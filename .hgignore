@@ -1,0 +1,6 @@
+syntax: glob
+core
+*.pyc
+*.swp
+*~
+TAGS

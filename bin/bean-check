@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+"""
+Run balance checks and list the validity ranges of all accounts.
+"""
+
+# stdlib imports
+from os.path import *
+from datetime import date
+from operator import attrgetter
+
+# beancount imports
+from beancount.utils import render_tree
+from beancount import cmdline
+
+
+def main():
+    import optparse
+    parser = optparse.OptionParser(__doc__.strip())
+
+    parser.add_option('-v', '--verbose', '--ranges', action='store_true',
+                      help="Print out the date ranges as well.")
+
+    parser.add_option('--all', action='store_true',
+                      help="Show all accounts.")
+
+    opts, ledger, args = cmdline.main(parser)
+
+    # Display the check ranges.
+    today = date.today()
+
+    if opts.verbose:
+        pred = attrgetter('checked') if not opts.all else None
+        for acc, branch, line in render_tree(ledger.get_root_account(), pred):
+            aline = branch + line
+            if acc.checked:
+                elapsed = today - acc.check_max
+                print '%-50s  %s  ->  %s    (%s days)' % (aline, acc.check_min, acc.check_max, elapsed.days)
+            else:
+                print aline
+
+if __name__ == '__main__':
+    main()
+
+
+

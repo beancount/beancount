@@ -1,0 +1,200 @@
+#!/usr/bin/env python
+"""
+Try your best to parse the crappy HTML coming out of RBC Direct Investing.
+
+Go to the RBC Direct Investing account and use the Web Developer extension to
+save the Generate Source (from the Source menu) for each month of activity. This
+script can extract the table and produce valid Ledger format text.
+
+This has got to be the absolute worst HTML I have ever seen. Also, note that you
+need to save the generated source, not the source you see directly.
+"""
+
+# stdlib imports
+import sys, re, cgi, logging
+from datetime import date
+from decimal import Decimal
+from xml.sax.saxutils import unescape
+from pprint import pprint, pformat
+from namedtuple import namedtuple
+
+# other imports
+from BeautifulSoup import BeautifulSoup
+
+
+
+def main():
+    import optparse
+    parser = optparse.OptionParser(__doc__.strip())
+
+    parser.add_option('-d', '--debug', action='store_true',
+                      help="Generate debug output.")
+
+    global opts
+    opts, args = parser.parse_args()
+
+    if len(args) < 2:
+        parser.error("You must specify an account and a filename to parse.")
+    acct, filenames = args[0], args[1:]
+
+    all = []
+    for fn in filenames:
+        print >> sys.stderr, "\n\nParsing file %s\n" % fn
+        all.extend(parse_file(fn))
+
+    ## sortfun = lambda x: (x.currency, x.settlement, x.priority)
+    sortfun = lambda x: (x.settlement, x.priority)
+
+
+    all.sort(key=sortfun)
+    acctmap = infer_account_names(acct, all)
+    for p in all:
+        print_as_ledger(p, acctmap[p.currency])
+
+def infer_account_names(acct, postings):
+    """
+    Given the name of an account and a list of postings, figure out if the
+    account name contains one of the currencies we saw, and if so, infer
+    alternate account names for it.
+
+    This is to handle the case of two accounts::
+
+      Assets:Investments:RBC-Broker:Account-USD
+      Assets:Investments:RBC-Broker:Account-CAD
+
+    """
+    currencies = frozenset(x.currency for x in postings)
+    for cur in currencies:
+        acct = acct.replace(cur, '%(currency)s')
+    return dict( (cur, acct % {'currency': cur})
+                 for cur in currencies )
+
+def print_as_ledger(p, acct):
+    write = sys.stdout.write
+
+    write(fmtdate(p.settlement))
+    if p.date != p.settlement:
+        write('=')
+        write(fmtdate(p.date))
+
+    desc = ' -- '.join(filter(None, (p.action, p.symbol, p.description)))
+
+    # Note: we used to dispatch the output format here to effect appropriate
+    # rounding here, on the 1000THS. We now use the Decimal object, which takes
+    # care of this automatically.
+    thou = re.match('\\b1000THS\\b', p.description)
+    ffmt = 's' if thou else 's'
+
+    vdict = p._asdict().copy()
+    vdict['quantity'] = (p.quantity / 1000) if thou else p.quantity
+    vdict['account'] = acct
+    vdict['symbol'] = '"%s"' % p.symbol if re.search('[0-9]', p.symbol) else p.symbol
+
+    if opts.debug:
+        for k, v in vdict.iteritems():
+            write(';; %s : %s\n' % (k, repr(v)))
+
+    write(' ! %s\n' % desc)
+
+    assert p.currency, p
+    if p.quantity:
+        if p.price:
+            assert p.action in ('Buy', 'Sell', 'DIV F6')
+            write('  %(account)-70s %(quantity)s %(symbol)s @ %(price)F %(currency)s\n'.replace('F', ffmt) % vdict)
+
+        else:
+            write('  %(account)-70s %(quantity)s %(symbol)s\n'.replace('F', ffmt) % vdict)
+
+    if p.amount:
+        write('  %(account)-70s %(amount)s %(currency)s\n'.replace('F', ffmt) % vdict)
+
+    write('\n')
+
+
+Entry = namedtuple('Entry',
+                   'date symbol description action quantity price amount currency settlement priority')
+
+
+def parse_file(fn):
+    soup = BeautifulSoup(open(fn),
+                         convertEntities=BeautifulSoup.HTML_ENTITIES)
+    soup.prettify()
+
+    # Find the header row (it's the only one).
+    tr = soup.find('tr', 'dataTableHeaderRow')
+
+    postings = []
+
+    priority = 1
+    tr = tr.findNextSibling('tr')
+    while 1:
+        # Work your way down the table, two rows at a time.
+        if tr is None:
+            break
+        tr1 = tr
+        tr2 = tr.findNextSibling('tr')
+        tr = tr2.findNextSibling('tr')
+
+        # Parse the first row.
+        tdlist = tr1.findAll('td')
+        assert len(tdlist) == 2
+        date, symbol_desc = [clean_str(x.contents[0]) for x in tdlist]
+
+        # Parse the second row.
+        tdlist = tr2.findAll('td')
+        assert len(tdlist) == 8
+        e1, e2, action, quantity, price, amount, currency, settlement = [
+             clean_str(x.contents[0] if x.contents else '') for x in tdlist]
+        assert not e1
+        assert not e2
+
+        # Convert to appropriate data types.
+        date = parse_date(date)
+        settlement = parse_date(settlement)
+        if amount:
+            amount = tonum(amount)
+        if price:
+            price = tonum(price)
+        if quantity:
+            quantity = tonum(quantity)
+        symbol, description = [x.strip() for x in symbol_desc.split('-', 1)]
+
+        mo = re.search('REINVEST @ \$(.*)', description)
+        if mo:
+            assert not price
+            price = tonum(mo.group(1))
+            trace(price)
+
+        p = Entry(date, symbol, description, action, quantity, price, amount,
+                  currency, settlement, priority)
+        postings.append(p)
+        priority += 1
+    return postings
+
+## FIXME: What is the appropriate way to do this for all entities?
+## other_entities = {'&nbsp;': ''}
+def clean_str(s):
+    return s.strip()
+    ## return unescape(s, other_entities).strip()
+
+
+_months = 'jan feb mar apr may jun jul aug sep oct nov dec'.split()
+
+def parse_date(dstr):
+    mo = re.match('(\d\d) (.*) (\d\d\d\d)', dstr)
+    mth = _months.index(mo.group(2).lower()) + 1
+    d = date(int(mo.group(3)), mth, int(mo.group(1)))
+    return d
+
+def fmtdate(d):
+    return d.strftime('%Y-%m-%d')
+
+def tonum(s):
+    return Decimal(s.replace(',', ''))
+
+
+
+
+
+if __name__ == '__main__':
+    main()

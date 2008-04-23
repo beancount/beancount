@@ -1,0 +1,50 @@
+==================================================
+   BeanCount: Command-line Accounting in Python
+==================================================
+
+.. contents::
+..
+    1  Description
+    2  Running the Demo
+    3  Documentation
+    4  Copyright and License
+    5  Author
+
+Description
+===========
+
+A powerful accounting system that uses only a simple text file format
+and a few Python scripts.
+
+
+Running the Demo
+================
+
+There is a demonstration ledger input file under the examples
+directory. To run a local web server on the example file, type the
+following command in the root directory::
+
+   demo.sh   
+
+
+Documentation
+=============
+
+- `CHANGES <CHANGES>`_
+- `TODO <TODO>`_
+- `Notes on Ledger in Python </beancount/doc/pyledger.html>`_
+- `Notes on acccounting </beancount/doc/accounting.html>`_
+- `SQL data model for simple accounting </beancount/doc/beancount.html>`_
+
+
+Copyright and License
+=====================
+
+Copyright (C) 2007-2008  Martin Blais.  All Rights Reserved.
+
+
+Author
+======
+
+Martin Blais <blais@furius.ca>
+

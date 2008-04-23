@@ -1,0 +1,192 @@
+/*
+  CSS for beancount server pages.
+*/
+
+/* Global page defs */
+
+body {
+  /* font-family: "trebuchet ms",verdana,sans-serif; font-size: 10pt; */
+  font-family: Luxi Sans, Lucida, Arial, sans-serif;
+  margin: 0px;
+  padding: 0px; /* for IE -- krock */
+  background-color: rgb(255,255,255);
+}
+
+div#document {
+  margin: 1em;
+}
+
+div#header {
+  background-image: url("header.jpg");
+  background-color: rgb(0,0,0);
+  background-repeat: no-repeat;
+  height: 62px;
+  border-bottom: 3px solid black;
+}
+
+div#top-navigation ul {
+  margin: 0px;
+  padding: 0px;
+}
+
+div#top-navigation li {
+  display: inline;
+  margin-left: 1.5em;
+  font-size: x-small;
+}
+
+body h1 {
+  text-align: center;
+}
+
+
+
+
+/* Style box for register. */
+
+div#style-selector ul {
+  margin: 0px;
+/*   padding: 0px; */
+}
+
+div#style-selector li {
+  display: inline;
+  margin-right: 1.5em;
+  font-size: x-small;
+  float: right;
+}
+
+
+
+/* Register view */
+
+table#register {
+  width: 100%;
+}
+
+table#register .flag {
+  font-weight: bold;
+  text-align: center;
+  min-width: 16px;
+}
+
+table#register .postdate {
+  text-align: right;
+}
+
+table#register tr.posting {
+  font-size: smaller;
+}
+
+tr.txn {
+  background-color: #FFF9BF;
+}
+
+tr.assert {
+  background-color: #FFDDDD;
+}
+
+tr.posting {
+  background-color: #FFFFFF;
+}
+
+
+
+
+
+table#balance td {
+  background-color: #F0F0F0;
+}
+
+
+tr.txn span.amount {
+  /* font-weight: bold; */
+}
+
+
+
+/* Account name component */
+span.account {
+  margin-left: 0px;
+  margin-right: 0px;
+  padding-left: 0px;
+  padding-right: 0px;
+  white-space: nowrap;
+}
+
+a.accomp {
+  margin-left: 0px;
+  margin-right: 0px;
+  padding-left: 0px;
+  padding-right: 0px;
+  white-space: nowrap;
+  text-decoration: none;
+/*   background-color: red; */
+/*   border: thin solid green; */
+}
+
+span.account .accsep {
+  margin-left: 0px;
+  margin-right: 0px;
+  padding-left: 0px;
+  padding-right: 0px;
+/*   background-color: blue; */
+/*   border: thin solid green; */
+}
+
+
+
+
+table#ranges td {
+  background-color: #F8F8F8;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+
+
+
+.folder {
+  border:none;
+  /* margin: 0 4px 0 0; */
+  padding-left: 2px;
+  padding-right: 2px;
+  margin-left: 0px;
+  margin-right: 0px;
+/*   border: thin solid red; */
+}
+
+span.foldspc {
+  margin-left: 24px;
+/*   border: thin solid blue; */
+}
+
+
+
+
+
+
+table td.wallet {
+  text-align: right;
+/*   padding-left: 10px; */
+/*   padding-right: 10px; */
+}
+
+span.amount {
+  white-space: nowrap;
+}
+
+/* table#balance tr { */
+/*   margin: 0px; */
+/*   padding: 0px; */
+/* } */
+
+
+table td.tree a:link, table td.tree a:visited {
+  text-decoration: none;
+}
+
+table td.tree {
+  white-space: nowrap;
+}
+

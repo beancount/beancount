@@ -1,0 +1,72 @@
+Date  	Tue, 22 Apr 2008 3:11 PM  ( 50 mins 15 secs ago ) 	Text view
+Print view
+Raw view
+From  	"Raymond Hettinger" <python@rcn.com>
+To  	"Martin Blais" <blais@furius.ca>
+Subject  	Accounting Package 	Show full header
+Nice little package.
+
+I look at your question list.  Here's a few thoughts.
+
+Usually, when there is a choice of several ways to record things (trade date vs settlement date, asset vs expense, cost basis vs
+mark-to-market), the right answer depends on who is using the books and for what purpose.  Traders usually think in terms of trade
+dates because that is when the decision is made and the asset valuation risk begins.  Accountants (including taxing authorities)
+usually look to settlement dates because that is when the cash moves.
+
+Often you can meet multiple needs by keeping multiple accounts for a single asset and then looking at either the individual accounts
+or the sum depending on what you're trying to analyze
+
+     my_house:at_cost    200,000
+     my_house_mkt_adj     10,000
+
+     my_car:at_cost           30,000
+     my_car:depreciation  <4,500>
+
+For taxes, you record a liability and expense at the time the obligation is incurred.  When you pay them, reduce the liability and
+cash:
+
+   #2/20/2008
+   Tax Expense      1,000 Dr
+   Tax Payable       1,000 Cr
+
+   #1/15/2009
+   Tax Payable       8,000 Dr
+   Tax Expense      8,000 Cr
+
+For multiple currencies, there simplest solution is to record all transactions in their native currency.  Then add a dynamic
+translation to USD or CAD using the current exchange rate before summing the trial balance.  The balancing entry goes to an expense
+for currency gains and losses.  Given:
+
+    Cash:USD  1000  Dr
+    Cash:Euro   4000  Dr
+    Equity:USD  7,500 Cr
+
+The dynamic trial balance with rate of (1.5 to 1) is:
+
+    Cash:USD                     1000  Dr
+    Cash:Euro_Converted    6000  Dr
+    Equity:USD                    7,500 Cr
+    CurrencyLosses                500 Dr
+
+
+Rather than making every trading entry or food purchase in your books, the common approach is to book summary totals from a
+single-entry subledger:
+
+  Burger King      10
+  McDonalds       20
+  Taco Bell          30
+  More junk         40
+  More tacos        50
+  Total                150
+
+  FoodExpense   150 Dr
+  Cash                 150 Cr
+
+FWIW, microsoft has a new accounting product that automatically books entries from PayPal and Ebay transactions.  That feature
+should not be hard to replicate.
+
+
+Raymond
+
+Inbox: 1 of 6	Go to:   <     Mailbox     >  	Delete and:   <     Mailbox     >  	
+Need help? Start here. Read the FAQ. Talk to other users.

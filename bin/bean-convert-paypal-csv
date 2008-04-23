@@ -1,0 +1,121 @@
+#!/usr/bin/env python
+"""
+Interpret the PayPal CSV file and output transactions suitable for Ledger.
+"""
+
+# stdlib imports
+import sys, re, cgi, logging, time
+from datetime import date
+from decimal import Decimal
+from xml.sax.saxutils import unescape
+from pprint import pprint, pformat
+from namedtuple import namedtuple
+from itertools import imap, count, starmap
+
+# other imports
+from BeautifulSoup import BeautifulSoup
+
+
+
+
+
+# My default accounts.
+acc_sales = 'Income:Book-Sales'
+acc_deposit = 'Assets:Current:PayPal'
+acc_fee = 'Expenses:Financial:Commissions:PayPal'
+
+def parse_date(s):
+    return date.fromtimestamp(time.mktime(time.strptime(s, '%m/%d/%Y')))
+
+def main():
+    import optparse
+    parser = optparse.OptionParser(__doc__.strip())
+    opts, args = parser.parse_args()
+    if not args:
+        parser.error("You must specify an CSV filenames to parse.")
+
+    ## parser.add_option('-f', '--ledger-file', action='store',
+    ##                   help="Use the given ledger file in order to infer the Paypal account name.")
+    ##
+    ## if opts.ledger_file:
+    ##     ledger = Ledger()
+    ##     ledger.parse_file(opts.ledger_file)
+    ## else:
+    ##     ledger = None
+    ## accname = infer_account_name(ledger)
+        
+    for fn in args:
+        rows = [(parse_date(x.date), x) for x in parse_csv_file(fn)]
+        rows = reversed(list(parse_csv_file(fn)))
+        ## rows.sort(key=lambda x: (x[0], x.time))
+        i = 0
+        for x in rows:
+            i += 1
+            date_ = parse_date(x.date)
+
+            isreceived = re.search('payment.*received', x.type, re.I)
+            isupdate = re.search('update', x.type, re.I)
+
+            email = x.from_email_address if isreceived else x.to_email_address
+            description = ', '.join(filter(None, (x.type, x.item_title, x.transaction_id, x.name, email)))
+
+            gross, net, fee = map(tonum, (x.gross, x.net, x.fee))
+
+            if isreceived:
+                # Note: auto-clear those transactions.
+                print '%s * %s' % (date_, description)
+                print '  %-50s    %s %s' % (acc_sales, -gross, x.currency)
+                print '  %-50s    %s %s' % (acc_fee, -fee, x.currency)
+                print '  %-50s    %s %s' % (acc_deposit, net, x.currency)
+                print
+
+            elif isupdate:
+                # Note: auto-clear those transactions.
+                print ';;%s * %s' % (date_, description)
+                print ';;  %-50s    %s %s' % (acc_sales, -gross, x.currency)
+                print ';;  %-50s    %s %s' % (acc_fee, -fee, x.currency)
+                print ';;  %-50s    %s %s' % (acc_deposit, net, x.currency)
+                print
+
+            else:
+                assert fee == 0
+                print '%s ! %s' % (date_, description)
+                print '  %-50s    %s %s' % (acc_deposit, net, x.currency)
+                print
+
+            ## if i % 5 == 0:
+            ##     balance = tonum(x.balance)
+            ##     print '@check %s  %-50s  %s %s' % (date_, acc_deposit, balance, x.currency)
+            ##     print
+
+        balance = tonum(x.balance)
+        print '@check %s  %-50s  %s %s' % (date_, acc_deposit, balance, x.currency)
+
+
+def tonum(x):
+    return Decimal(x.strip().replace(',', ''))
+
+def parse_csv_file(fn):
+    """
+    Parse a CSV file and return a list of rows as named_tuple objects.
+    We assume that the first row is a title row.
+    """
+    import csv
+    reader = csv.reader(open(fn, "rb"))
+    ireader = iter(reader)
+
+    cols = []
+    dummycount = count().next
+    for x in ireader.next():
+        cx = x.strip().lower().replace(' ', '_')
+        if not cx:
+            cx = 'dummy_%d' % dummycount()
+        cols.append(cx)
+
+    Row = namedtuple('Row', cols)
+    return (Row(*x) for x in ireader)
+
+
+if __name__ == '__main__':
+    main()
+

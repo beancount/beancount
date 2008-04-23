@@ -1,0 +1,309 @@
+=====================
+   beancount: TODO
+=====================
+
+.. contents::
+..
+    1  Beancount (Accounting)
+    2  Ideas
+      2.1  Links
+    3  Reporting
+
+
+
+Beancount (Accounting)
+======================
+
+main focus:
+
+  * support for import scripts
+  * check capital gains, write tests
+  * write tests for date inequalities
+  * add page and note filtering
+
+
+
+parser:
+
+- Bug: A transaction without postings should barf.
+
+- Review the dates inequalities, incl + excl, like compsci
+
+  * Clarify this for @check as well, it should probably be at the end
+    of the day.
+
+- make De and Cr just D and C
+
+- Allow commas in amounts. I like commas sometimes.
+
+- Validate commodities using the defaccount declaration.
+
+- Add a @defcomm directive, that checks validity for the commodities
+  that are seen.
+
+- Implement the {{ amount }} syntax.
+- Implement the @@ amount syntax.
+
+- Finish implementing the (Account) and [Account] syntaxes.
+
+- Display option: add an option to render only up to a specific level
+  of the tree of accounts.
+
+- Capital gains should not count commissions nor on the buy nor on the
+  sell side. How do we book them like this?  Create a small example.
+
+- IMPORTANT: Using the pickle, the errors only get reported when you
+  parse initially. We must make the balance checks in a separate
+  stage!!! Fix that, save the errors in the Ledger object and report
+  them every time.
+
+- Make my Capital-Gains use the most appropriate syntax and make sure
+  that the commissions aren't counted in (add a test).
+
+    You need to do a test for capital gains.
+
+checks:
+
+- Detect and find potential duplicates.
+
+
+import:
+
+- Modify all import scripts so that they avoid reimporting already
+  imported stuff. All the import scripts should take an existing
+  Ledger file as input.
+
+- The OFX importer needs to unescape &amp; and others.
+
+- Write a generic import routine that will try to heuristically match
+  partially completed transactions from an existing Ledger.
+
+
+scripts:
+
+- Write a script to laod the data into an SQL database.
+
+- Implement a web server and all pages being served from memory.
+
+- Figure out how to show balance to market value.
+
+- Make this available publicly (segregate the flair code more
+  clearly).
+
+- Figure out how to do stock splits properly.
+
+- Output reports using the debits and credits format.
+
+- Check time ranges should also output the ranges of transactions
+  present in the file.
+
+- Check balances for transactions that are in [].
+
+- Add a command to print the parsed transactions register in the order
+  they were read in.
+
+- Add declarations for important dates:
+
+  * @date 2007-01-01  Start of year 2007
+
+- Add directives specific to conversion scripts as well::
+
+     @defvar ofx accid 000016726282       Assets:Current:RBC:Checking
+
+     @defvar paypal acc_sales    Income:Book-Sales
+     @defvar paypal acc_deposit  Assets:Current:PayPal
+     @defvar paypal acc_fee      Expenses:Financial:Commissions:PayPal
+
+
+
+
+tests:
+
+- Test Wallet += None
+
+- Write functional tests
+- Write automated tests for everything.
+
+
+
+
+
+doc/examples/demos:
+
+- Make a presentation
+
+- Write simple documentation, maybe tests should be part of the
+  documentation?
+
+- Create an 'examples' subdirectory, with typical use cases.
+
+- Examples:
+
+  - mortgage, buying a home
+  - capital gains (with commissions correctly)
+  - cie expenses, the way I'm doing it.
+  - misc, e.g. credit card
+
+- Include examples
+
+
+- This is causing me a problem::
+
+    2008-02-14 * FUNDS TRANSFER
+      Assets:Current:RBC:Checking-US                                -89050.66 USD @ 0.9901 CAD
+      Assets:Current:RBC:Savings                                     88169.06 CAD
+
+  The costs are:
+
+    2008-02-14 * FUNDS TRANSFER
+      Assets:Current:RBC:Checking-US                                -88169.06 CAD
+      Assets:Current:RBC:Savings                                     88169.06 CAD
+
+  So when I show the balance sheet "at cost", it shows the account
+  Assets:Current:RBC:Checking-US as having had some CAD debited from
+  it.
+
+
+
+emacs:
+
+- Make ledger-expand-account rotate between the various choices.
+- Make it possible to select an account with partial completion.
+
+
+serve:
+
+- Modify htmlout to cache the result of rendering nodes, and reuse
+  that code.
+
+- Make it possible to upload a new file to the server to be parsed.
+  This way, I wouldn't even have to log in ssh in order to update the
+  in-memory database...
+
+- When you render an account, you should be able to click on any of
+  the components of the account name.
+
+
+
+reporting:
+
+- Implement `--code-as-payee' combined with `--by-payee', this
+  provides an interesting view.
+
+
+
+Ideas
+=====
+
+- Create a script to support generating lists of file locations for
+  navigating the input file in a certain order.
+
+    Let's say that I would want to inspect the input for some
+    arbitraty list of filtered transactions that relate to
+    postings: all I have to do is write a script that outputs
+    "errors" in a way that Emacs knows to parse, and then
+    'next-error and 'previous-error takes my cursor there with
+    a single keystroke!
+
+- Not sure if we need this with the @imported directive, but how about
+  a special field in the transaction's posting::
+
+    Assets:Investments:HSBC-Broker           -100 IVV @@ 136.2901 USD  {HD7egE62}
+    Income:Investment:Capital-Gains
+
+  This special kind of id would get computed in a uniform way from the
+  date and the account being imported, so that we could check if this
+  posting or transaction had already been imported before.
+
+- Add directives to support import:
+
+  @imported <FROMDATE> <TODATE> <ACCOUNT>
+
+  Using the intersection of these date intervals and the account name,
+  you can determine what has already been imported and avoid importing
+  twice.
+
+  * We need central support for these tasks as well.
+  * The conversion scripts should always parse a ledger file.
+
+- You should be able to click on dates and see all postings by date
+  too.
+
+- You should be able to click on a payee to view its transactions.
+
+
+
+
+Links
+-----
+
+Description of a data model very similar to my idea.
+http://homepages.tcp.co.uk/~m-wigley/gc_wp_ded.html
+
+
+
+Reporting
+=========
+
+- trial balance (view all accounts)
+
+  - total
+  - at intervals: per-week, per-month, etc.
+
+- register view
+
+  - total
+  - at intervals (?)
+
+- balance sheet  (A = L+E)
+
+  - total
+  - at intervals: per-week, per-month, etc.
+
+- pnl view  (R-I)
+
+  - total
+  - at intervals
+
+- errors / check
+
+- ranges of checks
+- ranges of transactions
+
+- info page
+
+- list of uncleared transactions
+
+- custom reports:
+
+* current cie expenses list and amount that needs be paid.
+* stuff that I lent and that I'm waiting for.
+* currency exposure.
+* list how much liquid assets are available
+
+
+
+
+
+
+
+- Three levels of views for register:
+
+  * Basic:
+
+        date, payee, description, amount, balance
+
+  * Matching:
+
+        date, payee, narration
+           date, posting-other        amount
+
+  * Full:
+
+        date, payee, narration
+           date, posting              amount
+           date, posting-other        amount
+        date  check                   amount  <------------- green
+
+
+

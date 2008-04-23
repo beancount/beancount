@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+"Simple web server to display the contents of some Ledger."
+from beancount.web.serve import main
+main()
+
+

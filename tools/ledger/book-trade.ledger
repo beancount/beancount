@@ -1,0 +1,34 @@
+;; Assets:Investments:HSBC-Broker ------------------------------------------------------------
+
+2007/11/02 * First trade at HSBC Sec. bought some IVV.
+  Assets:Investments:HSBC-Broker             100 IVV @ 153.3372 USD
+  Expenses:Financial:Commissions           24.88 USD
+  Expenses:Financial:Fees                   2.00 USD
+  Assets:Current:HSBC:Checking         -15360.60 USD
+
+2007/12/31 * End of year / Closing balances.
+  Assets:Investments:HSBC-Broker            -100 IVV
+  Equity:Closing-Balances                    100 IVV
+
+2007/12/31 * Start of year / Opening balances.
+  Assets:Investments:HSBC-Broker             100 IVV
+  Equity:Opening-Balances                   -100 IVV
+
+2008/02/04 * Sell 100 IVV - on 2008/01/30
+  Assets:Investments:HSBC-Broker            -100 IVV @ 136.2901 USD
+  Expenses:Financial:Commissions           24.88 USD
+  Expenses:Financial:Fees                   0.15 USD
+  Expenses:Financial:Fees                   2.00 USD
+  Assets:Current:HSBC:Checking          13601.98 USD
+
+;; FIXME: is this how we book a trade?
+2008/02/04 * Book IVV trade against original purchase.
+  Assets:Investments:HSBC-Broker             100 IVV
+  Assets:Current:HSBC:Checking         -15360.60 USD
+
+
+; 2008/02/29 * Balance
+;   Assets:Investments:HSBC-Broker            -13754 USD
+;   Misc
+
+

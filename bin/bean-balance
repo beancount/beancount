@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+"""
+Compute and print the balance of each selected account.
+"""
+
+# stdlib imports
+import re
+from os.path import *
+
+# beancount imports
+from beancount import cmdline
+from beancount.utils import render_tree
+from beancount.ledger import compute_balsheet
+
+
+
+def main():
+    import optparse
+    parser = optparse.OptionParser(__doc__.strip())
+
+    parser.add_option('-l', '--local', action='store_true',
+                      help="Display the local account's balance only.")
+
+    parser.add_option('-B', '--at-cost', action='store_true',
+                      help="Compute amounts at cost units instead of in amount units.")
+
+    opts, ledger, args = cmdline.main(parser)
+
+    compute_balsheet(ledger, 'local_balance', 'balance', opts.at_cost)
+    aname = 'local_balance' if opts.local else 'balance'
+    for acc, branch, line in render_tree(ledger.get_root_account()):
+        aline = branch + line
+        print '  %-40s %s' % (aline, getattr(acc, aname).round())
+
+if __name__ == '__main__':
+    main()
+
+
+

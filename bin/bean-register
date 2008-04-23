@@ -1,0 +1,54 @@
+#!/usr/bin/env python
+"""
+Print out the register of postings.
+"""
+
+# stdlib imports
+import re, logging
+from os.path import *
+
+# beancount imports
+from beancount import cmdline
+from beancount.utils import render_tree
+from beancount.wallet import Wallet
+
+
+
+
+logging.warning("THIS IS INCORRECT, YOU NEED TO RECONCILE THE LIST OF TRANSACTIONS, "
+                "see app.py:register()")
+
+def main():
+    import optparse
+    parser = optparse.OptionParser(__doc__.strip())
+
+    cmdline.select_addopts(parser)
+    parser.add_option('-v', '--verbose', action='store_true',
+                      help="Verbosely print some extra stuff.")
+
+    opts, ledger, args = cmdline.main(parser)
+
+    # Filter out the selected postings.
+    postings = cmdline.select_postings(ledger, opts)
+
+    # Print a tree of the selected accounts.
+    if opts.verbose:
+        pred = lambda acc: getattr(acc, 'selected', 0)
+        print
+        for acc, branch, line in render_tree(ledger.get_root_account(), pred):
+            print branch + line
+        print
+
+    balance = Wallet()
+    for post in sorted(postings):
+        balance += post.amount
+        print post.fulldate(), post.txn.topline()
+        print post.pretty(ledger)
+        print '**********', balance.round()
+        print
+
+
+if __name__ == '__main__':
+    main()
+
+

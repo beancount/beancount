@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<meta name="generator" content="Docutils 0.5: http://docutils.sourceforge.net/" />
+<title>Bean Counter: A Simpler Double-Entry Accounting System via SQL</title>
+<meta name="date" content="2008-03-29" />
+<link rel="stylesheet" href="../style.css" type="text/css" />
+</head>
+<body>
+
+<div id="project-header">
+  <a href="/"><img src="/home/furius-logo-w.png" id="logo"></a>
+  <div id="project-home"><a href="..">Project Home</a></div>
+</div>
+
+<div class="document" id="bean-counter-a-simpler-double-entry-accounting-system-via-sql">
+<h1 class="title">Bean Counter: A Simpler Double-Entry Accounting System via SQL</h1>
+<table class="docinfo" frame="void" rules="none">
+<col class="docinfo-name" />
+<col class="docinfo-content" />
+<tbody valign="top">
+<tr class="field"><th class="docinfo-name">Id:</th><td class="field-body">89339e54-5eca-40fe-a8fb-bf7787be3efb</td>
+</tr>
+<tr><th class="docinfo-name">Date:</th>
+<td>2008-03-29</td></tr>
+</tbody>
+</table>
+<div class="abstract topic">
+<p class="topic-title first">Abstract</p>
+<p>Simple design for a double-entry accounting system, using an SQL
+database as a backend.</p>
+</div>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#introduction" id="id1">Introduction</a></li>
+<li><a class="reference internal" href="#description-of-objects" id="id2">Description of Objects</a><ul>
+<li><a class="reference internal" href="#securities" id="id3">Securities</a></li>
+<li><a class="reference internal" href="#accounts" id="id4">Accounts</a></li>
+<li><a class="reference internal" href="#transactions" id="id5">Transactions</a></li>
+<li><a class="reference internal" href="#posting" id="id6">Posting</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#inconsistencies" id="id7">Inconsistencies</a></li>
+<li><a class="reference internal" href="#operations" id="id8">Operations</a><ul>
+<li><a class="reference internal" href="#importing-postings" id="id9">Importing Postings</a></li>
+<li><a class="reference internal" href="#categorizing-postings" id="id10">Categorizing Postings</a></li>
+<li><a class="reference internal" href="#graph-of-account-relationships" id="id11">Graph of Account Relationships</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tags" id="id12">Tags</a></li>
+<li><a class="reference internal" href="#initialization" id="id13">Initialization</a></li>
+<li><a class="reference internal" href="#other-issues" id="id14">Other Issues</a><ul>
+<li><a class="reference internal" href="#issues-with-multiple-currencies" id="id15">Issues with Multiple Currencies</a></li>
+<li><a class="reference internal" href="#import-batches" id="id16">Import Batches</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ideas-for-automation" id="id17">Ideas for Automation</a></li>
+</ul>
+</div>
+<!-- 1  Introduction
+2  Description of Objects
+  2.1  Securities
+  2.2  Accounts
+  2.3  Transactions
+  2.4  Posting
+3  Inconsistencies
+4  Operations
+  4.1  Importing Postings
+  4.2  Categorizing Postings
+  4.3  Graph of Account Relationships
+5  Tags
+6  Initialization
+7  Other Issues
+  7.1  Issues with Multiple Currencies
+  7.2  Import Batches
+8  Ideas for Automation -->
+<div class="section" id="introduction">
+<h1><a class="toc-backref" href="#id1">Introduction</a></h1>
+<p>This file contains a description of a relational database schema for a
+simple double-entry accounting system. The motivation behind the
+creation of a simple homegrown schema is that most available softwares
+are either bloated, use an opaque database format, or are downright
+buggy and impossible to use and trust. There is nothing very
+complicated about the simplest aspects of a double-entry accouting
+system, and this is what we provide here.</p>
+</div>
+<div class="section" id="description-of-objects">
+<h1><a class="toc-backref" href="#id2">Description of Objects</a></h1>
+<div class="section" id="securities">
+<h2><a class="toc-backref" href="#id3">Securities</a></h2>
+<p>Each account will contain postings which are valued in a number of
+units of a specific currency. Some of the accounts will contain shares
+of securities, like stocks. We need to create a table of unique
+securities, some of which include the currency units:</p>
+<pre class="literal-block">
+#!sql
+CREATE TABLE security (
+
+  -- Unique symbol, type and a name/description.
+  symbol VARCHAR(16),
+  name TEXT NOT NULL,
+
+  PRIMARY KEY (symbol)
+);
+</pre>
+<p>Eventually, we will want to add much more information to the
+securities themselves, and we will probably do this with an anciliary
+table, but for now, just to have the securities defined is good enough
+to carry out all the basic accounting classification tasks.</p>
+</div>
+<div class="section" id="accounts">
+<h2><a class="toc-backref" href="#id4">Accounts</a></h2>
+<p>All the transactions that can occur occur within an &quot;account&quot;. Each
+account is always denominated under a specific currency, and no
+transaction may occur in another currency within that account.</p>
+<p>Accounts may contain postings and sub-accounts (just like
+filesystem directories contain files and other directories):</p>
+<pre class="literal-block">
+#!sql
+CREATE TABLE account (
+
+  -- A unique and a long name/description.
+  id SERIAL,
+  name TEXT,
+
+  -- The parent account to which this account belongs.
+  parent_id INTEGER REFERENCES account(id),
+
+  -- The security that this account is denominated in.
+  sec VARCHAR(16) NOT NULL REFERENCES security(symbol),
+
+  -- Whether the account is a credit (True) or debug (False)
+  -- account.
+  isdebit BOOLEAN,
+
+  PRIMARY KEY (id),
+  UNIQUE (parent_id, name)
+);
+</pre>
+</div>
+<div class="section" id="transactions">
+<h2><a class="toc-backref" href="#id5">Transactions</a></h2>
+<p>Transactions are used as groupings of postings, which are meant
+to be balanced individually. If all postings are linked to a
+transaction, and all transactions balance, the system is insured to
+balance:</p>
+<pre class="literal-block">
+#!sql
+CREATE TABLE transaction (
+
+  -- A unique id to refer to the transaction.
+  id SERIAL,
+
+  -- An optional description that applies to the set of entries.
+  description TEXT,
+
+  -- A unqiue time for this set of transactions.
+  timestamp TIMESTAMP WITHOUT TIME ZONE,
+
+  PRIMARY KEY(id)
+);
+</pre>
+<p>About times:</p>
+<blockquote>
+Note that a posting has a specific date/time, but its
+corresponding transaction may have a different one. We need to
+insure that each transaction is atomic, so that at any point in time
+the system be coherent and balanced.</blockquote>
+<p>About securities:</p>
+<blockquote>
+<p>A transaction may contain postings which are denominated in
+different underlying currrencies. For example, this is how a stock
+purchase is supposed to work out:</p>
+<pre class="literal-block">
+transaction
+  posting        AAPL             3
+  posting        Checking                 301.00
+</pre>
+<p>The &quot;exchange rate&quot; between the two provides an implicit price for
+the conversion. Here the price would be 101.00$/share.</p>
+<p>Note that this price may not be the actual real price of the journal
+item that occurred on a market. We will want to group commission and
+fees in the same transaction, for example, which affects the
+true &quot;price&quot;:</p>
+<pre class="literal-block">
+transaction
+  posting          AAPL                    3
+  posting          Expenses:Commission     3.00
+  posting          Checking                       303.00
+</pre>
+</blockquote>
+</div>
+<div class="section" id="posting">
+<h2><a class="toc-backref" href="#id6">Posting</a></h2>
+<p>All the activity that occurs in an account is called a &quot;posting&quot;. A
+posting can be placed in any account that has a matching base
+security. Much of the work in filling up an accounting database is to
+categorize to which account a posting belongs, and to pair up entries
+with a transaction that balances.</p>
+<p>Note that if for whatever reason a posting is not yet classified to an
+account, it has to be placed in some sort of temporary account created
+for this purpose. A posting can never exist without an account.</p>
+<pre class="literal-block">
+#!sql
+CREATE TABLE posting (
+
+  -- A unique id to refer to the transaction.
+  id SERIAL,
+
+  -- Timestamp.
+  timestamp TIMESTAMP WITHOUT TIME ZONE,
+
+  -- The account to which this transaction belongs.
+  account_id INTEGER NOT NULL REFERENCES account(id)
+                              ON DELETE SET NULL,
+
+  -- Which transaction this posting belongs to (possibly NULL).
+  trans_id INTEGER DEFAULT NULL REFERENCES transaction(id)
+                   ON DELETE SET NULL,
+
+  -- The underlying currency or security.
+  symbol VARCHAR(16) REFERENCES security(symbol),
+
+  -- Amount of the transaction, in units of its currency.
+  -- Note that the sign indicates whether to increase or decrease
+  -- the owning account.
+  amount NUMERIC(16, 6),
+
+  -- Some text to identify this item. This is meant to be either
+  -- imported from some data file or entered manually by the user.
+  -- It may entirely be left empty, as it is not otherwise used by
+  -- the system.
+  description TEXT,
+  memo TEXT,
+
+  -- An optional unique GUID used at import time, to insure that
+  -- postings may not be imported twice.
+  guid VARCHAR(32) UNIQUE,
+
+  PRIMARY KEY(id)
+);
+</pre>
+</div>
+</div>
+<div class="section" id="inconsistencies">
+<h1><a class="toc-backref" href="#id7">Inconsistencies</a></h1>
+<p>Here is a list of the kinds of inconsistencies that may occur in the
+system, for which we need to provide convenient mechanisms to fix up:</p>
+<ol class="arabic simple">
+<li>postings without a transaction. This is the default state of
+newly imported entries.</li>
+<li>Transactions that don't balance. This is the main task that a user
+wanting to reconcile everything must do.</li>
+</ol>
+<p>Here are the kinds of inconsistencies that may not occur:</p>
+<ol class="arabic simple">
+<li>postings without account. These could occur if we allowed
+importing without an account, or if you could delete an account
+without clearing the transactions it contains. The database schema
+insures that all postings have some parent account.</li>
+</ol>
+</div>
+<div class="section" id="operations">
+<h1><a class="toc-backref" href="#id8">Operations</a></h1>
+<div class="section" id="importing-postings">
+<h2><a class="toc-backref" href="#id9">Importing Postings</a></h2>
+<p>A tool should be provided to parse some of the available data file
+formats (QIF, QFX, etc.) and to specify which account the postings
+have to go into.</p>
+<p>These importing tools should avoid importing the same items multiple
+times, by using the GUIDs that the data file formats provide.</p>
+</div>
+<div class="section" id="categorizing-postings">
+<h2><a class="toc-backref" href="#id10">Categorizing Postings</a></h2>
+<p>Once the transactions are imported into the database, we need to
+place each of them into a posting. This is done by creating a
+matching transaction with another account, in the other direction.</p>
+<p>A script can be run to allow the user to easily create these
+transactions.</p>
+</div>
+<div class="section" id="graph-of-account-relationships">
+<h2><a class="toc-backref" href="#id11">Graph of Account Relationships</a></h2>
+<p>A graph of the relationships between the various accounts can be
+obtained by looking at the transactions between accounts in a period
+of time.</p>
+</div>
+</div>
+<div class="section" id="tags">
+<h1><a class="toc-backref" href="#id12">Tags</a></h1>
+<p>Why limit ourselves to a tree structure? Tags can be used to make
+queries on sets of accounts:</p>
+<pre class="literal-block">
+#!sql-alt
+CREATE TABLE tag (
+
+  tagname VARCHAR(32),
+  account_id INTEGER REFERENCES account(id),
+
+  PRIMARY KEY(tagname)
+);
+</pre>
+</div>
+<div class="section" id="initialization">
+<h1><a class="toc-backref" href="#id13">Initialization</a></h1>
+<p>Some of the base securities to be created include:</p>
+<pre class="literal-block">
+#!sql
+insert into security (symbol, name) values ('USD', 'US Dollar');
+insert into security (symbol, name) values ('CAD', 'Canadian Dollar');
+insert into security (symbol, name) values ('AUD', 'Australian Dollar');
+insert into security (symbol, name) values ('JPY', 'Japanese Yen');
+</pre>
+</div>
+<div class="section" id="other-issues">
+<h1><a class="toc-backref" href="#id14">Other Issues</a></h1>
+<div class="section" id="issues-with-multiple-currencies">
+<h2><a class="toc-backref" href="#id15">Issues with Multiple Currencies</a></h2>
+<p>At <a class="reference external" href="http://homepages.tcp.co.uk/~m-wigley/gc_wp_ded.html">http://homepages.tcp.co.uk/~m-wigley/gc_wp_ded.html</a>, a transaction
+between multiple currencies is expressed as four entries, going
+through a special &quot;cash book&quot; account. Is this useful?</p>
+</div>
+<div class="section" id="import-batches">
+<h2><a class="toc-backref" href="#id16">Import Batches</a></h2>
+<p>It would be nice to be able to refer to all the entries inserted
+during a single import. We should create an anciliary table for
+entries that would store that information, e.g.:</p>
+<pre class="literal-block">
+#!alt
+CREATE TABLE import_batch (
+
+  batch_no    INTEGER,
+  id          INTEGER REFERENCES posting(id),
+
+  PRIMARY KEY (id)
+);
+</pre>
+<p>We could then easily join that table with the accounts table to select
+all the messages imported at once.</p>
+</div>
+</div>
+<div class="section" id="ideas-for-automation">
+<h1><a class="toc-backref" href="#id17">Ideas for Automation</a></h1>
+<ul class="simple">
+<li>Pre-fill amount using a matching description.</li>
+<li>On import: scan for duplicate transactions (matching all fields).
+Maybe we generate a unique checksum on the fields and use that later
+on to detect duplicate entries.</li>
+</ul>
+</div>
+</div>
+</body>
+</html>

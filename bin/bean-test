@@ -1,0 +1,43 @@
+#!/usr/bin/env python
+"""
+Testbed for new bean tools.
+"""
+
+# stdlib imports
+import sys, os, logging, re
+from decimal import Decimal
+from datetime import date
+from os.path import *
+from itertools import count, izip
+from operator import attrgetter
+
+# beancount imports
+from beancount.ledger import *
+from beancount.utils import *
+from beancount import cmdline
+
+
+
+def main():
+    import optparse
+    parser = optparse.OptionParser(__doc__.strip())
+
+    parser.add_option('-a', '--all', action='store_true',
+                      help="Show all accounts.")
+
+    opts, ledger, args = cmdline.main(parser)
+
+    root = ledger.get_root_account()
+    for x in itertree(root):
+        print x
+
+## FIXME: build a command to list all the unique payees.
+## FIXME: build an info command to list stats on the ledger.
+
+## FIXME: make the parse method on the Ledger, it should add to the current
+## Ledger object.
+
+
+if __name__ == '__main__':
+    main()
+

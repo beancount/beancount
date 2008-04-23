@@ -1,0 +1,8 @@
+@import url("/docutils-style.css");
+@import url("/project.css");
+
+div#project-header {
+  background-image: url("etc/header-universal-dollar.jpg");
+  background-color: #989898;
+}
+
