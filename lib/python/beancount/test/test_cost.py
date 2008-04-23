@@ -78,7 +78,7 @@ class TestCostBalancing(object):
         # Normal and virtual postings should balance independently.
         lgr = ledger_str(self.def_accounts + """
 
-2008-01-10 * Bought some shares
+2008-01-10 * 
   Assets:Bank              170.00 USD
   Income:Salary            169.00 USD
 
@@ -87,39 +87,4 @@ class TestCostBalancing(object):
         txn = lgr.transactions[0]
 ## FIXME: how do we assert an error here?
 
-
-
-
-
-
-
-
-
-
-
-"""
-2008-01-10 * Bought some shares
-  Assets:Bank               100.00 USD
-  Income:Salary            -100.00 USD
-  (Expenses:TripPlan)
-"""
-
-##         # Unbalanced posting.
-##         lgr = ledger_str(self.def_accounts + """
-
-## 2008-01-10 * Bought some shares
-##   Assets:Bank               100.00 USD
-##   Income:Salary
-##   (Expenses:TripPlan)        10.00 USD
-
-## """, 'unbalanced')
-
-##         assert len(lgr.transactions) == 1
-##         txn = lgr.transactions[0]
-##         assert txn.postings[0].amount == Wallet('100 USD')
-
-##         assert lgr.get_account('').total == Wallet()
-##         assert lgr.get_account('Assets:Bank').total == Wallet('100 USD')
-##         assert lgr.get_account('Income:Salary').total == Wallet('-100 USD')
-##         assert lgr.get_account('Expenses:TripPlan').total == Wallet('10 USD')
 

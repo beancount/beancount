@@ -568,6 +568,9 @@ class Ledger(object):
         Check that the given list of postings balance and automatically fill-in
         for missing ones.
         """
+        if not postings:
+            return
+
         # Note: we assume that we've already set the cost to the amount if
         # there was no price defined, so we can just use the cost here (in
         # convert_wallets()).
