@@ -184,6 +184,8 @@ serve:
 - When you render an account, you should be able to click on any of
   the components of the account name.
 
+- There is a bug with collapsing the tree nodes in the ranges page.
+
 
 
 reporting:
@@ -195,6 +197,7 @@ reporting:
 
   * By code
   * By payee
+
 
 
 

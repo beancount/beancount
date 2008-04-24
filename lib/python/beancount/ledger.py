@@ -14,6 +14,9 @@ from StringIO import StringIO
 from bisect import bisect_left
 from collections import defaultdict
 
+# other imports
+from namedtuple import namedtuple
+
 # beancount imports
 from beancount.wallet import Wallet
 from beancount.utils import SimpleDummy
@@ -276,7 +279,7 @@ class Ledger(object):
 
         msg = LedgerMessage(level, message, filename, lineno)
         self.messages.append(msg)
-        logging.log(level, '%s:%d: %s' % (filename, lineno, message)
+        logging.log(level, '%s:%d: %s' % (filename, lineno, message))
 
 
     # Account ordering integer.

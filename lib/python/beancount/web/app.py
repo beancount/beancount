@@ -177,6 +177,7 @@ def treetable_builder(tbl, iterator, skiproot=False):
         pretitle = [spc] * (len(ordering))
         if not isterminal:
             folder = A(IMG(src=umap("@@FolderOpen"), CLASS='folder'),
+                       # href='#',
                        onclick="treetable_toggleRow('%s');" % rowid)
             pretitle[-1] = folder
 
