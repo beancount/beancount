@@ -13,6 +13,8 @@ from itertools import count, izip, chain, repeat
 from StringIO import StringIO
 from bisect import bisect_left
 from collections import defaultdict
+
+# other imports
 from namedtuple import namedtuple
 
 # beancount imports
