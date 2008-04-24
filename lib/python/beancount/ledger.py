@@ -13,6 +13,7 @@ from itertools import count, izip, chain, repeat
 from StringIO import StringIO
 from bisect import bisect_left
 from collections import defaultdict
+from namedtuple import namedtuple
 
 # beancount imports
 from beancount.wallet import Wallet
@@ -37,6 +38,8 @@ def init_wallets(py_wallets):
 init_wallets(1)
 
 
+
+INFO, WARNING, ERROR = logging.INFO, logging.WARNING, logging.ERROR
 
 class Account(object):
     """
@@ -259,7 +262,7 @@ class Ledger(object):
             ]
         return lines
 
-    def log_message(self, level, message, obj):
+    def log(self, level, message, obj):
         "Log a message for later, and display to stderr."
         assert level in (logging.INFO,
                          logging.WARNING,
@@ -276,7 +279,7 @@ class Ledger(object):
 
         msg = LedgerMessage(level, message, filename, lineno)
         self.messages.append(msg)
-        logging.log(level, '%s:%d: %s' % (filename, lineno, message)
+        logging.log(level, '%s:%d: %s' % (filename, lineno, message))
 
 
     # Account ordering integer.
@@ -524,27 +527,29 @@ class Ledger(object):
                         parser = self.directives[direc]
                         parser.parse(direc_line, fn, lineno[0])
                     except KeyError, e:
-                        logging.warning("Unknown directive %s: %s" % (direc, str(e)))
+                        self.log(WARNING, "Unknown directive %s." % direc,
+                                 (fn, lineno[0]))
                     line = nextline()
                     continue
 
                 # Parse a directive.
                 mo = match_special(line)
                 if mo:
-                    logging.warning("Directive %s not supported." % mo.group(1))
+                    self.log(WARNING, "Directive %s not supported." % mo.group(1),
+                             (fn, lineno[0]))
                     line = nextline()
                     continue
 
                 # Parse a directive.
                 mo = match_command(line)
                 if mo:
-                    logging.warning("Command %s not supported." % mo.group(1))
+                    self.log(WARNING, "Command %s not supported." % mo.group(1),
+                             (fn, lineno[0]))
                     line = nextline()
                     continue
 
-                self.log_msg("%s:%d : Cannot recognize syntax: %s" % (fn, lineno[0], line))
-
-                logging.error("%s:%d : Cannot recognize syntax: %s" % (fn, lineno[0], line))
+                self.log(ERROR, "Cannot recognize syntax: %s" % line,
+                         (fn, lineno[0]))
                 line = nextline()
 
         except StopIteration:
@@ -583,8 +588,7 @@ class Ledger(object):
             # Process non-balanced virtual postings.
             for post in postsets[VIRT_UNBALANCED]:
                 if post.cost is None:
-                    logging.warning("%s:%d: Virtual posting without amount has no effect." %
-                                    (post.filename, post.lineno))
+                    self.log(WARNING, "Virtual posting without amount has no effect.", post)
                     post.amount = post.cost = Wallet()
 
     def check_postings_balance(self, postings):
@@ -607,8 +611,7 @@ class Ledger(object):
                 if noamount is None:
                     noamount = post
                 else:
-                    logging.error("%s:%d: more than one missing amounts." %
-                                  (post.filename, post.lineno))
+                    self.log(ERROR, "More than one missing amounts.", post)
                     post.cost = Wallet() # patch it up.
 
         if noamount:
@@ -628,17 +631,17 @@ class Ledger(object):
                 price1 = -amt1/amt2
                 price2 = -amt2/amt1
                 txn = postings[0].txn
-                logging.warning("%s:%d: Implied price: %s %s/%s  or  %s %s/%s" %
-                                (txn.filename, txn.lineno,
-                                 price1, com1, com2, price2, com2, com1))
+                self.log(WARNING,
+                         "Implied price: %s %s/%s  or  %s %s/%s" %
+                         (price1, com1, com2, price2, com2, com1), txn)
 
         # For each commodity, round the cost to a desired precision.
         cost = cost.round()
 
         if bool(cost):
             txn = postings[0].txn
-            logging.error("%s:%d: Transaction does not balance: Cost: %s" %
-                          (txn.filename, txn.lineno, cost.round()))
+            self.log(ERROR,
+                     "Transaction does not balance: Cost: %s" % cost.round(), txn)
 
         # Double-check to make sure that all postings in this transaction
         # has been normalized.
@@ -787,9 +790,10 @@ class CheckDirective(object):
                 se = expected or 'nothing'
                 sb = balance or 'nothing'
                 diff = (balance - expected).round() or 'nothing'
-                logging.error(
-                    "%s:%d : Balance check failed at  %s  %s :\n  Got:       %s\n  Expecting: %s  \n  Diff: %s\n" %
-                    (chk.filename, chk.lineno, cdate, acc.fullname, sb, se, diff))
+                ledger.log(ERROR,
+                           ("Balance check failed at  %s  %s :\n  Got:       %s\n"
+                           "  Expecting: %s  \n  Diff: %s\n") %
+                           (cdate, acc.fullname, sb, se, diff), chk)
 
             # Update ranges (no matter what).
             acc.check_min = min(acc.check_min, cdate) if acc.check_min else cdate
@@ -838,8 +842,7 @@ class DefineAccountDirective(object):
         for post in ledger.postings:
             accname = post.account.fullname
             if accname not in valid_accounts:
-                logging.error("%s:%d : Invalid account name '%s'." %
-                              (post.filename, post.lineno, accname))
+                ledger.log(ERROR, "Invalid account name '%s'." % accname, post)
 
 
 
@@ -889,9 +892,9 @@ class AutoPad(object):
         for pad_date, acc_target, acc_offset, fn, lineno in self.openings:
             checks = self.checkdir.account_checks(acc_target)
             if not checks:
-                logging.error("%s:%d: cannot automatically open a balance "
-                              "if there is no check for account %s." %
-                              (fn, lineno, acc_target.fullname))
+                ledger.log(ERROR, ("Cannot automatically open a balance "
+                                   "if there is no check for account %s." % acc_target.fullname)
+                           (fn, lineno))
                 continue
 
             # Find the checks that come before and after the pad date.
@@ -905,8 +908,9 @@ class AutoPad(object):
                         chk_after = chk
 
             if chk_after is None:
-                logging.error("%s:%d: cannot pad beyond the last check in account %s." %
-                              (fn, lineno, acc_target.fullname))
+                ledger.log(ERROR,
+                           "Cannot pad beyond the last check in account %s." %
+                           acc_target.fullname, (fn, lineno))
                 continue
 
             # Sum the balance between the checks.
@@ -922,8 +926,9 @@ class AutoPad(object):
             missing = chk_after.expected - balance
             if missing.isempty():
                 if chk_before is not None:
-                    logging.warning("%s:%d: unnecessary padding for account %s." %
-                                    (fn, lineno, acc_target.fullname))
+                    ledger.log(WARNING,
+                               "Unnecessary padding for account %s." % acc_target.fullname,
+                               (fn, lineno))
                 continue
 
             # Actually do insert a new transaction!
@@ -964,8 +969,9 @@ class AutoPad(object):
                 acc.postings.append(post)
                 post.amount = post.cost = amount
 
-            logging.info("%s: inserting opening balance at %s for %s" %
-                         (self.__class__.__name__, pad_date.isoformat(), missing))
+            ledger.log(INFO, "Inserting automatic padding at %s for %s" %
+                       (pad_date.isoformat(), missing)
+                       (fn, lineno))
 
 
 
