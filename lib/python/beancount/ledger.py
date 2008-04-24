@@ -237,6 +237,9 @@ class Ledger(object):
         # A list of all the postings.
         self.postings = []
 
+        # A list of the messages accumulated during the parsing of the ledger.
+        self.messages = []
+        
         # A map of directive-name to contents.
         self.directives = {}
         add_directive = lambda x: self.directives.__setitem__(x.name, x)
@@ -255,6 +258,26 @@ class Ledger(object):
             'Nb unique payees: %d' % len(payees),
             ]
         return lines
+
+    def log_message(self, level, message, obj):
+        "Log a message for later, and display to stderr."
+        assert level in (logging.INFO,
+                         logging.WARNING,
+                         logging.ERROR,
+                         logging.CRITICAL), level
+        
+        filename, lineno = None, None
+        if isinstance(obj, tuple):
+            filename, lineno = obj
+        if hasattr(obj, 'filename'):
+            filename = obj.filename
+        if hasattr(obj, 'lineno'):
+            lineno = obj.lineno
+
+        msg = LedgerMessage(level, message, filename, lineno)
+        self.messages.append(msg)
+        logging.log(level, '%s:%d: %s' % (filename, lineno, message)
+
 
     # Account ordering integer.
     acc_ordering = count().next
@@ -519,6 +542,8 @@ class Ledger(object):
                     line = nextline()
                     continue
 
+                self.log_msg("%s:%d : Cannot recognize syntax: %s" % (fn, lineno[0], line))
+
                 logging.error("%s:%d : Cannot recognize syntax: %s" % (fn, lineno[0], line))
                 line = nextline()
 
@@ -562,8 +587,7 @@ class Ledger(object):
                                     (post.filename, post.lineno))
                     post.amount = post.cost = Wallet()
 
-    @staticmethod
-    def check_postings_balance(postings):
+    def check_postings_balance(self, postings):
         """
         Check that the given list of postings balance and automatically fill-in
         for missing ones.
@@ -955,25 +979,4 @@ def filter_inout(tlist, pred):
 
 
 
-class LedgerMessage(object):
-    """
-    An error class that needs to be accessible later so that we can print them
-    on a web page. The error also needs to be able to bring the user to some
-    location in the source file, and possibly to link to some other pages where
-    the source of the problem may be diagnosed, for example, an account register
-    page or a date page.
-    """
-    def __init__(self, message, filename, lineno):
-        self.message = message
-        self.filename = filename
-        self.lineno = lineno
-
-class LedgerError(LedgerMessage):
-    level = 'error'
-
-class LedgerWarning(LedgerMessage):
-    level = 'warning'
-
-class LedgerInfo(LedgerMessage):
-    level = 'info'
-
+LedgerMessage = namedtuple('Message', ('level', 'message', 'filename', 'lineno'))
