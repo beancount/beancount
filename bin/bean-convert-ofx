@@ -19,6 +19,9 @@ import os, re
 from datetime import datetime
 from decimal import Decimal
 
+# beancount imports
+from beancount import cmdline
+
 # other imports
 from BeautifulSoup import BeautifulStoneSoup
 
@@ -132,22 +135,36 @@ def read_accounts_map(fn):
         accmap[accid] = name
     return accmap
 
+def process_account_mappings(ledger):
+    """
+    Process account mapping declarations and return a mapping.
+    """
+    m = {}
+    vardir = ledger.directives['var']
+    accids = vardir.modules['ofx']['accid']
+    for decl in accids:
+        accid, accname = [x.strip() for x in decl.split()]
+        m[accid] = accname
+    return m
+    
 def main():
     import optparse
     parser = optparse.OptionParser(__doc__.strip())
     opts, ledger, args = cmdline.main(parser)
 
-    if args < 2:
-        parser.error("You must provide a ledger file with account mappings "
-                     "and a list of OFX files to convert.")
-    ledger_fn = args[0]
-    ofx_files = args[1:]
+    if not args:
+        parser.error("You must provide a list of OFX files to convert.")
 
-    accounts_map = read_accounts_map(ledger_fn)
-    if not accounts_map:
-        parser.error("The ledger file does not contain account mappings.")
+    accounts_map = read_accounts_map(ledger)
+    trace(accounts_map)
+    raise SystemExit
 
-    for arg in ofx_files:
+    ## accounts_map = read_accounts_map(ledger_fn)
+    ## if not accounts_map:
+    ##     parser.error("The ledger file does not contain account mappings.")
+
+    
+    for arg in args:
         print '\n'*3
         print ';;;;; Import of %s' % arg
 

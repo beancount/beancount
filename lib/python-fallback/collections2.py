@@ -1,14 +1,16 @@
 __all__ = ['deque', 'defaultdict', 'namedtuple']
 # For bootstrapping reasons, the collection ABCs are defined in _abcoll.py.
 # They should however be considered an integral part of collections.py.
-from _abcoll import *
-import _abcoll
-__all__ += _abcoll.__all__
 
-from _collections import deque, defaultdict
-from operator import itemgetter as _itemgetter
-from keyword import iskeyword as _iskeyword
-import sys as _sys
+from collections import *
+## from _abcoll import *
+## import _abcoll
+## __all__ += _abcoll.__all__
+
+## from _collections import deque, defaultdict
+## from operator import itemgetter as _itemgetter
+## from keyword import iskeyword as _iskeyword
+## import sys as _sys
 
 def namedtuple(typename, field_names, verbose=False):
     """Returns a new subclass of tuple with named fields.
