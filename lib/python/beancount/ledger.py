@@ -785,7 +785,7 @@ class CheckDirective(object):
     commodity.
     """
 
-    name = 'assert'
+    name = 'check'
     prio = 1000
 
     mre = re.compile("\s*%(date)s\s+(%(account)s)\s+%(amount)s\s*$" %

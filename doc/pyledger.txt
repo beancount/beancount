@@ -429,7 +429,7 @@ Threads:
       has a different meaning than "it balances". "Cleared" is supposed to
       reflect the user's confidence that a transaction is accurate.  The
       directive above is definitely not about that, so I would instead suggest
-      "@check" or "@assert" or something else. Overloading the meaning of
+      "@check" or "@check" or something else. Overloading the meaning of
       "cleared" will create a lot of confusion IMO.
 
 

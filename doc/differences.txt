@@ -49,7 +49,7 @@ About Dates
 
 All check dates are assumed to be at midnight at the start of the
 given day. All transaction dates are assumed to occur something
-withint the day. Therefore, when you place an @assert directive, you
+withint the day. Therefore, when you place an @check directive, you
 are asserting this amount at the **beginning** of the day, before any
 of the transactions of that day occur.
 
@@ -74,7 +74,7 @@ FIXME todo
 
 
 
-- @assert
+- @check
 
 
 

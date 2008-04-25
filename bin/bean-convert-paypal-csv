@@ -84,11 +84,11 @@ def main():
 
             ## if i % 5 == 0:
             ##     balance = tonum(x.balance)
-            ##     print '@assert %s  %-50s  %s %s' % (date_, acc_deposit, balance, x.currency)
+            ##     print '@check %s  %-50s  %s %s' % (date_, acc_deposit, balance, x.currency)
             ##     print
 
         balance = tonum(x.balance)
-        print '@assert %s  %-50s  %s %s' % (date_, acc_deposit, balance, x.currency)
+        print '@check %s  %-50s  %s %s' % (date_, acc_deposit, balance, x.currency)
 
 
 def tonum(x):

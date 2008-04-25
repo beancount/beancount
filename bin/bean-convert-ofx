@@ -162,7 +162,7 @@ def main():
                 print
 
             print '; End import: %s ' % acc.end
-            print '@assert %s %s     %s %s' % (
+            print '@check %s %s     %s %s' % (
                 acc.bal_time.date(), acc.accname, acc.bal_amount, acc.currency)
             print
 
