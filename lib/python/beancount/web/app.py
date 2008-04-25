@@ -5,11 +5,13 @@ developing.
 """
 
 # stdlib imports
+import logging
 from wsgiref.util import request_uri, application_uri
 from os.path import *
 from operator import attrgetter
 from datetime import date
 from urlparse import urlparse
+from itertools import izip, count
 
 # other imports
 from htmlout import *
@@ -51,6 +53,8 @@ class Template(object):
                LI(A('Ranges', href=umap('@@Ranges'))),
                LI(A('Balance Sheet', href=umap('@@Balance'))),
                LI(A('General Ledger', href=umap('@@GeneralLedger'))),
+               LI(A('Source', href=umap('@@Source'))),
+               LI(A('Errors', href=umap('@@Messages'))),
                ),
             id='top-navigation')
 
@@ -342,6 +346,46 @@ def register_insert_checks(checklist, table, date=None):
             break
 
 
+def source(app, ctx):
+    """
+    Serve the source of the ledger.
+    """
+    page = Template()
+    div = DIV(id='source')
+    for i, line in izip(count(1), ctx.ledger.source):
+        div.append(PRE("%4d  |%s" % (i, line.strip())), A(name='line%d' % i))
+        
+    page.append(H1('Source'), div)
+    return page.render(app)
+
+
+
+msgname = {
+    logging.ERROR: 'error',
+    logging.WARNING: 'warning',
+    logging.INFO: 'info',
+    }
+
+def messages(app, ctx):
+    """
+    Report all ledger errors.
+    """
+    page = Template()
+    page.append(H1('Parsing Messages'))
+
+    ledger = ctx.ledger
+    div, = page.append(DIV(CLASS='message'))
+    tbl, = div.append(TABLE())
+    for msg in ledger.messages:
+        name = msgname[msg.level]
+        tbl.append(TR(TD(name.capitalize(), CLASS=name),
+                      TD(A(msg.message, href=umap('@@Source') + '#line%d' % msg.lineno))))
+
+    return page.render(app)
+
+
+
+
 def setstyle(app, ctx):
     "Set the session's style and redirect where we were."
     ctx.session['style'] = ctx.style[0]
@@ -363,7 +407,7 @@ def static(fn, ctype):
         app.write(result)
     return f
 
-def error(app, ctx):
+def server_error(app, ctx):
     app.setHeader('Content-Type','text/html')
     app.write('TODO')
     ## FIXME return the error page here.
@@ -387,7 +431,9 @@ page_directory = (
     ('@@GeneralLedger', register, '/register', None),
     ('@@Register', register, '/register/%s', '^/register/(?P<accname>.*)$'),
     ('@@SetStyle', setstyle, '/setstyle', '^/setstyle$'),
-    ('@@Error', error, '/error', None),
+    ('@@Messages', messages, '/messages', None),
+    ('@@Source', source, '/source', None),
+    ('@@Error', server_error, '/error', None),
 
     )
 

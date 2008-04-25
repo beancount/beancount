@@ -245,6 +245,9 @@ class Ledger(object):
         # A list of the messages accumulated during the parsing of the ledger.
         self.messages = []
         
+        # The source lines from which the Ledger was built.
+        self.source = []
+
         # A map of directive-name to contents.
         self.directives = {}
         add_directive = lambda x: self.directives.__setitem__(x.name, x)
@@ -279,7 +282,7 @@ class Ledger(object):
         if hasattr(obj, 'lineno'):
             lineno = obj.lineno
 
-        msg = LedgerMessage(level, message, filename, lineno)
+        msg = Message(level, message, filename, lineno)
         self.messages.append(msg)
         logging.log(level, '%s:%d: %s' % (filename, lineno, message))
 
@@ -364,6 +367,8 @@ class Ledger(object):
         (Those objects need to have completions and some conversions done on
         them, and more.)
         """
+        source = self.source = []
+
         # Cache some attribetus for speed.
         match_comment = self.comment_re.match
         match_empty = self.empty_re.match
@@ -383,6 +388,7 @@ class Ledger(object):
         def nextline():
             lineno[0] += 1
             line = xread()
+            source.append(line)
             assert isinstance(line, unicode), line
             if not line:
                 raise StopIteration
@@ -972,7 +978,7 @@ class AutoPad(object):
                 post.amount = post.cost = amount
 
             ledger.log(INFO, "Inserting automatic padding at %s for %s" %
-                       (pad_date.isoformat(), missing)
+                       (pad_date.isoformat(), missing),
                        (fn, lineno))
 
 
@@ -986,5 +992,18 @@ def filter_inout(tlist, pred):
 
 
 
+class Message(object):
+    "The encapsulation for a single message."
 
-LedgerMessage = namedtuple('Message', ('level', 'message', 'filename', 'lineno'))
+    def __init__(self, level, message, filename, lineno):
+        self.level = level
+        self.message = message
+        self.filename = filename
+        self.lineno = lineno
+
+    def __str__(self):
+        return '%s:%s:%d %s' % (self.level, self.filename, self.lineno, self.message)
+
+
+
+

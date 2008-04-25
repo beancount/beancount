@@ -92,12 +92,11 @@ tr.posting {
 
 
 
-
+/* Balance sheet / trial balance / global view of accounts */
 
 table#balance td {
   background-color: #F0F0F0;
 }
-
 
 tr.txn span.amount {
   /* font-weight: bold; */
@@ -106,6 +105,7 @@ tr.txn span.amount {
 
 
 /* Account name component */
+
 span.account {
   margin-left: 0px;
   margin-right: 0px;
@@ -136,6 +136,7 @@ span.account .accsep {
 
 
 
+/* Range view. */
 
 table#ranges td {
   background-color: #F8F8F8;
@@ -145,6 +146,9 @@ table#ranges td {
 
 
 
+
+
+/* tree tables */
 
 .folder {
   border:none;
@@ -161,11 +165,15 @@ span.foldspc {
 /*   border: thin solid blue; */
 }
 
+table td.tree a:link, table td.tree a:visited {
+  text-decoration: none;
+}
 
+table td.tree {
+  white-space: nowrap;
+}
 
-
-
-
+/* All wallets and amounts */
 table td.wallet {
   text-align: right;
 /*   padding-left: 10px; */
@@ -176,17 +184,37 @@ span.amount {
   white-space: nowrap;
 }
 
-/* table#balance tr { */
-/*   margin: 0px; */
-/*   padding: 0px; */
-/* } */
 
 
-table td.tree a:link, table td.tree a:visited {
-  text-decoration: none;
+
+/* Error messages view */
+
+div.message table {
+  width: 100%;
 }
 
-table td.tree {
-  white-space: nowrap;
+div.message table td {
+  border: thin solid black;
+}
+
+div.message .error {
+  color: red;
+}
+
+div.message .warning {
+  color: #990;
+}
+
+div.message .info {
+  color: #66F;
+}
+
+
+
+/* Source view */
+
+div#source pre {
+  padding: 0px;
+  margin: 0px;
 }
 
