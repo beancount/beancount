@@ -121,21 +121,7 @@ def find_account(st):
     currency = s.curdef.contents[0].strip()
     return acctid, currency
 
-def read_accounts_map(fn):
-    "Extract the account number mappings from a ledger file."
-    accmap = {}
-    for line in open(fn):
-        mo = re.match('^\s*@accid[ \t]+(.*)[ \t]+(.*)$', line)
-        if not mo:
-            continue
-        x = [x.strip() for x in mo.group(1, 2)]
-        if len(x) != 2:
-            raise SystemExit("Error reading map file: %s" % line)
-        accid, name = x
-        accmap[accid] = name
-    return accmap
-
-def process_account_mappings(ledger):
+def read_accounts_map(ledger):
     """
     Process account mapping declarations and return a mapping.
     """
@@ -146,7 +132,7 @@ def process_account_mappings(ledger):
         accid, accname = [x.strip() for x in decl.split()]
         m[accid] = accname
     return m
-    
+
 def main():
     import optparse
     parser = optparse.OptionParser(__doc__.strip())
@@ -156,14 +142,7 @@ def main():
         parser.error("You must provide a list of OFX files to convert.")
 
     accounts_map = read_accounts_map(ledger)
-    trace(accounts_map)
-    raise SystemExit
 
-    ## accounts_map = read_accounts_map(ledger_fn)
-    ## if not accounts_map:
-    ##     parser.error("The ledger file does not contain account mappings.")
-
-    
     for arg in args:
         print '\n'*3
         print ';;;;; Import of %s' % arg

@@ -15,7 +15,7 @@ def main(parser):
     "Parse the cmdline as a list of ledger source files and return a Ledger."
 
     logging.basicConfig(level=logging.INFO,
-                        format='%(levelname)s:%(message)s')
+                        format='%(levelname)-8s:%(message)s')
 
     parser.add_option('-p', '--enable-pickle', action='store_true',
                       help="Enable the pickling cache (create or use it).")

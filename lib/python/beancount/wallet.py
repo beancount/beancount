@@ -24,7 +24,11 @@ class Wallet(dict):
             dict.__init__(self, (args,), **kwds)
         elif len(args) == 1 and isinstance(args[0], str):
             # Initialize from a string "num COM".
-            num, com = args[0].split()
+            try:
+                num, com = args[0].split()
+            except ValueError:
+                raise ValueError(
+                    "Invalid string for initializing a Wallet: %s" % args[0])
             dict.__init__(self, ((com, num),), **kwds)
         else:
             # Initialize like a normal dictionary.

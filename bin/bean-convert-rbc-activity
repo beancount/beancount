@@ -18,7 +18,7 @@ from xml.sax.saxutils import unescape
 from pprint import pprint, pformat
 
 # other imports
-from ntuple import namedtuple
+from collections import namedtuple
 from BeautifulSoup import BeautifulSoup
 
 

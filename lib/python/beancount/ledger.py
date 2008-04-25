@@ -15,7 +15,7 @@ from bisect import bisect_left
 from collections import defaultdict
 
 # other imports
-from ntuple import namedtuple
+from collections2 import namedtuple
 
 # beancount imports
 from beancount.wallet import Wallet
@@ -238,8 +238,10 @@ class Posting(Dated):
     account_name = None
     virtual = VIRT_NORMAL
     amount = None
-    price = None
-    lotprice = None
+
+    price = None         # Price-per-commodity.
+    cost = None          # The cost of this commodity.
+
     note = None
 
     def __init__(self, txn):
@@ -328,9 +330,12 @@ class Ledger(object):
         if hasattr(obj, 'lineno'):
             lineno = obj.lineno
 
+        if filename is not None:
+            filename = abspath(filename)
+
         msg = Message(level, message, filename, lineno)
         self.messages.append(msg)
-        logging.log(level, ' %s:%-4d: %s' % (filename, lineno, message))
+        logging.log(level, ' %s:%-4d : %s' % (filename, lineno, message))
 
 
     # Account ordering integer.
@@ -391,9 +396,16 @@ class Ledger(object):
 
     # Pattern for a posting line (part of a transaction).
     posting_re = re.compile(
-        ('\s+([*!]\s+)?(%(account)s)(?:\s+%(amount)s)?(?:\s+{\s*%(amount)s\s*})?'
-         '(?:\s+@(@?)(?:\s+%(amount)s))?\s*(?:;(.*))?\s*$') %
+        ('\s+([*!]\s+)?(%(account)s)(?:\s+%(amount)s)?'  # main
+         '(?:\s+(?:({)\s*%(amount)s\s*}|({{)\s*%(amount)s\s*}}))?' # declared cost
+         '(?:\s+@(@?)(?:\s+%(amount)s))?\s*(?:;(.*))?\s*$') %  # price/note
         {'amount': amount_re.pattern, 'account': postaccount_re.pattern})
+
+## FIXME: remove
+    ## mo = posting_re.match('  Assets:Broker               10 AAPL {{1110.00 USD}} @ 121.00 USD  ; blie')
+    ## for i, x in enumerate(mo.groups()):
+    ##     print i+1, x
+    ## raise SystemExit
 
     # Pattern for the directives, and the special commands.
     directive_re = re.compile('^@([a-z_]+)\s+([^;]*)(;.*)?')
@@ -495,7 +507,7 @@ class Ledger(object):
                             txn.postings.append(post)
                             all_postings.append(post)
 
-                            post.flag, post.account_name, post.note = mo.group(1,2,10)
+                            post.flag, post.account_name, post.note = mo.group(1,2,14)
 
                             # Remove the modifications to the account name.
                             accname = post.account_name
@@ -506,44 +518,64 @@ class Ledger(object):
 
                             acc.postings.append(post)
 
-                            amount = mo.group(3,4)
-                            price = mo.group(8,9)
-                            lotprice = mo.group(5,6)
-                            post.price_complete = bool(mo.group(7))
 
-                            if amount[0] is not None:
-                                anum = Decimal(amount[0])
-                                acom = amount[1]
+                            # Fetch the amount.
+                            anum, acom = mo.group(3,4)
+                            if anum is not None:
+                                anum = Decimal(anum)
                                 post.amount = Wallet(acom, anum)
                                 add_commodity(acom)
                             else:
                                 post.amount = None
 
-                            if price[0] is not None:
-                                pcom = price[1]
-                                pnum = Decimal(price[0])
-                                post.price = Wallet(pcom, pnum)
+
+                            # Fetch the price.
+                            pnum, pcom = mo.group(12,13)
+                            if pnum is not None:
+                                pnum = Decimal(pnum)
                                 add_commodity(pcom)
+                                if bool(mo.group(11) == '@'):
+                                    pnum /= anum
+                                post.price = Wallet(pcom, pnum)
                             else:
                                 post.price = None
 
-                            if lotprice[0] is not None:
-                                lcom = lotprice[1]
-                                lnum = Decimal(lotprice[0])
-                                post.lotprice = Wallet(lcom, lnum)
-                                add_commodity(lcom)
-                            else:
-                                post.lotprice = None
 
-                            # Compute the cost, if possible.
-                            if post.lotprice is not None:
-                                post.cost = Wallet(lotprice[1], anum * lnum)
+                            # Fetch the cost.
+                            if mo.group(5) == '{':
+                                assert mo.group(8) == None
+                                cnum, ccom = mo.group(6,7)
+                                cnum = anum*Decimal(cnum)
+                                post.cost = Wallet(ccom, cnum)
+                                add_commodity(ccom)
+
+                            elif mo.group(8) == '{{':
+                                assert mo.group(5) == None
+                                cnum, ccom = mo.group(9,10)
+                                cnum = Decimal(cnum)
+                                post.cost = Wallet(ccom, cnum)
+                                add_commodity(ccom)
+
+                            else:
+                                assert mo.group(5) is None, mo.groups()
+                                assert mo.group(8) is None, mo.groups()
+
+
+                            # Compute the price from the explicit cost.
+                            if post.cost is not None:
+                                if post.price is None:
+                                    post.price = Wallet(ccom, cnum/anum)
+
+                            # Compute the cost from the explicit price.
                             elif post.price is not None:
-                                post.cost = Wallet(price[1], anum * pnum)
+                                    post.cost = Wallet(pcom, anum*pnum)
+
+                            # Compute the cost directly from the amount.
                             else:
                                 post.cost = post.amount
                                 if post.cost is not None:
-                                    post.cost = Wallet(post.cost)
+                                    post.cost = Wallet(post.cost) # copy
+
 
                             # Look for date overrides in the note field.
                             if post.note:
@@ -881,7 +913,7 @@ class DefineAccountDirective(object):
         if not mo:
             self.ledger.log(CRITICAL, "Invalid defaccount directive: %s" % line,
                             (filename, lineno))
-            return 
+            return
 
         isdebit = (mo.group(1) == 'De')
         account = self.ledger.get_account(mo.group(2), create=1)
@@ -1063,7 +1095,7 @@ class DefvarDirective(object):
                      "\s+(?P<value>.+)\s*$")
 
     def __init__(self, ledger):
-        
+
         self.modules = defaultdict(lambda: defaultdict(list))
         self.ledger = ledger
 
