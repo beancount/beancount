@@ -207,7 +207,7 @@ def main():
     parser.add_option('-d', '--database', action='store_true',
                       default='beancount.db',
                       help="Database name.")
-    opts, args = parser.parse_args()
+    opts, ledger, args = cmdline.main(parser)
 
     conn = dbapi.connect(database=opts.database,
                          host='localhost',

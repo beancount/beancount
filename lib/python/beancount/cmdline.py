@@ -35,9 +35,7 @@ def main(parser):
             parser.error("You must provide some files or set the "
                          "environment variable LEDGER_FILE.")
 
-    if len(args) > 1:
-        parser.error("More than one Ledger file is not supported right now.")
-    fn = args[0]
+    fn, args = args[0], args[1:]
 
     # Parse the file.
     if not exists(fn):
@@ -53,7 +51,7 @@ def main(parser):
         not exists(fn_cache) or
         getmtime(fn) > getmtime(fn_cache)):
 
-        logging.info("Parsing Ledger source file: %s" % fn)
+        # logging.info("Parsing Ledger source file: %s" % fn)
         ledger = Ledger()
 
         f = open(fn)

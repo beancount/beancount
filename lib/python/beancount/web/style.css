@@ -197,6 +197,10 @@ div.message table td {
   border: thin solid black;
 }
 
+div.message .critical {
+  color: red;
+}
+
 div.message .error {
   color: red;
 }

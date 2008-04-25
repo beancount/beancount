@@ -31,7 +31,7 @@ def main():
                       help="Generate debug output.")
 
     global opts
-    opts, args = parser.parse_args()
+    opts, ledger, args = cmdline.main(parser)
 
     if len(args) < 2:
         parser.error("You must specify an account and a filename to parse.")
@@ -44,7 +44,6 @@ def main():
 
     ## sortfun = lambda x: (x.currency, x.settlement, x.priority)
     sortfun = lambda x: (x.settlement, x.priority)
-
 
     all.sort(key=sortfun)
     acctmap = infer_account_names(acct, all)

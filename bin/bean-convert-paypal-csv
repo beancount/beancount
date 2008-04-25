@@ -12,9 +12,8 @@ from pprint import pprint, pformat
 from namedtuple import namedtuple
 from itertools import imap, count, starmap
 
-# other imports
-from BeautifulSoup import BeautifulSoup
-
+# beancount imports
+from beancount import cmdline
 
 
 
@@ -30,9 +29,10 @@ def parse_date(s):
 def main():
     import optparse
     parser = optparse.OptionParser(__doc__.strip())
-    opts, args = parser.parse_args()
+    opts, ledger, args = cmdline.main(parser)
+
     if not args:
-        parser.error("You must specify an CSV filenames to parse.")
+        parser.error("You must specify some CSV filenames to parse.")
 
     ## parser.add_option('-f', '--ledger-file', action='store',
     ##                   help="Use the given ledger file in order to infer the Paypal account name.")
@@ -85,11 +85,11 @@ def main():
 
             ## if i % 5 == 0:
             ##     balance = tonum(x.balance)
-            ##     print '@check %s  %-50s  %s %s' % (date_, acc_deposit, balance, x.currency)
+            ##     print '@assert %s  %-50s  %s %s' % (date_, acc_deposit, balance, x.currency)
             ##     print
 
         balance = tonum(x.balance)
-        print '@check %s  %-50s  %s %s' % (date_, acc_deposit, balance, x.currency)
+        print '@assert %s  %-50s  %s %s' % (date_, acc_deposit, balance, x.currency)
 
 
 def tonum(x):

@@ -41,7 +41,44 @@ init_wallets(1)
 
 
 
-INFO, WARNING, ERROR = logging.INFO, logging.WARNING, logging.ERROR
+# The error messages that we use.
+INFO     = logging.INFO      # Normal message, not an error.
+
+WARNING  = logging.WARNING   # Benign problem, we continue.
+
+ERROR    = logging.ERROR     # Serious error, but the parsed file is still valid,
+                             # for example, a failed assert.
+
+CRITICAL = logging.CRITICAL  # Error that we can't recover from,
+                             # the Ledger is invalid.
+
+
+
+
+
+
+
+def filter_inout(tlist, pred):
+    "Split the list in two according to the given predicate."
+    list_in, list_out = [], []
+    [(list_in if pred(el) else list_out).append(el) for el in tlist]
+    return list_in, list_out
+
+
+
+class Message(object):
+    "The encapsulation for a single message."
+
+    def __init__(self, level, message, filename, lineno):
+        self.level = level
+        self.message = message
+        self.filename = filename
+        self.lineno = lineno
+
+    def __str__(self):
+        return '%s:%s:%d %s' % (self.level, self.filename, self.lineno, self.message)
+
+
 
 class Account(object):
     """
@@ -72,6 +109,10 @@ class Account(object):
 
     def isroot(self):
         return self.fullname == ''
+
+    def isused(self):
+        "Return true if the account is used."
+        return self.postings or self.children
 
     def subpostings(self):
         """
@@ -244,7 +285,7 @@ class Ledger(object):
 
         # A list of the messages accumulated during the parsing of the ledger.
         self.messages = []
-        
+
         # The source lines from which the Ledger was built.
         self.source = []
 
@@ -254,7 +295,12 @@ class Ledger(object):
         check = CheckDirective(self)
         add_directive(check)
         add_directive(DefineAccountDirective(self))
-        add_directive(AutoPad(self, check))
+        add_directive(AutoPadDirective(self, check))
+        add_directive(DefvarDirective(self))
+
+    def isvalid(self):
+        "Return true if the ledger has not had critical errors."
+        return all(self.messages.level != CRITICAL)
 
     def dump_info(self):
         payees = set(txn.payee for txn in self.transactions)
@@ -273,7 +319,7 @@ class Ledger(object):
                          logging.WARNING,
                          logging.ERROR,
                          logging.CRITICAL), level
-        
+
         filename, lineno = None, None
         if isinstance(obj, tuple):
             filename, lineno = obj
@@ -284,7 +330,7 @@ class Ledger(object):
 
         msg = Message(level, message, filename, lineno)
         self.messages.append(msg)
-        logging.log(level, '%s:%d: %s' % (filename, lineno, message))
+        logging.log(level, ' %s:%-4d: %s' % (filename, lineno, message))
 
 
     # Account ordering integer.
@@ -535,7 +581,7 @@ class Ledger(object):
                         parser = self.directives[direc]
                         parser.parse(direc_line, fn, lineno[0])
                     except KeyError, e:
-                        self.log(WARNING, "Unknown directive %s." % direc,
+                        self.log(CRITICAL, "Unknown directive %s." % direc,
                                  (fn, lineno[0]))
                     line = nextline()
                     continue
@@ -551,12 +597,12 @@ class Ledger(object):
                 # Parse a directive.
                 mo = match_command(line)
                 if mo:
-                    self.log(WARNING, "Command %s not supported." % mo.group(1),
+                    self.log(CRITICAL, "Command %s not supported." % mo.group(1),
                              (fn, lineno[0]))
                     line = nextline()
                     continue
 
-                self.log(ERROR, "Cannot recognize syntax: %s" % line,
+                self.log(CRITICAL, "Cannot recognize syntax: %s" % line,
                          (fn, lineno[0]))
                 line = nextline()
 
@@ -619,7 +665,7 @@ class Ledger(object):
                 if noamount is None:
                     noamount = post
                 else:
-                    self.log(ERROR, "More than one missing amounts.", post)
+                    self.log(CRITICAL, "More than one missing amounts.", post)
                     post.cost = Wallet() # patch it up.
 
         if noamount:
@@ -656,7 +702,6 @@ class Ledger(object):
         for post in postings:
             assert post.amount is not None
             assert post.cost is not None
-
 
     def visit_preorder(self, node, visitor):
         """
@@ -755,8 +800,9 @@ class CheckDirective(object):
     def parse(self, line, filename, lineno):
         mo = self.mre.match(line)
         if not mo:
-            raise ValueError("%s:%d : Invalid check directive: %s" %
-                             (filename, lineno, line))
+            self.ledger.log(CRITICAL, "Invalid check directive: %s" % line,
+                            (filename, lineno))
+            return
         cdate = date(*map(int, mo.group(1, 2, 3)))
         account = self.ledger.get_account(mo.group(4), create=1)
         com = mo.group(6)
@@ -827,24 +873,29 @@ class DefineAccountDirective(object):
                       'commodity': Ledger.commodity_re.pattern})
 
     def __init__(self, ledger):
-        self.definitions = []
+        self.definitions = {}
         self.ledger = ledger
 
     def parse(self, line, filename, lineno):
         mo = self.mre.match(line)
         if not mo:
-            raise ValueError("Invalid defaccount directive: %s" % line)
+            self.ledger.log(CRITICAL, "Invalid defaccount directive: %s" % line,
+                            (filename, lineno))
+            return 
 
         isdebit = (mo.group(1) == 'De')
         account = self.ledger.get_account(mo.group(2), create=1)
         commodities = mo.group(3).split(',') if mo.group(3) else None
-        self.definitions.append((account, commodities, isdebit))
+        if account in self.definitions:
+            ledger.log(CRITICAL, "Duplicate account definition.",
+                       filename, lineno)
+        self.definitions[account] = (commodities, isdebit, filename, lineno)
 
     def apply(self):
         ledger = self.ledger
 
         # Compute a set of valid account fullnames.
-        valid_accounts = set(x[0].fullname for x in self.definitions)
+        valid_accounts = set(x.fullname for x in self.definitions)
 
         # Check that all the postings have a valid account name.
         for post in ledger.postings:
@@ -852,9 +903,15 @@ class DefineAccountDirective(object):
             if accname not in valid_accounts:
                 ledger.log(ERROR, "Invalid account name '%s'." % accname, post)
 
+        # Check for unused accounts.
+        for acc, (_, _, filename, lineno) in self.definitions.iteritems():
+            if not acc.isused():
+                ledger.log(WARNING, "Account %s is unused." % acc.fullname,
+                           (filename, lineno))
 
 
-class AutoPad(object):
+
+class AutoPadDirective(object):
     """
     Automatically insert an opening balance before any of the transactions
     before an existing account, to make the first check work. Insert a directive
@@ -886,7 +943,8 @@ class AutoPad(object):
     def parse(self, line, filename, lineno):
         mo = self.mre.match(line)
         if not mo:
-            raise ValueError("Invalid openbal directive: %s" % line)
+            self.log(CRITICAL, "Invalid pad directive: %s" % line,
+                     (filename, lineno))
 
         pad_date = date(*map(int, mo.group(1, 2, 3)))
         acc_target = self.ledger.get_account(mo.group(4))
@@ -900,9 +958,9 @@ class AutoPad(object):
         for pad_date, acc_target, acc_offset, fn, lineno in self.openings:
             checks = self.checkdir.account_checks(acc_target)
             if not checks:
-                ledger.log(ERROR, ("Cannot automatically open a balance "
-                                   "if there is no check for account %s." % acc_target.fullname)
-                           (fn, lineno))
+                ledger.log(ERROR, (
+                    "Cannot automatically pad if there is no check for account %s." %
+                    acc_target.fullname) (fn, lineno))
                 continue
 
             # Find the checks that come before and after the pad date.
@@ -984,25 +1042,42 @@ class AutoPad(object):
 
 
 
-def filter_inout(tlist, pred):
-    "Split the list in two according to the given predicate."
-    list_in, list_out = [], []
-    [(list_in if pred(el) else list_out).append(el) for el in tlist]
-    return list_in, list_out
+class DefvarDirective(object):
+    """
+    A directive that can be used to define generic parameters for specialized
+    applications. For example, the import scripts make use of this directive in
+    order to fetch some custom information from the ledger file. The format of
+    the variables is generic::
 
+        @defvar MODULE VARNAME VALUE
 
+    VALUE is only interpreted as a string. There can be multiple definitions of
+    the same variable (they are accumulated as a list).
+    """
 
-class Message(object):
-    "The encapsulation for a single message."
+    name = 'var'
+    prio = 2000
 
-    def __init__(self, level, message, filename, lineno):
-        self.level = level
-        self.message = message
-        self.filename = filename
-        self.lineno = lineno
+    mre = re.compile("\s*(?P<module>[a-zA-Z0-9]+)"
+                     "\s+(?P<varname>[a-zA-Z0-9]+)"
+                     "\s+(?P<value>.+)\s*$")
 
-    def __str__(self):
-        return '%s:%s:%d %s' % (self.level, self.filename, self.lineno, self.message)
+    def __init__(self, ledger):
+        
+        self.modules = defaultdict(lambda: defaultdict(list))
+        self.ledger = ledger
+
+    def parse(self, line, filename, lineno):
+        mo = self.mre.match(line)
+        if not mo:
+            self.ledger.log(CRITICAL, "Invalid check directive: %s" % line,
+                            (filename, lineno))
+            return
+
+        self.modules[mo.group('module')][mo.group('varname')].append(mo.group('value'))
+
+    def apply(self):
+        pass # Nothing to do--the modules do the parsing themselves.
 
 
 

@@ -135,7 +135,7 @@ def read_accounts_map(fn):
 def main():
     import optparse
     parser = optparse.OptionParser(__doc__.strip())
-    opts, args = parser.parse_args()
+    opts, ledger, args = cmdline.main(parser)
 
     if args < 2:
         parser.error("You must provide a ledger file with account mappings "
@@ -162,7 +162,7 @@ def main():
                 print
 
             print '; End import: %s ' % acc.end
-            print '@check %s %s     %s %s' % (
+            print '@assert %s %s     %s %s' % (
                 acc.bal_time.date(), acc.accname, acc.bal_amount, acc.currency)
             print
 

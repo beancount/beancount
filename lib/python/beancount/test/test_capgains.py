@@ -21,6 +21,7 @@ class TestCapitalGains(object):
 @defaccount De Assets:Broker
 @defaccount Cr Income:CapitalGains
 @defaccount De Expenses:Commissions
+@defaccount De Expenses:Deductible-Costs
 """
 
     def test_custom_cost(self):
@@ -92,9 +93,11 @@ class TestCapitalGains(object):
 
 2008-01-11 * Sold some shares.
   Assets:Broker              -10 AAPL {120.00 USD} @ 125.00 USD
-  Expenses:Commissions      9.95 USD
-  Assets:Bank            1240.05 USD
-  Income:CapitalGains      -50 USD    ;; <--- this is wrong!
+  Assets:Bank            1240.05 USD      ;; actual amount deposited (easy to find on statement)
+  Expenses:Commissions      9.95 USD      ;; actual commission for closing the trade
+  Income:CapitalGains                     ;; automatically computed gain (from share cost above)
+  [Income:CapitalGains]       19.90 USD   ;; offset for commissions to open and close this trade, manually entered
+  [Expenses:Deductible-Costs]             ;; an account that track costs for closed trades
 
 """, 'booked-gains')
         assert len(lgr.transactions) == 2
@@ -103,9 +106,11 @@ class TestCapitalGains(object):
         for accname, amount in (
             ('Assets:Bank', Decimal('50')-commisions),
             ('Expenses:Commissions', commisions),
-            ('Income:CapitalGains', Decimal('50')-commisions),
+            ('Income:CapitalGains', -(Decimal('50')-commisions)),
             ):
             assert (lgr.get_account(accname).total == Wallet('USD', amount))
+
+
 
 
 

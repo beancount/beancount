@@ -192,15 +192,6 @@ def treetable_builder(tbl, iterator, skiproot=False):
 
 
 
-
-
-
-
-
-
-
-
-
 def ranges(app, ctx):
     "Output the updated ranges of each account."
 
@@ -354,7 +345,7 @@ def source(app, ctx):
     div = DIV(id='source')
     for i, line in izip(count(1), ctx.ledger.source):
         div.append(PRE("%4d  |%s" % (i, line.strip())), A(name='line%d' % i))
-        
+
     page.append(H1('Source'), div)
     return page.render(app)
 
@@ -364,6 +355,7 @@ msgname = {
     logging.ERROR: 'error',
     logging.WARNING: 'warning',
     logging.INFO: 'info',
+    logging.CRITICAL: 'critical',
     }
 
 def messages(app, ctx):
