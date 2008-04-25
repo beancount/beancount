@@ -15,7 +15,7 @@ from bisect import bisect_left
 from collections import defaultdict
 
 # other imports
-from namedtuple import namedtuple
+from ntuple import namedtuple
 
 # beancount imports
 from beancount.wallet import Wallet
