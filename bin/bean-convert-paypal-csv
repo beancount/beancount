@@ -9,7 +9,6 @@ from datetime import date
 from decimal import Decimal
 from xml.sax.saxutils import unescape
 from pprint import pprint, pformat
-from namedtuple import namedtuple
 from itertools import imap, count, starmap
 
 # beancount imports
