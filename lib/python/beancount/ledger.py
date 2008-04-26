@@ -727,7 +727,8 @@ class Ledger(object):
         if bool(cost):
             txn = postings[0].txn
             self.log(ERROR,
-                     "Transaction does not balance: Cost: %s" % cost.round(), txn)
+                     "Transaction does not balance: remaining=%s\n%s\n" % (cost.round(), txn),
+                     txn)
 
         # Double-check to make sure that all postings in this transaction
         # has been normalized.

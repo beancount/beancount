@@ -1,0 +1,20 @@
+;;;;; Assets:Investments:GiFacto
+
+;; @check 2004-07-23  Assets:Investments:GiFacto:AIM-Trimark    3000.00 CAD
+
+2007-06-30 * Start of year.
+  Assets:Investments:GiFacto:AIM-Trimark     294.6540 "AIM681" @ 13.445 CAD
+  Equity:Opening-Balances
+
+@check 2007-06-30  Assets:Investments:GiFacto:AIM-Trimark    294.6540 "AIM681"
+
+2007-12-19 * Redemption
+  Assets:Investments:GiFacto:AIM-Trimark     -29.4650 "AIM681" @ 11.197 CAD
+  Assets:Current:RBC:Checking                             329.92 CAD ; [2007-12-24]
+  Equity:Opening-Balances                     329.92 CAD
+  Equity:Opening-Balances                    -326.62 CAD   ; adjusted cost base
+  Income:Investment:Capital-Gains
+
+@check 2007-12-31  Assets:Investments:GiFacto:AIM-Trimark    265.1890 "AIM681"
+
+;P 2007-12-31 "AIM681"  11.305 CAD

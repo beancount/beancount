@@ -196,7 +196,7 @@ ledger-expand-account.")
 
   (add-to-list
    'compilation-error-regexp-alist-alist
-   '(python-logging "\\(ERROR\\|WARNING\\):\\s-*\\([^:]+\\):\\([0-9]+\\)\\s-*:" 2 3))
+   '(python-logging "\\(WARNING\\|ERROR\\|CRITICAL\\)\\s-*:\\s-*\\(.+\\):\\([0-9]+\\)\\s-*:" 2 3))
 
   (add-to-list
    'compilation-error-regexp-alist 'python-logging)

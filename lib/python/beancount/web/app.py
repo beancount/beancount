@@ -238,7 +238,7 @@ def register(app, ctx):
     txns = set(post.txn for post in postings)
 
     # Get the list of checks for this account and include them in the listing.
-    checks = ctx.ledger.directives['assert']
+    checks = ctx.ledger.directives['check']
     acc_checks = sorted(checks.account_checks(acc))
 
     for c in acc_checks:
