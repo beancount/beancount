@@ -42,30 +42,28 @@ parser:
 - Add a @defcomm directive, that checks validity for the commodities
   that are seen.
 
-- Implement the {{ amount }} syntax.
-- Implement the @@ amount syntax.
-
-- Finish implementing the (Account) and [Account] syntaxes.
-
-- Display option: add an option to render only up to a specific level
-  of the tree of accounts.
-
-- Capital gains should not count commissions nor on the buy nor on the
-  sell side. How do we book them like this?  Create a small example.
-
 - IMPORTANT: Using the pickle, the errors only get reported when you
   parse initially. We must make the balance checks in a separate
   stage!!! Fix that, save the errors in the Ledger object and report
   them every time.
+
+
+capital gains:
+
+- Capital gains should not count commissions nor on the buy nor on the
+  sell side. How do we book them like this?  Create a small example.
 
 - Make my Capital-Gains use the most appropriate syntax and make sure
   that the commissions aren't counted in (add a test).
 
     You need to do a test for capital gains.
 
+
+
 checks:
 
 - Detect and find potential duplicates.
+
 
 
 import:
@@ -78,6 +76,7 @@ import:
 
 - Write a generic import routine that will try to heuristically match
   partially completed transactions from an existing Ledger.
+
 
 
 scripts:
@@ -147,7 +146,6 @@ doc/examples/demos:
 
 - Include examples
 
-
 - This is causing me a problem::
 
     2008-02-14 * FUNDS TRANSFER
@@ -166,25 +164,19 @@ doc/examples/demos:
 
 
 
-emacs:
-
-- Make ledger-expand-account rotate between the various choices.
-- Make it possible to select an account with partial completion.
-
-
 serve:
 
 - Modify htmlout to cache the result of rendering nodes, and reuse
-  that code.
+  that code; or optimize htmlout (it's very slow now, it creates an
+  intermediate tree). htmlout really should be a fast and simple C
+  extension module.
 
 - Make it possible to upload a new file to the server to be parsed.
   This way, I wouldn't even have to log in ssh in order to update the
   in-memory database...
 
-- When you render an account, you should be able to click on any of
-  the components of the account name.
-
-- There is a bug with collapsing the tree nodes in the ranges page.
+- BUG: There is a bug with collapsing the tree nodes in the ranges
+  page.
 
 
 

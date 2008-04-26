@@ -1,0 +1,18 @@
+
+
+2008-01-03 * BROKERAGE SERVICE - PURCHASE 100 IVV
+  Assets:Investments:HSBC-Securities                                            100 IVV @ 153.00 USD
+  Expenses:Financial:Commissions                                           24.00 USD
+  Expenses:Financial:Fees                                                   1.00 USD
+  Assets:Current:HSBC:Checking                                         -15325.00 USD
+
+
+
+2008-02-04 * BROKERAGE SERVICE - REDEEM 100 IVV 
+  Assets:Investments:HSBC-Securities                                            -100 IVV {153.00 USD} @ 154.00 USD
+  Expenses:Financial:Commissions                                           24.00 USD
+  Expenses:Financial:Fees                                                   1.00 USD
+  Assets:Current:HSBC:Checking                                          15375.00 USD
+  Income:Investment:Capital-Gains                                        -100.00 USD
+  [Expenses:Trading-Costs]                                                -50.00 USD
+  [Income:Investment:Capital-Gains]                                        50.00 USD
