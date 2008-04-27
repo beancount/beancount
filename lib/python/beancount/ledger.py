@@ -86,7 +86,7 @@ class Account(object):
     """
     # Account path separator.
     sep = ':'
-
+    
     def __init__(self, fullname, ordering):
 
         # The full name of the account.
@@ -103,6 +103,9 @@ class Account(object):
         self.parent = None
         self.children = []
 
+        # The number of times an account has been requested for use.
+        self.usedcount = 0
+
     def __str__(self):
         return "<Account '%s'>" % self.fullname
     __repr__ = __str__
@@ -112,7 +115,7 @@ class Account(object):
 
     def isused(self):
         "Return true if the account is used."
-        return self.postings or self.children
+        return self.usedcount > 0
 
     def subpostings(self):
         """
@@ -341,10 +344,12 @@ class Ledger(object):
     # Account ordering integer.
     acc_ordering = count().next
 
-    def get_account(self, name, create=False):
+    def get_account(self, name, create=False, incrcount=True):
         """
-        Return or create an account by name, creating all the intermediate account
-        tree nodes as well.
+        Return or create an account by name, creating all the intermediate
+        account tree nodes as well. 'incrcount' increases the account's 'used'
+        count by that much (this is used to figure out which accounts are in
+        use).
         """
         accounts = self.accounts
         try:
@@ -360,6 +365,8 @@ class Ledger(object):
                 children = acc.parent.children
                 if acc not in children:
                     children.append(acc)
+        if incrcount:
+            acc.usedcount += 1
         return acc
 
     def get_root_account(self):
@@ -917,7 +924,7 @@ class DefineAccountDirective(object):
             return
 
         isdebit = (mo.group(1) == 'De')
-        account = self.ledger.get_account(mo.group(2), create=1)
+        account = self.ledger.get_account(mo.group(2), create=1, incrcount=False)
         commodities = mo.group(3).split(',') if mo.group(3) else None
         if account in self.definitions:
             ledger.log(CRITICAL, "Duplicate account definition.",
@@ -937,7 +944,7 @@ class DefineAccountDirective(object):
                 ledger.log(ERROR, "Invalid account name '%s'." % accname, post)
 
         # Check for unused accounts.
-        for acc, (_, _, filename, lineno) in self.definitions.iteritems():
+        for acc, (_, _, filename, lineno) in sorted(self.definitions.iteritems()):
             if not acc.isused():
                 ledger.log(WARNING, "Account %s is unused." % acc.fullname,
                            (filename, lineno))
@@ -1111,6 +1118,25 @@ class DefvarDirective(object):
 
     def apply(self):
         pass # Nothing to do--the modules do the parsing themselves.
+
+def read_ofx_accounts_map(ledger):
+    """
+    Process account mapping declarations from the ledger file and return a
+    mapping.
+    """
+    m = {}
+    vardir = ledger.directives['var']
+    accids = vardir.modules['ofx']['accid']
+    for decl in accids:
+        accid, accname = [x.strip() for x in decl.split()]
+        try:
+            acc = ledger.get_account(accname)
+        except KeyError:
+            raise SystemExit(
+                "Could not find account %s\n  @var declaration: %s\n" %
+                (accname, decl))
+        m[accid] = acc
+    return m
 
 
 

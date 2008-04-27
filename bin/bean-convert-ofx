@@ -21,16 +21,18 @@ from decimal import Decimal
 
 # beancount imports
 from beancount import cmdline
+from beancount.ledger import Transaction, Posting, Account
+from beancount.ledger import read_ofx_accounts_map
 
 # other imports
 from BeautifulSoup import BeautifulStoneSoup
 
 
 
-class Account(object):
+class OFXAccount(object):
     "An OFX account object."
 
-    accname = None
+    fullname = None
     currency = None
     transactions = None
     start, end = None, None
@@ -40,7 +42,7 @@ class Account(object):
     def __init__(self):
         self.transactions = []
 
-class Transaction(object):
+class OFXTransaction(object):
     "An OFX transaction object."
 
     trntype = None
@@ -71,11 +73,11 @@ def process_ofx(fn, accounts_map):
     all = []
     soup = BeautifulStoneSoup(open(fn))
     for st in soup.findAll(['stmttrnrs', 'ccstmttrnrs']):
-        acc = Account()
+        acc = OFXAccount()
 
         accid, acc.currency = find_account(st)
         try:
-            acc.accname = accounts_map[accid]
+            acc.fullname = accounts_map[accid]
         except KeyError:
             raise KeyError("Missing account name in map for %s" % accid)
 
@@ -83,12 +85,12 @@ def process_ofx(fn, accounts_map):
         tranlist = st.find('banktranlist')
 
         # Find start and end times.
-        acc.start = ofx_parse_time(tranlist.dtstart.contents[0])
-        acc.end = ofx_parse_time(tranlist.dtend.contents[0])
+        start = ofx_parse_time(tranlist.dtstart.contents[0])
+        end = ofx_parse_time(tranlist.dtend.contents[0])
 
         # Process transactions themselves.
         for trn in tranlist.findAll('stmttrn'):
-            t = Transaction()
+            t = OFXTransaction()
             acc.transactions.append(t)
             for a in 'trntype dtposted trnamt fitid name memo checknum'.split():
                 n = trn.find(a)
@@ -100,7 +102,7 @@ def process_ofx(fn, accounts_map):
         acc.bal_amount = Decimal(st.ledgerbal.balamt.contents[0].strip())
         acc.bal_time = ofx_parse_time(st.ledgerbal.dtasof.contents[0].strip())
 
-        all.append(acc)
+        all.append((acc, start, end))
 
     return all
 
@@ -112,7 +114,10 @@ def ofx_parse_time(s):
         return datetime.strptime(s[:14], '%Y%m%d%H%M%S')
 
 def find_account(st):
-    "Get and return the account information and currency."
+    """
+    Get and return the account information and currency that was found in the
+    text file.
+    """
     s = st.find(['stmtrs', 'ccstmtrs'])
     assert s is not None
     acct = s.find(['bankacctfrom', 'ccacctfrom'])
@@ -121,17 +126,8 @@ def find_account(st):
     currency = s.curdef.contents[0].strip()
     return acctid, currency
 
-def read_accounts_map(ledger):
-    """
-    Process account mapping declarations and return a mapping.
-    """
-    m = {}
-    vardir = ledger.directives['var']
-    accids = vardir.modules['ofx']['accid']
-    for decl in accids:
-        accid, accname = [x.strip() for x in decl.split()]
-        m[accid] = accname
-    return m
+
+
 
 def main():
     import optparse
@@ -141,25 +137,25 @@ def main():
     if not args:
         parser.error("You must provide a list of OFX files to convert.")
 
-    accounts_map = read_accounts_map(ledger)
+    accounts_map = read_ofx_accounts_map(ledger)
 
     for arg in args:
         print '\n'*3
         print ';;;;; Import of %s' % arg
 
-        for acc in process_ofx(arg, accounts_map):
+        for acc, start, end in process_ofx(arg, accounts_map):
             print '\n'*3
-            print '; Import account: %s ' % acc.accname
-            print '; Start import: %s ' % acc.start
+            print '; Import account: %s ' % acc.fullname
+            print '; Start import: %s ' % start
             print
             for t in acc.transactions:
                 print str(t)
-                print '  %-60s %10.2f %s' % (acc.accname, t.amount, acc.currency)
+                print '  %-60s %10.2f %s' % (acc.fullname, t.amount, acc.currency)
                 print
 
-            print '; End import: %s ' % acc.end
+            print '; End import: %s ' % end
             print '@check %s %s     %s %s' % (
-                acc.bal_time.date(), acc.accname, acc.bal_amount, acc.currency)
+                acc.bal_time.date(), acc.fullname, acc.bal_amount, acc.currency)
             print
 
     print '\n'
