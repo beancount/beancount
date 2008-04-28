@@ -480,12 +480,17 @@ class Ledger(object):
                     txn.ordering = next_ordering()
                     append_txn(txn)
 
-                    actual_date = date(*map(int, mo.group(1, 2, 3)))
-
-                    if mo.group(4):
-                        effective_date = date(*map(int, mo.group(5, 6, 7)))
-                    else:
-                        effective_date = actual_date
+                    try:
+                        actual_date = date(*map(int, mo.group(1, 2, 3)))
+                        if mo.group(4):
+                            effective_date = date(*map(int, mo.group(5, 6, 7)))
+                        else:
+                            effective_date = actual_date
+                    except ValueError, e:
+                        self.log(CRITICAL, "Date component is out of range: %s" % e,
+                                 (fn, lineno[0]))
+                        line = nextline()
+                        continue
 
                     txn.actual_date = actual_date
                     txn.effective_date = effective_date
@@ -812,7 +817,7 @@ class BalanceVisitor(object):
 """
 
 class Check(SimpleDummy):
-    attrs = 'cdate account expected filename lineno flag balance'.split()
+    attrs = 'cdate account expected commodity filename lineno flag balance'.split()
 
     def __cmp__(self, other):
         return cmp(self.cdate, other.cdate)
@@ -850,7 +855,7 @@ class CheckDirective(object):
         com = mo.group(6)
         amount = (com, Decimal(mo.group(5)))
         expected = Wallet(*amount)
-        self.checks.append(Check(cdate, account, expected, filename, lineno,
+        self.checks.append(Check(cdate, account, expected, com, filename, lineno,
                                  None, expected))
 
     def apply(self):
@@ -874,7 +879,7 @@ class CheckDirective(object):
 
             # Remove the amounts that we're not supposed to be checking from the
             # actual balance.
-            balance = balance.mask(expected)
+            balance = balance.mask_commodity(chk.commodity)
 
             if chk.flag is None:
                 chk.flag = '*' if (balance == expected) else '!'

@@ -52,10 +52,18 @@ class Wallet(dict):
         except KeyError:
             return Wallet()
 
-    def mask(self, other):
+    def mask_wallet(self, other):
         "Return this wallet with only the commodities in the other wallet."
         return Wallet(
             (com, amt) for com, amt in self.iteritems() if com in other)
+
+    def mask_commodity(self, com):
+        "Return this wallet with only the commodities in the other wallet."
+        w = Wallet()
+        num = self.get(com, None)
+        if num is not None:
+            w[com] = num
+        return w
 
     def __str__(self):
         sitems = sorted(self.iteritems(), key=self.commodity_key)
