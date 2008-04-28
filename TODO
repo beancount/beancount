@@ -23,6 +23,9 @@ main focus:
   * add page and note filtering
 
 
+- You need to write a test with dates that are close by between
+  @checks and with @pad in between.
+
 
 parser:
 
@@ -47,6 +50,7 @@ parser:
   stage!!! Fix that, save the errors in the Ledger object and report
   them every time.
 
+- Figure out why we get 1.0 USD when we import OFX, we should get 1.00 USD
 
 capital gains:
 

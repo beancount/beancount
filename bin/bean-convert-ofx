@@ -15,13 +15,17 @@ directives are in comments.)
 """
 
 # stdlib imports
-import os, re
-from datetime import datetime
+import os, re, logging
+from datetime import datetime, date, timedelta
 from decimal import Decimal
+from collections import defaultdict
+from os.path import *
+from xml.sax.saxutils import unescape
 
 # beancount imports
 from beancount import cmdline
 from beancount.ledger import Transaction, Posting, Account
+from beancount.wallet import Wallet
 from beancount.ledger import read_ofx_accounts_map
 
 # other imports
@@ -32,7 +36,7 @@ from BeautifulSoup import BeautifulStoneSoup
 class OFXAccount(object):
     "An OFX account object."
 
-    fullname = None
+    account = None
     currency = None
     transactions = None
     start, end = None, None
@@ -41,6 +45,7 @@ class OFXAccount(object):
 
     def __init__(self):
         self.transactions = []
+
 
 class OFXTransaction(object):
     "An OFX transaction object."
@@ -53,14 +58,17 @@ class OFXTransaction(object):
     memo = None
     checknum = None
 
-    def initialize(self):
+    # A wallet with the amount of the transaction.
+    amount = None
+
+    def initialize(self, currency):
         if self.dtposted:
-            self.date = ofx_parse_time(self.dtposted).date()
-        self.description = ' -- '.join(filter(None, [self.name, self.memo]))
-        self.amount = Decimal(self.trnamt)
+            self.dtposted = ofx_parse_time(self.dtposted).date()
+        self.description = u' -- '.join(filter(None, [self.name, self.memo]))
+        self.amount = Wallet(currency, Decimal(self.trnamt))
 
     def __str__(self):
-        date_s = self.date.strftime('%Y-%m-%d')
+        date_s = self.dtposted.strftime('%Y-%m-%d')
         if self.checknum:
             return '%s ! (%s) %s' % (date_s, self.checknum,
                                      self.description)
@@ -73,11 +81,11 @@ def process_ofx(fn, accounts_map):
     all = []
     soup = BeautifulStoneSoup(open(fn))
     for st in soup.findAll(['stmttrnrs', 'ccstmttrnrs']):
-        acc = OFXAccount()
+        ofxacc = OFXAccount()
 
-        accid, acc.currency = find_account(st)
+        accid, ofxacc.currency = find_account(st)
         try:
-            acc.fullname = accounts_map[accid]
+            ofxacc.account = accounts_map[accid]
         except KeyError:
             raise KeyError("Missing account name in map for %s" % accid)
 
@@ -85,24 +93,24 @@ def process_ofx(fn, accounts_map):
         tranlist = st.find('banktranlist')
 
         # Find start and end times.
-        start = ofx_parse_time(tranlist.dtstart.contents[0])
-        end = ofx_parse_time(tranlist.dtend.contents[0])
+        ofxacc.start = ofx_parse_time(tranlist.dtstart.contents[0])
+        ofxacc.end = ofx_parse_time(tranlist.dtend.contents[0])
 
         # Process transactions themselves.
         for trn in tranlist.findAll('stmttrn'):
             t = OFXTransaction()
-            acc.transactions.append(t)
+            ofxacc.transactions.append(t)
             for a in 'trntype dtposted trnamt fitid name memo checknum'.split():
                 n = trn.find(a)
                 if n:
-                    setattr(t, a, n.contents[0].strip())
-            t.initialize()
+                    setattr(t, a, unescape(n.contents[0].strip()))
+            t.initialize(ofxacc.currency)
 
         # Find expected balance.
-        acc.bal_amount = Decimal(st.ledgerbal.balamt.contents[0].strip())
-        acc.bal_time = ofx_parse_time(st.ledgerbal.dtasof.contents[0].strip())
+        ofxacc.bal_amount = Decimal(st.ledgerbal.balamt.contents[0].strip())
+        ofxacc.bal_time = ofx_parse_time(st.ledgerbal.dtasof.contents[0].strip())
 
-        all.append((acc, start, end))
+        all.append(ofxacc)
 
     return all
 
@@ -139,26 +147,51 @@ def main():
 
     accounts_map = read_ofx_accounts_map(ledger)
 
+    # Create a map of postings by date.
+    bydate = defaultdict(list)
+    for post in ledger.postings:
+        bydate[post.actual_date].append(post)
+
+    oneday = timedelta(days=1)
+    datesearch_begin_offset = timedelta(days=-3)
+    datesearch_end_offset = timedelta(days=3)
+        
+
     for arg in args:
         print '\n'*3
-        print ';;;;; Import of %s' % arg
+        print ';;; Import of %s' % arg
 
-        for acc, start, end in process_ofx(arg, accounts_map):
+        for ofxacc in process_ofx(arg, accounts_map):
+            account = ofxacc.account
+
             print '\n'*3
-            print '; Import account: %s ' % acc.fullname
-            print '; Start import: %s ' % start
+            print '; Import account: %s ' % account.fullname
+            print '; Start import: %s ' % ofxacc.start
             print
-            for t in acc.transactions:
+            for t in ofxacc.transactions:
+                if account.check_min < t.dtposted < account.check_max:
+                    logging.warning("Skipping %s" % t)
+                    continue
+
                 print str(t)
-                print '  %-60s %10.2f %s' % (acc.fullname, t.amount, acc.currency)
+                print '  %-60s %s' % (account.fullname, t.amount)
+
+                # Look for potential matches in the ledger file.
+                date_ = t.dtposted + datesearch_begin_offset
+                date_end = t.dtposted + datesearch_end_offset
+                while date_ <= date_end:
+                    for post in bydate.get(date_, []):
+                        if t.amount == post.amount:
+                            print ';; Potential match at  %s:%s' % (abspath(post.filename), post.lineno)
+                    date_ += oneday
                 print
 
-            print '; End import: %s ' % end
+            print '; End import: %s ' % ofxacc.end
             print '@check %s %s     %s %s' % (
-                acc.bal_time.date(), acc.fullname, acc.bal_amount, acc.currency)
+                ofxacc.bal_time.date(), account.fullname, ofxacc.bal_amount, ofxacc.currency)
             print
 
-    print '\n'
+    print '\n'
 
 
 if __name__ == '__main__':

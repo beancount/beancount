@@ -302,6 +302,8 @@ class Ledger(object):
         add_directive(DefineAccountDirective(self))
         add_directive(AutoPadDirective(self, check))
         add_directive(DefvarDirective(self))
+        add_directive(BeginPageDirective(self))
+        add_directive(EndPageDirective(self))
 
     def isvalid(self):
         "Return true if the ledger has not had critical errors."
@@ -927,8 +929,8 @@ class DefineAccountDirective(object):
         account = self.ledger.get_account(mo.group(2), create=1, incrcount=False)
         commodities = mo.group(3).split(',') if mo.group(3) else None
         if account in self.definitions:
-            ledger.log(CRITICAL, "Duplicate account definition.",
-                       filename, lineno)
+            self.ledger.log(CRITICAL, "Duplicate account definition: %s" % account.fullname,
+                            (filename, lineno))
         self.definitions[account] = (commodities, isdebit, filename, lineno)
 
     def apply(self):
@@ -948,6 +950,29 @@ class DefineAccountDirective(object):
             if not acc.isused():
                 ledger.log(WARNING, "Account %s is unused." % acc.fullname,
                            (filename, lineno))
+
+
+
+class BeginPageDirective(object):
+    """
+    Set a page attribute to the transactions between beginpage and endpage
+    directives.
+    """
+    name = 'beginpage'
+    prio = 1
+
+    def __init__(self, ledger):
+        self.ledger = ledger
+
+    def parse(self, line, filename, lineno):
+        pass
+## FIXME: TODO
+
+    def apply(self):
+        pass
+    
+class EndPageDirective(BeginPageDirective):
+    name = 'endpage'
 
 
 
@@ -1075,8 +1100,9 @@ class AutoPadDirective(object):
                 acc.postings.append(post)
                 post.amount = post.cost = amount
 
-            ledger.log(INFO, "Inserting automatic padding at %s for %s" %
-                       (pad_date.isoformat(), missing),
+            ledger.log(INFO, "Inserting automatic padding for %s at %s for %s" %
+                       (acc_target.fullname,
+                        pad_date.isoformat(), missing),
                        (fn, lineno))
 
 
@@ -1137,6 +1163,8 @@ def read_ofx_accounts_map(ledger):
                 (accname, decl))
         m[accid] = acc
     return m
+
+
 
 
 
