@@ -194,6 +194,10 @@ def main():
     print '\n'
 
 
+## FIXME: we also need to try to match up transactions between those that are
+## being imported... this means that we should do it in a two step process.
+
+
 if __name__ == '__main__':
     main()
 
