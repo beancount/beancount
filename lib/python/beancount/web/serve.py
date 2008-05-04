@@ -196,11 +196,17 @@ def main():
     import optparse
     parser = optparse.OptionParser(__doc__.strip())
 
+    cmdline.select_addopts(parser)
+
     parser.add_option('-d', '--debug', '--devel', action='store_true',
                       help="Debug/development mode: don't cache styles and "
                       "reload code on every request.")
 
     opts, ledger, args = cmdline.main(parser)
+
+    # Filter out the selected postings.
+    pred = cmdline.create_filter_pred(opts)
+    ledger.filter_postings(pred)
 
     # Create and run the web server.
     app = BeanServer(ledger, opts.debug)

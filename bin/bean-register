@@ -13,11 +13,6 @@ from beancount.utils import render_tree
 from beancount.wallet import Wallet
 
 
-
-
-logging.warning("THIS IS INCORRECT, YOU NEED TO RECONCILE THE LIST OF TRANSACTIONS, "
-                "see app.py:register()")
-
 def main():
     import optparse
     parser = optparse.OptionParser(__doc__.strip())
@@ -29,21 +24,19 @@ def main():
     opts, ledger, args = cmdline.main(parser)
 
     # Filter out the selected postings.
-    postings = cmdline.select_postings(ledger, opts)
+    pred = cmdline.create_filter_pred(opts)
+    ledger.filter_postings(pred)
 
-    # Print a tree of the selected accounts.
-    if opts.verbose:
-        pred = lambda acc: getattr(acc, 'selected', 0)
-        print
-        for acc, branch, line in render_tree(ledger.get_root_account(), pred):
-            print branch + line
-        print
-
+    # Get the list of transactions that relate to the postings.
     balance = Wallet()
-    for post in sorted(postings):
-        balance += post.amount
-        print post.fulldate(), post.txn.topline()
-        print post.pretty(ledger)
+    for txn in ledger.transactions:
+        for post in txn.postings:
+            if post.selected:
+                balance += post.amount
+
+##         print post.fulldate(), post.txn.topline()
+##         print post.pretty(ledger)
+        print unicode(txn).encode('utf8')
         print '**********', balance.round()
         print
 
@@ -52,3 +45,12 @@ if __name__ == '__main__':
     main()
 
 
+
+
+##     # Print a tree of the selected accounts.
+##     if opts.verbose:
+##         pred = lambda acc: getattr(acc, 'selected', 0)
+##         print
+##         for acc, branch, line in render_tree(ledger.get_root_account(), pred):
+##             print branch + line
+##         print

@@ -251,7 +251,10 @@ class Posting(Dated):
         self.txn = txn
 
     def __str__(self):
-        return '  %-70s %s' % (self.account_name or self.account.name, self.amount)
+        s = '  %-70s %s' % (self.account_name or self.account.name, self.amount)
+        if self.note:
+            s += ' ; %s' % self.note
+        return s
     __repr__ = __str__
 
     def __key__(self):
@@ -447,8 +450,6 @@ class Ledger(object):
         match_directive = self.directive_re.match
 
         accounts = self.accounts
-        append_txn = self.transactions.append
-        all_postings = self.postings
 
         xread = f.readline
         lineno = [0]
@@ -478,7 +479,7 @@ class Ledger(object):
                     txn.filename = fn
                     txn.lineno = lineno[0]
                     txn.ordering = next_ordering()
-                    append_txn(txn)
+                    self.transactions.append(txn)
 
                     try:
                         actual_date = date(*map(int, mo.group(1, 2, 3)))
@@ -519,7 +520,7 @@ class Ledger(object):
                             post.filename, post.lineno = fn, lineno[0]
                             post.ordering = next_ordering()
                             txn.postings.append(post)
-                            all_postings.append(post)
+                            self.postings.append(post)
 
                             post.flag, post.account_name, post.note = mo.group(1,2,14)
 
@@ -766,7 +767,6 @@ class Ledger(object):
 
     visit = visit_preorder
 
-
     def run_directives(self):
         "Run all the directives on the ledger."
 
@@ -775,9 +775,34 @@ class Ledger(object):
         for direct in directives:
             direct.apply()
 
+    def filter_postings(self, pred):
+        """
+        Apply the given predicate on all the postings and filter out those for
+        which the predicate returns false.
+
+        Important note: as a side-effect, the 'selected' attribute is set to
+        true for the nodes that the predicate matches.
+        """
+        inset = frozenset(filter(pred, self.postings))
+
+        for post in self.postings:
+            post.selected = (post in inset)
+
+        if pred is None:
+            return
+
+        self.postings[:] = [post for post in self.postings if post in inset]
+
+        for acc in self.accounts.itervalues():
+            acc.postings[:] = [post for post in acc.postings if post in inset]
+
+        self.transactions = [txn for txn in self.transactions
+                             if any(post in inset for post in txn.postings)]
 
 
 
+
+            
 """ Accounts tree visitors.
 """
 

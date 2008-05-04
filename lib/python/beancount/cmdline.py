@@ -100,7 +100,58 @@ def select_addopts(parser):
 
     parser.add_option('-a', '--account', action='append', metavar='REGEXP',
                       default=[],
-                      help="Filter down for the given account regexp.")
+                      help="Filter only the given accounts.")
+
+    parser.add_option('-n', '--note', action='append', metavar='REGEXP',
+                      help="Filter only the postings with the given notes.")
+
+    parser.add_option('-y', '--year', action='store', metavar='REGEXP',
+                      help="Filter only the postings within the given year")
+
+def create_filter_pred(opts):
+    """
+    Synthesize and return a predicate that when applied to a Ledger's postings
+    will filter only the transactions specified in 'opts'. If there is no filter
+    to be applied, simply return None.
+    """
+    acc_funs = None
+    if opts.account:
+        try:
+            acc_funs = [re.compile(regexp, re.I).search for regexp in opts.account]
+        except re.error, e:
+            raise SystemExit(e)
+
+    note_funs = None
+    if opts.note:
+        try:
+            note_funs = [re.compile(regexp, re.I).search for regexp in opts.note]
+        except re.error, e:
+            raise SystemExit(e)
+
+    year = None
+    if opts.year:
+        try:
+            year = int(opts.year)
+        except ValueError:
+            raise SystemExit(e)
+
+## FIXME: you have to add begin/end filtering here.
+## FIXME: redistribute the expenses at regular intervals.
+ 
+
+    def pred(post):
+        if acc_funs is not None:
+            if all(not fun(post.account.fullname) for fun in acc_funs):
+                return False
+        if note_funs is not None:
+            if all(not fun(post.note or '') for fun in note_funs):
+                return False
+        if year is not None:
+            if post.actual_date.year != year:
+                return False
+        return True
+        
+    return pred
 
 def select_postings(ledger, opts):
     "Select the postings given by the selection options in 'opts'"
