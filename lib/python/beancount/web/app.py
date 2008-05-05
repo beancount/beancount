@@ -21,6 +21,7 @@ from beancount.ledger import compute_balsheet, Account
 from beancount.utils import render_tree, itertree
 from beancount.wallet import Wallet
 from beancount.web.serve import *
+from beancount import cmdline
 
 
 
@@ -58,6 +59,8 @@ class Template(object):
                ),
             id='top-navigation')
 
+        self.reload = DIV(A("Reload", href=umap('@@Reload')), id='reload')
+
         self.style = DIV(
             UL(LI(A('Compact', href=umap('@@SetStyle', style='compact'))),
                LI(A('Other', href=umap('@@SetStyle', style='other'))),
@@ -67,6 +70,7 @@ class Template(object):
             id='style-selector')
 
         self.body.append(self.header)
+        self.body.append(self.reload)
         self.body.append(self.style)
         self.body.append(self.navigation)
         self.body.append(self.document)
@@ -232,8 +236,6 @@ def register(app, ctx):
         raise HttpNotFound(accname)
     postings = set(acc.subpostings())
 
-## FIXME: do some filtering here.
-
     # Get the list of transactions that related to the postings.
     txns = set(post.txn for post in postings)
 
@@ -241,8 +243,9 @@ def register(app, ctx):
     checks = ctx.ledger.directives['check']
     acc_checks = sorted(checks.account_checks(acc))
 
-    for c in acc_checks:
-        print c
+## FIXME: remove
+    ## for c in acc_checks:
+    ##     print c
 
     balance = Wallet()
     for txn in sorted(txns):
@@ -379,6 +382,19 @@ def messages(app, ctx):
     return page.render(app)
 
 
+def reload(app, ctx):
+    """
+    Reload the ledger file and return to the given URL.
+    """
+    app.ledger = cmdline.reload(ctx.ledger)
+
+    # Filter out the selected postings.
+    pred = cmdline.create_filter_pred(app.opts)
+    app.ledger.filter_postings(pred)
+
+    trace(ctx.environ['HTTP_REFERER'])
+    raise HttpRedirect(ctx.environ['HTTP_REFERER'])
+
 
 
 def setstyle(app, ctx):
@@ -427,6 +443,7 @@ page_directory = (
     ('@@Register', register, '/register/%s', '^/register/(?P<accname>.*)$'),
     ('@@SetStyle', setstyle, '/setstyle', '^/setstyle$'),
     ('@@Messages', messages, '/messages', None),
+    ('@@Reload', reload, '/reload', None),
     ('@@Source', source, '/source', None),
     ('@@Error', server_error, '/error', None),
 

@@ -95,6 +95,12 @@ import:
   partially completed transactions from an existing Ledger.
 
 
+filtering:
+
+- We need an option to automatically add opening balances entries when
+  filtering by time.
+
+
 
 scripts:
 
@@ -179,6 +185,7 @@ doc/examples/demos:
   So when I show the balance sheet "at cost", it shows the account
   Assets:Current:RBC:Checking-US as having had some CAD debited from
   it.
+
 
 
 

@@ -19,7 +19,7 @@ __all__ = ('parse_time',)
 monthnames = [x.lower() for x in calendar.month_name]
 
 def match_month(name):
-    mmatches = [monthnames.index(n) for n in monthnames if n.startswith(name)]
+    mmatches = [i for (i, n) in enumerate(monthnames) if n.startswith(name)]
     if len(mmatches) == 1:
         return mmatches[0]
 
@@ -81,7 +81,7 @@ def parse_one_time(timestr):
         _, nbdays = calendar.monthrange(year, month)
         return (d, d + timedelta(days=nbdays))
 
-    mo = re.match('([a-z][a-z][a-z])(?:\s+|-)(\d\d\d\d)$', timestr)
+    mo = re.match('([a-zA-Z][a-z]*)(?:\s+|-)(\d\d\d\d)$', timestr)
     if mo:
         month = match_month(mo.group(1))
         if month is not None:

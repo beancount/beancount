@@ -279,6 +279,9 @@ class Ledger(object):
     """
     def __init__(self):
 
+        # A list of (filename, encoding) parsed.
+        self.parsed_files = []
+        
         # A dict of all the accounts.
         self.accounts = {}
 
@@ -437,6 +440,7 @@ class Ledger(object):
         (Those objects need to have completions and some conversions done on
         them, and more.)
         """
+        self.parsed_files.append((fn, encoding))
         source = self.source = []
 
         # Cache some attribetus for speed.

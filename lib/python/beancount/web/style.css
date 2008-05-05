@@ -42,18 +42,32 @@ body h1 {
 
 
 
+/* Reload box. */
+
+div#reload {
+  background: #EEE;
+  margin: 5px;
+  padding: 5px;
+  float: right;
+}
+
+
+
+
 /* Style box for register. */
 
 div#style-selector ul {
   margin: 0px;
 /*   padding: 0px; */
+  float: right;
 }
 
 div#style-selector li {
   display: inline;
-  margin-right: 1.5em;
+  margin-right: 0.5em;
   font-size: x-small;
-  float: right;
+  width: 30%;
+/*   float: right; */
 }
 
 

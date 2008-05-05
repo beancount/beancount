@@ -76,6 +76,22 @@ def main(parser):
 
     return opts, ledger, args
 
+def reload(ledger):
+    """
+    Parse the files again and create a new Ledger from them.
+    """
+    # Note: we ignore the pickling for reload.
+    ledger2 = Ledger()
+    
+    for fn, encoding in ledger.parsed_files:
+        f = open(fn)
+        if encoding:
+            Reader = codecs.getreader(encoding)
+            f = Reader(f)
+        ledger2.parse_file(f, fn, encoding)
+
+    ledger2.run_directives()
+    return ledger2
 
 
 
@@ -111,6 +127,10 @@ def select_addopts(parser):
                       help="Filter only the postings within the given time range. "
                       "There are multiple valid time range formats. See source "
                       "for details.")
+
+    ## parser.add_option('-o', '--open-balances', action='store_true',
+    ##                   help="Include opening balance entries when filtering "
+    ##                   "according to time.")
 
 def create_filter_pred(opts):
     """

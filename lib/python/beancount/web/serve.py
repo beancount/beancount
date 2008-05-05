@@ -45,7 +45,7 @@ class BeanServer(object):
 
     default_headers = [('Content-Type', 'text/html')]
 
-    def __init__(self, ledger, debug):
+    def __init__(self, ledger, opts):
         self.ledger = ledger
 
         self.data = []
@@ -56,8 +56,8 @@ class BeanServer(object):
 
         # Prototype for context object.
         ctx = self.ctx = Context()
-        ctx.debug = debug
-        ctx.ledger = ledger
+        self.opts = ctx.opts = opts
+        ctx.debug = opts.debug
 
     def setHeader(self, name, value):
         self.headers[name] = value
@@ -82,6 +82,7 @@ class BeanServer(object):
         self.headers = Headers(self.default_headers)
 
         ctx = copy(self.ctx) # shallow
+        ctx.ledger = self.ledger
         
         path = environ['PATH_INFO']
 
@@ -140,6 +141,8 @@ class BeanServer(object):
             status = getattr(e, 'status', '200 OK')
             start_response(status, [('Content-Type', 'text/html')])
             return [cgitb.html(sys.exc_info())]
+
+
 
 
 class Context(object):
@@ -209,7 +212,7 @@ def main():
     ledger.filter_postings(pred)
 
     # Create and run the web server.
-    app = BeanServer(ledger, opts.debug)
+    app = BeanServer(ledger, opts)
     httpd = make_server('', 8000, app)
     sa = httpd.socket.getsockname()
     logging.info("Serving HTTP on %s:%s" % (sa[0], sa[1]))
