@@ -4,11 +4,13 @@ Common cmdline interface for ledger scripts.
 
 # stdlib imports
 import os, logging, optparse, re, codecs
+from datetime import date
 import cPickle as pickle
 from os.path import exists, getmtime
 
 # beancount imports
 from beancount.ledger import Ledger
+from beancount.timeparse import parse_time
 
 
 def main(parser):
@@ -105,8 +107,10 @@ def select_addopts(parser):
     parser.add_option('-n', '--note', action='append', metavar='REGEXP',
                       help="Filter only the postings with the given notes.")
 
-    parser.add_option('-y', '--year', action='store', metavar='REGEXP',
-                      help="Filter only the postings within the given year")
+    parser.add_option('-t', '--time', action='store', metavar='REGEXP',
+                      help="Filter only the postings within the given time range. "
+                      "There are multiple valid time range formats. See source "
+                      "for details.")
 
 def create_filter_pred(opts):
     """
@@ -128,16 +132,15 @@ def create_filter_pred(opts):
         except re.error, e:
             raise SystemExit(e)
 
-    year = None
-    if opts.year:
+    if opts.time:
         try:
-            year = int(opts.year)
-        except ValueError:
+            interval = parse_time(opts.time)
+            if interval is not None:
+                logging.info("Filtering by interval:  %s  ->  %s" % interval)
+        except ValueError, e:
             raise SystemExit(e)
-
-## FIXME: you have to add begin/end filtering here.
-## FIXME: redistribute the expenses at regular intervals.
- 
+    else:
+        interval = None
 
     def pred(post):
         if acc_funs is not None:
@@ -146,12 +149,14 @@ def create_filter_pred(opts):
         if note_funs is not None:
             if all(not fun(post.note or '') for fun in note_funs):
                 return False
-        if year is not None:
-            if post.actual_date.year != year:
+        if interval is not None:
+            dbegin, dend = interval
+            if not (dbegin <= post.actual_date < dend):
                 return False
         return True
         
     return pred
+
 
 def select_postings(ledger, opts):
     "Select the postings given by the selection options in 'opts'"

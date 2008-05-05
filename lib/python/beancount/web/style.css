@@ -74,6 +74,11 @@ table#register .postdate {
   text-align: right;
 }
 
+table#register .postnote {
+  margin-left: 3em;
+  font-style: italic;
+}
+
 table#register tr.posting {
   font-size: smaller;
 }

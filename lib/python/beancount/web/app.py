@@ -282,8 +282,11 @@ def register(app, ctx):
                     if style == 'only':
                         continue
 
+                postacc = haccount(post.account.fullname)
+                if post.note:
+                    postacc = SPAN(SPAN(postacc), SPAN(';', post.note, CLASS='postnote'))
                 tr = TR(TD(post.rdate(), colspan='2', CLASS='postdate'),
-                        TD(haccount(post.account.fullname)),
+                        TD(postacc),
                         TD(hwallet(post.amount), CLASS='wallet'),
                         TD(),
                         TD(),

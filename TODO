@@ -26,6 +26,8 @@ main focus:
 - You need to write a test with dates that are close by between
   @checks and with @pad in between.
 
+- FIXME: redistribute the expenses at regular intervals in blais.ledger
+
 
 parser:
 
@@ -62,6 +64,17 @@ capital gains:
 
     You need to do a test for capital gains.
 
+views:
+
+- To create custom views, for example, weekly summaries, you could
+  convert the ledger into another ledger, where entries would have
+  been replaced by summary entries instead, and all the other
+  functionalities would still work.
+
+- Fun little project: Create a graphviz output from a Ledger, where
+  transactions above a certain amount would generate a link between
+  accounts. Note:  the threshold could be either for single
+  transactions, or for aggregate amounts (absolute value).
 
 
 checks:
@@ -108,7 +121,8 @@ scripts:
 
 - Add declarations for important dates:
 
-  * @date 2007-01-01  Start of year 2007
+  * @date 2007-01-01  'Q1 07'
+  * The date parsing should automatically recognize these
 
 - Add directives specific to conversion scripts as well::
 
