@@ -1146,6 +1146,8 @@ class AutoPadDirective(object):
                         pad_date.isoformat(), missing),
                        (fn, lineno))
 
+logging.warning('FIXME you have to loop over all the commodity types...')
+
 
 
 
