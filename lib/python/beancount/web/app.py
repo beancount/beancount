@@ -203,6 +203,7 @@ def ranges(app, ctx):
 
     today = date.today()
     table = TABLE(id='ranges', CLASS='treetable')
+    table.append(THEAD(TR(TH(), TH("Oldest Chk"), TH("Newest Chk"), TH("Days since"))))
     it = iter(itertree(ctx.ledger.get_root_account(), pred=attrgetter('checked')))
     for acc, td1, tr in treetable_builder(table, it):
         td1.append(
@@ -334,7 +335,7 @@ def register_insert_checks(checklist, table, date=None):
                     TD(u'Check at %s:%s' % (chk.filename, chk.lineno),
                        CLASS='description check'),
                     TD(hwallet(chk.expected), CLASS='wallet'),
-                    TD(),
+                    TD(hwallet(chk.diff)),
                     TD(hwallet(chk.balance), CLASS='wallet'),
                     CLASS='assert', style=trsty)
             table.append(tr)
@@ -392,7 +393,6 @@ def reload(app, ctx):
     pred = cmdline.create_filter_pred(app.opts)
     app.ledger.filter_postings(pred)
 
-    trace(ctx.environ['HTTP_REFERER'])
     raise HttpRedirect(ctx.environ['HTTP_REFERER'])
 
 

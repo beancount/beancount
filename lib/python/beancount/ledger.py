@@ -86,7 +86,7 @@ class Account(object):
     """
     # Account path separator.
     sep = ':'
-    
+
     def __init__(self, fullname, ordering):
 
         # The full name of the account.
@@ -281,7 +281,7 @@ class Ledger(object):
 
         # A list of (filename, encoding) parsed.
         self.parsed_files = []
-        
+
         # A dict of all the accounts.
         self.accounts = {}
 
@@ -631,8 +631,8 @@ class Ledger(object):
                     try:
                         parser = self.directives[direc]
                         parser.parse(direc_line, fn, lineno[0])
-                    except KeyError, e:
-                        self.log(CRITICAL, "Unknown directive %s." % direc,
+                    except ValueError, e:
+                        self.log(CRITICAL, "Unknown directive %s: %s" % (direc, e),
                                  (fn, lineno[0]))
                     line = nextline()
                     continue
@@ -749,11 +749,11 @@ class Ledger(object):
                      "Transaction does not balance: remaining=%s\n%s\n" % (cost.round(), txn),
                      txn)
 
-        # Double-check to make sure that all postings in this transaction
-        # has been normalized.
-        for post in postings:
-            assert post.amount is not None
-            assert post.cost is not None
+        ## # Double-check to make sure that all postings in this transaction
+        ## # has been normalized.
+        ## for post in postings:
+        ##     assert post.amount is not None
+        ##     assert post.cost is not None
 
     def visit_preorder(self, node, visitor):
         """
@@ -806,7 +806,7 @@ class Ledger(object):
 
 
 
-            
+
 """ Accounts tree visitors.
 """
 
@@ -916,10 +916,11 @@ class CheckDirective(object):
 
             # Note: it is contentious whether we should also round the number
             # specified in the check before making the comparison.
+            chk.diff = (balance - expected).round()
             if not chk.passed():
                 se = expected or 'nothing'
                 sb = balance or 'nothing'
-                diff = (balance - expected).round() or 'nothing'
+                diff = chk.diff or 'nothing'
                 ledger.log(ERROR,
                            ("Balance check failed at  %s  %s :\n  Got:       %s\n"
                            "  Expecting: %s  \n  Diff: %s\n") %
@@ -1004,7 +1005,7 @@ class BeginPageDirective(object):
 
     def apply(self):
         pass
-    
+
 class EndPageDirective(BeginPageDirective):
     name = 'endpage'
 
@@ -1042,12 +1043,18 @@ class AutoPadDirective(object):
     def parse(self, line, filename, lineno):
         mo = self.mre.match(line)
         if not mo:
-            self.log(CRITICAL, "Invalid pad directive: %s" % line,
-                     (filename, lineno))
+            self.ledger.log(CRITICAL, "Invalid pad directive: %s" % line,
+                            (filename, lineno))
+            return  
 
         pad_date = date(*map(int, mo.group(1, 2, 3)))
-        acc_target = self.ledger.get_account(mo.group(4))
-        acc_offset = self.ledger.get_account(mo.group(5))
+        try:
+            acc_target = self.ledger.get_account(mo.group(4))
+            acc_offset = self.ledger.get_account(mo.group(5))
+        except KeyError, e:
+            self.ledger.log(CRITICAL, "Invalid account: %s" % e,
+                            (filename, lineno))
+            return
 
         self.openings.append((pad_date, acc_target, acc_offset, filename, lineno))
 
@@ -1059,7 +1066,7 @@ class AutoPadDirective(object):
             if not checks:
                 ledger.log(ERROR, (
                     "Cannot automatically pad if there is no check for account %s." %
-                    acc_target.fullname) (fn, lineno))
+                    acc_target.fullname), (fn, lineno))
                 continue
 
             # Find the checks that come before and after the pad date.

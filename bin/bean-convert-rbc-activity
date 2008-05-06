@@ -18,9 +18,11 @@ from xml.sax.saxutils import unescape
 from pprint import pprint, pformat
 
 # other imports
-from collections import namedtuple
+from collections2 import namedtuple
 from BeautifulSoup import BeautifulSoup
 
+# beancount imports
+from beancount import cmdline
 
 
 def main():
@@ -34,7 +36,7 @@ def main():
     opts, ledger, args = cmdline.main(parser)
 
     if len(args) < 2:
-        parser.error("You must specify an account and a filename to parse.")
+        parser.error("You must specify a ledger file, an account name and a filenames to parse.")
     acct, filenames = args[0], args[1:]
 
     all = []
@@ -46,9 +48,8 @@ def main():
     sortfun = lambda x: (x.settlement, x.priority)
 
     all.sort(key=sortfun)
-    acctmap = infer_account_names(acct, all)
     for p in all:
-        print_as_ledger(p, acctmap[p.currency])
+        print_as_ledger(p, acct)
 
 def infer_account_names(acct, postings):
     """
