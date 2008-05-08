@@ -19,7 +19,7 @@ from collections2 import namedtuple
 
 # beancount imports
 from beancount.wallet import Wallet
-from beancount.utils import SimpleDummy
+from beancount.utils import SimpleDummy, iter_pairs
 
 
 __all__ = ('Account', 'Transaction', 'Posting', 'Ledger',
@@ -400,7 +400,7 @@ class Ledger(object):
                         {'date': date_re.pattern})
 
     # Pattern for an amount.
-    commodity_re = re.compile('"?([A-Za-z][A-Za-z0-9]*)"?')
+    commodity_re = re.compile('"?([A-Za-z][A-Za-z0-9.]*)"?')
     amount_re = re.compile('([-+]?\d*(?:\.\d*)?)\s+%(comm)s' %
                            {'comm': commodity_re.pattern})
 
@@ -1011,6 +1011,21 @@ class EndPageDirective(BeginPageDirective):
 
 
 
+class AutoPad(object):
+    "Representation of a @pad directive (and its temporary data)."
+    def __init__(self, pdate, acc_target, acc_offset, filename, lineno):
+        self.pdate = pdate
+        self.acc_target = acc_target
+        self.acc_offset = acc_offset
+        self.filename, self.lineno = filename, lineno
+
+        # The set of commodities that have been adjusted for this pad. (This is
+        # used to make only one check per commodity affect each pad.)
+        self.adjusted = dict() # commodity -> check
+        self.wallet = Wallet()
+
+
+
 class AutoPadDirective(object):
     """
     Automatically insert an opening balance before any of the transactions
@@ -1033,7 +1048,7 @@ class AutoPadDirective(object):
                       'account': Ledger.account_re.pattern})
 
     def __init__(self, ledger, checkdir):
-        self.openings = []
+        self.pads = []
         self.ledger = ledger
         self.checkdir = checkdir
 
@@ -1045,9 +1060,9 @@ class AutoPadDirective(object):
         if not mo:
             self.ledger.log(CRITICAL, "Invalid pad directive: %s" % line,
                             (filename, lineno))
-            return  
+            return
 
-        pad_date = date(*map(int, mo.group(1, 2, 3)))
+        pdate = date(*map(int, mo.group(1, 2, 3)))
         try:
             acc_target = self.ledger.get_account(mo.group(4))
             acc_offset = self.ledger.get_account(mo.group(5))
@@ -1056,98 +1071,108 @@ class AutoPadDirective(object):
                             (filename, lineno))
             return
 
-        self.openings.append((pad_date, acc_target, acc_offset, filename, lineno))
+        pad = AutoPad(pdate, acc_target, acc_offset, filename, lineno)
+        self.pads.append(pad)
 
     def apply(self):
         ledger = self.ledger
 
-        for pad_date, acc_target, acc_offset, fn, lineno in self.openings:
+        # Arrange pads by target account, then sort them, and deal with them
+        # thereafter as such.
+        padacc = defaultdict(list)
+        for x in self.pads:
+            padacc[x.acc_target].append(x)
+
+        for acc_target, pads in padacc.iteritems():
+
+            # Get the list of checks for this account.
             checks = self.checkdir.account_checks(acc_target)
             if not checks:
-                ledger.log(ERROR, (
-                    "Cannot automatically pad if there is no check for account %s." %
-                    acc_target.fullname), (fn, lineno))
                 continue
 
-            # Find the checks that come before and after the pad date.
-            chk_before = chk_after = None
-            for chk in checks:
-                if chk.cdate < pad_date:
-                    if chk_before is None or chk.cdate > chk_before.cdate:
-                        chk_before = chk
+            # Merge the account's postings, pads and check and sort them
+            # together using a Schwartzian transform with appropriate priorities
+            # to disambiguate cases where the date is equal.
+            slist = ([((pad.pdate, 0), pad) for pad in pads] +
+                     [((chk.cdate, 1), chk) for chk in checks] +
+                     [((post.actual_date, 2), post) for post in acc_target.postings])
+            slist.sort()
+
+            # The current pad, and a set of the commodities that have already
+            # been adjusted for it.
+            pad = None
+            balance = Wallet()
+            for sortkey, x in slist:
+
+                if isinstance(x, AutoPad):
+                    # Make this pad the current pad.
+                    pad = x
+
+                elif isinstance(x, Check):
+                    # Ajust the current pad to reflect this check, if it has not
+                    # already been adjusted.
+                    chk = x
+                    if (pad is not None and
+                        chk.commodity not in pad.adjusted):
+
+                        pad.adjusted[chk.commodity] = chk
+                        diff = chk.expected - balance
+                        balamount = diff.get(chk.commodity)
+                        if balamount:
+                            pad.wallet[chk.commodity] = balamount
+
+                            # Mark check as having been padded.
+                            chk.flag = self.flag
+
+                elif isinstance(x, Posting):
+                    post = x
+                    balance += post.amount
+
                 else:
-                    if chk_after is None or chk.cdate < chk_after.cdate:
-                        chk_after = chk
+                    raise ValueError("Invalid type in list.")
 
-            if chk_after is None:
-                ledger.log(ERROR,
-                           "Cannot pad beyond the last check in account %s." %
-                           acc_target.fullname, (fn, lineno))
-                continue
-
-            # Sum the balance between the checks.
-            balance = chk_before.expected if chk_before is not None else Wallet()
-            postings = acc_target.postings
-            for post in postings:
-                if chk_before is not None and post.actual_date < chk_before.cdate:
+            for pad in pads:
+                if not pad.wallet:
+                    logging.warning("Ununsed pad at %s:%d" % (pad.filename, pad.lineno))
                     continue
-                if post.actual_date >= chk_after.cdate:
-                    continue
-                balance += post.amount
 
-            missing = chk_after.expected - balance
-            if missing.isempty():
-                if chk_before is not None:
-                    ledger.log(WARNING,
-                               "Unnecessary padding for account %s." % acc_target.fullname,
-                               (fn, lineno))
-                continue
+                txn = Transaction()
+                ledger.transactions.append(txn)
+                txn.actual_date = txn.effective_date = pad.pdate
+                txn.filename = pad.filename
+                txn.lineno = 0
+                txn.ordering = 0
+                txn.flag = self.flag
+                txn.payee = self.__class__.__name__
 
-            # Actually do insert a new transaction!
-            if chk_before is not None:
-                chk_before.flag = self.flag
-            chk_after.flag = self.flag
+                chkstr = ', '.join('%s:%d' % (chk.filename, chk.lineno)
+                                   for chk in pad.adjusted.itervalues())
+                txn.narration = u'Automatic opening balance for checks: %s' % chkstr
 
-            txn = Transaction()
-            ledger.transactions.append(txn)
-            txn.actual_date = txn.effective_date = pad_date
-            txn.filename = '<openbal>'
-            txn.lineno = 0
-            txn.ordering = 0
-            txn.flag = self.flag
-            txn.payee = self.__class__.__name__
 
-            if chk_before is not None:
-                txn.narration = (
-                    u'Automatic opening balance for checks %s:%d and %s:%d' %
-                    (chk_before.filename, chk_before.lineno,
-                     chk_after.filename, chk_after.lineno))
-            else:
-                txn.narration = (
-                    u'Automatic opening balance for check %s:%d' %
-                    (chk_after.filename, chk_after.lineno))
+                for com, num in pad.wallet.iteritems():
+                    for acc, anum in ((pad.acc_target, num),
+                                      (pad.acc_offset, -num)):
 
-            for acc, amount in ((acc_target, missing),
-                                (acc_offset, -missing)):
-                post = Posting(txn)
-                post.filename, post.lineno = '<openbal>', 0
-                post.actual_date = post.effective_date = txn.actual_date
-                post.ordering = 0
-                post.flag = self.flag
-                post.account_name = acc.fullname
-                post.account = acc
-                txn.postings.append(post)
-                ledger.postings.append(post)
-                acc.postings.append(post)
-                post.amount = post.cost = amount
+                        # Let's install one posting per commodity, because the input
+                        # format does not allow more than that either (it would
+                        # work, but we just don't want to break the
+                        # 1-posting/1-commodity hypothesis).
+                        post = Posting(txn)
+                        post.filename, post.lineno = pad.filename, pad.lineno
+                        post.actual_date = post.effective_date = txn.actual_date
+                        post.ordering = 0
+                        post.flag = self.flag
+                        post.account_name = acc.fullname
+                        post.account = acc
+                        txn.postings.append(post)
+                        ledger.postings.append(post)
+                        acc.postings.append(post)
+                        post.amount = post.cost = Wallet(com, anum)
 
-            ledger.log(INFO, "Inserting automatic padding for %s at %s for %s" %
-                       (acc_target.fullname,
-                        pad_date.isoformat(), missing),
-                       (fn, lineno))
-
-logging.warning('FIXME you have to loop over all the commodity types...')
-
+                ledger.log(INFO, "Inserting automatic padding for %s at %s for %s" %
+                           (acc_target.fullname, pad.pdate.isoformat(), pad.wallet),
+                           (pad.filename, pad.lineno))
 
 
 

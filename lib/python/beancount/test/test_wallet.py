@@ -28,6 +28,12 @@ class TestWallet(object):
         assert len(w) == 1
         assert w['CAD'] == Decimal('5.688')
 
+        # Test special shortcut constructor.
+        w = Wallet('1 CAD, 2 USD')
+        assert len(w) == 2
+        assert w['CAD'] == Decimal('1')
+        assert w['USD'] == Decimal('2')
+
         # Test copy constructor.
         w2 = Wallet(w)
         assert w is not w2

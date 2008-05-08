@@ -9,6 +9,21 @@ from itertools import count, izip, chain, repeat
 __all__ = ('render_tree', 'itertree', 'SimpleDummy')
 
 
+def iter_pairs(l):
+    """Iterate among pairs of items. The last item will be iterated with the
+    second set to None."""
+    i = iter(l)
+    b = i.next()
+    done = 0
+    while not done:
+        a = b
+        try:
+            b = i.next()
+        except StopIteration:
+            b = None
+            done = 1
+        yield a, b
+
 def render_tree(root, pred=None, rootname='.'):
     """
     Generic routine to render a tree of nodes into an cute ascii form. The only

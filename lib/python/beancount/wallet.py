@@ -24,12 +24,15 @@ class Wallet(dict):
             dict.__init__(self, (args,), **kwds)
         elif len(args) == 1 and isinstance(args[0], str):
             # Initialize from a string "num COM".
-            try:
-                num, com = args[0].split()
-            except ValueError:
-                raise ValueError(
-                    "Invalid string for initializing a Wallet: %s" % args[0])
-            dict.__init__(self, ((com, num),), **kwds)
+            init = []
+            for am in args[0].split(','):
+                try:
+                    num, com = am.strip().split()
+                    init.append((com, num))
+                except ValueError:
+                    raise ValueError(
+                        "Invalid string for initializing a Wallet: %s" % args[0])
+            dict.__init__(self, init, **kwds)
         else:
             # Initialize like a normal dictionary.
             dict.__init__(self, *args, **kwds)
@@ -58,7 +61,7 @@ class Wallet(dict):
             (com, amt) for com, amt in self.iteritems() if com in other)
 
     def mask_commodity(self, com):
-        "Return this wallet with only the commodities in the other wallet."
+        "Return this wallet with only its given commodity."
         w = Wallet()
         num = self.get(com, None)
         if num is not None:
