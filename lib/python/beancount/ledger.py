@@ -530,9 +530,10 @@ class Ledger(object):
 
                             # Remove the modifications to the account name.
                             accname = post.account_name
-                            if accname[0] in '[(':
+                            fchar = accname[0]
+                            if fchar in '[(':
                                 accname = accname.strip()[1:-1]
-                                post.virtual = VIRT_BALANCED if accname[0] else VIRT_UNBALANCED
+                                post.virtual = VIRT_BALANCED if fchar == '[' else VIRT_UNBALANCED
                             post.account = acc = self.get_account(accname, create=1)
 
                             acc.postings.append(post)
