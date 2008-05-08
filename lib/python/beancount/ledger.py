@@ -654,7 +654,7 @@ class Ledger(object):
                     line = nextline()
                     continue
 
-                self.log(CRITICAL, "Cannot recognize syntax: %s" % line,
+                self.log(CRITICAL, "Cannot recognize syntax:\n %s" % line.strip(),
                          (fn, lineno[0]))
                 line = nextline()
 
@@ -877,7 +877,7 @@ class CheckDirective(object):
     def parse(self, line, filename, lineno):
         mo = self.mre.match(line)
         if not mo:
-            self.ledger.log(CRITICAL, "Invalid check directive: %s" % line,
+            self.ledger.log(CRITICAL, "Invalid check directive:\n %s" % line.strip(),
                             (filename, lineno))
             return
         cdate = date(*map(int, mo.group(1, 2, 3)))
@@ -923,7 +923,7 @@ class CheckDirective(object):
                 sb = balance or 'nothing'
                 diff = chk.diff or 'nothing'
                 ledger.log(ERROR,
-                           ("Balance check failed at  %s  %s :\n  Got:       %s\n"
+                           ("Check failed at  %s  %s :\n  Got:       %s\n"
                            "  Expecting: %s  \n  Diff: %s\n") %
                            (cdate, acc.fullname, sb, se, diff), chk)
 
@@ -1059,7 +1059,7 @@ class AutoPadDirective(object):
     def parse(self, line, filename, lineno):
         mo = self.mre.match(line)
         if not mo:
-            self.ledger.log(CRITICAL, "Invalid pad directive: %s" % line,
+            self.ledger.log(CRITICAL, "Invalid pad directive:\n %s" % line.strip(),
                             (filename, lineno))
             return
 

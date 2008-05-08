@@ -31,6 +31,8 @@ parser:
 
 - Bug: A transaction without postings should barf.
 
+- Bug: Invalid account names should only be reported once.
+
 - Review the dates inequalities, incl + excl, like compsci
 
   * Clarify this for @check as well, it should probably be at the end
@@ -387,11 +389,7 @@ is going somewhere.
 Another technique I've tried in order to track book value is to create
 subaccounts for each of the commodities traded. The problem with that
 is that when you have many commodities, it *stinks* (long account
-names), and also, the @check directive currently doesn't allow me to
-check the balance of an account including its subaccounts (maybe I
-should change that, but I haven't felt a need for it... the simple
-version works well enough otherwise, for the kinds of use of @check
-that I've made until this experiment).
+names).
 
 
 Specialized Syntax?
