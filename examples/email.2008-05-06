@@ -1,0 +1,96 @@
+Hi John
+
+I'm almost done reconciling all my finances back to july 2006. I've
+been working on and off over the past couple of weeks due to other
+projects taking over. Right now, I'm trying to finish up this
+reconciliation by adding data from my investing accounts.
+
+I'm trying to solve capital gains problem... there are some issues:
+the commissions must not be counted as part of the cost nor the profit
+(basically, the cost should include the commission, and the proceeds
+should have the commission subtracted). What I'm trying to do is to
+find a way to 1) accomodate the account that I used for the broker
+account to reflect the actual statment of activity (so I can compare
+them), and 2) to automatically compute the gains. Ideally, the
+cost-per-share would be automatically computed using the average value
+(this would be easy if the system can track the total amount spent for
+each commodity).
+
+
+Automatic assignment of non-balanced virtual transactions
+---------------------------------------------------------
+
+I haven't yet found the right way to do this, but while trying to
+figure the right set of transactions, I had an idea: wouldn't it be
+great if a non-balanced virtual transaction would automatically be set
+to the balance of the balanced transactions? e.g.::
+
+  2008-02-01 * Buy some Bananas.
+    Assets:Investments:Broker               30 Banana @ 12.00 CAD
+    Assets:Investments:Broker               
+    Expenses:Financial:Commissions               7.95 CAD
+    (Cost:Banana)                           
+
+In this example, both posting (2) and (4) would be assigned the value
+"-367.95 CAD". Normally, such transactions that have no amount are not
+allowed by the syntax. I'm quite certain that this added syntactic
+sugar could find uses. If there are no empty balanced postings, a
+virtual non-balanced posting should still not be allowed.
+
+
+Channeling Separates Costs to Normal and Virtual
+------------------------------------------------
+
+Another idea, that came about, is after I realized that in the syntax
+that includes the cost, the price is almost useless::
+
+    Assets:Investments:Broker             -20 Banana {12.00 CAD} @ 14.00 CAD
+
+14.00 CAD is not used, other than for setting a historical price point
+in the price database, a feature which has dubious use, since in most
+cases the user is interested in the "current" market value, and also,
+if the user is interested in the historical market value, the price
+points provided by the rare sale events are not very valueable (you'd
+have some other way to get the historical prices anyway).
+
+So I propose to extend this syntax a little bit: by specifying two
+share prices (or two costs, with {{}} or @@), you would be injecting a
+value for the posting into two sets of balances: the non-virtual, and
+the balanced virtual. For example::
+
+  2008-02-01 * Sell some Bananas.
+    Assets:Investments:Broker             -20 Banana {12.00 CAD} @ 14.00 CAD
+    Assets:Investments:Broker             280.00 CAD   <-- optional
+    [Income:Investments:Capital-Gains]    240.00 CAD   <-- optional
+    
+I'm not entirely sure that this is the way to go, but I feel that this
+is going somewhere. 
+
+Another technique I've tried in order to track book value is to create
+subaccounts for each of the commodities traded. The problem with that
+is that when you have many commodities, it *stinks* (long account
+names).
+
+
+Specialized Syntax?
+-------------------
+
+Maybe this capital gains tracking issue requires a special syntax (I
+know you hate that, but coming up with something that'll work may give
+some insight into how to solve this with the most simple marking that
+would do the most generic thing, that would support solving the
+problem elegantly while being as general as possible).
+
+What I need, is for the computer to track the total sum of each
+commodity within a single account (something like what is done
+explicitly in capgains1.ledger). I'm fine with always assuming that
+the book value of a commodity is the average for all the active
+positions. What I miss is the ability to automatically feed the
+average cost-per-share from this account into a posting.
+
+[I'll stop here for tonight, I'm too tired to continue.]
+
+        
+
+(In attachment you'll find some of the experiment ledgers I've been
+fiddling. They illustrate the problem to solve with some examples.)

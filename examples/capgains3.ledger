@@ -2,8 +2,8 @@
 
 ;; A test approach to using Ledger to compute Capital Gains.
 
-;; The approach attempts to leverage the cost specifiaction syntax ({{}}). 
-;; Unfortunately, I can't get it to deal with the commission properly on 
+;; The approach attempts to leverage the cost specifiaction syntax ({{}}).
+;; Unfortunately, I can't get it to deal with the commission properly on
 ;; the sell side.
 
 
@@ -34,31 +34,15 @@
   Assets:Investments:Broker
   Expenses:Financial:Commissions               7.95 CAD
 
-2008-02-02 * Buy some more Bananas.
-  Assets:Investments:Broker         10 Banana @ 12.50 CAD
-  Assets:Investments:Broker
-  Expenses:Financial:Commissions               7.95 CAD
-
-
 ;; The price of bananas goes up.
 
 2008-04-01 * Sell some Bananas.
   ;; The cost is calculated manually by the user.
-  Assets:Investments:Broker             -20 Banana {12.5225 CAD} @ 14.00 CAD
-  ;; Book commissions.
-  Expenses:Financial:Commissions           7.95 CAD
-  Assets:Investments:Broker               -7.95 CAD    
-  ;; As seen on trade confirmation slip.
-  Assets:Investments:Broker              272.05 CAD    
+  Assets:Investments:Broker             -30 Banana {{-367.95 CAD}} @ 14.00 CAD
+  ;; Amount from slip
+  Assets:Investments:Broker              412.05 CAD
+  ;; We have to make the commisions virtual, because otherwise the capital gains includes it... this stinks.
+  (Expenses:Financial:Commissions)           7.95 CAD
+  ;; Automatically computed gains.
   Income:Investments:Capital-Gains
 
-2008-04-02 * Sell some Bananas.
-  ;; The cost is calculated manually by the user.
-  Assets:Investments:Broker             -20 Banana {12.5225 CAD} @ 14.50 CAD
-  Expenses:Financial:Commissions          7.95 CAD
-  Assets:Investments:Broker              -7.95 CAD
-  ;; As seen on trade confirmation slip.
-  Assets:Investments:Broker             282.05 CAD
-  Income:Investments:Capital-Gains
-
-;; The declared gain should be 53.20.
