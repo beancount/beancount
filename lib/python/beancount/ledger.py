@@ -1096,7 +1096,7 @@ class AutoPadDirective(object):
             # to disambiguate cases where the date is equal.
             slist = ([((pad.pdate, 0), pad) for pad in pads] +
                      [((chk.cdate, 1), chk) for chk in checks] +
-                     [((post.actual_date, 2), post) for post in acc_target.postings])
+                     [((post.actual_date, 2), post) for post in acc_target.subpostings()])
             slist.sort()
 
             # The current pad, and a set of the commodities that have already
