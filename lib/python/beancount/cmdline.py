@@ -93,7 +93,7 @@ def reload(ledger):
     """
     # Note: we ignore the pickling for reload.
     ledger2 = Ledger()
-    
+
     for fn, encoding in ledger.parsed_files:
         f = open(fn)
         if encoding:
@@ -139,6 +139,10 @@ def select_addopts(parser):
                       "There are multiple valid time range formats. See source "
                       "for details.")
 
+    parser.add_option('-g', '--tag', action='store', metavar='REGEXP',
+                      help="Filter only the postings whose tag matches the "
+                      "expression.")
+
     ## parser.add_option('-o', '--open-balances', action='store_true',
     ##                   help="Include opening balance entries when filtering "
     ##                   "according to time.")
@@ -173,6 +177,14 @@ def create_filter_pred(opts):
     else:
         interval = None
 
+    if opts.tag:
+        try:
+            tagfun = re.compile(opts.tag, re.I).search
+        except re.error, e:
+            raise SystemExit(e)
+    else:
+        tagfun = None
+
     def pred(post):
         if acc_funs is not None:
             if all(not fun(post.account.fullname) for fun in acc_funs):
@@ -184,8 +196,11 @@ def create_filter_pred(opts):
             dbegin, dend = interval
             if not (dbegin <= post.actual_date < dend):
                 return False
+        if tagfun is not None:
+            if not (post.txn.tag and tagfun(post.txn.tag)):
+                return False
         return True
-        
+
     return pred
 
 

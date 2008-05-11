@@ -16,15 +16,10 @@ Beancount (Accounting)
 
 main focus:
 
-  * check capital gains, write tests
   * write tests for date inequalities
-  * add page filtering
-
 
 - You need to write a test with dates that are close by between
   @checks and with @pad in between.
-
-- FIXME: redistribute the expenses at regular intervals in blais.ledger
 
 
 parser:
@@ -208,8 +203,8 @@ serve:
   This way, I wouldn't even have to log in ssh in order to update the
   in-memory database...
 
-- BUG: There is a bug with collapsing the tree nodes in the ranges
-  page.
+- BUG: There is a JavaScrap bug with collapsing the tree nodes in the
+  ranges page.
 
 
 

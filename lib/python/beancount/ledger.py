@@ -115,7 +115,7 @@ class Account(object):
         n = len(self.postings)
         n += sum(len(child) for child in self.children)
         return n
-    
+
     def isroot(self):
         return self.fullname == ''
 
@@ -190,6 +190,11 @@ class Transaction(Dated):
     # payee. If there is separator, we simply leave the 'payee' field empty.
     payee = None
     narration = None
+
+    # The tag is a string that is assigned to a set of transactions, using the
+    # @begintag and @endtag directives. This can be used to mark transactions
+    # during a trip, for example.
+    tag = None
 
     # The vector sum of the various postings here-in contained.
     wallet = None
@@ -314,8 +319,11 @@ class Ledger(object):
         add_directive(DefineAccountDirective(self))
         add_directive(AutoPadDirective(self, check))
         add_directive(DefvarDirective(self))
-        add_directive(BeginPageDirective(self))
-        add_directive(EndPageDirective(self))
+        add_directive(BeginTagDirective(self))
+        add_directive(EndTagDirective(self))
+
+        # Current tag that is being assigned to transactions during parsing.
+        self.tag = None
 
     def isvalid(self):
         "Return true if the ledger has not had critical errors."
@@ -422,12 +430,6 @@ class Ledger(object):
          '(?:\s+@(@?)(?:\s+%(amount)s))?\s*(?:;(.*))?\s*$') %  # price/note
         {'amount': amount_re.pattern, 'account': postaccount_re.pattern})
 
-## FIXME: remove
-    ## mo = posting_re.match('  Assets:Broker               10 AAPL {{1110.00 USD}} @ 121.00 USD  ; blie')
-    ## for i, x in enumerate(mo.groups()):
-    ##     print i+1, x
-    ## raise SystemExit
-
     # Pattern for the directives, and the special commands.
     directive_re = re.compile('^@([a-z_]+)\s+([^;]*)(;.*)?')
     special_re = re.compile('([YPNDCiobh])\s+')
@@ -489,6 +491,7 @@ class Ledger(object):
                     txn.filename = fn
                     txn.lineno = lineno[0]
                     txn.ordering = next_ordering()
+                    txn.tag = self.tag
                     self.transactions.append(txn)
 
                     try:
@@ -995,26 +998,42 @@ class DefineAccountDirective(object):
 
 
 
-class BeginPageDirective(object):
+class BeginTagDirective(object):
     """
     Set a page attribute to the transactions between beginpage and endpage
     directives.
     """
-    name = 'beginpage'
+    name = 'begintag'
     prio = 1
 
     def __init__(self, ledger):
         self.ledger = ledger
 
     def parse(self, line, filename, lineno):
-        pass
-## FIXME: TODO
+        ledger = self.ledger
+
+        tag = line.strip()
+        if ledger.tag is not None:
+            ledger.log(ERROR, "Nested tags not supported. Tag %s ignored." % tag,
+                       (filename, lineno))
+            return
+
+        ledger.tag = tag
 
     def apply(self):
+        # Nothing to do: the tag has been set on the transaction objects during
+        # parsing.
         pass
 
-class EndPageDirective(BeginPageDirective):
-    name = 'endpage'
+class EndTagDirective(BeginTagDirective):
+    name = 'endtag'
+
+    def parse(self, line, filename, lineno):
+        ledger = self.ledger
+        assert ledger.tag is not None
+        ledger.tag = None
+
+
 
 
 

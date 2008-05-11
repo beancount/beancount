@@ -217,7 +217,7 @@ def ranges(app, ctx):
     table = TABLE(id='ranges', CLASS='treetable')
     table.append(THEAD(TR(TH(), TH("Oldest Chk"), TH("Newest Chk"), TH("Days since"))))
     it = iter(itertree(ctx.ledger.get_root_account(), pred=attrgetter('checked')))
-    for acc, td1, tr in treetable_builder(table, it):
+    for acc, td1, tr, _ in treetable_builder(table, it):
         td1.append(
             A(acc.name, href='/register/%s' % acc.fullname, CLASS='accomp'))
 
