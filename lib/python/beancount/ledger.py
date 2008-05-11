@@ -110,6 +110,12 @@ class Account(object):
         return "<Account '%s'>" % self.fullname
     __repr__ = __str__
 
+    def __len__(self):
+        "Return the number of subpostings for the account."
+        n = len(self.postings)
+        n += sum(len(child) for child in self.children)
+        return n
+    
     def isroot(self):
         return self.fullname == ''
 

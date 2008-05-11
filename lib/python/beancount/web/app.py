@@ -147,7 +147,10 @@ def balance(app, ctx):
 
     table = TABLE(id='balance', CLASS='treetable')
     it = iter(itertree(ctx.ledger.get_root_account()))
-    for acc, td1, tr in treetable_builder(table, it):
+    for acc, td1, tr, skip in treetable_builder(table, it):
+        if len(acc) == 0:
+            skip()
+            continue
         td1.append(
             A(acc.name, href=umap('@@Register', acc.fullname), CLASS='accomp'))
         tr.append(
@@ -178,6 +181,10 @@ def treetable_builder(tbl, iterator, skiproot=False):
     if skiproot:
         iterator.next()
 
+    skipflag = []
+    def skipfun():
+        skipflag.append(1)
+
     spc = SPAN(CLASS='foldspc')
     for ordering, isterminal, node in iterator:
         rowid = '%s_%s' % (iid, '_'.join(str(x) for x in ordering))
@@ -191,8 +198,13 @@ def treetable_builder(tbl, iterator, skiproot=False):
 
         td = TD(pretitle, CLASS='tree')
         tr = TR(td, id=rowid)
-        tbl.append(tr)
-        yield node, td, tr
+        yield node, td, tr, skipfun
+        if skipflag:
+            skipflag[:] = []
+        else:
+            tbl.append(tr)
+
+
 
 
 
