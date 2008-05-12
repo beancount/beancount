@@ -109,12 +109,7 @@ scripts:
 
 - Write a script to laod the data into an SQL database.
 
-- Implement a web server and all pages being served from memory.
-
 - Figure out how to show balance to market value.
-
-- Make this available publicly (segregate the flair code more
-  clearly).
 
 - Figure out how to do stock splits properly.
 
@@ -122,8 +117,6 @@ scripts:
 
 - Check time ranges should also output the ranges of transactions
   present in the file.
-
-- Check balances for transactions that are in [].
 
 - Add a command to print the parsed transactions register in the order
   they were read in.
@@ -179,7 +172,7 @@ doc/examples/demos:
       Assets:Current:RBC:Checking-US                                -89050.66 USD @ 0.9901 CAD
       Assets:Current:RBC:Savings                                     88169.06 CAD
 
-  The costs are:
+  The costs are::
 
     2008-02-14 * FUNDS TRANSFER
       Assets:Current:RBC:Checking-US                                -88169.06 CAD
@@ -244,9 +237,9 @@ Ideas
   date and the account being imported, so that we could check if this
   posting or transaction had already been imported before.
 
-- Add directives to support import:
+- Add directives to support import::
 
-  @imported <FROMDATE> <TODATE> <ACCOUNT>
+   @imported <FROMDATE> <TODATE> <ACCOUNT>
 
   Using the intersection of these date intervals and the account name,
   you can determine what has already been imported and avoid importing
