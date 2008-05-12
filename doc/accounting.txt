@@ -176,7 +176,7 @@ as a very simple data structure, using just a few database tables. I
 tried to use GnuCash, and quickly gave up: it was buggy and difficult
 to use. I did searches on the internet, which turned up a number of
 large bloated systems, until I found "Ledger", a simple program
-written by John Wietley, which was using simple text files to solve
+written by John Wiegley, which was using simple text files to solve
 the problem elegantly. I learned a lot by just playing with Ledger (I
 could not sleep for a few days, was so excited with the elegance of
 the solution).

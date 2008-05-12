@@ -51,7 +51,7 @@
 Why I'm Rewriting Ledger
 ========================
 
-IMHO 'Ledger' is sligthly falling short in the following ways:
+IMHO 'Ledger' is slightly falling short in the following ways:
 
 * It is written as a single program of C++ code, which
   includes three distinct parts:
@@ -723,6 +723,7 @@ they, actual vs. effective dates?
 Actual dates and "money in transit"
 +++++++++++++++++++++++++++++++++++
 
+::
 
   (16:51:46) blais: now let's talk about the actual date.
   (16:52:06) blais: If you set an actual date for a transaction != than for its parent, don't you run the risk that the books be imbalance for a short period of time?
@@ -784,6 +785,7 @@ when I try this in a file, it doesn't barf::
 I don't see a need for marking individual sides of a transaction as
 pending... is this a remnant from the past?
 
+::
 
   (17:05:40) blais: In the Emacs support file, there seems to be an hint that individual
   (17:05:40) blais: "transactions" (within entries) could be marked as pending. In fact,
@@ -808,17 +810,19 @@ Q: Periods don't work
 
 Questions for John:
 
-(18:08:59) blais: banane:~$ ledger-blais -E -s -b 2008/01/01 -e 2008/02/01 bal
-(18:09:03) blais: this gives me 0
-(18:09:10) blais: i have a hard time getting -b and -e to work.
-(18:09:12) blais: what is the format?
+::
 
-all the period options don't seem to work.
+ (18:08:59) blais: banane:~$ ledger-blais -E -s -b 2008/01/01 -e 2008/02/01 bal
+ (18:09:03) blais: this gives me 0
+ (18:09:10) blais: i have a hard time getting -b and -e to work.
+ (18:09:12) blais: what is the format?
+
+all the period options don't seem to work::
 
   This is a bug; Use DEBUG_CLASS=ledger.config.predicates and compile
   with --enable-debug on.
 
-Using the DEBUG_CLASS:
+Using the DEBUG_CLASS::
 
   // The result has to be an iostream.
   DEBUG_PRINT("class", foo << bar, << baz);
@@ -834,6 +838,8 @@ How do you reset the "default account" feature?
 +++++++++++++++++++++++++++++++++++++++++++++++
 
 You can't, right now, but ACK that this is a problem.
+
+::
 
   (17:07:37) blais: about the default account feature
   (17:07:41) blais: A <account>
@@ -860,18 +866,20 @@ Currency and prices
 Q: How does currency and prices work?  @ <PRICE> syntax, what does it
    do exactly?
 
-(17:23:43) blais: Q: How does currency and prices work?  @ <PRICE> syntax, what does it
-(17:23:43) blais:    do exactly?
-(17:23:57) johnw: what's the context?
-(17:23:59) blais: I'm not entirely sure what happens (technically) when you specify a price.
-(17:24:06) johnw: lots of stuff happens, actually
-(17:24:10) johnw: let me enumerate
-(17:24:13) blais: it's used for balancing, and somethign it affects the choice of the empty entry's commodioty
-(17:24:18) blais: please!
-(17:24:35) johnw: 1. It records a historical price for that commodity at the date of the entry (or transaction, if it has its own actual date)
-(17:24:53) johnw: 2. It create a lot-qualified (i.e., annotated) commodity with that price data as its qualifying details
-(17:25:15) johnw: 3. It sets the basis cost of the transaction for the purpose of balancing against the remainder of the entry
-(17:25:19) johnw: end
+::
+
+ (17:23:43) blais: Q: How does currency and prices work?  @ <PRICE> syntax, what does it
+ (17:23:43) blais:    do exactly?
+ (17:23:57) johnw: what's the context?
+ (17:23:59) blais: I'm not entirely sure what happens (technically) when you specify a price.
+ (17:24:06) johnw: lots of stuff happens, actually
+ (17:24:10) johnw: let me enumerate
+ (17:24:13) blais: it's used for balancing, and somethign it affects the choice of the empty entry's commodioty
+ (17:24:18) blais: please!
+ (17:24:35) johnw: 1. It records a historical price for that commodity at the date of the entry (or transaction, if it has its own actual date)
+ (17:24:53) johnw: 2. It create a lot-qualified (i.e., annotated) commodity with that price data as its qualifying details
+ (17:25:15) johnw: 3. It sets the basis cost of the transaction for the purpose of balancing against the remainder of the entry
+ (17:25:19) johnw: end
 
 
 
@@ -890,6 +898,8 @@ Q: Is there any reason you chose to use the '/' format for dates? This
    used for the american format (mm/dd/yyyy). I've never seen it like
    in Ledger. What's the story?
 
+   ::
+
      (17:35:34) johnw: you can use -
      (17:35:36) johnw: i'm just used to /
 
@@ -902,6 +912,8 @@ Real vs virtual transactions
 ++++++++++++++++++++++++++++
 
 Q: How are real vs. virtual transactions handled?
+
+::
 
      (17:36:30) johnw: --real strips virtuals, otherwise they are the same as real
      (17:36:33) blais: and is there anything different btw () virtual and [] virtual?
@@ -971,11 +983,13 @@ Q: Generating reports with debit/credit columns
   account/credit account confusion, but for reporting purposes, it
   would make sense to show it in the "usual" manner.
 
-(17:48:14) johnw: you can invert with "-t -a"
-(17:49:52) johnw: "-t /account/ ? -a : a"
-(17:50:06) johnw: surround everything after -t with single quotes
-(17:50:30) johnw: for a truly custom report, you'll have to export as XML and then read it in; or finish your Python port :)
-(17:50:50) johnw: ok, my wife and I are heading home, and will probably watch a TV show, I'll see you on IRC when I have time again!
+  ::
+
+   (17:48:14) johnw: you can invert with "-t -a"
+   (17:49:52) johnw: "-t /account/ ? -a : a"
+   (17:50:06) johnw: surround everything after -t with single quotes
+   (17:50:30) johnw: for a truly custom report, you'll have to export as XML and then read it in; or finish your Python port :)
+   (17:50:50) johnw: ok, my wife and I are heading home, and will probably watch a TV show, I'll see you on IRC when I have time again!
 
 
 
@@ -1096,7 +1110,7 @@ Ledger does not seem to be able to accept multiple -f options (further
 specified files in a single data set.
 
 
-I wish I could just say
+I wish I could just say::
 
   2008/01/03=2007/12/28 * Sell -- RHT -- RED HAT INC CA TAUX DE CHANGE    .96590
     Assets:Investments:RBC-Broker:Account-RSP                              -4.00 RHT @      21.14 CAD
@@ -1117,224 +1131,224 @@ Implementation Suggestions
 ==========================
 
 
-From: Martin Blais <blais@furius.ca>
-To:"John Wiegley" <johnw@newartisans.com>
-Cc: "Filippo Tampieri" <filippo.tampieri@gmail.com>
-Subject: Re: Haskell parser for Ledger
-BCC: blais+sent@furius.ca
---text follows this line--
-> >> I'm writing a simple parser in Python today. I want to see
-> > how fast it is (I mean, most of the parsing will be regexps
-> > anyway, which is fast-as-C, so I can't imagine it'll be much
-> > worse than the C code, at least not on my files... I'll ask
-> > someone on the forums to try to run it on a very large file,
-> > to see how it holds up).
->
-> I think a friend of mine wrote a Haskell parser based on regexps.  I
-> also have a complete parser in Common Lisp, if you're interested in
-> reading that instead of the C++ one.
-
-Can you point out the location of that code in CL? (I have a
-checkout of all newartisans Mercurial projects).
-
-
-> For certain usage scenarios (such as using Ledger as a backend library
-> for a full application), I entirely agree with you.  My model suits
-> one class of users: command-line users.  All choices have been made in
-> their favor (even if the set of possibilities was seriously limited,
-> like reporting options).
->
-> But I'm all for extending the model based on a common data format.  I
-> mean, the really important part is that I have a complete, immutable
-> data set going back 6 years now; the reporting and querying logic is
-> secondary to that -- albeit where all the exciting stuff happens.
-
-Your comment rings to true. I am 100% aligned with your way
-to thinking. The "little text file" way is for me a way of
-life, a way of dealing with information which, for people
-who are able to master the art of editing text files, is
-really, really powerful.
-
-However, you seem to imply that this is incompatible with
-using an SQL backend, and on that point only I would beg to
-differ. Apart from the hassle of having to setup the
-database server (a task which is by now very easy on all
-three platforms), the mode of working is still very much a
-cmdline oriented process. (Note that if/when sqlite obtains
-a nice finite-precision fp storing class we can then always
-assume an SQL backend, because setting up sqlite is a
-trivial matter.)
-
-In fact, my reporting code will generate abstract table
-data, which will then be fed to either a text renderer (for
-cmdline access), or to an HTML renderer (for creating web
-pages).
-
-
-> > 'ledger' has a ton of options for reporting, and I find them
-> > difficult to use and understand (oftentimes the options don't do
-> > what I expect them to, and their meaning depends on the actually
-> > command in use). I'd rather write my own reporting from the data
-> > model.
->
-> Ah, you are right here.  I find them confusing myself, sometimes.
-> UNIX command-line options are a poor substitute for a rich reporting
-> language.
-
-I've gone down that avenue myself before :-)
-It's exciting while your task is recent to memory, but over
-time it becomes hard to remember what meant what...
-
-
-> > * I want to make all the basic reporting available from my web
-> > server as HTML pages (much prettier, and I can access it anywhere,
-> > all the time).
->
-> I started doing this same thing with the CL port of Ledger.  I really
-> liked this style of reporting, since it conduces to _reading_ more
-> than paging through command-line output.  Plus, you can use bold,
-> italics and colors to much greater effect, not to mention charting.
-
-... and most of all, nicely aligned tables!
-
-Plus you can have links that you click on to obtain the
-register view...
-
-... and pie charts...
-
-... and graphs of PnL windows over time...
-
-... and I'm sure, lots of other things I can't think of now...
-
-
-> > * If you fiddle with the price syntaxes, you can easily make ledger
-> > dump core (I found it to be pretty stable, but there must be a few
-> > bugs left to iron out with the price stuff). This might be a problem
-> > when I start entering data for the investment accounts.
->
-> I would love bug reports!!! :)
-
-I'll take note the next time I crash it in the course of
-using it, but I was under the impression that you were
-moving on to the CL version.
-
-
-> > * I think that the author has decided to move on and more-or-less
-> > stop working on the C++ version and move to a CL implementation
-> > (using SBCL). It's a cool idea, and as you know I love LISP, but
-> > deployment is a real PIA, and I want to be able to run this
-> > everywhere-all-the-time on all my platforms (Mac UNIX Windoze), with
-> > minimal effort. You can't beat Python for that.
->
-> The deployment issues finally beat me down.  I'm turning back to
-> making the C++ version 100% correct and stable, and then I will stop
-> working on Ledger altogether.
->
-> What you are proposing sounds like "the next chapter", and I would be
-> very interested in supporting you in that endeavor.
-
-Awesome! Let me flesh out a first version, and then I'll
-setup a Mercurial repository from furius.ca, so you can
-participate first-hand if you like.
-
-I have a few questions about prices and such, things I do
-not quite understand clearly, that would be best discussed
-over voice.
-
-
-> > As mentioned above, I want to validate that my entries always fit a
-> > fixed set of accounts, which I declare near the top of the document.
-> > Moreover, those declarations further constrain the kinds of
-> > commodities that can be deposited in an account (possibly wildcard).
->
-> Very interesting, kind of like an asserts mechanism for your Ledger
-> data.  That is really an awesome idea!!
-
-Asserts: exactly what I want! (more below, I think this can
-be integrated in a more general idea.)
-
-
-> I'd like to see a more general syntax for this based on value
-> expressions, which would offer a full constraints mechanism.  For
-> example, to constrain all transactions to being less than $10,000 in
-> an account:
->
-> ? Constrain all transactions to less than $10,000
->    /Expenses:Food/      a < $10,000
->
-> The "?" indicates a "constraints entry".  Each transaction would have
-> two value expressions: one to match every applicable transaction in
-> the file, and another to provide the boolean logic of the constraint.
->
-> Then, while the file is being parsed, any violations of a constraint
-> would be treated as an error, the same as when an entry fails to
-> balance to zero.  I suppose making these warnings could be a
-> possibility as well.
->
-> Here is how you'd constrain commodities in this model:
->
-> ? Guarantee commodities within accounts
->    Assets:Checking    comm(a) == $1.00
->
-> (At the moment there is no value expr function that would allow:
-> comm(a) == "$")
->
-> Then, of course, there could be a specific declaration option -- such
-> as you have above -- for just this case, which internally would be
-> parsed as a constraints entry.
-
-This is a fantastic idea; I like the idea of creating a
-little language for constraints, but also this could be
-written in the form of a simple Python script that gets run
-as part of a checking stage. Once you're provided with easy
-access to the data model, a simple loop written in Python to
-do some custom checks is a 10 line program or something...
-if we find a way to open up user-code from within Python,
-you can leverage all the power of Python (and its libraries,
-accessing the network, etc) and then you don't even have to
-spend time on creating your own language.
-
-Note that this is also true for reporting: your reporting
-cmdline options are a form of language per se. IMO you would
-be better off creating a "reporting language" instead of the
-options.
-
-
-
-Note that I think it belongs in a later stage, now think
-about this:  it will be much more practical if we separate
-the concepts of "check" into distinct stages:
-
-A. Loading phase: simple syntax checking that occur during
-parsing:
-
-    At this stage, we don't even check if it balances, we
-    just parse and create the data structure, whether the
-    entries balance or not.
-
-B. Checking phase, which includes:
-
-   1. "Balance check": check that each of the Transactions
-      balances individually.
-
-   2. "Account validity check": check that all the account
-      names are in the list of defined names.
-
-   3. "Constraint check": the idea you flesh out above. I'm
-      not sure I would use it myself--I would rather
-      implement a little Python loop in a small source file
-      that gets automatically imported and run--but I'm sure
-      it would be useful.
-
-   4. "User-defined checks": user code that gets loaded and
-      run, being handed the data structure.
-
-I'm not 100% sure that all these checks should involve some
-syntax defined in the file (e.g. my list of account checks
-could feed from a separate file that defines the accounts,
-your list of conditions could be cmdline args), but I'm
-heavily biased towards the simplicity of keeping everything
-in a single file.
+| From: Martin Blais <blais@furius.ca>
+| To:"John Wiegley" <johnw@newartisans.com>
+| Cc: "Filippo Tampieri" <filippo.tampieri@gmail.com>
+| Subject: Re: Haskell parser for Ledger
+| BCC: blais+sent@furius.ca
+| --text follows this line--
+| > >> I'm writing a simple parser in Python today. I want to see
+| > > how fast it is (I mean, most of the parsing will be regexps
+| > > anyway, which is fast-as-C, so I can't imagine it'll be much
+| > > worse than the C code, at least not on my files... I'll ask
+| > > someone on the forums to try to run it on a very large file,
+| > > to see how it holds up).
+| >
+| > I think a friend of mine wrote a Haskell parser based on regexps.  I
+| > also have a complete parser in Common Lisp, if you're interested in
+| > reading that instead of the C++ one.
+| 
+| Can you point out the location of that code in CL? (I have a
+| checkout of all newartisans Mercurial projects).
+| 
+| 
+| > For certain usage scenarios (such as using Ledger as a backend library
+| > for a full application), I entirely agree with you.  My model suits
+| > one class of users: command-line users.  All choices have been made in
+| > their favor (even if the set of possibilities was seriously limited,
+| > like reporting options).
+| >
+| > But I'm all for extending the model based on a common data format.  I
+| > mean, the really important part is that I have a complete, immutable
+| > data set going back 6 years now; the reporting and querying logic is
+| > secondary to that -- albeit where all the exciting stuff happens.
+| 
+| Your comment rings to true. I am 100% aligned with your way
+| to thinking. The "little text file" way is for me a way of
+| life, a way of dealing with information which, for people
+| who are able to master the art of editing text files, is
+| really, really powerful.
+| 
+| However, you seem to imply that this is incompatible with
+| using an SQL backend, and on that point only I would beg to
+| differ. Apart from the hassle of having to setup the
+| database server (a task which is by now very easy on all
+| three platforms), the mode of working is still very much a
+| cmdline oriented process. (Note that if/when sqlite obtains
+| a nice finite-precision fp storing class we can then always
+| assume an SQL backend, because setting up sqlite is a
+| trivial matter.)
+| 
+| In fact, my reporting code will generate abstract table
+| data, which will then be fed to either a text renderer (for
+| cmdline access), or to an HTML renderer (for creating web
+| pages).
+| 
+| 
+| > > 'ledger' has a ton of options for reporting, and I find them
+| > > difficult to use and understand (oftentimes the options don't do
+| > > what I expect them to, and their meaning depends on the actually
+| > > command in use). I'd rather write my own reporting from the data
+| > > model.
+| >
+| > Ah, you are right here.  I find them confusing myself, sometimes.
+| > UNIX command-line options are a poor substitute for a rich reporting
+| > language.
+| 
+| I've gone down that avenue myself before :-)
+| It's exciting while your task is recent to memory, but over
+| time it becomes hard to remember what meant what...
+| 
+| 
+| > > * I want to make all the basic reporting available from my web
+| > > server as HTML pages (much prettier, and I can access it anywhere,
+| > > all the time).
+| >
+| > I started doing this same thing with the CL port of Ledger.  I really
+| > liked this style of reporting, since it conduces to _reading_ more
+| > than paging through command-line output.  Plus, you can use bold,
+| > italics and colors to much greater effect, not to mention charting.
+| 
+| ... and most of all, nicely aligned tables!
+| 
+| Plus you can have links that you click on to obtain the
+| register view...
+| 
+| ... and pie charts...
+| 
+| ... and graphs of PnL windows over time...
+| 
+| ... and I'm sure, lots of other things I can't think of now...
+| 
+| 
+| > > * If you fiddle with the price syntaxes, you can easily make ledger
+| > > dump core (I found it to be pretty stable, but there must be a few
+| > > bugs left to iron out with the price stuff). This might be a problem
+| > > when I start entering data for the investment accounts.
+| >
+| > I would love bug reports!!! :)
+| 
+| I'll take note the next time I crash it in the course of
+| using it, but I was under the impression that you were
+| moving on to the CL version.
+| 
+| 
+| > > * I think that the author has decided to move on and more-or-less
+| > > stop working on the C++ version and move to a CL implementation
+| > > (using SBCL). It's a cool idea, and as you know I love LISP, but
+| > > deployment is a real PIA, and I want to be able to run this
+| > > everywhere-all-the-time on all my platforms (Mac UNIX Windoze), with
+| > > minimal effort. You can't beat Python for that.
+| >
+| > The deployment issues finally beat me down.  I'm turning back to
+| > making the C++ version 100% correct and stable, and then I will stop
+| > working on Ledger altogether.
+| >
+| > What you are proposing sounds like "the next chapter", and I would be
+| > very interested in supporting you in that endeavor.
+| 
+| Awesome! Let me flesh out a first version, and then I'll
+| setup a Mercurial repository from furius.ca, so you can
+| participate first-hand if you like.
+| 
+| I have a few questions about prices and such, things I do
+| not quite understand clearly, that would be best discussed
+| over voice.
+| 
+| 
+| > > As mentioned above, I want to validate that my entries always fit a
+| > > fixed set of accounts, which I declare near the top of the document.
+| > > Moreover, those declarations further constrain the kinds of
+| > > commodities that can be deposited in an account (possibly wildcard).
+| >
+| > Very interesting, kind of like an asserts mechanism for your Ledger
+| > data.  That is really an awesome idea!!
+| 
+| Asserts: exactly what I want! (more below, I think this can
+| be integrated in a more general idea.)
+| 
+| 
+| > I'd like to see a more general syntax for this based on value
+| > expressions, which would offer a full constraints mechanism.  For
+| > example, to constrain all transactions to being less than $10,000 in
+| > an account:
+| >
+| > ? Constrain all transactions to less than $10,000
+| >    /Expenses:Food/      a < $10,000
+| >
+| > The "?" indicates a "constraints entry".  Each transaction would have
+| > two value expressions: one to match every applicable transaction in
+| > the file, and another to provide the boolean logic of the constraint.
+| >
+| > Then, while the file is being parsed, any violations of a constraint
+| > would be treated as an error, the same as when an entry fails to
+| > balance to zero.  I suppose making these warnings could be a
+| > possibility as well.
+| >
+| > Here is how you'd constrain commodities in this model:
+| >
+| > ? Guarantee commodities within accounts
+| >    Assets:Checking    comm(a) == $1.00
+| >
+| > (At the moment there is no value expr function that would allow:
+| > comm(a) == "$")
+| >
+| > Then, of course, there could be a specific declaration option -- such
+| > as you have above -- for just this case, which internally would be
+| > parsed as a constraints entry.
+| 
+| This is a fantastic idea; I like the idea of creating a
+| little language for constraints, but also this could be
+| written in the form of a simple Python script that gets run
+| as part of a checking stage. Once you're provided with easy
+| access to the data model, a simple loop written in Python to
+| do some custom checks is a 10 line program or something...
+| if we find a way to open up user-code from within Python,
+| you can leverage all the power of Python (and its libraries,
+| accessing the network, etc) and then you don't even have to
+| spend time on creating your own language.
+| 
+| Note that this is also true for reporting: your reporting
+| cmdline options are a form of language per se. IMO you would
+| be better off creating a "reporting language" instead of the
+| options.
+| 
+| 
+| 
+| Note that I think it belongs in a later stage, now think
+| about this:  it will be much more practical if we separate
+| the concepts of "check" into distinct stages:
+| 
+| A. Loading phase: simple syntax checking that occur during
+| parsing:
+| 
+|     At this stage, we don't even check if it balances, we
+|     just parse and create the data structure, whether the
+|     entries balance or not.
+| 
+| B. Checking phase, which includes:
+| 
+|    1. "Balance check": check that each of the Transactions
+|       balances individually.
+| 
+|    2. "Account validity check": check that all the account
+|       names are in the list of defined names.
+| 
+|    3. "Constraint check": the idea you flesh out above. I'm
+|       not sure I would use it myself--I would rather
+|       implement a little Python loop in a small source file
+|       that gets automatically imported and run--but I'm sure
+|       it would be useful.
+| 
+|    4. "User-defined checks": user code that gets loaded and
+|       run, being handed the data structure.
+| 
+| I'm not 100% sure that all these checks should involve some
+| syntax defined in the file (e.g. my list of account checks
+| could feed from a separate file that defines the accounts,
+| your list of conditions could be cmdline args), but I'm
+| heavily biased towards the simplicity of keeping everything
+| in a single file.
 
 
 Python as input syntax
@@ -1484,71 +1498,71 @@ they are easy to find-- the program can do that).
 Terminology
 ===========
 
-  BTW after fiddling with a few systems I would suggest the
-  following names for the objects/tables:
-
-  - Posting: an individual entry in a specific account (the
-    basic register view is a list of postings).
-
-  - Transaction: the thing that contains the individual
-    postings.
-
-  The word "journal entry" seems to have been abused left and
-  right, and should be best avoided. "Item" is too generic.
-  The names above are what I'm using through this long email.
-
-
-
-  > > I'm also toying with the idea of giving accounts longer,
-  > > more descriptive names, which would be used in reporting,
-  > > but I'm not sure it won't just make things more complicated
-  > > than necessary. Each account as a specific name that the
-  > > bank uses for it, for example "High-Power e-Savings
-  > > Account". I'd like to be able to see those in the final
-  > > report. Maybe I can leave it out of the ledger format and
-  > > just use a join to an anciliary table in my reporting code.
-  >
-  > Account aliases are already possible, such as:
-  >
-  >    @alias Savings = High-Power e-Savings Account
-  >
-  > Now you can using "Savings" in your ledger data, but real account name
-  > used will be the long form.
-
-  Ah, coool! I didn't know that. Awesome!!!
-
-
-  > > Reconciled Dates
-  > > ~~~~~~~~~~~~~~~~
-  > >
-  > > One problem I have is that it is not obvious to figure out
-  > > at a glance which accounts need updating. I would like a
-  > > directive that says "this account is up-to-date as of DATE".
-  > > From this, you can generate a little table that prints out
-  > > the last updated date ranges for each account for which it
-  > > matters. Only accounts for which such a directive has been
-  > > shown should be included in the list::
-  > >
-  > >  ;B 2008/04/01 Liabilities:Credit-Card:RBC-VISA
-  > >
-  > > Note that only the minimum and maximum values matter. Using
-  > > a command to generate the ranges, it's really easy to see
-  > > that you forgot to update a specific account (I have so many
-  > > accounts now, I get very confused; I like the computer to
-  > > help out.)
-  >
-  > If you use the -U reporting option, it will show you all transactions
-  > which are not up-to-date yet.  Can you describe the usage profile for
-  > this option?
-
-  Actually, I don't think the transactions embody all the
-  information: if an account has been inactive for two months,
-  e.g., it has no transactions in it, I still want to be able
-  to mark in the file that "I have checked until this date",
-  so that I won't have to go check again that really, nothing
-  happened since the last transaction. This is just to manage
-  the process of entering and reconciling the data (for the
-  human).
+|   BTW after fiddling with a few systems I would suggest the
+|   following names for the objects/tables:
+| 
+|   - Posting: an individual entry in a specific account (the
+|     basic register view is a list of postings).
+| 
+|   - Transaction: the thing that contains the individual
+|     postings.
+| 
+|   The word "journal entry" seems to have been abused left and
+|   right, and should be best avoided. "Item" is too generic.
+|   The names above are what I'm using through this long email.
+| 
+| 
+| 
+|   > > I'm also toying with the idea of giving accounts longer,
+|   > > more descriptive names, which would be used in reporting,
+|   > > but I'm not sure it won't just make things more complicated
+|   > > than necessary. Each account as a specific name that the
+|   > > bank uses for it, for example "High-Power e-Savings
+|   > > Account". I'd like to be able to see those in the final
+|   > > report. Maybe I can leave it out of the ledger format and
+|   > > just use a join to an anciliary table in my reporting code.
+|   >
+|   > Account aliases are already possible, such as:
+|   >
+|   >    @alias Savings = High-Power e-Savings Account
+|   >
+|   > Now you can using "Savings" in your ledger data, but real account name
+|   > used will be the long form.
+| 
+|   Ah, coool! I didn't know that. Awesome!!!
+| 
+| 
+|   > > Reconciled Dates
+|   > > ~~~~~~~~~~~~~~~~
+|   > >
+|   > > One problem I have is that it is not obvious to figure out
+|   > > at a glance which accounts need updating. I would like a
+|   > > directive that says "this account is up-to-date as of DATE".
+|   > > From this, you can generate a little table that prints out
+|   > > the last updated date ranges for each account for which it
+|   > > matters. Only accounts for which such a directive has been
+|   > > shown should be included in the list::
+|   > >
+|   > >  ;B 2008/04/01 Liabilities:Credit-Card:RBC-VISA
+|   > >
+|   > > Note that only the minimum and maximum values matter. Using
+|   > > a command to generate the ranges, it's really easy to see
+|   > > that you forgot to update a specific account (I have so many
+|   > > accounts now, I get very confused; I like the computer to
+|   > > help out.)
+|   >
+|   > If you use the -U reporting option, it will show you all transactions
+|   > which are not up-to-date yet.  Can you describe the usage profile for
+|   > this option?
+| 
+|   Actually, I don't think the transactions embody all the
+|   information: if an account has been inactive for two months,
+|   e.g., it has no transactions in it, I still want to be able
+|   to mark in the file that "I have checked until this date",
+|   so that I won't have to go check again that really, nothing
+|   happened since the last transaction. This is just to manage
+|   the process of entering and reconciling the data (for the
+|   human).
 
 
 

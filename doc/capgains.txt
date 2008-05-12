@@ -25,7 +25,7 @@
 
       1) convert the cost to CAD, convert the proceeds to CAD, then take the
       difference?
-        (removing the commissions before converting each time)
+      (removing the commissions before converting each time)
 
       or
 
