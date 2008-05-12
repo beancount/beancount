@@ -8,9 +8,9 @@ from collections import *
 ## __all__ += _abcoll.__all__
 
 ## from _collections import deque, defaultdict
-## from operator import itemgetter as _itemgetter
-## from keyword import iskeyword as _iskeyword
-## import sys as _sys
+from operator import itemgetter as _itemgetter
+from keyword import iskeyword as _iskeyword
+import sys as _sys
 
 def namedtuple(typename, field_names, verbose=False):
     """Returns a new subclass of tuple with named fields.
