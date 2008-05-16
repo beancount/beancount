@@ -199,6 +199,8 @@ serve:
 - BUG: There is a JavaScrap bug with collapsing the tree nodes in the
   ranges page.
 
+- We really should display the code/check number in the web register
+  output.
 
 
 reporting:
