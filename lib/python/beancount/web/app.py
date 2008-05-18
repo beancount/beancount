@@ -14,7 +14,8 @@ from urlparse import urlparse
 from itertools import izip, count
 
 # other imports
-from htmlout import *
+## from htmlout import *
+from xmlout import *
 
 # beancount imports
 from beancount.ledger import compute_balsheet, Account
@@ -28,15 +29,15 @@ from beancount import cmdline
 class Template(object):
     "Base template for all our pages."
 
-    header = DIV(A(IMG(src='header-universal-dollar.jpg', id='logo')),
-                 id='header')
-
     output_encoding = 'utf8'
 
     def __init__(self):
         self.initialize()
 
     def initialize(self):
+        self.header = DIV(A(IMG(src=umap('@@Logo'), id='logo')),
+                          id='header')
+
         self.body = BODY()
         self.head = HEAD(
             META(http_equiv="Content-Type",
@@ -69,34 +70,30 @@ class Template(object):
                ),
             id='style-selector')
 
-        self.body.append(self.header)
-        self.body.append(self.reload)
-        self.body.append(self.style)
-        self.body.append(self.navigation)
-        self.body.append(self.document)
+        self.body.add(self.header)
+        self.body.add(self.reload)
+        self.body.add(self.style)
+        self.body.add(self.navigation)
+        self.body.add(self.document)
 
-        self.append = self.document.append
+        self.add = self.document.add
 
     def render(self, app):
-        contents = tostring(self.html,
-                            doctype=1,
-                            encoding=self.output_encoding,
-                            pretty=1)
         app.setHeader('Content-Type','text/html')
-        app.write(contents)
+        contents = tostring(self.html, app,
+                            encoding=self.output_encoding)
 
 def ljoin(l, sep):
     "Intersperse the given list with the object 'seq'."
     if l:
-        nl = [(x, sep) for x in l[:-1]]
-        nl.append(l[-1])
+        nl = [(x, sep) for x in l[:-1]] + [l[-1]]
     else:
         nl = l
     return nl
 
 def hwallet(w):
     "Return some HTML suitable for rendering a wallet."
-    return ljoin([SPAN('%s %s' % (a,c), CLASS='amount') for (c,a) in w.round().tostrlist()], ',')
+    return ljoin([SPAN('%s %s' % (a,c), CLASS='amount') for (c,a) in w.round().tostrlist()], ', ')
 
 
 
@@ -124,16 +121,18 @@ def cachefunc(func):
 def haccount(accname):
     "Return some HTML for a full account name."
     l = []
+    append = l.append
     comps = []
+    cappend = comps.append
     for comp in accname.split(Account.sep):
-        comps.append(comp)
+        cappend(comp)
         name = Account.sep.join(comps)
-        l.append(A(comp, href=umap('@@Register', name), CLASS='accomp'))
+        append(A(comp, href=umap('@@Register', name), CLASS='accomp'))
     return SPAN(ljoin(l, SPAN(Account.sep, CLASS='accsep')), CLASS='account')
 
 def info(app, ctx):
     page = Template()
-    page.append(H1("Ledger Home"))
+    page.add(H1("Ledger Home"))
     return page.render(app)
 
 def balance(app, ctx):
@@ -151,13 +150,13 @@ def balance(app, ctx):
         if len(acc) == 0:
             skip()
             continue
-        td1.append(
+        td1.add(
             A(acc.name, href=umap('@@Register', acc.fullname), CLASS='accomp'))
-        tr.append(
+        tr.add(
             TD(hwallet(getattr(acc, 'balance').round()), CLASS='wallet'),
             TD(hwallet(getattr(acc, 'local_balance').round()), CLASS='wallet'))
 
-    page.append(H1('Balance Sheet'), table)
+    page.add(H1('Balance Sheet'), table)
     return page.render(app)
 
 
@@ -174,7 +173,7 @@ def treetable_builder(tbl, iterator, skiproot=False):
     """
     iid = tbl.attrib['id']
 
-    ## page.append(
+    ## page.add(
     ##     A(u'<+>', onclick="treetable_expandAll('balance');"),
     ##     A(u'<->', onclick="treetable_collapseAll('balance');"))
 
@@ -202,7 +201,7 @@ def treetable_builder(tbl, iterator, skiproot=False):
         if skipflag:
             skipflag[:] = []
         else:
-            tbl.append(tr)
+            tbl.add(tr)
 
 
 
@@ -215,10 +214,10 @@ def ranges(app, ctx):
 
     today = date.today()
     table = TABLE(id='ranges', CLASS='treetable')
-    table.append(THEAD(TR(TH(), TH("Oldest Chk"), TH("Newest Chk"), TH("Days since"))))
+    table.add(THEAD(TR(TH(), TH("Oldest Chk"), TH("Newest Chk"), TH("Days since"))))
     it = iter(itertree(ctx.ledger.get_root_account(), pred=attrgetter('checked')))
     for acc, td1, tr, _ in treetable_builder(table, it):
-        td1.append(
+        td1.add(
             A(acc.name, href='/register/%s' % acc.fullname, CLASS='accomp'))
 
         if acc.checked:
@@ -227,7 +226,7 @@ def ranges(app, ctx):
         else:
             tr.extend(TD() for _ in xrange(3))
 
-    page.append(H1('Updated Ranges'), table)
+    page.add(H1('Updated Ranges'), table)
     return page.render(app)
 
 
@@ -286,7 +285,7 @@ def register(app, ctx):
                 TD(hwallet(txn_amount), CLASS='wallet'),
                 TD(hwallet(balance), CLASS='wallet'),
                 CLASS='txn')
-        table.append(tr)
+        table.add(tr)
 
         # Display the postings.
         if style != 'compact':
@@ -307,15 +306,15 @@ def register(app, ctx):
                         TD(),
                         TD(),
                         CLASS='posting')
-                table.append(tr)
+                table.add(tr)
 
     # Add the remaining checks.
     register_insert_checks(acc_checks, table)
 
     if acc.isroot():
-        page.append(H1('General Ledger'), table)
+        page.add(H1('General Ledger'), table)
     else:
-        page.append(H1('Register for', haccount(acc.fullname)), table)
+        page.add(H1('Register for', haccount(acc.fullname)), table)
 
     return page.render(app)
 
@@ -350,7 +349,7 @@ def register_insert_checks(checklist, table, date=None):
                     TD(hwallet(chk.diff)),
                     TD(hwallet(chk.balance), CLASS='wallet'),
                     CLASS='assert', style=trsty)
-            table.append(tr)
+            table.add(tr)
             del checklist[0]
         else:
             break
@@ -363,9 +362,9 @@ def source(app, ctx):
     page = Template()
     div = DIV(id='source')
     for i, line in izip(count(1), ctx.ledger.source):
-        div.append(PRE("%4d  |%s" % (i, line.strip())), A(name='line%d' % i))
+        div.add(PRE("%4d  |%s" % (i, line.strip())), A(name='line%d' % i))
 
-    page.append(H1('Source'), div)
+    page.add(H1('Source'), div)
     return page.render(app)
 
 
@@ -382,14 +381,14 @@ def messages(app, ctx):
     Report all ledger errors.
     """
     page = Template()
-    page.append(H1('Parsing Messages'))
+    page.add(H1('Parsing Messages'))
 
     ledger = ctx.ledger
-    div, = page.append(DIV(CLASS='message'))
-    tbl, = div.append(TABLE())
+    div, = page.add(DIV(CLASS='message'))
+    tbl, = div.add(TABLE())
     for msg in ledger.messages:
         name = msgname[msg.level]
-        tbl.append(TR(TD(name.capitalize(), CLASS=name),
+        tbl.add(TR(TD(name.capitalize(), CLASS=name),
                       TD(A(msg.message, href=umap('@@Source') + '#line%d' % msg.lineno))))
 
     return page.render(app)
@@ -438,7 +437,7 @@ def server_error(app, ctx):
 
 
 
-# page-id, regexp-for-matching, render-format, callable-handler.
+# page-id, callable-handler, render-format, regexp-for-matching
 # If the regexp is left to a value of None, it is assumed it matches the render string exactly.
 page_directory = (
 
@@ -446,7 +445,7 @@ page_directory = (
     ('@@Treetable', static('treetable.js', 'text/javascript'), '/treetable.js', None),
     ('@@FolderOpen', static('folder_open.png', 'text/javascript'), '/folder_open.png', None),
     ('@@FolderClosed', static('folder_closed.png', 'text/javascript'), '/folder_closed.png', None),
-    ('@@Logo', static("header-universal-dollar.jpg", 'image/jpeg'), '/header.jpg', None),
+    ('@@Logo', static("header-universal-dollar.jpg", 'image/jpeg'), '/header-universal-dollar.jpg', None),
     ('@@Home', info, '/', None),
     ('@@Info', info, '/info', None),
     ('@@Ranges', ranges, '/ranges', None),
