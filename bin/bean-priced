@@ -1,0 +1,26 @@
+#!/usr/bin/env python
+"""
+Print out in which commodity a commodity is priced.
+"""
+
+# stdlib imports
+from collections import defaultdict
+
+# beancount imports
+from beancount.utils import render_tree
+from beancount import cmdline
+
+
+def main():
+    import optparse
+    parser = optparse.OptionParser(__doc__.strip())
+    opts, ledger, args = cmdline.main(parser)
+
+    for k, vlist in sorted(ledger.pricedmap.iteritems()):
+        print '%s (%s)' % (k, ','.join(vlist))
+            
+if __name__ == '__main__':
+    main()
+
+
+

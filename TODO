@@ -28,8 +28,6 @@ parser:
 
 - Bug: Invalid account names should only be reported once.
 
-- Do we detect an account defined twice as an error?
-
 - Review the dates inequalities, incl + excl, like compsci
 
   * Clarify this for @check as well, it should probably be at the end
@@ -39,10 +37,8 @@ parser:
 
 - Allow commas in amounts. I like commas sometimes.
 
-- Validate commodities using the defaccount declaration.
-
-- Add a @defcomm directive, that checks validity for the commodities
-  that are seen.
+- Maybe add a @defcomm directive, that checks validity for the
+  commodities that are seen.
 
 - IMPORTANT: Using the pickle, the errors only get reported when you
   parse initially. We must make the balance checks in a separate
@@ -55,6 +51,17 @@ parser:
 
 - Add a syntax to convert between currencies without having to fetch
   the values by hand, e.g. "3467.02 USD in CAD".
+
+- We may want to add a new syntax for comments that get parsed into
+  entries, something like this::
+
+    @comment <Account>
+      bla bhlablablabl blabla 
+      bla bhlablablabl blabla 
+      bla bhlablablabl blabla 
+
+  This could get displayed in the register, to show significant events
+  in the life of some accounts.
 
 
 capital gains:
@@ -85,7 +92,6 @@ checks:
 - Detect and find potential duplicates.
 
 
-
 import:
 
 - Modify all import scripts so that they avoid reimporting already
@@ -101,7 +107,8 @@ import:
 filtering:
 
 - We need an option to automatically add opening balances entries when
-  filtering by time.
+  filtering by time... this is important, otherwise the balances are
+  incorrect if you don't start at the very beginning.
 
 
 
@@ -136,15 +143,12 @@ scripts:
 
 
 
-
 tests:
 
 - Test Wallet += None
 
 - Write functional tests
 - Write automated tests for everything.
-
-
 
 
 
@@ -184,13 +188,11 @@ doc/examples/demos:
 
 
 
-
 serve:
 
-- Modify htmlout to cache the result of rendering nodes, and reuse
-  that code; or optimize htmlout (it's very slow now, it creates an
-  intermediate tree). htmlout really should be a fast and simple C
-  extension module.
+- Implement buffered output for faster response using a separate
+  thread and an iterator that yields from app.write when the data
+  buffer is large enough.
 
 - Make it possible to upload a new file to the server to be parsed.
   This way, I wouldn't even have to log in ssh in order to update the

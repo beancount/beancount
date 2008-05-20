@@ -128,7 +128,9 @@ def haccount(accname):
         cappend(comp)
         name = Account.sep.join(comps)
         append(A(comp, href=umap('@@Register', name), CLASS='accomp'))
-    return SPAN(ljoin(l, SPAN(Account.sep, CLASS='accsep')), CLASS='account')
+    accspan = SPAN(ljoin(l, SPAN(Account.sep, CLASS='accsep')), CLASS='account')
+    accspan.cache = 1
+    return accspan
 
 def info(app, ctx):
     page = Template()

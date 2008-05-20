@@ -106,6 +106,12 @@ class Account(object):
         # The number of times an account has been requested for use.
         self.usedcount = 0
 
+        # Flag: True if a debit account, False if a credit account, None is unknown.
+        self.isdebit = None
+
+        # A list of valid commodities that can be deposited in this account.
+        self.commodities = []
+
     def __str__(self):
         return "<Account '%s'>" % self.fullname
     __repr__ = __str__
@@ -310,6 +316,9 @@ class Ledger(object):
 
         # The source lines from which the Ledger was built.
         self.source = []
+
+        # A map of commodity to a list of price commodities.
+        self.pricedmap = defaultdict(set)
 
         # A map of directive-name to contents.
         self.directives = {}
@@ -677,6 +686,19 @@ class Ledger(object):
             roundmap[com] = Decimal(str(10**-prec))
 
         self.complete_balances()
+        self.compute_priced_map()
+
+    def compute_priced_map(self):
+        """
+        Compute the priced map, that is, the set of commodities that each
+        commodity is priced in.
+        """
+        self.pricedmap.clear()
+        for post in self.postings:
+            if post.price is not None:
+                assert len(post.amount) == 1
+                assert len(post.price) == 1
+                self.pricedmap[post.amount.keys()[0]].add(post.price.keys()[0])
 
     def complete_balances(self):
         """
@@ -955,7 +977,7 @@ class DefineAccountDirective(object):
     name = 'defaccount'
     prio = 1
 
-    mre = re.compile("\s*(De|Cr)\s+(%(account)s)\s+(?:%(commodity)s,?)*\s*$" %
+    mre = re.compile("\s*(De|Cr)\s+(%(account)s)\s+((?:%(commodity)s(?:,\s*)?)*)\s*$" %
                      {'account': Ledger.account_re.pattern,
                       'commodity': Ledger.commodity_re.pattern})
 
@@ -976,7 +998,9 @@ class DefineAccountDirective(object):
         if account in self.definitions:
             self.ledger.log(CRITICAL, "Duplicate account definition: %s" % account.fullname,
                             (filename, lineno))
-        self.definitions[account] = (commodities, isdebit, filename, lineno)
+        account.commodities = commodities
+        account.isdebit = isdebit
+        self.definitions[account] = (filename, lineno)
 
     def apply(self):
         ledger = self.ledger
@@ -991,10 +1015,27 @@ class DefineAccountDirective(object):
                 ledger.log(ERROR, "Invalid account name '%s'." % accname, post)
 
         # Check for unused accounts.
-        for acc, (_, _, filename, lineno) in sorted(self.definitions.iteritems()):
+        for acc, (filename, lineno) in sorted(self.definitions.iteritems()):
             if not acc.isused():
                 ledger.log(WARNING, "Account %s is unused." % acc.fullname,
                            (filename, lineno))
+
+        # Check that none of the account's postings are in an invalid commodity.
+        for accname in valid_accounts:
+            acc = self.ledger.get_account(accname)
+            if not acc.commodities:
+                continue
+            for post in acc.postings:
+                comms = post.amount.keys()
+                if not comms:
+                    continue # Empty amount for posting, ignore it.
+                comm = comms[0]
+                if comm not in acc.commodities:
+                    ledger.log(ERROR, "Invalid commodity '%s' for account '%s'." %
+                               (comm, accname), post)
+
+
+
 
 
 
