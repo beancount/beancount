@@ -193,7 +193,15 @@ class Wallet(dict):
     def commodity_key(kv):
         """ A sort key for the commodities."""
         k = kv[0]
-        return (len(k), k)
+        return (comm_importance.get(k, len(k)), k)
+
+
+# Order of important for commodities.
+comm_importance = {
+    'USD': 0,
+    'CAD': 1,
+    'EUR': 2,
+    }
 
 
 

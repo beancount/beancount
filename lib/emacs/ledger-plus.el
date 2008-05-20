@@ -111,7 +111,8 @@ ledger-expand-account.")
   (interactive)
   ;; Note: we use 'filename as a thing, because it accepts the : separators for
   ;; the underlying words we're looking for.
-  (let ((w (thing-at-point 'filename))
+  (let ((max-lisp-eval-depth 2000)
+	(w (thing-at-point 'filename))
 	(bounds (bounds-of-thing-at-point 'filename)))
 
     (if (and repeatable-repeated
