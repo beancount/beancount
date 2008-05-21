@@ -63,6 +63,9 @@ parser:
   This could get displayed in the register, to show significant events
   in the life of some accounts.
 
+- Make @pad able to pad for a percentage of the total, so that we're
+  able to use @pad instead of "distribution of expenses" entries.
+
 
 capital gains:
 
@@ -150,6 +153,11 @@ tests:
 - Write functional tests
 - Write automated tests for everything.
 
+
+emacs:
+
+- Make account lookup feature only use @defaccount so that it be a lot
+  faster in large files.
 
 
 doc/examples/demos:
