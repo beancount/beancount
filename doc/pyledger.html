@@ -22,67 +22,67 @@
 <col class="docinfo-content" />
 <tbody valign="top">
 <tr><th class="docinfo-name">Author:</th>
-<td>Martin Blais &lt;<a class="reference external" href="mailto:blais&#64;furius.ca">blais&#64;furius.ca</a>&gt;</td></tr>
+<td>Martin Blais &lt;<a class="reference" href="mailto:blais&#64;furius.ca">blais&#64;furius.ca</a>&gt;</td></tr>
 </tbody>
 </table>
 <div class="contents topic" id="contents">
 <p class="topic-title first">Contents</p>
 <ul class="simple">
-<li><a class="reference internal" href="#why-i-m-rewriting-ledger" id="id1">Why I'm Rewriting Ledger</a></li>
-<li><a class="reference internal" href="#re-implementation-of-ledger-todo" id="id2">([Re-)Implementation of Ledger / TODO</a><ul>
-<li><a class="reference internal" href="#ideas-for-reconciliation" id="id3">Ideas for Reconciliation</a><ul>
-<li><a class="reference internal" href="#implementation-details" id="id4">Implementation details</a></li>
+<li><a class="reference" href="#why-i-m-rewriting-ledger" id="id1">Why I'm Rewriting Ledger</a></li>
+<li><a class="reference" href="#re-implementation-of-ledger-todo" id="id2">([Re-)Implementation of Ledger / TODO</a><ul>
+<li><a class="reference" href="#ideas-for-reconciliation" id="id3">Ideas for Reconciliation</a><ul>
+<li><a class="reference" href="#implementation-details" id="id4">Implementation details</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#testing" id="id5">Testing</a></li>
-<li><a class="reference internal" href="#proposal-for-new-directives" id="id6">Proposal for New Directives</a><ul>
-<li><a class="reference internal" href="#account-declarations" id="id7">Account Declarations</a></li>
-<li><a class="reference internal" href="#account-number-mapping" id="id8">Account number mapping</a></li>
-<li><a class="reference internal" href="#check-feature" id="id9">&quot;Check&quot; feature</a></li>
-<li><a class="reference internal" href="#marking-for-reconciliation" id="id10">Marking for reconciliation</a></li>
-<li><a class="reference internal" href="#one-over-syntax" id="id11">One-over syntax</a></li>
-<li><a class="reference internal" href="#support-for-merging" id="id12">Support for Merging</a></li>
-<li><a class="reference internal" href="#pages" id="id13">Pages</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference internal" href="#report-generation" id="id14">Report generation</a><ul>
-<li><a class="reference internal" href="#mini-language-aspects" id="id15">Mini-language / Aspects</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#experiences-using-other-softwares" id="id16">Experiences Using Other Softwares</a><ul>
-<li><a class="reference internal" href="#gnucash-problems" id="id17">GnuCash Problems</a></li>
-<li><a class="reference internal" href="#fivedash-problems" id="id18">FiveDash Problems</a></li>
-<li><a class="reference internal" href="#ledger" id="id19">Ledger</a><ul>
-<li><a class="reference internal" href="#questions-answered" id="id20">Questions Answered</a><ul>
-<li><a class="reference internal" href="#actual-dates-vs-effective-dates" id="id21">Actual dates vs Effective Dates</a></li>
-<li><a class="reference internal" href="#actual-dates-and-money-in-transit" id="id22">Actual dates and &quot;money in transit&quot;</a></li>
-<li><a class="reference internal" href="#default-account-feature" id="id23">Default account feature</a></li>
-<li><a class="reference internal" href="#per-transaction-pending-state" id="id24">Per-Transaction Pending state</a></li>
-<li><a class="reference internal" href="#q-periods-don-t-work" id="id25">Q: Periods don't work</a></li>
-<li><a class="reference internal" href="#how-do-you-reset-the-default-account-feature" id="id26">How do you reset the &quot;default account&quot; feature?</a></li>
-<li><a class="reference internal" href="#currency-and-prices" id="id27">Currency and prices</a></li>
-<li><a class="reference internal" href="#slash-date-format" id="id28">Slash date format</a></li>
-<li><a class="reference internal" href="#real-vs-virtual-transactions" id="id29">Real vs virtual transactions</a></li>
-<li><a class="reference internal" href="#coherent-ordering" id="id30">Coherent Ordering</a></li>
-<li><a class="reference internal" href="#syntax-for-comments-vs-notes" id="id31">Syntax for comments vs. notes</a></li>
-<li><a class="reference internal" href="#placing-many-entries-together" id="id32">Placing many entries together</a></li>
-<li><a class="reference internal" href="#q-generating-reports-with-debit-credit-columns" id="id33">Q: Generating reports with debit/credit columns</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#questions-pending" id="id34">Questions Pending</a></li>
-<li><a class="reference internal" href="#about-reports" id="id35">About reports</a></li>
-<li><a class="reference internal" href="#about-emacs-support" id="id36">About Emacs Support</a></li>
+<li><a class="reference" href="#testing" id="id5">Testing</a></li>
+<li><a class="reference" href="#proposal-for-new-directives" id="id6">Proposal for New Directives</a><ul>
+<li><a class="reference" href="#account-declarations" id="id7">Account Declarations</a></li>
+<li><a class="reference" href="#account-number-mapping" id="id8">Account number mapping</a></li>
+<li><a class="reference" href="#check-feature" id="id9">&quot;Check&quot; feature</a></li>
+<li><a class="reference" href="#marking-for-reconciliation" id="id10">Marking for reconciliation</a></li>
+<li><a class="reference" href="#one-over-syntax" id="id11">One-over syntax</a></li>
+<li><a class="reference" href="#support-for-merging" id="id12">Support for Merging</a></li>
+<li><a class="reference" href="#pages" id="id13">Pages</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#phone-conversation" id="id37">Phone conversation</a></li>
-<li><a class="reference internal" href="#implementation-suggestions" id="id38">Implementation Suggestions</a></li>
-<li><a class="reference internal" href="#python-as-input-syntax" id="id39">Python as input syntax</a></li>
-<li><a class="reference internal" href="#balance-checks-may-be-optional" id="id40">Balance checks may be optional</a></li>
-<li><a class="reference internal" href="#terminology" id="id41">Terminology</a></li>
+<li><a class="reference" href="#report-generation" id="id14">Report generation</a><ul>
+<li><a class="reference" href="#mini-language-aspects" id="id15">Mini-language / Aspects</a></li>
+</ul>
+</li>
+<li><a class="reference" href="#experiences-using-other-softwares" id="id16">Experiences Using Other Softwares</a><ul>
+<li><a class="reference" href="#gnucash-problems" id="id17">GnuCash Problems</a></li>
+<li><a class="reference" href="#fivedash-problems" id="id18">FiveDash Problems</a></li>
+<li><a class="reference" href="#ledger" id="id19">Ledger</a><ul>
+<li><a class="reference" href="#questions-answered" id="id20">Questions Answered</a><ul>
+<li><a class="reference" href="#actual-dates-vs-effective-dates" id="id21">Actual dates vs Effective Dates</a></li>
+<li><a class="reference" href="#actual-dates-and-money-in-transit" id="id22">Actual dates and &quot;money in transit&quot;</a></li>
+<li><a class="reference" href="#default-account-feature" id="id23">Default account feature</a></li>
+<li><a class="reference" href="#per-transaction-pending-state" id="id24">Per-Transaction Pending state</a></li>
+<li><a class="reference" href="#q-periods-don-t-work" id="id25">Q: Periods don't work</a></li>
+<li><a class="reference" href="#how-do-you-reset-the-default-account-feature" id="id26">How do you reset the &quot;default account&quot; feature?</a></li>
+<li><a class="reference" href="#currency-and-prices" id="id27">Currency and prices</a></li>
+<li><a class="reference" href="#slash-date-format" id="id28">Slash date format</a></li>
+<li><a class="reference" href="#real-vs-virtual-transactions" id="id29">Real vs virtual transactions</a></li>
+<li><a class="reference" href="#coherent-ordering" id="id30">Coherent Ordering</a></li>
+<li><a class="reference" href="#syntax-for-comments-vs-notes" id="id31">Syntax for comments vs. notes</a></li>
+<li><a class="reference" href="#placing-many-entries-together" id="id32">Placing many entries together</a></li>
+<li><a class="reference" href="#q-generating-reports-with-debit-credit-columns" id="id33">Q: Generating reports with debit/credit columns</a></li>
+</ul>
+</li>
+<li><a class="reference" href="#questions-pending" id="id34">Questions Pending</a></li>
+<li><a class="reference" href="#about-reports" id="id35">About reports</a></li>
+<li><a class="reference" href="#about-emacs-support" id="id36">About Emacs Support</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference" href="#phone-conversation" id="id37">Phone conversation</a></li>
+<li><a class="reference" href="#implementation-suggestions" id="id38">Implementation Suggestions</a></li>
+<li><a class="reference" href="#python-as-input-syntax" id="id39">Python as input syntax</a></li>
+<li><a class="reference" href="#balance-checks-may-be-optional" id="id40">Balance checks may be optional</a></li>
+<li><a class="reference" href="#terminology" id="id41">Terminology</a></li>
 </ul>
 </div>
 <!-- 1  Why I'm Rewriting Ledger
@@ -128,7 +128,7 @@
 9  Terminology -->
 <div class="section" id="why-i-m-rewriting-ledger">
 <h1><a class="toc-backref" href="#id1">Why I'm Rewriting Ledger</a></h1>
-<p>IMHO 'Ledger' is sligthly falling short in the following ways:</p>
+<p>IMHO 'Ledger' is slightly falling short in the following ways:</p>
 <ul>
 <li><p class="first">It is written as a single program of C++ code, which
 includes three distinct parts:</p>
@@ -458,7 +458,7 @@ amounts returned at certain points in time.</p>
 <p>Threads:</p>
 <blockquote>
 <p>On Wed, 9 Apr 2008 00:15:30 -0400, &quot;John Wiegley&quot;
-&lt;<a class="reference external" href="mailto:johnw&#64;newartisans.com">johnw&#64;newartisans.com</a>&gt; said:
+&lt;<a class="reference" href="mailto:johnw&#64;newartisans.com">johnw&#64;newartisans.com</a>&gt; said:
 &gt; Thought you'd like to know that I implemented &#64;cleared today, and it
 &gt; works great.  I just need to think through what will happen for</p>
 <p>Awesome! You're a machine :-)</p>
@@ -475,7 +475,7 @@ already a concept of &quot;cleared&quot; transactions/postings in Ledger, which
 has a different meaning than &quot;it balances&quot;. &quot;Cleared&quot; is supposed to
 reflect the user's confidence that a transaction is accurate.  The
 directive above is definitely not about that, so I would instead suggest
-&quot;&#64;check&quot; or &quot;&#64;assert&quot; or something else. Overloading the meaning of
+&quot;&#64;check&quot; or &quot;&#64;check&quot; or something else. Overloading the meaning of
 &quot;cleared&quot; will create a lot of confusion IMO.</p>
 <p>&gt; I realized that &#64;cleared needs to accept balances (your &quot;wallets&quot;)
 &gt; instead of just amounts, which I solved by allowing value expressions:
@@ -733,8 +733,8 @@ they, actual vs. effective dates?</p>
 </div>
 <div class="section" id="actual-dates-and-money-in-transit">
 <h4><a class="toc-backref" href="#id22">Actual dates and &quot;money in transit&quot;</a></h4>
-<blockquote>
-<p>(16:51:46) blais: now let's talk about the actual date.
+<pre class="literal-block">
+(16:51:46) blais: now let's talk about the actual date.
 (16:52:06) blais: If you set an actual date for a transaction != than for its parent, don't you run the risk that the books be imbalance for a short period of time?
 (16:52:33) johnw: imbalance?
 (16:52:46) blais: were you to render the book between those dates, you would have a book that is not coherent.
@@ -752,14 +752,15 @@ they, actual vs. effective dates?</p>
 (16:53:58) blais: actually, I've got some real world cases like that already in my file.
 (16:54:08) blais: oh
 (16:54:10) blais: then I'm right
-(16:54:17) blais: the book <em>may</em> be incoherent.
+(16:54:17) blais: the book *may* be incoherent.
 (16:54:26) johnw: oh, you mean it doesn't balance
 (16:54:30) johnw: yes, you are right
 (16:54:49) blais: so if I'm using --end, how do I know if I have a coherent book?
 (16:54:56) blais: (you don't, I guess)
-(16:55:00) johnw: there are times when the money might be &quot;in transit&quot; and Ledger does not presently have a way to report that to you</p>
-<p>(16:58:05) blais: ABout actual dates: IMHO we should never show a balance that uses &quot;actual dates&quot;. Balance views only make sense when both sides of every included entry are present.</p>
-</blockquote>
+(16:55:00) johnw: there are times when the money might be &quot;in transit&quot; and Ledger does not presently have a way to report that to you
+
+(16:58:05) blais: ABout actual dates: IMHO we should never show a balance that uses &quot;actual dates&quot;. Balance views only make sense when both sides of every included entry are present.
+</pre>
 </div>
 <div class="section" id="default-account-feature">
 <h4><a class="toc-backref" href="#id23">Default account feature</a></h4>
@@ -785,7 +786,7 @@ when I try this in a file, it doesn't barf:</p>
 </pre>
 <p>I don't see a need for marking individual sides of a transaction as
 pending... is this a remnant from the past?</p>
-<blockquote>
+<pre class="literal-block">
 (17:05:40) blais: In the Emacs support file, there seems to be an hint that individual
 (17:05:40) blais: &quot;transactions&quot; (within entries) could be marked as pending. In fact,
 (17:05:40) blais: when I try this in a file, it doesn't barf::
@@ -801,34 +802,39 @@ pending... is this a remnant from the past?</p>
 (17:06:21) blais: right before the account names, ! or *
 (17:06:25) blais: I see.
 (17:06:36) blais: Undocument I believe.
-(17:06:38) blais:</blockquote>
+(17:06:38) blais:
+</pre>
 </div>
 <div class="section" id="q-periods-don-t-work">
 <h4><a class="toc-backref" href="#id25">Q: Periods don't work</a></h4>
 <p>Questions for John:</p>
-<p>(18:08:59) blais: banane:~$ ledger-blais -E -s -b 2008/01/01 -e 2008/02/01 bal
+<pre class="literal-block">
+(18:08:59) blais: banane:~$ ledger-blais -E -s -b 2008/01/01 -e 2008/02/01 bal
 (18:09:03) blais: this gives me 0
 (18:09:10) blais: i have a hard time getting -b and -e to work.
-(18:09:12) blais: what is the format?</p>
-<p>all the period options don't seem to work.</p>
-<blockquote>
+(18:09:12) blais: what is the format?
+</pre>
+<p>all the period options don't seem to work:</p>
+<pre class="literal-block">
 This is a bug; Use DEBUG_CLASS=ledger.config.predicates and compile
-with --enable-debug on.</blockquote>
+with --enable-debug on.
+</pre>
 <p>Using the DEBUG_CLASS:</p>
-<blockquote>
-<p>// The result has to be an iostream.
+<pre class="literal-block">
+// The result has to be an iostream.
 DEBUG_PRINT(&quot;class&quot;, foo &lt;&lt; bar, &lt;&lt; baz);
 DEBUG_PRINT_(foo &lt;&lt; bar, &lt;&lt; baz);
-DEBUG_CLASS(&quot;class&quot;);</p>
-<p>assert()
+DEBUG_CLASS(&quot;class&quot;);
+
+assert()
 CONFIRM() // More expansize than assert(), slower.
-VERIFY() // Much slower.</p>
-</blockquote>
+VERIFY() // Much slower.
+</pre>
 </div>
 <div class="section" id="how-do-you-reset-the-default-account-feature">
 <h4><a class="toc-backref" href="#id26">How do you reset the &quot;default account&quot; feature?</a></h4>
 <p>You can't, right now, but ACK that this is a problem.</p>
-<blockquote>
+<pre class="literal-block">
 (17:07:37) blais: about the default account feature
 (17:07:41) blais: A &lt;account&gt;
 (17:08:00) blais: I need to be able to &quot;reset&quot; it to &quot;no account&quot;, whithin the file.
@@ -845,7 +851,8 @@ VERIFY() // Much slower.</p>
 (17:09:36) blais: I can't use it then... too dangerous.
 (17:09:43) blais: This one is way important IMO.
 (17:10:04) johnw: i think i'd rather remove it
-(17:10:31) johnw: it's dangerous for entries to self-balance like that</blockquote>
+(17:10:31) johnw: it's dangerous for entries to self-balance like that
+</pre>
 </div>
 <div class="section" id="currency-and-prices">
 <h4><a class="toc-backref" href="#id27">Currency and prices</a></h4>
@@ -853,7 +860,8 @@ VERIFY() // Much slower.</p>
 <dt>Q: How does currency and prices work?  &#64; &lt;PRICE&gt; syntax, what does it</dt>
 <dd>do exactly?</dd>
 </dl>
-<p>(17:23:43) blais: Q: How does currency and prices work?  &#64; &lt;PRICE&gt; syntax, what does it
+<pre class="literal-block">
+(17:23:43) blais: Q: How does currency and prices work?  &#64; &lt;PRICE&gt; syntax, what does it
 (17:23:43) blais:    do exactly?
 (17:23:57) johnw: what's the context?
 (17:23:59) blais: I'm not entirely sure what happens (technically) when you specify a price.
@@ -864,7 +872,8 @@ VERIFY() // Much slower.</p>
 (17:24:35) johnw: 1. It records a historical price for that commodity at the date of the entry (or transaction, if it has its own actual date)
 (17:24:53) johnw: 2. It create a lot-qualified (i.e., annotated) commodity with that price data as its qualifying details
 (17:25:15) johnw: 3. It sets the basis cost of the transaction for the purpose of balancing against the remainder of the entry
-(17:25:19) johnw: end</p>
+(17:25:19) johnw: end
+</pre>
 </div>
 <div class="section" id="slash-date-format">
 <h4><a class="toc-backref" href="#id28">Slash date format</a></h4>
@@ -878,16 +887,17 @@ ways. Just curious.</li>
 <dd><p class="first">is rather unusual... ISO-8601 specifies '-', and '/' is normally
 used for the american format (mm/dd/yyyy). I've never seen it like
 in Ledger. What's the story?</p>
-<blockquote class="last">
+<pre class="last literal-block">
 (17:35:34) johnw: you can use -
-(17:35:36) johnw: i'm just used to /</blockquote>
+(17:35:36) johnw: i'm just used to /
+</pre>
 </dd>
 </dl>
 </div>
 <div class="section" id="real-vs-virtual-transactions">
 <h4><a class="toc-backref" href="#id29">Real vs virtual transactions</a></h4>
 <p>Q: How are real vs. virtual transactions handled?</p>
-<blockquote>
+<pre class="literal-block">
 (17:36:30) johnw: --real strips virtuals, otherwise they are the same as real
 (17:36:33) blais: and is there anything different btw () virtual and [] virtual?
 (17:36:37) johnw: it's just a single bit on the transaction, that's the only difference
@@ -895,7 +905,8 @@ in Ledger. What's the story?</p>
 (17:36:41) blais: that's it?
 (17:36:45) johnw: [] must balance within the entry, () does not need to balance
 (17:36:47) johnw: yes, it's just a filter
-(17:36:49) blais: cool.</blockquote>
+(17:36:49) blais: cool.
+</pre>
 </div>
 <div class="section" id="coherent-ordering">
 <h4><a class="toc-backref" href="#id30">Coherent Ordering</a></h4>
@@ -937,18 +948,21 @@ As much as possible, but in this case it's impossible.</blockquote>
 </div>
 <div class="section" id="q-generating-reports-with-debit-credit-columns">
 <h4><a class="toc-backref" href="#id33">Q: Generating reports with debit/credit columns</a></h4>
-<ul class="simple">
-<li>Isn't there a way to generate a report with the signs inverted (in
+<ul>
+<li><p class="first">Isn't there a way to generate a report with the signs inverted (in
 two columns), in the normal way that accountants like to have that?
 I understand that we're trying to abstract the whole debit
 account/credit account confusion, but for reporting purposes, it
-would make sense to show it in the &quot;usual&quot; manner.</li>
-</ul>
-<p>(17:48:14) johnw: you can invert with &quot;-t -a&quot;
+would make sense to show it in the &quot;usual&quot; manner.</p>
+<pre class="literal-block">
+(17:48:14) johnw: you can invert with &quot;-t -a&quot;
 (17:49:52) johnw: &quot;-t /account/ ? -a : a&quot;
 (17:50:06) johnw: surround everything after -t with single quotes
 (17:50:30) johnw: for a truly custom report, you'll have to export as XML and then read it in; or finish your Python port :)
-(17:50:50) johnw: ok, my wife and I are heading home, and will probably watch a TV show, I'll see you on IRC when I have time again!</p>
+(17:50:50) johnw: ok, my wife and I are heading home, and will probably watch a TV show, I'll see you on IRC when I have time again!
+</pre>
+</li>
+</ul>
 </div>
 </div>
 <div class="section" id="questions-pending">
@@ -1020,7 +1034,7 @@ entry: contains transactions
 journal: file</p>
 <p>Put up the file on the wiki</p>
 <p>Getting pricing data: ledger calls out to getquote().</p>
-<p><a class="reference external" href="ftp://ftp.newartisans.com/pub/python/catalog.py">ftp://ftp.newartisans.com/pub/python/catalog.py</a></p>
+<p><a class="reference" href="ftp://ftp.newartisans.com/pub/python/catalog.py">ftp://ftp.newartisans.com/pub/python/catalog.py</a></p>
 <p>auto-reconciler: goal number, look for uncleared transactions which
 when summed together will give you your goal number.</p>
 <p>Normalize.lisp has all the comments for the balancing algorithm.</p>
@@ -1039,204 +1053,252 @@ when summed together will give you your goal number.</p>
 <p>Ledger does not seem to be able to accept multiple -f options (further
 -f's get ignored silently). It should simply concatenate all the
 specified files in a single data set.</p>
-<p>I wish I could just say</p>
-<blockquote>
-<dl class="docutils">
-<dt>2008/01/03=2007/12/28 * Sell -- RHT -- RED HAT INC CA TAUX DE CHANGE    .96590</dt>
-<dd>Assets:Investments:RBC-Broker:Account-RSP                              -4.00 RHT &#64;      21.14 CAD
-Expenses:Financial:Commissions                                          9.95 USD &#64;     .96590 CAD
-Assets:Investments:RBC-Broker:Account-RSP                              72.06 CAD
-Expenses:Financial:Fees                                                      CAD</dd>
-</dl>
-</blockquote>
+<p>I wish I could just say:</p>
+<pre class="literal-block">
+2008/01/03=2007/12/28 * Sell -- RHT -- RED HAT INC CA TAUX DE CHANGE    .96590
+  Assets:Investments:RBC-Broker:Account-RSP                              -4.00 RHT &#64;      21.14 CAD
+  Expenses:Financial:Commissions                                          9.95 USD &#64;     .96590 CAD
+  Assets:Investments:RBC-Broker:Account-RSP                              72.06 CAD
+  Expenses:Financial:Fees                                                      CAD
+</pre>
 <p>... to tell Ledger which currency to use to complete the entry.</p>
 <p>For all rounding, there should be a way to tell Ledger which precision
 to use (for each commodity).</p>
 </div>
 <div class="section" id="implementation-suggestions">
 <h1><a class="toc-backref" href="#id38">Implementation Suggestions</a></h1>
-<p>From: Martin Blais &lt;<a class="reference external" href="mailto:blais&#64;furius.ca">blais&#64;furius.ca</a>&gt;
-To:&quot;John Wiegley&quot; &lt;<a class="reference external" href="mailto:johnw&#64;newartisans.com">johnw&#64;newartisans.com</a>&gt;
-Cc: &quot;Filippo Tampieri&quot; &lt;<a class="reference external" href="mailto:filippo.tampieri&#64;gmail.com">filippo.tampieri&#64;gmail.com</a>&gt;
-Subject: Re: Haskell parser for Ledger
-BCC: <a class="reference external" href="mailto:blais+sent&#64;furius.ca">blais+sent&#64;furius.ca</a>
---text follows this line--
-&gt; &gt;&gt; I'm writing a simple parser in Python today. I want to see
-&gt; &gt; how fast it is (I mean, most of the parsing will be regexps
-&gt; &gt; anyway, which is fast-as-C, so I can't imagine it'll be much
-&gt; &gt; worse than the C code, at least not on my files... I'll ask
-&gt; &gt; someone on the forums to try to run it on a very large file,
-&gt; &gt; to see how it holds up).
-&gt;
-&gt; I think a friend of mine wrote a Haskell parser based on regexps.  I
-&gt; also have a complete parser in Common Lisp, if you're interested in
-&gt; reading that instead of the C++ one.</p>
-<p>Can you point out the location of that code in CL? (I have a
-checkout of all newartisans Mercurial projects).</p>
-<p>&gt; For certain usage scenarios (such as using Ledger as a backend library
-&gt; for a full application), I entirely agree with you.  My model suits
-&gt; one class of users: command-line users.  All choices have been made in
-&gt; their favor (even if the set of possibilities was seriously limited,
-&gt; like reporting options).
-&gt;
-&gt; But I'm all for extending the model based on a common data format.  I
-&gt; mean, the really important part is that I have a complete, immutable
-&gt; data set going back 6 years now; the reporting and querying logic is
-&gt; secondary to that -- albeit where all the exciting stuff happens.</p>
-<p>Your comment rings to true. I am 100% aligned with your way
-to thinking. The &quot;little text file&quot; way is for me a way of
-life, a way of dealing with information which, for people
-who are able to master the art of editing text files, is
-really, really powerful.</p>
-<p>However, you seem to imply that this is incompatible with
-using an SQL backend, and on that point only I would beg to
-differ. Apart from the hassle of having to setup the
-database server (a task which is by now very easy on all
-three platforms), the mode of working is still very much a
-cmdline oriented process. (Note that if/when sqlite obtains
-a nice finite-precision fp storing class we can then always
-assume an SQL backend, because setting up sqlite is a
-trivial matter.)</p>
-<p>In fact, my reporting code will generate abstract table
-data, which will then be fed to either a text renderer (for
-cmdline access), or to an HTML renderer (for creating web
-pages).</p>
-<p>&gt; &gt; 'ledger' has a ton of options for reporting, and I find them
-&gt; &gt; difficult to use and understand (oftentimes the options don't do
-&gt; &gt; what I expect them to, and their meaning depends on the actually
-&gt; &gt; command in use). I'd rather write my own reporting from the data
-&gt; &gt; model.
-&gt;
-&gt; Ah, you are right here.  I find them confusing myself, sometimes.
-&gt; UNIX command-line options are a poor substitute for a rich reporting
-&gt; language.</p>
-<p>I've gone down that avenue myself before :-)
-It's exciting while your task is recent to memory, but over
-time it becomes hard to remember what meant what...</p>
-<p>&gt; &gt; * I want to make all the basic reporting available from my web
-&gt; &gt; server as HTML pages (much prettier, and I can access it anywhere,
-&gt; &gt; all the time).
-&gt;
-&gt; I started doing this same thing with the CL port of Ledger.  I really
-&gt; liked this style of reporting, since it conduces to _reading_ more
-&gt; than paging through command-line output.  Plus, you can use bold,
-&gt; italics and colors to much greater effect, not to mention charting.</p>
-<p>... and most of all, nicely aligned tables!</p>
-<p>Plus you can have links that you click on to obtain the
-register view...</p>
-<p>... and pie charts...</p>
-<p>... and graphs of PnL windows over time...</p>
-<p>... and I'm sure, lots of other things I can't think of now...</p>
-<p>&gt; &gt; * If you fiddle with the price syntaxes, you can easily make ledger
-&gt; &gt; dump core (I found it to be pretty stable, but there must be a few
-&gt; &gt; bugs left to iron out with the price stuff). This might be a problem
-&gt; &gt; when I start entering data for the investment accounts.
-&gt;
-&gt; I would love bug reports!!! :)</p>
-<p>I'll take note the next time I crash it in the course of
-using it, but I was under the impression that you were
-moving on to the CL version.</p>
-<p>&gt; &gt; * I think that the author has decided to move on and more-or-less
-&gt; &gt; stop working on the C++ version and move to a CL implementation
-&gt; &gt; (using SBCL). It's a cool idea, and as you know I love LISP, but
-&gt; &gt; deployment is a real PIA, and I want to be able to run this
-&gt; &gt; everywhere-all-the-time on all my platforms (Mac UNIX Windoze), with
-&gt; &gt; minimal effort. You can't beat Python for that.
-&gt;
-&gt; The deployment issues finally beat me down.  I'm turning back to
-&gt; making the C++ version 100% correct and stable, and then I will stop
-&gt; working on Ledger altogether.
-&gt;
-&gt; What you are proposing sounds like &quot;the next chapter&quot;, and I would be
-&gt; very interested in supporting you in that endeavor.</p>
-<p>Awesome! Let me flesh out a first version, and then I'll
-setup a Mercurial repository from furius.ca, so you can
-participate first-hand if you like.</p>
-<p>I have a few questions about prices and such, things I do
-not quite understand clearly, that would be best discussed
-over voice.</p>
-<p>&gt; &gt; As mentioned above, I want to validate that my entries always fit a
-&gt; &gt; fixed set of accounts, which I declare near the top of the document.
-&gt; &gt; Moreover, those declarations further constrain the kinds of
-&gt; &gt; commodities that can be deposited in an account (possibly wildcard).
-&gt;
-&gt; Very interesting, kind of like an asserts mechanism for your Ledger
-&gt; data.  That is really an awesome idea!!</p>
-<p>Asserts: exactly what I want! (more below, I think this can
-be integrated in a more general idea.)</p>
-<p>&gt; I'd like to see a more general syntax for this based on value
-&gt; expressions, which would offer a full constraints mechanism.  For
-&gt; example, to constrain all transactions to being less than $10,000 in
-&gt; an account:
-&gt;
-&gt; ? Constrain all transactions to less than $10,000
-&gt;    /Expenses:Food/      a &lt; $10,000
-&gt;
-&gt; The &quot;?&quot; indicates a &quot;constraints entry&quot;.  Each transaction would have
-&gt; two value expressions: one to match every applicable transaction in
-&gt; the file, and another to provide the boolean logic of the constraint.
-&gt;
-&gt; Then, while the file is being parsed, any violations of a constraint
-&gt; would be treated as an error, the same as when an entry fails to
-&gt; balance to zero.  I suppose making these warnings could be a
-&gt; possibility as well.
-&gt;
-&gt; Here is how you'd constrain commodities in this model:
-&gt;
-&gt; ? Guarantee commodities within accounts
-&gt;    Assets:Checking    comm(a) == $1.00
-&gt;
-&gt; (At the moment there is no value expr function that would allow:
-&gt; comm(a) == &quot;$&quot;)
-&gt;
-&gt; Then, of course, there could be a specific declaration option -- such
-&gt; as you have above -- for just this case, which internally would be
-&gt; parsed as a constraints entry.</p>
-<p>This is a fantastic idea; I like the idea of creating a
-little language for constraints, but also this could be
-written in the form of a simple Python script that gets run
-as part of a checking stage. Once you're provided with easy
-access to the data model, a simple loop written in Python to
-do some custom checks is a 10 line program or something...
-if we find a way to open up user-code from within Python,
-you can leverage all the power of Python (and its libraries,
-accessing the network, etc) and then you don't even have to
-spend time on creating your own language.</p>
-<p>Note that this is also true for reporting: your reporting
-cmdline options are a form of language per se. IMO you would
-be better off creating a &quot;reporting language&quot; instead of the
-options.</p>
-<p>Note that I think it belongs in a later stage, now think
-about this:  it will be much more practical if we separate
-the concepts of &quot;check&quot; into distinct stages:</p>
-<p>A. Loading phase: simple syntax checking that occur during
-parsing:</p>
-<blockquote>
-At this stage, we don't even check if it balances, we
-just parse and create the data structure, whether the
-entries balance or not.</blockquote>
-<ol class="upperalpha simple" start="2">
-<li>Checking phase, which includes:<ol class="arabic">
-<li>&quot;Balance check&quot;: check that each of the Transactions
-balances individually.</li>
-<li>&quot;Account validity check&quot;: check that all the account
-names are in the list of defined names.</li>
-<li>&quot;Constraint check&quot;: the idea you flesh out above. I'm
-not sure I would use it myself--I would rather
-implement a little Python loop in a small source file
-that gets automatically imported and run--but I'm sure
-it would be useful.</li>
-<li>&quot;User-defined checks&quot;: user code that gets loaded and
-run, being handed the data structure.</li>
-</ol>
-</li>
-</ol>
-<p>I'm not 100% sure that all these checks should involve some
-syntax defined in the file (e.g. my list of account checks
-could feed from a separate file that defines the accounts,
-your list of conditions could be cmdline args), but I'm
-heavily biased towards the simplicity of keeping everything
-in a single file.</p>
+<div class="line-block">
+<div class="line">From: Martin Blais &lt;<a class="reference" href="mailto:blais&#64;furius.ca">blais&#64;furius.ca</a>&gt;</div>
+<div class="line">To:&quot;John Wiegley&quot; &lt;<a class="reference" href="mailto:johnw&#64;newartisans.com">johnw&#64;newartisans.com</a>&gt;</div>
+<div class="line">Cc: &quot;Filippo Tampieri&quot; &lt;<a class="reference" href="mailto:filippo.tampieri&#64;gmail.com">filippo.tampieri&#64;gmail.com</a>&gt;</div>
+<div class="line">Subject: Re: Haskell parser for Ledger</div>
+<div class="line">BCC: <a class="reference" href="mailto:blais+sent&#64;furius.ca">blais+sent&#64;furius.ca</a></div>
+<div class="line">--text follows this line--</div>
+<div class="line">&gt; &gt;&gt; I'm writing a simple parser in Python today. I want to see</div>
+<div class="line">&gt; &gt; how fast it is (I mean, most of the parsing will be regexps</div>
+<div class="line">&gt; &gt; anyway, which is fast-as-C, so I can't imagine it'll be much</div>
+<div class="line">&gt; &gt; worse than the C code, at least not on my files... I'll ask</div>
+<div class="line">&gt; &gt; someone on the forums to try to run it on a very large file,</div>
+<div class="line">&gt; &gt; to see how it holds up).</div>
+<div class="line">&gt;</div>
+<div class="line">&gt; I think a friend of mine wrote a Haskell parser based on regexps.  I</div>
+<div class="line">&gt; also have a complete parser in Common Lisp, if you're interested in</div>
+<div class="line">&gt; reading that instead of the C++ one.</div>
+<div class="line"><br /></div>
+<div class="line">Can you point out the location of that code in CL? (I have a</div>
+<div class="line">checkout of all newartisans Mercurial projects).</div>
+<div class="line"><br /></div>
+<div class="line"><br /></div>
+<div class="line">&gt; For certain usage scenarios (such as using Ledger as a backend library</div>
+<div class="line">&gt; for a full application), I entirely agree with you.  My model suits</div>
+<div class="line">&gt; one class of users: command-line users.  All choices have been made in</div>
+<div class="line">&gt; their favor (even if the set of possibilities was seriously limited,</div>
+<div class="line">&gt; like reporting options).</div>
+<div class="line">&gt;</div>
+<div class="line">&gt; But I'm all for extending the model based on a common data format.  I</div>
+<div class="line">&gt; mean, the really important part is that I have a complete, immutable</div>
+<div class="line">&gt; data set going back 6 years now; the reporting and querying logic is</div>
+<div class="line">&gt; secondary to that -- albeit where all the exciting stuff happens.</div>
+<div class="line"><br /></div>
+<div class="line">Your comment rings to true. I am 100% aligned with your way</div>
+<div class="line">to thinking. The &quot;little text file&quot; way is for me a way of</div>
+<div class="line">life, a way of dealing with information which, for people</div>
+<div class="line">who are able to master the art of editing text files, is</div>
+<div class="line">really, really powerful.</div>
+<div class="line"><br /></div>
+<div class="line">However, you seem to imply that this is incompatible with</div>
+<div class="line">using an SQL backend, and on that point only I would beg to</div>
+<div class="line">differ. Apart from the hassle of having to setup the</div>
+<div class="line">database server (a task which is by now very easy on all</div>
+<div class="line">three platforms), the mode of working is still very much a</div>
+<div class="line">cmdline oriented process. (Note that if/when sqlite obtains</div>
+<div class="line">a nice finite-precision fp storing class we can then always</div>
+<div class="line">assume an SQL backend, because setting up sqlite is a</div>
+<div class="line">trivial matter.)</div>
+<div class="line"><br /></div>
+<div class="line">In fact, my reporting code will generate abstract table</div>
+<div class="line">data, which will then be fed to either a text renderer (for</div>
+<div class="line">cmdline access), or to an HTML renderer (for creating web</div>
+<div class="line">pages).</div>
+<div class="line"><br /></div>
+<div class="line"><br /></div>
+<div class="line">&gt; &gt; 'ledger' has a ton of options for reporting, and I find them</div>
+<div class="line">&gt; &gt; difficult to use and understand (oftentimes the options don't do</div>
+<div class="line">&gt; &gt; what I expect them to, and their meaning depends on the actually</div>
+<div class="line">&gt; &gt; command in use). I'd rather write my own reporting from the data</div>
+<div class="line">&gt; &gt; model.</div>
+<div class="line">&gt;</div>
+<div class="line">&gt; Ah, you are right here.  I find them confusing myself, sometimes.</div>
+<div class="line">&gt; UNIX command-line options are a poor substitute for a rich reporting</div>
+<div class="line">&gt; language.</div>
+<div class="line"><br /></div>
+<div class="line">I've gone down that avenue myself before :-)</div>
+<div class="line">It's exciting while your task is recent to memory, but over</div>
+<div class="line">time it becomes hard to remember what meant what...</div>
+<div class="line"><br /></div>
+<div class="line"><br /></div>
+<div class="line">&gt; &gt; * I want to make all the basic reporting available from my web</div>
+<div class="line">&gt; &gt; server as HTML pages (much prettier, and I can access it anywhere,</div>
+<div class="line">&gt; &gt; all the time).</div>
+<div class="line">&gt;</div>
+<div class="line">&gt; I started doing this same thing with the CL port of Ledger.  I really</div>
+<div class="line">&gt; liked this style of reporting, since it conduces to _reading_ more</div>
+<div class="line">&gt; than paging through command-line output.  Plus, you can use bold,</div>
+<div class="line">&gt; italics and colors to much greater effect, not to mention charting.</div>
+<div class="line"><br /></div>
+<div class="line">... and most of all, nicely aligned tables!</div>
+<div class="line"><br /></div>
+<div class="line">Plus you can have links that you click on to obtain the</div>
+<div class="line">register view...</div>
+<div class="line"><br /></div>
+<div class="line">... and pie charts...</div>
+<div class="line"><br /></div>
+<div class="line">... and graphs of PnL windows over time...</div>
+<div class="line"><br /></div>
+<div class="line">... and I'm sure, lots of other things I can't think of now...</div>
+<div class="line"><br /></div>
+<div class="line"><br /></div>
+<div class="line">&gt; &gt; * If you fiddle with the price syntaxes, you can easily make ledger</div>
+<div class="line">&gt; &gt; dump core (I found it to be pretty stable, but there must be a few</div>
+<div class="line">&gt; &gt; bugs left to iron out with the price stuff). This might be a problem</div>
+<div class="line">&gt; &gt; when I start entering data for the investment accounts.</div>
+<div class="line">&gt;</div>
+<div class="line">&gt; I would love bug reports!!! :)</div>
+<div class="line"><br /></div>
+<div class="line">I'll take note the next time I crash it in the course of</div>
+<div class="line">using it, but I was under the impression that you were</div>
+<div class="line">moving on to the CL version.</div>
+<div class="line"><br /></div>
+<div class="line"><br /></div>
+<div class="line">&gt; &gt; * I think that the author has decided to move on and more-or-less</div>
+<div class="line">&gt; &gt; stop working on the C++ version and move to a CL implementation</div>
+<div class="line">&gt; &gt; (using SBCL). It's a cool idea, and as you know I love LISP, but</div>
+<div class="line">&gt; &gt; deployment is a real PIA, and I want to be able to run this</div>
+<div class="line">&gt; &gt; everywhere-all-the-time on all my platforms (Mac UNIX Windoze), with</div>
+<div class="line">&gt; &gt; minimal effort. You can't beat Python for that.</div>
+<div class="line">&gt;</div>
+<div class="line">&gt; The deployment issues finally beat me down.  I'm turning back to</div>
+<div class="line">&gt; making the C++ version 100% correct and stable, and then I will stop</div>
+<div class="line">&gt; working on Ledger altogether.</div>
+<div class="line">&gt;</div>
+<div class="line">&gt; What you are proposing sounds like &quot;the next chapter&quot;, and I would be</div>
+<div class="line">&gt; very interested in supporting you in that endeavor.</div>
+<div class="line"><br /></div>
+<div class="line">Awesome! Let me flesh out a first version, and then I'll</div>
+<div class="line">setup a Mercurial repository from furius.ca, so you can</div>
+<div class="line">participate first-hand if you like.</div>
+<div class="line"><br /></div>
+<div class="line">I have a few questions about prices and such, things I do</div>
+<div class="line">not quite understand clearly, that would be best discussed</div>
+<div class="line">over voice.</div>
+<div class="line"><br /></div>
+<div class="line"><br /></div>
+<div class="line">&gt; &gt; As mentioned above, I want to validate that my entries always fit a</div>
+<div class="line">&gt; &gt; fixed set of accounts, which I declare near the top of the document.</div>
+<div class="line">&gt; &gt; Moreover, those declarations further constrain the kinds of</div>
+<div class="line">&gt; &gt; commodities that can be deposited in an account (possibly wildcard).</div>
+<div class="line">&gt;</div>
+<div class="line">&gt; Very interesting, kind of like an asserts mechanism for your Ledger</div>
+<div class="line">&gt; data.  That is really an awesome idea!!</div>
+<div class="line"><br /></div>
+<div class="line">Asserts: exactly what I want! (more below, I think this can</div>
+<div class="line">be integrated in a more general idea.)</div>
+<div class="line"><br /></div>
+<div class="line"><br /></div>
+<div class="line">&gt; I'd like to see a more general syntax for this based on value</div>
+<div class="line">&gt; expressions, which would offer a full constraints mechanism.  For</div>
+<div class="line">&gt; example, to constrain all transactions to being less than $10,000 in</div>
+<div class="line">&gt; an account:</div>
+<div class="line">&gt;</div>
+<div class="line">&gt; ? Constrain all transactions to less than $10,000</div>
+<div class="line">&gt;    /Expenses:Food/      a &lt; $10,000</div>
+<div class="line">&gt;</div>
+<div class="line">&gt; The &quot;?&quot; indicates a &quot;constraints entry&quot;.  Each transaction would have</div>
+<div class="line">&gt; two value expressions: one to match every applicable transaction in</div>
+<div class="line">&gt; the file, and another to provide the boolean logic of the constraint.</div>
+<div class="line">&gt;</div>
+<div class="line">&gt; Then, while the file is being parsed, any violations of a constraint</div>
+<div class="line">&gt; would be treated as an error, the same as when an entry fails to</div>
+<div class="line">&gt; balance to zero.  I suppose making these warnings could be a</div>
+<div class="line">&gt; possibility as well.</div>
+<div class="line">&gt;</div>
+<div class="line">&gt; Here is how you'd constrain commodities in this model:</div>
+<div class="line">&gt;</div>
+<div class="line">&gt; ? Guarantee commodities within accounts</div>
+<div class="line">&gt;    Assets:Checking    comm(a) == $1.00</div>
+<div class="line">&gt;</div>
+<div class="line">&gt; (At the moment there is no value expr function that would allow:</div>
+<div class="line">&gt; comm(a) == &quot;$&quot;)</div>
+<div class="line">&gt;</div>
+<div class="line">&gt; Then, of course, there could be a specific declaration option -- such</div>
+<div class="line">&gt; as you have above -- for just this case, which internally would be</div>
+<div class="line">&gt; parsed as a constraints entry.</div>
+<div class="line"><br /></div>
+<div class="line">This is a fantastic idea; I like the idea of creating a</div>
+<div class="line">little language for constraints, but also this could be</div>
+<div class="line">written in the form of a simple Python script that gets run</div>
+<div class="line">as part of a checking stage. Once you're provided with easy</div>
+<div class="line">access to the data model, a simple loop written in Python to</div>
+<div class="line">do some custom checks is a 10 line program or something...</div>
+<div class="line">if we find a way to open up user-code from within Python,</div>
+<div class="line">you can leverage all the power of Python (and its libraries,</div>
+<div class="line">accessing the network, etc) and then you don't even have to</div>
+<div class="line">spend time on creating your own language.</div>
+<div class="line"><br /></div>
+<div class="line">Note that this is also true for reporting: your reporting</div>
+<div class="line">cmdline options are a form of language per se. IMO you would</div>
+<div class="line">be better off creating a &quot;reporting language&quot; instead of the</div>
+<div class="line">options.</div>
+<div class="line"><br /></div>
+<div class="line"><br /></div>
+<div class="line"><br /></div>
+<div class="line">Note that I think it belongs in a later stage, now think</div>
+<div class="line">about this:  it will be much more practical if we separate</div>
+<div class="line">the concepts of &quot;check&quot; into distinct stages:</div>
+<div class="line"><br /></div>
+<div class="line">A. Loading phase: simple syntax checking that occur during</div>
+<div class="line">parsing:</div>
+<div class="line"><br /></div>
+<div class="line-block">
+<div class="line">At this stage, we don't even check if it balances, we</div>
+<div class="line">just parse and create the data structure, whether the</div>
+<div class="line">entries balance or not.</div>
+<div class="line"><br /></div>
+</div>
+<div class="line">B. Checking phase, which includes:</div>
+<div class="line"><br /></div>
+<div class="line-block">
+<div class="line">1. &quot;Balance check&quot;: check that each of the Transactions</div>
+<div class="line-block">
+<div class="line">balances individually.</div>
+<div class="line"><br /></div>
+</div>
+<div class="line">2. &quot;Account validity check&quot;: check that all the account</div>
+<div class="line-block">
+<div class="line">names are in the list of defined names.</div>
+<div class="line"><br /></div>
+</div>
+<div class="line">3. &quot;Constraint check&quot;: the idea you flesh out above. I'm</div>
+<div class="line-block">
+<div class="line">not sure I would use it myself--I would rather</div>
+<div class="line">implement a little Python loop in a small source file</div>
+<div class="line">that gets automatically imported and run--but I'm sure</div>
+<div class="line">it would be useful.</div>
+<div class="line"><br /></div>
+</div>
+<div class="line">4. &quot;User-defined checks&quot;: user code that gets loaded and</div>
+<div class="line-block">
+<div class="line">run, being handed the data structure.</div>
+<div class="line"><br /></div>
+</div>
+</div>
+<div class="line">I'm not 100% sure that all these checks should involve some</div>
+<div class="line">syntax defined in the file (e.g. my list of account checks</div>
+<div class="line">could feed from a separate file that defines the accounts,</div>
+<div class="line">your list of conditions could be cmdline args), but I'm</div>
+<div class="line">heavily biased towards the simplicity of keeping everything</div>
+<div class="line">in a single file.</div>
+</div>
 </div>
 <div class="section" id="python-as-input-syntax">
 <h1><a class="toc-backref" href="#id39">Python as input syntax</a></h1>
@@ -1374,65 +1436,77 @@ they are easy to find-- the program can do that).</p>
 </div>
 <div class="section" id="terminology">
 <h1><a class="toc-backref" href="#id41">Terminology</a></h1>
-<blockquote>
-<p>BTW after fiddling with a few systems I would suggest the
-following names for the objects/tables:</p>
-<ul class="simple">
-<li>Posting: an individual entry in a specific account (the
-basic register view is a list of postings).</li>
-<li>Transaction: the thing that contains the individual
-postings.</li>
-</ul>
-<p>The word &quot;journal entry&quot; seems to have been abused left and
-right, and should be best avoided. &quot;Item&quot; is too generic.
-The names above are what I'm using through this long email.</p>
-<p>&gt; &gt; I'm also toying with the idea of giving accounts longer,
-&gt; &gt; more descriptive names, which would be used in reporting,
-&gt; &gt; but I'm not sure it won't just make things more complicated
-&gt; &gt; than necessary. Each account as a specific name that the
-&gt; &gt; bank uses for it, for example &quot;High-Power e-Savings
-&gt; &gt; Account&quot;. I'd like to be able to see those in the final
-&gt; &gt; report. Maybe I can leave it out of the ledger format and
-&gt; &gt; just use a join to an anciliary table in my reporting code.
-&gt;
-&gt; Account aliases are already possible, such as:
-&gt;
-&gt;    &#64;alias Savings = High-Power e-Savings Account
-&gt;
-&gt; Now you can using &quot;Savings&quot; in your ledger data, but real account name
-&gt; used will be the long form.</p>
-<p>Ah, coool! I didn't know that. Awesome!!!</p>
-<p>&gt; &gt; Reconciled Dates
-&gt; &gt; ~~~~~~~~~~~~~~~~
-&gt; &gt;
-&gt; &gt; One problem I have is that it is not obvious to figure out
-&gt; &gt; at a glance which accounts need updating. I would like a
-&gt; &gt; directive that says &quot;this account is up-to-date as of DATE&quot;.
-&gt; &gt; From this, you can generate a little table that prints out
-&gt; &gt; the last updated date ranges for each account for which it
-&gt; &gt; matters. Only accounts for which such a directive has been
-&gt; &gt; shown should be included in the list::
-&gt; &gt;
-&gt; &gt;  ;B 2008/04/01 Liabilities:Credit-Card:RBC-VISA
-&gt; &gt;
-&gt; &gt; Note that only the minimum and maximum values matter. Using
-&gt; &gt; a command to generate the ranges, it's really easy to see
-&gt; &gt; that you forgot to update a specific account (I have so many
-&gt; &gt; accounts now, I get very confused; I like the computer to
-&gt; &gt; help out.)
-&gt;
-&gt; If you use the -U reporting option, it will show you all transactions
-&gt; which are not up-to-date yet.  Can you describe the usage profile for
-&gt; this option?</p>
-<p>Actually, I don't think the transactions embody all the
-information: if an account has been inactive for two months,
-e.g., it has no transactions in it, I still want to be able
-to mark in the file that &quot;I have checked until this date&quot;,
-so that I won't have to go check again that really, nothing
-happened since the last transaction. This is just to manage
-the process of entering and reconciling the data (for the
-human).</p>
-</blockquote>
+<div class="line-block">
+<div class="line">BTW after fiddling with a few systems I would suggest the</div>
+<div class="line">following names for the objects/tables:</div>
+<div class="line"><br /></div>
+<div class="line">- Posting: an individual entry in a specific account (the</div>
+<div class="line-block">
+<div class="line">basic register view is a list of postings).</div>
+<div class="line"><br /></div>
+</div>
+<div class="line">- Transaction: the thing that contains the individual</div>
+<div class="line-block">
+<div class="line">postings.</div>
+<div class="line"><br /></div>
+</div>
+<div class="line">The word &quot;journal entry&quot; seems to have been abused left and</div>
+<div class="line">right, and should be best avoided. &quot;Item&quot; is too generic.</div>
+<div class="line">The names above are what I'm using through this long email.</div>
+<div class="line"><br /></div>
+<div class="line"><br /></div>
+<div class="line"><br /></div>
+<div class="line">&gt; &gt; I'm also toying with the idea of giving accounts longer,</div>
+<div class="line">&gt; &gt; more descriptive names, which would be used in reporting,</div>
+<div class="line">&gt; &gt; but I'm not sure it won't just make things more complicated</div>
+<div class="line">&gt; &gt; than necessary. Each account as a specific name that the</div>
+<div class="line">&gt; &gt; bank uses for it, for example &quot;High-Power e-Savings</div>
+<div class="line">&gt; &gt; Account&quot;. I'd like to be able to see those in the final</div>
+<div class="line">&gt; &gt; report. Maybe I can leave it out of the ledger format and</div>
+<div class="line">&gt; &gt; just use a join to an anciliary table in my reporting code.</div>
+<div class="line">&gt;</div>
+<div class="line">&gt; Account aliases are already possible, such as:</div>
+<div class="line">&gt;</div>
+<div class="line">&gt;    &#64;alias Savings = High-Power e-Savings Account</div>
+<div class="line">&gt;</div>
+<div class="line">&gt; Now you can using &quot;Savings&quot; in your ledger data, but real account name</div>
+<div class="line">&gt; used will be the long form.</div>
+<div class="line"><br /></div>
+<div class="line">Ah, coool! I didn't know that. Awesome!!!</div>
+<div class="line"><br /></div>
+<div class="line"><br /></div>
+<div class="line">&gt; &gt; Reconciled Dates</div>
+<div class="line">&gt; &gt; ~~~~~~~~~~~~~~~~</div>
+<div class="line">&gt; &gt;</div>
+<div class="line">&gt; &gt; One problem I have is that it is not obvious to figure out</div>
+<div class="line">&gt; &gt; at a glance which accounts need updating. I would like a</div>
+<div class="line">&gt; &gt; directive that says &quot;this account is up-to-date as of DATE&quot;.</div>
+<div class="line">&gt; &gt; From this, you can generate a little table that prints out</div>
+<div class="line">&gt; &gt; the last updated date ranges for each account for which it</div>
+<div class="line">&gt; &gt; matters. Only accounts for which such a directive has been</div>
+<div class="line">&gt; &gt; shown should be included in the list::</div>
+<div class="line">&gt; &gt;</div>
+<div class="line">&gt; &gt;  ;B 2008/04/01 Liabilities:Credit-Card:RBC-VISA</div>
+<div class="line">&gt; &gt;</div>
+<div class="line">&gt; &gt; Note that only the minimum and maximum values matter. Using</div>
+<div class="line">&gt; &gt; a command to generate the ranges, it's really easy to see</div>
+<div class="line">&gt; &gt; that you forgot to update a specific account (I have so many</div>
+<div class="line">&gt; &gt; accounts now, I get very confused; I like the computer to</div>
+<div class="line">&gt; &gt; help out.)</div>
+<div class="line">&gt;</div>
+<div class="line">&gt; If you use the -U reporting option, it will show you all transactions</div>
+<div class="line">&gt; which are not up-to-date yet.  Can you describe the usage profile for</div>
+<div class="line">&gt; this option?</div>
+<div class="line"><br /></div>
+<div class="line">Actually, I don't think the transactions embody all the</div>
+<div class="line">information: if an account has been inactive for two months,</div>
+<div class="line">e.g., it has no transactions in it, I still want to be able</div>
+<div class="line">to mark in the file that &quot;I have checked until this date&quot;,</div>
+<div class="line">so that I won't have to go check again that really, nothing</div>
+<div class="line">happened since the last transaction. This is just to manage</div>
+<div class="line">the process of entering and reconciling the data (for the</div>
+<div class="line">human).</div>
+</div>
 </div>
 </div>
 </body>

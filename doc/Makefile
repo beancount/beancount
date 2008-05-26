@@ -3,18 +3,12 @@
 MODELS =					\
 	beancount.sql				
 
-HTML =					   \
-	accounting.html  \
-	beancount.html   \
-	capgains.html    \
-	differences.html \
-	pyledger.html
-
 .SUFFIXES: .txt .sql .db .create .test .clean .html
 
-all: docs sql
+all: sql
 
-docs: $(HTML)
+docs:
+	projects docs beancount
 
 .txt.html:
 	rst2html.py $< > $(<:.txt=.html)
@@ -42,4 +36,4 @@ examples:
 	rst-literals -s accounting.txt >/dev/null
 
 clean:
-	rm -f $(MODELS) $(HTML)
+	rm -f $(MODELS)
