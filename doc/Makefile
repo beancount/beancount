@@ -3,9 +3,23 @@
 MODELS =					\
 	beancount.sql				
 
-.SUFFIXES: .txt .sql .db .create .test .clean
+HTML =					   \
+	accounting.html  \
+	beancount.html   \
+	capgains.html    \
+	differences.html \
+	pyledger.html
 
-all: $(MODELS)
+.SUFFIXES: .txt .sql .db .create .test .clean .html
+
+all: docs sql
+
+docs: $(HTML)
+
+.txt.html:
+	rst2html.py $< > $(<:.txt=.html)
+
+sql: $(MODELS)
 
 .txt.sql:
 	-rm -f $@
@@ -24,10 +38,8 @@ all: $(MODELS)
 .sql.test:
 	psql -f $(<:.sql=test.sql) $(<:.sql=.db) 2>&1 | grep -v NOTICE:
 
-docs:
-	projects docs flair
-
 examples:
 	rst-literals -s accounting.txt >/dev/null
 
-
+clean:
+	rm -f $(MODELS) $(HTML)

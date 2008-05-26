@@ -4,4 +4,3 @@ core
 *.swp
 *~
 TAGS
-doc/*.html
