@@ -406,43 +406,65 @@ class Ledger(object):
 
 
 
+    # Regular expressions to help with parsing
+    # To keep these maintainable, we try to use named groups throughout.
+    # The cost is the nasty duplication seen below to still allow building
+    # of larger regexps from small ones.
 
     # Patterns for comments and empty lines.
     comment_re = re.compile('^\s*;(.*)$')
     empty_re = re.compile('^\s*$')
 
     # Pattern for date.
-    date_re = re.compile('(\d\d\d\d)[/-](\d\d)[/-](\d\d)')
+    date_re  = re.compile('(?P<year>\d\d\d\d)[/-](?P<month>\d\d?)[/-](?P<day>\d\d?)')
+    edate_re = re.compile('(?P<eyear>\d\d\d\d)[/-](?P<emonth>\d\d?)[/-](?P<eday>\d\d?)')
 
     # A date within a note.
-    notedate_re = re.compile('\[(?:%(date)s)?(?:=%(date)s)?\]' % {'date': date_re.pattern})
+    notedate_re = re.compile('\[(?:%(date)s)?(?:=%(edate)s)?\]' % {
+        'date': date_re.pattern,
+        'edate': edate_re.pattern
+        })
 
     # Pattern for a transaction line.
     payee_sep = ' | '
-    txn_re = re.compile('^%(date)s(=%(date)s)?\s+(?:(.)\s+)?(\(.*?\))?(.*)$' %
-                        {'date': date_re.pattern})
+    txn_re = re.compile('^%(date)s(=%(edate)s)?\s+(?:(?P<flag>.)\s+)?(?P<code>\(.*?\))?(?P<payee>.*)$' % {
+        'date': date_re.pattern,
+        'edate': edate_re.pattern
+        })
 
     # Pattern for an amount.
     commodity_re = re.compile('"?([A-Za-z][A-Za-z0-9.]*)"?')
-    amount_re = re.compile('([-+]?\d*(?:\.\d*)?)\s+%(comm)s' %
-                           {'comm': commodity_re.pattern})
+    amount_pat  = '(?P<quantity>[-+]?\d*(?:\.\d*)?)\s+(?P<commodity>"?([A-Za-z][A-Za-z0-9.]*)"?)'
+    amount2_pat = '(?P<quantity2>[-+]?\d*(?:\.\d*)?)\s+(?P<commodity2>"?([A-Za-z][A-Za-z0-9.]*)"?)'
+    amount3_pat = '(?P<quantity3>[-+]?\d*(?:\.\d*)?)\s+(?P<commodity3>"?([A-Za-z][A-Za-z0-9.]*)"?)'
+    amount4_pat = '(?P<quantity4>[-+]?\d*(?:\.\d*)?)\s+(?P<commodity4>"?([A-Za-z][A-Za-z0-9.]*)"?)'
+    amount_re = re.compile(amount_pat)
 
     # Pattern for an account (note: we don't allow spaces in this version).
-    account_re = re.compile('[:A-Za-z0-9-_]+')
+    account_re = re.compile('([:A-Za-z0-9-_]+)')
     postaccount_re = re.compile('(?:%(accname)s|\[%(accname)s\]|\(%(accname)s\))' %
                                 {'accname': account_re.pattern})
 
     # Pattern for a posting line (part of a transaction).
-    posting_re = re.compile(
-        ('\s+([*!]\s+)?(%(account)s)(?:\s+%(amount)s)?'  # main
-         '(?:\s+(?:({)\s*%(amount)s\s*}|({{)\s*%(amount)s\s*}}))?' # declared cost
-         '(?:\s+@(@?)(?:\s+%(amount)s))?\s*(?:;(.*))?\s*$') %  # price/note
-        {'amount': amount_re.pattern, 'account': postaccount_re.pattern})
+    posting_re = re.compile((
+        '\s+(?P<flag>[*!]\s+)?'                   # flag
+        '(?P<account>%(account)s)'                # account name
+        '(?:\s+%(amount)s)?'                      # amount
+        '(?:\s+(?:(?P<brace>{)\s*%(amount2)s\s*}|(?P<braces>{{)\s*%(amount3)s\s*}}))?' # txn cost
+        '(?:\s+@(?P<at>@?)(?:\s+%(amount4)s))?'   # price
+        '\s*(?:;(?P<note>.*))?\s*$'               # note
+        ) % {
+        'account': postaccount_re.pattern,
+        'amount' : amount_pat,
+        'amount2': amount2_pat,
+        'amount3': amount3_pat,
+        'amount4': amount4_pat,
+        })
 
     # Pattern for the directives, and the special commands.
-    directive_re = re.compile('^@([a-z_]+)\s+([^;]*)(;.*)?')
-    special_re = re.compile('([YPNDCiobh])\s+')
-    command_re = re.compile('!([a-z]+)')
+    directive_re = re.compile('^@(?P<directive>[a-z_]+)\s+(?P<data>[^;]*)(?P<note>;.*)?')
+    special_re = re.compile('(?P<special>[YPNDCiobh])\s+')
+    command_re = re.compile('!(?P<command>[a-z]+)')
 
     def parse_string(self, text, name='<string>', encoding='ascii'):
         f = StringIO(text)
@@ -504,9 +526,9 @@ class Ledger(object):
                     self.transactions.append(txn)
 
                     try:
-                        actual_date = date(*map(int, mo.group(1, 2, 3)))
-                        if mo.group(4):
-                            effective_date = date(*map(int, mo.group(5, 6, 7)))
+                        actual_date = date(*map(int, mo.group('year', 'month', 'day')))
+                        if mo.group('eyear'):
+                            effective_date = date(*map(int, mo.group('eyear', 'emonth', 'eday')))
                         else:
                             effective_date = actual_date
                     except ValueError, e:
@@ -518,10 +540,10 @@ class Ledger(object):
                     txn.actual_date = actual_date
                     txn.effective_date = effective_date
 
-                    txn.flag = mo.group(8)
-                    txn.code = mo.group(9)
+                    txn.flag = mo.group('flag')
+                    txn.code = mo.group('code')
 
-                    g = mo.group(10).split(Ledger.payee_sep, 1)
+                    g = mo.group('payee').split(Ledger.payee_sep, 1)
                     if len(g) == 1:
                         txn.narration = g[0]
                     else:
@@ -544,7 +566,7 @@ class Ledger(object):
                             txn.postings.append(post)
                             self.postings.append(post)
 
-                            post.flag, post.account_name, post.note = mo.group(1,2,14)
+                            post.flag, post.account_name, post.note = mo.group('flag','account','note')
 
                             # Remove the modifications to the account name.
                             accname = post.account_name
@@ -558,7 +580,7 @@ class Ledger(object):
 
 
                             # Fetch the amount.
-                            anum, acom = mo.group(3,4)
+                            anum, acom = mo.group('quantity','commodity')
                             if anum is not None:
                                 anum = Decimal(anum)
                                 post.amount = Wallet(acom, anum)
@@ -568,11 +590,11 @@ class Ledger(object):
 
 
                             # Fetch the price.
-                            pnum, pcom = mo.group(12,13)
+                            pnum, pcom = mo.group('quantity4','commodity4')
                             if pnum is not None:
                                 pnum = Decimal(pnum)
                                 add_commodity(pcom)
-                                if bool(mo.group(11) == '@'):
+                                if bool(mo.group('at') == '@'):
                                     pnum /= anum
                                 post.price = Wallet(pcom, pnum)
                             else:
@@ -580,23 +602,23 @@ class Ledger(object):
 
 
                             # Fetch the cost.
-                            if mo.group(5) == '{':
-                                assert mo.group(8) == None
-                                cnum, ccom = mo.group(6,7)
+                            if mo.group('brace') == '{':
+                                assert mo.group('braces') == None
+                                cnum, ccom = mo.group('quantity2','commodity2')
                                 cnum = anum*Decimal(cnum)
                                 post.cost = Wallet(ccom, cnum)
                                 add_commodity(ccom)
 
-                            elif mo.group(8) == '{{':
-                                assert mo.group(5) == None
-                                cnum, ccom = mo.group(9,10)
+                            elif mo.group('braces') == '{{':
+                                assert mo.group('brace') == None
+                                cnum, ccom = mo.group('quantity3','quantity3')
                                 cnum = Decimal(cnum)
                                 post.cost = Wallet(ccom, cnum)
                                 add_commodity(ccom)
 
                             else:
-                                assert mo.group(5) is None, mo.groups()
-                                assert mo.group(8) is None, mo.groups()
+                                assert mo.group('brace') is None, mo.groups()
+                                assert mo.group('braces') is None, mo.groups()
 
 
                             # Compute the price from the explicit cost.
@@ -621,10 +643,10 @@ class Ledger(object):
                                 if mo:
                                     # Set the posting's date according to the
                                     # dates in the note.
-                                    actual = mo.group(1,2,3)
+                                    actual = mo.group('year','month','day')
                                     if actual[0]:
                                         post.actual_date = date(*map(int, actual))
-                                    effective = mo.group(4,5,6)
+                                    effective = mo.group('eyear','emonth','eday')
                                     if effective[0]:
                                         post.effective_date = date(*map(int, effective))
 
@@ -646,7 +668,7 @@ class Ledger(object):
                 # Parse a directive.
                 mo = match_directive(line)
                 if mo:
-                    direc, direc_line = mo.group(1,2)
+                    direc, direc_line = mo.group('directive','data')
                     try:
                         parser = self.directives[direc]
                         parser.parse(direc_line, fn, lineno[0])
@@ -659,7 +681,7 @@ class Ledger(object):
                 # Parse a directive.
                 mo = match_special(line)
                 if mo:
-                    self.log(WARNING, "Directive %s not supported." % mo.group(1),
+                    self.log(WARNING, "Directive %s not supported." % mo.group('special'),
                              (fn, lineno[0]))
                     line = nextline()
                     continue
@@ -667,7 +689,7 @@ class Ledger(object):
                 # Parse a directive.
                 mo = match_command(line)
                 if mo:
-                    self.log(CRITICAL, "Command %s not supported." % mo.group(1),
+                    self.log(CRITICAL, "Command %s not supported." % mo.group('command'),
                              (fn, lineno[0]))
                     line = nextline()
                     continue
@@ -896,7 +918,7 @@ class CheckDirective(object):
     name = 'check'
     prio = 1000
 
-    mre = re.compile("\s*%(date)s\s+(%(account)s)\s+%(amount)s\s*$" %
+    mre = re.compile("\s*%(date)s\s+(?P<account>%(account)s)\s+%(amount)s\s*$" %
                      {'date': Ledger.date_re.pattern,
                       'account': Ledger.account_re.pattern,
                       'amount': Ledger.amount_re.pattern})
@@ -911,10 +933,10 @@ class CheckDirective(object):
             self.ledger.log(CRITICAL, "Invalid check directive:\n %s" % line.strip(),
                             (filename, lineno))
             return
-        cdate = date(*map(int, mo.group(1, 2, 3)))
-        account = self.ledger.get_account(mo.group(4), create=1)
-        com = mo.group(6)
-        amount = (com, Decimal(mo.group(5)))
+        cdate = date(*map(int, mo.group('year', 'month', 'day')))
+        account = self.ledger.get_account(mo.group('account'), create=1)
+        com = mo.group('commodity')
+        amount = (com, Decimal(mo.group('quantity')))
         expected = Wallet(*amount)
         self.checks.append(Check(cdate, account, expected, com, filename, lineno,
                                  None, expected))
@@ -977,7 +999,7 @@ class DefineAccountDirective(object):
     name = 'defaccount'
     prio = 1
 
-    mre = re.compile("\s*(De|Cr)\s+(%(account)s)\s+((?:%(commodity)s(?:,\s*)?)*)\s*$" %
+    mre = re.compile("\s*(?P<type>De|Cr)\s+(?P<account>%(account)s)\s+(?P<commodity>(?:%(commodity)s(?:,\s*)?)*)\s*$" %
                      {'account': Ledger.account_re.pattern,
                       'commodity': Ledger.commodity_re.pattern})
 
@@ -992,9 +1014,9 @@ class DefineAccountDirective(object):
                             (filename, lineno))
             return
 
-        isdebit = (mo.group(1) == 'De')
-        account = self.ledger.get_account(mo.group(2), create=1, incrcount=False)
-        commodities = mo.group(3).split(',') if mo.group(3) else None
+        isdebit = (mo.group('type') == 'De')
+        account = self.ledger.get_account(mo.group('account'), create=1, incrcount=False)
+        commodities = mo.group('commodity').split(',') if mo.group('commodity') else None
         if account in self.definitions:
             self.ledger.log(CRITICAL, "Duplicate account definition: %s" % account.fullname,
                             (filename, lineno))
@@ -1110,9 +1132,10 @@ class AutoPadDirective(object):
 
     flag = 'A'
 
-    mre = re.compile("\s*(?:%(date)s)\s+(%(account)s)\s+(%(account)s)\s*$" %
+    mre = re.compile("\s*(?:%(date)s)\s+(?P<account>%(account)s)\s+(?P<account2>%(account)s)\s*$" %
                      {'date': Ledger.date_re.pattern,
-                      'account': Ledger.account_re.pattern})
+                      'account': Ledger.account_re.pattern,
+                      })
 
     def __init__(self, ledger, checkdir):
         self.pads = []
@@ -1129,10 +1152,10 @@ class AutoPadDirective(object):
                             (filename, lineno))
             return
 
-        pdate = date(*map(int, mo.group(1, 2, 3)))
+        pdate = date(*map(int, mo.group('year', 'month', 'day')))
         try:
-            acc_target = self.ledger.get_account(mo.group(4))
-            acc_offset = self.ledger.get_account(mo.group(5))
+            acc_target = self.ledger.get_account(mo.group('account'))
+            acc_offset = self.ledger.get_account(mo.group('account2'))
         except KeyError, e:
             self.ledger.log(CRITICAL, "Invalid account: %s" % e,
                             (filename, lineno))
