@@ -14,6 +14,7 @@ from colorlog import ColorFormatter
 # beancount imports
 from beancount.ledger import Ledger
 from beancount.timeparse import parse_time
+from beancount import install_psyco
 
 
 def main(parser):
@@ -33,6 +34,9 @@ def main(parser):
                       dest='color', action='store_false', default=True,
                       help="Disable color terminal output.")
 
+    parser.add_option('--no-psyco', action='store_true',
+                      help="Disable psyco JIT optimizations.")
+
     opts, args = parser.parse_args()
 
     if sys.stderr.isatty() and opts.color:
@@ -47,6 +51,9 @@ def main(parser):
         except KeyError:
             parser.error("You must provide some files or set the "
                          "environment variable LEDGER_FILE.")
+
+    if not opts.no_psyco:
+        install_psyco()
 
     fn, args = args[0], args[1:]
 
