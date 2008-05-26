@@ -433,17 +433,17 @@ class Ledger(object):
         })
 
     # Pattern for an amount.
-    commodity_re = re.compile('"?([A-Za-z][A-Za-z0-9.]*)"?')
-    amount_pat  = '(?P<quantity>[-+]?\d*(?:\.\d*)?)\s+(?P<commodity>"?([A-Za-z][A-Za-z0-9.]*)"?)'
-    amount2_pat = '(?P<quantity2>[-+]?\d*(?:\.\d*)?)\s+(?P<commodity2>"?([A-Za-z][A-Za-z0-9.]*)"?)'
-    amount3_pat = '(?P<quantity3>[-+]?\d*(?:\.\d*)?)\s+(?P<commodity3>"?([A-Za-z][A-Za-z0-9.]*)"?)'
-    amount4_pat = '(?P<quantity4>[-+]?\d*(?:\.\d*)?)\s+(?P<commodity4>"?([A-Za-z][A-Za-z0-9.]*)"?)'
+    commodity_pat = '([^\s\d\-\+]+|"[^"]+")'
+    amount_pat  = '(?P<commodityprefix>%(commodity_pat)s)?\s*(?P<quantity>[-+]?\d+(?:\.\d*)?)\s*(?P<commodity>%(commodity_pat)s)?'    % {'commodity_pat':commodity_pat}
+    amount2_pat = '(?P<commodityprefix2>%(commodity_pat)s)?\s*(?P<quantity2>[-+]?\d+(?:\.\d*)?)\s*(?P<commodity2>%(commodity_pat)s)?' % {'commodity_pat':commodity_pat}
+    amount3_pat = '(?P<commodityprefix3>%(commodity_pat)s)?\s*(?P<quantity3>[-+]?\d+(?:\.\d*)?)\s*(?P<commodity3>%(commodity_pat)s)?' % {'commodity_pat':commodity_pat}
+    amount4_pat = '(?P<commodityprefix4>%(commodity_pat)s)?\s*(?P<quantity4>[-+]?\d+(?:\.\d*)?)\s*(?P<commodity4>%(commodity_pat)s)?' % {'commodity_pat':commodity_pat}
     amount_re = re.compile(amount_pat)
 
-    # Pattern for an account (note: we don't allow spaces in this version).
-    account_re = re.compile('([:A-Za-z0-9-_]+)')
-    postaccount_re = re.compile('(?:%(accname)s|\[%(accname)s\]|\(%(accname)s\))' %
-                                {'accname': account_re.pattern})
+    # Pattern for an account name.
+    account_pat     = '(?:[^\s]| (?! ))+'
+    postaccount_pat = '(?:%(accname)s|\[%(accname)s\]|\(%(accname)s\))' % {
+                            'accname': account_pat}
 
     # Pattern for a posting line (part of a transaction).
     posting_re = re.compile((
@@ -452,9 +452,10 @@ class Ledger(object):
         '(?:\s+%(amount)s)?'                      # amount
         '(?:\s+(?:(?P<brace>{)\s*%(amount2)s\s*}|(?P<braces>{{)\s*%(amount3)s\s*}}))?' # txn cost
         '(?:\s+@(?P<at>@?)(?:\s+%(amount4)s))?'   # price
-        '\s*(?:;(?P<note>.*))?\s*$'               # note
+        '(?:\s*;(?P<note>.*))?'                   # note
+        '\s*$'
         ) % {
-        'account': postaccount_re.pattern,
+        'account': postaccount_pat,
         'amount' : amount_pat,
         'amount2': amount2_pat,
         'amount3': amount3_pat,
@@ -580,7 +581,8 @@ class Ledger(object):
 
 
                             # Fetch the amount.
-                            anum, acom = mo.group('quantity','commodity')
+                            anum = mo.group('quantity')
+                            acom = mo.group('commodityprefix') or mo.group('commodity')
                             if anum is not None:
                                 anum = Decimal(anum)
                                 post.amount = Wallet(acom, anum)
@@ -590,7 +592,8 @@ class Ledger(object):
 
 
                             # Fetch the price.
-                            pnum, pcom = mo.group('quantity4','commodity4')
+                            pnum = mo.group('quantity4')
+                            pcom = mo.group('commodityprefix4') or mo.group('commodity4')
                             if pnum is not None:
                                 pnum = Decimal(pnum)
                                 add_commodity(pcom)
@@ -604,14 +607,16 @@ class Ledger(object):
                             # Fetch the cost.
                             if mo.group('brace') == '{':
                                 assert mo.group('braces') == None
-                                cnum, ccom = mo.group('quantity2','commodity2')
+                                cnum = mo.group('quantity2')
+                                ccom = mo.group('commodityprefix2') or mo.group('commodity2')
                                 cnum = anum*Decimal(cnum)
                                 post.cost = Wallet(ccom, cnum)
                                 add_commodity(ccom)
 
                             elif mo.group('braces') == '{{':
                                 assert mo.group('brace') == None
-                                cnum, ccom = mo.group('quantity3','quantity3')
+                                cnum = mo.group('quantity3')
+                                ccom = mo.group('commodityprefix3') or mo.group('commodity3')
                                 cnum = Decimal(cnum)
                                 post.cost = Wallet(ccom, cnum)
                                 add_commodity(ccom)
@@ -920,7 +925,7 @@ class CheckDirective(object):
 
     mre = re.compile("\s*%(date)s\s+(?P<account>%(account)s)\s+%(amount)s\s*$" %
                      {'date': Ledger.date_re.pattern,
-                      'account': Ledger.account_re.pattern,
+                      'account': Ledger.account_pat,
                       'amount': Ledger.amount_re.pattern})
 
     def __init__(self, ledger):
@@ -935,7 +940,7 @@ class CheckDirective(object):
             return
         cdate = date(*map(int, mo.group('year', 'month', 'day')))
         account = self.ledger.get_account(mo.group('account'), create=1)
-        com = mo.group('commodity')
+        com = mo.group('commodityprefix') or mo.group('commodity')
         amount = (com, Decimal(mo.group('quantity')))
         expected = Wallet(*amount)
         self.checks.append(Check(cdate, account, expected, com, filename, lineno,
@@ -1000,8 +1005,8 @@ class DefineAccountDirective(object):
     prio = 1
 
     mre = re.compile("\s*(?P<type>De|Cr)\s+(?P<account>%(account)s)\s+(?P<commodity>(?:%(commodity)s(?:,\s*)?)*)\s*$" %
-                     {'account': Ledger.account_re.pattern,
-                      'commodity': Ledger.commodity_re.pattern})
+                     {'account': Ledger.account_pat,
+                      'commodity': Ledger.commodity_pat})
 
     def __init__(self, ledger):
         self.definitions = {}
@@ -1134,7 +1139,7 @@ class AutoPadDirective(object):
 
     mre = re.compile("\s*(?:%(date)s)\s+(?P<account>%(account)s)\s+(?P<account2>%(account)s)\s*$" %
                      {'date': Ledger.date_re.pattern,
-                      'account': Ledger.account_re.pattern,
+                      'account': Ledger.account_pat,
                       })
 
     def __init__(self, ledger, checkdir):
