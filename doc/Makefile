@@ -1,12 +1,19 @@
 #!/usr/bin/env schema
 
 MODELS =					\
-	beancount.sql				
+	beancount.sql
+
+# Note: I keep the HTML files checked in on purpose, it is part of how I
+# maintain the website.
 
 .SUFFIXES: .txt .sql .db .create .test .clean .html
 
 all: sql
 
+# Note: this uses a private script called 'projects' that I have to update pages
+# in a way that looks good on my website. It invokes a custom-made script not
+# unlike rst2html.py, which inserts a div for the header and a few relative
+# links that work well by default. See beancount/etc/docutilsrc for the list.
 docs:
 	projects docs beancount
 
