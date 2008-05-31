@@ -136,7 +136,11 @@ def select_addopts(parser):
 
     parser.add_option('-a', '--account', action='append', metavar='REGEXP',
                       default=[],
-                      help="Filter only the given accounts.")
+                      help="Filter only the postings whose account matches the given regexp.")
+
+    parser.add_option('-A', '--transaction-account', action='append', metavar='REGEXP',
+                      default=[],
+                      help="Filter only the transactions which have at least one account which matches the given regexp.")
 
     parser.add_option('-n', '--note', action='append', metavar='REGEXP',
                       help="Filter only the postings with the given notes.")
@@ -164,6 +168,13 @@ def create_filter_pred(opts):
     if opts.account:
         try:
             acc_funs = [re.compile(regexp, re.I).search for regexp in opts.account]
+        except re.error, e:
+            raise SystemExit(e)
+
+    txnacc_funs = None
+    if opts.transaction_account:
+        try:
+            txnacc_funs = [re.compile(regexp, re.I).search for regexp in opts.transaction_account]
         except re.error, e:
             raise SystemExit(e)
 
@@ -195,6 +206,10 @@ def create_filter_pred(opts):
     def pred(post):
         if acc_funs is not None:
             if all(not fun(post.account.fullname) for fun in acc_funs):
+                return False
+        if txnacc_funs is not None:
+            if all(all(not fun(p.account.fullname) for fun in txnacc_funs)
+                   for p in post.txn.postings):
                 return False
         if note_funs is not None:
             if all(not fun(post.note or '') for fun in note_funs):
