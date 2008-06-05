@@ -1,0 +1,220 @@
+;;; -*- mode: ledger; coding: utf-8; -*-
+;;;
+;;; This is an example/demo file, with some example accounts and
+;;; some example transactions. A real-life Ledger file has a lot
+;;; more transactions in it, and possibly a very different set
+;;; of accounts; feel free to define your own and to change
+;;; everything in here if you use this as a template. You can be
+;;; creative, because all the accounts and commodities are
+;;; generic. (More comments are sprinkled below.)
+;;;
+
+;;;;; Initialization
+
+
+;;; Declaration of Accounts.
+
+;;; Here you can declare a list of valid accounts, and
+;;; optionally, a constraint on which kind of commodity they are
+;;; allowed to hold (helps you track down mistakes).
+;;;
+;;; Note that 
+;;;
+;;; - the system supports any currencies, and works with
+;;;   multiple commodities in the same Ledger. 
+;;;
+;;; - No distinction is made between currency commodities (e.g.
+;;;   USD, EUR, USD) and investment commodities (e.g. GOOG,
+;;;   AAPL, MSFT).
+;;;
+;;; - The Assets, Liabilities, Equity, Income, Expenses
+;;;   categories are not special; they are simply a convention;
+;;;   be creative if you like. There are really only two kinds
+;;;   of accounts: debit accounts and credit accounts, and the
+;;;   type is only used for reporting (maybe).
+
+@defaccount De Assets:Current:Cash
+@defaccount De Assets:Current:BestBank:Checking            USD
+@defaccount De Assets:Current:BestBank:Savings             USD
+@defaccount De Assets:Fixed:Home                           USD
+@defaccount De Assets:Investments:UTrade:Account           USD
+@defaccount De Assets:Loans
+@defaccount De Assets:AccountsReceivable
+
+@defaccount Cr Liabilities:AccountsPayable
+@defaccount Cr Liabilities:BestBank:Mortgage               USD
+@defaccount Cr Liabilities:BestBank:Mortgage:Loan          USD
+@defaccount Cr Liabilities:Credit-Card:VISA                USD
+
+@defaccount Cr Equity:Opening-Balances
+
+@defaccount Cr Income:Investment:Checking-Interest
+@defaccount Cr Income:Investment:Savings-Interest
+@defaccount Cr Income:Investment:Margin-Interest
+@defaccount Cr Income:Investment:Dividends
+@defaccount Cr Income:Investment:Money-Market
+@defaccount Cr Income:Investment:Bonds
+@defaccount Cr Income:Investment:Capital-Gains
+@defaccount Cr Income:Salary:AcmeCo
+
+@defaccount De Expenses:Financial:Fees
+@defaccount De Expenses:Financial:Commissions
+@defaccount De Expenses:Financial:Interest
+@defaccount De Expenses:Insurance:Travel
+@defaccount De Expenses:Insurance:Life
+@defaccount De Expenses:Food:Restaurant
+@defaccount De Expenses:Food:Grocery
+@defaccount De Expenses:Food:Alcool
+@defaccount De Expenses:Communications:Phone
+@defaccount De Expenses:Communications:Mail
+@defaccount De Expenses:Transportation:Parking
+@defaccount De Expenses:Transportation:Taxi
+@defaccount De Expenses:Transportation:Trains
+@defaccount De Expenses:Transportation:PublicTrans
+@defaccount De Expenses:Taxes:US-State-California        USD
+@defaccount De Expenses:Taxes:US-Federal                 USD
+@defaccount De Expenses:Govt-Services                    USD
+@defaccount De Expenses:Clothes
+@defaccount De Expenses:Sports
+@defaccount De Expenses:Sports:Gear
+@defaccount De Expenses:Fun:Movie
+@defaccount De Expenses:Fun:Museum
+@defaccount De Expenses:Food
+@defaccount De Expenses:Books
+@defaccount De Expenses:Travel:Flights
+@defaccount De Expenses:Travel:Accomodation
+@defaccount De Expenses:Toys:Photography
+@defaccount De Expenses:Toys:Computer
+@defaccount De Expenses:Office-Supplies
+@defaccount De Expenses:Medical
+@defaccount De Expenses:Charity
+@defaccount De Expenses:Misc
+@defaccount De Expenses:Home:Repair
+@defaccount De Expenses:Home:Maintenance
+@defaccount De Expenses:Home:Taxes
+@defaccount De Expenses:Home:Taxes:Municipal
+@defaccount De Expenses:Home:Taxes:School
+@defaccount De Expenses:Home:Insurance
+@defaccount De Expenses:Home:Monthly
+@defaccount De Expenses:Home:Monthly:Internet
+@defaccount De Expenses:Home:Monthly:Condo-Fees
+@defaccount De Expenses:Home:Monthly:Electricity
+@defaccount De Expenses:Home:Monthly:Loan-Interest
+@defaccount De Expenses:Home:Monthly:Water
+@defaccount De Expenses:Home:Acquisition:Furniture
+@defaccount De Expenses:Home:Acquisition:Renovations
+@defaccount De Expenses:Home:Acquisition:Legal
+@defaccount De Expenses:Home:Acquisition:Inspection
+
+
+
+;;; You can provide mappings from the account numbers ("account
+;;; ids") that are normally found in OFX files that the
+;;; banks/brokers provide, mapping to account names in this
+;;; Ledger file. This way, a script that converts the OFX into
+;;; Ledger-compatible syntax is able to automatically figure out
+;;; the right account names.
+
+;;; Account number mappings.
+@var ofx accid  123456789012       Assets:Current:BestBank:Checking
+@var ofx accid  123456789012       Assets:Current:BestBank:Savings
+@var ofx accid  1234567890         Liabilities:BestBank:Mortgage:Loan
+@var ofx accid  1234567890123456   Liabilities:Credit-Card:VISA
+@var ofx accid  1234567890         Assets:Investments:UTrade:Account
+
+
+
+;; The order that the transactions are declared in does not
+;; matter at all. Personally I like to organize transactions in
+;; chronological order, but within sections more-or-less by
+;; account. Here I've ordered transactions for presentation
+;; clarity.
+
+
+
+;;;; Assets:Current:BestBank:Checking
+
+;; This entry tells the software to automatically insert an
+;; entry at this date, of the amount required to fulfill the
+;; next @check directive (chronologically) in the account (for
+;; all commodities present). If the required amount is 0, no
+;; entry is added.
+@pad 2007-12-31 Assets:Current:BestBank:Checking   Equity:Opening-Balances
+
+;; This directive tells the software to assert that at the given
+;; date, in the given account, a specific amount of the given
+;; commodity was present.
+@check 2008-01-01 Assets:Current:BestBank:Checking   112.24 USD
+
+
+;; A check deposit, e.g. depositing a government check.
+2008-01-05 * GST CANADA | Deposit from govt for consumer tax rebate
+  Assets:Current:BestBank:Checking       77.76 USD
+  Expenses:Taxes:US-Federal
+
+
+;; This is how salary direct deposit entries might show up
+;; within the checking account section.
+2008-01-10 * ACME | Salary paid from employer
+  Assets:Current:BestBank:Checking        2000.00 USD
+  Income:Salary:AcmeCo
+
+2008-01-25 * ACME | Salary paid from employer
+  Assets:Current:BestBank:Checking        2000.00 USD
+  Income:Salary:AcmeCo
+
+2008-02-10 * ACME | Salary paid from employer
+  Assets:Current:BestBank:Checking        2000.00 USD
+  Income:Salary:AcmeCo
+
+2008-02-25 * ACME | Salary paid from employer
+  Assets:Current:BestBank:Checking        2000.00 USD
+  Income:Salary:AcmeCo
+
+
+;; Withdrawal from another bank's ATM machine (with fees).
+2008-01-12 * ATM withdrawal - 00044242
+  Assets:Current:BestBank:Checking    -301.50 USD
+  Expenses:Financial:Fees              1.50 USD
+  Assets:Current:Cash
+
+;; ATM withdrawal (without fees).
+2008-02-24 * ATM withdrawal
+  Assets:Current:BestBank:Checking    -300.00 USD
+  Assets:Current:Cash
+
+;; Automated withdrawal for Life insurance payments.
+2008-01-02 * LIFE INSURANCE -- LONDON LIFE
+  Assets:Current:BestBank:Checking         -42.69 USD
+  Expenses:Insurance:Life
+
+2008-02-02 * LIFE INSURANCE -- LONDON LIFE
+  Assets:Current:BestBank:Checking         -42.69 USD
+  Expenses:Insurance:Life
+
+
+;; A purchase from a store using the bank's debit card.
+2008-01-17 * Interac Purchase - 1341 - ACCES SPORTS S
+  Assets:Current:BestBank:Checking      -89.00 USD
+  Expenses:Sports:Gear
+
+
+;; A monthyl fee that the bank takes.
+2008-01-10 * MONTHLY FEE
+  Assets:Current:BestBank:Checking                   -4.00 USD
+  Expenses:Financial:Fees
+
+
+
+;; At the end of the month, I take my statements, look at the
+;; bottom and enter the amount that the bank says was there at
+;; that date. It should corroborate with the data in my Ledger.
+@check 2008-02-01 Assets:Current:BestBank:Checking   3752.81 USD
+
+
+
+
+
+
+
+

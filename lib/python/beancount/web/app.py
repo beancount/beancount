@@ -15,6 +15,7 @@ from itertools import izip, count
 
 # other imports
 ## from htmlout import *
+import xmlout
 from xmlout import *
 
 # beancount imports
@@ -386,8 +387,8 @@ def messages(app, ctx):
     page.add(H1('Parsing Messages'))
 
     ledger = ctx.ledger
-    div, = page.add(DIV(CLASS='message'))
-    tbl, = div.add(TABLE())
+    div = page.add(DIV(CLASS='message'))
+    tbl = div.add(TABLE())
     for msg in ledger.messages:
         name = msgname[msg.level]
         tbl.add(TR(TD(name.capitalize(), CLASS=name),
