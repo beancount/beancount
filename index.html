@@ -4,7 +4,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 <meta name="generator" content="Docutils 0.5: http://docutils.sourceforge.net/" />
-<title>BeanCount: Command-line Accounting in Python</title>
+<title>BeanCount: Command-line Double-Entry Accounting with Python</title>
 <link rel="stylesheet" href="style.css" type="text/css" />
 </head>
 <body>
@@ -14,8 +14,8 @@
   
 </div>
 
-<div class="document" id="beancount-command-line-accounting-in-python">
-<h1 class="title">BeanCount: Command-line Accounting in Python</h1>
+<div class="document" id="beancount-command-line-double-entry-accounting-with-python">
+<h1 class="title">BeanCount: Command-line Double-Entry Accounting with Python</h1>
 
 <div class="contents topic" id="contents">
 <p class="topic-title first">Contents</p>
@@ -34,21 +34,42 @@
 5  Author -->
 <div class="section" id="description">
 <h1><a class="toc-backref" href="#id1">Description</a></h1>
-<p>A powerful accounting system that uses only a simple text file format
-and a few Python scripts.</p>
+<p>A double-entry accounting system that uses a simple text file format
+as input. A few Python scripts are used to parse the contents of the
+file, for example, to serve the contents as a locally running web
+server. Scripts are provided to convert from OFX files into Ledger
+input format, and other formats (easily extensible).</p>
+<p>Notes:</p>
+<ul class="simple">
+<li>The ideas and syntax is entirely inspired by John Wigley's <a class="reference" href="http://www.newartisans.com/software/ledger.html">Ledger</a>,
+and the syntax is pretty much compatible with it. Beancount's syntax
+is a subset of Ledger (a little more restrictive), with a few
+additional directives. You should probably read Ledger's
+documentation in order to you use Beancount.</li>
+<li>Beancount is a Python version of Ledger, and thus is much slower,
+but also much easier to extend (the code is pure Python).</li>
+<li>Beancount provides a simple web front to view the contents of the
+database, so you don't have to parse the entire file everytime you
+want to view a different account (this helps mitigate the fact that
+parsing is comparatively slow).</li>
+<li>New features can be expected to flow between Ledger and Beancount,
+as the authors have been in touch and have discussed ways of doing
+integration. In particular, Ledger is being augmented with the
+ability to export its parser with a binding for the Python language,
+so Beancount's parser may eventually use the Ledger parser for
+speed, and Ledger may eventually leverage Beancount's web front-end.</li>
+</ul>
 </div>
 <div class="section" id="running-the-demo">
 <h1><a class="toc-backref" href="#id2">Running the Demo</a></h1>
 <p>There is a demonstration ledger input file under the examples
-directory. To run a local web server on the example file, type the
-following command in the root directory:</p>
-<pre class="literal-block">
-demo.sh
-</pre>
+directory. To run a local web server on the example demo file, cd into
+<tt class="docutils literal"><span class="pre">examples</span></tt> and run the demo scripts.</p>
 </div>
 <div class="section" id="documentation">
 <h1><a class="toc-backref" href="#id3">Documentation</a></h1>
 <ul class="simple">
+<li><a class="reference" href="examples/demo.ledger">Demo Ledger input file</a></li>
 <li><a class="reference" href="CHANGES">CHANGES</a></li>
 <li><a class="reference" href="TODO">TODO</a></li>
 <li><a class="reference" href="/beancount/doc/pyledger.html">Notes on Ledger in Python</a></li>

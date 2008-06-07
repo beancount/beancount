@@ -1,6 +1,6 @@
-==================================================
-   BeanCount: Command-line Accounting in Python
-==================================================
+=================================================================
+   BeanCount: Command-line Double-Entry Accounting with Python
+=================================================================
 
 .. contents::
 ..
@@ -13,23 +13,50 @@
 Description
 ===========
 
-A powerful accounting system that uses only a simple text file format
-and a few Python scripts.
+A double-entry accounting system that uses a simple text file format
+as input. A few Python scripts are used to parse the contents of the
+file, for example, to serve the contents as a locally running web
+server. Scripts are provided to convert from OFX files into Ledger
+input format, and other formats (easily extensible). 
+
+Notes:
+
+- The ideas and syntax is entirely inspired by John Wigley's Ledger_,
+  and the syntax is pretty much compatible with it. Beancount's syntax
+  is a subset of Ledger (a little more restrictive), with a few
+  additional directives. You should probably read Ledger's
+  documentation in order to you use Beancount.
+
+- Beancount is a Python version of Ledger, and thus is much slower,
+  but also much easier to extend (the code is pure Python).
+
+- Beancount provides a simple web front to view the contents of the
+  database, so you don't have to parse the entire file everytime you
+  want to view a different account (this helps mitigate the fact that
+  parsing is comparatively slow).
+
+- New features can be expected to flow between Ledger and Beancount,
+  as the authors have been in touch and have discussed ways of doing
+  integration. In particular, Ledger is being augmented with the
+  ability to export its parser with a binding for the Python language,
+  so Beancount's parser may eventually use the Ledger parser for
+  speed, and Ledger may eventually leverage Beancount's web front-end.
+
+.. _Ledger: http://www.newartisans.com/software/ledger.html
 
 
 Running the Demo
 ================
 
 There is a demonstration ledger input file under the examples
-directory. To run a local web server on the example file, type the
-following command in the root directory::
-
-   demo.sh   
+directory. To run a local web server on the example demo file, cd into
+``examples`` and run the demo scripts.
 
 
 Documentation
 =============
 
+- `Demo Ledger input file <examples/demo.ledger>`_
 - `CHANGES <CHANGES>`_
 - `TODO <TODO>`_
 - `Notes on Ledger in Python </beancount/doc/pyledger.html>`_
@@ -47,6 +74,4 @@ Author
 ======
 
 Martin Blais <blais@furius.ca>
-
-
 
