@@ -24,16 +24,23 @@ def main():
     parser.add_option('-B', '--at-cost', action='store_true',
                       help="Compute amounts at cost units instead of in amount units.")
 
+    parser.add_option('-a', '--account', action='store',
+                      help="Only show the balance for the specified account, in "
+                      "a format that can be deserialized to build a wallet.")
+
     opts, ledger, args = cmdline.main(parser)
 
     compute_balsheet(ledger, 'local_balance', 'balance', opts.at_cost)
-    aname = 'local_balance' if opts.local else 'balance'
-    for acc, branch, line in render_tree(ledger.get_root_account()):
-        aline = branch + line
-        print '  %-40s %s' % (aline, getattr(acc, aname).round())
+    if opts.account is not None:
+        acc = ledger.get_account(opts.account)
+        print repr(acc.balance)
+    else:
+        aname = 'local_balance' if opts.local else 'balance'
+        for acc, branch, line in render_tree(ledger.get_root_account()):
+            aline = branch + line
+            print '  %-40s %s' % (aline, getattr(acc, aname).round())
 
 if __name__ == '__main__':
     main()
-
 
 

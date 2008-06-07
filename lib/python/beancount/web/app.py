@@ -445,8 +445,8 @@ page_directory = (
 
     ('@@Style', static('style.css', 'text/css'), '/style.css', None),
     ('@@Treetable', static('treetable.js', 'text/javascript'), '/treetable.js', None),
-    ('@@FolderOpen', static('folder_open.png', 'text/javascript'), '/folder_open.png', None),
-    ('@@FolderClosed', static('folder_closed.png', 'text/javascript'), '/folder_closed.png', None),
+    ('@@FolderOpen', static('folder_open.png', 'image/png'), '/folder_open.png', None),
+    ('@@FolderClosed', static('folder_closed.png', 'image/png'), '/folder_closed.png', None),
     ('@@Logo', static("header-universal-dollar.jpg", 'image/jpeg'), '/header.jpg', None),
     ('@@Home', info, '/', None),
     ('@@Info', info, '/info', None),

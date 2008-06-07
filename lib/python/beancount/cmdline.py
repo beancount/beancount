@@ -57,6 +57,10 @@ def main(parser):
 
     fn, args = args[0], args[1:]
 
+    ledger = load_ledger(fn, opts)
+    return opts, ledger, args
+
+def load_ledger(fn, opts):
     # Parse the file.
     if not exists(fn):
         parser.error("No such file '%s'." % fn)
@@ -91,8 +95,8 @@ def main(parser):
         f.close()
 
     ledger.run_directives()
+    return ledger
 
-    return opts, ledger, args
 
 def reload(ledger):
     """
