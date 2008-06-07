@@ -14,7 +14,6 @@ from urlparse import urlparse
 from itertools import izip, count
 
 # other imports
-## from htmlout import *
 import xmlout
 from xmlout import *
 
