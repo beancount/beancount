@@ -5,9 +5,17 @@
 ;;; more transactions in it, and possibly a very different set
 ;;; of accounts; feel free to define your own and to change
 ;;; everything in here if you use this as a template. You can be
-;;; creative, because all the accounts and commodities are
-;;; generic. (More comments are sprinkled below.)
+;;; creative, because all the account categories and commodities
+;;; are entirely generic. (More comments are sprinkled below.)
 ;;;
+;;; The order in which the transactions are declared does not
+;;; matter at all... personally I like to organize transactions
+;;; in chronological order, within sections that are
+;;; more-or-less by account. I normally pretty much keep them in
+;;; the order that the converted OFX file presents them. Here
+;;; however, I've ordered the transactions for better clarity of
+;;; presentation, since this is a file with sample transactions.
+
 
 ;;;;; Initialization
 
@@ -18,10 +26,10 @@
 ;;; optionally, a constraint on which kind of commodity they are
 ;;; allowed to hold (helps you track down mistakes).
 ;;;
-;;; Note that 
+;;; Note that
 ;;;
 ;;; - the system supports any currencies, and works with
-;;;   multiple commodities in the same Ledger. 
+;;;   multiple commodities in the same Ledger.
 ;;;
 ;;; - No distinction is made between currency commodities (e.g.
 ;;;   USD, EUR, USD) and investment commodities (e.g. GOOG,
@@ -36,74 +44,70 @@
 @defaccount De Assets:Current:Cash
 @defaccount De Assets:Current:BestBank:Checking            USD
 @defaccount De Assets:Current:BestBank:Savings             USD
-@defaccount De Assets:Fixed:Home                           USD
+;@defaccount De Assets:Fixed:Home                           USD
 @defaccount De Assets:Investments:UTrade:Account           USD
-@defaccount De Assets:Loans
+@defaccount De Assets:Investments:UTrade:Account:AAPL      AAPL
+@defaccount De Assets:Investments:UTrade:Account:EWJ       EWJ
+;@defaccount De Assets:Loans
 @defaccount De Assets:AccountsReceivable
 
-@defaccount Cr Liabilities:AccountsPayable
-@defaccount Cr Liabilities:BestBank:Mortgage               USD
+;@defaccount Cr Liabilities:AccountsPayable
 @defaccount Cr Liabilities:BestBank:Mortgage:Loan          USD
 @defaccount Cr Liabilities:Credit-Card:VISA                USD
+@defaccount Cr Liabilities:Condo-Management                USD
 
 @defaccount Cr Equity:Opening-Balances
 
 @defaccount Cr Income:Investments:Interest:Checking
 @defaccount Cr Income:Investments:Interest:Savings
 @defaccount Cr Income:Investments:Dividends
-@defaccount Cr Income:Investments:Money-Market
-@defaccount Cr Income:Investments:Bonds
 @defaccount Cr Income:Investments:Capital-Gains
 @defaccount Cr Income:Salary:AcmeCo
 
 @defaccount De Expenses:Financial:Fees
 @defaccount De Expenses:Financial:Commissions
-@defaccount De Expenses:Financial:Interest
-@defaccount De Expenses:Insurance:Travel
 @defaccount De Expenses:Insurance:Life
 @defaccount De Expenses:Food:Restaurant
 @defaccount De Expenses:Food:Grocery
 @defaccount De Expenses:Food:Alcool
 @defaccount De Expenses:Communications:Phone
 @defaccount De Expenses:Communications:Mail
-@defaccount De Expenses:Transportation:Parking
+;@defaccount De Expenses:Transportation:Parking
 @defaccount De Expenses:Transportation:Taxi
-@defaccount De Expenses:Transportation:Trains
-@defaccount De Expenses:Transportation:PublicTrans
-@defaccount De Expenses:Taxes:US-State-California        USD
+;@defaccount De Expenses:Transportation:Trains
+;@defaccount De Expenses:Transportation:PublicTrans
+;@defaccount De Expenses:Taxes:US-State-California        USD
 @defaccount De Expenses:Taxes:US-Federal                 USD
 @defaccount De Expenses:Govt-Services                    USD
 @defaccount De Expenses:Clothes
 @defaccount De Expenses:Sports
 @defaccount De Expenses:Sports:Gear
 @defaccount De Expenses:Fun:Movie
-@defaccount De Expenses:Fun:Museum
-@defaccount De Expenses:Food
+;@defaccount De Expenses:Fun:Museum
 @defaccount De Expenses:Books
-@defaccount De Expenses:Travel:Flights
-@defaccount De Expenses:Travel:Accomodation
-@defaccount De Expenses:Toys:Photography
-@defaccount De Expenses:Toys:Computer
-@defaccount De Expenses:Office-Supplies
+;@defaccount De Expenses:Travel:Flights
+;@defaccount De Expenses:Travel:Accomodation
+;@defaccount De Expenses:Toys:Photography
+;@defaccount De Expenses:Toys:Computer
+;@defaccount De Expenses:Office-Supplies
 @defaccount De Expenses:Medical
 @defaccount De Expenses:Charity
-@defaccount De Expenses:Misc
-@defaccount De Expenses:Home:Repair
-@defaccount De Expenses:Home:Maintenance
-@defaccount De Expenses:Home:Taxes
-@defaccount De Expenses:Home:Taxes:Municipal
-@defaccount De Expenses:Home:Taxes:School
-@defaccount De Expenses:Home:Insurance
-@defaccount De Expenses:Home:Monthly
-@defaccount De Expenses:Home:Monthly:Internet
+;@defaccount De Expenses:Misc
+;@defaccount De Expenses:Home:Repair
+;@defaccount De Expenses:Home:Maintenance
+;@defaccount De Expenses:Home:Taxes:Municipal
+;@defaccount De Expenses:Home:Taxes:School
+;@defaccount De Expenses:Home:Insurance
+;@defaccount De Expenses:Home:Monthly
+;@defaccount De Expenses:Home:Monthly:Internet
 @defaccount De Expenses:Home:Monthly:Condo-Fees
-@defaccount De Expenses:Home:Monthly:Electricity
+;@defaccount De Expenses:Home:Monthly:Electricity
 @defaccount De Expenses:Home:Monthly:Loan-Interest
-@defaccount De Expenses:Home:Monthly:Water
-@defaccount De Expenses:Home:Acquisition:Furniture
-@defaccount De Expenses:Home:Acquisition:Renovations
-@defaccount De Expenses:Home:Acquisition:Legal
-@defaccount De Expenses:Home:Acquisition:Inspection
+;@defaccount De Expenses:Home:Monthly:Water
+;@defaccount De Expenses:Home:Acquisition:Furniture
+;@defaccount De Expenses:Home:Acquisition:Renovations
+;@defaccount De Expenses:Home:Acquisition:Legal
+;@defaccount De Expenses:Home:Acquisition:Inspection
 
 
 
@@ -123,15 +127,12 @@
 
 
 
-;; The order that the transactions are declared in does not
-;; matter at all. Personally I like to organize transactions in
-;; chronological order, but within sections more-or-less by
-;; account. Here I've ordered transactions for presentation
-;; clarity.
 
 
 
-;;;; Assets:Current:BestBank:Checking
+
+
+;;;;; Assets:Current:BestBank:Checking
 
 ;; This entry tells the software to automatically insert an
 ;; entry at this date, of the amount required to fulfill the
@@ -143,7 +144,7 @@
 ;; This directive tells the software to assert that at the given
 ;; date, in the given account, a specific amount of the given
 ;; commodity was present.
-@check 2008-01-01 Assets:Current:BestBank:Checking   112.24 USD
+@check 2008-01-01 Assets:Current:BestBank:Checking  1412.24 USD
 
 
 ;; A check deposit, e.g. depositing a government check.
@@ -152,11 +153,17 @@
   Expenses:Taxes:US-Federal
 
 
+
 ;; This is how salary direct deposit entries might show up
-;; within the checking account section.
+;; within the checking account section. Note how the salaries
+;; are negative amounts... that's because Income is a credit
+;; account category, and the numbers there are negative (you can
+;; interpret this as the "amount of work-dollars that you took
+;; from society and placed into your account").
+
 2008-01-10 * ACME | Salary paid from employer
   Assets:Current:BestBank:Checking        2000.00 USD
-  Income:Salary:AcmeCo
+  Income:Salary:AcmeCo                    -2000 USD
 
 2008-01-25 * ACME | Salary paid from employer
   Assets:Current:BestBank:Checking        2000.00 USD
@@ -171,6 +178,7 @@
   Income:Salary:AcmeCo
 
 
+
 ;; Withdrawal from another bank's ATM machine (with fees).
 2008-01-12 * ATM withdrawal - 00044242
   Assets:Current:BestBank:Checking    -301.50 USD
@@ -178,9 +186,18 @@
   Assets:Current:Cash
 
 ;; ATM withdrawal (without fees).
+2008-01-30 * ATM withdrawal
+  Assets:Current:BestBank:Checking    -800.00 USD
+  Assets:Current:Cash
+
+2008-02-10 * ATM withdrawal
+  Assets:Current:BestBank:Checking    -500.00 USD
+  Assets:Current:Cash
+
 2008-02-24 * ATM withdrawal
   Assets:Current:BestBank:Checking    -300.00 USD
   Assets:Current:Cash
+
 
 ;; Automated withdrawal for Life insurance payments.
 2008-01-02 * LIFE INSURANCE -- LONDON LIFE
@@ -198,17 +215,42 @@
   Expenses:Sports:Gear
 
 
-;; A monthyl fee that the bank takes.
+;; A monthly fee that the bank takes for its deposit banking services.
 2008-01-10 * MONTHLY FEE
   Assets:Current:BestBank:Checking                   -4.00 USD
   Expenses:Financial:Fees
+
+;; A typical bank's return on checking accounts.
+2008-01-12 * Deposit interest
+  Assets:Current:BestBank:Checking                0.02 USD
+  Income:Investments:Interest:Checking
+
+
+
+;; An example of using the A/R account: I bought an electronic
+;; toy for a friend, and I wanted to track the amount that he
+;; should pay back to me. Instead of placing it in expenses, I
+;; made it a receivable, which was cancelled later on where he
+;; paid me back.
+
+2008-03-26 * Bought an iPhone to Gilbert (had to use ATM)
+  Assets:AccountsReceivable                      431.92 USD
+  Expenses:Financial:Fees                          3.00 USD
+  Assets:Current:Cash                           -434.92 USD
+
+;; Notice that the amount pay back was for an approximate
+;; amount, so the overflow I placed in the cash account.
+2008-04-02 * Gilbert paid back for iPhone
+  Assets:Current:Cash                            440.00 CAD
+  Assets:AccountsReceivable                     -431.92 USD
+  Assets:Current:Cash
 
 
 
 ;; At the end of the month, I take my statements, look at the
 ;; bottom and enter the amount that the bank says was there at
 ;; that date. It should corroborate with the data in my Ledger.
-@check 2008-02-01 Assets:Current:BestBank:Checking   961.47 USD
+@check 2008-02-01 Assets:Current:BestBank:Checking   661.49 USD
 
 
 
@@ -226,6 +268,7 @@
   Assets:Current:BestBank:Savings                    95.69 USD
   Income:Investments:Interest:Savings
 
+
 ;; An entry that indicates a bank transfer from a checking account to a savings account.
 ;; There is a choice to locate this entry with the savings or with the checking, it's up to you.
 2008-01-29 * Transfer from checking to savings account
@@ -240,7 +283,42 @@
   Assets:Current:BestBank:Savings       -10000.00 USD
   Assets:Investments:UTrade:Account
 
-@check 2008-03-01 Assets:Current:BestBank:Savings    4198.03 USD
+
+;; A monthly check using the amount on the stament.
+@check 2008-03-01 Assets:Current:BestBank:Savings    2340.19 USD
+
+
+
+;; Automated mortgage payments from the savings account.
+2008-01-12 * MORTGAGE PAYMENT
+  Assets:Current:BestBank:Savings                                             -464.46 USD
+  Liabilities:BestBank:Mortgage:Loan                                           171.01 USD
+  Expenses:Home:Monthly:Loan-Interest
+
+2008-01-27 * MORTGAGE PAYMENT
+  Assets:Current:BestBank:Savings                                             -464.46 USD
+  Liabilities:BestBank:Mortgage:Loan                                           171.01 USD
+  Expenses:Home:Monthly:Loan-Interest
+
+2008-02-12 * MORTGAGE PAYMENT
+  Assets:Current:BestBank:Savings                                             -464.46 USD
+  Liabilities:BestBank:Mortgage:Loan                                           171.01 USD
+  Expenses:Home:Monthly:Loan-Interest
+
+2008-02-27 * MORTGAGE PAYMENT
+  Assets:Current:BestBank:Savings                                             -464.46 USD
+  Liabilities:BestBank:Mortgage:Loan                                           171.01 USD
+  Expenses:Home:Monthly:Loan-Interest
+
+2008-03-12 * MORTGAGE PAYMENT
+  Assets:Current:BestBank:Savings                                             -464.46 USD
+  Liabilities:BestBank:Mortgage:Loan                                           171.01 USD
+  Expenses:Home:Monthly:Loan-Interest
+
+2008-03-27 * MORTGAGE PAYMENT
+  Assets:Current:BestBank:Savings                                             -464.46 USD
+  Liabilities:BestBank:Mortgage:Loan                                           171.01 USD
+  Expenses:Home:Monthly:Loan-Interest
 
 
 
@@ -269,7 +347,7 @@
   Expenses:Food:Restaurant              51.17 USD
 
 
-;; Cell phone bill via credit crad. 
+;; Cell phone bill via credit crad.
 2008-01-19 * FIDO |
   Liabilities:Credit-Card:VISA
   Expenses:Communications:Phone         121.96 USD
@@ -286,9 +364,215 @@
 
 @check 2008-01-01  Assets:Investments:UTrade:Account  31273.02 USD
 
+;; Some example trades.
+;;
+;; - Notice how I like to create a special account to contain
+;;   each kind of commodity. This choice is an arbitrary one: I
+;;   could keep all the stocks in the one investing account
+;;   (which would then contain many different kinds of
+;;   commodities) but doing it this way I can more easily track
+;;   the book value of the remaining shares that I have. I think
+;;   there may be a better way to do this.
+;;
+;; - Usually I enter the final amounts from the trade
+;;   confirmation slips that get emailed to me, because the
+;;   information there is more precise and detailed than what I
+;;   seem to get from the online brokerage interface. YMMV.
+;;
+;; - I still don't have a good generic way to deal with the
+;;   capital gains automatically, so I enter them by hand for
+;;   now. The challenge is to find a generic way to account
+;;   for capital gains while accounting for commissions and
+;;   trade fees the correct way (they should get removed from the
+;;   capital gains at both ends of a trade).
+
+2008-01-08 * Buy some Apple Computer
+  Assets:Investments:UTrade:Account:AAPL                     30 AAPL @ 185.40 USD
+  Assets:Investments:UTrade:Account
+  Expenses:Financial:Commissions                        9.95 USD
+
+;; A divident payment.
+2008-02-02 * DIVIDEND from AAPL position
+  Assets:Investments:UTrade:Account    0.68 USD
+  Income:Investments:Dividends
+
+2008-02-28 * Sell off my Apple (because of skirt-length statistic)
+  Assets:Investments:UTrade:Account:AAPL                     -30 AAPL @ 193.02 USD
+  Assets:Investments:UTrade:Account                         5780.65 USD
+  Expenses:Financial:Commissions                        9.95 USD
+  (Income:Investments:Capital-Gains)                    -208.70 USD
+;; Note how the capital gain is a negative number... that's
+;; because Income is a credit account, like a salary.
+
+;; This position is kept long, so it gets reflected below in the check.
+2008-02-10 * Buy some japanese ETF from iShares
+  Assets:Investments:UTrade:Account:EWJ                     100 EWJ @ 13.34 USD
+  Assets:Investments:UTrade:Account
+  Expenses:Financial:Commissions                        9.95 USD
+
+
+;; Run checks against statement summary of positions that gets
+;; mailed periodically.
+@check 2008-03-01  Assets:Investments:UTrade:Account          40138.45 USD
+@check 2008-03-01  Assets:Investments:UTrade:Account:AAPL     0 AAPL
+@check 2008-03-01  Assets:Investments:UTrade:Account:EWJ      100 EWJ
 
 
 
 
 
-@check 2008-04-01  Assets:Investments:UTrade:Account  31273.02 USD
+;;;;; Expenses:Insurance:Life
+
+;; Estimate of value of life insurance policy, to account for
+;; total net worth.
+2008-01-01 * Life insurance policy resale value
+  Expenses:Insurance:Life     4407.06 USD
+  Equity:Opening-Balances
+
+
+
+
+
+
+;;;;; Assets:Fixed:Home
+
+;; You could use this account in order to reevaluate your home.
+
+
+
+
+
+;;;;; Expenses:Home:Monthly:Condo-Fees
+
+@pad 2008-01-01 Liabilities:Condo-Management      Equity:Opening-Balances
+
+@check 2008-01-01 Liabilities:Condo-Management      -41.11 USD
+
+2008-01-01 * Propri-Manage |
+  Expenses:Home:Monthly:Condo-Fees        212.61 USD
+  Liabilities:Condo-Management
+
+2008-01-14 * (998) Propri-Manage | cheque sent by snail mail
+  Liabilities:Condo-Management         800.00 USD
+  Assets:Current:BestBank:Checking
+
+2008-02-01 * Propri-Manage |
+  Expenses:Home:Monthly:Condo-Fees        212.61 USD
+  Liabilities:Condo-Management
+
+2008-03-01 * Propri-Manage |
+  Expenses:Home:Monthly:Condo-Fees        212.61 USD
+  Liabilities:Condo-Management
+
+2008-03-10 * Propri-Manage | special billing, spring works
+  Expenses:Home:Monthly:Condo-Fees     61.25 USD
+  Liabilities:Condo-Management
+
+@check 2008-04-01 Liabilities:Condo-Management     59.81 USD
+
+
+
+
+
+
+
+;;;;; Assets:Current:Cash
+;;;;; Expenses:*
+
+@pad 2007-12-31  Assets:Current:Cash  Equity:Opening-Balances
+
+;; Amount in wallet at a given time.
+@check 2007-12-31  Assets:Current:Cash                          200 CAD
+@check 2007-12-31  Assets:Current:Cash                          300 USD
+
+;; Because I don't track individual cash expenses very tightly,
+;; I still need to distribute the cash that disappeared into
+;; appropriate expense categories. What I like to do is
+;; guesstimate that about 80% of it goes into restaurants, and
+;; 20% into wine bars. What frequency and categories you choose
+;; to use is highly dependent on your lifestyle...
+
+2008-01-02 * Distribution of cash expenses
+  Expenses:Food:Restaurant   300.00 USD
+  Expenses:Food:Alcool       100.00 USD
+  Assets:Current:Cash
+
+2008-01-16 * Distribution of cash expenses
+  Expenses:Food:Restaurant   300.00 USD
+  Expenses:Food:Alcool       100.00 USD
+  Assets:Current:Cash
+
+2008-02-02 * Distribution of cash expenses
+  Expenses:Food:Restaurant   300.00 USD
+  Expenses:Food:Alcool       100.00 USD
+  Assets:Current:Cash
+
+2008-02-16 * Distribution of cash expenses
+  Expenses:Food:Restaurant   300.00 USD
+  Expenses:Food:Alcool       100.00 USD
+  Assets:Current:Cash
+
+2008-03-02 * Distribution of cash expenses
+  Expenses:Food:Restaurant   300.00 USD
+  Expenses:Food:Alcool       100.00 USD
+  Assets:Current:Cash
+
+2008-03-16 * Distribution of cash expenses
+  Expenses:Food:Restaurant   300.00 USD
+  Expenses:Food:Alcool       100.00 USD
+  Assets:Current:Cash
+
+
+
+;;
+;; Some common cash expenses.
+;;
+
+2008-02-18 * DMV | Renewal of driver's license.
+  Expenses:Govt-Services     110.00 USD
+  Assets:Current:Cash
+
+2008-01-21 * WHOLE FOODS |
+  Expenses:Food:Grocery    54.03 USD
+  Assets:Current:Cash
+
+2008-01-21 * USPS | sent package to mom
+  Expenses:Communications:Mail      4.43 USD
+  Assets:Current:Cash
+
+2008-02-04 * taxi home from meeting
+  Expenses:Transportation:Taxi  12.00 USD
+  Assets:Current:Cash
+
+2008-03-03 * ALDO | new shoes
+  Expenses:Clothes              121.20 USD
+  Assets:Current:Cash
+
+2008-02-24 * AMC | movies with girlfriend
+  Expenses:Fun:Movie           24 USD
+  Assets:Current:Cash
+
+2008-03-06 * Barnes & Noble | books on accounting
+  Expenses:Books      74.43 USD
+  Assets:Current:Cash
+
+2008-02-03 * ITHURTS MEDICAL CENT | x-ray for broken bones
+  Expenses:Medical           312.00 USD
+  Assets:Current:Cash
+
+2008-03-02 * ZEN CENTER | Donation to Zen center
+  Expenses:Charity        50 USD
+  Assets:Current:Cash
+
+
+@check 2008-03-01  Assets:Current:Cash                          200 CAD
+@check 2008-03-01  Assets:Current:Cash                          83.54 USD
+
+
+
+
+
+
+
+
+
