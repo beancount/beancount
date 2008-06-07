@@ -29,7 +29,7 @@ Notes:
   documentation in order to you use Beancount.
 
 - Beancount is a Python version of Ledger, and thus is much slower,
-  but also much easier to extend (the code is pure Python).
+  but also easier to extend (the code is pure Python).
 
 - Beancount provides a simple web front to view the contents of the
   database, so you don't have to parse the entire file everytime you
