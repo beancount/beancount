@@ -1,6 +1,6 @@
-=================================================================
-   BeanCount: Command-line Double-Entry Accounting with Python
-=================================================================
+=====================================================
+   BeanCount: Command-line Double-Entry Accounting
+=====================================================
 
 .. contents::
 ..
@@ -59,9 +59,6 @@ Documentation
 - `Demo Ledger input file <examples/demo.ledger>`_
 - `CHANGES <CHANGES>`_
 - `TODO <TODO>`_
-- `Notes on Ledger in Python </beancount/doc/pyledger.html>`_
-- `Notes on acccounting </beancount/doc/accounting.html>`_
-- `SQL data model for simple accounting </beancount/doc/beancount.html>`_
 
 
 Copyright and License
