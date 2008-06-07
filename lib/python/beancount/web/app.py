@@ -13,9 +13,9 @@ from datetime import date
 from urlparse import urlparse
 from itertools import izip, count
 
-# other imports
-import xmlout
-from xmlout import *
+# fallback imports
+from beancount.fallback import xmlout
+from beancount.fallback.xmlout import *
 
 # beancount imports
 from beancount.ledger import compute_balsheet, Account

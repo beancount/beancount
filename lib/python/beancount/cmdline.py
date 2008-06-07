@@ -9,7 +9,7 @@ import cPickle as pickle
 from os.path import exists, getmtime
 
 # other imports
-from colorlog import ColorFormatter
+from beancount.fallback.colorlog import ColorFormatter
 
 # beancount imports
 from beancount.ledger import Ledger

@@ -18,11 +18,13 @@ from xml.sax.saxutils import unescape
 from pprint import pprint, pformat
 
 # other imports
-from collections2 import namedtuple
 from BeautifulSoup import BeautifulSoup
 
 # beancount imports
 from beancount import cmdline
+
+# fallback imports
+from beancount.fallback.collections2 import namedtuple
 
 
 def main():

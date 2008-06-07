@@ -14,12 +14,12 @@ from StringIO import StringIO
 from bisect import bisect_left
 from collections import defaultdict
 
-# other imports
-from collections2 import namedtuple
-
 # beancount imports
 from beancount.wallet import Wallet
 from beancount.utils import SimpleDummy, iter_pairs
+
+# fallback imports
+from beancount.fallback.collections2 import namedtuple
 
 
 __all__ = ('Account', 'Transaction', 'Posting', 'Ledger',

@@ -5,6 +5,8 @@ A logging module Formatter class that adds colors to the output.
 # stdlib imports
 import logging
 from logging import Formatter
+
+# local imports
 from termctrl import TerminalController
 
 

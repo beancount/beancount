@@ -37,7 +37,7 @@ input format, and other formats (easily extensible).
       author_email="blais@furius.ca",
       url="http://furius.ca/beancount",
       package_dir = {'': 'lib/python'},
-      packages = ['beancount'],
+      packages = ['beancount', 'beancount.fallback', 'beancount.fallback.elementtree', 'beancount.web', 'beancount.test'],
       scripts=scripts
      )
 
