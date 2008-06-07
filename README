@@ -6,9 +6,10 @@
 ..
     1  Description
     2  Running the Demo
-    3  Documentation
-    4  Copyright and License
-    5  Author
+    3  Download
+    4  Documentation
+    5  Copyright and License
+    6  Author
 
 Description
 ===========
@@ -51,6 +52,15 @@ Running the Demo
 There is a demonstration ledger input file under the examples
 directory. To run a local web server on the example demo file, cd into
 ``examples`` and run the demo scripts.
+
+
+Download
+========
+
+You can obtain the Ledger source from Furius' public Mercurial
+repository, by typing the following command::
+
+  hg clone https://hg.furius.ca/public/beancount
 
 
 Documentation
