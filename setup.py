@@ -15,7 +15,6 @@ scripts = [join('bin', x) for x in ('bean-serve',
                                     'bean-info',
                                     'bean-balance',
                                     'bean-convert-ofx',
-                                    'bean-info',
                                     'bean-priced',
                                     'bean-register')]
 
@@ -42,7 +41,11 @@ input format, and other formats (easily extensible).
       author_email="blais@furius.ca",
       url="http://furius.ca/beancount",
       package_dir = {'': 'lib/python'},
-      packages = ['beancount', 'beancount.fallback', 'beancount.fallback.elementtree', 'beancount.web', 'beancount.test'],
+      packages = ['beancount',
+                  'beancount.web',
+                  'beancount.fallback',
+                  'beancount.fallback.elementtree',
+                  'beancount.test'],
       scripts=scripts
      )
 
