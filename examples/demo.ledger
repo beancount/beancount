@@ -48,13 +48,12 @@
 
 @defaccount Cr Equity:Opening-Balances
 
-@defaccount Cr Income:Investment:Checking-Interest
-@defaccount Cr Income:Investment:Savings-Interest
-@defaccount Cr Income:Investment:Margin-Interest
-@defaccount Cr Income:Investment:Dividends
-@defaccount Cr Income:Investment:Money-Market
-@defaccount Cr Income:Investment:Bonds
-@defaccount Cr Income:Investment:Capital-Gains
+@defaccount Cr Income:Investments:Interest:Checking
+@defaccount Cr Income:Investments:Interest:Savings
+@defaccount Cr Income:Investments:Dividends
+@defaccount Cr Income:Investments:Money-Market
+@defaccount Cr Income:Investments:Bonds
+@defaccount Cr Income:Investments:Capital-Gains
 @defaccount Cr Income:Salary:AcmeCo
 
 @defaccount De Expenses:Financial:Fees
@@ -209,11 +208,83 @@
 ;; At the end of the month, I take my statements, look at the
 ;; bottom and enter the amount that the bank says was there at
 ;; that date. It should corroborate with the data in my Ledger.
-@check 2008-02-01 Assets:Current:BestBank:Checking   3752.81 USD
+@check 2008-02-01 Assets:Current:BestBank:Checking   961.47 USD
 
 
 
 
+
+
+;;;;; Assets:Current:BestBank:Savings
+
+@pad 2007-12-31 Assets:Current:BestBank:Savings   Equity:Opening-Balances
+
+@check 2008-01-01 Assets:Current:BestBank:Savings    12000 USD
+
+;; Interest paid on balance in savings account.
+2008-01-03 * DEPOSIT INTEREST
+  Assets:Current:BestBank:Savings                    95.69 USD
+  Income:Investments:Interest:Savings
+
+;; An entry that indicates a bank transfer from a checking account to a savings account.
+;; There is a choice to locate this entry with the savings or with the checking, it's up to you.
+2008-01-29 * Transfer from checking to savings account
+  Assets:Current:BestBank:Savings       2000.00 USD
+  Assets:Current:BestBank:Checking
+
+2008-02-03 * DEPOSIT INTEREST
+  Assets:Current:BestBank:Savings                    102.34 USD
+  Income:Investments:Interest:Savings
+
+2008-02-03 * Transferring money to brokerage account for better investment.
+  Assets:Current:BestBank:Savings       -10000.00 USD
+  Assets:Investments:UTrade:Account
+
+@check 2008-03-01 Assets:Current:BestBank:Savings    4198.03 USD
+
+
+
+;;;;; Liabilities:Credit-Card:VISA
+
+@pad 2008-01-01 Liabilities:Credit-Card:VISA  Equity:Opening-Balances
+@check 2008-01-01 Liabilities:Credit-Card:VISA  -791.34 USD
+
+;; Paying back my credit card.
+2008-01-22 * Online Banking payment - 5051 - VISA
+  Assets:Current:BestBank:Checking     -791.34 USD
+  Liabilities:Credit-Card:VISA
+
+
+;; Expenses at restaurants on credit card.
+2008-01-15 * Cafe Imagination |
+  Liabilities:Credit-Card:VISA
+  Expenses:Food:Restaurant              47.00 USD
+
+2008-01-19 * Soupe Bol |
+  Liabilities:Credit-Card:VISA
+  Expenses:Food:Restaurant              21.00 USD
+
+2008-01-27 * Scola Pasta |
+  Liabilities:Credit-Card:VISA
+  Expenses:Food:Restaurant              51.17 USD
+
+
+;; Cell phone bill via credit crad. 
+2008-01-19 * FIDO |
+  Liabilities:Credit-Card:VISA
+  Expenses:Communications:Phone         121.96 USD
+
+
+
+
+
+
+
+;;;;; Assets:Investments:UTrade:Account
+
+@pad 2007-12-31 Assets:Investments:UTrade:Account  Equity:Opening-Balances
+
+@check 2008-01-01  Assets:Investments:UTrade:Account  31273.02 USD
 
 
 
