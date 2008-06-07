@@ -80,6 +80,7 @@
 @defaccount De Expenses:Taxes:US-Federal                 USD
 @defaccount De Expenses:Govt-Services                    USD
 @defaccount De Expenses:Clothes
+@defaccount De Expenses:Car:Gas
 @defaccount De Expenses:Sports
 @defaccount De Expenses:Sports:Gear
 @defaccount De Expenses:Fun:Movie
@@ -195,7 +196,7 @@
   Assets:Current:Cash
 
 2008-02-24 * ATM withdrawal
-  Assets:Current:BestBank:Checking    -300.00 USD
+  Assets:Current:BestBank:Checking    -500.00 USD
   Assets:Current:Cash
 
 
@@ -544,6 +545,43 @@
   Expenses:Transportation:Taxi  12.00 USD
   Assets:Current:Cash
 
+
+
+;; Short weekend trip to Skii Mountain.
+;;
+;; You can use the @begintag and @endtag directives to mark all
+;; transactions between them with a specific tag. Later on you
+;; can filter the postings to a tag by using a cmdline. This
+;; allows you to find out what expenses were incurred during a
+;; specific trip.
+
+@begintag Skii-trip
+
+2008-01-27 * SUNONO | fill'er up
+  Expenses:Car:Gas            40 USD
+  Assets:Current:Cash
+
+2008-01-27 * SKII | Lift tickets
+  Expenses:Sports        120 USD
+  Assets:Current:Cash
+
+2008-01-27 * Dinner at chalet
+  Expenses:Food:Restaurant      35.33 USD
+  Assets:Current:Cash
+
+2008-01-28 * breakfast
+  Expenses:Food:Restaurant      17.23 USD
+  Assets:Current:Cash
+
+2008-01-28 * a new hat, it was cold
+  Expenses:Clothes              40.02 USD
+  Assets:Current:Cash
+
+@endtag Skii-tip
+
+
+
+
 2008-03-03 * ALDO | new shoes
   Expenses:Clothes              121.20 USD
   Assets:Current:Cash
@@ -566,15 +604,10 @@
 
 
 @check 2008-03-01  Assets:Current:Cash                          200 CAD
-@check 2008-03-01  Assets:Current:Cash                          83.54 USD
+@check 2008-03-01  Assets:Current:Cash                          30.96 USD
 
 
 
 
 
 
-;; Short weekend trip
-
-@beginpage Tremblant
-
-@endpage Tremblant
