@@ -195,6 +195,19 @@ class Wallet(dict):
         k = kv[0]
         return (comm_importance.get(k, len(k)), k)
 
+    def price(self, comm, ucomm, price):
+        """ Replace all the units of 'comm' by units of 'ucomm' at the given
+        price. """
+        try:
+            units = self[comm]
+        except KeyError:
+            return
+        wdiff = Wallet()
+        wdiff[comm] = -units
+        wdiff[ucomm] = units * price
+        self += wdiff
+
+
 
 # Order of important for commodities.
 comm_importance = {

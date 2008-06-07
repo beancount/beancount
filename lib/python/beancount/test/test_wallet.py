@@ -95,4 +95,14 @@ class TestWallet(object):
         assert w.only('CAD') == Wallet(CAD='17.1343843')
 
 
+    def test_price(self):
         
+        w = Wallet(AAPL='20')
+        w.price('AAPL', 'USD', Decimal('10'))
+        assert w == Wallet(USD='200')
+        
+        w = Wallet(AAPL='20', MSFT='10.1')
+        w.price('AAPL', 'USD', Decimal('10'))
+        assert w == Wallet(USD='200', MSFT='10.1')
+
+

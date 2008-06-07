@@ -17,7 +17,9 @@ from beancount.timeparse import parse_time
 from beancount import install_psyco
 
 
-def main(parser):
+MANY=-1
+
+def main(parser, no=1):
     "Parse the cmdline as a list of ledger source files and return a Ledger."
 
     logging.basicConfig(level=logging.INFO,
@@ -55,10 +57,15 @@ def main(parser):
     if not opts.no_psyco:
         install_psyco()
 
-    fn, args = args[0], args[1:]
-
-    ledger = load_ledger(fn, opts)
-    return opts, ledger, args
+    if no == 1:
+        fn, args = args[0], args[1:]
+        ledger = load_ledger(fn, opts)
+        return opts, ledger, args
+    elif no == MANY:
+        ledgers = [load_ledger(fn, opts) for fn in args]
+        return opts, ledgers, args
+    elif no == 0:
+        return opts, None, args
 
 def load_ledger(fn, opts):
     # Parse the file.
