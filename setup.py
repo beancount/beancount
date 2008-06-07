@@ -11,7 +11,8 @@ from distutils.core import setup
 
 
 # Install all scripts under bin.
-scripts = filter(isfile, [join('bin', x) for x in os.listdir('bin')])
+scripts = filter(isfile, [join('bin', x) for x in os.listdir('bin')
+                          if x.startswith('bean-')])
 
 def read_version():
     try:
