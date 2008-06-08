@@ -22,7 +22,7 @@ input format, and other formats (easily extensible).
 
 Notes:
 
-- The ideas and syntax is entirely inspired by John Wigley's Ledger_,
+- The ideas and syntax is entirely inspired by John Wiegley's Ledger_,
   and the syntax is pretty much compatible with it. Beancount's syntax
   is a subset of Ledger (a little more restrictive), with a few
   additional directives. You should probably read Ledger's
