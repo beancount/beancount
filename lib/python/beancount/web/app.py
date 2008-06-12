@@ -53,7 +53,7 @@ class Template(object):
         self.navigation = DIV(
             UL(LI(A('Home', href=umap('@@Home'))),
                LI(A('Ranges', href=umap('@@Ranges'))),
-               LI(A('Balance Sheet', href=umap('@@Balance'))),
+               LI(A('Trial Balance', href=umap('@@TrialBalance'))),
                LI(A('General Ledger', href=umap('@@GeneralLedger'))),
                LI(A('Source', href=umap('@@Source'))),
                LI(A('Errors', href=umap('@@Messages'))),
@@ -143,7 +143,7 @@ def balance(app, ctx):
     local = False
     at_cost = False
 
-    # First compute the balance sheet.
+    # First compute the trial balance.
     compute_balsheet(ctx.ledger, 'local_balance', 'balance', at_cost)
 
     table = TABLE(id='balance', CLASS='treetable')
@@ -158,7 +158,7 @@ def balance(app, ctx):
             TD(hwallet(getattr(acc, 'balance').round()), CLASS='wallet'),
             TD(hwallet(getattr(acc, 'local_balance').round()), CLASS='wallet'))
 
-    page.add(H1('Balance Sheet'), table)
+    page.add(H1('Trial Balance'), table)
     return page.render(app)
 
 
@@ -451,7 +451,7 @@ page_directory = (
     ('@@Home', info, '/', None),
     ('@@Info', info, '/info', None),
     ('@@Ranges', ranges, '/ranges', None),
-    ('@@Balance', balance, '/balance', None),
+    ('@@TrialBalance', balance, '/balance', None),
     ('@@GeneralLedger', register, '/register', None),
     ('@@Register', register, '/register/%s', '^/register/(?P<accname>.*)$'),
     ('@@SetStyle', setstyle, '/setstyle', '^/setstyle$'),
