@@ -977,7 +977,7 @@ class DefineAccountDirective(object):
     name = 'defaccount'
     prio = 1
 
-    mre = re.compile("\s*(De|Cr)\s+(%(account)s)\s+((?:%(commodity)s(?:,\s*)?)*)\s*$" %
+    mre = re.compile("\s*(D[re]|Cr)\s+(%(account)s)\s+((?:%(commodity)s(?:,\s*)?)*)\s*$" %
                      {'account': Ledger.account_re.pattern,
                       'commodity': Ledger.commodity_re.pattern})
 
@@ -992,7 +992,7 @@ class DefineAccountDirective(object):
                             (filename, lineno))
             return
 
-        isdebit = (mo.group(1) == 'De')
+        isdebit = (mo.group(1) in ('Dr', 'De'))
         account = self.ledger.get_account(mo.group(2), create=1, incrcount=False)
         commodities = mo.group(3).split(',') if mo.group(3) else None
         if account in self.definitions:

@@ -21,6 +21,19 @@ main focus:
 - You need to write a test with dates that are close by between
   @checks and with @pad in between.
 
+- Closing the books should be done properly, with entries from
+  Income/Expenses into Equity, in order to have the same balances
+  whether we limit the date or not.
+
+- Produce proper reports for 
+
+   Trial Balance
+   Balance Sheet (summarized)
+   Income Statment / PnL Report
+   Capital Statement
+
+   
+
 
 parser:
 
