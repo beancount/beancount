@@ -154,12 +154,6 @@ tests:
 - Write automated tests for everything.
 
 
-emacs:
-
-- Make account lookup feature only use @defaccount so that it be a lot
-  faster in large files.
-
-
 doc/examples/demos:
 
 - Make a presentation

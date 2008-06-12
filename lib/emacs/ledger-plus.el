@@ -6,9 +6,9 @@
 
 (require 'ledger)
 
-(defun ledger-accounts nil
-  "The list of accounts in the current buffer.")
-(make-variable-buffer-local 'ledger-accounts)
+;; (defun ledger-accounts nil
+;;   "The list of accounts in the current buffer.")
+;; (make-variable-buffer-local 'ledger-accounts)
 
 (add-hook 'ledger-mode-hook 'ledger-plus-hook-function)
 
@@ -78,19 +78,24 @@ old, solid and lovely.)"
 ;;; 	(delete-region (point) (match-end 0))))))
 
 
-(defun ledger-get-accounts (exclude-line)
+(defun ledger-get-accounts (exclude-line &optional all)
   "Heuristically obtain a list of all the accounts used in all the postings.
-We ignore patterns seen the line 'exclude-line'."
-  (let ((accounts))
+We ignore patterns seen the line 'exclude-line'. If ALL is non-nil, look 
+for account names in postings as well (default is to look at the @defaccount 
+declarations only."
+  (let* ((accounts)
+	 (defre "^@defaccount\\s-+\\(?:De\\|Cr\\)\\s-+\\([A-Z][A-Za-z0-9-_:]*\\)\\s-*")
+	 (accre (if all
+		    (concat "\\(?:"
+			    "^[ \t]+\\([A-Z][A-Za-z0-9-_:]*\\)\\s-*"
+			    "\\|"
+			    defre
+			    "\\)"
+			    )
+		  defre)))
     (save-excursion
       (goto-char (point-min))
-      (while (re-search-forward
-	      (concat "\\(?:"
-		      "^[ \t]+\\([A-Z][A-Za-z0-9-_:]*\\)\\s-*"
-		      "\\|"
-		      "^@defaccount\\s-+\\(?:De\\|Cr\\)\\s-+\\([A-Z][A-Za-z0-9-_:]*\\)\\s-*"
-		      "\\)"
-		      ) nil t)
+      (while (re-search-forward accre nil t)
 	(let ((no (if (match-string 1) 1 2)))
 	  (when (not (= (line-number-at-pos (match-end no)) exclude-line))
 	    (let ((acc (match-string no)))
