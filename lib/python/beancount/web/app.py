@@ -51,12 +51,16 @@ class Template(object):
         self.document = DIV(id='document')
 
         self.navigation = DIV(
-            UL(LI(A('Home', href=umap('@@Home'))),
-               LI(A('Ranges', href=umap('@@Ranges'))),
+            UL(LI(A('Chart of Accounts', href=umap('@@ChartOfAccounts'))),
                LI(A('Trial Balance', href=umap('@@TrialBalance'))),
                LI(A('General Ledger', href=umap('@@GeneralLedger'))),
-               LI(A('Source', href=umap('@@Source'))),
+               LI(A('Balance Sheet', href=umap('@@BalanceSheet'))),
+               LI(A('P&L', href=umap('@@IncomeStatement'))),
+               LI(A('Capital', href=umap('@@CapitalStatement'))),
+               LI(A('Ranges', href=umap('@@Ranges'))),
+               LI(A('Stats', href=umap('@@Statistics'))),
                LI(A('Errors', href=umap('@@Messages'))),
+               LI(A('Source', href=umap('@@Source'))),
                ),
             id='top-navigation')
 
@@ -132,12 +136,19 @@ def haccount(accname):
     accspan.cache = 1
     return accspan
 
-def info(app, ctx):
+def accounts(app, ctx):
     page = Template()
-    page.add(H1("Ledger Home"))
+    page.add(H1("Chart of Accounts"))
+    page.add(P("FIXME TODO"))
     return page.render(app)
 
-def balance(app, ctx):
+def stats(app, ctx):
+    page = Template()
+    page.add(H1("Statistics"))
+    page.add(P("FIXME TODO"))
+    return page.render(app)
+
+def trial(app, ctx):
     page = Template()
 
     local = False
@@ -160,6 +171,25 @@ def balance(app, ctx):
 
     page.add(H1('Trial Balance'), table)
     return page.render(app)
+
+def balance(app, ctx):
+    page = Template()
+    page.add(H1("Balance Sheet"))
+    page.add(P("FIXME TODO"))
+    return page.render(app)
+
+def pnl(app, ctx):
+    page = Template()
+    page.add(H1("Income Statement / P&L Report"))
+    page.add(P("FIXME TODO"))
+    return page.render(app)
+
+def capital(app, ctx):
+    page = Template()
+    page.add(H1("Capital Statement"))
+    page.add(P("FIXME TODO"))
+    return page.render(app)
+
 
 
 def treetable_builder(tbl, iterator, skiproot=False):
@@ -207,8 +237,6 @@ def treetable_builder(tbl, iterator, skiproot=False):
 
 
 
-
-
 def ranges(app, ctx):
     "Output the updated ranges of each account."
 
@@ -228,7 +256,7 @@ def ranges(app, ctx):
         else:
             tr.extend(TD() for _ in xrange(3))
 
-    page.add(H1('Updated Ranges'), table)
+    page.add(H1('Updated Time Ranges'), table)
     return page.render(app)
 
 
@@ -316,7 +344,7 @@ def register(app, ctx):
     if acc.isroot():
         page.add(H1('General Ledger'), table)
     else:
-        page.add(H1('Register for', haccount(acc.fullname)), table)
+        page.add(H1('Register for ', haccount(acc.fullname)), table)
 
     return page.render(app)
 
@@ -448,11 +476,15 @@ page_directory = (
     ('@@FolderOpen', static('folder_open.png', 'image/png'), '/folder_open.png', None),
     ('@@FolderClosed', static('folder_closed.png', 'image/png'), '/folder_closed.png', None),
     ('@@Logo', static("header-universal-dollar.jpg", 'image/jpeg'), '/header.jpg', None),
-    ('@@Home', info, '/', None),
-    ('@@Info', info, '/info', None),
+    ('@@Home', accounts, '/', None),
+    ('@@ChartOfAccounts', accounts, '/accounts', None),
+    ('@@Statistics', stats, '/stats', None),
     ('@@Ranges', ranges, '/ranges', None),
-    ('@@TrialBalance', balance, '/balance', None),
+    ('@@TrialBalance', trial, '/trial', None),
     ('@@GeneralLedger', register, '/register', None),
+    ('@@BalanceSheet', balance, '/balance', None),
+    ('@@IncomeStatement', pnl, '/pnl', None),
+    ('@@CapitalStatement', capital, '/capital', None),
     ('@@Register', register, '/register/%s', '^/register/(?P<accname>.*)$'),
     ('@@SetStyle', setstyle, '/setstyle', '^/setstyle$'),
     ('@@Messages', messages, '/messages', None),

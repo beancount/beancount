@@ -21,6 +21,8 @@ main focus:
 - You need to write a test with dates that are close by between
   @checks and with @pad in between.
 
+- Replace 'Home' page by Chart of Accounts page.
+
 - Closing the books should be done properly, with entries from
   Income/Expenses into Equity, in order to have the same balances
   whether we limit the date or not.
