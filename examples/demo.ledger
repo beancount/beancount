@@ -603,6 +603,8 @@
   Assets:Current:Cash
 
 
+
+
 @check 2008-03-01  Assets:Current:Cash                          200 CAD
 @check 2008-03-01  Assets:Current:Cash                          30.96 USD
 
