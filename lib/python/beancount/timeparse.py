@@ -40,6 +40,16 @@ def parse_time(timestr):
                 to_ = x[0]
                 interval = (from_, to_)
 
+    # Try to parse an interval.
+    mo = re.match('(?:to|until)(?::\s*|\s+)(.*)$', timestr)
+    if mo:
+        to_str = mo.group(1)
+        x = parse_one_time(to_str)
+        if x is not None:
+            from_ = date(1900, 1, 1)
+            to_ = x[0]
+            interval = (from_, to_)
+
     # Finally try to parse a single time event (which will be interpreted as an
     # interval).
     if interval is None:
@@ -55,14 +65,18 @@ def parse_time(timestr):
 today = date.today()
 
 def parse_one_time(timestr):
-    "Parse a single instant in time."
+    """ Parse a single instant in time and return two dates: the corresponding
+    parsed date, and a date for the next interval implied by the single date.
+    For example, if '2007' is given (2007-01-01, 2008-01-01) is returned. If
+    '2007-04' is given (2007-04-01, 2008-05-01) is returned."""
 
+    trace(timestr)
     if timestr == 'now':
         return (today, today + timedelta(days=1))
-
-    mo = re.match('(\d\d\d\d)(?:\s+|\s*[-/]\s*)(\d\d)(?:\s+|\s*[-/]\s*)(?:\s+|\s*[-/]\s*)(\d\d)$', timestr)
+    
+    mo = re.match('(\d\d\d\d)(?:\s+|\s*[-/]\s*)(\d\d)(?:\s+|\s*[-/]\s*)(\d\d)$', timestr)
     if mo:
-        month, year, day = map(int, mo.group(1, 2, 3))
+        year, month, day = map(int, mo.group(1, 2, 3))
         d1 = date(year, month, day)
         d2 = date(year, month, day) + timedelta(days=1)
         return (d1, d2)
