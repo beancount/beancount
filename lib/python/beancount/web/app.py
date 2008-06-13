@@ -190,6 +190,12 @@ def capital(app, ctx):
     page.add(P("FIXME TODO"))
     return page.render(app)
 
+def positions(app, ctx):
+    page = Template()
+    page.add(H1("Positions / Assets"))
+    page.add(P("FIXME TODO - add a summary of market values of current positions for assets, with changes"))
+    return page.render(app)
+
 
 
 def treetable_builder(tbl, iterator, skiproot=False):
@@ -485,6 +491,7 @@ page_directory = (
     ('@@BalanceSheet', balance, '/balance', None),
     ('@@IncomeStatement', pnl, '/pnl', None),
     ('@@CapitalStatement', capital, '/capital', None),
+    ('@@Positions', positions, '/positions', None),
     ('@@Register', register, '/register/%s', '^/register/(?P<accname>.*)$'),
     ('@@SetStyle', setstyle, '/setstyle', '^/setstyle$'),
     ('@@Messages', messages, '/messages', None),
