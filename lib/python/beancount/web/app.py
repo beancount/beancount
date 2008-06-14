@@ -168,7 +168,7 @@ def trial(app, ctx):
     # First compute the trial balance.
     compute_balsheet(ctx.ledger, 'local_balance', 'balance', at_cost)
 
-    table = TABLE(id='balance', CLASS='treetable')
+    table = TABLE(id='balance', CLASS='accounts treetable')
     it = iter(itertree(ctx.ledger.get_root_account()))
     for acc, td1, tr, skip in treetable_builder(table, it):
         if len(acc) == 0:
@@ -260,7 +260,7 @@ def ranges(app, ctx):
     page = Template()
 
     today = date.today()
-    table = TABLE(id='ranges', CLASS='treetable')
+    table = TABLE(id='ranges', CLASS='accounts treetable')
     table.add(THEAD(TR(TH(), TH("Oldest Chk"), TH("Newest Chk"), TH("Days since"))))
     it = iter(itertree(ctx.ledger.get_root_account(), pred=attrgetter('checked')))
     for acc, td1, tr, _ in treetable_builder(table, it):
