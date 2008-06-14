@@ -70,7 +70,6 @@ def parse_one_time(timestr):
     For example, if '2007' is given (2007-01-01, 2008-01-01) is returned. If
     '2007-04' is given (2007-04-01, 2008-05-01) is returned."""
 
-    trace(timestr)
     if timestr == 'now':
         return (today, today + timedelta(days=1))
     

@@ -129,45 +129,37 @@ def reload(ledger):
 Code to filter down specific postings.
 """
 
-class SelectPostings(object):
-
-    @staticmethod
-    def mark(node):
-        node.selected = 1
-
-    def __init__(self):
-        self.postings = []
-
-    def __call__(self, acc):
-        if getattr(acc, 'selected', False):
-            self.postings.extend(acc.postings)
-
 def select_addopts(parser):
     "Add options for selecting accounts/postings."
 
-    parser.add_option('-a', '--account', action='append', metavar='REGEXP',
-                      default=[],
-                      help="Filter only the postings whose account matches the given regexp.")
+    ## parser.add_option('-c', '--close', '--close-books',
+    ##                   action='store', metavar='TIME_EXPR',
+    ##                   help="Close the books at the given time.")
 
-    parser.add_option('-A', '--transaction-account', action='append', metavar='REGEXP',
-                      default=[],
-                      help="Filter only the transactions which have at least one account which matches the given regexp.")
+    group = optparse.OptionGroup(parser, "Options for filtering postings.")
 
-    parser.add_option('-n', '--note', action='append', metavar='REGEXP',
-                      help="Filter only the postings with the given notes.")
+    group.add_option('-a', '--account', action='append', metavar='REGEXP',
+                     default=[],
+                     help="Filter only the postings whose account matches the given regexp.")
 
-    parser.add_option('-t', '--time', action='store', metavar='REGEXP',
-                      help="Filter only the postings within the given time range. "
-                      "There are multiple valid time range formats. See source "
-                      "for details.")
+    group.add_option('-A', '--transaction-account', action='append', metavar='REGEXP',
+                     default=[],
+                     help="Filter only the transactions which have at least one account which matches the given regexp.")
 
-    parser.add_option('-g', '--tag', action='store', metavar='REGEXP',
-                      help="Filter only the postings whose tag matches the "
-                      "expression.")
+    group.add_option('-n', '--note', action='append', metavar='REGEXP',
+                     help="Filter only the postings with the given notes.")
 
-    ## parser.add_option('-o', '--open-balances', action='store_true',
-    ##                   help="Include opening balance entries when filtering "
-    ##                   "according to time.")
+    group.add_option('-t', '--time', action='store', metavar='TIME_EXPR',
+                     help="Filter only the postings within the given time range. "
+                     "There are multiple valid time range formats. See source "
+                     "for details.")
+
+    group.add_option('-g', '--tag', action='store', metavar='REGEXP',
+                     help="Filter only the postings whose tag matches the "
+                     "expression.")
+
+    parser.add_option_group(group)
+
 
 def create_filter_pred(opts):
     """
@@ -214,49 +206,70 @@ def create_filter_pred(opts):
     else:
         tagfun = None
 
-    def pred(post):
-        if acc_funs is not None:
-            if all(not fun(post.account.fullname) for fun in acc_funs):
-                return False
-        if txnacc_funs is not None:
-            if all(all(not fun(p.account.fullname) for fun in txnacc_funs)
-                   for p in post.txn.postings):
-                return False
-        if note_funs is not None:
-            if all(not fun(post.note or '') for fun in note_funs):
-                return False
-        if interval is not None:
-            dbegin, dend = interval
-            if not (dbegin <= post.actual_date < dend):
-                return False
-        if tagfun is not None:
-            if not (post.txn.tag and tagfun(post.txn.tag)):
-                return False
-        return True
+    if all((x is None) for x in
+           (acc_funs, txnacc_funs, note_funs, interval, tagfun)):
+        # Simpler predicate for speed optimization.
+        def pred(post):
+            return True
+    else:
+        def pred(post):
+            if acc_funs is not None:
+                if all(not fun(post.account.fullname) for fun in acc_funs):
+                    return False
+            if txnacc_funs is not None:
+                if all(all(not fun(p.account.fullname) for fun in txnacc_funs)
+                       for p in post.txn.postings):
+                    return False
+            if note_funs is not None:
+                if all(not fun(post.note or '') for fun in note_funs):
+                    return False
+            if interval is not None:
+                dbegin, dend = interval
+                if not (dbegin <= post.actual_date < dend):
+                    return False
+            if tagfun is not None:
+                if not (post.txn.tag and tagfun(post.txn.tag)):
+                    return False
+            return True
 
     return pred
 
 
-def select_postings(ledger, opts):
-    "Select the postings given by the selection options in 'opts'"
+## FIXME: remove
 
-    # Mark all the selected accounts.
-    if opts.account:
-        for regexp in opts.account:
-            try:
-                are = re.compile('.*%s.*' % regexp, re.I)
-            except re.error, e:
-                raise SystemExit(e)
-            for acc in ledger.accounts.itervalues():
-                if are.match(acc.fullname):
-                    ledger.visit(acc, SelectPostings.mark)
-    else:
-        ledger.visit(ledger.get_root_account(), SelectPostings.mark)
+## class SelectPostings(object):
 
-    # Pick up the selected postings.
-    vis = SelectPostings()
-    ledger.visit(ledger.get_root_account(), vis)
-    return vis.postings
+##     @staticmethod
+##     def mark(node):
+##         node.selected = 1
+
+##     def __init__(self):
+##         self.postings = []
+
+##     def __call__(self, acc):
+##         if getattr(acc, 'selected', False):
+##             self.postings.extend(acc.postings)
+
+## def select_postings(ledger, opts):
+##     "Select the postings given by the selection options in 'opts'"
+
+##     # Mark all the selected accounts.
+##     if opts.account:
+##         for regexp in opts.account:
+##             try:
+##                 are = re.compile('.*%s.*' % regexp, re.I)
+##             except re.error, e:
+##                 raise SystemExit(e)
+##             for acc in ledger.accounts.itervalues():
+##                 if are.match(acc.fullname):
+##                     ledger.visit(acc, SelectPostings.mark)
+##     else:
+##         ledger.visit(ledger.get_root_account(), SelectPostings.mark)
+
+##     # Pick up the selected postings.
+##     vis = SelectPostings()
+##     ledger.visit(ledger.get_root_account(), vis)
+##     return vis.postings
 
 
 
