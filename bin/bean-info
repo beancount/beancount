@@ -11,6 +11,7 @@ from beancount import cmdline
 def main():
     import optparse
     parser = optparse.OptionParser(__doc__.strip())
+    cmdline.addopts(parser)
     opts, ledger, args = cmdline.main(parser)
 
     print

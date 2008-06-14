@@ -28,6 +28,7 @@ def main():
                       help="Only show the balance for the specified account, in "
                       "a format that can be deserialized to build a wallet.")
 
+    cmdline.addopts(parser)
     opts, ledger, args = cmdline.main(parser)
 
     compute_balsheet(ledger, 'local_balance', 'balance', opts.at_cost)

@@ -17,10 +17,10 @@ def main():
     import optparse
     parser = optparse.OptionParser(__doc__.strip())
 
-    cmdline.addopts(parser)
     parser.add_option('-v', '--verbose', action='store_true',
                       help="Verbosely print some extra stuff.")
 
+    cmdline.addopts(parser)
     opts, ledger, args = cmdline.main(parser)
 
     # Get the list of transactions that relate to the postings.

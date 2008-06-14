@@ -25,6 +25,7 @@ def main():
     parser.add_option('-a', '--all', action='store_true',
                       help="Show all accounts.")
 
+    cmdline.addopts(parser)
     opts, ledger, args = cmdline.main(parser)
 
     root = ledger.get_root_account()

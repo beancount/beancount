@@ -178,6 +178,7 @@ def main():
 
     totassets = Wallet()
     totpricedmap = {}
+    cmdline.addopts(parser)
     opts, _, args = cmdline.main(parser, no=0)
     for fn in args:
         try:

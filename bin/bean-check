@@ -23,6 +23,7 @@ def main():
     parser.add_option('--all', action='store_true',
                       help="Show all accounts.")
 
+    cmdline.addopts(parser)
     opts, ledger, args = cmdline.main(parser)
 
     # Display the check ranges.
