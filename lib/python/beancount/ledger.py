@@ -117,6 +117,12 @@ class Account(object):
         n += sum(len(child) for child in self.children)
         return n
 
+    atypemap = {True: 'Debit',
+                False: 'Credit',
+                None: ''}
+    def getatype(self):
+        return self.atypemap[self.isdebit]
+
     def isroot(self):
         return self.fullname == ''
 

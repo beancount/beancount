@@ -113,7 +113,7 @@ tr.posting {
 
 /* Balance sheet / trial balance / global view of accounts */
 
-table#balance td {
+table.accounts td {
   background-color: #F0F0F0;
 }
 

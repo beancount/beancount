@@ -138,8 +138,19 @@ def haccount(accname):
 
 def accounts(app, ctx):
     page = Template()
-    page.add(H1("Chart of Accounts"))
-    page.add(P("FIXME TODO"))
+
+    table = TABLE(id='chart-of-accounts', CLASS='accounts treetable')
+    it = iter(itertree(ctx.ledger.get_root_account()))
+    for acc, td1, tr, skip in treetable_builder(table, it):
+        td1.add(
+            A(acc.name, href=umap('@@Register', acc.fullname), CLASS='accomp'))
+        tr.add(
+            TD(acc.getatype()),
+            TD(", ".join(acc.commodities) if acc.commodities else ""),
+            ## TD("%d" % len(acc.postings)),
+            )
+
+    page.add(H1("Chart of Accounts"), table)
     return page.render(app)
 
 def stats(app, ctx):
