@@ -16,22 +16,11 @@ Beancount (Accounting)
 
 main focus:
 
-  * write tests for date inequalities
-
-- You need to write a test with dates that are close by between
-  @checks and with @pad in between.
-
-- Replace 'Home' page by Chart of Accounts page.
-
-- Closing the books should be done properly, with entries from
-  Income/Expenses into Equity, in order to have the same balances
-  whether we limit the date or not.
-
 - Produce proper reports for 
 
    Trial Balance
    Balance Sheet (summarized)
-   Income Statment / PnL Report
+   Income Statement / PnL Report
    Capital Statement
 
 - Make GeneralLedger report "by month", an index page with links, with
@@ -39,9 +28,13 @@ main focus:
 
 - Add a check to insure that parents do not contain mixed Dr and Cr
   account types as children.
+
+- You need to write a test with dates that are close by between
+  @checks and with @pad in between, for date inequalities.
+
+
+
    
-
-
 parser:
 
 - Bug: A transaction without postings should barf.

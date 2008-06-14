@@ -53,7 +53,7 @@ class Template(object):
         self.navigation = DIV(
             UL(LI(A('Chart of Accounts', href=umap('@@ChartOfAccounts'))),
                LI(A('Trial Balance', href=umap('@@TrialBalance'))),
-               LI(A('General Ledger', href=umap('@@GeneralLedger'))),
+               LI(A('Ledgers', href=umap('@@LedgerIndex'))),
                LI(A('Balance Sheet', href=umap('@@BalanceSheet'))),
                LI(A('P&L', href=umap('@@IncomeStatement'))),
                LI(A('Capital', href=umap('@@CapitalStatement'))),
@@ -131,7 +131,7 @@ def haccount(accname):
     for comp in accname.split(Account.sep):
         cappend(comp)
         name = Account.sep.join(comps)
-        append(A(comp, href=umap('@@Register', name), CLASS='accomp'))
+        append(A(comp, href=umap('@@AccountLedger', name), CLASS='accomp'))
     accspan = SPAN(ljoin(l, SPAN(Account.sep, CLASS='accsep')), CLASS='account')
     accspan.cache = 1
     return accspan
@@ -144,7 +144,7 @@ def chartofaccounts(app, ctx):
     it = iter(itertree(ctx.ledger.get_root_account()))
     for acc, td1, tr, skip in treetable_builder(table, it):
         td1.add(
-            A(acc.name, href=umap('@@Register', acc.fullname), CLASS='accomp'))
+            A(acc.name, href=umap('@@AccountLedger', acc.fullname), CLASS='accomp'))
         tr.add(
             TD(acc.getatype()),
             TD(", ".join(acc.commodities) if acc.commodities else ""),
@@ -181,7 +181,7 @@ def trial(app, ctx):
             skip()
             continue
         td1.add(
-            A(acc.name, href=umap('@@Register', acc.fullname), CLASS='accomp'))
+            A(acc.name, href=umap('@@AccountLedger', acc.fullname), CLASS='accomp'))
         tr.add(
             TD(hwallet(getattr(acc, 'balance').round()), CLASS='wallet'),
             TD(hwallet(getattr(acc, 'local_balance').round()), CLASS='wallet'))
@@ -277,7 +277,7 @@ def activity(app, ctx):
     it = iter(itertree(ctx.ledger.get_root_account(), pred=attrgetter('checked')))
     for acc, td1, tr, _ in treetable_builder(table, it):
         td1.add(
-            A(acc.name, href='/register/%s' % acc.fullname, CLASS='accomp'))
+            A(acc.name, href=umap('@@AccountLedger', acc.fullname), CLASS='accomp'))
 
         if acc.checked:
             elapsed = today - acc.check_max
@@ -293,12 +293,49 @@ def activity(app, ctx):
 
 
 
-def register(app, ctx):
+def iter_months(oldest, newest):
+    """Yield dates for the first day of every month between oldest and newest."""
+    cdate = date(oldest.year, oldest.month, 1)
+    while 1:
+        yield cdate
+        mth = cdate.month % 12 + 1
+        year = cdate.year + (1 if mth == 1 else 0)
+        cdate = date(year, mth, 1)
+        if cdate > newest:
+            break
+
+
+def ledgeridx(app, ctx):
+    ledger = app.ledger
+    
+    page = Template()
+    ul = UL(
+        LI(A("General Ledger (all transactions)", href=umap('@@GeneralLedger'))),
+        )
+    page.add(H1("Ledgers"),
+             ul,
+             P(I("Note: These ledgers display transactions for all accounts; for by-account ledgers, click on any account name in any other view.")),
+             )
+
+    if ledger.transactions:
+        date_oldest = ledger.transactions[0].actual_date
+        mths = list(iter_months(date_oldest, date.today()))
+        for d in reversed(mths):
+            mthstr = d.strftime('%Y-%m')
+            ul.add(LI(A("Ledger for %s" % mthstr,
+                        href=umap("@@MonthLedger", d.year, d.month)
+                      )))
+
+    return page.render(app)
+
+
+
+def ledger(app, ctx):
     """
     List the transactions that pertain to a list of filtered postings.
     """
     page = Template()
-    table = TABLE(id='register')
+    table = TABLE(id='ledger')
 
     style = ctx.session.get('style', 'other')
     assert style in ('compact', 'other', 'only', 'full')
@@ -310,6 +347,19 @@ def register(app, ctx):
         raise HttpNotFound(accname)
     postings = set(acc.subpostings())
 
+    year = getattr(ctx, 'year', '')
+    mth = getattr(ctx, 'month', '')
+    if year and mth:
+        year = int(year)
+        mth = int(mth)
+        dbegin = date(year, mth, 1)
+        mth = mth % 12 + 1
+        if mth == 1:
+            year += 1
+        dend = date(year, mth, 1)
+    else:
+        dbegin = None
+
     # Get the list of transactions that related to the postings.
     txns = set(post.txn for post in postings)
 
@@ -317,12 +367,12 @@ def register(app, ctx):
     checks = ctx.ledger.directives['check']
     acc_checks = sorted(checks.account_checks(acc))
 
-## FIXME: remove
-    ## for c in acc_checks:
-    ##     print c
-
     balance = Wallet()
     for txn in sorted(txns):
+        if dbegin is not None:
+            if not (dbegin <= txn.actual_date < dend):
+                continue
+
         register_insert_checks(acc_checks, table, txn.actual_date)
 
         try:
@@ -376,7 +426,7 @@ def register(app, ctx):
     if acc.isroot():
         page.add(H1('General Ledger'), table)
     else:
-        page.add(H1('Register for ', haccount(acc.fullname)), table)
+        page.add(H1('Ledger for ', haccount(acc.fullname)), table)
 
     return page.render(app)
 
@@ -510,16 +560,21 @@ page_directory = (
     ('@@FolderClosed', static('folder_closed.png', 'image/png'), '/folder_closed.png', None),
     ('@@Logo', static("header-universal-dollar.jpg", 'image/jpeg'), '/header.jpg', None),
     ('@@Home', redirect('@@ChartOfAccounts'), '/', None),
+
     ('@@ChartOfAccounts', chartofaccounts, '/accounts', None),
     ('@@Statistics', stats, '/stats', None),
     ('@@Activity', activity, '/activity', None),
     ('@@TrialBalance', trial, '/trial', None),
-    ('@@GeneralLedger', register, '/register', None),
     ('@@BalanceSheet', balance, '/balance', None),
     ('@@IncomeStatement', pnl, '/pnl', None),
     ('@@CapitalStatement', capital, '/capital', None),
     ('@@Positions', positions, '/positions', None),
-    ('@@Register', register, '/register/%s', '^/register/(?P<accname>.*)$'),
+
+    ('@@LedgerIndex', ledgeridx, '/ledger/index', None),
+    ('@@GeneralLedger', ledger, '/ledger/general', None),
+    ('@@MonthLedger', ledger, '/ledger/bymonth/%04d/%02d', '^/ledger/bymonth/(?P<year>\d\d\d\d)/(?P<month>\d\d)$'),
+    ('@@AccountLedger', ledger, '/ledger/byaccount/%s', '^/ledger/byaccount/(?P<accname>.*)$'),
+
     ('@@SetStyle', setstyle, '/setstyle', '^/setstyle$'),
     ('@@Messages', messages, '/messages', None),
     ('@@Reload', reload, '/reload', None),

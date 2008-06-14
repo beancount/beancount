@@ -54,7 +54,7 @@ div#reload {
 
 
 
-/* Style box for register. */
+/* Style box for ledger. */
 
 div#style-selector ul {
   margin: 0px;
@@ -72,28 +72,28 @@ div#style-selector li {
 
 
 
-/* Register view */
+/* Ledger view */
 
-table#register {
+table#ledger {
   width: 100%;
 }
 
-table#register .flag {
+table#ledger .flag {
   font-weight: bold;
   text-align: center;
   min-width: 16px;
 }
 
-table#register .postdate {
+table#ledger .postdate {
   text-align: right;
 }
 
-table#register .postnote {
+table#ledger .postnote {
   margin-left: 3em;
   font-style: italic;
 }
 
-table#register tr.posting {
+table#ledger tr.posting {
   font-size: smaller;
 }
 
