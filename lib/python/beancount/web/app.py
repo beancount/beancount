@@ -59,8 +59,8 @@ class Template(object):
                LI(A('Capital', href=umap('@@CapitalStatement'))),
                LI(A('Ranges', href=umap('@@Ranges'))),
                LI(A('Stats', href=umap('@@Statistics'))),
-               LI(A('Errors', href=umap('@@Messages'))),
                LI(A('Source', href=umap('@@Source'))),
+               LI(A('Log', href=umap('@@Messages'))),
                ),
             id='top-navigation')
 
@@ -157,6 +157,8 @@ def stats(app, ctx):
     page = Template()
     page.add(H1("Statistics"))
     page.add(P("FIXME TODO"))
+## FIXME: add application options
+## FIXME: maybe Source should just become a link from this page
     return page.render(app)
 
 def trial(app, ctx):

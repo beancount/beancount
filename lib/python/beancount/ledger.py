@@ -148,10 +148,16 @@ class Account(object):
         else:
             return Account.sep.join((self.parent.get_fullname(), self.name)).lstrip(':')
 
-    def issubaccount(self, other):
-        "Return true if the 'other' account is a subaccount of this one."
-        # We do this by name for now.
-        return other.name.startswith(self.name)
+    def ischildof(self, cparent):
+        """ Return true if the 'cparent' account is a parent of this account (or
+        is that account itself)."""
+
+        if self is cparent:
+            return True
+        elif self.parent is None:
+            return False
+        else:
+            return self.parent.ischildof(cparent)
 
 
 
@@ -543,7 +549,6 @@ class Ledger(object):
                             post.filename, post.lineno = fn, lineno[0]
                             post.ordering = next_ordering()
                             txn.postings.append(post)
-                            self.postings.append(post)
 
                             post.flag, post.account_name, post.note = mo.group(1,2,14)
 
@@ -554,9 +559,6 @@ class Ledger(object):
                                 accname = accname.strip()[1:-1]
                                 post.virtual = VIRT_BALANCED if fchar == '[' else VIRT_UNBALANCED
                             post.account = acc = self.get_account(accname, create=1)
-
-                            acc.postings.append(post)
-
 
                             # Fetch the amount.
                             anum, acom = mo.group(3,4)
@@ -680,6 +682,8 @@ class Ledger(object):
         except StopIteration:
             pass
 
+        self.build_postings_lists()
+
         # Set the precision map according to some rules about the commodities.
         roundmap = Wallet.roundmap
         for com in self.commodities:
@@ -689,6 +693,22 @@ class Ledger(object):
         self.complete_balances()
         self.compute_priced_map()
 
+    def build_postings_lists(self):
+        """ (Re)Builds internal lists of postings from the list of transactions."""
+
+        self.postings = []
+        for acc in self.accounts.itervalues():
+            acc.postings = []
+
+        for txn in self.transactions:
+            for post in txn.postings:
+                post.account.postings.append(post)
+                self.postings.append(post)
+
+        self.postings.sort()
+        for acc in self.accounts.itervalues():
+            acc.postings.sort()
+        
     def compute_priced_map(self):
         """
         Compute the priced map, that is, the set of commodities that each
@@ -812,6 +832,100 @@ class Ledger(object):
         for direct in directives:
             direct.apply()
 
+
+    close_flag = 'A'
+
+    def close_books(self, closedate):
+        """ Close the books at the specified date 'closedate', replacing all
+        entries before that date by opening balances, and resetting
+        Income/Revenues and Expenses categories to zero via entries in Equity.
+        """
+        other_account = self.get_account('Equity:Opening-Balances', create=1)
+
+        # Select all the transactions with date on or after the closing date.
+        # This is the set of transactions that we will keep.
+        keep_txns = list(txn
+                         for txn in self.transactions
+                         if txn.actual_date >= closedate)
+
+        # Compute the set of all postings we will keep, the 'in' set (vs.
+        # 'out').
+        inset = set(post
+                    for txn in keep_txns
+                    for post in txn.postings)
+
+        # Figure out some accounts to ignore for closing the books (the income
+        # statement accounts, mainly).
+        income_acc = self.find_account(('Income', 'Revenue', 'Revenues'))
+        expenses_acc = self.find_account(('Expenses', 'Expense'))
+        imb1_acc = self.find_account(('Imbalance',))
+        imb2_acc = self.find_account(('Imbalances',))
+        ignore_accounts = filter(None, [income_acc, expenses_acc, imb1_acc, imb2_acc])
+
+        # Create automated transactions to replace balances from all the
+        # transactions that came before the closing date, transactions which
+        # will be removed.
+        open_txns = []
+        next_ordering = count(1).next
+        for acc in self.accounts.itervalues():
+            # Ignore income and expenses accounts.
+            if any(acc.ischildof(x) for x in ignore_accounts):
+                continue
+
+            bal = Wallet()
+            for post in acc.postings:
+                if post not in inset:
+                    bal += post.amount
+            if not bal:
+                continue
+            
+            # Create a transaction to replace the removed postings.
+            txn = Transaction()
+            txn.ordering = next_ordering()
+            txn.actual_date = txn.effective_date = closedate
+            txn.flag = self.close_flag
+            txn.narration = ("Closing the books for account: '%s'" %
+                             acc.fullname)
+
+            post = Posting(txn)
+            post.ordering = next_ordering()
+            txn.postings.append(post)
+            post.flag, post.account_name, post.note = txn.flag, acc.fullname, None
+            post.account = acc
+            post.amount = bal
+            post.actual_date = closedate
+
+            # Other side.
+            post = Posting(txn)
+            post.ordering = next_ordering()
+            txn.postings.append(post)
+            post.flag, post.account_name, post.note = txn.flag, acc.fullname, None
+            post.account = other_account
+            post.amount = -bal
+            post.actual_date = closedate
+
+            open_txns.append(txn)
+
+        self.transactions = sorted(open_txns + keep_txns)
+        self.build_postings_lists()
+
+    def find_account(self, namelist):
+        """ Returns the first account found matching the given name."""
+        candidates = []
+        for accname in namelist:
+            try:
+                candidates.append(self.get_account(accname))
+            except KeyError:
+                pass
+        if not candidates:
+            return None
+        elif len(candidates) > 1:
+            raise KeyError("Ambiguous accounts for %s: %s" %
+                           (', '.join(namelist),
+                            ', '.join(acc.fullname for acc in candidates)))
+        else:
+            return candidates[0]
+        
     def filter_postings(self, pred):
         """
         Apply the given predicate on all the postings and filter out those for

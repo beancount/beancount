@@ -101,14 +101,9 @@ def load_ledger(fn, opts):
         ledger = pickle.load(f)
         f.close()
 
-    ledger.run_directives()
-
-    # Filter out the selected postings.
-    pred = create_filter_pred(opts)
-    ledger.filter_postings(pred)
+    run_postprocesses(ledger, opts)
 
     return ledger
-
 
 def reload(ledger, opts):
     """
@@ -124,15 +119,20 @@ def reload(ledger, opts):
             f = Reader(f)
         ledger2.parse_file(f, fn, encoding)
 
-    ledger2.run_directives()
-
-    # Filter out the selected postings.
-    pred = create_filter_pred(opts)
-    ledger2.filter_postings(pred)
+    run_postprocesses(ledger2, opts)
 
     return ledger2
 
+def run_postprocesses(ledger, opts):
+    ledger.run_directives()
+    
+    if opts.close:
+        closedate, _ = parse_time(opts.close)
+        ledger.close_books(closedate)
 
+    pred = create_filter_pred(opts)
+    ledger.filter_postings(pred)
+    
 
 
 """
@@ -142,9 +142,9 @@ Code to filter down specific postings.
 def addopts(parser):
     "Add options for selecting accounts/postings."
 
-    ## parser.add_option('-c', '--close', '--close-books',
-    ##                   action='store', metavar='TIME_EXPR',
-    ##                   help="Close the books at the given time.")
+    parser.add_option('-c', '--close', '--close-books',
+                      action='store', metavar='TIME_EXPR',
+                      help="Close the books at the given time.")
 
     group = optparse.OptionGroup(parser, "Options for filtering postings.")
 
