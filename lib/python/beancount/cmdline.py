@@ -102,10 +102,15 @@ def load_ledger(fn, opts):
         f.close()
 
     ledger.run_directives()
+
+    # Filter out the selected postings.
+    pred = create_filter_pred(opts)
+    ledger.filter_postings(pred)
+
     return ledger
 
 
-def reload(ledger):
+def reload(ledger, opts):
     """
     Parse the files again and create a new Ledger from them.
     """
@@ -120,6 +125,11 @@ def reload(ledger):
         ledger2.parse_file(f, fn, encoding)
 
     ledger2.run_directives()
+
+    # Filter out the selected postings.
+    pred = create_filter_pred(opts)
+    ledger2.filter_postings(pred)
+
     return ledger2
 
 

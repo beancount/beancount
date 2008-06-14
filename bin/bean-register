@@ -23,10 +23,6 @@ def main():
 
     opts, ledger, args = cmdline.main(parser)
 
-    # Filter out the selected postings.
-    pred = cmdline.create_filter_pred(opts)
-    ledger.filter_postings(pred)
-
     # Get the list of transactions that relate to the postings.
     balance = Wallet()
     for txn in ledger.transactions:

@@ -434,12 +434,7 @@ def reload(app, ctx):
     """
     Reload the ledger file and return to the given URL.
     """
-    app.ledger = cmdline.reload(ctx.ledger)
-
-    # Filter out the selected postings.
-    pred = cmdline.create_filter_pred(app.opts)
-    app.ledger.filter_postings(pred)
-
+    app.ledger = cmdline.reload(ctx.ledger, app.opts)
     raise HttpRedirect(ctx.environ['HTTP_REFERER'])
 
 
