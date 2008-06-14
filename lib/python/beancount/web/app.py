@@ -5,13 +5,14 @@ developing.
 """
 
 # stdlib imports
-import logging
+import sys, logging
 from wsgiref.util import request_uri, application_uri
 from os.path import *
 from operator import attrgetter
 from datetime import date
 from urlparse import urlparse
 from itertools import izip, count
+from pprint import pformat
 
 # fallback imports
 from beancount.fallback import xmlout
@@ -59,9 +60,7 @@ class Template(object):
                LI(A('Capital', href=umap('@@CapitalStatement'))),
                LI(A('Positions', href=umap('@@Positions'))),
                LI(A('Activity', href=umap('@@Activity'))),
-               LI(A('Stats', href=umap('@@Statistics'))),
-               LI(A('Source', href=umap('@@Source'))),
-               LI(A('Log', href=umap('@@Messages'))),
+               LI(A('Stats/Logs', href=umap('@@Statistics'))),
                ),
             id='top-navigation')
 
@@ -157,12 +156,23 @@ def chartofaccounts(app, ctx):
 
 def stats(app, ctx):
     page = Template()
-    page.add(H1("Statistics"))
-    page.add(P("FIXME TODO"))
-## FIXME: add application options
-## FIXME: add global ledger values, filenames, nb. transactions, etc.
-## FIXME: maybe Source should just become a link from this page
-## FIXME: maybe Log should just become a link from this page
+    page.add(H1("Statistics, Logs and Other Info"))
+
+    page.add(H2("Command-line Options"), PRE(' '.join(sys.argv)))
+
+    ledger = ctx.ledger
+    page.add(H2("Statistics"),
+             TABLE(
+                 TR(TD("Nb Transactions:"), TD("%d" % len(ledger.transactions))),
+                 TR(TD("Nb Postings:"), TD("%d" % len(ledger.postings)))
+                 ))
+
+    page.add(H2("Links"),
+             UL(
+                 LI(A('Source', href=umap('@@Source'))),
+                 LI(A('Message Log (and Errors)', href=umap('@@Messages'))),
+                 ))
+
     return page.render(app)
 
 def trial(app, ctx):
@@ -212,7 +222,7 @@ def semi_table(acc, tid):
 
     table.add(TR(TD(B("Totals")),
                  TD(hwallet(sum_pos)),
-                 TD(hwallet(-sum_neg))))
+                 TD(["(", hwallet(-sum_neg), ")"] if sum_neg else [])))
 
     total = sum_pos + sum_neg
     table.add(TR(TD(B("Sum")),
@@ -255,7 +265,7 @@ def balance_sheet(app, ctx):
            TD(hwallet(total))))
     page.add(BR(style="clear: both"),
              H2("Net Difference"), net)
-             
+
     return page.render(app)
 
 
@@ -303,8 +313,26 @@ def capital(app, ctx):
 def positions(app, ctx):
     page = Template()
     page.add(H1("Positions / Assets"))
-    page.add(P("FIXME TODO - add a summary of market values of current positions for assets, with changes"))
+
+    # First compute the trial balance.
+    ledger = ctx.ledger
+    compute_balsheet(ledger, 'local_balance', 'balance')
+## FIXME: rename to compute_balances, and do it once in the post-process.
+
+    a_acc = ledger.find_account(('Assets', 'Asset'))
+    if a_acc is None:
+        page.add(P("Could not find assets account.", CLASS="error"))
+        return page.render(app)
+
+    tbl = TABLE(id="positions")
+    tbl.add(THEAD(TR(TD("Position"), TD("Market value"))))
+    for comm, amount in a_acc.balance.tostrlist():
+        tbl.add(TR(TD("%s %s" % (amount, comm)), TD("?")))
+    page.add(H2("Total Assets"), tbl)
+
     return page.render(app)
+
+
 
 
 

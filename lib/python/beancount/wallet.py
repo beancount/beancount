@@ -76,7 +76,7 @@ class Wallet(dict):
         return 'Wallet(%s)' % dict.__repr__(self)
 
     def tostrlist(self):
-        """Return a list of pairs of strings (amount, commodity) to be
+        """Return a list of pairs of strings (commodity, amount) to be
         rendered)."""
         return sorted(self.iteritems(), key=self.commodity_key)
 

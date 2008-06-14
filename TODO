@@ -16,15 +16,7 @@ Beancount (Accounting)
 
 main focus:
 
-- Produce proper reports for 
-
-   Trial Balance
-   Balance Sheet (summarized)
-   Income Statement / PnL Report
-   Capital Statement
-
-- Make GeneralLedger report "by month", an index page with links, with
-  an option to list "all entries".
+- Finish the Capital Statement and Positions page
 
 - Add a check to insure that parents do not contain mixed Dr and Cr
   account types as children.
