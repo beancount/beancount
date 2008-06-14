@@ -18,7 +18,7 @@ A double-entry accounting system that uses a simple text file format
 as input. A few Python scripts are used to parse the contents of the
 file, for example, to serve the contents as a locally running web
 server. Scripts are provided to convert from OFX files into Ledger
-input format, and other formats (easily extensible). 
+input format, and other formats (easily extensible).
 
 Notes:
 
@@ -44,6 +44,17 @@ Notes:
   speed, and Ledger may eventually leverage Beancount's web front-end.
 
 .. _Ledger: http://www.newartisans.com/software/ledger.html
+
+
+.. important::
+
+   This code works; as a testimony, I'm using it personally, actively
+   to manage my own finances and my company's finances, and thus I'm
+   running it and its components at the very least a few times montly.
+   If you have any problem using it, please let me know. This software
+   should be in a functional state; this is not abandonware, nor is it
+   prototyping code either. You should be able to use beancount to do
+   "real work" (I do).
 
 
 Running the Demo
