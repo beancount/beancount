@@ -139,7 +139,7 @@ def reload(ledger, opts):
 Code to filter down specific postings.
 """
 
-def select_addopts(parser):
+def addopts(parser):
     "Add options for selecting accounts/postings."
 
     ## parser.add_option('-c', '--close', '--close-books',

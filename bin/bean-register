@@ -17,7 +17,7 @@ def main():
     import optparse
     parser = optparse.OptionParser(__doc__.strip())
 
-    cmdline.select_addopts(parser)
+    cmdline.addopts(parser)
     parser.add_option('-v', '--verbose', action='store_true',
                       help="Verbosely print some extra stuff.")
 

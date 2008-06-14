@@ -198,7 +198,7 @@ def main():
     import optparse
     parser = optparse.OptionParser(__doc__.strip())
 
-    cmdline.select_addopts(parser)
+    cmdline.addopts(parser)
     parser.add_option('-d', '--debug', '--devel', action='store_true',
                       help="Debug/development mode: don't cache styles and "
                       "reload code on every request.")
