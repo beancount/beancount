@@ -58,11 +58,6 @@ CRITICAL = logging.CRITICAL  # Error that we can't recover from,
 
 
 
-def filter_inout(tlist, pred):
-    "Split the list in two according to the given predicate."
-    list_in, list_out = [], []
-    [(list_in if pred(el) else list_out).append(el) for el in tlist]
-    return list_in, list_out
 
 
 

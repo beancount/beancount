@@ -24,6 +24,14 @@ def iter_pairs(l):
             done = 1
         yield a, b
 
+
+def filter_inout(tlist, pred):
+    "Split the list in two according to the given predicate."
+    list_in, list_out = [], []
+    [(list_in if pred(el) else list_out).append(el) for el in tlist]
+    return list_in, list_out
+
+
 def render_tree(root, pred=None, rootname='.'):
     """
     Generic routine to render a tree of nodes into an cute ascii form. The only
