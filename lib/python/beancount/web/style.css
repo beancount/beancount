@@ -39,7 +39,9 @@ body h1 {
   text-align: center;
 }
 
-
+h2 {
+  font-size: medium;
+}
 
 
 /* Reload box. */
@@ -121,6 +123,12 @@ tr.txn span.amount {
   /* font-weight: bold; */
 }
 
+table.balsheet {
+  margin-left: 2%;
+  margin-right: 2%;
+  width: 96%;
+}
+
 
 
 /* Account name component */
@@ -169,6 +177,10 @@ table#activity td {
 
 /* tree tables */
 
+thead {
+  font-size: smaller;
+}
+
 .folder {
   border:none;
   /* margin: 0 4px 0 0; */
@@ -203,6 +215,21 @@ span.amount {
   white-space: nowrap;
 }
 
+
+
+/* Side-by-side views */
+
+div.left {
+  width: 50%;
+  /* border: thin solid red; */
+}
+
+div.right {
+  float: right;
+  left: 50%;
+  width: 50%;
+  /* border: thin solid blue; */
+}
 
 
 
@@ -240,4 +267,13 @@ div#source pre {
   padding: 0px;
   margin: 0px;
 }
+
+
+
+/* Error divs and paragraphs. */
+
+.error {
+  color: red;
+}
+
 

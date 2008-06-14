@@ -189,11 +189,41 @@ def trial(app, ctx):
     page.add(H1('Trial Balance'), table)
     return page.render(app)
 
-def balance(app, ctx):
+def balance_sheet(app, ctx):
     page = Template()
     page.add(H1("Balance Sheet"))
-    page.add(P("FIXME TODO"))
+
+    ledger = ctx.ledger
+
+    a_acc = ledger.find_account(('Assets', 'Asset'))
+    l_acc = ledger.find_account(('Liabilities', 'Liability'))
+    e_acc = ledger.find_account(('Equity', 'Capital'))
+    if None in (a_acc, l_acc, e_acc):
+        page.add(P("Could not get all A, L and E accounts.", CLASS="error"))
+        return page.render(app)
+
+    def balsheet_table(acc):
+        table = TABLE(id='balsheet', CLASS='balsheet accounts treetable')
+        table.add(THEAD(TR(TH("Account"), TH("Debit"), TH("Credit"))))
+        it = iter(itertree(acc))
+        for acc, td1, tr, skip in treetable_builder(table, it):
+            td1.add(
+                A(acc.name, href=umap('@@AccountLedger', acc.fullname), CLASS='accomp'))
+            tr.add(
+                TD(),  ## FIXME TODO
+                TD(),
+                )
+        return table
+
+    a_table = balsheet_table(a_acc)
+    l_table = balsheet_table(l_acc)
+    e_table = balsheet_table(e_acc)
+    page.add(DIV(H2("Assets"), l_table, e_table, CLASS='right'),
+             DIV(H2("Liabilities"), a_table, CLASS='left'),
+             )
     return page.render(app)
+
+
 
 def pnl(app, ctx):
     page = Template()
@@ -307,7 +337,7 @@ def iter_months(oldest, newest):
 
 def ledgeridx(app, ctx):
     ledger = app.ledger
-    
+
     page = Template()
     ul = UL(
         LI(A("General Ledger (all transactions)", href=umap('@@GeneralLedger'))),
@@ -565,7 +595,7 @@ page_directory = (
     ('@@Statistics', stats, '/stats', None),
     ('@@Activity', activity, '/activity', None),
     ('@@TrialBalance', trial, '/trial', None),
-    ('@@BalanceSheet', balance, '/balance', None),
+    ('@@BalanceSheet', balance_sheet, '/balance', None),
     ('@@IncomeStatement', pnl, '/pnl', None),
     ('@@CapitalStatement', capital, '/capital', None),
     ('@@Positions', positions, '/positions', None),
