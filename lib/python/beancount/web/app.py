@@ -57,6 +57,7 @@ class Template(object):
                LI(A('Balance Sheet', href=umap('@@BalanceSheet'))),
                LI(A('P&L', href=umap('@@IncomeStatement'))),
                LI(A('Capital', href=umap('@@CapitalStatement'))),
+               LI(A('Positions', href=umap('@@Positions'))),
                LI(A('Activity', href=umap('@@Activity'))),
                LI(A('Stats', href=umap('@@Statistics'))),
                LI(A('Source', href=umap('@@Source'))),
@@ -189,11 +190,46 @@ def trial(app, ctx):
     page.add(H1('Trial Balance'), table)
     return page.render(app)
 
+
+def semi_table(acc, tid):
+    table = TABLE(id=tid, CLASS='semi accounts treetable')
+    table.add(THEAD(TR(TH("Account"), TH("Debit"), TH("Credit"))))
+    it = iter(itertree(acc))
+    sum_pos, sum_neg = Wallet(), Wallet()
+    for acc, td1, tr, skip in treetable_builder(table, it):
+        td1.add(
+            A(acc.name, href=umap('@@AccountLedger', acc.fullname), CLASS='accomp'))
+        wpos, wneg = acc.local_balance.split()
+        sum_pos += wpos
+        sum_neg += wneg
+        tr.add(
+            TD(hwallet(wpos.round()) if wpos else ''),
+            )
+        if wneg:
+            tr.add(TD('(', hwallet(-wneg.round()), ')'))
+        else:
+            tr.add(TD())
+
+    table.add(TR(TD(B("Totals")),
+                 TD(hwallet(sum_pos)),
+                 TD(hwallet(-sum_neg))))
+
+    total = sum_pos + sum_neg
+    table.add(TR(TD(B("Sum")),
+                 TD(hwallet(total))
+                 ))
+
+    return table, total
+
+
 def balance_sheet(app, ctx):
     page = Template()
     page.add(H1("Balance Sheet"))
 
     ledger = ctx.ledger
+
+    # First compute the trial balance.
+    compute_balsheet(ledger, 'local_balance', 'balance')
 
     a_acc = ledger.find_account(('Assets', 'Asset'))
     l_acc = ledger.find_account(('Liabilities', 'Liability'))
@@ -202,25 +238,24 @@ def balance_sheet(app, ctx):
         page.add(P("Could not get all A, L and E accounts.", CLASS="error"))
         return page.render(app)
 
-    def balsheet_table(acc):
-        table = TABLE(id='balsheet', CLASS='balsheet accounts treetable')
-        table.add(THEAD(TR(TH("Account"), TH("Debit"), TH("Credit"))))
-        it = iter(itertree(acc))
-        for acc, td1, tr, skip in treetable_builder(table, it):
-            td1.add(
-                A(acc.name, href=umap('@@AccountLedger', acc.fullname), CLASS='accomp'))
-            tr.add(
-                TD(),  ## FIXME TODO
-                TD(),
-                )
-        return table
-
-    a_table = balsheet_table(a_acc)
-    l_table = balsheet_table(l_acc)
-    e_table = balsheet_table(e_acc)
-    page.add(DIV(H2("Assets"), l_table, e_table, CLASS='right'),
-             DIV(H2("Liabilities"), a_table, CLASS='left'),
+    a_table, a_total = semi_table(a_acc, 'assets')
+    l_table, l_total = semi_table(l_acc, 'liabilities')
+    e_table, e_total = semi_table(e_acc, 'equity')
+    page.add(DIV(H2("Liabilities", CLASS="duotables"), l_table,
+                 H2("Equity", CLASS="duotables"), e_table,
+                 CLASS='right'),
+             DIV(H2("Assets", CLASS="duotables"), a_table,
+                 CLASS='left'),
              )
+
+    total = a_total + l_total + e_total
+    net = TABLE(id='net', CLASS='treetable')
+    net.add(
+        TR(TD("Net Difference"),
+           TD(hwallet(total))))
+    page.add(BR(style="clear: both"),
+             H2("Net Difference"), net)
+             
     return page.render(app)
 
 
@@ -228,8 +263,36 @@ def balance_sheet(app, ctx):
 def pnl(app, ctx):
     page = Template()
     page.add(H1("Income Statement / P&L Report"))
-    page.add(P("FIXME TODO"))
+
+    ledger = ctx.ledger
+
+    # First compute the trial balance.
+    compute_balsheet(ledger, 'local_balance', 'balance')
+
+    i_acc = ledger.find_account(('Income', 'Revenue', 'Revenues'))
+    e_acc = ledger.find_account(('Expenses', 'Expense'))
+    if None in (i_acc, e_acc):
+        page.add(P("Could not get all unique income and expenses accounts.", CLASS="error"))
+        return page.render(app)
+
+    i_table, i_total = semi_table(i_acc, 'income')
+    e_table, e_total = semi_table(e_acc, 'expenses')
+    page.add(DIV(H2("Expenses", CLASS="duotables"), e_table,
+                 CLASS='right'),
+             DIV(H2("Income", CLASS="duotables"), i_table,
+                 CLASS='left'),
+             )
+
+    total = i_total + e_total
+    net = TABLE(id='net', CLASS='treetable')
+    net.add(
+        TR(TD("Net Difference"),
+           TD(hwallet(total))))
+    page.add(BR(style="clear: both"),
+             H2("Net Difference"), net)
+
     return page.render(app)
+
 
 def capital(app, ctx):
     page = Template()

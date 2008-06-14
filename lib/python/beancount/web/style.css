@@ -123,12 +123,15 @@ tr.txn span.amount {
   /* font-weight: bold; */
 }
 
-table.balsheet {
+table.semi {
   margin-left: 2%;
   margin-right: 2%;
   width: 96%;
 }
 
+h2.duotables {
+  border-bottom: medium solid black;
+}
 
 
 /* Account name component */
@@ -229,6 +232,10 @@ div.right {
   left: 50%;
   width: 50%;
   /* border: thin solid blue; */
+}
+
+div.right h2, div.left h2 {
+  margin-top: 0px;
 }
 
 

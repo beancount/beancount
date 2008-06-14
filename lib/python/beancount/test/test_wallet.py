@@ -105,4 +105,23 @@ class TestWallet(object):
         w.price('AAPL', 'USD', Decimal('10'))
         assert w == Wallet(USD='200', MSFT='10.1')
 
+    def test_split(self):
+
+        w = Wallet()
+        wp, wn = w.split()
+        assert w == (wp + wn)
+
+        w = Wallet('10 USD')
+        wp, wn = w.split()
+        assert w == (wp + wn)
+        
+        w = Wallet('-10 CAD')
+        wp, wn = w.split()
+        assert w == (wp + wn)
+
+        w = Wallet(USD='10', CAD='-10')
+        wp, wn = w.split()
+        assert w == (wp + wn)
+
+
 

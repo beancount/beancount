@@ -87,7 +87,7 @@ class Wallet(dict):
 
     def isempty(self):
         return not any(self.itervalues())
-        
+
     def __nonzero__(self):
         return any(self.itervalues())
 
@@ -207,6 +207,16 @@ class Wallet(dict):
         wdiff[ucomm] = units * price
         self += wdiff
 
+    def split(self):
+        """ Split this wallet into two, one with all the positive unit values
+        and one with all the negative unit values. This function returns two
+        wallets which, summed together, should equal this wallet."""
+        wpos, wneg = Wallet(), Wallet()
+        zero = Decimal('0')
+        for k, value in self.iteritems():
+            w = wpos if value > zero else wneg
+            w[k] = value
+        return wpos, wneg
 
 
 # Order of important for commodities.

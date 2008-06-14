@@ -84,7 +84,7 @@ We ignore patterns seen the line 'exclude-line'. If ALL is non-nil, look
 for account names in postings as well (default is to look at the @defaccount 
 declarations only."
   (let* ((accounts)
-	 (defre "^@defaccount\\s-+\\(?:De\\|Cr\\)\\s-+\\([A-Z][A-Za-z0-9-_:]*\\)\\s-*")
+	 (defre "^@defaccount\\s-+\\(?:D[er]\\|Cr\\)\\s-+\\([A-Z][A-Za-z0-9-_:]*\\)\\s-*")
 	 (accre (if all
 		    (concat "\\(?:"
 			    "^[ \t]+\\([A-Z][A-Za-z0-9-_:]*\\)\\s-*"
