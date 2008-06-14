@@ -57,7 +57,7 @@ class Template(object):
                LI(A('Balance Sheet', href=umap('@@BalanceSheet'))),
                LI(A('P&L', href=umap('@@IncomeStatement'))),
                LI(A('Capital', href=umap('@@CapitalStatement'))),
-               LI(A('Ranges', href=umap('@@Ranges'))),
+               LI(A('Activity', href=umap('@@Activity'))),
                LI(A('Stats', href=umap('@@Statistics'))),
                LI(A('Source', href=umap('@@Source'))),
                LI(A('Log', href=umap('@@Messages'))),
@@ -136,10 +136,11 @@ def haccount(accname):
     accspan.cache = 1
     return accspan
 
-def accounts(app, ctx):
+def chartofaccounts(app, ctx):
     page = Template()
 
     table = TABLE(id='chart-of-accounts', CLASS='accounts treetable')
+    table.add(THEAD(TR(TH("Account"), TH("Dr/Cr"), TH("Valid Commodities"))))
     it = iter(itertree(ctx.ledger.get_root_account()))
     for acc, td1, tr, skip in treetable_builder(table, it):
         td1.add(
@@ -158,7 +159,9 @@ def stats(app, ctx):
     page.add(H1("Statistics"))
     page.add(P("FIXME TODO"))
 ## FIXME: add application options
+## FIXME: add global ledger values, filenames, nb. transactions, etc.
 ## FIXME: maybe Source should just become a link from this page
+## FIXME: maybe Log should just become a link from this page
     return page.render(app)
 
 def trial(app, ctx):
@@ -171,6 +174,7 @@ def trial(app, ctx):
     compute_balsheet(ctx.ledger, 'local_balance', 'balance', at_cost)
 
     table = TABLE(id='balance', CLASS='accounts treetable')
+    table.add(THEAD(TR(TH("Account"), TH("Cumulative"), TH("Individual"))))
     it = iter(itertree(ctx.ledger.get_root_account()))
     for acc, td1, tr, skip in treetable_builder(table, it):
         if len(acc) == 0:
@@ -256,14 +260,20 @@ def treetable_builder(tbl, iterator, skiproot=False):
 
 
 
-def ranges(app, ctx):
-    "Output the updated ranges of each account."
+def activity(app, ctx):
+    "Output the updated time ranges of each account."
 
     page = Template()
 
     today = date.today()
-    table = TABLE(id='ranges', CLASS='accounts treetable')
-    table.add(THEAD(TR(TH(), TH("Oldest Chk"), TH("Newest Chk"), TH("Days since"))))
+    table = TABLE(id='activity', CLASS='accounts treetable')
+    table.add(THEAD(TR(TH("Account"),
+                       TH("Oldest Chk"),
+                       TH("Newest Chk"),
+                       TH("Days since"),
+                       TH("Last Posting"),
+                       TH("Days since"),
+                       )))
     it = iter(itertree(ctx.ledger.get_root_account(), pred=attrgetter('checked')))
     for acc, td1, tr, _ in treetable_builder(table, it):
         td1.add(
@@ -271,11 +281,14 @@ def ranges(app, ctx):
 
         if acc.checked:
             elapsed = today - acc.check_max
-            tr.extend(TD(str(x)) for x in (acc.check_min, acc.check_max, '(%s days)' % elapsed.days))
-        else:
-            tr.extend(TD() for _ in xrange(3))
+            tr.extend(TD(str(x)) for x in (acc.check_min, acc.check_max, '%s days' % elapsed.days))
 
-    page.add(H1('Updated Time Ranges'), table)
+        if acc.postings:
+            post_last = acc.postings[-1]
+            elapsed = today - post_last.actual_date
+            tr.extend(TD(str(x)) for x in (post_last.actual_date, '%s days' % elapsed.days))
+
+    page.add(H1('Activity'), table)
     return page.render(app)
 
 
@@ -438,7 +451,7 @@ def messages(app, ctx):
     for msg in ledger.messages:
         name = msgname[msg.level]
         tbl.add(TR(TD(name.capitalize(), CLASS=name),
-                      TD(A(msg.message, href=umap('@@Source') + '#line%d' % msg.lineno))))
+                      TD(A(msg.message, href=umap('@@Source') + '#line%d' % (msg.lineno or 0)))))
 
     return page.render(app)
 
@@ -458,6 +471,12 @@ def setstyle(app, ctx):
     raise HttpRedirect(ctx.environ['HTTP_REFERER'])
 
 
+
+def redirect(*args):
+    "Return a resource to redirect to the given resource id."
+    def redirect_res(app, ctx):
+        raise HttpRedirect(umap(*args))
+    return redirect_res
 
 def static(fn, ctype):
     """Return a handler for a static file to be served, with caching.
@@ -490,10 +509,10 @@ page_directory = (
     ('@@FolderOpen', static('folder_open.png', 'image/png'), '/folder_open.png', None),
     ('@@FolderClosed', static('folder_closed.png', 'image/png'), '/folder_closed.png', None),
     ('@@Logo', static("header-universal-dollar.jpg", 'image/jpeg'), '/header.jpg', None),
-    ('@@Home', accounts, '/', None),
-    ('@@ChartOfAccounts', accounts, '/accounts', None),
+    ('@@Home', redirect('@@ChartOfAccounts'), '/', None),
+    ('@@ChartOfAccounts', chartofaccounts, '/accounts', None),
     ('@@Statistics', stats, '/stats', None),
-    ('@@Ranges', ranges, '/ranges', None),
+    ('@@Activity', activity, '/activity', None),
     ('@@TrialBalance', trial, '/trial', None),
     ('@@GeneralLedger', register, '/register', None),
     ('@@BalanceSheet', balance, '/balance', None),

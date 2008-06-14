@@ -139,7 +139,8 @@ class BeanServer(object):
             # Print out a nicely rendered traceback of the error.
             status = getattr(e, 'status', '200 OK')
             start_response(status, [('Content-Type', 'text/html')])
-            return [cgitb.html(sys.exc_info())]
+            einfo = sys.exc_info()
+            return [cgitb.html(einfo)]
 
 
 

@@ -376,7 +376,11 @@ class Ledger(object):
 
         msg = Message(level, message, filename, lineno)
         self.messages.append(msg)
-        logging.log(level, ' %s:%-4d : %s' % (filename, lineno, message))
+        if filename is not None and lineno is not None:
+            s = ' %s:%-4d : %s' % (filename, lineno, message)
+        else:
+            s = ' %s' % message
+        logging.log(level, s)
 
 
     # Account ordering integer.
@@ -905,6 +909,8 @@ class Ledger(object):
             post.actual_date = closedate
 
             open_txns.append(txn)
+            self.log(INFO, " Closing books at %s in %s for %s" %
+                     (closedate, acc.fullname, bal), (None, None))
 
         self.transactions = sorted(open_txns + keep_txns)
         self.build_postings_lists()

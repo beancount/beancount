@@ -37,6 +37,8 @@ main focus:
 - Make GeneralLedger report "by month", an index page with links, with
   an option to list "all entries".
 
+- Add a check to insure that parents do not contain mixed Dr and Cr
+  account types as children.
    
 
 
