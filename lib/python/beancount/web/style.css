@@ -17,7 +17,7 @@ div#document {
 }
 
 div#header {
-  background-image: url("/header.jpg");
+  background-image: url("header.jpg");
   background-color: rgb(0,0,0);
   background-repeat: no-repeat;
   height: 62px;
