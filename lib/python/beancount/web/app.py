@@ -36,8 +36,7 @@ class Template(object):
         self.initialize()
 
     def initialize(self):
-        self.header = DIV(A(IMG(src=umap('@@Logo'), id='logo')),
-                          id='header')
+        self.header = DIV(' ', id='header')
 
         self.body = BODY()
         self.head = HEAD(
@@ -679,7 +678,7 @@ page_directory = (
     ('@@Treetable', static('treetable.js', 'text/javascript'), '/treetable.js', None),
     ('@@FolderOpen', static('folder_open.png', 'image/png'), '/folder_open.png', None),
     ('@@FolderClosed', static('folder_closed.png', 'image/png'), '/folder_closed.png', None),
-    ('@@Logo', static("header-universal-dollar.jpg", 'image/jpeg'), '/header.jpg', None),
+    ('@@HeaderBackground', static("header-universal-dollar.jpg", 'image/jpeg'), '/header.jpg', None),
     ('@@Home', redirect('@@ChartOfAccounts'), '/', None),
 
     ('@@ChartOfAccounts', chartofaccounts, '/accounts', None),
