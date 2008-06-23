@@ -59,15 +59,15 @@ def main(parser, no=1):
 
     if no == 1:
         fn, args = args[0], args[1:]
-        ledger = load_ledger(fn, opts)
+        ledger = load_ledger(parser, fn, opts)
         return opts, ledger, args
     elif no == MANY:
-        ledgers = [load_ledger(fn, opts) for fn in args]
+        ledgers = [load_ledger(parser, fn, opts) for fn in args]
         return opts, ledgers, args
     elif no == 0:
         return opts, None, args
 
-def load_ledger(fn, opts):
+def load_ledger(parser, fn, opts):
     # Parse the file.
     if not exists(fn):
         parser.error("No such file '%s'." % fn)
@@ -126,12 +126,15 @@ def reload(ledger, opts):
 def run_postprocesses(ledger, opts):
     ledger.run_directives()
     
-    if opts.close:
+    if hasattr(opts, 'close') and opts.close:
         closedate, _ = parse_time(opts.close)
         ledger.close_books(closedate)
 
-    pred = create_filter_pred(opts)
-    ledger.filter_postings(pred)
+    filter_opts = 'account', 'transaction_account', 'note', 'time', 'tag'
+
+    if all(hasattr(opts, x) for x in filter_opts):
+        pred = create_filter_pred(opts)
+        ledger.filter_postings(pred)
     
 
 
@@ -280,6 +283,8 @@ def create_filter_pred(opts):
 ##     vis = SelectPostings()
 ##     ledger.visit(ledger.get_root_account(), vis)
 ##     return vis.postings
+
+
 
 
 

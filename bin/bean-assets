@@ -19,6 +19,7 @@ from beancount import cmdline
 from beancount.utils import render_tree
 from beancount.ledger import compute_balsheet
 from beancount.wallet import Wallet
+from beancount.web.market import getquote
 
 
 
@@ -90,61 +91,9 @@ class FileValueCache(object):
 
 
 
-market_currency = {
-    'NYSE': 'USD',
-    'TSE': 'CAD',
-    }
 
 
 
-url_google = 'http://finance.google.com/finance?q=%s'
-
-def getquote_google(sym):
-    ssym = sym.strip().lower()
-    f = urllib.urlopen(url_google % ssym)
-    soup = BeautifulSoup(f)
-    el = soup.find('span', 'pr')
-    if el is not None:
-        # Find the quote currency.
-        h1 = soup.find('h1')
-        mstr = h1.next.next
-        mstr = mstr.replace('&nbsp;', '').replace('\n', '')
-        mstring = '\\(([A-Za-z]+),\\s+([A-Z]+):%s\\)' % ssym.upper()
-        mo = re.match(mstring, mstr)
-        if mo is not None:
-            market = mo.group(2)
-            comm = market_currency[market]
-        else:
-            raise ValueError("Unknown market: %s for %s" % (mstr, ssym))
-        price = Decimal(el.contents[0])
-
-        chg = soup.find('span', 'bld')
-    else:
-        comm, price, chg = None, None
-        
-        
-    url = '' % (symbol, stat)
-    return urllib.urlopen(url).read().strip().strip('"')
-
-url_yahoo = 'http://finance.yahoo.com/d/quotes.csv?s=%s&f=l1c1'
-
-
-def specDecimal(s):
-    if s == 'N/A':
-        return Decimal()
-    else:
-        return Decimal(s)
-
-def getquote_yahoo(sym, pcomm):
-    ssym = sym.strip().lower()
-    if pcomm == 'CAD':
-        ssym += '.TO'
-    f = urllib.urlopen(url_yahoo % ssym)
-    contents = f.read().strip()
-    price, change = [specDecimal(x) for x in contents.split(',')]
-    return (price, change)
-
-getquote = getquote_yahoo
 
 
 

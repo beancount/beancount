@@ -24,6 +24,7 @@ from beancount.utils import render_tree, itertree
 from beancount.wallet import Wallet
 from beancount.web.serve import *
 from beancount import cmdline
+from beancount.web.market import *
 
 
 
@@ -324,9 +325,29 @@ def positions(app, ctx):
         return page.render(app)
 
     tbl = TABLE(id="positions")
-    tbl.add(THEAD(TR(TD("Position"), TD("Market value"))))
+    tbl.add(THEAD(TR(TD("Position"), TD("Currency"), TD("Price"), TD("Change"), TD("Market Value"))))
     for comm, amount in a_acc.balance.tostrlist():
-        tbl.add(TR(TD("%s %s" % (amount, comm)), TD("?")))
+        pcomms = [] if comm in currencies else ledger.pricedmap[comm]
+        assert len(pcomms) in (0, 1), "Ambiguous commodities."
+        pcomm = ', '.join(pcomms)
+        if pcomms:
+            price, change = get_market_price(comm, pcomm)
+            if price is None:
+                price = "..."
+                change = "..."
+            else:
+                value = "%s %s" % (amount * price, pcomm)
+                price = "%s %s" % (price, pcomm)
+                change = "%s %s" % (change, pcomm)
+        else:
+            price = ''
+            change = ''
+            if comm in currencies:
+                value = "%s %s" % (amount, comm)
+            else:
+                value = ''
+
+        tbl.add(TR(TD("%s %s" % (amount, comm)), TD(pcomm), TD(price), TD(change), TD(value)))
     page.add(H2("Total Assets"), tbl)
 
     return page.render(app)

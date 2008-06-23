@@ -175,6 +175,19 @@ table#activity td {
 }
 
 
+/* Positions view */
+
+table#positions {
+  text-align: right;
+  border-collapse: collapse;
+}
+
+table#positions td {
+  border: thin solid black;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+}
+
 
 
 
