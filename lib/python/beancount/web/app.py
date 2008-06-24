@@ -350,6 +350,14 @@ def positions(app, ctx):
         tbl.add(TR(TD("%s %s" % (amount, comm)), TD(pcomm), TD(price), TD(change), TD(value)))
     page.add(H2("Total Assets"), tbl)
 
+    xrates = get_xrates()
+    tbl = TABLE(id="xrates")
+    tbl.add(THEAD(TR(TD("Quote"), TD("Base"), TD("Bid"), TD("Ask"), TD("Time"))))
+    for (quote, base), (bid, ask, dtime) in xrates.iteritems():
+        tds = [TD(str(x)) for x in (quote, base, bid, ask, dtime)]
+        tbl.add(TR(tds))
+    page.add(H2("Exchange Rates"), tbl)
+
     return page.render(app)
 
 

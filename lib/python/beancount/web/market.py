@@ -12,7 +12,7 @@ from datetime import datetime
 from BeautifulSoup import BeautifulSoup
 
 
-__all__ = ('get_market_price', 'currencies', 'get_xrate')
+__all__ = ('get_market_price', 'currencies', 'get_xrate', 'get_xrates')
 
 
 currencies = ['USD', 'CAD', 'JPY', 'EUR', 'AUD', 'CHF', 'BRL']
@@ -163,6 +163,12 @@ def get_xrate(quote, base):
         assert r is not None
         return r
     
+def get_xrates():
+    """ Return all the exchange rates we have. """
+    if _xrates:
+        return _xrates.copy()
+    else:
+        refresh_xrates()
 
 
 

@@ -177,12 +177,12 @@ table#activity td {
 
 /* Positions view */
 
-table#positions {
+table#positions, table#xrates {
   text-align: right;
   border-collapse: collapse;
 }
 
-table#positions td {
+table#positions td, table#xrates td {
   border: thin solid black;
   padding-left: 0.5em;
   padding-right: 0.5em;
