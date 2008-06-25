@@ -13,6 +13,7 @@ from datetime import date
 from urlparse import urlparse
 from itertools import izip, count
 from pprint import pformat
+from decimal import Decimal, getcontext
 
 # fallback imports
 from beancount.fallback import xmlout
@@ -310,6 +311,9 @@ def capital(app, ctx):
     page.add(P("FIXME TODO"))
     return page.render(app)
 
+
+refcomm = 'USD'
+
 def positions(app, ctx):
     page = Template()
     page.add(H1("Positions / Assets"))
@@ -324,39 +328,78 @@ def positions(app, ctx):
         page.add(P("Could not find assets account.", CLASS="error"))
         return page.render(app)
 
-    tbl = TABLE(id="positions")
-    tbl.add(THEAD(TR(TD("Position"), TD("Currency"), TD("Price"), TD("Change"), TD("Market Value"))))
-    for comm, amount in a_acc.balance.tostrlist():
-        pcomms = [] if comm in currencies else ledger.pricedmap[comm]
-        assert len(pcomms) in (0, 1), "Ambiguous commodities."
-        pcomm = ', '.join(pcomms)
-        if pcomms:
-            price, change = get_market_price(comm, pcomm)
-            if price is None:
-                price = "..."
-                change = "..."
-            else:
-                value = "%s %s" % (amount * price, pcomm)
-                price = "%s %s" % (price, pcomm)
-                change = "%s %s" % (change, pcomm)
-        else:
-            price = ''
-            change = ''
-            if comm in currencies:
-                value = "%s %s" % (amount, comm)
-            else:
-                value = ''
-
-        tbl.add(TR(TD("%s %s" % (amount, comm)), TD(pcomm), TD(price), TD(change), TD(value)))
-    page.add(H2("Total Assets"), tbl)
+    # Add a table of currencies that we're interested in.
+    icurrencies = set(c for c in a_acc.balance.iterkeys() if c in currencies)
 
     xrates = get_xrates()
-    tbl = TABLE(id="xrates")
-    tbl.add(THEAD(TR(TD("Quote"), TD("Base"), TD("Bid"), TD("Ask"), TD("Time"))))
-    for (quote, base), (bid, ask, dtime) in xrates.iteritems():
-        tds = [TD(str(x)) for x in (quote, base, bid, ask, dtime)]
+    if xrates:
+        tbl = TABLE(id="xrates")
+        tbl.add(THEAD(TR(TD("Quote"), TD("Base"), TD("Bid"), TD("Ask"))))
+        for (quote, base), (bid, ask, dtime) in xrates.iteritems():
+            if quote in icurrencies and base in icurrencies:
+                tds = [TD(str(x)) for x in (quote, base, bid, ask)]
+                tbl.add(TR(tds))
+        page.add(H2("Exchange Rates"), tbl)
+
+
+    # Add a table of positions.
+    tbl = TABLE(id="positions")
+    tbl.add(THEAD(TR(TD("Position"), TD("Currency"), TD("Price"), TD("Change"),
+                     TD("Total Value"), TD("Total Change"),
+                     TD("Total Value (USD)"), TD("Total Change (USD)"))))
+    for comm, amount in a_acc.balance.tostrlist():
+        pcomms = [] if comm in currencies else list(ledger.pricedmap[comm])
+        assert len(pcomms) in (0, 1), "Ambiguous commodities."
+        if pcomms:
+            pcomm = pcomms[0]
+            price, change = get_market_price(comm, pcomm)
+            if price is None:
+                fprice = fchange = \
+                    totvalue = totchange = \
+                    totvalue_usd = totchange_usd = "..."
+            else:
+                fprice = "%s %s" % (price, pcomm)
+                fchange = "%s %s" % (change, pcomm)
+                totvalue = "%s %s" % (amount * price, pcomm)
+                totchange = "%s %s" % (amount * change, pcomm)
+                if pcomm == refcomm:
+                    rate = Decimal("1")
+                else:
+                    urate = xrates.get((pcomm, refcomm), None)
+                    if urate is not None:
+                        bid, ask, _ = urate
+                        trace('a', bid, ask)
+                        rate = (bid + ask) / 2
+                    else:
+                        irate = xrates.get((refcomm, pcomm), None)
+                        if irate is not None:
+                            bid, ask, _ = irate
+                            trace('b', bid, ask)
+                            rate = 1 / ((bid + ask) / 2)
+                        else:
+                            rate = None
+                
+                if rate is not None:
+                    totvalue_usd = "%.2f %s" % (amount * price * rate, refcomm)
+                    totchange_usd = "%.2f %s" % (amount * change * rate, refcomm)
+                else:
+                    totvalue_usd = ""
+                    totchange_usd = ""
+        else:
+            pcomm = ''
+            fprice = fchange = totvalue = totchange = totvalue_usd = totchange_usd = ''
+            if comm in currencies:
+                totvalue = "%s %s" % (amount, comm)
+
+        tds = [TD("%s %s" % (amount, comm)), TD(pcomm),
+               TD(fprice), TD(fchange),
+               TD(totvalue), TD(totchange),
+               TD(totvalue_usd), TD(totchange_usd)]
+        
         tbl.add(TR(tds))
-    page.add(H2("Exchange Rates"), tbl)
+
+    page.add(H2("Total Assets"), tbl)
+
 
     return page.render(app)
 
