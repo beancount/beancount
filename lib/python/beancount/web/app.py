@@ -510,8 +510,9 @@ def ledgeridx(app, ctx):
              )
 
     if ledger.transactions:
-        date_oldest = ledger.transactions[0].actual_date
-        mths = list(iter_months(date_oldest, date.today()))
+        date_oldest = min(x.actual_date for x in ledger.transactions)
+        date_youngest = max(x.actual_date for x in ledger.transactions)
+        mths = list(iter_months(date_oldest, date_youngest))
         for d in reversed(mths):
             mthstr = d.strftime('%Y-%m')
             ul.add(LI(A("Ledger for %s" % mthstr,
