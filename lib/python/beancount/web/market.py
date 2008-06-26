@@ -158,10 +158,11 @@ def get_xrate(quote, base):
     try:
         r = _xrates[(quote, base)]
     except KeyError:
+        t = threading.Thread(target=refresh_xrates)
+        t.start()
         refresh_xrates()
-        r = _xrates[(quote, base)]
-        assert r is not None
-        return r
+        r = None
+    return r
     
 def get_xrates():
     """ Return all the exchange rates we have. """
