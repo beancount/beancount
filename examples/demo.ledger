@@ -397,11 +397,12 @@
   Assets:Investments:UTrade:Account    0.68 USD
   Income:Investments:Dividends
 
-2008-02-28 * Sell off my Apple (because of skirt-length statistic)
-  Assets:Investments:UTrade:Account:AAPL                     -30 AAPL @ 193.02 USD
-  Assets:Investments:UTrade:Account                         5780.65 USD
-  Expenses:Financial:Commissions                        9.95 USD
-  (Income:Investments:Capital-Gains)                    -208.70 USD
+;; Because of my skirt-length statistic computation.
+2008-02-28 * Sell off my Apple
+  Assets:Investments:UTrade:Account:AAPL     -30 AAPL @ 193.02 USD
+  Assets:Investments:UTrade:Account         5780.65 USD
+  Expenses:Financial:Commissions               9.95 USD
+  (Income:Investments:Capital-Gains)        -208.70 USD
 ;; Note how the capital gain is a negative number... that's
 ;; because Income is a credit account, like a salary.
 
@@ -591,8 +592,8 @@
   Assets:Current:Cash
 
 2008-03-06 * Barnes & Noble | books on accounting
-  Expenses:Books      74.43 USD
-  Assets:Current:Cash
+  Expenses:Books            74.43 USD
+  Assets:Current:Cash      -74.43 USD
 
 2008-02-03 * ITHURTS MEDICAL CENT | x-ray for broken bones
   Expenses:Medical           312.00 USD
