@@ -368,13 +368,11 @@ def positions(app, ctx):
                     urate = xrates.get((pcomm, refcomm), None)
                     if urate is not None:
                         bid, ask, _ = urate
-                        trace('a', bid, ask)
                         rate = (bid + ask) / 2
                     else:
                         irate = xrates.get((refcomm, pcomm), None)
                         if irate is not None:
                             bid, ask, _ = irate
-                            trace('b', bid, ask)
                             rate = 1 / ((bid + ask) / 2)
                         else:
                             rate = None
