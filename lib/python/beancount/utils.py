@@ -9,9 +9,9 @@ from itertools import count, izip, chain, repeat
 __all__ = ('render_tree', 'itertree', 'SimpleDummy')
 
 
-def iter_pairs(l):
-    """Iterate among pairs of items. The last item will be iterated with the
-    second set to None."""
+def iter_pairs(l, last=True):
+    """Iterate among pairs of items. If last is true, the last item will be
+    iterated with the second set to None."""
     i = iter(l)
     b = i.next()
     done = 0
@@ -20,10 +20,11 @@ def iter_pairs(l):
         try:
             b = i.next()
         except StopIteration:
+            if not last:
+                raise
             b = None
             done = 1
         yield a, b
-
 
 def filter_inout(tlist, pred):
     "Split the list in two according to the given predicate."

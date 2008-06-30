@@ -14,6 +14,7 @@ from urlparse import urlparse
 from itertools import izip, count
 from pprint import pformat
 from decimal import Decimal, getcontext
+from collections import defaultdict
 
 # fallback imports
 from beancount.fallback import xmlout
@@ -24,6 +25,7 @@ from beancount.ledger import compute_balsheet, Account
 from beancount.utils import render_tree, itertree
 from beancount.wallet import Wallet
 from beancount.web.serve import *
+from beancount.utils import iter_pairs
 from beancount import cmdline
 from beancount.web.market import *
 
@@ -61,6 +63,7 @@ class Template(object):
                LI(A('Capital', href=umap('@@CapitalStatement'))),
                LI(A('Positions', href=umap('@@Positions'))),
                LI(A('Activity', href=umap('@@Activity'))),
+               LI(A('Locations', href=umap('@@Locations'))),
                LI(A('Stats/Logs', href=umap('@@Statistics'))),
                ),
             id='top-navigation')
@@ -68,10 +71,10 @@ class Template(object):
         self.reload = DIV(A("Reload", href=umap('@@Reload')), id='reload')
 
         self.style = DIV(
-            UL(LI(A('Compact', href=umap('@@SetStyle', style='compact'))),
-               LI(A('Other', href=umap('@@SetStyle', style='other'))),
-               LI(A('Only', href=umap('@@SetStyle', style='only'))),
-               LI(A('Full', href=umap('@@SetStyle', style='full'))),
+            UL(LI(A('Com', href=umap('@@SetStyle', style='compact'))),
+               LI(A('Oth', href=umap('@@SetStyle', style='other'))),
+               ##LI(A('O', href=umap('@@SetStyle', style='only'))),
+               LI(A('Ful', href=umap('@@SetStyle', style='full'))),
                ),
             id='style-selector')
 
@@ -376,7 +379,7 @@ def positions(app, ctx):
                             rate = 1 / ((bid + ask) / 2)
                         else:
                             rate = None
-                
+
                 if rate is not None:
                     totvalue_usd = "%.2f %s" % (amount * price * rate, refcomm)
                     totchange_usd = "%.2f %s" % (amount * change * rate, refcomm)
@@ -393,7 +396,7 @@ def positions(app, ctx):
                TD(fprice), TD(fchange),
                TD(totvalue), TD(totchange),
                TD(totvalue_usd), TD(totchange_usd)]
-        
+
         tbl.add(TR(tds))
 
     page.add(H2("Total Assets"), tbl)
@@ -697,6 +700,59 @@ def messages(app, ctx):
     return page.render(app)
 
 
+def locations(app, ctx):
+    page = Template()
+    page.add(H1("Locations"))
+
+    location = ctx.ledger.directives['location']
+
+    # Group lists per year.
+    peryear = defaultdict(list)
+    for x in sorted(location.locations):
+        ldate = x[0]
+        peryear[ldate.year].append(x)
+
+    today = date.today()
+
+    # Cap lists beginnings and ends.
+    yitems = sorted(peryear.iteritems())
+    city, country = "", ""
+    for year, ylist in yitems:
+        ldate, _, _ = ylist[0]
+        if (ldate.month, ldate.day) != (1, 1):
+            ylist.insert(0, (date(year, 1, 1), city, country))
+
+        ldate, city, country = ylist[-1]
+        if (ldate.month, ldate.day) != (1, 1):
+            d = date(year+1, 1, 1)
+            if d > today:
+                d = today
+            ylist.append((d, city, country))
+
+    for year, ylist in yitems:
+        ul = page.add(H2(str(year)), UL())
+        comap = defaultdict(int)
+        ramq_days = 0
+        for x1, x2 in iter_pairs(ylist, False):
+            ldate1, city, country = x1
+            ldate2, _, _ = x2
+            days = (ldate2 - ldate1).days
+            ul.append(LI("%s -> %s (%d days) : %s (%s)" % (ldate1, ldate2, days, city, country)))
+            comap[country] += days
+            if country == 'Canada' or days < 21:
+                ramq_days += days
+            
+        ulc = page.add(UL())
+        for country, days in sorted(comap.iteritems()):
+            ulc.append(LI("%s : %d days" % (country, days)))
+
+        page.add(P("(Days of presence for RAMQ: %d days)" % ramq_days))
+
+    return page.render(app)
+
+
+
+
 def reload(app, ctx):
     """
     Reload the ledger file and return to the given URL.
@@ -760,6 +816,7 @@ page_directory = (
     ('@@IncomeStatement', pnl, '/pnl', None),
     ('@@CapitalStatement', capital, '/capital', None),
     ('@@Positions', positions, '/positions', None),
+    ('@@Locations', locations, '/locations', None),
 
     ('@@LedgerIndex', ledgeridx, '/ledger/index', None),
     ('@@GeneralLedger', ledger, '/ledger/general', None),

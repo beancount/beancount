@@ -337,6 +337,7 @@ class Ledger(object):
         add_directive(DefvarDirective(self))
         add_directive(BeginTagDirective(self))
         add_directive(EndTagDirective(self))
+        add_directive(LocationDirective(self))
 
         # Current tag that is being assigned to transactions during parsing.
         self.tag = None
@@ -1422,6 +1423,39 @@ def read_ofx_accounts_map(ledger):
 
 
 
+class LocationDirective(object):
+    """
+    A directive that can be used to provide an update on the physical location
+    of the main spender in a personal account. This is used to calculate the
+    number of days spent in each country for each civil year, in order to
 
+    - declare it to customs if needed (with precision)
+    - declare it to the Canadian medicare plans.
+    """
+
+    name = 'location'
+    prio = 2000
+
+    mre = re.compile(("\s*(?:%(date)s)"
+                      "\s+(?P<city>[^,]+)\s*,"
+                      "\s+(?P<country>.+)\s*$") %
+                     {'date': Ledger.date_re.pattern})
+
+    def __init__(self, ledger):
+        self.locations = []
+        self.ledger = ledger
+
+    def parse(self, line, filename, lineno):
+        mo = self.mre.match(line)
+        if not mo:
+            self.ledger.log(CRITICAL, "Invalid location directive: %s" % line,
+                            (filename, lineno))
+            return
+
+        ldate = date(*map(int, mo.group(1, 2, 3)))
+        self.locations.append( (ldate, mo.group(4), mo.group(5)) )
+
+    def apply(self):
+        pass # Nothing to do--the modules do the parsing themselves.
 
 
