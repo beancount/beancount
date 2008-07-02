@@ -22,6 +22,7 @@ from BeautifulSoup import BeautifulSoup
 
 # beancount imports
 from beancount import cmdline
+from beancount.ledger import read_ofx_accounts_map
 
 # fallback imports
 from beancount.fallback.collections2 import namedtuple
@@ -37,21 +38,31 @@ def main():
     global opts
     opts, ledger, args = cmdline.main(parser)
 
-    if len(args) < 2:
-        parser.error("You must specify a ledger file, an account name and a filenames to parse.")
-    acct, filenames = args[0], args[1:]
+    if len(args) < 1:
+        parser.error("You must specify a ledger file and a list of HTML filenames to parse.")
+    filenames = args
+
+    accounts_map = read_ofx_accounts_map(ledger)
 
     all = []
     for fn in filenames:
         print >> sys.stderr, "\n\nParsing file %s\n" % fn
-        all.extend(parse_file(fn))
+        acctid, postings = parse_file(fn)
+
+        # Map account
+        try:
+            acc = accounts_map[acctid]
+        except KeyError:
+            raise KeyError("Missing account name in map for %s" % acctid)
+
+        all.extend((x, acc) for x in postings)
 
     ## sortfun = lambda x: (x.currency, x.settlement, x.priority)
-    sortfun = lambda x: (x.settlement, x.priority)
+    sortfun = lambda x: (x[0].settlement, x[0].priority)
 
     all.sort(key=sortfun)
-    for p in all:
-        print_as_ledger(p, acct)
+    for p, acc in all:
+        print_as_ledger(p, acc.fullname)
 
 def infer_account_names(acct, postings):
     """
@@ -122,6 +133,12 @@ def parse_file(fn):
                          convertEntities=BeautifulSoup.HTML_ENTITIES)
     soup.prettify()
 
+    sare = re.compile('SelectedAccount=(\d+)')
+    mainform = soup.find('form', attrs={'name': "MainForm", 'action':sare})
+    mo = sare.search(mainform['action'])
+    assert mo
+    acctid = mo.group(1)
+
     # Find the header row (it's the only one).
     tr = soup.find('tr', 'dataTableHeaderRow')
 
@@ -171,7 +188,7 @@ def parse_file(fn):
                   currency, settlement, priority)
         postings.append(p)
         priority += 1
-    return postings
+    return acctid, postings
 
 ## FIXME: What is the appropriate way to do this for all entities?
 ## other_entities = {'&nbsp;': ''}

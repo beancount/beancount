@@ -746,7 +746,8 @@ def locations(app, ctx):
         for country, days in sorted(comap.iteritems()):
             ulc.append(LI("%s : %d days" % (country, days)))
 
-        page.add(P("(Days of presence for RAMQ: %d days)" % ramq_days))
+        page.add(P("(Days of presence for RAMQ: %d days - missing %s days)" %
+                   (ramq_days, 183 - ramq_days)))
 
     return page.render(app)
 
