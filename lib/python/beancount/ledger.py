@@ -1057,7 +1057,7 @@ class CheckDirective(object):
 
             balance = Wallet()
             for post in acc.subpostings():
-                if post.actual_date <= cdate:
+                if post.actual_date <= cdate:  ## Note: shouldn't this be "<" ?
                     balance += post.amount
 
             # Remove the amounts that we're not supposed to be checking from the
