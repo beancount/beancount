@@ -25,6 +25,9 @@ def main(parser, no=1):
     logging.basicConfig(level=logging.INFO,
                         format='%(levelname)-8s:%(message)s')
 
+    parser.add_option('-v', '--verbose', action='store_true',
+                      help="Display warnings and non-essential information.")
+
     parser.add_option('-p', '--enable-pickle', action='store_true',
                       help="Enable the pickling cache (create or use it).")
 
@@ -41,6 +44,8 @@ def main(parser, no=1):
 
     opts, args = parser.parse_args()
 
+    logging.getLogger().setLevel(logging.INFO if opts.verbose else logging.ERROR)
+                                 
     if sys.stderr.isatty() and opts.color:
         hndlr = logging.getLogger().handlers[-1]
         hndlr.setFormatter(ColorFormatter(hndlr.stream, hndlr.formatter._fmt))
