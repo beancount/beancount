@@ -334,7 +334,10 @@ def positions(app, ctx):
     # Add a table of currencies that we're interested in.
     icurrencies = set(c for c in a_acc.balance.iterkeys() if c in currencies)
 
-    xrates = get_xrates()
+    try:
+        xrates = get_xrates()
+    except IOError:
+        xrates = None
     if xrates:
         tbl = TABLE(id="xrates")
         tbl.add(THEAD(TR(TD("Quote"), TD("Base"), TD("Bid"), TD("Ask"))))
@@ -343,7 +346,6 @@ def positions(app, ctx):
                 tds = [TD(str(x)) for x in (quote, base, bid, ask)]
                 tbl.add(TR(tds))
         page.add(H2("Exchange Rates"), tbl)
-
 
     # Add a table of positions.
     tbl = TABLE(id="positions")
@@ -355,7 +357,10 @@ def positions(app, ctx):
         assert len(pcomms) in (0, 1), "Ambiguous commodities."
         if pcomms:
             pcomm = pcomms[0]
-            price, change = get_market_price(comm, pcomm)
+            try:
+                price, change = get_market_price(comm, pcomm)
+            except IOError:
+                price, change = None, None
             if price is None:
                 fprice = fchange = \
                     totvalue = totchange = \
