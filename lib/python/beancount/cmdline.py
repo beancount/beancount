@@ -141,6 +141,10 @@ def run_postprocesses(ledger, opts):
         pred = create_filter_pred(opts)
         ledger.filter_postings(pred)
     
+    if opts.reduce:
+        ledger.reduce(opts.reduce)
+
+
 
 
 """
@@ -153,6 +157,10 @@ def addopts(parser):
     parser.add_option('-c', '--close', '--close-books',
                       action='store', metavar='TIME_EXPR',
                       help="Close the books at the given time.")
+
+    parser.add_option('-r', '--reduce', action='store',
+                      help="Reduce all amounts to a single commodity, using a rate "
+                      "calculated so it will neutralize the trial balance to nothing.")
 
     group = optparse.OptionGroup(parser, "Options for filtering postings.")
 
@@ -175,7 +183,7 @@ def addopts(parser):
     group.add_option('-g', '--tag', action='store', metavar='REGEXP',
                      help="Filter only the postings whose tag matches the "
                      "expression.")
-
+    
     parser.add_option_group(group)
 
 
