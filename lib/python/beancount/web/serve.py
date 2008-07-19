@@ -204,13 +204,17 @@ def main():
                       help="Debug/development mode: don't cache styles and "
                       "reload code on every request.")
 
+    parser.add_option('-p', '--port', action='store', type='int',
+                      default=8000,
+                      help="Port to use for local web server.")
+
     opts, ledger, args = cmdline.main(parser)
 
     # Create and run the web server.
     app = BeanServer(ledger, opts)
-    httpd = make_server('', 8000, app)
+    httpd = make_server('', opts.port, app)
     sa = httpd.socket.getsockname()
-    logging.info("Serving HTTP on %s:%s" % (sa[0], sa[1]))
+    print ("Ready. ( http://%s:%s )" % (sa[0], sa[1]))
     try:
         while 1:
             httpd.handle_request()  # serve one request, then exit

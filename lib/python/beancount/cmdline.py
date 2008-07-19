@@ -28,7 +28,7 @@ def main(parser, no=1):
     parser.add_option('-v', '--verbose', action='store_true',
                       help="Display warnings and non-essential information.")
 
-    parser.add_option('-p', '--enable-pickle', action='store_true',
+    parser.add_option('-P', '--enable-pickle', action='store_true',
                       help="Enable the pickling cache (create or use it).")
 
     parser.add_option('-e', '--encoding', '--input-encoding', action='store',
