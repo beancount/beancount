@@ -74,14 +74,15 @@ def main(parser, no=1):
 
 def load_ledger(parser, fn, opts):
     # Parse the file.
-    if not exists(fn):
-        parser.error("No such file '%s'." % fn)
+    if fn != '-':
+        if not exists(fn):
+            parser.error("No such file '%s'." % fn)
 
-    # Rebuild the Ledger file if it needs it; otherwise load from the cache.
-    fn_cache = '%s.pickle' % fn
-    if not opts.enable_pickle:
-        if exists(fn_cache):
-            os.remove(fn_cache)
+        # Rebuild the Ledger file if it needs it; otherwise load from the cache.
+        fn_cache = '%s.pickle' % fn
+        if not opts.enable_pickle:
+            if exists(fn_cache):
+                os.remove(fn_cache)
 
     if (not opts.enable_pickle or
         not exists(fn_cache) or
@@ -90,7 +91,10 @@ def load_ledger(parser, fn, opts):
         # logging.info("Parsing Ledger source file: %s" % fn)
         ledger = Ledger()
 
-        f = open(fn)
+        if fn == '-':
+            f = sys.stdin
+        else:
+            f = open(fn)
         if opts.encoding:
             Reader = codecs.getreader(opts.encoding)
             f = Reader(f)
@@ -102,9 +106,10 @@ def load_ledger(parser, fn, opts):
             f.close()
 
     else:
-        f = open(fn_cache, 'rb')
-        ledger = pickle.load(f)
-        f.close()
+        if fn != '-':
+            f = open(fn_cache, 'rb')
+            ledger = pickle.load(f)
+            f.close()
 
     run_postprocesses(ledger, opts)
 
