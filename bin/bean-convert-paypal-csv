@@ -11,6 +11,9 @@ from xml.sax.saxutils import unescape
 from pprint import pprint, pformat
 from itertools import imap, count, starmap
 
+# other imports
+from beancount.fallback.collections2 import namedtuple
+
 # beancount imports
 from beancount import cmdline
 
@@ -28,21 +31,11 @@ def parse_date(s):
 def main():
     import optparse
     parser = optparse.OptionParser(__doc__.strip())
-    opts, ledger, args = cmdline.main(parser)
+    opts, ledger, args = cmdline.main(parser, no=0)
 
     if not args:
         parser.error("You must specify some CSV filenames to parse.")
 
-    ## parser.add_option('-f', '--ledger-file', action='store',
-    ##                   help="Use the given ledger file in order to infer the Paypal account name.")
-    ##
-    ## if opts.ledger_file:
-    ##     ledger = Ledger()
-    ##     ledger.parse_file(opts.ledger_file)
-    ## else:
-    ##     ledger = None
-    ## accname = infer_account_name(ledger)
-        
     for fn in args:
         rows = [(parse_date(x.date), x) for x in parse_csv_file(fn)]
         rows = reversed(list(parse_csv_file(fn)))
