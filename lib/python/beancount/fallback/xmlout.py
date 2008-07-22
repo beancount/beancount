@@ -65,7 +65,7 @@ def flatten_recursive(s, f=None):
     if f is None:
         f = []
     for c in s:
-        if isinstance(c, types.ListType) or isinstance(c, types.TupleType):
+        if isinstance(c, (list, tuple)):
             flatten_recursive(c, f)
         else:
             f.append(c)

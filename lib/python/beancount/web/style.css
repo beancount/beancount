@@ -238,6 +238,16 @@ span.amount {
   white-space: nowrap;
 }
 
+table td.cumulative {
+  text-align: right;
+  background-color: #FFEEEE;
+}
+
+table td.price {
+  font-style: italic;
+  padding-left: 1em;
+}
+
 
 
 /* Side-by-side views */

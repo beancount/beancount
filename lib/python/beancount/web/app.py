@@ -22,6 +22,7 @@ from beancount.fallback.xmlout import *
 
 # beancount imports
 from beancount.ledger import compute_balsheet, Account
+from beancount.ledger import VIRT_NORMAL, VIRT_BALANCED, VIRT_UNBALANCED
 from beancount.utils import render_tree, itertree
 from beancount.wallet import Wallet
 from beancount.web.serve import *
@@ -537,7 +538,7 @@ def ledger(app, ctx):
     page = Template(ctx)
     table = TABLE(id='ledger')
 
-    style = ctx.session.get('style', 'other')
+    style = ctx.session.get('style', 'full')
     assert style in ('compact', 'other', 'only', 'full')
 
     accname = getattr(ctx, 'accname', '')
@@ -595,7 +596,7 @@ def ledger(app, ctx):
                 TD(txn.description(), CLASS='description'),
                 TD(CLASS='wallet'),
                 TD(hwallet(txn_amount), CLASS='wallet'),
-                TD(hwallet(balance), CLASS='wallet'),
+                TD(hwallet(balance), CLASS='wallet cumulative'),
                 CLASS='txn')
         table.add(tr)
 
@@ -610,12 +611,16 @@ def ledger(app, ctx):
                         continue
 
                 postacc = haccount(post.account.fullname)
+                if post.virtual == VIRT_UNBALANCED:
+                    postacc = ['(', SPAN(postacc), ')']
+                elif post.virtual == VIRT_BALANCED:
+                    postacc = ['[', SPAN(postacc), ']']
                 if post.note:
-                    postacc = SPAN(SPAN(postacc), SPAN(';', post.note, CLASS='postnote'))
+                    postacc = [postacc, SPAN(';', post.note, CLASS='postnote')]
                 tr = TR(TD(post.rdate(), colspan='2', CLASS='postdate'),
                         TD(postacc),
                         TD(hwallet(post.amount), CLASS='wallet'),
-                        TD(),
+                        TD(['@ ', hwallet(post.price)] if post.price else '', CLASS='price'),
                         TD(),
                         CLASS='posting')
                 table.add(tr)
@@ -747,7 +752,7 @@ def locations(app, ctx):
             comap[country] += days
             if country == 'Canada' or days < 21:
                 ramq_days += days
-            
+
         ulc = page.add(UL())
         for country, days in sorted(comap.iteritems()):
             ulc.append(LI("%s : %d days" % (country, days)))
