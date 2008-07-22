@@ -36,11 +36,11 @@ class Template(object):
 
     output_encoding = 'utf8'
 
-    def __init__(self):
-        self.initialize()
+    def __init__(self, ctx):
+        self.initialize(ctx)
 
-    def initialize(self):
-        self.header = DIV(' ', id='header')
+    def initialize(self, ctx):
+        self.header = DIV(SPAN(ctx.opts.title or ' ', id='title'), id='header')
 
         self.body = BODY()
         self.head = HEAD(
@@ -89,7 +89,8 @@ class Template(object):
     def render(self, app):
         app.setHeader('Content-Type','text/html')
         contents = tostring(self.html, app,
-                            encoding=self.output_encoding)
+                            encoding=self.output_encoding,
+                            pretty=True)
 
 def ljoin(l, sep):
     "Intersperse the given list with the object 'seq'."
@@ -141,7 +142,7 @@ def haccount(accname):
     return accspan
 
 def chartofaccounts(app, ctx):
-    page = Template()
+    page = Template(ctx)
 
     table = TABLE(id='chart-of-accounts', CLASS='accounts treetable')
     table.add(THEAD(TR(TH("Account"), TH("Dr/Cr"), TH("Valid Commodities"))))
@@ -159,7 +160,7 @@ def chartofaccounts(app, ctx):
     return page.render(app)
 
 def stats(app, ctx):
-    page = Template()
+    page = Template(ctx)
     page.add(H1("Statistics, Logs and Other Info"))
 
     page.add(H2("Command-line Options"), PRE(' '.join(sys.argv)))
@@ -180,7 +181,7 @@ def stats(app, ctx):
     return page.render(app)
 
 def trial(app, ctx):
-    page = Template()
+    page = Template(ctx)
 
     local = False
     at_cost = False
@@ -237,7 +238,7 @@ def semi_table(acc, tid):
 
 
 def balance_sheet(app, ctx):
-    page = Template()
+    page = Template(ctx)
     page.add(H1("Balance Sheet"))
 
     ledger = ctx.ledger
@@ -275,7 +276,7 @@ def balance_sheet(app, ctx):
 
 
 def pnl(app, ctx):
-    page = Template()
+    page = Template(ctx)
     page.add(H1("Income Statement / P&L Report"))
 
     ledger = ctx.ledger
@@ -309,7 +310,7 @@ def pnl(app, ctx):
 
 
 def capital(app, ctx):
-    page = Template()
+    page = Template(ctx)
     page.add(H1("Capital Statement"))
     page.add(P("FIXME TODO"))
     return page.render(app)
@@ -318,7 +319,7 @@ def capital(app, ctx):
 refcomm = 'USD'
 
 def positions(app, ctx):
-    page = Template()
+    page = Template(ctx)
     page.add(H1("Positions / Assets"))
 
     # First compute the trial balance.
@@ -461,7 +462,7 @@ def treetable_builder(tbl, iterator, skiproot=False):
 def activity(app, ctx):
     "Output the updated time ranges of each account."
 
-    page = Template()
+    page = Template(ctx)
 
     today = date.today()
     table = TABLE(id='activity', CLASS='accounts treetable')
@@ -506,7 +507,7 @@ def iter_months(oldest, newest):
 def ledgeridx(app, ctx):
     ledger = app.ledger
 
-    page = Template()
+    page = Template(ctx)
     ul = UL(
         LI(A("General Ledger (all transactions)", href=umap('@@GeneralLedger'))),
         )
@@ -533,7 +534,7 @@ def ledger(app, ctx):
     """
     List the transactions that pertain to a list of filtered postings.
     """
-    page = Template()
+    page = Template(ctx)
     table = TABLE(id='ledger')
 
     style = ctx.session.get('style', 'other')
@@ -670,7 +671,7 @@ def source(app, ctx):
     """
     Serve the source of the ledger.
     """
-    page = Template()
+    page = Template(ctx)
     div = DIV(id='source')
     for i, line in izip(count(1), ctx.ledger.source):
         div.add(PRE("%4d  |%s" % (i, line.strip())), A(name='line%d' % i))
@@ -691,7 +692,7 @@ def messages(app, ctx):
     """
     Report all ledger errors.
     """
-    page = Template()
+    page = Template(ctx)
     page.add(H1('Parsing Messages'))
 
     ledger = ctx.ledger
@@ -706,7 +707,7 @@ def messages(app, ctx):
 
 
 def locations(app, ctx):
-    page = Template()
+    page = Template(ctx)
     page.add(H1("Locations"))
 
     location = ctx.ledger.directives['location']

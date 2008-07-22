@@ -24,6 +24,13 @@ div#header {
   border-bottom: 3px solid black;
 }
 
+div#header span#title {
+  color: white;
+  font-size: xx-large;
+  font-weight: bold;
+  padding: 0.5em;
+}
+
 div#top-navigation ul {
   margin: 0px;
   padding: 0px;

@@ -208,6 +208,9 @@ def main():
                       default=8000,
                       help="Port to use for local web server.")
 
+    parser.add_option('-T', '--title', action='store',
+                      help="Title to display in the web interface.")
+
     opts, ledger, args = cmdline.main(parser)
 
     # Create and run the web server.

@@ -95,6 +95,8 @@ def translate_attribs(attribs):
 
 def tostring(node, *args, **kwds):
     if 'pretty' in kwds or 'pretty_print' in kwds:
+        if 'pretty' in kwds: del kwds['pretty']
+        if 'pretty_print' in kwds: del kwds['pretty_print']
         indent(node)
     return ElementTree(node).write(*args, **kwds)
 
