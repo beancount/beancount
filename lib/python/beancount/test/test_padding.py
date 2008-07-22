@@ -8,7 +8,7 @@ import sys
 from datetime import date
 
 # beancount imports
-from beancount.ledger import Ledger, compute_balsheet
+from beancount.ledger import Ledger
 from beancount.wallet import Wallet
 from beancount.beantest import ledger_str
 

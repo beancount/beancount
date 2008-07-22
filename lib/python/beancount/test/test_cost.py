@@ -7,7 +7,7 @@ import sys
 from datetime import date
 
 # beancount imports
-from beancount.ledger import Ledger, compute_balsheet
+from beancount.ledger import Ledger
 from beancount.wallet import Wallet
 from beancount.beantest import ledger_str
 
@@ -37,8 +37,8 @@ class TestCostBalancing(object):
         assert len(lgr.transactions) == 1
         txn = lgr.transactions[0]
         assert txn.postings[0].amount == Wallet('100 USD')
-        assert lgr.get_account('Assets:Bank').total == Wallet('100 USD')
-        assert lgr.get_account('Income:Salary').total == Wallet('-100 USD')
+        assert lgr.get_account('Assets:Bank').balance == Wallet('100 USD')
+        assert lgr.get_account('Income:Salary').balance == Wallet('-100 USD')
 
 
         # Empty unbalanced virtual posting should fail.

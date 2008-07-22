@@ -8,7 +8,7 @@ from datetime import date
 from decimal import Decimal
 
 # beancount imports
-from beancount.ledger import Ledger, compute_balsheet
+from beancount.ledger import Ledger
 from beancount.wallet import Wallet
 from beancount.beantest import ledger_str
 
@@ -108,7 +108,7 @@ class TestCapitalGains(object):
             ('Expenses:Commissions', commisions),
             ('Income:CapitalGains', -(Decimal('50')-commisions)),
             ):
-            assert (lgr.get_account(accname).total == Wallet('USD', amount))
+            assert (lgr.get_account(accname).balance == Wallet('USD', amount))
 
 
 

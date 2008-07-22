@@ -21,7 +21,7 @@ from beancount.fallback import xmlout
 from beancount.fallback.xmlout import *
 
 # beancount imports
-from beancount.ledger import compute_balsheet, Account
+from beancount.ledger import Account
 from beancount.ledger import VIRT_NORMAL, VIRT_BALANCED, VIRT_UNBALANCED
 from beancount.utils import render_tree, itertree
 from beancount.wallet import Wallet
@@ -184,12 +184,6 @@ def stats(app, ctx):
 def trial(app, ctx):
     page = Template(ctx)
 
-    local = False
-    at_cost = False
-
-    # First compute the trial balance.
-    compute_balsheet(ctx.ledger, 'local_balance', 'balance', at_cost)
-
     table = TABLE(id='balance', CLASS='accounts treetable')
     table.add(THEAD(TR(TH("Account"), TH("Cumulative"), TH("Individual"))))
     it = iter(itertree(ctx.ledger.get_root_account()))
@@ -244,9 +238,6 @@ def balance_sheet(app, ctx):
 
     ledger = ctx.ledger
 
-    # First compute the trial balance.
-    compute_balsheet(ledger, 'local_balance', 'balance')
-
     a_acc = ledger.find_account(('Assets', 'Asset'))
     l_acc = ledger.find_account(('Liabilities', 'Liability'))
     e_acc = ledger.find_account(('Equity', 'Capital'))
@@ -281,9 +272,6 @@ def pnl(app, ctx):
     page.add(H1("Income Statement / P&L Report"))
 
     ledger = ctx.ledger
-
-    # First compute the trial balance.
-    compute_balsheet(ledger, 'local_balance', 'balance')
 
     i_acc = ledger.find_account(('Income', 'Revenue', 'Revenues'))
     e_acc = ledger.find_account(('Expenses', 'Expense'))
@@ -325,8 +313,6 @@ def positions(app, ctx):
 
     # First compute the trial balance.
     ledger = ctx.ledger
-    compute_balsheet(ledger, 'local_balance', 'balance')
-## FIXME: rename to compute_balances, and do it once in the post-process.
 
     a_acc = ledger.find_account(('Assets', 'Asset'))
     if a_acc is None:

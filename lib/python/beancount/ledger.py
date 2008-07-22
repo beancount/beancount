@@ -23,8 +23,7 @@ from beancount.fallback.collections2 import namedtuple
 
 
 __all__ = ('Account', 'Transaction', 'Posting', 'Ledger',
-           'CheckDirective',
-           'compute_balsheet')
+           'CheckDirective')
 
 oneday = timedelta(days=1)
 
@@ -270,6 +269,7 @@ class Posting(Dated):
     cost = None          # The cost of this commodity.
 
     note = None
+    booking = False  # Whether this is a booking entry to be filled in.
 
     def __init__(self, txn):
         self.txn = txn
@@ -446,10 +446,17 @@ class Ledger(object):
 
     # Pattern for a posting line (part of a transaction).
     posting_re = re.compile(
-        ('\s+([*!]\s+)?(%(account)s)(?:\s+%(amount)s)?'  # main
+        ('\s+([*!]\s+)?(%(account)s)' # account name
+         '(?:'
+         '(?:\s+%(amount)s)?'  # main
          '(?:\s+(?:({)\s*%(amount)s\s*}|({{)\s*%(amount)s\s*}}))?' # declared cost
-         '(?:\s+@(@?)(?:\s+%(amount)s))?\s*(?:;(.*))?\s*$') %  # price/note
-        {'amount': amount_re.pattern, 'account': postaccount_re.pattern})
+         '(?:\s+@(@?)(?:\s+%(amount)s))?\s*(?:;(.*))?\s*$'
+         '|'
+         '\s+(BOOK)\s+%(commodity)s\s*$'  # booking entry
+         ')') %  # price/note
+        {'amount': amount_re.pattern,
+         'account': postaccount_re.pattern,
+         'commodity': commodity_re.pattern})
 
     # Pattern for the directives, and the special commands.
     directive_re = re.compile('^@([a-z_]+)\s+([^;]*)(;.*)?')
@@ -556,6 +563,7 @@ class Ledger(object):
                             txn.postings.append(post)
 
                             post.flag, post.account_name, post.note = mo.group(1,2,14)
+                            post.booking = (mo.group(15) == 'BOOK')
 
                             # Remove the modifications to the account name.
                             accname = post.account_name
@@ -696,6 +704,7 @@ class Ledger(object):
             roundmap[com] = Decimal(str(10**-prec))
 
         self.complete_balances()
+        self.compute_balsheet('local_balance', 'balance', atcost=False)
         self.compute_priced_map()
 
     def build_postings_lists(self):
@@ -713,18 +722,14 @@ class Ledger(object):
         self.postings.sort()
         for acc in self.accounts.itervalues():
             acc.postings.sort()
-        
-    def compute_priced_map(self):
+
+    def compute_balsheet(self, aname_bal, aname_total, atcost=False):
         """
-        Compute the priced map, that is, the set of commodities that each
-        commodity is priced in.
+        Compute a balance sheet stored in the given attribute on each account
+        node.
         """
-        self.pricedmap.clear()
-        for post in self.postings:
-            if post.price is not None:
-                assert len(post.amount) == 1
-                assert len(post.price) == 1
-                self.pricedmap[post.amount.keys()[0]].add(post.price.keys()[0])
+        vis = BalanceVisitor(aname_bal, aname_total, atcost)
+        self.visit(self.get_root_account(), vis)
 
     def complete_balances(self):
         """
@@ -753,6 +758,18 @@ class Ledger(object):
                 if post.cost is None:
                     self.log(WARNING, "Virtual posting without amount has no effect.", post)
                     post.amount = post.cost = Wallet()
+
+    def compute_priced_map(self):
+        """
+        Compute the priced map, that is, the set of commodities that each
+        commodity is priced in.
+        """
+        self.pricedmap.clear()
+        for post in self.postings:
+            if post.price is not None:
+                assert len(post.amount) == 1
+                assert len(post.price) == 1
+                self.pricedmap[post.amount.keys()[0]].add(post.price.keys()[0])
 
     def check_postings_balance(self, postings):
         """
@@ -883,7 +900,7 @@ class Ledger(object):
                     bal += post.amount
             if not bal:
                 continue
-            
+
             # Create a transaction to replace the removed postings.
             txn = Transaction()
             txn.ordering = next_ordering()
@@ -932,7 +949,7 @@ class Ledger(object):
                             ', '.join(acc.fullname for acc in candidates)))
         else:
             return candidates[0]
-        
+
     def filter_postings(self, pred):
         """
         Apply the given predicate on all the postings and filter out those for
@@ -964,17 +981,9 @@ class Ledger(object):
 """ Accounts tree visitors.
 """
 
-def compute_balsheet(ledger, aname_bal, aname_total, atcost=False):
-    """
-    Compute a balance sheet stored in the given attribute on each account
-    node.
-    """
-    vis = BalanceVisitor(aname_bal, aname_total, atcost)
-    ledger.visit(ledger.get_root_account(), vis)
-
 class BalanceVisitor(object):
     """
-    A visitor that computes the balance of the given node.
+    A visitor that computes the balance of the given account node.
     """
     def __init__(self, aname_bal, aname_total, atcost):
         self.aname_bal = aname_bal
