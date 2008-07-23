@@ -4,6 +4,7 @@ Main file and data models for the Python version of Ledger.
 
 # stdlib imports
 import sys, os, logging, re, codecs
+from copy import copy, deepcopy
 import cPickle as pickle
 from decimal import Decimal, getcontext
 from datetime import date, timedelta
@@ -310,9 +311,12 @@ class BookedTrade(object):
         # the booking trade.
         self.postings = []
 
-    def add_leg(self, post, amount):
+    def __key__(self):
+        return self.postings[-1][0].actual_date
+
+    def add_leg(self, post, bamount):
         assert post.amount.iterkeys().next() == self.booking_commodity()
-        self.postings.append( (post, amount) )
+        self.postings.append( (post, bamount) )
 
     def booking_commodity(self):
         return self.post_booking.booking
@@ -807,44 +811,50 @@ class Ledger(object):
                 if bcomm in tpost.amount:
                     booking_jobs[tpost.account].append(post.booking)
                     
-## FIXME: remove
-        ## trace(booking_jobs)
-
         # For each account where we do booking.
-        for acc, bcomms in booking_jobs.iteritems():
+        for acc, bcomms in sorted(booking_jobs.iteritems()):
 
             # For each booking commodity.
             for bcomm in bcomms:
 
                 # Figure out the price commodity of the booking commodity.
                 pcomms = self.pricedmap[bcomm]
-                assert len(pcomms) == 1
-                pcomm = pcomms.pop()
+                assert len(pcomms) == 1, (bcomm, pcomms)
+                pcomm = iter(pcomms).next()
 
+                # Process all of the account's postings in order
                 inv = FIFOInventory()
-                print inv.dump()
+                ## inv.dump()
                 for post in acc.postings:
+                    # Apply trades to our inventory.
                     if bcomm in post.amount:
                         assert post.price is not None, post
                         assert len(post.price) == 1
                         price = post.price[pcomm]
                         inv.trade(price, post.amount[bcomm], post)
-                        print inv.dump()
+                        ## inv.dump()
 
-                    for post in post.txn.postings:
-                        if post.booking:
+                    # If there is a booking posting in the current transaction,
+                    # set its amount to the P+L at this point.
+                    for tpost in post.txn.postings:
+                        if tpost.booking:
                             extras = inv.realized_extras
                             pnl = inv.reset_pnl()
-                            post.amount = Wallet(pcomm, -pnl)
-                            post.flag = 'B' # booked.
+                            ## inv.dump()
+                            tpost.amount = Wallet(pcomm, -pnl)
+                            tpost.flag = 'B' # booked.
 
                             # Add booked postings so we can report them in a
                             # global list later.
-                            btrade = BookedTrade(post)
-                            for post, amt, _ in extras:
-                                btrade.add_leg(post, amt)
+                            btrade = BookedTrade(tpost)
+                            for post, amt, price in extras:
+                                btrade.add_leg(post, Wallet(bcomm, amt))
                             self.booked_trades.append(btrade)
 
+        self.booked_trades.sort()
+
+        # Note: Maybe we need to include the booking posting if it is not part
+        # of the list of transations that makes up a trade.
 
     def compute_priced_map(self):
         """
@@ -1021,7 +1031,7 @@ class Ledger(object):
         self.build_postings_lists()
 
 
-FIXME you need to filter the booked_trades by the closing date as well, and filter by date.
+## FIXME you need to filter the booked_trades by the closing date as well, and filter by date.
 
 
 

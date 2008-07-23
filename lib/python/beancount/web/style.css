@@ -118,6 +118,10 @@ table.txntable tr.posting {
   background-color: #FFFFFF;
 }
 
+table.txntable td.highpost {
+  background-color: #F4F4F4;
+}
+
 
 
 /* Balance sheet / trial balance / global view of accounts */
@@ -198,7 +202,7 @@ table#positions td, table#xrates td {
 
 
 
-/* tree tables */
+/* Tree tables */
 
 thead {
   font-size: smaller;
@@ -315,3 +319,9 @@ div#source pre {
 }
 
 
+/* Trades / round-turns */
+
+div.btrade {
+  border-top: medium solid black;
+  margin-bottom: 30px;
+}

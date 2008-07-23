@@ -174,6 +174,7 @@ class BookingInventory(Inventory):
         self.last_trade_price = price
 
         extras = []
+        quant_orig = quant
 
         # Book the new trade against existing positions if the trade is not on
         # the same side as our current position.
@@ -196,20 +197,23 @@ class BookingInventory(Inventory):
 
                 quant += booked_quant
                 self._realized_pnl += booked_quant * (price - rec_price)
-                extras.append( (rec_extra, booked_quant, rec_price) )
+                e = (rec_extra, booked_quant, rec_price)
+                extras.append(e)
                 if done:
                     break
 
             assert quant * self.position() >= 0
+
+        # Don't forget to add this trade to the list as well.
+        if quant != quant_orig:
+            e = (extra, quant_orig - quant, price)
+            extras.append(e)
 
         # Append the remainder of our trade to the inventory if not all was
         # booked. Note: we don't bother joining the last record if it is at the
         # same price as the trade.
         if quant != 0:
             self.record_append((price, quant, extra))
-
-        # Don't forget to add this trade to the list as well.
-        extras.append( (extra, quant, price) )
 
         self.realized_extras.extend(extras)
         return extras

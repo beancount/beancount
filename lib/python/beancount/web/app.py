@@ -102,9 +102,11 @@ def ljoin(l, sep):
         nl = l
     return nl
 
-def hwallet(w):
+def hwallet(w, round=True):
     "Return some HTML suitable for rendering a wallet."
-    return ljoin([SPAN('%s %s' % (a,c), CLASS='amount') for (c,a) in w.round().tostrlist()], ', ')
+    if round:
+        w = w.round()
+    return ljoin([SPAN('%s %s' % (a,c), CLASS='amount') for (c,a) in w.tostrlist()], ', ')
 
 
 
@@ -569,7 +571,10 @@ def ledger(app, ctx):
 
 
 
-def render_postings_table(postings, style, filterfun=None, acc_checks=None):
+def render_postings_table(postings, style,
+                          filterfun=None,
+                          acc_checks=None,
+                          amount_overrides=None):
 
     table = TABLE(CLASS='txntable')
 
@@ -593,7 +598,11 @@ def render_postings_table(postings, style, filterfun=None, acc_checks=None):
         txn_amount = Wallet()
         for post in txn.postings:
             if post in postings:
-                txn_amount += post.amount
+                if post in amount_overrides:
+                    amt = amount_overrides[post]
+                else:
+                    amt = post.amount
+                txn_amount += amt
 
         # Add this amount to the balance.
         balance += txn_amount
@@ -611,11 +620,11 @@ def render_postings_table(postings, style, filterfun=None, acc_checks=None):
         # Display the postings.
         if style != 'compact':
             for post in txn.postings:
-                if post in postings:
+                inlist = post in postings
+                if inlist:
                     if style == 'other':
                         continue
-                else:
-                    if style == 'only':
+                elif style == 'only':
                         continue
 
                 postacc = haccount(post.account.fullname)
@@ -625,12 +634,16 @@ def render_postings_table(postings, style, filterfun=None, acc_checks=None):
                     postacc = ['[', SPAN(postacc), ']']
                 if post.note:
                     postacc = [postacc, SPAN(';', post.note, CLASS='postnote')]
+                td_account =TD(postacc)
+                if inlist:
+                    td_account.attrib['class'] = 'highpost'
                 tr = TR(TD(post.rdate(), colspan='2', CLASS='postdate'),
-                        TD(postacc),
+                        td_account,
                         TD(hwallet(post.amount), CLASS='wallet'),
-                        TD(['@ ', hwallet(post.price)] if post.price else '', CLASS='price'),
+                        TD(['@ ', hwallet(post.price, round=False)] if post.price else '', CLASS='price'),
                         TD(),
                         CLASS='posting')
+
                 table.add(tr)
 
     # Add the remaining checks.
@@ -780,11 +793,16 @@ def trades(app, ctx):
     for btrade in ledger.booked_trades:
         ## page.add(P(str(btrade)))
 
-        postings = [post for post, _ in btrade.postings]
-        ## page.add(P(str(postings)))
-        
-        table = render_postings_table(postings, style)
-        page.add(table)
+        bpostings = [post for post, _ in btrade.postings]
+        overrides = dict(btrade.postings)
+
+        table = render_postings_table(bpostings, style,
+                                      amount_overrides=overrides)
+        page.add(DIV(H2(btrade.post_booking.booking), table, CLASS='btrade'))
+
+
+
+## render_postings_table(postings, style)
 
 
 

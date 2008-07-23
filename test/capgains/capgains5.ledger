@@ -12,7 +12,7 @@
   Assets:Investments:XTrade          
 
 2004-07-23 * Sell Apple Inc
-  Assets:Investments:XTrade:AAPL    -10 "AAPL" @ 127.232 USD
+  Assets:Investments:XTrade:AAPL    -8.3 "AAPL" @ 127.232 USD
   Expenses:Financial:Commissions     9.95 USD
   Assets:Investments:XTrade          
   (Income:Investments:Capital-Gains)    BOOK "AAPL"

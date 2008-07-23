@@ -7,7 +7,7 @@ powerful: as simple as possible.
 """
 
 # stdlib imports
-import sys, re, cgitb, logging, cgi
+import sys, re, cgitb, logging, cgi, traceback
 from random import randint
 from wsgiref.simple_server import make_server
 from wsgiref.util import request_uri, application_uri
@@ -139,8 +139,11 @@ class BeanServer(object):
             # Print out a nicely rendered traceback of the error.
             status = getattr(e, 'status', '200 OK')
             start_response(status, [('Content-Type', 'text/html')])
-            einfo = sys.exc_info()
-            return [cgitb.html(einfo)]
+            failsafe = traceback.format_exc()
+            try:
+                return [cgitb.html(sys.exc_info())]
+            except Exception:
+                return ['<pre>', failsafe, '</pre>']
 
 
 
