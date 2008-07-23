@@ -399,10 +399,10 @@
 
 ;; Because of my skirt-length statistic computation.
 2008-02-28 * Sell off my Apple
-  Assets:Investments:UTrade:Account:AAPL     -30 AAPL @ 193.02 USD
+  Assets:Investments:UTrade:Account:AAPL        -30 AAPL @ 193.02 USD
   Assets:Investments:UTrade:Account         5780.65 USD
   Expenses:Financial:Commissions               9.95 USD
-  (Income:Investments:Capital-Gains)        BOOK USD
+  (Income:Investments:Capital-Gains)           BOOK AAPL
 ;; Note how the capital gain is a negative number... that's
 ;; because Income is a credit account, like a salary.
 

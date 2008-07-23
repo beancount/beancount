@@ -417,7 +417,7 @@ class Ledger(object):
         self.source = []
 
         # A map of commodity to a list of price commodities.
-        self.pricedmap = defaultdict(set)
+        self.pricedmap = None
 
         # A map of directive-name to contents.
         self.directives = {}
@@ -924,12 +924,13 @@ class Ledger(object):
         Compute the priced map, that is, the set of commodities that each
         commodity is priced in.
         """
-        self.pricedmap.clear()
+        pmap = defaultdict(set)
         for post in self.postings:
             if post.price is not None:
                 assert len(post.amount) == 1
                 assert len(post.price) == 1
-                self.pricedmap[post.amount.keys()[0]].add(post.price.keys()[0])
+                pmap[post.amount.keys()[0]].add(post.price.keys()[0])
+        self.pricedmap = dict(pmap)
 
     def check_postings_balance(self, postings):
         """
