@@ -402,7 +402,7 @@
   Assets:Investments:UTrade:Account:AAPL     -30 AAPL @ 193.02 USD
   Assets:Investments:UTrade:Account         5780.65 USD
   Expenses:Financial:Commissions               9.95 USD
-  (Income:Investments:Capital-Gains)        -208.70 USD
+  (Income:Investments:Capital-Gains)        BOOK USD
 ;; Note how the capital gain is a negative number... that's
 ;; because Income is a credit account, like a salary.
 

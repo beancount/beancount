@@ -3,6 +3,9 @@
 ============================
 
 
+Old Notes
+=========
+
   From  	"Filippo Tampieri" <filippo.tampieri@gmail.com>
   To  	"Martin Blais" <blais@furius.ca>
   Cc  	"John Wiegley" <johnw@newartisans.com> [Add]
@@ -126,3 +129,72 @@
       > > > >            assert (lgr.get_account(accname).total == Wallet('USD',
       > > > >            amount))
       > > > >
+
+
+
+First Implementation [Martin Blais <blais@furius.ca>]
+=====================================================
+
+  Hi John
+
+  Just wanted to let you know that I've partially solved the
+  trade booking problem within beancount. The way I'm doing it
+  is like this::
+
+    2004-07-23 * Buy Apple Inc
+      Assets:Investments:XTrade:AAPL     10 "AAPL" @ 116.238 USD
+      Expenses:Financial:Commissions     9.95 USD
+      Assets:Investments:XTrade          
+
+    2004-07-23 * Sell Apple Inc
+      Assets:Investments:XTrade:AAPL    -8.3 "AAPL" @ 127.232 USD
+      Expenses:Financial:Commissions     9.95 USD
+      Assets:Investments:XTrade          
+      (Income:Investments:Capital-Gains)    BOOK "AAPL"
+
+  The transaction with the posting with "BOOK <COMMODITY>" has
+  its postings searched for a (unique) one that has the given
+  commodity (in this case, the first posting of the second
+  transaction). From this posting, the account name is
+  extracted (Assets:Investments:XTrade:AAPL). This process is
+  repeated for all entries with BOOK entries.
+
+  Then, for each of the accounts, for each of the commodities
+  that need to be inventoried, the postings of the account are
+  iterated and a FIFO inventory is calculated of the
+  positions. Gains/losses are realized when a posting with a
+  BOOK entry is present, which case the inventory has its
+  accumulated gains/losses cancelled and the amount is
+  transferred to the booking entry (the line with BOOK in the
+  example).
+
+  Note that I'm making a few assumptions:
+
+  - I'm assuming that there is a single posting with the
+    booking commodity in a transaction that contains a booking
+    posting.
+
+  - I'm assuming that the commodity is priced throughout the
+    system in a single currency. This is the currency that the
+    inventory uses.
+
+  - I'm doing all inventory trades before filling in the
+    booking entries.
+
+  On the web server, I have a new page which lists all the
+  transactions involved in each trade. This works with closing
+  the books, and with date filtering as well.
+
+  This method works well but does not take into account
+  commissions. I think my accountant removes the commissions
+  globally after gains/losses are computed, but I'm not sure
+  (I can't reach him for a few days).
+
+  Anyway, just thought you might find this interesting.
+  Let me know if you have suggestions on how to improve this.
+
+  Note: the demo has not been updated in the beancount code,
+  but I'll do that as soon as I return from yoga later.
+
+  cheers,
+
