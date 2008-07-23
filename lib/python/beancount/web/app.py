@@ -63,6 +63,7 @@ class Template(object):
                LI(A('P&L', href=umap('@@IncomeStatement'))),
                LI(A('Capital', href=umap('@@CapitalStatement'))),
                LI(A('Positions', href=umap('@@Positions'))),
+               LI(A('Trades', href=umap('@@Trades'))),
                LI(A('Activity', href=umap('@@Activity'))),
                LI(A('Locations', href=umap('@@Locations'))),
                LI(A('Stats/Logs', href=umap('@@Statistics'))),
@@ -522,7 +523,6 @@ def ledger(app, ctx):
     List the transactions that pertain to a list of filtered postings.
     """
     page = Template(ctx)
-    table = TABLE(id='ledger')
 
     style = ctx.session.get('style', 'full')
     assert style in ('compact', 'other', 'only', 'full')
@@ -547,20 +547,42 @@ def ledger(app, ctx):
     else:
         dbegin = None
 
-    # Get the list of transactions that related to the postings.
-    txns = set(post.txn for post in postings)
-
     # Get the list of checks for this account and include them in the listing.
     checks = ctx.ledger.directives['check']
     acc_checks = sorted(checks.account_checks(acc))
 
+    if dbegin is not None:
+        def dfilter(txn):
+            if not (dbegin <= txn.actual_date < dend):
+                return True
+    else:
+        dfilter = None
+
+    table = render_postings_table(postings, style, dfilter, acc_checks)
+
+    if acc.isroot():
+        page.add(H1('General Ledger'), table)
+    else:
+        page.add(H1('Ledger for ', haccount(acc.fullname)), table)
+
+    return page.render(app)
+
+
+
+def render_postings_table(postings, style, filterfun=None, acc_checks=None):
+
+    table = TABLE(CLASS='txntable')
+
+    # Get the list of transactions that relate to the postings.
+    txns = set(post.txn for post in postings)
+
     balance = Wallet()
     for txn in sorted(txns):
-        if dbegin is not None:
-            if not (dbegin <= txn.actual_date < dend):
-                continue
+        if filterfun is not None and filterfun(txn) is True:
+            continue
 
-        register_insert_checks(acc_checks, table, txn.actual_date)
+        if acc_checks is not None:
+            register_insert_checks(acc_checks, table, txn.actual_date)
 
         try:
             sty = 'background-color: %s' % flag_colors[txn.flag]
@@ -612,14 +634,13 @@ def ledger(app, ctx):
                 table.add(tr)
 
     # Add the remaining checks.
-    register_insert_checks(acc_checks, table)
+    if acc_checks is not None:
+        register_insert_checks(acc_checks, table)
 
-    if acc.isroot():
-        page.add(H1('General Ledger'), table)
-    else:
-        page.add(H1('Ledger for ', haccount(acc.fullname)), table)
+    return table
 
-    return page.render(app)
+
+
 
 # Colors for the flag cell.
 flag_colors = {'!': '#F66',
@@ -749,6 +770,28 @@ def locations(app, ctx):
     return page.render(app)
 
 
+def trades(app, ctx):
+    page = Template(ctx)
+    page.add(H1("Trades"))
+
+    style = ctx.session.get('style', 'full')
+    ledger = ctx.ledger
+
+    for btrade in ledger.booked_trades:
+        ## page.add(P(str(btrade)))
+
+        postings = [post for post, _ in btrade.postings]
+        ## page.add(P(str(postings)))
+        
+        table = render_postings_table(postings, style)
+        page.add(table)
+
+
+
+    return page.render(app)
+
+
+
 
 
 def reload(app, ctx):
@@ -815,6 +858,7 @@ page_directory = (
     ('@@CapitalStatement', capital, '/capital', None),
     ('@@Positions', positions, '/positions', None),
     ('@@Locations', locations, '/locations', None),
+    ('@@Trades', trades, '/trades', None),
 
     ('@@LedgerIndex', ledgeridx, '/ledger/index', None),
     ('@@GeneralLedger', ledger, '/ledger/general', None),

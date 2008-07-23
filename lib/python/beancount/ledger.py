@@ -17,6 +17,7 @@ from collections import defaultdict
 # beancount imports
 from beancount.wallet import Wallet
 from beancount.utils import SimpleDummy, iter_pairs
+from beancount.inventory import FIFOInventory
 
 # fallback imports
 from beancount.fallback.collections2 import namedtuple
@@ -294,6 +295,29 @@ class Posting(Dated):
             '; %s' % self.note if self.note else '')
 
 
+class BookedTrade(object):
+    """
+    An object that represents all the information that is present in a trade
+    (turn-around).
+    """
+    def __init__(self, post):
+
+        # The posting that initiated the booking.
+        self.post_booking = post
+
+        # The list of (posting, amount) that participated in the booked trade.
+        # The amount is in units of the booking commodity, which is provided by
+        # the booking trade.
+        self.postings = []
+
+    def add_leg(self, post, amount):
+        assert post.amount.iterkeys().next() == self.booking_commodity()
+        self.postings.append( (post, amount) )
+
+    def booking_commodity(self):
+        return self.post_booking.booking
+
+
 
 class Ledger(object):
     """
@@ -341,6 +365,9 @@ class Ledger(object):
 
         # Current tag that is being assigned to transactions during parsing.
         self.tag = None
+
+        # List of booked trades.
+        self.booked_trades = []
 
     def isvalid(self):
         "Return true if the ledger has not had critical errors."
@@ -563,7 +590,7 @@ class Ledger(object):
                             txn.postings.append(post)
 
                             post.flag, post.account_name, post.note = mo.group(1,2,14)
-                            post.booking = (mo.group(15) == 'BOOK')
+                            post.booking = (mo.group(16) if mo.group(15) == 'BOOK' else None)
 
                             # Remove the modifications to the account name.
                             accname = post.account_name
@@ -704,8 +731,9 @@ class Ledger(object):
             roundmap[com] = Decimal(str(10**-prec))
 
         self.complete_balances()
-        self.compute_balsheet('local_balance', 'balance', atcost=False)
         self.compute_priced_map()
+        self.complete_bookings()
+        self.compute_balsheet('local_balance', 'balance')
 
     def build_postings_lists(self):
         """ (Re)Builds internal lists of postings from the list of transactions."""
@@ -758,6 +786,65 @@ class Ledger(object):
                 if post.cost is None:
                     self.log(WARNING, "Virtual posting without amount has no effect.", post)
                     post.amount = post.cost = Wallet()
+
+    def complete_bookings(self):
+        """
+        Complete entries that are automatic bookings in each account.
+
+        Important note: this does *NOT* automatically take into account the
+        commissions.
+        """
+        booking_posts = (post for post in self.postings if post.booking)
+
+        # Figure out which account to book into, by finding the posting in this
+        # transaction that involves the given commodity. We build a list of
+        # tuples that represent the "booking jobs" that we have to carry out.
+        booking_jobs = defaultdict(list)
+        for post in booking_posts:
+            bcomm = post.booking
+            
+            for tpost in post.txn.postings:
+                if bcomm in tpost.amount:
+                    booking_jobs[tpost.account].append(post.booking)
+                    
+## FIXME: remove
+        ## trace(booking_jobs)
+
+        # For each account where we do booking.
+        for acc, bcomms in booking_jobs.iteritems():
+
+            # For each booking commodity.
+            for bcomm in bcomms:
+
+                # Figure out the price commodity of the booking commodity.
+                pcomms = self.pricedmap[bcomm]
+                assert len(pcomms) == 1
+                pcomm = pcomms.pop()
+
+                inv = FIFOInventory()
+                print inv.dump()
+                for post in acc.postings:
+                    if bcomm in post.amount:
+                        assert post.price is not None, post
+                        assert len(post.price) == 1
+                        price = post.price[pcomm]
+                        inv.trade(price, post.amount[bcomm], post)
+                        print inv.dump()
+
+                    for post in post.txn.postings:
+                        if post.booking:
+                            extras = inv.realized_extras
+                            pnl = inv.reset_pnl()
+                            post.amount = Wallet(pcomm, -pnl)
+                            post.flag = 'B' # booked.
+
+                            # Add booked postings so we can report them in a
+                            # global list later.
+                            btrade = BookedTrade(post)
+                            for post, amt, _ in extras:
+                                btrade.add_leg(post, amt)
+                            self.booked_trades.append(btrade)
+
 
     def compute_priced_map(self):
         """
@@ -932,6 +1019,11 @@ class Ledger(object):
 
         self.transactions = sorted(open_txns + keep_txns)
         self.build_postings_lists()
+
+
+FIXME you need to filter the booked_trades by the closing date as well, and filter by date.
+
+
 
     def find_account(self, namelist):
         """ Returns the first account found matching the given name."""

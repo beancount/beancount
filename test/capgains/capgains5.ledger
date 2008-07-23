@@ -1,0 +1,18 @@
+@defaccount Dr   Assets:Current:RBC:Checking
+@defaccount Dr   Assets:Investments:XTrade
+@defaccount Dr   Assets:Investments:XTrade:AAPL
+@defaccount Cr   Income:Investments:Dividends
+@defaccount Cr   Income:Investments:Capital-Gains
+@defaccount Dr   Expenses:Financial:Commissions
+
+
+2004-07-23 * Buy Apple Inc
+  Assets:Investments:XTrade:AAPL     10 "AAPL" @ 116.238 USD
+  Expenses:Financial:Commissions     9.95 USD
+  Assets:Investments:XTrade          
+
+2004-07-23 * Sell Apple Inc
+  Assets:Investments:XTrade:AAPL    -10 "AAPL" @ 127.232 USD
+  Expenses:Financial:Commissions     9.95 USD
+  Assets:Investments:XTrade          
+  (Income:Investments:Capital-Gains)    BOOK "AAPL"

@@ -81,40 +81,40 @@ div#style-selector li {
 
 
 
-/* Ledger view */
+/* Table view */
 
-table#ledger {
+table.txntable {
   width: 100%;
 }
 
-table#ledger .flag {
+table.txntable .flag {
   font-weight: bold;
   text-align: center;
   min-width: 16px;
 }
 
-table#ledger .postdate {
+table.txntable .postdate {
   text-align: right;
 }
 
-table#ledger .postnote {
+table.txntable .postnote {
   margin-left: 3em;
   font-style: italic;
 }
 
-table#ledger tr.posting {
+table.txntable tr.posting {
   font-size: smaller;
 }
 
-tr.txn {
+table.txntable tr.txn {
   background-color: #FFF9BF;
 }
 
-tr.assert {
+table.txntable tr.assert {
   background-color: #FFDDDD;
 }
 
-tr.posting {
+table.txntable tr.posting {
   background-color: #FFFFFF;
 }
 
@@ -246,6 +246,7 @@ table td.cumulative {
 table td.price {
   font-style: italic;
   padding-left: 1em;
+  white-space: nowrap;
 }
 
 
