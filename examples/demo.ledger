@@ -403,8 +403,15 @@
   Assets:Investments:UTrade:Account         5780.65 USD
   Expenses:Financial:Commissions               9.95 USD
   (Income:Investments:Capital-Gains)           BOOK AAPL
-;; Note how the capital gain is a negative number... that's
-;; because Income is a credit account, like a salary.
+;; The line that says "BOOK AAPL" means to insert the amount that
+;; corresponds to the gains/losses for the commodity "AAPL" within
+;; the account for the posting in this transaction that includes AAPL
+;; (Assets:Investments:UTrade:Account:AAPL, found automatically).
+;; The inventory booking is done in FIFO order.
+;;
+;; The capital gain will show up as a negative number...
+;; that's because Income is a credit account, like a salary.
+
 
 ;; This position is kept long, so it gets reflected below in the check.
 2008-02-10 * Buy some japanese ETF from iShares
