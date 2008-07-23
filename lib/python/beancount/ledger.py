@@ -801,7 +801,6 @@ class Ledger(object):
         self.complete_balances()
         self.compute_priced_map()
         self.complete_bookings()
-        self.compute_balsheet('local_balance', 'balance')
 
     def build_postings_lists(self):
         """ (Re)Builds internal lists of postings from the list of transactions."""
@@ -1124,7 +1123,6 @@ class Ledger(object):
         true for the nodes that the predicate matches.
         """
         inset = frozenset(filter(pred, self.postings))
-        trace('INSET = %s' % len(inset))
 
         for post in self.postings:
             post.selected = (post in inset)

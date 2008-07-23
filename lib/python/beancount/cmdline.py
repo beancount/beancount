@@ -146,6 +146,7 @@ def run_postprocesses(ledger, opts):
         pred = create_filter_pred(opts)
         ledger.filter_postings(pred)
     
+    ledger.compute_balsheet('local_balance', 'balance')
 
 
 
