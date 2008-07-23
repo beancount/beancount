@@ -598,7 +598,7 @@ def render_postings_table(postings, style,
         txn_amount = Wallet()
         for post in txn.postings:
             if post in postings:
-                if post in amount_overrides:
+                if amount_overrides and post in amount_overrides:
                     amt = amount_overrides[post]
                 else:
                     amt = post.amount
@@ -784,6 +784,9 @@ def locations(app, ctx):
 
 
 def trades(app, ctx):
+    """
+    Render a list of trades.
+    """
     page = Template(ctx)
     page.add(H1("Trades"))
 
@@ -791,24 +794,18 @@ def trades(app, ctx):
     ledger = ctx.ledger
 
     for btrade in ledger.booked_trades:
-        ## page.add(P(str(btrade)))
 
         bpostings = [post for post, _ in btrade.postings]
         overrides = dict(btrade.postings)
 
         table = render_postings_table(bpostings, style,
                                       amount_overrides=overrides)
-        page.add(DIV(H2(btrade.post_booking.booking), table, CLASS='btrade'))
-
-
-
-## render_postings_table(postings, style)
-
-
+        title = '%s - %s in %s' % (btrade.close_date(),
+                                   btrade.post_booking.booking,
+                                   btrade.acc.fullname)
+        page.add(DIV(H2(title), table, CLASS='btrade'))
 
     return page.render(app)
-
-
 
 
 

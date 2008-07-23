@@ -239,21 +239,22 @@ def create_filter_pred(opts):
     else:
         def pred(post):
             if acc_funs is not None:
-                if all(not fun(post.account.fullname) for fun in acc_funs):
+                if all(not fun(post.get_account_name()) for fun in acc_funs):
                     return False
             if txnacc_funs is not None:
                 if all(all(not fun(p.account.fullname) for fun in txnacc_funs)
-                       for p in post.txn.postings):
+                       for p in post.get_txn_postings()):
                     return False
             if note_funs is not None:
-                if all(not fun(post.note or '') for fun in note_funs):
+                if all(not fun(post.get_note() or '') for fun in note_funs):
                     return False
             if interval is not None:
                 dbegin, dend = interval
-                if not (dbegin <= post.actual_date < dend):
+                if not (dbegin <= post.get_date() < dend):
                     return False
             if tagfun is not None:
-                if not (post.txn.tag and tagfun(post.txn.tag)):
+                tag = post.get_tag()
+                if not (tag and tagfun(tag)):
                     return False
             return True
 

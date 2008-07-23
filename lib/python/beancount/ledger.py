@@ -188,6 +188,26 @@ class Dated(object):
         return ''.join(l)
 
 
+class Filtrable(object):
+    """
+    Base class for filtering using the predicate created by the cmdline module.
+    """
+    def get_date(self):
+        pass
+
+    def get_account_name(self):
+        pass
+
+    def get_note(self):
+        pass
+
+    def get_tag(self):
+        pass
+
+    def get_txn_postings(self):
+        pass
+
+
 class Transaction(Dated):
     "A transaction, that contains postings."
 
@@ -295,24 +315,50 @@ class Posting(Dated):
             self.cost.round(),
             '; %s' % self.note if self.note else '')
 
+    #
+    # Filtrable.
+    #
+    def get_date(self):
+        return self.actual_date
+
+    def get_account_name(self):
+        self.account.fullname
+
+    def get_note(self):
+        return self.note
+
+    def get_tag(self):
+        return self.txn.tag
+
+    def get_txn_postings(self):
+        return self.txn.postings
+
 
 class BookedTrade(object):
     """
     An object that represents all the information that is present in a trade
     (turn-around).
     """
-    def __init__(self, post):
+    def __init__(self, acc, bcomm, post_booking):
+
+        # The account and booking commodity.
+        self.acc = acc
+        self.bcomm = bcomm
 
         # The posting that initiated the booking.
-        self.post_booking = post
+        self.post_booking = post_booking
 
         # The list of (posting, amount) that participated in the booked trade.
         # The amount is in units of the booking commodity, which is provided by
         # the booking trade.
         self.postings = []
 
-    def __key__(self):
+    def close_date(self):
         return self.postings[-1][0].actual_date
+
+    __key__ = close_date
+    def __cmp__(self, other):
+        return cmp(self.close_date(), other.close_date())
 
     def add_leg(self, post, bamount):
         assert post.amount.iterkeys().next() == self.booking_commodity()
@@ -320,6 +366,24 @@ class BookedTrade(object):
 
     def booking_commodity(self):
         return self.post_booking.booking
+
+    #
+    # Filtrable.
+    #
+    def get_date(self):
+        return self.close_date()
+
+    def get_account_name(self):
+        return self.acc.fullname
+
+    def get_note(self):
+        return None
+
+    def get_tag(self):
+        return None
+
+    def get_txn_postings(self):
+        return self.postings  # Not sure why I'm doing this.
 
 
 
@@ -803,14 +867,14 @@ class Ledger(object):
         # Figure out which account to book into, by finding the posting in this
         # transaction that involves the given commodity. We build a list of
         # tuples that represent the "booking jobs" that we have to carry out.
-        booking_jobs = defaultdict(list)
+        booking_jobs = defaultdict(set)
         for post in booking_posts:
             bcomm = post.booking
             
             for tpost in post.txn.postings:
                 if bcomm in tpost.amount:
-                    booking_jobs[tpost.account].append(post.booking)
-                    
+                    booking_jobs[tpost.account].add(post.booking)
+
         # For each account where we do booking.
         for acc, bcomms in sorted(booking_jobs.iteritems()):
 
@@ -846,7 +910,7 @@ class Ledger(object):
 
                             # Add booked postings so we can report them in a
                             # global list later.
-                            btrade = BookedTrade(tpost)
+                            btrade = BookedTrade(acc, bcomm, tpost)
                             for post, amt, price in extras:
                                 btrade.add_leg(post, Wallet(bcomm, amt))
                             self.booked_trades.append(btrade)
@@ -958,6 +1022,7 @@ class Ledger(object):
         """ Close the books at the specified date 'closedate', replacing all
         entries before that date by opening balances, and resetting
         Income/Revenues and Expenses categories to zero via entries in Equity.
+        We also remove trades whose date is before the closed date.
         """
         other_account = self.get_account('Equity:Opening-Balances', create=1)
 
@@ -1027,13 +1092,11 @@ class Ledger(object):
             self.log(INFO, " Closing books at %s in %s for %s" %
                      (closedate, acc.fullname, bal), (None, None))
 
+        self.booked_trades = filter(lambda t: t.close_date() >= closedate,
+                                    self.booked_trades)
+
         self.transactions = sorted(open_txns + keep_txns)
         self.build_postings_lists()
-
-
-## FIXME you need to filter the booked_trades by the closing date as well, and filter by date.
-
-
 
     def find_account(self, namelist):
         """ Returns the first account found matching the given name."""
@@ -1061,6 +1124,7 @@ class Ledger(object):
         true for the nodes that the predicate matches.
         """
         inset = frozenset(filter(pred, self.postings))
+        trace('INSET = %s' % len(inset))
 
         for post in self.postings:
             post.selected = (post in inset)
@@ -1076,6 +1140,7 @@ class Ledger(object):
         self.transactions = [txn for txn in self.transactions
                              if any(post in inset for post in txn.postings)]
 
+        self.booked_trades = filter(pred, self.booked_trades)
 
 
 
