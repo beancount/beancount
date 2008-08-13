@@ -15,6 +15,7 @@ from beancount.fallback.colorlog import ColorFormatter
 from beancount.ledger import Ledger
 from beancount.timeparse import parse_time
 from beancount import install_psyco
+from beancount import assetdef
 
 
 MANY=-1
@@ -42,6 +43,9 @@ def main(parser, no=1):
     parser.add_option('--no-psyco', action='store_true',
                       help="Disable psyco JIT optimizations.")
 
+    parser.add_option('--assets', action='append', default=[],
+                      help="Root directories for asset definition files.")
+
     opts, args = parser.parse_args()
 
     logging.getLogger().setLevel(logging.INFO if opts.verbose else logging.ERROR)
@@ -61,6 +65,9 @@ def main(parser, no=1):
 
     if not opts.no_psyco:
         install_psyco()
+
+    for assfn in opts.assets:
+        assetdef.add_asset_path(assfn)
 
     if no == 1:
         fn, args = args[0], args[1:]
