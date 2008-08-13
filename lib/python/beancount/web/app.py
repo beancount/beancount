@@ -35,7 +35,7 @@ from beancount.web.market import *
 class Template(object):
     "Base template for all our pages."
 
-    output_encoding = 'utf8'
+    output_encoding = 'utf-8'
 
     def __init__(self, ctx):
         self.initialize(ctx)
@@ -48,7 +48,7 @@ class Template(object):
             META(http_equiv="Content-Type",
                  content="text/html; charset=%s" % self.output_encoding),
             LINK(rel='stylesheet', href=umap('@@Style'), type='text/css'),
-            SCRIPT(type="text/javascript", src=umap('@@Treetable')),
+            SCRIPT(' ', type="text/javascript", src=umap('@@Treetable')),
             )
         self.html = HTML(self.head, self.body)
 
@@ -90,9 +90,17 @@ class Template(object):
 
     def render(self, app):
         app.setHeader('Content-Type','text/html')
+        ##app.write(doctype)
         contents = tostring(self.html, app,
                             encoding=self.output_encoding,
                             pretty=True)
+
+doctype = '''\
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+'''
+
+
 
 def ljoin(l, sep):
     "Intersperse the given list with the object 'seq'."
@@ -180,6 +188,7 @@ def stats(app, ctx):
              UL(
                  LI(A('Source', href=umap('@@Source'))),
                  LI(A('Message Log (and Errors)', href=umap('@@Messages'))),
+                 LI(A('Pricing Commodities', href=umap('@@Pricing'))),
                  ))
 
     return page.render(app)
@@ -344,7 +353,11 @@ def positions(app, ctx):
                      TD("Total Value"), TD("Total Change"),
                      TD("Total Value (USD)"), TD("Total Change (USD)"))))
     for comm, amount in a_acc.balance.tostrlist():
-        pcomms = [] if comm in currencies else list(ledger.pricedmap[comm])
+        try:
+            pcomms = [] if comm in currencies else list(ledger.pricedmap[comm])
+        except KeyError:
+            logging.error(comm, ledger.pricedmap)
+            continue
         assert len(pcomms) in (0, 1), "Ambiguous commodities."
         if pcomms:
             pcomm = pcomms[0]
@@ -400,6 +413,25 @@ def positions(app, ctx):
 
     return page.render(app)
 
+
+
+def pricing(app, ctx):
+    "A list of the commodities used for pricing each type of financial asset."
+    page = Template(ctx)
+    page.add(H1("Pricing Commodities"))
+
+    # First compute the trial balance.
+    ledger = ctx.ledger
+
+    # Add a table of positions.
+    tbl = TABLE(id="pricedmap")
+    tbl.add(THEAD(TR(TD("Commodity"), TD("Price Currency"))))
+    for comm, pclist in sorted(ledger.pricedmap.iteritems()):
+        tbl.add(TR( TD(comm), TD(', '.join(pclist)) ))
+
+    page.add(tbl)
+
+    return page.render(app)
 
 
 
@@ -731,6 +763,8 @@ def messages(app, ctx):
     return page.render(app)
 
 
+ramq_reqdays = 183
+
 def locations(app, ctx):
     page = Template(ctx)
     page.add(H1("Locations"))
@@ -772,13 +806,17 @@ def locations(app, ctx):
             comap[country] += days
             if country == 'Canada' or days < 21:
                 ramq_days += days
+                # FIXME: I think that technically I would have to be in Quebec,
+                # not just in Canada.
 
         ulc = page.add(UL())
         for country, days in sorted(comap.iteritems()):
             ulc.append(LI("%s : %d days" % (country, days)))
 
-        page.add(P("(Days of presence for RAMQ: %d days - missing %s days)" %
-                   (ramq_days, 183 - ramq_days)))
+        missing_days = ramq_reqdays - ramq_days
+        ulc.add(LI("... for RAMQ eligibility: %d days / %d : %s" %
+                   (ramq_days, ramq_reqdays,
+                    ('Missing %d days' % missing_days if missing_days > 0 else 'Okay'))))
 
     return page.render(app)
 
@@ -874,6 +912,7 @@ page_directory = (
     ('@@Positions', positions, '/positions', None),
     ('@@Locations', locations, '/locations', None),
     ('@@Trades', trades, '/trades', None),
+    ('@@Pricing', pricing, '/pricing', None),
 
     ('@@LedgerIndex', ledgeridx, '/ledger/index', None),
     ('@@GeneralLedger', ledger, '/ledger/general', None),
