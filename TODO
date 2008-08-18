@@ -24,6 +24,11 @@ main focus:
 - You need to write a test with dates that are close by between
   @checks and with @pad in between, for date inequalities.
 
+- Add account numbers, to be able to sort in order of liquidity.
+
+- 'Tag' should be renamed 'project' (pretty standard naming).
+
+
 
 
    
