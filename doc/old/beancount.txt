@@ -1,0 +1,340 @@
+====================================================================
+   Bean Counter: A Simpler Double-Entry Accounting System via SQL
+====================================================================
+:Id: 89339e54-5eca-40fe-a8fb-bf7787be3efb
+:Date: 2008-03-29
+:Abstract:
+
+  Simple design for a double-entry accounting system.
+
+.. contents::
+..
+    1  Introduction
+    2  Description of Objects
+      2.1  Securities
+      2.2  Accounts
+      2.3  Transactions
+      2.4  Posting
+    3  Inconsistencies
+    4  Operations
+      4.1  Importing Postings
+      4.2  Categorizing Postings
+      4.3  Graph of Account Relationships
+    5  Tags
+    6  Initialization
+    7  Other Issues
+      7.1  Issues with Multiple Currencies
+      7.2  Import Batches
+    8  Ideas for Automation
+
+
+Introduction
+============
+
+This file contains a description of a relational database schema for a
+simple double-entry accounting system. The motivation behind the
+creation of a simple homegrown schema is that most available softwares
+are either bloated, use an opaque database format, or are downright
+buggy and impossible to use and trust. There is nothing very
+complicated about the simplest aspects of a double-entry accouting
+system, and this is what we provide here.
+
+
+Description of Objects
+======================
+
+Securities
+----------
+
+Each account will contain postings which are valued in a number of
+units of a specific currency. Some of the accounts will contain shares
+of securities, like stocks. We need to create a table of unique
+securities, some of which include the currency units::
+
+  #!sql
+  CREATE TABLE security (
+
+    -- Unique symbol, type and a name/description.
+    symbol VARCHAR(16),
+    name TEXT NOT NULL,
+
+    PRIMARY KEY (symbol)
+  );
+
+Eventually, we will want to add much more information to the
+securities themselves, and we will probably do this with an anciliary
+table, but for now, just to have the securities defined is good enough
+to carry out all the basic accounting classification tasks.
+
+
+Accounts
+--------
+
+All the transactions that can occur occur within an "account". Each
+account is always denominated under a specific currency, and no
+transaction may occur in another currency within that account.
+
+Accounts may contain postings and sub-accounts (just like
+filesystem directories contain files and other directories)::
+
+  #!sql
+  CREATE TABLE account (
+
+    -- A unique and a long name/description.
+    id SERIAL,
+    name TEXT,
+
+    -- The parent account to which this account belongs.
+    parent_id INTEGER REFERENCES account(id),
+
+    -- The security that this account is denominated in.
+    sec VARCHAR(16) NOT NULL REFERENCES security(symbol),
+
+    -- Whether the account is a credit (True) or debug (False)
+    -- account.
+    isdebit BOOLEAN,
+
+    PRIMARY KEY (id),
+    UNIQUE (parent_id, name)
+  );
+
+
+Transactions
+------------
+
+Transactions are used as groupings of postings, which are meant
+to be balanced individually. If all postings are linked to a
+transaction, and all transactions balance, the system is insured to
+balance::
+
+  #!sql
+  CREATE TABLE transaction (
+
+    -- A unique id to refer to the transaction.
+    id SERIAL,
+
+    -- An optional description that applies to the set of entries.
+    description TEXT,
+
+    -- A unqiue time for this set of transactions.
+    timestamp TIMESTAMP WITHOUT TIME ZONE,
+
+    PRIMARY KEY(id)
+  );
+
+
+About times:
+
+  Note that a posting has a specific date/time, but its
+  corresponding transaction may have a different one. We need to
+  insure that each transaction is atomic, so that at any point in time
+  the system be coherent and balanced.
+
+About securities:
+
+  A transaction may contain postings which are denominated in
+  different underlying currrencies. For example, this is how a stock
+  purchase is supposed to work out::
+
+    transaction
+      posting        AAPL             3
+      posting        Checking                 301.00
+
+  The "exchange rate" between the two provides an implicit price for
+  the conversion. Here the price would be 101.00$/share.
+
+  Note that this price may not be the actual real price of the journal
+  item that occurred on a market. We will want to group commission and
+  fees in the same transaction, for example, which affects the
+  true "price"::
+
+    transaction
+      posting          AAPL                    3
+      posting          Expenses:Commission     3.00
+      posting          Checking                       303.00
+
+
+
+Posting
+-------
+
+All the activity that occurs in an account is called a "posting". A
+posting can be placed in any account that has a matching base
+security. Much of the work in filling up an accounting database is to
+categorize to which account a posting belongs, and to pair up entries
+with a transaction that balances.
+
+Note that if for whatever reason a posting is not yet classified to an
+account, it has to be placed in some sort of temporary account created
+for this purpose. A posting can never exist without an account.
+
+::
+
+  #!sql
+  CREATE TABLE posting (
+
+    -- A unique id to refer to the transaction.
+    id SERIAL,
+
+    -- Timestamp.
+    timestamp TIMESTAMP WITHOUT TIME ZONE,
+
+    -- The account to which this transaction belongs.
+    account_id INTEGER NOT NULL REFERENCES account(id)
+                                ON DELETE SET NULL,
+
+    -- Which transaction this posting belongs to (possibly NULL).
+    trans_id INTEGER DEFAULT NULL REFERENCES transaction(id)
+                     ON DELETE SET NULL,
+
+    -- The underlying currency or security.
+    symbol VARCHAR(16) REFERENCES security(symbol),
+
+    -- Amount of the transaction, in units of its currency.
+    -- Note that the sign indicates whether to increase or decrease
+    -- the owning account.
+    amount NUMERIC(16, 6),
+
+    -- Some text to identify this item. This is meant to be either
+    -- imported from some data file or entered manually by the user.
+    -- It may entirely be left empty, as it is not otherwise used by
+    -- the system.
+    description TEXT,
+    memo TEXT,
+
+    -- An optional unique GUID used at import time, to insure that
+    -- postings may not be imported twice.
+    guid VARCHAR(32) UNIQUE,
+
+    PRIMARY KEY(id)
+  );
+
+
+Inconsistencies
+===============
+
+Here is a list of the kinds of inconsistencies that may occur in the
+system, for which we need to provide convenient mechanisms to fix up:
+
+#. postings without a transaction. This is the default state of
+   newly imported entries.
+
+#. Transactions that don't balance. This is the main task that a user
+   wanting to reconcile everything must do.
+
+
+Here are the kinds of inconsistencies that may not occur:
+
+#. postings without account. These could occur if we allowed
+   importing without an account, or if you could delete an account
+   without clearing the transactions it contains. The database schema
+   insures that all postings have some parent account.
+
+
+
+Operations
+==========
+
+Importing Postings
+------------------
+
+A tool should be provided to parse some of the available data file
+formats (QIF, QFX, etc.) and to specify which account the postings
+have to go into.
+
+These importing tools should avoid importing the same items multiple
+times, by using the GUIDs that the data file formats provide.
+
+
+Categorizing Postings
+---------------------
+
+Once the transactions are imported into the database, we need to
+place each of them into a posting. This is done by creating a
+matching transaction with another account, in the other direction.
+
+A script can be run to allow the user to easily create these
+transactions.
+
+
+Graph of Account Relationships
+------------------------------
+
+A graph of the relationships between the various accounts can be
+obtained by looking at the transactions between accounts in a period
+of time.
+
+
+
+Tags
+====
+
+Why limit ourselves to a tree structure? Tags can be used to make
+queries on sets of accounts::
+
+  #!sql-alt
+  CREATE TABLE tag (
+
+    tagname VARCHAR(32),
+    account_id INTEGER REFERENCES account(id),
+
+    PRIMARY KEY(tagname)
+  );
+
+
+
+Initialization
+==============
+
+Some of the base securities to be created include::
+
+  #!sql
+  insert into security (symbol, name) values ('USD', 'US Dollar');
+  insert into security (symbol, name) values ('CAD', 'Canadian Dollar');
+  insert into security (symbol, name) values ('AUD', 'Australian Dollar');
+  insert into security (symbol, name) values ('JPY', 'Japanese Yen');
+
+
+Other Issues
+============
+
+
+Issues with Multiple Currencies
+-------------------------------
+
+At http://homepages.tcp.co.uk/~m-wigley/gc_wp_ded.html, a transaction
+between multiple currencies is expressed as four entries, going
+through a special "cash book" account. Is this useful?
+
+Import Batches
+--------------
+
+It would be nice to be able to refer to all the entries inserted
+during a single import. We should create an anciliary table for
+entries that would store that information, e.g.::
+
+   #!alt
+   CREATE TABLE import_batch (
+
+     batch_no    INTEGER,
+     id          INTEGER REFERENCES posting(id),
+
+     PRIMARY KEY (id)
+   );
+
+We could then easily join that table with the accounts table to select
+all the messages imported at once.
+
+
+
+Ideas for Automation
+====================
+
+- Pre-fill amount using a matching description.
+
+- On import: scan for duplicate transactions (matching all fields).
+  Maybe we generate a unique checksum on the fields and use that later
+  on to detect duplicate entries.
+
+
+

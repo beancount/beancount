@@ -16,6 +16,8 @@ Beancount (Accounting)
 
 main focus:
 
+- beancount: Add a page for the hedged values of everything.
+
 - Finish the Capital Statement and Positions page
 
 - Add a check to insure that parents do not contain mixed Dr and Cr
