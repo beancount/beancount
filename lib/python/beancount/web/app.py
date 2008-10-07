@@ -5,7 +5,7 @@ developing.
 """
 
 # stdlib imports
-import sys, logging
+import sys, logging, re
 from wsgiref.util import request_uri, application_uri
 from os.path import *
 from operator import attrgetter
@@ -319,6 +319,8 @@ def capital(app, ctx):
 
 refcomm = 'USD'
 
+market_url = 'http://finance.google.com/finance?q=%s'
+
 def positions(app, ctx):
     page = Template(ctx)
     page.add(H1("Positions / Assets"))
@@ -349,16 +351,25 @@ def positions(app, ctx):
 
     # Add a table of positions.
     tbl = TABLE(id="positions")
-    tbl.add(THEAD(TR(TD("Position"), TD("Currency"), TD("Price"), TD("Change"),
+    tbl.add(THEAD(TR(TD("Description"),
+                     TD("Position"), TD("Currency"), TD("Price"), TD("Change"),
                      TD("Total Value"), TD("Total Change"),
                      TD("Total Value (USD)"), TD("Total Change (USD)"))))
+    commnames = ledger.directives['defcomm'].commnames
     for comm, amount in a_acc.balance.tostrlist():
+        # Strip numbers from the end, to remove splits.
+        mo = re.match('(.*)[\'~][0-9]', comm)
+        if mo:
+            comm = mo.group(1)
         try:
-            pcomms = [] if comm in currencies else list(ledger.pricedmap[comm])
+            if comm in currencies:
+                pcomms = []
+            else:
+                pcomms = [x for x in ledger.pricedmap[comm] if x in currencies]
         except KeyError:
             logging.error(comm, ledger.pricedmap)
             continue
-        assert len(pcomms) in (0, 1), "Ambiguous commodities."
+        assert len(pcomms) in (0, 1), "Ambiguous commodities: %s" % pcomms
         if pcomms:
             pcomm = pcomms[0]
             try:
@@ -401,7 +412,11 @@ def positions(app, ctx):
             if comm in currencies:
                 totvalue = "%s %s" % (amount, comm)
 
-        tds = [TD("%s %s" % (amount, comm)), TD(pcomm),
+        market, name = commnames.get(comm, u'')
+        if market is not None:
+            name = A(name, href=market_url % market)            
+        tds = [TD(name, CLASS='l'),
+               TD("%s %s" % (amount, comm)), TD(pcomm),
                TD(fprice), TD(fchange),
                TD(totvalue), TD(totchange),
                TD(totvalue_usd), TD(totchange_usd)]
@@ -409,7 +424,6 @@ def positions(app, ctx):
         tbl.add(TR(tds))
 
     page.add(H2("Total Assets"), tbl)
-
 
     return page.render(app)
 
@@ -505,6 +519,7 @@ def activity(app, ctx):
             tr.extend(TD(str(x)) for x in (acc.check_min, acc.check_max, '%s days' % elapsed.days))
 
         if acc.postings:
+            trace(acc, len(acc.postings))
             post_last = acc.postings[-1]
             elapsed = today - post_last.actual_date
             tr.extend(TD(str(x)) for x in (post_last.actual_date, '%s days' % elapsed.days))

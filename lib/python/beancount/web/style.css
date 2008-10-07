@@ -193,6 +193,10 @@ table#positions, table#xrates {
   border-collapse: collapse;
 }
 
+table#positions, table#xrates td.l {
+  text-align: left;
+}
+
 table#positions td, table#xrates td {
   border: thin solid black;
   padding-left: 0.5em;

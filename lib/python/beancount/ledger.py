@@ -425,6 +425,7 @@ class Ledger(object):
         check = CheckDirective(self)
         add_directive(check)
         add_directive(DefineAccountDirective(self))
+        add_directive(DefineCommodityDirective(self))
         add_directive(AutoPadDirective(self, check))
         add_directive(DefvarDirective(self))
         add_directive(BeginTagDirective(self))
@@ -530,7 +531,7 @@ class Ledger(object):
                         {'date': date_re.pattern})
 
     # Pattern for an amount.
-    commodity_re = re.compile('"?([A-Za-z][A-Za-z0-9.]*)"?')
+    commodity_re = re.compile('"?([A-Za-z][A-Za-z0-9.~\']*)"?')
     amount_re = re.compile('([-+]?\d*(?:\.\d*)?)\s+%(comm)s' %
                            {'comm': commodity_re.pattern})
 
@@ -1015,7 +1016,12 @@ class Ledger(object):
         for direct in directives:
             direct.apply()
 
+        # We need to re-sort the postings because the directives may have added
+        # some out-of-order postings.
+        self.build_postings_lists()
 
+
+            
     close_flag = 'A'
 
     def close_books(self, closedate):
@@ -1333,6 +1339,37 @@ class DefineAccountDirective(object):
 
 
 
+class DefineCommodityDirective(object):
+    """
+    Define a commodity name.
+    """
+
+    name = 'defcomm'
+    prio = 1
+
+    market_re = re.compile('"?"?')
+
+    mre = re.compile("\s*%(commodity)s\s+([A-Za-z-][A-Za-z0-9:.-]*)\s+(.+)\s*$" %
+                     {'commodity': Ledger.commodity_re.pattern})
+
+    def __init__(self, ledger):
+        self.commnames = {}
+        self.ledger = ledger
+
+    def parse(self, line, filename, lineno):
+        mo = self.mre.match(line)
+        if not mo:
+            self.ledger.log(CRITICAL, "Invalid defcomm directive: %s" % line,
+                            (filename, lineno))
+            return
+
+        market, name = mo.group(2, 3)
+        if market == '-':
+            market = None
+        self.commnames[mo.group(1)] = (market, name)
+
+    def apply(self):
+        pass
 
 
 
@@ -1632,5 +1669,6 @@ class LocationDirective(object):
 
     def apply(self):
         pass # Nothing to do--the modules do the parsing themselves.
+
 
 
