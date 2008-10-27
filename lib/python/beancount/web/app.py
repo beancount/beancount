@@ -456,7 +456,7 @@ def treetable_builder(tbl, iterator, skiproot=False):
     rows for creating a JavaScript tree with the treetable JS source. Note that
     the table needs to have a unique 'id' attribute. This is an iterator that yields
 
-      (node, td-of-column-1, tr-for-row)
+      (node, td-of-column-1, tr-for-row, skip-function)
 
     You need to add the relevant columns on the row object, using data in the
     node.
@@ -505,7 +505,6 @@ def activity(app, ctx):
     table.add(THEAD(TR(TH("Account"),
                        TH("Oldest Chk"),
                        TH("Newest Chk"),
-                       TH("Days since"),
                        TH("Last Posting"),
                        TH("Days since"),
                        )))
@@ -514,15 +513,25 @@ def activity(app, ctx):
         td1.add(
             A(acc.name, href=umap('@@AccountLedger', acc.fullname), CLASS='accomp'))
 
+        append = False
+        row = [TD() for _ in xrange(4)]
+        elapsed_check, elapsed_post = None, None
         if acc.checked:
-            elapsed = today - acc.check_max
-            tr.extend(TD(str(x)) for x in (acc.check_min, acc.check_max, '%s days' % elapsed.days))
+            row[0].add(str(acc.check_min))
+            row[1].add(str(acc.check_max))
+            elapsed_check = (today - acc.check_max).days
+            append = True
 
         if acc.postings:
-            trace(acc, len(acc.postings))
             post_last = acc.postings[-1]
-            elapsed = today - post_last.actual_date
-            tr.extend(TD(str(x)) for x in (post_last.actual_date, '%s days' % elapsed.days))
+            row[2].add(str(post_last.actual_date))
+            elapsed_post = (today - post_last.actual_date).days
+            append = True
+
+        if append:
+            row[3].add('%s days' % min(filter(lambda x: x is not None,
+                                              [elapsed_check, elapsed_post])))
+            tr.extend(row)
 
     page.add(H1('Activity'), table)
     return page.render(app)

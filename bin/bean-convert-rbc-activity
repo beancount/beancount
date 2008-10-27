@@ -182,7 +182,6 @@ def parse_file(fn):
         if mo:
             assert not price
             price = tonum(mo.group(1))
-            trace(price)
 
         p = Entry(date, symbol, description, action, quantity, price, amount,
                   currency, settlement, priority)
