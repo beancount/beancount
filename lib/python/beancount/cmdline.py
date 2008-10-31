@@ -46,6 +46,10 @@ def main(parser, no=1):
     parser.add_option('--assets', action='append', default=[],
                       help="Root directories for asset definition files.")
 
+    parser.add_option('--private', '--no-source', action='store_true',
+                      help="Remove some possibly sensitive personal informations,"
+                      " no access to source, for example.")
+
     opts, args = parser.parse_args()
 
     logging.getLogger().setLevel(logging.INFO if opts.verbose else logging.ERROR)

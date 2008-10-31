@@ -138,6 +138,8 @@ def cachefunc(func):
 
     return f
 
+websep = '~'
+
 @cachefunc
 def haccount(accname):
     "Return some HTML for a full account name."
@@ -147,7 +149,7 @@ def haccount(accname):
     cappend = comps.append
     for comp in accname.split(Account.sep):
         cappend(comp)
-        name = Account.sep.join(comps)
+        name = websep.join(comps)
         append(A(comp, href=umap('@@AccountLedger', name), CLASS='accomp'))
     accspan = SPAN(ljoin(l, SPAN(Account.sep, CLASS='accsep')), CLASS='account')
     accspan.cache = 1
@@ -184,12 +186,10 @@ def stats(app, ctx):
                  TR(TD("Nb Postings:"), TD("%d" % len(ledger.postings)))
                  ))
 
-    page.add(H2("Links"),
-             UL(
-                 LI(A('Source', href=umap('@@Source'))),
-                 LI(A('Message Log (and Errors)', href=umap('@@Messages'))),
-                 LI(A('Pricing Commodities', href=umap('@@Pricing'))),
-                 ))
+    ul = UL( LI(A('Message Log (and Errors)', href=umap('@@Messages'))),
+             LI(A('Pricing Commodities', href=umap('@@Pricing'))),
+             LI(A('Source', href=umap('@@Source'))), ) 
+    page.add(H2("Links"), ul)
 
     return page.render(app)
 
@@ -324,6 +324,9 @@ market_url = 'http://finance.google.com/finance?q=%s'
 def positions(app, ctx):
     page = Template(ctx)
     page.add(H1("Positions / Assets"))
+## FIXME: remove
+    return page.render(app)
+    
 
     # First compute the trial balance.
     ledger = ctx.ledger
@@ -586,6 +589,7 @@ def ledger(app, ctx):
     assert style in ('compact', 'other', 'only', 'full')
 
     accname = getattr(ctx, 'accname', '')
+    accname = accname.replace(websep, Account.sep)
     try:
         acc = ctx.ledger.get_account(accname)
     except KeyError:
@@ -754,8 +758,9 @@ def source(app, ctx):
     """
     page = Template(ctx)
     div = DIV(id='source')
-    for i, line in izip(count(1), ctx.ledger.source):
-        div.add(PRE("%4d  |%s" % (i, line.strip())), A(name='line%d' % i))
+    if not app.opts.private:
+        for i, line in izip(count(1), ctx.ledger.source):
+            div.add(PRE("%4d  |%s" % (i, line.strip())), A(name='line%d' % i))
 
     page.add(H1('Source'), div)
     return page.render(app)
