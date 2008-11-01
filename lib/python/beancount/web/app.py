@@ -188,10 +188,20 @@ def stats(app, ctx):
 
     ul = UL( LI(A('Message Log (and Errors)', href=umap('@@Messages'))),
              LI(A('Pricing Commodities', href=umap('@@Pricing'))),
-             LI(A('Source', href=umap('@@Source'))), ) 
+             LI(A('Source', href=umap('@@Source'))),
+             LI(A('Resources Requires for CSS (for websuck)', href=umap('@@ScrapeResources'))))
     page.add(H2("Links"), ul)
 
     return page.render(app)
+
+def scraperes(app, ctx):
+    page = Template(ctx)
+    page.add(H1("Scrape Resources"))
+    for id_ in ('@@FolderOpen', '@@FolderClosed', '@@HeaderBackground'):
+        page.add(IMG(src=umap(id_)))
+    return page.render(app)
+
+
 
 def trial(app, ctx):
     page = Template(ctx)
@@ -213,12 +223,16 @@ def trial(app, ctx):
     return page.render(app)
 
 
-def semi_table(acc, tid):
+def semi_table(acc, tid, remove_empty=True):
     table = TABLE(id=tid, CLASS='semi accounts treetable')
     table.add(THEAD(TR(TH("Account"), TH("Debit"), TH("Credit"))))
     it = iter(itertree(acc))
     sum_pos, sum_neg = Wallet(), Wallet()
     for acc, td1, tr, skip in treetable_builder(table, it):
+        if remove_empty and len(acc) == 0:
+            skip()
+            continue
+
         td1.add(
             A(acc.name, href=umap('@@AccountLedger', acc.fullname), CLASS='accomp'))
         wpos, wneg = acc.local_balance.split()
@@ -326,7 +340,7 @@ def positions(app, ctx):
     page.add(H1("Positions / Assets"))
 ## FIXME: remove
     return page.render(app)
-    
+
 
     # First compute the trial balance.
     ledger = ctx.ledger
@@ -417,7 +431,7 @@ def positions(app, ctx):
 
         market, name = commnames.get(comm, u'')
         if market is not None:
-            name = A(name, href=market_url % market)            
+            name = A(name, href=market_url % market)
         tds = [TD(name, CLASS='l'),
                TD("%s %s" % (amount, comm)), TD(pcomm),
                TD(fprice), TD(fchange),
@@ -758,7 +772,9 @@ def source(app, ctx):
     """
     page = Template(ctx)
     div = DIV(id='source')
-    if not app.opts.private:
+    if app.opts.private:
+        div.add(P("(Sorry, source not available.)"))
+    else:
         for i, line in izip(count(1), ctx.ledger.source):
             div.add(PRE("%4d  |%s" % (i, line.strip())), A(name='line%d' % i))
 
@@ -920,6 +936,7 @@ def server_error(app, ctx):
 
 
 
+
 # page-id, callable-handler, render-format, regexp-for-matching
 # If the regexp is left to a value of None, it is assumed it matches the render string exactly.
 page_directory = (
@@ -929,6 +946,8 @@ page_directory = (
     ('@@FolderOpen', static('folder_open.png', 'image/png'), '/folder_open.png', None),
     ('@@FolderClosed', static('folder_closed.png', 'image/png'), '/folder_closed.png', None),
     ('@@HeaderBackground', static("header-universal-dollar.jpg", 'image/jpeg'), '/header.jpg', None),
+    ('@@ScrapeResources', scraperes, '/scraperes', None),
+
     ('@@Home', redirect('@@ChartOfAccounts'), '/', None),
 
     ('@@ChartOfAccounts', chartofaccounts, '/accounts', None),
