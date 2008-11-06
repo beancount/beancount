@@ -238,7 +238,7 @@ def create_filter_pred(opts):
 
     if opts.tag:
         try:
-            tagfun = re.compile(opts.tag, re.I).search
+            tagfun = re.compile('^%s$' % opts.tag, re.I).search
         except re.error, e:
             raise SystemExit(e)
     else:
