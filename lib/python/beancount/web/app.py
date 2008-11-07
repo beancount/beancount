@@ -180,7 +180,7 @@ def haccount(accname):
     return accspan
 
 
-def chartofaccounts(app, ctx):
+def page__chartofaccounts(app, ctx):
     page = Template(ctx)
 
     table = TABLE(id='chart-of-accounts', CLASS='accounts treetable')
@@ -198,7 +198,7 @@ def chartofaccounts(app, ctx):
     page.add(H1("Chart of Accounts"), table)
     return page.render(app)
 
-def stats(app, ctx):
+def page__stats(app, ctx):
     page = Template(ctx)
     page.add(H1("Statistics, Logs and Other Info"))
 
@@ -219,7 +219,7 @@ def stats(app, ctx):
 
     return page.render(app)
 
-def scraperes(app, ctx):
+def page__scraperes(app, ctx):
     page = Template(ctx)
     page.add(H1("Scrape Resources"))
     for id_ in ('@@FolderOpen', '@@FolderClosed', '@@HeaderBackground'):
@@ -228,7 +228,7 @@ def scraperes(app, ctx):
 
 
 
-def trial(app, ctx):
+def page__trialbalance(app, ctx):
     page = Template(ctx)
 
     table = TABLE(id='balance', CLASS='accounts treetable')
@@ -306,7 +306,7 @@ def semi_table(acc, tid, remove_empty=True, conversions=None):
     return table, net
 
 
-def balance_sheet(app, ctx):
+def page__balancesheet(app, ctx):
     page = Template(ctx)
     page.add(H1("Balance Sheet"))
 
@@ -338,7 +338,7 @@ def balance_sheet(app, ctx):
 
 
 
-def income(app, ctx):
+def page__income(app, ctx):
     page = Template(ctx)
     page.add(H1("Income Statement / P&L Report"))
 
@@ -369,14 +369,14 @@ def income(app, ctx):
     return page.render(app)
 
 
-def capital(app, ctx):
+def page__capital(app, ctx):
     page = Template(ctx)
     page.add(H1("Capital Statement"))
     page.add(P("FIXME TODO"))
     return page.render(app)
 
 
-def cashflow(app, ctx):
+def page__cashflow(app, ctx):
     page = Template(ctx)
     page.add(H1("Cash-Flow Statement"))
     page.add(P("FIXME TODO"))
@@ -388,7 +388,7 @@ refcomm = 'USD'
 
 market_url = 'http://finance.google.com/finance?q=%s'
 
-def positions(app, ctx):
+def page__positions(app, ctx):
     page = Template(ctx)
     page.add(H1("Positions / Assets"))
 ## FIXME: remove
@@ -499,7 +499,7 @@ def positions(app, ctx):
 
 
 
-def pricing(app, ctx):
+def page__pricing(app, ctx):
     "A list of the commodities used for pricing each type of financial asset."
     page = Template(ctx)
     page.add(H1("Pricing Commodities"))
@@ -565,7 +565,7 @@ def treetable_builder(tbl, iterator, skiproot=False):
 
 
 
-def activity(app, ctx):
+def page__activity(app, ctx):
     "Output the updated time ranges of each account."
 
     page = Template(ctx)
@@ -620,7 +620,7 @@ def iter_months(oldest, newest):
             break
 
 
-def ledgeridx(app, ctx):
+def page__ledgerindex(app, ctx):
     ledger = app.ledger
 
     page = Template(ctx)
@@ -649,7 +649,7 @@ def ledgeridx(app, ctx):
 
 
 
-def ledger(app, ctx):
+def page__ledger(app, ctx):
     """
     List the transactions that pertain to a list of filtered postings.
     """
@@ -825,7 +825,7 @@ def register_insert_checks(checklist, table, date=None):
             break
 
 
-def source(app, ctx):
+def page__source(app, ctx):
     """
     Serve the source of the ledger.
     """
@@ -849,7 +849,7 @@ msgname = {
     logging.CRITICAL: 'critical',
     }
 
-def messages(app, ctx):
+def page__messages(app, ctx):
     """
     Report all ledger errors.
     """
@@ -869,7 +869,7 @@ def messages(app, ctx):
 
 ramq_reqdays = 183
 
-def locations(app, ctx):
+def page__locations(app, ctx):
     page = Template(ctx)
     page.add(H1("Locations"))
 
@@ -925,7 +925,7 @@ def locations(app, ctx):
     return page.render(app)
 
 
-def trades(app, ctx):
+def page__trades(app, ctx):
     """
     Render a list of trades.
     """
@@ -951,7 +951,7 @@ def trades(app, ctx):
 
 
 
-def reload(app, ctx):
+def page__reload(app, ctx):
     """
     Reload the ledger file and return to the given URL.
     """
@@ -960,7 +960,7 @@ def reload(app, ctx):
 
 
 
-def setstyle(app, ctx):
+def page__setstyle(app, ctx):
     "Set the session's style and redirect where we were."
     ctx.session['style'] = ctx.style[0]
     raise HttpRedirect(ctx.environ['HTTP_REFERER'])
@@ -987,7 +987,7 @@ def static(fn, ctype):
         app.write(result)
     return f
 
-def server_error(app, ctx):
+def page__servererror(app, ctx):
     app.setHeader('Content-Type','text/html')
     app.write('TODO')
     ## FIXME return the error page here.
@@ -1005,33 +1005,33 @@ page_directory = (
     ('@@FolderOpen', static('folder_open.png', 'image/png'), '/folder_open.png', None),
     ('@@FolderClosed', static('folder_closed.png', 'image/png'), '/folder_closed.png', None),
     ('@@HeaderBackground', static("header-universal-dollar.jpg", 'image/jpeg'), '/header.jpg', None),
-    ('@@ScrapeResources', scraperes, '/scraperes', None),
+    ('@@ScrapeResources', page__scraperes, '/scraperes', None),
 
     ('@@Home', redirect('@@ChartOfAccounts'), '/', None),
 
-    ('@@ChartOfAccounts', chartofaccounts, '/accounts', None),
-    ('@@Statistics', stats, '/stats', None),
-    ('@@Activity', activity, '/activity', None),
-    ('@@TrialBalance', trial, '/trial', None),
-    ('@@BalanceSheet', balance_sheet, '/balance', None),
-    ('@@IncomeStatement', income, '/income', None),
-    ('@@CapitalStatement', capital, '/capital', None),
-    ('@@CashFlow', cashflow, '/cashflow', None),
-    ('@@Positions', positions, '/positions', None),
-    ('@@Locations', locations, '/locations', None),
-    ('@@Trades', trades, '/trades', None),
-    ('@@Pricing', pricing, '/pricing', None),
+    ('@@ChartOfAccounts', page__chartofaccounts, '/accounts', None),
+    ('@@Statistics', page__stats, '/stats', None),
+    ('@@Activity', page__activity, '/activity', None),
+    ('@@TrialBalance', page__trialbalance, '/trial', None),
+    ('@@BalanceSheet', page__balancesheet, '/balance', None),
+    ('@@IncomeStatement', page__income, '/income', None),
+    ('@@CapitalStatement', page__capital, '/capital', None),
+    ('@@CashFlow', page__cashflow, '/cashflow', None),
+    ('@@Positions', page__positions, '/positions', None),
+    ('@@Locations', page__locations, '/locations', None),
+    ('@@Trades', page__trades, '/trades', None),
+    ('@@Pricing', page__pricing, '/pricing', None),
 
-    ('@@LedgerIndex', ledgeridx, '/ledger/index', None),
-    ('@@GeneralLedger', ledger, '/ledger/general', None),
-    ('@@MonthLedger', ledger, '/ledger/bymonth/%04d/%02d', '^/ledger/bymonth/(?P<year>\d\d\d\d)/(?P<month>\d\d)$'),
-    ('@@AccountLedger', ledger, '/ledger/byaccount/%s', '^/ledger/byaccount/(?P<accname>.*)$'),
+    ('@@LedgerIndex', page__ledgerindex, '/ledger/index', None),
+    ('@@GeneralLedger', page__ledger, '/ledger/general', None),
+    ('@@MonthLedger', page__ledger, '/ledger/bymonth/%04d/%02d', '^/ledger/bymonth/(?P<year>\d\d\d\d)/(?P<month>\d\d)$'),
+    ('@@AccountLedger', page__ledger, '/ledger/byaccount/%s', '^/ledger/byaccount/(?P<accname>.*)$'),
 
-    ('@@SetStyle', setstyle, '/setstyle', '^/setstyle$'),
-    ('@@Messages', messages, '/messages', None),
-    ('@@Reload', reload, '/reload', None),
-    ('@@Source', source, '/source', None),
-    ('@@Error', server_error, '/error', None),
+    ('@@SetStyle', page__setstyle, '/setstyle', '^/setstyle$'),
+    ('@@Messages', page__messages, '/messages', None),
+    ('@@Reload', page__reload, '/reload', None),
+    ('@@Source', page__source, '/source', None),
+    ('@@Error', page__servererror, '/error', None),
 
     )
 
