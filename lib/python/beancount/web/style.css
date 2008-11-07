@@ -119,7 +119,10 @@ table.txntable tr.posting {
 }
 
 table.txntable td.highpost {
-  background-color: #F0F0F0;
+  text-decoration: underline; 
+/*   font-weight: bold; */
+/*   border: thin dashed #CCC; */
+/*   background-color: #E8E8E8; */
 }
 
 
@@ -128,6 +131,10 @@ table.txntable td.highpost {
 
 table.accounts td {
   background-color: #F0F0F0;
+}
+
+tr.txn td {
+  border-top: thin solid black;
 }
 
 tr.txn span.amount {
