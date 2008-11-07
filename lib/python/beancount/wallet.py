@@ -218,6 +218,20 @@ class Wallet(dict):
             w[k] = value
         return wpos, wneg
 
+    def convert(self, conversions):
+        """Given a list of (from-asset, to-asset, rate), convert the from-assets
+        to to-assets using the specified rate and return a new Wallet with the
+        new amounts."""
+        assert isinstance(conversions, list)
+        w = self.copy()
+        for from_asset, to_asset, rate in conversions:
+            if from_asset in w:
+                if to_asset not in w:
+                    w[to_asset] = Decimal()
+                w[to_asset] += w[from_asset] * rate
+                del w[from_asset]
+        return w
+
 
 # Order of important for commodities.
 comm_importance = {

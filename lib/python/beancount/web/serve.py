@@ -15,6 +15,7 @@ from wsgiref.headers import Headers
 from StringIO import StringIO
 from os.path import *
 from copy import copy
+from decimal import Decimal
 import Cookie
 
 # beancount imports
@@ -214,7 +215,21 @@ def main():
     parser.add_option('-T', '--title', action='store',
                       help="Title to display in the web interface.")
 
+    parser.add_option('--conversion', 
+                      action='append', metavar='CONVERSION', default=[],
+                      help="Apply the given conversion to wallets before displaying them. "
+                      "The option's format should like this: '1 EUR = 1.28 USD'.")
+
     opts, ledger, args = cmdline.main(parser)
+
+    # Parse the specified conversions.
+    opts.conversions = []
+    for cstr in opts.conversion:
+        side = '([0-9.]+)\s+([A-Z]{3})'
+        mo = re.match('\s*%s\s*=\s*%s\s*' % (side, side), cstr)
+        amt1, amt2 = map(Decimal, mo.group(1, 3))
+        comm1, comm2 = mo.group(2, 4)
+        opts.conversions.append( (comm1, comm2, amt2/amt1) )
 
     # Create and run the web server.
     app = BeanServer(ledger, opts)

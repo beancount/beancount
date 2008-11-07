@@ -57,11 +57,12 @@ class Template(object):
 
         self.navigation = DIV(
             UL(LI(A('Chart of Accounts', href=umap('@@ChartOfAccounts'))),
+               LI(A('Journals', href=umap('@@LedgerIndex'))),
                LI(A('Trial Balance', href=umap('@@TrialBalance'))),
-               LI(A('Ledgers', href=umap('@@LedgerIndex'))),
                LI(A('Balance Sheet', href=umap('@@BalanceSheet'))),
-               LI(A('P&L', href=umap('@@IncomeStatement'))),
+               LI(A('Income', href=umap('@@IncomeStatement'))),
                LI(A('Capital', href=umap('@@CapitalStatement'))),
+               LI(A('CashFlow', href=umap('@@CashFlow'))),
                LI(A('Positions', href=umap('@@Positions'))),
                LI(A('Trades', href=umap('@@Trades'))),
                LI(A('Activity', href=umap('@@Activity'))),
@@ -116,6 +117,19 @@ def hwallet(w, round=True):
         w = w.round()
     return ljoin([SPAN('%s %s' % (a,c), CLASS='amount') for (c,a) in w.tostrlist()], ', ')
 
+def hwallet_paren(w, round=True):
+    "A version of hwallet that renders negative numbers in parentheses."
+    if round:
+        w = w.round()
+    l = []
+    for (c,a) in w.tostrlist():    
+        if a >= 0:
+            a = SPAN('%s %s' % (a,c), CLASS='amount')
+        else:
+            a = SPAN('(%s) %s' % (-a,c), CLASS='amount')
+        l.append(a)
+    return ljoin(l, ', ')
+
 
 
 # Scavenged from Mercurial.
@@ -141,8 +155,9 @@ def cachefunc(func):
 websep = '~'
 
 @cachefunc
-def haccount(accname):
-    "Return some HTML for a full account name."
+def haccount_split(accname):
+    """Return some HTML for a full account name. This version makes each
+    subaccount clickable."""
     l = []
     append = l.append
     comps = []
@@ -154,6 +169,16 @@ def haccount(accname):
     accspan = SPAN(ljoin(l, SPAN(Account.sep, CLASS='accsep')), CLASS='account')
     accspan.cache = 1
     return accspan
+
+@cachefunc
+def haccount(accname):
+    "Return some HTML for a full account name. There is a single link."
+    accspan = SPAN(
+        A(accname, href=umap('@@AccountLedger', accname), CLASS='accomp'),
+        CLASS='account')
+    accspan.cache = 1
+    return accspan
+
 
 def chartofaccounts(app, ctx):
     page = Template(ctx)
@@ -207,27 +232,48 @@ def trial(app, ctx):
     page = Template(ctx)
 
     table = TABLE(id='balance', CLASS='accounts treetable')
-    table.add(THEAD(TR(TH("Account"), TH("Cumulative"), TH("Individual"))))
+    table.add(THEAD(TR(TH("Account"), TH("Debit"), TH("Credit"), TH(), TH("Cum. Sum"))))
     it = iter(itertree(ctx.ledger.get_root_account()))
+    sumdr, sumcr = Wallet(), Wallet()
     for acc, td1, tr, skip in treetable_builder(table, it):
         if len(acc) == 0:
             skip()
             continue
         td1.add(
             A(acc.name, href=umap('@@AccountLedger', acc.fullname), CLASS='accomp'))
+        
+        lbal = acc.local_balance.convert(app.opts.conversions).round()
+        dr, cr = lbal.split()
+        sumdr += dr
+        sumcr += cr
         tr.add(
-            TD(hwallet(getattr(acc, 'balance').round()), CLASS='wallet'),
-            TD(hwallet(getattr(acc, 'local_balance').round()), CLASS='wallet'))
+            TD(hwallet_paren(dr), CLASS='wallet'),
+            TD(hwallet_paren(-cr), CLASS='wallet'),
+            )
+
+        bal = acc.balance.convert(app.opts.conversions).round()
+        if not lbal and bal:
+            tr.add(
+                TD('...'),
+                TD(hwallet_paren(bal),
+                   CLASS='wallet'),
+                )
+
+    table.add(TR(TD(), TD(hwallet_paren(sumdr)), TD(hwallet_paren(-sumcr)),
+                 TD(), TD()))
 
     page.add(H1('Trial Balance'), table)
     return page.render(app)
 
 
-def semi_table(acc, tid, remove_empty=True):
+def semi_table(acc, tid, remove_empty=True, conversions=None):
+    """ Given an account, create a table for the transactions contained therein
+    (including its subaccounts)."""
+
     table = TABLE(id=tid, CLASS='semi accounts treetable')
     table.add(THEAD(TR(TH("Account"), TH("Debit"), TH("Credit"))))
     it = iter(itertree(acc))
-    sum_pos, sum_neg = Wallet(), Wallet()
+    sumdr, sumcr = Wallet(), Wallet()
     for acc, td1, tr, skip in treetable_builder(table, it):
         if remove_empty and len(acc) == 0:
             skip()
@@ -235,27 +281,29 @@ def semi_table(acc, tid, remove_empty=True):
 
         td1.add(
             A(acc.name, href=umap('@@AccountLedger', acc.fullname), CLASS='accomp'))
-        wpos, wneg = acc.local_balance.split()
-        sum_pos += wpos
-        sum_neg += wneg
+
+        local_balance = acc.local_balance
+        if conversions:
+            local_balance = local_balance.convert(conversions)
+
+        dr, cr = local_balance.split()
+        sumdr += dr
+        sumcr += cr
         tr.add(
-            TD(hwallet(wpos.round()) if wpos else ''),
+            TD(hwallet_paren(dr.round()) if dr else ''),
+            TD(hwallet_paren(-cr.round()) if cr else ''),
             )
-        if wneg:
-            tr.add(TD('(', hwallet(-wneg.round()), ')'))
-        else:
-            tr.add(TD())
 
     table.add(TR(TD(B("Totals")),
-                 TD(hwallet(sum_pos)),
-                 TD(["(", hwallet(-sum_neg), ")"] if sum_neg else [])))
+                 TD(hwallet_paren(sumdr)),
+                 TD(hwallet_paren(-sumcr))))
 
-    total = sum_pos + sum_neg
-    table.add(TR(TD(B("Sum")),
-                 TD(hwallet(total))
-                 ))
+    net = sumdr + sumcr
+    ## table.add(TR(TD(B("Net")),
+    ##              TD(hwallet_paren(net))
+    ##              ))
 
-    return table, total
+    return table, net
 
 
 def balance_sheet(app, ctx):
@@ -271,9 +319,9 @@ def balance_sheet(app, ctx):
         page.add(P("Could not get all A, L and E accounts.", CLASS="error"))
         return page.render(app)
 
-    a_table, a_total = semi_table(a_acc, 'assets')
-    l_table, l_total = semi_table(l_acc, 'liabilities')
-    e_table, e_total = semi_table(e_acc, 'equity')
+    a_table, a_total = semi_table(a_acc, 'assets', conversions=app.opts.conversions)
+    l_table, l_total = semi_table(l_acc, 'liabilities', conversions=app.opts.conversions)
+    e_table, e_total = semi_table(e_acc, 'equity', conversions=app.opts.conversions)
     page.add(DIV(H2("Liabilities", CLASS="duotables"), l_table,
                  H2("Equity", CLASS="duotables"), e_table,
                  CLASS='right'),
@@ -282,18 +330,15 @@ def balance_sheet(app, ctx):
              )
 
     total = a_total + l_total + e_total
-    net = TABLE(id='net', CLASS='treetable')
-    net.add(
-        TR(TD("Net Difference"),
-           TD(hwallet(total))))
     page.add(BR(style="clear: both"),
-             H2("Net Difference"), net)
+             TABLE( TR(TD(B("Net Income:")), TD(hwallet(total))),
+                    id='net', CLASS='treetable') )
 
     return page.render(app)
 
 
 
-def pnl(app, ctx):
+def income(app, ctx):
     page = Template(ctx)
     page.add(H1("Income Statement / P&L Report"))
 
@@ -305,8 +350,8 @@ def pnl(app, ctx):
         page.add(P("Could not get all unique income and expenses accounts.", CLASS="error"))
         return page.render(app)
 
-    i_table, i_total = semi_table(i_acc, 'income')
-    e_table, e_total = semi_table(e_acc, 'expenses')
+    i_table, i_total = semi_table(i_acc, 'income', conversions=app.opts.conversions)
+    e_table, e_total = semi_table(e_acc, 'expenses', conversions=app.opts.conversions)
     page.add(DIV(H2("Expenses", CLASS="duotables"), e_table,
                  CLASS='right'),
              DIV(H2("Income", CLASS="duotables"), i_table,
@@ -329,6 +374,14 @@ def capital(app, ctx):
     page.add(H1("Capital Statement"))
     page.add(P("FIXME TODO"))
     return page.render(app)
+
+
+def cashflow(app, ctx):
+    page = Template(ctx)
+    page.add(H1("Cash-Flow Statement"))
+    page.add(P("FIXME TODO"))
+    return page.render(app)
+
 
 
 refcomm = 'USD'
@@ -572,11 +625,14 @@ def ledgeridx(app, ctx):
 
     page = Template(ctx)
     ul = UL(
-        LI(A("General Ledger (all transactions)", href=umap('@@GeneralLedger'))),
+        LI(A("General Journal", href=umap('@@GeneralLedger')),
+           "  (all transactions by-date)"),
         )
-    page.add(H1("Ledgers"),
+    page.add(H1("Journals"),
              ul,
-             P(I("Note: These ledgers display transactions for all accounts; for by-account ledgers, click on any account name in any other view.")),
+             ## P(I("""Note: These journals display transactions for accounts, ordered by-date; for
+             ##        ledgers (transactions by-account), click on any account name
+             ##        in any other view.""")),
              )
 
     if ledger.transactions:
@@ -585,7 +641,7 @@ def ledgeridx(app, ctx):
         mths = list(iter_months(date_oldest, date_youngest))
         for d in reversed(mths):
             mthstr = d.strftime('%Y-%m')
-            ul.add(LI(A("Ledger for %s" % mthstr,
+            ul.add(LI(A("Journal for %s" % mthstr,
                         href=umap("@@MonthLedger", d.year, d.month)
                       )))
 
@@ -637,7 +693,10 @@ def ledger(app, ctx):
     table = render_postings_table(postings, style, dfilter, acc_checks)
 
     if acc.isroot():
-        page.add(H1('General Ledger'), table)
+        if dbegin is None:
+            page.add(H1('General Journal'), table)
+        else:
+            page.add(H1('Journal for %s' % dbegin), table)
     else:
         page.add(H1('Ledger for ', haccount(acc.fullname)), table)
 
@@ -955,8 +1014,9 @@ page_directory = (
     ('@@Activity', activity, '/activity', None),
     ('@@TrialBalance', trial, '/trial', None),
     ('@@BalanceSheet', balance_sheet, '/balance', None),
-    ('@@IncomeStatement', pnl, '/pnl', None),
+    ('@@IncomeStatement', income, '/income', None),
     ('@@CapitalStatement', capital, '/capital', None),
+    ('@@CashFlow', cashflow, '/cashflow', None),
     ('@@Positions', positions, '/positions', None),
     ('@@Locations', locations, '/locations', None),
     ('@@Trades', trades, '/trades', None),

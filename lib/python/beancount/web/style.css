@@ -329,3 +329,13 @@ div.btrade {
   border-top: medium solid black;
   margin-bottom: 30px;
 }
+
+
+
+/* Trial Balance */
+
+table#balance td.wallet {
+  padding-left: 1em;
+  padding-right: 1em;
+}
+

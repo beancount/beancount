@@ -187,12 +187,12 @@ def addopts(parser):
     group.add_option('-n', '--note', action='append', metavar='REGEXP',
                      help="Filter only the postings with the given notes.")
 
-    group.add_option('-t', '--time', action='store', metavar='TIME_EXPR',
+    group.add_option('--time', action='store', metavar='TIME_EXPR',
                      help="Filter only the postings within the given time range. "
                      "There are multiple valid time range formats. See source "
                      "for details.")
 
-    group.add_option('-g', '--tag', action='store', metavar='REGEXP',
+    group.add_option('-g', '-t', '--tag', action='store', metavar='REGEXP',
                      help="Filter only the postings whose tag matches the "
                      "expression.")
     
@@ -238,7 +238,7 @@ def create_filter_pred(opts):
 
     if opts.tag:
         try:
-            tagfun = re.compile('^%s$' % opts.tag, re.I).search
+            tagfun = lambda tags: opts.tag in tags
         except re.error, e:
             raise SystemExit(e)
     else:
@@ -266,8 +266,8 @@ def create_filter_pred(opts):
                 if not (dbegin <= post.get_date() < dend):
                     return False
             if tagfun is not None:
-                tag = post.get_tag()
-                if not (tag and tagfun(tag)):
+                tags = post.get_tags()
+                if not (tags and tagfun(tags)):
                     return False
             return True
 

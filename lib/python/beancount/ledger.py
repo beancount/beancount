@@ -225,10 +225,10 @@ class Transaction(Dated):
     payee = None
     narration = None
 
-    # The tag is a string that is assigned to a set of transactions, using the
-    # @begintag and @endtag directives. This can be used to mark transactions
-    # during a trip, for example.
-    tag = None
+    # The tags is a (shared) list that is assigned to a set of transactions,
+    # using the @begintag and @endtag directives. This can be used to mark
+    # transactions during a trip, for example.
+    tags = None
 
     # The vector sum of the various postings here-in contained.
     wallet = None
@@ -327,8 +327,8 @@ class Posting(Dated):
     def get_note(self):
         return self.note
 
-    def get_tag(self):
-        return self.txn.tag
+    def get_tags(self):
+        return self.txn.tags
 
     def get_txn_postings(self):
         return self.txn.postings
@@ -432,8 +432,8 @@ class Ledger(object):
         add_directive(EndTagDirective(self))
         add_directive(LocationDirective(self))
 
-        # Current tag that is being assigned to transactions during parsing.
-        self.tag = None
+        # Current tags that are being assigned to transactions during parsing.
+        self.tags = []
 
         # List of booked trades.
         self.booked_trades = []
@@ -615,7 +615,7 @@ class Ledger(object):
                     txn.filename = fn
                     txn.lineno = lineno[0]
                     txn.ordering = next_ordering()
-                    txn.tag = self.tag
+                    txn.tags = self.tags
                     self.transactions.append(txn)
 
                     try:
@@ -1388,12 +1388,9 @@ class BeginTagDirective(object):
         ledger = self.ledger
 
         tag = line.strip()
-        if ledger.tag is not None:
-            ledger.log(ERROR, "Nested tags not supported. Tag %s ignored." % tag,
-                       (filename, lineno))
-            return
-
-        ledger.tag = tag
+        ledger.tags = list(ledger.tags) + [tag]  
+        # Note: it is important to make a copy of 'ledger.tags' here because
+        # this is getting reference by postings many many times.
 
     def apply(self):
         # Nothing to do: the tag has been set on the transaction objects during
@@ -1405,8 +1402,10 @@ class EndTagDirective(BeginTagDirective):
 
     def parse(self, line, filename, lineno):
         ledger = self.ledger
-        assert ledger.tag is not None
-        ledger.tag = None
+        tag = line.strip()
+        assert tag in ledger.tags, (tag, ledger.tags)
+        ledger.tags = list(ledger.tags) # copy
+        ledger.tags.remove(tag)
 
 
 
