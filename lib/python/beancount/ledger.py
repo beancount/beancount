@@ -431,6 +431,7 @@ class Ledger(object):
         add_directive(BeginTagDirective(self))
         add_directive(EndTagDirective(self))
         add_directive(LocationDirective(self))
+        add_directive(PriceDirective(self))
 
         # Current tags that are being assigned to transactions during parsing.
         self.tags = []
@@ -1665,6 +1666,54 @@ class LocationDirective(object):
 
         ldate = date(*map(int, mo.group(1, 2, 3)))
         self.locations.append( (ldate, mo.group(4), mo.group(5)) )
+
+    def apply(self):
+        pass # Nothing to do--the modules do the parsing themselves.
+
+
+
+class PriceDirective(object):
+    """
+    Define prices and exchange rates between two commodities. This is used to
+    build an internal price history database that can be used for other
+    purposes, for example, converting all values from one commodity to another
+    in the reports, and for computing capital gains in a currency different from
+    the underlying's rice currency.
+
+    Note that we don't include this feature with the intention of providing
+    detailed time-series of prices. Instead, we expect that the user will simply
+    enter some of the prices, where relevant for his application.
+    """
+
+    name = 'price'
+    prio = 100
+
+    mre = re.compile(("\s*(?:%(date)s)"
+                      "\s+(?:%(commodity)s)"
+                      "\s+%(amount)s"
+                      ) %
+                     {'date': Ledger.date_re.pattern,
+                      'commodity': Ledger.commodity_re.pattern,
+                      'amount': Ledger.amount_re.pattern})
+
+    def __init__(self, ledger):
+        self.ledger = ledger
+
+        # A map of (from, to) commodity pairs to a list of (date, price) pairs.
+        self.prices = {}
+
+    def parse(self, line, filename, lineno):
+        mo = self.mre.match(line)
+        if not mo:
+            self.ledger.log(CRITICAL, "Invalid price directive: %s" % line,
+                            (filename, lineno))
+            return
+        
+        trace(mo.groups())
+## FIXME continue
+        ## ldate = date(*map(int, mo.group(1, 2, 3)))
+        ## trace(ldate, mo.group(2,3,4))
+        
 
     def apply(self):
         pass # Nothing to do--the modules do the parsing themselves.
