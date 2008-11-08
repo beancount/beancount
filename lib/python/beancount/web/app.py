@@ -217,6 +217,14 @@ def page__stats(app, ctx):
              LI(A('Resources Requires for CSS (for websuck)', href=umap('@@ScrapeResources'))))
     page.add(H2("Links"), ul)
 
+    ul = UL()
+    prices = ledger.directives['price'].prices
+    for (base, quote), phist in prices.iteritems():
+        sym = '%s/%s' % (base, quote)
+        ul.add( LI(A("Price History for %s" % sym,
+                      href=umap('@@PriceHistory', base, quote))) )
+    page.add(H2("Price Histories"), ul)
+
     return page.render(app)
 
 def page__scraperes(app, ctx):
@@ -514,6 +522,23 @@ def page__pricing(app, ctx):
         tbl.add(TR( TD(comm), TD(', '.join(pclist)) ))
 
     page.add(tbl)
+
+    return page.render(app)
+
+
+def page__pricehistory(app, ctx):
+    """A page that describes the samples of a price history. It expects
+    base/quote commodities as input."""
+    page = Template(ctx)
+    page.add(H1("Price History for %s/%s" % (ctx.base, ctx.quote)))
+    
+    tbl, = page.add(TABLE(THEAD(TR(TH("Date"), TH("Rate"))),
+                          CLASS='price_history'))
+
+    prices = app.ledger.directives['price'].prices
+    phist = prices[(ctx.base, ctx.quote)]
+    for date_, rate in phist:
+        tbl.append( TR(TD(date_.isoformat()), TD(str(rate))) )
 
     return page.render(app)
 
@@ -1021,11 +1046,16 @@ page_directory = (
     ('@@Locations', page__locations, '/locations', None),
     ('@@Trades', page__trades, '/trades', None),
     ('@@Pricing', page__pricing, '/pricing', None),
+    ('@@PriceHistory', page__pricehistory, '/price/history/%s/%s',
+     '^/price/history/(?P<base>[^/]+)/(?P<quote>[^/]+)$'),
 
     ('@@LedgerIndex', page__ledgerindex, '/ledger/index', None),
     ('@@GeneralLedger', page__ledger, '/ledger/general', None),
-    ('@@MonthLedger', page__ledger, '/ledger/bymonth/%04d/%02d', '^/ledger/bymonth/(?P<year>\d\d\d\d)/(?P<month>\d\d)$'),
-    ('@@AccountLedger', page__ledger, '/ledger/byaccount/%s', '^/ledger/byaccount/(?P<accname>.*)$'),
+    ('@@MonthLedger', page__ledger, '/ledger/bymonth/%04d/%02d',
+     '^/ledger/bymonth/(?P<year>\d\d\d\d)/(?P<month>\d\d)$'),
+
+    ('@@AccountLedger', page__ledger, '/ledger/byaccount/%s',
+     '^/ledger/byaccount/(?P<accname>.*)$'),
 
     ('@@SetStyle', page__setstyle, '/setstyle', '^/setstyle$'),
     ('@@Messages', page__messages, '/messages', None),

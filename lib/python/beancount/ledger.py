@@ -365,7 +365,7 @@ class BookedTrade(object):
         self.postings.append( (post, bamount) )
 
     def booking_commodity(self):
-        return self.post_booking.booking
+        return self.post_booking.booking[0]
 
     #
     # Filtrable.
@@ -549,7 +549,7 @@ class Ledger(object):
          '(?:\s+(?:({)\s*%(amount)s\s*}|({{)\s*%(amount)s\s*}}))?' # declared cost
          '(?:\s+@(@?)(?:\s+%(amount)s))?\s*(?:;(.*))?\s*$'
          '|'
-         '\s+(BOOK)\s+%(commodity)s\s*$'  # booking entry
+         '\s+(BOOK)\s+%(commodity)s(?:\s+(IN)\s+%(commodity)s)?\s*$'  # booking entry
          ')') %  # price/note
         {'amount': amount_re.pattern,
          'account': postaccount_re.pattern,
@@ -660,7 +660,12 @@ class Ledger(object):
                             txn.postings.append(post)
 
                             post.flag, post.account_name, post.note = mo.group(1,2,14)
-                            post.booking = (mo.group(16) if mo.group(15) == 'BOOK' else None)
+                            booking_comm = (mo.group(16) if mo.group(15) == 'BOOK' else None)
+                            if booking_comm is not None:
+                                booking_quote = (mo.group(18) if mo.group(17) == 'IN' else None)
+                                post.booking = (booking_comm, booking_quote)
+                            else:
+                                post.booking = None
 
                             # Remove the modifications to the account name.
                             accname = post.account_name
@@ -870,7 +875,7 @@ class Ledger(object):
         # tuples that represent the "booking jobs" that we have to carry out.
         booking_jobs = defaultdict(set)
         for post in booking_posts:
-            bcomm = post.booking
+            bcomm, bquote = post.booking
             
             for tpost in post.txn.postings:
                 if bcomm in tpost.amount:
@@ -880,7 +885,7 @@ class Ledger(object):
         for acc, bcomms in sorted(booking_jobs.iteritems()):
 
             # For each booking commodity.
-            for bcomm in bcomms:
+            for bcomm, bquote in bcomms:
 
                 # Figure out the price commodity of the booking commodity.
                 pcomms = self.pricedmap[bcomm]
@@ -1712,7 +1717,13 @@ class PriceDirective(object):
         ldate = date(*map(int, mo.group(1, 2, 3)))
         base, quote = mo.group(4,6)
         rate = Decimal(mo.group(5))
-        self.prices[(base, quote)].append( (ldate, rate) )
+        phist = self.prices[(base, quote)]
+        if phist.finddate(ldate) is not None:
+            self.ledger.log(ERROR, "Duplicate price: %s" % line,
+                            (filename, lineno))
+            return
+        else:
+            phist.append( (ldate, rate) )
 
     def apply(self):
         # Sort all the price histories only once.
@@ -1727,11 +1738,20 @@ class PriceHistory(list):
     """ An object that can accumulate samples of price history and calculate
     interpolated values."""
 
+    def __init__(self):
+        list.__init__(self)
+        self.m = {}
+
     def append(self, el):
         assert isinstance(el, tuple)
         assert isinstance(el[0], date)
         assert isinstance(el[1], Decimal)
+        self.m[el[0]] = el[1]
         return list.append(self, el)
+
+    def finddate(self, d):
+        "Return the rate at precisely date 'd'."
+        return self.m.get(d, None)
 
     def interpolate(self, date_):
         "Linear interpolation of the rate, given our samples."
