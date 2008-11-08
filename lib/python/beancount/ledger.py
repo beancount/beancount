@@ -12,7 +12,7 @@ from os.path import *
 from operator import attrgetter
 from itertools import count, izip, chain, repeat
 from StringIO import StringIO
-from bisect import bisect_left
+from bisect import bisect_left, bisect_right
 from collections import defaultdict
 
 # beancount imports
@@ -1699,8 +1699,8 @@ class PriceDirective(object):
     def __init__(self, ledger):
         self.ledger = ledger
 
-        # A map of (from, to) commodity pairs to a list of (date, price) pairs.
-        self.prices = {}
+        # A map of (from, to) commodity pairs to PriceHistory objects.
+        self.prices = defaultdict(PriceHistory)
 
     def parse(self, line, filename, lineno):
         mo = self.mre.match(line)
@@ -1709,14 +1709,48 @@ class PriceDirective(object):
                             (filename, lineno))
             return
         
-        trace(mo.groups())
-## FIXME continue
-        ## ldate = date(*map(int, mo.group(1, 2, 3)))
-        ## trace(ldate, mo.group(2,3,4))
-        
+        ldate = date(*map(int, mo.group(1, 2, 3)))
+        base, quote = mo.group(4,6)
+        rate = Decimal(mo.group(5))
+        self.prices[(base, quote)].append( (ldate, rate) )
 
     def apply(self):
-        pass # Nothing to do--the modules do the parsing themselves.
+        # Sort all the price histories only once.
+        for phist in self.prices.itervalues():
+            phist.sort()
+
+    def getrate(self, base, quote, date_):
+        return self.prices[(base, quote)].interpolate(date_)
 
 
+class PriceHistory(list):
+    """ An object that can accumulate samples of price history and calculate
+    interpolated values."""
+
+    def append(self, el):
+        assert isinstance(el, tuple)
+        assert isinstance(el[0], date)
+        assert isinstance(el[1], Decimal)
+        return list.append(self, el)
+
+    def interpolate(self, date_):
+        "Linear interpolation of the rate, given our samples."
+        idx = bisect_left(self, (date_, None))
+
+        # Edge cases.
+        if idx == len(self):
+            d, r = self[idx-1]
+            return r
+        if idx == 0:
+            d, r = self[0]
+            return r
+
+        # Interpolate between the two closest dates.
+        idx -= 1
+        d1, r1 = self[idx]
+        d2, r2 = self[idx+1]
+        assert d1 < date_, (d1, date_)
+        assert d2 >= date_, (d2, date_)
+        alpha = Decimal((date_ - d1).days) / Decimal((d2 - d1).days)
+        return (1-alpha)*r1 + (alpha)*r2
 
