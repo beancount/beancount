@@ -201,7 +201,7 @@ class Filtrable(object):
     def get_note(self):
         pass
 
-    def get_tag(self):
+    def get_tags(self):
         pass
 
     def get_txn_postings(self):
@@ -379,8 +379,8 @@ class BookedTrade(object):
     def get_note(self):
         return None
 
-    def get_tag(self):
-        return None
+    def get_tags(self):
+        return []
 
     def get_txn_postings(self):
         return self.postings  # Not sure why I'm doing this.
@@ -896,6 +896,7 @@ class Ledger(object):
                 inv = FIFOInventory()
                 ## inv.dump()
                 for post in acc.postings:
+
                     # Apply trades to our inventory.
                     if bcomm in post.amount:
                         assert post.price is not None, post
@@ -912,7 +913,8 @@ class Ledger(object):
                             pnl = inv.reset_pnl()
                             ## inv.dump()
                             tpost.amount = Wallet(pcomm, -pnl)
-                            tpost.flag = 'B' # booked.
+                            tpost.flag = 'B'
+                            tpost.note = 'BOOKED'
 
                             # Add booked postings so we can report them in a
                             # global list later.
