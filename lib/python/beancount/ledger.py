@@ -266,6 +266,12 @@ class Transaction(Dated):
         lines.extend(post.pretty() for post in self.postings)
         return os.linesep.join(lines)
 
+    def get_booking_post(self):
+        """Find a booking entry in its posts and return it or None if there
+        aren't any."""
+        for post in self.postings:
+            if post.booking is not None:
+                return post
 
 
 VIRT_NORMAL, VIRT_BALANCED, VIRT_UNBALANCED = 0, 1, 2
@@ -868,33 +874,50 @@ class Ledger(object):
         Important note: this does *NOT* automatically take into account the
         commissions.
         """
-        booking_posts = (post for post in self.postings if post.booking)
 
-        # Figure out which account to book into, by finding the posting in this
-        # transaction that involves the given commodity. We build a list of
-        # tuples that represent the "booking jobs" that we have to carry out.
+        # Build a list of booking jobs to be done, by looking at all
+        # (unresolved) booking posts and finding out which accounts we need to
+        # apply booking for which commodity. For example:
+        #
+        #    2004-11-29 * Sell QQQ
+        #      Assets:Investments:RBCDirect:Taxable-CA:QQQ   -50.00 QQQ @ 39.02 USD
+        #      Assets:Investments:RBCDirect:Taxable-CA      2233.52 CAD @ 0.8638 USD
+        #      Expenses:Financial:Commissions                 25.00 CAD
+        #      (Income:Investments:Capital-Gains)           BOOK QQQ IN CAD
+        #
+        # The 3rd posting tells us that we need to book QQQ, in the account
+        # specified in the first posting. We would create a booking job to book
+        # QQQ in account 'Assets:Investments:RBCDirect:Taxable-CA:QQQ'. The
+        # second (or other) line(s) do(es) not affect the booking. Note that
+        # this means that commissions are not included in the booked gain/loss.
+        booking_posts = (post for post in self.postings if post.booking)
         booking_jobs = defaultdict(set)
         for post in booking_posts:
-            bcomm, bquote = post.booking
-            
+            bcomm, _ = post.booking
             for tpost in post.txn.postings:
                 if bcomm in tpost.amount:
-                    booking_jobs[tpost.account].add(post.booking)
+                    booking_jobs[tpost.account].add(bcomm)
+                    break
+            else:
+                logging.error("Invalid booking for %s in transaction at %s:%d" %
+                              (bcomm, txn.filename, txn.lineno))
 
-        # For each account where we do booking.
+        # Apply the booking jobs to each required account.
         for acc, bcomms in sorted(booking_jobs.iteritems()):
 
             # For each booking commodity.
-            for bcomm, bquote in bcomms:
+            for bcomm in bcomms:
+                logging.info("Booking  %s  in %s" % (bcomm, acc.fullname))
 
-                # Figure out the price commodity of the booking commodity.
+                # Figure out the pricing commodity of the commodity being
+                # booked.
                 pcomms = self.pricedmap[bcomm]
                 assert len(pcomms) == 1, (bcomm, pcomms)
                 pcomm = iter(pcomms).next()
 
-                # Process all of the account's postings in order
+                # Process all of the account's postings in order.
                 inv = FIFOInventory()
-                ## inv.dump()
+                booked = []
                 for post in acc.postings:
 
                     # Apply trades to our inventory.
@@ -902,26 +925,34 @@ class Ledger(object):
                         assert post.price is not None, post
                         assert len(post.price) == 1
                         price = post.price[pcomm]
-                        inv.trade(price, post.amount[bcomm], post)
-                        ## inv.dump()
+                        _booked, _ = inv.trade(price, post.amount[bcomm], post)
+                        booked.extend(_booked)
 
                     # If there is a booking posting in the current transaction,
                     # set its amount to the P+L at this point.
-                    for tpost in post.txn.postings:
-                        if tpost.booking:
-                            extras = inv.realized_extras
-                            pnl = inv.reset_pnl()
-                            ## inv.dump()
-                            tpost.amount = Wallet(pcomm, -pnl)
-                            tpost.flag = 'B'
-                            tpost.note = 'BOOKED'
+                    #
+                    # FIXME: we should preprocess this to avoid the loop in
+                    # processing each transaction.
+                    txn = post.txn
+                    tpost = txn.get_booking_post()
+                    if tpost is None:
+                        logging.warning("Unbooked %s in transaction at %s:%d" %
+                                        (bcomm, txn.filename, txn.lineno))
+                    else:
+                        ## tpost.booking
 
-                            # Add booked postings so we can report them in a
-                            # global list later.
-                            btrade = BookedTrade(acc, bcomm, tpost)
-                            for post, amt, price in extras:
-                                btrade.add_leg(post, Wallet(bcomm, amt))
-                            self.booked_trades.append(btrade)
+                        pnl = inv.reset_pnl()
+                        tpost.amount = Wallet(pcomm, -pnl)
+                        tpost.flag = 'B'
+                        tpost.note = 'BOOKED'
+
+                        # Add booked postings so we can report them in a
+                        # global list later.
+                        btrade = BookedTrade(acc, bcomm, tpost)
+                        for post, amt in booked:
+                            btrade.add_leg(post, Wallet(bcomm, amt))
+                        booked[:] = []
+                        self.booked_trades.append(btrade)
 
         self.booked_trades.sort()
 
@@ -1029,7 +1060,7 @@ class Ledger(object):
         self.build_postings_lists()
 
 
-            
+
     close_flag = 'A'
 
     def close_books(self, closedate):
@@ -1396,7 +1427,7 @@ class BeginTagDirective(object):
         ledger = self.ledger
 
         tag = line.strip()
-        ledger.tags = list(ledger.tags) + [tag]  
+        ledger.tags = list(ledger.tags) + [tag]
         # Note: it is important to make a copy of 'ledger.tags' here because
         # this is getting reference by postings many many times.
 
@@ -1715,7 +1746,7 @@ class PriceDirective(object):
             self.ledger.log(CRITICAL, "Invalid price directive: %s" % line,
                             (filename, lineno))
             return
-        
+
         ldate = date(*map(int, mo.group(1, 2, 3)))
         base, quote = mo.group(4,6)
         rate = Decimal(mo.group(5))

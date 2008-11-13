@@ -967,9 +967,10 @@ def page__trades(app, ctx):
 
         table = render_postings_table(bpostings, style,
                                       amount_overrides=overrides)
-        title = '%s - %s in %s' % (btrade.close_date(),
-                                   btrade.post_booking.booking,
-                                   btrade.acc.fullname)
+        title = '%s - %s in %s; %s' % (btrade.close_date(),
+                                                btrade.post_booking.booking[0],
+                                                btrade.post_booking.booking[1],
+                                                btrade.acc.fullname)
         page.add(DIV(H2(title), table, CLASS='btrade'))
 
     return page.render(app)

@@ -30,7 +30,6 @@ __all__ = ('Inventory', 'FIFOInventory', 'LIFOInventory', 'AvgInventory',
            'PRICING_REAL', 'PRICING_AVERAGE')
 
 
-fixme remove float() where it appears
 
 class Position(object):
     """ A position that we're holding. Its size represents the remaining size,
@@ -273,7 +272,7 @@ class Inventory(object):
         if quant is not None:
             if quant * pos.size <= 0:
                 raise KeyError("Invalid close size %s of %s." % (quant, pos.size))
-            if float(quant)/pos.size > 1:
+            if abs(quant) > abs(pos.size):
                 raise KeyError("Trying to close %s of %s." % (quant, pos.size))
         else:
             quant = -pos.size
@@ -341,14 +340,14 @@ class Inventory(object):
                 assert total_booked == 0, total_booked
                 realized_pnl = 0
             else:
-                realized_cost = int(round(
-                    (float(total_booked)*self.cost4avg)/position))
+                realized_cost = self.L((total_booked*self.F(self.cost4avg))/position)
                 realized_pnl = total_booked * price - realized_cost
                 self.cost4avg -= realized_cost
         self._realized_pnl += realized_pnl
         if total_booked == 0:
             assert realized_pnl == 0, realized_pnl
-            
+        else:
+            booked.append( (obj, -total_booked) )
             
         # Append the remainder of our trade to the inventory if not all was
         # booked.
