@@ -80,6 +80,17 @@ class Wallet(dict):
         rendered)."""
         return sorted(self.iteritems(), key=self.commodity_key)
 
+    def tonum(self):
+        """Assuming that the wallet contains a single commodity, return the
+        amount for that commodity. If the Wallet is empty, return 0."""
+        if len(self) == 0:
+            d = Decimal()
+        elif len(self) == 1:
+            d = self.itervalues().next()
+        else:
+            raise ValueError("Cannot convert wallet %s to a single number." % self)
+        return d
+
     def __setitem__(self, key, value):
         if not isinstance(value, Decimal):
             value = Decimal(value)
@@ -155,7 +166,7 @@ class Wallet(dict):
         return w
 
     def __mul__(self, other):
-        assert isinstance(other, int)
+        assert isinstance(other, (int, Decimal)), repr(other)
         w = Wallet(self)
         for k, v in self.iteritems():
             w[k] *= other
@@ -163,7 +174,7 @@ class Wallet(dict):
         return w
 
     def __div__(self, other):
-        assert isinstance(other, int)
+        assert isinstance(other, (int, Decimal))
         w = Wallet(self)
         for k, v in self.iteritems():
             w[k] /= other

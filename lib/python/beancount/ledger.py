@@ -939,9 +939,20 @@ class Ledger(object):
                         logging.warning("Unbooked %s in transaction at %s:%d" %
                                         (bcomm, txn.filename, txn.lineno))
                     else:
-                        ## tpost.booking
+                        comm_base, comm_quote = tpost.booking
 
+                        pricedir = self.directives['price']
+
+                        _pnl = 0
+                        for post, amt in booked:
+                            _pnl += post.price.tonum() * amt
+                        assert _pnl
+                        
+                        ## pricedir.getrate(comm_base, comm_quote)
+                        
                         pnl = inv.reset_pnl()
+                        trace(pnl, _pnl)
+
                         tpost.amount = Wallet(pcomm, -pnl)
                         tpost.flag = 'B'
                         tpost.note = 'BOOKED'
