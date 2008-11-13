@@ -962,16 +962,23 @@ def page__trades(app, ctx):
 
     for btrade in ledger.booked_trades:
 
-        bpostings = [post for post, _ in btrade.postings]
-        overrides = dict(btrade.postings)
+        bpostings = [x[0] for x in btrade.postings]
+        overrides = dict(
+            (post, amount) for (post, amount, price, amount_target, xrate)
+            in btrade.postings)
 
+        trades = PRE()
+        for x in btrade.postings:
+            trades.add( repr(x)+'\n' )
+        
         table = render_postings_table(bpostings, style,
                                       amount_overrides=overrides)
-        title = '%s - %s in %s; %s' % (btrade.close_date(),
-                                                btrade.post_booking.booking[0],
-                                                btrade.post_booking.booking[1],
-                                                btrade.acc.fullname)
-        page.add(DIV(H2(title), table, CLASS='btrade'))
+        title = '%s - %s %s ; %s' % (
+            btrade.close_date(),
+            btrade.comm,
+            'in %s' % btrade.comm_target if btrade.comm_target else '',
+            btrade.acc.fullname)
+        page.add(DIV(H2(title), trades, table, CLASS='btrade'))
 
     return page.render(app)
 

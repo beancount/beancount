@@ -345,18 +345,19 @@ class BookedTrade(object):
     An object that represents all the information that is present in a trade
     (turn-around).
     """
-    def __init__(self, acc, bcomm, post_booking):
+    def __init__(self, acc, comm, comm_target):
 
         # The account and booking commodity.
         self.acc = acc
-        self.bcomm = bcomm
 
-        # The posting that initiated the booking.
-        self.post_booking = post_booking
+        # The commodity being booked.
+        self.comm = comm
 
-        # The list of (posting, amount) that participated in the booked trade.
-        # The amount is in units of the booking commodity, which is provided by
-        # the booking trade.
+        # The target pricing commodity for PnL calculation. 
+        self.comm_target = comm_target
+
+        # The list of (posting, amount, price, amount_in, xrate) that
+        # participated in the booked trade. 
         self.postings = []
 
     def close_date(self):
@@ -366,12 +367,10 @@ class BookedTrade(object):
     def __cmp__(self, other):
         return cmp(self.close_date(), other.close_date())
 
-    def add_leg(self, post, bamount):
-        assert post.amount.iterkeys().next() == self.booking_commodity()
-        self.postings.append( (post, bamount) )
-
-    def booking_commodity(self):
-        return self.post_booking.booking[0]
+    def add_leg(self, post, amount, price, amount_target, xrate_target):
+        assert post.amount.tocomm() == self.comm
+        assert post.amount.tocomm() == amount.tocomm()
+        self.postings.append( (post, amount, price, amount_target, xrate_target) )
 
     #
     # Filtrable.
@@ -939,29 +938,46 @@ class Ledger(object):
                         logging.warning("Unbooked %s in transaction at %s:%d" %
                                         (bcomm, txn.filename, txn.lineno))
                     else:
-                        comm_base, comm_quote = tpost.booking
+                        _, comm_target = tpost.booking
 
                         pricedir = self.directives['price']
 
-                        _pnl = 0
+                        # Create the trade's legs and compute the PnL.
+                        btrade = BookedTrade(acc, bcomm, comm_target)
+                        pnl, pnl_target = Decimal(), Decimal()
                         for post, amt in booked:
-                            _pnl += post.price.tonum() * amt
-                        assert _pnl
-                        
-                        ## pricedir.getrate(comm_base, comm_quote)
-                        
-                        pnl = inv.reset_pnl()
-                        trace(pnl, _pnl)
 
-                        tpost.amount = Wallet(pcomm, -pnl)
+FIXME there is some confusion about bcomm, and amount, clarify this
+
+                            amount = Wallet(bcomm, amt)
+                            price = post.price
+                            nprice = price.tonum()
+
+                            if comm_target is not None:
+                                comm_pricing = post.price.tocomm()
+                                xrate = pricedir.getrate(
+                                    comm_pricing, comm_target, post.actual_date)
+                                amount_target = Wallet(comm_target, amt * xrate)
+                            else:
+                                amount_target, xrate = None, None
+                                
+                            btrade.add_leg(post, amount, price,
+                                           amount_target, xrate)
+
+                            pnl += nprice * amt
+                            pnl_target += nprice * amt * (xrate or 1)
+
+                        assert pnl == inv.reset_pnl() # Sanity check.
+
+                        if comm_target is not None:
+                            w = Wallet(comm_target, -pnl_target)
+                        else:
+                            w = Wallet(pcomm, -pnl)
+
+                        tpost.amount = w
                         tpost.flag = 'B'
                         tpost.note = 'BOOKED'
 
-                        # Add booked postings so we can report them in a
-                        # global list later.
-                        btrade = BookedTrade(acc, bcomm, tpost)
-                        for post, amt in booked:
-                            btrade.add_leg(post, Wallet(bcomm, amt))
                         booked[:] = []
                         self.booked_trades.append(btrade)
 

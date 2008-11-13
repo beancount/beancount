@@ -91,6 +91,14 @@ class Wallet(dict):
             raise ValueError("Cannot convert wallet %s to a single number." % self)
         return d
 
+    def tocomm(self):
+        """Assuming that the wallet contains a single commodity, return the
+        amount for that commodity. Fail if the Wallet is empty."""
+        if len(self) == 1:
+            return self.iterkeys().next()
+        else:
+            raise ValueError("Cannot convert wallet %s to a single number." % self)
+
     def __setitem__(self, key, value):
         if not isinstance(value, Decimal):
             value = Decimal(value)
