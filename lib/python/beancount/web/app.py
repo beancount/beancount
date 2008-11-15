@@ -723,7 +723,7 @@ def page__ledger(app, ctx):
         else:
             page.add(H1('Journal for %s' % dbegin), table)
     else:
-        page.add(H1('Ledger for ', haccount(acc.fullname)), table)
+        page.add(H1('Ledger for ', haccount_split(acc.fullname)), table)
 
     return page.render(app)
 
@@ -938,7 +938,7 @@ def page__locations(app, ctx):
                 # FIXME: I think that technically I would have to be in Quebec,
                 # not just in Canada.
 
-        ulc = page.add(UL())
+        ulc = page.add(H2("Summary %s" % year), UL())
         for country, days in sorted(comap.iteritems()):
             ulc.append(LI("%s : %d days" % (country, days)))
 
@@ -960,25 +960,31 @@ def page__trades(app, ctx):
     style = ctx.session.get('style', 'full')
     ledger = ctx.ledger
 
-    for btrade in ledger.booked_trades:
+    for bt in ledger.booked_trades:
 
-        bpostings = [x[0] for x in btrade.postings]
-        overrides = dict(
-            (post, amount) for (post, amount, price, amount_target, xrate)
-            in btrade.postings)
+        postings = [x.post for x in bt.legs]
+        overrides = dict((x.post, Wallet(bt.comm_book, x.amount_book))
+                         for x in bt.legs)
 
-        trades = PRE()
-        for x in btrade.postings:
-            trades.add( repr(x)+'\n' )
+        legs_table = TABLE()
+        for leg in bt.legs:
+            legs_table.add(
+                TR(TD(str(leg.post.actual_date)),
+                   TD(hwallet(Wallet(bt.comm_book, leg.amount_book))),
+                   TD(hwallet(Wallet(leg.comm_price, leg.price))),
+                   TD(hwallet(Wallet(leg.comm_price, leg.amount_price))),
+                   TD(hwallet(Wallet(bt.comm_target, leg.xrate))),
+                   TD(hwallet(Wallet(bt.comm_target, leg.amount_target))),
+                   ))
         
-        table = render_postings_table(bpostings, style,
+        table = render_postings_table(postings, style,
                                       amount_overrides=overrides)
         title = '%s - %s %s ; %s' % (
-            btrade.close_date(),
-            btrade.comm,
-            'in %s' % btrade.comm_target if btrade.comm_target else '',
-            btrade.acc.fullname)
-        page.add(DIV(H2(title), trades, table, CLASS='btrade'))
+            bt.close_date(),
+            bt.comm_book,
+            'in %s' % bt.comm_target if bt.comm_target else '',
+            bt.account.fullname)
+        page.add(DIV(H2(title), legs_table, table, CLASS='btrade'))
 
     return page.render(app)
 

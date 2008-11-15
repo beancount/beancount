@@ -99,6 +99,13 @@ class Wallet(dict):
         else:
             raise ValueError("Cannot convert wallet %s to a single number." % self)
 
+    def single(self):
+        """Return a tuple of (amount, commodity) if this wallet contains a
+        single thing. If empty or if it contains multiple things, blow up."""
+        assert len(self) == 1, "Wallet contains more than one thing."
+        c, a = self.iteritems().next()
+        return (a, c)
+
     def __setitem__(self, key, value):
         if not isinstance(value, Decimal):
             value = Decimal(value)

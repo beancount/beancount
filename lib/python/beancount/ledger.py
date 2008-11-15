@@ -345,41 +345,53 @@ class BookedTrade(object):
     An object that represents all the information that is present in a trade
     (turn-around).
     """
-    def __init__(self, acc, comm, comm_target):
+    Leg = namedtuple("Leg",
+                     ('post amount_book '
+                      'price comm_price '
+                      'amount_price xrate amount_target').split())
+    # comm_book: the commodity being booked
+    # comm_price: the commodity in which the booked commodity is priced
+    # comm_target: the target commodity for the gain/loss
+    # amount_book: number of units that we booked
+    # amount_price: amount in the natural pricing commodity
+    # amount_target: amount in the final target commodity
+
+    def __init__(self, account, comm_book, comm_target):
 
         # The account and booking commodity.
-        self.acc = acc
+        self.account = account
 
         # The commodity being booked.
-        self.comm = comm
+        self.comm_book = comm_book
 
         # The target pricing commodity for PnL calculation. 
         self.comm_target = comm_target
 
         # The list of (posting, amount, price, amount_in, xrate) that
         # participated in the booked trade. 
-        self.postings = []
+        self.legs = []
 
     def close_date(self):
-        return self.postings[-1][0].actual_date
+        return self.legs[-1][0].actual_date
 
     __key__ = close_date
     def __cmp__(self, other):
         return cmp(self.close_date(), other.close_date())
 
-    def add_leg(self, post, amount, price, amount_target, xrate_target):
-        assert post.amount.tocomm() == self.comm
-        assert post.amount.tocomm() == amount.tocomm()
-        self.postings.append( (post, amount, price, amount_target, xrate_target) )
+    def add_leg(self, *args):
+        "See Leg nested class for required members."
+        leg = self.Leg(*args)
+        assert leg.post.amount.tocomm() == self.comm_book
+        self.legs.append(leg)
 
     #
-    # Filtrable.
+    # Implement the Filtrable interface.
     #
     def get_date(self):
         return self.close_date()
 
     def get_account_name(self):
-        return self.acc.fullname
+        return self.account.fullname
 
     def get_note(self):
         return None
@@ -388,7 +400,7 @@ class BookedTrade(object):
         return []
 
     def get_txn_postings(self):
-        return self.postings  # Not sure why I'm doing this.
+        return [x.post for x in self.legs]
 
 
 
@@ -866,6 +878,13 @@ class Ledger(object):
                     self.log(WARNING, "Virtual posting without amount has no effect.", post)
                     post.amount = post.cost = Wallet()
 
+    def get_price_comm(self, comm):
+        """ Return the pricing commodity of the given commodity 'comm'. Note
+        that there must be a single pricing commodity for this to work. """
+        pcomms = self.pricedmap[comm]
+        assert len(pcomms) == 1, "Looking in %s for %s." % (pcomms, comm)
+        return iter(pcomms).next()
+
     def complete_bookings(self):
         """
         Complete entries that are automatic bookings in each account.
@@ -902,17 +921,16 @@ class Ledger(object):
                               (bcomm, txn.filename, txn.lineno))
 
         # Apply the booking jobs to each required account.
+        pricedir = self.directives['price']
         for acc, bcomms in sorted(booking_jobs.iteritems()):
 
             # For each booking commodity.
-            for bcomm in bcomms:
-                logging.info("Booking  %s  in %s" % (bcomm, acc.fullname))
+            for comm_book in bcomms:
+                logging.info("Booking  %s  in %s" % (comm_book, acc.fullname))
 
                 # Figure out the pricing commodity of the commodity being
                 # booked.
-                pcomms = self.pricedmap[bcomm]
-                assert len(pcomms) == 1, (bcomm, pcomms)
-                pcomm = iter(pcomms).next()
+                comm_price = self.get_price_comm(comm_book)
 
                 # Process all of the account's postings in order.
                 inv = FIFOInventory()
@@ -920,11 +938,11 @@ class Ledger(object):
                 for post in acc.postings:
 
                     # Apply trades to our inventory.
-                    if bcomm in post.amount:
+                    if comm_book in post.amount:
                         assert post.price is not None, post
-                        assert len(post.price) == 1
-                        price = post.price[pcomm]
-                        _booked, _ = inv.trade(price, post.amount[bcomm], post)
+                        assert post.price.tocomm() == comm_price
+                        price = post.price.tonum()
+                        _booked, _ = inv.trade(price, post.amount[comm_book], post)
                         booked.extend(_booked)
 
                     # If there is a booking posting in the current transaction,
@@ -936,43 +954,37 @@ class Ledger(object):
                     tpost = txn.get_booking_post()
                     if tpost is None:
                         logging.warning("Unbooked %s in transaction at %s:%d" %
-                                        (bcomm, txn.filename, txn.lineno))
+                                        (comm_book, txn.filename, txn.lineno))
                     else:
-                        _, comm_target = tpost.booking
-
-                        pricedir = self.directives['price']
+                        _comm_book, comm_target = tpost.booking
+                        assert _comm_book == comm_book, (_comm_book, comm_book)
 
                         # Create the trade's legs and compute the PnL.
-                        btrade = BookedTrade(acc, bcomm, comm_target)
+                        btrade = BookedTrade(acc, comm_book, comm_target)
                         pnl, pnl_target = Decimal(), Decimal()
-                        for post, amt in booked:
+                        for post, amount_book in booked:
 
-###FIXME there is some confusion about bcomm, and amount, clarify this
+                            price, comm_price = post.price.single()
 
-                            amount = Wallet(bcomm, amt)
-                            price = post.price
-                            nprice = price.tonum()
-
-                            if comm_target is not None:
-                                comm_pricing = post.price.tocomm()
-                                xrate = pricedir.getrate(
-                                    comm_pricing, comm_target, post.actual_date)
-                                amount_target = Wallet(comm_target, amt * xrate)
+                            amount_price = amount_book * price
+                            if comm_target is None:
+                                xrate = 1
+                                amount_target = amount_price
                             else:
-                                amount_target, xrate = None, None
+                                xrate = pricedir.getrate(
+                                    comm_price, comm_target, post.actual_date)
+                                amount_target = amount_price * xrate
                                 
-                            btrade.add_leg(post, amount, price,
-                                           amount_target, xrate)
+                            btrade.add_leg(post, amount_book,
+                                           price, comm_price,
+                                           amount_price, xrate, amount_target)
 
-                            pnl += nprice * amt
-                            pnl_target += nprice * amt * (xrate or 1)
+                            pnl += amount_price
+                            pnl_target += amount_target
 
                         assert pnl == inv.reset_pnl() # Sanity check.
 
-                        if comm_target is not None:
-                            w = Wallet(comm_target, -pnl_target)
-                        else:
-                            w = Wallet(pcomm, -pnl)
+                        w = Wallet(comm_target, -pnl_target)
 
                         tpost.amount = w
                         tpost.flag = 'B'
