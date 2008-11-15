@@ -947,7 +947,7 @@ class Ledger(object):
                         pnl, pnl_target = Decimal(), Decimal()
                         for post, amt in booked:
 
-FIXME there is some confusion about bcomm, and amount, clarify this
+###FIXME there is some confusion about bcomm, and amount, clarify this
 
                             amount = Wallet(bcomm, amt)
                             price = post.price
