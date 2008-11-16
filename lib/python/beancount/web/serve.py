@@ -231,6 +231,9 @@ def main():
         comm1, comm2 = mo.group(2, 4)
         opts.conversions.append( (comm1, comm2, amt2/amt1) )
 
+    # Re-enable interrupts.
+    import signal; signal.signal(signal.SIGINT, signal.SIG_DFL)
+
     # Create and run the web server.
     app = BeanServer(ledger, opts)
     httpd = make_server('', opts.port, app)

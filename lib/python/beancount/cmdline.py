@@ -20,7 +20,7 @@ from beancount import assetdef
 
 MANY=-1
 
-def main(parser, no=1):
+def main(parser, no=MANY):
     "Parse the cmdline as a list of ledger source files and return a Ledger."
 
     logging.basicConfig(level=logging.INFO,
@@ -28,9 +28,6 @@ def main(parser, no=1):
 
     parser.add_option('-v', '--verbose', action='store_true',
                       help="Display warnings and non-essential information.")
-
-    parser.add_option('-P', '--enable-pickle', action='store_true',
-                      help="Enable the pickling cache (create or use it).")
 
     parser.add_option('-e', '--encoding', '--input-encoding', action='store',
                       default='utf8',
@@ -48,7 +45,7 @@ def main(parser, no=1):
 
     parser.add_option('--private', '--with-source',
                       action='store_false', default=True,
-                      help="Allow serviung some possibly sensitive personal informations,"
+                      help="Allow serving some possibly sensitive personal informations,"
                       " access to source file, for example.")
 
     opts, args = parser.parse_args()
@@ -74,35 +71,20 @@ def main(parser, no=1):
     for assfn in opts.assets:
         assetdef.add_asset_path(assfn)
 
-    if no == 1:
-        fn, args = args[0], args[1:]
-        ledger = load_ledger(parser, fn, opts)
+    if no == 0:
+        return opts, None, args
+    elif no == 1:
+        args = args[1:]
+        ledger = load_ledger(parser, args[0:1], opts)
         return opts, ledger, args
     elif no == MANY:
-        ledgers = [load_ledger(parser, fn, opts) for fn in args]
-        return opts, ledgers, args
-    elif no == 0:
-        return opts, None, args
+        ledger = load_ledger(parser, args, opts)
+        return opts, ledger, args
 
-def load_ledger(parser, fn, opts):
-    # Parse the file.
-    if fn != '-':
-        if not exists(fn):
-            parser.error("No such file '%s'." % fn)
-
-        # Rebuild the Ledger file if it needs it; otherwise load from the cache.
-        fn_cache = '%s.pickle' % fn
-        if not opts.enable_pickle:
-            if exists(fn_cache):
-                os.remove(fn_cache)
-
-    if (not opts.enable_pickle or
-        not exists(fn_cache) or
-        getmtime(fn) > getmtime(fn_cache)):
-
-        # logging.info("Parsing Ledger source file: %s" % fn)
-        ledger = Ledger()
-
+def load_ledger(parser, filenames, opts):
+    # logging.info("Parsing Ledger source file: %s" % fn)
+    ledger = Ledger()
+    for fn in filenames:
         if fn == '-':
             f = sys.stdin
         else:
@@ -112,21 +94,9 @@ def load_ledger(parser, fn, opts):
             f = Reader(f)
         ledger.parse_file(f, fn, opts.encoding)
 
-        if opts.enable_pickle:
-            f = open(fn_cache, 'wb')
-            pickle.dump(ledger, f)
-            f.close()
-
-    else:
-        if fn != '-':
-            f = open(fn_cache, 'rb')
-            ledger = pickle.load(f)
-            f.close()
-
     run_postprocesses(ledger, opts)
 
     return ledger
-
 def reload(ledger, opts):
     """
     Parse the files again and create a new Ledger from them.
