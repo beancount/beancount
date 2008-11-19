@@ -61,8 +61,8 @@ class Template(object):
                LI(A('Trial Balance', href=umap('@@TrialBalance'))),
                LI(A('Balance Sheet', href=umap('@@BalanceSheet'))),
                LI(A('Income', href=umap('@@IncomeStatement'))),
-               LI(A('Capital', href=umap('@@CapitalStatement'))),
                LI(A('CashFlow', href=umap('@@CashFlow'))),
+               LI(A('Capital', href=umap('@@CapitalStatement'))),
                LI(A('Positions', href=umap('@@Positions'))),
                LI(A('Trades', href=umap('@@Trades'))),
                LI(A('Activity', href=umap('@@Activity'))),
@@ -966,17 +966,33 @@ def page__trades(app, ctx):
         overrides = dict((x.post, Wallet(bt.comm_book, x.amount_book))
                          for x in bt.legs)
 
-        legs_table = TABLE()
+        legs_table = TABLE(
+            THEAD(
+                TR(TH("Date"), TH("Units"), TH("Native Price"),
+                   TH("Native Amount"), TH("Target Rate"), TH("Target Amount"))),
+            CLASS="trades")
+
         for leg in bt.legs:
             legs_table.add(
                 TR(TD(str(leg.post.actual_date)),
                    TD(hwallet(Wallet(bt.comm_book, leg.amount_book))),
                    TD(hwallet(Wallet(leg.comm_price, leg.price))),
                    TD(hwallet(Wallet(leg.comm_price, leg.amount_price))),
-                   TD(hwallet(Wallet(bt.comm_target, leg.xrate))),
-                   TD(hwallet(Wallet(bt.comm_target, leg.amount_target))),
+                   TD(hwallet(Wallet('%s/%s' % (leg.comm_price, bt.comm_target or '-'), leg.xrate))),
+                   TD(hwallet(Wallet(bt.comm_target or leg.comm_price, leg.amount_target))),
                    ))
-        
+
+        post_book = bt.post_book
+
+        legs_table.add(
+            TR(TD('Gain/-Loss'),
+               TD(),
+               TD(),
+               TD(hwallet(-bt.post_book.amount_orig)),
+               TD(),
+               TD(hwallet(-bt.post_book.amount)),
+               ))
+
         table = render_postings_table(postings, style,
                                       amount_overrides=overrides)
         title = '%s - %s %s ; %s' % (
@@ -984,7 +1000,8 @@ def page__trades(app, ctx):
             bt.comm_book,
             'in %s' % bt.comm_target if bt.comm_target else '',
             bt.account.fullname)
-        page.add(DIV(H2(title), legs_table, table, CLASS='btrade'))
+        page.add(DIV(H2(title), legs_table, P("Corresponding transactions:"), table,
+                     CLASS='btrade'))
 
     return page.render(app)
 

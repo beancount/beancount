@@ -346,3 +346,25 @@ table#balance td.wallet {
   padding-right: 1em;
 }
 
+
+
+/* Trades */
+
+table.trades {
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+  /* border: thin solid black; */
+  border-collapse: collapse;
+  /* margin-top: 1.5em; */
+  /* margin-bottom: 1.5em; */
+  background-color: #ECC;
+} 
+
+table.trades td {
+  border: thin solid black;
+  text-align: center;
+}
+
+
+

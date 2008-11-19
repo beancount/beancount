@@ -22,9 +22,6 @@ all.)
 from collections import deque
 from decimal import Decimal
 
-# common imports
-from oanda.prices import f2i, i2f
-
 __all__ = ('Inventory', 'FIFOInventory', 'LIFOInventory', 'AvgInventory',
            'BOOKING_FIFO', 'BOOKING_LIFO', 'BOOKING_NONE',
            'PRICING_REAL', 'PRICING_AVERAGE')
@@ -95,9 +92,9 @@ class Inventory(object):
         self.pricing_method = pricing
 
         # Functions that convert into integer, float and string representation.
-        self.L = f2i
-        self.F = i2f
-        self.S = lambda x: str(i2f(x))
+        self.L = lambda x: Decimal(str(x))
+        self.F = float
+        self.S = str
 
         self.reset()
 

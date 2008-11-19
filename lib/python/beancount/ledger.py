@@ -356,7 +356,7 @@ class BookedTrade(object):
     # amount_price: amount in the natural pricing commodity
     # amount_target: amount in the final target commodity
 
-    def __init__(self, account, comm_book, comm_target):
+    def __init__(self, account, comm_book, comm_target, post_book):
 
         # The account and booking commodity.
         self.account = account
@@ -364,11 +364,14 @@ class BookedTrade(object):
         # The commodity being booked.
         self.comm_book = comm_book
 
-        # The target pricing commodity for PnL calculation. 
+        # The target pricing commodity for PnL calculation.
         self.comm_target = comm_target
 
+        # The post that is adjusted for booking.
+        self.post_book = post_book
+
         # The list of (posting, amount, price, amount_in, xrate) that
-        # participated in the booked trade. 
+        # participated in the booked trade.
         self.legs = []
 
     def close_date(self):
@@ -911,14 +914,15 @@ class Ledger(object):
         booking_posts = (post for post in self.postings if post.booking)
         booking_jobs = defaultdict(set)
         for post in booking_posts:
-            bcomm, _ = post.booking
+            comm_book, _ = post.booking
+            n = 0
             for tpost in post.txn.postings:
-                if bcomm in tpost.amount:
-                    booking_jobs[tpost.account].add(bcomm)
-                    break
-            else:
+                if comm_book in tpost.amount:
+                    booking_jobs[tpost.account].add(comm_book)
+                    n += 1
+            if n == 0:
                 logging.error("Invalid booking for %s in transaction at %s:%d" %
-                              (bcomm, txn.filename, txn.lineno))
+                              (comm_book, post.txn.filename, post.txn.lineno))
 
         # Apply the booking jobs to each required account.
         pricedir = self.directives['price']
@@ -951,19 +955,25 @@ class Ledger(object):
                     # FIXME: we should preprocess this to avoid the loop in
                     # processing each transaction.
                     txn = post.txn
-                    tpost = txn.get_booking_post()
-                    if tpost is None:
+                    post_book = txn.get_booking_post()
+                    if post_book is None:
                         logging.warning("Unbooked %s in transaction at %s:%d" %
                                         (comm_book, txn.filename, txn.lineno))
+
+                    elif not booked:
+                        post_book.flag = 'B'
+                        post_book.note = 'BOOKED'
+                        logging.warning("Useless booking entry in transaction at %s:%d" %
+                                        (txn.filename, txn.lineno))
+
                     else:
-                        _comm_book, comm_target = tpost.booking
+                        _comm_book, comm_target = post_book.booking
                         assert _comm_book == comm_book, (_comm_book, comm_book)
 
                         # Create the trade's legs and compute the PnL.
-                        btrade = BookedTrade(acc, comm_book, comm_target)
-                        pnl, pnl_target = Decimal(), Decimal()
+                        btrade = BookedTrade(acc, comm_book, comm_target, post_book)
+                        pnl_price, pnl_target = Decimal(), Decimal()
                         for post, amount_book in booked:
-
                             price, comm_price = post.price.single()
 
                             amount_price = amount_book * price
@@ -971,24 +981,29 @@ class Ledger(object):
                                 xrate = 1
                                 amount_target = amount_price
                             else:
+                                assert comm_target != comm_price, (comm_target, comm_price)
                                 xrate = pricedir.getrate(
                                     comm_price, comm_target, post.actual_date)
                                 amount_target = amount_price * xrate
-                                
+
                             btrade.add_leg(post, amount_book,
                                            price, comm_price,
                                            amount_price, xrate, amount_target)
 
-                            pnl += amount_price
+                            pnl_price += amount_price
                             pnl_target += amount_target
 
-                        assert pnl == inv.reset_pnl() # Sanity check.
+                        assert pnl_price == inv.reset_pnl() # Sanity check.
 
-                        w = Wallet(comm_target, -pnl_target)
+                        w_price = Wallet(comm_price, -pnl_price)
+                        w_target = Wallet(comm_target or comm_price, -pnl_target)
 
-                        tpost.amount = w
-                        tpost.flag = 'B'
-                        tpost.note = 'BOOKED'
+                        if not hasattr(post_book, 'amount_orig'):
+                            post_book.amount_orig = Wallet()                            
+                        post_book.amount_orig += w_price
+                        post_book.amount += w_target
+                        post_book.flag = 'B'
+                        post_book.note = 'BOOKED'
 
                         booked[:] = []
                         self.booked_trades.append(btrade)
@@ -1796,8 +1811,10 @@ class PriceDirective(object):
             return
         else:
             phist.append( (ldate, rate) )
+            phist.sort()
 
     def apply(self):
+        # FIXME: This ends up happening too late, we need it beforehand.
         # Sort all the price histories only once.
         for phist in self.prices.itervalues():
             phist.sort()
@@ -1827,22 +1844,30 @@ class PriceHistory(list):
 
     def interpolate(self, date_):
         "Linear interpolation of the rate, given our samples."
+        if len(self) == 0:
+            raise IndexError("Cannot interpolate empty price history.")
         idx = bisect_left(self, (date_, None))
 
         # Edge cases.
+        res = None
         if idx == len(self):
             d, r = self[idx-1]
-            return r
-        if idx == 0:
+            res = r
+        elif idx == 0:
             d, r = self[0]
-            return r
+            res = r
 
         # Interpolate between the two closest dates.
-        idx -= 1
-        d1, r1 = self[idx]
-        d2, r2 = self[idx+1]
-        assert d1 < date_, (d1, date_)
-        assert d2 >= date_, (d2, date_)
-        alpha = Decimal((date_ - d1).days) / Decimal((d2 - d1).days)
-        return (1-alpha)*r1 + (alpha)*r2
+        if res is None:
+            idx -= 1
+            d1, r1 = self[idx]
+            d2, r2 = self[idx+1]
+            assert d1 < date_, (d1, date_)
+            assert d2 >= date_, (d2, date_)
+            alpha = Decimal((date_ - d1).days) / Decimal((d2 - d1).days)
+            res = (1-alpha)*r1 + (alpha)*r2
+
+        return res
+
+
 
