@@ -123,5 +123,18 @@ class TestWallet(object):
         wp, wn = w.split()
         assert w == (wp + wn)
 
+    def test_convert(self):
+        conv = [('INR', 'CAD', 1/Decimal('40'))]
 
+        w = Wallet()
+        assert w.convert(conv) == w
+        
+        w = Wallet('10 USD')
+        assert w.convert(conv) == w
+        
+        w = Wallet('10 INR')
+        assert w.convert(conv) == Wallet('0.25 CAD')
+
+        w = Wallet('1600 INR')
+        assert w.convert(conv) == Wallet('40 CAD')
 

@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<meta name="generator" content="Docutils 0.5: http://docutils.sourceforge.net/" />
+<meta name="generator" content="Docutils 0.4.1: http://docutils.sourceforge.net/" />
 <title>Notes on Capital Gains</title>
 <link rel="stylesheet" href="../style.css" type="text/css" />
 </head>
@@ -16,7 +16,8 @@
 
 <div class="document" id="notes-on-capital-gains">
 <h1 class="title">Notes on Capital Gains</h1>
-
+<div class="section">
+<h1><a id="old-notes" name="old-notes">Old Notes</a></h1>
 <blockquote>
 <p>From          &quot;Filippo Tampieri&quot; &lt;<a class="reference" href="mailto:filippo.tampieri&#64;gmail.com">filippo.tampieri&#64;gmail.com</a>&gt;
 To    &quot;Martin Blais&quot; &lt;<a class="reference" href="mailto:blais&#64;furius.ca">blais&#64;furius.ca</a>&gt;
@@ -133,6 +134,65 @@ position?</p>
 &gt; &gt; &gt; &gt;</p>
 </blockquote>
 </blockquote>
+</div>
+<div class="section">
+<h1><a id="first-implementation-martin-blais-blais-furius-ca" name="first-implementation-martin-blais-blais-furius-ca">First Implementation [Martin Blais &lt;<a class="reference" href="mailto:blais&#64;furius.ca">blais&#64;furius.ca</a>&gt;]</a></h1>
+<blockquote>
+<p>Hi John</p>
+<p>Just wanted to let you know that I've partially solved the
+trade booking problem within beancount. The way I'm doing it
+is like this:</p>
+<pre class="literal-block">
+2004-07-23 * Buy Apple Inc
+  Assets:Investments:XTrade:AAPL     10 &quot;AAPL&quot; &#64; 116.238 USD
+  Expenses:Financial:Commissions     9.95 USD
+  Assets:Investments:XTrade
+
+2004-07-23 * Sell Apple Inc
+  Assets:Investments:XTrade:AAPL    -8.3 &quot;AAPL&quot; &#64; 127.232 USD
+  Expenses:Financial:Commissions     9.95 USD
+  Assets:Investments:XTrade
+  (Income:Investments:Capital-Gains)    BOOK &quot;AAPL&quot;
+</pre>
+<p>The transaction with the posting with &quot;BOOK &lt;COMMODITY&gt;&quot; has
+its postings searched for a (unique) one that has the given
+commodity (in this case, the first posting of the second
+transaction). From this posting, the account name is
+extracted (Assets:Investments:XTrade:AAPL). This process is
+repeated for all entries with BOOK entries.</p>
+<p>Then, for each of the accounts, for each of the commodities
+that need to be inventoried, the postings of the account are
+iterated and a FIFO inventory is calculated of the
+positions. Gains/losses are realized when a posting with a
+BOOK entry is present, which case the inventory has its
+accumulated gains/losses cancelled and the amount is
+transferred to the booking entry (the line with BOOK in the
+example).</p>
+<p>Note that I'm making a few assumptions:</p>
+<ul class="simple">
+<li>I'm assuming that there is a single posting with the
+booking commodity in a transaction that contains a booking
+posting.</li>
+<li>I'm assuming that the commodity is priced throughout the
+system in a single currency. This is the currency that the
+inventory uses.</li>
+<li>I'm doing all inventory trades before filling in the
+booking entries.</li>
+</ul>
+<p>On the web server, I have a new page which lists all the
+transactions involved in each trade. This works with closing
+the books, and with date filtering as well.</p>
+<p>This method works well but does not take into account
+commissions. I think my accountant removes the commissions
+globally after gains/losses are computed, but I'm not sure
+(I can't reach him for a few days).</p>
+<p>Anyway, just thought you might find this interesting.
+Let me know if you have suggestions on how to improve this.</p>
+<p>Note: the demo has not been updated in the beancount code,
+but I'll do that as soon as I return from yoga later.</p>
+<p>cheers,</p>
+</blockquote>
+</div>
 </div>
 </body>
 </html>

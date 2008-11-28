@@ -53,7 +53,7 @@ def getquote_google(sym):
 
 
 
-url_yahoo = 'http://finance.yahoo.com/d/quotes.csv?s=%s&f=l1c1'
+url_yahoo = 'http://download.finance.yahoo.com/d/quotes.csv?s=%s&f=l1c1'
 
 def specDecimal(s):
     if s == 'N/A':

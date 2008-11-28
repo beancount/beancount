@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<meta name="generator" content="Docutils 0.5: http://docutils.sourceforge.net/" />
+<meta name="generator" content="Docutils 0.4.1: http://docutils.sourceforge.net/" />
 <title>Differences between Beancount and Ledger</title>
 <meta name="date" content="2008-04-23" />
 <meta name="author" content="Martin Blais &lt;blais&#64;furius.ca&gt;" />
@@ -33,8 +33,8 @@
 <p>A document that summarizes the differences between the valid syntax
 for Beancount and the syntax of Ledger.</p>
 </div>
-<div class="section" id="introduction">
-<h1>Introduction</h1>
+<div class="section">
+<h1><a id="introduction" name="introduction">Introduction</a></h1>
 <p>Beancount is an accounting system that uses simple text files, whose
 syntax is meant to be compatible with John Wiegley's Ledger program.
 Beancount supports a subset of the Ledger syntax, but also provides
@@ -47,8 +47,8 @@ to eventually use the Ledger program as a Python module to do the
 parsing, but some of it is there because we felt that some features
 were not necessary.</p>
 </div>
-<div class="section" id="unsupported-syntax">
-<h1>Unsupported Syntax</h1>
+<div class="section">
+<h1><a id="unsupported-syntax" name="unsupported-syntax">Unsupported Syntax</a></h1>
 <p>Beancount...</p>
 <ul>
 <li><p class="first">does not support expressions.</p>
@@ -63,8 +63,8 @@ provide a way to &quot;set&quot; the syntax, and will do something reasonable
 with defaults.</p>
 </li>
 </ul>
-<div class="section" id="about-dates">
-<h2>About Dates</h2>
+<div class="section">
+<h2><a id="about-dates" name="about-dates">About Dates</a></h2>
 <p>All check dates are assumed to be at midnight at the start of the
 given day. All transaction dates are assumed to occur something
 withint the day. Therefore, when you place an &#64;check directive, you
@@ -72,8 +72,8 @@ are asserting this amount at the <strong>beginning</strong> of the day, before a
 of the transactions of that day occur.</p>
 </div>
 </div>
-<div class="section" id="features-not-found-in-ledger">
-<h1>Features not found in Ledger</h1>
+<div class="section">
+<h1><a id="features-not-found-in-ledger" name="features-not-found-in-ledger">Features not found in Ledger</a></h1>
 <p>FIXME todo</p>
 <ul>
 <li><p class="first">&#64;pad</p>

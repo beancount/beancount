@@ -5,7 +5,7 @@ developing.
 """
 
 # stdlib imports
-import sys, logging
+import sys, logging, re
 from wsgiref.util import request_uri, application_uri
 from os.path import *
 from operator import attrgetter
@@ -57,10 +57,11 @@ class Template(object):
 
         self.navigation = DIV(
             UL(LI(A('Chart of Accounts', href=umap('@@ChartOfAccounts'))),
+               LI(A('Journals', href=umap('@@LedgerIndex'))),
                LI(A('Trial Balance', href=umap('@@TrialBalance'))),
-               LI(A('Ledgers', href=umap('@@LedgerIndex'))),
                LI(A('Balance Sheet', href=umap('@@BalanceSheet'))),
-               LI(A('P&L', href=umap('@@IncomeStatement'))),
+               LI(A('Income', href=umap('@@IncomeStatement'))),
+               LI(A('CashFlow', href=umap('@@CashFlow'))),
                LI(A('Capital', href=umap('@@CapitalStatement'))),
                LI(A('Positions', href=umap('@@Positions'))),
                LI(A('Trades', href=umap('@@Trades'))),
@@ -116,6 +117,19 @@ def hwallet(w, round=True):
         w = w.round()
     return ljoin([SPAN('%s %s' % (a,c), CLASS='amount') for (c,a) in w.tostrlist()], ', ')
 
+def hwallet_paren(w, round=True):
+    "A version of hwallet that renders negative numbers in parentheses."
+    if round:
+        w = w.round()
+    l = []
+    for (c,a) in w.tostrlist():    
+        if a >= 0:
+            a = SPAN('%s %s' % (a,c), CLASS='amount')
+        else:
+            a = SPAN('(%s) %s' % (-a,c), CLASS='amount')
+        l.append(a)
+    return ljoin(l, ', ')
+
 
 
 # Scavenged from Mercurial.
@@ -138,22 +152,35 @@ def cachefunc(func):
 
     return f
 
+websep = '~'
+
 @cachefunc
-def haccount(accname):
-    "Return some HTML for a full account name."
+def haccount_split(accname):
+    """Return some HTML for a full account name. This version makes each
+    subaccount clickable."""
     l = []
     append = l.append
     comps = []
     cappend = comps.append
     for comp in accname.split(Account.sep):
         cappend(comp)
-        name = Account.sep.join(comps)
+        name = websep.join(comps)
         append(A(comp, href=umap('@@AccountLedger', name), CLASS='accomp'))
     accspan = SPAN(ljoin(l, SPAN(Account.sep, CLASS='accsep')), CLASS='account')
     accspan.cache = 1
     return accspan
 
-def chartofaccounts(app, ctx):
+@cachefunc
+def haccount(accname):
+    "Return some HTML for a full account name. There is a single link."
+    accspan = SPAN(
+        A(accname, href=umap('@@AccountLedger', accname), CLASS='accomp'),
+        CLASS='account')
+    accspan.cache = 1
+    return accspan
+
+
+def page__chartofaccounts(app, ctx):
     page = Template(ctx)
 
     table = TABLE(id='chart-of-accounts', CLASS='accounts treetable')
@@ -171,7 +198,7 @@ def chartofaccounts(app, ctx):
     page.add(H1("Chart of Accounts"), table)
     return page.render(app)
 
-def stats(app, ctx):
+def page__stats(app, ctx):
     page = Template(ctx)
     page.add(H1("Statistics, Logs and Other Info"))
 
@@ -184,67 +211,110 @@ def stats(app, ctx):
                  TR(TD("Nb Postings:"), TD("%d" % len(ledger.postings)))
                  ))
 
-    page.add(H2("Links"),
-             UL(
-                 LI(A('Source', href=umap('@@Source'))),
-                 LI(A('Message Log (and Errors)', href=umap('@@Messages'))),
-                 LI(A('Pricing Commodities', href=umap('@@Pricing'))),
-                 ))
+    ul = UL( LI(A('Message Log (and Errors)', href=umap('@@Messages'))),
+             LI(A('Pricing Commodities', href=umap('@@Pricing'))),
+             LI(A('Source', href=umap('@@Source'))),
+             LI(A('Resources Requires for CSS (for websuck)', href=umap('@@ScrapeResources'))))
+    page.add(H2("Links"), ul)
+
+    ul = UL()
+    prices = ledger.directives['price'].prices
+    for (base, quote), phist in prices.iteritems():
+        sym = '%s/%s' % (base, quote)
+        ul.add( LI(A("Price History for %s" % sym,
+                      href=umap('@@PriceHistory', base, quote))) )
+    page.add(H2("Price Histories"), ul)
 
     return page.render(app)
 
-def trial(app, ctx):
+def page__scraperes(app, ctx):
+    page = Template(ctx)
+    page.add(H1("Scrape Resources"))
+    for id_ in ('@@FolderOpen', '@@FolderClosed', '@@HeaderBackground'):
+        page.add(IMG(src=umap(id_)))
+    return page.render(app)
+
+
+
+def page__trialbalance(app, ctx):
     page = Template(ctx)
 
     table = TABLE(id='balance', CLASS='accounts treetable')
-    table.add(THEAD(TR(TH("Account"), TH("Cumulative"), TH("Individual"))))
+    table.add(THEAD(TR(TH("Account"), TH("Debit"), TH("Credit"), TH(), TH("Cum. Sum"))))
     it = iter(itertree(ctx.ledger.get_root_account()))
+    sumdr, sumcr = Wallet(), Wallet()
     for acc, td1, tr, skip in treetable_builder(table, it):
         if len(acc) == 0:
             skip()
             continue
         td1.add(
             A(acc.name, href=umap('@@AccountLedger', acc.fullname), CLASS='accomp'))
+        
+        lbal = acc.local_balance.convert(app.opts.conversions).round()
+        dr, cr = lbal.split()
+        sumdr += dr
+        sumcr += cr
         tr.add(
-            TD(hwallet(getattr(acc, 'balance').round()), CLASS='wallet'),
-            TD(hwallet(getattr(acc, 'local_balance').round()), CLASS='wallet'))
+            TD(hwallet_paren(dr), CLASS='wallet'),
+            TD(hwallet_paren(-cr), CLASS='wallet'),
+            )
+
+        bal = acc.balance.convert(app.opts.conversions).round()
+        if not lbal and bal:
+            tr.add(
+                TD('...'),
+                TD(hwallet_paren(bal),
+                   CLASS='wallet'),
+                )
+
+    table.add(TR(TD(), TD(hwallet_paren(sumdr)), TD(hwallet_paren(-sumcr)),
+                 TD(), TD()))
 
     page.add(H1('Trial Balance'), table)
     return page.render(app)
 
 
-def semi_table(acc, tid):
+def semi_table(acc, tid, remove_empty=True, conversions=None):
+    """ Given an account, create a table for the transactions contained therein
+    (including its subaccounts)."""
+
     table = TABLE(id=tid, CLASS='semi accounts treetable')
     table.add(THEAD(TR(TH("Account"), TH("Debit"), TH("Credit"))))
     it = iter(itertree(acc))
-    sum_pos, sum_neg = Wallet(), Wallet()
+    sumdr, sumcr = Wallet(), Wallet()
     for acc, td1, tr, skip in treetable_builder(table, it):
+        if remove_empty and len(acc) == 0:
+            skip()
+            continue
+
         td1.add(
             A(acc.name, href=umap('@@AccountLedger', acc.fullname), CLASS='accomp'))
-        wpos, wneg = acc.local_balance.split()
-        sum_pos += wpos
-        sum_neg += wneg
+
+        local_balance = acc.local_balance
+        if conversions:
+            local_balance = local_balance.convert(conversions)
+
+        dr, cr = local_balance.split()
+        sumdr += dr
+        sumcr += cr
         tr.add(
-            TD(hwallet(wpos.round()) if wpos else ''),
+            TD(hwallet_paren(dr.round()) if dr else ''),
+            TD(hwallet_paren(-cr.round()) if cr else ''),
             )
-        if wneg:
-            tr.add(TD('(', hwallet(-wneg.round()), ')'))
-        else:
-            tr.add(TD())
 
     table.add(TR(TD(B("Totals")),
-                 TD(hwallet(sum_pos)),
-                 TD(["(", hwallet(-sum_neg), ")"] if sum_neg else [])))
+                 TD(hwallet_paren(sumdr)),
+                 TD(hwallet_paren(-sumcr))))
 
-    total = sum_pos + sum_neg
-    table.add(TR(TD(B("Sum")),
-                 TD(hwallet(total))
-                 ))
+    net = sumdr + sumcr
+    ## table.add(TR(TD(B("Net")),
+    ##              TD(hwallet_paren(net))
+    ##              ))
 
-    return table, total
+    return table, net
 
 
-def balance_sheet(app, ctx):
+def page__balancesheet(app, ctx):
     page = Template(ctx)
     page.add(H1("Balance Sheet"))
 
@@ -257,9 +327,9 @@ def balance_sheet(app, ctx):
         page.add(P("Could not get all A, L and E accounts.", CLASS="error"))
         return page.render(app)
 
-    a_table, a_total = semi_table(a_acc, 'assets')
-    l_table, l_total = semi_table(l_acc, 'liabilities')
-    e_table, e_total = semi_table(e_acc, 'equity')
+    a_table, a_total = semi_table(a_acc, 'assets', conversions=app.opts.conversions)
+    l_table, l_total = semi_table(l_acc, 'liabilities', conversions=app.opts.conversions)
+    e_table, e_total = semi_table(e_acc, 'equity', conversions=app.opts.conversions)
     page.add(DIV(H2("Liabilities", CLASS="duotables"), l_table,
                  H2("Equity", CLASS="duotables"), e_table,
                  CLASS='right'),
@@ -268,18 +338,15 @@ def balance_sheet(app, ctx):
              )
 
     total = a_total + l_total + e_total
-    net = TABLE(id='net', CLASS='treetable')
-    net.add(
-        TR(TD("Net Difference"),
-           TD(hwallet(total))))
     page.add(BR(style="clear: both"),
-             H2("Net Difference"), net)
+             TABLE( TR(TD(B("Net Income:")), TD(hwallet(total))),
+                    id='net', CLASS='treetable') )
 
     return page.render(app)
 
 
 
-def pnl(app, ctx):
+def page__income(app, ctx):
     page = Template(ctx)
     page.add(H1("Income Statement / P&L Report"))
 
@@ -291,8 +358,8 @@ def pnl(app, ctx):
         page.add(P("Could not get all unique income and expenses accounts.", CLASS="error"))
         return page.render(app)
 
-    i_table, i_total = semi_table(i_acc, 'income')
-    e_table, e_total = semi_table(e_acc, 'expenses')
+    i_table, i_total = semi_table(i_acc, 'income', conversions=app.opts.conversions)
+    e_table, e_total = semi_table(e_acc, 'expenses', conversions=app.opts.conversions)
     page.add(DIV(H2("Expenses", CLASS="duotables"), e_table,
                  CLASS='right'),
              DIV(H2("Income", CLASS="duotables"), i_table,
@@ -310,18 +377,31 @@ def pnl(app, ctx):
     return page.render(app)
 
 
-def capital(app, ctx):
+def page__capital(app, ctx):
     page = Template(ctx)
     page.add(H1("Capital Statement"))
     page.add(P("FIXME TODO"))
     return page.render(app)
 
 
+def page__cashflow(app, ctx):
+    page = Template(ctx)
+    page.add(H1("Cash-Flow Statement"))
+    page.add(P("FIXME TODO"))
+    return page.render(app)
+
+
+
 refcomm = 'USD'
 
-def positions(app, ctx):
+market_url = 'http://finance.google.com/finance?q=%s'
+
+def page__positions(app, ctx):
     page = Template(ctx)
     page.add(H1("Positions / Assets"))
+## FIXME: remove
+    return page.render(app)
+
 
     # First compute the trial balance.
     ledger = ctx.ledger
@@ -349,16 +429,25 @@ def positions(app, ctx):
 
     # Add a table of positions.
     tbl = TABLE(id="positions")
-    tbl.add(THEAD(TR(TD("Position"), TD("Currency"), TD("Price"), TD("Change"),
+    tbl.add(THEAD(TR(TD("Description"),
+                     TD("Position"), TD("Currency"), TD("Price"), TD("Change"),
                      TD("Total Value"), TD("Total Change"),
                      TD("Total Value (USD)"), TD("Total Change (USD)"))))
+    commnames = ledger.directives['defcomm'].commnames
     for comm, amount in a_acc.balance.tostrlist():
+        # Strip numbers from the end, to remove splits.
+        mo = re.match('(.*)[\'~][0-9]', comm)
+        if mo:
+            comm = mo.group(1)
         try:
-            pcomms = [] if comm in currencies else list(ledger.pricedmap[comm])
+            if comm in currencies:
+                pcomms = []
+            else:
+                pcomms = [x for x in ledger.pricedmap[comm] if x in currencies]
         except KeyError:
             logging.error(comm, ledger.pricedmap)
             continue
-        assert len(pcomms) in (0, 1), "Ambiguous commodities."
+        assert len(pcomms) in (0, 1), "Ambiguous commodities: %s" % pcomms
         if pcomms:
             pcomm = pcomms[0]
             try:
@@ -401,7 +490,11 @@ def positions(app, ctx):
             if comm in currencies:
                 totvalue = "%s %s" % (amount, comm)
 
-        tds = [TD("%s %s" % (amount, comm)), TD(pcomm),
+        market, name = commnames.get(comm, u'')
+        if market is not None:
+            name = A(name, href=market_url % market)
+        tds = [TD(name, CLASS='l'),
+               TD("%s %s" % (amount, comm)), TD(pcomm),
                TD(fprice), TD(fchange),
                TD(totvalue), TD(totchange),
                TD(totvalue_usd), TD(totchange_usd)]
@@ -410,12 +503,11 @@ def positions(app, ctx):
 
     page.add(H2("Total Assets"), tbl)
 
-
     return page.render(app)
 
 
 
-def pricing(app, ctx):
+def page__pricing(app, ctx):
     "A list of the commodities used for pricing each type of financial asset."
     page = Template(ctx)
     page.add(H1("Pricing Commodities"))
@@ -434,6 +526,23 @@ def pricing(app, ctx):
     return page.render(app)
 
 
+def page__pricehistory(app, ctx):
+    """A page that describes the samples of a price history. It expects
+    base/quote commodities as input."""
+    page = Template(ctx)
+    page.add(H1("Price History for %s/%s" % (ctx.base, ctx.quote)))
+    
+    tbl, = page.add(TABLE(THEAD(TR(TH("Date"), TH("Rate"))),
+                          CLASS='price_history'))
+
+    prices = app.ledger.directives['price'].prices
+    phist = prices[(ctx.base, ctx.quote)]
+    for date_, rate in phist:
+        tbl.append( TR(TD(date_.isoformat()), TD(str(rate))) )
+
+    return page.render(app)
+
+
 
 
 def treetable_builder(tbl, iterator, skiproot=False):
@@ -442,7 +551,7 @@ def treetable_builder(tbl, iterator, skiproot=False):
     rows for creating a JavaScript tree with the treetable JS source. Note that
     the table needs to have a unique 'id' attribute. This is an iterator that yields
 
-      (node, td-of-column-1, tr-for-row)
+      (node, td-of-column-1, tr-for-row, skip-function)
 
     You need to add the relevant columns on the row object, using data in the
     node.
@@ -481,7 +590,7 @@ def treetable_builder(tbl, iterator, skiproot=False):
 
 
 
-def activity(app, ctx):
+def page__activity(app, ctx):
     "Output the updated time ranges of each account."
 
     page = Template(ctx)
@@ -491,7 +600,6 @@ def activity(app, ctx):
     table.add(THEAD(TR(TH("Account"),
                        TH("Oldest Chk"),
                        TH("Newest Chk"),
-                       TH("Days since"),
                        TH("Last Posting"),
                        TH("Days since"),
                        )))
@@ -500,14 +608,25 @@ def activity(app, ctx):
         td1.add(
             A(acc.name, href=umap('@@AccountLedger', acc.fullname), CLASS='accomp'))
 
+        append = False
+        row = [TD() for _ in xrange(4)]
+        elapsed_check, elapsed_post = None, None
         if acc.checked:
-            elapsed = today - acc.check_max
-            tr.extend(TD(str(x)) for x in (acc.check_min, acc.check_max, '%s days' % elapsed.days))
+            row[0].add(str(acc.check_min))
+            row[1].add(str(acc.check_max))
+            elapsed_check = (today - acc.check_max).days
+            append = True
 
         if acc.postings:
             post_last = acc.postings[-1]
-            elapsed = today - post_last.actual_date
-            tr.extend(TD(str(x)) for x in (post_last.actual_date, '%s days' % elapsed.days))
+            row[2].add(str(post_last.actual_date))
+            elapsed_post = (today - post_last.actual_date).days
+            append = True
+
+        if append:
+            row[3].add('%s days' % min(filter(lambda x: x is not None,
+                                              [elapsed_check, elapsed_post])))
+            tr.extend(row)
 
     page.add(H1('Activity'), table)
     return page.render(app)
@@ -526,16 +645,19 @@ def iter_months(oldest, newest):
             break
 
 
-def ledgeridx(app, ctx):
+def page__ledgerindex(app, ctx):
     ledger = app.ledger
 
     page = Template(ctx)
     ul = UL(
-        LI(A("General Ledger (all transactions)", href=umap('@@GeneralLedger'))),
+        LI(A("General Journal", href=umap('@@GeneralLedger')),
+           "  (all transactions by-date)"),
         )
-    page.add(H1("Ledgers"),
+    page.add(H1("Journals"),
              ul,
-             P(I("Note: These ledgers display transactions for all accounts; for by-account ledgers, click on any account name in any other view.")),
+             ## P(I("""Note: These journals display transactions for accounts, ordered by-date; for
+             ##        ledgers (transactions by-account), click on any account name
+             ##        in any other view.""")),
              )
 
     if ledger.transactions:
@@ -544,7 +666,7 @@ def ledgeridx(app, ctx):
         mths = list(iter_months(date_oldest, date_youngest))
         for d in reversed(mths):
             mthstr = d.strftime('%Y-%m')
-            ul.add(LI(A("Ledger for %s" % mthstr,
+            ul.add(LI(A("Journal for %s" % mthstr,
                         href=umap("@@MonthLedger", d.year, d.month)
                       )))
 
@@ -552,7 +674,7 @@ def ledgeridx(app, ctx):
 
 
 
-def ledger(app, ctx):
+def page__ledger(app, ctx):
     """
     List the transactions that pertain to a list of filtered postings.
     """
@@ -562,6 +684,7 @@ def ledger(app, ctx):
     assert style in ('compact', 'other', 'only', 'full')
 
     accname = getattr(ctx, 'accname', '')
+    accname = accname.replace(websep, Account.sep)
     try:
         acc = ctx.ledger.get_account(accname)
     except KeyError:
@@ -595,9 +718,12 @@ def ledger(app, ctx):
     table = render_postings_table(postings, style, dfilter, acc_checks)
 
     if acc.isroot():
-        page.add(H1('General Ledger'), table)
+        if dbegin is None:
+            page.add(H1('General Journal'), table)
+        else:
+            page.add(H1('Journal for %s' % dbegin), table)
     else:
-        page.add(H1('Ledger for ', haccount(acc.fullname)), table)
+        page.add(H1('Ledger for ', haccount_split(acc.fullname)), table)
 
     return page.render(app)
 
@@ -724,14 +850,17 @@ def register_insert_checks(checklist, table, date=None):
             break
 
 
-def source(app, ctx):
+def page__source(app, ctx):
     """
     Serve the source of the ledger.
     """
     page = Template(ctx)
     div = DIV(id='source')
-    for i, line in izip(count(1), ctx.ledger.source):
-        div.add(PRE("%4d  |%s" % (i, line.strip())), A(name='line%d' % i))
+    if app.opts.private:
+        div.add(P("(Sorry, source not available.)"))
+    else:
+        for i, line in izip(count(1), ctx.ledger.source):
+            div.add(PRE("%4d  |%s" % (i, line.strip())), A(name='line%d' % i))
 
     page.add(H1('Source'), div)
     return page.render(app)
@@ -745,7 +874,7 @@ msgname = {
     logging.CRITICAL: 'critical',
     }
 
-def messages(app, ctx):
+def page__messages(app, ctx):
     """
     Report all ledger errors.
     """
@@ -765,7 +894,7 @@ def messages(app, ctx):
 
 ramq_reqdays = 183
 
-def locations(app, ctx):
+def page__locations(app, ctx):
     page = Template(ctx)
     page.add(H1("Locations"))
 
@@ -809,7 +938,7 @@ def locations(app, ctx):
                 # FIXME: I think that technically I would have to be in Quebec,
                 # not just in Canada.
 
-        ulc = page.add(UL())
+        ulc = page.add(H2("Summary %s" % year), UL())
         for country, days in sorted(comap.iteritems()):
             ulc.append(LI("%s : %d days" % (country, days)))
 
@@ -821,7 +950,7 @@ def locations(app, ctx):
     return page.render(app)
 
 
-def trades(app, ctx):
+def page__trades(app, ctx):
     """
     Render a list of trades.
     """
@@ -831,23 +960,54 @@ def trades(app, ctx):
     style = ctx.session.get('style', 'full')
     ledger = ctx.ledger
 
-    for btrade in ledger.booked_trades:
+    for bt in ledger.booked_trades:
 
-        bpostings = [post for post, _ in btrade.postings]
-        overrides = dict(btrade.postings)
+        postings = [x.post for x in bt.legs]
+        overrides = dict((x.post, Wallet(bt.comm_book, x.amount_book))
+                         for x in bt.legs)
 
-        table = render_postings_table(bpostings, style,
+        legs_table = TABLE(
+            THEAD(
+                TR(TH("Date"), TH("Units"), TH("Native Price"),
+                   TH("Native Amount"), TH("Target Rate"), TH("Target Amount"))),
+            CLASS="trades")
+
+        for leg in bt.legs:
+            legs_table.add(
+                TR(TD(str(leg.post.actual_date)),
+                   TD(hwallet(Wallet(bt.comm_book, leg.amount_book))),
+                   TD(hwallet(Wallet(leg.comm_price, leg.price))),
+                   TD(hwallet(Wallet(leg.comm_price, leg.amount_price))),
+                   TD(hwallet(Wallet('%s/%s' % (leg.comm_price, bt.comm_target or '-'), leg.xrate))),
+                   TD(hwallet(Wallet(bt.comm_target or leg.comm_price, leg.amount_target))),
+                   ))
+
+        post_book = bt.post_book
+
+        legs_table.add(
+            TR(TD('Gain/-Loss'),
+               TD(),
+               TD(),
+               TD(hwallet(-bt.post_book.amount_orig)),
+               TD(),
+               TD(hwallet(-bt.post_book.amount)),
+               ))
+
+        table = render_postings_table(postings, style,
                                       amount_overrides=overrides)
-        title = '%s - %s in %s' % (btrade.close_date(),
-                                   btrade.post_booking.booking,
-                                   btrade.acc.fullname)
-        page.add(DIV(H2(title), table, CLASS='btrade'))
+        title = '%s - %s %s ; %s' % (
+            bt.close_date(),
+            bt.comm_book,
+            'in %s' % bt.comm_target if bt.comm_target else '',
+            bt.account.fullname)
+        page.add(DIV(H2(title), legs_table, P("Corresponding transactions:"), table,
+                     CLASS='btrade'))
 
     return page.render(app)
 
 
 
-def reload(app, ctx):
+def page__reload(app, ctx):
     """
     Reload the ledger file and return to the given URL.
     """
@@ -856,7 +1016,7 @@ def reload(app, ctx):
 
 
 
-def setstyle(app, ctx):
+def page__setstyle(app, ctx):
     "Set the session's style and redirect where we were."
     ctx.session['style'] = ctx.style[0]
     raise HttpRedirect(ctx.environ['HTTP_REFERER'])
@@ -883,10 +1043,11 @@ def static(fn, ctype):
         app.write(result)
     return f
 
-def server_error(app, ctx):
+def page__servererror(app, ctx):
     app.setHeader('Content-Type','text/html')
     app.write('TODO')
     ## FIXME return the error page here.
+
 
 
 
@@ -900,30 +1061,38 @@ page_directory = (
     ('@@FolderOpen', static('folder_open.png', 'image/png'), '/folder_open.png', None),
     ('@@FolderClosed', static('folder_closed.png', 'image/png'), '/folder_closed.png', None),
     ('@@HeaderBackground', static("header-universal-dollar.jpg", 'image/jpeg'), '/header.jpg', None),
+    ('@@ScrapeResources', page__scraperes, '/scraperes', None),
+
     ('@@Home', redirect('@@ChartOfAccounts'), '/', None),
 
-    ('@@ChartOfAccounts', chartofaccounts, '/accounts', None),
-    ('@@Statistics', stats, '/stats', None),
-    ('@@Activity', activity, '/activity', None),
-    ('@@TrialBalance', trial, '/trial', None),
-    ('@@BalanceSheet', balance_sheet, '/balance', None),
-    ('@@IncomeStatement', pnl, '/pnl', None),
-    ('@@CapitalStatement', capital, '/capital', None),
-    ('@@Positions', positions, '/positions', None),
-    ('@@Locations', locations, '/locations', None),
-    ('@@Trades', trades, '/trades', None),
-    ('@@Pricing', pricing, '/pricing', None),
+    ('@@ChartOfAccounts', page__chartofaccounts, '/accounts', None),
+    ('@@Statistics', page__stats, '/stats', None),
+    ('@@Activity', page__activity, '/activity', None),
+    ('@@TrialBalance', page__trialbalance, '/trial', None),
+    ('@@BalanceSheet', page__balancesheet, '/balance', None),
+    ('@@IncomeStatement', page__income, '/income', None),
+    ('@@CapitalStatement', page__capital, '/capital', None),
+    ('@@CashFlow', page__cashflow, '/cashflow', None),
+    ('@@Positions', page__positions, '/positions', None),
+    ('@@Locations', page__locations, '/locations', None),
+    ('@@Trades', page__trades, '/trades', None),
+    ('@@Pricing', page__pricing, '/pricing', None),
+    ('@@PriceHistory', page__pricehistory, '/price/history/%s/%s',
+     '^/price/history/(?P<base>[^/]+)/(?P<quote>[^/]+)$'),
 
-    ('@@LedgerIndex', ledgeridx, '/ledger/index', None),
-    ('@@GeneralLedger', ledger, '/ledger/general', None),
-    ('@@MonthLedger', ledger, '/ledger/bymonth/%04d/%02d', '^/ledger/bymonth/(?P<year>\d\d\d\d)/(?P<month>\d\d)$'),
-    ('@@AccountLedger', ledger, '/ledger/byaccount/%s', '^/ledger/byaccount/(?P<accname>.*)$'),
+    ('@@LedgerIndex', page__ledgerindex, '/ledger/index', None),
+    ('@@GeneralLedger', page__ledger, '/ledger/general', None),
+    ('@@MonthLedger', page__ledger, '/ledger/bymonth/%04d/%02d',
+     '^/ledger/bymonth/(?P<year>\d\d\d\d)/(?P<month>\d\d)$'),
 
-    ('@@SetStyle', setstyle, '/setstyle', '^/setstyle$'),
-    ('@@Messages', messages, '/messages', None),
-    ('@@Reload', reload, '/reload', None),
-    ('@@Source', source, '/source', None),
-    ('@@Error', server_error, '/error', None),
+    ('@@AccountLedger', page__ledger, '/ledger/byaccount/%s',
+     '^/ledger/byaccount/(?P<accname>.*)$'),
+
+    ('@@SetStyle', page__setstyle, '/setstyle', '^/setstyle$'),
+    ('@@Messages', page__messages, '/messages', None),
+    ('@@Reload', page__reload, '/reload', None),
+    ('@@Source', page__source, '/source', None),
+    ('@@Error', page__servererror, '/error', None),
 
     )
 

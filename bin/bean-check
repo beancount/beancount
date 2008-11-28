@@ -17,8 +17,8 @@ def main():
     import optparse
     parser = optparse.OptionParser(__doc__.strip())
 
-    parser.add_option('-v', '--verbose', '--ranges', action='store_true',
-                      help="Print out the date ranges as well.")
+    ## parser.add_option('-v', '--verbose', '--ranges', action='store_true',
+    ##                   help="Print out the date ranges as well.")
 
     parser.add_option('--all', action='store_true',
                       help="Show all accounts.")

@@ -1,18 +1,101 @@
 """
-Inventory algorithms.
+Trade inventory.
+
+This module provides a very flexible inventory object, used to maintain position
+and to calculate P+L for a positions, for a single product. In order to compute
+P+L, we need to book current trades with past trades, and our inventory object
+supports various booking methods to select which positions get booked (FIFO,
+LIFO, custom), and a few ways to price the booked positions (real, average
+cost). It can also support manual booking of specific trades, in case an
+external booking algorithm already takes place.
+
+Note that to avoid precision errors, all prices are expressed as integers scaled
+to 10^8.
+
+(We have intended to make this object as flexible as possible, because this is a
+generic problem that tends to be badly solved in the financial industry with
+error-prone and confusing calculations, and can easily be solved once and for
+all.)
 """
 
 # stdlib imports
 from collections import deque
 from decimal import Decimal
 
-__all__ = ('FIFOInventory', 'LIFOInventory', 'AvgInventory')
+__all__ = ('Inventory', 'FIFOInventory', 'LIFOInventory', 'AvgInventory',
+           'BOOKING_FIFO', 'BOOKING_LIFO', 'BOOKING_NONE',
+           'PRICING_REAL', 'PRICING_AVERAGE')
+
+
+
+class Position(object):
+    """ A position that we're holding. Its size represents the remaining size,
+    and not the original trade size."""
+
+    def __init__(self, inv, price, size, obj=None):
+
+        # The inventory that this position is attached to. (Note that this is
+        # only necessary to access the integer representation converters.)
+        self.inv = inv
+
+        # The original price paid for the position.
+        self.price = price
+
+        # The current/remaining size of that position.
+        self.size = size
+
+        # An trade object that represents a psition (it can be any type of your
+        # choosing). These objects are returned when matched and/or removed.
+        self.obj = obj
+
+    def __str__(self):
+        S = self.inv.S
+        if self.obj is not None:
+            return '%s @ %s : %s' % (self.size, S(self.price), self.obj)
+        else:
+            return '%s @ %s' % (self.size, S(self.price))
+
+    def cost(self):
+        return self.price * self.size
+
+
+# Booking methods.
+def BOOKING_FIFO(inv):
+    "Return the next trade for FIFO booking."
+    return inv.positions[0]
+
+def BOOKING_LIFO(inv):
+    "Return the next trade for LIFO booking."
+    return inv.positions[-1]
+
+def BOOKING_NONE(inv):
+    "Prevent from using automatic booking."
+    raise IndexError("Automatic booking is disabled. "
+                     "You need to close your trades manually.")
+
+
+# Pricing methods.
+PRICING_REAL = object()
+PRICING_AVERAGE = object()
 
 
 class Inventory(object):
     "An interface for inventory objects."
 
-    def __init__(self):
+
+    def __init__(self, booking=BOOKING_NONE, pricing=PRICING_REAL):
+        # The booking method, a function object that is supposed to return the
+        # next position to be matched.
+        self.booking_findnext = booking
+
+        # The pricing method.
+        self.pricing_method = pricing
+
+        # Functions that convert into integer, float and string representation.
+        self.L = lambda x: Decimal(str(x))
+        self.F = float
+        self.S = str
+
         self.reset()
 
     def reset(self):
@@ -22,23 +105,30 @@ class Inventory(object):
         self.mark = None
 
         # The realized P+L for this inventory.
-        self._realized_pnl = Decimal()
-
-        # Extra objects and history of realized P+L.
-        self.realized_extras = []
+        self._realized_pnl = self.L(0)
 
         # The price of the last trade.
         self.last_trade_price = None
 
-        self.reset_position()
+        # For precision reasons, we track the cost of our positions separately
+        # (we could otherwise adjust each of them to the average every time it
+        # changes, introducing numerical error, but simplifying the code). This
+        # is only used for average cost pricing.
+        self.cost4avg = self.L(0)
+
+        # A deque of Position objects for our active position.
+        self.positions = deque()
 
     def reset_position(self):
         """
         Reset the current position to 0. After calling this method, the P+L is
-        only the unrealized P+L.
+        only the unrealized P+L. We return the list of trade objects for the
+        eliminated positions.
         """
-        raise NotImplementedError
-    
+        eliminated = [pos.obj for pos in self.positions]
+        self.positions = deque()
+        return eliminated
+
     def consolidate(self, price):
         """
         Book all of the current inventory's position at the given price
@@ -46,12 +136,26 @@ class Inventory(object):
         that price. This method does not affect the position, but it transfers
         unrealized P+L into realized P+L. This means that if the mark price is
         equal to the consolidation price, the unrealized P+L is 0 after this
-        method is called.
+        method is called if the consolidation price is equal to the mark price.
         """
-        pos = self.position()
-        self.trade(price, -pos)
-        assert self.position() == 0
-        self.trade(price, pos)
+        # We extract the PnL from each position by changing its trade price.
+        realized_pnl = 0
+        for pos in self.positions:
+            realized_pnl += (price - pos.price) * pos.size
+            pos.price = price
+        self._realized_pnl += realized_pnl
+
+        if self.pricing_method is PRICING_AVERAGE:
+            self.cost4avg += realized_pnl
+            assert self.cost4avg == self.realcost()
+
+        # Another way to accomplish this would be to perform two trades, but
+        # that would delete the information about the trade objects. We used to
+        # do it like this:
+        ## pos = self.position()
+        ## self.trade(price, -pos)
+        ## assert self.position() == 0
+        ## self.trade(price, pos)
 
     def reset_pnl(self):
         """
@@ -59,20 +163,40 @@ class Inventory(object):
         transfers out the realized P+L from this inventory.
         """
         rpnl, self._realized_pnl = self._realized_pnl, 0
-        self.realized_extras = []
         return rpnl
 
     def setmark(self, price):
         "Set the mark price for the current product."
         self.mark = price
 
+    def setmarkexit(self, bid, ask):
+        "Set the mark price at the price to exit."
+        self.mark = bid if self.position() > 0 else ask
+
+    def _sanity_check(self):
+        "Perform some internal sanity checks."
+
+        # Check that the signs of our inventory are all the same.
+        if self.positions:
+            size = self.positions[0].size
+            for pos in self.positions:
+                assert pos.size * size > 0, pos
+
     def position(self):
         "Return the current position this inventory is holding."
-        raise NotImplementedError
+        self._sanity_check()
+        return sum(pos.size for pos in self.positions) if self.positions else self.L(0)
+
+    def realcost(self):
+        "Return the real cost of our current positions."
+        return sum(pos.cost() for pos in self.positions) if self.positions else self.L(0)
 
     def cost(self):
         "Return the original cost of our active position."
-        raise NotImplementedError
+        if self.pricing_method is PRICING_REAL:
+            return self.realcost()
+        else:
+            return self.cost4avg
 
     def value(self):
         "Return the marked value of the entire position."
@@ -82,12 +206,12 @@ class Inventory(object):
                 raise ValueError("You need to set the mark to obtain the pnl")
             return pos * self.mark
         else:
-            return Decimal()
+            return self.L(0)
 
     def avgprice(self):
         "Return the average price paid for each unit of the current position."
         pos = self.position()
-        return float(self.cost()) / float(pos) if pos != 0 else None
+        return self.L(self.F(self.cost()) / pos) if pos != 0 else None
 
     def realized_pnl(self):
         return self._realized_pnl
@@ -96,7 +220,7 @@ class Inventory(object):
         "Return the P+L for our current position (not including past realized P+L."
         pos = self.position()
         if pos == 0:
-            return Decimal()
+            return self.L(0)
         if self.mark is None:
             raise ValueError("You need to set the mark to obtain the pnl")
         return self.position() * self.mark - self.cost()
@@ -105,205 +229,148 @@ class Inventory(object):
         "Return the P+L for our current position (not including past realized P+L."
         return self._realized_pnl + self.unrealized_pnl()
 
-    def close(self):
-        "Close all the current positions at the mark price."
-        self.trade(self.mark, -self.position())
+    def dump(self):
+        print ',---------------', self
+        print '| position       ', self.position()
+        print '| mark           ', self.S(self.mark) if self.mark else None
+        print '| avgprice       ', self.S(self.avgprice() or 0)
+        print '| value          ', self.S(self.value()) if self.mark else None
+        print '| cost           ', self.S(self.cost())
+        print '| cost4avg       ', self.S(self.cost4avg)
+        print '| unrealized_pnl ', self.S(self.unrealized_pnl()) if self.mark else None
+        print '| realized_pnl   ', self.S(self.realized_pnl())
+        print '| pnl            ', self.S(self.pnl()) if self.mark else None
+        print '| inventory:     '
+        for pos in self.positions:
+            print '|   %s' % pos
+        print '`---------------', self
+
+    def close_all(self, price):
+        "Close all the positions at the mark price."
+        self.trade(price, -self.position())
         assert self.position() == 0
 
-    def trade(self, price, quant, extra=None):
-        """
-        Book a trade for size 'quant' at the given 'price'.
-        The 'extra' parameter is used for inventories that book trades, to
-        report on the history of which trades are summarized in the realized
-        pnl.
-        """
+    def _findpos(self, obj):
+        "Return the position that corresponds to a specific trade object."
+        for pos in self.positions:
+            if pos.obj is obj:
+                return pos
+        else:
+            return None
 
-        raise NotImplementedError
+    def close(self, obj, price, quant=None):
+        """ Close the position for the trade 'obj' at the given 'price'. If
+        'quant' is specified, close the position only partially (otherwise close
+        the entire position). Note that the outcome of using this method does
+        not depend on the selected booking method."""
+        pos = self._findpos(obj)
+        if pos is None:
+            raise KeyError("Invalid trade object, could not be found: %s" % obj)
+        if quant is not None:
+            if quant * pos.size <= 0:
+                raise KeyError("Invalid close size %s of %s." % (quant, pos.size))
+            if abs(quant) > abs(pos.size):
+                raise KeyError("Trying to close %s of %s." % (quant, pos.size))
+        else:
+            quant = -pos.size
+        return self._trade(price, quant, None, lambda inv: pos)
 
-    def dump(self):
-        print '---------------', self
-        print 'position       ', self.position()
-        print 'mark           ', self.mark if self.mark else None
-        print 'avgprice       ', self.avgprice() or 0
-        print 'value          ', self.value() if self.mark else None
-        print 'cost           ', self.cost()
-        print 'unrealized_pnl ', self.unrealized_pnl() if self.mark else None
-        print 'realized_pnl   ', self.realized_pnl()
-        print 'pnl            ', self.pnl() if self.mark else None
+    def trade(self, price, quant, obj=None):
+        """ Book a trade for size 'quant' at the given 'price', using the
+        default booking method. Return list of trade objects booked and
+        the PnL realized by this trade (if any)."""
 
-    def serialize(self):
-        """
-        Return a dict of values that can be used to store and restore the
-        inventory later. This is used to persist the inventory state for its
-        P+L.
-        """
-        return {
-            'position': self.position(),
-            'cost': self.cost(),
-            'realized_pnl': self.realized_pnl(),
-            'mark': self.mark if self.mark else None,
-            }
-                    
-    def unserialize(self, m):
-        pass
+        return self._trade(price, quant, obj, self.booking_findnext)
 
+    def _trade(self, price, quant, obj, nextpos):
+        """ Trade booking implementation. We book trades at price 'price' for
+        the given size 'quant' only. 'obj' is the trade object to this trade,
+        and is inserted in the new Position object if there is remaining size.
+        'nextpos' is a function that will return the next Position object to be
+        booked against (this is the booking method)."""
 
+        ## trace('__________________ _trade', price, quant, obj, booking)
 
-#
-# Concrete implementations.
-#
+        # A list of (trade-object, quantity) booked.
+        booked = []
 
-class BookingInventory(Inventory):
-    "A base class for classes that book trades."
+        # Total size booked during this trade.
+        total_booked = 0
 
-    def __init__(self):
-        Inventory.__init__(self)
-        self.reset_position()
-
-    def reset_position(self):
-        # A list of (price, size) tuples for our active position.
-        self.inventory = deque()
-
-    def position(self):
-        return sum(s for p, s, e in self.inventory) if self.inventory else Decimal()
-
-    def cost(self):
-        return sum(p*s for p, s, e in self.inventory) if self.inventory else Decimal()
-
-    def trade(self, price, quant, extra=None):
-        self.last_trade_price = price
-
-        extras = []
-        quant_orig = quant
+        # "Real" PnL for the booked trades.
+        real_pnl = 0
 
         # Book the new trade against existing positions if the trade is not on
         # the same side as our current position.
-        pos = self.position()
-        if quant * pos < 0:
+        position = self.position()
+        if quant * position < 0:
 
-            # Process all the position records.
+            # Process all the positions.
             done = 0
-            while self.inventory:
-                rec_price, rec_quant, rec_extra = self.record_popnext()
-                if abs(quant) >= abs(rec_quant):
-                    # This record is entirely consumed by the trade.
-                    booked_quant = rec_quant
+            while self.positions:
+                pos = nextpos(self)
+                if abs(quant) >= abs(pos.size):
+                    # This position is entirely consumed by the trade.
+                    booked_quant = pos.size
+                    self.positions.remove(pos) # This may become slow.
                 else:
-                    # This record is only partially consumed by the trade.
-                    # We reinsert the updated record and exit the loop.
+                    # This position is only partially consumed by the trade.
                     booked_quant = -quant
-                    self.record_reinsert((rec_price, rec_quant + quant, rec_extra))
+                    pos.size += quant
                     done = 1
 
                 quant += booked_quant
-                self._realized_pnl += booked_quant * (price - rec_price)
-                e = (rec_extra, booked_quant, rec_price)
-                extras.append(e)
-                if done:
+                total_booked += booked_quant
+                booked.append( (pos.obj, -booked_quant) )
+
+                real_pnl += booked_quant * (price - pos.price)
+                if done or quant == 0:
                     break
 
             assert quant * self.position() >= 0
 
-        # Don't forget to add this trade to the list as well.
-        if quant != quant_orig:
-            e = (extra, quant_orig - quant, price)
-            extras.append(e)
-
+        # Price the booked trades into the realized PnL, depending on method.
+        if self.pricing_method is PRICING_REAL:
+            realized_pnl = real_pnl
+        else:
+            if position == 0:
+                assert total_booked == 0, total_booked
+                realized_pnl = 0
+            else:
+                realized_cost = self.L((total_booked*self.F(self.cost4avg))/position)
+                realized_pnl = total_booked * price - realized_cost
+                self.cost4avg -= realized_cost
+        self._realized_pnl += realized_pnl
+        if total_booked == 0:
+            assert realized_pnl == 0, realized_pnl
+        else:
+            booked.append( (obj, total_booked) )
+            
         # Append the remainder of our trade to the inventory if not all was
-        # booked. Note: we don't bother joining the last record if it is at the
-        # same price as the trade.
+        # booked.
         if quant != 0:
-            self.record_append((price, quant, extra))
-
-        self.realized_extras.extend(extras)
-        return extras
-
-    def dump(self):
-        super(BookingInventory, self).dump()
-        print 'inventory      ', ', '.join('%s @ %s' % (s, p) for p, s, e in self.inventory)
-
-    def record_popnext(self):
-        "Pop and return the next trade record."
-
-    def record_reinsert(self, rec):
-        "Reinsert a removed trade record."
-
-    def record_append(self, rec):
-        "Append a new trade record."
-
-
-class AvgInventory(Inventory):
-    "A concrete inventory class that books trades at their average price."
-
-    def reset_position(self):
-        # Because we want to average the price of our trades, we lump together
-        # all the position as a single trade and update the price.
-        self._position = 0
-
-        # Note: we keep the internal cost value as a float to minimize numerical
-        # error.
-        self._cost = Decimal()
-
-    def position(self):
-        return self._position
-
-    def cost(self):
-        return int(self._cost)
-
-    def trade(self, price, quant, extra=None):
-        # Note: 'extra' does not make sense for the average inventory.
+            newpos = Position(self, price, quant, obj)
+            self.positions.append(newpos)
+            if self.pricing_method is PRICING_AVERAGE:
+                self.cost4avg += newpos.cost()
 
         self.last_trade_price = price
-
-        pos = self._position
-        if quant * pos < 0:
-
-            if abs(quant) > abs(pos):
-                # Our position is entirely consumed by the trade.
-                booked_quant = pos
-                delta_cost = self._cost
-            else:
-                booked_quant = -quant
-                # Our position is partially consumed by the trade: book the
-                # trades at their current average price.
-                delta_cost = (booked_quant * self._cost) / pos
-
-            self._cost -= delta_cost
-            self._position -= booked_quant
-            self._realized_pnl += booked_quant * price - delta_cost
-
-            quant += booked_quant
-            assert quant * self.position() >= 0
-
-        # Append the remainder of our trade to our position.
-        if quant != 0:
-            self._position += quant
-            self._cost += quant * price
+        return booked, realized_pnl
 
 
-class FIFOInventory(BookingInventory):
-    "An inventory that books trades in a first-in/first-out fashion."
 
-    def record_popnext(self):
-        return self.inventory.popleft()
+class FIFOInventory(Inventory):
+    def __init__(self):
+        Inventory.__init__(self, booking=BOOKING_FIFO, pricing=PRICING_REAL)
 
-    def record_reinsert(self, rec):
-        self.inventory.appendleft(rec)
+class LIFOInventory(Inventory):
+    def __init__(self):
+        Inventory.__init__(self, booking=BOOKING_LIFO, pricing=PRICING_REAL)
 
-    def record_append(self, rec):
-        self.inventory.append(rec)
-
-
-class LIFOInventory(BookingInventory):
-    "An inventory that books trades in a lsat-in/first-out fashion."
-
-    def record_popnext(self):
-        return self.inventory.pop()
-
-    def record_reinsert(self, rec):
-        self.inventory.append(rec)
-
-    def record_append(self, rec):
-        self.inventory.append(rec)
+class AvgInventory(Inventory):
+    def __init__(self):
+        Inventory.__init__(self, booking=BOOKING_FIFO, pricing=PRICING_AVERAGE)
+        # Note: the booking method matters little here, other than for the
+        # ordering of the trades that get closed.
 
 

@@ -4,15 +4,82 @@
 
 .. contents::
 ..
-    1  Beancount (Accounting)
-    2  Ideas
-      2.1  Links
-    3  Reporting
+    1  How to Bake a Copy of the Accouting
+      1.1  Beancount (Accounting)
+      1.2  Ideas
+    2  Links
+      2.1  Reporting
 
+
+
+How to Bake a Copy of the Accouting
+===================================
+::
+
+  wget -nkp http://localhost:8000/
 
 
 Beancount (Accounting)
 ======================
+
+  - beancount: Enter trade costs with BOOK for all personal trading
+    too, check that it works well. Check that capital gains
+    calculations do not include commissions.
+
+    * Add 1/rate syntax.
+    * Add --end option
+    * Make --close synonym --begin
+    * Add account numbers for classification and sorting.
+    * Add a cash account flag in @defaccount, to generate the Cashflow Statement.
+    * beancount: Make the --close place its Equity into
+      RetainedEarnings rather than Opening Balances.
+    * beancount: When you --close, make the balance transferred in
+      RetainedEarnings rather than the OpeningBalances
+    * beancount: remove @checks that are outside of begin/end, it
+      looks bad.
+
+
+app:
+
+  - beancount: figure out how to render a wallet with 5 significant
+    digits (for xrates in trades page).
+
+price tables:
+
+  - beancount: Make USD/CAD also specify CAD/USD in the price table;
+    the lookup procedure should be able to compute the reverse prices.
+  - beancount: Change the --conversion option to use rates from our
+    price table instead.
+
+graphs:
+
+  - beancount: Generate a graph for the main kinds of account
+    interchanges, by looking at the most significant transactions
+    between the accounts. For example, ignore transactions which are
+    too small in absolute value, or whose total is too small a portion
+    of the total.
+
+
+reports:
+
+  - beancount: Available balance sheet reports should be: begin, end,
+    both.  Perhaps the "both" statement is only in report foramt.
+
+
+by-payee pages:
+
+  - beancount: Create by-payee pages, which should include a trial
+    balance and a by-payee ledger. The list of payees should make it
+    easy to pinpoint typing discrepancies and maybe should only match
+    payee names loosely.
+
+
+
+trade booking:
+
+  - beancount: figure out how to solve trades with share splits.
+
+
 
 main focus:
 

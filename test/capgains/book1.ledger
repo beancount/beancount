@@ -1,0 +1,232 @@
+;;; -*- mode: ledger; coding: utf-8; fill-column: 400; -*-
+;;; Personal ledger.
+
+;;;;; Initialization
+
+;;; Chart of Accounts
+
+@defaccount Dr Assets:Current:Cash
+@defaccount Dr Assets:Current:RBC:Checking                                       CAD
+@defaccount Dr Assets:Current:RBC:Checking-US                                    USD
+@defaccount Dr Assets:Current:RBC:Savings                                        CAD
+@defaccount Dr Assets:Current:HSBC:Checking                                      USD
+@defaccount Dr Assets:Current:HSBC:Secured                                       USD
+@defaccount Dr Assets:Current:HSBC:Savings                                       USD
+@defaccount Dr Assets:Fixed:Home                                                 CAD
+@defaccount Dr Assets:Investments:RBCDirect:Taxable-US                           USD
+@defaccount Dr Assets:Investments:RBCDirect:Taxable-US:QQQ
+@defaccount Dr Assets:Investments:RBCDirect:Taxable-US:RBF1003
+@defaccount Dr Assets:Investments:RBCDirect:Taxable-US:AAPL
+@defaccount Dr Assets:Investments:RBCDirect:Taxable-US:EFA
+@defaccount Dr Assets:Investments:RBCDirect:Taxable-US:EWJ
+@defaccount Dr Assets:Investments:RBCDirect:Taxable-US:GLD
+@defaccount Dr Assets:Investments:RBCDirect:Taxable-US:IEV                      IEV,IEV1
+@defaccount Dr Assets:Investments:RBCDirect:Taxable-US:IJH
+@defaccount Dr Assets:Investments:RBCDirect:Taxable-US:ILF
+@defaccount Dr Assets:Investments:RBCDirect:Taxable-US:IVV
+@defaccount Dr Assets:Investments:RBCDirect:Taxable-US:IWM
+@defaccount Dr Assets:Investments:RBCDirect:Taxable-CA                           CAD
+@defaccount Dr Assets:Investments:RBCDirect:Taxable-CA:CRA
+@defaccount Dr Assets:Investments:RBCDirect:Taxable-CA:QQQ
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA                               CAD
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:Contrib                       CAD
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:JDU
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:NT
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:RHT
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:AAPL
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:RBF550
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:RBF551
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:RBF558
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:RBF559
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:RBF556
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:RBF564
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:RBF468
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:RBF265
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:RBF462
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:RBF269
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:NBC860
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:RBF575
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:RBF1002
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:RBF1037
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:RBF1016
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:AIS512
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:AIS511
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:CSCO
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:QQQ
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:XEG
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:XMA                           XMA,XMA'2
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:XIN
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:XSU
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:XSP
+@defaccount Dr Assets:Investments:RBCDirect:RSP-CA:IWM                           IWM
+@defaccount Dr Assets:Investments:HSBC-Securities                                USD
+@defaccount Dr Assets:Investments:HSBC-Securities:IVV                            IVV
+@defaccount Dr Assets:Investments:OANDA:Primary                                  USD
+@defaccount Dr Assets:Investments:OANDA:Hedging                                  USD
+@defaccount Dr Assets:Investments:London-Life-Policy                             CAD
+@defaccount Dr Assets:Investments:Private
+@defaccount Dr Assets:Investments:Private:Furius
+@defaccount Dr Assets:Investments:Private:Safehouse
+@defaccount Dr Assets:Loans:Mertz                                                USD
+@defaccount Dr Assets:AccountsReceivable
+
+@defaccount Cr Liabilities:AccountsPayable
+@defaccount Cr Liabilities:Propri-Gestion                                        CAD
+@defaccount Cr Liabilities:Gesta-Conseil                                         CAD
+@defaccount Cr Liabilities:RBC:Credit-Line                                       CAD
+@defaccount Cr Liabilities:RBC:Mortgage                                          CAD
+@defaccount Cr Liabilities:RBC:Mortgage:Loan                                     CAD
+@defaccount Cr Liabilities:RBC:Mortgage:Credit-Line                              CAD
+@defaccount Cr Liabilities:Credit-Card:RBC-VISA                                  CAD
+@defaccount Cr Liabilities:Credit-Card:HSBC-MasterCard                           USD
+
+@defaccount Cr Equity:Opening-Balances
+
+@defaccount Cr Income:Investments:Interest:Checking
+@defaccount Cr Income:Investments:Interest:Savings
+@defaccount Cr Income:Investments:Interest:Margin
+@defaccount Cr Income:Investments:Dividends
+@defaccount Cr Income:Investments:Capital-Gains
+@defaccount Cr Income:Investments:Capital-Gains:FOREX
+@defaccount Cr Income:Investments:NonTax:Dividends
+@defaccount Cr Income:Investments:NonTax:Capital-Gains
+@defaccount Cr Income:Private:Shares
+@defaccount Cr Income:Private:Options
+@defaccount Cr Income:Expense-Account
+@defaccount Cr Income:Salary:Autodesk:RSP-Contrib                                CAD
+@defaccount Cr Income:Salary:EWT:Salary                                          USD
+@defaccount Cr Income:Salary:EWT:Bonus                                           USD
+@defaccount Cr Income:Salary:EWT:Severance                                       USD
+@defaccount Cr Income:Salary:EWT:HousingAllowance                                USD
+@defaccount Cr Income:Salary:FATTOC:Salary                                       USD
+;@defaccount Cr Income:Salary:FATTOC:Bonus                                        USD
+;@defaccount Cr Income:Salary:FATTOC:Severance                                    USD
+@defaccount Cr Income:Salary:Furius                                              CAD
+;@defaccount Cr Income:Dividends:Furius                                           CAD
+
+@defaccount Dr Expenses:Accounting
+@defaccount Dr Expenses:Financial:Fees
+@defaccount Dr Expenses:Financial:Fees:OANDA-API
+@defaccount Dr Expenses:Financial:Commissions
+@defaccount Dr Expenses:Insurance:Travel
+@defaccount Dr Expenses:Insurance:Life
+@defaccount Dr Expenses:Communications
+@defaccount Dr Expenses:Communications:Phone
+@defaccount Dr Expenses:Communications:Mail
+@defaccount Dr Expenses:Communications:Email
+@defaccount Dr Expenses:Communications:Domains
+@defaccount Dr Expenses:Advertising
+@defaccount Dr Expenses:Clothing
+@defaccount Dr Expenses:Hair
+@defaccount Dr Expenses:Sports:Yoga
+@defaccount Dr Expenses:Sports:Gear
+@defaccount Dr Expenses:Fun:Movie
+@defaccount Dr Expenses:Fun:Music
+@defaccount Dr Expenses:Fun:Museum
+@defaccount Dr Expenses:Fun:Events
+@defaccount Dr Expenses:Fun:Online
+@defaccount Dr Expenses:Food:Restaurant
+@defaccount Dr Expenses:Food:Grocery
+@defaccount Dr Expenses:Food:Alcool
+@defaccount Dr Expenses:Food:Energy-Drinks
+@defaccount Dr Expenses:Books
+@defaccount Dr Expenses:Gifts
+@defaccount Dr Expenses:Travel:Flights
+@defaccount Dr Expenses:Travel:Accommodation
+@defaccount Dr Expenses:Travel:Gear
+@defaccount Dr Expenses:Travel:Documents
+@defaccount Dr Expenses:Transportation:Parking
+@defaccount Dr Expenses:Transportation:Taxi
+@defaccount Dr Expenses:Transportation:Train
+@defaccount Dr Expenses:Transportation:Bus
+@defaccount Dr Expenses:Transportation:Car-Rental
+@defaccount Dr Expenses:Transportation:Car-Share
+@defaccount Dr Expenses:Transportation:PublicTrans
+@defaccount Dr Expenses:Transportation:Gas
+@defaccount Dr Expenses:Toys:Photography
+@defaccount Dr Expenses:Toys:Audio
+@defaccount Dr Expenses:Toys:Computer
+@defaccount Dr Expenses:Toys:Software
+@defaccount Dr Expenses:Toys:Electronics
+@defaccount Dr Expenses:Office-Supplies
+
+;@defaccount Dr Expenses:Taxes:CA:Furius                                          CAD
+@defaccount Dr Expenses:Taxes:Canada:Provincial-Quebec                           CAD
+@defaccount Dr Expenses:Taxes:Canada:Federal                                     CAD
+@defaccount Dr Expenses:Taxes:US:EWT                                             USD
+@defaccount Dr Expenses:Taxes:US:FATTOC                                          USD
+@defaccount Dr Expenses:Taxes:US:State-California                                USD
+@defaccount Dr Expenses:Taxes:US:Federal                                         USD
+
+@defaccount Dr Expenses:Govt-Services                                            CAD
+@defaccount Dr Expenses:Medical
+@defaccount Dr Expenses:Dental
+@defaccount Dr Expenses:Charity
+@defaccount Dr Expenses:Professional-Associations
+@defaccount Dr Expenses:Conferences
+@defaccount Dr Expenses:Education
+;@defaccount Dr Expenses:Home:Repair
+;@defaccount Dr Expenses:Home:Maintenance
+@defaccount Dr Expenses:Home:Taxes
+@defaccount Dr Expenses:Home:Taxes:Municipal
+@defaccount Dr Expenses:Home:Taxes:School
+@defaccount Dr Expenses:Home:Insurance
+@defaccount Dr Expenses:Home:Monthly
+@defaccount Dr Expenses:Home:Monthly:Internet
+@defaccount Dr Expenses:Home:Monthly:Condo-Fees
+@defaccount Dr Expenses:Home:Monthly:Electricity
+@defaccount Dr Expenses:Home:Monthly:Loan-Interest
+;@defaccount Dr Expenses:Home:Monthly:Water
+@defaccount Dr Expenses:Home:Acquisition:Escrow
+@defaccount Dr Expenses:Home:Acquisition:Furniture
+@defaccount Dr Expenses:Home:Acquisition:Renovations
+@defaccount Dr Expenses:Home:Acquisition:Legal
+@defaccount Dr Expenses:Home:Acquisition:Welcome-Tax
+@defaccount Dr Expenses:Home:Acquisition:Inspection
+@defaccount Dr Expenses:Appartments:Temporary:Rent
+@defaccount Dr Expenses:Appartments:ParkLaBrea
+@defaccount Dr Expenses:Appartments:ParkLaBrea:Rent
+@defaccount Dr Expenses:Appartments:ParkLaBrea:Furniture
+@defaccount Dr Expenses:Appartments:ParkLaBrea:Utilities
+@defaccount Dr Expenses:Car:Tickets
+@defaccount Dr Expenses:Car:Misc
+;@defaccount Dr Expenses:Car:Wash
+
+@defaccount Dr Imbalances
+
+
+
+;;; Commodity names.
+@defcomm USD  -     US Dollar
+@defcomm EUR  -     Euro
+@defcomm CAD  -     Canadian Dollar
+@defcomm GBP  -     British Pound
+@defcomm JPY  -     Japanese Yen
+@defcomm AUD  -     Australian Dollar
+
+@defcomm QQQ  NASD:QQQ  Nasdaq Cubes
+
+
+
+2001-01-03 * Buy some Nasdaq 100
+  Assets:Investments:RBCDirect:Taxable-US:QQQ                50 QQQ @ 61.250 USD
+  Expenses:Financial:Commissions                                29.35 USD
+  Assets:Investments:RBCDirect:Taxable-US                -3091.85 USD  ; cost
+  ;; cost = 3091.85 USD * 1.49420 USD/CAD = 4619.84 CAD
+
+2004-11-24 * QQQ's are moved from the USD account to the CAD account.
+  Assets:Investments:RBCDirect:Taxable-US:QQQ       -50 QQQ  @ 61.250 USD
+  Assets:Investments:RBCDirect:Taxable-CA:QQQ        50 QQQ  @ 61.250 USD
+
+@price 2004-11-29  USD 1.157622 CAD
+
+2004-11-29 * Sell QQQ
+  Assets:Investments:RBCDirect:Taxable-CA:QQQ       -40 QQQ @ 39.02 USD
+  Assets:Investments:RBCDirect:Taxable-CA           1696.52 CAD @ 0.92 USD
+  (Income:Investments:Capital-Gains)     BOOK QQQ IN CAD
+
+2004-12-04 * Sell the rest of QQQ
+  Assets:Investments:RBCDirect:Taxable-CA:QQQ       -10 QQQ @ 40.20 USD
+  Assets:Investments:RBCDirect:Taxable-CA            436.96 CAD @ 0.92 USD
+  (Income:Investments:Capital-Gains)     BOOK QQQ IN CAD
+

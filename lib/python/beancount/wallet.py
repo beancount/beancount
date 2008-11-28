@@ -80,6 +80,32 @@ class Wallet(dict):
         rendered)."""
         return sorted(self.iteritems(), key=self.commodity_key)
 
+    def tonum(self):
+        """Assuming that the wallet contains a single commodity, return the
+        amount for that commodity. If the Wallet is empty, return 0."""
+        if len(self) == 0:
+            d = Decimal()
+        elif len(self) == 1:
+            d = self.itervalues().next()
+        else:
+            raise ValueError("Cannot convert wallet %s to a single number." % self)
+        return d
+
+    def tocomm(self):
+        """Assuming that the wallet contains a single commodity, return the
+        amount for that commodity. Fail if the Wallet is empty."""
+        if len(self) == 1:
+            return self.iterkeys().next()
+        else:
+            raise ValueError("Cannot convert wallet %s to a single number." % self)
+
+    def single(self):
+        """Return a tuple of (amount, commodity) if this wallet contains a
+        single thing. If empty or if it contains multiple things, blow up."""
+        assert len(self) == 1, "Wallet contains more than one thing."
+        c, a = self.iteritems().next()
+        return (a, c)
+
     def __setitem__(self, key, value):
         if not isinstance(value, Decimal):
             value = Decimal(value)
@@ -155,7 +181,7 @@ class Wallet(dict):
         return w
 
     def __mul__(self, other):
-        assert isinstance(other, int)
+        assert isinstance(other, (int, Decimal)), repr(other)
         w = Wallet(self)
         for k, v in self.iteritems():
             w[k] *= other
@@ -163,7 +189,7 @@ class Wallet(dict):
         return w
 
     def __div__(self, other):
-        assert isinstance(other, int)
+        assert isinstance(other, (int, Decimal))
         w = Wallet(self)
         for k, v in self.iteritems():
             w[k] /= other
@@ -217,6 +243,20 @@ class Wallet(dict):
             w = wpos if value > zero else wneg
             w[k] = value
         return wpos, wneg
+
+    def convert(self, conversions):
+        """Given a list of (from-asset, to-asset, rate), convert the from-assets
+        to to-assets using the specified rate and return a new Wallet with the
+        new amounts."""
+        assert isinstance(conversions, list)
+        w = self.copy()
+        for from_asset, to_asset, rate in conversions:
+            if from_asset in w:
+                if to_asset not in w:
+                    w[to_asset] = Decimal()
+                w[to_asset] += w[from_asset] * rate
+                del w[from_asset]
+        return w
 
 
 # Order of important for commodities.

@@ -12,7 +12,7 @@ from os.path import *
 from operator import attrgetter
 from itertools import count, izip, chain, repeat
 from StringIO import StringIO
-from bisect import bisect_left
+from bisect import bisect_left, bisect_right
 from collections import defaultdict
 
 # beancount imports
@@ -201,7 +201,7 @@ class Filtrable(object):
     def get_note(self):
         pass
 
-    def get_tag(self):
+    def get_tags(self):
         pass
 
     def get_txn_postings(self):
@@ -225,10 +225,10 @@ class Transaction(Dated):
     payee = None
     narration = None
 
-    # The tag is a string that is assigned to a set of transactions, using the
-    # @begintag and @endtag directives. This can be used to mark transactions
-    # during a trip, for example.
-    tag = None
+    # The tags is a (shared) list that is assigned to a set of transactions,
+    # using the @begintag and @endtag directives. This can be used to mark
+    # transactions during a trip, for example.
+    tags = None
 
     # The vector sum of the various postings here-in contained.
     wallet = None
@@ -266,6 +266,12 @@ class Transaction(Dated):
         lines.extend(post.pretty() for post in self.postings)
         return os.linesep.join(lines)
 
+    def get_booking_post(self):
+        """Find a booking entry in its posts and return it or None if there
+        aren't any."""
+        for post in self.postings:
+            if post.booking is not None:
+                return post
 
 
 VIRT_NORMAL, VIRT_BALANCED, VIRT_UNBALANCED = 0, 1, 2
@@ -327,8 +333,8 @@ class Posting(Dated):
     def get_note(self):
         return self.note
 
-    def get_tag(self):
-        return self.txn.tag
+    def get_tags(self):
+        return self.txn.tags
 
     def get_txn_postings(self):
         return self.txn.postings
@@ -339,51 +345,65 @@ class BookedTrade(object):
     An object that represents all the information that is present in a trade
     (turn-around).
     """
-    def __init__(self, acc, bcomm, post_booking):
+    Leg = namedtuple("Leg",
+                     ('post amount_book '
+                      'price comm_price '
+                      'amount_price xrate amount_target').split())
+    # comm_book: the commodity being booked
+    # comm_price: the commodity in which the booked commodity is priced
+    # comm_target: the target commodity for the gain/loss
+    # amount_book: number of units that we booked
+    # amount_price: amount in the natural pricing commodity
+    # amount_target: amount in the final target commodity
+
+    def __init__(self, account, comm_book, comm_target, post_book):
 
         # The account and booking commodity.
-        self.acc = acc
-        self.bcomm = bcomm
+        self.account = account
 
-        # The posting that initiated the booking.
-        self.post_booking = post_booking
+        # The commodity being booked.
+        self.comm_book = comm_book
 
-        # The list of (posting, amount) that participated in the booked trade.
-        # The amount is in units of the booking commodity, which is provided by
-        # the booking trade.
-        self.postings = []
+        # The target pricing commodity for PnL calculation.
+        self.comm_target = comm_target
+
+        # The post that is adjusted for booking.
+        self.post_book = post_book
+
+        # The list of (posting, amount, price, amount_in, xrate) that
+        # participated in the booked trade.
+        self.legs = []
 
     def close_date(self):
-        return self.postings[-1][0].actual_date
+        return self.legs[-1][0].actual_date
 
     __key__ = close_date
     def __cmp__(self, other):
         return cmp(self.close_date(), other.close_date())
 
-    def add_leg(self, post, bamount):
-        assert post.amount.iterkeys().next() == self.booking_commodity()
-        self.postings.append( (post, bamount) )
-
-    def booking_commodity(self):
-        return self.post_booking.booking
+    def add_leg(self, *args):
+        "See Leg nested class for required members."
+        leg = self.Leg(*args)
+        assert leg.post.amount.tocomm() == self.comm_book
+        self.legs.append(leg)
 
     #
-    # Filtrable.
+    # Implement the Filtrable interface.
     #
     def get_date(self):
         return self.close_date()
 
     def get_account_name(self):
-        return self.acc.fullname
+        return self.account.fullname
 
     def get_note(self):
         return None
 
-    def get_tag(self):
-        return None
+    def get_tags(self):
+        return []
 
     def get_txn_postings(self):
-        return self.postings  # Not sure why I'm doing this.
+        return [x.post for x in self.legs]
 
 
 
@@ -425,14 +445,16 @@ class Ledger(object):
         check = CheckDirective(self)
         add_directive(check)
         add_directive(DefineAccountDirective(self))
+        add_directive(DefineCommodityDirective(self))
         add_directive(AutoPadDirective(self, check))
         add_directive(DefvarDirective(self))
         add_directive(BeginTagDirective(self))
         add_directive(EndTagDirective(self))
         add_directive(LocationDirective(self))
+        add_directive(PriceDirective(self))
 
-        # Current tag that is being assigned to transactions during parsing.
-        self.tag = None
+        # Current tags that are being assigned to transactions during parsing.
+        self.tags = []
 
         # List of booked trades.
         self.booked_trades = []
@@ -530,7 +552,7 @@ class Ledger(object):
                         {'date': date_re.pattern})
 
     # Pattern for an amount.
-    commodity_re = re.compile('"?([A-Za-z][A-Za-z0-9.]*)"?')
+    commodity_re = re.compile('"?([A-Za-z][A-Za-z0-9.~\']*)"?')
     amount_re = re.compile('([-+]?\d*(?:\.\d*)?)\s+%(comm)s' %
                            {'comm': commodity_re.pattern})
 
@@ -547,7 +569,7 @@ class Ledger(object):
          '(?:\s+(?:({)\s*%(amount)s\s*}|({{)\s*%(amount)s\s*}}))?' # declared cost
          '(?:\s+@(@?)(?:\s+%(amount)s))?\s*(?:;(.*))?\s*$'
          '|'
-         '\s+(BOOK)\s+%(commodity)s\s*$'  # booking entry
+         '\s+(BOOK)\s+%(commodity)s(?:\s+(IN)\s+%(commodity)s)?\s*$'  # booking entry
          ')') %  # price/note
         {'amount': amount_re.pattern,
          'account': postaccount_re.pattern,
@@ -614,7 +636,7 @@ class Ledger(object):
                     txn.filename = fn
                     txn.lineno = lineno[0]
                     txn.ordering = next_ordering()
-                    txn.tag = self.tag
+                    txn.tags = self.tags
                     self.transactions.append(txn)
 
                     try:
@@ -658,7 +680,12 @@ class Ledger(object):
                             txn.postings.append(post)
 
                             post.flag, post.account_name, post.note = mo.group(1,2,14)
-                            post.booking = (mo.group(16) if mo.group(15) == 'BOOK' else None)
+                            booking_comm = (mo.group(16) if mo.group(15) == 'BOOK' else None)
+                            if booking_comm is not None:
+                                booking_quote = (mo.group(18) if mo.group(17) == 'IN' else None)
+                                post.booking = (booking_comm, booking_quote)
+                            else:
+                                post.booking = None
 
                             # Remove the modifications to the account name.
                             accname = post.account_name
@@ -854,6 +881,13 @@ class Ledger(object):
                     self.log(WARNING, "Virtual posting without amount has no effect.", post)
                     post.amount = post.cost = Wallet()
 
+    def get_price_comm(self, comm):
+        """ Return the pricing commodity of the given commodity 'comm'. Note
+        that there must be a single pricing commodity for this to work. """
+        pcomms = self.pricedmap[comm]
+        assert len(pcomms) == 1, "Looking in %s for %s." % (pcomms, comm)
+        return iter(pcomms).next()
+
     def complete_bookings(self):
         """
         Complete entries that are automatic bookings in each account.
@@ -861,58 +895,118 @@ class Ledger(object):
         Important note: this does *NOT* automatically take into account the
         commissions.
         """
-        booking_posts = (post for post in self.postings if post.booking)
 
-        # Figure out which account to book into, by finding the posting in this
-        # transaction that involves the given commodity. We build a list of
-        # tuples that represent the "booking jobs" that we have to carry out.
+        # Build a list of booking jobs to be done, by looking at all
+        # (unresolved) booking posts and finding out which accounts we need to
+        # apply booking for which commodity. For example:
+        #
+        #    2004-11-29 * Sell QQQ
+        #      Assets:Investments:RBCDirect:Taxable-CA:QQQ   -50.00 QQQ @ 39.02 USD
+        #      Assets:Investments:RBCDirect:Taxable-CA      2233.52 CAD @ 0.8638 USD
+        #      Expenses:Financial:Commissions                 25.00 CAD
+        #      (Income:Investments:Capital-Gains)           BOOK QQQ IN CAD
+        #
+        # The 3rd posting tells us that we need to book QQQ, in the account
+        # specified in the first posting. We would create a booking job to book
+        # QQQ in account 'Assets:Investments:RBCDirect:Taxable-CA:QQQ'. The
+        # second (or other) line(s) do(es) not affect the booking. Note that
+        # this means that commissions are not included in the booked gain/loss.
+        booking_posts = (post for post in self.postings if post.booking)
         booking_jobs = defaultdict(set)
         for post in booking_posts:
-            bcomm = post.booking
-            
+            comm_book, _ = post.booking
+            n = 0
             for tpost in post.txn.postings:
-                if bcomm in tpost.amount:
-                    booking_jobs[tpost.account].add(post.booking)
+                if comm_book in tpost.amount:
+                    booking_jobs[tpost.account].add(comm_book)
+                    n += 1
+            if n == 0:
+                logging.error("Invalid booking for %s in transaction at %s:%d" %
+                              (comm_book, post.txn.filename, post.txn.lineno))
 
-        # For each account where we do booking.
+        # Apply the booking jobs to each required account.
+        pricedir = self.directives['price']
         for acc, bcomms in sorted(booking_jobs.iteritems()):
 
             # For each booking commodity.
-            for bcomm in bcomms:
+            for comm_book in bcomms:
+                logging.info("Booking  %s  in %s" % (comm_book, acc.fullname))
 
-                # Figure out the price commodity of the booking commodity.
-                pcomms = self.pricedmap[bcomm]
-                assert len(pcomms) == 1, (bcomm, pcomms)
-                pcomm = iter(pcomms).next()
+                # Figure out the pricing commodity of the commodity being
+                # booked.
+                comm_price = self.get_price_comm(comm_book)
 
-                # Process all of the account's postings in order
+                # Process all of the account's postings in order.
                 inv = FIFOInventory()
-                ## inv.dump()
+                booked = []
                 for post in acc.postings:
+
                     # Apply trades to our inventory.
-                    if bcomm in post.amount:
+                    if comm_book in post.amount:
                         assert post.price is not None, post
-                        assert len(post.price) == 1
-                        price = post.price[pcomm]
-                        inv.trade(price, post.amount[bcomm], post)
-                        ## inv.dump()
+                        assert post.price.tocomm() == comm_price
+                        price = post.price.tonum()
+                        _booked, _ = inv.trade(price, post.amount[comm_book], post)
+                        booked.extend(_booked)
 
                     # If there is a booking posting in the current transaction,
                     # set its amount to the P+L at this point.
-                    for tpost in post.txn.postings:
-                        if tpost.booking:
-                            extras = inv.realized_extras
-                            pnl = inv.reset_pnl()
-                            ## inv.dump()
-                            tpost.amount = Wallet(pcomm, -pnl)
-                            tpost.flag = 'B' # booked.
+                    #
+                    # FIXME: we should preprocess this to avoid the loop in
+                    # processing each transaction.
+                    txn = post.txn
+                    post_book = txn.get_booking_post()
+                    if post_book is None:
+                        logging.warning("Unbooked %s in transaction at %s:%d" %
+                                        (comm_book, txn.filename, txn.lineno))
 
-                            # Add booked postings so we can report them in a
-                            # global list later.
-                            btrade = BookedTrade(acc, bcomm, tpost)
-                            for post, amt, price in extras:
-                                btrade.add_leg(post, Wallet(bcomm, amt))
-                            self.booked_trades.append(btrade)
+                    elif not booked:
+                        post_book.flag = 'B'
+                        post_book.note = 'BOOKED'
+                        logging.warning("Useless booking entry in transaction at %s:%d" %
+                                        (txn.filename, txn.lineno))
+
+                    else:
+                        _comm_book, comm_target = post_book.booking
+                        assert _comm_book == comm_book, (_comm_book, comm_book)
+
+                        # Create the trade's legs and compute the PnL.
+                        btrade = BookedTrade(acc, comm_book, comm_target, post_book)
+                        pnl_price, pnl_target = Decimal(), Decimal()
+                        for post, amount_book in booked:
+                            price, comm_price = post.price.single()
+
+                            amount_price = amount_book * price
+                            if comm_target is None:
+                                xrate = 1
+                                amount_target = amount_price
+                            else:
+                                assert comm_target != comm_price, (comm_target, comm_price)
+                                xrate = pricedir.getrate(
+                                    comm_price, comm_target, post.actual_date)
+                                amount_target = amount_price * xrate
+
+                            btrade.add_leg(post, amount_book,
+                                           price, comm_price,
+                                           amount_price, xrate, amount_target)
+
+                            pnl_price += amount_price
+                            pnl_target += amount_target
+
+                        assert pnl_price == inv.reset_pnl() # Sanity check.
+
+                        w_price = Wallet(comm_price, -pnl_price)
+                        w_target = Wallet(comm_target or comm_price, -pnl_target)
+
+                        if not hasattr(post_book, 'amount_orig'):
+                            post_book.amount_orig = Wallet()                            
+                        post_book.amount_orig += w_price
+                        post_book.amount += w_target
+                        post_book.flag = 'B'
+                        post_book.note = 'BOOKED'
+
+                        booked[:] = []
+                        self.booked_trades.append(btrade)
 
         self.booked_trades.sort()
 
@@ -1014,6 +1108,11 @@ class Ledger(object):
                             key=attrgetter('prio'))
         for direct in directives:
             direct.apply()
+
+        # We need to re-sort the postings because the directives may have added
+        # some out-of-order postings.
+        self.build_postings_lists()
+
 
 
     close_flag = 'A'
@@ -1333,6 +1432,37 @@ class DefineAccountDirective(object):
 
 
 
+class DefineCommodityDirective(object):
+    """
+    Define a commodity name.
+    """
+
+    name = 'defcomm'
+    prio = 1
+
+    market_re = re.compile('"?"?')
+
+    mre = re.compile("\s*%(commodity)s\s+([A-Za-z-][A-Za-z0-9:.-]*)\s+(.+)\s*$" %
+                     {'commodity': Ledger.commodity_re.pattern})
+
+    def __init__(self, ledger):
+        self.commnames = {}
+        self.ledger = ledger
+
+    def parse(self, line, filename, lineno):
+        mo = self.mre.match(line)
+        if not mo:
+            self.ledger.log(CRITICAL, "Invalid defcomm directive: %s" % line,
+                            (filename, lineno))
+            return
+
+        market, name = mo.group(2, 3)
+        if market == '-':
+            market = None
+        self.commnames[mo.group(1)] = (market, name)
+
+    def apply(self):
+        pass
 
 
 
@@ -1351,12 +1481,9 @@ class BeginTagDirective(object):
         ledger = self.ledger
 
         tag = line.strip()
-        if ledger.tag is not None:
-            ledger.log(ERROR, "Nested tags not supported. Tag %s ignored." % tag,
-                       (filename, lineno))
-            return
-
-        ledger.tag = tag
+        ledger.tags = list(ledger.tags) + [tag]
+        # Note: it is important to make a copy of 'ledger.tags' here because
+        # this is getting reference by postings many many times.
 
     def apply(self):
         # Nothing to do: the tag has been set on the transaction objects during
@@ -1368,8 +1495,10 @@ class EndTagDirective(BeginTagDirective):
 
     def parse(self, line, filename, lineno):
         ledger = self.ledger
-        assert ledger.tag is not None
-        ledger.tag = None
+        tag = line.strip()
+        assert tag in ledger.tags, (tag, ledger.tags)
+        ledger.tags = list(ledger.tags) # copy
+        ledger.tags.remove(tag)
 
 
 
@@ -1632,5 +1761,113 @@ class LocationDirective(object):
 
     def apply(self):
         pass # Nothing to do--the modules do the parsing themselves.
+
+
+
+class PriceDirective(object):
+    """
+    Define prices and exchange rates between two commodities. This is used to
+    build an internal price history database that can be used for other
+    purposes, for example, converting all values from one commodity to another
+    in the reports, and for computing capital gains in a currency different from
+    the underlying's rice currency.
+
+    Note that we don't include this feature with the intention of providing
+    detailed time-series of prices. Instead, we expect that the user will simply
+    enter some of the prices, where relevant for his application.
+    """
+
+    name = 'price'
+    prio = 100
+
+    mre = re.compile(("\s*(?:%(date)s)"
+                      "\s+(?:%(commodity)s)"
+                      "\s+%(amount)s"
+                      ) %
+                     {'date': Ledger.date_re.pattern,
+                      'commodity': Ledger.commodity_re.pattern,
+                      'amount': Ledger.amount_re.pattern})
+
+    def __init__(self, ledger):
+        self.ledger = ledger
+
+        # A map of (from, to) commodity pairs to PriceHistory objects.
+        self.prices = defaultdict(PriceHistory)
+
+    def parse(self, line, filename, lineno):
+        mo = self.mre.match(line)
+        if not mo:
+            self.ledger.log(CRITICAL, "Invalid price directive: %s" % line,
+                            (filename, lineno))
+            return
+
+        ldate = date(*map(int, mo.group(1, 2, 3)))
+        base, quote = mo.group(4,6)
+        rate = Decimal(mo.group(5))
+        phist = self.prices[(base, quote)]
+        if phist.finddate(ldate) is not None:
+            self.ledger.log(ERROR, "Duplicate price: %s" % line,
+                            (filename, lineno))
+            return
+        else:
+            phist.append( (ldate, rate) )
+            phist.sort()
+
+    def apply(self):
+        # FIXME: This ends up happening too late, we need it beforehand.
+        # Sort all the price histories only once.
+        for phist in self.prices.itervalues():
+            phist.sort()
+
+    def getrate(self, base, quote, date_):
+        return self.prices[(base, quote)].interpolate(date_)
+
+
+class PriceHistory(list):
+    """ An object that can accumulate samples of price history and calculate
+    interpolated values."""
+
+    def __init__(self):
+        list.__init__(self)
+        self.m = {}
+
+    def append(self, el):
+        assert isinstance(el, tuple)
+        assert isinstance(el[0], date)
+        assert isinstance(el[1], Decimal)
+        self.m[el[0]] = el[1]
+        return list.append(self, el)
+
+    def finddate(self, d):
+        "Return the rate at precisely date 'd'."
+        return self.m.get(d, None)
+
+    def interpolate(self, date_):
+        "Linear interpolation of the rate, given our samples."
+        if len(self) == 0:
+            raise IndexError("Cannot interpolate empty price history.")
+        idx = bisect_left(self, (date_, None))
+
+        # Edge cases.
+        res = None
+        if idx == len(self):
+            d, r = self[idx-1]
+            res = r
+        elif idx == 0:
+            d, r = self[0]
+            res = r
+
+        # Interpolate between the two closest dates.
+        if res is None:
+            idx -= 1
+            d1, r1 = self[idx]
+            d2, r2 = self[idx+1]
+            assert d1 < date_, (d1, date_)
+            assert d2 >= date_, (d2, date_)
+            alpha = Decimal((date_ - d1).days) / Decimal((d2 - d1).days)
+            res = (1-alpha)*r1 + (alpha)*r2
+
+        return res
+
 
 
