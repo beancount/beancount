@@ -74,8 +74,8 @@ def main(parser, no=MANY):
     if no == 0:
         return opts, None, args
     elif no == 1:
-        args = args[1:]
         ledger = load_ledger(parser, args[0:1], opts)
+        args = args[1:]
         return opts, ledger, args
     elif no == MANY:
         ledger = load_ledger(parser, args, opts)

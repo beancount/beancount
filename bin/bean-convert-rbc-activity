@@ -36,7 +36,7 @@ def main():
                       help="Generate debug output.")
 
     global opts
-    opts, ledger, args = cmdline.main(parser)
+    opts, ledger, args = cmdline.main(parser, 1)
 
     if len(args) < 1:
         parser.error("You must specify a ledger file and a list of HTML filenames to parse.")

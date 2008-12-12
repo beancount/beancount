@@ -140,7 +140,7 @@ def find_account(st):
 def main():
     import optparse
     parser = optparse.OptionParser(__doc__.strip())
-    opts, ledger, args = cmdline.main(parser)
+    opts, ledger, args = cmdline.main(parser, 1)
 
     if not args:
         parser.error("You must provide a list of OFX files to convert.")

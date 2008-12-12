@@ -38,6 +38,11 @@ Beancount (Accounting)
     * beancount: remove @checks that are outside of begin/end, it
       looks bad.
 
+- beancount: Generate a trades page in the format used by Yves.
+
+- beancount: Change URL names to use ~ as file separators,
+  because it won't work under Windows otherwise, with wget.
+
 
 app:
 

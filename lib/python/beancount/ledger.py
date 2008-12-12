@@ -1223,6 +1223,8 @@ class Ledger(object):
         true for the nodes that the predicate matches.
         """
         inset = frozenset(filter(pred, self.postings))
+        if len(inset) == 0:
+            logging.error("No postings selected by predicates.")
 
         for post in self.postings:
             post.selected = (post in inset)
