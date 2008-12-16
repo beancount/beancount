@@ -16,7 +16,7 @@ How to Bake a Copy of the Accouting
 ===================================
 ::
 
-  wget -nkp http://localhost:8000/
+  wget -rkp http://localhost:8000/
 
 
 Beancount (Accounting)

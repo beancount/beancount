@@ -43,7 +43,7 @@ def main(parser, no=MANY):
     parser.add_option('--assets', action='append', default=[],
                       help="Root directories for asset definition files.")
 
-    parser.add_option('--private', '--with-source',
+    parser.add_option('--unsafe', '--with-source',
                       action='store_false', default=True,
                       help="Allow serving some possibly sensitive personal informations,"
                       " access to source file, for example.")

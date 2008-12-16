@@ -856,7 +856,7 @@ def page__source(app, ctx):
     """
     page = Template(ctx)
     div = DIV(id='source')
-    if app.opts.private:
+    if app.opts.unsafe:
         div.add(P("(Sorry, source not available.)"))
     else:
         for i, line in izip(count(1), ctx.ledger.source):
