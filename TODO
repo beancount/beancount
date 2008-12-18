@@ -4,19 +4,10 @@
 
 .. contents::
 ..
-    1  How to Bake a Copy of the Accouting
-      1.1  Beancount (Accounting)
-      1.2  Ideas
-    2  Links
-      2.1  Reporting
-
-
-
-How to Bake a Copy of the Accouting
-===================================
-::
-
-  wget -rkp http://localhost:8000/
+    1  Beancount (Accounting)
+    2  Ideas
+      2.1  Links
+    3  Reporting
 
 
 Beancount (Accounting)

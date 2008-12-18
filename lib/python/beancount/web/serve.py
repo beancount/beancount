@@ -87,7 +87,7 @@ class BeanServer(object):
         
         path = environ['PATH_INFO']
 
-        ishtml = '.' not in basename(path)
+        ishtml = '.' not in basename(path) or path.endswith('.html')
         if ishtml:
             # Load cookie (session is only in memory).
             cookie = Cookie.SimpleCookie(environ.get('HTTP_COOKIE', ''))

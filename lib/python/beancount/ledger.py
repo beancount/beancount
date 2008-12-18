@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 """
 Main file and data models for the Python version of Ledger.
 """
 
 # stdlib imports
-import sys, os, logging, re, codecs
+import sys, os, logging, re, codecs, string
 from copy import copy, deepcopy
 import cPickle as pickle
 from decimal import Decimal, getcontext
@@ -238,7 +239,8 @@ class Transaction(Dated):
         self.postings = []
 
     def description(self):
-        return Ledger.payee_sep.join(filter(None, (self.payee, self.narration)))
+        return ''.join(['%s | ' % self.payee if self.payee else '',
+                        self.narration or ''])
 
     def topline(self):
         "Render the top line of the transaction, without the date."
@@ -547,9 +549,10 @@ class Ledger(object):
     notedate_re = re.compile('\[(?:%(date)s)?(?:=%(date)s)?\]' % {'date': date_re.pattern})
 
     # Pattern for a transaction line.
-    payee_sep = ' | '
     txn_re = re.compile('^%(date)s(=%(date)s)?\s+(?:(.)\s+)?(\(.*?\))?(.*)$' %
                         {'date': date_re.pattern})
+    payee_sep = ' | '
+    desc_re = re.compile('(?:\s*([^|]+?)\s*\|)?\s*([^|]*?)\s*$')
 
     # Pattern for an amount.
     commodity_re = re.compile('"?([A-Za-z][A-Za-z0-9.~\']*)"?')
@@ -657,12 +660,14 @@ class Ledger(object):
                     txn.flag = mo.group(8)
                     txn.code = mo.group(9)
 
-                    g = mo.group(10).split(Ledger.payee_sep, 1)
-                    if len(g) == 1:
-                        txn.narration = g[0]
-                    else:
-                        assert len(g) == 2
-                        txn.payee, txn.narration = g
+                    desc_line = mo.group(10)
+                    mod = Ledger.desc_re.match(desc_line)
+                    if not mod:
+                        self.log(ERROR, "Invalid description: %s" % desc_line,
+                                 (fn, lineno[0]))
+                        line = nextline()
+                        continue
+                    txn.payee, txn.narration = mod.groups()
 
                     # Parse the postings.
                     while 1:
@@ -828,6 +833,7 @@ class Ledger(object):
         self.complete_balances()
         self.compute_priced_map()
         self.complete_bookings()
+        self.build_payee_lists()
 
     def build_postings_lists(self):
         """ (Re)Builds internal lists of postings from the list of transactions."""
@@ -1241,6 +1247,41 @@ class Ledger(object):
                              if any(post in inset for post in txn.postings)]
 
         self.booked_trades = filter(pred, self.booked_trades)
+
+        self.build_payee_lists()
+
+    def build_payee_lists(self):
+        paydict = defaultdict(list)
+
+        for txn in self.transactions:
+            if txn.payee:
+                payee = ' '.join(txn.payee.lower().split()).encode('ascii', 'replace')
+                paydict[payee].append(txn)
+
+        self.payees = {}
+        for key, txns in paydict.iteritems():
+
+            # Find the payee name variant with the highest complexity score.
+            snames = [(accent_score(txn.payee), txn.payee) for txn in txns]
+            snames.sort()
+            payee = snames[-1][1]
+
+            self.payees[payee] = txns
+
+
+
+
+
+_accents = u'áâàäãéêèëíîìïóôòöõúûùüçøñÁÂÀÄÉÊÈËÍÎÌÏÓÔÒÖÚÛÙÜÇØÑ¡¿'
+
+def accent_score(s):
+    """ Return a score for a string that ranks strings in importance whevener
+    they have capital letters and accents."""
+    acc_upper = sum(1 for c in s if c in string.uppercase)
+    acc_score = sum(1 for c in s if c in _accents)
+    return acc_upper + acc_score
+
+
 
 
 

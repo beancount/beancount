@@ -63,6 +63,7 @@ class Template(object):
                LI(A('Income', href=umap('@@IncomeStatement'))),
                LI(A('CashFlow', href=umap('@@CashFlow'))),
                LI(A('Capital', href=umap('@@CapitalStatement'))),
+               LI(A('Payees', href=umap('@@Payees'))),
                LI(A('Positions', href=umap('@@Positions'))),
                LI(A('Trades', href=umap('@@Trades'))),
                LI(A('Activity', href=umap('@@Activity'))),
@@ -154,6 +155,9 @@ def cachefunc(func):
 
 websep = '~'
 
+def webaccname(accname):
+    return accname.replace(':', websep)
+
 @cachefunc
 def haccount_split(accname):
     """Return some HTML for a full account name. This version makes each
@@ -164,8 +168,8 @@ def haccount_split(accname):
     cappend = comps.append
     for comp in accname.split(Account.sep):
         cappend(comp)
-        name = websep.join(comps)
-        append(A(comp, href=umap('@@AccountLedger', name), CLASS='accomp'))
+        wname = websep.join(comps)
+        append(A(comp, href=umap('@@AccountLedger', wname), CLASS='accomp'))
     accspan = SPAN(ljoin(l, SPAN(Account.sep, CLASS='accsep')), CLASS='account')
     accspan.cache = 1
     return accspan
@@ -174,7 +178,8 @@ def haccount_split(accname):
 def haccount(accname):
     "Return some HTML for a full account name. There is a single link."
     accspan = SPAN(
-        A(accname, href=umap('@@AccountLedger', accname), CLASS='accomp'),
+        A(accname, href=umap('@@AccountLedger', webaccname(accname)),
+          CLASS='accomp'),
         CLASS='account')
     accspan.cache = 1
     return accspan
@@ -188,7 +193,8 @@ def page__chartofaccounts(app, ctx):
     it = iter(itertree(ctx.ledger.get_root_account()))
     for acc, td1, tr, skip in treetable_builder(table, it):
         td1.add(
-            A(acc.name, href=umap('@@AccountLedger', acc.fullname), CLASS='accomp'))
+            A(acc.name, href=umap('@@AccountLedger', webaccname(acc.fullname)),
+              CLASS='accomp'))
         tr.add(
             TD(acc.getatype()),
             TD(", ".join(acc.commodities) if acc.commodities else ""),
@@ -214,7 +220,7 @@ def page__stats(app, ctx):
     ul = UL( LI(A('Message Log (and Errors)', href=umap('@@Messages'))),
              LI(A('Pricing Commodities', href=umap('@@Pricing'))),
              LI(A('Source', href=umap('@@Source'))),
-             LI(A('Resources Requires for CSS (for websuck)', href=umap('@@ScrapeResources'))))
+             LI(A('Resources Required for CSS (for websuck)', href=umap('@@ScrapeResources'))))
     page.add(H2("Links"), ul)
 
     ul = UL()
@@ -232,6 +238,8 @@ def page__scraperes(app, ctx):
     page.add(H1("Scrape Resources"))
     for id_ in ('@@FolderOpen', '@@FolderClosed', '@@HeaderBackground'):
         page.add(IMG(src=umap(id_)))
+    page.add(A("Home", href=umap('@@Home')))
+
     return page.render(app)
 
 
@@ -248,7 +256,8 @@ def page__trialbalance(app, ctx):
             skip()
             continue
         td1.add(
-            A(acc.name, href=umap('@@AccountLedger', acc.fullname), CLASS='accomp'))
+            A(acc.name, href=umap('@@AccountLedger', webaccname(acc.fullname)),
+              CLASS='accomp'))
         
         lbal = acc.local_balance.convert(app.opts.conversions).round()
         dr, cr = lbal.split()
@@ -288,7 +297,8 @@ def semi_table(acc, tid, remove_empty=True, conversions=None):
             continue
 
         td1.add(
-            A(acc.name, href=umap('@@AccountLedger', acc.fullname), CLASS='accomp'))
+            A(acc.name, href=umap('@@AccountLedger', webaccname(acc.fullname)),
+              CLASS='accomp'))
 
         local_balance = acc.local_balance
         if conversions:
@@ -388,6 +398,16 @@ def page__cashflow(app, ctx):
     page = Template(ctx)
     page.add(H1("Cash-Flow Statement"))
     page.add(P("FIXME TODO"))
+    return page.render(app)
+
+
+def page__payees(app, ctx):
+    page = Template(ctx)
+    page.add(H1("Payees"))
+    ul = page.add(UL())
+    for payee in sorted(ctx.ledger.payees.iterkeys()):
+        ul.add(LI(A(payee, href=umap('@@PayeeLedger', payee))))
+
     return page.render(app)
 
 
@@ -606,7 +626,8 @@ def page__activity(app, ctx):
     it = iter(itertree(ctx.ledger.get_root_account(), pred=attrgetter('checked')))
     for acc, td1, tr, _ in treetable_builder(table, it):
         td1.add(
-            A(acc.name, href=umap('@@AccountLedger', acc.fullname), CLASS='accomp'))
+            A(acc.name, href=umap('@@AccountLedger', webaccname(acc.fullname)),
+              CLASS='accomp'))
 
         append = False
         row = [TD() for _ in xrange(4)]
@@ -674,12 +695,14 @@ def page__ledgerindex(app, ctx):
 
 
 
+## FIXME I want to split this and support a page for single payee transactions
+## and flow statement.
+
 def page__ledger(app, ctx):
     """
     List the transactions that pertain to a list of filtered postings.
     """
     page = Template(ctx)
-
     style = ctx.session.get('style', 'full')
     assert style in ('compact', 'other', 'only', 'full')
 
@@ -725,6 +748,27 @@ def page__ledger(app, ctx):
     else:
         page.add(H1('Ledger for ', haccount_split(acc.fullname)), table)
 
+    return page.render(app)
+
+
+def page__ledger_payee(app, ctx):
+    """
+    List the transactions that pertain to a list of filtered postings.
+    """
+    page = Template(ctx)
+    style = ctx.session.get('style', 'full')
+    assert style in ('compact', 'other', 'only', 'full')
+
+    payee = getattr(ctx, 'payee', '')
+    txns = ctx.ledger.payees[payee]
+
+    postings = []
+    for txn in txns:
+        postings.extend(txn.postings)
+
+    table = render_postings_table(postings, style)
+
+    page.add(H1('Payee transactions for %s' % payee), table)
     return page.render(app)
 
 
@@ -1064,6 +1108,7 @@ page_directory = (
     ('@@ScrapeResources', page__scraperes, '/scraperes', None),
 
     ('@@Home', redirect('@@ChartOfAccounts'), '/', None),
+    ('@@HomeIndex', redirect('@@ChartOfAccounts'), '/index', None),
 
     ('@@ChartOfAccounts', page__chartofaccounts, '/accounts', None),
     ('@@Statistics', page__stats, '/stats', None),
@@ -1073,6 +1118,7 @@ page_directory = (
     ('@@IncomeStatement', page__income, '/income', None),
     ('@@CapitalStatement', page__capital, '/capital', None),
     ('@@CashFlow', page__cashflow, '/cashflow', None),
+    ('@@Payees', page__payees, '/payees', None),
     ('@@Positions', page__positions, '/positions', None),
     ('@@Locations', page__locations, '/locations', None),
     ('@@Trades', page__trades, '/trades', None),
@@ -1087,6 +1133,8 @@ page_directory = (
 
     ('@@AccountLedger', page__ledger, '/ledger/byaccount/%s',
      '^/ledger/byaccount/(?P<accname>.*)$'),
+    ('@@PayeeLedger', page__ledger_payee, '/ledger/bypayee/%s',
+     '^/ledger/bypayee/(?P<payee>.*)$'),
 
     ('@@SetStyle', page__setstyle, '/setstyle', '^/setstyle$'),
     ('@@Messages', page__messages, '/messages', None),
