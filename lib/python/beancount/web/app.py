@@ -123,7 +123,7 @@ def hwallet_paren(w, round=True):
     if round:
         w = w.round()
     l = []
-    for (c,a) in w.tostrlist():    
+    for (c,a) in w.tostrlist():
         if a >= 0:
             a = SPAN('%s %s' % (a,c), CLASS='amount')
         else:
@@ -244,8 +244,18 @@ def page__scraperes(app, ctx):
 
 
 
+def render_trial_field(field='local_balance', conversions=None):
+    """ Render a trial balance of the accounts tree using a particular field. """
+    pass
+
+
+
 def page__trialbalance(app, ctx):
     page = Template(ctx)
+
+    conversions = app.opts.conversions
+
+    #---------------------------------------------------------------------------
 
     table = TABLE(id='balance', CLASS='accounts treetable')
     table.add(THEAD(TR(TH("Account"), TH("Debit"), TH("Credit"), TH(), TH("Cum. Sum"))))
@@ -258,8 +268,8 @@ def page__trialbalance(app, ctx):
         td1.add(
             A(acc.name, href=umap('@@AccountLedger', webaccname(acc.fullname)),
               CLASS='accomp'))
-        
-        lbal = acc.local_balance.convert(app.opts.conversions).round()
+
+        lbal = acc.local_balance.convert(conversions).round()
         dr, cr = lbal.split()
         sumdr += dr
         sumcr += cr
@@ -268,7 +278,7 @@ def page__trialbalance(app, ctx):
             TD(hwallet_paren(-cr), CLASS='wallet'),
             )
 
-        bal = acc.balance.convert(app.opts.conversions).round()
+        bal = acc.balance.convert(conversions).round()
         if not lbal and bal:
             tr.add(
                 TD('...'),
@@ -279,11 +289,14 @@ def page__trialbalance(app, ctx):
     table.add(TR(TD(), TD(hwallet_paren(sumdr)), TD(hwallet_paren(-sumcr)),
                  TD(), TD()))
 
+    #---------------------------------------------------------------------------
+
     page.add(H1('Trial Balance'), table)
     return page.render(app)
 
 
-def semi_table(acc, tid, remove_empty=True, conversions=None):
+def semi_table(acc, tid, remove_empty=True, conversions=None,
+               attr='local_balance'):
     """ Given an account, create a table for the transactions contained therein
     (including its subaccounts)."""
 
@@ -300,11 +313,11 @@ def semi_table(acc, tid, remove_empty=True, conversions=None):
             A(acc.name, href=umap('@@AccountLedger', webaccname(acc.fullname)),
               CLASS='accomp'))
 
-        local_balance = acc.local_balance
+        balance = getattr(acc, attr)
         if conversions:
-            local_balance = local_balance.convert(conversions)
+            balance = balance.convert(conversions)
 
-        dr, cr = local_balance.split()
+        dr, cr = balance.split()
         sumdr += dr
         sumcr += cr
         tr.add(
@@ -551,7 +564,7 @@ def page__pricehistory(app, ctx):
     base/quote commodities as input."""
     page = Template(ctx)
     page.add(H1("Price History for %s/%s" % (ctx.base, ctx.quote)))
-    
+
     tbl, = page.add(TABLE(THEAD(TR(TH("Date"), TH("Rate"))),
                           CLASS='price_history'))
 
