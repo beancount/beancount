@@ -244,7 +244,7 @@ def page__scraperes(app, ctx):
 
 
 
-def render_trial_field(ledger, field, conversions=None):
+def render_trial_field(ledger, field, field_cum, conversions=None):
     """
     Render a trial balance of the accounts tree using a particular field.
     """
@@ -261,25 +261,34 @@ def render_trial_field(ledger, field, conversions=None):
               CLASS='accomp'))
 
         lbal = getattr(acc, field, None)
-        if lbal is None:
+        bal = getattr(acc, field_cum, None)
+        if lbal is None and bal is None:
+            skip()
             continue
 
-        lbal = lbal.convert(conversions).round()
-        dr, cr = lbal.split()
-        sumdr += dr
-        sumcr += cr
-        tr.add(
-            TD(hwallet_paren(dr), CLASS='wallet'),
-            TD(hwallet_paren(-cr), CLASS='wallet'),
-            )
-
-        bal = acc.balance.convert(conversions).round()
-        if not lbal and bal:
+        if lbal is not None:
+            lbal = lbal.convert(conversions).round()
+            dr, cr = lbal.split()
+            sumdr += dr
+            sumcr += cr
             tr.add(
-                TD('...'),
-                TD(hwallet_paren(bal),
-                   CLASS='wallet'),
+                TD(hwallet_paren(dr), CLASS='wallet'),
+                TD(hwallet_paren(-cr), CLASS='wallet'),
                 )
+        else:
+            tr.add(
+                TD(CLASS='wallet'),
+                TD(CLASS='wallet'),
+                )
+            
+        if bal is not None:
+            bal = bal.convert(conversions).round()
+            if not lbal and bal:
+                tr.add(
+                    TD('...'),
+                    TD(hwallet_paren(bal),
+                       CLASS='wallet'),
+                    )
 
     table.add(TR(TD(), TD(hwallet_paren(sumdr)), TD(hwallet_paren(-sumcr)),
                  TD(), TD()))
@@ -293,7 +302,8 @@ def page__trialbalance(app, ctx):
     ledger = ctx.ledger
     conversions = app.opts.conversions
 
-    table = render_trial_field(ledger, 'local_balance', app.opts.conversions)
+    table = render_trial_field(ledger, 'local_balance', 'balance',
+                               app.opts.conversions)
 
     page.add(H1('Trial Balance'), table)
     return page.render(app)
@@ -422,8 +432,8 @@ def page__payees(app, ctx):
     page = Template(ctx)
     page.add(H1("Payees"))
     ul = page.add(UL())
-    for payee in sorted(ctx.ledger.payees.iterkeys()):
-        ul.add(LI(A(payee, href=umap('@@PayeeLedger', payee))))
+    for key, (payee, _) in sorted(ctx.ledger.payees.iteritems()):
+        ul.add(LI(A(payee, href=umap('@@PayeeLedger', key))))
 
     return page.render(app)
 
@@ -711,10 +721,6 @@ def page__ledgerindex(app, ctx):
     return page.render(app)
 
 
-
-## FIXME I want to split this and support a page for single payee transactions
-## and flow statement.
-
 def page__ledger(app, ctx):
     """
     List the transactions that pertain to a list of filtered postings.
@@ -776,25 +782,36 @@ def page__ledger_payee(app, ctx):
     style = ctx.session.get('style', 'full')
     assert style in ('compact', 'other', 'only', 'full')
 
-    ledger = ctx.ledger
-    payee = getattr(ctx, 'payee', '')
-    txns = ledger.payees[payee]
+    payee_key = getattr(ctx, 'payee', '')
+    payee, txns = ctx.ledger.payees[payee_key]
 
+    # Render a table for the list of transactions.
     postings = []
     for txn in txns:
         postings.extend(txn.postings)
-
-    table = render_postings_table(postings, style)
+    table_txns = render_postings_table(postings, style)
 
     # Render a trial balance of only the transactions that involve this payee.
-FIXME TODO
+    rootacc = ctx.ledger.get_root_account()
+    rootacc.clear_field('payee_total')
+    rootacc.clear_field('payee_cum')
+    for txn in txns:
+        for post in txn.postings:
+            acc = post.account
+            aname = 'payee_total'
+            while acc is not None:
+                if not hasattr(acc, aname):
+                    setattr(acc, aname, Wallet())
+                getattr(acc, aname).__iadd__(post.amount)
+                aname = 'payee_cum'
+                acc = acc.parent
+    table_flow = render_trial_field(ctx.ledger, 'payee_total', 'payee_cum',
+                                app.opts.conversions)
     
-
-
-
-
-
-    page.add(H1('Payee transactions for %s' % payee), table)
+    page.add(H1('Payee transactions for %s' % payee),
+             H2('Summary'), table_flow,
+             HR(),
+             H2('Transactions'), table_txns)
     return page.render(app)
 
 

@@ -161,6 +161,17 @@ class Account(object):
         else:
             return self.parent.ischildof(cparent)
 
+    def clear_field(self, aname):
+        """ Rename the attribute 'aname' from the account and all its
+        subaccounts."""
+        if hasattr(self, aname):
+            delattr(self, aname)
+        for child in self.children:
+            child.clear_field(aname)
+        
+
+
+
 
 
 class Dated(object):
@@ -1255,7 +1266,8 @@ class Ledger(object):
 
         for txn in self.transactions:
             if txn.payee:
-                payee = ' '.join(txn.payee.lower().split()).encode('ascii', 'replace')
+                payee = ' '.join(txn.payee.lower().split()).encode(
+                    'ascii', 'replace').replace(' ', '-').replace('.', '')
                 paydict[payee].append(txn)
 
         self.payees = {}
@@ -1266,7 +1278,7 @@ class Ledger(object):
             snames.sort()
             payee = snames[-1][1]
 
-            self.payees[payee] = txns
+            self.payees[key] = (payee, txns)
 
 
 
