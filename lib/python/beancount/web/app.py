@@ -244,22 +244,13 @@ def page__scraperes(app, ctx):
 
 
 
-def render_trial_field(field='local_balance', conversions=None):
-    """ Render a trial balance of the accounts tree using a particular field. """
-    pass
-
-
-
-def page__trialbalance(app, ctx):
-    page = Template(ctx)
-
-    conversions = app.opts.conversions
-
-    #---------------------------------------------------------------------------
-
+def render_trial_field(ledger, field, conversions=None):
+    """
+    Render a trial balance of the accounts tree using a particular field.
+    """
     table = TABLE(id='balance', CLASS='accounts treetable')
     table.add(THEAD(TR(TH("Account"), TH("Debit"), TH("Credit"), TH(), TH("Cum. Sum"))))
-    it = iter(itertree(ctx.ledger.get_root_account()))
+    it = iter(itertree(ledger.get_root_account()))
     sumdr, sumcr = Wallet(), Wallet()
     for acc, td1, tr, skip in treetable_builder(table, it):
         if len(acc) == 0:
@@ -269,7 +260,11 @@ def page__trialbalance(app, ctx):
             A(acc.name, href=umap('@@AccountLedger', webaccname(acc.fullname)),
               CLASS='accomp'))
 
-        lbal = acc.local_balance.convert(conversions).round()
+        lbal = getattr(acc, field, None)
+        if lbal is None:
+            continue
+
+        lbal = lbal.convert(conversions).round()
         dr, cr = lbal.split()
         sumdr += dr
         sumcr += cr
@@ -289,7 +284,16 @@ def page__trialbalance(app, ctx):
     table.add(TR(TD(), TD(hwallet_paren(sumdr)), TD(hwallet_paren(-sumcr)),
                  TD(), TD()))
 
-    #---------------------------------------------------------------------------
+    return table
+
+
+def page__trialbalance(app, ctx):
+    page = Template(ctx)
+
+    ledger = ctx.ledger
+    conversions = app.opts.conversions
+
+    table = render_trial_field(ledger, 'local_balance', app.opts.conversions)
 
     page.add(H1('Trial Balance'), table)
     return page.render(app)
@@ -772,14 +776,23 @@ def page__ledger_payee(app, ctx):
     style = ctx.session.get('style', 'full')
     assert style in ('compact', 'other', 'only', 'full')
 
+    ledger = ctx.ledger
     payee = getattr(ctx, 'payee', '')
-    txns = ctx.ledger.payees[payee]
+    txns = ledger.payees[payee]
 
     postings = []
     for txn in txns:
         postings.extend(txn.postings)
 
     table = render_postings_table(postings, style)
+
+    # Render a trial balance of only the transactions that involve this payee.
+FIXME TODO
+    
+
+
+
+
 
     page.add(H1('Payee transactions for %s' % payee), table)
     return page.render(app)
