@@ -13,6 +13,9 @@
 Beancount (Accounting)
 ======================
 
+  - Remove checks that are outside the postings dates, at
+    render time
+
   - Add a pie chart to visualize the constitution of the Income
     Statement.
 
