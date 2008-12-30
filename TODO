@@ -13,6 +13,11 @@
 Beancount (Accounting)
 ======================
 
+  - Add a pie chart to visualize the constitution of the Income
+    Statement.
+
+  - Make the conversions be applied everywhere consistently.
+
   - beancount: Enter trade costs with BOOK for all personal trading
     too, check that it works well. Check that capital gains
     calculations do not include commissions.
