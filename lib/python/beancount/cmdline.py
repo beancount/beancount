@@ -13,12 +13,15 @@ from beancount.fallback.colorlog import ColorFormatter
 
 # beancount imports
 from beancount.ledger import Ledger
-from beancount.timeparse import parse_time
+from beancount.timeparse import parse_time, parse_one_time
 from beancount import install_psyco
 from beancount import assetdef
 
 
 MANY=-1
+
+DATE_WAAAYBACK = date(1800, 1, 1)
+DATE_WAAAYFWD = date(4000, 1, 1)
 
 def main(parser, no=MANY):
     "Parse the cmdline as a list of ledger source files and return a Ledger."
@@ -71,6 +74,11 @@ def main(parser, no=MANY):
     for assfn in opts.assets:
         assetdef.add_asset_path(assfn)
 
+    if opts.begin:
+        opts.begin, _ = parse_one_time(opts.begin)
+    if opts.end:
+        opts.end, _ = parse_one_time(opts.end)
+
     if no == 0:
         return opts, None, args
     elif no == 1:
@@ -97,6 +105,7 @@ def load_ledger(parser, filenames, opts):
     run_postprocesses(ledger, opts)
 
     return ledger
+
 def reload(ledger, opts):
     """
     Parse the files again and create a new Ledger from them.
@@ -118,11 +127,10 @@ def reload(ledger, opts):
 def run_postprocesses(ledger, opts):
     ledger.run_directives()
     
-    if hasattr(opts, 'close') and opts.close:
-        closedate, _ = parse_time(opts.close)
-        ledger.close_books(closedate)
+    if hasattr(opts, 'begin') and opts.begin:
+        ledger.close_books(opts.begin)
 
-    filter_opts = 'account', 'transaction_account', 'note', 'time', 'tag'
+    filter_opts = 'account', 'transaction_account', 'note', 'begin', 'end', 'tag'
 
     if all(hasattr(opts, x) for x in filter_opts):
         pred = create_filter_pred(opts)
@@ -140,27 +148,33 @@ Code to filter down specific postings.
 def addopts(parser):
     "Add options for selecting accounts/postings."
 
-    parser.add_option('-c', '--close', '--close-books',
+    parser.add_option('--begin', '--start', '--close', dest='begin', 
                       action='store', metavar='TIME_EXPR',
-                      help="Close the books at the given time.")
+                      help="Begin time in the interval in use for the flow "
+                      "statements (e.g. Income Statement). If specified, "
+                      "synthetic entries are inserted to close the books at "
+                      "that time, so that level amounts are calculated properly.")
+
+    parser.add_option('--end', '--stop', dest='end',
+                      action='store', metavar='TIME_EXPR',
+                      help="Ignore postings with a date after the given date. "
+                      "This allows the flow statements (e.g. Income Statement) "
+                      "to focus on a finite period.")
 
     group = optparse.OptionGroup(parser, "Options for filtering postings.")
 
     group.add_option('-a', '--account', action='append', metavar='REGEXP',
                      default=[],
-                     help="Filter only the postings whose account matches the given regexp.")
+                     help="Filter only the postings whose account matches "
+                     "the given regexp.")
 
-    group.add_option('-A', '--transaction-account', action='append', metavar='REGEXP',
-                     default=[],
-                     help="Filter only the transactions which have at least one account which matches the given regexp.")
+    group.add_option('-A', '--transaction-account',
+                     action='append', metavar='REGEXP', default=[],
+                     help="Filter only the transactions which have at least "
+                     "one account which matches the given regexp.")
 
     group.add_option('-n', '--note', action='append', metavar='REGEXP',
                      help="Filter only the postings with the given notes.")
-
-    group.add_option('--time', action='store', metavar='TIME_EXPR',
-                     help="Filter only the postings within the given time range. "
-                     "There are multiple valid time range formats. See source "
-                     "for details.")
 
     group.add_option('-g', '-t', '--tag', action='store', metavar='REGEXP',
                      help="Filter only the postings whose tag matches the "
@@ -196,13 +210,12 @@ def create_filter_pred(opts):
         except re.error, e:
             raise SystemExit(e)
 
-    if opts.time:
-        try:
-            interval = parse_time(opts.time)
-            if interval is not None:
-                logging.info("Filtering by interval:  %s  ->  %s" % interval)
-        except ValueError, e:
-            raise SystemExit(e)
+        
+    if opts.begin or opts.end:
+        begin = opts.begin or DATE_WAAAYBACK
+        end = opts.end or DATE_WAAAYFWD
+        interval = (begin, end)
+        logging.info("Filtering by interval:  %s  ->  %s" % interval)
     else:
         interval = None
 

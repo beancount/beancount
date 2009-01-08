@@ -26,8 +26,6 @@ Beancount (Accounting)
     calculations do not include commissions.
 
     * Add 1/rate syntax.
-    * Add --end option
-    * Make --close synonym --begin
     * Add account numbers for classification and sorting.
     * Add a cash account flag in @defaccount, to generate the Cashflow Statement.
     * beancount: Make the --close place its Equity into
@@ -66,8 +64,8 @@ graphs:
 
 reports:
 
-  - beancount: Available balance sheet reports should be: begin, end,
-    both.  Perhaps the "both" statement is only in report foramt.
+  - beancount: Available balance sheet reports should be: at begin, at
+    end, both. Perhaps the "both" statement is only in report foramt.
 
 
 by-payee pages:
