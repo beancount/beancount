@@ -376,7 +376,7 @@ def page__balancesheet(app, ctx):
 
     total = a_total + l_total + e_total
     page.add(BR(style="clear: both"),
-             TABLE( TR(TD(B("Net Income:")), TD(hwallet(total))),
+             TABLE( TR(TD(B("A + L + E:")), TD(hwallet(total))),
                     id='net', CLASS='treetable') )
 
     return page.render(app)
@@ -1053,8 +1053,8 @@ def page__trades(app, ctx):
 
         legs_table = TABLE(
             THEAD(
-                TR(TH("Date"), TH("Units"), TH("Native CCY Price"),
-                   TH("Native CCY Amount"), TH("Exchange Rate"), TH("Amount in Report CCY"))),
+                TR(TH("Date"), TH("Units"), TH("Price"),
+                   TH("Amount"), TH("Exchange Rate"), TH("Report Amount (target CCY)"))),
             CLASS="trades")
 
         for leg in bt.legs:
