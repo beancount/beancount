@@ -23,7 +23,7 @@ from beancount import cmdline
 # My default accounts.
 acc_sales = 'Income:Book-Sales'
 acc_deposit = 'Assets:Current:PayPal'
-acc_fee = 'Expenses:Financial:Commissions:PayPal'
+acc_fee = 'Expenses:Financial:Fees:PayPal'
 
 def parse_date(s):
     return date.fromtimestamp(time.mktime(time.strptime(s, '%m/%d/%Y')))
