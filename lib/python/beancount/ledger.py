@@ -966,8 +966,6 @@ class Ledger(object):
                         price = post.price.tonum()
                         _booked, _ = inv.trade(price, post.amount[comm_book], post)
 
-                        trace(_booked)
-
                         booked.extend(_booked)
 
                     # If there is a booking posting in the current transaction,

@@ -324,7 +324,7 @@ class Inventory(object):
 
                 quant += booked_quant
                 total_booked += booked_quant
-                booked.append( (pos.obj, -booked_quant) )
+                booked.append( (pos.obj, booked_quant) )
 
                 real_pnl += booked_quant * (price - pos.price)
                 if done or quant == 0:
@@ -347,7 +347,7 @@ class Inventory(object):
         if total_booked == 0:
             assert realized_pnl == 0, realized_pnl
         else:
-            booked.append( (obj, total_booked) )
+            booked.append( (obj, -total_booked) )
             
         # Append the remainder of our trade to the inventory if not all was
         # booked.
