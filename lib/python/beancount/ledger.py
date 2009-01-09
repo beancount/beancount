@@ -995,7 +995,7 @@ class Ledger(object):
                         for post, amount_book in booked:
                             price, comm_price = post.price.single()
 
-                            amount_price = amount_book * price
+                            amount_price = -amount_book * price
                             if comm_target is None:
                                 xrate = 1
                                 amount_target = amount_price
@@ -1012,10 +1012,11 @@ class Ledger(object):
                             pnl_price += amount_price
                             pnl_target += amount_target
 
-                        assert pnl_price == inv.reset_pnl() # Sanity check.
+                        rpnl = inv.reset_pnl()
+                        assert pnl_price == rpnl, (pnl_price, rpnl) # Sanity check.
 
-                        w_price = Wallet(comm_price, -pnl_price)
-                        w_target = Wallet(comm_target or comm_price, -pnl_target)
+                        w_price = Wallet(comm_price, pnl_price)
+                        w_target = Wallet(comm_target or comm_price, pnl_target)
 
                         if not hasattr(post_book, 'amount_orig'):
                             post_book.amount_orig = Wallet()

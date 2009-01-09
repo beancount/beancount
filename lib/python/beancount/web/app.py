@@ -1073,9 +1073,9 @@ def page__trades(app, ctx):
             TR(TD('Gain(+) / Loss(-)'),
                TD(),
                TD(),
-               TD(hwallet(-bt.post_book.amount_orig)),
+               TD(hwallet(bt.post_book.amount_orig)),
                TD(),
-               TD(hwallet(-bt.post_book.amount)),
+               TD(hwallet(bt.post_book.amount)),
                ))
 
         postings = [x.post for x in bt.legs]
@@ -1105,8 +1105,9 @@ def page__trades_csv(app, ctx):
     ledger = ctx.ledger
 
     rows = [["Date", "Units", "Commodity",
-             "Native Price", "Native CCY", "Native Amount", "Native CCY Gain(+) / Loss(-)",
-             "Exchange Rate", "Reported Amount", "Report CCY", "Report CCY Gain(+) / Loss(-)"]]
+             "CCY", "Price", "Amount", "Gain/Loss",
+             "",
+             "Report CCY", "XRate", "Report Amount", "Report Gain/Loss"]]
 
     for bt in ledger.booked_trades:
         rows.append([]) # empty line
@@ -1116,21 +1117,23 @@ def page__trades_csv(app, ctx):
                 str(leg.post.actual_date),
                 leg.amount_book,
                 bt.comm_book,
-                leg.price,
                 leg.comm_price,
+                leg.price,
                 leg.amount_price,
                 '',
+                '',
+                bt.comm_target or leg.comm_price,
                 leg.xrate,
                 leg.amount_target,
-                bt.comm_target or leg.comm_price,
                 ''
                 ])
 
         post_book = bt.post_book
         rows.append(['', '', '', '', '', '',
-                     str(-bt.post_book.amount_orig),
-                     '', '', '',
-                     str(-bt.post_book.amount)])
+                     str(bt.post_book.amount_orig.tonum()),
+                     '', '', '', '',
+                     str(bt.post_book.amount.tonum())])
+        rows.append([]) # empty line
 
     oss = StringIO.StringIO()
     writer = csv.writer(oss)
