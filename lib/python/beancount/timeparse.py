@@ -108,6 +108,6 @@ def parse_one_time(timestr):
         year = int(mo.group(1))
         return (date(year, 1, 1), date(year+1, 1, 1))
 
-    return None
+    raise ValueError("Cannot parse: %s" % repr(timestr))
 
 

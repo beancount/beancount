@@ -5,7 +5,7 @@ developing.
 """
 
 # stdlib imports
-import sys, logging, re
+import sys, logging, re, StringIO, csv
 from wsgiref.util import request_uri, application_uri
 from os.path import *
 from operator import attrgetter
@@ -280,7 +280,7 @@ def render_trial_field(ledger, field, field_cum, conversions=None):
                 TD(CLASS='wallet'),
                 TD(CLASS='wallet'),
                 )
-            
+
         if bal is not None:
             bal = bal.convert(conversions).round()
             if not lbal and bal:
@@ -403,13 +403,11 @@ def page__income(app, ctx):
                  CLASS='left'),
              )
 
-    total = i_total + e_total
     net = TABLE(id='net', CLASS='treetable')
     net.add(
-        TR(TD("Net Difference"),
-           TD(hwallet(total))))
+        TR(TD("Net Difference:"), TD(hwallet(i_total + e_total))))
     page.add(BR(style="clear: both"),
-             H2("Net Difference"), net)
+             H2("Net Difference (Expenses + Income)"), net)
 
     return page.render(app)
 
@@ -807,7 +805,7 @@ def page__ledger_payee(app, ctx):
                 acc = acc.parent
     table_flow = render_trial_field(ctx.ledger, 'payee_total', 'payee_cum',
                                 app.opts.conversions)
-    
+
     page.add(H1('Payee transactions for %s' % payee),
              H2('Summary'), table_flow,
              HR(),
@@ -821,7 +819,11 @@ def render_postings_table(postings, style,
                           acc_checks=None,
                           amount_overrides=None):
 
-    table = TABLE(CLASS='txntable')
+    table = TABLE(
+        THEAD(
+            TR(TH("Date"), TH("F"), TH("Description/Posting"),
+               TH(""), TH("Amount"), TH("Balance"))),
+        CLASS='txntable')
 
     # Get the list of transactions that relate to the postings.
     txns = set(post.txn for post in postings)
@@ -1049,14 +1051,10 @@ def page__trades(app, ctx):
 
     for bt in ledger.booked_trades:
 
-        postings = [x.post for x in bt.legs]
-        overrides = dict((x.post, Wallet(bt.comm_book, x.amount_book))
-                         for x in bt.legs)
-
         legs_table = TABLE(
             THEAD(
-                TR(TH("Date"), TH("Units"), TH("Native Price"),
-                   TH("Native Amount"), TH("Target Rate"), TH("Target Amount"))),
+                TR(TH("Date"), TH("Units"), TH("Native CCY Price"),
+                   TH("Native CCY Amount"), TH("Exchange Rate"), TH("Amount in Report CCY"))),
             CLASS="trades")
 
         for leg in bt.legs:
@@ -1072,7 +1070,7 @@ def page__trades(app, ctx):
         post_book = bt.post_book
 
         legs_table.add(
-            TR(TD('Gain/-Loss'),
+            TR(TD('Gain(+) / Loss(-)'),
                TD(),
                TD(),
                TD(hwallet(-bt.post_book.amount_orig)),
@@ -1080,6 +1078,9 @@ def page__trades(app, ctx):
                TD(hwallet(-bt.post_book.amount)),
                ))
 
+        postings = [x.post for x in bt.legs]
+        overrides = dict((x.post, Wallet(bt.comm_book, x.amount_book))
+                         for x in bt.legs)
         table = render_postings_table(postings, style,
                                       amount_overrides=overrides)
         title = '%s - %s %s ; %s' % (
@@ -1090,8 +1091,53 @@ def page__trades(app, ctx):
         page.add(DIV(H2(title), legs_table, P("Corresponding transactions:"), table,
                      CLASS='btrade'))
 
+    page.add(HR(),
+             A("Download as CSV", href=umap("@@TradesCSV")))
+
     return page.render(app)
 
+
+
+def page__trades_csv(app, ctx):
+    """
+    Generate a CSV document with the list of trades.
+    """
+    ledger = ctx.ledger
+
+    rows = [["Date", "Units", "Commodity",
+             "Native Price", "Native CCY", "Native Amount", "Native CCY Gain(+) / Loss(-)",
+             "Exchange Rate", "Reported Amount", "Report CCY", "Report CCY Gain(+) / Loss(-)"]]
+
+    for bt in ledger.booked_trades:
+        rows.append([]) # empty line
+
+        for leg in bt.legs:
+            rows.append([
+                str(leg.post.actual_date),
+                leg.amount_book,
+                bt.comm_book,
+                leg.price,
+                leg.comm_price,
+                leg.amount_price,
+                '',
+                leg.xrate,
+                leg.amount_target,
+                bt.comm_target or leg.comm_price,
+                ''
+                ])
+
+        post_book = bt.post_book
+        rows.append(['', '', '', '', '', '',
+                     str(-bt.post_book.amount_orig),
+                     '', '', '',
+                     str(-bt.post_book.amount)])
+
+    oss = StringIO.StringIO()
+    writer = csv.writer(oss)
+    writer.writerows(rows)
+
+    app.setHeader('Content-Type','text/csv')
+    app.write(oss.getvalue())
 
 
 def page__reload(app, ctx):
@@ -1165,6 +1211,7 @@ page_directory = (
     ('@@Positions', page__positions, '/positions', None),
     ('@@Locations', page__locations, '/locations', None),
     ('@@Trades', page__trades, '/trades', None),
+    ('@@TradesCSV', page__trades_csv, '/trades.csv', None),
     ('@@Pricing', page__pricing, '/pricing', None),
     ('@@PriceHistory', page__pricehistory, '/price/history/%s/%s',
      '^/price/history/(?P<base>[^/]+)/(?P<quote>[^/]+)$'),

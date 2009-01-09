@@ -168,7 +168,7 @@ class Account(object):
             delattr(self, aname)
         for child in self.children:
             child.clear_field(aname)
-        
+
 
 
 
@@ -895,7 +895,8 @@ class Ledger(object):
             # Process non-balanced virtual postings.
             for post in postsets[VIRT_UNBALANCED]:
                 if post.cost is None:
-                    self.log(WARNING, "Virtual posting without amount has no effect.", post)
+                    if post.booking is None:
+                        self.log(WARNING, "Virtual posting without amount has no effect.", post)
                     post.amount = post.cost = Wallet()
 
     def get_price_comm(self, comm):
@@ -964,6 +965,9 @@ class Ledger(object):
                         assert post.price.tocomm() == comm_price
                         price = post.price.tonum()
                         _booked, _ = inv.trade(price, post.amount[comm_book], post)
+
+                        trace(_booked)
+
                         booked.extend(_booked)
 
                     # If there is a booking posting in the current transaction,
@@ -1016,7 +1020,7 @@ class Ledger(object):
                         w_target = Wallet(comm_target or comm_price, -pnl_target)
 
                         if not hasattr(post_book, 'amount_orig'):
-                            post_book.amount_orig = Wallet()                            
+                            post_book.amount_orig = Wallet()
                         post_book.amount_orig += w_price
                         post_book.amount += w_target
                         post_book.flag = 'B'
@@ -1266,8 +1270,9 @@ class Ledger(object):
 
         for txn in self.transactions:
             if txn.payee:
-                payee = ' '.join(txn.payee.lower().split()).encode(
-                    'ascii', 'replace').replace(' ', '-').replace('.', '')
+                payee = re.sub('[^A-Za-z0-9]', '_',
+                               ' '.join(txn.payee.lower().split()).encode('ascii',
+                                                                          'replace'))
                 paydict[payee].append(txn)
 
         self.payees = {}

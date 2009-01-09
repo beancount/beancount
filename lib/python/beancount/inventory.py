@@ -82,7 +82,6 @@ PRICING_AVERAGE = object()
 class Inventory(object):
     "An interface for inventory objects."
 
-
     def __init__(self, booking=BOOKING_NONE, pricing=PRICING_REAL):
         # The booking method, a function object that is supposed to return the
         # next position to be matched.
@@ -92,9 +91,12 @@ class Inventory(object):
         self.pricing_method = pricing
 
         # Functions that convert into integer, float and string representation.
-        self.L = lambda x: Decimal(str(x))
-        self.F = float
-        self.S = str
+        if not hasattr(self, 'L'):
+            self.L = lambda x: Decimal(str(x))
+        if not hasattr(self, 'F'):
+            self.F = float
+        if not hasattr(self, 'S'):
+            self.S = str
 
         self.reset()
 
@@ -208,10 +210,10 @@ class Inventory(object):
         else:
             return self.L(0)
 
-    def avgprice(self):
+    def avgcost(self):
         "Return the average price paid for each unit of the current position."
         pos = self.position()
-        return self.L(self.F(self.cost()) / pos) if pos != 0 else None
+        return self.L(self.F(self.cost()) / pos) if pos != 0 else self.L(0)
 
     def realized_pnl(self):
         return self._realized_pnl
@@ -233,7 +235,7 @@ class Inventory(object):
         print ',---------------', self
         print '| position       ', self.position()
         print '| mark           ', self.S(self.mark) if self.mark else None
-        print '| avgprice       ', self.S(self.avgprice() or 0)
+        print '| avgcost        ', self.S(self.avgcost() or 0)
         print '| value          ', self.S(self.value()) if self.mark else None
         print '| cost           ', self.S(self.cost())
         print '| cost4avg       ', self.S(self.cost4avg)
@@ -278,7 +280,8 @@ class Inventory(object):
     def trade(self, price, quant, obj=None):
         """ Book a trade for size 'quant' at the given 'price', using the
         default booking method. Return list of trade objects booked and
-        the PnL realized by this trade (if any)."""
+        the PnL realized by this trade (if any).
+        Note: if you want to book positions manually, use the close() method."""
 
         return self._trade(price, quant, obj, self.booking_findnext)
 

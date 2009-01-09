@@ -74,9 +74,9 @@ def main(parser, no=MANY):
     for assfn in opts.assets:
         assetdef.add_asset_path(assfn)
 
-    if opts.begin:
+    if hasattr(opts, 'begin') and opts.begin:
         opts.begin, _ = parse_one_time(opts.begin)
-    if opts.end:
+    if hasattr(opts, 'end') and opts.end:
         opts.end, _ = parse_one_time(opts.end)
 
     if no == 0:
