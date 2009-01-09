@@ -249,9 +249,9 @@ def render_trial_field(ledger, field, field_cum, conversions=None):
     Render a trial balance of the accounts tree using a particular field.
     """
     table = TABLE(id='balance', CLASS='accounts treetable')
-    table.add(THEAD(TR(TH("Account"), TH("Debit"), TH("Credit"), TH(), TH("Cum. Sum"))))
+    table.add(THEAD(TR(TH("Account"), TH("Amount"), TH(), TH("Cum. Sum"))))
     it = iter(itertree(ledger.get_root_account()))
-    sumdr, sumcr = Wallet(), Wallet()
+    sum_ = Wallet()
     for acc, td1, tr, skip in treetable_builder(table, it):
         if len(acc) == 0:
             skip()
@@ -268,16 +268,12 @@ def render_trial_field(ledger, field, field_cum, conversions=None):
 
         if lbal is not None:
             lbal = lbal.convert(conversions).round()
-            dr, cr = lbal.split()
-            sumdr += dr
-            sumcr += cr
+            sum_ += lbal
             tr.add(
-                TD(hwallet_paren(dr), CLASS='wallet'),
-                TD(hwallet_paren(-cr), CLASS='wallet'),
+                TD(hwallet_paren(lbal), CLASS='wallet'),
                 )
         else:
             tr.add(
-                TD(CLASS='wallet'),
                 TD(CLASS='wallet'),
                 )
 
@@ -290,7 +286,7 @@ def render_trial_field(ledger, field, field_cum, conversions=None):
                        CLASS='wallet'),
                     )
 
-    table.add(TR(TD(), TD(hwallet_paren(sumdr)), TD(hwallet_paren(-sumcr)),
+    table.add(TR(TD(), TD(hwallet_paren(sum_)),
                  TD(), TD()))
 
     return table
@@ -315,9 +311,9 @@ def semi_table(acc, tid, remove_empty=True, conversions=None,
     (including its subaccounts)."""
 
     table = TABLE(id=tid, CLASS='semi accounts treetable')
-    table.add(THEAD(TR(TH("Account"), TH("Debit"), TH("Credit"))))
+    table.add(THEAD(TR(TH("Account"), TH("Amount"))))
     it = iter(itertree(acc))
-    sumdr, sumcr = Wallet(), Wallet()
+    sum_ = Wallet()
     for acc, td1, tr, skip in treetable_builder(table, it):
         if remove_empty and len(acc) == 0:
             skip()
@@ -331,24 +327,16 @@ def semi_table(acc, tid, remove_empty=True, conversions=None,
         if conversions:
             balance = balance.convert(conversions)
 
-        dr, cr = balance.split()
-        sumdr += dr
-        sumcr += cr
+        sum_ += balance
         tr.add(
-            TD(hwallet_paren(dr.round()) if dr else ''),
-            TD(hwallet_paren(-cr.round()) if cr else ''),
+            TD(hwallet_paren(balance.round()) if balance else '')
             )
 
     table.add(TR(TD(B("Totals")),
-                 TD(hwallet_paren(sumdr)),
-                 TD(hwallet_paren(-sumcr))))
+                 TD(hwallet_paren(sum_))
+                 ))
 
-    net = sumdr + sumcr
-    ## table.add(TR(TD(B("Net")),
-    ##              TD(hwallet_paren(net))
-    ##              ))
-
-    return table, net
+    return table, sum_
 
 
 def page__balancesheet(app, ctx):

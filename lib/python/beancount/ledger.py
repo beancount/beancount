@@ -1163,7 +1163,7 @@ class Ledger(object):
         expenses_acc = self.find_account(('Expenses', 'Expense'))
         imb1_acc = self.find_account(('Imbalance',))
         imb2_acc = self.find_account(('Imbalances',))
-        ignore_accounts = filter(None, [income_acc, expenses_acc, imb1_acc, imb2_acc])
+        ignore_accounts = filter(None, [income_acc, expenses_acc, imb1_acc, imb2_acc, other_account])
 
         # Create automated transactions to replace balances from all the
         # transactions that came before the closing date, transactions which
@@ -1187,7 +1187,7 @@ class Ledger(object):
             txn.ordering = next_ordering()
             txn.actual_date = txn.effective_date = closedate
             txn.flag = self.close_flag
-            txn.narration = ("Closing the books for account: '%s'" %
+            txn.narration = ("Opening books for account: '%s'" %
                              acc.fullname)
 
             post = Posting(txn)
