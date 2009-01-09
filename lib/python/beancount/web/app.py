@@ -1034,6 +1034,8 @@ def page__trades(app, ctx):
     page = Template(ctx)
     page.add(H1("Trades"))
 
+    page.add(DIV(A("Download as CSV", href=umap("@@TradesCSV")), CLASS='right-link'))
+
     style = ctx.session.get('style', 'full')
     ledger = ctx.ledger
 
@@ -1078,9 +1080,6 @@ def page__trades(app, ctx):
             bt.account.fullname)
         page.add(DIV(H2(title), legs_table, P("Corresponding transactions:"), table,
                      CLASS='btrade'))
-
-    page.add(HR(),
-             A("Download as CSV", href=umap("@@TradesCSV")))
 
     return page.render(app)
 

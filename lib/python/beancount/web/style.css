@@ -366,5 +366,10 @@ table.trades td {
   text-align: center;
 }
 
+div.right-link {
+  text-align: right;
+  margin: 0.5em;
+}
+
 
 
