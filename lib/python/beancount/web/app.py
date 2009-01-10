@@ -787,7 +787,7 @@ def page__ledger_payee(app, ctx):
             acc = post.account
             aname = 'payee_total'
             while acc is not None:
-                if not hasattr(acc, aname):
+                if not aname in acc.balances:
                     acc.balances[aname] = Wallet()
                 acc.balances[aname].__iadd__(post.amount)
                 aname = 'payee_cum'

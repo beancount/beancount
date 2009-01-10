@@ -83,11 +83,8 @@ class Account(object):
     """
     __slots__ = ('sep', 'fullname', 'name', 'ordering', 'postings',
                  'parent', 'children', 'usedcount', 'isdebit', 'commodities',
-                 'checked', 'check_min', 'check_max',
-                 # FIXME: to remove
                  'balances',
-                 ##'balance', 'local_balance',
-                 'payee_total', 'payee_cum')
+                 'checked', 'check_min', 'check_max')
 
     # Account path separator.
     sep = ':'
@@ -168,7 +165,8 @@ class Account(object):
         if self.parent is None:
             return self.name
         else:
-            return Account.sep.join((self.parent.get_fullname(), self.name)).lstrip(':')
+            return Account.sep.join(
+                (self.parent.get_fullname(), self.name)).lstrip(':')
 
     def ischildof(self, cparent):
         """ Return true if the 'cparent' account is a parent of this account (or
@@ -185,7 +183,7 @@ class Account(object):
         """ Rename the attribute 'aname' from the account and all its
         subaccounts."""
         if hasattr(self, aname):
-            delattr(self, aname)
+            self.balances.pop(aname)
         for child in self.children:
             child.clear_field(aname)
 
