@@ -81,6 +81,12 @@ class Account(object):
     """
     An account object.
     """
+    __slots__ = ('sep', 'fullname', 'name', 'ordering', 'postings',
+                 'parent', 'children', 'usedcount', 'isdebit', 'commodities',
+                 'checked', 'check_min', 'check_max',
+                 # FIXME: to remove
+                 'balance', 'local_balance', 'payee_total', 'payee_cum')
+
     # Account path separator.
     sep = ':'
 
@@ -108,6 +114,17 @@ class Account(object):
 
         # A list of valid commodities that can be deposited in this account.
         self.commodities = []
+
+        # An attribute that tells if this account contains a check.
+        # (Set by the 'check' directive.)
+        self.checked = None
+        self.check_min = None
+        self.check_max = None
+
+        ## # A dict of available balances on an account object.
+        ## # All the wallet amounts calculated per-account can be stored here under
+        ## # unique names.
+        ## self.balances = {}
 
     def __str__(self):
         return "<Account '%s'>" % self.fullname
