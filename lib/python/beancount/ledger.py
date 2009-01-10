@@ -83,7 +83,7 @@ class Account(object):
     """
     __slots__ = ('sep', 'fullname', 'name', 'ordering', 'postings',
                  'parent', 'children', 'usedcount', 'isdebit', 'commodities',
-                 'balances', 'tmp_postings',
+                 'balances', 'balances_cumul', 'tmp_postings',
                  'checked', 'check_min', 'check_max')
 
     # Account path separator.
@@ -122,9 +122,9 @@ class Account(object):
 
         # A dict of available balances on an account object. All the wallet
         # amounts calculated per-account can be stored here under unique names.
-        # Some names are reserved: 'local' is the main balance for this account.
-        # 'cumul' for is the cumulative equivalent.
+        # Some names are reserved: 'total' is the main balance for this account.
         self.balances = {}
+        self.balances_cumul = {}
 
         # Temporary list used in computing balances for the tree of nodes.
         # This list contains lists of postings to process for this account.
@@ -887,9 +887,8 @@ class Ledger(object):
         """
         A visitor that computes the balance of the given account node.
         """
-        def __init__(self, aname_local, aname_cumul, atcost):
-            self.aname_local = aname_local
-            self.aname_cumul = aname_cumul
+        def __init__(self, aname, atcost):
+            self.aname = aname
             self.atcost = atcost
 
         def __call__(self, node):
@@ -899,15 +898,15 @@ class Ledger(object):
             for post in node.tmp_postings:
                 assert post.account is node
                 bal += (post.cost if self.atcost else post.amount)
-            node.balances[self.aname_local] = bal
+            node.balances[self.aname] = bal
             total = Wallet(bal)
 
             # Compute balance that includes children (cumulative).
             for child in node.children:
-                total += child.balances[self.aname_cumul]
-            node.balances[self.aname_cumul] = total
+                total += child.balances_cumul[self.aname]
+            node.balances_cumul[self.aname] = total
 
-    def compute_balsheet(self, aname_local, aname_cumul, atcost=False):
+    def compute_balsheet(self, aname, atcost=False):
         """
         Compute a balance sheet stored in the given attribute on each account
         node.
@@ -917,24 +916,22 @@ class Ledger(object):
             acc.tmp_postings = acc.postings
 
         # Accumulate amounts.
-        vis = self.BalanceVisitor(aname_local, aname_cumul, atcost)
+        vis = self.BalanceVisitor(aname, atcost)
         self.visit(self.get_root_account(), vis)
 
         # Reset the temporary lists.
         for acc in self.accounts.itervalues():
             acc.tmp_postings = None
 
-    def compute_balances_from_postings(self, postings,
-                                       aname_local, aname_cumul,
-                                       atcost=False):
+    def compute_balances_from_postings(self, postings, aname, atcost=False):
         """
         Given a set of postings, compute balances into the given attributes.
         """
 
         # Clear the accumulators.
         for acc in self.accounts.itervalues():
-            acc.balances.pop(aname_local, None)
-            acc.balances.pop(aname_cumul, None)
+            acc.balances.pop(aname, None)
+            acc.balances_cumul.pop(aname, None)
 
         # Create the temporary postings lists.
         for acc in self.accounts.itervalues():

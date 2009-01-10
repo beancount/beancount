@@ -108,7 +108,8 @@ class TestCapitalGains(object):
             ('Expenses:Commissions', commisions),
             ('Income:CapitalGains', -(Decimal('50')-commisions)),
             ):
-            assert (lgr.get_account(accname).balances['local'] == Wallet('USD', amount))
+            assert (lgr.get_account(accname).balances['total'] ==
+                    Wallet('USD', amount))
 
 
 

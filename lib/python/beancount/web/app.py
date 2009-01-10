@@ -256,7 +256,7 @@ def page__scraperes(app, ctx):
 
 
 
-def render_trial_field(ledger, field_local, field_cumul, conversions=None):
+def render_trial_field(ledger, aname, conversions=None):
     """
     Render a trial balance of the accounts tree using a particular field.
     """
@@ -272,8 +272,8 @@ def render_trial_field(ledger, field_local, field_cumul, conversions=None):
             A(acc.name, href=umap('@@AccountLedger', webaccname(acc.fullname)),
               CLASS='accomp'))
 
-        lbal = acc.balances.get(field_local, None)
-        bal = acc.balances.get(field_cumul, None)
+        lbal = acc.balances.get(aname, None)
+        bal = acc.balances_cumul.get(aname, None)
         if lbal.isempty() and bal.isempty():
             skip()
             continue
@@ -310,15 +310,14 @@ def page__trialbalance(app, ctx):
     ledger = ctx.ledger
     conversions = app.opts.conversions
 
-    table = render_trial_field(ledger, 'local', 'cumul',
+    table = render_trial_field(ledger, 'total',
                                app.opts.conversions)
 
     page.add(H1('Trial Balance'), table)
     return page.render(app)
 
 
-def semi_table(acc, tid, remove_empty=True, conversions=None,
-               attr='local'):
+def semi_table(acc, tid, remove_empty=True, conversions=None, aname='total'):
     """ Given an account, create a table for the transactions contained therein
     (including its subaccounts)."""
 
@@ -335,7 +334,7 @@ def semi_table(acc, tid, remove_empty=True, conversions=None,
             A(acc.name, href=umap('@@AccountLedger', webaccname(acc.fullname)),
               CLASS='accomp'))
 
-        balance = acc.balances[attr]
+        balance = acc.balances[aname]
         if conversions:
             balance = balance.convert(conversions)
 
@@ -467,7 +466,7 @@ def page__positions(app, ctx):
         return page.render(app)
 
     # Add a table of currencies that we're interested in.
-    icurrencies = set(c for c in a_acc.balances['local'].iterkeys()
+    icurrencies = set(c for c in a_acc.balances['total'].iterkeys()
                       if c in currencies)
 
     try:
@@ -490,7 +489,7 @@ def page__positions(app, ctx):
                      TD("Total Value"), TD("Total Change"),
                      TD("Total Value (USD)"), TD("Total Change (USD)"))))
     commnames = ledger.directives['defcomm'].commnames
-    for comm, amount in a_acc.balances['local'].tostrlist():
+    for comm, amount in a_acc.balances['total'].tostrlist():
         # Strip numbers from the end, to remove splits.
         mo = re.match('(.*)[\'~][0-9]', comm)
         if mo:
@@ -801,15 +800,14 @@ def page__ledger_payee(app, ctx):
     table_txns = render_postings_table(postings, style)
 
     # Render a trial balance of only the transactions that involve this payee.
-    ctx.ledger.compute_balances_from_postings(postings,
-                                              'payee_local', 'payee_cumul')
-    table_flow = render_trial_field(ctx.ledger, 'payee_local', 'payee_cumul',
-                                    app.opts.conversions)
+    ctx.ledger.compute_balances_from_postings(postings, 'payee')
+    table_flow = render_trial_field(ctx.ledger, 'payee', app.opts.conversions)
 
     page.add(H1('Payee transactions for %s' % payee),
              H2('Summary'), table_flow,
              HR(),
              H2('Transactions'), table_txns)
+
     return page.render(app)
 
 

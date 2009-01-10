@@ -37,8 +37,8 @@ class TestCostBalancing(object):
         assert len(lgr.transactions) == 1
         txn = lgr.transactions[0]
         assert txn.postings[0].amount == Wallet('100 USD')
-        assert lgr.get_account('Assets:Bank').balances['local'] == Wallet('100 USD')
-        assert lgr.get_account('Income:Salary').balance['local'] == Wallet('-100 USD')
+        assert lgr.get_account('Assets:Bank').balances['total'] == Wallet('100 USD')
+        assert lgr.get_account('Income:Salary').balance['total'] == Wallet('-100 USD')
 
 
         # Empty unbalanced virtual posting should fail.
