@@ -61,14 +61,14 @@ class Template(object):
                LI(A('Trial Balance', href=umap('@@TrialBalance'))),
                LI(A('Balance Sheet', href=umap('@@BalanceSheet'))),
                LI(A('Income', href=umap('@@IncomeStatement'))),
-               LI(A('CashFlow', href=umap('@@CashFlow'))),
-               LI(A('Capital', href=umap('@@CapitalStatement'))),
+               ## LI(A('CashFlow', href=umap('@@CashFlow'))),
+               ## LI(A('Capital', href=umap('@@CapitalStatement'))),
                LI(A('Payees', href=umap('@@Payees'))),
                LI(A('Positions', href=umap('@@Positions'))),
                LI(A('Trades', href=umap('@@Trades'))),
-               LI(A('Activity', href=umap('@@Activity'))),
-               LI(A('Locations', href=umap('@@Locations'))),
-               LI(A('Stats/Logs', href=umap('@@Statistics'))),
+               ## LI(A('Activity', href=umap('@@Activity'))),
+               ## LI(A('Locations', href=umap('@@Locations'))),
+               LI(A('Other', href=umap('@@Other'))),
                ),
             id='top-navigation')
 
@@ -204,9 +204,26 @@ def page__chartofaccounts(app, ctx):
     page.add(H1("Chart of Accounts"), table)
     return page.render(app)
 
-def page__stats(app, ctx):
+def page__other(app, ctx):
     page = Template(ctx)
-    page.add(H1("Statistics, Logs and Other Info"))
+    page.add(H1("Other pages, Statistics, and Logs"))
+
+
+    ul1 = UL(
+        LI(A('Cash Flow Statement', href=umap('@@CashFlow'))),
+        LI(A("Capital Statement", href=umap('@@CapitalStatement')),
+           " (Shareholder's Equity)"),
+        LI(A('Update Activity', href=umap('@@Activity'))),
+        LI(A('Locations', href=umap('@@Locations'))),
+        LI(A('Pricing Commodities', href=umap('@@Pricing'))),
+        )
+    ul2 = UL(
+        LI(A('Source', href=umap('@@Source'))),
+        LI(A('Message Log (and Errors)', href=umap('@@Messages'))),
+        LI(A('Resources Required for CSS (for websuck)',
+             href=umap('@@ScrapeResources'))))
+    page.add(H2("Other Pages"), ul1, ul2)
+
 
     page.add(H2("Command-line Options"), PRE(' '.join(sys.argv)))
 
@@ -216,12 +233,6 @@ def page__stats(app, ctx):
                  TR(TD("Nb Transactions:"), TD("%d" % len(ledger.transactions))),
                  TR(TD("Nb Postings:"), TD("%d" % len(ledger.postings)))
                  ))
-
-    ul = UL( LI(A('Message Log (and Errors)', href=umap('@@Messages'))),
-             LI(A('Pricing Commodities', href=umap('@@Pricing'))),
-             LI(A('Source', href=umap('@@Source'))),
-             LI(A('Resources Required for CSS (for websuck)', href=umap('@@ScrapeResources'))))
-    page.add(H2("Links"), ul)
 
     ul = UL()
     prices = ledger.directives['price'].prices
@@ -1194,7 +1205,7 @@ page_directory = (
     ('@@HomeIndex', redirect('@@ChartOfAccounts'), '/index', None),
 
     ('@@ChartOfAccounts', page__chartofaccounts, '/accounts', None),
-    ('@@Statistics', page__stats, '/stats', None),
+    ('@@Other', page__other, '/other', None),
     ('@@Activity', page__activity, '/activity', None),
     ('@@TrialBalance', page__trialbalance, '/trial', None),
     ('@@BalanceSheet', page__balancesheet, '/balance', None),
