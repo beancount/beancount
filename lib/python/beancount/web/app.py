@@ -260,8 +260,8 @@ def render_trial_field(ledger, field, field_cum, conversions=None):
             A(acc.name, href=umap('@@AccountLedger', webaccname(acc.fullname)),
               CLASS='accomp'))
 
-        lbal = getattr(acc, field, None)
-        bal = getattr(acc, field_cum, None)
+        lbal = acc.balances.get(field, None)
+        bal = acc.balances.get(field_cum, None)
         if lbal is None and bal is None:
             skip()
             continue
@@ -298,7 +298,7 @@ def page__trialbalance(app, ctx):
     ledger = ctx.ledger
     conversions = app.opts.conversions
 
-    table = render_trial_field(ledger, 'local_balance', 'balance',
+    table = render_trial_field(ledger, 'local', 'cumul',
                                app.opts.conversions)
 
     page.add(H1('Trial Balance'), table)
@@ -306,7 +306,7 @@ def page__trialbalance(app, ctx):
 
 
 def semi_table(acc, tid, remove_empty=True, conversions=None,
-               attr='local_balance'):
+               attr='local'):
     """ Given an account, create a table for the transactions contained therein
     (including its subaccounts)."""
 
@@ -323,7 +323,7 @@ def semi_table(acc, tid, remove_empty=True, conversions=None,
             A(acc.name, href=umap('@@AccountLedger', webaccname(acc.fullname)),
               CLASS='accomp'))
 
-        balance = getattr(acc, attr)
+        balance = acc.balances[attr]
         if conversions:
             balance = balance.convert(conversions)
 
@@ -445,7 +445,8 @@ def page__positions(app, ctx):
         return page.render(app)
 
     # Add a table of currencies that we're interested in.
-    icurrencies = set(c for c in a_acc.balance.iterkeys() if c in currencies)
+    icurrencies = set(c for c in a_acc.balances['local'].iterkeys()
+                      if c in currencies)
 
     try:
         xrates = get_xrates()
@@ -467,7 +468,7 @@ def page__positions(app, ctx):
                      TD("Total Value"), TD("Total Change"),
                      TD("Total Value (USD)"), TD("Total Change (USD)"))))
     commnames = ledger.directives['defcomm'].commnames
-    for comm, amount in a_acc.balance.tostrlist():
+    for comm, amount in a_acc.balances['local'].tostrlist():
         # Strip numbers from the end, to remove splits.
         mo = re.match('(.*)[\'~][0-9]', comm)
         if mo:
@@ -787,8 +788,8 @@ def page__ledger_payee(app, ctx):
             aname = 'payee_total'
             while acc is not None:
                 if not hasattr(acc, aname):
-                    setattr(acc, aname, Wallet())
-                getattr(acc, aname).__iadd__(post.amount)
+                    acc.balances[aname] = Wallet()
+                acc.balances[aname].__iadd__(post.amount)
                 aname = 'payee_cum'
                 acc = acc.parent
     table_flow = render_trial_field(ctx.ledger, 'payee_total', 'payee_cum',

@@ -85,7 +85,9 @@ class Account(object):
                  'parent', 'children', 'usedcount', 'isdebit', 'commodities',
                  'checked', 'check_min', 'check_max',
                  # FIXME: to remove
-                 'balance', 'local_balance', 'payee_total', 'payee_cum')
+                 'balances',
+                 ##'balance', 'local_balance',
+                 'payee_total', 'payee_cum')
 
     # Account path separator.
     sep = ':'
@@ -121,10 +123,11 @@ class Account(object):
         self.check_min = None
         self.check_max = None
 
-        ## # A dict of available balances on an account object.
-        ## # All the wallet amounts calculated per-account can be stored here under
-        ## # unique names.
-        ## self.balances = {}
+        # A dict of available balances on an account object. All the wallet
+        # amounts calculated per-account can be stored here under unique names.
+        # Some names are reserved: 'local' is the main balance for this account.
+        # 'cumul' for is the cumulative equivalent.
+        self.balances = {} 
 
     def __str__(self):
         return "<Account '%s'>" % self.fullname
@@ -1350,11 +1353,11 @@ class BalanceVisitor(object):
         for post in node.postings:
             assert post.account is node
             bal += post.cost if self.atcost else post.amount
-        setattr(node, self.aname_bal, bal)
+        node.balances[self.aname_bal] = bal
         total = Wallet(bal)
         for child in node.children:
-            total += getattr(child, self.aname_total)
-        setattr(node, self.aname_total, total)
+            total += child.balances[self.aname_total]
+        node.balances[self.aname_total] = total
 
 
 
