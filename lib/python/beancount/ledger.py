@@ -940,7 +940,7 @@ class Ledger(object):
             post.account.tmp_postings.append(post)
 
         # Accumulate amounts.
-        vis = self.BalanceVisitor(aname_local, aname_cumul, atcost)
+        vis = self.BalanceVisitor(aname, atcost)
         self.visit(self.get_root_account(), vis)
 
         # Reset the temporary lists.
