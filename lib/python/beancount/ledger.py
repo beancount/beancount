@@ -83,7 +83,7 @@ class Account(object):
     """
     __slots__ = ('sep', 'fullname', 'name', 'ordering', 'postings',
                  'parent', 'children', 'usedcount', 'isdebit', 'commodities',
-                 'balances',
+                 'balances', 'tmp_postings',
                  'checked', 'check_min', 'check_max')
 
     # Account path separator.
@@ -124,7 +124,11 @@ class Account(object):
         # amounts calculated per-account can be stored here under unique names.
         # Some names are reserved: 'local' is the main balance for this account.
         # 'cumul' for is the cumulative equivalent.
-        self.balances = {} 
+        self.balances = {}
+
+        # Temporary list used in computing balances for the tree of nodes.
+        # This list contains lists of postings to process for this account.
+        self.tmp_postings = None
 
     def __str__(self):
         return "<Account '%s'>" % self.fullname
@@ -178,16 +182,6 @@ class Account(object):
             return False
         else:
             return self.parent.ischildof(cparent)
-
-    def clear_field(self, aname):
-        """ Rename the attribute 'aname' from the account and all its
-        subaccounts."""
-        if hasattr(self, aname):
-            self.balances.pop(aname)
-        for child in self.children:
-            child.clear_field(aname)
-
-
 
 
 
@@ -485,7 +479,7 @@ class Ledger(object):
         add_directive(PriceDirective(self))
 
         # Current tags that are being assigned to transactions during parsing.
-        self.tags = []
+        self.current_tags = []
 
         # List of booked trades.
         self.booked_trades = []
@@ -669,7 +663,7 @@ class Ledger(object):
                     txn.filename = fn
                     txn.lineno = lineno[0]
                     txn.ordering = next_ordering()
-                    txn.tags = self.tags
+                    txn.tags = self.current_tags
                     self.transactions.append(txn)
 
                     try:
@@ -888,13 +882,75 @@ class Ledger(object):
         for acc in self.accounts.itervalues():
             acc.postings.sort()
 
-    def compute_balsheet(self, aname_bal, aname_total, atcost=False):
+
+    class BalanceVisitor(object):
+        """
+        A visitor that computes the balance of the given account node.
+        """
+        def __init__(self, aname_local, aname_cumul, atcost):
+            self.aname_local = aname_local
+            self.aname_cumul = aname_cumul
+            self.atcost = atcost
+
+        def __call__(self, node):
+
+            # Compute local balance.
+            bal = Wallet()
+            for post in node.tmp_postings:
+                assert post.account is node
+                bal += (post.cost if self.atcost else post.amount)
+            node.balances[self.aname_local] = bal
+            total = Wallet(bal)
+
+            # Compute balance that includes children (cumulative).
+            for child in node.children:
+                total += child.balances[self.aname_cumul]
+            node.balances[self.aname_cumul] = total
+
+    def compute_balsheet(self, aname_local, aname_cumul, atcost=False):
         """
         Compute a balance sheet stored in the given attribute on each account
         node.
         """
-        vis = BalanceVisitor(aname_bal, aname_total, atcost)
+        # Set the temporary postings list to the full list.
+        for acc in self.accounts.itervalues():
+            acc.tmp_postings = acc.postings
+
+        # Accumulate amounts.
+        vis = self.BalanceVisitor(aname_local, aname_cumul, atcost)
         self.visit(self.get_root_account(), vis)
+
+        # Reset the temporary lists.
+        for acc in self.accounts.itervalues():
+            acc.tmp_postings = None
+
+    def compute_balances_from_postings(self, postings,
+                                       aname_local, aname_cumul,
+                                       atcost=False):
+        """
+        Given a set of postings, compute balances into the given attributes.
+        """
+
+        # Clear the accumulators.
+        for acc in self.accounts.itervalues():
+            acc.balances.pop(aname_local, None)
+            acc.balances.pop(aname_cumul, None)
+
+        # Create the temporary postings lists.
+        for acc in self.accounts.itervalues():
+            acc.tmp_postings = []
+        for post in postings:
+            post.account.tmp_postings.append(post)
+
+        # Accumulate amounts.
+        vis = self.BalanceVisitor(aname_local, aname_cumul, atcost)
+        self.visit(self.get_root_account(), vis)
+
+        # Reset the temporary lists.
+        for acc in self.accounts.itervalues():
+            acc.tmp_postings = None
+
+
 
     def complete_balances(self):
         """
@@ -1320,6 +1376,9 @@ class Ledger(object):
 
 
 
+
+
+
 _accents = u'áâàäãéêèëíîìïóôòöõúûùüçøñÁÂÀÄÉÊÈËÍÎÌÏÓÔÒÖÚÛÙÜÇØÑ¡¿'
 
 def accent_score(s):
@@ -1332,30 +1391,6 @@ def accent_score(s):
 
 
 
-
-
-""" Accounts tree visitors.
-"""
-
-class BalanceVisitor(object):
-    """
-    A visitor that computes the balance of the given account node.
-    """
-    def __init__(self, aname_bal, aname_total, atcost):
-        self.aname_bal = aname_bal
-        self.aname_total = aname_total
-        self.atcost = atcost
-
-    def __call__(self, node):
-        bal = Wallet()
-        for post in node.postings:
-            assert post.account is node
-            bal += post.cost if self.atcost else post.amount
-        node.balances[self.aname_bal] = bal
-        total = Wallet(bal)
-        for child in node.children:
-            total += child.balances[self.aname_total]
-        node.balances[self.aname_total] = total
 
 
 
@@ -1574,9 +1609,10 @@ class BeginTagDirective(object):
         ledger = self.ledger
 
         tag = line.strip()
-        ledger.tags = list(ledger.tags) + [tag]
-        # Note: it is important to make a copy of 'ledger.tags' here because
-        # this is getting reference by postings many many times.
+        ledger.current_tags = list(ledger.current_tags) + [tag]
+        # Note: it is important to make a copy of the list of current tags
+        # stored in 'ledger.current_tags' because this list is getting referenced
+        # directly by postings as the file is being read.
 
     def apply(self):
         # Nothing to do: the tag has been set on the transaction objects during
@@ -1589,9 +1625,10 @@ class EndTagDirective(BeginTagDirective):
     def parse(self, line, filename, lineno):
         ledger = self.ledger
         tag = line.strip()
-        assert tag in ledger.tags, (tag, ledger.tags)
-        ledger.tags = list(ledger.tags) # copy
-        ledger.tags.remove(tag)
+        assert tag in ledger.current_tags, (tag, ledger.current_tags)
+        ledger.current_tags = list(ledger.current_tags)
+        ledger.current_tags.remove(tag)
+        # copying 'ledger.current_tags', see above, same reason.
 
 
 

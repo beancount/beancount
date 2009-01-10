@@ -63,9 +63,10 @@ class Template(object):
                LI(A('Income', href=umap('@@IncomeStatement'))),
                ## LI(A('CashFlow', href=umap('@@CashFlow'))),
                ## LI(A('Capital', href=umap('@@CapitalStatement'))),
-               LI(A('Payees', href=umap('@@Payees'))),
                LI(A('Positions', href=umap('@@Positions'))),
                LI(A('Trades', href=umap('@@Trades'))),
+               LI(A('Payees', href=umap('@@Payees'))),
+               ## LI(A('Tags', href=umap('@@Tags'))),
                ## LI(A('Activity', href=umap('@@Activity'))),
                ## LI(A('Locations', href=umap('@@Locations'))),
                LI(A('Other', href=umap('@@Other'))),
@@ -255,7 +256,7 @@ def page__scraperes(app, ctx):
 
 
 
-def render_trial_field(ledger, field, field_cum, conversions=None):
+def render_trial_field(ledger, field_local, field_cumul, conversions=None):
     """
     Render a trial balance of the accounts tree using a particular field.
     """
@@ -271,9 +272,9 @@ def render_trial_field(ledger, field, field_cum, conversions=None):
             A(acc.name, href=umap('@@AccountLedger', webaccname(acc.fullname)),
               CLASS='accomp'))
 
-        lbal = acc.balances.get(field, None)
-        bal = acc.balances.get(field_cum, None)
-        if lbal is None and bal is None:
+        lbal = acc.balances.get(field_local, None)
+        bal = acc.balances.get(field_cumul, None)
+        if lbal.isempty() and bal.isempty():
             skip()
             continue
 
@@ -428,6 +429,16 @@ def page__cashflow(app, ctx):
 def page__payees(app, ctx):
     page = Template(ctx)
     page.add(H1("Payees"))
+    ul = page.add(UL())
+    for key, (payee, _) in sorted(ctx.ledger.payees.iteritems()):
+        ul.add(LI(A(payee, href=umap('@@PayeeLedger', key))))
+
+    return page.render(app)
+
+
+def page__tags(app, ctx):
+    page = Template(ctx)
+    page.add(H1("Tags"))
     ul = page.add(UL())
     for key, (payee, _) in sorted(ctx.ledger.payees.iteritems()):
         ul.add(LI(A(payee, href=umap('@@PayeeLedger', key))))
@@ -790,21 +801,10 @@ def page__ledger_payee(app, ctx):
     table_txns = render_postings_table(postings, style)
 
     # Render a trial balance of only the transactions that involve this payee.
-    rootacc = ctx.ledger.get_root_account()
-    rootacc.clear_field('payee_total')
-    rootacc.clear_field('payee_cum')
-    for txn in txns:
-        for post in txn.postings:
-            acc = post.account
-            aname = 'payee_total'
-            while acc is not None:
-                if not aname in acc.balances:
-                    acc.balances[aname] = Wallet()
-                acc.balances[aname].__iadd__(post.amount)
-                aname = 'payee_cum'
-                acc = acc.parent
-    table_flow = render_trial_field(ctx.ledger, 'payee_total', 'payee_cum',
-                                app.opts.conversions)
+    ctx.ledger.compute_balances_from_postings(postings,
+                                              'payee_local', 'payee_cumul')
+    table_flow = render_trial_field(ctx.ledger, 'payee_local', 'payee_cumul',
+                                    app.opts.conversions)
 
     page.add(H1('Payee transactions for %s' % payee),
              H2('Summary'), table_flow,
