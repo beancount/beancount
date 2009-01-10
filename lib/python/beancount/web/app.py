@@ -9,7 +9,7 @@ import sys, logging, re, StringIO, csv
 from wsgiref.util import request_uri, application_uri
 from os.path import *
 from operator import attrgetter
-from datetime import date
+from datetime import date, timedelta
 from urlparse import urlparse
 from itertools import izip, count
 from pprint import pformat
@@ -984,6 +984,7 @@ def page__locations(app, ctx):
         peryear[ldate.year].append(x)
 
     today = date.today()
+    oneday = timedelta(days=1)
 
     # Cap lists beginnings and ends.
     yitems = sorted(peryear.iteritems())
@@ -994,11 +995,10 @@ def page__locations(app, ctx):
             ylist.insert(0, (date(year, 1, 1), city, country))
 
         ldate, city, country = ylist[-1]
-        if (ldate.month, ldate.day) != (1, 1):
-            d = date(year+1, 1, 1)
-            if d > today:
-                d = today
-            ylist.append((d, city, country))
+        d = date(year+1, 1, 1)
+        if d > today:
+            d = today
+        ylist.append((d, city, country))
 
     for year, ylist in yitems:
         ul = page.add(H2(str(year)), UL())
@@ -1008,7 +1008,8 @@ def page__locations(app, ctx):
             ldate1, city, country = x1
             ldate2, _, _ = x2
             days = (ldate2 - ldate1).days
-            ul.append(LI("%s -> %s (%d days) : %s (%s)" % (ldate1, ldate2, days, city, country)))
+            ul.append(LI("%s -> %s (%d days) : %s (%s)" %
+                         (ldate1, ldate2 - oneday, days, city, country)))
             comap[country] += days
             if country == 'Canada' or days < 21:
                 ramq_days += days
@@ -1022,7 +1023,9 @@ def page__locations(app, ctx):
         missing_days = ramq_reqdays - ramq_days
         ulc.add(LI("... for RAMQ eligibility: %d days / %d : %s" %
                    (ramq_days, ramq_reqdays,
-                    ('Missing %d days' % missing_days if missing_days > 0 else 'Okay'))))
+                    ('Missing %d days' % missing_days
+                     if missing_days > 0
+                     else 'Okay'))))
 
     return page.render(app)
 

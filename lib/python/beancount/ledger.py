@@ -557,7 +557,8 @@ class Ledger(object):
     date_re = re.compile('(\d\d\d\d)[/-](\d\d)[/-](\d\d)')
 
     # A date within a note.
-    notedate_re = re.compile('\[(?:%(date)s)?(?:=%(date)s)?\]' % {'date': date_re.pattern})
+    notedate_re = re.compile('\[(?:%(date)s)?(?:=%(date)s)?\]' %
+                             {'date': date_re.pattern})
 
     # Pattern for a transaction line.
     txn_re = re.compile('^%(date)s(=%(date)s)?\s+(?:(.)\s+)?(\(.*?\))?(.*)$' %
@@ -695,10 +696,15 @@ class Ledger(object):
                             post.ordering = next_ordering()
                             txn.postings.append(post)
 
-                            post.flag, post.account_name, post.note = mo.group(1,2,14)
-                            booking_comm = (mo.group(16) if mo.group(15) == 'BOOK' else None)
+                            (post.flag,
+                             post.account_name,
+                             post.note) = mo.group(1,2,14)
+
+                            booking_comm = (mo.group(16) if mo.group(15) == 'BOOK'
+                                            else None)
                             if booking_comm is not None:
-                                booking_quote = (mo.group(18) if mo.group(17) == 'IN' else None)
+                                booking_quote = (
+                                    mo.group(18) if mo.group(17) == 'IN' else None)
                                 post.booking = (booking_comm, booking_quote)
                             else:
                                 post.booking = None
@@ -708,7 +714,8 @@ class Ledger(object):
                             fchar = accname[0]
                             if fchar in '[(':
                                 accname = accname.strip()[1:-1]
-                                post.virtual = VIRT_BALANCED if fchar == '[' else VIRT_UNBALANCED
+                                post.virtual = (VIRT_BALANCED if fchar == '['
+                                                else VIRT_UNBALANCED)
                             post.account = acc = self.get_account(accname, create=1)
 
                             # Fetch the amount.
@@ -780,7 +787,8 @@ class Ledger(object):
                                         post.actual_date = date(*map(int, actual))
                                     effective = mo.group(4,5,6)
                                     if effective[0]:
-                                        post.effective_date = date(*map(int, effective))
+                                        post.effective_date = \
+                                            date(*map(int, effective))
 
                                     # Remove the date spec from the note itself.
                                     post.note = self.notedate_re.sub(post.note, '')
@@ -896,7 +904,9 @@ class Ledger(object):
             for post in postsets[VIRT_UNBALANCED]:
                 if post.cost is None:
                     if post.booking is None:
-                        self.log(WARNING, "Virtual posting without amount has no effect.", post)
+                        self.log(
+                            WARNING,
+                            "Virtual posting without amount has no effect.", post)
                     post.amount = post.cost = Wallet()
 
     def get_price_comm(self, comm):
@@ -982,8 +992,9 @@ class Ledger(object):
                     elif not booked:
                         post_book.flag = 'B'
                         post_book.note = 'BOOKED'
-                        logging.warning("Useless booking entry in transaction at %s:%d" %
-                                        (txn.filename, txn.lineno))
+                        logging.warning(
+                            "Useless booking entry in transaction at %s:%d" %
+                            (txn.filename, txn.lineno))
 
                     else:
                         _comm_book, comm_target = post_book.booking
@@ -1000,7 +1011,8 @@ class Ledger(object):
                                 xrate = 1
                                 amount_target = amount_price
                             else:
-                                assert comm_target != comm_price, (comm_target, comm_price)
+                                assert comm_target != comm_price, \
+                                       (comm_target, comm_price)
                                 xrate = pricedir.getrate(
                                     comm_price, comm_target, post.actual_date)
                                 amount_target = amount_price * xrate
@@ -1096,7 +1108,8 @@ class Ledger(object):
         if bool(cost):
             txn = postings[0].txn
             self.log(ERROR,
-                     "Transaction does not balance: remaining=%s\n%s\n" % (cost.round(), txn),
+                     "Transaction does not balance: remaining=%s\n%s\n" %
+                     (cost.round(), txn),
                      txn)
 
         ## # Double-check to make sure that all postings in this transaction
@@ -1163,7 +1176,8 @@ class Ledger(object):
         expenses_acc = self.find_account(('Expenses', 'Expense'))
         imb1_acc = self.find_account(('Imbalance',))
         imb2_acc = self.find_account(('Imbalances',))
-        ignore_accounts = filter(None, [income_acc, expenses_acc, imb1_acc, imb2_acc, other_account])
+        ignore_accounts = filter(None, [income_acc, expenses_acc,
+                                        imb1_acc, imb2_acc, other_account])
 
         # Create automated transactions to replace balances from all the
         # transactions that came before the closing date, transactions which
@@ -1432,7 +1446,8 @@ class DefineAccountDirective(object):
     name = 'defaccount'
     prio = 1
 
-    mre = re.compile("\s*(D[re]|Cr)\s+(%(account)s)\s+((?:%(commodity)s(?:,\s*)?)*)\s*$" %
+    mre = re.compile(("\s*(D[re]|Cr)\s+(%(account)s)\s+"
+                      "((?:%(commodity)s(?:,\s*)?)*)\s*$") %
                      {'account': Ledger.account_re.pattern,
                       'commodity': Ledger.commodity_re.pattern})
 
@@ -1451,7 +1466,8 @@ class DefineAccountDirective(object):
         account = self.ledger.get_account(mo.group(2), create=1, incrcount=False)
         commodities = mo.group(3).split(',') if mo.group(3) else None
         if account in self.definitions:
-            self.ledger.log(CRITICAL, "Duplicate account definition: %s" % account.fullname,
+            self.ledger.log(CRITICAL,
+                            "Duplicate account definition: %s" % account.fullname,
                             (filename, lineno))
         account.commodities = commodities
         account.isdebit = isdebit
@@ -1647,7 +1663,8 @@ class AutoPadDirective(object):
             # to disambiguate cases where the date is equal.
             slist = ([((pad.pdate, 0), pad) for pad in pads] +
                      [((chk.cdate, 1), chk) for chk in checks] +
-                     [((post.actual_date, 2), post) for post in acc_target.subpostings()])
+                     [((post.actual_date, 2), post)
+                      for post in acc_target.subpostings()])
             slist.sort()
 
             # The current pad, and a set of the commodities that have already
@@ -1685,7 +1702,8 @@ class AutoPadDirective(object):
 
             for pad in pads:
                 if not pad.wallet:
-                    logging.warning("Ununsed pad at %s:%d" % (pad.filename, pad.lineno))
+                    logging.warning("Ununsed pad at %s:%d" %
+                                    (pad.filename, pad.lineno))
                     continue
 
                 txn = Transaction()
@@ -1760,7 +1778,8 @@ class DefvarDirective(object):
                             (filename, lineno))
             return
 
-        self.modules[mo.group('module')][mo.group('varname')].append(mo.group('value'))
+        self.modules[mo.group('module')][mo.group('varname')].append(
+            mo.group('value'))
 
     def apply(self):
         pass # Nothing to do--the modules do the parsing themselves.
@@ -1819,8 +1838,16 @@ class LocationDirective(object):
         self.locations.append( (ldate, mo.group(4), mo.group(5)) )
 
     def apply(self):
-        pass # Nothing to do--the modules do the parsing themselves.
+        pass
 
+        ## # If the ledger appears to be current, append a date for today in order
+        ## # to count those days as well.
+        ## if not self.locations:
+        ##     return
+        ## lastloc = sorted(self.locations)[-1]
+        ## today = date.today()
+        ## if lastloc[0] < today:
+        ##     self.locations.append( (today, lastloc[1], lastloc[2]) )
 
 
 class PriceDirective(object):
