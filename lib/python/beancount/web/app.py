@@ -66,7 +66,7 @@ class Template(object):
                LI(A('Positions', href=umap('@@Positions'))),
                LI(A('Trades', href=umap('@@Trades'))),
                LI(A('Payees', href=umap('@@Payees'))),
-               ## LI(A('Tags', href=umap('@@Tags'))),
+               LI(A('Tags', href=umap('@@Tags'))),
                ## LI(A('Activity', href=umap('@@Activity'))),
                ## LI(A('Locations', href=umap('@@Locations'))),
                LI(A('Other', href=umap('@@Other'))),
@@ -298,8 +298,8 @@ def render_trial_field(ledger, aname, conversions=None):
                        CLASS='wallet'),
                     )
 
-    table.add(TR(TD(), TD(hwallet_paren(sum_)),
-                 TD(), TD()))
+    ## No need to display the sum at the bottom, it's already at the top node.
+    ## table.add(TR(TD(), TD(hwallet_paren(sum_)), TD(), TD()))
 
     return table
 
@@ -439,8 +439,8 @@ def page__tags(app, ctx):
     page = Template(ctx)
     page.add(H1("Tags"))
     ul = page.add(UL())
-    for key, (payee, _) in sorted(ctx.ledger.payees.iteritems()):
-        ul.add(LI(A(payee, href=umap('@@PayeeLedger', key))))
+    for tagname in sorted(ctx.ledger.tags.iterkeys()):
+        ul.add(LI(A(tagname, href=umap('@@TagLedger', tagname))))
 
     return page.render(app)
 
@@ -804,6 +804,35 @@ def page__ledger_payee(app, ctx):
     table_flow = render_trial_field(ctx.ledger, 'payee', app.opts.conversions)
 
     page.add(H1('Payee transactions for %s' % payee),
+             H2('Summary'), table_flow,
+             HR(),
+             H2('Transactions'), table_txns)
+
+    return page.render(app)
+
+
+def page__ledger_tag(app, ctx):
+    """
+    List the transactions that pertain to a list of filtered postings.
+    """
+    page = Template(ctx)
+    style = ctx.session.get('style', 'full')
+    assert style in ('compact', 'other', 'only', 'full')
+
+    tagname = getattr(ctx, 'tag', '')
+    txns = ctx.ledger.tags[tagname]
+
+    # Render a table for the list of transactions.
+    postings = []
+    for txn in txns:
+        postings.extend(txn.postings)
+    table_txns = render_postings_table(postings, style)
+
+    # Render a trial balance of only the transactions that involve this tag.
+    ctx.ledger.compute_balances_from_postings(postings, 'tag')
+    table_flow = render_trial_field(ctx.ledger, 'tag', app.opts.conversions)
+
+    page.add(H1('Tag transactions for %s' % tagname),
              H2('Summary'), table_flow,
              HR(),
              H2('Transactions'), table_txns)
@@ -1211,6 +1240,7 @@ page_directory = (
     ('@@CapitalStatement', page__capital, '/capital', None),
     ('@@CashFlow', page__cashflow, '/cashflow', None),
     ('@@Payees', page__payees, '/payees', None),
+    ('@@Tags', page__tags, '/tags', None),
     ('@@Positions', page__positions, '/positions', None),
     ('@@Locations', page__locations, '/locations', None),
     ('@@Trades', page__trades, '/trades', None),
@@ -1228,6 +1258,8 @@ page_directory = (
      '^/ledger/byaccount/(?P<accname>.*)$'),
     ('@@PayeeLedger', page__ledger_payee, '/ledger/bypayee/%s',
      '^/ledger/bypayee/(?P<payee>.*)$'),
+    ('@@TagLedger', page__ledger_tag, '/ledger/bytag/%s',
+     '^/ledger/bytag/(?P<tag>.*)$'),
 
     ('@@SetStyle', page__setstyle, '/setstyle', '^/setstyle$'),
     ('@@Messages', page__messages, '/messages', None),

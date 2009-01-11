@@ -865,6 +865,7 @@ class Ledger(object):
         self.compute_priced_map()
         self.complete_bookings()
         self.build_payee_lists()
+        self.build_tag_lists()
 
     def build_postings_lists(self):
         """ (Re)Builds internal lists of postings from the list of transactions."""
@@ -1348,6 +1349,7 @@ class Ledger(object):
         self.booked_trades = filter(pred, self.booked_trades)
 
         self.build_payee_lists()
+        self.build_tag_lists()
 
     def build_payee_lists(self):
         paydict = defaultdict(list)
@@ -1369,7 +1371,16 @@ class Ledger(object):
 
             self.payees[key] = (payee, txns)
 
+    def build_tag_lists(self):
+        tagdict = defaultdict(list)
 
+        for txn in self.transactions:
+            if txn.tags is None:
+                continue
+            for tag in txn.tags:
+                tagdict[tag].append(txn)
+
+        self.tags = tagdict
 
 
 
