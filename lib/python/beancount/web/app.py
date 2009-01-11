@@ -5,7 +5,7 @@ developing.
 """
 
 # stdlib imports
-import sys, logging, re, StringIO, csv
+import sys, os, logging, re, StringIO, csv
 from wsgiref.util import request_uri, application_uri
 from os.path import *
 from operator import attrgetter
@@ -304,6 +304,34 @@ def render_trial_field(ledger, aname, conversions=None):
     return table
 
 
+def render_txn_field(ledger, aname, conversions=None):
+    """
+    Render two sets of postings equivalent to the accounts tree using a
+    particular field: one that has the same effect, and one that undoes it. This
+    function returns two lists of lines for the transactions.
+    """
+    list_do = []
+    list_undo = []
+
+    it = iter(itertree(ledger.get_root_account()))
+    sum_ = Wallet()
+    for ordering, isterminal, acc in it:
+        if len(acc) == 0:
+            continue
+
+        lbal = acc.balances.get(aname, None)
+        if lbal.isempty():
+            continue
+
+        if lbal is not None:
+            lbal = lbal.convert(conversions).round()
+            for comm, amount in lbal.iteritems():
+                list_do.append('  %-60s     %s %s' % (acc.fullname, amount, comm))
+                list_undo.append('  %-60s     %s %s' % (acc.fullname, -amount, comm))
+
+    return list_do, list_undo
+
+
 def page__trialbalance(app, ctx):
     page = Template(ctx)
 
@@ -431,7 +459,6 @@ def page__payees(app, ctx):
     ul = page.add(UL())
     for key, (payee, _) in sorted(ctx.ledger.payees.iteritems()):
         ul.add(LI(A(payee, href=umap('@@PayeeLedger', key))))
-
     return page.render(app)
 
 
@@ -441,7 +468,6 @@ def page__tags(app, ctx):
     ul = page.add(UL())
     for tagname in sorted(ctx.ledger.tags.iterkeys()):
         ul.add(LI(A(tagname, href=umap('@@TagLedger', tagname))))
-
     return page.render(app)
 
 
@@ -832,10 +858,24 @@ def page__ledger_tag(app, ctx):
     ctx.ledger.compute_balances_from_postings(postings, 'tag')
     table_flow = render_trial_field(ctx.ledger, 'tag', app.opts.conversions)
 
+    # Render two transactions to replace the transactions in the tags.
+    do, undo = render_txn_field(ctx.ledger, 'tag')
+
+    enddate = max(x.actual_date for x in postings)
+    txnline = ("%s  S  Summary | Summary transaction for tag:  %s" %
+               (enddate, tagname))
+    do.insert(0, txnline)
+    undo.insert(0, txnline + '  (UNDO)')
+
     page.add(H1('Tag transactions for %s' % tagname),
              H2('Summary'), table_flow,
              HR(),
-             H2('Transactions'), table_txns)
+             H2('Transactions'), table_txns,
+             HR(),
+             H2('Equivalent transactions'), 
+             PRE(os.linesep.join(do)),
+             PRE(os.linesep.join(undo)),
+             )
 
     return page.render(app)
 
