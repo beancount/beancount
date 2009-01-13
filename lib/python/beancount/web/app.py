@@ -69,7 +69,7 @@ class Template(object):
                LI(A('Tags', href=umap('@@Tags'))),
                ## LI(A('Activity', href=umap('@@Activity'))),
                ## LI(A('Locations', href=umap('@@Locations'))),
-               LI(A('Other', href=umap('@@Other'))),
+               LI(A('Other...', href=umap('@@Other'))),
                ),
             id='top-navigation')
 
@@ -1261,6 +1261,7 @@ def page__servererror(app, ctx):
 # If the regexp is left to a value of None, it is assumed it matches the render string exactly.
 page_directory = (
 
+    ('@@Robots', static('robots.txt', 'text/plain'), '/robots.txt', None),
     ('@@Style', static('style.css', 'text/css'), '/style.css', None),
     ('@@Treetable', static('treetable.js', 'text/javascript'), '/treetable.js', None),
     ('@@FolderOpen', static('folder_open.png', 'image/png'), '/folder_open.png', None),
