@@ -380,7 +380,7 @@ def semi_table(acc, tid, remove_empty=True, conversions=None, aname='total'):
 
 def page__balancesheet(app, ctx):
     page = Template(ctx)
-    page.add(H1("Balance Sheet"))
+    page.add(H1("Balance Sheet (ending)"))
 
     ledger = ctx.ledger
 
@@ -412,7 +412,8 @@ def page__balancesheet(app, ctx):
 
 def page__income(app, ctx):
     page = Template(ctx)
-    page.add(H1("Income Statement / P&L Report"))
+    page.add(H1("Income Statement" #" / P&L Report"
+                ))
 
     ledger = ctx.ledger
 

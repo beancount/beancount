@@ -13,6 +13,11 @@
 Beancount (Accounting)
 ======================
 
+  - You should more explicitly state the beginning and ending period
+    on each statement pages (it is super important information).
+    Just below the title.
+
+
   - Remove checks that are outside the postings dates, at
     render time
 

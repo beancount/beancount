@@ -563,7 +563,7 @@
 ;; allows you to find out what expenses were incurred during a
 ;; specific trip.
 
-@begintag Skii-trip
+@begintag ski-trip
 
 2008-01-27 * SUNONO | fill'er up
   Expenses:Car:Gas            40 USD
@@ -585,7 +585,7 @@
   Expenses:Clothes              40.02 USD
   Assets:Current:Cash
 
-@endtag Skii-trip
+@endtag ski-trip
 
 
 
