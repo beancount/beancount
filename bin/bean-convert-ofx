@@ -155,7 +155,7 @@ def main():
     oneday = timedelta(days=1)
     datesearch_begin_offset = timedelta(days=-3)
     datesearch_end_offset = timedelta(days=3)
-        
+
 
     for arg in args:
         print '\n'*3
@@ -164,12 +164,25 @@ def main():
         for ofxacc in process_ofx(arg, accounts_map):
             account = ofxacc.account
 
+            # Calculate boundaries within which we skip the transactions as
+            # already entered (because they are located within the largest valid
+            # check interval). We only skip when we have a non-empty range of
+            # checks.
+            if (account.check_min is not None and
+                account.check_max is not None and
+                account.check_min != account.check_max):
+
+                check_min = account.check_min
+                check_max = account.check_max
+
             print '\n'*3
             print '; Import account: %s ' % account.fullname
             print '; Start import: %s ' % ofxacc.start
             print
             for t in ofxacc.transactions:
-                if account.check_min < t.dtposted < account.check_max:
+
+                # Skip entries between the largest valid check interval.
+                if (check_min is not None and check_min < t.dtposted < check_max):
                     logging.warning("Skipping %s" % t)
                     continue
 
