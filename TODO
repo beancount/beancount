@@ -7,16 +7,20 @@
     1  Beancount (Accounting)
     2  Ideas
       2.1  Links
-    3  Reporting
+    3  Redesign
+    4  Reporting
 
 
 Beancount (Accounting)
 ======================
 
+  - I need a text version of the Balance Sheet, to paste in my TODO
+    file.
+
+
   - You should more explicitly state the beginning and ending period
     on each statement pages (it is super important information).
     Just below the title.
-
 
   - Remove checks that are outside the postings dates, at
     render time
@@ -46,7 +50,6 @@ Beancount (Accounting)
 
 
 
-- beancount: Generate a trades page in the format used by Yves.
 
 - beancount: Change URL names to use ~ as file separators,
   because it won't work under Windows otherwise, with wget.
@@ -77,15 +80,6 @@ reports:
 
   - beancount: Available balance sheet reports should be: at begin, at
     end, both. Perhaps the "both" statement is only in report foramt.
-
-
-by-payee pages:
-
-  - beancount: Create by-payee pages, which should include a trial
-    balance and a by-payee ledger. The list of payees should make it
-    easy to pinpoint typing discrepancies and maybe should only match
-    payee names loosely.
-
 
 
 trade booking:
@@ -364,44 +358,16 @@ http://homepages.tcp.co.uk/~m-wigley/gc_wp_ded.html
 
 
 
-Reporting
-=========
+Redesign
+========
 
-- trial balance (view all accounts)
+Here is an idea for a redesign:
 
-  - total
-  - at intervals: per-week, per-month, etc.
-
-- register view
-
-  - total
-  - at intervals (?)
-
-- balance sheet  (A = L+E)
-
-  - total
-  - at intervals: per-week, per-month, etc.
-
-- pnl view  (R-I)
-
-  - total
-  - at intervals
-
-- errors / check
-
-- ranges of checks
-- ranges of transactions
-
-- info page
-
-- list of uncleared transactions
-
-- custom reports:
-
-* current cie expenses list and amount that needs be paid.
-* stuff that I lent and that I'm waiting for.
-* currency exposure.
-* list how much liquid assets are available
+  The Ledger object should always contain all the transactions.
+  Instead of filtering the postings on input, you should create
+  specialized iterator objects that are used to filter the postings on
+  the fly. This would allow removing all the special shit that needs
+  to be ordered correctly, that happens at load-time.
 
 
 
