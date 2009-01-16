@@ -168,6 +168,7 @@ def main():
             # already entered (because they are located within the largest valid
             # check interval). We only skip when we have a non-empty range of
             # checks.
+            check_min = None
             if (account.check_min is not None and
                 account.check_max is not None and
                 account.check_min != account.check_max):
