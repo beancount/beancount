@@ -64,18 +64,42 @@ class Application(QApplication):
         QObject.connect(regex_list, SIGNAL('textChanged(const QString&)'), self.selaccfilter.setFilterRegExp)
 
         # Layout everything nicely
-        self.ui = QSplitter()
-        self.ui.addWidget(LayoutWidget((regex_list, self.accview)))
-        self.ui.addWidget(LayoutWidget((regex_edit, self.selaccview)))
-        self.ui.setStretchFactor(0,1)
-        self.ui.setStretchFactor(1,2)
+        self.ui = QMainWindow()
+        
+        splitter = QSplitter()
+        splitter.addWidget(LayoutWidget((regex_list, self.accview)))
+        splitter.addWidget(LayoutWidget((regex_edit, self.selaccview)))
+        splitter.setStretchFactor(0,1)
+        splitter.setStretchFactor(1,2)
+        self.ui.setCentralWidget(splitter)
         self.ui.show()
 
-        # Setup shortcuts.
-        self.bindShortcut('Ctrl+Q', self.quit)
-        self.bindShortcut('Ctrl+R', self.refresh)
-        self.bindShortcut('Ctrl+O', self.onFileOpen)
         signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+        self.buildMenu()
+
+    def buildMenu(self):
+
+        # File menu
+        fileMenu = self.ui.menuBar().addMenu("File")
+
+        # Action|Open...
+        action = QAction("Open...", self)
+        action.setShortcut('Ctrl+O')
+        fileMenu.addAction(action)
+        QObject.connect(action, SIGNAL("triggered()"), self.onFileOpen)
+
+        # Action|Refresh...
+        action = QAction("Refresh...", self)
+        action.setShortcut('Ctrl+R')
+        fileMenu.addAction(action)
+        QObject.connect(action, SIGNAL("triggered()"), self.refresh)
+        
+        # Action|Quit...
+        action = QAction("Quit...", self)
+        action.setShortcut('Ctrl+Q')
+        fileMenu.addAction(action)
+        QObject.connect(action, SIGNAL("triggered()"), self.quit)
 
     def onAccSelectionChanged(self, selected, deselected):
         indexes = selected.indexes()
