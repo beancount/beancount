@@ -43,7 +43,10 @@ class Application(QApplication):
         self.selaccfilter.setSourceModel(self.selaccmodel)
         self.selaccfilter.setFilterKeyColumn(-1)
         self.selaccfilter.setFilterCaseSensitivity(Qt.CaseInsensitive)
-        self.selaccfilter.setHeaderData(0, Qt.Horizontal, QVariant('Date'))
+
+        # Label the columns of the table.
+        for i, string in enumerate(('Date', 'Account', 'Comment', 'Price')):
+            self.selaccmodel.setHorizontalHeaderItem(i, QStandardItem(string))
 
         # Account list view.
         self.accview = QListView()
@@ -99,7 +102,8 @@ class Application(QApplication):
         items = map(lambda x:self.accmodel.itemFromIndex(x), indexes)
         items = map(lambda x:str(x.text()), items)
 
-        self.selaccmodel.clear()
+        # Clear all the rows of the table but not the header.
+        self.selaccmodel.removeRows(0, self.selaccmodel.rowCount())
 
         for _, _, account in iter(itertree(self.ledger.get_account(items[0]))):
             for p in account.postings:
