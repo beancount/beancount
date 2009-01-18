@@ -83,23 +83,14 @@ class Application(QApplication):
         # File menu
         fileMenu = self.ui.menuBar().addMenu("File")
 
-        # Action|Open...
-        action = QAction("Open...", self)
-        action.setShortcut('Ctrl+O')
-        fileMenu.addAction(action)
-        QObject.connect(action, SIGNAL("triggered()"), self.onFileOpen)
+        for text, seq, cb in (('Open...', 'Ctrl+O', self.onFileOpen),
+                              ('Refresh', 'Ctrl+R', self.refresh),
+                              ('Quit', 'Ctrl+Q', self.quit)):            
 
-        # Action|Refresh...
-        action = QAction("Refresh...", self)
-        action.setShortcut('Ctrl+R')
-        fileMenu.addAction(action)
-        QObject.connect(action, SIGNAL("triggered()"), self.refresh)
-        
-        # Action|Quit...
-        action = QAction("Quit...", self)
-        action.setShortcut('Ctrl+Q')
-        fileMenu.addAction(action)
-        QObject.connect(action, SIGNAL("triggered()"), self.quit)
+            action = QAction(text, self)
+            action.setShortcut(seq)
+            fileMenu.addAction(action)
+            QObject.connect(action, SIGNAL("triggered()"), cb)
 
     def onAccSelectionChanged(self, selected, deselected):
         indexes = selected.indexes()
