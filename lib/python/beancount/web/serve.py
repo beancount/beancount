@@ -112,7 +112,11 @@ class BeanServer(object):
                 # Update the context object with components of the request and
                 # with the query parameters.
                 ctx.environ = environ
-                form = cgi.parse(environ=environ)
+
+                conlen = int(self.environ['CONTENT_LENGTH'])
+                s = self.environ['wsgi.input'].read(conlen)
+                form = cgi.parse_qs(s)
+
                 ctx.__dict__.update(form)
                 ctx.__dict__.update(vardict)
 
