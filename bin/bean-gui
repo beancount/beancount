@@ -1,87 +1,136 @@
+#!/usr/bin/env python
+#------------------------------------------------------------------------------
+
 from beancount.ledger import Ledger
 from beancount.utils import itertree
-import codecs
-
-ledger = Ledger()
-fn = '/Users/ccaron/ccaron.ledger'
-
-f = open(fn)
-Reader = codecs.getreader('ascii')
-f = Reader(f)
-ledger.parse_file(f, fn, 'ascii')
-
-
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+import logging, codecs, signal, os
 
-app = QApplication([])
+#------------------------------------------------------------------------------
 
-model = QStandardItemModel()
-for _, _, x in iter(itertree(ledger.get_root_account())):
-    model.appendRow([QStandardItem(x.fullname)])
+class LayoutWidget(QWidget):
+    def __init__(self, widgets, vertical=True):
+        QWidget.__init__(self)
+        layout = QVBoxLayout() if vertical else QHBoxLayout()
+        for w in widgets:
+            layout.addWidget(w)
+        self.setLayout(layout)
 
-proxymodel = QSortFilterProxyModel()
-proxymodel.setSourceModel(model)
-proxymodel.setFilterCaseSensitivity(Qt.CaseInsensitive)
+#------------------------------------------------------------------------------
 
-detailmodel = QStandardItemModel()
-detailfilter = QSortFilterProxyModel()
-detailfilter.setSourceModel(detailmodel)
-detailfilter.setFilterKeyColumn(-1)
-detailfilter.setFilterCaseSensitivity(Qt.CaseInsensitive)
+class Application(QApplication):
+    def __init__(self, *args):
+        QApplication.__init__(self, *args)
 
-def selectionChanged(selected, deselected):
-    indexes = selected.indexes()
-    indexes = map(lambda x:proxymodel.mapToSource(x), indexes)
-    items = map(lambda x:model.itemFromIndex(x), indexes)
-    items = map(lambda x:str(x.text()), items)
+        # FIXME: This should be an abstract model that talks
+        #        directly to the ledger.
+        self.accmodel = QStandardItemModel()
 
-    detailmodel.clear()
+        self.ledger = Ledger()
+        self.readLedger('../examples/demo.ledger')
 
-    for _, _, account in iter(itertree(ledger.get_account(items[0]))):
-        for p in account.postings:
-            detailmodel.appendRow([QStandardItem(str(p.get_date())),
-                                   QStandardItem(str(p.account_name)),
-                                   QStandardItem(str(p.txn.narration)),
-                                   QStandardItem(str(p.amount))])
+        # Account list filter
+        self.accfilter = QSortFilterProxyModel()
+        self.accfilter.setSourceModel(self.accmodel)
+        self.accfilter.setFilterCaseSensitivity(Qt.CaseInsensitive)
 
-treeview = QListView()
-treeview.selectionChanged = selectionChanged
-treeview.setModel(proxymodel)
-QObject.connect(treeview, SIGNAL('selectionChanged(const QItemSelection&, const QItemSelection&)'), selectionChanged)
+        # Selected account model
+        self.selaccmodel = QStandardItemModel()
 
+        # Selected account filter
+        self.selaccfilter = QSortFilterProxyModel()
+        self.selaccfilter.setSourceModel(self.selaccmodel)
+        self.selaccfilter.setFilterKeyColumn(-1)
+        self.selaccfilter.setFilterCaseSensitivity(Qt.CaseInsensitive)
 
-listview = QTableView()
-listview.horizontalHeader().setStretchLastSection(True)
-listview.setSelectionMode(QAbstractItemView.SingleSelection)
-listview.setSelectionBehavior(QAbstractItemView.SelectRows)
-listview.setSortingEnabled(True)
-listview.setModel(detailfilter)
+        # Account list view.
+        self.accview = QListView()
+        self.accview.selectionChanged = self.onAccSelectionChanged
+        self.accview.setModel(self.accfilter)
 
-regex_list = QLineEdit()
-regex_edit = QLineEdit()
-QObject.connect(regex_edit, SIGNAL('textChanged(const QString&)'), proxymodel.setFilterRegExp)
-QObject.connect(regex_list, SIGNAL('textChanged(const QString&)'), detailfilter.setFilterRegExp)
-widget = QWidget()
+        # Selected account view.
+        self.selaccview = QTableView()
+        self.selaccview.horizontalHeader().setStretchLastSection(True)
+        self.selaccview.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.selaccview.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.selaccview.setSortingEnabled(True)
+        self.selaccview.setModel(self.selaccfilter)
 
-layout1 = QVBoxLayout()
-layout1.addWidget(regex_edit)
-layout1.addWidget(treeview)
+        # Inputs fields for regexs
+        regex_list = QLineEdit()
+        regex_edit = QLineEdit()
+        QObject.connect(regex_edit, SIGNAL('textChanged(const QString&)'), self.accfilter.setFilterRegExp)
+        QObject.connect(regex_list, SIGNAL('textChanged(const QString&)'), self.selaccfilter.setFilterRegExp)
 
-layout2 = QVBoxLayout()
-layout2.addWidget(regex_list)
-layout2.addWidget(listview)
+        # Layout everything nicely
+        self.ui = QMainWindow()
+        
+        splitter = QSplitter()
+        splitter.addWidget(LayoutWidget((regex_list, self.accview)))
+        splitter.addWidget(LayoutWidget((regex_edit, self.selaccview)))
+        splitter.setStretchFactor(0,1)
+        splitter.setStretchFactor(1,2)
+        self.ui.setCentralWidget(splitter)
+        self.ui.show()
 
-layout = QSplitter()
-w1 = QWidget()
-w1.setLayout(layout1)
-layout.addWidget(w1)
-w2 = QWidget()
-w2.setLayout(layout2)
-layout.addWidget(w2)
-layout.setStretchFactor(0,1)
-layout.setStretchFactor(1,2)
-layout.show()
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-app.exec_()
+        self.buildMenu()
+
+    def buildMenu(self):
+
+        # File menu
+        fileMenu = self.ui.menuBar().addMenu("File")
+
+        for text, seq, cb in (('Open...', 'Ctrl+O', self.onFileOpen),
+                              ('Refresh', 'Ctrl+R', self.refresh),
+                              ('Quit', 'Ctrl+Q', self.quit)):            
+
+            action = QAction(text, self)
+            action.setShortcut(seq)
+            fileMenu.addAction(action)
+            QObject.connect(action, SIGNAL("triggered()"), cb)
+
+    def onAccSelectionChanged(self, selected, deselected):
+        indexes = selected.indexes()
+        indexes = map(lambda x:self.accfilter.mapToSource(x), indexes)
+        items = map(lambda x:self.accmodel.itemFromIndex(x), indexes)
+        items = map(lambda x:str(x.text()), items)
+
+        self.selaccmodel.clear()
+
+        for _, _, account in iter(itertree(self.ledger.get_account(items[0]))):
+            for p in account.postings:
+                self.selaccmodel.appendRow([QStandardItem(str(p.get_date())),
+                                            QStandardItem(str(p.account_name)),
+                                            QStandardItem(str(p.txn.narration)),
+                                            QStandardItem(str(p.amount))])
+    def onFileOpen(self):
+        filename = QFileDialog.getOpenFileName(self.ui, "Open Ledger...")
+        if filename:
+            self.readLedger(str(filename))
+
+    def readLedger(self, fn):
+        f = open(fn)
+        Reader = codecs.getreader('ascii')
+        f = Reader(f)
+        self.ledger = Ledger()
+        self.ledger.parse_file(f, fn, 'ascii')
+        self.refresh()
+
+    def bindShortcut(self, seq, target):
+        QObject.connect(QShortcut(QKeySequence(seq), self.ui),
+                        SIGNAL('activated()'), target)
+        
+    def refresh(self):
+        self.accmodel.clear()
+        for _, _, x in iter(itertree(self.ledger.get_root_account())):
+            self.accmodel.appendRow([QStandardItem(x.fullname)])
+
+#------------------------------------------------------------------------------
+        
+if __name__ == '__main__':
+    app = Application([])
+    app.exec_()
 
