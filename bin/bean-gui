@@ -43,6 +43,7 @@ class Application(QApplication):
         self.selaccfilter.setSourceModel(self.selaccmodel)
         self.selaccfilter.setFilterKeyColumn(-1)
         self.selaccfilter.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self.selaccfilter.setHeaderData(0, Qt.Horizontal, QVariant('Date'))
 
         # Account list view.
         self.accview = QListView()
@@ -58,17 +59,17 @@ class Application(QApplication):
         self.selaccview.setModel(self.selaccfilter)
 
         # Inputs fields for regexs
-        regex_list = QLineEdit()
-        regex_edit = QLineEdit()
-        QObject.connect(regex_edit, SIGNAL('textChanged(const QString&)'), self.accfilter.setFilterRegExp)
-        QObject.connect(regex_list, SIGNAL('textChanged(const QString&)'), self.selaccfilter.setFilterRegExp)
+        regex_acc = QLineEdit()
+        regex_selacc = QLineEdit()
+        QObject.connect(regex_acc, SIGNAL('textChanged(const QString&)'), self.accfilter.setFilterRegExp)
+        QObject.connect(regex_selacc, SIGNAL('textChanged(const QString&)'), self.selaccfilter.setFilterRegExp)
 
         # Layout everything nicely
         self.ui = QMainWindow()
         
         splitter = QSplitter()
-        splitter.addWidget(LayoutWidget((regex_list, self.accview)))
-        splitter.addWidget(LayoutWidget((regex_edit, self.selaccview)))
+        splitter.addWidget(LayoutWidget((regex_acc, self.accview)))
+        splitter.addWidget(LayoutWidget((regex_selacc, self.selaccview)))
         splitter.setStretchFactor(0,1)
         splitter.setStretchFactor(1,2)
         self.ui.setCentralWidget(splitter)
