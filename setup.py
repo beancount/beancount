@@ -11,12 +11,13 @@ from distutils.core import setup
 
 
 # Install all scripts under bin.
-scripts = [join('bin', x) for x in ('bean-serve',
-                                    'bean-info',
-                                    'bean-balance',
+scripts = [join('bin', x) for x in ('bean-web',
+                                    'bean-trial',
+                                    'bean-suck',
                                     'bean-convert-ofx',
-                                    'bean-priced',
-                                    'bean-register')]
+                                    'bean-convert-paypal-csv',
+                                    'bean-convert-rbc-activity',
+                                    )]
 
 def read_version():
     try:
@@ -45,7 +46,7 @@ input format, and other formats (easily extensible).
                   'beancount.web',
                   'beancount.fallback',
                   'beancount.fallback.elementtree',
-                  'beancount.test'],
+                  ],
       scripts=scripts
      )
 
