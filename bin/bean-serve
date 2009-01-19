@@ -1,0 +1,7 @@
+#!/usr/bin/env python
+from warnings import warn
+warn("'bean-serve' has been renamed to 'bean-web'. Adjust your scripts.")
+from beancount.web.serve import main
+main()
+
+
