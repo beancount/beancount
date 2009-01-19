@@ -488,17 +488,6 @@ class Ledger(object):
         "Return true if the ledger has not had critical errors."
         return all(self.messages.level != CRITICAL)
 
-    def dump_info(self):
-        payees = set(txn.payee for txn in self.transactions)
-        lines = [
-            'Nb accounts: %d' % len(self.accounts),
-            'Nb transactions: %d' % len(self.transactions),
-            'Nb commodities: %d' % len(self.commodities),
-            'Nb postings: %d' % len(self.postings),
-            'Nb unique payees: %d' % len(payees),
-            ]
-        return lines
-
     def log(self, level, message, obj):
         "Log a message for later, and display to stderr."
         assert level in (logging.INFO,

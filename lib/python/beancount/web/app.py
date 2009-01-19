@@ -231,8 +231,11 @@ def page__other(app, ctx):
     ledger = ctx.ledger
     page.add(H2("Statistics"),
              TABLE(
+                 TR(TD("Nb Accounts:"), TD("%d" % len(ledger.accounts))),
+                 TR(TD("Nb Commodities:"), TD("%d" % len(ledger.commodities))),
                  TR(TD("Nb Transactions:"), TD("%d" % len(ledger.transactions))),
-                 TR(TD("Nb Postings:"), TD("%d" % len(ledger.postings)))
+                 TR(TD("Nb Postings:"), TD("%d" % len(ledger.postings))),
+                 TR(TD("Nb Payees:"), TD("%d" % len(ledger.payees))),
                  ))
 
     ul = UL()
