@@ -17,17 +17,14 @@ from BeautifulSoup import BeautifulSoup
 # beancount imports
 from beancount import cmdline
 from beancount.utils import render_tree
-from beancount.ledger import compute_balsheet
 from beancount.wallet import Wallet
 from beancount.web.market import getquote
-
 
 
 class FileValueCache(object):
     "A cache for a value derived from a file."
 
     COMPUTE = None
-
 
     def __init__(self, cachefn):
         self.cachefn = '/tmp/bean-assets.cache'
@@ -134,10 +131,10 @@ def main():
             balance, pricedmap = fvcache.get(fn)
         except KeyError:
             # Compute the balance.
-            ledger = cmdline.load_ledger(fn, opts)
-            compute_balsheet(ledger, 'local_balance', 'balance')
+            ledger = cmdline.load_ledger(parser, [fn], opts)
+            ledger.compute_balsheet('total')
             acc = ledger.get_account('Assets')
-            balance = acc.balance
+            balance = acc.balances['total']
             pricedmap = ledger.pricedmap
             fvcache.update(fn, (balance, pricedmap))
         totassets += balance

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-Interpret the PayPal CSV file and output transactions suitable for Ledger.
+Interpret the PayPal CSV file and output transactions in a format suitable for
+Ledger.
 """
 
 # stdlib imports

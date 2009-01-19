@@ -84,7 +84,7 @@ class BeanServer(object):
 
         ctx = copy(self.ctx) # shallow
         ctx.ledger = self.ledger
-        
+
         path = environ['PATH_INFO']
 
         ishtml = '.' not in basename(path) or path.endswith('.html')
@@ -198,9 +198,9 @@ class Mapper(object):
                 query.append('%s=%s' % kv)
             url += '?' + '&'.join(query)
         return url
-            
 
-        
+
+
 
 
 def main():
@@ -219,10 +219,11 @@ def main():
     parser.add_option('-T', '--title', action='store',
                       help="Title to display in the web interface.")
 
-    parser.add_option('--conversion', 
+    parser.add_option('--conversion',
                       action='append', metavar='CONVERSION', default=[],
-                      help="Apply the given conversion to wallets before displaying them. "
-                      "The option's format should like this: '1 EUR = 1.28 USD'.")
+                      help="Apply the given conversion to wallets before "
+                      "displaying them. The option's format should like "
+                      "this: '1 EUR = 1.28 USD'.")
 
     opts, ledger, args = cmdline.main(parser)
 

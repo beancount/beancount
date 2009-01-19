@@ -2,6 +2,12 @@
 """
 Try your best to parse the crappy HTML coming out of RBC Direct Investing.
 
+You'd think that after all these years and numerous 'improvements' to their web
+interface over the years, that they would bother providing OFX export, something
+simple to implement that anyone with a ledger would use, but no. We have to
+parse HTML, bad HTML. Such is the reality of dealing with banks. (At least they
+didn't get caught up in the subprime mess, that offers some consolation.)
+
 Go to the RBC Direct Investing account and use the Web Developer extension to
 save the Generate Source (from the Source menu) for each month of activity. This
 script can extract the table and produce valid Ledger format text.
@@ -39,7 +45,8 @@ def main():
     opts, ledger, args = cmdline.main(parser, 1)
 
     if len(args) < 1:
-        parser.error("You must specify a ledger file and a list of HTML filenames to parse.")
+        parser.error("You must specify a ledger file and a list of HTML "
+                     "filenames to parse.")
     filenames = args
 
     accounts_map = read_ofx_accounts_map(ledger)

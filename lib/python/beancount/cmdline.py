@@ -48,8 +48,8 @@ def main(parser, no=MANY):
 
     parser.add_option('--unsafe', '--with-source',
                       action='store_false', default=True,
-                      help="Allow serving some possibly sensitive personal informations,"
-                      " access to source file, for example.")
+                      help="Allow serving some possibly sensitive personal "
+                      "informations, access to source file, for example.")
 
     opts, args = parser.parse_args()
 
