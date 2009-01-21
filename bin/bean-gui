@@ -25,13 +25,25 @@ class LayoutWidget(QWidget):
 
 #------------------------------------------------------------------------------
 
+class PieView(QAbstractItemView):
+    def verticalOffset(self):
+        return self.verticalScrollBar().value()
+    def horizontalOffset(self):
+        return self.horizontalScrollBar().value()
+    def paintEvent(self, event):
+        return
+        ## for i in xrange(self.model().rowCount(self.rootIndex())):
+        ##     index = self.model().index(i, 1, self.rootIndex())
+
+#------------------------------------------------------------------------------
+
 class Application(QApplication):
     def __init__(self, ledger_fn, *args):
         QApplication.__init__(self, [])
 
         # FIXME: This should be an abstract model that talks
         #        directly to the ledger.
-        self.accmodel = QStandardItemModel()
+        self.accmodel = QStandardItemModel(self)
 
         self.ledger = Ledger()
         self.readLedger(ledger_fn)
@@ -73,12 +85,16 @@ class Application(QApplication):
         QObject.connect(regex_acc, SIGNAL('textChanged(const QString&)'), self.accfilter.setFilterRegExp)
         QObject.connect(regex_selacc, SIGNAL('textChanged(const QString&)'), self.selaccfilter.setFilterRegExp)
 
+        # Pie View
+        self.pieview = PieView()
+        self.pieview.setModel(self.selaccmodel)
+
         # Layout everything nicely
         self.ui = QMainWindow()
-        
+
         splitter = QSplitter()
         splitter.addWidget(LayoutWidget((regex_acc, self.accview)))
-        splitter.addWidget(LayoutWidget((regex_selacc, self.selaccview)))
+        splitter.addWidget(LayoutWidget((regex_selacc, self.selaccview, self.pieview)))
         splitter.setStretchFactor(0,1)
         splitter.setStretchFactor(1,2)
         self.ui.setCentralWidget(splitter)
@@ -117,6 +133,13 @@ class Application(QApplication):
                                             QStandardItem(str(p.account_name)),
                                             QStandardItem(str(p.txn.narration)),
                                             QStandardItem(str(p.amount))])
+
+
+        self.selaccmodel.emit(SIGNAL("dataChanged(const QModelIndex&, const QModelIndex&)"),
+                              self.selaccmodel.index(0, 0),
+                              self.selaccmodel.index(self.selaccmodel.rowCount(), self.selaccmodel.columnCount()))
+
+        
     def onFileOpen(self):
         filename = QFileDialog.getOpenFileName(self.ui, "Open Ledger...")
         if filename:
