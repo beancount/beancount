@@ -12,6 +12,8 @@ from beancount.utils import itertree
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 import logging, codecs, signal, os
+from collections import defaultdict
+from itertools import izip
 
 #------------------------------------------------------------------------------
  
@@ -26,14 +28,36 @@ class LayoutWidget(QWidget):
 #------------------------------------------------------------------------------
 
 class PieView(QAbstractItemView):
+
+    colors = (Qt.darkRed,
+              Qt.green, Qt.darkGreen, Qt.blue, Qt.darkBlue,
+              Qt.cyan, Qt.darkCyan, Qt.magenta, Qt.darkMagenta,
+              Qt.yellow, Qt.darkYellow, Qt.gray, Qt.darkGray, Qt.lightGray)
+    
     def verticalOffset(self):
         return self.verticalScrollBar().value()
     def horizontalOffset(self):
         return self.horizontalScrollBar().value()
     def paintEvent(self, event):
-        return
-        ## for i in xrange(self.model().rowCount(self.rootIndex())):
-        ##     index = self.model().index(i, 1, self.rootIndex())
+        painter = QPainter(self.viewport())
+        painter.setRenderHint(QPainter.Antialiasing)
+        rect = event.rect().adjusted(10,10,-10,-10)
+        values = defaultdict(int)
+        for i in xrange(self.model().rowCount(self.rootIndex())):
+            index = self.model().index(i, 1, self.rootIndex())
+            values[self.model().itemFromIndex(index).text()] += 1
+
+        total = float(sum(values.values()))
+        current = 0
+        for i, (key, val) in enumerate(values.iteritems()):
+            a = current/total
+            b = val/total
+            color = QColor(self.colors[i%len(self.colors)])
+            painter.setBrush(color)
+            painter.setPen(color.darker())
+            painter.drawPie(rect, a*360*16, b*360*16)
+            current += val
+        
 
 #------------------------------------------------------------------------------
 
@@ -137,7 +161,8 @@ class Application(QApplication):
 
         self.selaccmodel.emit(SIGNAL("dataChanged(const QModelIndex&, const QModelIndex&)"),
                               self.selaccmodel.index(0, 0),
-                              self.selaccmodel.index(self.selaccmodel.rowCount(), self.selaccmodel.columnCount()))
+                              self.selaccmodel.index(self.selaccmodel.rowCount(),
+                                                     self.selaccmodel.columnCount()))
 
         
     def onFileOpen(self):
