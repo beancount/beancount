@@ -260,6 +260,15 @@ class Wallet(dict):
                 del w[from_asset]
         return w
 
+    def nbthings(self):
+        """ Return a single number, the total number of things that are stored
+        in this wallet. (This is used for fiddling, as a really gross and
+        inaccurate approximation of total amount.)"""
+        return sum(self.itervalues())
+        
+        
+
+
 
 # Order of important for commodities.
 comm_importance = {

@@ -138,3 +138,9 @@ class TestWallet(object):
         w = Wallet('1600 INR')
         assert w.convert(conv) == Wallet('40 CAD')
 
+    def test_nbthings(self):
+        w = Wallet()
+        w['USD'] = Decimal('4.1')
+        w['JPY'] = Decimal('17.0')
+        assert w.nbthings() == Decimal('21.1')
+
