@@ -26,15 +26,15 @@ class LayoutWidget(QWidget):
 #------------------------------------------------------------------------------
 
 class Application(QApplication):
-    def __init__(self, *args):
-        QApplication.__init__(self, *args)
+    def __init__(self, ledger_fn, *args):
+        QApplication.__init__(self, [])
 
         # FIXME: This should be an abstract model that talks
         #        directly to the ledger.
         self.accmodel = QStandardItemModel()
 
         self.ledger = Ledger()
-        self.readLedger('../examples/demo.ledger')
+        self.readLedger(ledger_fn)
 
         # Account list filter
         self.accfilter = QSortFilterProxyModel()
@@ -124,10 +124,10 @@ class Application(QApplication):
 
     def readLedger(self, fn):
         f = open(fn)
-        Reader = codecs.getreader('ascii')
+        Reader = codecs.getreader('utf-8')
         f = Reader(f)
         self.ledger = Ledger()
-        self.ledger.parse_file(f, fn, 'ascii')
+        self.ledger.parse_file(f, fn, 'utf-8')
         self.refresh()
 
     def bindShortcut(self, seq, target):
@@ -141,7 +141,17 @@ class Application(QApplication):
 
 #------------------------------------------------------------------------------
         
-if __name__ == '__main__':
-    app = Application([])
+def main():
+    import optparse
+    parser = optparse.OptionParser(__doc__.strip())
+    opts, args = parser.parse_args()
+
+    if len(args) != 1:
+        parser.error("You need to specify a ledger file to process.")
+
+    app = Application(args[0])
     app.exec_()
+
+if __name__ == '__main__':
+    main()
 
