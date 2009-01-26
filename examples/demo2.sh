@@ -3,4 +3,4 @@
 # Run this in a shell and use a web browser to access http://localhost:8000
 # The demo file contains many example transactions.
 PROJDIR=.. . ../etc/env
-python $PROJDIR/bin/bean-serve -g ski-trip demo.ledger
+python $PROJDIR/bin/bean-web -g ski-trip demo.ledger
