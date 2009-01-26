@@ -9,7 +9,7 @@ from decimal import Decimal
 from datetime import datetime
 
 # other imports
-from BeautifulSoup import BeautifulSoup
+from beancount.fallback.BeautifulSoup import BeautifulSoup
 
 
 __all__ = ('get_market_price', 'currencies', 'get_xrate', 'get_xrates')
