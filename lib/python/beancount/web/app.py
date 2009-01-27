@@ -59,7 +59,9 @@ class Template(object):
             UL(LI(A('Chart of Accounts', href=umap('@@ChartOfAccounts'))),
                LI(A('Journals', href=umap('@@LedgerIndex'))),
                LI(A('Trial Balance', href=umap('@@TrialBalance'))),
-               LI(A('Balance Sheet', href=umap('@@BalanceSheet'))),
+               LI(A('Begin', href=umap('@@BalanceSheetBegin')),
+                  ' ... ',
+                  A('Balance Sheet ... End', href=umap('@@BalanceSheetEnd'))),
                LI(A('Income', href=umap('@@IncomeStatement'))),
                ## LI(A('CashFlow', href=umap('@@CashFlow'))),
                ## LI(A('Capital', href=umap('@@CapitalStatement'))),
@@ -381,9 +383,9 @@ def semi_table(acc, tid, remove_empty=True, conversions=None, aname='total'):
     return table, sum_
 
 
-def page__balancesheet(app, ctx):
+def page__balancesheet_end(app, ctx):
     page = Template(ctx)
-    page.add(H1("Balance Sheet (ending)"))
+    page.add(H1("Balance Sheet (Ending)"))
 
     ledger = ctx.ledger
 
@@ -408,6 +410,38 @@ def page__balancesheet(app, ctx):
     page.add(BR(style="clear: both"),
              TABLE( TR(TD(B("A + L + E:")), TD(hwallet(total))),
                     id='net', CLASS='treetable') )
+
+    return page.render(app)
+
+
+def page__balancesheet_begin(app, ctx):
+    page = Template(ctx)
+    page.add(H1("Balance Sheet (Beginning)"))
+
+    ## ledger = ctx.ledger
+
+    ## a_acc = ledger.find_account(('Assets', 'Asset'))
+    ## l_acc = ledger.find_account(('Liabilities', 'Liability'))
+    ## e_acc = ledger.find_account(('Equity', 'Capital'))
+    ## if None in (a_acc, l_acc, e_acc):
+    ##     page.add(P("Could not get all A, L and E accounts.", CLASS="error"))
+    ##     return page.render(app)
+
+    ## a_table, a_total = semi_table(a_acc, 'assets', conversions=app.opts.conversions)
+    ## l_table, l_total = semi_table(l_acc, 'liabilities', conversions=app.opts.conversions)
+    ## e_table, e_total = semi_table(e_acc, 'equity', conversions=app.opts.conversions)
+    ## page.add(DIV(H2("Liabilities", CLASS="duotables"), l_table,
+    ##              H2("Equity", CLASS="duotables"), e_table,
+    ##              CLASS='right'),
+    ##          DIV(H2("Assets", CLASS="duotables"), a_table,
+    ##              CLASS='left'),
+    ##          )
+
+    ## total = a_total + l_total + e_total
+    ## page.add(BR(style="clear: both"),
+    ##          TABLE( TR(TD(B("A + L + E:")), TD(hwallet(total))),
+    ##                 id='net', CLASS='treetable') )
+    page.add('FIXME TODO')
 
     return page.render(app)
 
@@ -876,7 +910,7 @@ def page__ledger_tag(app, ctx):
              HR(),
              H2('Transactions'), table_txns,
              HR(),
-             H2('Equivalent transactions'), 
+             H2('Equivalent transactions'),
              PRE(os.linesep.join(do)),
              PRE(os.linesep.join(undo)),
              )
@@ -1288,7 +1322,9 @@ page_directory = (
     ('@@Other', page__other, '/other', None),
     ('@@Activity', page__activity, '/activity', None),
     ('@@TrialBalance', page__trialbalance, '/trial', None),
-    ('@@BalanceSheet', page__balancesheet, '/balance', None),
+    ('@@BalanceSheet', page__balancesheet_end, '/balend', None),
+    ('@@BalanceSheetEnd', page__balancesheet_end, '/balend', None),
+    ('@@BalanceSheetBegin', page__balancesheet_begin, '/balbeg', None),
     ('@@IncomeStatement', page__income, '/income', None),
     ('@@CapitalStatement', page__capital, '/capital', None),
     ('@@CashFlow', page__cashflow, '/cashflow', None),
