@@ -125,6 +125,11 @@ table.txntable td.highpost {
 /*   background-color: #E8E8E8; */
 }
 
+a.payee:link, a.payee:visited {
+  text-decoration: none; 
+  color: black;
+  font-weight: bold;
+}
 
 
 /* Balance sheet / trial balance / global view of accounts */

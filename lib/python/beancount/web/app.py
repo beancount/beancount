@@ -926,9 +926,17 @@ def render_postings_table(postings, style,
         balance += txn_amount
 
         # Display the transaction line.
+        desc = []
+        if txn.payee:
+            desc.append(A(txn.payee, href=umap('@@PayeeLedger', txn.payee_key),
+                          CLASS='payee'))
+            desc.append(' | ')
+        if txn.narration:
+            desc.append(txn.narration)
+
         tr = TR(TD(txn.rdate()),
                 TD(txn.flag, CLASS='flag', style=sty),
-                TD(txn.description(), CLASS='description'),
+                TD(desc, CLASS='description'),
                 TD(CLASS='wallet'),
                 TD(hwallet(txn_amount), CLASS='wallet'),
                 TD(hwallet(balance), CLASS='wallet cumulative'),

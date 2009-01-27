@@ -484,6 +484,9 @@ class Ledger(object):
         # List of booked trades.
         self.booked_trades = []
 
+        # A dict of payees key names to (full-payee-name, transaction)
+        self.payees = {}
+
     def isvalid(self):
         "Return true if the ledger has not had critical errors."
         return all(self.messages.level != CRITICAL)
@@ -1345,10 +1348,9 @@ class Ledger(object):
 
         for txn in self.transactions:
             if txn.payee:
-                payee = re.sub('[^A-Za-z0-9]', '_',
-                               ' '.join(txn.payee.lower().split()).encode('ascii',
-                                                                          'replace'))
-                paydict[payee].append(txn)
+                key = txn.payee_key = compute_payee_key(txn.payee)
+                paydict[key].append(txn)
+                
 
         self.payees = {}
         for key, txns in paydict.iteritems():
@@ -1372,6 +1374,9 @@ class Ledger(object):
         self.tags = tagdict
 
 
+def compute_payee_key(payee):
+    return re.sub('[^A-Za-z0-9]', '_',
+                  ' '.join(payee.lower().split()).encode('ascii', 'replace'))    
 
 
 
