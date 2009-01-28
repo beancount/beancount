@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+"""
+Create a digest for searching beancount transactions by fuzzy word matching.
+
+Ideas for matching:
+
+- Score higher if the word comes in closer order
+- Score higher if matches in the same field (payee, vs. narration)
+- Score higher if the boundaries match
+
+"""
+
+# stdlib imports
+import os, re
+import cPickle as pickle
+from os.path import *
+from collections import defaultdict
+
+# beancount imports
+from beancount import cmdline
+
+
+def main():
+    import optparse
+    parser = optparse.OptionParser(__doc__.strip())
+
+    parser.add_option('-f', '--database', action='store',
+                  default=join(os.environ['HOME'], '.beancount'),
+                  help="Specify the database filename to use")
+
+    opts, args = parser.parse_args()
+
+    f = open(opts.database, 'r')
+    odict = pickle.load(f)
+    f.close()
+
+    matchdict = defaultdict(int)
+    for term in args:
+        try:
+            matchfun = re.compile(term, re.I).search
+            terms = [k for k in odict.iterkeys() if matchfun(k)]
+            for term in terms:
+                for desc in odict[term]:
+                    matchdict[desc] += 1
+        except KeyError:
+            pass
+
+    matches = sorted(((score, desc) for desc, score in matchdict.iteritems()),
+                     reverse=1)
+    for score, desc in matches:
+        print
+        print
+        print
+        print 'Score: %s' % score
+        print
+        print desc
+
+
+if __name__ == '__main__':
+    main()
+
+

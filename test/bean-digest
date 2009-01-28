@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+"""
+Create a digest for searching beancount transactions by fuzzy word matching.
+"""
+
+# stdlib imports
+import os, re
+import cPickle as pickle
+from os.path import *
+from collections import defaultdict
+
+# beancount imports
+from beancount import cmdline
+
+
+def main():
+    import optparse
+    parser = optparse.OptionParser(__doc__.strip())
+
+    parser.add_option('-f', '--database', action='store',
+                      default=join(os.environ['HOME'], '.beancount'),
+                      help="Specify the database filename to use")
+
+    cmdline.addopts(parser)
+    opts, ledger, args = cmdline.main(parser)
+
+
+    odict = defaultdict(list)
+    for txn in ledger.transactions:
+        lines = []
+        no = txn.lineno-1
+        if not (no >= 1):
+            continue
+            
+        while 1:
+            line = ledger.source[no]
+            if re.match('\s*$', line):
+                break
+            lines.append(line)
+            no += 1
+
+        desc = u''.join(lines)
+
+        names = []
+        for n in txn.payee, txn.narration:
+            if n:
+                names.extend(n.split())
+            
+        for n in names:
+            odict[n].append(desc)
+
+    f = open(opts.database, 'w')
+    pickle.dump(odict, f)
+    f.close()
+
+if __name__ == '__main__':
+    main()
+

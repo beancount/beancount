@@ -1768,7 +1768,7 @@ class AutoPadDirective(object):
                 ledger.transactions.append(txn)
                 txn.actual_date = txn.effective_date = pad.pdate
                 txn.filename = pad.filename
-                txn.lineno = 0
+                txn.lineno = -1
                 txn.ordering = 0
                 txn.flag = self.flag
                 txn.payee = self.__class__.__name__
