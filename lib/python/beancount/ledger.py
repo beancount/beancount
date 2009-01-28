@@ -1323,6 +1323,7 @@ class Ledger(object):
         inset = frozenset(filter(pred, self.postings))
         if len(inset) == 0:
             logging.error("No postings selected by predicates.")
+            sys.exit(1)
 
         for post in self.postings:
             post.selected = (post in inset)

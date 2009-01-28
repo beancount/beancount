@@ -11,7 +11,7 @@ from os.path import *
 from operator import attrgetter
 from datetime import date, timedelta
 from urlparse import urlparse
-from itertools import izip, count
+from itertools import izip, count, imap
 from pprint import pformat
 from decimal import Decimal, getcontext
 from collections import defaultdict
@@ -61,7 +61,7 @@ class Template(object):
                LI(A('Trial Balance', href=umap('@@TrialBalance'))),
                LI(A('Begin', href=umap('@@BalanceSheetBegin')),
                   ' ... ',
-                  A('Balance Sheet ... End', href=umap('@@BalanceSheetEnd'))),
+                  A('Bal.Sheet ... End', href=umap('@@BalanceSheetEnd'))),
                LI(A('Income', href=umap('@@IncomeStatement'))),
                ## LI(A('CashFlow', href=umap('@@CashFlow'))),
                ## LI(A('Capital', href=umap('@@CapitalStatement'))),
@@ -195,6 +195,9 @@ def page__chartofaccounts(app, ctx):
     table.add(THEAD(TR(TH("Account"), TH("Dr/Cr"), TH("Valid Commodities"))))
     it = iter(itertree(ctx.ledger.get_root_account()))
     for acc, td1, tr, skip in treetable_builder(table, it):
+        if len(acc) == 0:
+            skip()
+            continue
         td1.add(
             A(acc.name, href=umap('@@AccountLedger', webaccname(acc.fullname)),
               CLASS='accomp'))
@@ -234,6 +237,9 @@ def page__other(app, ctx):
     page.add(H2("Statistics"),
              TABLE(
                  TR(TD("Nb Accounts:"), TD("%d" % len(ledger.accounts))),
+                 TR(TD("Nb Accounts with Postings:"),
+                    TD("%d" % sum(1 for a in ledger.accounts.itervalues()
+                                  if len(a) > 0))),
                  TR(TD("Nb Commodities:"), TD("%d" % len(ledger.commodities))),
                  TR(TD("Nb Transactions:"), TD("%d" % len(ledger.transactions))),
                  TR(TD("Nb Postings:"), TD("%d" % len(ledger.postings))),
@@ -723,7 +729,11 @@ def page__activity(app, ctx):
                        TH("Days since"),
                        )))
     it = iter(itertree(ctx.ledger.get_root_account(), pred=attrgetter('checked')))
-    for acc, td1, tr, _ in treetable_builder(table, it):
+    for acc, td1, tr, skip in treetable_builder(table, it):
+        if len(acc) == 0:
+            skip()
+            continue
+
         td1.add(
             A(acc.name, href=umap('@@AccountLedger', webaccname(acc.fullname)),
               CLASS='accomp'))
@@ -1100,6 +1110,10 @@ def page__locations(app, ctx):
     page = Template(ctx)
     page.add(H1("Locations"))
 
+    # Compute the minimum time in the filtered postings.
+    mindate = min(imap(attrgetter('actual_date'), ctx.ledger.postings))
+    maxdate = max(imap(attrgetter('actual_date'), ctx.ledger.postings))
+
     location = ctx.ledger.directives['location']
 
     # Group lists per year.
@@ -1108,8 +1122,9 @@ def page__locations(app, ctx):
         ldate = x[0]
         peryear[ldate.year].append(x)
 
-    today = date.today()
     oneday = timedelta(days=1)
+    today = date.today()
+    tomorrow = today + oneday
 
     # Cap lists beginnings and ends.
     yitems = sorted(peryear.iteritems())
@@ -1121,17 +1136,27 @@ def page__locations(app, ctx):
 
         ldate, city, country = ylist[-1]
         d = date(year+1, 1, 1)
-        if d > today:
-            d = today
+        if d > tomorrow:
+            d = tomorrow
         ylist.append((d, city, country))
 
     for year, ylist in yitems:
-        ul = page.add(H2(str(year)), UL())
+        ul = UL()
         comap = defaultdict(int)
         ramq_days = 0
         for x1, x2 in iter_pairs(ylist, False):
             ldate1, city, country = x1
             ldate2, _, _ = x2
+
+            if ((ldate1 <= mindate and ldate2 <= mindate) or
+                (ldate1 >= maxdate and ldate2 >= maxdate)):
+                continue
+
+            if ldate1 < mindate:
+                ldate1 = mindate
+            if ldate2 > maxdate:
+                ldate2 = maxdate + oneday
+
             days = (ldate2 - ldate1).days
             ul.append(LI("%s -> %s (%d days) : %s (%s)" %
                          (ldate1, ldate2 - oneday, days, city, country)))
@@ -1141,16 +1166,21 @@ def page__locations(app, ctx):
                 # FIXME: I think that technically I would have to be in Quebec,
                 # not just in Canada.
 
-        ulc = page.add(H2("Summary %s" % year), UL())
-        for country, days in sorted(comap.iteritems()):
-            ulc.append(LI("%s : %d days" % (country, days)))
+        if len(ul) > 0:
+            page.add(H2(str(year)), ul)
+            ulc = page.add(H2("Summary %s" % year), UL())
+            total_days = 0
+            for country, days in sorted(comap.iteritems()):
+                ulc.append(LI("%s : %d days" % (country, days)))
+                total_days += days
+            ulc.append(LI("Total : %d days" % total_days))
 
-        missing_days = ramq_reqdays - ramq_days
-        ulc.add(LI("... for RAMQ eligibility: %d days / %d : %s" %
-                   (ramq_days, ramq_reqdays,
-                    ('Missing %d days' % missing_days
-                     if missing_days > 0
-                     else 'Okay'))))
+            missing_days = ramq_reqdays - ramq_days
+            ulc.add(LI("... for RAMQ eligibility: %d days / %d : %s" %
+                       (ramq_days, ramq_reqdays,
+                        ('Missing %d days' % missing_days
+                         if missing_days > 0
+                         else 'Okay'))))
 
     return page.render(app)
 

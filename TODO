@@ -14,6 +14,9 @@
 Beancount (Accounting)
 ======================
 
+  - Implement beginning balance sheet. Beginning and end of periods
+    should be clearly indicated on both pages.
+
   - I need a TEXT version of the Balance Sheet, to paste in my TODO
     file.
 
@@ -48,10 +51,6 @@ Beancount (Accounting)
       show in my report?
 
 
-
-
-- beancount: Change URL names to use ~ as file separators,
-  because it won't work under Windows otherwise, with wget.
 
 
 app:
@@ -312,7 +311,7 @@ Ideas
   navigating the input file in a certain order.
 
     Let's say that I would want to inspect the input for some
-    arbitraty list of filtered transactions that relate to
+    arbitrary list of filtered transactions that relate to
     postings: all I have to do is write a script that outputs
     "errors" in a way that Emacs knows to parse, and then
     'next-error and 'previous-error takes my cursor there with
