@@ -14,6 +14,10 @@
 Beancount (Accounting)
 ======================
 
+  - Add JavaScript menus in order to include everything from the
+    top-level, so that it looks more like a real application, it'll
+    look goodx (see if bean-suck still works on that).
+
   - Implement beginning balance sheet. Beginning and end of periods
     should be clearly indicated on both pages.
 
