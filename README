@@ -43,7 +43,7 @@ Notes:
   so Beancount's parser may eventually use the Ledger parser for
   speed, and Ledger may eventually leverage Beancount's web front-end.
 
-.. _Ledger: http://www.newartisans.com/software/ledger.html
+.. _Ledger: http://www.newartisans.com/blog/projects/ledger.html
 
 
 .. important::
