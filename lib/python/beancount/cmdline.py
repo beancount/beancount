@@ -54,7 +54,7 @@ def main(parser, no=MANY):
     opts, args = parser.parse_args()
 
     logging.getLogger().setLevel(logging.INFO if opts.verbose else logging.ERROR)
-                                 
+
     if sys.stderr.isatty() and opts.color:
         hndlr = logging.getLogger().handlers[-1]
         hndlr.setFormatter(ColorFormatter(hndlr.stream, hndlr.formatter._fmt))
@@ -126,7 +126,7 @@ def reload(ledger, opts):
 
 def run_postprocesses(ledger, opts):
     ledger.run_directives()
-    
+
     if hasattr(opts, 'begin') and opts.begin:
         ledger.close_books(opts.begin)
 
@@ -135,7 +135,7 @@ def run_postprocesses(ledger, opts):
     if all(hasattr(opts, x) for x in filter_opts):
         pred = create_filter_pred(opts)
         ledger.filter_postings(pred)
-    
+
     ledger.compute_balsheet('total')
 
 
@@ -148,7 +148,7 @@ Code to filter down specific postings.
 def addopts(parser):
     "Add options for selecting accounts/postings."
 
-    parser.add_option('--begin', '--start', '--close', dest='begin', 
+    parser.add_option('--begin', '--start', '--close', dest='begin',
                       action='store', metavar='TIME_EXPR',
                       help="Begin time in the interval in use for the flow "
                       "statements (e.g. Income Statement). If specified, "
@@ -179,7 +179,7 @@ def addopts(parser):
     group.add_option('-g', '-t', '--tag', action='store', metavar='REGEXP',
                      help="Filter only the postings whose tag matches the "
                      "expression.")
-    
+
     parser.add_option_group(group)
 
 
@@ -210,7 +210,7 @@ def create_filter_pred(opts):
         except re.error, e:
             raise SystemExit(e)
 
-        
+
     if opts.begin or opts.end:
         begin = opts.begin or DATE_WAAAYBACK
         end = opts.end or DATE_WAAAYFWD

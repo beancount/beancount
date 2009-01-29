@@ -1046,7 +1046,8 @@ def register_insert_checks(checklist, table, date=None):
             break
         chk = checklist[0]
         # Note: we use "<" here because the check's date semantic is "after all
-        # transactions on that day".
+        # transactions on that day", and therefore we need to render the green
+        # check line after the transactions on that date.
         if date is None or chk.cdate < date:
             sty = 'background-color: %s' % flag_colors[chk.flag]
             trsty = 'background-color: %s' % check_colors[chk.flag]
