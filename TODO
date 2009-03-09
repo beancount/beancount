@@ -14,6 +14,14 @@
 Beancount (Accounting)
 ======================
 
+  - Have beancount-convert-ofx parse description NUM USD @ NUM and insert an
+    appropriate line in the output, perhaps as a comment
+
+  - beancount: Figure out problem with autopadding for beginning of a trip!
+
+  - beancount: look at booking warnings in blais.ledger.
+
+
   - Add JavaScript menus in order to include everything from the
     top-level, so that it looks more like a real application, it'll
     look goodx (see if bean-suck still works on that).

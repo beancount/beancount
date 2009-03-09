@@ -30,6 +30,8 @@ __all__ = ('Account', 'Transaction', 'Posting', 'Ledger',
 
 oneday = timedelta(days=1)
 
+com_unit_precision = ('Miles',)
+
 
 def init_wallets(py_wallets):
     """
@@ -850,7 +852,10 @@ class Ledger(object):
         # Set the precision map according to some rules about the commodities.
         roundmap = Wallet.roundmap
         for com in self.commodities:
-            prec = 2 if (len(com) == 3) else 3
+            if com in com_unit_precision:
+                prec = 0
+            else:
+                prec = 2 if (len(com) == 3) else 3
             roundmap[com] = Decimal(str(10**-prec))
 
         self.complete_balances()
