@@ -1,0 +1,17 @@
+OCAML_LIBRARIES = bin_prot oUnit
+OCAMLFLAGS = -dtypes -thread -w Ae -warn-error Ae -g
+
+TARGETS = test_runner.exe mac_test.exe timing.exe
+
+section
+  OCamlMakePPDeps($(PA_SEXP_BIN), timing)
+  OCAML_LIBRARIES += jane our_marshal sysprog
+  OCamlMakeLibDeps(%)
+  $(addsuffixes $(OCAML_SUFFIXES), timing):
+  InstantiateOCamlEnv()
+
+OCamlMakeProjDefaults($(TARGETS))
+
+OCamlMakePPDeps($(PA_BIN_PROT), bin_prot_test example mac_test)
+
+InstantiateOCamlEnv()
