@@ -151,7 +151,7 @@
 ;; A check deposit, e.g. depositing a government check.
 2008-01-05 * GST CANADA | Deposit from govt for consumer tax rebate
   Assets:Current:BestBank:Checking       77.76 USD
-  Expenses:Taxes:US-Federal
+  Expenses:Taxes:US-Federal 
 
 
 
@@ -412,7 +412,6 @@
 ;; The capital gain will show up as a negative number...
 ;; that's because Income is a credit account, like a salary.
 
-
 ;; This position is kept long, so it gets reflected below in the check.
 2008-02-10 * Buy some japanese ETF from iShares
   Assets:Investments:UTrade:Account:EWJ                     100 EWJ @ 13.34 USD
@@ -430,6 +429,8 @@
 
 
 
+
+
 ;;;;; Expenses:Insurance:Life
 
 ;; Estimate of value of life insurance policy, to account for
@@ -437,6 +438,7 @@
 2008-01-01 * Life insurance policy resale value
   Expenses:Insurance:Life     4407.06 USD
   Equity:Opening-Balances
+
 
 
 

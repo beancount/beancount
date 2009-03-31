@@ -5,6 +5,8 @@
 
 *)
 
+open Printf;;
+
 
 (* Utility string functions. *)
 let createini len c =
@@ -12,7 +14,7 @@ let createini len c =
   let () = String.fill s 0 len c in s;;
 
 
-(* Precision settings (hard-coded for now). *)
+(* Precision settings (hard-coded hack for now). *)
 let _mult = 10000000;;
 let _ndigits = 8;;
 
@@ -46,20 +48,41 @@ let comps_of_string s =
 (* Create a new decimal object. *)
 let create s =
   let ip, fp = comps_of_string s in
-    Decimal(ip, fp);;
+    Decimal (ip * _mult + fp);;
 
 
 (* Convert a decimal object to a string representation. *)
-let string_of_decimal = function |
-FIXME this is obviously flawed on the fraction side, need to pad and strip
-    Decimal(ip, fp) -> string_of_int ip ^ "." ^ string_of_int fp;;
+let string_of_decimal (Decimal x) =
+  let fmt = sprintf "%%d.%%0%dd" _ndigits in
+  let ip = x / _mult in
+  let fp = x - ip in
+    sprintf fmt ip fp
+;;
+
+
+sprintf "%%d.%%0%dd" _ndigits;;
+
+
+string_of_decimal (create "0.0017");;
+
+
+let myspf fmt =
+  let f x y = (fmt, x, y) in f;;
+
+myspf "%s %s" 2 3 ;;
 
 
 
 
-let (+^) d1 d2 = match d1, d2 with
-    Decimal(ip1, fp1), Decimal(ip2, fp2) ->
-      (ip1+ip2, fp1+fp2);;
+
+
+
+
+
+
+(* let (+^) d1 d2 = match d1, d2 with *)
+(*     Decimal(ip1, fp1), Decimal(ip2, fp2) -> *)
+(*       (ip1+ip2, fp1+fp2);; *)
 
 
 
@@ -67,12 +90,8 @@ let (+^) d1 d2 = match d1, d2 with
 
 
 (* string_of_decimal (create "400.232");; *)
-;;
 
 let d1 = create "0.0017" and
     d2 = create "1.032" in
   d1 +^ d2;;
-
-string_of_decimal (create "0.0017");;
-
 
