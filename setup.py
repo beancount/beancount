@@ -27,15 +27,19 @@ def read_version():
             "Error: you must run setup from the root directory (%s)" % str(e))
 
 
-# Include VERSION without having to create MANIFEST.in
-# (I don't like all those files for setup.)
-def deco_add_defaults(fun):
+# Include all files without having to create MANIFEST.in
+def add_all_files(fun):
+    import os, os.path
+    from os.path import abspath, dirname, join
     def f(self):
-        self.filelist.append('VERSION')
+        for root, dirs, files in os.walk('.'):
+            if '.hg' in dirs: dirs.remove('.hg')
+            self.filelist.extend(join(root[2:], fn) for fn in files
+                                 if not fn.endswith('.pyc'))
         return fun(self)
     return f
 from distutils.command.sdist import sdist
-sdist.add_defaults = deco_add_defaults(sdist.add_defaults)
+sdist.add_defaults = add_all_files(sdist.add_defaults)
 
 
 setup(name="beancount",
