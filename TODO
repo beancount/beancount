@@ -14,6 +14,9 @@
 Beancount (Accounting)
 ======================
 
+  - Postings that have a "!" flag should have at least their
+    background red.
+
   - Have beancount-convert-ofx parse description NUM USD @ NUM and insert an
     appropriate line in the output, perhaps as a comment
 

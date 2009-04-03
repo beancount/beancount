@@ -10,7 +10,7 @@ fi
 
 wget --recursive --no-host-directories			\
      --page-requisites --convert-links --html-extension	\
-     http://localhost:8000/ --directory-prefix		\
+     http://localhost:8080/ --directory-prefix		\
     "$1"
 
 

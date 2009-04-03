@@ -215,13 +215,13 @@ def main():
                       "reload code on every request.")
 
     parser.add_option('-p', '--port', action='store', type='int',
-                      default=8000,
+                      default=8080,
                       help="Port to use for local web server.")
 
     parser.add_option('-T', '--title', action='store',
                       help="Title to display in the web interface.")
 
-    parser.add_option('--conversion',
+    parser.add_option('--conversion', '--convert',
                       action='append', metavar='CONVERSION', default=[],
                       help="Apply the given conversion to wallets before "
                       "displaying them. The option's format should like "
