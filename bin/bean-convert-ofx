@@ -177,8 +177,8 @@ def main():
                 check_max = account.check_max
 
             print '\n'*3
-            print '; Import account: %s ' % account.fullname
-            print '; Start import: %s ' % ofxacc.start
+            hdfmt = '; %s import  %s  %s'
+            print hdfmt % ('Start', account.fullname, ofxacc.start)
             print
             for t in ofxacc.transactions:
 
@@ -200,7 +200,7 @@ def main():
                     date_ += oneday
                 print
 
-            print '; End import: %s ' % ofxacc.end
+            print hdfmt % ('End', account.fullname, ofxacc.end)
             print '@check %s %s     %s %s' % (
                 ofxacc.bal_time.date(), account.fullname, ofxacc.bal_amount, ofxacc.currency)
             print
