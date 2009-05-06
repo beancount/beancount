@@ -29,6 +29,7 @@ that just inserts today's date."
 
   (define-key ledger-mode-map [(control ?c) (control ?d)] 'ledger-insert-date)
   (define-key ledger-mode-map [(control ?c) (control ?i)] 'ledger-insert-account)
+  (define-key ledger-mode-map [(control ?c) (control ?c)] 'ledger-toggle-bangs)
 
   )
 
@@ -185,6 +186,12 @@ ledger-expand-account.")
 ;; right before our line number. Actually, sort the original account definitions
 ;; according to the distance from the current line.
 
+(defun ledger-toggle-bangs ()
+  (interactive)
+  (save-excursion 
+    (mark-paragraph)
+    (replace-string "!" "*" nil (point) (mark))))
+
 
 
 
@@ -208,7 +215,6 @@ ledger-expand-account.")
    'compilation-error-regexp-alist 'python-logging)
 
   )
-
 
 
 (provide 'ledger-plus)

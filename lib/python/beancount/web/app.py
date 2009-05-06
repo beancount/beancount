@@ -57,11 +57,11 @@ class Template(object):
 
         self.navigation = DIV(
             UL(LI(A('Chart of Accounts', href=umap('@@ChartOfAccounts'))),
-               LI(A('Journals', href=umap('@@LedgerIndex'))),
-               LI(A('Trial Balance', href=umap('@@TrialBalance'))),
+               LI(A('Journals', href=umap('@@JournalIndex'))),
+               LI(A('General Ledger', href=umap('@@LedgerGeneral'))),
                LI(A('Begin', href=umap('@@BalanceSheetBegin')),
-                  ' ... ',
-                  A('Bal.Sheet ... End', href=umap('@@BalanceSheetEnd'))),
+                  ' ... Bal.Sheet ... ',
+                  A('End', href=umap('@@BalanceSheetEnd'))),
                LI(A('Income', href=umap('@@IncomeStatement'))),
                ## LI(A('CashFlow', href=umap('@@CashFlow'))),
                ## LI(A('Capital', href=umap('@@CapitalStatement'))),
@@ -172,7 +172,7 @@ def haccount_split(accname):
     for comp in accname.split(Account.sep):
         cappend(comp)
         wname = websep.join(comps)
-        append(A(comp, href=umap('@@AccountLedger', wname), CLASS='accomp'))
+        append(A(comp, href=umap('@@JournalAccount', wname), CLASS='accomp'))
     accspan = SPAN(ljoin(l, SPAN(Account.sep, CLASS='accsep')), CLASS='account')
     accspan.cache = 1
     return accspan
@@ -181,7 +181,7 @@ def haccount_split(accname):
 def haccount(accname):
     "Return some HTML for a full account name. There is a single link."
     accspan = SPAN(
-        A(accname, href=umap('@@AccountLedger', webaccname(accname)),
+        A(accname, href=umap('@@JournalAccount', webaccname(accname)),
           CLASS='accomp'),
         CLASS='account')
     accspan.cache = 1
@@ -199,7 +199,7 @@ def page__chartofaccounts(app, ctx):
             skip()
             continue
         td1.add(
-            A(acc.name, href=umap('@@AccountLedger', webaccname(acc.fullname)),
+            A(acc.name, href=umap('@@JournalAccount', webaccname(acc.fullname)),
               CLASS='accomp'))
         tr.add(
             TD(acc.getatype()),
@@ -280,7 +280,7 @@ def render_trial_field(ledger, aname, conversions=None):
             skip()
             continue
         td1.add(
-            A(acc.name, href=umap('@@AccountLedger', webaccname(acc.fullname)),
+            A(acc.name, href=umap('@@JournalAccount', webaccname(acc.fullname)),
               CLASS='accomp'))
 
         lbal = acc.balances.get(aname, None)
@@ -370,7 +370,7 @@ def semi_table(acc, tid, remove_empty=True, conversions=None, aname='total'):
             continue
 
         td1.add(
-            A(acc.name, href=umap('@@AccountLedger', webaccname(acc.fullname)),
+            A(acc.name, href=umap('@@JournalAccount', webaccname(acc.fullname)),
               CLASS='accomp'))
 
         balance = acc.balances[aname]
@@ -502,7 +502,7 @@ def page__payees(app, ctx):
     page.add(H1("Payees"))
     ul = page.add(UL())
     for key, (payee, _) in sorted(ctx.ledger.payees.iteritems()):
-        ul.add(LI(A(payee, href=umap('@@PayeeLedger', key))))
+        ul.add(LI(A(payee, href=umap('@@LedgerPayee', key))))
     return page.render(app)
 
 
@@ -511,7 +511,7 @@ def page__tags(app, ctx):
     page.add(H1("Tags"))
     ul = page.add(UL())
     for tagname in sorted(ctx.ledger.tags.iterkeys()):
-        ul.add(LI(A(tagname, href=umap('@@TagLedger', tagname))))
+        ul.add(LI(A(tagname, href=umap('@@LedgerTag', tagname))))
     return page.render(app)
 
 
@@ -735,7 +735,7 @@ def page__activity(app, ctx):
             continue
 
         td1.add(
-            A(acc.name, href=umap('@@AccountLedger', webaccname(acc.fullname)),
+            A(acc.name, href=umap('@@JournalAccount', webaccname(acc.fullname)),
               CLASS='accomp'))
 
         append = False
@@ -775,12 +775,12 @@ def iter_months(oldest, newest):
             break
 
 
-def page__ledgerindex(app, ctx):
+def page__journal_index(app, ctx):
     ledger = app.ledger
 
     page = Template(ctx)
     ul = UL(
-        LI(A("General Journal", href=umap('@@GeneralLedger')),
+        LI(A("General Journal", href=umap('@@JournalAll')),
            "  (all transactions by-date)"),
         )
     page.add(H1("Journals"),
@@ -797,28 +797,24 @@ def page__ledgerindex(app, ctx):
         for d in reversed(mths):
             mthstr = d.strftime('%Y-%m')
             ul.add(LI(A("Journal for %s" % mthstr,
-                        href=umap("@@MonthLedger", d.year, d.month)
+                        href=umap("@@JournalMonthly", d.year, d.month)
                       )))
 
     return page.render(app)
 
 
-def page__ledger(app, ctx):
+def page__journal_all(app, ctx):
     """
-    List the transactions that pertain to a list of filtered postings.
+    List all the transactions.
     """
-    page = Template(ctx)
-    style = ctx.session.get('style', 'full')
-    assert style in ('compact', 'other', 'only', 'full')
+    acc = ctx.ledger.get_root_account()
+    return render_journal(app, ctx, acc)
 
-    accname = getattr(ctx, 'accname', '')
-    accname = accname.replace(websep, Account.sep)
-    try:
-        acc = ctx.ledger.get_account(accname)
-    except KeyError:
-        raise HttpNotFound(accname)
-    postings = set(acc.subpostings())
 
+def page__journal_monthly(app, ctx):
+    """
+    List all the transactions for a single month.
+    """
     year = getattr(ctx, 'year', '')
     mth = getattr(ctx, 'month', '')
     if year and mth:
@@ -831,6 +827,39 @@ def page__ledger(app, ctx):
         dend = date(year, mth, 1)
     else:
         dbegin = None
+
+    acc = ctx.ledger.get_root_account()
+    return render_journal(app, ctx, acc, (dbegin, dend))
+
+
+def page__journal_account(app, ctx):
+    """
+    List all the transactions for a single account.
+    """
+    accname = ctx.accname
+    accname = accname.replace(websep, Account.sep)
+    try:
+        acc = ctx.ledger.get_account(accname)
+    except KeyError:
+        raise HttpNotFound(accname)
+    return render_journal(app, ctx, acc)
+
+
+def render_journal(app, ctx, acc, dates=None):
+    """
+    List the transactions that pertain to a list of filtered postings.
+    The dates interval is optional.
+    """
+    page = Template(ctx)
+    style = ctx.session.get('style', 'full')
+    assert style in ('compact', 'other', 'only', 'full')
+
+    # Check that we have a valid account.
+    assert acc, acc
+    postings = set(acc.subpostings())
+
+    # Unpack date interval (if specified).
+    (dbegin, dend) = dates or (None, None)
 
     # Get the list of checks for this account and include them in the listing.
     checks = ctx.ledger.directives['check']
@@ -878,9 +907,9 @@ def page__ledger_payee(app, ctx):
     table_flow = render_trial_field(ctx.ledger, 'payee', app.opts.conversions)
 
     page.add(H1('Payee transactions for %s' % payee),
-             H2('Summary'), table_flow,
+             H2('Ledger'), table_flow,
              HR(),
-             H2('Transactions'), table_txns)
+             H2('Journal'), table_txns)
 
     return page.render(app)
 
@@ -916,9 +945,9 @@ def page__ledger_tag(app, ctx):
     undo.insert(0, txnline + '  (UNDO)')
 
     page.add(H1('Tag transactions for %s' % tagname),
-             H2('Summary'), table_flow,
+             H2('Ledger'), table_flow,
              HR(),
-             H2('Transactions'), table_txns,
+             H2('Journal'), table_txns,
              HR(),
              H2('Equivalent transactions'),
              PRE(os.linesep.join(do)),
@@ -972,7 +1001,7 @@ def render_postings_table(postings, style,
         # Display the transaction line.
         desc = []
         if txn.payee:
-            desc.append(A(txn.payee, href=umap('@@PayeeLedger', txn.payee_key),
+            desc.append(A(txn.payee, href=umap('@@LedgerPayee', txn.payee_key),
                           CLASS='payee'))
             desc.append(' | ')
         if txn.narration:
@@ -1354,7 +1383,6 @@ page_directory = (
     ('@@ChartOfAccounts', page__chartofaccounts, '/accounts', None),
     ('@@Other', page__other, '/other', None),
     ('@@Activity', page__activity, '/activity', None),
-    ('@@TrialBalance', page__trialbalance, '/trial', None),
     ('@@BalanceSheet', page__balancesheet_end, '/balsheet_end', None),
     ('@@BalanceSheetEnd', page__balancesheet_end, '/balsheet_end', None),
     ('@@BalanceSheetBegin', page__balancesheet_begin, '/balsheet_beg', None),
@@ -1368,20 +1396,16 @@ page_directory = (
     ('@@Trades', page__trades, '/trades', None),
     ('@@TradesCSV', page__trades_csv, '/trades.csv', None),
     ('@@Pricing', page__pricing, '/pricing', None),
-    ('@@PriceHistory', page__pricehistory, '/price/history/%s/%s',
-     '^/price/history/(?P<base>[^/]+)/(?P<quote>[^/]+)$'),
+    ('@@PriceHistory', page__pricehistory, '/price/history/%s/%s', '^/price/history/(?P<base>[^/]+)/(?P<quote>[^/]+)$'),
 
-    ('@@LedgerIndex', page__ledgerindex, '/ledger/index', None),
-    ('@@GeneralLedger', page__ledger, '/ledger/general', None),
-    ('@@MonthLedger', page__ledger, '/ledger/bymonth/%04d/%02d',
-     '^/ledger/bymonth/(?P<year>\d\d\d\d)/(?P<month>\d\d)$'),
+    ('@@JournalIndex', page__journal_index, '/journal/index', None),
+    ('@@JournalAll', page__journal_all, '/journal/all', None),
+    ('@@JournalMonthly', page__journal_monthly, '/journal/monthly/%04d/%02d', '^/journal/monthly/(?P<year>\d\d\d\d)/(?P<month>\d\d)$'),
+    ('@@JournalAccount', page__journal_account, '/ledger/byaccount/%s', '^/ledger/byaccount/(?P<accname>.*)$'),
 
-    ('@@AccountLedger', page__ledger, '/ledger/byaccount/%s',
-     '^/ledger/byaccount/(?P<accname>.*)$'),
-    ('@@PayeeLedger', page__ledger_payee, '/ledger/bypayee/%s',
-     '^/ledger/bypayee/(?P<payee>.*)$'),
-    ('@@TagLedger', page__ledger_tag, '/ledger/bytag/%s',
-     '^/ledger/bytag/(?P<tag>.*)$'),
+    ('@@LedgerGeneral', page__trialbalance, '/ledger', "^/(?:ledger|trial)$"),
+    ('@@LedgerPayee', page__ledger_payee, '/ledger/bypayee/%s', '^/ledger/bypayee/(?P<payee>.*)$'),
+    ('@@LedgerTag', page__ledger_tag, '/ledger/bytag/%s', '^/ledger/bytag/(?P<tag>.*)$'),
 
     ('@@SetStyle', page__setstyle, '/setstyle', '^/setstyle$'),
     ('@@Messages', page__messages, '/messages', None),
