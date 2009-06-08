@@ -1249,13 +1249,15 @@ def page__trades(app, ctx):
 
         post_book = bt.post_book
 
+        # Note: negate the final amounts as they were applied to flow values
+        # (income/expense).
         legs_table.add(
             TR(TD('Gain(+) / Loss(-)'),
                TD(),
                TD(),
-               TD(hwallet(bt.post_book.amount_orig)),
+               TD(hwallet(-bt.post_book.amount_orig)),
                TD(),
-               TD(hwallet(bt.post_book.amount)),
+               TD(hwallet(-bt.post_book.amount)),
                ))
 
         postings = [x.post for x in bt.legs]

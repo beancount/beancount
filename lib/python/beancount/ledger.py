@@ -1101,8 +1101,12 @@ class Ledger(object):
 
                         if not hasattr(post_book, 'amount_orig'):
                             post_book.amount_orig = Wallet()
-                        post_book.amount_orig += w_price
-                        post_book.amount += w_target
+
+                        # Important note: these are usually flow amounts
+                        # (income/expense) and so a gain will show as a negative
+                        # value, and a loss as a positive one (expense).
+                        post_book.amount_orig -= w_price
+                        post_book.amount -= w_target
                         post_book.flag = 'B'
                         post_book.note = 'BOOKED'
 
