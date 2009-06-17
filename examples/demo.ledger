@@ -151,7 +151,7 @@
 ;; A check deposit, e.g. depositing a government check.
 2008-01-05 * GST CANADA | Deposit from govt for consumer tax rebate
   Assets:Current:BestBank:Checking       77.76 USD
-  Expenses:Taxes:US-Federal 
+  Expenses:Taxes:US-Federal
 
 
 
@@ -340,8 +340,8 @@
   Expenses:Food:Restaurant              47.00 USD
 
 2008-01-19 * Soupe Bol |
-  Liabilities:Credit-Card:VISA
-  Expenses:Food:Restaurant              21.00 USD
+  Liabilities:Credit-Card:VISA          -21.00 USD
+  Expenses:Food:Restaurant
 
 2008-01-27 * Scola Pasta |
   Liabilities:Credit-Card:VISA
@@ -448,6 +448,8 @@
 ;;;;; Assets:Fixed:Home
 
 ;; You could use this account in order to reevaluate your home.
+
+
 
 
 
