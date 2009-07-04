@@ -1488,9 +1488,11 @@ class CheckDirective(object):
                 sb = balance or 'nothing'
                 diff = chk.diff or 'nothing'
                 ledger.log(ERROR,
-                           ("Check failed at  %s  %s :\n  Got:       %s\n"
-                           "  Expecting: %s  \n  Diff: %s\n") %
-                           (cdate, acc.fullname, sb, se, diff), chk)
+                           ("Check failed at  %s  %s :\n"
+                            "  Expecting: %s\n"
+                            "  Got:       %s\n"
+                            "  Diff: %s\n") %
+                           (cdate, acc.fullname, se, sb, diff), chk)
 
             # Update ranges (no matter what).
             acc.check_min = min(acc.check_min, cdate) if acc.check_min else cdate
