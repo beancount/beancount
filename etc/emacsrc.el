@@ -10,6 +10,19 @@
 (require 'ledger)
 (require 'ledger-plus)
 
+
+(defun ledger-insert-food ()
+  (insert-yesterday) (insert " *  |\n")
+  (insert "  Expenses:Food:Restaurant		USD \n")
+  (insert "  Assets:Current:Cash\n")
+  (forward-line -3) (forward-word 3) (forward-char 3))
+
+
+;;;-----------------------------------------------------------------------------
+
+(define-abbrev ledger-mode-abbrev-table "food" "" 'ledger-insert-food)
+
+
 (defun user-ledger-mode-hook ()
   (set-fill-column 200)
 
