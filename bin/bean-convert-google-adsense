@@ -1,0 +1,92 @@
+#!/usr/bin/env python
+"""
+Interpret the Google AdSense CSV file and output transactions in a format
+suitable for Ledger.
+"""
+
+# stdlib imports
+import re, time, codecs
+from datetime import date
+from decimal import Decimal
+from itertools import count
+
+# other imports
+from beancount.fallback.collections2 import namedtuple
+
+# beancount imports
+from beancount import cmdline
+
+
+
+
+# My default accounts.
+acc_asset = 'Assets:Current:AdSense'
+acc_income = 'Income:Advertising:AdSense'
+acc_deposit = 'Assets:Current:RBC:Checking'
+currency = 'USD'
+payee = 'Google AdSense'
+
+
+def parse_date(s):
+    return date.fromtimestamp(time.mktime(time.strptime(s, '%m/%d/%y')))
+
+def main():
+    import optparse
+    parser = optparse.OptionParser(__doc__.strip())
+    opts, ledger, args = cmdline.main(parser, no=0)
+
+    if not args:
+        parser.error("You must specify some CSV filenames to parse.")
+
+    for fn in args:
+        f = codecs.open(fn, "rb", encoding='utf-16')
+        rows = list(parse_csv_file(f, delimiter='\t'))
+        i = 0
+        for x in rows:
+            i += 1
+            date_ = parse_date(x.date)
+
+            ispayment = re.search('payment.*issued', x.description, re.I)
+
+            if not ispayment:
+                print '%s * %s | %s' % (date_, payee, x.description)
+                print '  %-50s    %s %s' % (acc_asset, x.amount, currency)
+                print '  %-50s    %s %s' % (acc_income, '', '')
+                print
+            else:
+                print '%s ! %s | %s' % (date_, payee, x.description)
+                print '  %-50s    %s %s' % (acc_income, x.amount, currency)
+                print '  %-50s    %s %s' % (acc_deposit, '', '')
+                print
+
+        balance = tonum(x.account_balance)
+        print '@check %s  %-50s  %s %s' % (date_, acc_asset, balance, currency)
+
+
+def tonum(x):
+    return Decimal(x.strip().replace(',', ''))
+
+def parse_csv_file(f, **kw):
+    """
+    Parse a CSV file and return a list of rows as named_tuple objects.
+    We assume that the first row is a title row.
+    """
+    import csv
+    reader = csv.reader(f, **kw)
+    ireader = iter(reader)
+
+    cols = []
+    dummycount = count().next
+    for x in ireader.next():
+        cx = x.strip().lower().replace(' ', '_')
+        if not cx:
+            cx = 'dummy_%d' % dummycount()
+        cols.append(cx)
+
+    Row = namedtuple('Row', cols)
+    return (Row(*x) for x in ireader)
+
+
+if __name__ == '__main__':
+    main()
+
