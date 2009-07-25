@@ -38,7 +38,6 @@ def main():
         parser.error("You must specify some CSV filenames to parse.")
 
     for fn in args:
-        rows = [(parse_date(x.date), x) for x in parse_csv_file(fn)]
         rows = reversed(list(parse_csv_file(fn)))
         ## rows.sort(key=lambda x: (x[0], x.time))
         i = 0
