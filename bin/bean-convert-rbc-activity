@@ -152,7 +152,8 @@ def parse_file(fn):
     postings = []
 
     priority = 1
-    tr = tr.findNextSibling('tr')
+    tbody = tr.parent.findNextSibling('tbody')
+    tr = tbody.find('tr')
     while 1:
         # Work your way down the table, two rows at a time.
         if tr is None:

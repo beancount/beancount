@@ -23,6 +23,7 @@ from beancount import cmdline
 
 # My default accounts.
 acc_sales = 'Income:Book-Sales'
+acc_unknown = 'Income:?'
 acc_deposit = 'Assets:Current:PayPal'
 acc_fee = 'Expenses:Financial:Fees:PayPal'
 
@@ -70,8 +71,10 @@ def main():
                 print
 
             else:
-                assert fee == 0
                 print '%s ! %s' % (date_, description)
+                print '  %-50s    %s %s' % (acc_unknown, -gross, x.currency)
+                if fee != 0:
+                    print '  %-50s    %s %s' % (acc_fee, -fee, x.currency)
                 print '  %-50s    %s %s' % (acc_deposit, net, x.currency)
                 print
 
