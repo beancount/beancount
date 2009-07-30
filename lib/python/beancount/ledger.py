@@ -1360,7 +1360,7 @@ class Ledger(object):
             if txn.payee:
                 key = txn.payee_key = compute_payee_key(txn.payee)
                 paydict[key].append(txn)
-                
+
 
         self.payees = {}
         for key, txns in paydict.iteritems():
@@ -1386,7 +1386,7 @@ class Ledger(object):
 
 def compute_payee_key(payee):
     return re.sub('[^A-Za-z0-9]', '_',
-                  ' '.join(payee.lower().split()).encode('ascii', 'replace'))    
+                  ' '.join(payee.lower().split()).encode('ascii', 'replace'))
 
 
 

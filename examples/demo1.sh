@@ -3,4 +3,4 @@
 # Run this in a shell and use a web browser to access http://localhost:8080
 # The demo file contains many example transactions.
 PROJDIR=.. . ../etc/env
-python $PROJDIR/bin/bean-web --debug demo.ledger
+python $PROJDIR/bin/bean-web --with-source demo.ledger

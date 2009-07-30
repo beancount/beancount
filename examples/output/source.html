@@ -1,0 +1,1307 @@
+<html>
+  <head>
+    <meta content="text/html; charset=utf-8" http_equiv="Content-Type" />
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <script src="treetable.js" type="text/javascript"> </script>
+  </head><body>
+    <div id="header">
+      <span id="title"> </span>
+    </div><div id="reload">
+      <a href="accounts.html">Reload</a>
+    </div><div id="style-selector">
+      <ul>
+        <li>
+          <a href="accounts.html">Com</a>
+        </li><li>
+          <a href="accounts.html">Oth</a>
+        </li><li>
+          <a href="accounts.html">Ful</a>
+        </li>
+      </ul>
+    </div><div id="top-navigation">
+      <ul>
+        <li>
+          <a href="accounts.html">Chart of Accounts</a>
+        </li><li>
+          <a href="journal/index.html">Journals</a>
+        </li><li>
+          <a href="ledger.html">General Ledger</a>
+        </li><li>
+          <a href="balsheet_beg.html">Begin</a> ... Bal.Sheet ... <a href="balsheet_end.html">End</a>
+        </li><li>
+          <a href="income.html">Income</a>
+        </li><li>
+          <a href="positions.html">Positions</a>
+        </li><li>
+          <a href="trades.html">Trades</a>
+        </li><li>
+          <a href="payees.html">Payees</a>
+        </li><li>
+          <a href="tags.html">Tags</a>
+        </li><li>
+          <a href="other.html">Other...</a>
+        </li>
+      </ul>
+    </div><div id="document">
+      <h1>Source</h1>
+      <div id="source">
+        <pre>   1  |;;; -*- mode: ledger; coding: utf-8; -*-</pre>
+        <a name="line1" />
+        <pre>   2  |;;;</pre>
+        <a name="line2" />
+        <pre>   3  |;;; This is an example/demo file, with some example accounts and</pre>
+        <a name="line3" />
+        <pre>   4  |;;; some example transactions. A real-life Ledger file has a lot</pre>
+        <a name="line4" />
+        <pre>   5  |;;; more transactions in it, and possibly a very different set</pre>
+        <a name="line5" />
+        <pre>   6  |;;; of accounts; feel free to define your own and to change</pre>
+        <a name="line6" />
+        <pre>   7  |;;; everything in here if you use this as a template. You can be</pre>
+        <a name="line7" />
+        <pre>   8  |;;; creative, because all the account categories and commodities</pre>
+        <a name="line8" />
+        <pre>   9  |;;; are entirely generic. (More comments are sprinkled below.)</pre>
+        <a name="line9" />
+        <pre>  10  |;;;</pre>
+        <a name="line10" />
+        <pre>  11  |;;; The order in which the transactions are declared does not</pre>
+        <a name="line11" />
+        <pre>  12  |;;; matter at all... personally I like to organize transactions</pre>
+        <a name="line12" />
+        <pre>  13  |;;; in chronological order, within sections that are</pre>
+        <a name="line13" />
+        <pre>  14  |;;; more-or-less by account. I normally pretty much keep them in</pre>
+        <a name="line14" />
+        <pre>  15  |;;; the order that the converted OFX file presents them. Here</pre>
+        <a name="line15" />
+        <pre>  16  |;;; however, I've ordered the transactions for better clarity of</pre>
+        <a name="line16" />
+        <pre>  17  |;;; presentation, since this is a file with sample transactions.</pre>
+        <a name="line17" />
+        <pre>  18  |</pre>
+        <a name="line18" />
+        <pre>  19  |</pre>
+        <a name="line19" />
+        <pre>  20  |;;;;; Initialization</pre>
+        <a name="line20" />
+        <pre>  21  |</pre>
+        <a name="line21" />
+        <pre>  22  |</pre>
+        <a name="line22" />
+        <pre>  23  |;;; Declaration of Accounts.</pre>
+        <a name="line23" />
+        <pre>  24  |</pre>
+        <a name="line24" />
+        <pre>  25  |;;; Here you can declare a list of valid accounts, and</pre>
+        <a name="line25" />
+        <pre>  26  |;;; optionally, a constraint on which kind of commodity they are</pre>
+        <a name="line26" />
+        <pre>  27  |;;; allowed to hold (helps you track down mistakes).</pre>
+        <a name="line27" />
+        <pre>  28  |;;;</pre>
+        <a name="line28" />
+        <pre>  29  |;;; Note that</pre>
+        <a name="line29" />
+        <pre>  30  |;;;</pre>
+        <a name="line30" />
+        <pre>  31  |;;; - the system supports any currencies, and works with</pre>
+        <a name="line31" />
+        <pre>  32  |;;;   multiple commodities in the same Ledger.</pre>
+        <a name="line32" />
+        <pre>  33  |;;;</pre>
+        <a name="line33" />
+        <pre>  34  |;;; - No distinction is made between currency commodities (e.g.</pre>
+        <a name="line34" />
+        <pre>  35  |;;;   USD, EUR, USD) and investment commodities (e.g. GOOG,</pre>
+        <a name="line35" />
+        <pre>  36  |;;;   AAPL, MSFT).</pre>
+        <a name="line36" />
+        <pre>  37  |;;;</pre>
+        <a name="line37" />
+        <pre>  38  |;;; - The Assets, Liabilities, Equity, Income, Expenses</pre>
+        <a name="line38" />
+        <pre>  39  |;;;   categories are not special; they are simply a convention;</pre>
+        <a name="line39" />
+        <pre>  40  |;;;   be creative if you like. There are really only two kinds</pre>
+        <a name="line40" />
+        <pre>  41  |;;;   of accounts: debit accounts and credit accounts, and the</pre>
+        <a name="line41" />
+        <pre>  42  |;;;   type is only used for reporting (maybe).</pre>
+        <a name="line42" />
+        <pre>  43  |</pre>
+        <a name="line43" />
+        <pre>  44  |@defaccount De Assets:Current:Cash</pre>
+        <a name="line44" />
+        <pre>  45  |@defaccount De Assets:Current:BestBank:Checking            USD</pre>
+        <a name="line45" />
+        <pre>  46  |@defaccount De Assets:Current:BestBank:Savings             USD</pre>
+        <a name="line46" />
+        <pre>  47  |;@defaccount De Assets:Fixed:Home                           USD</pre>
+        <a name="line47" />
+        <pre>  48  |@defaccount De Assets:Investments:UTrade:Account           USD</pre>
+        <a name="line48" />
+        <pre>  49  |@defaccount De Assets:Investments:UTrade:Account:AAPL      AAPL</pre>
+        <a name="line49" />
+        <pre>  50  |@defaccount De Assets:Investments:UTrade:Account:EWJ       EWJ</pre>
+        <a name="line50" />
+        <pre>  51  |;@defaccount De Assets:Loans</pre>
+        <a name="line51" />
+        <pre>  52  |@defaccount De Assets:AccountsReceivable</pre>
+        <a name="line52" />
+        <pre>  53  |</pre>
+        <a name="line53" />
+        <pre>  54  |;@defaccount Cr Liabilities:AccountsPayable</pre>
+        <a name="line54" />
+        <pre>  55  |@defaccount Cr Liabilities:BestBank:Mortgage:Loan          USD</pre>
+        <a name="line55" />
+        <pre>  56  |@defaccount Cr Liabilities:Credit-Card:VISA                USD</pre>
+        <a name="line56" />
+        <pre>  57  |@defaccount Cr Liabilities:Condo-Management                USD</pre>
+        <a name="line57" />
+        <pre>  58  |</pre>
+        <a name="line58" />
+        <pre>  59  |@defaccount Cr Equity:Opening-Balances</pre>
+        <a name="line59" />
+        <pre>  60  |</pre>
+        <a name="line60" />
+        <pre>  61  |@defaccount Cr Income:Investments:Interest:Checking</pre>
+        <a name="line61" />
+        <pre>  62  |@defaccount Cr Income:Investments:Interest:Savings</pre>
+        <a name="line62" />
+        <pre>  63  |@defaccount Cr Income:Investments:Dividends</pre>
+        <a name="line63" />
+        <pre>  64  |@defaccount Cr Income:Investments:Capital-Gains</pre>
+        <a name="line64" />
+        <pre>  65  |@defaccount Cr Income:Salary:AcmeCo</pre>
+        <a name="line65" />
+        <pre>  66  |</pre>
+        <a name="line66" />
+        <pre>  67  |@defaccount De Expenses:Financial:Fees</pre>
+        <a name="line67" />
+        <pre>  68  |@defaccount De Expenses:Financial:Commissions</pre>
+        <a name="line68" />
+        <pre>  69  |@defaccount De Expenses:Insurance:Life</pre>
+        <a name="line69" />
+        <pre>  70  |@defaccount De Expenses:Food:Restaurant</pre>
+        <a name="line70" />
+        <pre>  71  |@defaccount De Expenses:Food:Grocery</pre>
+        <a name="line71" />
+        <pre>  72  |@defaccount De Expenses:Food:Alcool</pre>
+        <a name="line72" />
+        <pre>  73  |@defaccount De Expenses:Communications:Phone</pre>
+        <a name="line73" />
+        <pre>  74  |@defaccount De Expenses:Communications:Mail</pre>
+        <a name="line74" />
+        <pre>  75  |;@defaccount De Expenses:Transportation:Parking</pre>
+        <a name="line75" />
+        <pre>  76  |@defaccount De Expenses:Transportation:Taxi</pre>
+        <a name="line76" />
+        <pre>  77  |;@defaccount De Expenses:Transportation:Trains</pre>
+        <a name="line77" />
+        <pre>  78  |;@defaccount De Expenses:Transportation:PublicTrans</pre>
+        <a name="line78" />
+        <pre>  79  |;@defaccount De Expenses:Taxes:US-State-California        USD</pre>
+        <a name="line79" />
+        <pre>  80  |@defaccount De Expenses:Taxes:US-Federal                 USD</pre>
+        <a name="line80" />
+        <pre>  81  |@defaccount De Expenses:Govt-Services                    USD</pre>
+        <a name="line81" />
+        <pre>  82  |@defaccount De Expenses:Clothes</pre>
+        <a name="line82" />
+        <pre>  83  |@defaccount De Expenses:Car:Gas</pre>
+        <a name="line83" />
+        <pre>  84  |@defaccount De Expenses:Sports</pre>
+        <a name="line84" />
+        <pre>  85  |@defaccount De Expenses:Sports:Gear</pre>
+        <a name="line85" />
+        <pre>  86  |@defaccount De Expenses:Fun:Movie</pre>
+        <a name="line86" />
+        <pre>  87  |;@defaccount De Expenses:Fun:Museum</pre>
+        <a name="line87" />
+        <pre>  88  |@defaccount De Expenses:Books</pre>
+        <a name="line88" />
+        <pre>  89  |;@defaccount De Expenses:Travel:Flights</pre>
+        <a name="line89" />
+        <pre>  90  |;@defaccount De Expenses:Travel:Accomodation</pre>
+        <a name="line90" />
+        <pre>  91  |;@defaccount De Expenses:Toys:Photography</pre>
+        <a name="line91" />
+        <pre>  92  |;@defaccount De Expenses:Toys:Computer</pre>
+        <a name="line92" />
+        <pre>  93  |;@defaccount De Expenses:Office-Supplies</pre>
+        <a name="line93" />
+        <pre>  94  |@defaccount De Expenses:Medical</pre>
+        <a name="line94" />
+        <pre>  95  |@defaccount De Expenses:Charity</pre>
+        <a name="line95" />
+        <pre>  96  |;@defaccount De Expenses:Misc</pre>
+        <a name="line96" />
+        <pre>  97  |;@defaccount De Expenses:Home:Repair</pre>
+        <a name="line97" />
+        <pre>  98  |;@defaccount De Expenses:Home:Maintenance</pre>
+        <a name="line98" />
+        <pre>  99  |;@defaccount De Expenses:Home:Taxes:Municipal</pre>
+        <a name="line99" />
+        <pre> 100  |;@defaccount De Expenses:Home:Taxes:School</pre>
+        <a name="line100" />
+        <pre> 101  |;@defaccount De Expenses:Home:Insurance</pre>
+        <a name="line101" />
+        <pre> 102  |;@defaccount De Expenses:Home:Monthly</pre>
+        <a name="line102" />
+        <pre> 103  |;@defaccount De Expenses:Home:Monthly:Internet</pre>
+        <a name="line103" />
+        <pre> 104  |@defaccount De Expenses:Home:Monthly:Condo-Fees</pre>
+        <a name="line104" />
+        <pre> 105  |;@defaccount De Expenses:Home:Monthly:Electricity</pre>
+        <a name="line105" />
+        <pre> 106  |@defaccount De Expenses:Home:Monthly:Loan-Interest</pre>
+        <a name="line106" />
+        <pre> 107  |;@defaccount De Expenses:Home:Monthly:Water</pre>
+        <a name="line107" />
+        <pre> 108  |;@defaccount De Expenses:Home:Acquisition:Furniture</pre>
+        <a name="line108" />
+        <pre> 109  |;@defaccount De Expenses:Home:Acquisition:Renovations</pre>
+        <a name="line109" />
+        <pre> 110  |;@defaccount De Expenses:Home:Acquisition:Legal</pre>
+        <a name="line110" />
+        <pre> 111  |;@defaccount De Expenses:Home:Acquisition:Inspection</pre>
+        <a name="line111" />
+        <pre> 112  |</pre>
+        <a name="line112" />
+        <pre> 113  |</pre>
+        <a name="line113" />
+        <pre> 114  |</pre>
+        <a name="line114" />
+        <pre> 115  |;;; You can provide mappings from the account numbers ("account</pre>
+        <a name="line115" />
+        <pre> 116  |;;; ids") that are normally found in OFX files that the</pre>
+        <a name="line116" />
+        <pre> 117  |;;; banks/brokers provide, mapping to account names in this</pre>
+        <a name="line117" />
+        <pre> 118  |;;; Ledger file. This way, a script that converts the OFX into</pre>
+        <a name="line118" />
+        <pre> 119  |;;; Ledger-compatible syntax is able to automatically figure out</pre>
+        <a name="line119" />
+        <pre> 120  |;;; the right account names.</pre>
+        <a name="line120" />
+        <pre> 121  |</pre>
+        <a name="line121" />
+        <pre> 122  |;;; Account number mappings.</pre>
+        <a name="line122" />
+        <pre> 123  |@var ofx accid  123456789012       Assets:Current:BestBank:Checking</pre>
+        <a name="line123" />
+        <pre> 124  |@var ofx accid  123456789012       Assets:Current:BestBank:Savings</pre>
+        <a name="line124" />
+        <pre> 125  |@var ofx accid  1234567890         Liabilities:BestBank:Mortgage:Loan</pre>
+        <a name="line125" />
+        <pre> 126  |@var ofx accid  1234567890123456   Liabilities:Credit-Card:VISA</pre>
+        <a name="line126" />
+        <pre> 127  |@var ofx accid  1234567890         Assets:Investments:UTrade:Account</pre>
+        <a name="line127" />
+        <pre> 128  |</pre>
+        <a name="line128" />
+        <pre> 129  |</pre>
+        <a name="line129" />
+        <pre> 130  |</pre>
+        <a name="line130" />
+        <pre> 131  |</pre>
+        <a name="line131" />
+        <pre> 132  |</pre>
+        <a name="line132" />
+        <pre> 133  |</pre>
+        <a name="line133" />
+        <pre> 134  |</pre>
+        <a name="line134" />
+        <pre> 135  |</pre>
+        <a name="line135" />
+        <pre> 136  |;;;;; Assets:Current:BestBank:Checking</pre>
+        <a name="line136" />
+        <pre> 137  |</pre>
+        <a name="line137" />
+        <pre> 138  |;; This entry tells the software to automatically insert an</pre>
+        <a name="line138" />
+        <pre> 139  |;; entry at this date, of the amount required to fulfill the</pre>
+        <a name="line139" />
+        <pre> 140  |;; next @check directive (chronologically) in the account (for</pre>
+        <a name="line140" />
+        <pre> 141  |;; all commodities present). If the required amount is 0, no</pre>
+        <a name="line141" />
+        <pre> 142  |;; entry is added.</pre>
+        <a name="line142" />
+        <pre> 143  |@pad 2007-12-31 Assets:Current:BestBank:Checking   Equity:Opening-Balances</pre>
+        <a name="line143" />
+        <pre> 144  |</pre>
+        <a name="line144" />
+        <pre> 145  |;; This directive tells the software to assert that at the given</pre>
+        <a name="line145" />
+        <pre> 146  |;; date, in the given account, a specific amount of the given</pre>
+        <a name="line146" />
+        <pre> 147  |;; commodity was present.</pre>
+        <a name="line147" />
+        <pre> 148  |@check 2008-01-01 Assets:Current:BestBank:Checking  1412.24 USD</pre>
+        <a name="line148" />
+        <pre> 149  |</pre>
+        <a name="line149" />
+        <pre> 150  |</pre>
+        <a name="line150" />
+        <pre> 151  |;; A check deposit, e.g. depositing a government check.</pre>
+        <a name="line151" />
+        <pre> 152  |2008-01-05 * GST CANADA | Deposit from govt for consumer tax rebate</pre>
+        <a name="line152" />
+        <pre> 153  |Assets:Current:BestBank:Checking       77.76 USD</pre>
+        <a name="line153" />
+        <pre> 154  |Expenses:Taxes:US-Federal</pre>
+        <a name="line154" />
+        <pre> 155  |</pre>
+        <a name="line155" />
+        <pre> 156  |</pre>
+        <a name="line156" />
+        <pre> 157  |</pre>
+        <a name="line157" />
+        <pre> 158  |;; This is how salary direct deposit entries might show up</pre>
+        <a name="line158" />
+        <pre> 159  |;; within the checking account section. Note how the salaries</pre>
+        <a name="line159" />
+        <pre> 160  |;; are negative amounts... that's because Income is a credit</pre>
+        <a name="line160" />
+        <pre> 161  |;; account category, and the numbers there are negative (you can</pre>
+        <a name="line161" />
+        <pre> 162  |;; interpret this as the "amount of work-dollars that you took</pre>
+        <a name="line162" />
+        <pre> 163  |;; from society and placed into your account").</pre>
+        <a name="line163" />
+        <pre> 164  |</pre>
+        <a name="line164" />
+        <pre> 165  |2008-01-10 * ACME | Salary paid from employer</pre>
+        <a name="line165" />
+        <pre> 166  |Assets:Current:BestBank:Checking        2000.00 USD</pre>
+        <a name="line166" />
+        <pre> 167  |Income:Salary:AcmeCo                    -2000 USD</pre>
+        <a name="line167" />
+        <pre> 168  |</pre>
+        <a name="line168" />
+        <pre> 169  |2008-01-25 * ACME | Salary paid from employer</pre>
+        <a name="line169" />
+        <pre> 170  |Assets:Current:BestBank:Checking        2000.00 USD</pre>
+        <a name="line170" />
+        <pre> 171  |Income:Salary:AcmeCo</pre>
+        <a name="line171" />
+        <pre> 172  |</pre>
+        <a name="line172" />
+        <pre> 173  |2008-02-10 * ACME | Salary paid from employer</pre>
+        <a name="line173" />
+        <pre> 174  |Assets:Current:BestBank:Checking        2000.00 USD</pre>
+        <a name="line174" />
+        <pre> 175  |Income:Salary:AcmeCo</pre>
+        <a name="line175" />
+        <pre> 176  |</pre>
+        <a name="line176" />
+        <pre> 177  |2008-02-25 * ACME | Salary paid from employer</pre>
+        <a name="line177" />
+        <pre> 178  |Assets:Current:BestBank:Checking        2000.00 USD</pre>
+        <a name="line178" />
+        <pre> 179  |Income:Salary:AcmeCo</pre>
+        <a name="line179" />
+        <pre> 180  |</pre>
+        <a name="line180" />
+        <pre> 181  |</pre>
+        <a name="line181" />
+        <pre> 182  |</pre>
+        <a name="line182" />
+        <pre> 183  |;; Withdrawal from another bank's ATM machine (with fees).</pre>
+        <a name="line183" />
+        <pre> 184  |2008-01-12 * ATM withdrawal - 00044242</pre>
+        <a name="line184" />
+        <pre> 185  |Assets:Current:BestBank:Checking    -301.50 USD</pre>
+        <a name="line185" />
+        <pre> 186  |Expenses:Financial:Fees              1.50 USD</pre>
+        <a name="line186" />
+        <pre> 187  |Assets:Current:Cash</pre>
+        <a name="line187" />
+        <pre> 188  |</pre>
+        <a name="line188" />
+        <pre> 189  |;; ATM withdrawal (without fees).</pre>
+        <a name="line189" />
+        <pre> 190  |2008-01-30 * ATM withdrawal</pre>
+        <a name="line190" />
+        <pre> 191  |Assets:Current:BestBank:Checking    -800.00 USD</pre>
+        <a name="line191" />
+        <pre> 192  |Assets:Current:Cash</pre>
+        <a name="line192" />
+        <pre> 193  |</pre>
+        <a name="line193" />
+        <pre> 194  |2008-02-10 * ATM withdrawal</pre>
+        <a name="line194" />
+        <pre> 195  |Assets:Current:BestBank:Checking    -500.00 USD</pre>
+        <a name="line195" />
+        <pre> 196  |Assets:Current:Cash</pre>
+        <a name="line196" />
+        <pre> 197  |</pre>
+        <a name="line197" />
+        <pre> 198  |2008-02-24 * ATM withdrawal</pre>
+        <a name="line198" />
+        <pre> 199  |Assets:Current:BestBank:Checking    -500.00 USD</pre>
+        <a name="line199" />
+        <pre> 200  |Assets:Current:Cash</pre>
+        <a name="line200" />
+        <pre> 201  |</pre>
+        <a name="line201" />
+        <pre> 202  |</pre>
+        <a name="line202" />
+        <pre> 203  |;; Automated withdrawal for Life insurance payments.</pre>
+        <a name="line203" />
+        <pre> 204  |2008-01-02 * LIFE INSURANCE -- LONDON LIFE</pre>
+        <a name="line204" />
+        <pre> 205  |Assets:Current:BestBank:Checking         -42.69 USD</pre>
+        <a name="line205" />
+        <pre> 206  |Expenses:Insurance:Life</pre>
+        <a name="line206" />
+        <pre> 207  |</pre>
+        <a name="line207" />
+        <pre> 208  |2008-02-02 * LIFE INSURANCE -- LONDON LIFE</pre>
+        <a name="line208" />
+        <pre> 209  |Assets:Current:BestBank:Checking         -42.69 USD</pre>
+        <a name="line209" />
+        <pre> 210  |Expenses:Insurance:Life</pre>
+        <a name="line210" />
+        <pre> 211  |</pre>
+        <a name="line211" />
+        <pre> 212  |</pre>
+        <a name="line212" />
+        <pre> 213  |;; A purchase from a store using the bank's debit card.</pre>
+        <a name="line213" />
+        <pre> 214  |2008-01-17 * Interac Purchase - 1341 - ACCES SPORTS S</pre>
+        <a name="line214" />
+        <pre> 215  |Assets:Current:BestBank:Checking      -89.00 USD</pre>
+        <a name="line215" />
+        <pre> 216  |Expenses:Sports:Gear</pre>
+        <a name="line216" />
+        <pre> 217  |</pre>
+        <a name="line217" />
+        <pre> 218  |</pre>
+        <a name="line218" />
+        <pre> 219  |;; A monthly fee that the bank takes for its deposit banking services.</pre>
+        <a name="line219" />
+        <pre> 220  |2008-01-10 * MONTHLY FEE</pre>
+        <a name="line220" />
+        <pre> 221  |Assets:Current:BestBank:Checking                   -4.00 USD</pre>
+        <a name="line221" />
+        <pre> 222  |Expenses:Financial:Fees</pre>
+        <a name="line222" />
+        <pre> 223  |</pre>
+        <a name="line223" />
+        <pre> 224  |;; A typical bank's return on checking accounts.</pre>
+        <a name="line224" />
+        <pre> 225  |2008-01-12 * Deposit interest</pre>
+        <a name="line225" />
+        <pre> 226  |Assets:Current:BestBank:Checking                0.02 USD</pre>
+        <a name="line226" />
+        <pre> 227  |Income:Investments:Interest:Checking</pre>
+        <a name="line227" />
+        <pre> 228  |</pre>
+        <a name="line228" />
+        <pre> 229  |</pre>
+        <a name="line229" />
+        <pre> 230  |</pre>
+        <a name="line230" />
+        <pre> 231  |;; An example of using the A/R account: I bought an electronic</pre>
+        <a name="line231" />
+        <pre> 232  |;; toy for a friend, and I wanted to track the amount that he</pre>
+        <a name="line232" />
+        <pre> 233  |;; should pay back to me. Instead of placing it in expenses, I</pre>
+        <a name="line233" />
+        <pre> 234  |;; made it a receivable, which was cancelled later on where he</pre>
+        <a name="line234" />
+        <pre> 235  |;; paid me back.</pre>
+        <a name="line235" />
+        <pre> 236  |</pre>
+        <a name="line236" />
+        <pre> 237  |2008-03-26 * Bought an iPhone to Gilbert (had to use ATM)</pre>
+        <a name="line237" />
+        <pre> 238  |Assets:AccountsReceivable                      431.92 USD</pre>
+        <a name="line238" />
+        <pre> 239  |Expenses:Financial:Fees                          3.00 USD</pre>
+        <a name="line239" />
+        <pre> 240  |Assets:Current:Cash                           -434.92 USD</pre>
+        <a name="line240" />
+        <pre> 241  |</pre>
+        <a name="line241" />
+        <pre> 242  |;; Notice that the amount pay back was for an approximate</pre>
+        <a name="line242" />
+        <pre> 243  |;; amount, so the overflow I placed in the cash account.</pre>
+        <a name="line243" />
+        <pre> 244  |2008-04-02 * Gilbert paid back for iPhone</pre>
+        <a name="line244" />
+        <pre> 245  |Assets:Current:Cash                            440.00 CAD</pre>
+        <a name="line245" />
+        <pre> 246  |Assets:AccountsReceivable                     -431.92 USD</pre>
+        <a name="line246" />
+        <pre> 247  |Assets:Current:Cash</pre>
+        <a name="line247" />
+        <pre> 248  |</pre>
+        <a name="line248" />
+        <pre> 249  |</pre>
+        <a name="line249" />
+        <pre> 250  |</pre>
+        <a name="line250" />
+        <pre> 251  |;; At the end of the month, I take my statements, look at the</pre>
+        <a name="line251" />
+        <pre> 252  |;; bottom and enter the amount that the bank says was there at</pre>
+        <a name="line252" />
+        <pre> 253  |;; that date. It should corroborate with the data in my Ledger.</pre>
+        <a name="line253" />
+        <pre> 254  |@check 2008-02-01 Assets:Current:BestBank:Checking   661.49 USD</pre>
+        <a name="line254" />
+        <pre> 255  |</pre>
+        <a name="line255" />
+        <pre> 256  |</pre>
+        <a name="line256" />
+        <pre> 257  |</pre>
+        <a name="line257" />
+        <pre> 258  |</pre>
+        <a name="line258" />
+        <pre> 259  |</pre>
+        <a name="line259" />
+        <pre> 260  |</pre>
+        <a name="line260" />
+        <pre> 261  |;;;;; Assets:Current:BestBank:Savings</pre>
+        <a name="line261" />
+        <pre> 262  |</pre>
+        <a name="line262" />
+        <pre> 263  |@pad 2007-12-31 Assets:Current:BestBank:Savings   Equity:Opening-Balances</pre>
+        <a name="line263" />
+        <pre> 264  |</pre>
+        <a name="line264" />
+        <pre> 265  |@check 2008-01-01 Assets:Current:BestBank:Savings    12000 USD</pre>
+        <a name="line265" />
+        <pre> 266  |</pre>
+        <a name="line266" />
+        <pre> 267  |;; Interest paid on balance in savings account.</pre>
+        <a name="line267" />
+        <pre> 268  |2008-01-03 * DEPOSIT INTEREST</pre>
+        <a name="line268" />
+        <pre> 269  |Assets:Current:BestBank:Savings                    95.69 USD</pre>
+        <a name="line269" />
+        <pre> 270  |Income:Investments:Interest:Savings</pre>
+        <a name="line270" />
+        <pre> 271  |</pre>
+        <a name="line271" />
+        <pre> 272  |</pre>
+        <a name="line272" />
+        <pre> 273  |;; An entry that indicates a bank transfer from a checking account to a savings account.</pre>
+        <a name="line273" />
+        <pre> 274  |;; There is a choice to locate this entry with the savings or with the checking, it's up to you.</pre>
+        <a name="line274" />
+        <pre> 275  |2008-01-29 * Transfer from checking to savings account</pre>
+        <a name="line275" />
+        <pre> 276  |Assets:Current:BestBank:Savings       2000.00 USD</pre>
+        <a name="line276" />
+        <pre> 277  |Assets:Current:BestBank:Checking</pre>
+        <a name="line277" />
+        <pre> 278  |</pre>
+        <a name="line278" />
+        <pre> 279  |2008-02-03 * DEPOSIT INTEREST</pre>
+        <a name="line279" />
+        <pre> 280  |Assets:Current:BestBank:Savings                    102.34 USD</pre>
+        <a name="line280" />
+        <pre> 281  |Income:Investments:Interest:Savings</pre>
+        <a name="line281" />
+        <pre> 282  |</pre>
+        <a name="line282" />
+        <pre> 283  |2008-02-03 * Transferring money to brokerage account for better investment.</pre>
+        <a name="line283" />
+        <pre> 284  |Assets:Current:BestBank:Savings       -10000.00 USD</pre>
+        <a name="line284" />
+        <pre> 285  |Assets:Investments:UTrade:Account</pre>
+        <a name="line285" />
+        <pre> 286  |</pre>
+        <a name="line286" />
+        <pre> 287  |</pre>
+        <a name="line287" />
+        <pre> 288  |;; A monthly check using the amount on the stament.</pre>
+        <a name="line288" />
+        <pre> 289  |@check 2008-03-01 Assets:Current:BestBank:Savings    2340.19 USD</pre>
+        <a name="line289" />
+        <pre> 290  |</pre>
+        <a name="line290" />
+        <pre> 291  |</pre>
+        <a name="line291" />
+        <pre> 292  |</pre>
+        <a name="line292" />
+        <pre> 293  |;; Automated mortgage payments from the savings account.</pre>
+        <a name="line293" />
+        <pre> 294  |2008-01-12 * MORTGAGE PAYMENT</pre>
+        <a name="line294" />
+        <pre> 295  |Assets:Current:BestBank:Savings                                             -464.46 USD</pre>
+        <a name="line295" />
+        <pre> 296  |Liabilities:BestBank:Mortgage:Loan                                           171.01 USD</pre>
+        <a name="line296" />
+        <pre> 297  |Expenses:Home:Monthly:Loan-Interest</pre>
+        <a name="line297" />
+        <pre> 298  |</pre>
+        <a name="line298" />
+        <pre> 299  |2008-01-27 * MORTGAGE PAYMENT</pre>
+        <a name="line299" />
+        <pre> 300  |Assets:Current:BestBank:Savings                                             -464.46 USD</pre>
+        <a name="line300" />
+        <pre> 301  |Liabilities:BestBank:Mortgage:Loan                                           171.01 USD</pre>
+        <a name="line301" />
+        <pre> 302  |Expenses:Home:Monthly:Loan-Interest</pre>
+        <a name="line302" />
+        <pre> 303  |</pre>
+        <a name="line303" />
+        <pre> 304  |2008-02-12 * MORTGAGE PAYMENT</pre>
+        <a name="line304" />
+        <pre> 305  |Assets:Current:BestBank:Savings                                             -464.46 USD</pre>
+        <a name="line305" />
+        <pre> 306  |Liabilities:BestBank:Mortgage:Loan                                           171.01 USD</pre>
+        <a name="line306" />
+        <pre> 307  |Expenses:Home:Monthly:Loan-Interest</pre>
+        <a name="line307" />
+        <pre> 308  |</pre>
+        <a name="line308" />
+        <pre> 309  |2008-02-27 * MORTGAGE PAYMENT</pre>
+        <a name="line309" />
+        <pre> 310  |Assets:Current:BestBank:Savings                                             -464.46 USD</pre>
+        <a name="line310" />
+        <pre> 311  |Liabilities:BestBank:Mortgage:Loan                                           171.01 USD</pre>
+        <a name="line311" />
+        <pre> 312  |Expenses:Home:Monthly:Loan-Interest</pre>
+        <a name="line312" />
+        <pre> 313  |</pre>
+        <a name="line313" />
+        <pre> 314  |2008-03-12 * MORTGAGE PAYMENT</pre>
+        <a name="line314" />
+        <pre> 315  |Assets:Current:BestBank:Savings                                             -464.46 USD</pre>
+        <a name="line315" />
+        <pre> 316  |Liabilities:BestBank:Mortgage:Loan                                           171.01 USD</pre>
+        <a name="line316" />
+        <pre> 317  |Expenses:Home:Monthly:Loan-Interest</pre>
+        <a name="line317" />
+        <pre> 318  |</pre>
+        <a name="line318" />
+        <pre> 319  |2008-03-27 * MORTGAGE PAYMENT</pre>
+        <a name="line319" />
+        <pre> 320  |Assets:Current:BestBank:Savings                                             -464.46 USD</pre>
+        <a name="line320" />
+        <pre> 321  |Liabilities:BestBank:Mortgage:Loan                                           171.01 USD</pre>
+        <a name="line321" />
+        <pre> 322  |Expenses:Home:Monthly:Loan-Interest</pre>
+        <a name="line322" />
+        <pre> 323  |</pre>
+        <a name="line323" />
+        <pre> 324  |</pre>
+        <a name="line324" />
+        <pre> 325  |</pre>
+        <a name="line325" />
+        <pre> 326  |;;;;; Liabilities:Credit-Card:VISA</pre>
+        <a name="line326" />
+        <pre> 327  |</pre>
+        <a name="line327" />
+        <pre> 328  |@pad 2008-01-01 Liabilities:Credit-Card:VISA  Equity:Opening-Balances</pre>
+        <a name="line328" />
+        <pre> 329  |@check 2008-01-01 Liabilities:Credit-Card:VISA  -791.34 USD</pre>
+        <a name="line329" />
+        <pre> 330  |</pre>
+        <a name="line330" />
+        <pre> 331  |;; Paying back my credit card.</pre>
+        <a name="line331" />
+        <pre> 332  |2008-01-22 * Online Banking payment - 5051 - VISA</pre>
+        <a name="line332" />
+        <pre> 333  |Assets:Current:BestBank:Checking     -791.34 USD</pre>
+        <a name="line333" />
+        <pre> 334  |Liabilities:Credit-Card:VISA</pre>
+        <a name="line334" />
+        <pre> 335  |</pre>
+        <a name="line335" />
+        <pre> 336  |</pre>
+        <a name="line336" />
+        <pre> 337  |;; Expenses at restaurants on credit card.</pre>
+        <a name="line337" />
+        <pre> 338  |2008-01-15 * Cafe Imagination |</pre>
+        <a name="line338" />
+        <pre> 339  |Liabilities:Credit-Card:VISA</pre>
+        <a name="line339" />
+        <pre> 340  |Expenses:Food:Restaurant              47.00 USD</pre>
+        <a name="line340" />
+        <pre> 341  |</pre>
+        <a name="line341" />
+        <pre> 342  |2008-01-19 * Soupe Bol |</pre>
+        <a name="line342" />
+        <pre> 343  |Liabilities:Credit-Card:VISA          -21.00 USD</pre>
+        <a name="line343" />
+        <pre> 344  |Expenses:Food:Restaurant</pre>
+        <a name="line344" />
+        <pre> 345  |</pre>
+        <a name="line345" />
+        <pre> 346  |2008-01-27 * Scola Pasta |</pre>
+        <a name="line346" />
+        <pre> 347  |Liabilities:Credit-Card:VISA</pre>
+        <a name="line347" />
+        <pre> 348  |Expenses:Food:Restaurant              51.17 USD</pre>
+        <a name="line348" />
+        <pre> 349  |</pre>
+        <a name="line349" />
+        <pre> 350  |</pre>
+        <a name="line350" />
+        <pre> 351  |;; Cell phone bill via credit crad.</pre>
+        <a name="line351" />
+        <pre> 352  |2008-01-19 * FIDO |</pre>
+        <a name="line352" />
+        <pre> 353  |Liabilities:Credit-Card:VISA</pre>
+        <a name="line353" />
+        <pre> 354  |Expenses:Communications:Phone         121.96 USD</pre>
+        <a name="line354" />
+        <pre> 355  |</pre>
+        <a name="line355" />
+        <pre> 356  |</pre>
+        <a name="line356" />
+        <pre> 357  |</pre>
+        <a name="line357" />
+        <pre> 358  |</pre>
+        <a name="line358" />
+        <pre> 359  |</pre>
+        <a name="line359" />
+        <pre> 360  |</pre>
+        <a name="line360" />
+        <pre> 361  |</pre>
+        <a name="line361" />
+        <pre> 362  |;;;;; Assets:Investments:UTrade:Account</pre>
+        <a name="line362" />
+        <pre> 363  |</pre>
+        <a name="line363" />
+        <pre> 364  |@pad 2007-12-31 Assets:Investments:UTrade:Account  Equity:Opening-Balances</pre>
+        <a name="line364" />
+        <pre> 365  |</pre>
+        <a name="line365" />
+        <pre> 366  |@check 2008-01-01  Assets:Investments:UTrade:Account  31273.02 USD</pre>
+        <a name="line366" />
+        <pre> 367  |</pre>
+        <a name="line367" />
+        <pre> 368  |;; Some example trades.</pre>
+        <a name="line368" />
+        <pre> 369  |;;</pre>
+        <a name="line369" />
+        <pre> 370  |;; - Notice how I like to create a special account to contain</pre>
+        <a name="line370" />
+        <pre> 371  |;;   each kind of commodity. This choice is an arbitrary one: I</pre>
+        <a name="line371" />
+        <pre> 372  |;;   could keep all the stocks in the one investing account</pre>
+        <a name="line372" />
+        <pre> 373  |;;   (which would then contain many different kinds of</pre>
+        <a name="line373" />
+        <pre> 374  |;;   commodities) but doing it this way I can more easily track</pre>
+        <a name="line374" />
+        <pre> 375  |;;   the book value of the remaining shares that I have. I think</pre>
+        <a name="line375" />
+        <pre> 376  |;;   there may be a better way to do this.</pre>
+        <a name="line376" />
+        <pre> 377  |;;</pre>
+        <a name="line377" />
+        <pre> 378  |;; - Usually I enter the final amounts from the trade</pre>
+        <a name="line378" />
+        <pre> 379  |;;   confirmation slips that get emailed to me, because the</pre>
+        <a name="line379" />
+        <pre> 380  |;;   information there is more precise and detailed than what I</pre>
+        <a name="line380" />
+        <pre> 381  |;;   seem to get from the online brokerage interface. YMMV.</pre>
+        <a name="line381" />
+        <pre> 382  |;;</pre>
+        <a name="line382" />
+        <pre> 383  |;; - I still don't have a good generic way to deal with the</pre>
+        <a name="line383" />
+        <pre> 384  |;;   capital gains automatically, so I enter them by hand for</pre>
+        <a name="line384" />
+        <pre> 385  |;;   now. The challenge is to find a generic way to account</pre>
+        <a name="line385" />
+        <pre> 386  |;;   for capital gains while accounting for commissions and</pre>
+        <a name="line386" />
+        <pre> 387  |;;   trade fees the correct way (they should get removed from the</pre>
+        <a name="line387" />
+        <pre> 388  |;;   capital gains at both ends of a trade).</pre>
+        <a name="line388" />
+        <pre> 389  |</pre>
+        <a name="line389" />
+        <pre> 390  |2008-01-08 * Buy some Apple Computer</pre>
+        <a name="line390" />
+        <pre> 391  |Assets:Investments:UTrade:Account:AAPL                     30 AAPL @ 185.40 USD</pre>
+        <a name="line391" />
+        <pre> 392  |Assets:Investments:UTrade:Account</pre>
+        <a name="line392" />
+        <pre> 393  |Expenses:Financial:Commissions                        9.95 USD</pre>
+        <a name="line393" />
+        <pre> 394  |</pre>
+        <a name="line394" />
+        <pre> 395  |;; A divident payment.</pre>
+        <a name="line395" />
+        <pre> 396  |2008-02-02 * DIVIDEND from AAPL position</pre>
+        <a name="line396" />
+        <pre> 397  |Assets:Investments:UTrade:Account    0.68 USD</pre>
+        <a name="line397" />
+        <pre> 398  |Income:Investments:Dividends</pre>
+        <a name="line398" />
+        <pre> 399  |</pre>
+        <a name="line399" />
+        <pre> 400  |;; Because of my skirt-length statistic computation.</pre>
+        <a name="line400" />
+        <pre> 401  |2008-02-28 * Sell off my Apple</pre>
+        <a name="line401" />
+        <pre> 402  |Assets:Investments:UTrade:Account:AAPL        -30 AAPL @ 193.02 USD</pre>
+        <a name="line402" />
+        <pre> 403  |Assets:Investments:UTrade:Account         5780.65 USD</pre>
+        <a name="line403" />
+        <pre> 404  |Expenses:Financial:Commissions               9.95 USD</pre>
+        <a name="line404" />
+        <pre> 405  |(Income:Investments:Capital-Gains)           BOOK AAPL</pre>
+        <a name="line405" />
+        <pre> 406  |;; The line that says "BOOK AAPL" means to insert the amount that</pre>
+        <a name="line406" />
+        <pre> 407  |;; corresponds to the gains/losses for the commodity "AAPL" within</pre>
+        <a name="line407" />
+        <pre> 408  |;; the account for the posting in this transaction that includes AAPL</pre>
+        <a name="line408" />
+        <pre> 409  |;; (Assets:Investments:UTrade:Account:AAPL, found automatically).</pre>
+        <a name="line409" />
+        <pre> 410  |;; The inventory booking is done in FIFO order.</pre>
+        <a name="line410" />
+        <pre> 411  |;;</pre>
+        <a name="line411" />
+        <pre> 412  |;; The capital gain will show up as a negative number...</pre>
+        <a name="line412" />
+        <pre> 413  |;; that's because Income is a credit account, like a salary.</pre>
+        <a name="line413" />
+        <pre> 414  |</pre>
+        <a name="line414" />
+        <pre> 415  |;; This position is kept long, so it gets reflected below in the check.</pre>
+        <a name="line415" />
+        <pre> 416  |2008-02-10 * Buy some japanese ETF from iShares</pre>
+        <a name="line416" />
+        <pre> 417  |Assets:Investments:UTrade:Account:EWJ                     100 EWJ @ 13.34 USD</pre>
+        <a name="line417" />
+        <pre> 418  |Assets:Investments:UTrade:Account</pre>
+        <a name="line418" />
+        <pre> 419  |Expenses:Financial:Commissions                        9.95 USD</pre>
+        <a name="line419" />
+        <pre> 420  |</pre>
+        <a name="line420" />
+        <pre> 421  |</pre>
+        <a name="line421" />
+        <pre> 422  |;; Run checks against statement summary of positions that gets</pre>
+        <a name="line422" />
+        <pre> 423  |;; mailed periodically.</pre>
+        <a name="line423" />
+        <pre> 424  |@check 2008-03-01  Assets:Investments:UTrade:Account          40138.45 USD</pre>
+        <a name="line424" />
+        <pre> 425  |@check 2008-03-01  Assets:Investments:UTrade:Account:AAPL     0 AAPL</pre>
+        <a name="line425" />
+        <pre> 426  |@check 2008-03-01  Assets:Investments:UTrade:Account:EWJ      100 EWJ</pre>
+        <a name="line426" />
+        <pre> 427  |</pre>
+        <a name="line427" />
+        <pre> 428  |</pre>
+        <a name="line428" />
+        <pre> 429  |</pre>
+        <a name="line429" />
+        <pre> 430  |</pre>
+        <a name="line430" />
+        <pre> 431  |</pre>
+        <a name="line431" />
+        <pre> 432  |</pre>
+        <a name="line432" />
+        <pre> 433  |</pre>
+        <a name="line433" />
+        <pre> 434  |;;;;; Expenses:Insurance:Life</pre>
+        <a name="line434" />
+        <pre> 435  |</pre>
+        <a name="line435" />
+        <pre> 436  |;; Estimate of value of life insurance policy, to account for</pre>
+        <a name="line436" />
+        <pre> 437  |;; total net worth.</pre>
+        <a name="line437" />
+        <pre> 438  |2008-01-01 * Life insurance policy resale value</pre>
+        <a name="line438" />
+        <pre> 439  |Expenses:Insurance:Life     4407.06 USD</pre>
+        <a name="line439" />
+        <pre> 440  |Equity:Opening-Balances</pre>
+        <a name="line440" />
+        <pre> 441  |</pre>
+        <a name="line441" />
+        <pre> 442  |</pre>
+        <a name="line442" />
+        <pre> 443  |</pre>
+        <a name="line443" />
+        <pre> 444  |</pre>
+        <a name="line444" />
+        <pre> 445  |</pre>
+        <a name="line445" />
+        <pre> 446  |</pre>
+        <a name="line446" />
+        <pre> 447  |</pre>
+        <a name="line447" />
+        <pre> 448  |;;;;; Assets:Fixed:Home</pre>
+        <a name="line448" />
+        <pre> 449  |</pre>
+        <a name="line449" />
+        <pre> 450  |;; You could use this account in order to reevaluate your home.</pre>
+        <a name="line450" />
+        <pre> 451  |</pre>
+        <a name="line451" />
+        <pre> 452  |</pre>
+        <a name="line452" />
+        <pre> 453  |</pre>
+        <a name="line453" />
+        <pre> 454  |</pre>
+        <a name="line454" />
+        <pre> 455  |</pre>
+        <a name="line455" />
+        <pre> 456  |</pre>
+        <a name="line456" />
+        <pre> 457  |</pre>
+        <a name="line457" />
+        <pre> 458  |;;;;; Expenses:Home:Monthly:Condo-Fees</pre>
+        <a name="line458" />
+        <pre> 459  |</pre>
+        <a name="line459" />
+        <pre> 460  |@pad 2008-01-01 Liabilities:Condo-Management      Equity:Opening-Balances</pre>
+        <a name="line460" />
+        <pre> 461  |</pre>
+        <a name="line461" />
+        <pre> 462  |@check 2008-01-01 Liabilities:Condo-Management      -41.11 USD</pre>
+        <a name="line462" />
+        <pre> 463  |</pre>
+        <a name="line463" />
+        <pre> 464  |2008-01-01 * Propri-Manage |</pre>
+        <a name="line464" />
+        <pre> 465  |Expenses:Home:Monthly:Condo-Fees        212.61 USD</pre>
+        <a name="line465" />
+        <pre> 466  |Liabilities:Condo-Management</pre>
+        <a name="line466" />
+        <pre> 467  |</pre>
+        <a name="line467" />
+        <pre> 468  |2008-01-14 * (998) Propri-Manage | cheque sent by snail mail</pre>
+        <a name="line468" />
+        <pre> 469  |Liabilities:Condo-Management         800.00 USD</pre>
+        <a name="line469" />
+        <pre> 470  |Assets:Current:BestBank:Checking</pre>
+        <a name="line470" />
+        <pre> 471  |</pre>
+        <a name="line471" />
+        <pre> 472  |2008-02-01 * Propri-Manage |</pre>
+        <a name="line472" />
+        <pre> 473  |Expenses:Home:Monthly:Condo-Fees        212.61 USD</pre>
+        <a name="line473" />
+        <pre> 474  |Liabilities:Condo-Management</pre>
+        <a name="line474" />
+        <pre> 475  |</pre>
+        <a name="line475" />
+        <pre> 476  |2008-03-01 * Propri-Manage |</pre>
+        <a name="line476" />
+        <pre> 477  |Expenses:Home:Monthly:Condo-Fees        212.61 USD</pre>
+        <a name="line477" />
+        <pre> 478  |Liabilities:Condo-Management</pre>
+        <a name="line478" />
+        <pre> 479  |</pre>
+        <a name="line479" />
+        <pre> 480  |2008-03-10 * Propri-Manage | special billing, spring works</pre>
+        <a name="line480" />
+        <pre> 481  |Expenses:Home:Monthly:Condo-Fees     61.25 USD</pre>
+        <a name="line481" />
+        <pre> 482  |Liabilities:Condo-Management</pre>
+        <a name="line482" />
+        <pre> 483  |</pre>
+        <a name="line483" />
+        <pre> 484  |@check 2008-04-01 Liabilities:Condo-Management     59.81 USD</pre>
+        <a name="line484" />
+        <pre> 485  |</pre>
+        <a name="line485" />
+        <pre> 486  |</pre>
+        <a name="line486" />
+        <pre> 487  |</pre>
+        <a name="line487" />
+        <pre> 488  |</pre>
+        <a name="line488" />
+        <pre> 489  |</pre>
+        <a name="line489" />
+        <pre> 490  |</pre>
+        <a name="line490" />
+        <pre> 491  |</pre>
+        <a name="line491" />
+        <pre> 492  |;;;;; Assets:Current:Cash</pre>
+        <a name="line492" />
+        <pre> 493  |;;;;; Expenses:*</pre>
+        <a name="line493" />
+        <pre> 494  |</pre>
+        <a name="line494" />
+        <pre> 495  |@pad 2007-12-31  Assets:Current:Cash  Equity:Opening-Balances</pre>
+        <a name="line495" />
+        <pre> 496  |</pre>
+        <a name="line496" />
+        <pre> 497  |;; Amount in wallet at a given time.</pre>
+        <a name="line497" />
+        <pre> 498  |@check 2007-12-31  Assets:Current:Cash                          200 CAD</pre>
+        <a name="line498" />
+        <pre> 499  |@check 2007-12-31  Assets:Current:Cash                          300 USD</pre>
+        <a name="line499" />
+        <pre> 500  |</pre>
+        <a name="line500" />
+        <pre> 501  |;; Because I don't track individual cash expenses very tightly,</pre>
+        <a name="line501" />
+        <pre> 502  |;; I still need to distribute the cash that disappeared into</pre>
+        <a name="line502" />
+        <pre> 503  |;; appropriate expense categories. What I like to do is</pre>
+        <a name="line503" />
+        <pre> 504  |;; guesstimate that about 80% of it goes into restaurants, and</pre>
+        <a name="line504" />
+        <pre> 505  |;; 20% into wine bars. What frequency and categories you choose</pre>
+        <a name="line505" />
+        <pre> 506  |;; to use is highly dependent on your lifestyle...</pre>
+        <a name="line506" />
+        <pre> 507  |</pre>
+        <a name="line507" />
+        <pre> 508  |2008-01-02 * Distribution of cash expenses</pre>
+        <a name="line508" />
+        <pre> 509  |Expenses:Food:Restaurant   300.00 USD</pre>
+        <a name="line509" />
+        <pre> 510  |Expenses:Food:Alcool       100.00 USD</pre>
+        <a name="line510" />
+        <pre> 511  |Assets:Current:Cash</pre>
+        <a name="line511" />
+        <pre> 512  |</pre>
+        <a name="line512" />
+        <pre> 513  |2008-01-16 * Distribution of cash expenses</pre>
+        <a name="line513" />
+        <pre> 514  |Expenses:Food:Restaurant   300.00 USD</pre>
+        <a name="line514" />
+        <pre> 515  |Expenses:Food:Alcool       100.00 USD</pre>
+        <a name="line515" />
+        <pre> 516  |Assets:Current:Cash</pre>
+        <a name="line516" />
+        <pre> 517  |</pre>
+        <a name="line517" />
+        <pre> 518  |2008-02-02 * Distribution of cash expenses</pre>
+        <a name="line518" />
+        <pre> 519  |Expenses:Food:Restaurant   300.00 USD</pre>
+        <a name="line519" />
+        <pre> 520  |Expenses:Food:Alcool       100.00 USD</pre>
+        <a name="line520" />
+        <pre> 521  |Assets:Current:Cash</pre>
+        <a name="line521" />
+        <pre> 522  |</pre>
+        <a name="line522" />
+        <pre> 523  |2008-02-16 * Distribution of cash expenses</pre>
+        <a name="line523" />
+        <pre> 524  |Expenses:Food:Restaurant   300.00 USD</pre>
+        <a name="line524" />
+        <pre> 525  |Expenses:Food:Alcool       100.00 USD</pre>
+        <a name="line525" />
+        <pre> 526  |Assets:Current:Cash</pre>
+        <a name="line526" />
+        <pre> 527  |</pre>
+        <a name="line527" />
+        <pre> 528  |2008-03-02 * Distribution of cash expenses</pre>
+        <a name="line528" />
+        <pre> 529  |Expenses:Food:Restaurant   300.00 USD</pre>
+        <a name="line529" />
+        <pre> 530  |Expenses:Food:Alcool       100.00 USD</pre>
+        <a name="line530" />
+        <pre> 531  |Assets:Current:Cash</pre>
+        <a name="line531" />
+        <pre> 532  |</pre>
+        <a name="line532" />
+        <pre> 533  |2008-03-16 * Distribution of cash expenses</pre>
+        <a name="line533" />
+        <pre> 534  |Expenses:Food:Restaurant   300.00 USD</pre>
+        <a name="line534" />
+        <pre> 535  |Expenses:Food:Alcool       100.00 USD</pre>
+        <a name="line535" />
+        <pre> 536  |Assets:Current:Cash</pre>
+        <a name="line536" />
+        <pre> 537  |</pre>
+        <a name="line537" />
+        <pre> 538  |</pre>
+        <a name="line538" />
+        <pre> 539  |</pre>
+        <a name="line539" />
+        <pre> 540  |;;</pre>
+        <a name="line540" />
+        <pre> 541  |;; Some common cash expenses.</pre>
+        <a name="line541" />
+        <pre> 542  |;;</pre>
+        <a name="line542" />
+        <pre> 543  |</pre>
+        <a name="line543" />
+        <pre> 544  |2008-02-18 * DMV | Renewal of driver's license.</pre>
+        <a name="line544" />
+        <pre> 545  |Expenses:Govt-Services     110.00 USD</pre>
+        <a name="line545" />
+        <pre> 546  |Assets:Current:Cash</pre>
+        <a name="line546" />
+        <pre> 547  |</pre>
+        <a name="line547" />
+        <pre> 548  |2008-01-21 * WHOLE FOODS |</pre>
+        <a name="line548" />
+        <pre> 549  |Expenses:Food:Grocery    54.03 USD</pre>
+        <a name="line549" />
+        <pre> 550  |Assets:Current:Cash</pre>
+        <a name="line550" />
+        <pre> 551  |</pre>
+        <a name="line551" />
+        <pre> 552  |2008-01-21 * USPS | sent package to mom</pre>
+        <a name="line552" />
+        <pre> 553  |Expenses:Communications:Mail      4.43 USD</pre>
+        <a name="line553" />
+        <pre> 554  |Assets:Current:Cash</pre>
+        <a name="line554" />
+        <pre> 555  |</pre>
+        <a name="line555" />
+        <pre> 556  |2008-02-04 * taxi home from meeting</pre>
+        <a name="line556" />
+        <pre> 557  |Expenses:Transportation:Taxi  12.00 USD</pre>
+        <a name="line557" />
+        <pre> 558  |Assets:Current:Cash</pre>
+        <a name="line558" />
+        <pre> 559  |</pre>
+        <a name="line559" />
+        <pre> 560  |</pre>
+        <a name="line560" />
+        <pre> 561  |</pre>
+        <a name="line561" />
+        <pre> 562  |;; Short weekend trip to Skii Mountain.</pre>
+        <a name="line562" />
+        <pre> 563  |;;</pre>
+        <a name="line563" />
+        <pre> 564  |;; You can use the @begintag and @endtag directives to mark all</pre>
+        <a name="line564" />
+        <pre> 565  |;; transactions between them with a specific tag. Later on you</pre>
+        <a name="line565" />
+        <pre> 566  |;; can filter the postings to a tag by using a cmdline. This</pre>
+        <a name="line566" />
+        <pre> 567  |;; allows you to find out what expenses were incurred during a</pre>
+        <a name="line567" />
+        <pre> 568  |;; specific trip.</pre>
+        <a name="line568" />
+        <pre> 569  |</pre>
+        <a name="line569" />
+        <pre> 570  |@begintag ski-trip</pre>
+        <a name="line570" />
+        <pre> 571  |</pre>
+        <a name="line571" />
+        <pre> 572  |2008-01-27 * SUNONO | fill'er up</pre>
+        <a name="line572" />
+        <pre> 573  |Expenses:Car:Gas            40 USD</pre>
+        <a name="line573" />
+        <pre> 574  |Assets:Current:Cash</pre>
+        <a name="line574" />
+        <pre> 575  |</pre>
+        <a name="line575" />
+        <pre> 576  |2008-01-27 * SKII | Lift tickets</pre>
+        <a name="line576" />
+        <pre> 577  |Expenses:Sports        120 USD</pre>
+        <a name="line577" />
+        <pre> 578  |Assets:Current:Cash</pre>
+        <a name="line578" />
+        <pre> 579  |</pre>
+        <a name="line579" />
+        <pre> 580  |2008-01-27 * Dinner at chalet</pre>
+        <a name="line580" />
+        <pre> 581  |Expenses:Food:Restaurant      35.33 USD</pre>
+        <a name="line581" />
+        <pre> 582  |Assets:Current:Cash</pre>
+        <a name="line582" />
+        <pre> 583  |</pre>
+        <a name="line583" />
+        <pre> 584  |2008-01-28 * breakfast</pre>
+        <a name="line584" />
+        <pre> 585  |Expenses:Food:Restaurant      17.23 USD</pre>
+        <a name="line585" />
+        <pre> 586  |Assets:Current:Cash</pre>
+        <a name="line586" />
+        <pre> 587  |</pre>
+        <a name="line587" />
+        <pre> 588  |2008-01-28 * a new hat, it was cold</pre>
+        <a name="line588" />
+        <pre> 589  |Expenses:Clothes              40.02 USD</pre>
+        <a name="line589" />
+        <pre> 590  |Assets:Current:Cash</pre>
+        <a name="line590" />
+        <pre> 591  |</pre>
+        <a name="line591" />
+        <pre> 592  |@endtag ski-trip</pre>
+        <a name="line592" />
+        <pre> 593  |</pre>
+        <a name="line593" />
+        <pre> 594  |</pre>
+        <a name="line594" />
+        <pre> 595  |</pre>
+        <a name="line595" />
+        <pre> 596  |</pre>
+        <a name="line596" />
+        <pre> 597  |2008-03-03 * ALDO | new shoes</pre>
+        <a name="line597" />
+        <pre> 598  |Expenses:Clothes              121.20 USD</pre>
+        <a name="line598" />
+        <pre> 599  |Assets:Current:Cash</pre>
+        <a name="line599" />
+        <pre> 600  |</pre>
+        <a name="line600" />
+        <pre> 601  |2008-02-24 * AMC | movies with girlfriend</pre>
+        <a name="line601" />
+        <pre> 602  |Expenses:Fun:Movie           24 USD</pre>
+        <a name="line602" />
+        <pre> 603  |Assets:Current:Cash</pre>
+        <a name="line603" />
+        <pre> 604  |</pre>
+        <a name="line604" />
+        <pre> 605  |2008-03-06 * Barnes &amp; Noble | books on accounting</pre>
+        <a name="line605" />
+        <pre> 606  |Expenses:Books            74.43 USD</pre>
+        <a name="line606" />
+        <pre> 607  |Assets:Current:Cash      -74.43 USD</pre>
+        <a name="line607" />
+        <pre> 608  |</pre>
+        <a name="line608" />
+        <pre> 609  |2008-02-03 * ITHURTS MEDICAL CENT | x-ray for broken bones</pre>
+        <a name="line609" />
+        <pre> 610  |Expenses:Medical           312.00 USD</pre>
+        <a name="line610" />
+        <pre> 611  |Assets:Current:Cash</pre>
+        <a name="line611" />
+        <pre> 612  |</pre>
+        <a name="line612" />
+        <pre> 613  |2008-03-02 * ZEN CENTER | Donation to Zen center</pre>
+        <a name="line613" />
+        <pre> 614  |Expenses:Charity        50 USD</pre>
+        <a name="line614" />
+        <pre> 615  |Assets:Current:Cash</pre>
+        <a name="line615" />
+        <pre> 616  |</pre>
+        <a name="line616" />
+        <pre> 617  |</pre>
+        <a name="line617" />
+        <pre> 618  |</pre>
+        <a name="line618" />
+        <pre> 619  |</pre>
+        <a name="line619" />
+        <pre> 620  |@check 2008-03-01  Assets:Current:Cash                          200 CAD</pre>
+        <a name="line620" />
+        <pre> 621  |@check 2008-03-01  Assets:Current:Cash                          30.96 USD</pre>
+        <a name="line621" />
+        <pre> 622  |</pre>
+        <a name="line622" />
+        <pre> 623  |</pre>
+        <a name="line623" />
+        <pre> 624  |</pre>
+        <a name="line624" />
+        <pre> 625  |</pre>
+        <a name="line625" />
+        <pre> 626  |</pre>
+        <a name="line626" />
+        <pre> 627  |</pre>
+        <a name="line627" />
+        <pre> 628  |</pre>
+        <a name="line628" />
+      </div>
+    </div>
+  </body>
+</html>
