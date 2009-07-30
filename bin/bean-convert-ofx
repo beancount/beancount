@@ -58,12 +58,15 @@ class OFXTransaction(object):
     memo = None
     checknum = None
 
-    # A wallet with the amount of the transaction.
+    # Wallet with the amount of the transaction, and the other side (if available).
     amount = None
+    amount_other = None
 
     def initialize(self, currency):
         if self.dtposted:
             self.dtposted = ofx_parse_time(self.dtposted).date()
+        if self.memo is not None and re.match('[0-9.]+ [A-Z]{3} @ [0-9.]+', self.memo):
+            self.amount_other, self.memo = self.memo, None
         self.description = u' -- '.join(filter(None, [self.name, self.memo]))
         self.amount = Wallet(currency, Decimal(self.trnamt))
 
@@ -189,6 +192,8 @@ def main():
 
                 print str(t)
                 print '  %-60s %s' % (account.fullname, t.amount)
+                if t.amount_other is not None:
+                    print '  %-60s %s %s' % ('?', t.amount_other, ofxacc.currency)
 
                 # Look for potential matches in the ledger file.
                 date_ = t.dtposted + datesearch_begin_offset
