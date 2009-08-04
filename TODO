@@ -14,6 +14,9 @@
 Beancount (Accounting)
 ======================
 
+  - Add a "reason" field for @location, and display as trips, with
+    some sort of meaning to them.
+
   - When using @@ the signs should match; warn if they don't
 
   - Postings that have a "!" flag should have at least their
