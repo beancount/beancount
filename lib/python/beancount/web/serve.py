@@ -133,7 +133,7 @@ class BeanServer(object):
                 return self.data
 
         except HttpRedirect, e:
-            location = e.message
+            location = str(e)
             start_response(e.status, [('Location', location)])
             return [str(e)]
 

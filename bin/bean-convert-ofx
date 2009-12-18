@@ -206,6 +206,8 @@ def main():
                 print
 
             print hdfmt % ('End', account.fullname, ofxacc.end)
+            if re.search('\\bCredit-Card:HSBC\\b', account.fullname):
+                ofxacc.bal_amount = -ofxacc.bal_amount
             print '@check %s %s     %s %s' % (
                 ofxacc.bal_time.date(), account.fullname, ofxacc.bal_amount, ofxacc.currency)
             print

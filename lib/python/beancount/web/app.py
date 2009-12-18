@@ -56,12 +56,14 @@ class Template(object):
         self.document = DIV(id='document')
 
         self.navigation = DIV(
-            UL(LI(A('Chart of Accounts', href=umap('@@ChartOfAccounts'))),
+            UL(
+               LI(A('Menu', href=umap('@@Menu'))),
+               LI(A('Chart of Accounts', href=umap('@@ChartOfAccounts'))),
                LI(A('Journals', href=umap('@@JournalIndex'))),
                LI(A('General Ledger', href=umap('@@LedgerGeneral'))),
-               LI(A('Begin', href=umap('@@BalanceSheetBegin')),
-                  ' ... Bal.Sheet ... ',
-                  A('End', href=umap('@@BalanceSheetEnd'))),
+               LI(A('Bal.Sheet Begin', href=umap('@@BalanceSheetBegin')),
+                  ' ... ',
+                  A('BalSheet End', href=umap('@@BalanceSheetEnd'))),
                LI(A('Income', href=umap('@@IncomeStatement'))),
                ## LI(A('CashFlow', href=umap('@@CashFlow'))),
                ## LI(A('Capital', href=umap('@@CapitalStatement'))),
@@ -186,6 +188,38 @@ def haccount(accname):
         CLASS='account')
     accspan.cache = 1
     return accspan
+
+
+def page__menu(app, ctx):
+    page = Template(ctx)
+
+    t1, t2 = TD(style='width: 50%'), TD(style='width: 50%')
+    table = TABLE(TBODY(TR(t1, t2), id='menu', style='width: 100%'))
+
+    t1.add(UL(
+               LI(A('Chart of Accounts', href=umap('@@ChartOfAccounts'))),
+               LI(A('Journals', href=umap('@@JournalIndex'))),
+               LI(A('General Ledger', href=umap('@@LedgerGeneral'))),
+               LI(A('Bal.Sheet Begin', href=umap('@@BalanceSheetBegin')),
+                  ' ... ',
+                  A('BalSheet End', href=umap('@@BalanceSheetEnd'))),
+               LI(A('Income', href=umap('@@IncomeStatement'))),
+        ))
+        
+    t2.add(UL(
+               ## LI(A('CashFlow', href=umap('@@CashFlow'))),
+               ## LI(A('Capital', href=umap('@@CapitalStatement'))),
+               LI(A('Positions', href=umap('@@Positions'))),
+               LI(A('Trades', href=umap('@@Trades'))),
+               LI(A('Payees', href=umap('@@Payees'))),
+               LI(A('Tags', href=umap('@@Tags'))),
+               ## LI(A('Activity', href=umap('@@Activity'))),
+               ## LI(A('Locations', href=umap('@@Locations'))),
+               LI(A('Other...', href=umap('@@Other'))),
+        ))
+
+    page.add(H1("Index"), table)
+    return page.render(app)
 
 
 def page__chartofaccounts(app, ctx):
@@ -1056,11 +1090,13 @@ def render_postings_table(postings, style,
 
 # Colors for the flag cell.
 flag_colors = {'!': '#F66',
+               '?': '#F66',
                '*': '#AFA',
                'A': '#AAF'}
 
 # Colors for the body of the check row in the register.
 check_colors = {'!': '#F66',
+                '?': '#F66',
                '*': '#AFA',
                'A': '#AFA'}
 
@@ -1379,8 +1415,9 @@ page_directory = (
     ('@@HeaderBackground', static("header-universal-dollar.jpg", 'image/jpeg'), '/header.jpg', None),
     ('@@ScrapeResources', page__scraperes, '/scraperes', None),
 
-    ('@@Home', redirect('@@ChartOfAccounts'), '/', None),
-    ('@@HomeIndex', redirect('@@ChartOfAccounts'), '/index', None),
+    ('@@Home', redirect('@@Menu'), '/', None),
+    ('@@HomeIndex', redirect('@@Menu'), '/index', None),
+    ('@@Menu', page__menu, '/menu', None),
 
     ('@@ChartOfAccounts', page__chartofaccounts, '/accounts', None),
     ('@@Other', page__other, '/other', None),

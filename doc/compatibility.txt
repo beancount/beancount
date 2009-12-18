@@ -1,0 +1,153 @@
+Date  	Fri, 13 Nov 2009 7:50 AM  ( 1 hour 7 mins ago )
+From  	"Fabrice Niessen" <fni@missioncriticalit.com>
+To  	"Martin Blais" <blais@furius.ca>
+Subject  	Re: Beancount... counts for me!
+
+Hi Martin,
+
+"Martin Blais" wrote:
+> "Fabrice Niessen" <fni@missioncriticalit.com> said:
+>>
+>> Would your commands be comments from Ledger's point of view (such as
+>> `;@check', `;@pad', and so on), I could use all of the tools floating
+>> around Ledger, including using the full power of beancount -- in particular
+>> the @check directive and the tags, which I feel very useful.
+>>
+>> It wouldn't change anything from your point of view, but would be a huge
+>> incentive for beancount's adoption by a lot of Ledger users. Forking from
+>> it makes the users have to make a "non return" choice, which I find just
+>> sad.
+>
+> I don't have enough time on my hands to make the changes you suggest.
+>
+> cat file.ledger | sed -e 's/@check/;@check/' | xargs bean-web
+
+Just to let you know, here is my current solution for still being able to use
+`ledger' / `hledger' / `beancount' with the same unique data file, such as:
+
+--8<---------------cut here---------------start------------->8---
+; m4
+ifelse(LEDGER,beancount,include(`accounts-decl.dat'))
+
+2007/12/19 Checking balance
+    Assets:Bank:Checking:123456099999    2700.00 EUR
+    Equity:Opening-Balances
+
+include(`123456099999.dat')
+
+2007/12/29 Checking balance
+    Assets:Bank:Savings:123456099998     9694.77 EUR
+    Equity:Opening-Balances
+
+include(`123456099998.dat')
+
+2007/12/04 Checking balance
+    Assets:Bank:Checking:97999799997    4861.68 EUR
+    Equity:Opening-Balances
+
+; m4
+include(`97999799997.dat')
+
+@check 2009/06/04 Assets:Bank:Savings:123456099998 420.00 EUR
+--8<---------------cut here---------------end--------------->8---
+
+where:
+
+- `123456099999.dat' (and the like) contains traditional `ledger'
+  transactions;
+- `accounts-decl.dat' contains beancount's declaration of accounts.
+
+I process this main file through `m4' first (allowing the inclusion of
+sub-files, which is very nice as I have one big file per bank account), and a
+couple of `sed' to adapt to the subtle differences between `beancount' and the
+others (removing the declarations of accounts and the `@' directives, as they
+don't understand that!):
+
+--8<---------------cut here---------------start------------->8---
+# lgl FILE COMMANDS -- Ledger using `ledger'
+function lgl ()
+{
+    LF_M4=$1; shift;
+    LF_TMP=/tmp/ledger.dat;
+    m4 $LF_M4 | sed -e 's/^@/;@/' > $LF_TMP && ledger -f $LF_TMP $@
+}
+
+# lgh FILE COMMANDS -- Ledger using `hledger'
+function lgh ()
+{
+    LF_M4=$1; shift;
+    LF_TMP=/tmp/ledger.dat;
+    m4 $LF_M4 | sed -e 's/^@/;@/' > $LF_TMP && hledger -f $LF_TMP $@
+}
+
+# lgb FILE -- Ledger using `beancount'
+function lgb ()
+{
+    m4 -D LEDGER=beancount $1 | sed -e 's/\(.*\)(\(.*\)) \(.*\)/\1\3 | \2/g' | bean-web -
+}
+--8<---------------cut here---------------end--------------->8---
+
+Would you see a smarter approach, I'm a taker!
+
+Best regards and thanks a lot for all your contributions...
+
+Fabrice
+
+PS- FYI, when clicking on my accounts' hyperlinks, I've got a Python error:
+
+--8<---------------cut here---------------start------------->8---
+<type 'exceptions.ValueError'>  Python 2.6.4: /usr/bin/python
+Fri Nov 13 13:41:19 2009
+
+A problem occurred in a Python script. Here is the sequence of function calls leading up to the error, in the order they occurred.
+ /usr/local/lib/python2.6/dist-packages/beancount/web/serve.py1 in __call__(self=<beancount.web.serve.BeanServer object at 0x88e6b2c>, environ={'COLORFGBG': '0;default;15', 'COLORTERM': 'rxvt-xpm', 'CONTENT_LENGTH': '', 'CONTENT_TYPE': 'text/plain', 'DBUS_SESSION_BUS_ADDRESS': 'unix:abstract=/tmp/dbus-7qE7aprveb,guid=c6fe4922eb3c354ffb5f21874afd22c4', 'DESKTOP_SESSION': 'stumpwm', 'DISPLAY': ':0.0', 'GATEWAY_INTERFACE': 'CGI/1.1', 'GDMSESSION': 'stumpwm', 'GDM_KEYBOARD_LAYOUT': 'gb', ...}, start_response=<bound method ServerHandler.start_response of <w...mple_server.ServerHandler instance at 0x8ae8b0c>>)
+  123                 ctx.__dict__.update(vardict)
+  124
+  125                 page(self, ctx)
+  126
+  127                 # Add session cookie to headers, if necessary.
+page = <function page__journal_account at 0x8a3d764>, self = <beancount.web.serve.BeanServer object at 0x88e6b2c>, ctx = <beancount.web.serve.Context object at 0x8a94d4c>
+ /usr/local/lib/python2.6/dist-packages/beancount/web/app.py2 in page__journal_account(app=<beancount.web.serve.BeanServer object at 0x88e6b2c>, ctx=<beancount.web.serve.Context object at 0x8a94d4c>)
+  843     except KeyError:
+  844         raise HttpNotFound(accname)
+  845     return render_journal(app, ctx, acc)
+  846
+  847
+global render_journal = <function render_journal at 0x8a3d79c>, app = <beancount.web.serve.BeanServer object at 0x88e6b2c>, ctx = <beancount.web.serve.Context object at 0x8a94d4c>, acc = <Account 'Assets:Bank:Savings:123456099998'>
+ /usr/local/lib/python2.6/dist-packages/beancount/web/app.py3 in render_journal(app=<beancount.web.serve.BeanServer object at 0x88e6b2c>, ctx=<beancount.web.serve.Context object at 0x8a94d4c>, acc=<Account 'Assets:Bank:Savings:123456099998'>, dates=None)
+  873         dfilter = None
+  874
+  875     table = render_postings_table(postings, style, dfilter, acc_checks)
+  876
+  877     if acc.isroot():
+table undefined, global render_postings_table = <function render_postings_table at 0x8a3d80c>, postings = set([ Assets:Bank:Savings:123456099998 9694.77 EUR, Assets:Bank:Savings:123456099998 -7694.77 EUR, Assets:Bank:Savings:123456099998 -1000.00 EUR, Assets:Bank:Savings:123456099998 -500.00 EUR, Assets:Bank:Savings:123456099998 -500.00 EUR, Assets:Bank:Savings:123456099998 54.93 EUR, ...]), style = 'full', dfilter = None, acc_checks = [Check(2009-06-04, <Account 'Assets:Bank:Savings:...99998'>, 420.00 EUR, EUR, -, 5512, *, 420.00 EUR)]
+ /usr/local/lib/python2.6/dist-packages/beancount/web/app.py4 in render_postings_table(postings=set([ Assets:Bank:Savings:123456099998 9694.77 EUR, Assets:Bank:Savings:123456099998 -7694.77 EUR, Assets:Bank:Savings:123456099998 -1000.00 EUR, Assets:Bank:Savings:123456099998 -500.00 EUR, Assets:Bank:Savings:123456099998 -500.00 EUR, Assets:Bank:Savings:123456099998 54.93 EUR, ...]), style='full', filterfun=None, acc_checks=[Check(2009-06-04, <Account 'Assets:Bank:Savings:...99998'>, 420.00 EUR, EUR, -, 5512, *, 420.00 EUR)], amount_overrides=None)
+ 1009
+ 1010         tr = TR(TD(txn.rdate()),
+ 1011                 TD(txn.flag, CLASS='flag', style=sty),
+ 1012                 TD(desc, CLASS='description'),
+ 1013                 TD(CLASS='wallet'),
+global TD = <class 'beancount.fallback.xmlout.td'>, txn = <beancount.ledger.Transaction object at 0x884a5ec>, txn.flag = None, CLASS undefined, style = 'full', sty = ''
+ /usr/local/lib/python2.6/dist-packages/beancount/fallback/xmlout.py5 in __init__(self=<Element 'td' at 8aefbec>, *children=(None,), **attribs={'class': 'flag', 'style': ''})
+   27         Element.__init__(self, self.__class__.__name__.lower(), attribs)
+   28
+   29         self.extend(children)
+   30
+   31     def add(self, *children):
+self = <Element 'td' at 8aefbec>, self.extend = <bound method td.extend of <Element 'td' at 8aefbec>>, children = (None,)
+ /usr/local/lib/python2.6/dist-packages/beancount/fallback/xmlout.py6 in extend(self=<Element 'td' at 8aefbec>, children=[None])
+   56
+   57                 else:
+   58                     raise ValueError("Invalid child type: %s" % type(child))
+   59
+   60             return child # Return the last child.
+builtin ValueError = <type 'exceptions.ValueError'>, builtin type = <type 'type'>, child = None
+
+<type 'exceptions.ValueError'>: Invalid child type: <type 'NoneType'>
+      args = ("Invalid child type: <type 'NoneType'>",)
+      message = "Invalid child type: <type 'NoneType'>"
+--8<---------------cut here---------------end--------------->8---
+
+Not sure to understand why... I thought it could be because the account name
+is only made of figures, but it doesn't seem to be the (only) explanation?
+

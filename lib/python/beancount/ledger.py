@@ -1418,7 +1418,7 @@ class Check(SimpleDummy):
         return cmp(self.cdate, other.cdate)
 
     def passed(self):
-        return self.flag != '!'   # '*' or 'A'
+        return self.flag != '!'
 
 
 class CheckDirective(object):

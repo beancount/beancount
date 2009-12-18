@@ -29,6 +29,11 @@ Beancount (Accounting)
 
   - beancount: look at booking warnings in blais.ledger.
 
+  - I'd love a way to filter down a journal by omitting all the small
+    items and keeping just the larger ones, to get an automatic
+    overview of the large amounts in a long series of transactions.
+    All the small amounts could be lumped together under a special
+    entry.
 
   - Add JavaScript menus in order to include everything from the
     top-level, so that it looks more like a real application, it'll
