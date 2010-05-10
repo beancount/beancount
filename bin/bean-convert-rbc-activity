@@ -24,7 +24,7 @@ from xml.sax.saxutils import unescape
 from pprint import pprint, pformat
 
 # other imports
-from BeautifulSoup import BeautifulSoup
+from BeautifulSoup import BeautifulSoup, Tag
 
 # beancount imports
 from beancount import cmdline
@@ -140,11 +140,9 @@ def parse_file(fn):
                          convertEntities=BeautifulSoup.HTML_ENTITIES)
     soup.prettify()
 
-    sare = re.compile('SelectedAccount=(\d+)')
-    mainform = soup.find('form', attrs={'name': "MainForm", 'action':sare})
-    mo = sare.search(mainform['action'])
-    assert mo
-    acctid = mo.group(1)
+    tr = soup.find('tr', id="selectControl")
+    td = tr.find('input', id="SelectedAccount")
+    acctid = td['value']
 
     # Find the header row (it's the only one).
     tr = soup.find('tr', 'dataTableHeaderRow')
@@ -162,28 +160,38 @@ def parse_file(fn):
         tr2 = tr.findNextSibling('tr')
         tr = tr2.findNextSibling('tr')
 
+        def findval(tr_, type_):
+            assert(tr_)
+            htype = "header_%s" % type_
+            v = tr_.find('th', headers=htype) or tr_.find('td', headers=htype)
+            ## print '-------', type_, v.contents
+            el = v.contents[0] if v.contents else ''
+            if isinstance(el, Tag):
+                el = el.contents[0] if el.contents else ''
+            r = unicode(el).strip()
+            return r
+
         # Parse the first row.
-        tdlist = tr1.findAll('td')
-        assert len(tdlist) == 2
-        date, symbol_desc = [clean_str(x.contents[0]) for x in tdlist]
+        date = findval(tr1, 'date')
+        symbol_desc = findval(tr1, 'symboldescription')
 
         # Parse the second row.
-        tdlist = tr2.findAll('td')
-        assert len(tdlist) == 8
-        e1, e2, action, quantity, price, amount, currency, settlement = [
-             clean_str(x.contents[0] if x.contents else '') for x in tdlist]
-        assert not e1
-        assert not e2
+        action = findval(tr2, 'action')
+        quantity = findval(tr2, 'quantity')
+        price = findval(tr2, 'price')
+        amount = findval(tr2, 'amount')
+        currency = findval(tr2, 'currency')
+        settlement = findval(tr2, 'settlement')
 
         # Convert to appropriate data types.
         date = parse_date(date)
         settlement = parse_date(settlement)
         if amount:
-            amount = tonum(amount)
+            amount = None if amount == 'Not applicable' else tonum(amount)
         if price:
-            price = tonum(price)
+            price = None if price == 'Not applicable' else tonum(price)
         if quantity:
-            quantity = tonum(quantity)
+            quantity = None if quantity == 'Not applicable' else tonum(quantity)
         symbol, description = [x.strip() for x in symbol_desc.split('-', 1)]
 
         mo = re.search('REINVEST @ \$(.*)', description)
@@ -195,6 +203,7 @@ def parse_file(fn):
                   currency, settlement, priority)
         postings.append(p)
         priority += 1
+
     return acctid, postings
 
 ## FIXME: What is the appropriate way to do this for all entities?
