@@ -44,51 +44,38 @@ def main():
         i = 0
         for x in rows:
             i += 1
-            date_ = parse_date(x.date)
+            date_ = parse_date(x['Date'])
 
-            isreceived = re.search('payment.*received', x.type, re.I)
-            isupdate = re.search('update', x.type, re.I)
+            email = x[' From Email Address']
+            if re.match('.*@furius.ca', email):
+                email = x[' To Email Address']
 
-            email = x.from_email_address if isreceived else x.to_email_address
-            description = ', '.join(filter(None, (x.type, x.item_title, x.transaction_id, x.name, email)))
+            name = x[' Name']
+            description = ', '.join(filter(None, (x[' Type'], x[' Item Title'], x[' Shipping Address'], x[' Transaction ID'], email)))
 
-            gross, net, fee = map(tonum, (x.gross, x.net, x.fee))
+            gross, net, fee = map(tonum, (x[' Gross'], x[' Net'], x[' Fee']))
 
-            if isreceived:
-                # Note: auto-clear those transactions.
-                print '%s * %s' % (date_, description)
-                print '  %-50s    %s %s' % (acc_sales, -gross, x.currency)
-                print '  %-50s    %s %s' % (acc_fee, -fee, x.currency)
-                print '  %-50s    %s %s' % (acc_deposit, net, x.currency)
-                print
-
-            elif isupdate:
-                # Note: auto-clear those transactions.
-                print ';;%s * %s' % (date_, description)
-                print ';;  %-50s    %s %s' % (acc_sales, -gross, x.currency)
-                print ';;  %-50s    %s %s' % (acc_fee, -fee, x.currency)
-                print ';;  %-50s    %s %s' % (acc_deposit, net, x.currency)
-                print
-
-            else:
-                print '%s ! %s' % (date_, description)
-                print '  %-50s    %s %s' % (acc_unknown, -gross, x.currency)
-                if fee != 0:
-                    print '  %-50s    %s %s' % (acc_fee, -fee, x.currency)
-                print '  %-50s    %s %s' % (acc_deposit, net, x.currency)
-                print
+            print '%s ! %s | 1.04848484848%s' % (date_, name, description)
+            print '  %-50s    %s %s' % (acc_unknown, -gross, x[' Currency'])
+            if fee != 0:
+                print '  %-50s    %s %s' % (acc_fee, -fee, x[' Currency'])
+            print '  %-50s    %s %s' % (acc_deposit, net, x[' Currency'])
+            print
 
             ## if i % 5 == 0:
             ##     balance = tonum(x.balance)
-            ##     print '@check %s  %-50s  %s %s' % (date_, acc_deposit, balance, x.currency)
+            ##     print '@check %s  %-50s  %s %s' % (date_, acc_deposit, balance, x[' Currency'])
             ##     print
 
-        balance = tonum(x.balance)
-        print '@check %s  %-50s  %s %s' % (date_, acc_deposit, balance, x.currency)
+        balance = tonum(x[' Balance'])
+        print '@check %s  %-50s  %s %s' % (date_, acc_deposit, balance, x[' Currency'])
 
 
 def tonum(x):
-    return Decimal(x.strip().replace(',', ''))
+    n = x.strip().replace(',', '')
+    if not n:
+        n = '0'
+    return Decimal(n)
 
 def parse_csv_file(fn):
     """
@@ -96,19 +83,8 @@ def parse_csv_file(fn):
     We assume that the first row is a title row.
     """
     import csv
-    reader = csv.reader(open(fn, "rb"))
-    ireader = iter(reader)
-
-    cols = []
-    dummycount = count().next
-    for x in ireader.next():
-        cx = x.strip().lower().replace(' ', '_')
-        if not cx:
-            cx = 'dummy_%d' % dummycount()
-        cols.append(cx)
-
-    Row = namedtuple('Row', cols)
-    return (Row(*x) for x in ireader)
+    f = open(fn, "rb")
+    return csv.DictReader(f)
 
 
 if __name__ == '__main__':
