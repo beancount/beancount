@@ -265,8 +265,8 @@ class Wallet(dict):
         in this wallet. (This is used for fiddling, as a really gross and
         inaccurate approximation of total amount.)"""
         return sum(self.itervalues())
-        
-        
+
+
 
 
 
