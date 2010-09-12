@@ -63,6 +63,7 @@ input format, and other formats (easily extensible).
                   'beancount.fallback',
                   'beancount.fallback.elementtree',
                   ],
+      package_data = {'beancount.web': ['*jpg', '*png', 'robots.txt', 'treetable.js', 'style.css']},
       scripts=scripts
      )
 
