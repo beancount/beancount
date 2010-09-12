@@ -448,7 +448,7 @@ def page__balancesheet_end(app, ctx):
 
     total = a_total + l_total + e_total
     page.add(BR(style="clear: both"),
-             TABLE( TR(TD(B("A + L + E:")), TD(hwallet(total))),
+             TABLE( TR(TD(B("A + L + E =")), TD(hwallet(total))),
                     id='net', CLASS='treetable') )
 
     return page.render(app)
@@ -508,11 +508,9 @@ def page__income(app, ctx):
                  CLASS='left'),
              )
 
-    net = TABLE(id='net', CLASS='treetable')
-    net.add(
-        TR(TD("Net Difference:"), TD(hwallet(i_total + e_total))))
     page.add(BR(style="clear: both"),
-             H2("Net Difference (Expenses + Income)"), net)
+             TABLE( TR(TD(B("I + X = ")), TD(hwallet(i_total + e_total))),
+                    id='net', CLASS='treetable') )
 
     return page.render(app)
 
