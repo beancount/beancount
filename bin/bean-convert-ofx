@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 """
+Usage:   bean-convert-ofx [LEDGER] [OFX-FILE]
+
 Read an OFX file and output its entries as Ledger syntax.
 
 This program also reads a mapping from account id to account name, from the
