@@ -14,6 +14,9 @@
 Beancount (Accounting)
 ======================
 
+  - Allow entering "Comment" fields that show up in a specific
+    account's log!!
+
   - Add a "reason" field for @location, and display as trips, with
     some sort of meaning to them.
 
