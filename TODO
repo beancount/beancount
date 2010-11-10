@@ -14,6 +14,9 @@
 Beancount (Accounting)
 ======================
 
+  - A text rendering of the balance sheet / income statement would be
+    _very_ useful for collaboration/communication with others.
+
   - Allow entering "Comment" fields that show up in a specific
     account's log!!
 
