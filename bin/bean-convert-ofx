@@ -21,6 +21,7 @@ import os, re, logging
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 from collections import defaultdict
+from operator import attrgetter
 from os.path import *
 from xml.sax.saxutils import unescape
 
@@ -145,6 +146,12 @@ def find_account(st):
 def main():
     import optparse
     parser = optparse.OptionParser(__doc__.strip())
+
+    parser.add_option('-I', '--invert', action='store_true',
+                      help=("Invert the transaction amount and accounts. "
+                            "(This is used for splitting out the balance "
+                            "between many accounts.)"))
+
     opts, ledger, args = cmdline.main(parser, 1)
 
     if not args:
@@ -185,7 +192,7 @@ def main():
             hdfmt = '; %s import  %s  %s'
             print hdfmt % ('Start', account.fullname, ofxacc.start)
             print
-            for t in ofxacc.transactions:
+            for t in sorted(ofxacc.transactions, key=attrgetter('dtposted')):
 
                 # Skip entries between the largest valid check interval.
                 if (check_min is not None and check_min < t.dtposted < check_max):
@@ -193,10 +200,17 @@ def main():
                     continue
 
                 print str(t)
-                print '  %-60s %s' % (account.fullname, t.amount)
-                if t.amount_other is not None:
-                    print '  %-60s %s %s' % ('?', t.amount_other, ofxacc.currency)
-
+                if not opts.invert:
+                    print '  %-60s %s' % (account.fullname, t.amount)
+                    if t.amount_other is not None:
+                        print '  %-60s %s %s' % ('?', t.amount_other, ofxacc.currency)
+                else:
+                    print '  %-60s %s' % ('?', -(t.amount))
+                    if t.amount_other:
+                        print '  %-60s %s %s' % (account.fullname, t.amount_other, ofxacc.currency)
+                    else:
+                        print '  %-60s' % (account.fullname,)
+                    
                 # Look for potential matches in the ledger file.
                 date_ = t.dtposted + datesearch_begin_offset
                 date_end = t.dtposted + datesearch_end_offset
