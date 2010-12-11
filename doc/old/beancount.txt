@@ -5,7 +5,8 @@
 :Date: 2008-03-29
 :Abstract:
 
-  Simple design for a double-entry accounting system.
+  Simple design for a double-entry accounting system, using an SQL
+  database as a backend.
 
 .. contents::
 ..
