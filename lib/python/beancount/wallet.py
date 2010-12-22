@@ -61,7 +61,7 @@ class Wallet(dict):
             (com, amt) for com, amt in self.iteritems() if com in other)
 
     def mask_commodity(self, com):
-        "Return this wallet with only its given commodity."
+        "Return this wallet with only the given commodity."
         w = Wallet()
         num = self.get(com, None)
         if num is not None:
