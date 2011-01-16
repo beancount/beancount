@@ -1,11 +1,10 @@
-;;/usr/bin/env emacs
+;; -*- mode: emacs-lisp -*-
 ;;
 ;; Emacs setup for Ledger.
 ;;
 
 ;; Add the emacs path.
-(add-to-list 'load-path
-	     (concat project-dir "/lib/emacs"))
+(add-to-list 'load-path (concat project-current "/lib/emacs"))
 
 (require 'ledger)
 (require 'ledger-plus)
