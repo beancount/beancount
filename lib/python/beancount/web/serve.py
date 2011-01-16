@@ -8,6 +8,7 @@ powerful: as simple as possible.
 
 # stdlib imports
 import sys, re, cgitb, logging, cgi, traceback
+from time import time
 from random import randint
 from wsgiref.simple_server import make_server
 from wsgiref.util import request_uri, application_uri
@@ -20,6 +21,7 @@ import Cookie
 
 # beancount imports
 from beancount import cmdline
+from beancount.utils import TimerUtil
 
 
 __all__ = ('main', 'Mapper',
@@ -227,7 +229,9 @@ def main():
                       "displaying them. The option's format should like "
                       "this: '1 EUR = 1.28 USD'.")
 
+    t = TimerUtil('main')
     opts, ledger, args = cmdline.main(parser)
+    t('load_ledger')
 
     # Parse the specified conversions.
     opts.conversions = []
@@ -245,6 +249,9 @@ def main():
     app = BeanServer(ledger, opts)
     httpd = make_server('', opts.port, app)
     sa = httpd.socket.getsockname()
+    t('make_server')
+    print t
+
     print ("Ready. ( http://%s:%s )" % (sa[0], sa[1]))
     try:
         while 1:

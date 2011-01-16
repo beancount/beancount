@@ -3,7 +3,9 @@ Generic utilities.
 """
 
 # stdlib imports
-import operator
+import sys, operator
+from time import time
+from StringIO import StringIO
 from itertools import count, izip, chain, repeat
 
 __all__ = ('render_tree', 'itertree', 'SimpleDummy')
@@ -136,3 +138,44 @@ class SimpleDummy(object):
         return tuple(getattr(self, a) for a in self.attrs)
 
 
+
+
+class TimerUtil:
+    "A convenience utility for breaking down time taken in functions."
+
+    class Step:
+        def __init__(self, name):
+            self.name = name
+            self.tfirst = time()
+            self.dt = 0
+
+    def __init__(self, timername):
+        self.name = timername
+        self.tstart = self.tlast = time()
+        self.steps = {}
+        self.printed = False
+
+    def __call__(self, stepname):
+        try:
+            step = self.steps[stepname]
+        except KeyError:
+            step = self.steps[stepname] = TimerUtil.Step(stepname)
+        t = time()
+        step.dt += t - self.tlast
+        self.tlast = t
+
+    def __str__(self):
+        s = StringIO()
+        steps = sorted(self.steps.values(), key=(lambda s: s.tfirst))
+        dtotal = self.tlast - self.tstart
+        s.write("\n")
+        for step in steps:
+            s.write("%s | %s : %.2f  (%.1f%%)\n" % (self.name, step.name, step.dt, step.dt*100/dtotal))
+        s.write("%s: %.2f\n" % (self.name, dtotal))
+        s.write("\n")
+        self.printed = True
+        return s.getvalue()
+
+    def __del__(self):
+        if not self.printed:
+            sys.stdout.write(str(self))

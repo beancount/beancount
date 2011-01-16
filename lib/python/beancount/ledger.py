@@ -18,7 +18,7 @@ from collections import defaultdict
 
 # beancount imports
 from beancount.wallet import Wallet
-from beancount.utils import SimpleDummy, iter_pairs
+from beancount.utils import SimpleDummy, iter_pairs, TimerUtil
 from beancount.inventory import FIFOInventory
 
 # fallback imports
@@ -1212,12 +1212,15 @@ class Ledger(object):
 
         directives = sorted(self.directives.itervalues(),
                             key=attrgetter('prio'))
+        t = TimerUtil('run_directives')
         for direct in directives:
             direct.apply()
+            t(direct.name)
 
         # We need to re-sort the postings because the directives may have added
         # some out-of-order postings.
         self.build_postings_lists()
+        t('build_postings_lists')
 
 
 
@@ -1456,9 +1459,12 @@ class CheckDirective(object):
     def apply(self):
         ledger = self.ledger
 
+        t = TimerUtil('check.apply')
+
         for acc in ledger.accounts.itervalues():
             acc.checked = False
             acc.check_min = acc.check_max = None
+        t('reset_values')
 
         for chk in self.checks:
             cdate = chk.cdate
@@ -1466,15 +1472,21 @@ class CheckDirective(object):
             expected = chk.expected
 
             acc.checked = True
+            t('init')
 
             balance = Wallet()
             for post in acc.subpostings():
-                if post.actual_date <= cdate:  ## Note: shouldn't this be "<" ?
+                # Note: depending on whether we consider a check time to be at
+                # the beginning or the end of the day of the check, this may be
+                # < or <=.
+                if post.actual_date <= cdate:
                     balance += post.amount
+            t('acc')
 
             # Remove the amounts that we're not supposed to be checking from the
             # actual balance.
             balance = balance.mask_commodity(chk.commodity)
+            t('mask')
 
             if chk.flag is None:
                 chk.flag = '*' if (balance == expected) else '!'
@@ -1493,10 +1505,12 @@ class CheckDirective(object):
                             "  Got:       %s\n"
                             "  Diff: %s\n") %
                            (cdate, acc.fullname, se, sb, diff), chk)
+            t('earn')
 
             # Update ranges (no matter what).
             acc.check_min = min(acc.check_min, cdate) if acc.check_min else cdate
             acc.check_max = max(acc.check_max, cdate) if acc.check_max else cdate
+            t('update')
 
     def account_checks(self, acc):
         "Return the list of checks for the given account."
