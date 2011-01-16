@@ -5,13 +5,16 @@ Wallet arithmetic.
 # stdlib imports
 from decimal import Decimal
 
+# beancount imports
+from beancount.utils import TimerUtil
+
 __all__ = ('Wallet',)
 
 
 
 class Wallet(dict):
     """
-    A mapping of currency to amount. The basic operators are suppored.
+    A mapping of currency to amount. The basic operators are supported.
     """
 
     # A dict of commodity -> Decimal to determine the default precision for

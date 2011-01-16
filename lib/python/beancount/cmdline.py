@@ -4,6 +4,7 @@ Common cmdline interface for ledger scripts.
 
 # stdlib imports
 import sys, os, logging, optparse, re, codecs
+from time import time
 from datetime import date
 import cPickle as pickle
 from os.path import exists, getmtime
@@ -16,6 +17,7 @@ from beancount.ledger import Ledger
 from beancount.timeparse import parse_time, parse_one_time
 from beancount import install_psyco
 from beancount import assetdef
+from beancount.utils import TimerUtil
 
 
 MANY=-1
@@ -91,6 +93,8 @@ def main(parser, no=MANY):
 
 def load_ledger(parser, filenames, opts):
     # logging.info("Parsing Ledger source file: %s" % fn)
+    t = TimerUtil('load_ledger')
+
     ledger = Ledger()
     for fn in filenames:
         if fn == '-':
@@ -101,8 +105,10 @@ def load_ledger(parser, filenames, opts):
             Reader = codecs.getreader(opts.encoding)
             f = Reader(f)
         ledger.parse_file(f, fn, opts.encoding)
+    t('parse_file')
 
     run_postprocesses(ledger, opts)
+    t('run_postprocesses')
 
     return ledger
 
@@ -125,18 +131,22 @@ def reload(ledger, opts):
     return ledger2
 
 def run_postprocesses(ledger, opts):
+    t = TimerUtil('run_postprocesses')
     ledger.run_directives()
+    t('run_directives')
 
     if hasattr(opts, 'begin') and opts.begin:
         ledger.close_books(opts.begin)
+    t('close_books')
 
     filter_opts = 'account', 'transaction_account', 'note', 'begin', 'end', 'tag'
-
     if all(hasattr(opts, x) for x in filter_opts):
         pred = create_filter_pred(opts)
         ledger.filter_postings(pred)
+    t('filter_postings')
 
     ledger.compute_balsheet('total')
+    t('compute_balsheet')
 
 
 

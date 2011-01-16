@@ -14,6 +14,16 @@
 Beancount (Accounting)
 ======================
 
+  - Optimize: rewrite 'wallet' in C. __iadd__ is where all the time is
+    being spent.
+
+  - Awesome idea!!! Specify a single account, and automatically select
+    all the other accounts which are linked by any transaction in this
+    account; generate a balance sheet from this list of accounts. e.g.
+    Expenses:Trading, Income:PnL, Assets:Trading.
+
+  - It would be really nice to render the line numbers in the HTML
+
   - A text rendering of the balance sheet / income statement would be
     _very_ useful for collaboration/communication with others.
 
