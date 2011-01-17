@@ -3,16 +3,16 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<meta name="generator" content="Docutils 0.4.1: http://docutils.sourceforge.net/" />
+<meta name="generator" content="Docutils 0.6: http://docutils.sourceforge.net/" />
 <title>Writing Ledger in Python</title>
 <meta name="author" content="Martin Blais &lt;blais&#64;furius.ca&gt;" />
-<link rel="stylesheet" href="../style.css" type="text/css" />
+<link rel="stylesheet" href="../../style.css" type="text/css" />
 </head>
 <body>
 
 <div id="project-header">
   <a href="/"><img src="/home/furius-logo-w.png" id="logo"></a>
-  <div id="project-home"><a href="..">Project Home</a></div>
+  <div id="project-home"><a href="../..">Project Home</a></div>
 </div>
 
 <div class="document" id="writing-ledger-in-python">
@@ -22,67 +22,67 @@
 <col class="docinfo-content" />
 <tbody valign="top">
 <tr><th class="docinfo-name">Author:</th>
-<td>Martin Blais &lt;<a class="reference" href="mailto:blais&#64;furius.ca">blais&#64;furius.ca</a>&gt;</td></tr>
+<td>Martin Blais &lt;<a class="reference external" href="mailto:blais&#64;furius.ca">blais&#64;furius.ca</a>&gt;</td></tr>
 </tbody>
 </table>
-<div class="contents topic">
-<p class="topic-title first"><a id="contents" name="contents">Contents</a></p>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
 <ul class="simple">
-<li><a class="reference" href="#why-i-m-rewriting-ledger" id="id1" name="id1">Why I'm Rewriting Ledger</a></li>
-<li><a class="reference" href="#re-implementation-of-ledger-todo" id="id2" name="id2">([Re-)Implementation of Ledger / TODO</a><ul>
-<li><a class="reference" href="#ideas-for-reconciliation" id="id3" name="id3">Ideas for Reconciliation</a><ul>
-<li><a class="reference" href="#implementation-details" id="id4" name="id4">Implementation details</a></li>
+<li><a class="reference internal" href="#why-i-m-rewriting-ledger" id="id1">Why I'm Rewriting Ledger</a></li>
+<li><a class="reference internal" href="#re-implementation-of-ledger-todo" id="id2">([Re-)Implementation of Ledger / TODO</a><ul>
+<li><a class="reference internal" href="#ideas-for-reconciliation" id="id3">Ideas for Reconciliation</a><ul>
+<li><a class="reference internal" href="#implementation-details" id="id4">Implementation details</a></li>
 </ul>
 </li>
-<li><a class="reference" href="#testing" id="id5" name="id5">Testing</a></li>
-<li><a class="reference" href="#proposal-for-new-directives" id="id6" name="id6">Proposal for New Directives</a><ul>
-<li><a class="reference" href="#account-declarations" id="id7" name="id7">Account Declarations</a></li>
-<li><a class="reference" href="#account-number-mapping" id="id8" name="id8">Account number mapping</a></li>
-<li><a class="reference" href="#check-feature" id="id9" name="id9">&quot;Check&quot; feature</a></li>
-<li><a class="reference" href="#marking-for-reconciliation" id="id10" name="id10">Marking for reconciliation</a></li>
-<li><a class="reference" href="#one-over-syntax" id="id11" name="id11">One-over syntax</a></li>
-<li><a class="reference" href="#support-for-merging" id="id12" name="id12">Support for Merging</a></li>
-<li><a class="reference" href="#pages" id="id13" name="id13">Pages</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference" href="#report-generation" id="id14" name="id14">Report generation</a><ul>
-<li><a class="reference" href="#mini-language-aspects" id="id15" name="id15">Mini-language / Aspects</a></li>
-</ul>
-</li>
-<li><a class="reference" href="#experiences-using-other-softwares" id="id16" name="id16">Experiences Using Other Softwares</a><ul>
-<li><a class="reference" href="#gnucash-problems" id="id17" name="id17">GnuCash Problems</a></li>
-<li><a class="reference" href="#fivedash-problems" id="id18" name="id18">FiveDash Problems</a></li>
-<li><a class="reference" href="#ledger" id="id19" name="id19">Ledger</a><ul>
-<li><a class="reference" href="#questions-answered" id="id20" name="id20">Questions Answered</a><ul>
-<li><a class="reference" href="#actual-dates-vs-effective-dates" id="id21" name="id21">Actual dates vs Effective Dates</a></li>
-<li><a class="reference" href="#actual-dates-and-money-in-transit" id="id22" name="id22">Actual dates and &quot;money in transit&quot;</a></li>
-<li><a class="reference" href="#default-account-feature" id="id23" name="id23">Default account feature</a></li>
-<li><a class="reference" href="#per-transaction-pending-state" id="id24" name="id24">Per-Transaction Pending state</a></li>
-<li><a class="reference" href="#q-periods-don-t-work" id="id25" name="id25">Q: Periods don't work</a></li>
-<li><a class="reference" href="#how-do-you-reset-the-default-account-feature" id="id26" name="id26">How do you reset the &quot;default account&quot; feature?</a></li>
-<li><a class="reference" href="#currency-and-prices" id="id27" name="id27">Currency and prices</a></li>
-<li><a class="reference" href="#slash-date-format" id="id28" name="id28">Slash date format</a></li>
-<li><a class="reference" href="#real-vs-virtual-transactions" id="id29" name="id29">Real vs virtual transactions</a></li>
-<li><a class="reference" href="#coherent-ordering" id="id30" name="id30">Coherent Ordering</a></li>
-<li><a class="reference" href="#syntax-for-comments-vs-notes" id="id31" name="id31">Syntax for comments vs. notes</a></li>
-<li><a class="reference" href="#placing-many-entries-together" id="id32" name="id32">Placing many entries together</a></li>
-<li><a class="reference" href="#q-generating-reports-with-debit-credit-columns" id="id33" name="id33">Q: Generating reports with debit/credit columns</a></li>
-</ul>
-</li>
-<li><a class="reference" href="#questions-pending" id="id34" name="id34">Questions Pending</a></li>
-<li><a class="reference" href="#about-reports" id="id35" name="id35">About reports</a></li>
-<li><a class="reference" href="#about-emacs-support" id="id36" name="id36">About Emacs Support</a></li>
+<li><a class="reference internal" href="#testing" id="id5">Testing</a></li>
+<li><a class="reference internal" href="#proposal-for-new-directives" id="id6">Proposal for New Directives</a><ul>
+<li><a class="reference internal" href="#account-declarations" id="id7">Account Declarations</a></li>
+<li><a class="reference internal" href="#account-number-mapping" id="id8">Account number mapping</a></li>
+<li><a class="reference internal" href="#check-feature" id="id9">&quot;Check&quot; feature</a></li>
+<li><a class="reference internal" href="#marking-for-reconciliation" id="id10">Marking for reconciliation</a></li>
+<li><a class="reference internal" href="#one-over-syntax" id="id11">One-over syntax</a></li>
+<li><a class="reference internal" href="#support-for-merging" id="id12">Support for Merging</a></li>
+<li><a class="reference internal" href="#pages" id="id13">Pages</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference" href="#phone-conversation" id="id37" name="id37">Phone conversation</a></li>
-<li><a class="reference" href="#implementation-suggestions" id="id38" name="id38">Implementation Suggestions</a></li>
-<li><a class="reference" href="#python-as-input-syntax" id="id39" name="id39">Python as input syntax</a></li>
-<li><a class="reference" href="#balance-checks-may-be-optional" id="id40" name="id40">Balance checks may be optional</a></li>
-<li><a class="reference" href="#terminology" id="id41" name="id41">Terminology</a></li>
+<li><a class="reference internal" href="#report-generation" id="id14">Report generation</a><ul>
+<li><a class="reference internal" href="#mini-language-aspects" id="id15">Mini-language / Aspects</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#experiences-using-other-softwares" id="id16">Experiences Using Other Softwares</a><ul>
+<li><a class="reference internal" href="#gnucash-problems" id="id17">GnuCash Problems</a></li>
+<li><a class="reference internal" href="#fivedash-problems" id="id18">FiveDash Problems</a></li>
+<li><a class="reference internal" href="#ledger" id="id19">Ledger</a><ul>
+<li><a class="reference internal" href="#questions-answered" id="id20">Questions Answered</a><ul>
+<li><a class="reference internal" href="#actual-dates-vs-effective-dates" id="id21">Actual dates vs Effective Dates</a></li>
+<li><a class="reference internal" href="#actual-dates-and-money-in-transit" id="id22">Actual dates and &quot;money in transit&quot;</a></li>
+<li><a class="reference internal" href="#default-account-feature" id="id23">Default account feature</a></li>
+<li><a class="reference internal" href="#per-transaction-pending-state" id="id24">Per-Transaction Pending state</a></li>
+<li><a class="reference internal" href="#q-periods-don-t-work" id="id25">Q: Periods don't work</a></li>
+<li><a class="reference internal" href="#how-do-you-reset-the-default-account-feature" id="id26">How do you reset the &quot;default account&quot; feature?</a></li>
+<li><a class="reference internal" href="#currency-and-prices" id="id27">Currency and prices</a></li>
+<li><a class="reference internal" href="#slash-date-format" id="id28">Slash date format</a></li>
+<li><a class="reference internal" href="#real-vs-virtual-transactions" id="id29">Real vs virtual transactions</a></li>
+<li><a class="reference internal" href="#coherent-ordering" id="id30">Coherent Ordering</a></li>
+<li><a class="reference internal" href="#syntax-for-comments-vs-notes" id="id31">Syntax for comments vs. notes</a></li>
+<li><a class="reference internal" href="#placing-many-entries-together" id="id32">Placing many entries together</a></li>
+<li><a class="reference internal" href="#q-generating-reports-with-debit-credit-columns" id="id33">Q: Generating reports with debit/credit columns</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#questions-pending" id="id34">Questions Pending</a></li>
+<li><a class="reference internal" href="#about-reports" id="id35">About reports</a></li>
+<li><a class="reference internal" href="#about-emacs-support" id="id36">About Emacs Support</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#phone-conversation" id="id37">Phone conversation</a></li>
+<li><a class="reference internal" href="#implementation-suggestions" id="id38">Implementation Suggestions</a></li>
+<li><a class="reference internal" href="#python-as-input-syntax" id="id39">Python as input syntax</a></li>
+<li><a class="reference internal" href="#balance-checks-may-be-optional" id="id40">Balance checks may be optional</a></li>
+<li><a class="reference internal" href="#terminology" id="id41">Terminology</a></li>
 </ul>
 </div>
 <!-- 1  Why I'm Rewriting Ledger
@@ -126,8 +126,8 @@
 7  Python as input syntax
 8  Balance checks may be optional
 9  Terminology -->
-<div class="section">
-<h1><a class="toc-backref" href="#id1" id="why-i-m-rewriting-ledger" name="why-i-m-rewriting-ledger">Why I'm Rewriting Ledger</a></h1>
+<div class="section" id="why-i-m-rewriting-ledger">
+<h1><a class="toc-backref" href="#id1">Why I'm Rewriting Ledger</a></h1>
 <p>IMHO 'Ledger' is slightly falling short in the following ways:</p>
 <ul>
 <li><p class="first">It is written as a single program of C++ code, which
@@ -191,18 +191,18 @@ and for small files it is fast enough.</p>
 </li>
 </ul>
 </div>
-<div class="section">
-<h1><a class="toc-backref" href="#id2" id="re-implementation-of-ledger-todo" name="re-implementation-of-ledger-todo">([Re-)Implementation of Ledger / TODO</a></h1>
-<div class="section">
-<h2><a class="toc-backref" href="#id3" id="ideas-for-reconciliation" name="ideas-for-reconciliation">Ideas for Reconciliation</a></h2>
+<div class="section" id="re-implementation-of-ledger-todo">
+<h1><a class="toc-backref" href="#id2">([Re-)Implementation of Ledger / TODO</a></h1>
+<div class="section" id="ideas-for-reconciliation">
+<h2><a class="toc-backref" href="#id3">Ideas for Reconciliation</a></h2>
 <ul class="simple">
 <li>How difficult would it be to make it possible to find two
 transactions with imbalances and the same dollar amount and to
 propose merges and to pair them up automatically? Not very. This
 could even be a cmdline tool working on a database.</li>
 </ul>
-<div class="section">
-<h3><a class="toc-backref" href="#id4" id="implementation-details" name="implementation-details">Implementation details</a></h3>
+<div class="section" id="implementation-details">
+<h3><a class="toc-backref" href="#id4">Implementation details</a></h3>
 <ul class="simple">
 <li>I want to talk about a Python version of the parser, which would be
 slow, but I have a way (that I used in Nabu) to do incremental
@@ -310,8 +310,8 @@ there.</p>
 </ul>
 </div>
 </div>
-<div class="section">
-<h2><a class="toc-backref" href="#id5" id="testing" name="testing">Testing</a></h2>
+<div class="section" id="testing">
+<h2><a class="toc-backref" href="#id5">Testing</a></h2>
 <p>About testing for speed:</p>
 <pre class="literal-block">
 (16:36:46) johnw: that results in about 400,000 transactions
@@ -320,13 +320,13 @@ there.</p>
 (16:37:09) blais: Jey, Haskell is a beautiful langauge for this kind of problem.
 </pre>
 </div>
-<div class="section">
-<h2><a class="toc-backref" href="#id6" id="proposal-for-new-directives" name="proposal-for-new-directives">Proposal for New Directives</a></h2>
+<div class="section" id="proposal-for-new-directives">
+<h2><a class="toc-backref" href="#id6">Proposal for New Directives</a></h2>
 <p>Some ideas that I will implement in my Python parser and which you may
 or may not find useful. I have implemented some of these as comments
 already. They are complementary to the existing functionality.</p>
-<div class="section">
-<h3><a class="toc-backref" href="#id7" id="account-declarations" name="account-declarations">Account Declarations</a></h3>
+<div class="section" id="account-declarations">
+<h3><a class="toc-backref" href="#id7">Account Declarations</a></h3>
 <p>Declaration of valid accounts:</p>
 <blockquote>
 <p>I'm afraid of mistyping the name of an account, or to accidentally
@@ -416,8 +416,8 @@ Account&quot;. I'd like to be able to see those in the final
 report. Maybe I can leave it out of the ledger format and
 just use a join to an anciliary table in my reporting code.</p>
 </div>
-<div class="section">
-<h3><a class="toc-backref" href="#id8" id="account-number-mapping" name="account-number-mapping">Account number mapping</a></h3>
+<div class="section" id="account-number-mapping">
+<h3><a class="toc-backref" href="#id8">Account number mapping</a></h3>
 <p>I wrote a script that converts an OFX file into Ledger
 syntax. I simply insert that file in my document in order to
 reconcile that account. The import script does need to be
@@ -431,8 +431,8 @@ the file, I added this directive:</p>
 ;M 3233762676464639        Liabilities:Credit-Card:RBC-VISA
 </pre>
 </div>
-<div class="section">
-<h3><a class="toc-backref" href="#id9" id="check-feature" name="check-feature">&quot;Check&quot; feature</a></h3>
+<div class="section" id="check-feature">
+<h3><a class="toc-backref" href="#id9">&quot;Check&quot; feature</a></h3>
 <p>Here is a cool idea: on my statements, I sometimes have precise
 amounts that each account should be at, for examnple, the statement
 will give me the &quot;Closing Balance&quot; amount.</p>
@@ -458,7 +458,7 @@ amounts returned at certain points in time.</p>
 <p>Threads:</p>
 <blockquote>
 <p>On Wed, 9 Apr 2008 00:15:30 -0400, &quot;John Wiegley&quot;
-&lt;<a class="reference" href="mailto:johnw&#64;newartisans.com">johnw&#64;newartisans.com</a>&gt; said:
+&lt;<a class="reference external" href="mailto:johnw&#64;newartisans.com">johnw&#64;newartisans.com</a>&gt; said:
 &gt; Thought you'd like to know that I implemented &#64;cleared today, and it
 &gt; works great.  I just need to think through what will happen for</p>
 <p>Awesome! You're a machine :-)</p>
@@ -502,8 +502,8 @@ and CAD?</p>
 <p>What do you think?</p>
 </blockquote>
 </div>
-<div class="section">
-<h3><a class="toc-backref" href="#id10" id="marking-for-reconciliation" name="marking-for-reconciliation">Marking for reconciliation</a></h3>
+<div class="section" id="marking-for-reconciliation">
+<h3><a class="toc-backref" href="#id10">Marking for reconciliation</a></h3>
 <p>I would like to be able to flag an account as having been reconciled
 up to a specific date. I would like for this to be recorded somehow,
 and to be able to query the system to find out what work I have to do
@@ -536,8 +536,8 @@ it's really easy to see that you forgot to update a specific account
 (I have so many accounts now, I get very confused; I like the computer
 to help out.)</p>
 </div>
-<div class="section">
-<h3><a class="toc-backref" href="#id11" id="one-over-syntax" name="one-over-syntax">One-over syntax</a></h3>
+<div class="section" id="one-over-syntax">
+<h3><a class="toc-backref" href="#id11">One-over syntax</a></h3>
 <p>Q: I'd like to be able to express exchange rates with the inverse
 rate, and for the computer to automatically take care of it, e.g.:</p>
 <pre class="literal-block">
@@ -550,13 +550,13 @@ rate, and for the computer to automatically take care of it, e.g.:</p>
 Assets:Investments:RBC-Broker:Account-CAD                               121.41 CAD &#64; 1/&#64; 0.96760 USD</blockquote>
 <p>You can do this with an expression.</p>
 </div>
-<div class="section">
-<h3><a class="toc-backref" href="#id12" id="support-for-merging" name="support-for-merging">Support for Merging</a></h3>
+<div class="section" id="support-for-merging">
+<h3><a class="toc-backref" href="#id12">Support for Merging</a></h3>
 <p>We should be able to associate an id with an OFX file, so that we can
 detect previously entered entries.</p>
 </div>
-<div class="section">
-<h3><a class="toc-backref" href="#id13" id="pages" name="pages">Pages</a></h3>
+<div class="section" id="pages">
+<h3><a class="toc-backref" href="#id13">Pages</a></h3>
 <p>Another way to associate a custag tag/field to entries is by virtue of
 their organisation in the file. We could tag a sequence of consecutive
 entries in a block, like this:</p>
@@ -581,10 +581,10 @@ accounts hierarchy to some extent.</p>
 </div>
 </div>
 </div>
-<div class="section">
-<h1><a class="toc-backref" href="#id14" id="report-generation" name="report-generation">Report generation</a></h1>
-<div class="section">
-<h2><a class="toc-backref" href="#id15" id="mini-language-aspects" name="mini-language-aspects">Mini-language / Aspects</a></h2>
+<div class="section" id="report-generation">
+<h1><a class="toc-backref" href="#id14">Report generation</a></h1>
+<div class="section" id="mini-language-aspects">
+<h2><a class="toc-backref" href="#id15">Mini-language / Aspects</a></h2>
 <p>from DATE    : specify the date range to filter transactions by
 to DATE</p>
 <p>maxlevel NO  : level to render down-to in the tree of accounts</p>
@@ -598,10 +598,10 @@ at the given dates of the transaction.</dd>
 </dl>
 </div>
 </div>
-<div class="section">
-<h1><a class="toc-backref" href="#id16" id="experiences-using-other-softwares" name="experiences-using-other-softwares">Experiences Using Other Softwares</a></h1>
-<div class="section">
-<h2><a class="toc-backref" href="#id17" id="gnucash-problems" name="gnucash-problems">GnuCash Problems</a></h2>
+<div class="section" id="experiences-using-other-softwares">
+<h1><a class="toc-backref" href="#id16">Experiences Using Other Softwares</a></h1>
+<div class="section" id="gnucash-problems">
+<h2><a class="toc-backref" href="#id17">GnuCash Problems</a></h2>
 <p>Note on my attempts at using GnuCash. Verdict: not ready for prime
 time.</p>
 <ul class="simple">
@@ -625,8 +625,8 @@ prevent duplicate transactions.</li>
 have to 1) fix one of the them, and then 2) delete the other.</li>
 </ul>
 </div>
-<div class="section">
-<h2><a class="toc-backref" href="#id18" id="fivedash-problems" name="fivedash-problems">FiveDash Problems</a></h2>
+<div class="section" id="fivedash-problems">
+<h2><a class="toc-backref" href="#id18">FiveDash Problems</a></h2>
 <p>[2008-04-02]</p>
 <p>I could not get it to work. The main page displays this:</p>
 <pre class="literal-block">
@@ -641,12 +641,12 @@ permission denied for schema system
 Continue
 </pre>
 </div>
-<div class="section">
-<h2><a class="toc-backref" href="#id19" id="ledger" name="ledger">Ledger</a></h2>
-<div class="section">
-<h3><a class="toc-backref" href="#id20" id="questions-answered" name="questions-answered">Questions Answered</a></h3>
-<div class="section">
-<h4><a class="toc-backref" href="#id21" id="actual-dates-vs-effective-dates" name="actual-dates-vs-effective-dates">Actual dates vs Effective Dates</a></h4>
+<div class="section" id="ledger">
+<h2><a class="toc-backref" href="#id19">Ledger</a></h2>
+<div class="section" id="questions-answered">
+<h3><a class="toc-backref" href="#id20">Questions Answered</a></h3>
+<div class="section" id="actual-dates-vs-effective-dates">
+<h4><a class="toc-backref" href="#id21">Actual dates vs Effective Dates</a></h4>
 <p>In &quot;2.7 File format&quot;, the part about per-unit transaction costs is
 impossible to understand:</p>
 <pre class="literal-block">
@@ -664,7 +664,7 @@ What is an &quot;effective&quot; date?
 How are they being used?</p>
 <p>(There is little or no mention of these concepts in the rest of the
 documentation.)</p>
-<p>Also, what does <tt class="docutils literal"><span class="pre">=EDATE</span></tt> refer to? There is no mention of it on the
+<p>Also, what does <tt class="docutils literal">=EDATE</tt> refer to? There is no mention of it on the
 page:</p>
 <pre class="literal-block">
 A line beginning with a number denotes an entry.  It may be
@@ -731,8 +731,8 @@ they, actual vs. effective dates?</p>
 </dl>
 </blockquote>
 </div>
-<div class="section">
-<h4><a class="toc-backref" href="#id22" id="actual-dates-and-money-in-transit" name="actual-dates-and-money-in-transit">Actual dates and &quot;money in transit&quot;</a></h4>
+<div class="section" id="actual-dates-and-money-in-transit">
+<h4><a class="toc-backref" href="#id22">Actual dates and &quot;money in transit&quot;</a></h4>
 <pre class="literal-block">
 (16:51:46) blais: now let's talk about the actual date.
 (16:52:06) blais: If you set an actual date for a transaction != than for its parent, don't you run the risk that the books be imbalance for a short period of time?
@@ -762,8 +762,8 @@ they, actual vs. effective dates?</p>
 (16:58:05) blais: ABout actual dates: IMHO we should never show a balance that uses &quot;actual dates&quot;. Balance views only make sense when both sides of every included entry are present.
 </pre>
 </div>
-<div class="section">
-<h4><a class="toc-backref" href="#id23" id="default-account-feature" name="default-account-feature">Default account feature</a></h4>
+<div class="section" id="default-account-feature">
+<h4><a class="toc-backref" href="#id23">Default account feature</a></h4>
 <p>The default account directive does not appear to be documented:</p>
 <pre class="literal-block">
 ; Default account for withdraw is cash account.
@@ -774,8 +774,8 @@ A Assets:Current:Cash
 This feature is not documented yet (2.6).
 </pre>
 </div>
-<div class="section">
-<h4><a class="toc-backref" href="#id24" id="per-transaction-pending-state" name="per-transaction-pending-state">Per-Transaction Pending state</a></h4>
+<div class="section" id="per-transaction-pending-state">
+<h4><a class="toc-backref" href="#id24">Per-Transaction Pending state</a></h4>
 <p>In the Emacs support file, there seems to be an hint that individual
 &quot;transactions&quot; (within entries) could be marked as pending. In fact,
 when I try this in a file, it doesn't barf:</p>
@@ -805,8 +805,8 @@ pending... is this a remnant from the past?</p>
 (17:06:38) blais:
 </pre>
 </div>
-<div class="section">
-<h4><a class="toc-backref" href="#id25" id="q-periods-don-t-work" name="q-periods-don-t-work">Q: Periods don't work</a></h4>
+<div class="section" id="q-periods-don-t-work">
+<h4><a class="toc-backref" href="#id25">Q: Periods don't work</a></h4>
 <p>Questions for John:</p>
 <pre class="literal-block">
 (18:08:59) blais: banane:~$ ledger-blais -E -s -b 2008/01/01 -e 2008/02/01 bal
@@ -831,8 +831,8 @@ CONFIRM() // More expansize than assert(), slower.
 VERIFY() // Much slower.
 </pre>
 </div>
-<div class="section">
-<h4><a class="toc-backref" href="#id26" id="how-do-you-reset-the-default-account-feature" name="how-do-you-reset-the-default-account-feature">How do you reset the &quot;default account&quot; feature?</a></h4>
+<div class="section" id="how-do-you-reset-the-default-account-feature">
+<h4><a class="toc-backref" href="#id26">How do you reset the &quot;default account&quot; feature?</a></h4>
 <p>You can't, right now, but ACK that this is a problem.</p>
 <pre class="literal-block">
 (17:07:37) blais: about the default account feature
@@ -854,8 +854,8 @@ VERIFY() // Much slower.
 (17:10:31) johnw: it's dangerous for entries to self-balance like that
 </pre>
 </div>
-<div class="section">
-<h4><a class="toc-backref" href="#id27" id="currency-and-prices" name="currency-and-prices">Currency and prices</a></h4>
+<div class="section" id="currency-and-prices">
+<h4><a class="toc-backref" href="#id27">Currency and prices</a></h4>
 <dl class="docutils">
 <dt>Q: How does currency and prices work?  &#64; &lt;PRICE&gt; syntax, what does it</dt>
 <dd>do exactly?</dd>
@@ -875,8 +875,8 @@ VERIFY() // Much slower.
 (17:25:19) johnw: end
 </pre>
 </div>
-<div class="section">
-<h4><a class="toc-backref" href="#id28" id="slash-date-format" name="slash-date-format">Slash date format</a></h4>
+<div class="section" id="slash-date-format">
+<h4><a class="toc-backref" href="#id28">Slash date format</a></h4>
 <ul class="simple">
 <li>Your date format is not ISO, why not use &quot;-&quot; instead of &quot;/&quot;? In any
 case, the parser could easily be modified to be able to support both
@@ -894,8 +894,8 @@ in Ledger. What's the story?</p>
 </dd>
 </dl>
 </div>
-<div class="section">
-<h4><a class="toc-backref" href="#id29" id="real-vs-virtual-transactions" name="real-vs-virtual-transactions">Real vs virtual transactions</a></h4>
+<div class="section" id="real-vs-virtual-transactions">
+<h4><a class="toc-backref" href="#id29">Real vs virtual transactions</a></h4>
 <p>Q: How are real vs. virtual transactions handled?</p>
 <pre class="literal-block">
 (17:36:30) johnw: --real strips virtuals, otherwise they are the same as real
@@ -908,8 +908,8 @@ in Ledger. What's the story?</p>
 (17:36:49) blais: cool.
 </pre>
 </div>
-<div class="section">
-<h4><a class="toc-backref" href="#id30" id="coherent-ordering" name="coherent-ordering">Coherent Ordering</a></h4>
+<div class="section" id="coherent-ordering">
+<h4><a class="toc-backref" href="#id30">Coherent Ordering</a></h4>
 <p>When we parse the file, we should keep some sort of ordering integer
 so that the order that appears in the file is the same order that
 appears when we list the register. This is just for coherence, while
@@ -917,13 +917,13 @@ comparing statements.</p>
 <blockquote>
 2.6 does this, apparently.</blockquote>
 </div>
-<div class="section">
-<h4><a class="toc-backref" href="#id31" id="syntax-for-comments-vs-notes" name="syntax-for-comments-vs-notes">Syntax for comments vs. notes</a></h4>
+<div class="section" id="syntax-for-comments-vs-notes">
+<h4><a class="toc-backref" href="#id31">Syntax for comments vs. notes</a></h4>
 <p>The syntax for comments should be distinct from the syntax for notes,
 using ; for both is misleading.</p>
 </div>
-<div class="section">
-<h4><a class="toc-backref" href="#id32" id="placing-many-entries-together" name="placing-many-entries-together">Placing many entries together</a></h4>
+<div class="section" id="placing-many-entries-together">
+<h4><a class="toc-backref" href="#id32">Placing many entries together</a></h4>
 <p>Adding in these entries like this works fine:</p>
 <pre class="literal-block">
 2007/12/31 * Cost basis.
@@ -946,8 +946,8 @@ using ; for both is misleading.</p>
 <blockquote>
 As much as possible, but in this case it's impossible.</blockquote>
 </div>
-<div class="section">
-<h4><a class="toc-backref" href="#id33" id="q-generating-reports-with-debit-credit-columns" name="q-generating-reports-with-debit-credit-columns">Q: Generating reports with debit/credit columns</a></h4>
+<div class="section" id="q-generating-reports-with-debit-credit-columns">
+<h4><a class="toc-backref" href="#id33">Q: Generating reports with debit/credit columns</a></h4>
 <ul>
 <li><p class="first">Isn't there a way to generate a report with the signs inverted (in
 two columns), in the normal way that accountants like to have that?
@@ -965,11 +965,11 @@ would make sense to show it in the &quot;usual&quot; manner.</p>
 </ul>
 </div>
 </div>
-<div class="section">
-<h3><a class="toc-backref" href="#id34" id="questions-pending" name="questions-pending">Questions Pending</a></h3>
+<div class="section" id="questions-pending">
+<h3><a class="toc-backref" href="#id34">Questions Pending</a></h3>
 </div>
-<div class="section">
-<h3><a class="toc-backref" href="#id35" id="about-reports" name="about-reports">About reports</a></h3>
+<div class="section" id="about-reports">
+<h3><a class="toc-backref" href="#id35">About reports</a></h3>
 <ul>
 <li><p class="first">I want to use columns for different currencies. The current
 display is very difficult to read.</p>
@@ -986,8 +986,8 @@ nodes should be shown in this case instead:</p>
 </li>
 </ul>
 </div>
-<div class="section">
-<h3><a class="toc-backref" href="#id36" id="about-emacs-support" name="about-emacs-support">About Emacs Support</a></h3>
+<div class="section" id="about-emacs-support">
+<h3><a class="toc-backref" href="#id36">About Emacs Support</a></h3>
 <ul class="simple">
 <li>The comment-syntax should be set appropriately.</li>
 <li>The highlight mode does not work on posting lines which do not have
@@ -1012,8 +1012,8 @@ Ledger is doing with inference.</li>
 </div>
 </div>
 </div>
-<div class="section">
-<h1><a class="toc-backref" href="#id37" id="phone-conversation" name="phone-conversation">Phone conversation</a></h1>
+<div class="section" id="phone-conversation">
+<h1><a class="toc-backref" href="#id37">Phone conversation</a></h1>
 <p>&#64;word
 !word</p>
 <p>&#64;include
@@ -1034,7 +1034,7 @@ entry: contains transactions
 journal: file</p>
 <p>Put up the file on the wiki</p>
 <p>Getting pricing data: ledger calls out to getquote().</p>
-<p><a class="reference" href="ftp://ftp.newartisans.com/pub/python/catalog.py">ftp://ftp.newartisans.com/pub/python/catalog.py</a></p>
+<p><a class="reference external" href="ftp://ftp.newartisans.com/pub/python/catalog.py">ftp://ftp.newartisans.com/pub/python/catalog.py</a></p>
 <p>auto-reconciler: goal number, look for uncleared transactions which
 when summed together will give you your goal number.</p>
 <p>Normalize.lisp has all the comments for the balancing algorithm.</p>
@@ -1065,14 +1065,14 @@ specified files in a single data set.</p>
 <p>For all rounding, there should be a way to tell Ledger which precision
 to use (for each commodity).</p>
 </div>
-<div class="section">
-<h1><a class="toc-backref" href="#id38" id="implementation-suggestions" name="implementation-suggestions">Implementation Suggestions</a></h1>
+<div class="section" id="implementation-suggestions">
+<h1><a class="toc-backref" href="#id38">Implementation Suggestions</a></h1>
 <div class="line-block">
-<div class="line">From: Martin Blais &lt;<a class="reference" href="mailto:blais&#64;furius.ca">blais&#64;furius.ca</a>&gt;</div>
-<div class="line">To:&quot;John Wiegley&quot; &lt;<a class="reference" href="mailto:johnw&#64;newartisans.com">johnw&#64;newartisans.com</a>&gt;</div>
-<div class="line">Cc: &quot;Filippo Tampieri&quot; &lt;<a class="reference" href="mailto:filippo.tampieri&#64;gmail.com">filippo.tampieri&#64;gmail.com</a>&gt;</div>
+<div class="line">From: Martin Blais &lt;<a class="reference external" href="mailto:blais&#64;furius.ca">blais&#64;furius.ca</a>&gt;</div>
+<div class="line">To:&quot;John Wiegley&quot; &lt;<a class="reference external" href="mailto:johnw&#64;newartisans.com">johnw&#64;newartisans.com</a>&gt;</div>
+<div class="line">Cc: &quot;Filippo Tampieri&quot; &lt;<a class="reference external" href="mailto:filippo.tampieri&#64;gmail.com">filippo.tampieri&#64;gmail.com</a>&gt;</div>
 <div class="line">Subject: Re: Haskell parser for Ledger</div>
-<div class="line">BCC: <a class="reference" href="mailto:blais+sent&#64;furius.ca">blais+sent&#64;furius.ca</a></div>
+<div class="line">BCC: <a class="reference external" href="mailto:blais+sent&#64;furius.ca">blais+sent&#64;furius.ca</a></div>
 <div class="line">--text follows this line--</div>
 <div class="line">&gt; &gt;&gt; I'm writing a simple parser in Python today. I want to see</div>
 <div class="line">&gt; &gt; how fast it is (I mean, most of the parsing will be regexps</div>
@@ -1300,8 +1300,8 @@ to use (for each commodity).</p>
 <div class="line">in a single file.</div>
 </div>
 </div>
-<div class="section">
-<h1><a class="toc-backref" href="#id39" id="python-as-input-syntax" name="python-as-input-syntax">Python as input syntax</a></h1>
+<div class="section" id="python-as-input-syntax">
+<h1><a class="toc-backref" href="#id39">Python as input syntax</a></h1>
 <p>Think about this silly idea: if we could make the input
 syntax Python code itself, the possibilities for syntax
 additions are endless. With suitable imports, here is a
@@ -1427,15 +1427,15 @@ load_sql_database(ledger,
                   hostname='furius.ca')
 </pre>
 </div>
-<div class="section">
-<h1><a class="toc-backref" href="#id40" id="balance-checks-may-be-optional" name="balance-checks-may-be-optional">Balance checks may be optional</a></h1>
+<div class="section" id="balance-checks-may-be-optional">
+<h1><a class="toc-backref" href="#id40">Balance checks may be optional</a></h1>
 <p>About the &quot;balance check: Note that in the great majority of
 cases you always want to run this, but I like the idea of
 being able to leave some transactions unbalanced (as long as
 they are easy to find-- the program can do that).</p>
 </div>
-<div class="section">
-<h1><a class="toc-backref" href="#id41" id="terminology" name="terminology">Terminology</a></h1>
+<div class="section" id="terminology">
+<h1><a class="toc-backref" href="#id41">Terminology</a></h1>
 <div class="line-block">
 <div class="line">BTW after fiddling with a few systems I would suggest the</div>
 <div class="line">following names for the objects/tables:</div>

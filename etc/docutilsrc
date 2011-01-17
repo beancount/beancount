@@ -1,6 +1,6 @@
 README index.html @header
-doc/beancount.txt @header
-doc/accounting.txt @header
-doc/pyledger.txt @header
-doc/capgains.txt @header
-doc/differences.txt @header
+doc/development/beancount.txt @header
+doc/development/accounting.txt @header
+doc/development/pyledger.txt @header
+doc/development/capgains.txt @header
+doc/development/differences.txt @header

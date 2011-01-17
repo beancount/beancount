@@ -3,17 +3,17 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<meta name="generator" content="Docutils 0.4.1: http://docutils.sourceforge.net/" />
+<meta name="generator" content="Docutils 0.6: http://docutils.sourceforge.net/" />
 <title>Differences between Beancount and Ledger</title>
 <meta name="date" content="2008-04-23" />
 <meta name="author" content="Martin Blais &lt;blais&#64;furius.ca&gt;" />
-<link rel="stylesheet" href="../style.css" type="text/css" />
+<link rel="stylesheet" href="../../style.css" type="text/css" />
 </head>
 <body>
 
 <div id="project-header">
   <a href="/"><img src="/home/furius-logo-w.png" id="logo"></a>
-  <div id="project-home"><a href="..">Project Home</a></div>
+  <div id="project-home"><a href="../..">Project Home</a></div>
 </div>
 
 <div class="document" id="differences-between-beancount-and-ledger">
@@ -25,7 +25,7 @@
 <tr><th class="docinfo-name">Date:</th>
 <td>2008-04-23</td></tr>
 <tr><th class="docinfo-name">Author:</th>
-<td>Martin Blais &lt;<a class="reference" href="mailto:blais&#64;furius.ca">blais&#64;furius.ca</a>&gt;</td></tr>
+<td>Martin Blais &lt;<a class="reference external" href="mailto:blais&#64;furius.ca">blais&#64;furius.ca</a>&gt;</td></tr>
 </tbody>
 </table>
 <div class="abstract topic">
@@ -33,8 +33,8 @@
 <p>A document that summarizes the differences between the valid syntax
 for Beancount and the syntax of Ledger.</p>
 </div>
-<div class="section">
-<h1><a id="introduction" name="introduction">Introduction</a></h1>
+<div class="section" id="introduction">
+<h1>Introduction</h1>
 <p>Beancount is an accounting system that uses simple text files, whose
 syntax is meant to be compatible with John Wiegley's Ledger program.
 Beancount supports a subset of the Ledger syntax, but also provides
@@ -47,14 +47,14 @@ to eventually use the Ledger program as a Python module to do the
 parsing, but some of it is there because we felt that some features
 were not necessary.</p>
 </div>
-<div class="section">
-<h1><a id="unsupported-syntax" name="unsupported-syntax">Unsupported Syntax</a></h1>
+<div class="section" id="unsupported-syntax">
+<h1>Unsupported Syntax</h1>
 <p>Beancount...</p>
 <ul>
 <li><p class="first">does not support expressions.</p>
 </li>
 <li><p class="first">does not support the syntax that uses symbols instead of explicit
-commodities, e,g. <tt class="docutils literal"><span class="pre">$10.00</span></tt>. You have to use <tt class="docutils literal"><span class="pre">10.00</span> <span class="pre">USD</span></tt></p>
+commodities, e,g. <tt class="docutils literal">$10.00</tt>. You have to use <tt class="docutils literal">10.00 USD</tt></p>
 </li>
 <li><p class="first">does not infer the format of the output for each commodity</p>
 <p>This is by choice, the definition is ambiguous: if you use two
@@ -63,8 +63,8 @@ provide a way to &quot;set&quot; the syntax, and will do something reasonable
 with defaults.</p>
 </li>
 </ul>
-<div class="section">
-<h2><a id="about-dates" name="about-dates">About Dates</a></h2>
+<div class="section" id="about-dates">
+<h2>About Dates</h2>
 <p>All check dates are assumed to be at midnight at the start of the
 given day. All transaction dates are assumed to occur something
 withint the day. Therefore, when you place an &#64;check directive, you
@@ -72,8 +72,8 @@ are asserting this amount at the <strong>beginning</strong> of the day, before a
 of the transactions of that day occur.</p>
 </div>
 </div>
-<div class="section">
-<h1><a id="features-not-found-in-ledger" name="features-not-found-in-ledger">Features not found in Ledger</a></h1>
+<div class="section" id="features-not-found-in-ledger">
+<h1>Features not found in Ledger</h1>
 <p>FIXME todo</p>
 <ul>
 <li><p class="first">&#64;pad</p>
