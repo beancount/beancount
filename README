@@ -71,10 +71,12 @@ directory. To run a local web server on the example demo file, cd into
 Download
 ========
 
-You can obtain the Ledger source from Furius' public Mercurial
-repository, by typing the following command::
+A Mercurial repository can be found at:
 
-  hg clone https://hg.furius.ca/public/beancount
+  https://hg.furius.ca/public/beancount/
+
+`Click here for download instructions. </web-furius/downloading.html>`_
+
 
 
 Documentation
