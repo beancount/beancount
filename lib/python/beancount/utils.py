@@ -178,4 +178,4 @@ class TimerUtil:
 
     def __del__(self):
         if not self.printed:
-            sys.stdout.write(str(self))
+            pass # sys.stdout.write(str(self))

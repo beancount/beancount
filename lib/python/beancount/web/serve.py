@@ -250,8 +250,8 @@ def main():
     httpd = make_server('', opts.port, app)
     sa = httpd.socket.getsockname()
     t('make_server')
-    print t
-
+    t = None
+    
     print ("Ready. ( http://%s:%s )" % (sa[0], sa[1]))
     try:
         while 1:
