@@ -67,6 +67,7 @@ input format, and other formats (easily extensible).
 
       ext_modules = [
           Extension('beancount/cwallet',
+                    extra_compile_args=['-std=c++0x', '-Wall'],
                     sources=['lib/python/beancount/cwallet.cpp'])],
 
       scripts=scripts

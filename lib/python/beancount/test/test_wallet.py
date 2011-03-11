@@ -15,8 +15,12 @@ class TestWallet(unittest.TestCase):
 
     def test_init(self):
         print Wallet
-        print Wallet()
-        pass
+        w = Wallet()
+        print w
+        print len(w)
+        w['USD'] = 42
+        o = w['USD']
+        print o, repr(o)
 
 
     def test_simple(self):
