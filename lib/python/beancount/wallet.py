@@ -3,6 +3,7 @@ Wallet arithmetic.
 """
 
 # stdlib imports
+import logging
 from decimal import Decimal
 
 # beancount imports
@@ -11,8 +12,7 @@ from beancount.utils import TimerUtil
 __all__ = ('Wallet',)
 
 
-
-class Wallet(dict):
+class _Wallet(dict):
     """
     A mapping of currency to amount. The basic operators are supported.
     """
@@ -288,3 +288,12 @@ def _clean(w):
     for k in rlist:
         del w[k]
 
+
+
+try:
+    from beancount.cwallet import Wallet
+except ImportError:
+    logging.warning("Fast Wallet object not available; falling back on Python Wallet object.")
+    Wallet = _Wallet
+    
+    

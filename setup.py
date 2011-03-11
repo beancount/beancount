@@ -7,7 +7,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import os
 from os.path import join, isfile
-from distutils.core import setup
+from distutils.core import setup, Extension
 
 
 # Install all scripts under bin.
@@ -64,6 +64,11 @@ input format, and other formats (easily extensible).
                   'beancount.fallback.elementtree',
                   ],
       package_data = {'beancount.web': ['*jpg', '*png', 'robots.txt', 'treetable.js', 'style.css']},
+
+      ext_modules = [
+          Extension('beancount/cwallet',
+                    sources=['lib/python/beancount/cwallet.c'])],
+
       scripts=scripts
      )
 
