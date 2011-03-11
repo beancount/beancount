@@ -3,6 +3,7 @@ Wallet arithmetic tests.
 """
 
 # stdlib imports
+import unittest
 from decimal import Decimal
 
 # beancount imports
@@ -10,7 +11,13 @@ from beancount.wallet import Wallet
 
 
 
-class TestWallet(object):
+class TestWallet(unittest.TestCase):
+
+    def test_init(self):
+        print Wallet
+        print Wallet()
+        pass
+
 
     def test_simple(self):
         "Simple wallet tests."
@@ -144,3 +151,7 @@ class TestWallet(object):
         w['JPY'] = Decimal('17.0')
         assert w.nbthings() == Decimal('21.1')
 
+
+
+if __name__ == '__main__':
+    unittest.main()

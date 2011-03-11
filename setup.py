@@ -67,7 +67,7 @@ input format, and other formats (easily extensible).
 
       ext_modules = [
           Extension('beancount/cwallet',
-                    sources=['lib/python/beancount/cwallet.c'])],
+                    sources=['lib/python/beancount/cwallet.cpp'])],
 
       scripts=scripts
      )
