@@ -1,0 +1,6 @@
+#!/bin/bash
+CLJROOT=$HOME/c/clojure-binaries/clojure-1.2
+PROJECT=$(dirname $(dirname $0))
+streamlined --swank $CLJROOT/base $CLJROOT/web -c $PROJECT/src
+
+# FIXME: find a way to run the main function automatically.
