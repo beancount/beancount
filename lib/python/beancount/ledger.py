@@ -480,6 +480,11 @@ class Ledger(object):
         add_directive(LocationDirective(self))
         add_directive(PriceDirective(self))
 
+        # A map of command-name to contents.
+        self.commands = {}
+        add_command = lambda x: self.commands.__setitem__(x.name, x)
+        add_command(IncludeCommand(self))
+
         # Current tags that are being assigned to transactions during parsing.
         self.current_tags = []
 
@@ -599,7 +604,7 @@ class Ledger(object):
     # Pattern for the directives, and the special commands.
     directive_re = re.compile('^@([a-z_]+)\s+([^;]*)(;.*)?')
     special_re = re.compile('([YPNDCiobh])\s+')
-    command_re = re.compile('!([a-z]+)')
+    command_re = re.compile('!([a-z]+)\s+([^;]*)(;.*)?')
 
     def parse_string(self, text, name='<string>', encoding='ascii'):
         f = StringIO(text)
@@ -835,8 +840,13 @@ class Ledger(object):
                 # Parse a directive.
                 mo = match_command(line)
                 if mo:
-                    self.log(CRITICAL, "Command %s not supported." % mo.group(1),
-                             (fn, lineno[0]))
+                    comm, comm_line = mo.group(1,2)
+                    try:
+                        parser = self.commands[comm]
+                        parser.execute(comm_line, fn)
+                    except ValueError, e:
+                        self.log(CRITICAL, "Command %s not supported." % mo.group(1),
+                                 (fn, lineno[0]))
                     line = nextline()
                     continue
 
@@ -2039,4 +2049,15 @@ class PriceHistory(list):
         return res
 
 
+class IncludeCommand(object):
+    """
+    Include the text of a given file at the specific location.
+    """
+    name = 'include'
 
+    def __init__(self, ledger):
+        self.ledger = ledger
+
+    def execute(self, line, filename):
+        ledger = self.ledger
+        print line
