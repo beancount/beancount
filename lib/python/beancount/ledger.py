@@ -634,15 +634,13 @@ class Ledger(object):
 
         accounts = self.accounts
 
-        xread = f.readline
+        self.inp = InputManager(f)
         lineno = [0]
         def nextline():
             lineno[0] += 1
-            line = xread()
+            line = self.inp.readline()
             source.append(line)
             assert isinstance(line, unicode), line
-            if not line:
-                raise StopIteration
             return line
 
         add_commodity = self.commodities.add
@@ -2049,6 +2047,25 @@ class PriceHistory(list):
         return res
 
 
+class InputManager(object):
+    def __init__(self, fileobj):
+        self.inputs = [ fileobj ]
+
+    def readline(self):
+        if len(self.inputs) == 0:
+            raise StopIteration
+
+        line = self.inputs[-1].readline()
+        if line:
+            return line
+
+        self.inputs.pop()
+        return self.readline()
+
+    def add_input(self, fileobj):
+        self.inputs.append(fileobj)
+
+
 class IncludeCommand(object):
     """
     Include the text of a given file at the specific location.
@@ -2059,5 +2076,6 @@ class IncludeCommand(object):
         self.ledger = ledger
 
     def execute(self, line, filename):
-        ledger = self.ledger
-        print line
+        f = StringIO(open(line[:-1]).read())
+        Reader = codecs.getreader('ascii')
+        self.ledger.inp.add_input(Reader(f))
