@@ -634,7 +634,7 @@ class Ledger(object):
 
         accounts = self.accounts
 
-        self.inp = InputManager(f)
+        self.inp = InputManager(f, fn)
         lineno = [0]
         def nextline():
             lineno[0] += 1
@@ -657,7 +657,7 @@ class Ledger(object):
                 mo = match_txn(line)
                 if mo:
                     txn = Transaction()
-                    txn.filename = fn
+                    txn.filename = self.inp.get_fn()
                     txn.lineno = lineno[0]
                     txn.ordering = next_ordering()
                     txn.tags = self.current_tags
@@ -671,7 +671,7 @@ class Ledger(object):
                             effective_date = actual_date
                     except ValueError, e:
                         self.log(CRITICAL, "Date component is out of range: %s" % e,
-                                 (fn, lineno[0]))
+                                 (self.inp.get_fn(), lineno[0]))
                         line = nextline()
                         continue
 
@@ -685,7 +685,7 @@ class Ledger(object):
                     mod = Ledger.desc_re.match(desc_line)
                     if not mod:
                         self.log(ERROR, "Invalid description: %s" % desc_line,
-                                 (fn, lineno[0]))
+                                 (self.inp.get_fn(), lineno[0]))
                         line = nextline()
                         continue
                     txn.payee, txn.narration = mod.groups()
@@ -701,7 +701,7 @@ class Ledger(object):
                         mo = match_posting(line)
                         if mo:
                             post = Posting(txn)
-                            post.filename, post.lineno = fn, lineno[0]
+                            post.filename, post.lineno = self.inp.get_fn(), lineno[0]
                             post.ordering = next_ordering()
                             txn.postings.append(post)
 
@@ -823,7 +823,7 @@ class Ledger(object):
                         parser.parse(direc_line, fn, lineno[0])
                     except ValueError, e:
                         self.log(CRITICAL, "Unknown directive %s: %s" % (direc, e),
-                                 (fn, lineno[0]))
+                                 (self.inp.get_fn(), lineno[0]))
                     line = nextline()
                     continue
 
@@ -831,7 +831,7 @@ class Ledger(object):
                 mo = match_special(line)
                 if mo:
                     self.log(WARNING, "Directive %s not supported." % mo.group(1),
-                             (fn, lineno[0]))
+                             (self.inp.get_fn(), lineno[0]))
                     line = nextline()
                     continue
 
@@ -844,12 +844,12 @@ class Ledger(object):
                         parser.execute(comm_line, fn)
                     except ValueError, e:
                         self.log(CRITICAL, "Command %s not supported." % mo.group(1),
-                                 (fn, lineno[0]))
+                                 (self.inp.get_fn(), lineno[0]))
                     line = nextline()
                     continue
 
                 self.log(CRITICAL, "Cannot recognize syntax:\n %s" % line.strip(),
-                         (fn, lineno[0]))
+                         (self.inp.get_fn(), lineno[0]))
                 line = nextline()
 
         except StopIteration:
@@ -2048,22 +2048,25 @@ class PriceHistory(list):
 
 
 class InputManager(object):
-    def __init__(self, fileobj):
-        self.inputs = [ fileobj ]
+    def __init__(self, fileobj, label):
+        self.inputs = [ (fileobj, label) ]
 
     def readline(self):
         if len(self.inputs) == 0:
             raise StopIteration
 
-        line = self.inputs[-1].readline()
+        line = self.inputs[-1][0].readline()
         if line:
             return line
 
         self.inputs.pop()
         return self.readline()
 
-    def add_input(self, fileobj):
-        self.inputs.append(fileobj)
+    def add_input(self, fileobj, label):
+        self.inputs.append((fileobj, label))
+
+    def get_fn(self):
+        return self.inputs[-1][1]
 
 
 class IncludeCommand(object):
@@ -2078,4 +2081,4 @@ class IncludeCommand(object):
     def execute(self, line, filename):
         f = StringIO(open(line[:-1]).read())
         Reader = codecs.getreader('ascii')
-        self.ledger.inp.add_input(Reader(f))
+        self.ledger.inp.add_input(Reader(f), line[:-1])
