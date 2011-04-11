@@ -657,8 +657,7 @@ class Ledger(object):
                 mo = match_txn(line)
                 if mo:
                     txn = Transaction()
-                    txn.filename = self.inp.get_fn()
-                    txn.lineno = lineno[0]
+                    txn.filename, txn.lineno = self.inp.get_file_line()
                     txn.ordering = next_ordering()
                     txn.tags = self.current_tags
                     self.transactions.append(txn)
@@ -671,7 +670,7 @@ class Ledger(object):
                             effective_date = actual_date
                     except ValueError, e:
                         self.log(CRITICAL, "Date component is out of range: %s" % e,
-                                 (self.inp.get_fn(), lineno[0]))
+                                 self.inp.get_file_line())
                         line = nextline()
                         continue
 
@@ -685,7 +684,7 @@ class Ledger(object):
                     mod = Ledger.desc_re.match(desc_line)
                     if not mod:
                         self.log(ERROR, "Invalid description: %s" % desc_line,
-                                 (self.inp.get_fn(), lineno[0]))
+                                 self.inp.get_file_line())
                         line = nextline()
                         continue
                     txn.payee, txn.narration = mod.groups()
@@ -701,7 +700,7 @@ class Ledger(object):
                         mo = match_posting(line)
                         if mo:
                             post = Posting(txn)
-                            post.filename, post.lineno = self.inp.get_fn(), lineno[0]
+                            post.filename, post.lineno = self.inp.get_file_line()
                             post.ordering = next_ordering()
                             txn.postings.append(post)
 
@@ -823,7 +822,7 @@ class Ledger(object):
                         parser.parse(direc_line, fn, lineno[0])
                     except ValueError, e:
                         self.log(CRITICAL, "Unknown directive %s: %s" % (direc, e),
-                                 (self.inp.get_fn(), lineno[0]))
+                                 self.inp.get_file_line())
                     line = nextline()
                     continue
 
@@ -831,7 +830,7 @@ class Ledger(object):
                 mo = match_special(line)
                 if mo:
                     self.log(WARNING, "Directive %s not supported." % mo.group(1),
-                             (self.inp.get_fn(), lineno[0]))
+                             self.inp.get_file_line())
                     line = nextline()
                     continue
 
@@ -844,12 +843,12 @@ class Ledger(object):
                         parser.execute(comm_line, fn)
                     except ValueError, e:
                         self.log(CRITICAL, "Command %s not supported." % mo.group(1),
-                                 (self.inp.get_fn(), lineno[0]))
+                                 self.inp.get_file_line())
                     line = nextline()
                     continue
 
                 self.log(CRITICAL, "Cannot recognize syntax:\n %s" % line.strip(),
-                         (self.inp.get_fn(), lineno[0]))
+                         self.inp.get_file_line())
                 line = nextline()
 
         except StopIteration:
@@ -2049,12 +2048,13 @@ class PriceHistory(list):
 
 class InputManager(object):
     def __init__(self, fileobj, label):
-        self.inputs = [ (fileobj, label) ]
+        self.inputs = [ [fileobj, label, 0] ]
 
     def readline(self):
         if len(self.inputs) == 0:
             raise StopIteration
 
+        self.inputs[-1][2] += 1
         line = self.inputs[-1][0].readline()
         if line:
             return line
@@ -2063,10 +2063,11 @@ class InputManager(object):
         return self.readline()
 
     def add_input(self, fileobj, label):
-        self.inputs.append((fileobj, label))
+        self.inputs.append([fileobj, label, 0])
 
-    def get_fn(self):
-        return self.inputs[-1][1]
+    def get_file_line(self):
+        return self.inputs[-1][1], self.inputs[-1][2]
+        
 
 
 class IncludeCommand(object):
