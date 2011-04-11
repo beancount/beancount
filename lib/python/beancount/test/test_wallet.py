@@ -16,12 +16,15 @@ class TestWallet(unittest.TestCase):
     def test_init(self):
         print Wallet
         w = Wallet()
-        print w
-        print len(w)
+        ## print w
+        ## print len(w)
         w['USD'] = 42
+        w['USD'] = 42000000000l
         o = w['USD']
-        print o, repr(o)
+        print w
+        ## print o, '|', repr(o)
 
+        
 
     def test_simple(self):
         "Simple wallet tests."

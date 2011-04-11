@@ -11,6 +11,11 @@
 #include <string>
 #include <cstdint>
 #include <iostream>
+#include <iomanip>
+#include <sstream>
+
+#include "itoa.h"
+
 
 
 
@@ -40,7 +45,6 @@ PyObject* decimal_from_int(int64_t i)
     return PyObject_CallFunction(decimal_ctor, (char*)"s", buf);
 }
 
-
 PyGetSetDef Wallet_getset[] = {
     {NULL}
 };
@@ -51,43 +55,36 @@ PyObject* Wallet_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
     if (self == NULL) {
         return NULL;
     }
-
-    self->mapping = WalletMap();
+    ::new(&self->mapping)WalletMap();
 
     return (PyObject*)self;
 }
 
-void Wallet_dealloc(PyObject* self)
+void Wallet_dealloc(PyObject* o)
 {
+    Wallet* self = (Wallet*)o;
+    self->mapping.~WalletMap();
     PyObject_Del(self);
 }
 
-PyObject* Wallet_str(PyObject* self)
+PyObject* Wallet_str(PyObject* o)
 {
-    return PyString_FromStringAndSize("<Wallet>", 8);
-}
+    Wallet* self = (Wallet*)o;
+    std::ostringstream oss;
+    oss << "<Wallet";
+    for ( WalletMap::const_iterator it = self->mapping.begin();
+          it != self->mapping.end();
+          ++it ) {
 
-#if 0
-PyObject* Wallet_dump(PyObject* self, PyObject* offset_)
-{
-    if ( !PyInt_Check(offset_) ) {
-        return NULL;
+        char buf[1024];
+        int n = itoall(it->second, buf, 20);
+        buf[n] = 0;
+        oss << " " << PyString_AsString(it->first) << "=" << buf;
     }
-    long offset = PyInt_AS_LONG(offset_);
-    return Wallet_render(self, true, offset);
+    oss << ">";
+    std::string s = oss.str();
+    return PyString_FromStringAndSize(s.c_str(), s.length());
 }
-#endif
-
-int Wallet_cmp(PyObject* o1, PyObject* o2)
-{
-/*FIXME: TODO*/
-    if ( o1 == o2 ) {
-        return 0;
-    }
-    return 1;
-}
-
-//------------------------------------------------------------------------------
 
 // This function is used by PyMapping_Length() and PyObject_Size(), and has the
 // same signature. This slot may be set to NULL if the object has no defined
@@ -97,13 +94,20 @@ Py_ssize_t Wallet_mapping_len(PyObject* self)
     return ((Wallet*)self)->mapping.size();
 }
 
+
+
+// FIXME: make the decimal conversion as a specially named method; the default
+// getting should return a simple long. Only the printing stage needs a Decimal
+// object, and taht could be done explicitly.
+
+
 // This function is used by PyObject_GetItem() and has the same signature. This
 // slot must be filled for the PyMapping_Check() function to return 1, it can be
 // NULL otherwise.
 PyObject* Wallet_mapping_getitem(PyObject* self, PyObject* key)
 {
     if ( !PyString_Check(key) ) {
-        PyErr_SetString(PyExc_IOError, "Invalid type for key.");
+        PyErr_SetString(PyExc_ValueError, "Invalid type for key.");
         return NULL;
     }
 
@@ -112,15 +116,34 @@ PyObject* Wallet_mapping_getitem(PyObject* self, PyObject* key)
         Py_RETURN_NONE;
     }
 
-    return decimal_from_int(it->second);
+    return PyLong_FromLongLong(it->second);
+    //return decimal_from_int(it->second);
 }
 
 // This function is used by PyObject_SetItem() and has the same signature. If
 // this slot is NULL, the object does not support item assignment.
 int Wallet_mapping_setitem(PyObject* self, PyObject* key, PyObject* value)
 {
-    ((Wallet*)self)->mapping.insert(WalletMap::value_type(key, 321123456789LL));
-    return 0; // FIXME: TODO
+    int64_t ivalue = 0;
+    if ( PyLong_Check(value) ) {
+        ivalue = PyLong_AsLongLong(value);
+    }
+    else if ( PyInt_Check(value) ) {
+        ivalue = PyInt_AsLong(value);
+    }
+    else if ( PyString_Check(value) ) {
+        // Here: convert from a string.
+
+
+
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError, "Invalid type for value.");
+        return -1;
+    }
+
+    ((Wallet*)self)->mapping[key] = ivalue;
+    return 0;
 }
 
 PyMappingMethods Wallet_mapping = {
@@ -128,6 +151,13 @@ PyMappingMethods Wallet_mapping = {
     Wallet_mapping_getitem, /* mp_subscript */
     Wallet_mapping_setitem, /* mp_ass_subscript */
 };
+
+
+
+
+
+
+
 
 
 
@@ -148,7 +178,7 @@ PyTypeObject Wallet_Type = {
     0,                      /* tp_print */
     0,                      /* tp_getattr */
     0,                      /* tp_setattr */
-    Wallet_cmp,             /* tp_compare */
+    0,                      /* tp_compare */
     Wallet_str,             /* tp_repr */
     0,                      /* tp_as_number */
     0,                      /* tp_as_sequence */
