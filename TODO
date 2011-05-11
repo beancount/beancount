@@ -14,6 +14,13 @@
 Beancount (Accounting)
 ======================
 
+  - Find good ways to transfer data to an Excel spreadsheet
+
+  - Generate graphs of account amounts over time
+  - Include average amounts, average delta amount
+
+  - All Ledger objects should have begin/end dates.
+
   - Optimize: rewrite 'wallet' in C. __iadd__ is where all the time is
     being spent.
 

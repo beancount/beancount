@@ -523,6 +523,15 @@ class Ledger(object):
     # Account ordering integer.
     acc_ordering = count().next
 
+    def beginning(self):
+        return self.postings[0].actual_date
+
+    def end(self):
+        return self.postings[-1].actual_date
+
+    def duration(self):
+        return self.end() - self.beginning()
+
     def get_account(self, name, create=False, incrcount=True):
         """
         Return or create an account by name, creating all the intermediate

@@ -192,11 +192,13 @@ class _Wallet(dict):
         return w
 
     def __div__(self, other):
-        assert isinstance(other, (int, Decimal))
-        w = Wallet(self)
-        for k, v in self.iteritems():
-            w[k] /= other
-        _clean(w)
+        if isinstance(other, (int, Decimal)):
+            w = Wallet(self)
+            for k, v in self.iteritems():
+                w[k] /= other
+            _clean(w)
+        elif isinstance(other, Wallet):
+            assert False # FIXME: Implement computing ratios.
         return w
 
     def round(self, mprecision=None):
