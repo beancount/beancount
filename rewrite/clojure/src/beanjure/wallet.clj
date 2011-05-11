@@ -21,6 +21,10 @@
 (def wallet-neg
   (partial fmap -))
 
+(defn wallet-div
+  [w divisor]
+  (fmap #(/ % divisor) w))
+
 (defn wallet-comm
   "Assuming that the wallet contains a single commodity, return the
    amount for that commodity. Fail if the Wallet is empty."
@@ -36,8 +40,15 @@
   [w]
   (->> w vals (apply +)))
 
+(defn wallet-only
+  "Return a wallet like this one but with only the given commodity."
+  [w comm]
+  {comm (get w comm 0)})
 
-
+(defn wallet-mask
+  "Return this wallet with only the commodities present in the other wallet."
+  [w wother]
+  (into {} (map #(.entryAt w %) (keys wother))))
 
 
 (deftest ops
@@ -53,11 +64,22 @@
   (is (= (wallet-neg {:USD 200 :CAD 201})
 	 {:USD -200 :CAD -201}))
 
+  (is (= (wallet-div {:USD 200 :CAD 100} 2)   {:USD 100 :CAD 50}))
+  (is (= (wallet-div {:USD 200 :CAD 100} 0.1) {:USD 2000 :CAD 1000}))
+
   (is (= (wallet-comm {:USD 200})
 	 {:USD 200}))
 
   (is (= (wallet-nbthings {:CAD 1 :USD 2 :JPY 3})
 	 6))
+
+  (is (= (wallet-only {:CAD 1 :USD 2 :JPY 3} :CAD)
+	 {:CAD 1}))
+  (is (= (wallet-only {} :CAD)
+	 {:CAD 0}))
+
+  (is (= (wallet-mask {:CAD 1 :USD 2 :JPY 3 :GBP 4} {:CAD 100 :JPY 300})
+	 {:CAD 1 :JPY 3}))
 
   (is (thrown? Exception
 	       (wallet-comm {:CAD 1 :USD 200})))
@@ -67,17 +89,7 @@
 
 ;;------------------------------------------------------------------------------
 
-;;     def only(self, comm):
-;;         "Return a wallet like this one but with only the given commodity."
-;;         try:
-;;             return Wallet(comm, self[comm])
-;;         except KeyError:
-;;             return Wallet()
 
-;;     def mask_wallet(self, other):
-;;         "Return this wallet with only the commodities in the other wallet."
-;;         return Wallet(
-;;             (com, amt) for com, amt in self.iteritems() if com in other)
 
 ;;     def mask_commodity(self, com):
 ;;         "Return this wallet with only the given commodity."
