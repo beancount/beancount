@@ -171,7 +171,7 @@ def main():
 
     for arg in args:
         print '\n'*3
-        print ';;; Import of %s' % arg
+        #print ';;; Import of %s' % arg
 
         for ofxacc in process_ofx(arg, accounts_map):
             account = ofxacc.account
@@ -190,7 +190,7 @@ def main():
 
             print '\n'*3
             hdfmt = '; %s import  %s  %s'
-            print hdfmt % ('Start', account.fullname, ofxacc.start)
+            #print hdfmt % ('Start', account.fullname, ofxacc.start)
             print
             for t in sorted(ofxacc.transactions, key=attrgetter('dtposted')):
 
@@ -221,7 +221,7 @@ def main():
                     date_ += oneday
                 print
 
-            print hdfmt % ('End', account.fullname, ofxacc.end)
+            #print hdfmt % ('End', account.fullname, ofxacc.end)
             if re.search('\\bCredit-Card:HSBC\\b', account.fullname):
                 ofxacc.bal_amount = -ofxacc.bal_amount
             print '@check %s %s     %s %s' % (
