@@ -1,7 +1,7 @@
 #!/bin/bash
 CLJROOT=$HOME/c/clojure-binaries/clojure-1.2
 PROJECT=$(dirname $(dirname $0))
-SUNJARS=/usr/lib/jvm/java-6-sun-1.6.0.24/lib/tools.jar
+SUNJARS=/usr/lib/jvm/java-6-sun-1.6.0.26/lib/tools.jar
 streamlined -v --debug --swank $CLJROOT/base $CLJROOT/web $SUNJARS -c $PROJECT/src
 
 
