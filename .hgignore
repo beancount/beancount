@@ -4,3 +4,5 @@ core
 *.swp
 *~
 TAGS
+build
+lib/python/beancount/cwallet.so
