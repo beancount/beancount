@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<meta name="generator" content="Docutils 0.6: http://docutils.sourceforge.net/" />
+<meta name="generator" content="Docutils 0.7: http://docutils.sourceforge.net/" />
 <title>BeanCount: Command-line Double-Entry Accounting</title>
 <link rel="stylesheet" href="style.css" type="text/css" />
 </head>
@@ -21,19 +21,21 @@
 <p class="topic-title first">Contents</p>
 <ul class="simple">
 <li><a class="reference internal" href="#description" id="id1">Description</a></li>
-<li><a class="reference internal" href="#demo" id="id2">Demo</a></li>
-<li><a class="reference internal" href="#download" id="id3">Download</a></li>
-<li><a class="reference internal" href="#documentation" id="id4">Documentation</a></li>
-<li><a class="reference internal" href="#copyright-and-license" id="id5">Copyright and License</a></li>
-<li><a class="reference internal" href="#author" id="id6">Author</a></li>
+<li><a class="reference internal" href="#project-status" id="id2">Project Status</a></li>
+<li><a class="reference internal" href="#demo" id="id3">Demo</a></li>
+<li><a class="reference internal" href="#download" id="id4">Download</a></li>
+<li><a class="reference internal" href="#documentation" id="id5">Documentation</a></li>
+<li><a class="reference internal" href="#copyright-and-license" id="id6">Copyright and License</a></li>
+<li><a class="reference internal" href="#author" id="id7">Author</a></li>
 </ul>
 </div>
 <!-- 1  Description
-2  Demo
-3  Download
-4  Documentation
-5  Copyright and License
-6  Author -->
+2  Project Status
+3  Demo
+4  Download
+5  Documentation
+6  Copyright and License
+7  Author -->
 <div class="section" id="description">
 <h1><a class="toc-backref" href="#id1">Description</a></h1>
 <p>A double-entry accounting system that uses a simple text file format
@@ -44,10 +46,11 @@ input format, and other formats (easily extensible).</p>
 <p>Notes:</p>
 <ul class="simple">
 <li>The ideas and syntax is entirely inspired by John Wiegley's <a class="reference external" href="http://www.newartisans.com/blog/projects/ledger.html">Ledger</a>,
-and the syntax is pretty much compatible with it. Beancount's syntax
-is a subset of Ledger (a little more restrictive), with a few
-additional directives. You should probably read Ledger's
-documentation in order to you use Beancount.</li>
+and the syntax is pretty much compatible with it, or at least it was
+at the time it was created. Beancount's syntax is a subset of Ledger
+(a little more restrictive), with a few additional directives. You
+should probably read Ledger's documentation in order to use
+Beancount.</li>
 <li>Beancount is a Python version of Ledger, and thus is much slower,
 but also easier to extend (the code is pure Python).</li>
 <li>Beancount provides a simple web front to view the contents of the
@@ -61,19 +64,19 @@ ability to export its parser with a binding for the Python language,
 so Beancount's parser may eventually use the Ledger parser for
 speed, and Ledger may eventually leverage Beancount's web front-end.</li>
 </ul>
-<div class="important">
-<p class="first admonition-title">Important</p>
-<p class="last">This code works; as a testimony, I'm using it personally, actively
+</div>
+<div class="section" id="project-status">
+<h1><a class="toc-backref" href="#id2">Project Status</a></h1>
+<p>This code is stable; as a testimony, I'm using it personally, actively
 to manage my own finances and my company's finances, and thus I'm
 running it and its components at the very least a few times montly.
-If you have any problem using it, please let me know. This software
-should be in a functional state; this is not abandonware, nor is it
-prototyping code either. You should be able to use beancount to do
-&quot;real work&quot; (I do). [Updated on 2010-09]</p>
-</div>
+I've been using it for years without having to modify it
+significantly. Basically, this software is in a functional state; this
+is not abandonware, nor is it prototyping code either. You should be
+able to use beancount to do &quot;real work.&quot; [Updated on 2012-03]</p>
 </div>
 <div class="section" id="demo">
-<h1><a class="toc-backref" href="#id2">Demo</a></h1>
+<h1><a class="toc-backref" href="#id3">Demo</a></h1>
 <p>There is a demonstration ledger input file under the examples
 directory. To run a local web server on the example demo file, cd into
 <tt class="docutils literal">examples</tt> and run the demo scripts.</p>
@@ -83,26 +86,26 @@ directory. To run a local web server on the example demo file, cd into
 </ul>
 </div>
 <div class="section" id="download">
-<h1><a class="toc-backref" href="#id3">Download</a></h1>
+<h1><a class="toc-backref" href="#id4">Download</a></h1>
 <p>A Mercurial repository can be found at:</p>
 <blockquote>
 <a class="reference external" href="https://hg.furius.ca/public/beancount/">https://hg.furius.ca/public/beancount/</a></blockquote>
 <p><a class="reference external" href="/web-furius/downloading.html">Click here for download instructions.</a></p>
 </div>
 <div class="section" id="documentation">
-<h1><a class="toc-backref" href="#id4">Documentation</a></h1>
+<h1><a class="toc-backref" href="#id5">Documentation</a></h1>
 <ul class="simple">
 <li><a class="reference external" href="CHANGES">CHANGES</a></li>
 <li><a class="reference external" href="TODO">TODO</a></li>
 </ul>
 </div>
 <div class="section" id="copyright-and-license">
-<h1><a class="toc-backref" href="#id5">Copyright and License</a></h1>
+<h1><a class="toc-backref" href="#id6">Copyright and License</a></h1>
 <p>Copyright (C) 2007-2008  Martin Blais.  All Rights Reserved.</p>
 <p>This code is distributed under the <a class="reference external" href="COPYING">GNU General Public License</a>;</p>
 </div>
 <div class="section" id="author">
-<h1><a class="toc-backref" href="#id6">Author</a></h1>
+<h1><a class="toc-backref" href="#id7">Author</a></h1>
 <p>Martin Blais &lt;<a class="reference external" href="mailto:blais&#64;furius.ca">blais&#64;furius.ca</a>&gt;</p>
 </div>
 </div>
