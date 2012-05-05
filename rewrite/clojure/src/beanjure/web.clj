@@ -1,21 +1,46 @@
 (ns beanjure.web
   (:use ring.adapter.jetty
         ring.middleware.stacktrace
-	compojure.core
-        )
+        [compojure.core :only (defroutes GET)])
 
-  (:require [compojure.route :as route]
+  (:require [compojure.core :as compo]
+            [compojure.route :as route]
             [compojure.handler :as handler]
 	    [ring.middleware.file :as file]
 	    [ring.middleware.reload :as reload]
 	    [ring.middleware.stacktrace :as stacktrace]
+            [net.cgrand.enlive-html :as en]
             )
+
+  (:import [java.io File])
   )
 
-(defroutes main-routes
-  (GET "/" [] "<h1>Beancount</h1>")
-  (route/files "/home/blais/p/beanjure/web" :root "/r")
-  (route/resources "/resources")
+
+
+(def static-dir
+  "Root of static files being served."
+  (str (System/getenv "HOME") "/p/beanjure/web"))
+
+(def template-dir
+  "Root of template files to load."
+  (str (System/getenv "HOME") "/p/beanjure/templates"))
+
+
+
+
+(en/deftemplate layout (File. (str template-dir "/layout.html"))
+  []
+  )
+
+
+
+
+
+
+(defroutes routes
+  (GET "/" [] (layout))
+  (route/files static-dir)
+  ;;(route/resources "/resources")
   (route/not-found "Page not found")
   )
 
@@ -32,10 +57,11 @@
 
 
 
+
 (def app
-  (-> (handler/site #'main-routes)
+  (-> (handler/site #'routes)
       (reload/wrap-reload '(beanjure.main))
-      (file/wrap-file "/home/blais/p/beanjure/web")
+      ;(file/wrap-file static-dir)
       (stacktrace/wrap-stacktrace)
       (wrap-request-logging)
 
@@ -67,31 +93,14 @@
 (def server (run-server #'app 8000))
 (.stop server)
 
-(require '[clojure.pprint :as pprint]
-         '[clojure.reflect :only (reflect)])
-
-(pprint/pprint (reflect server))
-
-(def f (route/files "/home/blais/p/beanjure/web" :root "/r"))
-(f nil)
-
-(use 'clojure.set)
-(clojure.set/difference #{1 2} #{2 3})
-
-(use 'swank.cdt)
-(set-bp clojure.set/difference)
-
-(set-bp stop-server)
-
-
-(def example-route (GET "/" [] "<html>...</html>"))
-(example-route {:server-port 80
-		:server-name "127.0.0.1"
-		:remote-addr "127.0.0.1"
-		:uri "/"
-		:scheme :http
-		:headers {}
-		:request-method :get})
+;; (def example-route (GET "/" [] "<html>...</html>"))
+;; (example-route {:server-port 80
+;; 		:server-name "127.0.0.1"
+;; 		:remote-addr "127.0.0.1"
+;; 		:uri "/"
+;; 		:scheme :http
+;; 		:headers {}
+;; 		:request-method :get})
 
 
 

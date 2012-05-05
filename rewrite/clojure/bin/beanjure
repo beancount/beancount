@@ -34,6 +34,7 @@ streamlined --swank					\
 	$MAVEN/javax/servlet/servlet-api/2.5		\
         $MAVEN/joda-time/joda-time			\
 	$MAVEN/commons-*				\
+        $MAVEN/org/ccil/cowan/tagsoup			\
 							\
 	$CHECKOUTS/ring					\
 	$CHECKOUTS/clout				\

@@ -1,0 +1,380 @@
+/*
+  CSS for beancount server pages.
+*/
+
+/* Global page defs */
+
+body {
+  /* font-family: "trebuchet ms",verdana,sans-serif; font-size: 10pt; */
+  font-family: Luxi Sans, Lucida, Arial, sans-serif;
+  margin: 0px;
+  padding: 0px; /* for IE -- krock */
+  background-color: rgb(255,255,255);
+}
+
+div#document {
+  margin: 1em;
+}
+
+div#header {
+  background-image: url("header.jpg");
+  background-color: rgb(0,0,0);
+  background-repeat: no-repeat;
+  height: 62px;
+  border-bottom: 3px solid black;
+}
+
+div#header span#title {
+  color: white;
+  font-size: xx-large;
+  font-weight: bold;
+  padding: 0.5em;
+}
+
+div#top-navigation ul {
+  margin: 0px;
+  padding: 0px;
+}
+
+div#top-navigation li {
+  display: inline;
+  margin-left: 1.5em;
+  font-size: x-small;
+}
+
+body h1 {
+  text-align: center;
+}
+
+h2 {
+  font-size: medium;
+}
+
+
+/* Reload box. */
+
+div#reload {
+  background: #EEE;
+  margin: 5px;
+  padding: 5px;
+  float: right;
+}
+
+
+
+
+/* Style box for ledger. */
+
+div#style-selector ul {
+  margin: 0px;
+/*   padding: 0px; */
+  float: right;
+}
+
+div#style-selector li {
+  display: inline;
+  margin-right: 0.5em;
+  font-size: x-small;
+  width: 30%;
+/*   float: right; */
+}
+
+
+
+/* Table view */
+
+table.txntable {
+  width: 100%;
+}
+
+table.txntable .flag {
+  font-weight: bold;
+  text-align: center;
+  min-width: 16px;
+}
+
+table.txntable .postdate {
+  text-align: right;
+}
+
+table.txntable .postnote {
+  margin-left: 3em;
+  font-style: italic;
+}
+
+table.txntable tr.posting {
+  font-size: smaller;
+}
+
+table.txntable tr.txn {
+  background-color: #FFF9BF;
+}
+
+table.txntable tr.assert {
+  background-color: #FFDDDD;
+}
+
+table.txntable tr.posting {
+  background-color: #FFFFFF;
+}
+
+table.txntable td.highpost {
+  /* text-decoration: underline;  */
+  font-weight: bold;
+/*   border: thin dashed #CCC; */
+/*   background-color: #E8E8E8; */
+}
+
+a.payee:link, a.payee:visited {
+  text-decoration: none; 
+  color: black;
+  font-weight: bold;
+}
+
+
+/* Balance sheet / trial balance / global view of accounts */
+
+table.accounts td {
+  background-color: #F0F0F0;
+}
+
+tr.txn td {
+  border-top: thin solid black;
+}
+
+tr.txn span.amount {
+  /* font-weight: bold; */
+}
+
+table.semi {
+  margin-left: 2%;
+  margin-right: 2%;
+  width: 96%;
+}
+
+h2.duotables {
+  border-bottom: medium solid black;
+}
+
+
+/* Account name component */
+
+span.account {
+  margin-left: 0px;
+  margin-right: 0px;
+  padding-left: 0px;
+  padding-right: 0px;
+  white-space: nowrap;
+}
+
+a.accomp {
+  margin-left: 0px;
+  margin-right: 0px;
+  padding-left: 0px;
+  padding-right: 0px;
+  white-space: nowrap;
+  text-decoration: none;
+/*   background-color: red; */
+/*   border: thin solid green; */
+}
+
+span.account .accsep {
+  margin-left: 0px;
+  margin-right: 0px;
+  padding-left: 0px;
+  padding-right: 0px;
+/*   background-color: blue; */
+/*   border: thin solid green; */
+}
+
+
+
+/* Range view. */
+
+table#activity td {
+  background-color: #F8F8F8;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+
+/* Positions view */
+
+table#positions, table#xrates {
+  text-align: right;
+  border-collapse: collapse;
+}
+
+table#positions, table#xrates td.l {
+  text-align: left;
+}
+
+table#positions td, table#xrates td {
+  border: thin solid black;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+}
+
+
+
+
+/* Tree tables */
+
+thead {
+  font-size: smaller;
+}
+
+.folder {
+  border:none;
+  /* margin: 0 4px 0 0; */
+  padding-left: 2px;
+  padding-right: 2px;
+  margin-left: 0px;
+  margin-right: 0px;
+/*   border: thin solid red; */
+}
+
+span.foldspc {
+  margin-left: 24px;
+/*   border: thin solid blue; */
+}
+
+table td.tree a:link, table td.tree a:visited {
+  text-decoration: none;
+}
+
+table td.tree {
+  white-space: nowrap;
+}
+
+/* All wallets and amounts */
+table td.wallet {
+  text-align: right;
+/*   padding-left: 10px; */
+/*   padding-right: 10px; */
+}
+
+span.amount {
+  white-space: nowrap;
+}
+
+table td.cumulative {
+  text-align: right;
+  background-color: #FFEEEE;
+}
+
+table td.price {
+  font-style: italic;
+  padding-left: 1em;
+  white-space: nowrap;
+}
+
+
+
+/* Side-by-side views */
+
+div.left {
+  width: 50%;
+  /* border: thin solid red; */
+}
+
+div.right {
+  float: right;
+  left: 50%;
+  width: 50%;
+  /* border: thin solid blue; */
+}
+
+div.right h2, div.left h2 {
+  margin-top: 0px;
+}
+
+
+
+/* Error messages view */
+
+div.message table {
+  width: 100%;
+}
+
+div.message table td {
+  border: thin solid black;
+}
+
+div.message .critical {
+  color: red;
+}
+
+div.message .error {
+  color: red;
+}
+
+div.message .warning {
+  color: #990;
+}
+
+div.message .info {
+  color: #66F;
+}
+
+
+
+/* Source view */
+
+div#source pre {
+  padding: 0px;
+  margin: 0px;
+}
+
+
+
+/* Error divs and paragraphs. */
+
+.error {
+  color: red;
+}
+
+
+/* Trades / round-turns */
+
+div.btrade {
+  border-top: medium solid black;
+  margin-bottom: 30px;
+}
+
+
+
+/* Trial Balance */
+
+table#balance td.wallet {
+  padding-left: 1em;
+  padding-right: 1em;
+}
+
+
+
+/* Trades */
+
+table.trades {
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+  /* border: thin solid black; */
+  border-collapse: collapse;
+  /* margin-top: 1.5em; */
+  /* margin-bottom: 1.5em; */
+  background-color: #ECC;
+} 
+
+table.trades td {
+  border: thin solid black;
+  text-align: center;
+}
+
+div.right-link {
+  text-align: right;
+  margin: 0.5em;
+}
+
+
+
