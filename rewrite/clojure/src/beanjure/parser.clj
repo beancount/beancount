@@ -10,11 +10,6 @@
   )
 
 
-(defn assoc-list [map key value]
-  (assoc map key
-	 (conj (get map key []) value)))
-
-
 ;;------------------------------------------------------------------------------
 
 (def r-comment #"^[ \t]*;(.*)$")
@@ -106,7 +101,6 @@
 
 (defn parse-transaction [m lines acc]
   ;;(println "--- transaction" (first (drop 1 m)))
-
 ;;  (if-let [a (nth m 9)] (println a))
   (let [[d1 d2 :as d] (get-dates (subvec m 1 7)),
 	flag (nth m 7),
@@ -119,8 +113,8 @@
 	   line (first lines),
 	   rest (next lines)]
       (if (or (nil? line) (empty-line? line))
-	(fn [] (parse-top rest (assoc-list acc :transactions
-					   (Transaction. d1 d2 flag check-no payee description postings))))
+	(fn [] (parse-top rest (update-in acc [:transactions] conj
+                                          (Transaction. d1 d2 flag check-no payee description postings))))
 	(recur (cons (parse-posting line) postings) (first rest) (next rest)))
       )))
 
@@ -165,7 +159,6 @@
 
 (defn parse-top [lines acc]
   (let [line (first lines), rest (next lines)]
-    (print line)
     (if (nil? line)
       acc
       ;; Skip empty lines.
@@ -180,7 +173,7 @@
 	  (if-let [m (re-matches r-directive line)]
 	    (let [directive (parse-directive acc m)]
 	      (fn [] (parse-top rest (if directive
-				       (assoc-list acc :directives directive)
+				       (update-in acc [:directives] conj directive)
 				       acc))))
 
 	    ;; Otherwise.
@@ -192,17 +185,45 @@
 
 (defn read-ledger [lines]
   (trampoline parse-top lines {})
-  nil
   )
 
 (comment
 
 (def fname (str (System/getenv "HOME") "/q/accounting/blais.ledger"))
 
-(dorun (map println (take 500 (line-seq (reader fname)))))
+;;(dorun (map println (take 500 (line-seq (reader fname)))))
 
-(time (read-ledger (line-seq (reader fname))))
-(pprint (:transactions (read-ledger (take 500 (read-lines fname)))))
+
+;; (defmethod print-method  [o, ^Writer w]
+;;   (.write w (if (.fmID o)
+;;     ))
+
+
+
+(def ledger (time (read-ledger (line-seq (reader fname)))))
+
+(keys ledger)
+(-> ledger :transactions count)
+(-> ledger :directives count)
+
+(ledger :directives)
+
+(-> ledger :transactions first :payee)
+
+
+
+(do
+  (println "----------------------------------------")
+  (doseq [txn (:transactions ledger)]
+    (if (re-find #"(?i)laika" (:description txn))
+      (println txn))))
+
+(dorun (map #(println (:description %)) (:transactions ledger)))
+
+(float (/ (apply + (map #(-> % :postings count) (:transactions ledger))) (count (:transactions ledger))))
+
+
+(pprint (:transactions (read-ledger (line-seq (reader fname)))))
 (time (:transactions (read-ledger (read-lines fname))))
 ;(time (read-ledger (read-lines fname)))
 
@@ -212,11 +233,11 @@
 
 
 
-;; Improvmenets:
+
+;; Improvements:
 ;;   remove 'var ofx accid' -> @accid
 ;;   @check becomes -> @check-after @check-before
 ;;   only tags on postings, no notes vs. tags
 ;;   a new Exercise object; all Ledger objects serve Exercise
 ;;   Balsheet begin
 ;;   import should support bayesian
-

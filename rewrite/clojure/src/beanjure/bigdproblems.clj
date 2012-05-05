@@ -38,5 +38,3 @@
 ;; Should I just give up and define a comparison method that
 ;; will work ONLY for the data structures I'm expecting to see?
 ;; (e.g. "maps with values that are all Comparable")
-
-

@@ -2,46 +2,44 @@
 PROJECTS=$HOME/p
 CHECKOUTS=$HOME/c
 JAVA=/usr/share/java
-MAVEN=/usr/share/maven-repo
+MAVEN=$HOME/.m2/repository
 
-streamlined --swank							\
-	$CHECKOUTS/clojure						\
-									\
-	$CHECKOUTS/swank-clojure					\
-									\
-	$CHECKOUTS/core.incubator					\
-	$CHECKOUTS/core.memoize						\
-	$CHECKOUTS/core.logic						\
-	$CHECKOUTS/core.match						\
-	$CHECKOUTS/java.classpath					\
-	$CHECKOUTS/java.data						\
-	$CHECKOUTS/data.codec						\
-	$CHECKOUTS/data.csv						\
-	$CHECKOUTS/data.json						\
-	$CHECKOUTS/data.xml						\
-	$CHECKOUTS/data.zip						\
-	$CHECKOUTS/algo.generic						\
-	$CHECKOUTS/math.numeric-tower					\
-	$CHECKOUTS/tools.cli						\
-	$CHECKOUTS/tools.logging					\
-	$CHECKOUTS/tools.macro						\
-	$CHECKOUTS/tools.namespace					\
-	$CHECKOUTS/tools.trace						\
-	$CHECKOUTS/clj-stacktrace					\
-	$CHECKOUTS/ns-tracker						\
-									\
-	$JAVA/jetty.jar							\
-	$JAVA/jetty-util.jar						\
-	$MAVEN/javax/servlet/servlet-api/2.5/servlet-api-2.5.jar	\
-	$JAVA/commons-codec.jar						\
-	$JAVA/commons-fileupload.jar					\
-	$CHECKOUTS/ring/ring-core					\
-	$CHECKOUTS/ring/ring-devel					\
-	$CHECKOUTS/ring/ring-jetty-adapter				\
-	$CHECKOUTS/ring/ring-servlet					\
-	$CHECKOUTS/clout						\
-	$CHECKOUTS/hiccup						\
-	$CHECKOUTS/compojure						\
-									\
-	$PROJECTS/beanjure						\
+streamlined --swank					\
+	$CHECKOUTS/clojure				\
+							\
+	$CHECKOUTS/core.incubator			\
+	$CHECKOUTS/core.memoize				\
+	$CHECKOUTS/core.logic				\
+	$CHECKOUTS/core.match				\
+	$CHECKOUTS/java.classpath			\
+	$CHECKOUTS/java.data				\
+	$CHECKOUTS/data.codec				\
+	$CHECKOUTS/data.csv				\
+	$CHECKOUTS/data.json				\
+	$CHECKOUTS/data.xml				\
+	$CHECKOUTS/data.zip				\
+	$CHECKOUTS/algo.generic				\
+	$CHECKOUTS/math.numeric-tower			\
+	$CHECKOUTS/tools.cli				\
+	$CHECKOUTS/tools.logging			\
+	$CHECKOUTS/tools.macro				\
+	$CHECKOUTS/tools.namespace			\
+	$CHECKOUTS/tools.trace				\
+	$CHECKOUTS/ns-tracker				\
+	$CHECKOUTS/clj-time				\
+	$CHECKOUTS/clj-stacktrace			\
+	$CHECKOUTS/swank-clojure			\
+							\
+	$MAVEN/org/eclipse/jetty/jetty-*/7.6.1.*	\
+	$MAVEN/javax/servlet/servlet-api/2.5		\
+        $MAVEN/joda-time/joda-time			\
+	$MAVEN/commons-*				\
+							\
+	$CHECKOUTS/ring					\
+	$CHECKOUTS/clout				\
+	$CHECKOUTS/hiccup				\
+	$CHECKOUTS/enlive				\
+	$CHECKOUTS/compojure				\
+							\
+	$PROJECTS/beanjure				\
 	$*

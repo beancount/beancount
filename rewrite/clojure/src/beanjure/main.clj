@@ -13,7 +13,7 @@
   )
 
 (defroutes main-routes
-  (GET "/" [] "<h1>Beancount</h1>") 
+  (GET "/" [] "<h1>Beancount</h1>")
   (route/files "/home/blais/p/beanjure/web" :root "/r")
   (route/resources "/resources")
   (route/not-found "Page not found")
@@ -34,7 +34,7 @@
 
 (def app
   (-> (handler/site #'main-routes)
-      (reload/wrap-reload '(beanjure.main))   
+      (reload/wrap-reload '(beanjure.main))
       (file/wrap-file "/home/blais/p/beanjure/web")
       (stacktrace/wrap-stacktrace)
       (wrap-request-logging)
