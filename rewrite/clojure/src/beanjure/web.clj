@@ -19,7 +19,7 @@
 
 (def static-dir
   "Root of static files being served."
-  (str (System/getenv "HOME") "/p/beanjure/web"))
+  (str (System/getenv "HOME") "/p/beanjure/static"))
 
 (def template-dir
   "Root of template files to load."
@@ -27,24 +27,20 @@
 
 
 
-
 (en/deftemplate layout (File. (str template-dir "/layout.html"))
   []
   )
 
-
-
-
-
-
 (defroutes routes
   (GET "/" [] (layout))
-  (route/files static-dir)
+  ;;(route/files static-dir)
   ;;(route/resources "/resources")
   (route/not-found "Page not found")
   )
 
 
+
+;; FIXME: use java.logging.*, set it up.
 (defn- log [msg & vals]
   (let [line (apply format msg vals)]
     (locking System/out (println line))))
@@ -61,7 +57,7 @@
 (def app
   (-> (handler/site #'routes)
       (reload/wrap-reload '(beanjure.main))
-      ;(file/wrap-file static-dir)
+      (file/wrap-file static-dir)
       (stacktrace/wrap-stacktrace)
       (wrap-request-logging)
 
