@@ -1,6 +1,5 @@
 (ns beanjure.parser
-  (:use [clojure.contrib.repl-utils :only (show)]
-        [clojure.contrib.duck-streams :only (read-lines)]
+  (:use [clojure.java.io :only (reader)]
         [clojure.pprint :only (pprint)]
         [clojure.string :only (split join)]
 	)
@@ -166,6 +165,7 @@
 
 (defn parse-top [lines acc]
   (let [line (first lines), rest (next lines)]
+    (print line)
     (if (nil? line)
       acc
       ;; Skip empty lines.
@@ -199,7 +199,9 @@
 
 (def fname (str (System/getenv "HOME") "/q/accounting/blais.ledger"))
 
-(time (read-ledger (take 500 (read-lines fname))))
+(dorun (map println (take 500 (line-seq (reader fname)))))
+
+(time (read-ledger (line-seq (reader fname))))
 (pprint (:transactions (read-ledger (take 500 (read-lines fname)))))
 (time (:transactions (read-ledger (read-lines fname))))
 ;(time (read-ledger (read-lines fname)))

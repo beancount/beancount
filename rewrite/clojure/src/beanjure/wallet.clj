@@ -1,13 +1,16 @@
 (ns beanjure.wallet
   (:use [clojure.test]
-	[clojure.contrib.repl-utils :only (show)]
-	[clojure.contrib.generic.functor :only (fmap)]
+	[clojure.reflect :only (reflect)]
+	[clojure.algo.generic.functor :only (fmap)]
   	)
 
   ;; (:require [clojure.java.io :as jio])
 
   ;; (:import [java.util Date])
   )
+
+
+(for [x (range 10)] (Thread/sleep 100))
 
 
 (def wallet-empty? empty?)
@@ -51,6 +54,9 @@
   (into {} (map #(.entryAt w %) (keys wother))))
 
 
+
+
+
 (deftest ops
   (is (wallet-empty? {}))
   (is (not (wallet-empty? {:USD 200})))
@@ -65,7 +71,7 @@
 	 {:USD -200 :CAD -201}))
 
   (is (= (wallet-div {:USD 200 :CAD 100} 2)   {:USD 100 :CAD 50}))
-  (is (= (wallet-div {:USD 200 :CAD 100} 0.1) {:USD 2000 :CAD 1000}))
+  (is (= (wallet-div {:USD 200 :CAD 100} 0.1M) {:USD 2000M :CAD 1000M}))
 
   (is (= (wallet-comm {:USD 200})
 	 {:USD 200}))
@@ -87,8 +93,63 @@
 
 
 
+
+(comment
+
+(import [java.math BigDecimal])
+(BigDecimal. 293)
+(+ (BigDecimal. "293.032") (BigDecimal. "0.00000032"))
+
+  (= (bigdec "0.1") 0.1M)
+  
+  (= (wallet-div {:USD 200M :CAD 100M} 0.1M)
+     {:USD 2.00E+3M :CAD 1.00E+3M}
+     {:USD 2000M :CAD 1000M})
+  )
+
+
+
+
+(with-precision 1
+  (= 2.00E+3M 2000M))
+(= 2E+3M 2000M)
+(compare (bigdec "2000") (bigdec 2000)) 2.00E+3M
+
+(= {:USD 2E+3M} {:USD 2000M})
+(compare {:USD 2E+3M} {:USD 2000M})
+
+(.longValue 2E+3M)
+(.longValue 2000M)
+
+(.scale 2E+3M)
+(.scale 2000M)
+(.equals 2E+3M 2000M)
+
+(= 2E+3M 2000M)
+(equals 2E+3M 2000M)
+(equals 2E+3M 2000M)
+
+(= 2E+1M 20M)
+
+(.compareTo 2.00E+3M 2000M)
+(.toString 2.00E+3M)
+(.toString 2000M)
+
+
+(=
+ {:USD 2.00E+3M :CAD 1.00E+3M}
+ {:USD 2000M :CAD 1000M})
+
+
 ;;------------------------------------------------------------------------------
 
+(comment
+  (defrecord Wallet [contents])
+  (Wallet. {:USD 200})
+  (let [w1 (Wallet. {:USD 200}),
+        w2 (Wallet. {:USD 101})]
+    (apply merge-with + (map :contents [w1 w2])))
+  )
 
 
 ;;     def mask_commodity(self, com):
@@ -203,4 +264,7 @@
 ;;                 w[to_asset] += w[from_asset] * rate
 ;;                 del w[from_asset]
 ;;         return w
+
+
+
 
