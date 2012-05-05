@@ -1,4 +1,4 @@
-(ns beanjure.main
+(ns beanjure.web
   (:use ring.adapter.jetty
         ring.middleware.stacktrace
 	compojure.core
