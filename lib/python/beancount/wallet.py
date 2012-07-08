@@ -91,7 +91,7 @@ class _Wallet(dict):
         elif len(self) == 1:
             d = self.itervalues().next()
         else:
-            raise ValueError("Cannot convert wallet %s to a single number." % self)
+            raise ValueError("Cannot convert wallet '%s' to a single number." % self)
         return d
 
     def tocomm(self):
@@ -100,7 +100,7 @@ class _Wallet(dict):
         if len(self) == 1:
             return self.iterkeys().next()
         else:
-            raise ValueError("Cannot convert wallet %s to a single number." % self)
+            raise ValueError("Cannot convert wallet '%s' to a single number." % self)
 
     def single(self):
         """Return a tuple of (amount, commodity) if this wallet contains a

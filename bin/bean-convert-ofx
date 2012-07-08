@@ -17,7 +17,7 @@ directives are in comments.)
 """
 
 # stdlib imports
-import os, re, logging
+import sys, os, re, logging
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 from collections import defaultdict
@@ -66,6 +66,11 @@ class OFXTransaction(object):
     amount_other = None
 
     def initialize(self, currency):
+        if self.name is not None:
+            self.name = self.name.replace('<br/>', '  ')
+        if self.memo is not None:
+            self.memo = self.memo.replace('<br/>', '  ')
+
         if self.dtposted:
             self.dtposted = ofx_parse_time(self.dtposted).date()
         if self.memo is not None and re.match('[0-9.]+ [A-Z]{3} @ [0-9.]+', self.memo):

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 """
+Usage: FILE.CSV [FILE.CSV...]
+
 Interpret the PayPal CSV file and output transactions in a format suitable for
 Ledger.
 """
@@ -33,7 +35,7 @@ def parse_date(s):
 def main():
     import optparse
     parser = optparse.OptionParser(__doc__.strip())
-    opts, ledger, args = cmdline.main(parser, no=0)
+    opts, _, args = cmdline.main(parser, no=0)
 
     if not args:
         parser.error("You must specify some CSV filenames to parse.")

@@ -185,6 +185,9 @@ class Account(object):
         else:
             return self.parent.ischildof(cparent)
 
+    def get_category_name(self):
+        "Return the category of the account, that is, Assets, Liability, etc."
+        return self.fullname.split(Account.sep)[0]
 
 
 
