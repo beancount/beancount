@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 "Simple web server to display the contents of some Ledger."
+
+import sys
+try:
+    import cdecimal
+    sys.modules["decimal"] = cdecimal
+except ImportError:
+    pass
+
 from beancount.web.serve import main
 main()
 

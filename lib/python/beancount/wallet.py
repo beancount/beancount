@@ -3,6 +3,7 @@ Wallet arithmetic.
 """
 
 # stdlib imports
+import logging
 from decimal import Decimal
 
 # beancount imports
@@ -11,8 +12,7 @@ from beancount.utils import TimerUtil
 __all__ = ('Wallet',)
 
 
-
-class Wallet(dict):
+class _Wallet(dict):
     """
     A mapping of currency to amount. The basic operators are supported.
     """
@@ -91,7 +91,7 @@ class Wallet(dict):
         elif len(self) == 1:
             d = self.itervalues().next()
         else:
-            raise ValueError("Cannot convert wallet %s to a single number." % self)
+            raise ValueError("Cannot convert wallet '%s' to a single number." % self)
         return d
 
     def tocomm(self):
@@ -100,7 +100,7 @@ class Wallet(dict):
         if len(self) == 1:
             return self.iterkeys().next()
         else:
-            raise ValueError("Cannot convert wallet %s to a single number." % self)
+            raise ValueError("Cannot convert wallet '%s' to a single number." % self)
 
     def single(self):
         """Return a tuple of (amount, commodity) if this wallet contains a
@@ -192,11 +192,13 @@ class Wallet(dict):
         return w
 
     def __div__(self, other):
-        assert isinstance(other, (int, Decimal))
-        w = Wallet(self)
-        for k, v in self.iteritems():
-            w[k] /= other
-        _clean(w)
+        if isinstance(other, (int, Decimal)):
+            w = Wallet(self)
+            for k, v in self.iteritems():
+                w[k] /= other
+            _clean(w)
+        elif isinstance(other, Wallet):
+            assert False # FIXME: Implement computing ratios.
         return w
 
     def round(self, mprecision=None):
@@ -288,3 +290,12 @@ def _clean(w):
     for k in rlist:
         del w[k]
 
+
+
+try:
+    from beancount.cwallet import Wallet
+except ImportError:
+    logging.warning("Fast Wallet object not available; falling back on Python Wallet object.")
+    Wallet = _Wallet
+    
+    

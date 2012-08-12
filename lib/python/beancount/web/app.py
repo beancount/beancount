@@ -205,7 +205,7 @@ def page__menu(app, ctx):
                   A('BalSheet End', href=umap('@@BalanceSheetEnd'))),
                LI(A('Income', href=umap('@@IncomeStatement'))),
         ))
-        
+
     t2.add(UL(
                ## LI(A('CashFlow', href=umap('@@CashFlow'))),
                ## LI(A('Capital', href=umap('@@CapitalStatement'))),
@@ -256,6 +256,7 @@ def page__other(app, ctx):
         LI(A('Update Activity', href=umap('@@Activity'))),
         LI(A('Locations', href=umap('@@Locations'))),
         LI(A('Pricing Commodities', href=umap('@@Pricing'))),
+        LI(A('Custom Averages', href=umap('@@CustomAverages'))),
         )
     ul2 = UL(
         LI(A('Source', href=umap('@@Source'))),
@@ -458,29 +459,6 @@ def page__balancesheet_begin(app, ctx):
     page = Template(ctx)
     page.add(H1("Balance Sheet (Beginning)"))
 
-    ## ledger = ctx.ledger
-
-    ## a_acc = ledger.find_account(('Assets', 'Asset'))
-    ## l_acc = ledger.find_account(('Liabilities', 'Liability'))
-    ## e_acc = ledger.find_account(('Equity', 'Capital'))
-    ## if None in (a_acc, l_acc, e_acc):
-    ##     page.add(P("Could not get all A, L and E accounts.", CLASS="error"))
-    ##     return page.render(app)
-
-    ## a_table, a_total = semi_table(a_acc, 'assets', conversions=app.opts.conversions)
-    ## l_table, l_total = semi_table(l_acc, 'liabilities', conversions=app.opts.conversions)
-    ## e_table, e_total = semi_table(e_acc, 'equity', conversions=app.opts.conversions)
-    ## page.add(DIV(H2("Liabilities", CLASS="duotables"), l_table,
-    ##              H2("Equity", CLASS="duotables"), e_table,
-    ##              CLASS='right'),
-    ##          DIV(H2("Assets", CLASS="duotables"), a_table,
-    ##              CLASS='left'),
-    ##          )
-
-    ## total = a_total + l_total + e_total
-    ## page.add(BR(style="clear: both"),
-    ##          TABLE( TR(TD(B("A + L + E:")), TD(hwallet(total))),
-    ##                 id='net', CLASS='treetable') )
     page.add('FIXME TODO')
 
     return page.render(app)
@@ -699,6 +677,38 @@ def page__pricehistory(app, ctx):
 
     return page.render(app)
 
+
+def page__customaverages(app, ctx):
+    "Some custom averages computed. This is essentially a spreadsheet."
+    page = Template(ctx)
+    page.add(H1("Custom Averages"))
+    ledger = ctx.ledger
+
+    tit = H2("Retained Earnings")
+    salaries = ledger.find_account(('Income:Salary',)).balances_cumul['total']
+    taxes = ledger.find_account(('Expenses:Salary',)).balances_cumul['total']
+    tbl = TABLE()
+    tbl.add(THEAD(TR(TD("Description"), TD("Total"))))
+    tbl.add(TR( TD("Salaries"), TD(hwallet(-salaries)) ))
+    tbl.add(TR( TD("Taxes"), TD(hwallet(taxes)) ))
+    retained = -(salaries + taxes)
+    tbl.add(TR( TD("Retained Earnings"), TD(hwallet(retained)) ))
+    page.add(tit)
+    page.add(tbl)
+
+    tit = H2("Food Expenditures")
+    food = ledger.find_account(('Expenses:Food',)).balances_cumul['total']
+    tbl = TABLE()
+    tbl.add(THEAD(TR(TD("Description"), TD("Total"))))
+    tbl.add(TR( TD("Food"), TD(hwallet(food)) ))
+    tbl.add(TR( TD("% of retained earnings"), TD('%.1f %%' % (100*food['USD']/retained['USD'])) ))
+    duration = ledger.duration()
+    tbl.add(TR( TD("Period"), TD(str(duration.days)) ))
+    tbl.add(TR( TD("Per day"), TD(hwallet(food/duration.days)) ))
+    page.add(tit)
+    page.add(tbl)
+
+    return page.render(app)
 
 
 
@@ -1433,6 +1443,7 @@ page_directory = (
     ('@@Trades', page__trades, '/trades', None),
     ('@@TradesCSV', page__trades_csv, '/trades.csv', None),
     ('@@Pricing', page__pricing, '/pricing', None),
+    ('@@CustomAverages', page__customaverages, '/customavg', None),
     ('@@PriceHistory', page__pricehistory, '/price/history/%s/%s', '^/price/history/(?P<base>[^/]+)/(?P<quote>[^/]+)$'),
 
     ('@@JournalIndex', page__journal_index, '/journal/index', None),

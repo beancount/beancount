@@ -1,0 +1,128 @@
+Re: BeanCount
+
+From:
+    "Christopher Singley" <> 
+To:
+    "Martin Blais" <blais@furius.ca>
+Date:
+    Sat, 21 May 2011 11:58 (4 days 8 hours ago)
+
+On Sat, May 21, 2011 at 8:36 AM, Martin Blais <blais@furius.ca> wrote:
+> Interesting. I had never heard of this "money measurement" concept.
+> It's here too:
+> http://en.wikipedia.org/wiki/Money_measurement_concept
+>
+> In both Ledger and Beancount, the accounts contain whatever units you
+> like; it is assumed that the conversion to a common unit is done at
+> the presentation state (assuming we have a timeline of exchange
+> rates/prices somewhere to make the conversions).
+
+Yes, this is somewhat degenerate.  I understand the attraction -
+ledger's data entry format is very elegant - but squeezing the
+complexity out of this part just means it will pop up elsewhere.
+
+I think this structure, as it stands, likely interferes with clean
+separation of functionality.
+
+> Note the parentheses around (Income:CapitalGains); this is the hack
+> that lets me do this, it tells Beancount not to count this posting in
+> the sum of the transaction. I hate it, because there are no checks, I
+> just have to be careful to enter the right amount.
+
+Yeah, these are appalling bookkeeping practices.  By mixing up your
+single-entry (units) and double-entry ($) accounting, you have wound
+up using single-entry accounting on your P&L... tasking your brain
+with keeping it straight, rather than relying on the system to do it
+for you.  See how the complexity you squeezed out of the data entry
+now pops up here?
+
+It's a question of cost/benefit, I guess.  If you're never going to do
+any complicated P&L, just bookkeeping of personal cash, then the
+simple data entry will look very attractive.  OTOH, if you're going to
+throw some gnarly postings at your books, then a little more overhead
+on the data entry side will look like a small price to pay in order to
+have nice clean books.
+
+>
+> I suppose you would do something like this? ::
+>
+>  2011-05-21 * Buy Apple Shares
+>    Assets:Investments:AAPL:Cost         6000.00 USD
+>    Expenses:Financial:Commissions         10.00 USD
+>    Assets:Investments:CashAccount      -6010.00 USD
+>
+>  2011-06-21 * Sell Apple Shares
+>    Income:CapitalGains                 -1000.00 USD
+>    Assets:Investments:AAPL:Cost        -6000.00 USD
+>    Expenses:Financial:Commissions         10.00 USD
+>    Assets:Investments:CashAccount       6990.00 USD
+>
+> Is this correct?
+
+Yes, pretty much.  You are getting the picture.
+
+To walk a little further down the road, all of these debits & credits
+are calculated by reference to a separate journal of trades... the
+accountant (or accounting system) looks up what units have been booked
+in & out at what prices, and what adjustments to units & costs have
+been made along the way... and then applies some sort of algorithm
+(FIFO, LIFO, min-gain, max-gain, specific identification, whatever) in
+order to generate the right dollar-value debits & credits to post to
+the journal.
+
+> This is very interesting. I can see how this would work well with a
+> modest amount of transactions in those other "units" (e.g. stocks for
+> personal investments). We could think of a special dedicated syntax
+> for entering the trades themselves, and somehow to link them to a
+> specific account.
+
+I would suggest using a separate flat text file for inventory
+transactions, with its own special syntax.
+
+The "linkage to a specific account" is where the chart of accounts
+comes in... which I notice that ledger has also done away with.
+
+I think the solution to chart-of-accounts type references is more
+flexible than the pretty strong mandate not to mix up dollars and
+units.
+
+The traditional solution here involves assigning account numbers, and
+using those as pointers.  This whole thing is pretty straightforward
+to map onto an SQL-based foreign key scheme, which is a standard
+architecture... but there are other perfectly valid solutions.
+
+> But what do you do with different currency units in the same account?
+
+Aha, an excellent question.  As you can probably surmise from this
+whole discussion of "money measurement", the only answer is, "you
+don't".  You have separate accounts ... entirely separate ledgers,
+even... for different currencies.
+
+> For example, I have lived in a few different places and I do have a
+> single ledger with separate long stretches of transactions in CAD and
+> USD. And it goes on--for example, I still have accounts in Canada in
+> CAD--a property there, with various continuing expenses-- but I'm
+> earning in the US and live in NYC. So I need to be able to have more
+> than one common "unit of measurement" concept? (tracking all the CAD
+> transactions in their equivalent USD basis is not practical in this
+> case, or vice-versa, there are too many on either side). Similarly,
+> when I travel for long periods (e.g. one month) I track all the
+> transactions in the native currency.
+>
+> How is it normally done?
+
+You have CAD accounts, and USD accounts.  You have CAD balance sheet,
+and USD balance sheet.  You have CAD P&L, and USD P&L.  You can put
+these together to make consolidated balance sheets & consolidated
+P&L...  and when you do that, you have to choose one or the other
+currency as a functional reporting currency.  That's why, if you look
+at company balance sheets, they will always note at the top "CAD
+$thousands" or "USD $millions" or somesuch... they are telling you the
+reporting basis.
+
+Currency translations can get to be a real bitch of a topic...
+complexities not much less than securities inventory.  I gather you
+care about this topic quite a bit more!  It is good to make the system
+flexible enough to handle these things well.  In fact, I have currency
+accounting needs myself.
+

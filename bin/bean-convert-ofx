@@ -17,7 +17,7 @@ directives are in comments.)
 """
 
 # stdlib imports
-import os, re, logging
+import sys, os, re, logging
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 from collections import defaultdict
@@ -66,6 +66,11 @@ class OFXTransaction(object):
     amount_other = None
 
     def initialize(self, currency):
+        if self.name is not None:
+            self.name = self.name.replace('<br/>', '  ')
+        if self.memo is not None:
+            self.memo = self.memo.replace('<br/>', '  ')
+
         if self.dtposted:
             self.dtposted = ofx_parse_time(self.dtposted).date()
         if self.memo is not None and re.match('[0-9.]+ [A-Z]{3} @ [0-9.]+', self.memo):
@@ -171,7 +176,7 @@ def main():
 
     for arg in args:
         print '\n'*3
-        print ';;; Import of %s' % arg
+        #print ';;; Import of %s' % arg
 
         for ofxacc in process_ofx(arg, accounts_map):
             account = ofxacc.account
@@ -190,7 +195,7 @@ def main():
 
             print '\n'*3
             hdfmt = '; %s import  %s  %s'
-            print hdfmt % ('Start', account.fullname, ofxacc.start)
+            #print hdfmt % ('Start', account.fullname, ofxacc.start)
             print
             for t in sorted(ofxacc.transactions, key=attrgetter('dtposted')):
 
@@ -221,7 +226,7 @@ def main():
                     date_ += oneday
                 print
 
-            print hdfmt % ('End', account.fullname, ofxacc.end)
+            #print hdfmt % ('End', account.fullname, ofxacc.end)
             if re.search('\\bCredit-Card:HSBC\\b', account.fullname):
                 ofxacc.bal_amount = -ofxacc.bal_amount
             print '@check %s %s     %s %s' % (

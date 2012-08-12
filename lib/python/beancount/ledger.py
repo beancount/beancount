@@ -185,6 +185,9 @@ class Account(object):
         else:
             return self.parent.ischildof(cparent)
 
+    def get_category_name(self):
+        "Return the category of the account, that is, Assets, Liability, etc."
+        return self.fullname.split(Account.sep)[0]
 
 
 
@@ -527,6 +530,15 @@ class Ledger(object):
 
     # Account ordering integer.
     acc_ordering = count().next
+
+    def beginning(self):
+        return self.postings[0].actual_date
+
+    def end(self):
+        return self.postings[-1].actual_date
+
+    def duration(self):
+        return self.end() - self.beginning()
 
     def get_account(self, name, create=False, incrcount=True):
         """

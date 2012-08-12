@@ -14,6 +14,32 @@
 Beancount (Accounting)
 ======================
 
+  - Add a diective for adding a link to a pdf document, for statements.
+
+  - Idea: Add @close directive in order to mark the end of a specific
+    account.
+
+  - Idea: Add @comment directive in order to insert parsed comments at
+    dates.
+
+  - Idea: When an invalid check occurs and the amount is the same as
+    the other but with a negative sign, you can detect this and flag
+    it as an incorrect sign (a milder error) than an invalid check.
+
+  - Idea: color entries with an inverted sign (e.g. payments in a
+    liability account) differently!
+
+  - Idea: a @check that works on differences, like a clamp on an
+    income statement between two dates. This would be useful for
+    OANDA, for example.
+
+  - Find good ways to transfer data to an Excel spreadsheet
+
+  - Generate graphs of account amounts over time
+  - Include average amounts, average delta amount
+
+  - All Ledger objects should have begin/end dates.
+
   - Optimize: rewrite 'wallet' in C. __iadd__ is where all the time is
     being spent.
 
