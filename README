@@ -1,6 +1,6 @@
-=====================================================
-   BeanCount: Command-line Double-Entry Accounting
-=====================================================
+========================================================
+   BeanCount: Double-Entry Accounting with Text Input
+========================================================
 
 .. contents::
 ..
@@ -15,11 +15,11 @@
 Description
 ===========
 
-A double-entry accounting system that uses a simple text file format
-as input. A few Python scripts are used to parse the contents of the
-file, for example, to serve the contents as a locally running web
-server. Scripts are provided to convert from OFX files into Ledger
-input format, and other formats (easily extensible).
+A double-entry accounting system that uses a simple text file format as input. A
+few Python scripts are used to parse the contents of the file, for example, to
+serve the contents as a locally running web server. Scripts are provided to
+convert from OFX files into Ledger input format, and other formats (easily
+extensible).
 
 Notes:
 
