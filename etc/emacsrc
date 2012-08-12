@@ -4,7 +4,7 @@
 ;;
 
 ;; Add the emacs path.
-(add-to-list 'load-path (concat project-current "/lib/emacs"))
+(add-to-list 'load-path (concat project-current "/lib/elisp"))
 
 (require 'ledger)
 (require 'ledger-plus)
