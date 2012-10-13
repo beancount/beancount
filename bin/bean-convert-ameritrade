@@ -1,0 +1,77 @@
+#!/usr/bin/env python
+"""
+Convert an Ameritrade CSV file into a Ledger-compatible output.
+"""
+import sys, os, re, csv
+from decimal import Decimal
+
+
+ACCOUNT_THIS = 'Assets:Investments:Ameritrade'
+ACCOUNT_FUNDING = 'Assets:Current:TD:Checking'
+ACCOUNT_INTEREST = 'Income:Investments:Interest'
+
+ALWAYS_EMPTY = ['REG FEE', 'SHORT-TERM RDM FEE', 'FUND REDEMPTION FEE', ' DEFERRED SALES CHARGE', 'PRICE', 'COMMISSION']
+
+CCY = 'USD'
+
+def check_empty(o, *fnames):
+    for f in fnames:
+        assert o[f] in ('', None)
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(__doc__.strip())
+    parser.add_argument('-a', '--account', action='store', default=ACCOUNT_THIS)
+    parser.add_argument('-f', '--funding-account', dest='account_funding', action='store', default=ACCOUNT_FUNDING)
+    parser.add_argument('-i', '--interest-account', dest='account_interest', action='store', default=ACCOUNT_INTEREST)
+    parser.add_argument('filename', help='Filename')
+    opts = parser.parse_args()
+
+    rdr = csv.DictReader(open(opts.filename))
+    # header = rdr.next()
+    # print header
+    for o in rdr:
+        if re.search('END', o['DATE']):
+            break
+
+        check_empty(o, *ALWAYS_EMPTY)
+
+        mo = re.match('(\d\d)/(\d\d)/(\d\d\d\d)', o['DATE'])
+        month, day, year = map(int, mo.groups())
+
+        desc = o['DESCRIPTION']
+        if re.search('electronic funding receipt', desc, re.I):
+            check_empty(o, 'QUANTITY', 'SYMBOL')
+            print '%04d-%02d-%02d * %s -- %s' % (year, month, day, desc, o['TRANSACTION ID'])
+            amt = Decimal(o['AMOUNT'])
+            print '  %-48s %10.2f %s' % (opts.account, amt, CCY)
+            print ';  %-48s %10.2f %s' % (opts.account_funding, -amt, CCY)
+            print
+
+        elif re.search('money market purchase \(.*\)', desc, re.I):
+            check_empty(o, 'PRICE', 'COMMISSION')
+            qty, symbol = Decimal(o['QUANTITY']), o['SYMBOL']
+            print '%04d-%02d-%02d * %s -- %s' % (year, month, day, desc, o['TRANSACTION ID'])
+            amt = Decimal(o['AMOUNT'])
+            print '  %-48s %10.2f %s @ 1 %s' % ('%s:%s' % (opts.account, symbol), qty, symbol, CCY)
+            print
+
+        elif re.search('money market purchase', desc, re.I):
+            check_empty(o, 'PRICE', 'COMMISSION', 'QUANTITY', 'SYMBOL')
+            print '%04d-%02d-%02d * %s -- %s' % (year, month, day, desc, o['TRANSACTION ID'])
+            amt = Decimal(o['AMOUNT'])
+            print '  %-48s %10.2f %s' % (opts.account, amt, CCY)
+            print
+
+        elif re.search('money market interest \(.*\)', desc, re.I):
+            check_empty(o, 'PRICE', 'COMMISSION')
+            qty, symbol = Decimal(o['QUANTITY']), o['SYMBOL']
+            print '%04d-%02d-%02d * %s -- %s' % (year, month, day, desc, o['TRANSACTION ID'])
+            print '  %-48s %10.2f %s' % ('%s:%s' % (opts.account, symbol), qty, symbol)
+            assert re.match('^MM', symbol)
+            amt = qty # Same as dollars
+            print '  %-48s %10.2f %s' % (opts.account_interest, -amt, CCY)
+            print
+
+if __name__ == '__main__':
+    main()
