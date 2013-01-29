@@ -678,6 +678,31 @@ def page__pricehistory(app, ctx):
     return page.render(app)
 
 
+def page__costofliving(app, ctx):
+    """A page that sums up expenses for the current year and annualizes."""
+    page = Template(ctx)
+    page.add(H1("Cost of Living"))
+
+    ledger = app.ledger
+
+
+    tbl, = page.add(TABLE(THEAD(TR(TH("What"), TH("Amount")))))
+
+    gross = ledger.get_account('Expenses')
+    tbl.append( TR(TD("Gross Expenses"), TD(hwallet(gross.balances_cumul['total']))) )
+
+
+    salary = ledger.get_account('Expenses:Salary')
+    loft = ledger.get_account('Expenses:Home:Loft4530')
+    tbl.append( TR(TD("Salary Taxes"), TD(hwallet(salary.balances_cumul['total']))) )
+    tbl.append( TR(TD("Loft Expenses"), TD(hwallet(loft.balances_cumul['total']))) )
+
+    net = (gross.balances_cumul['total'] - salary.balances_cumul['total'] - loft.balances_cumul['total'])
+    tbl.append( TR(TD("Net Expenses"), TD(hwallet(net))) )
+
+    return page.render(app)
+
+
 def page__customaverages(app, ctx):
     "Some custom averages computed. This is essentially a spreadsheet."
     page = Template(ctx)
@@ -1445,6 +1470,7 @@ page_directory = (
     ('@@Pricing', page__pricing, '/pricing', None),
     ('@@CustomAverages', page__customaverages, '/customavg', None),
     ('@@PriceHistory', page__pricehistory, '/price/history/%s/%s', '^/price/history/(?P<base>[^/]+)/(?P<quote>[^/]+)$'),
+    ('@@CostOfLiving', page__costofliving, '/costofliving', None),
 
     ('@@JournalIndex', page__journal_index, '/journal/index', None),
     ('@@JournalAll', page__journal_all, '/journal/all', None),
@@ -1465,4 +1491,3 @@ page_directory = (
 
 mapper = Mapper(page_directory)
 umap = urlmap = mapper.map
-

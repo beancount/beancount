@@ -142,6 +142,10 @@ class Account(object):
         n += sum(len(child) for child in self.children)
         return n
 
+    def __iter__(self):
+        "Iterate over all the child accounts, including this account."
+        return iterate_over_accounts(self)
+
     atypemap = {True: 'Debit',
                 False: 'Credit',
                 None: ''}
@@ -154,6 +158,10 @@ class Account(object):
     def isused(self):
         "Return true if the account is used."
         return self.usedcount > 0
+
+    def isleaf(self):
+        "Return true if the account has no children."
+        return len(self.children) == 0
 
     def subpostings(self):
         """
@@ -189,6 +197,13 @@ class Account(object):
         "Return the category of the account, that is, Assets, Liability, etc."
         return self.fullname.split(Account.sep)[0]
 
+
+def iterate_over_accounts(acc):
+    "Generator that yields this account and all its child accounts."
+    yield acc
+    for subacc in acc.children:
+        for acc in iterate_over_accounts(subacc):
+            yield acc
 
 
 class Dated(object):
@@ -574,7 +589,7 @@ class Ledger(object):
 
     # Patterns for comments and empty lines.
     comment_re = re.compile('^\s*;(.*)$')
-    empty_re = re.compile('^\s*$')
+    empty_re = re.compile('^[\s\014]*$') # 014 = ^L, FIXME this doesn't work
 
     # Pattern for date.
     date_re = re.compile('(\d\d\d\d)[/-](\d\d)[/-](\d\d)')
@@ -2079,7 +2094,7 @@ class InputManager(object):
 
     def get_file_line(self):
         return self.inputs[-1][1], self.inputs[-1][2]
-        
+
 
 
 class IncludeCommand(object):
