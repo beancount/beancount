@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+"""
+Given a parent account, find all the unique subaccounts and spit out a CSV file
+of the sums in them by year.
+"""
+
+import sys
+try:
+    import cdecimal
+    sys.modules["decimal"] = cdecimal
+except ImportError:
+    pass
+
+# stdlib imports
+import re, csv, logging
+from datetime import date
+from decimal import Decimal
+from xml.sax.saxutils import unescape
+from pprint import pprint, pformat
+from collections import defaultdict
+
+# other imports
+from BeautifulSoup import BeautifulSoup, Tag
+
+# beancount imports
+from beancount import cmdline
+from beancount.ledger import read_ofx_accounts_map
+from beancount.wallet import Wallet
+
+
+def main():
+    import optparse
+    parser = optparse.OptionParser(__doc__.strip())
+    opts, ledger, args = cmdline.main(parser, 1)
+    accname, = args
+
+    # Fetch the specified account, if possible.
+    acc = ledger.find_account([accname])
+    if not acc:
+        raise KeyError("Could not find account '%s'" % accname)
+
+    # Compute groups of postings.
+    minyear, maxyear = 100000, 0
+    accmap = defaultdict(dict)
+    for subacc in acc:
+        ymap = accmap[subacc.fullname]
+        for year, year_postings in group_postings_by_year(subacc.subpostings()):
+            # Compute the total for that year
+            total = Wallet()
+            for post in year_postings:
+                total += post.amount
+            ymap[year] = total
+
+            if year < minyear:
+                minyear = year
+            if year > maxyear:
+                maxyear = year
+
+    # Spit out the sum totals as a CSV file.
+    out = csv.writer(sys.stdout)
+    head = ['account'] + [year for year in xrange(minyear, maxyear+1)]
+    out.writerow(head)
+    for subacc in acc:
+        if not subacc.isleaf():
+            continue
+        ymap = accmap[subacc.fullname]
+        row = [subacc.fullname]
+        for year in xrange(minyear, maxyear+1):
+           wallet = ymap.get(year, None)
+           row.append( wallet.only('CAD').tonum() if wallet else '' )
+        out.writerow(row)
+
+
+def group_postings_by_year(postings):
+    """ Given a list of postings, group them by year and yield each (year,
+    list-of-postings)."""
+    yearmap = defaultdict(list)
+    for p in postings:
+        yearmap[p.txn.actual_date.year].append(p)
+    return sorted(yearmap.iteritems())
+
+
+
+
+if __name__ == '__main__':
+    main()

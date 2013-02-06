@@ -6,72 +6,125 @@ import sys, os, re, csv
 from decimal import Decimal
 
 
-ACCOUNT_THIS = 'Assets:Investments:Ameritrade'
+ACCOUNT_CASH = 'Assets:Investments:Ameritrade:Main'
+ACCOUNT_MONEYMARKET = 'Assets:Investments:Ameritrade:Main:MMDA1'
 ACCOUNT_FUNDING = 'Assets:Current:TD:Checking'
+ACCOUNT_FUNDING_WIRE = 'Assets:Investments:OANDA:Primary'
 ACCOUNT_INTEREST = 'Income:Investments:Interest'
+ACCOUNT_FEES = 'Expenses:Financial:Fees'
 
 ALWAYS_EMPTY = ['REG FEE', 'SHORT-TERM RDM FEE', 'FUND REDEMPTION FEE', ' DEFERRED SALES CHARGE', 'PRICE', 'COMMISSION']
 
-CCY = 'USD'
+USD = 'USD'
+
+
+accounts_map = {
+    'CLIENT REQUESTED ELECTRONIC FUNDING DISBURSEMENT (FUNDS NOW)' : (ACCOUNT_CASH        , +1),
+    'CLIENT REQUESTED ELECTRONIC FUNDING RECEIPT (FUNDS NOW)'      : (ACCOUNT_CASH        , +1),
+    'MONEY MARKET INTEREST (MMDA1)'                                : (ACCOUNT_MONEYMARKET , +1),
+    'MONEY MARKET PURCHASE'                                        : (ACCOUNT_CASH        , +1),
+    'MONEY MARKET PURCHASE (MMDA1)'                                : (ACCOUNT_MONEYMARKET , +1),
+    'MONEY MARKET REDEMPTION'                                      : (ACCOUNT_CASH        , +1),
+    'MONEY MARKET REDEMPTION (MMDA1)'                              : (ACCOUNT_MONEYMARKET , -1),
+    'WIRE CHARGE (FEE)'                                            : (ACCOUNT_CASH        , +1),
+    'WIRE OUTGOING (ACD WIRE DISBURSEMENTS)'                       : (ACCOUNT_CASH        , +1),
+}
+
+groupmap = {}
+
+class Group:
+
+    def __str__(self):
+        return self.name
+
+    def __init__(self, name, descriptions, other=None):
+        self.name = name
+        assert isinstance(descriptions, list)
+        self.descriptions = descriptions
+        self.other_account = other
+
+        # Add this group to the global mapping.
+        for desc in self.descriptions:
+            assert desc not in groupmap
+            groupmap[desc] = self
+
+
+groups = [
+#   Group(NAME,            [DESC1, DESC2, ...], OTHER_ACCOUNT),
+    Group('Withdrawal',    ['CLIENT REQUESTED ELECTRONIC FUNDING DISBURSEMENT (FUNDS NOW)'], ACCOUNT_FUNDING),
+    Group('Deposit',       ['CLIENT REQUESTED ELECTRONIC FUNDING RECEIPT (FUNDS NOW)'], ACCOUNT_FUNDING),
+    Group('Interest',      ['MONEY MARKET INTEREST (MMDA1)'], ACCOUNT_INTEREST),
+    Group('MM Purchase',   ['MONEY MARKET PURCHASE', 'MONEY MARKET PURCHASE (MMDA1)']),
+    Group('MM Redemption', ['MONEY MARKET REDEMPTION', 'MONEY MARKET REDEMPTION (MMDA1)']),
+    Group('Wire Fee',      ['WIRE CHARGE (FEE)'], ACCOUNT_FEES),
+    Group('Withdrawal',    ['WIRE OUTGOING (ACD WIRE DISBURSEMENTS)'], ACCOUNT_FUNDING_WIRE),
+    ]
 
 def check_empty(o, *fnames):
     for f in fnames:
         assert o[f] in ('', None)
 
+def longest(seq):
+    longest, length = None, -1
+    for x in seq:
+        lenx = len(x)
+        if lenx > length:
+            longest, length = x, lenx
+    return longest
+
+def fmt_conversions(sign, qty, symbol):
+    amount = Decimal(qty) * sign
+    if symbol in (USD,):
+        return '%10.2f %s' % (amount, symbol)
+    elif symbol in ('MMDA1',):
+        return '%10.2f %s @ 1 %s' % (amount, symbol, USD)
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(__doc__.strip())
-    parser.add_argument('-a', '--account', action='store', default=ACCOUNT_THIS)
-    parser.add_argument('-f', '--funding-account', dest='account_funding', action='store', default=ACCOUNT_FUNDING)
-    parser.add_argument('-i', '--interest-account', dest='account_interest', action='store', default=ACCOUNT_INTEREST)
     parser.add_argument('filename', help='Filename')
     opts = parser.parse_args()
 
     rdr = csv.DictReader(open(opts.filename))
     # header = rdr.next()
-    # print header
+
+    transactions = []
+    last_group = None
+
     for o in rdr:
-        if re.search('END', o['DATE']):
+        if re.search('END OF FILE', o['DATE']):
             break
+        desc = o['DESCRIPTION']
+        group = groupmap[desc]
+        if group is last_group:
+            _, postings = transactions[-1]
+            postings.append(o)
+        else:
+            transactions.append( (group, [o]) )
+            last_group = group
 
-        check_empty(o, *ALWAYS_EMPTY)
+    for txn in transactions:
+        group, postings = txn
 
-        mo = re.match('(\d\d)/(\d\d)/(\d\d\d\d)', o['DATE'])
+        first_posting = postings[0]
+        last_posting = postings[-1]
+        mo = re.match('(\d\d)/(\d\d)/(\d\d\d\d)', last_posting['DATE'])
         month, day, year = map(int, mo.groups())
 
-        desc = o['DESCRIPTION']
-        if re.search('electronic funding receipt', desc, re.I):
-            check_empty(o, 'QUANTITY', 'SYMBOL')
-            print '%04d-%02d-%02d * %s -- %s' % (year, month, day, desc, o['TRANSACTION ID'])
-            amt = Decimal(o['AMOUNT'])
-            print '  %-48s %10.2f %s' % (opts.account, amt, CCY)
-            print ';  %-48s %10.2f %s' % (opts.account_funding, -amt, CCY)
-            print
+        desc = longest(o['DESCRIPTION'] for o in postings)
 
-        elif re.search('money market purchase \(.*\)', desc, re.I):
-            check_empty(o, 'PRICE', 'COMMISSION')
-            qty, symbol = Decimal(o['QUANTITY']), o['SYMBOL']
-            print '%04d-%02d-%02d * %s -- %s' % (year, month, day, desc, o['TRANSACTION ID'])
-            amt = Decimal(o['AMOUNT'])
-            print '  %-48s %10.2f %s @ 1 %s' % ('%s:%s' % (opts.account, symbol), qty, symbol, CCY)
-            print
+        print '%04d-%02d-%02d * %-16s -- %s' % (year, month, day, group.name, desc)
+        for o in postings:
+            accname, sign = accounts_map[o['DESCRIPTION']]
+            qty, symbol = o['QUANTITY'], o['SYMBOL']
+            if not symbol:
+                qty, symbol = o['AMOUNT'], USD
+            amount_str = fmt_conversions(sign, qty, symbol)
+            print '  %-48s %-24s     ; %s' % (accname, amount_str, o['TRANSACTION ID'])
+        if group.other_account:
+            print '  %-48s' % (group.other_account)
+        print
 
-        elif re.search('money market purchase', desc, re.I):
-            check_empty(o, 'PRICE', 'COMMISSION', 'QUANTITY', 'SYMBOL')
-            print '%04d-%02d-%02d * %s -- %s' % (year, month, day, desc, o['TRANSACTION ID'])
-            amt = Decimal(o['AMOUNT'])
-            print '  %-48s %10.2f %s' % (opts.account, amt, CCY)
-            print
-
-        elif re.search('money market interest \(.*\)', desc, re.I):
-            check_empty(o, 'PRICE', 'COMMISSION')
-            qty, symbol = Decimal(o['QUANTITY']), o['SYMBOL']
-            print '%04d-%02d-%02d * %s -- %s' % (year, month, day, desc, o['TRANSACTION ID'])
-            print '  %-48s %10.2f %s' % ('%s:%s' % (opts.account, symbol), qty, symbol)
-            assert re.match('^MM', symbol)
-            amt = qty # Same as dollars
-            print '  %-48s %10.2f %s' % (opts.account_interest, -amt, CCY)
-            print
 
 if __name__ == '__main__':
     main()
