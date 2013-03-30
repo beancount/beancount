@@ -14,6 +14,38 @@
 Beancount (Accounting)
 ======================
 
+  - Each account has basically many dimensions; it would be nice to be able to
+    group them as such:
+
+      * COUNTRY: Canada, USA
+      * CURRENCY: CAD, USD, other
+      * TYPE: Asset, Income, Liability
+      * INSTITUTION: RBC, RBC-Investment, HSBC, TD, etc.
+      * SOURCE: Google, Eladian, MarketFactory, etc.
+      * DESTINATION: IRS, CRA, State-NewYork, State-California
+
+    Ideally, one should be able to generate report by querying on a subset of
+    these dimensions!!
+
+      Note: we can restrict each account to hold only a single currency, and
+      encode the name of the currency in the account's name. This is reasonable.
+
+  - Add a report for the maximum value of each account at the end of every year
+    (for foreign assets decl)
+
+  - About the discrepancy between the concept of "Payee" and a superfluous lead
+    account, e.g. Internet:TimeWarner, which typically contains only
+    transactions from that payee: maybe we can elide the account name if it
+    contains only a single payee, or perhaps a warning may be issued? I don't
+    know.
+
+  - Tie the Ledger server to a directory hierarchy, where files can be found by
+    account, automatically. Serve the files.
+
+    * Correlate the files by uuid, e.g. if a @UUID is found in the description
+      of a transaction, if a file anywhere in the document store has @UUID in
+      it, a link should be rendered to view the file directly.
+
   - Require an @open directive for all accounts... would replace @defaccount,
     can still search the entire file for them! Simpler...
 
@@ -439,9 +471,3 @@ Here is an idea for a redesign:
   specialized iterator objects that are used to filter the postings on
   the fly. This would allow removing all the special shit that needs
   to be ordered correctly, that happens at load-time.
-
-
-
-
-
-

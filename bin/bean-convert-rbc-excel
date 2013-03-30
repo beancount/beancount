@@ -32,7 +32,7 @@ def main():
     for row in reversed(rows[1:]):
         r = Row(*[cell.find('.//{%s}Data' % ss).text
                   for cell in row.findall('.//{%s}Cell' % ss)])
-        
+
         s = StringIO()
         if r.Settlement != r.Date:
             s.write('%s=%s' % (r.Settlement, r.Date))
