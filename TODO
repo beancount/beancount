@@ -8,7 +8,7 @@
     2  Ideas
       2.1  Links
     3  Redesign
-    4  Reporting
+    4  Idea for Integrating the Cost Basis in Beancount
 
 
 Beancount (Accounting)
@@ -471,3 +471,52 @@ Here is an idea for a redesign:
   specialized iterator objects that are used to filter the postings on
   the fly. This would allow removing all the special shit that needs
   to be ordered correctly, that happens at load-time.
+
+
+
+Idea for Integrating the Cost Basis in Beancount
+================================================
+
+- Every account carries a cost basis.
+
+- You can have posting with or without a cost-basis.
+
+- If the posting has a cost-basis posting, the cost-basis is used to balance the
+  transaction.
+
+- As you sum up the postings in the account, keep track of the full inventory as
+
+    (commodity, cost) -> quantity
+
+  As a special case, "cost" can be null. This is the case where there is no cost
+  tracking for this commodity item. We maintain the full inventory of positions
+  with a cost basis in the account; as a default case, the cost is null.
+
+- BALANCE CHECK: When balancing a transaction, if an amount has an associated
+  cost basis, use the cost basis instead of the actual amount to balance.
+
+- INVENTORY CHECK: When a position is modified in the inverse direction,
+  require a cost to book against. If no cost is specified, it just degrades to
+  decrease from the bucket of commodities with a null cost (it all works out!)
+
+- ZERO CHECK: Insure that the quantity can never be negative for any bucket.
+
+- Optional extended check syntax: You could extend the @check syntax to include
+  the cost, so that technically you could check that there are a specific number
+
+
+
+2013-03-01 * buy
+  Assets:Checking        10 GOOG # 700 USD
+  Assets:Investment     -7000 USD
+
+2013-03-15 * sell
+  Assets:Checking       -10 GOOG # 700 USD @ 800 USD
+  Income:RealizedPnL    -1000 USD
+  Assets:Investment      8000 USD
+
+
+Syntax
+
+Test: Items of the same kind with and without cost basis
+Test: Multiple items of different types with a cost basis in the same account
