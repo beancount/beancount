@@ -14,6 +14,23 @@
 Beancount (Accounting)
 ======================
 
+  - Rendering: When you collapse a parent account, its aggregate amount should
+    render, and disappear when not collapsed
+
+  - All entries should have collapsing a-la-JavaScript, along with
+    collapse/reveal all buttons. All JS.
+
+  - If the software is finally fast enough in Go, render RESTful on the fly for
+    any date:
+
+    * REST:  /balsheet/20121231/
+    * REST:  /income/20121231/20131231/
+
+    This way, you could have any year on the same run. No need to restart, even
+    have a menu with all the years, and perhaps even some of the latest months.
+
+  - All entries should be generic... everything should show up.
+
   - Each account has basically many dimensions; it would be nice to be able to
     group them as such:
 
