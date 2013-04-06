@@ -1,0 +1,26 @@
+#!/usr/bin/env python
+"""
+Simply print a list of all the accounts.
+"""
+
+# stdlib imports
+from os.path import *
+
+# beancount imports
+from beancount import cmdline
+from beancount.utils import render_tree
+
+
+def main():
+    import optparse
+    parser = optparse.OptionParser(__doc__.strip())
+    cmdline.addopts(parser)
+    opts, ledger, args = cmdline.main(parser)
+
+    for acc, branch, line in render_tree(ledger.get_root_account()):
+        print acc.fullname
+
+
+if __name__ == '__main__':
+    main()
+

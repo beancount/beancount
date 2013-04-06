@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+"""
+Check that a hierarchy of directories matches a list of accounts.
+"""
+
+# stdlib imports
+import os, logging, re
+from os import path
+
+# beancount imports
+from beancount import cmdline
+from beancount.utils import render_tree
+
+
+def get_accounts(ledger):
+    for acc, branch, line in render_tree(ledger.get_root_account()):
+        yield acc.fullname
+
+def find_files(rootdir):
+    for root, dirs, files in os.walk(rootdir):
+        yield root[len(rootdir)+1:]
+
+def main():
+    import optparse
+    parser = optparse.OptionParser(__doc__.strip())
+    cmdline.addopts(parser)
+    opts, ledger, args = cmdline.main(parser, 1)
+    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+
+    accounts = set(get_accounts(ledger))
+    for arg in args:
+        logging.info("Checking '%s'" % arg)
+        for dname in find_files(arg):
+            dircomps = dname.split('/')
+            if not all(re.match('[A-Z].*', x) for x in dircomps):
+                logging.warn("Directory '%s' skipped." % dname)
+                continue
+
+            if dircomps[0] == 'Misc':
+                logging.warn("Directory '%s' skipped." % dname)
+                continue
+
+            aname = dname.replace('/', ':')
+            if aname not in accounts:
+                logging.error("Directory '%s' is invalid." % dname)
+
+if __name__ == '__main__':
+    main()

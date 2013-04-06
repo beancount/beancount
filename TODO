@@ -14,6 +14,84 @@
 Beancount (Accounting)
 ======================
 
+  - Support Ledger's aliases?
+  - Support Ledger's "root account"?  I can only see it being useful for
+    includes.
+
+  - Change my syntax: start with date no matter what, everything has a date,
+    simpler
+
+  - Rename actual and effective to date and aux-date, like Ledger, I'm not even
+    sure we do anything with the aux-date actually.
+
+  - In order to create multiple similar transactions at many dates in one
+    syntax' entry, you could allow overriding the date on each posting, e.g.:
+
+       2013-04-01 * Blah di bla
+         2013-01-01  Grocery          10 USD
+         2013-02-01  Grocery          10 USD
+         2013-03-01  Grocery          10 USD
+         Cash
+
+    This would create three transactions, with these dates:
+
+        date           aux-date
+        2013-01-01     2013-04-01     10 / 3.33
+        2013-02-01     2013-04-01     ...
+        2013-03-01     2013-04-01     ...
+
+    Could be a nice way to make distributed transactions.
+
+
+  - In the new design:
+
+    * Split the concepts of "Account" (name, global attributes) and
+      "AccountRealization" (list of postings and accumulated balances). A Ledger
+      contains AccountRealization instances. There should be a global Ledger
+      with AccountRealization's that contains all of the actual parsed postings.
+      Other Ledger instances can be filtered from this one.  All the
+      AccountRealization's share the same Account objects.
+
+    * Wallet -> "Inventory". An "Inventory" contains "Lots", which are comprised
+      of ((Commodity, Cost, Date) -> Amount) mappings, where Cost and Date may
+      be null.
+
+  - Matching on Inventory Lots should be loose: try to match automatically
+    against the most SPECIFIC lots.
+
+         (AAPL, 18.45, nil) -> +1
+         (AAPL, 17.93, nil) -> +1
+         (AAPL, nil, nil)   -> -1    ... should choose any of the inventory
+
+    Also, maybe the inventory's date should be filled in automatically by the
+    parser... just an idea. Maybe date doesn't have to be allowed to be nil.
+
+
+  - One kind of report that would be GREAT is a single grid with all income accounts
+    on the left with year by year on the horizontal. An overview of all the years.
+
+
+  - Create a command to extract time series for any account, as a csv file. You
+    could then easily use this for plotting!
+
+  - The new syntax should support (ignore) org-mode headers, I need this. In
+    fact, because everything starts with a date, the parser should be able to
+    automatically pick up transactions from an arbitrary text file (line that
+    starts with a date and a word, followed by at least one line with
+    some indentation).
+
+  - The new format code should keep and optionally render the source file/line
+    of any transaction, and allow clicking to get to the source line in the
+    rendering.
+
+  - Comments should use '#' not ';' anymore, it's just more common
+
+  - Remove @begin / @end support-- simplify, put the tags on each txn as {tag}
+    instead. Simpler.
+
+  - Inventory lots should have a date: (commodity, price, date). Use the same syntax as Ledger:
+      {price} [date]
+
   - Rendering: When you collapse a parent account, its aggregate amount should
     render, and disappear when not collapsed
 

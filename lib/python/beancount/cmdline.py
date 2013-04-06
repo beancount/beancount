@@ -265,5 +265,3 @@ def create_filter_pred(opts):
             return True
 
     return pred
-
-
