@@ -292,10 +292,11 @@ def _clean(w):
 
 
 
-try:
-    from beancount.cwallet import Wallet
-except ImportError:
-    logging.warning("Fast Wallet object not available; falling back on Python Wallet object.")
-    Wallet = _Wallet
-    
-    
+Wallet = _Wallet
+
+# FIXME: Disabled for now; this also screws up the logging level, info() doesn't show up somehow.
+# try:
+#     from beancount.cwallet import Wallet
+# except ImportError:
+#     logging.warning("Fast Wallet object not available; falling back on Python Wallet object.")
+#     Wallet = _Wallet

@@ -228,4 +228,3 @@ PyMODINIT_FUNC initcwallet(void)
     std::cout << "decimal_ctor = " << decimal_ctor << std::endl;
 
 }
-

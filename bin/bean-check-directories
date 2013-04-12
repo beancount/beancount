@@ -25,7 +25,9 @@ def main():
     parser = optparse.OptionParser(__doc__.strip())
     cmdline.addopts(parser)
     opts, ledger, args = cmdline.main(parser, 1)
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    logging.getLogger().setLevel(logging.INFO)
+    logging.info("TESTING")
+    print logging.getLogger().level, logging.INFO
 
     accounts = set(get_accounts(ledger))
     for arg in args:
@@ -33,11 +35,11 @@ def main():
         for dname in find_files(arg):
             dircomps = dname.split('/')
             if not all(re.match('[A-Z].*', x) for x in dircomps):
-                logging.warn("Directory '%s' skipped." % dname)
+                logging.debug("Directory '%s' skipped." % dname)
                 continue
 
             if dircomps[0] == 'Misc':
-                logging.warn("Directory '%s' skipped." % dname)
+                logging.debug("Directory '%s' skipped." % dname)
                 continue
 
             aname = dname.replace('/', ':')
