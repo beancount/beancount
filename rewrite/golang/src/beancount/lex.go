@@ -6,6 +6,7 @@ package beancount
 
 import (
 	"fmt"
+	//"os"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -51,44 +52,38 @@ const (
   itemRCurl											// }
   itemEqual											// =
   itemComma											// ,
-  itemTXNFLAG										// [*\!&R#c\?SP]
-  itemTXN												// The 'txn' keyword
-  itemOFX												// The 'ofx' keyword
-  itemACCID											// The 'accid' keyword
-  itemDEFACCOUNT								// @defaccount
-  itemVAR												// @var
-  itemPAD												// @pad
-  itemCHECK											// @check
-  itemBEGINTAG									// @begintag
-  itemENDTAG										// @endtag
-  itemPRICE											// @price
-  itemLOCATION									// @location
+
+  itemTXN												// 'txn' keyword
+  itemTXNFLAG										// Valid characters for flags
+  itemCHECK											// 'check' keyword
+  itemOPEN											// 'open' keyword
+  itemCLOSE											// 'close' keyword
+  itemPAD												// 'pad' keyword
+  itemEVENT											// 'event' keyword
+  itemPRICE											// 'price' keyword
+  itemLOCATION									// 'location' keyword
+
+  itemBEGINTAG									// 'begintag' keyword
+  itemENDTAG										// 'endtag' keyword
+
 	itemDate											// A date object
 	itemCurrency									// A currency specification
-	itemDrCr											// "Dr" or "Cr"
+	itemAccount  									// The name of an account
   itemString										// A quoted string, with any characters inside
 	itemNumber										// A floating-point number
 )
 
-var key = map[string]itemType{
-  "|"						: itemPipe,
-  "@@"					: itemAtAt,
-  "@"						: itemAt,
-  "{"						: itemLCurl,
-  "}"						: itemRCurl,
-  "="						: itemEqual,
-  ","						: itemComma,
+var keywords = map[string]itemType{
   "txn"					: itemTXN,
-  "ofx"					: itemOFX,
-  "accid"				: itemACCID,
-  "@defaccount" : itemDEFACCOUNT,
-  "@var"				: itemVAR,
-  "@pad"				: itemPAD,
-  "@check"			: itemCHECK,
-  "@begintag"		: itemBEGINTAG,
-  "@endtag"			: itemENDTAG,
-  "@price"			: itemPRICE,
-  "@location"		: itemLOCATION,
+  "check"				: itemCHECK,
+  "open"				: itemOPEN,
+  "close"				: itemCLOSE,
+  "pad"					: itemPAD,
+  "event"				: itemEVENT,
+  "price"				: itemPRICE,
+  "location"		: itemLOCATION, // FIXME: remove, make this just an event
+  "begintag"		: itemBEGINTAG,
+  "endtag"			: itemENDTAG,
 }
 
 const eof = -1
@@ -128,6 +123,11 @@ func (l *lexer) peek() rune {
 	r := l.next()
 	l.backup()
 	return r
+}
+
+// 'length' returns the number of runes parsed.
+func (l *lexer) length() Pos {
+	return l.pos - l.start
 }
 
 // 'backup' steps back one rune. Can only be called once per call of next.
@@ -184,7 +184,7 @@ func (l *lexer) nextItem() item {
 }
 
 // 'lex' creates a new scanner for the input string.
-func lex(name, input, left, right string) *lexer {
+func Lex(name, input string) *lexer {
 	l := &lexer{
 		name:       name,
 		input:      input,
@@ -205,7 +205,7 @@ var (
 	dateRegexp, _ = regexp.Compile("[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]")
 )
 
-// 'lexTopLevel' is the top-level scanner
+// 'lexTopLevel' is the top-level scanner that looks for new things
 func lexTopLevel(l *lexer) stateFn {
 	if int(l.pos) >= len(l.input) {
 		l.width = 0
@@ -213,6 +213,7 @@ func lexTopLevel(l *lexer) stateFn {
 		return nil
 	}
 
+	var ninput   = l.input[l.pos:]
 	switch r := l.peek(); {
 
 	case r == eof:
@@ -231,65 +232,106 @@ func lexTopLevel(l *lexer) stateFn {
 		return lexComment
 
 	case unicode.IsDigit(r):
-		if dateRegexp.MatchString(l.input[l.pos:]) {
+		if len(ninput) >= 10 && dateRegexp.MatchString(ninput) {
 			l.pos += 10
 			l.emit(itemDate)
+		} else {
+			return lexNumber
 		}
-		// FIXME: parse a number here
 
-	case l.accept("*!&R#c?SP"):
-		l.emit(itemTXNFLAG)
+	case l.accept("+-"):
+		l.backup()
+		return lexNumber
 
 	case l.accept("|"):
 		l.emit(itemPipe)
 
+	case strings.HasPrefix(ninput, "@@"):
+		l.pos += 2
+		l.emit(itemAtAt)
 
+	case l.accept("@"):
+		l.emit(itemAt)
 
-// FIXME: continue here
-	// case strings.HasPrefix(l.input[l.pos:], "@@"):
-	// 	l.emit(itemAtAt)
+	case l.accept("{"):
+		l.emit(itemLCurl)
 
-  // "@@"					: itemAtAt,
-  // "@"						: itemAt,
-  // "{"						: itemLCurl,
-  // "}"						: itemRCurl,
-  // "="						: itemEqual,
-  // ","						: itemComma,
+	case l.accept("}"):
+		l.emit(itemRCurl)
 
+	case l.accept("="):
+		l.emit(itemEqual)
 
+	case l.accept(","):
+		l.emit(itemComma)
 
+	case l.accept("\""):
+		return lexString
+
+	case l.accept("*!&#?%"):
+		l.emit(itemTXNFLAG)
+
+	case l.accept("ABCDEFGHIJKLMNOPQRSTUVWXYZ"):
+		return lexFreeWord
+
+	case l.accept("abcdefghijklmnopqrstuvwxyz"):
+		return lexKeyword
+
+	default:
+		return l.errorf("Invalid input")
 	}
-	return lexTopLevel
 
-	// for {
-	// 	if strings.HasPrefix(l.input[l.pos:], l.leftDelim) {
-	// 		if l.pos > l.start {
-	// 			l.emit(itemText)
-	// 		}
-	// 		return lexLeftDelim
-	// 	}
-	// 	if l.next() == eof {
-	// 		break
-	// 	}
-	// }
-	// // Correctly reached EOF.
-	// if l.pos > l.start {
-	// 	l.emit(itemText)
-	// }
-	// l.emit(itemEOF)
-	// return nil
+	return lexTopLevel
 }
 
-// // lexLeftDelim scans the left delimiter, which is known to be present.
-// func lexLeftDelim(l *lexer) stateFn {
-// 	l.pos += Pos(len(l.leftDelim))
-// 	if strings.HasPrefix(l.input[l.pos:], leftComment) {
-// 		return lexComment
-// 	}
-// 	l.emit(itemLeftDelim)
-// 	l.parenDepth = 0
-// 	return lexInsideAction
-// }
+// 'lexFreeWord' looks for a free string, which could be an account, currency,
+// or a Dr/Cr marker.
+func lexFreeWord(l *lexer) stateFn {
+	l.backup()
+
+	var allUpper = true;
+	var hasSpecial = false;
+Loop:
+	for {
+		switch r := l.next(); {
+
+		case unicode.IsLetter(r):
+			if unicode.IsLower(r) {
+				allUpper = false
+			}
+
+		case unicode.IsDigit(r):
+
+		case r == ':' || r == '_' || r == '-':
+			hasSpecial = true;
+
+		default:
+			l.backup()
+			break Loop;
+		}
+	}
+
+	if hasSpecial {
+		l.emit(itemAccount)
+	} else if allUpper && l.length() >= 2 {
+		l.emit(itemCurrency)
+	} else {
+		return l.errorf("Invalid string")
+	}
+	return lexTopLevel
+}
+
+// 'lexKeyword' scans a keyword
+func lexKeyword(l *lexer) stateFn {
+	l.acceptRun("abcdefghijklmnopqrstuvwxyz")
+	keyword := l.input[l.start:l.pos]
+	if item, found := keywords[keyword]; found {
+		l.emit(item)
+	} else {
+		return l.errorf("Invalid keyword: '%v'", keyword)
+	}
+	return lexTopLevel
+}
 
 // 'lexComment' scans a comment. The left comment marker is known to be present.
 func lexComment(l *lexer) stateFn {
@@ -307,78 +349,29 @@ func lexComment(l *lexer) stateFn {
 	return lexTopLevel
 }
 
-// // lexRightDelim scans the right delimiter, which is known to be present.
-// func lexRightDelim(l *lexer) stateFn {
-// 	l.pos += Pos(len(l.rightDelim))
-// 	l.emit(itemRightDelim)
-// 	return lexText
-// }
-//
-// // lexInsideAction scans the elements inside action delimiters.
-// func lexInsideAction(l *lexer) stateFn {
-// 	// Either number, quoted string, or identifier.
-// 	// Spaces separate arguments; runs of spaces turn into itemSpace.
-// 	// Pipe symbols separate and are emitted.
-// 	if strings.HasPrefix(l.input[l.pos:], l.rightDelim) {
-// 		if l.parenDepth == 0 {
-// 			return lexRightDelim
-// 		}
-// 		return l.errorf("unclosed left paren")
-// 	}
-// 	switch r := l.next(); {
-// 	case r == eof || isEndOfLine(r):
-// 		return l.errorf("unclosed action")
-// 	case isSpace(r):
-// 		return lexSpace
-// 	case r == ':':
-// 		if l.next() != '=' {
-// 			return l.errorf("expected :=")
-// 		}
-// 		l.emit(itemColonEquals)
-// 	case r == '|':
-// 		l.emit(itemPipe)
-// 	case r == '"':
-// 		return lexQuote
-// 	case r == '`':
-// 		return lexRawQuote
-// 	case r == '$':
-// 		return lexVariable
-// 	case r == '\'':
-// 		return lexChar
-// 	case r == '.':
-// 		// special look-ahead for ".field" so we don't break l.backup().
-// 		if l.pos < Pos(len(l.input)) {
-// 			r := l.input[l.pos]
-// 			if r < '0' || '9' < r {
-// 				return lexField
-// 			}
-// 		}
-// 		fallthrough // '.' can start a number.
-// 	case r == '+' || r == '-' || ('0' <= r && r <= '9'):
-// 		l.backup()
-// 		return lexNumber
-// 	case isAlphaNumeric(r):
-// 		l.backup()
-// 		return lexIdentifier
-// 	case r == '(':
-// 		l.emit(itemLeftParen)
-// 		l.parenDepth++
-// 		return lexInsideAction
-// 	case r == ')':
-// 		l.emit(itemRightParen)
-// 		l.parenDepth--
-// 		if l.parenDepth < 0 {
-// 			return l.errorf("unexpected right paren %#U", r)
-// 		}
-// 		return lexInsideAction
-// 	case r <= unicode.MaxASCII && unicode.IsPrint(r):
-// 		l.emit(itemChar)
-// 		return lexInsideAction
-// 	default:
-// 		return l.errorf("unrecognized character in action: %#U", r)
-// 	}
-// 	return lexInsideAction
-// }
+// 'lexString' parse a quoted string literal.
+func lexString(l *lexer) stateFn {
+	l.ignore()
+Loop:
+	for {
+		switch l.next() {
+		case '\\':
+			if r := l.next(); r != eof && r != '\n' {
+				break
+			}
+			fallthrough
+		case eof, '\n':
+			return l.errorf("unterminated quoted string")
+		case '"':
+			break Loop
+		}
+	}
+	l.pos -= 1
+	l.emit(itemString)
+	l.pos += 1
+	l.ignore()
+	return lexTopLevel
+}
 
 // 'lexSpace' scans a run of space characters.
 // One space has already been seen.
@@ -394,205 +387,6 @@ func lexSpace(l *lexer) stateFn {
 	return lexTopLevel
 }
 
-
-
-
-
-// // lexIdentifier scans an alphanumeric.
-// func lexIdentifier(l *lexer) stateFn {
-// Loop:
-// 	for {
-// 		switch r := l.next(); {
-// 		case isAlphaNumeric(r):
-// 			// absorb.
-// 		default:
-// 			l.backup()
-// 			word := l.input[l.start:l.pos]
-// 			if !l.atTerminator() {
-// 				return l.errorf("bad character %#U", r)
-// 			}
-// 			switch {
-// 			case key[word] > itemKeyword:
-// 				l.emit(key[word])
-// 			case word[0] == '.':
-// 				l.emit(itemField)
-// 			case word == "true", word == "false":
-// 				l.emit(itemBool)
-// 			default:
-// 				l.emit(itemIdentifier)
-// 			}
-// 			break Loop
-// 		}
-// 	}
-// 	return lexInsideAction
-// }
-//
-// // lexField scans a field: .Alphanumeric.
-// // The . has been scanned.
-// func lexField(l *lexer) stateFn {
-// 	return lexFieldOrVariable(l, itemField)
-// }
-//
-// // lexVariable scans a Variable: $Alphanumeric.
-// // The $ has been scanned.
-// func lexVariable(l *lexer) stateFn {
-// 	if l.atTerminator() { // Nothing interesting follows -> "$".
-// 		l.emit(itemVariable)
-// 		return lexInsideAction
-// 	}
-// 	return lexFieldOrVariable(l, itemVariable)
-// }
-//
-// // lexVariable scans a field or variable: [.$]Alphanumeric.
-// // The . or $ has been scanned.
-// func lexFieldOrVariable(l *lexer, typ itemType) stateFn {
-// 	if l.atTerminator() { // Nothing interesting follows -> "." or "$".
-// 		if typ == itemVariable {
-// 			l.emit(itemVariable)
-// 		} else {
-// 			l.emit(itemDot)
-// 		}
-// 		return lexInsideAction
-// 	}
-// 	var r rune
-// 	for {
-// 		r = l.next()
-// 		if !isAlphaNumeric(r) {
-// 			l.backup()
-// 			break
-// 		}
-// 	}
-// 	if !l.atTerminator() {
-// 		return l.errorf("bad character %#U", r)
-// 	}
-// 	l.emit(typ)
-// 	return lexInsideAction
-// }
-//
-// // atTerminator reports whether the input is at valid termination character to
-// // appear after an identifier. Breaks .X.Y into two pieces. Also catches cases
-// // like "$x+2" not being acceptable without a space, in case we decide one
-// // day to implement arithmetic.
-// func (l *lexer) atTerminator() bool {
-// 	r := l.peek()
-// 	if isSpace(r) || isEndOfLine(r) {
-// 		return true
-// 	}
-// 	switch r {
-// 	case eof, '.', ',', '|', ':', ')', '(':
-// 		return true
-// 	}
-// 	// Does r start the delimiter? This can be ambiguous (with delim=="//", $x/2 will
-// 	// succeed but should fail) but only in extremely rare cases caused by willfully
-// 	// bad choice of delimiter.
-// 	if rd, _ := utf8.DecodeRuneInString(l.rightDelim); rd == r {
-// 		return true
-// 	}
-// 	return false
-// }
-//
-// // lexChar scans a character constant. The initial quote is already
-// // scanned. Syntax checking is done by the parser.
-// func lexChar(l *lexer) stateFn {
-// Loop:
-// 	for {
-// 		switch l.next() {
-// 		case '\\':
-// 			if r := l.next(); r != eof && r != '\n' {
-// 				break
-// 			}
-// 			fallthrough
-// 		case eof, '\n':
-// 			return l.errorf("unterminated character constant")
-// 		case '\'':
-// 			break Loop
-// 		}
-// 	}
-// 	l.emit(itemCharConstant)
-// 	return lexInsideAction
-// }
-//
-// // lexNumber scans a number: decimal, octal, hex, float, or imaginary. This
-// // isn't a perfect number scanner - for instance it accepts "." and "0x0.2"
-// // and "089" - but when it's wrong the input is invalid and the parser (via
-// // strconv) will notice.
-// func lexNumber(l *lexer) stateFn {
-// 	if !l.scanNumber() {
-// 		return l.errorf("bad number syntax: %q", l.input[l.start:l.pos])
-// 	}
-// 	if sign := l.peek(); sign == '+' || sign == '-' {
-// 		// Complex: 1+2i. No spaces, must end in 'i'.
-// 		if !l.scanNumber() || l.input[l.pos-1] != 'i' {
-// 			return l.errorf("bad number syntax: %q", l.input[l.start:l.pos])
-// 		}
-// 		l.emit(itemComplex)
-// 	} else {
-// 		l.emit(itemNumber)
-// 	}
-// 	return lexInsideAction
-// }
-//
-// func (l *lexer) scanNumber() bool {
-// 	// Optional leading sign.
-// 	l.accept("+-")
-// 	// Is it hex?
-// 	digits := "0123456789"
-// 	if l.accept("0") && l.accept("xX") {
-// 		digits = "0123456789abcdefABCDEF"
-// 	}
-// 	l.acceptRun(digits)
-// 	if l.accept(".") {
-// 		l.acceptRun(digits)
-// 	}
-// 	if l.accept("eE") {
-// 		l.accept("+-")
-// 		l.acceptRun("0123456789")
-// 	}
-// 	// Is it imaginary?
-// 	l.accept("i")
-// 	// Next thing mustn't be alphanumeric.
-// 	if isAlphaNumeric(l.peek()) {
-// 		l.next()
-// 		return false
-// 	}
-// 	return true
-// }
-//
-// // lexQuote scans a quoted string.
-// func lexQuote(l *lexer) stateFn {
-// Loop:
-// 	for {
-// 		switch l.next() {
-// 		case '\\':
-// 			if r := l.next(); r != eof && r != '\n' {
-// 				break
-// 			}
-// 			fallthrough
-// 		case eof, '\n':
-// 			return l.errorf("unterminated quoted string")
-// 		case '"':
-// 			break Loop
-// 		}
-// 	}
-// 	l.emit(itemString)
-// 	return lexInsideAction
-// }
-//
-// // lexRawQuote scans a raw quoted string.
-// func lexRawQuote(l *lexer) stateFn {
-// Loop:
-// 	for {
-// 		switch l.next() {
-// 		case eof, '\n':
-// 			return l.errorf("unterminated raw quoted string")
-// 		case '`':
-// 			break Loop
-// 		}
-// 	}
-// 	l.emit(itemRawString)
-// 	return lexInsideAction
-// }
-
 // 'isSpace' reports whether r is a space character.
 func isSpace(r rune) bool {
 	return r == ' ' || r == '\t'
@@ -606,4 +400,20 @@ func isEndOfLine(r rune) bool {
 // 'isAlphaNumeric' reports whether r is an alphabetic, digit, or underscore.
 func isAlphaNumeric(r rune) bool {
 	return r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)
+}
+
+// 'lexNumber' scans a number: decimal, octal, hex, float, or imaginary. This
+// isn't a perfect number scanner - for instance it accepts "." and "0x0.2"
+// and "089" - but when it's wrong the input is invalid and the parser (via
+// strconv) will notice.
+func lexNumber(l *lexer) stateFn {
+	// Optional leading sign.
+	l.accept("+-")
+	digits := "0123456789"
+	l.acceptRun(digits)
+	if l.accept(".") {
+		l.acceptRun(digits)
+	}
+	l.emit(itemNumber)
+	return lexTopLevel
 }

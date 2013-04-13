@@ -14,6 +14,13 @@
 Beancount (Accounting)
 ======================
 
+  - @location really should just convert into a generic event "location", just
+    as address and school should; they're just events with forward fill...
+    Serve this at:
+
+       http://localhost:8080/20120101/20130101/events/location/days
+
+
   - Consider making the lot syntax like this:
 
        -4 {GOOG @ 790.83 USD}
@@ -23,7 +30,7 @@ Beancount (Accounting)
        -4 GOOG {790.83 USD}
 
     It's actually a lot more accurate...
-                                                                   
+
   - Constrain all accounts to begin with the 6 categories.
 
   - Support a category called "Misc:*" in order to deal with non-summable things

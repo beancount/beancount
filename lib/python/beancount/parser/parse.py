@@ -23,9 +23,9 @@ __all__ = ('create_parser',)
 tokens = """
     INDENT
     DATE NUMBER STRING
-    ACCOUNT DRCR CURRENCY
-    DEFACCOUNT VAR PAD CHECK BEGINTAG ENDTAG PRICE LOCATION
-    TXNFLAG TXN OFX ACCID
+    ACCOUNT CURRENCY
+    TXN TXNFLAG CHECK OPEN CLOSE PAD EVENT COMMENT PRICE LOCATION
+    BEGINTAG ENDTAG 
     AT ATAT PIPE EQUAL EOL LCURL RCURL COMMA
 """.split()
 
@@ -37,10 +37,6 @@ def t_INDENT(t):
     if find_column(t) == 0:
         return t
 
-t_TXN = r'txn'
-t_OFX = r'ofx'
-t_ACCID = r'accid'
-
 t_PIPE = r'\|'
 t_ATAT = r'@@'
 t_AT = r'@'
@@ -48,21 +44,25 @@ t_LCURL = r'{'
 t_RCURL = r'}'
 t_EQUAL = r'='
 t_COMMA = r','
-t_TXNFLAG = r'[*\!&R#c\?SP]'
 
 def t_EOL(t):
     r'\n'
     t.lexer.lineno += 1
     return t
 
-t_DEFACCOUNT = r'@defaccount'
-t_VAR = r'@var'
-t_PAD = r'@pad'
-t_CHECK = r'@check'
-t_BEGINTAG = r'@begintag'
-t_ENDTAG = r'@endtag'
-t_PRICE = r'@price'
-t_LOCATION = r'@location'
+t_TXN = r'txn'
+t_TXNFLAG = r'[*\!&%#\?]'
+t_CHECK = r'check'
+t_OPEN = r'open'
+t_CLOSE = r'close'
+t_PAD = r'pad'
+t_EVENT = r'event'
+t_COMMENT = r'comment'
+t_PRICE = r'price'
+t_LOCATION = r'location'
+
+t_BEGINTAG = r'begintag'
+t_ENDTAG = r'endtag'
 
 def t_DATE(t):
     r'(\d\d\d\d)[-/](\d\d)[-/](\d\d)'
@@ -91,7 +91,7 @@ def t_NUMBER(t):
     r'[-+]?([0-9\.])+'
     return t
 
-def t_COMMENT(t):
+def t_comment(t):
     r';+(.*)'
 
 def t_error(t):
@@ -180,31 +180,36 @@ def p_endtag(p):
     """endtag : ENDTAG STRING
     """
 
-VarAccid = namedtuple('VarAccid', 'account accountid')
+# FIXME: Add account id.
+Open = namedtuple('Open', 'date account currency_list accountid')
+Close = namedtuple('Close', 'date account')
 
-def p_var_accid(p):
-    """var_accid : VAR OFX ACCID STRING ACCOUNT
+def p_open(p):
+    """open : DATE OPEN ACCOUNT currency_list
+            | DATE OPEN ACCOUNT STRING currency_list
     """
-    p[0] = VarAccid(*p[4:])
+    if len(p) == 6:
+        accountid, currencies = p[4], p[5]
+    else:
+        accountid, currencies = None, p[4]
+    p[0] = Open(p[1], p[3], currencies, accountid)
 
-DefAccount = namedtuple('DefAccount', 'account drcr currency_list')
-
-def p_defaccount(p):
-    """defaccount : DEFACCOUNT DRCR ACCOUNT currency_list
+def p_close(p):
+    """close : DATE CLOSE ACCOUNT
     """
-    p[0] = DefAccount(*p[2:])
+    p[0] = Close(p[1], p[3])
 
 Pad = namedtuple('Pad', 'date account_to account_from')
 
 def p_pad(p):
-    """pad : PAD DATE ACCOUNT ACCOUNT
+    """pad : DATE PAD ACCOUNT ACCOUNT
     """
     p[0] = Pad(*p[2:])
 
 Check = namedtuple('Check', 'date account amount')
 
 def p_check(p):
-    """check : CHECK DATE ACCOUNT amount
+    """check : DATE CHECK ACCOUNT amount
     """
     p[0] = Check(*p[2:])
 
@@ -227,26 +232,42 @@ def p_lot(p):
 Price = namedtuple('Price', 'price date currency amount')
 
 def p_price(p):
-    """price : PRICE DATE CURRENCY amount
+    """price : DATE PRICE CURRENCY amount
     """
     p[0] = Price(*p[1:])
 
 Location = namedtuple('Location', 'date city')
 
 def p_location(p):
-    """location : LOCATION DATE STRING
+    """location : DATE LOCATION STRING
     """
     p[0] = Location(*p[2:])
+
+Event = namedtuple('Event', 'date event_type event_description')
+
+def p_event(p):
+    """event : DATE EVENT STRING STRING
+    """
+    p[0] = Event(p[1], p[3], p[4])
+
+Comment = namedtuple('Comment', 'date comment')
+
+def p_comment(p):
+    """comment : DATE COMMENT STRING
+    """
+    p[0] = Comment(p[1], p[2])
 
 def p_entry(p):
     """entry : EOL
              | transaction
-             | defaccount
-             | var_accid
-             | pad
              | check
              | begintag
              | endtag
+             | open
+             | close
+             | pad
+             | event
+             | comment
              | price
              | location
     """
