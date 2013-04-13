@@ -23,7 +23,8 @@ def main():
 
     source = open(opts.filename).read()
 
-    lexer, parser = parse.create_parser()
+    
+    lexer, parser = parse.create_parser(debug=1) #optimize=1
     lexer.filename = path.abspath(opts.filename)
     if opts.lex_only:
         lexer.input(source)

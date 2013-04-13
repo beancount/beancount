@@ -14,6 +14,23 @@
 Beancount (Accounting)
 ======================
 
+  - Consider making the lot syntax like this:
+
+       -4 {GOOG @ 790.83 USD}
+
+    instead of:
+
+       -4 GOOG {790.83 USD}
+
+    It's actually a lot more accurate...
+                                                                   
+  - Constrain all accounts to begin with the 6 categories.
+
+  - Support a category called "Misc:*" in order to deal with non-summable things
+    like RRSP contributsions. There's no need to do anything else special, just
+    goes to/from some Misc accounts.
+
+
   - Remove support for virtual postings, hack not needed anymore!
   - Remove support for BOOK <> IN ... do it now!
 
