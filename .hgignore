@@ -7,3 +7,4 @@ TAGS
 build
 lib/python/beancount/cwallet.so
 lib/python/beancount/parser/parsetab.py
+*.a
