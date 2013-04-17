@@ -15,75 +15,116 @@ import (
 
 type Pos int
 
-// Item represents a token or text string returned from the scanner.
+// Tok represents a token or text string returned from the scanner.
 type item struct {
-	typ itemType // The type of this item.
+	Type TokenType // The type of this item.
 	pos Pos      // The starting position, in bytes, of this item in the input string.
 	val string   // The value of this item.
 }
 
 func (i item) String() string {
 	switch {
-	case i.typ == itemEOF:
+	case i.Type == TokEOF:
 		return "EOF"
-	// case i.typ == itemEOL:
+	// case i.Type == TokEOL:
 	// 	return "EOL"
-	case i.typ == itemError:
+	case i.Type == TokERROR:
 		return i.val
 	default:
-		return fmt.Sprintf("<%v %#v>", i.typ, i.val)
+		return fmt.Sprintf("<%v %#v>", i.Type, i.val)
 	}
 	return fmt.Sprintf("%q", i.val)
 }
 
-// itemType identifies the type of lex items.
-type itemType int
+// TokenType identifies the type of lex items.
+type TokenType int
 
 const (
-	itemError    itemType = iota	// error occurred; value is text of error
-  itemIndent										// Initial indent IF at the beginning of a line
-  itemEOL												// End-of-line
-	itemEOF                       // End-of-file
-	itemComment										// A comment
-  itemPipe											// |
-  itemAtAt											// @@
-  itemAt												// @
-  itemLCurl											// {
-  itemRCurl											// }
-  itemEqual											// =
-  itemComma											// ,
+	TokERROR    TokenType = iota		// error occurred; value is text of error
+  TokINDENT											// Initial indent IF at the beginning of a line
+  TokEOL												// End-of-line
+	TokEOF												// End-of-file
+	TokCOMMENT  									// A comment
+  TokPIPE												// |
+  TokATAT												// @@
+  TokAT													// @
+  TokLCURL											// {
+  TokRCURL											// }
+  TokEQUAL											// =
+  TokCOMMA											// ,
 
-  itemTXN												// 'txn' keyword
-  itemTXNFLAG										// Valid characters for flags
-  itemCHECK											// 'check' keyword
-  itemOPEN											// 'open' keyword
-  itemCLOSE											// 'close' keyword
-  itemPAD												// 'pad' keyword
-  itemEVENT											// 'event' keyword
-  itemPRICE											// 'price' keyword
-  itemLOCATION									// 'location' keyword
+  TokTXN												// 'txn' keyword
+  TokTXNFLAG										// Valid characters for flags
+  TokCHECK											// 'check' keyword
+  TokOPEN												// 'open' keyword
+  TokCLOSE											// 'close' keyword
+  TokPAD												// 'pad' keyword
+  TokEVENT											// 'event' keyword
+  TokPRICE											// 'price' keyword
+  TokLOCATION										// 'location' keyword
+  TokNOTE    										// 'note' keyword
 
-  itemBEGINTAG									// 'begintag' keyword
-  itemENDTAG										// 'endtag' keyword
+  TokBEGINTAG										// 'begintag' keyword
+  TokENDTAG											// 'endtag' keyword
 
-	itemDate											// A date object
-	itemCurrency									// A currency specification
-	itemAccount  									// The name of an account
-  itemString										// A quoted string, with any characters inside
-	itemNumber										// A floating-point number
+	TokDATE												// A date object
+	TokCURRENCY										// A currency specification
+	TokACCOUNT  									// The name of an account
+  TokSTRING											// A quoted string, with any characters inside
+	TokNUMBER											// A floating-point number
 )
 
-var keywords = map[string]itemType{
-  "txn"					: itemTXN,
-  "check"				: itemCHECK,
-  "open"				: itemOPEN,
-  "close"				: itemCLOSE,
-  "pad"					: itemPAD,
-  "event"				: itemEVENT,
-  "price"				: itemPRICE,
-  "location"		: itemLOCATION, // FIXME: remove, make this just an event
-  "begintag"		: itemBEGINTAG,
-  "endtag"			: itemENDTAG,
+// Make the types prettyprint.
+var itemName = map[TokenType]string{
+	TokERROR			: "ERROR",
+	TokINDENT			: "INDENT",
+	TokEOL				: "EOL",
+	TokEOF				: "EOF",
+	TokCOMMENT    : "COMMENT",
+	TokPIPE				: "PIPE",
+	TokATAT				: "ATAT",
+	TokAT					: "AT",
+	TokLCURL			: "LCURL",
+	TokRCURL			: "RCURL",
+	TokEQUAL			: "EQUAL",
+	TokCOMMA			: "COMMA",
+	TokTXN				: "TXN",
+	TokTXNFLAG		: "TXNFLAG",
+	TokCHECK			: "CHECK",
+	TokOPEN				: "OPEN",
+	TokCLOSE			: "CLOSE",
+	TokPAD				: "PAD",
+	TokEVENT			: "EVENT",
+	TokPRICE			: "PRICE",
+	TokLOCATION		: "LOCATION",
+	TokNOTE   		: "NOTE",
+	TokBEGINTAG		: "BEGINTAG",
+	TokENDTAG			: "ENDTAG",
+	TokDATE				: "DATE",
+	TokCURRENCY		: "CURRENCY",
+	TokACCOUNT		: "ACCOUNT",
+	TokSTRING			: "STRING",
+	TokNUMBER			: "NUMBER",
+}
+
+func (it TokenType) String() string {
+	return itemName[it]
+}
+
+
+
+var keywords = map[string]TokenType{
+  "txn"					: TokTXN,
+  "check"				: TokCHECK,
+  "open"				: TokOPEN,
+  "close"				: TokCLOSE,
+  "pad"					: TokPAD,
+  "event"				: TokEVENT,
+  "price"				: TokPRICE,
+  "location"		: TokLOCATION, // FIXME: remove, make this just an event
+  "note"  		  : TokNOTE,
+  "begintag"		: TokBEGINTAG,
+  "endtag"			: TokENDTAG,
 }
 
 const eof = -1
@@ -99,7 +140,7 @@ type lexer struct {
 	pos        Pos       // Current position in the input
 	start      Pos       // Start position of this item
 	width      Pos       // Width of last rune read from input
-	lastPos    Pos       // Position of most recent item returned by nextItem
+	lastPos    Pos       // Position of most recent item returned by NextTok
 	lineStart  Pos       // Position of the beginning the current line
 	lineNo     int       // Current line number
 	items      chan item // Channel of scanned items
@@ -136,7 +177,7 @@ func (l *lexer) backup() {
 }
 
 // 'emit' passes an item back to the client.
-func (l *lexer) emit(t itemType) {
+func (l *lexer) emit(t TokenType) {
 	l.items <- item{t, l.start, l.input[l.start:l.pos]}
 	l.start = l.pos
 }
@@ -163,21 +204,21 @@ func (l *lexer) acceptRun(valid string) {
 }
 
 // 'lineNumber' reports which line we're on, based on the position of
-// the previous item returned by nextItem. Doing it this way
+// the previous item returned by NextTok. Doing it this way
 // means we don't have to worry about peek double counting.
 func (l *lexer) lineNumber() int {
 	return 1 + strings.Count(l.input[:l.lastPos], "\n")
 }
 
 // 'errorf' returns an error token and terminates the scan by passing
-// back a nil pointer that will be the next state, terminating l.nextItem.
+// back a nil pointer that will be the next state, terminating l.NextTok.
 func (l *lexer) errorf(format string, args ...interface{}) stateFn {
-	l.items <- item{itemError, l.start, fmt.Sprintf(format, args...)}
+	l.items <- item{TokERROR, l.start, fmt.Sprintf(format, args...)}
 	return nil
 }
 
-// 'nextItem' returns the next item from the input.
-func (l *lexer) nextItem() item {
+// 'NextTok' returns the next item from the input.
+func (l *lexer) NextTok() item {
 	item := <-l.items
 	l.lastPos = item.pos
 	return item
@@ -202,18 +243,18 @@ func (l *lexer) run() {
 }
 
 var (
-	dateRegexp, _ = regexp.Compile("[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]")
+	dateRegexp, _ = regexp.Compile("^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]")
 )
 
 // 'lexTopLevel' is the top-level scanner that looks for new things
 func lexTopLevel(l *lexer) stateFn {
 	if int(l.pos) >= len(l.input) {
 		l.width = 0
-		l.emit(itemEOF)
+		l.emit(TokEOF)
 		return nil
 	}
 
-	var ninput   = l.input[l.pos:]
+	var ninput = l.input[l.pos:]
 	switch r := l.peek(); {
 
 	case r == eof:
@@ -221,7 +262,7 @@ func lexTopLevel(l *lexer) stateFn {
 
 	case isEndOfLine(r):
 		l.next()
-		l.emit(itemEOL)
+		l.emit(TokEOL)
 		l.lineNo++
 		l.lineStart = l.pos
 
@@ -234,42 +275,45 @@ func lexTopLevel(l *lexer) stateFn {
 	case unicode.IsDigit(r):
 		if len(ninput) >= 10 && dateRegexp.MatchString(ninput) {
 			l.pos += 10
-			l.emit(itemDate)
+			l.emit(TokDATE)
 		} else {
 			return lexNumber
 		}
+
+	case r == '.':
+			return lexNumber
 
 	case l.accept("+-"):
 		l.backup()
 		return lexNumber
 
 	case l.accept("|"):
-		l.emit(itemPipe)
+		l.emit(TokPIPE)
 
 	case strings.HasPrefix(ninput, "@@"):
 		l.pos += 2
-		l.emit(itemAtAt)
+		l.emit(TokATAT)
 
 	case l.accept("@"):
-		l.emit(itemAt)
+		l.emit(TokAT)
 
 	case l.accept("{"):
-		l.emit(itemLCurl)
+		l.emit(TokLCURL)
 
 	case l.accept("}"):
-		l.emit(itemRCurl)
+		l.emit(TokRCURL)
 
 	case l.accept("="):
-		l.emit(itemEqual)
+		l.emit(TokEQUAL)
 
 	case l.accept(","):
-		l.emit(itemComma)
+		l.emit(TokCOMMA)
 
 	case l.accept("\""):
 		return lexString
 
 	case l.accept("*!&#?%"):
-		l.emit(itemTXNFLAG)
+		l.emit(TokTXNFLAG)
 
 	case l.accept("ABCDEFGHIJKLMNOPQRSTUVWXYZ"):
 		return lexFreeWord
@@ -278,7 +322,7 @@ func lexTopLevel(l *lexer) stateFn {
 		return lexKeyword
 
 	default:
-		return l.errorf("Invalid input")
+		return l.errorf("Invalid input: %v", l.input[l.pos:l.pos+80])
 	}
 
 	return lexTopLevel
@@ -305,6 +349,8 @@ Loop:
 		case r == ':' || r == '_' || r == '-':
 			hasSpecial = true;
 
+		case r == '\'':
+
 		default:
 			l.backup()
 			break Loop;
@@ -312,9 +358,9 @@ Loop:
 	}
 
 	if hasSpecial {
-		l.emit(itemAccount)
+		l.emit(TokACCOUNT)
 	} else if allUpper && l.length() >= 2 {
-		l.emit(itemCurrency)
+		l.emit(TokCURRENCY)
 	} else {
 		return l.errorf("Invalid string")
 	}
@@ -345,7 +391,7 @@ func lexComment(l *lexer) stateFn {
 		l.next()
 	}
 
-	l.emit(itemComment)
+	l.emit(TokCOMMENT)
 	return lexTopLevel
 }
 
@@ -367,7 +413,7 @@ Loop:
 		}
 	}
 	l.pos -= 1
-	l.emit(itemString)
+	l.emit(TokSTRING)
 	l.pos += 1
 	l.ignore()
 	return lexTopLevel
@@ -380,7 +426,7 @@ func lexSpace(l *lexer) stateFn {
 		l.next()
 	}
 	if l.start == l.lineStart {
-		l.emit(itemIndent)
+		l.emit(TokINDENT)
 	} else {
 		l.ignore()
 	}
@@ -414,6 +460,6 @@ func lexNumber(l *lexer) stateFn {
 	if l.accept(".") {
 		l.acceptRun(digits)
 	}
-	l.emit(itemNumber)
+	l.emit(TokNUMBER)
 	return lexTopLevel
 }

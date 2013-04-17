@@ -24,7 +24,7 @@ tokens = """
     INDENT
     DATE NUMBER STRING
     ACCOUNT CURRENCY
-    TXN TXNFLAG CHECK OPEN CLOSE PAD EVENT COMMENT PRICE LOCATION
+    TXN TXNFLAG CHECK OPEN CLOSE PAD EVENT NOTE PRICE LOCATION
     BEGINTAG ENDTAG 
     AT ATAT PIPE EQUAL EOL LCURL RCURL COMMA
 """.split()
@@ -57,7 +57,7 @@ t_OPEN = r'open'
 t_CLOSE = r'close'
 t_PAD = r'pad'
 t_EVENT = r'event'
-t_COMMENT = r'comment'
+t_NOTE = r'note'
 t_PRICE = r'price'
 t_LOCATION = r'location'
 
@@ -250,12 +250,12 @@ def p_event(p):
     """
     p[0] = Event(p[1], p[3], p[4])
 
-Comment = namedtuple('Comment', 'date comment')
+Note = namedtuple('Note', 'date note')
 
-def p_comment(p):
-    """comment : DATE COMMENT STRING
+def p_note(p):
+    """note : DATE NOTE STRING
     """
-    p[0] = Comment(p[1], p[2])
+    p[0] = Note(p[1], p[2])
 
 def p_entry(p):
     """entry : EOL
@@ -267,7 +267,7 @@ def p_entry(p):
              | close
              | pad
              | event
-             | comment
+             | note
              | price
              | location
     """

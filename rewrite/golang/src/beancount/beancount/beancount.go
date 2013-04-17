@@ -10,27 +10,30 @@ import (
 
 func main() {
 
+	// Parse arguments.
+	debugLexer := flag.Bool("debug-lexer", false, "Print out tokens")
 	// wordPtr := flag.String("word", "foo", "a string")
 	// numbPtr := flag.Int("numb", 42, "an int")
-	// boolPtr := flag.Bool("fork", false, "a bool")
   // var svar string
 	// flag.StringVar(&svar, "svar", "bar", "a string var")
 	flag.Parse()
 
-
 	for _, filename := range flag.Args() {
 
-		// file, err := os.Open(filename) // For read access.
-    b, err := ioutil.ReadFile("input.txt")
+    b, err := ioutil.ReadFile(filename)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		l := beancount.Lex(filename, b)
+		input := string(b)
+
+		l := beancount.Lex(filename, input)
 		for {
-			item := l.nextItem()
-			fmt.Println("item: %v", item)
-			if item.typ == beancount.itemEOF || item.typ == beancount.itemError {
+			item := l.NextTok()
+			if *debugLexer {
+				fmt.Printf("item: %v\n", item)
+			}
+			if item.Type == beancount.TokEOF || item.Type == beancount.TokERROR {
 				break
 			}
 		}
