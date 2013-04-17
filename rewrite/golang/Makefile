@@ -8,17 +8,30 @@ export GOROOT
 
 BEANCOUNT = $(GOPATH)/bin/beancount
 
+
+
+$(GOPATH)/src/beancount/grammar.go: $(GOPATH)/src/beancount/grammar.y
+	go tool yacc -p "bean_" -o $@ $< 
+
+grammar: $(GOPATH)/src/beancount/grammar.go
+
+
+
 .PHONY: $(BEANCOUNT)
 $(BEANCOUNT):
 	go install beancount/beancount
 
 build: $(BEANCOUNT)
 
+
+
 LEDGER = $(HOME)/q/office/accounting/tmp/syntax.ledger
 
 run: $(BEANCOUNT) $(LEDGER)
 	time -v $(BEANCOUNT) $(LEDGER) > $(LEDGER).tokens
 #time -v $(BEANCOUNT) --debug-lexer $(LEDGER) > $(LEDGER).tokens
+
+
 
 test:
 	go test -v beancount

@@ -8,6 +8,12 @@ import (
 	"beancount"
 )
 
+
+type yyLexer interface {
+	Lex(lval *yySymType) int
+	Error(e string)
+}
+
 func main() {
 
 	// Parse arguments.
