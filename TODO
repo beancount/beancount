@@ -14,6 +14,21 @@
 Beancount (Accounting)
 ======================
 
+  - The syntax should support multiline strings naturally...
+
+  - Whether an account shows up in a particular Ledger (realization) really only
+    should depend on whether the account was open during the period (we now have
+    account open/close dates... let's use them instead of a heuristic!).
+
+  - A new ledger mode should be able to
+
+    * Automatically indent postings ("a line that begins with an account")
+    * Highlight strings
+    * Automatically align lines with currency numbers
+
+  - Some syntax should be added for tags, e.g. ":tag", tags should all be moved
+    to the description line, no tags allowed on postings
+
   - @location really should just convert into a generic event "location", just
     as address and school should; they're just events with forward fill...
     Serve this at:

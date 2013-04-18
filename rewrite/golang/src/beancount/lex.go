@@ -1,7 +1,3 @@
-// Copyright 2011 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package beancount
 
 import (
@@ -23,11 +19,11 @@ type item struct {
 
 func (i item) String() string {
 	switch {
-	case i.Type == TokEOF:
+	case i.Type == EOF:
 		return "EOF"
-	// case i.Type == TokEOL:
+	// case i.Type == EOL:
 	// 	return "EOL"
-	case i.Type == TokERROR:
+	case i.Type == ERROR:
 		return i.val
 	default:
 		return fmt.Sprintf("<%v %#v>", i.Type, i.val)
@@ -38,72 +34,38 @@ func (i item) String() string {
 // TokenType identifies the type of lex items.
 type TokenType int
 
-// const (
-// 	TokERROR    TokenType = iota		// error occurred; value is text of error
-//   TokINDENT											// Initial indent IF at the beginning of a line
-//   TokEOL												// End-of-line
-// 	TokEOF												// End-of-file
-// 	TokCOMMENT  									// A comment
-//   TokPIPE												// |
-//   TokATAT												// @@
-//   TokAT													// @
-//   TokLCURL											// {
-//   TokRCURL											// }
-//   TokEQUAL											// =
-//   TokCOMMA											// ,
-
-//   TokTXN												// 'txn' keyword
-//   TokTXNFLAG										// Valid characters for flags
-//   TokCHECK											// 'check' keyword
-//   TokOPEN												// 'open' keyword
-//   TokCLOSE											// 'close' keyword
-//   TokPAD												// 'pad' keyword
-//   TokEVENT											// 'event' keyword
-//   TokPRICE											// 'price' keyword
-//   TokLOCATION										// 'location' keyword
-//   TokNOTE    										// 'note' keyword
-
-//   TokBEGINTAG										// 'begintag' keyword
-//   TokENDTAG											// 'endtag' keyword
-
-// 	TokDATE												// A date object
-// 	TokCURRENCY										// A currency specification
-// 	TokACCOUNT  									// The name of an account
-//   TokSTRING											// A quoted string, with any characters inside
-// 	TokNUMBER											// A floating-point number
-// )
-
 // Make the types prettyprint.
+// FIXME: I think there's a way to auto-generate this map from gen code in grammar.go
 var itemName = map[TokenType]string{
-	TokERROR			: "ERROR",
-	TokINDENT			: "INDENT",
-	TokEOL				: "EOL",
-	TokEOF				: "EOF",
-	TokCOMMENT    : "COMMENT",
-	TokPIPE				: "PIPE",
-	TokATAT				: "ATAT",
-	TokAT					: "AT",
-	TokLCURL			: "LCURL",
-	TokRCURL			: "RCURL",
-	TokEQUAL			: "EQUAL",
-	TokCOMMA			: "COMMA",
-	TokTXN				: "TXN",
-	TokTXNFLAG		: "TXNFLAG",
-	TokCHECK			: "CHECK",
-	TokOPEN				: "OPEN",
-	TokCLOSE			: "CLOSE",
-	TokPAD				: "PAD",
-	TokEVENT			: "EVENT",
-	TokPRICE			: "PRICE",
-	TokLOCATION		: "LOCATION",
-	TokNOTE   		: "NOTE",
-	TokBEGINTAG		: "BEGINTAG",
-	TokENDTAG			: "ENDTAG",
-	TokDATE				: "DATE",
-	TokCURRENCY		: "CURRENCY",
-	TokACCOUNT		: "ACCOUNT",
-	TokSTRING			: "STRING",
-	TokNUMBER			: "NUMBER",
+	ERROR					: "ERROR",
+	INDENT				: "INDENT",
+	EOL						: "EOL",
+	EOF						: "EOF",
+	COMMENT				: "COMMENT",
+	PIPE					: "PIPE",
+	ATAT					: "ATAT",
+	AT						: "AT",
+	LCURL					: "LCURL",
+	RCURL					: "RCURL",
+	EQUAL					: "EQUAL",
+	COMMA					: "COMMA",
+	TXN						: "TXN",
+	TXNFLAG				: "TXNFLAG",
+	CHECK					: "CHECK",
+	OPEN					: "OPEN",
+	CLOSE					: "CLOSE",
+	PAD						: "PAD",
+	EVENT					: "EVENT",
+	PRICE					: "PRICE",
+	LOCATION			: "LOCATION",
+	NOTE					: "NOTE",
+	BEGINTAG			: "BEGINTAG",
+	ENDTAG				: "ENDTAG",
+	DATE					: "DATE",
+	CURRENCY			: "CURRENCY",
+	ACCOUNT				: "ACCOUNT",
+	STRING				: "STRING",
+	NUMBER				: "NUMBER",
 }
 
 func (it TokenType) String() string {
@@ -113,17 +75,17 @@ func (it TokenType) String() string {
 
 
 var keywords = map[string]TokenType{
-  "txn"					: TokTXN,
-  "check"				: TokCHECK,
-  "open"				: TokOPEN,
-  "close"				: TokCLOSE,
-  "pad"					: TokPAD,
-  "event"				: TokEVENT,
-  "price"				: TokPRICE,
-  "location"		: TokLOCATION, // FIXME: remove, make this just an event
-  "note"  		  : TokNOTE,
-  "begintag"		: TokBEGINTAG,
-  "endtag"			: TokENDTAG,
+  "txn"					: TXN,
+  "check"				: CHECK,
+  "open"				: OPEN,
+  "close"				: CLOSE,
+  "pad"					: PAD,
+  "event"				: EVENT,
+  "price"				: PRICE,
+  "location"		: LOCATION, // FIXME: remove, make this just an event
+  "note"  		  : NOTE,
+  "begintag"		: BEGINTAG,
+  "endtag"			: ENDTAG,
 }
 
 const eof = -1
@@ -212,7 +174,7 @@ func (l *Lexer) lineNumber() int {
 // 'errorf' returns an error token and terminates the scan by passing
 // back a nil pointer that will be the next state, terminating l.NextTok.
 func (l *Lexer) errorf(format string, args ...interface{}) stateFn {
-	l.items <- item{TokERROR, l.start, fmt.Sprintf(format, args...)}
+	l.items <- item{ERROR, l.start, fmt.Sprintf(format, args...)}
 	return nil
 }
 
@@ -250,7 +212,7 @@ var (
 func lexTopLevel(l *Lexer) stateFn {
 	if int(l.pos) >= len(l.input) {
 		l.width = 0
-		l.emit(TokEOF)
+		l.emit(EOF)
 		return nil
 	}
 
@@ -262,7 +224,7 @@ func lexTopLevel(l *Lexer) stateFn {
 
 	case isEndOfLine(r):
 		l.next()
-		l.emit(TokEOL)
+		l.emit(EOL)
 		l.lineNo++
 		l.lineStart = l.pos
 
@@ -275,7 +237,7 @@ func lexTopLevel(l *Lexer) stateFn {
 	case unicode.IsDigit(r):
 		if len(ninput) >= 10 && dateRegexp.MatchString(ninput) {
 			l.pos += 10
-			l.emit(TokDATE)
+			l.emit(DATE)
 		} else {
 			return lexNumber
 		}
@@ -288,40 +250,40 @@ func lexTopLevel(l *Lexer) stateFn {
 		return lexNumber
 
 	case l.accept("|"):
-		l.emit(TokPIPE)
+		l.emit(PIPE)
 
 	case strings.HasPrefix(ninput, "@@"):
 		l.pos += 2
-		l.emit(TokATAT)
+		l.emit(ATAT)
 
 	case l.accept("@"):
-		l.emit(TokAT)
+		l.emit(AT)
 
 	case l.accept("{"):
-		l.emit(TokLCURL)
+		l.emit(LCURL)
 
 	case l.accept("}"):
-		l.emit(TokRCURL)
+		l.emit(RCURL)
 
 	case l.accept("="):
-		l.emit(TokEQUAL)
+		l.emit(EQUAL)
 
 	case l.accept(","):
-		l.emit(TokCOMMA)
+		l.emit(COMMA)
 
 	case l.accept("\""):
-		return lexString
+		return lexStringMulti
 
 	case r == '*':
 		if l.start == l.lineStart {
 			return lexSkipLine
 		} else {
 			l.pos++
-			l.emit(TokTXNFLAG)
+			l.emit(TXNFLAG)
 		}
 
 	case l.accept("!&#?%"):
-		l.emit(TokTXNFLAG)
+		l.emit(TXNFLAG)
 
 	case l.accept("ABCDEFGHIJKLMNOPQRSTUVWXYZ"):
 		return lexFreeWord
@@ -358,6 +320,7 @@ Loop:
 			hasSpecial = true;
 
 		case r == '\'':
+		case r == '.':
 
 		default:
 			l.backup()
@@ -366,9 +329,9 @@ Loop:
 	}
 
 	if hasSpecial {
-		l.emit(TokACCOUNT)
+		l.emit(ACCOUNT)
 	} else if allUpper && l.length() >= 2 {
-		l.emit(TokCURRENCY)
+		l.emit(CURRENCY)
 	} else {
 		return l.errorf("Invalid string")
 	}
@@ -399,8 +362,14 @@ func lexComment(l *Lexer) stateFn {
 		l.next()
 	}
 
-	l.emit(TokCOMMENT)
+	emitComment(l)
 	return lexTopLevel
+}
+
+// 'emitComment' is where we decide to either emit or ignore COMMENT tokens.
+func emitComment(l *Lexer) {
+	///l.emit(COMMENT)
+	l.ignore()
 }
 
 // 'lexSkipLine' skips until the end of the line and emits it as a comment. This
@@ -410,12 +379,12 @@ func lexSkipLine(l *Lexer) stateFn {
 		l.next()
 	}
 
-	l.emit(TokCOMMENT)
+	emitComment(l)
 	return lexTopLevel
 }
 
-// 'lexString' parse a quoted string literal.
-func lexString(l *Lexer) stateFn {
+// 'lexStringSingle' parses a quoted string literal on a single line.
+func lexStringSingle(l *Lexer) stateFn {
 	l.ignore()
 Loop:
 	for {
@@ -432,7 +401,26 @@ Loop:
 		}
 	}
 	l.pos -= 1
-	l.emit(TokSTRING)
+	l.emit(STRING)
+	l.pos += 1
+	l.ignore()
+	return lexTopLevel
+}
+
+// 'lexStringMulti' parses a quoted string literal on possibly multiple lines.
+func lexStringMulti(l *Lexer) stateFn {
+	l.ignore()
+Loop:
+	for {
+		switch l.next() {
+		case eof:
+			return l.errorf("unterminated quoted string")
+		case '"':
+			break Loop
+		}
+	}
+	l.pos -= 1
+	l.emit(STRING)
 	l.pos += 1
 	l.ignore()
 	return lexTopLevel
@@ -445,7 +433,7 @@ func lexSpace(l *Lexer) stateFn {
 		l.next()
 	}
 	if l.start == l.lineStart {
-		l.emit(TokINDENT)
+		l.emit(INDENT)
 	} else {
 		l.ignore()
 	}
@@ -479,11 +467,6 @@ func lexNumber(l *Lexer) stateFn {
 	if l.accept(".") {
 		l.acceptRun(digits)
 	}
-	l.emit(TokNUMBER)
+	l.emit(NUMBER)
 	return lexTopLevel
 }
-
-
-
-
-

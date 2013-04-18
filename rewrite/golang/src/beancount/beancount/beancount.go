@@ -32,7 +32,7 @@ func main() {
 			for {
 				item := l.NextTok()
 				fmt.Printf("item: %v\n", item)
-				if item.Type == beancount.TokEOF || item.Type == beancount.TokERROR {
+				if item.Type == beancount.EOF || item.Type == beancount.ERROR {
 					break
 				}
 			}

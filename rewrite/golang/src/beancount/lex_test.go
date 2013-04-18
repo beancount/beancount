@@ -11,34 +11,34 @@ import (
 )
 
 // Make the types prettyprint.
-var TokName = map[TokenType]string{
-	TokERROR			: "ERROR",
-	TokINDENT		: "INDENT",
-	TokEOL				: "EOL",
-	TokEOF				: "OF",
-	TokPIPE			: "PIPE",
-	TokATAT			: "ATAT",
-	TokAT				: "AT",
-	TokLCURL			: "LCURL",
-	TokRCURL			: "RCURL",
-	TokEQUAL			: "EQUAL",
-	TokCOMMA			: "COMMA",
-	TokDATE			: "DATE",
-	TokCURRENCY	: "CURRENCY",
-	TokSTRING		: "STRING",
-	TokNUMBER		: "NUMBER",
-	TokCOMMENT		: "COMMENT",
-  TokTXN				: "TXN",
-  TokTXNFLAG		: "TXNFLAG",
-  TokCHECK			: "CHECK",
-  TokOPEN			: "OPEN",
-  TokCLOSE			: "CLOSE",
-  TokPAD				: "PAD",
-  TokEVENT			: "EVENT",
-  TokPRICE			: "PRICE",
-  TokLOCATION	: "LOCATION",
-  TokBEGINTAG	: "BEGINTAG",
-  TokENDTAG		: "ENDTAG",
+var Name = map[TokenType]string{
+	ERROR			: "ERROR",
+	INDENT		: "INDENT",
+	EOL				: "EOL",
+	EOF				: "OF",
+	PIPE			: "PIPE",
+	ATAT			: "ATAT",
+	AT				: "AT",
+	LCURL			: "LCURL",
+	RCURL			: "RCURL",
+	EQUAL			: "EQUAL",
+	COMMA			: "COMMA",
+	DATE			: "DATE",
+	CURRENCY	: "CURRENCY",
+	STRING		: "STRING",
+	NUMBER		: "NUMBER",
+	COMMENT		: "COMMENT",
+  TXN				: "TXN",
+  TXNFLAG		: "TXNFLAG",
+  CHECK			: "CHECK",
+  OPEN			: "OPEN",
+  CLOSE			: "CLOSE",
+  PAD				: "PAD",
+  EVENT			: "EVENT",
+  PRICE			: "PRICE",
+  LOCATION	: "LOCATION",
+  BEGINTAG	: "BEGINTAG",
+  ENDTAG		: "ENDTAG",
 }
 
 type lexTest struct {
@@ -48,21 +48,21 @@ type lexTest struct {
 }
 
 var (
-	tEOL      = item{TokEOL, 0, "\n"}
-	tEOF      = item{TokEOF, 0, ""}
-	tINDENT      = item{TokINDENT, 0, "  "}
-	// tCOMMENT      = item{TokCOMMENT, 0, "COMMENT"}
-	// tFor      = item{TokIdentifier, 0, "for"}
-	// tLeft     = item{TokLeftDelim, 0, "{{"}
-	// tLpar     = item{TokLeftParen, 0, "("}
-	// tPipe     = item{TokPIPE, 0, "|"}
-	// tQuote    = item{TokSTRING, 0, `"abc \n\t\" "`}
-	// tRange    = item{TokRange, 0, "range"}
-	// tRight    = item{TokRightDelim, 0, "}}"}
-	// tRpar     = item{TokRightParen, 0, ")"}
-	// tSpace    = item{TokSpace, 0, " "}
+	tEOL      = item{EOL, 0, "\n"}
+	tEOF      = item{EOF, 0, ""}
+	tINDENT      = item{INDENT, 0, "  "}
+	// tCOMMENT      = item{COMMENT, 0, "COMMENT"}
+	// tFor      = item{Identifier, 0, "for"}
+	// tLeft     = item{LeftDelim, 0, "{{"}
+	// tLpar     = item{LeftParen, 0, "("}
+	// tPipe     = item{PIPE, 0, "|"}
+	// tQuote    = item{STRING, 0, `"abc \n\t\" "`}
+	// tRange    = item{Range, 0, "range"}
+	// tRight    = item{RightDelim, 0, "}}"}
+	// tRpar     = item{RightParen, 0, ")"}
+	// tSpace    = item{Space, 0, " "}
 	// raw       = "`" + `abc\n\t\" ` + "`"
-	// tRawQuote = item{TokRawString, 0, raw}
+	// tRawQuote = item{RawString, 0, raw}
 )
 
 var lexTests = []lexTest{
@@ -86,75 +86,75 @@ var lexTests = []lexTest{
 		tEOF}},
 
 	{"comment", "; Bla-di-bla", []item{
-		{TokCOMMENT, 0, " Bla-di-bla"},
+		{COMMENT, 0, " Bla-di-bla"},
 		tEOF}},
 	{"comment_nl", "; Bla-di-bla\n", []item{
-		{TokCOMMENT, 0, " Bla-di-bla"},
+		{COMMENT, 0, " Bla-di-bla"},
 		tEOL,
 		tEOF}},
 	{"indent_comment_nl", "  ; Bla-di-bla\n", []item{
 		tINDENT,
-		{TokCOMMENT, 0, " Bla-di-bla"},
+		{COMMENT, 0, " Bla-di-bla"},
 		tEOL,
 		tEOF}},
 
 	{"date", "2013-04-13", []item{
-		{TokDATE, 0, "2013-04-13"},
+		{DATE, 0, "2013-04-13"},
 		tEOF}},
 	{"date_space", "2013-04-13  \n", []item{
-		{TokDATE, 0, "2013-04-13"},
+		{DATE, 0, "2013-04-13"},
 		tEOL,
 		tEOF}},
 
 	{"date_flag", "2013-04-13 *", []item{
-		{TokDATE, 0, "2013-04-13"},
-		{TokTXNFLAG, 0, "*"},
+		{DATE, 0, "2013-04-13"},
+		{TXNFLAG, 0, "*"},
 		tEOF}},
 	{"date_flag", "2013-04-13 %", []item{
-		{TokDATE, 0, "2013-04-13"},
-		{TokTXNFLAG, 0, "%"},
+		{DATE, 0, "2013-04-13"},
+		{TXNFLAG, 0, "%"},
 		tEOF}},
 
-	{"flag", "*", []item{{TokTXNFLAG, 0, "*"}, tEOF}},
-	{"flag", "!", []item{{TokTXNFLAG, 0, "!"}, tEOF}},
-	{"flag", "&", []item{{TokTXNFLAG, 0, "&"}, tEOF}},
-	{"flag", "#", []item{{TokTXNFLAG, 0, "#"}, tEOF}},
-	{"flag", "%", []item{{TokTXNFLAG, 0, "%"}, tEOF}},
+	{"flag", "*", []item{{TXNFLAG, 0, "*"}, tEOF}},
+	{"flag", "!", []item{{TXNFLAG, 0, "!"}, tEOF}},
+	{"flag", "&", []item{{TXNFLAG, 0, "&"}, tEOF}},
+	{"flag", "#", []item{{TXNFLAG, 0, "#"}, tEOF}},
+	{"flag", "%", []item{{TXNFLAG, 0, "%"}, tEOF}},
 
-	{"pipe", "|", []item{{TokPIPE, 0, "|"}, tEOF}},
-	{"at", "@", []item{{TokAT, 0, "@"}, tEOF}},
-	{"atat", "@@", []item{{TokATAT, 0, "@@"}, tEOF}},
-	{"lcurl", "{", []item{{TokLCURL, 0, "{"}, tEOF}},
-	{"rcurl", "}", []item{{TokRCURL, 0, "}"}, tEOF}},
-	{"equal", "=", []item{{TokEQUAL, 0, "="}, tEOF}},
-	{"comma", ",", []item{{TokCOMMA, 0, ","}, tEOF}},
+	{"pipe", "|", []item{{PIPE, 0, "|"}, tEOF}},
+	{"at", "@", []item{{AT, 0, "@"}, tEOF}},
+	{"atat", "@@", []item{{ATAT, 0, "@@"}, tEOF}},
+	{"lcurl", "{", []item{{LCURL, 0, "{"}, tEOF}},
+	{"rcurl", "}", []item{{RCURL, 0, "}"}, tEOF}},
+	{"equal", "=", []item{{EQUAL, 0, "="}, tEOF}},
+	{"comma", ",", []item{{COMMA, 0, ","}, tEOF}},
 
-	{"string", "\"Bla-di-bla\"", []item{{TokSTRING, 0, "Bla-di-bla"}, tEOF}},
+	{"string", "\"Bla-di-bla\"", []item{{STRING, 0, "Bla-di-bla"}, tEOF}},
 	{"string", "\"Bla\" \"di\" \"bla\"", []item{
-		{TokSTRING, 0, "Bla"},
-		{TokSTRING, 0, "di"},
-		{TokSTRING, 0, "bla"},
+		{STRING, 0, "Bla"},
+		{STRING, 0, "di"},
+		{STRING, 0, "bla"},
 		tEOF}},
 
-	{"account", "Assets:US:HSBC", []item{{TokACCOUNT, 0, "Assets:US:HSBC"}, tEOF}},
-	{"account", "Assets:CA:RBC-Investing", []item{{TokACCOUNT, 0, "Assets:CA:RBC-Investing"}, tEOF}},
-	{"account", "Assets:CA:RBC_Investing", []item{{TokACCOUNT, 0, "Assets:CA:RBC_Investing"}, tEOF}},
+	{"account", "Assets:US:HSBC", []item{{ACCOUNT, 0, "Assets:US:HSBC"}, tEOF}},
+	{"account", "Assets:CA:RBC-Investing", []item{{ACCOUNT, 0, "Assets:CA:RBC-Investing"}, tEOF}},
+	{"account", "Assets:CA:RBC_Investing", []item{{ACCOUNT, 0, "Assets:CA:RBC_Investing"}, tEOF}},
 
-	{"currency", "USD", []item{{TokCURRENCY, 0, "USD"}, tEOF}},
-	{"currency", "CAD", []item{{TokCURRENCY, 0, "CAD"}, tEOF}},
-	{"currency", "RBF1001", []item{{TokCURRENCY, 0, "RBF1001"}, tEOF}},
-	{"currency", "AIS512", []item{{TokCURRENCY, 0, "AIS512"}, tEOF}},
+	{"currency", "USD", []item{{CURRENCY, 0, "USD"}, tEOF}},
+	{"currency", "CAD", []item{{CURRENCY, 0, "CAD"}, tEOF}},
+	{"currency", "RBF1001", []item{{CURRENCY, 0, "RBF1001"}, tEOF}},
+	{"currency", "AIS512", []item{{CURRENCY, 0, "AIS512"}, tEOF}},
 
-	{"number", "12345", []item{{TokNUMBER, 0, "12345"}, tEOF}},
-	{"number", "123.45", []item{{TokNUMBER, 0, "123.45"}, tEOF}},
-	{"number", "876.6433", []item{{TokNUMBER, 0, "876.6433"}, tEOF}},
-	{"number", "-876.6433", []item{{TokNUMBER, 0, "-876.6433"}, tEOF}},
-	{"number", "+876.6433", []item{{TokNUMBER, 0, "+876.6433"}, tEOF}},
-	{"number", "-876", []item{{TokNUMBER, 0, "-876"}, tEOF}},
-	{"number", "+876", []item{{TokNUMBER, 0, "+876"}, tEOF}},
+	{"number", "12345", []item{{NUMBER, 0, "12345"}, tEOF}},
+	{"number", "123.45", []item{{NUMBER, 0, "123.45"}, tEOF}},
+	{"number", "876.6433", []item{{NUMBER, 0, "876.6433"}, tEOF}},
+	{"number", "-876.6433", []item{{NUMBER, 0, "-876.6433"}, tEOF}},
+	{"number", "+876.6433", []item{{NUMBER, 0, "+876.6433"}, tEOF}},
+	{"number", "-876", []item{{NUMBER, 0, "-876"}, tEOF}},
+	{"number", "+876", []item{{NUMBER, 0, "+876"}, tEOF}},
 
-	{"directive", "open", []item{{TokOPEN, 0, "open"}, tEOF}},
-	{"directive", "close", []item{{TokCLOSE, 0, "close"}, tEOF}},
+	{"directive", "open", []item{{OPEN, 0, "open"}, tEOF}},
+	{"directive", "close", []item{{CLOSE, 0, "close"}, tEOF}},
 }
 
 // 'collect' gathers the emitted items into a slice.
@@ -163,7 +163,7 @@ func collect(t *lexTest) (items []item) {
 	for {
 		item := l.NextTok()
 		items = append(items, item)
-		if item.Type == TokEOF || item.Type == TokERROR {
+		if item.Type == EOF || item.Type == ERROR {
 			break
 		}
 	}
