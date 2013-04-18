@@ -6,7 +6,6 @@ package beancount
 
 import (
 	"fmt"
-	//"os"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -39,40 +38,40 @@ func (i item) String() string {
 // TokenType identifies the type of lex items.
 type TokenType int
 
-const (
-	TokERROR    TokenType = iota		// error occurred; value is text of error
-  TokINDENT											// Initial indent IF at the beginning of a line
-  TokEOL												// End-of-line
-	TokEOF												// End-of-file
-	TokCOMMENT  									// A comment
-  TokPIPE												// |
-  TokATAT												// @@
-  TokAT													// @
-  TokLCURL											// {
-  TokRCURL											// }
-  TokEQUAL											// =
-  TokCOMMA											// ,
+// const (
+// 	TokERROR    TokenType = iota		// error occurred; value is text of error
+//   TokINDENT											// Initial indent IF at the beginning of a line
+//   TokEOL												// End-of-line
+// 	TokEOF												// End-of-file
+// 	TokCOMMENT  									// A comment
+//   TokPIPE												// |
+//   TokATAT												// @@
+//   TokAT													// @
+//   TokLCURL											// {
+//   TokRCURL											// }
+//   TokEQUAL											// =
+//   TokCOMMA											// ,
 
-  TokTXN												// 'txn' keyword
-  TokTXNFLAG										// Valid characters for flags
-  TokCHECK											// 'check' keyword
-  TokOPEN												// 'open' keyword
-  TokCLOSE											// 'close' keyword
-  TokPAD												// 'pad' keyword
-  TokEVENT											// 'event' keyword
-  TokPRICE											// 'price' keyword
-  TokLOCATION										// 'location' keyword
-  TokNOTE    										// 'note' keyword
+//   TokTXN												// 'txn' keyword
+//   TokTXNFLAG										// Valid characters for flags
+//   TokCHECK											// 'check' keyword
+//   TokOPEN												// 'open' keyword
+//   TokCLOSE											// 'close' keyword
+//   TokPAD												// 'pad' keyword
+//   TokEVENT											// 'event' keyword
+//   TokPRICE											// 'price' keyword
+//   TokLOCATION										// 'location' keyword
+//   TokNOTE    										// 'note' keyword
 
-  TokBEGINTAG										// 'begintag' keyword
-  TokENDTAG											// 'endtag' keyword
+//   TokBEGINTAG										// 'begintag' keyword
+//   TokENDTAG											// 'endtag' keyword
 
-	TokDATE												// A date object
-	TokCURRENCY										// A currency specification
-	TokACCOUNT  									// The name of an account
-  TokSTRING											// A quoted string, with any characters inside
-	TokNUMBER											// A floating-point number
-)
+// 	TokDATE												// A date object
+// 	TokCURRENCY										// A currency specification
+// 	TokACCOUNT  									// The name of an account
+//   TokSTRING											// A quoted string, with any characters inside
+// 	TokNUMBER											// A floating-point number
+// )
 
 // Make the types prettyprint.
 var itemName = map[TokenType]string{
@@ -130,10 +129,10 @@ var keywords = map[string]TokenType{
 const eof = -1
 
 // stateFn represents the state of the scanner as a function that returns the next state.
-type stateFn func(*lexer) stateFn
+type stateFn func(*Lexer) stateFn
 
-// 'lexer' holds the state of the scanner.
-type lexer struct {
+// 'Lexer' holds the state of the scanner.
+type Lexer struct {
 	name       string    // The name of the input; used only for error reports
 	input      string    // The string being scanned
 	state      stateFn   // The next lexing function to enter
@@ -148,7 +147,7 @@ type lexer struct {
 }
 
 // 'next' returns the next rune in the input.
-func (l *lexer) next() rune {
+func (l *Lexer) next() rune {
 	if int(l.pos) >= len(l.input) {
 		l.width = 0
 		return eof
@@ -160,35 +159,35 @@ func (l *lexer) next() rune {
 }
 
 // 'peek' returns but does not consume the next rune in the input.
-func (l *lexer) peek() rune {
+func (l *Lexer) peek() rune {
 	r := l.next()
 	l.backup()
 	return r
 }
 
 // 'length' returns the number of runes parsed.
-func (l *lexer) length() Pos {
+func (l *Lexer) length() Pos {
 	return l.pos - l.start
 }
 
 // 'backup' steps back one rune. Can only be called once per call of next.
-func (l *lexer) backup() {
+func (l *Lexer) backup() {
 	l.pos -= l.width
 }
 
 // 'emit' passes an item back to the client.
-func (l *lexer) emit(t TokenType) {
+func (l *Lexer) emit(t TokenType) {
 	l.items <- item{t, l.start, l.input[l.start:l.pos]}
 	l.start = l.pos
 }
 
 // 'ignore' skips over the pending input before this point.
-func (l *lexer) ignore() {
+func (l *Lexer) ignore() {
 	l.start = l.pos
 }
 
 // 'accept' consumes the next rune if it's from the valid set.
-func (l *lexer) accept(valid string) bool {
+func (l *Lexer) accept(valid string) bool {
 	if strings.IndexRune(valid, l.next()) >= 0 {
 		return true
 	}
@@ -197,7 +196,7 @@ func (l *lexer) accept(valid string) bool {
 }
 
 // 'acceptRun' consumes a run of runes from the valid set.
-func (l *lexer) acceptRun(valid string) {
+func (l *Lexer) acceptRun(valid string) {
 	for strings.IndexRune(valid, l.next()) >= 0 {
 	}
 	l.backup()
@@ -206,37 +205,38 @@ func (l *lexer) acceptRun(valid string) {
 // 'lineNumber' reports which line we're on, based on the position of
 // the previous item returned by NextTok. Doing it this way
 // means we don't have to worry about peek double counting.
-func (l *lexer) lineNumber() int {
+func (l *Lexer) lineNumber() int {
 	return 1 + strings.Count(l.input[:l.lastPos], "\n")
 }
 
 // 'errorf' returns an error token and terminates the scan by passing
 // back a nil pointer that will be the next state, terminating l.NextTok.
-func (l *lexer) errorf(format string, args ...interface{}) stateFn {
+func (l *Lexer) errorf(format string, args ...interface{}) stateFn {
 	l.items <- item{TokERROR, l.start, fmt.Sprintf(format, args...)}
 	return nil
 }
 
 // 'NextTok' returns the next item from the input.
-func (l *lexer) NextTok() item {
+func (l *Lexer) NextTok() item {
 	item := <-l.items
 	l.lastPos = item.pos
 	return item
 }
 
 // 'lex' creates a new scanner for the input string.
-func Lex(name, input string) *lexer {
-	l := &lexer{
+func MakeLexer(name, input string) *Lexer {
+	l := &Lexer{
 		name:       name,
 		input:      input,
+		lineNo:     1,
 		items:      make(chan item),
 	}
 	go l.run()
 	return l
 }
 
-// 'run' runs the state machine for the lexer.
-func (l *lexer) run() {
+// 'run' runs the state machine for the Lexer.
+func (l *Lexer) run() {
 	for l.state = lexTopLevel; l.state != nil; {
 		l.state = l.state(l)
 	}
@@ -247,7 +247,7 @@ var (
 )
 
 // 'lexTopLevel' is the top-level scanner that looks for new things
-func lexTopLevel(l *lexer) stateFn {
+func lexTopLevel(l *Lexer) stateFn {
 	if int(l.pos) >= len(l.input) {
 		l.width = 0
 		l.emit(TokEOF)
@@ -312,7 +312,15 @@ func lexTopLevel(l *lexer) stateFn {
 	case l.accept("\""):
 		return lexString
 
-	case l.accept("*!&#?%"):
+	case r == '*':
+		if l.start == l.lineStart {
+			return lexSkipLine
+		} else {
+			l.pos++
+			l.emit(TokTXNFLAG)
+		}
+
+	case l.accept("!&#?%"):
 		l.emit(TokTXNFLAG)
 
 	case l.accept("ABCDEFGHIJKLMNOPQRSTUVWXYZ"):
@@ -330,7 +338,7 @@ func lexTopLevel(l *lexer) stateFn {
 
 // 'lexFreeWord' looks for a free string, which could be an account, currency,
 // or a Dr/Cr marker.
-func lexFreeWord(l *lexer) stateFn {
+func lexFreeWord(l *Lexer) stateFn {
 	l.backup()
 
 	var allUpper = true;
@@ -368,7 +376,7 @@ Loop:
 }
 
 // 'lexKeyword' scans a keyword
-func lexKeyword(l *lexer) stateFn {
+func lexKeyword(l *Lexer) stateFn {
 	l.acceptRun("abcdefghijklmnopqrstuvwxyz")
 	keyword := l.input[l.start:l.pos]
 	if item, found := keywords[keyword]; found {
@@ -380,7 +388,7 @@ func lexKeyword(l *lexer) stateFn {
 }
 
 // 'lexComment' scans a comment. The left comment marker is known to be present.
-func lexComment(l *lexer) stateFn {
+func lexComment(l *Lexer) stateFn {
 	for l.peek() == ';' {
 		l.next()
 	}
@@ -395,8 +403,19 @@ func lexComment(l *lexer) stateFn {
 	return lexTopLevel
 }
 
+// 'lexSkipLine' skips until the end of the line and emits it as a comment. This
+// is used to ignore org-mode lines.
+func lexSkipLine(l *Lexer) stateFn {
+	for !isEndOfLine(l.peek()) && l.peek() != eof {
+		l.next()
+	}
+
+	l.emit(TokCOMMENT)
+	return lexTopLevel
+}
+
 // 'lexString' parse a quoted string literal.
-func lexString(l *lexer) stateFn {
+func lexString(l *Lexer) stateFn {
 	l.ignore()
 Loop:
 	for {
@@ -421,7 +440,7 @@ Loop:
 
 // 'lexSpace' scans a run of space characters.
 // One space has already been seen.
-func lexSpace(l *lexer) stateFn {
+func lexSpace(l *Lexer) stateFn {
 	for isSpace(l.peek()) {
 		l.next()
 	}
@@ -452,7 +471,7 @@ func isAlphaNumeric(r rune) bool {
 // isn't a perfect number scanner - for instance it accepts "." and "0x0.2"
 // and "089" - but when it's wrong the input is invalid and the parser (via
 // strconv) will notice.
-func lexNumber(l *lexer) stateFn {
+func lexNumber(l *Lexer) stateFn {
 	// Optional leading sign.
 	l.accept("+-")
 	digits := "0123456789"
@@ -463,3 +482,8 @@ func lexNumber(l *lexer) stateFn {
 	l.emit(TokNUMBER)
 	return lexTopLevel
 }
+
+
+
+
+

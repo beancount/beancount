@@ -8,12 +8,6 @@ import (
 	"beancount"
 )
 
-
-type yyLexer interface {
-	Lex(lval *yySymType) int
-	Error(e string)
-}
-
 func main() {
 
 	// Parse arguments.
@@ -33,16 +27,19 @@ func main() {
 
 		input := string(b)
 
-		l := beancount.Lex(filename, input)
-		for {
-			item := l.NextTok()
-			if *debugLexer {
+		l := beancount.MakeLexer(filename, input)
+		if *debugLexer {
+			for {
+				item := l.NextTok()
 				fmt.Printf("item: %v\n", item)
+				if item.Type == beancount.TokEOF || item.Type == beancount.TokERROR {
+					break
+				}
 			}
-			if item.Type == beancount.TokEOF || item.Type == beancount.TokERROR {
-				break
-			}
+		} else {
+			beancount.Parse(l)
 		}
+
 		return
 	}
 }
