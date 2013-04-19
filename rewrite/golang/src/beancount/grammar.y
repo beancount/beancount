@@ -107,6 +107,8 @@ type Account struct {
 %type	<posting> posting
 %type	<posting_list> posting_list
 %type	<account> account
+%type	<str> begintag
+%type	<str> endtag
 
 %start directives
 
@@ -188,8 +190,14 @@ currency_list : empty
               | currency_list COMMA CURRENCY
 
 begintag : BEGINTAG STRING
+         {
+					 $$ = $2
+				 }
 
 endtag : ENDTAG STRING
+       {
+				 $$ = $2
+			 }
 
 open : DATE OPEN account currency_list
      | DATE OPEN account STRING currency_list
@@ -236,7 +244,15 @@ entry : EOL
 
 directive : entry
 				  | begintag
+          {
+						parserState.tags.PushFront($1)
+					}
 				  | endtag
+          {
+						// FIXME: We should assert that the tag is present in the list (or
+						// at the top of it, if required to be balanced).
+						parserState.tags.Remove(parserState.tags.Front())
+					}
 
 directives : empty
            | directives directive
@@ -258,6 +274,18 @@ func (l Lexer) Error(e string) {
 	fmt.Printf("%s:%d: %v\n", l.name, l.lineNo, e)
 }
 
+
+
+// Global state of the parser.
+type ParserState struct {
+	tags *list.List
+}
+
+var parserState *ParserState
+
 func Parse(yylex yyLexer) int {
-	return yyParse(yylex)
+	parserState = &ParserState{list.New()}
+	result := yyParse(yylex)
+	parserState = nil
+	return result
 }
