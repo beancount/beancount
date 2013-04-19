@@ -6,9 +6,23 @@ import (
 	"log"
 	"io/ioutil"
 	"beancount"
+	"time"
+)
+
+const (
+	Day = time.Hour * 24
 )
 
 func main() {
+
+// FIXME: remove
+	// d0, error := time.Parse("2006-01-02", "2014-12-31")
+	// d := d0.Add(Day)
+	// fmt.Printf("%#v %v %#v\n", d, d.Format("2006-01-02"), error)
+
+	// d, error := time.ParseDuration("2006-01-02", "2013-04-18")
+
+
 
 	// Parse arguments.
 	debugLexer := flag.Bool("debug-lexer", false, "Print out tokens")

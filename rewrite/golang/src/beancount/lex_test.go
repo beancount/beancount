@@ -1,7 +1,3 @@
-// Copyright 2011 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package beancount
 
 import (
@@ -23,6 +19,7 @@ var Name = map[TokenType]string{
 	RCURL			: "RCURL",
 	EQUAL			: "EQUAL",
 	COMMA			: "COMMA",
+	SLASH			: "SLASH",
 	DATE			: "DATE",
 	CURRENCY	: "CURRENCY",
 	STRING		: "STRING",
@@ -86,15 +83,15 @@ var lexTests = []lexTest{
 		tEOF}},
 
 	{"comment", "; Bla-di-bla", []item{
-		{COMMENT, 0, " Bla-di-bla"},
+		//{COMMENT, 0, " Bla-di-bla"},
 		tEOF}},
 	{"comment_nl", "; Bla-di-bla\n", []item{
-		{COMMENT, 0, " Bla-di-bla"},
+		//{COMMENT, 0, " Bla-di-bla"},
 		tEOL,
 		tEOF}},
 	{"indent_comment_nl", "  ; Bla-di-bla\n", []item{
 		tINDENT,
-		{COMMENT, 0, " Bla-di-bla"},
+		//{COMMENT, 0, " Bla-di-bla"},
 		tEOL,
 		tEOF}},
 
@@ -115,7 +112,6 @@ var lexTests = []lexTest{
 		{TXNFLAG, 0, "%"},
 		tEOF}},
 
-	{"flag", "*", []item{{TXNFLAG, 0, "*"}, tEOF}},
 	{"flag", "!", []item{{TXNFLAG, 0, "!"}, tEOF}},
 	{"flag", "&", []item{{TXNFLAG, 0, "&"}, tEOF}},
 	{"flag", "#", []item{{TXNFLAG, 0, "#"}, tEOF}},
@@ -153,13 +149,58 @@ var lexTests = []lexTest{
 	{"number", "-876", []item{{NUMBER, 0, "-876"}, tEOF}},
 	{"number", "+876", []item{{NUMBER, 0, "+876"}, tEOF}},
 
+	{"inventory_price_only", "987.65 GOOG @ 704.01 USD", []item{
+		{NUMBER, 0, "987.65"},
+		{CURRENCY, 0, "GOOG"},
+		{AT, 0, "@"},
+		{NUMBER, 0, "704.01"},
+		{CURRENCY, 0, "USD"},
+		tEOF}},
+
+	{"inventory_cost_only", "987.65 GOOG {765.03 USD}", []item{
+		{NUMBER, 0, "987.65"},
+		{CURRENCY, 0, "GOOG"},
+		{LCURL, 0, "{"},
+		{NUMBER, 0, "765.03"},
+		{CURRENCY, 0, "USD"},
+		{RCURL, 0, "}"},
+		tEOF}},
+
+	{"inventory_cost_with_date", "987.65 GOOG {765.03 USD / 2013-04-18}", []item{
+		{NUMBER, 0, "987.65"},
+		{CURRENCY, 0, "GOOG"},
+		{LCURL, 0, "{"},
+		{NUMBER, 0, "765.03"},
+		{CURRENCY, 0, "USD"},
+		{SLASH, 0, "/"},
+		{DATE, 0, "2013-04-18"},
+		{RCURL, 0, "}"},
+		tEOF}},
+
+	{"inventory_cost_and_price", "987.65 GOOG {765.03 USD} @ 704.01 USD", []item{
+		{NUMBER, 0, "987.65"},
+		{CURRENCY, 0, "GOOG"},
+		{LCURL, 0, "{"},
+		{NUMBER, 0, "765.03"},
+		{CURRENCY, 0, "USD"},
+		{RCURL, 0, "}"},
+		{AT, 0, "@"},
+		{NUMBER, 0, "704.01"},
+		{CURRENCY, 0, "USD"},
+		tEOF}},
+
+	// {"inventory", "987.65 GOOG {765.03 USD} @ 704.01 USD", []item{
+	// 	{NUMBER, 0, "987.65"},
+	// 	{CURRENCY, 0, "GOOG"},
+	// 	tEOF}},
+
 	{"directive", "open", []item{{OPEN, 0, "open"}, tEOF}},
 	{"directive", "close", []item{{CLOSE, 0, "close"}, tEOF}},
 }
 
 // 'collect' gathers the emitted items into a slice.
 func collect(t *lexTest) (items []item) {
-	l := Lex(t.name, t.input)
+	l := MakeLexer(t.name, t.input)
 	for {
 		item := l.NextTok()
 		items = append(items, item)

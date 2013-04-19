@@ -49,6 +49,7 @@ var itemName = map[TokenType]string{
 	RCURL					: "RCURL",
 	EQUAL					: "EQUAL",
 	COMMA					: "COMMA",
+	SLASH					: "SLASH",
 	TXN						: "TXN",
 	TXNFLAG				: "TXNFLAG",
 	CHECK					: "CHECK",
@@ -270,6 +271,9 @@ func lexTopLevel(l *Lexer) stateFn {
 
 	case l.accept(","):
 		l.emit(COMMA)
+
+	case l.accept("/"):
+		l.emit(SLASH)
 
 	case l.accept("\""):
 		return lexStringMulti

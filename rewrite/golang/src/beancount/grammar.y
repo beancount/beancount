@@ -1,116 +1,187 @@
+// -*- mode: go -*-
+// Grammar for beancount syntax parser.
+// This is meant to be used with the stock "go yacc" command.
+
 %{
 
 package beancount
 
 import (
-	// "bufio"
-	// "flag"
 	"fmt"
-	// "math"
-	// "runtime"
-	// "os"
-	// "path/filepath"
-	// "strconv"
-	// "unicode/utf8"
+	"time"
+	"unicode/utf8"
+	"container/list"
 )
 
-// const (
-// 	Ndim = 15  // number of dimensions
-// 	Maxe = 695 // log of largest number
-// )
+const (
+	ISO8601 = "2006-01-02"
+)
 
-// type Node struct {
-// 	vval float64
-// 	dim  [Ndim]int8
-// }
 
-// type Var struct {
-// 	name string
-// 	node Node
-// }
 
-// var fi *bufio.Reader // input
-// var fund [Ndim]*Var  // names of fundamental units
-// var line string      // current input line
-// var lineno int       // current input line number
-// var linep int        // index to next rune in unput
-// var nerrors int      // error count
-// var one Node         // constant one
-// var peekrune rune    // backup runt from input
-// var retnode1 Node
-// var retnode2 Node
-// var retnode Node
-// var sym string
-// var vflag bool
+type Parser struct {
+	transactions *list.List
+}
+
+func MakeParser() *Parser {
+	return &Parser{
+		transactions: list.New(),
+	}
+}
+
+type DatePair struct {
+	date time.Time
+	other_date time.Time
+}
+
+
+
+// FIXME: These will all go into another file
+type Transaction struct {
+	date time.Time
+	other_date time.Time
+	flag rune
+	description string
+	postings *list.List
+}
+
+type Posting struct {
+	account *Account
+}
+
+type Account struct {
+	name string
+}
+
+
+
 
 %}
 
 %union {
-	val string
+	str string
+	char rune
+	date time.Time
+	dates *DatePair
+	transaction *Transaction
+	posting *Posting
+	posting_list *list.List
+	account *Account
 }
 
-// %type	<node>	prog expr expr0 expr1 expr2 expr3 expr4
+%token <str> ERROR			// error occurred; value is text of error
+%token <str> INDENT			// Initial indent IF at the beginning of a line
+%token <str> EOL				// End-of-line
+%token <str> EOF				// End-of-file
+%token <str> COMMENT		// A comment
+%token <str> PIPE				// |
+%token <str> ATAT				// @@
+%token <str> AT					// @
+%token <str> LCURL			// {
+%token <str> RCURL			// }
+%token <str> EQUAL			// =
+%token <str> COMMA			// ,
+%token <str> SLASH			// /
+%token <str> TXN				// 'txn' keyword
+%token <str> TXNFLAG		// Valid characters for flags
+%token <str> CHECK			// 'check' keyword
+%token <str> OPEN				// 'open' keyword
+%token <str> CLOSE			// 'close' keyword
+%token <str> PAD				// 'pad' keyword
+%token <str> EVENT			// 'event' keyword
+%token <str> PRICE			// 'price' keyword
+%token <str> LOCATION		// 'location' keyword
+%token <str> NOTE				// 'note' keyword
+%token <str> BEGINTAG		// 'begintag' keyword
+%token <str> ENDTAG			// 'endtag' keyword
+%token <str> DATE				// A date object
+%token <str> CURRENCY		// A currency specification
+%token <str> ACCOUNT		// The name of an account
+%token <str> STRING			// A quoted string, with any characters inside
+%token <str> NUMBER			// A floating-point number
 
-// %token	<vval>	VÄL // dieresis to test UTF-8
-// %token	<numb>	_SUP // tests leading underscore in token name
+%type <char> txn
+%type	<date> date
+%type	<dates> date_pair
+%type	<transaction> transaction
+%type	<posting> posting
+%type	<posting_list> posting_list
+%type	<account> account
 
-// FIXME: I really ought to put the types in here...
-%token ERROR	// error occurred; value is text of error
-%token INDENT	// Initial indent IF at the beginning of a line
-%token EOL	// End-of-line
-%token EOF	// End-of-file
-%token COMMENT  // A comment
-%token PIPE	// |
-%token ATAT	// @@
-%token AT	// @
-%token LCURL	// {
-%token RCURL	// }
-%token EQUAL	// =
-%token COMMA	// ,
-%token TXN	// 'txn' keyword
-%token TXNFLAG	// Valid characters for flags
-%token CHECK	// 'check' keyword
-%token OPEN	// 'open' keyword
-%token CLOSE	// 'close' keyword
-%token PAD	// 'pad' keyword
-%token EVENT	// 'event' keyword
-%token PRICE	// 'price' keyword
-%token LOCATION	// 'location' keyword
-%token NOTE    	// 'note' keyword
-%token BEGINTAG	// 'begintag' keyword
-%token ENDTAG	// 'endtag' keyword
-%token DATE	// A date object
-%token CURRENCY	// A currency specification
-%token ACCOUNT  // The name of an account
-%token STRING	// A quoted string, with any characters inside
-%token NUMBER	// A floating-point number
-
-%start entry_list
+%start directives
 
 %%
+//--------------------------------------------------------------------------------
 
 empty :
 
 txn : TXN
+    {
+			$$ = rune(-1)
+		}
     | TXNFLAG
+    {
+			r, _ := utf8.DecodeRuneInString($1)
+			$$ = r
+		}
 
-dates : DATE
-      | DATE EQUAL DATE
+date : DATE
+     {
+			 d, _ := time.Parse(ISO8601, $1)
+			 $$ = d
+		 }
 
-transaction : dates txn STRING EOL posting_list
-            | dates txn STRING PIPE STRING EOL posting_list
+date_pair : date
+					{
+						$$ = &DatePair{$1, time.Time{}}
+					}
+					| date EQUAL date
+					{
+						$$ = &DatePair{$1, $3}
+					}
+
+transaction : date_pair txn STRING EOL posting_list
+            {
+							$$ = &Transaction{$1.date, $1.other_date, $2, $3, $5}
+						}
+            | date_pair txn STRING PIPE STRING EOL posting_list
+            {
+							$$ = &Transaction{$1.date, $1.other_date, $2, $5, $7}
+						}
 
 optflag : empty
         | TXNFLAG
 
-posting : INDENT optflag ACCOUNT lot EOL
-        | INDENT optflag ACCOUNT lot AT amount EOL
-        | INDENT optflag ACCOUNT lot ATAT amount EOL
-        | INDENT optflag ACCOUNT EOL
-        | INDENT EOL
+account : ACCOUNT
+        {
+					$$ = &Account{$1}
+				}
+
+posting : INDENT optflag account amount_lot EOL
+        {
+					$$ = &Posting{}
+				}
+        | INDENT optflag account amount_lot AT amount EOL
+        {
+					$$ = &Posting{}
+				}
+        | INDENT optflag account amount_lot ATAT amount EOL
+        {
+					$$ = &Posting{}
+				}
+        | INDENT optflag account EOL
+        {
+					$$ = &Posting{}
+				}
 
 posting_list : empty
+             {
+							 $$ = list.New()
+						 }
              | posting_list posting
+             {
+							 $$.PushBack($2)
+						 }
 
 currency_list : empty
               | CURRENCY
@@ -120,19 +191,26 @@ begintag : BEGINTAG STRING
 
 endtag : ENDTAG STRING
 
-open : DATE OPEN ACCOUNT currency_list
-     | DATE OPEN ACCOUNT STRING currency_list
+open : DATE OPEN account currency_list
+     | DATE OPEN account STRING currency_list
 
-close : DATE CLOSE ACCOUNT
+close : DATE CLOSE account
 
-pad : DATE PAD ACCOUNT ACCOUNT
+pad : DATE PAD account account
 
-check : DATE CHECK ACCOUNT amount
+check : DATE CHECK account amount
 
 amount : NUMBER CURRENCY
 
-lot : amount
-    | amount LCURL amount RCURL
+amount_lot : amount
+           | amount cost
+
+cost : LCURL amount RCURL
+     | LCURL amount SLASH DATE RCURL
+     {
+			 //fmt.Printf("%20v / %v\n", $2.str, $4.str)
+		 }
+
 
 price : DATE PRICE CURRENCY amount
 
@@ -141,15 +219,13 @@ location : DATE LOCATION STRING
 event : DATE EVENT STRING STRING
 
 note : DATE NOTE STRING
-{
-	fmt.Printf("%#v\n", &$3)
-}
+/* { */
+/* 	fmt.Printf("%#v\n", &$3) */
+/* } */
 
 entry : EOL
       | transaction
       | check
-      | begintag
-      | endtag
       | open
       | close
       | pad
@@ -158,10 +234,15 @@ entry : EOL
       | price
       | location
 
-entry_list : empty
-           | entry_list entry
+directive : entry
+				  | begintag
+				  | endtag
+
+directives : empty
+           | directives directive
 
 
+//--------------------------------------------------------------------------------
 %%
 
 func (l Lexer) Lex(lval *yySymType) int {
@@ -169,7 +250,7 @@ func (l Lexer) Lex(lval *yySymType) int {
 	if item.Type == EOF {
 		return 0
 	}
-	lval.val = item.val
+	lval.str = item.val
 	return int(item.Type)
 }
 
