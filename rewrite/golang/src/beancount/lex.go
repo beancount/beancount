@@ -69,8 +69,8 @@ var itemName = map[TokenType]string{
 	BEGINTAG			: "BEGINTAG",
 	ENDTAG				: "ENDTAG",
 	DATE					: "DATE",
-	CURRENCY			: "CURRENCY",
 	ACCOUNT				: "ACCOUNT",
+	CURRENCY			: "CURRENCY",
 	STRING				: "STRING",
 	NUMBER				: "NUMBER",
 }

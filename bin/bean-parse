@@ -4,6 +4,7 @@ generator instead of crappy manual parsing. This will allow changes
 to the syntax much easier, and porting to other languages easier too.
 """
 import sys
+import time
 
 from beancount.parser import parse
 from os import path
@@ -23,6 +24,7 @@ def main():
 
     source = open(opts.filename).read()
 
+    t1 = time.time()
     
     lexer, parser = parse.create_parser(debug=1) #optimize=1
     lexer.filename = path.abspath(opts.filename)
@@ -32,12 +34,14 @@ def main():
             sys.stdout.write("(%s,%r,%d,%d)\n" %
                              (tok.type, tok.value, tok.lineno, tok.lexpos))
         sys.exit(1)
-
+        
     result = parser.parse(source, lexer=lexer)
     if result is None:
         logging.error("Parsing error.")
         sys.exit(1)
 
+    t2 = time.time()
+    print (t2 - t1)
 
 if __name__ == '__main__':
     main()

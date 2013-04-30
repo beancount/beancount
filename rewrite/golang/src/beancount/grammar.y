@@ -97,8 +97,8 @@ type Account struct {
 %token <str> BEGINTAG		// 'begintag' keyword
 %token <str> ENDTAG			// 'endtag' keyword
 %token <str> DATE				// A date object
-%token <str> CURRENCY		// A currency specification
 %token <str> ACCOUNT		// The name of an account
+%token <str> CURRENCY		// A currency specification
 %token <str> STRING			// A quoted string, with any characters inside
 %token <str> NUMBER			// A floating-point number
 
@@ -201,34 +201,34 @@ endtag : ENDTAG STRING
 				 $$ = $2
 			 }
 
-open : DATE OPEN account currency_list
-     | DATE OPEN account STRING currency_list
+open : date OPEN account currency_list
+     | date OPEN account STRING currency_list
 
-close : DATE CLOSE account
+close : date CLOSE account
 
-pad : DATE PAD account account
+pad : date PAD account account
 
-check : DATE CHECK account amount
+check : date CHECK account amount
 
 amount : NUMBER CURRENCY
 
 amount_lot : amount
-           | amount cost
+           | amount lot
 
-cost : LCURL amount RCURL
-     | LCURL amount SLASH DATE RCURL
-     {
-			 //fmt.Printf("%20v / %v\n", $2.str, $4.str)
-		 }
+lot : LCURL amount RCURL
+    | LCURL amount SLASH date RCURL
+    {
+		 //fmt.Printf("%20v / %v\n", $2.str, $4.str)
+	 }
 
 
-price : DATE PRICE CURRENCY amount
+price : date PRICE CURRENCY amount
 
-location : DATE LOCATION STRING
+location : date LOCATION STRING
 
-event : DATE EVENT STRING STRING
+event : date EVENT STRING STRING
 
-note : DATE NOTE STRING
+note : date NOTE STRING
 /* { */
 /* 	fmt.Printf("%#v\n", &$3) */
 /* } */

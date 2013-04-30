@@ -24,7 +24,7 @@ func AssertEqual(t *testing.T, a, b interface{}) {
 
 
 func TestCreateLots(t *testing.T) {
-	lot := NewLot()
+	lot := NewLot("USD", "1.2032")
 	fmt.Printf("lot = %#v\n", lot)
 }
 
