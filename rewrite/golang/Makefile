@@ -41,6 +41,10 @@ test:
 	go test -v beancount
 
 
+test2:
+	go test -v beancount -test.run TestCreateInventories
+	#go test -v beancount -test.run TestBigInts
+
 
 clean:
 	rm -rf bin pkg

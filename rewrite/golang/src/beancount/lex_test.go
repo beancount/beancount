@@ -1,3 +1,5 @@
+// Unit tests for the Beancount 2.0 input syntax lexer.
+
 package beancount
 
 import (
@@ -237,6 +239,7 @@ func TestLex(t *testing.T) {
 		}
 	}
 }
+
 
 
 func TestRegexps(t *testing.T) {

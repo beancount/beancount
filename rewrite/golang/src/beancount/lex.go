@@ -1,3 +1,9 @@
+// A lexer for beancount 2.0 input syntax.
+//
+// This lexer is a little special in that it respects whitespace only at the
+// beginning of a line of text. It also outputs end-of-line tokens, because the
+// syntax definition depends on it.
+
 package beancount
 
 import (

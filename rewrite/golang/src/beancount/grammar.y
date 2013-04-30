@@ -1,6 +1,8 @@
 // -*- mode: go -*-
-// Grammar for beancount syntax parser.
-// This is meant to be used with the stock "go yacc" command.
+// Parser grammar for beancount 2.0 input syntax.
+//
+// This assumes it feeds off the corresponding lexer in this pacakge. This is
+// meant to be used with the stock "go yacc" command.
 
 %{
 
