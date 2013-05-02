@@ -14,6 +14,10 @@
 Beancount (Accounting)
 ======================
 
+  - Dont special case org-mode... Aything that doesnt start with a date or
+    pushtag/poptag should be skipped; this should work with LaTeX or any
+    of the text-modes.
+
   - The syntax should support multiline strings naturally...
 
   - Whether an account shows up in a particular Ledger (realization) really only
