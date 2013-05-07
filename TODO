@@ -14,6 +14,16 @@
 Beancount (Accounting)
 ======================
 
+  - Create importer library support in Python for writing beancount importers.
+    See OANDA script to being. Formatting transactions should be code in common.
+    Finding accounts with ids too.
+
+  - Write a C perser with boost::python bindings.
+
+  - How does cdecimal work? Can I use from C?
+
+  - Write all the new beancount in Python 3!
+
   - Dont special case org-mode... Aything that doesnt start with a date or
     pushtag/poptag should be skipped; this should work with LaTeX or any
     of the text-modes.
