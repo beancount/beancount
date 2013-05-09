@@ -16,3 +16,4 @@ rewrite/c/beancount_lexer.c
 rewrite/c/beancount_lexer.h
 rewrite/c/beancount_parser.c
 rewrite/c/beancount_parser.h
+rewrite/c/beancount_reader

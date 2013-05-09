@@ -3,7 +3,7 @@
 all: beancount_reader
 
 beancount_parser.c beancount_parser.h: beancount_parser.y
-	bison $<
+	bison -o beancount_parser.c $<
 
 beancount_lexer.c beancount_lexer.h: beancount_lexer.l beancount_parser.h
 	flex $<
