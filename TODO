@@ -18,7 +18,7 @@ Beancount (Accounting)
     See OANDA script to being. Formatting transactions should be code in common.
     Finding accounts with ids too.
 
-  - Write a C perser with boost::python bindings.
+  - Write a C parser with boost::python bindings.
 
   - How does cdecimal work? Can I use from C?
 
@@ -27,6 +27,9 @@ Beancount (Accounting)
   - Dont special case org-mode... Aything that doesnt start with a date or
     pushtag/poptag should be skipped; this should work with LaTeX or any
     of the text-modes.
+
+  - With the new format... support includes, it makes a lot more sense to do
+    that now!
 
   - The syntax should support multiline strings naturally...
 
