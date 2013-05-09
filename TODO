@@ -14,6 +14,18 @@
 Beancount (Accounting)
 ======================
 
+  - Challeng: Can I compute IRR return on my condo accurately?
+    TODO: Add benefits received as an Income, as transactions.
+    You should be able to compute the IRR of any Ledger!
+
+  - Challenge: Can I automatically compute my taxation rate for every year?
+
+  - Challenge: Can I obtain a list of my assets at any time?
+
+  - Add syntax for tags, as :TagName, and convert all the @d039f548 to
+    :d039f548, these linked transactions just become like tags. Maybe ::d039f548
+    is not listed and :d039f548 is listed, or something like that.
+
   - Create importer library support in Python for writing beancount importers.
     See OANDA script to being. Formatting transactions should be code in common.
     Finding accounts with ids too.
@@ -51,7 +63,6 @@ Beancount (Accounting)
     Serve this at:
 
        http://localhost:8080/20120101/20130101/events/location/days
-
 
   - Consider making the lot syntax like this:
 

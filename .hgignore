@@ -13,3 +13,6 @@ rewrite/golang/y.output
 rewrite/golang/src/beancount/grammar.go
 rewrite/c/beancount_lexer
 rewrite/c/beancount_lexer.c
+rewrite/c/beancount_lexer.h
+rewrite/c/beancount_parser.c
+rewrite/c/beancount_parser.h
