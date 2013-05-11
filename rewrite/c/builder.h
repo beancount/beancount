@@ -6,6 +6,7 @@
 
 extern PyObject* builder;
 PyObject* build(PyObject* builder, const char* method_name, const char* string);
+PyObject* buildDate(PyObject* builder, const char* method_name, int year, int month, int day);
 
 
 #endif

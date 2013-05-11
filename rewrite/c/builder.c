@@ -21,6 +21,12 @@ PyObject* build(PyObject* builder, const char* method_name, const char* string)
     return PyObject_CallMethod(builder, (char*)method_name, "s", string);
 }
 
+/* A special builder for dates, because parsing using a format string is significantly slow. */
+PyObject* buildDate(PyObject* builder, const char* method_name, int year, int month, int day)
+{
+    return PyObject_CallMethod(builder, (char*)method_name, "iii", year, month, day);
+}
+
 
 
 PyDoc_STRVAR(parse_doc,
@@ -84,4 +90,3 @@ PyMODINIT_FUNC PyInit__beancount(void)
 
     return m;
 }
-

@@ -38,7 +38,10 @@ clean:
 	rm -f beancount_lexer.c beancount_lexer.h
 	rm -f *.so
 
-pybuild:
+
+
+
+pybuild: beancount_parser.c beancount_parser.h beancount_lexer.c beancount_lexer.h
 	python3 setup.py build_ext -i
 
 pytest:

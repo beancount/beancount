@@ -47,6 +47,9 @@ void yy_skip_line(void);
 extern void yyerror(char const *s);
 
 
+/* Utility functions. */
+int strtonl(const char* buf, size_t nchars);
+
 }
 
 /*------------------------------------------------------------------------------------------------------------------------*/
@@ -112,32 +115,34 @@ endtag		{ return ENDTAG; }
 
  /* Dates. */
 [0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][0-9]	{
-    /* yylval->pyobj = parseDate(yytext); */
-    yylval->pyobj = build(builder, "date", yytext);
+    int year = strtonl(yytext, 4);
+    int month = strtonl(yytext+5, 2);
+    int day = strtonl(yytext+8, 2);
+    yylval->pyobj = buildDate(builder, "buildDate", year, month, day);
     return DATE;
 }
 
  /* Account names. */
 (([A-Z][A-Za-z0-9\-]+):)+([A-Z][A-Za-z0-9\-]+)		{
-    /* yylval->pyobj = parseString(yytext); */
+    yylval->pyobj = build(builder, "parseAccount", yytext);
     return ACCOUNT;
 }
 
  /* Currencies. These are defined as uppercase only in order to disambiguate the syntax. */
 [A-Z][A-Z0-9\'\.]{1,10}		{
-    /* yylval->pyobj = parseString(yytext); */
+    yylval->pyobj = build(builder, "parseCurrency", yytext);
     return CURRENCY;
 }
 
  /* String literals. */
 \"[^\"]*\" 			{
-    /* yylval->pyobj = parseString(&yytext[1], strlen(yytext)-2); */
+    yylval->pyobj = build(builder, "parseString", yytext);
     return STRING;
 }
 
  /* Numbers */
 [-+]?([0-9\.])+ 		{
-    /* yylval->pyobj = parseDecimal(yytest); */
+    yylval->pyobj = build(builder, "parseNumber", yytext);
     return NUMBER;
 }
 
@@ -167,4 +172,15 @@ void yy_skip_line()
         }
     }
     unput(c);
+}
+
+int strtonl(const char* buf, size_t nchars)
+{
+    int result = 0;
+    int i;
+    for ( i = 0; i < nchars; ++i ) {
+        result *= 10;
+        result += (buf[i] - '0');
+    }
+    return result;
 }
