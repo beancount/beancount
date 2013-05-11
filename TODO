@@ -14,6 +14,9 @@
 Beancount (Accounting)
 ======================
 
+  - Propagate exception from Python
+  - Add filename/lineno to error reporting
+
   - Add tags parsing
 
   - Add filename and lineno to the new version

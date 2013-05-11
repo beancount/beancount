@@ -122,7 +122,8 @@ endtag		{ return ENDTAG; }
 }
 
  /* Account names. */
-(([A-Z][A-Za-z0-9\-]+):)+([A-Z][A-Za-z0-9\-]+)		{
+ /* ([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)+ */
+(Assets|Liabilities|Equity|Income|Expenses|Misc)(:[A-Z][A-Za-z0-9\-]+)+		{
     yylval->pyobj = build(builder, "parseAccount", yytext);
     return ACCOUNT;
 }
@@ -146,7 +147,7 @@ endtag		{ return ENDTAG; }
 }
 
  /* Default rule. This should never be reached. */
-.	{ yyerror("Syntax error in tokenizer."); }
+.	{ yyerror("Syntax error in tokenizer"); } /* FIXME: Add filename/line no to this error. */
 
 
 
