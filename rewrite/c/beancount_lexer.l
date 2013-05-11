@@ -90,8 +90,7 @@ int strtonl(const char* buf, size_t nchars);
     Other lines are just skipped. This allows us to use org-mode or other separators in the input syntax. */
 [*!&#?%]	{
     if ( yy_column() != 0 ) {
-        /* printf("yylval '%d'\n", (void*)yylval); */
-        /* yylval->character = yytext[0]; */
+        yylval->character = yytext[0];
         return TXNFLAG;
     }
     else {
@@ -118,7 +117,7 @@ endtag		{ return ENDTAG; }
     int year = strtonl(yytext, 4);
     int month = strtonl(yytext+5, 2);
     int day = strtonl(yytext+8, 2);
-    yylval->pyobj = buildDate(builder, "buildDate", year, month, day);
+    yylval->pyobj = buildDate(builder, "parseDate", year, month, day);
     return DATE;
 }
 

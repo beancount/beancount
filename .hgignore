@@ -17,3 +17,4 @@ rewrite/c/beancount_lexer.h
 rewrite/c/beancount_parser.c
 rewrite/c/beancount_parser.h
 rewrite/c/beancount_reader
+rewrite/c/_beancount.cpython-33m.so

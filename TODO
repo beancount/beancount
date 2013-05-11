@@ -14,6 +14,10 @@
 Beancount (Accounting)
 ======================
 
+  - Add tags parsing
+
+  - Add filename and lineno to the new version
+
   - Use that beautiful new font from Tactile in the new rendering. Totally worth
     it.
 

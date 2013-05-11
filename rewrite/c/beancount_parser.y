@@ -76,11 +76,11 @@ const char* getTokenName(int token);
 %token NOTE                /* 'note' keyword */
 %token BEGINTAG            /* 'begintag' keyword */
 %token ENDTAG              /* 'endtag' keyword */
-%token <string> DATE       /* A date object */
-%token <string> ACCOUNT    /* The name of an account */
-%token <string> CURRENCY   /* A currency specification */
-%token <string> STRING     /* A quoted string, with any characters inside */
-%token <string> NUMBER     /* A floating-point number */
+%token <pyobj> DATE       /* A date object */
+%token <pyobj> ACCOUNT    /* The name of an account */
+%token <pyobj> CURRENCY   /* A currency specification */
+%token <pyobj> STRING     /* A quoted string, with any characters inside */
+%token <pyobj> NUMBER     /* A floating-point number */
 
 %code{
 
@@ -127,13 +127,14 @@ const char* getTokenName(int token)
 
 /* Types for non-terminal symbols. */
 %type <character> txn
-%type <pyobj> date
-%type <transaction> transaction
-%type <posting> posting
-%type <posting_list> posting_list
-%type <account> account
+%type <pyobj> transaction
+%type <pyobj> posting
+%type <pyobj> posting_list
+%type <pyobj> currency_list
+%type <pyobj> open
 %type <string> begintag
 %type <string> endtag
+%type <pyobj> amount
 
 
 /* Start symbol. */
@@ -156,49 +157,33 @@ txn : TXN
         $$ = $1;
     }
 
-date : DATE
-     {
-         /* free($1); */
-         /* $$ = buildDate($1); */
-         /* d, _ := time.Parse(ISO8601, $1) */
-         /* $$ = d */
-     }
-
 eol : EOL
     | COMMENT EOL
 
-transaction : date txn STRING eol posting_list
+transaction : DATE txn STRING eol posting_list
             {
-              /* $$ = &Transaction{$1.date, $1.other_date, $2, $3, $5} */
+                $$ = PyObject_CallMethod(builder, "buildTransaction", "ObOO", $1, $2, Py_None, $3);
             }
-            | date txn STRING PIPE STRING eol posting_list
+            | DATE txn STRING PIPE STRING eol posting_list
             {
-              /* $$ = &Transaction{$1.date, $1.other_date, $2, $5, $7} */
+                $$ = PyObject_CallMethod(builder, "buildTransaction", "ObOO", $1, $2, $3, $5);
             }
 
 optflag : empty
         | TXNFLAG
 
-account : ACCOUNT
+posting : INDENT optflag ACCOUNT amount_lot eol
         {
-          /* $$ = &Account{$1} */
+            /* $$ = PyObject_CallMethod(builder, "buildPosting", "ObOO", $2, $3, $4); */
         }
-
-posting : INDENT optflag account amount_lot eol
+        | INDENT optflag ACCOUNT amount_lot AT amount eol
         {
-          /* $$ = &Posting{} */
         }
-        | INDENT optflag account amount_lot AT amount eol
+        | INDENT optflag ACCOUNT amount_lot ATAT amount eol
         {
-          /* $$ = &Posting{} */
         }
-        | INDENT optflag account amount_lot ATAT amount eol
+        | INDENT optflag ACCOUNT eol
         {
-          /* $$ = &Posting{} */
-        }
-        | INDENT optflag account eol
-        {
-          /* $$ = &Posting{} */
         }
 
 posting_list : empty
@@ -211,8 +196,17 @@ posting_list : empty
              }
 
 currency_list : empty
+              {
+                  $$ = Py_None; /* FIXME: Do I need to incref here? */
+              }
               | CURRENCY
+              {
+                  $$ = PyObject_CallMethod(builder, "buildList", "OO", Py_None, $1);
+              }
               | currency_list COMMA CURRENCY
+              {
+                  $$ = PyObject_CallMethod(builder, "buildList", "OO", $1, $3);
+              }
 
 begintag : BEGINTAG STRING
          {
@@ -224,34 +218,43 @@ endtag : ENDTAG STRING
          /* $$ = $2 */
        }
 
-open : date OPEN account currency_list
-     | date OPEN account STRING currency_list
+open : DATE OPEN ACCOUNT currency_list
+     {
+         $$ = PyObject_CallMethod(builder, "buildOpen", "OOOO", $1, Py_None, $3, $4);
+     }
+     | DATE OPEN ACCOUNT STRING currency_list
+     {
+         $$ = PyObject_CallMethod(builder, "buildOpen", "OOOO", $1, $3, $4, $5);
+     }
 
-close : date CLOSE account
+close : DATE CLOSE ACCOUNT
 
-pad : date PAD account account
+pad : DATE PAD ACCOUNT ACCOUNT
 
-check : date CHECK account amount
+check : DATE CHECK ACCOUNT amount
 
 amount : NUMBER CURRENCY
+       {
+         $$ = PyObject_CallMethod(builder, "buildAmount", "OO", $1, $2);
+       }
 
 amount_lot : amount
            | amount lot
 
 lot : LCURL amount RCURL
-    | LCURL amount SLASH date RCURL
+    | LCURL amount SLASH DATE RCURL
     {
      /* fmt.Printf("%20v / %v\n", $2.str, $4.str) */
    }
 
 
-price : date PRICE CURRENCY amount
+price : DATE PRICE CURRENCY amount
 
-location : date LOCATION STRING
+location : DATE LOCATION STRING
 
-event : date EVENT STRING STRING
+event : DATE EVENT STRING STRING
 
-note : date NOTE STRING
+note : DATE NOTE STRING
 /* { */
 /*  fmt.Printf("%#v\n", &$3) */
 /* } */
