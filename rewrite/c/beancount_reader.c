@@ -1,20 +1,25 @@
+#include <Python.h>
 #include "beancount_lexer.h"
 #include "beancount_parser.h"
 
-const char* getTokenName(int token);
-
 extern int yydebug;
+
 
 int main(int argc, char** argv)
 {
     ++argv, --argc;  /* skip over program name */
-    if ( argc > 0 )
-        yyin = fopen(argv[0], "r");
-    else
+    FILE* fp = NULL;
+    if ( argc > 0 ) {
+        fp = fopen(argv[0], "r");
+        yyin = fp;
+    }
+    else {
         yyin = stdin;
+    }
 
     /* yydebug = 1; */
 
+    int r = 0;
 #if 0
     while ( 1 )  {
         int token = yylex();
@@ -24,7 +29,13 @@ int main(int argc, char** argv)
         }
     }
 #else
-    int r = yyparse();
-    return r;
+    r = yyparse();
 #endif
+
+    if ( fp != NULL ) {
+        fclose(fp);
+    }
+    yylex_destroy();
+
+    return r;
 }

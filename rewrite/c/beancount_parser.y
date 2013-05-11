@@ -6,101 +6,107 @@
  * meant to be used with the stock "go yacc" command.
  */
 
-%defines
-%error-verbose
-%debug
-
+/*--------------------------------------------------------------------------------*/
+/* Prologue */
 %{
 
 #include <stdio.h>
-
-/* type Parser struct { */
-/*  transactions *list.List */
-/* } */
-
-/* func MakeParser() *Parser { */
-/*  return &Parser{ */
-/*    transactions: list.New(), */
-/*  } */
-/* } */
-
-/* type DatePair struct { */
-/*  date time.Time */
-/*  other_date time.Time */
-/* } */
+#include "builder.h"
 
 
-
-/* // FIXME: These will all go into another file */
-/* type Transaction struct { */
-/*  date time.Time */
-/*  other_date time.Time */
-/*  flag rune */
-/*  description string */
-/*  postings *list.List */
-/* } */
-
-/* type Posting struct { */
-/*  account *Account */
-/* } */
-
-/* type Account struct { */
-/*  name string */
-/* } */
-
+/* Error-handling function. */
 void yyerror(char const *s)
 {
-    fprintf(stderr, "%s\n", s);
+    fprintf(stderr, "Parsing error: %s\n", s);
 }
 
+/* Get a printable version of a token name. */
+const char* getTokenName(int token);
 
 
 %}
 
+
+/*--------------------------------------------------------------------------------*/
+/* Bison Declarations */
+
+
+/* Options. */
+%defines
+%error-verbose
+%debug
+%pure_parser
+
+
+/* Collection of value types. */
 %union {
-    const char* str;
+    char character;
+    char* string;
+    PyObject* pyobj;
     /* char rune */
     /* date time.Time */
-    /* dates *DatePair */
     /* transaction *Transaction */
     /* posting *Posting */
     /* posting_list *list.List */
     /* account *Account */
 }
 
-%token <str> ERROR    /* error occurred; value is text of error */
-%token <str> INDENT   /* Initial indent IF at the beginning of a line */
-%token <str> EOL      /* End-of-line */
-%token <str> COMMENT  /* A comment */
-%token <str> SKIPPED  /* A line skipped because not a directive nor a comment */
-%token <str> PIPE     /* | */
-%token <str> ATAT     /* @@ */
-%token <str> AT       /* @ */
-%token <str> LCURL    /* { */
-%token <str> RCURL    /* } */
-%token <str> EQUAL    /* = */
-%token <str> COMMA    /* , */
-%token <str> SLASH    /* / */
-%token <str> TXN      /* 'txn' keyword */
-%token <str> TXNFLAG  /* Valid characters for flags */
-%token <str> CHECK    /* 'check' keyword */
-%token <str> OPEN     /* 'open' keyword */
-%token <str> CLOSE    /* 'close' keyword */
-%token <str> PAD      /* 'pad' keyword */
-%token <str> EVENT    /* 'event' keyword */
-%token <str> PRICE    /* 'price' keyword */
-%token <str> LOCATION /* 'location' keyword */
-%token <str> NOTE     /* 'note' keyword */
-%token <str> BEGINTAG /* 'begintag' keyword */
-%token <str> ENDTAG   /* 'endtag' keyword */
-%token <str> DATE     /* A date object */
-%token <str> ACCOUNT  /* The name of an account */
-%token <str> CURRENCY /* A currency specification */
-%token <str> STRING   /* A quoted string, with any characters inside */
-%token <str> NUMBER   // A floating-point number
+
+/* Destructors */
+%destructor { } <character>
+
+%destructor {
+    if ( $$ != 0 ) {
+        printf("free'ing '%s'\n", $$);
+        free($$);
+        $$ = 0;
+    }
+} <string>
+
+%destructor {
+    if ( $$ != 0 ) {
+    }
+} <pyobj>
+
+/* %destructor { free ($$); printf ("%d", @$.first_line); } STRING1 string1 */
+/* %destructor { printf ("Discarding tagless symbol.\n"); } <> */
+
+
+/* Types for terminal symbols */
+%token <string> ERROR      /* error occurred; value is text of error */
+%token <string> INDENT     /* Initial indent IF at the beginning of a line */
+%token <string> EOL        /* End-of-line */
+%token <string> COMMENT    /* A comment */
+%token <string> SKIPPED    /* A line skipped because not a directive nor a comment */
+%token <string> PIPE       /* | */
+%token <string> ATAT       /* @@ */
+%token <string> AT         /* @ */
+%token <string> LCURL      /* { */
+%token <string> RCURL      /* } */
+%token <string> EQUAL      /* = */
+%token <string> COMMA      /* , */
+%token <string> SLASH      /* / */
+%token <character> TXNFLAG /* Valid characters for flags */
+%token TXN                 /* 'txn' keyword */
+%token CHECK               /* 'check' keyword */
+%token OPEN                /* 'open' keyword */
+%token CLOSE               /* 'close' keyword */
+%token PAD                 /* 'pad' keyword */
+%token EVENT               /* 'event' keyword */
+%token PRICE               /* 'price' keyword */
+%token LOCATION            /* 'location' keyword */
+%token NOTE                /* 'note' keyword */
+%token BEGINTAG            /* 'begintag' keyword */
+%token ENDTAG              /* 'endtag' keyword */
+%token <string> DATE       /* A date object */
+%token <string> ACCOUNT    /* The name of an account */
+%token <string> CURRENCY   /* A currency specification */
+%token <string> STRING     /* A quoted string, with any characters inside */
+%token <string> NUMBER     /* A floating-point number */
 
 %code{
 
+/* A function that will convert a token name to a string, used in debugging. */
 const char* getTokenName(int token)
 {
     switch ( token ) {
@@ -138,60 +144,55 @@ const char* getTokenName(int token)
     return 0;
 }
 
- }
+}
 
 
-%type <char> txn
-%type <sate> date
-%type <sates> date_pair
-%type <sransaction> transaction
-%type <sosting> posting
-%type <sosting_list> posting_list
-%type <sccount> account
-%type <str> begintag
-%type <str> endtag
+/* Types for non-terminal symbols. */
+%type <character> txn
+%type <pyobj> date
+%type <transaction> transaction
+%type <posting> posting
+%type <posting_list> posting_list
+%type <account> account
+%type <string> begintag
+%type <string> endtag
 
+
+/* Start symbol. */
 %start directives
 
+
+/*--------------------------------------------------------------------------------*/
+/* Grammar Rules */
 %%
-//--------------------------------------------------------------------------------
 
 empty :
 
+/* A transaction declaration can be either 'txn' or one of the special character flags. */
 txn : TXN
     {
-      /* $$ = rune(-1) */
+        $$ = '*';
     }
     | TXNFLAG
     {
-      /* r, _ := utf8.DecodeRuneInString($1) */
-      /* $$ = r */
+        $$ = $1;
     }
 
 date : DATE
      {
-         printf("%s", $1);
+         $$ = buildDate($1);
        /* d, _ := time.Parse(ISO8601, $1) */
        /* $$ = d */
      }
 
-date_pair : date
-          {
-            /* $$ = &DatePair{$1, time.Time{}} */
-          }
-          | date EQUAL date
-          {
-            /* $$ = &DatePair{$1, $3} */
-          }
-
 eol : EOL
     | COMMENT EOL
 
-transaction : date_pair txn STRING eol posting_list
+transaction : date txn STRING eol posting_list
             {
               /* $$ = &Transaction{$1.date, $1.other_date, $2, $3, $5} */
             }
-            | date_pair txn STRING PIPE STRING eol posting_list
+            | date txn STRING PIPE STRING eol posting_list
             {
               /* $$ = &Transaction{$1.date, $1.other_date, $2, $5, $7} */
             }
@@ -304,7 +305,8 @@ directives : empty
            | directives directive
 
 
-//--------------------------------------------------------------------------------
+/*--------------------------------------------------------------------------------*/
+/* Epilogue */
 %%
 
 /* func (l Lexer) Lex(lval *yySymType) int { */

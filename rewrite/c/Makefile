@@ -2,6 +2,9 @@
 
 all: beancount_reader
 
+CC = gcc
+CFLAGS = -g -I/usr/include/python3.3 -I/usr/include/x86_64-linux-gnu/python3.3m
+
 beancount_parser.c beancount_parser.h: beancount_parser.y
 	bison -o beancount_parser.c $<
 
@@ -11,7 +14,8 @@ beancount_lexer.c beancount_lexer.h: beancount_lexer.l beancount_parser.h
 SOURCES = 					\
 	beancount_lexer.c			\
 	beancount_parser.c			\
-	beancount_reader.c
+	beancount_reader.c			\
+	builder.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
@@ -22,7 +26,10 @@ beancount_reader: $(OBJECTS)
 test: beancount_reader
 	./beancount_reader $(HOME)/q/office/accounting/tmp/syntax.ledger
 
+grind: beancount_reader
+	valgrind --leak-check=full --show-reachable=yes ./beancount_reader $(HOME)/q/office/accounting/tmp/syntax.ledger
+
 clean:
-	rm -f core $(OBJECTS) 
+	rm -f core $(OBJECTS)
 	rm -f beancount_parser.c beancount_parser.h
 	rm -f beancount_lexer.c beancount_lexer.h

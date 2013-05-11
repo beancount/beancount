@@ -14,7 +14,10 @@
 Beancount (Accounting)
 ======================
 
-  - Challeng: Can I compute IRR return on my condo accurately?
+  - Use that beautiful new font from Tactile in the new rendering. Totally worth
+    it.
+
+  - Challenge: Can I compute IRR return on my condo accurately?
     TODO: Add benefits received as an Income, as transactions.
     You should be able to compute the IRR of any Ledger!
 
