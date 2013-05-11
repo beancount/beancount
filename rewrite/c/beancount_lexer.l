@@ -10,13 +10,13 @@
 %option yylineno
 %option never-interactive
 %option warn
+%option bison-bridge
+%option outfile="beancount_lexer.c"
+%option header-file="beancount_lexer.h"
 /* %option reentrant */
 /* %option debug */
 /* %option stack */
-%option bison-bridge
 /* %option 8bit */
-%option outfile="beancount_lexer.c"
-%option header-file="beancount_lexer.h"
 
 
 /* Top Code. */
@@ -24,6 +24,8 @@
 
 /* Includes. */
 #include <math.h>
+#include <stdlib.h>
+
 #include "builder.h"
 #include "beancount_parser.h"
 
@@ -34,11 +36,15 @@ extern int yy_pos;
 
 #define YY_USER_ACTION        { yy_pos++; }
 
-int yy_column();
+int yy_column(void);
 
 
 /* Skip the rest of the input line. */
-void yy_skip_line();
+void yy_skip_line(void);
+
+
+/* Error handler. */
+extern void yyerror(char const *s);
 
 
 }
@@ -106,24 +112,37 @@ endtag		{ return ENDTAG; }
 
  /* Dates. */
 [0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][0-9]	{
-    yylval->string = strdup(yytext);
+    /* yylval->pyobj = parseDate(yytext); */
+    yylval->pyobj = build(builder, "date", yytext);
     return DATE;
 }
 
  /* Account names. */
-(([A-Z][A-Za-z0-9\-]+):)+([A-Z][A-Za-z0-9\-]+)		{ return ACCOUNT; }
+(([A-Z][A-Za-z0-9\-]+):)+([A-Z][A-Za-z0-9\-]+)		{
+    /* yylval->pyobj = parseString(yytext); */
+    return ACCOUNT;
+}
 
  /* Currencies. These are defined as uppercase only in order to disambiguate the syntax. */
-[A-Z][A-Z0-9\'\.]{1,10} 				{ return CURRENCY; }
+[A-Z][A-Z0-9\'\.]{1,10}		{
+    /* yylval->pyobj = parseString(yytext); */
+    return CURRENCY;
+}
 
  /* String literals. */
-\"[^\"]*\"							{ return STRING; }
+\"[^\"]*\" 			{
+    /* yylval->pyobj = parseString(&yytext[1], strlen(yytext)-2); */
+    return STRING;
+}
 
  /* Numbers */
-[-+]?([0-9\.])+						{ return NUMBER; }
+[-+]?([0-9\.])+ 		{
+    /* yylval->pyobj = parseDecimal(yytest); */
+    return NUMBER;
+}
 
  /* Default rule. This should never be reached. */
-.		{ yyerror("Syntax error in tokenizer."); }
+.	{ yyerror("Syntax error in tokenizer."); }
 
 
 

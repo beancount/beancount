@@ -7,6 +7,8 @@ extern int yydebug;
 
 int main(int argc, char** argv)
 {
+    int r = 0;
+
     ++argv, --argc;  /* skip over program name */
     FILE* fp = NULL;
     if ( argc > 0 ) {
@@ -19,7 +21,6 @@ int main(int argc, char** argv)
 
     /* yydebug = 1; */
 
-    int r = 0;
 #if 0
     while ( 1 )  {
         int token = yylex();
@@ -37,5 +38,6 @@ int main(int argc, char** argv)
     }
     yylex_destroy();
 
+    Py_Finalize();
     return r;
 }

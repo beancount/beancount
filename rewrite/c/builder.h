@@ -4,7 +4,8 @@
 #include <Python.h>
 
 
-PyObject* buildDate(const char* date_str);
+extern PyObject* builder;
+PyObject* build(PyObject* builder, const char* method_name, const char* string);
 
 
 #endif

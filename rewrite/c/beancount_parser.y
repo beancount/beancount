@@ -12,6 +12,7 @@
 
 #include <stdio.h>
 #include "builder.h"
+#include "beancount_lexer.h"
 
 
 /* Error-handling function. */
@@ -43,34 +44,11 @@ const char* getTokenName(int token);
     char character;
     char* string;
     PyObject* pyobj;
-    /* char rune */
-    /* date time.Time */
     /* transaction *Transaction */
     /* posting *Posting */
     /* posting_list *list.List */
     /* account *Account */
 }
-
-
-/* Destructors */
-%destructor { } <character>
-
-%destructor {
-    if ( $$ != 0 ) {
-        printf("free'ing '%s'\n", $$);
-        free($$);
-        $$ = 0;
-    }
-} <string>
-
-%destructor {
-    if ( $$ != 0 ) {
-    }
-} <pyobj>
-
-/* %destructor { free ($$); printf ("%d", @$.first_line); } STRING1 string1 */
-/* %destructor { printf ("Discarding tagless symbol.\n"); } <> */
-
 
 /* Types for terminal symbols */
 %token <string> ERROR      /* error occurred; value is text of error */
@@ -180,9 +158,10 @@ txn : TXN
 
 date : DATE
      {
-         $$ = buildDate($1);
-       /* d, _ := time.Parse(ISO8601, $1) */
-       /* $$ = d */
+         /* free($1); */
+         /* $$ = buildDate($1); */
+         /* d, _ := time.Parse(ISO8601, $1) */
+         /* $$ = d */
      }
 
 eol : EOL
@@ -308,32 +287,3 @@ directives : empty
 /*--------------------------------------------------------------------------------*/
 /* Epilogue */
 %%
-
-/* func (l Lexer) Lex(lval *yySymType) int { */
-/*   item := l.NextTok() */
-/*   if item.Type == EOF { */
-/*     return 0 */
-/*   } */
-/*   lval.str = item.val */
-/*   return int(item.Type) */
-/* } */
-
-/* func (l Lexer) Error(e string) { */
-/*   fmt.Printf("%s:%d: %v\n", l.name, l.lineNo, e) */
-/* } */
-
-
-
-/* // Global state of the parser. */
-/* type ParserState struct { */
-/*   tags *list.List */
-/* } */
-
-/* var parserState *ParserState */
-
-/* func Parse(yylex yyLexer) int { */
-/*   parserState = &ParserState{list.New()} */
-/*   result := yyParse(yylex) */
-/*   parserState = nil */
-/*   return result */
-/* } */
