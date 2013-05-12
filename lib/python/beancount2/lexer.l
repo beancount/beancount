@@ -105,7 +105,6 @@ close		{ return CLOSE; }
 pad		{ return PAD; }
 event		{ return EVENT; }
 price		{ return PRICE; }
-location	{ return LOCATION; }
 note		{ return NOTE; }
 begintag	{ return BEGINTAG; }
 endtag		{ return ENDTAG; }
@@ -120,7 +119,7 @@ endtag		{ return ENDTAG; }
 }
 
  /* Account names. */
- /* ([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)+ */
+ /* FIXME: Remove 'Misc' */
 (Assets|Liabilities|Equity|Income|Expenses|Misc)(:[A-Z][A-Za-z0-9\-]+)+		{
     yylval->pyobj = BUILD("ACCOUNT", "s", yytext);
     return ACCOUNT;
@@ -143,6 +142,13 @@ endtag		{ return ENDTAG; }
 [-+]?([0-9\.])+ 		{
     yylval->pyobj = BUILD("NUMBER", "s", yytext);
     return NUMBER;
+}
+
+ /* Tags */
+\[[A-Za-z0-9\-_/]+\] 		{
+    yytext[strlen(yytext)-1] = '\0';
+    yylval->pyobj = BUILD("TAG", "s", &(yytext[1]));
+    return TAG;
 }
 
  /* Default rule. This should never be reached. */

@@ -14,6 +14,12 @@
 Beancount (Accounting)
 ======================
 
+  - Set a correct filename in grammar.y
+  - When an error occurs, skip the lexer to the next empty line and recommence.
+
+  - Support a mode for the lexer to spit out its results on stdout, so that we
+    can cross-check with parsers in other languages.
+
   - Don't support Misc:* accounts... remove those from my ledger. Keep it simple.
 
   - Watch all FIXMEs

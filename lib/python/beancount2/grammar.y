@@ -18,7 +18,7 @@
 /* Error-handling function. */
 void yyerror(char const *s)
 {
-    fprintf(stderr, "Parsing error: %s\n", s);
+    fprintf(stderr, "%s:%d:%d: Parsing error - %s\n", "/home/blais/q/office/accounting/tmp/syntax.beancount", yy_line_begin, yy_column(), s);
 }
 
 /* Get a printable version of a token name. */
@@ -77,15 +77,15 @@ const char* getTokenName(int token);
 %token PAD                 /* 'pad' keyword */
 %token EVENT               /* 'event' keyword */
 %token PRICE               /* 'price' keyword */
-%token LOCATION            /* 'location' keyword */
 %token NOTE                /* 'note' keyword */
 %token BEGINTAG            /* 'begintag' keyword */
 %token ENDTAG              /* 'endtag' keyword */
-%token <pyobj> DATE       /* A date object */
-%token <pyobj> ACCOUNT    /* The name of an account */
-%token <pyobj> CURRENCY   /* A currency specification */
-%token <pyobj> STRING     /* A quoted string, with any characters inside */
-%token <pyobj> NUMBER     /* A floating-point number */
+%token <pyobj> DATE        /* A date object */
+%token <pyobj> ACCOUNT     /* The name of an account */
+%token <pyobj> CURRENCY    /* A currency specification */
+%token <pyobj> STRING      /* A quoted string, with any characters inside */
+%token <pyobj> NUMBER      /* A floating-point number */
+%token <pyobj> TAG         /* A tag that can be associated with a transaction */
 
 %code{
 
@@ -114,7 +114,6 @@ const char* getTokenName(int token)
         case PAD      : return "PAD";
         case EVENT    : return "EVENT";
         case PRICE    : return "PRICE";
-        case LOCATION : return "LOCATION";
         case NOTE     : return "NOTE";
         case BEGINTAG : return "BEGINTAG";
         case ENDTAG   : return "ENDTAG";
@@ -123,6 +122,7 @@ const char* getTokenName(int token)
         case CURRENCY : return "CURRENCY";
         case STRING   : return "STRING";
         case NUMBER   : return "NUMBER";
+        case TAG      : return "TAG";
     }
     return 0;
 }
@@ -149,6 +149,7 @@ const char* getTokenName(int token)
 %type <pyobj> note
 %type <pyobj> entry
 %type <pyobj> declarations
+%type <pyobj> tag
 
 
 /* Start symbol. */
@@ -239,13 +240,15 @@ currency_list : empty
                   DECREF2($1, $3);
               }
 
-begintag : BEGINTAG STRING
+tag : STRING
+
+begintag : BEGINTAG tag
          {
              BUILD("begintag", "O", $2);
              DECREF1($2);
          }
 
-endtag : ENDTAG STRING
+endtag : ENDTAG tag
        {
            BUILD("endtag", "O", $2);
            DECREF1($2);

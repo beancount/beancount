@@ -64,6 +64,9 @@ class Builder(object):
     def STRING(self, s):
         return s
 
+    def TAG(self, s):
+        return s
+
     def NUMBER(self, s):
         return Decimal(s)
 

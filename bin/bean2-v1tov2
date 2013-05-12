@@ -103,6 +103,11 @@ def remove_datepair(line):
     else:
         return line
 
+def convert_tags(line):
+    if re.match('(begintag|endtag)', line):
+        return re.sub('(begintag|endtag)\s+(.*)', '\\1 "\\2"', line)
+    else:
+        return line
 
 def main():
     import argparse, logging
@@ -126,6 +131,7 @@ def main():
     lines = imap(defaccount_to_open, lines)
     lines = imap(uncomment_tentative, lines)
     lines = imap(add_org_mode_section, lines)
+    lines = imap(convert_tags, lines)
 
     for line in lines:
         sys.stdout.write(line)

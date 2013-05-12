@@ -33,7 +33,7 @@ def main():
             print(txn)
     entries.sort(key=lambda x: x.date)
 
-    print_tags(entries)
+    # print_tags(entries)
 
 
 def print_locations(entries):
