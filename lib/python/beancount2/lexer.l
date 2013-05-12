@@ -121,8 +121,7 @@ endtag		{ return ENDTAG; }
 }
 
  /* Account names. */
- /* FIXME: Remove 'Misc' */
-(Assets|Liabilities|Equity|Income|Expenses|Misc)(:[A-Z][A-Za-z0-9\-]+)+		{
+(Assets|Liabilities|Equity|Income|Expenses)(:[A-Z][A-Za-z0-9\-]+)+		{
     yylval->pyobj = BUILD("ACCOUNT", "s", yytext);
     return ACCOUNT;
 }
@@ -153,7 +152,7 @@ endtag		{ return ENDTAG; }
 }
 
  /* Default rule. This should never be reached. */
-.	{ report_error("Syntax error in tokenizer", yylloc); } /* FIXME: Add filename/line no to this error. */
+.	{ report_error("Syntax error.", yylloc); }
 
 
 

@@ -15,6 +15,8 @@
 #include "lexer.h"
 
 
+/* FIXME: set real filename here. */
+
 /* Error-handling function. */
 void yyerror(char const* message)
 {

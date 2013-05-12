@@ -9,6 +9,8 @@ import beancount2.parser
 from beancount2.parser import *
 
 
+#-------------------------------------------------------------------------------
+
 def get_account_type(account):
     return account.name.split(':')[0]
 
@@ -16,6 +18,8 @@ def is_balance_sheet_account(account):
     return get_account_type(account) in ('Assets', 'Liabilities', 'Equity')
 
 
+
+#-------------------------------------------------------------------------------
 
 
 def main():
