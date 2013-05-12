@@ -106,8 +106,14 @@ class Builder(object):
     def note(self, date, comment):
         return Note(date, comment)
 
-    def transaction(self, date, flag, payee, description, postings):
-        return Transaction(date, chr(flag), payee, description, self.tags.copy(), postings)
+    def transaction(self, date, flag, payee, description, tags, postings):
+        ctags = []
+        if tags is not None:
+            ctags.extend(tags)
+        if self.tags:
+            ctags.extend(self.tags)
+
+        return Transaction(date, chr(flag), payee, description, ctags, postings)
 
     def posting(self, account, amount_lot, amount, istotal, optflag):
         return Posting(account, amount_lot, amount, istotal, optflag)

@@ -30,6 +30,7 @@ const char* getTokenName(int token);
 #define DECREF2(x1, x2)
 #define DECREF3(x1, x2, x3)
 #define DECREF4(x1, x2, x3, x4)
+#define DECREF5(x1, x2, x3, x4, x5)
 
 %}
 
@@ -149,6 +150,7 @@ const char* getTokenName(int token)
 %type <pyobj> note
 %type <pyobj> entry
 %type <pyobj> declarations
+%type <pyobj> tags_list
 
 
 /* Start symbol. */
@@ -174,15 +176,26 @@ txn : TXN
 eol : EOL
     | COMMENT EOL
 
-transaction : DATE txn STRING eol posting_list
+tags_list : empty
+          {
+              Py_INCREF(Py_None);
+              $$ = Py_None;
+          }
+          | tags_list TAG
+          {
+              $$ = BUILD("handle_list", "OO", $1, $2);
+              DECREF2($1, $2);
+          }
+
+transaction : DATE txn STRING tags_list eol posting_list
             {
-                $$ = BUILD("transaction", "ObOOO", $1, $2, Py_None, $3, $5);
-                DECREF3($1, $3, $5);
+                $$ = BUILD("transaction", "ObOOOO", $1, $2, Py_None, $3, $4, $6);
+                DECREF4($1, $3, $4, $6);
             }
-            | DATE txn STRING PIPE STRING eol posting_list
+            | DATE txn STRING PIPE STRING tags_list eol posting_list
             {
-                $$ = BUILD("transaction", "ObOOO", $1, $2, $3, $5, $7);
-                DECREF4($1, $3, $5, $7);
+                $$ = BUILD("transaction", "ObOOOO", $1, $2, $3, $5, $6, $8);
+                DECREF5($1, $3, $5, $6, $8);
             }
 
 optflag : empty

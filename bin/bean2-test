@@ -36,6 +36,7 @@ def main():
         return
     
     entries = beancount2.parser.parse(opts.filename)
+
     if opts.verbose:
         for txn in entries:
             print(txn)
