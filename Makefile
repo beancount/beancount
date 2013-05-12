@@ -31,8 +31,15 @@ build: $(CROOT)/grammar.c $(CROOT)/grammar.h $(CROOT)/lexer.c $(CROOT)/lexer.h
 test:
 	time bean2-test $(TEST_LEDGER)
 
+dump_lexer:
+	bean2-dump-lexer $(TEST_LEDGER)
+
 grind:
 	valgrind --leak-check=full /usr/local/bin/python3 bean2-test $(TEST_LEDGER)
 
 debug:
 	gdb --args /usr/local/bin/python3 /home/blais/p/beancount/bin/bean2-test $(TEST_LEDGER)
+
+convert:
+	bean2-v1tov2 $(HOME)/q/office/accounting/blais.ledger > $(TEST_LEDGER)
+

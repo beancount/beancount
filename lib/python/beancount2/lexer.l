@@ -29,6 +29,7 @@
 
 
 /* Handle the current column. */
+extern int yy_line_no;
 extern int yy_line_begin;
 extern int yy_pos;
 
@@ -57,6 +58,7 @@ int strtonl(const char* buf, size_t nchars);
 
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
 \n		{
+    yy_line_no++;
     yy_line_begin = yy_pos + 1;
     return EOL;
 }
@@ -145,8 +147,7 @@ endtag		{ return ENDTAG; }
 }
 
  /* Tags */
-\[[A-Za-z0-9\-_/]+\] 		{
-    yytext[strlen(yytext)-1] = '\0';
+#[A-Za-z0-9\-_/.]+ 		{
     yylval->pyobj = BUILD("TAG", "s", &(yytext[1]));
     return TAG;
 }
@@ -160,7 +161,8 @@ endtag		{ return ENDTAG; }
 /*------------------------------------------------------------------------------------------------------------------------*/
 /* User Code */
 
-int yy_line_begin = 0;
+int yy_line_no = 1;
+int yy_line_begin = 1;
 int yy_pos = 0;
 
 int yy_column()

@@ -18,7 +18,7 @@
 /* Error-handling function. */
 void yyerror(char const *s)
 {
-    fprintf(stderr, "%s:%d:%d: Parsing error - %s\n", "/home/blais/q/office/accounting/tmp/syntax.beancount", yy_line_begin, yy_column(), s);
+    fprintf(stderr, "%s:%d:%d: Parsing error - %s\n", "/home/blais/q/office/accounting/tmp/syntax.beancount", yy_line_no, yy_column(), s);
 }
 
 /* Get a printable version of a token name. */
@@ -149,7 +149,6 @@ const char* getTokenName(int token)
 %type <pyobj> note
 %type <pyobj> entry
 %type <pyobj> declarations
-%type <pyobj> tag
 
 
 /* Start symbol. */
@@ -240,15 +239,13 @@ currency_list : empty
                   DECREF2($1, $3);
               }
 
-tag : STRING
-
-begintag : BEGINTAG tag
+begintag : BEGINTAG TAG
          {
              BUILD("begintag", "O", $2);
              DECREF1($2);
          }
 
-endtag : ENDTAG tag
+endtag : ENDTAG TAG
        {
            BUILD("endtag", "O", $2);
            DECREF1($2);

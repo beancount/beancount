@@ -13,6 +13,8 @@
 /* The bison header file does not contain this... silly. */
 extern int yyparse(void);
 
+extern const char* getTokenName(int token);
+
 
 /* The current builder during parsing (as a global variable for now). */
 PyObject* builder = 0;
@@ -61,12 +63,12 @@ Your builder is responsible to accumulating results.");
 
 PyObject* parse(PyObject *self, PyObject *args)
 {
-    const char* filename = 0;
-
     /* Unpack and validate arguments */
+    const char* filename = 0;
     if ( !PyArg_ParseTuple(args, "sO", &filename, &builder) ) {
         return NULL;
     }
+    Py_XINCREF(builder);
 
     /* Open the file. */
     FILE* fp = fopen(filename, "r");
@@ -86,6 +88,7 @@ PyObject* parse(PyObject *self, PyObject *args)
         fclose(fp);
     }
     yylex_destroy();
+    Py_XDECREF(builder);
     builder = 0;
 
     /* Check for parsing errors. */
@@ -104,8 +107,49 @@ PyObject* parse(PyObject *self, PyObject *args)
 
 
 
+/* Iniitalize the lexer to start running in debug mode. */
+PyObject* lexer_init(PyObject *self, PyObject *args)
+{
+    /* Unpack and validate arguments */
+    const char* filename = 0;
+    if ( !PyArg_ParseTuple(args, "sO", &filename, &builder) ) {
+        return NULL;
+    }
+    Py_XINCREF(builder);
+
+    /* Open the file. */
+    FILE* fp = fopen(filename, "r");
+    if ( fp == NULL ) {
+        return PyErr_Format(PyExc_IOError, "Cannot open file '%s'.", filename);
+    }
+
+    /* Initialize the parser. */
+    yyin = fp;
+
+    Py_RETURN_NONE;
+}
+
+/* Get the next token; return None if complete. */
+PyObject* lexer_next(PyObject *self, PyObject *args)
+{
+    /* Run the lexer. */
+    YYSTYPE yylval;
+    int token = yylex(&yylval);
+    if ( token == 0 ) {
+        yylex_destroy();
+        Py_RETURN_NONE;
+    }
+
+    const char* tokenName = getTokenName(token);
+    return Py_BuildValue("(ssii)", tokenName, yytext, yy_line_no, yy_column());
+}
+
+
+
 static PyMethodDef module_functions[] = {
     {"parse", parse, METH_VARARGS, parse_doc},
+    {"lexer_init", lexer_init, METH_VARARGS, NULL},
+    {"lexer_next", lexer_next, METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL} /* Sentinel */
 };
 

@@ -105,7 +105,7 @@ def remove_datepair(line):
 
 def convert_tags(line):
     if re.match('(begintag|endtag)', line):
-        return re.sub('(begintag|endtag)\s+(.*)', '\\1 "\\2"', line)
+        return re.sub('(begintag|endtag)\s+(.*)', '\\1 #\\2', line)
     else:
         return line
 

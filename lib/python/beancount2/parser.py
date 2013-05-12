@@ -113,8 +113,33 @@ class Builder(object):
         return Posting(account, amount_lot, amount, istotal, optflag)
 
 
+
+
+
 def parse(filename):
     """Parse a beancount input file and return a list of transactions."""
     builder = Builder()
     _parser.parse(filename, builder)
     return builder.result
+
+
+
+
+class LexOnlyBuilder(object):
+
+    def DATE(self, year, month, day): pass
+    def ACCOUNT(self, s):             pass
+    def CURRENCY(self, s):            pass
+    def STRING(self, s):              pass
+    def TAG(self, s):                 pass
+    def NUMBER(self, s):              pass
+
+def dump_lexer(filename, fileobj):
+    """Parse a beancount input file and return a list of transactions."""
+    _parser.lexer_init(filename, LexOnlyBuilder())
+    while 1:
+        x = _parser.lexer_next()
+        if x is None:
+            break
+        token, text, lineno, column = x
+        print('{:12} {:6d} {:2d} {}'.format(token, lineno, column, repr(text)))

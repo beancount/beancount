@@ -20,13 +20,21 @@ def is_balance_sheet_account(account):
 
 def main():
     parser = argparse.ArgumentParser(__doc__.strip())
+
     parser.add_argument('filename',
                         help='Beancount input filename.')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help="Print out verbose information")
 
+    parser.add_argument('-l', '--dump-lexer', action='store_true',
+                        help="Run the lexer only, output the tags.")
+
     opts = parser.parse_args()
 
+    if opts.dump_lexer:
+        beancount2.parser.lexer_dump(opts.filename, sys.stdout)
+        return
+    
     entries = beancount2.parser.parse(opts.filename)
     if opts.verbose:
         for txn in entries:
