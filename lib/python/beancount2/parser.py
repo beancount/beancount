@@ -7,7 +7,7 @@ from cdecimal import Decimal
 from collections import namedtuple
 
 from beancount2 import _parser
-from beancount2.inventory import Amount
+from beancount2.inventory import Amount, Lot, Position
 
 
 # All possible types of entries.
@@ -22,7 +22,7 @@ Price       = namedtuple('Price'       , 'date currency amount')
 
 # Basic data types.
 Account = namedtuple('Account', 'name')
-Posting = namedtuple('Posting', 'account amount_lot amount istotal optflag')
+Posting = namedtuple('Posting', 'account position price istotal optflag')
 
 
 class Builder(object):
@@ -74,11 +74,13 @@ class Builder(object):
     def amount(self, number, currency):
         return Amount(number, currency)
 
-    def lot(self, amount, lot_date):
-        return Lot(amount, lot_date)
+    def lot_cost_date(self, cost, lot_date):
+        return (cost, lot_date)
 
-    def amount_lot(self, amount, lot):
-        return (amount, lot)
+    def position(self, amount, lot_cost_date):
+        cost, lot_date = lot_cost_date if lot_cost_date else (None, None)
+        lot = Lot(amount.currency, cost, lot_date)
+        return Position(lot, amount.number)
 
     def handle_list(self, object_list, object):
         if object_list is None:
@@ -116,8 +118,8 @@ class Builder(object):
 
         return Transaction(date, chr(flag), payee, description, ctags, postings)
 
-    def posting(self, account, amount_lot, amount, istotal, optflag):
-        return Posting(account, amount_lot, amount, istotal, optflag)
+    def posting(self, account, position, price, istotal, optflag):
+        return Posting(account, position, price, istotal, optflag)
 
 
 

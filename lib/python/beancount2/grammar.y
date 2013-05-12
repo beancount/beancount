@@ -153,8 +153,8 @@ const char* getTokenName(int token)
 %type <pyobj> check
 %type <pyobj> pad
 %type <pyobj> amount
-%type <pyobj> amount_lot
-%type <pyobj> lot
+%type <pyobj> position
+%type <pyobj> lot_cost_date
 %type <pyobj> price
 %type <pyobj> event
 %type <pyobj> note
@@ -214,17 +214,17 @@ optflag : empty
         }
         | TXNFLAG
 
-posting : INDENT optflag ACCOUNT amount_lot eol
+posting : INDENT optflag ACCOUNT position eol
         {
             $$ = BUILD("posting", "OOOOb", $3, $4, Py_None, Py_False, $2);
             DECREF2($3, $4);
         }
-        | INDENT optflag ACCOUNT amount_lot AT amount eol
+        | INDENT optflag ACCOUNT position AT amount eol
         {
             $$ = BUILD("posting", "OOOOb", $3, $4, $6, Py_False, $2);
             DECREF3($3, $4, $6);
         }
-        | INDENT optflag ACCOUNT amount_lot ATAT amount eol
+        | INDENT optflag ACCOUNT position ATAT amount eol
         {
             $$ = BUILD("posting", "OOOOb", $3, $4, $6, Py_True, $2);
             DECREF3($3, $4, $6);
@@ -310,28 +310,27 @@ amount : NUMBER CURRENCY
          DECREF2($1, $2);
        }
 
-amount_lot : amount
+position : amount
            {
-               $$ = BUILD("amount_lot", "OO", $1, Py_None);
+               $$ = BUILD("position", "OO", $1, Py_None);
                DECREF1($1);
            }
-           | amount lot
+           | amount lot_cost_date
            {
-               $$ = BUILD("amount_lot", "OO", $1, $2);
+               $$ = BUILD("position", "OO", $1, $2);
                DECREF2($1, $2);
            }
 
-
-lot : LCURL amount RCURL
-    {
-        $$ = BUILD("lot", "OO", $2, Py_None);
-        DECREF1($2);
-    }
-    | LCURL amount SLASH DATE RCURL
-    {
-        $$ = BUILD("lot", "OO", $2, $4);
-        DECREF2($2, $4);
-    }
+lot_cost_date : LCURL amount RCURL
+         {
+             $$ = BUILD("lot_cost_date", "OO", $2, Py_None);
+             DECREF1($2);
+         }
+         | LCURL amount SLASH DATE RCURL
+         {
+             $$ = BUILD("lot_cost_date", "OO", $2, $4);
+             DECREF2($2, $4);
+         }
 
 
 price : DATE PRICE CURRENCY amount
