@@ -7,6 +7,7 @@ from cdecimal import Decimal
 from collections import namedtuple
 
 from beancount2 import _parser
+from beancount2.inventory import Amount
 
 
 # All possible types of entries.
@@ -71,10 +72,10 @@ class Builder(object):
         return Decimal(s)
 
     def amount(self, number, currency):
-        return (number, currency)
+        return Amount(number, currency)
 
-    def lot(self, amount, date):
-        return (amount, date)
+    def lot(self, amount, lot_date):
+        return Lot(amount, lot_date)
 
     def amount_lot(self, amount, lot):
         return (amount, lot)

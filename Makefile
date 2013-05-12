@@ -43,3 +43,5 @@ debug:
 convert:
 	bean2-v1tov2 $(HOME)/q/office/accounting/blais.ledger > $(TEST_LEDGER)
 
+unittest unittests:
+	nosetests-3.3 -s lib/python/beancount2
