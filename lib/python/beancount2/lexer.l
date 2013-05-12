@@ -11,6 +11,7 @@
 %option never-interactive
 %option warn
 %option bison-bridge
+%option bison-locations
 /* %option reentrant */
 /* %option debug */
 /* %option stack */
@@ -28,22 +29,22 @@
 #include "grammar.h"
 
 
-/* Handle the current column. */
-extern int yy_line_no;
-extern int yy_line_begin;
-extern int yy_pos;
+/* Handle detecting the beginning of line. */
+extern int yy_line_tokens; /* Number of tokens since the bol */
 
-#define YY_USER_ACTION        { yy_pos++; }
-
-int yy_column(void);
+#define YY_USER_ACTION  {                               \
+    yy_line_tokens++;                                   \
+    yylloc->first_line = yylloc->last_line = yylineno;  \
+  }
 
 
 /* Skip the rest of the input line. */
 void yy_skip_line(void);
 
 
-/* Error handler. */
+/* Error handlers. */
 extern void yyerror(char const *s);
+extern void report_error(char const *s, YYLTYPE* yylloc);
 
 
 /* Utility functions. */
@@ -58,14 +59,13 @@ int strtonl(const char* buf, size_t nchars);
 
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
 \n		{
-    yy_line_no++;
-    yy_line_begin = yy_pos + 1;
+    yy_line_tokens = 0;
     return EOL;
 }
 
  /* Ignore whitespace, except when found at the beginning of a line. This is how we group indented postings. */
 [ \t\r]+	{
-    if ( yy_column() == 0 ) {
+    if ( yy_line_tokens == 1 ) {
         return INDENT;
     }
 }
@@ -89,7 +89,7 @@ int strtonl(const char* buf, size_t nchars);
  /* Special characters which may be used in-lieu of a 'txn' keyword in a transaction declaration output as a token.
     Other lines are just skipped. This allows us to use org-mode or other separators in the input syntax. */
 [*!&#?%]	{
-    if ( yy_column() != 0 ) {
+    if ( yy_line_tokens != 1 ) {
         yylval->character = yytext[0];
         return TXNFLAG;
     }
@@ -153,7 +153,7 @@ endtag		{ return ENDTAG; }
 }
 
  /* Default rule. This should never be reached. */
-.	{ yyerror("Syntax error in tokenizer"); } /* FIXME: Add filename/line no to this error. */
+.	{ report_error("Syntax error in tokenizer", yylloc); } /* FIXME: Add filename/line no to this error. */
 
 
 
@@ -161,14 +161,7 @@ endtag		{ return ENDTAG; }
 /*------------------------------------------------------------------------------------------------------------------------*/
 /* User Code */
 
-int yy_line_no = 1;
-int yy_line_begin = 1;
-int yy_pos = 0;
-
-int yy_column()
-{
-    return yy_pos - yy_line_begin;
-}
+int yy_line_tokens = 0;
 
 void yy_skip_line()
 {

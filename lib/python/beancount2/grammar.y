@@ -16,9 +16,16 @@
 
 
 /* Error-handling function. */
-void yyerror(char const *s)
+void yyerror(char const* message)
 {
-    fprintf(stderr, "%s:%d:%d: Parsing error - %s\n", "/home/blais/q/office/accounting/tmp/syntax.beancount", yy_line_no, yy_column(), s);
+    /* fprintf(stderr, "LOCTEST %d %d: ", yylloc.first_line, s); */
+    fprintf(stderr, "%s: %s\n", "/home/blais/q/office/accounting/tmp/syntax.beancount", message);
+}
+
+void report_error(char const* message, YYLTYPE* yylloc)
+{
+    fprintf(stderr, "%s:%d:: %s\n", "/home/blais/q/office/accounting/tmp/syntax.beancount",
+            yylloc->first_line, message);
 }
 
 /* Get a printable version of a token name. */
@@ -44,6 +51,7 @@ const char* getTokenName(int token);
 %error-verbose
 %debug
 %pure_parser
+%locations
 
 /* FIXME: Pass this explicitly eventually. */
 /* %parse-param { PyObject* builder} */

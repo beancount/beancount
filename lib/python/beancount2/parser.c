@@ -134,14 +134,15 @@ PyObject* lexer_next(PyObject *self, PyObject *args)
 {
     /* Run the lexer. */
     YYSTYPE yylval;
-    int token = yylex(&yylval);
+    YYLTYPE yylloc;
+    int token = yylex(&yylval, &yylloc);
     if ( token == 0 ) {
         yylex_destroy();
         Py_RETURN_NONE;
     }
 
     const char* tokenName = getTokenName(token);
-    return Py_BuildValue("(ssii)", tokenName, yytext, yy_line_no, yy_column());
+    return Py_BuildValue("(ssi)", tokenName, yytext, yylloc.first_line);
 }
 
 

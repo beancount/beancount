@@ -147,5 +147,5 @@ def dump_lexer(filename, fileobj):
         x = _parser.lexer_next()
         if x is None:
             break
-        token, text, lineno, column = x
-        print('{:12} {:6d} {:2d} {}'.format(token, lineno, column, repr(text)))
+        token, text, lineno = x
+        print('{:12} {:6d} {}'.format(token, lineno, repr(text)))
