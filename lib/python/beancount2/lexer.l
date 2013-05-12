@@ -11,8 +11,8 @@
 %option never-interactive
 %option warn
 %option bison-bridge
-%option outfile="beancount_lexer.c"
-%option header-file="beancount_lexer.h"
+%option outfile="lexer.c"
+%option header-file="lexer.h"
 /* %option reentrant */
 /* %option debug */
 /* %option stack */
@@ -26,8 +26,8 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include "builder.h"
-#include "beancount_parser.h"
+#include "parser.h"
+#include "grammar.h"
 
 
 /* Handle the current column. */

@@ -3,9 +3,9 @@
 /* #include <datetime.h> */
 /* #include <string.h> */
 
-#include "builder.h"
-#include "beancount_lexer.h"
-#include "beancount_parser.h"
+#include "parser.h"
+#include "lexer.h"
+#include "parser.h"
 
 /* The bison header file does not contain this... silly. */
 int yyparse(void);
@@ -44,6 +44,9 @@ PyObject* parse(PyObject *self, PyObject *args)
 
     /* Open the file. */
     FILE* fp = fopen(filename, "r");
+    if ( fp == NULL ) {
+        return PyErr_Format(PyExc_IOError, "Cannot open file '%s'.", filename);
+    }
 
     /* Initialize the parser. */
     yyin = fp;
@@ -62,6 +65,9 @@ PyObject* parse(PyObject *self, PyObject *args)
     /* Return the result as a float */
     Py_RETURN_NONE;
 }
+
+/* FIXME: Make a version of this which takes a string as input! For
+ * unit-testing... */
 
 
 
@@ -82,7 +88,7 @@ static struct PyModuleDef moduledef = {
     NULL,                                 /* m_free */
 };
 
-PyMODINIT_FUNC PyInit__beancount(void)
+PyMODINIT_FUNC PyInit__parser(void)
 {
     PyObject* m = PyModule_Create(&moduledef);
     if ( m == NULL )

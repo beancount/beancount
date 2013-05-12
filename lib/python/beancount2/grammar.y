@@ -11,8 +11,8 @@
 %{
 
 #include <stdio.h>
-#include "builder.h"
-#include "beancount_lexer.h"
+#include "parser.h"
+#include "lexer.h"
 
 
 /* Error-handling function. */

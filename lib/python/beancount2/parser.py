@@ -2,10 +2,11 @@
 """
 Basic test to invoke the beancount parser.
 """
-import _beancount
 import datetime
 from cdecimal import Decimal
 from collections import namedtuple
+
+from beancount2 import _parser
 
 
 CURRENCIES = {}
@@ -20,6 +21,9 @@ class Currency:
 class Builder:
     def __init__(self):
         pass
+
+    def get_transactions(self):
+        return None ## FIXME: todo
 
     def parseDate(self, year, month, day):
         return datetime.date(year, month, day)
@@ -59,16 +63,9 @@ class Builder:
 Open = namedtuple('Open', 'date account account_id currencies')
 
 
-def main():
-    import argparse, logging
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = argparse.ArgumentParser(__doc__.strip())
-    parser.add_argument('filename', help='Filename')
-    opts = parser.parse_args()
-
+def parse(filename):
+    """Parse a beancount input file and return a list of transactions."""
     builder = Builder()
-    _beancount.parse(opts.filename, builder)
-
-
-if __name__ == '__main__':
-    main()
+    print(builder)
+    _parser.parse(filename, builder)
+    return builder.get_transactions()

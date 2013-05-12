@@ -1,6 +1,6 @@
 #include <Python.h>
-#include "beancount_lexer.h"
-#include "beancount_parser.h"
+#include "lexer.h"
+#include "parser.h"
 
 extern int yydebug;
 

@@ -14,6 +14,10 @@
 Beancount (Accounting)
 ======================
 
+  - Watch all FIXMEs
+
+  - Copy converter into the new beancount
+
   - Propagate exception from Python
   - Add filename/lineno to error reporting
 

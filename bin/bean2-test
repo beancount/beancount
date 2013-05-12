@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+"""Various tests for beancount2.
+"""
+import argparse
+
+import beancount2.parser
+
+
+def main():
+    parser = argparse.ArgumentParser(__doc__.strip())
+    parser.add_argument('filename',
+                        help='Beancount input filename.')
+    opts = parser.parse_args()
+
+    transactions = beancount2.parser.parse(opts.filename)
+    print(transactions)
+    # for txn in transactions:
+    #     print(txn)
+
+
+if __name__ == '__main__':
+    main()
