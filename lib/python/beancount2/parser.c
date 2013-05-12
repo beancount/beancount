@@ -42,7 +42,8 @@ PyObject* build(char* rule_name, char* format, ...)
 #endif
 
 
-/* Check if the object is null; if so, report an error. */
+/* Check if the object is null; if so, report an error. This is used internally
+   only, to debug the parser rules, and should never trigger in production. */
 PyObject* checkNull(PyObject* o)
 {
     if ( o == NULL ) {
@@ -78,7 +79,7 @@ PyObject* parse(PyObject *self, PyObject *args)
     /* yydebug = 1; */
 
     /* Parse! This will call back methods on the builder instance. */
-    yyparse();
+    int result = yyparse();
 
     /* Finalize the parser. */
     if ( fp != NULL ) {
@@ -87,7 +88,14 @@ PyObject* parse(PyObject *self, PyObject *args)
     yylex_destroy();
     builder = 0;
 
-    /* Return the result as a float */
+    /* Check for parsing errors. */
+    if ( result != 0 ) {
+        return PyErr_Format(PyExc_RuntimeError, "Parsing error.");
+    }
+
+#if 0
+    yylval->pyobj;
+#endif
     Py_RETURN_NONE;
 }
 

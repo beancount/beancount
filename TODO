@@ -14,6 +14,8 @@
 Beancount (Accounting)
 ======================
 
+  - Don't support Misc:* accounts... remove those from my ledger. Keep it simple.
+
   - Watch all FIXMEs
 
   - Copy converter into the new beancount

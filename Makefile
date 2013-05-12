@@ -1,7 +1,7 @@
 #!/usr/bin/env make
 
 # Just my big old test ledger, converted automatically.
-TEST_LEDGER = $(HOME)/q/office/accounting/tmp/syntax.ledger
+TEST_LEDGER = $(HOME)/q/office/accounting/tmp/syntax.beancount
 
 all: build
 

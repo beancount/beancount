@@ -9,23 +9,37 @@ from collections import namedtuple
 from beancount2 import _parser
 
 
-CURRENCIES = {}
+# All possible types of entries.
+Open        = namedtuple('Open'        , 'date account account_id currencies')
+Close       = namedtuple('Close'       , 'date account')
+Pad         = namedtuple('Pad'         , 'date account account_pad')
+Check       = namedtuple('Check'       , 'date account amount')
+Transaction = namedtuple('Transaction' , 'date flag payee description tags postings')
+Event       = namedtuple('Event'       , 'date type description')
+Note        = namedtuple('Note'        , 'date comment')
+Price       = namedtuple('Price'       , 'date currency amount')
 
-class Currency:
-    def __init__(self, name):
-        self.name = name
-    def __str__(self):
-        return '<%s>' % self.name
-    __repr__ = __str__
+# Basic data types.
+Account = namedtuple('Account', 'name')
+Posting = namedtuple('Posting', 'account amount_lot amount istotal optflag')
+
 
 class Builder(object):
 
     def __init__(self):
+        # A stack of the current active tags.
         self.tags = []
 
-    def get_result(self):
-        """Return a list of the transactions.."""
-        return None ## FIXME: todo
+        # The result from running the parser.
+        self.result = None
+
+        # Temporary accounts map.
+        self.accounts = {}
+
+    def store_result(self, result):
+        """Start rule stores the final result here."""
+        self.result = result
+
 
     def begintag(self, tag):
         self.tags.append(tag)
@@ -38,14 +52,14 @@ class Builder(object):
         return datetime.date(year, month, day)
 
     def ACCOUNT(self, s):
-        return s
+        try:
+            account = self.accounts[s]
+        except KeyError:
+            account = self.accounts[s] = Account(s)
+        return account
 
     def CURRENCY(self, s):
-        try:
-            return CURRENCIES[s]
-        except KeyError:
-            ccy = CURRENCIES[s] = Currency(s)
-            return ccy
+        return s
 
     def STRING(self, s):
         return s
@@ -55,6 +69,9 @@ class Builder(object):
 
     def amount(self, number, currency):
         return (number, currency)
+
+    def lot(self, amount, date):
+        return (amount, date)
 
     def amount_lot(self, amount, lot):
         return (amount, lot)
@@ -77,23 +94,24 @@ class Builder(object):
     def check(self, date, account, amount):
         return Check(date, account, amount)
 
-    def transaction(self, date, txn, payee, description, postings):
-        pass #print('transaction', date, chr(txn), payee, description)
+    def event(self, date, event_type, description):
+        return Event(date, event_type, description)
+
+    def price(self, date, currency, amount):
+        return Price(date, currency, amount)
+
+    def note(self, date, comment):
+        return Note(date, comment)
+
+    def transaction(self, date, flag, payee, description, postings):
+        return Transaction(date, chr(flag), payee, description, self.tags.copy(), postings)
 
     def posting(self, account, amount_lot, amount, istotal, optflag):
         return Posting(account, amount_lot, amount, istotal, optflag)
-
-
-Open = namedtuple('Open', 'date account account_id currencies')
-Close = namedtuple('Close', 'date account')
-Pad = namedtuple('Pad', 'date account account_pad')
-Check = namedtuple('Check', 'date account amount')
-Posting = namedtuple('Posting', 'account amount_lot amount istotal optflag')
-Transaction = namedtuple('Transaction', 'date txn payee description postings')
 
 
 def parse(filename):
     """Parse a beancount input file and return a list of transactions."""
     builder = Builder()
     _parser.parse(filename, builder)
-    return builder.get_result()
+    return builder.result

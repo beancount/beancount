@@ -44,6 +44,9 @@ const char* getTokenName(int token);
 %debug
 %pure_parser
 
+/* FIXME: Pass this explicitly eventually. */
+/* %parse-param { PyObject* builder} */
+
 
 /* Collection of value types. */
 %union {
@@ -141,10 +144,15 @@ const char* getTokenName(int token)
 %type <pyobj> amount
 %type <pyobj> amount_lot
 %type <pyobj> lot
+%type <pyobj> price
+%type <pyobj> event
+%type <pyobj> note
+%type <pyobj> entry
+%type <pyobj> declarations
 
 
 /* Start symbol. */
-%start directives
+%start file
 
 
 /*--------------------------------------------------------------------------------*/
@@ -245,7 +253,7 @@ endtag : ENDTAG STRING
 
 open : DATE OPEN ACCOUNT currency_list
      {
-         $$ = BUILD("open", "OOOO", $1, Py_None, $3, $4);
+         $$ = BUILD("open", "OOOO", $1, $3, Py_None, $4);
          DECREF3($1, $3, $4);
      }
      | DATE OPEN ACCOUNT STRING currency_list
@@ -293,27 +301,33 @@ amount_lot : amount
 
 lot : LCURL amount RCURL
     {
-        Py_INCREF(Py_None);
-        $$ = Py_None;         /* FIXME: TODO here */
+        $$ = BUILD("lot", "OO", $2, Py_None);
         DECREF1($2);
     }
     | LCURL amount SLASH DATE RCURL
     {
-        Py_INCREF(Py_None);
-        $$ = Py_None;         /* FIXME: TODO here */
+        $$ = BUILD("lot", "OO", $2, $4);
         DECREF2($2, $4);
     }
 
 
-/* FIXME: not sure we will actually need these at all... */
 price : DATE PRICE CURRENCY amount
-
-/* FIXME: remove this, this degrades nicely to an event with name "location". */
-location : DATE LOCATION STRING
+      {
+          $$ = BUILD("price", "OOO", $1, $3, $4);
+          DECREF3($1, $3, $4);
+      }
 
 event : DATE EVENT STRING STRING
+      {
+          $$ = BUILD("event", "OOO", $1, $3, $4);
+          DECREF3($1, $3, $4);
+      }
 
 note : DATE NOTE STRING
+      {
+          $$ = BUILD("note", "OO", $1, $3);
+          DECREF2($1, $3);
+      }
 
 entry : transaction
       | check
@@ -323,24 +337,34 @@ entry : transaction
       | event
       | note
       | price
-      | location
+      {
+          $$ = $1;
+      }
 
-directive : entry
-          | SKIPPED
+directive : SKIPPED
           | eol
           | begintag
-          {
-            /* parserState.tags.PushFront($1) */
-          }
           | endtag
-          {
-            // FIXME: We should assert that the tag is present in the list (or
-            // at the top of it, if required to be balanced).
-            /* parserState.tags.Remove(parserState.tags.Front()) */
-          }
 
-directives : empty
-           | directives directive
+declarations : declarations entry
+             {
+                 $$ = BUILD("handle_list", "OO", $1, $2);
+                 DECREF2($1, $2);
+             }
+             | declarations directive
+             {
+                 $$ = $1;
+             }
+             | empty
+             {
+                  Py_INCREF(Py_None);
+                  $$ = Py_None;
+             }
+
+file : declarations
+     {
+         BUILD("store_result", "O", $1);
+     }
 
 
 /*--------------------------------------------------------------------------------*/
