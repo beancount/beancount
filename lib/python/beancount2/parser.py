@@ -10,19 +10,30 @@ from beancount2 import _parser
 from beancount2.inventory import Amount, Lot, Position
 
 
+# The location in a source file where the directive was found.
+FileLocation = namedtuple('FileLocation', 'filename lineno')
+
 # All possible types of entries.
-Open        = namedtuple('Open'        , 'date account account_id currencies')
-Close       = namedtuple('Close'       , 'date account')
-Pad         = namedtuple('Pad'         , 'date account account_pad')
-Check       = namedtuple('Check'       , 'date account amount')
-Transaction = namedtuple('Transaction' , 'date flag payee description tags postings')
-Event       = namedtuple('Event'       , 'date type description')
-Note        = namedtuple('Note'        , 'date comment')
-Price       = namedtuple('Price'       , 'date currency amount')
+Open        = namedtuple('Open'        , 'fileloc date account account_id currencies')
+Close       = namedtuple('Close'       , 'fileloc date account')
+Pad         = namedtuple('Pad'         , 'fileloc date account account_pad')
+Check       = namedtuple('Check'       , 'fileloc date account amount')
+Transaction = namedtuple('Transaction' , 'fileloc date flag payee description tags postings')
+Event       = namedtuple('Event'       , 'fileloc date type description')
+Note        = namedtuple('Note'        , 'fileloc date comment')
+Price       = namedtuple('Price'       , 'fileloc date currency amount')
 
 # Basic data types.
 Account = namedtuple('Account', 'name')
 Posting = namedtuple('Posting', 'account position price istotal optflag')
+
+
+class ParserError(RuntimeError):
+    "A parsing error. Formats the file location into the message string."
+
+    def __init__(self, fileloc, message):
+        RuntimeError.__init__(self, '{:s}:{:d}: {}'.format(
+            fileloc.filename, fileloc.lineno, message))
 
 
 class Builder(object):
@@ -88,50 +99,58 @@ class Builder(object):
         object_list.append(object)
         return object_list
 
-    def open(self, date, account, account_id, currencies):
-        return Open(date, account, account_id, currencies)
+    def open(self, filename, lineno, date, account, account_id, currencies):
+        fileloc = FileLocation(filename, lineno)
+        return Open(fileloc, date, account, account_id, currencies)
 
-    def close(self, date, account):
-        return Close(date, account)
+    def close(self, filename, lineno, date, account):
+        fileloc = FileLocation(filename, lineno)
+        return Close(fileloc, date, account)
 
-    def pad(self, date, account, account_pad):
-        return Pad(date, account, account_pad)
+    def pad(self, filename, lineno, date, account, account_pad):
+        fileloc = FileLocation(filename, lineno)
+        return Pad(fileloc, date, account, account_pad)
 
-    def check(self, date, account, amount):
-        return Check(date, account, amount)
+    def check(self, filename, lineno, date, account, amount):
+        fileloc = FileLocation(filename, lineno)
+        return Check(fileloc, date, account, amount)
 
-    def event(self, date, event_type, description):
-        return Event(date, event_type, description)
+    def event(self, filename, lineno, date, event_type, description):
+        fileloc = FileLocation(filename, lineno)
+        return Event(fileloc, date, event_type, description)
 
-    def price(self, date, currency, amount):
-        return Price(date, currency, amount)
+    def price(self, filename, lineno, date, currency, amount):
+        fileloc = FileLocation(filename, lineno)
+        return Price(fileloc, date, currency, amount)
 
-    def note(self, date, comment):
-        return Note(date, comment)
-
-    def transaction(self, date, flag, payee, description, tags, postings):
-        ctags = []
-        if tags is not None:
-            ctags.extend(tags)
-        if self.tags:
-            ctags.extend(self.tags)
-
-        return Transaction(date, chr(flag), payee, description, ctags, postings)
+    def note(self, filename, lineno, date, comment):
+        fileloc = FileLocation(filename, lineno)
+        return Note(fileloc, date, comment)
 
     def posting(self, account, position, price, istotal, optflag):
         return Posting(account, position, price, istotal, optflag)
 
+    def transaction(self, filename, lineno, date, flag, payee, description, tags, postings):
+        fileloc = FileLocation(filename, lineno)
 
+        # Detect when a transaction does not have at least two legs.
+        if postings is None or len(postings) < 2:
+            raise ParserError("Invalid number of postings", fileloc)
 
+        # Merge the tags from the stach with the explicit tags of this transaction
+        ctags = set()
+        if tags is not None:
+            ctags.update(tags)
+        if self.tags:
+            ctags.update(self.tags)
 
+        return Transaction(fileloc, date, chr(flag), payee, description, ctags, postings)
 
 def parse(filename):
     """Parse a beancount input file and return a list of transactions."""
     builder = Builder()
     _parser.parse(filename, builder)
     return builder.result
-
-
 
 
 class LexOnlyBuilder(object):

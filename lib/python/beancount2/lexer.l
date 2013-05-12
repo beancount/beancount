@@ -29,6 +29,10 @@
 #include "grammar.h"
 
 
+/* The filename being parsed. */
+extern const char* yy_filename;
+
+
 /* Handle detecting the beginning of line. */
 extern int yy_line_tokens; /* Number of tokens since the bol */
 
@@ -160,6 +164,7 @@ endtag		{ return ENDTAG; }
 /*------------------------------------------------------------------------------------------------------------------------*/
 /* User Code */
 
+const char* yy_filename = 0;
 int yy_line_tokens = 0;
 
 void yy_skip_line()

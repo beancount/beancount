@@ -7,6 +7,7 @@ from collections import defaultdict
 
 import beancount2.parser
 from beancount2.parser import *
+from beancount2.inventory import Inventory
 
 
 #-------------------------------------------------------------------------------
@@ -38,7 +39,7 @@ def main():
     if opts.dump_lexer:
         beancount2.parser.lexer_dump(opts.filename, sys.stdout)
         return
-    
+
     entries = beancount2.parser.parse(opts.filename)
 
     if opts.verbose:
@@ -46,7 +47,21 @@ def main():
             print(txn)
     entries.sort(key=lambda x: x.date)
 
+    test_realize(entries)
     # print_tags(entries)
+
+
+def test_realize(entries):
+    accounts_map = defaultdict(Inventory)
+    for entry in entries:
+        if not isinstance(entry, Transaction):
+            continue
+        if not entry.postings:
+            print(entry)
+        # for posting in entry.postings:
+        #     inventory = accounts_map[posting.account.name]
+        #     print(inventory)
+
 
 
 def print_locations(entries):

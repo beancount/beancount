@@ -41,6 +41,10 @@ const char* getTokenName(int token);
 #define DECREF4(x1, x2, x3, x4)
 #define DECREF5(x1, x2, x3, x4, x5)
 
+
+#define FILE_LINE_ARGS  yy_filename, yylloc.first_line
+
+
 %}
 
 
@@ -199,12 +203,12 @@ tags_list : empty
 
 transaction : DATE txn STRING tags_list eol posting_list
             {
-                $$ = BUILD("transaction", "ObOOOO", $1, $2, Py_None, $3, $4, $6);
+                $$ = BUILD("transaction", "siObOOOO", FILE_LINE_ARGS, $1, $2, Py_None, $3, $4, $6);
                 DECREF4($1, $3, $4, $6);
             }
             | DATE txn STRING PIPE STRING tags_list eol posting_list
             {
-                $$ = BUILD("transaction", "ObOOOO", $1, $2, $3, $5, $6, $8);
+                $$ = BUILD("transaction", "siObOOOO", FILE_LINE_ARGS, $1, $2, $3, $5, $6, $8);
                 DECREF5($1, $3, $5, $6, $8);
             }
 
@@ -276,30 +280,30 @@ endtag : ENDTAG TAG
 
 open : DATE OPEN ACCOUNT currency_list
      {
-         $$ = BUILD("open", "OOOO", $1, $3, Py_None, $4);
+         $$ = BUILD("open", "siOOOO", FILE_LINE_ARGS, $1, $3, Py_None, $4);
          DECREF3($1, $3, $4);
      }
      | DATE OPEN ACCOUNT STRING currency_list
      {
-         $$ = BUILD("open", "OOOO", $1, $3, $4, $5);
+         $$ = BUILD("open", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $5);
          DECREF4($1, $3, $4, $5);
      }
 
 close : DATE CLOSE ACCOUNT
       {
-          $$ = BUILD("close", "OO", $1, $3);
+          $$ = BUILD("close", "siOO", FILE_LINE_ARGS, $1, $3);
           DECREF2($1, $3);
       }
 
 pad : DATE PAD ACCOUNT ACCOUNT
     {
-        $$ = BUILD("pad", "OOO", $1, $3, $4);
+        $$ = BUILD("pad", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
         DECREF3($1, $3, $4);
     }
 
 check : DATE CHECK ACCOUNT amount
       {
-          $$ = BUILD("check", "OOO", $1, $3, $4);
+          $$ = BUILD("check", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
           DECREF3($1, $3, $4);
       }
 
@@ -335,19 +339,19 @@ lot_cost_date : LCURL amount RCURL
 
 price : DATE PRICE CURRENCY amount
       {
-          $$ = BUILD("price", "OOO", $1, $3, $4);
+          $$ = BUILD("price", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
           DECREF3($1, $3, $4);
       }
 
 event : DATE EVENT STRING STRING
       {
-          $$ = BUILD("event", "OOO", $1, $3, $4);
+          $$ = BUILD("event", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
           DECREF3($1, $3, $4);
       }
 
 note : DATE NOTE STRING
       {
-          $$ = BUILD("note", "OO", $1, $3);
+          $$ = BUILD("note", "siOO", FILE_LINE_ARGS, $1, $3);
           DECREF2($1, $3);
       }
 

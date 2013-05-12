@@ -20,30 +20,6 @@ extern const char* getTokenName(int token);
 PyObject* builder = 0;
 
 
-
-/* FIXME: remove */
-#if 0
-/* This function gets invoked by the parser to call methods on its builder.*/
-PyObject* build(char* rule_name, char* format, ...)
-{
-    va_list va;
-    PyObject* result;
-
-    char method_name[128];
-    strcpy(method_name, "parse_");
-    strcpy(method_name+6, rule_name);
-
-    /* Note: we use the global variable 'builder' here. Revise this in the
-     * future. */
-    va_start(va, format);
-    result = PyObject_CallMethod(builder, method_name, format, va);
-    va_end(va);
-
-    return result;
-}
-#endif
-
-
 /* Check if the object is null; if so, report an error. This is used internally
    only, to debug the parser rules, and should never trigger in production. */
 PyObject* checkNull(PyObject* o)
@@ -78,6 +54,7 @@ PyObject* parse(PyObject *self, PyObject *args)
 
     /* Initialize the parser. */
     yyin = fp;
+    yy_filename = filename;
     /* yydebug = 1; */
 
     /* Parse! This will call back methods on the builder instance. */
@@ -90,6 +67,7 @@ PyObject* parse(PyObject *self, PyObject *args)
     yylex_destroy();
     Py_XDECREF(builder);
     builder = 0;
+    yy_filename = 0;
 
     /* Check for parsing errors. */
     if ( result != 0 ) {

@@ -52,18 +52,3 @@ class TestInventory(unittest.TestCase):
         print(inv.get_costs())
 
 
-    #     amount2 = Amount(Decimal('25.01'), 'USD')
-    #     inventory.add(amount2)
-    #     print(inventory)
-
-    #     amount3 = Amount(Decimal('12.73'), 'CAD')
-    #     inventory.add(amount3)
-    #     print(inventory)
-
-    #     amount4 = Amount(Decimal('-84.03'), 'USD')
-    #     inventory.add(amount4)
-    #     print(inventory)
-
-    #     amount5 = Amount(Decimal('-40.99'), 'USD')
-    #     inventory.add(amount5)
-    #     print(inventory)
