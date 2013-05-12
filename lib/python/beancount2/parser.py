@@ -19,7 +19,7 @@ class Currency:
     __repr__ = __str__
 
 class Builder(object):
-    
+
     def __init__(self):
         self.tags = []
 
@@ -29,10 +29,10 @@ class Builder(object):
 
     def begintag(self, tag):
         self.tags.append(tag)
-    
+
     def endtag(self, tag):
         self.tags.remove(tag)
-    
+
 
     def DATE(self, year, month, day):
         return datetime.date(year, month, day)
@@ -56,8 +56,8 @@ class Builder(object):
     def amount(self, number, currency):
         return (number, currency)
 
-    def transaction(self, date, txn, payee, description, postings):
-        pass #print('transaction', date, chr(txn), payee, description)
+    def amount_lot(self, amount, lot):
+        return (amount, lot)
 
     def handle_list(self, object_list, object):
         if object_list is None:
@@ -71,8 +71,14 @@ class Builder(object):
     def close(self, date, account):
         return Close(date, account)
 
-    def pad(self, date, account):
-        return Pad(date, account)
+    def pad(self, date, account, account_pad):
+        return Pad(date, account, account_pad)
+
+    def check(self, date, account, amount):
+        return Check(date, account, amount)
+
+    def transaction(self, date, txn, payee, description, postings):
+        pass #print('transaction', date, chr(txn), payee, description)
 
     def posting(self, account, amount_lot, amount, istotal, optflag):
         return Posting(account, amount_lot, amount, istotal, optflag)
@@ -80,7 +86,8 @@ class Builder(object):
 
 Open = namedtuple('Open', 'date account account_id currencies')
 Close = namedtuple('Close', 'date account')
-Pad = namedtuple('Pad', 'date account')
+Pad = namedtuple('Pad', 'date account account_pad')
+Check = namedtuple('Check', 'date account amount')
 Posting = namedtuple('Posting', 'account amount_lot amount istotal optflag')
 Transaction = namedtuple('Transaction', 'date txn payee description postings')
 
@@ -88,6 +95,5 @@ Transaction = namedtuple('Transaction', 'date txn payee description postings')
 def parse(filename):
     """Parse a beancount input file and return a list of transactions."""
     builder = Builder()
-    print(builder)
     _parser.parse(filename, builder)
     return builder.get_result()

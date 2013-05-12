@@ -25,6 +25,12 @@ void yyerror(char const *s)
 const char* getTokenName(int token);
 
 
+/* #define DECREF1(x)  Py_DECREF(x); */
+#define DECREF1(x1)
+#define DECREF2(x1, x2)
+#define DECREF3(x1, x2, x3)
+#define DECREF4(x1, x2, x3, x4)
+
 %}
 
 
@@ -130,9 +136,11 @@ const char* getTokenName(int token)
 %type <pyobj> currency_list
 %type <pyobj> open
 %type <pyobj> close
+%type <pyobj> check
 %type <pyobj> pad
 %type <pyobj> amount
 %type <pyobj> amount_lot
+%type <pyobj> lot
 
 
 /* Start symbol. */
@@ -161,10 +169,12 @@ eol : EOL
 transaction : DATE txn STRING eol posting_list
             {
                 $$ = BUILD("transaction", "ObOOO", $1, $2, Py_None, $3, $5);
+                DECREF3($1, $3, $5);
             }
             | DATE txn STRING PIPE STRING eol posting_list
             {
                 $$ = BUILD("transaction", "ObOOO", $1, $2, $3, $5, $7);
+                DECREF4($1, $3, $5, $7);
             }
 
 optflag : empty
@@ -176,105 +186,134 @@ optflag : empty
 posting : INDENT optflag ACCOUNT amount_lot eol
         {
             $$ = BUILD("posting", "OOOOb", $3, $4, Py_None, Py_False, $2);
+            DECREF2($3, $4);
         }
         | INDENT optflag ACCOUNT amount_lot AT amount eol
         {
             $$ = BUILD("posting", "OOOOb", $3, $4, $6, Py_False, $2);
+            DECREF3($3, $4, $6);
         }
         | INDENT optflag ACCOUNT amount_lot ATAT amount eol
         {
             $$ = BUILD("posting", "OOOOb", $3, $4, $6, Py_True, $2);
+            DECREF3($3, $4, $6);
         }
         | INDENT optflag ACCOUNT eol
         {
             $$ = BUILD("posting", "OOOOb", $3, Py_None, Py_None, Py_False, $2);
+            DECREF1($3);
         }
 
 posting_list : empty
              {
-                 $$ = Py_None; /* FIXME: Do I need to incref here? */
+                 Py_INCREF(Py_None);
+                 $$ = Py_None;
              }
              | posting_list posting
              {
                  $$ = BUILD("handle_list", "OO", $1, $2);
+                 DECREF2($1, $2);
              }
 
 currency_list : empty
               {
-                  $$ = Py_None; /* FIXME: Do I need to incref here? */
+                  Py_INCREF(Py_None);
+                  $$ = Py_None;
               }
               | CURRENCY
               {
                   $$ = BUILD("handle_list", "OO", Py_None, $1);
+                  DECREF1($1);
               }
               | currency_list COMMA CURRENCY
               {
                   $$ = BUILD("handle_list", "OO", $1, $3);
+                  DECREF2($1, $3);
               }
 
 begintag : BEGINTAG STRING
          {
              BUILD("begintag", "O", $2);
+             DECREF1($2);
          }
 
 endtag : ENDTAG STRING
        {
            BUILD("endtag", "O", $2);
+           DECREF1($2);
        }
 
 open : DATE OPEN ACCOUNT currency_list
      {
          $$ = BUILD("open", "OOOO", $1, Py_None, $3, $4);
+         DECREF3($1, $3, $4);
      }
      | DATE OPEN ACCOUNT STRING currency_list
      {
          $$ = BUILD("open", "OOOO", $1, $3, $4, $5);
+         DECREF4($1, $3, $4, $5);
      }
 
 close : DATE CLOSE ACCOUNT
       {
           $$ = BUILD("close", "OO", $1, $3);
+          DECREF2($1, $3);
       }
 
 pad : DATE PAD ACCOUNT ACCOUNT
     {
-        /* $$ = BUILD("pad", "OOO", $1, $3, $4); */
+        $$ = BUILD("pad", "OOO", $1, $3, $4);
+        DECREF3($1, $3, $4);
     }
 
 check : DATE CHECK ACCOUNT amount
       {
           $$ = BUILD("check", "OOO", $1, $3, $4);
+          DECREF3($1, $3, $4);
       }
 
 amount : NUMBER CURRENCY
        {
-         $$ = BUILD("amount", "OO", $1, $2);
+         PyObject* o = BUILD("amount", "OO", $1, $2);
+         $$ = o;
+         DECREF2($1, $2);
        }
 
 amount_lot : amount
+           {
+               $$ = BUILD("amount_lot", "OO", $1, Py_None);
+               DECREF1($1);
+           }
            | amount lot
            {
-               /* FIXME: here */
+               $$ = BUILD("amount_lot", "OO", $1, $2);
+               DECREF2($1, $2);
            }
 
 
 lot : LCURL amount RCURL
+    {
+        Py_INCREF(Py_None);
+        $$ = Py_None;         /* FIXME: TODO here */
+        DECREF1($2);
+    }
     | LCURL amount SLASH DATE RCURL
     {
-        /* FIXME: here */
-   }
+        Py_INCREF(Py_None);
+        $$ = Py_None;         /* FIXME: TODO here */
+        DECREF2($2, $4);
+    }
 
 
+/* FIXME: not sure we will actually need these at all... */
 price : DATE PRICE CURRENCY amount
 
+/* FIXME: remove this, this degrades nicely to an event with name "location". */
 location : DATE LOCATION STRING
 
 event : DATE EVENT STRING STRING
 
 note : DATE NOTE STRING
-/* { */
-/*  fmt.Printf("%#v\n", &$3) */
-/* } */
 
 entry : transaction
       | check

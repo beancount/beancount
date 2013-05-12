@@ -20,7 +20,7 @@ PyObject* builder = 0;
 
 
 /* FIXME: remove */
-#if 0 
+#if 0
 /* This function gets invoked by the parser to call methods on its builder.*/
 PyObject* build(char* rule_name, char* format, ...)
 {
@@ -41,6 +41,16 @@ PyObject* build(char* rule_name, char* format, ...)
 }
 #endif
 
+
+/* Check if the object is null; if so, report an error. */
+PyObject* checkNull(PyObject* o)
+{
+    if ( o == NULL ) {
+        PyErr_Print();
+        abort();
+    }
+    return o;
+}
 
 
 

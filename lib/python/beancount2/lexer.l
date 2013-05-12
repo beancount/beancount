@@ -11,8 +11,6 @@
 %option never-interactive
 %option warn
 %option bison-bridge
-%option outfile="lexer.c"
-%option header-file="lexer.h"
 /* %option reentrant */
 /* %option debug */
 /* %option stack */

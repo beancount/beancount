@@ -6,7 +6,10 @@
 
 extern PyObject* builder;
 
-#define BUILD(method_name, format, ...) \
-    PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);
+PyObject* checkNull(PyObject* o);
+
+#define BUILD(method_name, format, ...)                                                 \
+    checkNull( PyObject_CallMethod(builder, method_name, format, __VA_ARGS__) );
+
 
 #endif
