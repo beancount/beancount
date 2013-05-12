@@ -42,12 +42,8 @@ const char* getTokenName(int token);
 /* Collection of value types. */
 %union {
     char character;
-    char* string;
+    const char* string;
     PyObject* pyobj;
-    /* transaction *Transaction */
-    /* posting *Posting */
-    /* posting_list *list.List */
-    /* account *Account */
 }
 
 /* Types for terminal symbols */
@@ -127,14 +123,16 @@ const char* getTokenName(int token)
 
 /* Types for non-terminal symbols. */
 %type <character> txn
+%type <character> optflag
 %type <pyobj> transaction
 %type <pyobj> posting
 %type <pyobj> posting_list
 %type <pyobj> currency_list
 %type <pyobj> open
-%type <string> begintag
-%type <string> endtag
+%type <pyobj> close
+%type <pyobj> pad
 %type <pyobj> amount
+%type <pyobj> amount_lot
 
 
 /* Start symbol. */
@@ -162,37 +160,43 @@ eol : EOL
 
 transaction : DATE txn STRING eol posting_list
             {
-                $$ = PyObject_CallMethod(builder, "buildTransaction", "ObOO", $1, $2, Py_None, $3);
+                $$ = BUILD("transaction", "ObOOO", $1, $2, Py_None, $3, $5);
             }
             | DATE txn STRING PIPE STRING eol posting_list
             {
-                $$ = PyObject_CallMethod(builder, "buildTransaction", "ObOO", $1, $2, $3, $5);
+                $$ = BUILD("transaction", "ObOOO", $1, $2, $3, $5, $7);
             }
 
 optflag : empty
+        {
+            $$ = '\0';
+        }
         | TXNFLAG
 
 posting : INDENT optflag ACCOUNT amount_lot eol
         {
-            /* $$ = PyObject_CallMethod(builder, "buildPosting", "ObOO", $2, $3, $4); */
+            $$ = BUILD("posting", "OOOOb", $3, $4, Py_None, Py_False, $2);
         }
         | INDENT optflag ACCOUNT amount_lot AT amount eol
         {
+            $$ = BUILD("posting", "OOOOb", $3, $4, $6, Py_False, $2);
         }
         | INDENT optflag ACCOUNT amount_lot ATAT amount eol
         {
+            $$ = BUILD("posting", "OOOOb", $3, $4, $6, Py_True, $2);
         }
         | INDENT optflag ACCOUNT eol
         {
+            $$ = BUILD("posting", "OOOOb", $3, Py_None, Py_None, Py_False, $2);
         }
 
 posting_list : empty
              {
-               /* $$ = list.New() */
+                 $$ = Py_None; /* FIXME: Do I need to incref here? */
              }
              | posting_list posting
              {
-               /* $$.PushBack($2) */
+                 $$ = BUILD("handle_list", "OO", $1, $2);
              }
 
 currency_list : empty
@@ -201,50 +205,63 @@ currency_list : empty
               }
               | CURRENCY
               {
-                  $$ = PyObject_CallMethod(builder, "buildList", "OO", Py_None, $1);
+                  $$ = BUILD("handle_list", "OO", Py_None, $1);
               }
               | currency_list COMMA CURRENCY
               {
-                  $$ = PyObject_CallMethod(builder, "buildList", "OO", $1, $3);
+                  $$ = BUILD("handle_list", "OO", $1, $3);
               }
 
 begintag : BEGINTAG STRING
          {
-           /* $$ = $2 */
+             BUILD("begintag", "O", $2);
          }
 
 endtag : ENDTAG STRING
        {
-         /* $$ = $2 */
+           BUILD("endtag", "O", $2);
        }
 
 open : DATE OPEN ACCOUNT currency_list
      {
-         $$ = PyObject_CallMethod(builder, "buildOpen", "OOOO", $1, Py_None, $3, $4);
+         $$ = BUILD("open", "OOOO", $1, Py_None, $3, $4);
      }
      | DATE OPEN ACCOUNT STRING currency_list
      {
-         $$ = PyObject_CallMethod(builder, "buildOpen", "OOOO", $1, $3, $4, $5);
+         $$ = BUILD("open", "OOOO", $1, $3, $4, $5);
      }
 
 close : DATE CLOSE ACCOUNT
+      {
+          $$ = BUILD("close", "OO", $1, $3);
+      }
 
 pad : DATE PAD ACCOUNT ACCOUNT
+    {
+        /* $$ = BUILD("pad", "OOO", $1, $3, $4); */
+    }
 
 check : DATE CHECK ACCOUNT amount
+      {
+          $$ = BUILD("check", "OOO", $1, $3, $4);
+      }
 
 amount : NUMBER CURRENCY
        {
-         $$ = PyObject_CallMethod(builder, "buildAmount", "OO", $1, $2);
+         $$ = BUILD("amount", "OO", $1, $2);
        }
 
 amount_lot : amount
            | amount lot
+           {
+               /* FIXME: here */
+           }
+
 
 lot : LCURL amount RCURL
     | LCURL amount SLASH DATE RCURL
     {
-     /* fmt.Printf("%20v / %v\n", $2.str, $4.str) */
+        /* FIXME: here */
    }
 
 

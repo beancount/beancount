@@ -28,4 +28,4 @@ build: $(CROOT)/grammar.c $(CROOT)/grammar.h $(CROOT)/lexer.c $(CROOT)/lexer.h
 
 .PHONY: test
 test:
-	bean2-test $(TEST_LEDGER)
+	time bean2-test $(TEST_LEDGER)

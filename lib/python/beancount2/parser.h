@@ -5,8 +5,8 @@
 
 
 extern PyObject* builder;
-PyObject* build(PyObject* builder, const char* method_name, const char* string);
-PyObject* buildDate(PyObject* builder, const char* method_name, int year, int month, int day);
 
+#define BUILD(method_name, format, ...) \
+    PyObject_CallMethod(builder, method_name, format, __VA_ARGS__);
 
 #endif

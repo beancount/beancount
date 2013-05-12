@@ -18,49 +18,71 @@ class Currency:
         return '<%s>' % self.name
     __repr__ = __str__
 
-class Builder:
+class Builder(object):
+    
     def __init__(self):
-        pass
+        self.tags = []
 
-    def get_transactions(self):
+    def get_result(self):
+        """Return a list of the transactions.."""
         return None ## FIXME: todo
 
-    def parseDate(self, year, month, day):
+    def begintag(self, tag):
+        self.tags.append(tag)
+    
+    def endtag(self, tag):
+        self.tags.remove(tag)
+    
+
+    def DATE(self, year, month, day):
         return datetime.date(year, month, day)
 
-    def parseAccount(self, s):
+    def ACCOUNT(self, s):
         return s
 
-    def parseCurrency(self, s):
+    def CURRENCY(self, s):
         try:
             return CURRENCIES[s]
         except KeyError:
             ccy = CURRENCIES[s] = Currency(s)
             return ccy
 
-    def parseString(self, s):
-        return s[1:-1]
+    def STRING(self, s):
+        return s
 
-    def parseNumber(self, s):
+    def NUMBER(self, s):
         return Decimal(s)
 
-    def buildAmount(self, number, currency):
+    def amount(self, number, currency):
         return (number, currency)
 
-    def buildTransaction(self, date, txn, payee, description):
+    def transaction(self, date, txn, payee, description, postings):
         pass #print('transaction', date, chr(txn), payee, description)
 
-    def buildList(self, object_list, object):
+    def handle_list(self, object_list, object):
         if object_list is None:
             object_list = []
         object_list.append(object)
         return object_list
 
-    def buildOpen(self, date, account, accound_id, currencies):
-        return Open(date, account, accound_id, currencies)
+    def open(self, date, account, account_id, currencies):
+        return Open(date, account, account_id, currencies)
+
+    def close(self, date, account):
+        return Close(date, account)
+
+    def pad(self, date, account):
+        return Pad(date, account)
+
+    def posting(self, account, amount_lot, amount, istotal, optflag):
+        return Posting(account, amount_lot, amount, istotal, optflag)
 
 
 Open = namedtuple('Open', 'date account account_id currencies')
+Close = namedtuple('Close', 'date account')
+Pad = namedtuple('Pad', 'date account')
+Posting = namedtuple('Posting', 'account amount_lot amount istotal optflag')
+Transaction = namedtuple('Transaction', 'date txn payee description postings')
 
 
 def parse(filename):
@@ -68,4 +90,4 @@ def parse(filename):
     builder = Builder()
     print(builder)
     _parser.parse(filename, builder)
-    return builder.get_transactions()
+    return builder.get_result()

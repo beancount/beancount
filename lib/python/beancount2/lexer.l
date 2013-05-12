@@ -117,32 +117,33 @@ endtag		{ return ENDTAG; }
     int year = strtonl(yytext, 4);
     int month = strtonl(yytext+5, 2);
     int day = strtonl(yytext+8, 2);
-    yylval->pyobj = buildDate(builder, "parseDate", year, month, day);
+    yylval->pyobj = BUILD("DATE", "iii", year, month, day);
     return DATE;
 }
 
  /* Account names. */
  /* ([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)+ */
 (Assets|Liabilities|Equity|Income|Expenses|Misc)(:[A-Z][A-Za-z0-9\-]+)+		{
-    yylval->pyobj = build(builder, "parseAccount", yytext);
+    yylval->pyobj = BUILD("ACCOUNT", "s", yytext);
     return ACCOUNT;
 }
 
  /* Currencies. These are defined as uppercase only in order to disambiguate the syntax. */
 [A-Z][A-Z0-9\'\.]{1,10}		{
-    yylval->pyobj = build(builder, "parseCurrency", yytext);
+    yylval->pyobj = BUILD("CURRENCY", "s", yytext);
     return CURRENCY;
 }
 
  /* String literals. */
 \"[^\"]*\" 			{
-    yylval->pyobj = build(builder, "parseString", yytext);
+    yytext[strlen(yytext)-1] = '\0';
+    yylval->pyobj = BUILD("STRING", "s", &(yytext[1]));
     return STRING;
 }
 
  /* Numbers */
 [-+]?([0-9\.])+ 		{
-    yylval->pyobj = build(builder, "parseNumber", yytext);
+    yylval->pyobj = BUILD("NUMBER", "s", yytext);
     return NUMBER;
 }
 

@@ -1,31 +1,46 @@
+/* A Python extension module that invokes the parser defined in lexer.l and
+ * grammar.y. */
+
 #include <Python.h>
 #include <moduleobject.h>
-/* #include <datetime.h> */
-/* #include <string.h> */
+#include <ctype.h>
 
 #include "parser.h"
 #include "lexer.h"
 #include "parser.h"
 
-/* The bison header file does not contain this... silly. */
-int yyparse(void);
 
+/* The bison header file does not contain this... silly. */
+extern int yyparse(void);
 
 
 /* The current builder during parsing (as a global variable for now). */
 PyObject* builder = 0;
 
-/* This function gets invoked by the parser to call methods on its builder.*/
-PyObject* build(PyObject* builder, const char* method_name, const char* string)
-{
-    return PyObject_CallMethod(builder, (char*)method_name, "s", string);
-}
 
-/* A special builder for dates, because parsing using a format string is significantly slow. */
-PyObject* buildDate(PyObject* builder, const char* method_name, int year, int month, int day)
+
+/* FIXME: remove */
+#if 0 
+/* This function gets invoked by the parser to call methods on its builder.*/
+PyObject* build(char* rule_name, char* format, ...)
 {
-    return PyObject_CallMethod(builder, (char*)method_name, "iii", year, month, day);
+    va_list va;
+    PyObject* result;
+
+    char method_name[128];
+    strcpy(method_name, "parse_");
+    strcpy(method_name+6, rule_name);
+
+    /* Note: we use the global variable 'builder' here. Revise this in the
+     * future. */
+    va_start(va, format);
+    result = PyObject_CallMethod(builder, method_name, format, va);
+    va_end(va);
+
+    return result;
 }
+#endif
+
 
 
 
