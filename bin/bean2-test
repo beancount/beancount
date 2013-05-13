@@ -3,6 +3,8 @@
 (This is the main test program I fiddle with during development.)
 """
 import argparse
+import contextlib
+import time
 from collections import defaultdict
 
 import beancount2.parser
@@ -19,9 +21,16 @@ def is_balance_sheet_account(account):
     return get_account_type(account) in ('Assets', 'Liabilities', 'Equity')
 
 
+@contextlib.contextmanager
+def print_time(operation):
+    t1 = time.time()
+    yield
+    t2 = time.time()
+    print(">>>>> Operation: '{}'  Time: {:.0f}ms".format(operation, (t2 - t1)*1000))
+
+
 
 #-------------------------------------------------------------------------------
-
 
 def main():
     parser = argparse.ArgumentParser(__doc__.strip())
@@ -40,14 +49,15 @@ def main():
         beancount2.parser.lexer_dump(opts.filename, sys.stdout)
         return
 
-    entries = beancount2.parser.parse(opts.filename)
+    with print_time('parse'):
+        entries = beancount2.parser.parse(opts.filename)
 
     if opts.verbose:
         for txn in entries:
             print(txn)
     entries.sort(key=lambda x: x.date)
 
-    test_realize(entries)
+    # test_realize(entries)
     # print_tags(entries)
 
 
@@ -56,11 +66,16 @@ def test_realize(entries):
     for entry in entries:
         if not isinstance(entry, Transaction):
             continue
-        if not entry.postings:
-            print(entry)
-        # for posting in entry.postings:
-        #     inventory = accounts_map[posting.account.name]
-        #     print(inventory)
+
+        print('------------------------', entry)
+        for posting in entry.postings:
+            inventory = accounts_map[posting.account.name]
+            print(posting)
+            print(inventory)
+            # inventory.add_position(posting.position)
+            # print(inventory)
+            # print()
+
 
 
 

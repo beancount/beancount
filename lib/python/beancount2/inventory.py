@@ -65,12 +65,17 @@ class Position:
         self.number = number
 
     def __str__(self):
-        return 'Position({}, {})'.format(self.lot, self.number)
+        return 'Position({}, {})'.format(self.number, self.lot)
+
+    def get_amount(self):
+        return Amount(self.number, self.lot.currency)
 
     def add(self, number):
         self.number += number
-        if self.number < 0:
-            raise ValueError("Negative position: {}".format(self))
+
+        # FIXME: We need for some accounts to have inventories that may not go negative, needs to warn, needs to pad, to get fixed properly.
+        # if self.number < 0:
+        #     raise ValueError("Negative position: {}".format(self))
 
 
 
@@ -91,6 +96,21 @@ class Inventory:
                 position.number, lot.currency, cost_string, lot.lot_date))
         return 'Inventory( {} )'.format(', '.join(lot_strings))
 
+    def __bool__(self):
+        return bool(self.positions)
+
+    def is_empty(self):
+        return not bool(self.positions)
+
+    def __len__(self):
+        return len(self.positions)
+
+    def is_small(self, epsilon):
+        for position in self.positions:
+            if position.number > epsilon:
+                return False
+        return True
+
     def get_amounts(self):
         """Return a list of Amounts (ignoring cost)."""
         return [Amount(position.number, position.lot.currency)
@@ -107,6 +127,16 @@ class Inventory:
                 cost_inventory.add(mult_amount(cost, position.number))
         return cost_inventory.get_amounts()
 
+    def get_positions(self):
+        "Return the positions in this inventory."
+        return self.positions
+
+    # def extract_position(self):
+    #     """Convert this inventory in a single position, if possible. if
+    #     not possible, this returns None."""
+    #     if len(self.positions) == 1:
+    #         return self.positions[0]
+
     def copy(self):
         return deepcopy(self)
 
@@ -121,7 +151,7 @@ class Inventory:
         return found
 
     def add(self, amount, cost=None, lot_date=None):
-        """Add or substract with strict lot matching."""
+        """Add using position components (with strict lot matching)."""
         assert isinstance(amount, (NoneType, Amount))
         assert isinstance(cost, (NoneType, Amount))
         assert isinstance(lot_date, (NoneType, date))
@@ -130,3 +160,11 @@ class Inventory:
         position.add(amount.number)
         if position.number == ZERO:
             self.positions.remove(position)
+
+    # def add_position(self, new_position):
+    #     """Add using a position (with strict lot matching)."""
+    #     assert isinstance(new_position, Position)
+    #     position = self.find_create(new_position.lot)
+    #     position.add(new_position.number)
+    #     if position.number == ZERO:
+    #         self.positions.remove(position)

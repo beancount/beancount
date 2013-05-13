@@ -1,7 +1,8 @@
 #!/usr/bin/env make
 
 # Just my big old test ledger, converted automatically.
-TEST_LEDGER = $(HOME)/q/office/accounting/tmp/syntax.beancount
+TEST_OLDINPUT = $(HOME)/q/office/accounting/blais.ledger
+TEST_LEDGER = $(HOME)/q/office/accounting/blais.beancount
 
 all: build
 
@@ -29,7 +30,7 @@ build: $(CROOT)/grammar.c $(CROOT)/grammar.h $(CROOT)/lexer.c $(CROOT)/lexer.h
 
 .PHONY: test
 test:
-	time bean2-test $(TEST_LEDGER)
+	bean2-test $(TEST_LEDGER)
 
 dump_lexer:
 	bean2-dump-lexer $(TEST_LEDGER)
@@ -41,7 +42,7 @@ debug:
 	gdb --args /usr/local/bin/python3 /home/blais/p/beancount/bin/bean2-test $(TEST_LEDGER)
 
 convert:
-	bean2-v1tov2 $(HOME)/q/office/accounting/blais.ledger > $(TEST_LEDGER)
+	bean2-v1tov2 $(TEST_OLDINPUT) > $(TEST_LEDGER)
 
 unittest unittests:
 	nosetests-3.3 -s lib/python/beancount2

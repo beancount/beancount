@@ -21,12 +21,12 @@
 void yyerror(char const* message)
 {
     /* fprintf(stderr, "LOCTEST %d %d: ", yylloc.first_line, s); */
-    fprintf(stderr, "%s: %s\n", "/home/blais/q/office/accounting/tmp/syntax.beancount", message);
+    fprintf(stderr, "%s: %s\n", "/home/blais/q/office/accounting/blais.ledger", message);
 }
 
 void report_error(char const* message, YYLTYPE* yylloc)
 {
-    fprintf(stderr, "%s:%d:: %s\n", "/home/blais/q/office/accounting/tmp/syntax.beancount",
+    fprintf(stderr, "%s:%d:: %s\n", "/home/blais/q/office/accounting/blais.ledger",
             yylloc->first_line, message);
 }
 

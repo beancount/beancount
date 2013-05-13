@@ -3,12 +3,19 @@
 Basic test to invoke the beancount parser.
 """
 import datetime
+import copy
+import logging
 from cdecimal import Decimal
 from collections import namedtuple
 
 from beancount2 import _parser
-from beancount2.inventory import Amount, Lot, Position
+from beancount2.inventory import Amount, mult_amount
+from beancount2.inventory import Lot, Position, Inventory
 
+
+__sanity_checks__ = False
+
+ZERO = Decimal()
 
 # The location in a source file where the directive was found.
 FileLocation = namedtuple('FileLocation', 'filename lineno')
@@ -25,7 +32,7 @@ Price       = namedtuple('Price'       , 'fileloc date currency amount')
 
 # Basic data types.
 Account = namedtuple('Account', 'name')
-Posting = namedtuple('Posting', 'account position price istotal optflag')
+Posting = namedtuple('Posting', 'account position price optflag')
 
 
 class ParserError(RuntimeError):
@@ -43,14 +50,14 @@ class Builder(object):
         self.tags = []
 
         # The result from running the parser.
-        self.result = None
+        self.entries = None
 
         # Temporary accounts map.
         self.accounts = {}
 
-    def store_result(self, result):
+    def store_result(self, entries):
         """Start rule stores the final result here."""
-        self.result = result
+        self.entries = entries
 
 
     def begintag(self, tag):
@@ -128,7 +135,11 @@ class Builder(object):
         return Note(fileloc, date, comment)
 
     def posting(self, account, position, price, istotal, optflag):
-        return Posting(account, position, price, istotal, optflag)
+        # If the price is specified for the entire amount, compute the effective
+        # price here and forget about that detail of the input syntax.
+        if istotal:
+            price = Amount(price.number / position.number, price.currency)
+        return Posting(account, position, price, optflag)
 
     def transaction(self, filename, lineno, date, flag, payee, description, tags, postings):
         fileloc = FileLocation(filename, lineno)
@@ -144,13 +155,128 @@ class Builder(object):
         if self.tags:
             ctags.update(self.tags)
 
+        # print('{}:{}: {}'.format(fileloc.filename, fileloc.lineno, description))
+        postings = balance_postings(fileloc, postings)
+
+        # Check that the balance actually is empty.
+        if __sanity_checks__:
+            residual = compute_residual(postings)
+            assert residual.is_small(SMALL_EPSILON), residual
+
         return Transaction(fileloc, date, chr(flag), payee, description, ctags, postings)
+
 
 def parse(filename):
     """Parse a beancount input file and return a list of transactions."""
     builder = Builder()
     _parser.parse(filename, builder)
-    return builder.result
+    return copy.copy(builder.entries)
+
+
+SMALL_EPSILON = Decimal('0.004') # FIXME: This should probably be a little smaller.
+
+def compute_residual(postings):
+    """Compute the residual of a set of complete postings.
+    This is used to cross-check a balanced transaction."""
+
+    inventory = Inventory()
+    for posting in postings:
+        position = posting.position
+        lot = position.lot
+
+        # It the position has a cost, use that to balance this posting.
+        if lot.cost:
+            amount = mult_amount(lot.cost, position.number)
+
+        # If there is a price, use that to balance this posting.
+        elif posting.price:
+            amount = mult_amount(posting.price, position.number)
+
+        # Otherwise, just use the amount itself.
+        else:
+            amount = position.get_amount()
+        inventory.add(amount)
+
+    return inventory
+
+
+def balance_postings(fileloc, postings):
+    """Replace and complete postings that have no amount specified on them.
+    Return a new list of balanced postings, with the incomplete postings
+    replaced with completed ones.
+    (The 'postings' parameter may be modified or destroyed for performance;
+    don't reuse it.)"""
+
+    # The list of postings without and with an explicit position.
+    auto_postings_indices = []
+
+    # Currencies seen in complete postings.
+    currencies = set()
+
+    # An inventory to accumulate the residual balance.
+    inventory = Inventory()
+
+    for i, posting in enumerate(postings):
+        position = posting.position
+
+        if position is None:
+            auto_postings_indices.append(i)
+        else:
+            lot = position.lot
+            currencies.add(lot.currency)
+
+            # It the position has a cost, use that to balance this posting.
+            if lot.cost:
+                amount = mult_amount(lot.cost, position.number)
+
+            # If there is a price, use that to balance this posting.
+            elif posting.price:
+                amount = mult_amount(posting.price, position.number)
+
+            # Otherwise, just use the amount itself.
+            else:
+                amount = position.get_amount()
+            inventory.add(amount)
+
+    # If there are auto-postings, fill them in.
+    if auto_postings_indices:
+        # If there are too many such postings, we can't do anything, barf.
+        if len(auto_postings_indices) > 1:
+            raise ParserError(fileloc, "Too many auto-postings; cannot fill in.")
+
+        index = auto_postings_indices[0]
+        old_posting = postings[index]
+        assert old_posting.price is None
+
+        residual_positions = inventory.get_positions()
+
+        # If there are no residual positions, we want to still insert a posting
+        # but with a zero position, so that the posting shows up anyhow. We
+        # insert one such posting for each currency seen in the complete
+        # postings.
+        new_postings = []
+        if not residual_positions:
+            for currency in currencies:
+                position = Position(Lot(currency, None, None), ZERO)
+                new_postings.append(
+                    Posting(old_posting.account, position, None, old_posting.optflag))
+        else:
+            # Convert all the residual positions in inventory into a posting for
+            # each position.
+            for position in residual_positions:
+                position.number = -position.number
+                new_postings.append(
+                    Posting(old_posting.account, position, None, old_posting.optflag))
+
+        postings[index:index+1] = new_postings
+
+    else:
+        # Detect complete sets of postings that have residual balance.
+        if not inventory.is_small(SMALL_EPSILON):
+            raise ParserError(fileloc, "Transaction does not balance: {}.".format(inventory))
+
+    return postings
+
 
 
 class LexOnlyBuilder(object):
