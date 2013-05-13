@@ -25,7 +25,7 @@ Open        = namedtuple('Open'        , 'fileloc date account account_id curren
 Close       = namedtuple('Close'       , 'fileloc date account')
 Pad         = namedtuple('Pad'         , 'fileloc date account account_pad')
 Check       = namedtuple('Check'       , 'fileloc date account amount')
-Transaction = namedtuple('Transaction' , 'fileloc date flag payee description tags postings')
+Transaction = namedtuple('Transaction' , 'fileloc date flag payee narration tags postings')
 Event       = namedtuple('Event'       , 'fileloc date type description')
 Note        = namedtuple('Note'        , 'fileloc date comment')
 Price       = namedtuple('Price'       , 'fileloc date currency amount')
@@ -141,7 +141,7 @@ class Builder(object):
             price = Amount(price.number / position.number, price.currency)
         return Posting(account, position, price, flag)
 
-    def transaction(self, filename, lineno, date, flag, payee, description, tags, postings):
+    def transaction(self, filename, lineno, date, flag, payee, narration, tags, postings):
         fileloc = FileLocation(filename, lineno)
 
         # Detect when a transaction does not have at least two legs.
@@ -156,11 +156,11 @@ class Builder(object):
             ctags.update(self.tags)
 
         # Balance incomplete auto-postings.
-        # print('{}:{}: {}'.format(fileloc.filename, fileloc.lineno, description))
+        # print('{}:{}: {}'.format(fileloc.filename, fileloc.lineno, narration))
         postings, inserted = balance_incomplete_postings(fileloc, postings)
 
         # Create the transaction.
-        transaction = Transaction(fileloc, date, chr(flag), payee, description, ctags, postings)
+        transaction = Transaction(fileloc, date, chr(flag), payee, narration, ctags, postings)
 
         # Check that the balance actually is empty.
         if __sanity_checks__:
