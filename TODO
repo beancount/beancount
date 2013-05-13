@@ -2,6 +2,9 @@
 beancount: TODO
 * Ideas and random TODO Items
 
+  - Clean up: add unit tests for everything, and docstrings everywhere.
+    This new version will be really, really clean!
+
   - You need to clean up the memory of the strings created; call free() on each
     string in the rules.
 

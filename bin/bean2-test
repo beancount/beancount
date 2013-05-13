@@ -6,6 +6,7 @@ import argparse
 import contextlib
 import io
 import re
+import sys
 import time
 from collections import defaultdict
 
@@ -69,11 +70,23 @@ def main():
         return
 
     with print_time('parse'):
-        entries = beancount2.parser.parse(opts.filename)
-        entries.sort(key=lambda x: x.date)
-
+        ledger = beancount2.parser.parse(opts.filename)
+    
     with print_time('realize'):
-        accounts_map = test_realize(entries)
+        accounts_map = test_realize(ledger.entries)
+
+    if 1:
+        # list(map(print, ledger.accounts.get_names()))
+        ledger.accounts.dump(sys.stdout)
+
+
+        # account = ledger.accounts.get('Assets:CA:RBC-Investing:RRSP:AIS512')
+        # print(account.name)
+        # print(account.parent.name)
+        # print(account.parent.parent.name)
+        # print(account.parent.parent.parent.parent.parent.name)
+        
+
 
     # Print all the balances
     if 0:
@@ -81,7 +94,7 @@ def main():
         for account, inventory in sorted(accounts_map.items()):
             print("{:{:d}s} {}".format(account, maxlen, inventory))
 
-    # for txn in filter_type(entries, Transaction):
+    # for txn in filter_type(ledger.entries, Transaction):
     #     if not re.search('GOOGLE INC', txn.description):
     #         continue
     #     print('-' * 80)
@@ -90,10 +103,10 @@ def main():
     #     print(residual)
 
     if opts.verbose:
-        for txn in entries:
+        for txn in ledger.entries:
             print(pretty_transaction(txn))
 
-    # print_tags(entries)
+    # print_tags(ledger.entries)
 
 
 def test_realize(entries):

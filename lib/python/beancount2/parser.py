@@ -9,6 +9,7 @@ from cdecimal import Decimal
 from collections import namedtuple
 
 from beancount2 import _parser
+from beancount2 import render_tree
 from beancount2.inventory import Amount, mult_amount
 from beancount2.inventory import Lot, Position, Inventory
 
@@ -31,7 +32,7 @@ Note        = namedtuple('Note'        , 'fileloc date comment')
 Price       = namedtuple('Price'       , 'fileloc date currency amount')
 
 # Basic data types.
-Account = namedtuple('Account', 'name')
+Account = namedtuple('Account', 'name parent children')
 Posting = namedtuple('Posting', 'account position price flag')
 
 
@@ -43,17 +44,89 @@ class ParserError(RuntimeError):
             fileloc.filename, fileloc.lineno, message))
 
 
+def account_parent_name(name):
+    """Return the name of the parent account of the given account."""
+    components = name.split(':')
+    components.pop(-1)
+    return ':'.join(components)
+
+def account_leaf_name(name):
+    return name.split(':')[-1]
+
+
+class AccountTree:
+    """A container for a hierarchy of accounts."""
+
+    def __init__(self):
+        # The root note of all accounts.
+        self.root = Account('', None, [])
+
+        # A mapping of (name, Account).
+        self.accounts_map = {'': self.root}
+
+    def dump(self, out_file):
+        string = render_tree.render(self.root,
+                                    lambda x: account_leaf_name(x.name),
+                                    lambda x: x.children)
+        print(string, file=out_file)
+
+    def get(self, name):
+        return self.accounts_map[name]
+
+    def get_names(self):
+        return sorted(self.accounts_map)
+
+    def get_or_create(self, name):
+        try:
+            account = self.accounts_map[name]
+        except KeyError:
+            parent = self.get_or_create(account_parent_name(name))
+            account = Account(name, parent, [])
+            parent.children.append(account)
+            self.accounts_map[name] = account
+        return account
+
+
+
+# FIXME: it would be nice to be able to just provide a list of entries in order
+# to create a Ledger, and for the subtree of accounts to just recreate itself
+# automatically from that list of entries. Is the tree of accounts part of a
+# Realization?
+#
+# Or maybe just the 'children' part of an account is part of the Realization?
+#
+# Maybe just 'entries' is the basic unit, and 'Ledger' *is* the realization?
+
+class Ledger:
+    """A class that contains a particular list of entries and an
+    associated account tree. Note: the account tree is redundant and
+    could be recalculated from the list of entries."""
+
+    def __init__(self, entries, accounts):
+
+        # A list of sorted entries in this ledger.
+        assert isinstance(entries, list)
+        entries.sort(key=lambda x: x.date)
+        self.entries = entries
+
+        # A tree of accounts.
+        assert isinstance(accounts, AccountTree)
+        self.accounts = accounts
+
+
 class Builder(object):
+    """A builder used by the lexer and grammer parser as callbacks to create
+    the data objects corresponding to rules parsed from the input file."""
 
     def __init__(self):
         # A stack of the current active tags.
         self.tags = []
 
-        # The result from running the parser.
+        # The result from running the parser, a list of entries.
         self.entries = None
 
         # Temporary accounts map.
-        self.accounts = {}
+        self.account_tree = AccountTree()
 
     def store_result(self, entries):
         """Start rule stores the final result here."""
@@ -70,21 +143,17 @@ class Builder(object):
     def DATE(self, year, month, day):
         return datetime.date(year, month, day)
 
-    def ACCOUNT(self, s):
-        try:
-            account = self.accounts[s]
-        except KeyError:
-            account = self.accounts[s] = Account(s)
-        return account
+    def ACCOUNT(self, account_name):
+        return self.account_tree.get_or_create(account_name)
 
-    def CURRENCY(self, s):
-        return s
+    def CURRENCY(self, currency_name):
+        return currency_name
 
-    def STRING(self, s):
-        return s
+    def STRING(self, string):
+        return string
 
-    def TAG(self, s):
-        return s
+    def TAG(self, tag):
+        return tag
 
     def NUMBER(self, s):
         return Decimal(s)
@@ -171,10 +240,11 @@ class Builder(object):
 
 
 def parse(filename):
-    """Parse a beancount input file and return a list of transactions."""
+    """Parse a beancount input file and return Ledger with the list of
+    transactions and tree of accounts."""
     builder = Builder()
     _parser.parse(filename, builder)
-    return copy.copy(builder.entries)
+    return Ledger(builder.entries, builder.account_tree)
 
 
 
