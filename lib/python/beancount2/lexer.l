@@ -95,7 +95,7 @@ int strtonl(const char* buf, size_t nchars);
 [*!&#?%]	{
     if ( yy_line_tokens != 1 ) {
         yylval->character = yytext[0];
-        return TXNFLAG;
+        return FLAG;
     }
     else {
         yy_skip_line();

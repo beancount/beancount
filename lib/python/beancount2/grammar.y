@@ -84,7 +84,7 @@ const char* getTokenName(int token);
 %token <string> EQUAL      /* = */
 %token <string> COMMA      /* , */
 %token <string> SLASH      /* / */
-%token <character> TXNFLAG /* Valid characters for flags */
+%token <character> FLAG    /* Valid characters for flags */
 %token TXN                 /* 'txn' keyword */
 %token CHECK               /* 'check' keyword */
 %token OPEN                /* 'open' keyword */
@@ -121,7 +121,7 @@ const char* getTokenName(int token)
         case EQUAL    : return "EQUAL";
         case COMMA    : return "COMMA";
         case SLASH    : return "SLASH";
-        case TXNFLAG  : return "TXNFLAG";
+        case FLAG     : return "FLAG";
         case TXN      : return "TXN";
         case CHECK    : return "CHECK";
         case OPEN     : return "OPEN";
@@ -182,7 +182,7 @@ txn : TXN
     {
         $$ = '*';
     }
-    | TXNFLAG
+    | FLAG
     {
         $$ = $1;
     }
@@ -216,7 +216,7 @@ optflag : empty
         {
             $$ = '\0';
         }
-        | TXNFLAG
+        | FLAG
 
 posting : INDENT optflag ACCOUNT position eol
         {

@@ -1,6 +1,5 @@
-=====================
-   beancount: TODO
-=====================
+-*- mode: org -*-
+beancount: TODO
 
 .. contents::
 ..
@@ -11,8 +10,10 @@
     4  Idea for Integrating the Cost Basis in Beancount
 
 
-Beancount (Accounting)
-======================
+* TODO items
+
+  - You need to clean up the memory of the strings created; call free() on each
+    string in the rules.
 
   - Set a correct filename in grammar.y
   - When an error occurs, skip the lexer to the next empty line and recommence.
@@ -27,11 +28,11 @@ Beancount (Accounting)
   - Copy converter into the new beancount
 
   - Propagate exception from Python
-  - Add filename/lineno to error reporting
 
-  - Add tags parsing
+  - Add lineno is incorrect, it points to the next entry, not the previous one,
+    fix this bug.
 
-  - Add filename and lineno to the new version
+
 
   - Use that beautiful new font from Tactile in the new rendering. Totally worth
     it.
@@ -51,12 +52,6 @@ Beancount (Accounting)
   - Create importer library support in Python for writing beancount importers.
     See OANDA script to being. Formatting transactions should be code in common.
     Finding accounts with ids too.
-
-  - Write a C parser with boost::python bindings.
-
-  - How does cdecimal work? Can I use from C?
-
-  - Write all the new beancount in Python 3!
 
   - Dont special case org-mode... Aything that doesnt start with a date or
     pushtag/poptag should be skipped; this should work with LaTeX or any
@@ -639,8 +634,7 @@ Ideas
 
 
 
-Links
------
+* Links
 
 Description of a data model very similar to my idea.
 http://homepages.tcp.co.uk/~m-wigley/gc_wp_ded.html
@@ -649,8 +643,7 @@ http://homepages.tcp.co.uk/~m-wigley/gc_wp_ded.html
 
 
 
-Redesign
-========
+* Redesign
 
 Here is an idea for a redesign:
 
@@ -662,8 +655,7 @@ Here is an idea for a redesign:
 
 
 
-Idea for Integrating the Cost Basis in Beancount
-================================================
+* Idea for Integrating the Cost Basis in Beancount
 
 - Every account carries a cost basis.
 
@@ -708,3 +700,46 @@ Syntax
 
 Test: Items of the same kind with and without cost basis
 Test: Multiple items of different types with a cost basis in the same account
+
+
+
+* New features in Beancount v2 (complete rewrite)
+
+- Implemented in Python 3
+
+- Internal data structures are more functional, immutable, allowing you to more
+  easily create scripts that use the in-memory data. Overall, the new code is
+  way simpler and much easier to understand because of this. It's actually
+  become dead simple.
+
+- New, simplified, and more consistent (and rigid) syntax will make it possible
+  to add more features in the future, and to have parsers in other languages too
+  (e.g. Go).
+
+- Booking trades with capital gain tracking should now work.
+
+- The new parser is written in C, so it is much much faster, and future changes
+  will be easier
+
+- The new web server fxi
+
+- Design flaws were fixed
+
+- Various outputs to text, csv, and xls are now supported.
+
+- There is no need to filter ahead of time
+
+- The input file is monitored by the server, and can be automatically reloaded.
+  This makes it easier to just start the web server, then edit the file to
+  update what you need.
+
+- There is no need to specify a period anymore; the interface is able to
+  realize any required periods, and the GUI provides access to most common
+  cross-sections (all, by year, by tag, transactions with bookings, etc.).
+
+- Balance sheet amounts can now reported in terms of book values.
+
+- Debit accounts can now be rendered with positive numbers (color-coded).
+
+- Client-side javascript has been added for a neater, more compact rendering of
+  journals.
