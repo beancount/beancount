@@ -1,57 +1,15 @@
 -*- mode: org -*-
 beancount: TODO
-
-.. contents::
-..
-    1  Beancount (Accounting)
-    2  Ideas
-      2.1  Links
-    3  Redesign
-    4  Idea for Integrating the Cost Basis in Beancount
-
-
-* TODO items
+* Ideas and random TODO Items
 
   - You need to clean up the memory of the strings created; call free() on each
     string in the rules.
 
-  - Set a correct filename in grammar.y
   - When an error occurs, skip the lexer to the next empty line and recommence.
 
   - Support a mode for the lexer to spit out its results on stdout, so that we
     can cross-check with parsers in other languages.
 
-  - Don't support Misc:* accounts... remove those from my ledger. Keep it simple.
-
-  - Watch all FIXMEs
-
-  - Copy converter into the new beancount
-
-  - Propagate exception from Python
-
-  - Add lineno is incorrect, it points to the next entry, not the previous one,
-    fix this bug.
-
-
-
-  - Use that beautiful new font from Tactile in the new rendering. Totally worth
-    it.
-
-  - Challenge: Can I compute IRR return on my condo accurately?
-    TODO: Add benefits received as an Income, as transactions.
-    You should be able to compute the IRR of any Ledger!
-
-  - Challenge: Can I automatically compute my taxation rate for every year?
-
-  - Challenge: Can I obtain a list of my assets at any time?
-
-  - Add syntax for tags, as :TagName, and convert all the @d039f548 to
-    :d039f548, these linked transactions just become like tags. Maybe ::d039f548
-    is not listed and :d039f548 is listed, or something like that.
-
-  - Create importer library support in Python for writing beancount importers.
-    See OANDA script to being. Formatting transactions should be code in common.
-    Finding accounts with ids too.
 
   - Dont special case org-mode... Aything that doesnt start with a date or
     pushtag/poptag should be skipped; this should work with LaTeX or any
@@ -59,8 +17,6 @@ beancount: TODO
 
   - With the new format... support includes, it makes a lot more sense to do
     that now!
-
-  - The syntax should support multiline strings naturally...
 
   - Whether an account shows up in a particular Ledger (realization) really only
     should depend on whether the account was open during the period (we now have
@@ -89,7 +45,7 @@ beancount: TODO
 
        -4 GOOG {790.83 USD}
 
-    It's actually a lot more accurate...
+    It's actually a lot more accurate to what's going on...
 
   - Constrain all accounts to begin with the 6 categories.
 
@@ -97,17 +53,9 @@ beancount: TODO
     like RRSP contributsions. There's no need to do anything else special, just
     goes to/from some Misc accounts.
 
-
-  - Remove support for virtual postings, hack not needed anymore!
-  - Remove support for BOOK <> IN ... do it now!
-
-
   - Support Ledger's aliases?
   - Support Ledger's "root account"?  I can only see it being useful for
     includes.
-
-  - Change my syntax: start with date no matter what, everything has a date,
-    simpler
 
   - Rename actual and effective to date and aux-date, like Ledger, I'm not even
     sure we do anything with the aux-date actually.
@@ -368,12 +316,6 @@ reports:
     end, both. Perhaps the "both" statement is only in report foramt.
 
 
-trade booking:
-
-  - beancount: figure out how to solve trades with share splits.
-
-
-
 main focus:
 
 - beancount: Add a page for the hedged values of everything.
@@ -391,12 +333,7 @@ main focus:
 - 'Tag' should be renamed 'project' (pretty standard naming).
 
 
-
-
-
 parser:
-
-- Bug: A transaction without postings should barf.
 
 - Bug: Invalid account names should only be reported once.
 
@@ -572,28 +509,79 @@ serve:
   This way, I wouldn't even have to log in ssh in order to update the
   in-memory database...
 
-- BUG: There is a JavaScrap bug with collapsing the tree nodes in the
-  ranges page.
-
 - We really should display the code/check number in the web register
   output.
 
 
-reporting:
+* Documentation
 
-- Implement `--code-as-payee' combined with `--by-payee', this
-  provides an interesting view.
+  - Write a simple cheat-sheet with an overview of the syntax
 
-  Implement a view ...
+  - Write a series of real-life problems solved. This should be really much
+    more helpful than boring docs.
 
-  * By code
-  * By payee
+* Future
+
+  - The syntax should support multiline strings naturally...
 
 
+* Bugs
+
+  - Propagate exception from Python
+
+  - Add lineno is incorrect, it points to the next entry, not the previous one,
+    fix this bug.
+
+  - Set a correct filename in grammar.y
+
+  - Fix all FIXMEs
+
+* Web Server
+
+  - Use that beautiful new font from Tactile in the new rendering. Totally worth
+    it.
+
+  - Render balance sheet/ income statement cells with two numbers for parent
+    nodes, so that when you collapse a node, all the amounts of its children sum
+    up automatically and display in its cell. You should have a consistent
+    report regardless of whether nodes are collapsed or not. This will require
+    some JavaScript effort.
 
 
-Ideas
-=====
+* Challenges
+
+  - Challenge: Can I compute IRR return on my condo accurately?
+    TODO: Add benefits received as an Income, as transactions.
+    You should be able to compute the IRR of any Ledger!
+
+  - Challenge: Can I automatically compute my taxation rate for every year?
+
+  - Challenge: Can I obtain a list of my assets at any time?
+
+* Fixes to Ledger
+
+  - Convert all the @d039f548 to
+    :d039f548, these linked transactions just become like tags. Maybe ::d039f548
+    is not listed and :d039f548 is listed, or something like that.
+
+* Importers Library
+
+  - Create importer library support in Python for writing beancount importers.
+    See OANDA script to being. Formatting transactions should be code in common.
+    Finding accounts with ids too.
+
+  - Write some smarter code to identify which transactions have alreader been
+    imported in the ledger. Do not rely on checks. This means that the importers
+    should create incomplete transaction objects and supply that to this
+    function, which will then attempt to identify for each of the supplied
+    transactions, which ones are already there.
+
+  - Given some incomplete transactions, complete them heuristically based on
+    previous contents of the ledger. This should make import a lot easier. This
+    should be generic and work across all importers, a single function call.
+
+
+* Ideas
 
 - Create a script to support generating lists of file locations for
   navigating the input file in a certain order.
@@ -630,29 +618,6 @@ Ideas
   too.
 
 - You should be able to click on a payee to view its transactions.
-
-
-
-
-* Links
-
-Description of a data model very similar to my idea.
-http://homepages.tcp.co.uk/~m-wigley/gc_wp_ded.html
-
-
-
-
-
-* Redesign
-
-Here is an idea for a redesign:
-
-  The Ledger object should always contain all the transactions.
-  Instead of filtering the postings on input, you should create
-  specialized iterator objects that are used to filter the postings on
-  the fly. This would allow removing all the special shit that needs
-  to be ordered correctly, that happens at load-time.
-
 
 
 * Idea for Integrating the Cost Basis in Beancount
@@ -705,7 +670,7 @@ Test: Multiple items of different types with a cost basis in the same account
 
 * New features in Beancount v2 (complete rewrite)
 
-- Implemented in Python 3
+- Implemented in Python 3, from scratch.
 
 - Internal data structures are more functional, immutable, allowing you to more
   easily create scripts that use the in-memory data. Overall, the new code is
@@ -721,25 +686,45 @@ Test: Multiple items of different types with a cost basis in the same account
 - The new parser is written in C, so it is much much faster, and future changes
   will be easier
 
-- The new web server fxi
+- The new web server fixes annoying rendering issues.
 
-- Design flaws were fixed
+  * Balance sheet amounts can now reported in terms of book values.
+  * Debit accounts can now be rendered with positive numbers (color-coded).
+  * The internal data structure changes are much more general, and allow, for
+    instance, creating a balance sheet at any point in time. In particular, you
+    can have a balance sheet at the beginning and end of an exercise.
 
-- Various outputs to text, csv, and xls are now supported.
+- Some internal design flaws were fixed, like checks on filtered ledgers showing
+  up from incorrect periods.
 
-- There is no need to filter ahead of time
+- Various outputs to text, csv, and xls are now supported for easier sharing.
 
 - The input file is monitored by the server, and can be automatically reloaded.
   This makes it easier to just start the web server, then edit the file to
   update what you need.
 
-- There is no need to specify a period anymore; the interface is able to
+- There is no need to specify a filter period anymore; the interface is able to
   realize any required periods, and the GUI provides access to most common
-  cross-sections (all, by year, by tag, transactions with bookings, etc.).
-
-- Balance sheet amounts can now reported in terms of book values.
-
-- Debit accounts can now be rendered with positive numbers (color-coded).
+  cross-sections (all, by year, by tag, by payee, transactions with bookings,
+  etc.). You should be able to just specify the GUI.
 
 - Client-side javascript has been added for a neater, more compact rendering of
   journals.
+
+- There is a new library for code common to all importers; it should be easier
+  to write importers now.
+
+- There is a new module that allows you to automatically book new transactions
+  on import, based on the previous contents of your ledger file.
+
+- New scripts to extract a list of current positions at any time, and global
+  summaries over many years or months.
+
+- There is no more Emacs major mode, but only a minor mode; you may now use any
+  text mode you like, most especially org-mode, which allows you to hide and
+  show large sections of your file. This is really convenient or organize your
+  input file in sections.  Less Emacs customization is better.
+
+  * The account completer function is still there.
+  * For org-mode, highlighting is still present.
+  * There is a new function to align the prices of a transaction automatically.
