@@ -107,7 +107,7 @@ class Inventory:
 
     def is_small(self, epsilon):
         for position in self.positions:
-            if position.number > epsilon:
+            if abs(position.number) > epsilon:
                 return False
         return True
 
@@ -161,10 +161,10 @@ class Inventory:
         if position.number == ZERO:
             self.positions.remove(position)
 
-    # def add_position(self, new_position):
-    #     """Add using a position (with strict lot matching)."""
-    #     assert isinstance(new_position, Position)
-    #     position = self.find_create(new_position.lot)
-    #     position.add(new_position.number)
-    #     if position.number == ZERO:
-    #         self.positions.remove(position)
+    def add_position(self, new_position):
+        """Add using a position (with strict lot matching)."""
+        assert isinstance(new_position, Position), new_position
+        position = self.find_create(new_position.lot)
+        position.add(new_position.number)
+        if position.number == ZERO:
+            self.positions.remove(position)

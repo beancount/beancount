@@ -32,7 +32,7 @@ Price       = namedtuple('Price'       , 'fileloc date currency amount')
 
 # Basic data types.
 Account = namedtuple('Account', 'name')
-Posting = namedtuple('Posting', 'account position price optflag')
+Posting = namedtuple('Posting', 'account position price flag')
 
 
 class ParserError(RuntimeError):
@@ -134,12 +134,12 @@ class Builder(object):
         fileloc = FileLocation(filename, lineno)
         return Note(fileloc, date, comment)
 
-    def posting(self, account, position, price, istotal, optflag):
+    def posting(self, account, position, price, istotal, flag):
         # If the price is specified for the entire amount, compute the effective
         # price here and forget about that detail of the input syntax.
         if istotal:
             price = Amount(price.number / position.number, price.currency)
-        return Posting(account, position, price, optflag)
+        return Posting(account, position, price, flag)
 
     def transaction(self, filename, lineno, date, flag, payee, description, tags, postings):
         fileloc = FileLocation(filename, lineno)
@@ -155,15 +155,19 @@ class Builder(object):
         if self.tags:
             ctags.update(self.tags)
 
+        # Balance incomplete auto-postings.
         # print('{}:{}: {}'.format(fileloc.filename, fileloc.lineno, description))
-        postings = balance_postings(fileloc, postings)
+        postings, inserted = balance_incomplete_postings(fileloc, postings)
+
+        # Create the transaction.
+        transaction = Transaction(fileloc, date, chr(flag), payee, description, ctags, postings)
 
         # Check that the balance actually is empty.
         if __sanity_checks__:
             residual = compute_residual(postings)
             assert residual.is_small(SMALL_EPSILON), residual
 
-        return Transaction(fileloc, date, chr(flag), payee, description, ctags, postings)
+        return transaction
 
 
 def parse(filename):
@@ -173,7 +177,11 @@ def parse(filename):
     return copy.copy(builder.entries)
 
 
-SMALL_EPSILON = Decimal('0.004') # FIXME: This should probably be a little smaller.
+
+# FIXME: does this belong here? Not sure.
+
+
+SMALL_EPSILON = Decimal('0.005') # FIXME: This should probably be a little smaller.
 
 def compute_residual(postings):
     """Compute the residual of a set of complete postings.
@@ -200,7 +208,7 @@ def compute_residual(postings):
     return inventory
 
 
-def balance_postings(fileloc, postings):
+def balance_incomplete_postings(fileloc, postings):
     """Replace and complete postings that have no amount specified on them.
     Return a new list of balanced postings, with the incomplete postings
     replaced with completed ones.
@@ -240,6 +248,8 @@ def balance_postings(fileloc, postings):
 
     # If there are auto-postings, fill them in.
     if auto_postings_indices:
+        inserted_autopostings = True
+
         # If there are too many such postings, we can't do anything, barf.
         if len(auto_postings_indices) > 1:
             raise ParserError(fileloc, "Too many auto-postings; cannot fill in.")
@@ -259,23 +269,27 @@ def balance_postings(fileloc, postings):
             for currency in currencies:
                 position = Position(Lot(currency, None, None), ZERO)
                 new_postings.append(
-                    Posting(old_posting.account, position, None, old_posting.optflag))
+                    Posting(old_posting.account, position, None, old_posting.flag))
         else:
             # Convert all the residual positions in inventory into a posting for
             # each position.
             for position in residual_positions:
                 position.number = -position.number
                 new_postings.append(
-                    Posting(old_posting.account, position, None, old_posting.optflag))
+                    Posting(old_posting.account, position, None, old_posting.flag))
 
         postings[index:index+1] = new_postings
 
     else:
+        inserted_autopostings = False
+
         # Detect complete sets of postings that have residual balance.
         if not inventory.is_small(SMALL_EPSILON):
             raise ParserError(fileloc, "Transaction does not balance: {}.".format(inventory))
 
-    return postings
+    return postings, inserted_autopostings
+
+
 
 
 

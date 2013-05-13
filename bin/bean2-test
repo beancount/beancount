@@ -4,6 +4,8 @@
 """
 import argparse
 import contextlib
+import io
+import re
 import time
 from collections import defaultdict
 
@@ -29,6 +31,23 @@ def print_time(operation):
     print(">>>>> Operation: '{}'  Time: {:.0f}ms".format(operation, (t2 - t1)*1000))
 
 
+def pretty_transaction(txn):
+    """Format nicely a transaction for printing. Returns a string"""
+    lines = ["{} {} {} | {} {}".format(txn.date, txn.flag, txn.payee or '', txn.description,
+                                         ','.join(txn.tags))]
+    for post in txn.postings:
+        lines.append("  {:1} {:58s} {} {} {}".format(
+            chr(post.flag) if post.flag else '', post.account.name, post.position.number, post.position.lot, post.price or ''))
+    return '\n'.join(lines)
+
+
+def filter_type(elist, types):
+    """Filter the given list to yield only instances of the given types."""
+    for element in elist:
+        if not isinstance(element, types):
+            continue
+        yield element
+
 
 #-------------------------------------------------------------------------------
 
@@ -51,13 +70,29 @@ def main():
 
     with print_time('parse'):
         entries = beancount2.parser.parse(opts.filename)
+        entries.sort(key=lambda x: x.date)
+
+    with print_time('realize'):
+        accounts_map = test_realize(entries)
+
+    # Print all the balances
+    if 0:
+        maxlen = max(map(len, accounts_map))
+        for account, inventory in sorted(accounts_map.items()):
+            print("{:{:d}s} {}".format(account, maxlen, inventory))
+
+    # for txn in filter_type(entries, Transaction):
+    #     if not re.search('GOOGLE INC', txn.description):
+    #         continue
+    #     print('-' * 80)
+    #     print(pretty_transaction(txn))
+    #     residual = compute_residual(txn.postings)
+    #     print(residual)
 
     if opts.verbose:
         for txn in entries:
-            print(txn)
-    entries.sort(key=lambda x: x.date)
+            print(pretty_transaction(txn))
 
-    # test_realize(entries)
     # print_tags(entries)
 
 
@@ -67,15 +102,11 @@ def test_realize(entries):
         if not isinstance(entry, Transaction):
             continue
 
-        print('------------------------', entry)
+        # print('------------------------', entry)
         for posting in entry.postings:
             inventory = accounts_map[posting.account.name]
-            print(posting)
-            print(inventory)
-            # inventory.add_position(posting.position)
-            # print(inventory)
-            # print()
-
+            inventory.add_position(posting.position)
+    return accounts_map
 
 
 
