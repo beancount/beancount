@@ -4,54 +4,109 @@
 
 ;; This file is not part of GNU Emacs.
 
-font-lock-defaults
-font-lock-keywords
-
-;;(org-font-lock-keywords t nil nil backward-paragraph)
-
+(require 'ido) ;; For completing read.
+(require 'font-lock)
 
 
 (define-minor-mode beancount-mode
-  "Toggle Beancount mode."
+  "A minor mode to help editing Beancount files.
+This can be used within other text modes, in particular, org-mode
+is great for sectioning large files with many transactions."
   :init-value nil
   :lighter " Beancount"
-  ;; :keymap
-  ;; '(([C-backspace] . hungry-electric-delete)
-  ;;   ([C-M-backspace]
-  ;;    . (lambda ()
-  ;;        (interactive)
-  ;;        (hungry-electric-delete t))))
+  :keymap
+  '(([(control c)(\')] . beancount-insert-account))
   :group 'beancount
 
-  (beancount-setup-font-lock-keywords beancount-mode)
+  ;; Customize font-lock for beancount.
+  ;;
+  ;; Important: you have to use 'nil for the mode here because in certain major
+  ;; modes (e.g. org-mode) the font-lock-keywords is a buffer-local variable.
+  (if beancount-mode
+      (font-lock-add-keywords nil beancount-font-lock-defaults)
+      (font-lock-remove-keywords nil beancount-font-lock-defaults))
+  (font-lock-fontify-buffer)
+
+  (when beancount-mode
+    (make-variable-buffer-local 'beancount-accounts)
+    (setq beancount-accounts (beancount-get-accounts)))
   )
 
-(defun beancount-setup-font-lock-keywords (addp)
-  (if addp
-      (font-lock-add-keywords major-mode beancount-font-lock-defaults)
-      (font-lock-remove-keywords major-mode beancount-font-lock-defaults))
-  (if font-lock-mode (font-lock-fontify-buffer)))
+
+;; font-lock-builtin-face 	font-lock-comment-delimiter-face
+;; font-lock-comment-face 	font-lock-constant-face
+;; font-lock-doc-face 	font-lock-function-name-face
+;; font-lock-keyword-face 	font-lock-negation-char-face
+;; font-lock-preprocessor-face 	font-lock-reference-face
+;; font-lock-string-face 	font-lock-syntactic-face-function
+;; font-lock-type-face 	font-lock-variable-name-face
+;; font-lock-warning-face
 
 (defvar beancount-font-lock-defaults
   `(;; Strings
     ("\".*?\"" . font-lock-string-face)
+
     ;; Comments
     (";.+" . font-lock-comment-face)
+
     ;; Reserved keywords
-    (,(regexp-opt '("txn" "check" "open" "close" "pad" "event" "price" "location" "note")) . font-lock-keyword-face)
+    (,(regexp-opt '("txn" "check" "open" "close" "pad" "event" "price" "note"
+                    "begintag" "endtag")) . font-lock-keyword-face)
+
     ;; Tags
-    (,(regexp-opt '("begintag" "endtag")) . font-lock-keyword-face)
+    ("#[A-Za-z0-9\-_/.]+" . font-lock-type-face)
+
     ;; Date
     ("[0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][0-9]" . font-lock-constant-face)
+
     ;; Account
     ("\\([A-Z][A-Za-z0-9\-]+:\\)+\\([A-Z][A-Za-z0-9\-]+\\)" . font-lock-builtin-face)
-    ;; Number + Currency
-    ("\\([0-9]+\\(\\.[0-9]+\\)?\\)\\s-+\\([A-Z][A-Z0-9'\.]\\{1,10\\}\\)" 1 bold)
-    ;;("\\([0-9]+\\(\\.[0-9]+\\)?\\)\\s+\\([A-Z][A-Z0-9'\.]\\{1,10\\}\\)" . bold)
+
     ;; Txn Flags
     ("! " . font-lock-warning-face)
+
+    ;; Number + Currency
+    ;;; ("\\([\\-+]?[0-9]+\\(\\.[0-9]+\\)?\\)\\s-+\\([A-Z][A-Z0-9'\.]\\{1,10\\}\\)" . )
+
     ))
 
+(defvar beancount-account-regexp (concat (regexp-opt '("Assets"
+                                                       "Liabilities"
+                                                       "Equity"
+                                                       "Income"
+                                                       "Expenses"))
+                                         "\\(:[A-Z][A-Za-z0-9-_:]+\\)")
+  "A regular expression to match account names.")
+
+(defvar beancount-accounts nil
+  "A list of the accounts available in this buffer. This is a
+  cache of the value computed by beancount-get-accounts.")
+
+(defun beancount-hash-keys (hashtable)
+  "Extract all the keys of the given hashtable. Return a sorted list."
+  (let (rlist)
+    (maphash (lambda (k v) (push k rlist)) hashtable)
+    rlist))
+
+
+(defun beancount-get-accounts ()
+  "Heuristically obtain a list of all the accounts used in all the postings.
+We ignore patterns seen the line 'exclude-line'. If ALL is non-nil, look
+for account names in postings as well (default is to look at the @defaccount
+declarations only."
+  (let ((accounts (make-hash-table :test 'equal)))
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward beancount-account-regexp nil t)
+        (puthash (match-string-no-properties 0) nil accounts)))
+    (sort (beancount-hash-keys accounts) 'string<)))
+
+(defun beancount-insert-account (account-name)
+  "Insert one of the valid account names in this file (using ido
+niceness)."
+  (interactive
+   (list (ido-completing-read "Account: " beancount-accounts)))
+  (insert account-name))
 
 
 (provide 'beancount)

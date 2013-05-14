@@ -71,7 +71,7 @@ def main():
 
     with print_time('parse'):
         ledger = beancount2.parser.parse(opts.filename)
-    
+
     with print_time('realize'):
         accounts_map = test_realize(ledger.entries)
 
@@ -85,7 +85,7 @@ def main():
         # print(account.parent.name)
         # print(account.parent.parent.name)
         # print(account.parent.parent.parent.parent.parent.name)
-        
+
 
 
     # Print all the balances

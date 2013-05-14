@@ -6,54 +6,62 @@
 ;; Add the emacs path.
 (add-to-list 'load-path (concat project-current "/lib/elisp"))
 
-(require 'ledger)
-(require 'ledger-plus)
+(if t
+    (progn ;; New Beancount-only configuration.
+
+      (require 'beancount)
+
+      )
+  (progn ;; Old Ledger configuration.
+
+    (require 'ledger)
+    (require 'ledger-plus)
 
 
-(defun ledger-insert-food ()
-  (insert-yesterday) (insert " *  |\n")
-  (insert "  Expenses:Food:Restaurant		USD \n")
-  (insert "  Assets:Current:Cash\n")
-  (forward-line -3) (forward-word 3) (forward-char 3))
+    (defun ledger-insert-food ()
+      (insert-yesterday) (insert " *  |\n")
+      (insert "  Expenses:Food:Restaurant		USD \n")
+      (insert "  Assets:Current:Cash\n")
+      (forward-line -3) (forward-word 3) (forward-char 3))
 
 
 ;;;-----------------------------------------------------------------------------
 
-(define-abbrev ledger-mode-abbrev-table "food" "" 'ledger-insert-food)
+    (define-abbrev ledger-mode-abbrev-table "food" "" 'ledger-insert-food)
 
 
-(defun user-ledger-mode-hook ()
-  (set-fill-column 200)
+    (defun user-ledger-mode-hook ()
+      (set-fill-column 200)
 
-;;  (outline-minor-mode 1)
-  (setq outline-regexp "^;;;;; ")
+      ;;  (outline-minor-mode 1)
+      (setq outline-regexp "^;;;;; ")
 
-  (define-key ledger-mode-map [(control ?c) (control ?n)]
-    'outline-next-visible-heading)
-  (define-key ledger-mode-map [(control ?c) (control ?p)]
-    'outline-previous-visible-heading)
+      (define-key ledger-mode-map [(control ?c) (control ?n)]
+        'outline-next-visible-heading)
+      (define-key ledger-mode-map [(control ?c) (control ?p)]
+        'outline-previous-visible-heading)
 
-  ;; FIXME: we should make this work for the current entry when a region is not
-  ;; selected.
-  (define-key ledger-mode-map [(control ?c) (control ?q)]
-    (lambda () (interactive) (ledger-align-amounts 80)))
+      ;; FIXME: we should make this work for the current entry when a region is not
+      ;; selected.
+      (define-key ledger-mode-map [(control ?c) (control ?q)]
+        (lambda () (interactive) (ledger-align-amounts 80)))
 
-  ;; Remove tab bindings that are injected illegally in ledger.el.
-  (define-key ledger-mode-map [tab] nil)
-  (define-key ledger-mode-map [(control ?i)] nil)
+      ;; Remove tab bindings that are injected illegally in ledger.el.
+      (define-key ledger-mode-map [tab] nil)
+      (define-key ledger-mode-map [(control ?i)] nil)
 
-  ;; Bring back comment-region.
-  (define-key ledger-mode-map [(control ?c) (control ?c)] 'comment-region)
+      ;; Bring back comment-region.
+      (define-key ledger-mode-map [(control ?c) (control ?c)] 'comment-region)
 
-  (setq comment-start "; ")
+      (setq comment-start "; ")
 
-  )
+      )
 
-(add-hook 'ledger-mode-hook 'user-ledger-mode-hook)
+    (add-hook 'ledger-mode-hook 'user-ledger-mode-hook)
 
-(add-to-list 'auto-mode-alist '("\\.ledger$" . ledger-mode))
+    (add-to-list 'auto-mode-alist '("\\.ledger$" . ledger-mode))
 
-
+    ))
 
 
 
