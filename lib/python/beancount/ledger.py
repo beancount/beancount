@@ -589,6 +589,7 @@ class Ledger(object):
 
     # Patterns for comments and empty lines.
     comment_re = re.compile('^\s*;(.*)$')
+    skipped_re = re.compile(r'^\*+ ')
     empty_re = re.compile('^[\s\014]*$') # 014 = ^L, FIXME this doesn't work
 
     # Pattern for date.
@@ -651,6 +652,7 @@ class Ledger(object):
 
         # Cache some attribetus for speed.
         match_comment = self.comment_re.match
+        match_skipped = self.skipped_re.match
         match_empty = self.empty_re.match
         search_notedate = self.notedate_re.search
         match_txn = self.txn_re.match
@@ -676,7 +678,7 @@ class Ledger(object):
             line = nextline()
             while 1:
                 # Skip comments.
-                if match_empty(line) or match_comment(line):
+                if match_empty(line) or match_comment(line) or match_skipped(line):
                     line = nextline()
                     continue
 
