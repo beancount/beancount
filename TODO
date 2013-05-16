@@ -2,6 +2,39 @@
 beancount: TODO
 * Ideas and random TODO Items
 
+  - Add a new kind of directive::
+
+      2013-05-15 document  Assets:US:TDBank:Checking  statement.pdf
+
+  - Add a '--documents' option that will look for a directory hierarchy matching
+    the beancount file one, and then automatically add "document" directives as
+    above from filenames like this::
+
+      2013-05-15.blablabalastatement.pdf
+
+    The filename should be relative to CWD. Also, maybe we want to have
+    a special  "#documents documents/2013" directive within the file that
+    specifies that, so we don't have to put it in cmdline arguments everytime?
+
+  - Idea: for condo & baking files into a zip file: allow serving only one
+    ledger realization.
+
+    * One option is to use the same base/root straing as for the web URL:
+
+         http://localhost:8080/byyear/2013/...
+
+      server_one_ledger(getledger('byyear/2013'), port=8080)
+      --realization='byyear/2013'
+
+    This would serve only that realization, and not others. This way I could
+    bake only this one in a zip file. This would be useful.
+
+
+  - There should be a script that is able to go through a directory of files
+    and automaticalyl attempt to detect which types they are (if any), and
+    invoke converters automatically. Other people should be able to add and
+    improve this script.
+
   - Clean up: add unit tests for everything, and docstrings everywhere.
     This new version will be really, really clean!
 
