@@ -5,6 +5,12 @@ beancount: TODO
   - Checks need to be re-ordered to be _before_ all the transactions of the same
     date. Do this in the parser.
 
+* Helpers for Documents
+
+  - There should be a script that knows about the formats of my various PDF
+    files under ~/u/Downloads and that automatically puts them under the right
+    subdirectory. Maybe pdf2text and look for account ids, then try to
+    automatically match against one of the account_id declared in the Ledger.
 
 
 * Capital Gains
