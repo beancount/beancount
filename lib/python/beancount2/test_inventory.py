@@ -2,10 +2,9 @@
 Unit tests for the inventory class.
 """
 import unittest
-from cdecimal import Decimal
 
-from beancount2.inventory import Amount, AmountS
-from beancount2.inventory import Lot, Inventory
+from beancount2.data import Amount, AmountS, Lot
+from beancount2.inventory import Inventory
 
 
 class TestInventory(unittest.TestCase):
@@ -50,5 +49,3 @@ class TestInventory(unittest.TestCase):
         inv.add(AmountS('100', 'AAPL'), AmountS('404.00', 'USD'))
         print(inv.get_amounts())
         print(inv.get_costs())
-
-

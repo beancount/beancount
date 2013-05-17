@@ -5,113 +5,29 @@ Basic test to invoke the beancount parser.
 import datetime
 import copy
 import logging
-from cdecimal import Decimal
 from collections import namedtuple
 
 from beancount2 import _parser
 from beancount2 import render_tree
-from beancount2.inventory import Amount, mult_amount
-from beancount2.inventory import Lot, Position, Inventory
+from beancount2.data import *
+from beancount2.inventory import Position, Inventory
 
 
+# Options.
 __sanity_checks__ = False
 
-ZERO = Decimal()
 
-# The location in a source file where the directive was found.
-FileLocation = namedtuple('FileLocation', 'filename lineno')
-
-# All possible types of entries.
-Open        = namedtuple('Open'        , 'fileloc date account account_id currencies')
-Close       = namedtuple('Close'       , 'fileloc date account')
-Pad         = namedtuple('Pad'         , 'fileloc date account account_pad')
-Check       = namedtuple('Check'       , 'fileloc date account amount')
-Transaction = namedtuple('Transaction' , 'fileloc date flag payee narration tags postings')
-Event       = namedtuple('Event'       , 'fileloc date type description')
-Note        = namedtuple('Note'        , 'fileloc date comment')
-Price       = namedtuple('Price'       , 'fileloc date currency amount')
-
-# Basic data types.
-Account = namedtuple('Account', 'name type')
-Posting = namedtuple('Posting', 'account position price flag')
+# The difference amount at which we consider a transaction to be balanced.
+# FIXME: This should probably be a little smaller.
+SMALL_EPSILON = Decimal('0.005') #
 
 
 class ParserError(RuntimeError):
-    "A parsing error. Formats the file location into the message string."
+    """A parsing error. Formats the file location into the message string."""
 
     def __init__(self, fileloc, message):
         RuntimeError.__init__(self, '{:s}:{:d}: {}'.format(
             fileloc.filename, fileloc.lineno, message))
-
-
-def account_parent_name(name):
-    """Return the name of the parent account of the given account."""
-    components = name.split(':')
-    components.pop(-1)
-    return ':'.join(components)
-
-def account_leaf_name(name):
-    return name.split(':')[-1]
-
-
-class AccountTree:
-    """A container for a hierarchy of accounts."""
-
-    def __init__(self):
-        # The root note of all accounts.
-        self.root = Account('', None, [])
-
-        # A mapping of (name, Account).
-        self.accounts_map = {'': self.root}
-
-    def dump(self, out_file):
-        string = render_tree.render(self.root,
-                                    lambda x: account_leaf_name(x.name),
-                                    lambda x: x.children)
-        print(string, file=out_file)
-
-    def get(self, name):
-        return self.accounts_map[name]
-
-    def get_names(self):
-        return sorted(self.accounts_map)
-
-    def get_or_create(self, name):
-        try:
-            account = self.accounts_map[name]
-        except KeyError:
-            parent = self.get_or_create(account_parent_name(name))
-            account = Account(name, parent, [])
-            parent.children.append(account)
-            self.accounts_map[name] = account
-        return account
-
-
-
-# FIXME: it would be nice to be able to just provide a list of entries in order
-# to create a Ledger, and for the subtree of accounts to just recreate itself
-# automatically from that list of entries. Is the tree of accounts part of a
-# Realization?
-#
-# Or maybe just the 'children' part of an account is part of the Realization?
-#
-# Maybe just 'entries' is the basic unit, and 'Ledger' *is* the realization?
-
-class Ledger:
-    """A class that contains a particular list of entries and an
-    associated account tree. Note: the account tree is redundant and
-    could be recalculated from the list of entries."""
-
-    def __init__(self, entries, accounts):
-
-        # A list of sorted entries in this ledger.
-        assert isinstance(entries, list)
-        entries.sort(key=lambda x: x.date)
-        self.entries = entries
-
-        # A tree of accounts.
-        assert isinstance(accounts, AccountTree)
-        self.accounts = accounts
 
 
 class Builder(object):
@@ -124,9 +40,6 @@ class Builder(object):
 
         # The result from running the parser, a list of entries.
         self.entries = None
-
-        # # Temporary accounts map.
-        # self.account_tree = AccountTree()
 
     def store_result(self, entries):
         """Start rule stores the final result here."""
@@ -144,8 +57,7 @@ class Builder(object):
         return datetime.date(year, month, day)
 
     def ACCOUNT(self, account_name):
-        # return self.account_tree.get_or_create(account_name)
-        return Account(account_name, account_name.split(':')[0])
+        return Account(account_name, account_type(account_name))
 
     def CURRENCY(self, currency_name):
         return currency_name
@@ -247,12 +159,6 @@ def parse(filename):
     _parser.parse(filename, builder)
     return builder.entries
 
-
-
-# FIXME: does this belong here? Not sure.
-
-
-SMALL_EPSILON = Decimal('0.005') # FIXME: This should probably be a little smaller.
 
 def compute_residual(postings):
     """Compute the residual of a set of complete postings.
@@ -365,6 +271,7 @@ def balance_incomplete_postings(fileloc, postings):
 
 
 class LexOnlyBuilder(object):
+    """A builder used only for getting the lexer to pass."""
 
     def DATE(self, year, month, day): pass
     def ACCOUNT(self, s):             pass

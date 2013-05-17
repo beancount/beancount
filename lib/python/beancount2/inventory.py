@@ -35,28 +35,16 @@ as None. This is the case for most of the transactions.
 
 """
 from collections import namedtuple
-from cdecimal import Decimal
 from copy import deepcopy
 from datetime import date
 import io
 
-
-Amount = namedtuple('Amount', 'number currency')
-
-def AmountS(number_string, currency):
-    return Amount(Decimal(number_string), currency)
-
-def mult_amount(amount, number):
-    return Amount(amount.number * number, amount.currency)
-
-
-Lot = namedtuple('Lot', 'currency cost lot_date')
-
-ZERO = Decimal()
-NoneType = type(None)
+from beancount2.data import ZERO, Decimal, Amount, Lot
 
 
 class Position:
+    """A 'Position' is a specific number of units of a lot.
+    This is used to track inventories."""
 
     __slots__ = ('lot', 'number')
 
@@ -78,10 +66,11 @@ class Position:
         #     raise ValueError("Negative position: {}".format(self))
 
 
-
 class Inventory:
+    """An Inventory is a set of positions."""
 
     def __init__(self):
+        # Positions held in this inventory.
         self.positions = []
 
     def __str__(self):
@@ -141,6 +130,7 @@ class Inventory:
         return deepcopy(self)
 
     def find_create(self, lot):
+        """Find or create a position associated with a given lot."""
         for position in self.positions:
             if position.lot == lot:
                 found = position
@@ -152,9 +142,9 @@ class Inventory:
 
     def add(self, amount, cost=None, lot_date=None):
         """Add using position components (with strict lot matching)."""
-        assert isinstance(amount, (NoneType, Amount))
-        assert isinstance(cost, (NoneType, Amount))
-        assert isinstance(lot_date, (NoneType, date))
+        assert isinstance(amount, Amount)
+        assert cost is None or isinstance(cost, Amount)
+        assert lot_date is None or isinstance(lot_date, date)
         lot = Lot(amount.currency, cost, lot_date)
         position = self.find_create(lot)
         position.add(amount.number)
