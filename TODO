@@ -1,5 +1,12 @@
 -*- mode: org -*-
 beancount: TODO
+* Urgent
+
+  - Checks need to be re-ordered to be _before_ all the transactions of the same
+    date. Do this in the parser.
+
+
+
 * Capital Gains
 
   - Capital gains should not count commissions nor on the buy nor on the
@@ -319,6 +326,9 @@ beancount: TODO
 
 
 * Emacs Support
+
+  - In the new mode, we need to recreate a function that will mark a posting as
+    valid (replace '!' by '*').
 
   - A new ledger mode should have functions to
 

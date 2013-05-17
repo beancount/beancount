@@ -11,25 +11,14 @@ import time
 from collections import defaultdict
 
 import beancount2.parser
+from beancount2 import checks
+from beancount2 import utils
+from beancount2 import utils
 from beancount2.parser import *
 from beancount2.inventory import Inventory
 
 
 #-------------------------------------------------------------------------------
-
-def is_balance_sheet_account(account):
-    return account.type in ('Assets', 'Liabilities', 'Equity')
-
-def is_income_statement_account(account):
-    return account.type in ('Income', 'Expenses')
-
-
-@contextlib.contextmanager
-def print_time(operation):
-    t1 = time.time()
-    yield
-    t2 = time.time()
-    print(">>>>> Operation: '{}'  Time: {:.0f}ms".format(operation, (t2 - t1)*1000))
 
 
 def pretty_transaction(txn):
@@ -42,15 +31,19 @@ def pretty_transaction(txn):
     return '\n'.join(lines)
 
 
-def filter_type(elist, types):
-    """Filter the given list to yield only instances of the given types."""
-    for element in elist:
-        if not isinstance(element, types):
-            continue
-        yield element
+
+
 
 
 #-------------------------------------------------------------------------------
+
+def print_entries_by_date(entries):
+    prev_date = None
+    for entry in entries:
+        if prev_date != entry.date:
+            print()
+            prev_date = entry.date
+        print(entry)
 
 def main():
     parser = argparse.ArgumentParser(__doc__.strip())
@@ -65,24 +58,20 @@ def main():
 
     opts = parser.parse_args()
 
-    if opts.dump_lexer:
-        beancount2.parser.lexer_dump(opts.filename, sys.stdout)
-        return
+    with utils.print_time('parse'):
+        contents = beancount2.parser.parse(opts.filename)
 
-    with print_time('parse'):
-        entries = beancount2.parser.parse(opts.filename)
+    print_entries_by_date(contents.entries)
 
-    with print_time('realize'):
-        accounts_map = test_realize(entries)
+    # checks.check(contents.entries, contents.accounts)
+    
+    # with print_time('realize'):
+    #     accounts_map = test_realize(entries)
 
-    find_unique_templates(entries)
-
-
-    if 0:
-        # list(map(print, ledger.accounts.get_names()))
-        ledger.accounts.dump(sys.stdout)
+    # find_unique_templates(entries)
 
 
+    #if 0:
         # account = ledger.accounts.get('Assets:CA:RBC-Investing:RRSP:AIS512')
         # print(account.name)
         # print(account.parent.name)

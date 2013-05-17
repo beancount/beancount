@@ -1,9 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
-Try to automatically convert my original file to a newer, better parseable syntax.
+Try to automatically convert a V1 .ledger beancount input file to the newer .beancount V2 syntax.
 """
 import os, sys, re
-from itertools import imap
 
 
 def unquote(s):
@@ -109,6 +108,7 @@ def convert_tags(line):
     else:
         return line
 
+
 def main():
     import argparse, logging
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
@@ -116,22 +116,22 @@ def main():
     parser.add_argument('filename', help='Filenames')
     opts = parser.parse_args()
 
-    lines = open(opts.filename).xreadlines()
-    lines = imap(remove_datepair, lines)
-    lines = imap(add_strings, lines)
-    lines = imap(convert_certain_commodities, lines)
-    lines = imap(convert_var_directive, lines)
-    lines = imap(convert_defcomm_directive, lines)
-    lines = imap(convert_tags, lines)
-    lines = imap(unindent_comments, lines)
-    lines = imap(convert_quoted_currencies, lines)
-    lines = imap(convert_location, lines)
-    lines = imap(convert_directives, lines)
-    lines = imap(swap_directives_into_events, lines)
-    lines = imap(defaccount_to_open, lines)
-    lines = imap(uncomment_tentative, lines)
-    lines = imap(add_org_mode_section, lines)
-    lines = imap(convert_tags, lines)
+    lines = open(opts.filename).readlines()
+    lines = map(remove_datepair, lines)
+    lines = map(add_strings, lines)
+    lines = map(convert_certain_commodities, lines)
+    lines = map(convert_var_directive, lines)
+    lines = map(convert_defcomm_directive, lines)
+    lines = map(convert_tags, lines)
+    lines = map(unindent_comments, lines)
+    lines = map(convert_quoted_currencies, lines)
+    lines = map(convert_location, lines)
+    lines = map(convert_directives, lines)
+    lines = map(swap_directives_into_events, lines)
+    lines = map(defaccount_to_open, lines)
+    lines = map(uncomment_tentative, lines)
+    lines = map(add_org_mode_section, lines)
+    lines = map(convert_tags, lines)
 
     for line in lines:
         sys.stdout.write(line)

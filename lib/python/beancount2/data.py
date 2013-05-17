@@ -42,6 +42,12 @@ def account_type(name):
     """Return the type of this account's name."""
     return name.split(':')[0]
 
+def is_balance_sheet_account(account):
+    return account.type in ('Assets', 'Liabilities', 'Equity')
+
+def is_income_statement_account(account):
+    return account.type in ('Income', 'Expenses')
+
 
 # The location in a source file where the directive was read from.
 FileLocation = namedtuple('FileLocation', 'filename lineno')

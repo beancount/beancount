@@ -8,7 +8,7 @@ import logging
 from collections import namedtuple
 
 from beancount2 import _parser
-from beancount2 import render_tree
+from beancount2.utils import render_tree
 from beancount2.data import *
 from beancount2.inventory import Position, Inventory
 
@@ -18,8 +18,8 @@ __sanity_checks__ = False
 
 
 # The difference amount at which we consider a transaction to be balanced.
-# FIXME: This should probably be a little smaller.
-SMALL_EPSILON = Decimal('0.005') #
+# Note: This could probably be a little smaller and that would be a good thing.
+SMALL_EPSILON = Decimal('0.005')
 
 
 class ParserError(RuntimeError):
@@ -41,6 +41,9 @@ class Builder(object):
         # The result from running the parser, a list of entries.
         self.entries = None
 
+        # A mapping of all the accounts created.
+        self.accounts = {}
+
     def store_result(self, entries):
         """Start rule stores the final result here."""
         self.entries = entries
@@ -57,7 +60,12 @@ class Builder(object):
         return datetime.date(year, month, day)
 
     def ACCOUNT(self, account_name):
-        return Account(account_name, account_type(account_name))
+        try:
+            account = self.accounts[account_name]
+        except KeyError:
+            account = Account(account_name, account_type(account_name))
+            self.accounts[account_name] = account
+        return account
 
     def CURRENCY(self, currency_name):
         return currency_name
@@ -152,12 +160,31 @@ class Builder(object):
         return transaction
 
 
+# The result from parsing a set of entries.
+# I want this to remain as simple as possible.
+# The list of entries is sorted by date, and the order of appearance in the input file.
+FileContents = namedtuple('FileContents', 'entries accounts')
+
+
+SORT_ORDER = {Check: -1
+              Open: -1,
+              Close: 1}
+
+def entry_sortkey(entry):
+    """Sort-key for entries. We sort by date, except that checks
+    should be placed in front of every list of entries of that same day,
+    in order to balance linearly."""
+    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.fileloc.lineno)
+
+
 def parse(filename):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts."""
     builder = Builder()
     _parser.parse(filename, builder)
-    return builder.entries
+    entries = sorted(builder.entries, key=entry_sortkey)
+    accounts = sorted(builder.accounts.values())
+    return FileContents(entries, accounts)
 
 
 def compute_residual(postings):
@@ -187,10 +214,15 @@ def compute_residual(postings):
 
 def balance_incomplete_postings(fileloc, postings):
     """Replace and complete postings that have no amount specified on them.
-    Return a new list of balanced postings, with the incomplete postings
-    replaced with completed ones.
-    (The 'postings' parameter may be modified or destroyed for performance;
-    don't reuse it.)"""
+
+    Returns a new list of balanced postings, with the incomplete postings
+    replaced with completed ones. This is probably the only place where there
+    is a bit of non-trivial logic in this entire project (and the rewrite was
+    to make sure it was *that* simple.)
+
+    Note: The 'postings' parameter may be modified or destroyed for performance
+    reasons; don't reuse it.
+    """
 
     # The list of postings without and with an explicit position.
     auto_postings_indices = []
@@ -201,10 +233,12 @@ def balance_incomplete_postings(fileloc, postings):
     # An inventory to accumulate the residual balance.
     inventory = Inventory()
 
+    # Process all the postings.
     for i, posting in enumerate(postings):
         position = posting.position
 
         if position is None:
+            # This posting will have to get auto-completed.
             auto_postings_indices.append(i)
         else:
             lot = position.lot

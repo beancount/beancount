@@ -6,12 +6,14 @@ import sys
 import argparse
 import beancount2.parser
 
+
 def main():
     parser = argparse.ArgumentParser(__doc__.strip())
     parser.add_argument('filename', help='Beancount input filename.')
     opts = parser.parse_args()
 
     beancount2.parser.dump_lexer(opts.filename, sys.stdout)
+
 
 if __name__ == '__main__':
     main()
