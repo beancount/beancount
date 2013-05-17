@@ -12,7 +12,7 @@ demo:
 
 clean:
 	rm -f core
-	rm -f build
+	rm -rf build
 	rm -f lib/python/grammar.h lib/python/grammar.c
 	rm -f lib/python/lexer.h lib/python/lexer.c
 	rm -f lib/python/*.so
