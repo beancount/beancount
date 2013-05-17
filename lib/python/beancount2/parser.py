@@ -32,7 +32,7 @@ Note        = namedtuple('Note'        , 'fileloc date comment')
 Price       = namedtuple('Price'       , 'fileloc date currency amount')
 
 # Basic data types.
-Account = namedtuple('Account', 'name parent children')
+Account = namedtuple('Account', 'name type')
 Posting = namedtuple('Posting', 'account position price flag')
 
 
@@ -125,8 +125,8 @@ class Builder(object):
         # The result from running the parser, a list of entries.
         self.entries = None
 
-        # Temporary accounts map.
-        self.account_tree = AccountTree()
+        # # Temporary accounts map.
+        # self.account_tree = AccountTree()
 
     def store_result(self, entries):
         """Start rule stores the final result here."""
@@ -144,7 +144,8 @@ class Builder(object):
         return datetime.date(year, month, day)
 
     def ACCOUNT(self, account_name):
-        return self.account_tree.get_or_create(account_name)
+        # return self.account_tree.get_or_create(account_name)
+        return Account(account_name, account_name.split(':')[0])
 
     def CURRENCY(self, currency_name):
         return currency_name
@@ -244,7 +245,7 @@ def parse(filename):
     transactions and tree of accounts."""
     builder = Builder()
     _parser.parse(filename, builder)
-    return Ledger(builder.entries, builder.account_tree)
+    return builder.entries
 
 
 

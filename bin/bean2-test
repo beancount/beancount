@@ -17,11 +17,11 @@ from beancount2.inventory import Inventory
 
 #-------------------------------------------------------------------------------
 
-def get_account_type(account):
-    return account.name.split(':')[0]
-
 def is_balance_sheet_account(account):
-    return get_account_type(account) in ('Assets', 'Liabilities', 'Equity')
+    return account.type in ('Assets', 'Liabilities', 'Equity')
+
+def is_income_statement_account(account):
+    return account.type in ('Income', 'Expenses')
 
 
 @contextlib.contextmanager
@@ -70,12 +70,15 @@ def main():
         return
 
     with print_time('parse'):
-        ledger = beancount2.parser.parse(opts.filename)
+        entries = beancount2.parser.parse(opts.filename)
 
     with print_time('realize'):
-        accounts_map = test_realize(ledger.entries)
+        accounts_map = test_realize(entries)
 
-    if 1:
+    find_unique_templates(entries)
+
+
+    if 0:
         # list(map(print, ledger.accounts.get_names()))
         ledger.accounts.dump(sys.stdout)
 
@@ -107,6 +110,7 @@ def main():
             print(pretty_transaction(txn))
 
     # print_tags(ledger.entries)
+
 
 
 def test_realize(entries):
@@ -156,6 +160,47 @@ def print_tags(entries):
         print(tag)
         for e in entry_list:
             print('  ', e)
+
+
+def unique_alias(account):
+    if (account.type == 'Expenses' and
+        not re.search(':Taxes:', account.name)):
+        return 'Expenses:*'
+    else:
+        return account.name
+
+
+def account_sortkey(account):
+    """Sort a list of accounts, taking into account the type of account.
+    Assets, Liabilities, Equity, Income and Expenses, in this order, then
+    in the order of the account's name."""
+    return (ACCOUNTS_ORDERING[account.type], account.name)
+
+def account_names_sortkey(account_name):
+    """Sort a list of accounts, taking into account the type of account.
+    Assets, Liabilities, Equity, Income and Expenses, in this order, then
+    in the order of the account's name."""
+    account_type = account_name.split(':')[0]
+    return (ACCOUNTS_ORDERING[account_type], account_name)
+
+ACCOUNTS_ORDERING = dict((x,i) for (i,x) in enumerate('Assets Liabilities Equity Income Expenses'.split()))
+
+
+
+def find_unique_templates(entries):
+    """Filter out transactions and group them by types of accounts transacted."""
+
+    groups = defaultdict(list)
+    for entry in filter_type(entries, Transaction):
+        account_names = frozenset(sorted(unique_alias(posting.account)
+                                         for posting in entry.postings))
+        groups[account_names].append(entry)
+
+    print(len(groups))
+
+    for account_names, entry_list in sorted(groups.items(), key=lambda x: len(x[1]), reverse=True):
+        print(tuple(sorted(account_names, key=account_names_sortkey)), len(entry_list))
+
 
 
 
