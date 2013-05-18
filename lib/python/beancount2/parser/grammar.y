@@ -14,20 +14,18 @@
 #include "parser.h"
 #include "lexer.h"
 
-
 /* FIXME: set real filename here. */
 
 /* Error-handling function. */
 void yyerror(char const* message)
 {
     /* fprintf(stderr, "LOCTEST %d %d: ", yylloc.first_line, s); */
-    fprintf(stderr, "%s: %s\n", "/home/blais/q/office/accounting/blais.ledger", message);
+    fprintf(stderr, "%s: %s\n", yy_filename, message);
 }
 
 void report_error(char const* message, YYLTYPE* yylloc)
 {
-    fprintf(stderr, "%s:%d:: %s\n", "/home/blais/q/office/accounting/blais.ledger",
-            yylloc->first_line, message);
+    fprintf(stderr, "%s:%d:: %s\n", yy_filename, yylloc->first_line, message);
 }
 
 /* Get a printable version of a token name. */
@@ -101,49 +99,6 @@ const char* getTokenName(int token);
 %token <pyobj> STRING      /* A quoted string, with any characters inside */
 %token <pyobj> NUMBER      /* A floating-point number */
 %token <pyobj> TAG         /* A tag that can be associated with a transaction */
-
-%code{
-
-/* A function that will convert a token name to a string, used in debugging. */
-const char* getTokenName(int token)
-{
-    switch ( token ) {
-        case ERROR    : return "ERROR";
-        case INDENT   : return "INDENT";
-        case EOL      : return "EOL";
-        case COMMENT  : return "COMMENT";
-        case SKIPPED  : return "SKIPPED";
-        case PIPE     : return "PIPE";
-        case ATAT     : return "ATAT";
-        case AT       : return "AT";
-        case LCURL    : return "LCURL";
-        case RCURL    : return "RCURL";
-        case EQUAL    : return "EQUAL";
-        case COMMA    : return "COMMA";
-        case SLASH    : return "SLASH";
-        case FLAG     : return "FLAG";
-        case TXN      : return "TXN";
-        case CHECK    : return "CHECK";
-        case OPEN     : return "OPEN";
-        case CLOSE    : return "CLOSE";
-        case PAD      : return "PAD";
-        case EVENT    : return "EVENT";
-        case PRICE    : return "PRICE";
-        case NOTE     : return "NOTE";
-        case BEGINTAG : return "BEGINTAG";
-        case ENDTAG   : return "ENDTAG";
-        case DATE     : return "DATE";
-        case ACCOUNT  : return "ACCOUNT";
-        case CURRENCY : return "CURRENCY";
-        case STRING   : return "STRING";
-        case NUMBER   : return "NUMBER";
-        case TAG      : return "TAG";
-    }
-    return 0;
-}
-
-}
-
 
 /* Types for non-terminal symbols. */
 %type <character> txn
@@ -396,3 +351,41 @@ file : declarations
 /*--------------------------------------------------------------------------------*/
 /* Epilogue */
 %%
+
+/* A function that will convert a token name to a string, used in debugging. */
+const char* getTokenName(int token)
+{
+    switch ( token ) {
+        case ERROR    : return "ERROR";
+        case INDENT   : return "INDENT";
+        case EOL      : return "EOL";
+        case COMMENT  : return "COMMENT";
+        case SKIPPED  : return "SKIPPED";
+        case PIPE     : return "PIPE";
+        case ATAT     : return "ATAT";
+        case AT       : return "AT";
+        case LCURL    : return "LCURL";
+        case RCURL    : return "RCURL";
+        case EQUAL    : return "EQUAL";
+        case COMMA    : return "COMMA";
+        case SLASH    : return "SLASH";
+        case FLAG     : return "FLAG";
+        case TXN      : return "TXN";
+        case CHECK    : return "CHECK";
+        case OPEN     : return "OPEN";
+        case CLOSE    : return "CLOSE";
+        case PAD      : return "PAD";
+        case EVENT    : return "EVENT";
+        case PRICE    : return "PRICE";
+        case NOTE     : return "NOTE";
+        case BEGINTAG : return "BEGINTAG";
+        case ENDTAG   : return "ENDTAG";
+        case DATE     : return "DATE";
+        case ACCOUNT  : return "ACCOUNT";
+        case CURRENCY : return "CURRENCY";
+        case STRING   : return "STRING";
+        case NUMBER   : return "NUMBER";
+        case TAG      : return "TAG";
+    }
+    return 0;
+}

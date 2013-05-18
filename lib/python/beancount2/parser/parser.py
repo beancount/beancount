@@ -6,6 +6,7 @@ import datetime
 import copy
 import logging
 from collections import namedtuple
+from os import path
 
 from beancount2.parser import _parser
 from beancount2.utils import render_tree
@@ -181,7 +182,7 @@ def parse(filename):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts."""
     builder = Builder()
-    _parser.parse(filename, builder)
+    _parser.parse(path.abspath(filename), builder)
     entries = sorted(builder.entries, key=entry_sortkey)
     accounts = sorted(builder.accounts.values())
     return FileContents(entries, accounts)

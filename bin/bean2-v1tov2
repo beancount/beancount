@@ -75,7 +75,7 @@ def swap_directives_into_events(line):
     return re.sub('(check|pad|location|price|event)\s+(\d\d\d\d-\d\d-\d\d)', '\\2 \\1', line)
 
 def defaccount_to_open(line):
-    mo = re.match('^defaccount\s+(Dr|Cr)\s+([A-Za-z0-9:\-_]+)\s*(.*)\n', line)
+    mo = re.match('^defaccount\s+(D[re]|Cr)\s+([A-Za-z0-9:\-_]+)\s*(.*)\n', line)
     if mo:
         return '1970-01-01 open {:64} {}\n'.format(
             mo.group(2).strip(),

@@ -1,9 +1,11 @@
 -*- mode: org -*-
 beancount: TODO
-* Urgent
+* NEW
+
+  - Errors from the parser and others should all be accumulated in one place,
+    so that we do all the reporting at the very top level.
 
   - More all parser files under beancount2.parser, remove creader.c
-
 
   - Checks need to be re-ordered to be _before_ all the transactions of the same
     date. Do this in the parser.

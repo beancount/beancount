@@ -13,9 +13,9 @@ demo:
 clean:
 	rm -f core
 	rm -rf build
-	rm -f lib/python/grammar.h lib/python/grammar.c
-	rm -f lib/python/lexer.h lib/python/lexer.c
-	rm -f lib/python/*.so
+	rm -f $(CROOT)/grammar.h $(CROOT)/grammar.c
+	rm -f $(CROOT)/lexer.h $(CROOT)/lexer.c
+	rm -f $(CROOT)/*.so
 
 CROOT=lib/python/beancount2/parser
 
