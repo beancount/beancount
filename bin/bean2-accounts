@@ -28,6 +28,5 @@ def main():
         close_date = close.date if close else ''
         print('{:{len}}  {}  {}'.format(account.name, open_date, close_date, len=maxlen))
 
-
 if __name__ == '__main__':
     main()

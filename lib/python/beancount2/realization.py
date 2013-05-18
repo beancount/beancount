@@ -1,41 +1,32 @@
 """
 Realization of specific lists of account postings into reports.
 """
+from collections import namedtuple, defaultdict
+from beancount2.utils import tree_utils
+from beancount2.inventory import Inventory
+from beancount2.data import Transaction
 
 
-class AccountTree:
+RealAccount = namedtuple('Account', 'name children postings')
+RealPosting = namedtuple('RealPosting', 'entry posting inventory')
+
+
+class RealAccountTree(tree_utils.TreeDict):
     """A container for a hierarchy of accounts, that can conveniently
     create and maintain a hierarchy of accounts."""
 
+    def create_node(self, account_name):
+        return RealAccount(account_name, [], [])
+
+    def get_name(self, real_account):
+       return real_account.name.split(':')[-1]
+
+    def get_children(self, real_account):
+        return real_account.children
+
     def __init__(self):
-        # The root note of all accounts.
-        self.root = Account('', None, [])
+        tree_utils.TreeDict.__init__(self, self, ':')
 
-        # A mapping of (name, Account).
-        self.accounts_map = {'': self.root}
-
-    def dump(self, out_file):
-        string = render_tree.render(self.root,
-                                    lambda x: account_leaf_name(x.name),
-                                    lambda x: x.children)
-        print(string, file=out_file)
-
-    def get(self, name):
-        return self.accounts_map[name]
-
-    def get_names(self):
-        return sorted(self.accounts_map)
-
-    def get_or_create(self, name):
-        """Get or create the account with the given name."""
-        try:
-            account = self.accounts_map[name]
-        except KeyError:
-            parent = self.get_or_create(account_parent_name(name))
-            account = Account(name)
-            parent.children.append(account)
-            self.accounts_map[name] = account
-        return account
 
 
 class Ledger:
@@ -47,9 +38,35 @@ class Ledger:
 
         # A list of sorted entries in this ledger.
         assert isinstance(entries, list)
-        entries.sort(key=lambda x: x.date)
+        # entries.sort(key=lambda x: x.date)
         self.entries = entries
 
-        # A tree of accounts.
-        assert isinstance(accounts, AccountTree)
-        self.accounts = accounts
+        # # A tree of accounts.
+        # self.real_accounts = RealAccountTree()
+
+
+
+
+def realize(entries):
+    """Realize a list of entries into a Ledger object, which contains
+    placeholders with balances for each entry, and an accounts tree.
+    This is then used to render a report."""
+
+    real_accounts = RealAccountTree()
+
+    inventory_map = defaultdict(Inventory)
+    for entry in entries:
+        if isinstance(entry, Transaction):
+            # Realizing a transaction updates the balance inventory for that entry.
+
+            for posting in entry.postings:
+                account_name = posting.account.name
+
+                inventory = inventory_map[account_name]
+                inventory.add_position(posting.position)
+
+                real_account = real_accounts[account_name]
+                real_account.postings.append(
+                    RealPosting(entry, posting, inventory.copy()))
+
+    return real_accounts

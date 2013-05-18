@@ -9,7 +9,7 @@ from collections import namedtuple
 from os import path
 
 from beancount2.parser import _parser
-from beancount2.utils import render_tree
+from beancount2.utils import tree_utils
 from beancount2.data import *
 from beancount2.inventory import Position, Inventory
 

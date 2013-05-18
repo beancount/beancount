@@ -38,6 +38,21 @@ def account_leaf_name(name):
     """Get the name of the leaf of this account."""
     return name.split(':')[-1]
 
+def account_sortkey(account):
+    """Sort a list of accounts, taking into account the type of account.
+    Assets, Liabilities, Equity, Income and Expenses, in this order, then
+    in the order of the account's name."""
+    return (TYPES_ORDER[account.type], account.name)
+
+def account_names_sortkey(account_name):
+    """Sort a list of accounts, taking into account the type of account.
+    Assets, Liabilities, Equity, Income and Expenses, in this order, then
+    in the order of the account's name."""
+    account_type = account_name.split(':')[0]
+    return (TYPES_ORDER[account_type], account_name)
+
+TYPES_ORDER = dict((x,i) for (i,x) in enumerate('Assets Liabilities Equity Income Expenses'.split()))
+
 def account_type(name):
     """Return the type of this account's name."""
     return name.split(':')[0]

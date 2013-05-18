@@ -13,7 +13,8 @@ from collections import defaultdict
 import beancount2.parser
 from beancount2 import checks
 from beancount2 import utils
-from beancount2 import utils
+from beancount2 import data
+from beancount2 import realization
 from beancount2.parser import *
 from beancount2.inventory import Inventory
 
@@ -74,6 +75,26 @@ def main():
                                  error.message))
 
 
+    with utils.print_time('realize'):
+        real_accounts = realization.realize(contents.entries)
+
+        if 1:
+            def render_inventory(real_account):
+                if real_account.postings:
+                    return '        {:32s}'.format(real_account.postings[-1].inventory)
+
+            real_accounts.dump(sys.stdout, render_inventory)
+
+        # real_account = real_accounts['Assets:Cash']
+        # for real_posting in real_account.postings:
+        #     print('{} {:48} {:72} {:72}'.format(real_posting.entry.date,
+        #                                   ' | '.join([real_posting.entry.payee or '', real_posting.entry.narration]),
+        #                                   real_posting.posting.position,
+        #                                   real_posting.inventory,
+        #                                   ))
+
+
+
     # with print_time('realize'):
     #     accounts_map = test_realize(entries)
 
@@ -108,21 +129,6 @@ def main():
             print(pretty_transaction(txn))
 
     # print_tags(ledger.entries)
-
-
-
-def test_realize(entries):
-    accounts_map = defaultdict(Inventory)
-    for entry in entries:
-        if not isinstance(entry, Transaction):
-            continue
-
-        # print('------------------------', entry)
-        for posting in entry.postings:
-            inventory = accounts_map[posting.account.name]
-            inventory.add_position(posting.position)
-    return accounts_map
-
 
 
 def print_locations(entries):
@@ -168,23 +174,6 @@ def unique_alias(account):
         return account.name
 
 
-def account_sortkey(account):
-    """Sort a list of accounts, taking into account the type of account.
-    Assets, Liabilities, Equity, Income and Expenses, in this order, then
-    in the order of the account's name."""
-    return (ACCOUNTS_ORDERING[account.type], account.name)
-
-def account_names_sortkey(account_name):
-    """Sort a list of accounts, taking into account the type of account.
-    Assets, Liabilities, Equity, Income and Expenses, in this order, then
-    in the order of the account's name."""
-    account_type = account_name.split(':')[0]
-    return (ACCOUNTS_ORDERING[account_type], account_name)
-
-ACCOUNTS_ORDERING = dict((x,i) for (i,x) in enumerate('Assets Liabilities Equity Income Expenses'.split()))
-
-
-
 def find_unique_templates(entries):
     """Filter out transactions and group them by types of accounts transacted."""
 
@@ -197,7 +186,7 @@ def find_unique_templates(entries):
     print(len(groups))
 
     for account_names, entry_list in sorted(groups.items(), key=lambda x: len(x[1]), reverse=True):
-        print(tuple(sorted(account_names, key=account_names_sortkey)), len(entry_list))
+        print(tuple(sorted(account_names, key=data.account_names_sortkey)), len(entry_list))
 
 
 

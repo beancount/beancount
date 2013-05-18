@@ -42,58 +42,58 @@
 ;;;   of accounts: debit accounts and credit accounts, and the
 ;;;   type is only used for reporting (maybe).
 
-1970-01-01 open Assets:Current:Cash                                              
-1970-01-01 open Assets:Current:BestBank:Checking                                 USD
-1970-01-01 open Assets:Current:BestBank:Savings                                  USD
+1970-01-01 open Assets:Cash
+1970-01-01 open Assets:BestBank:Checking                                 USD
+1970-01-01 open Assets:BestBank:Savings                                  USD
 ;defaccount De Assets:Fixed:Home                           USD
-1970-01-01 open Assets:Investments:UTrade:Account                                USD
-1970-01-01 open Assets:Investments:UTrade:Account:AAPL                           AAPL
-1970-01-01 open Assets:Investments:UTrade:Account:EWJ                            EWJ
+1970-01-01 open Assets:UTrade:Account                                USD
+1970-01-01 open Assets:UTrade:Account:AAPL                           AAPL
+1970-01-01 open Assets:UTrade:Account:EWJ                            EWJ
 ;defaccount De Assets:Loans
-1970-01-01 open Assets:AccountsReceivable                                        
+1970-01-01 open Assets:AccountsReceivable
 
 ;defaccount Cr Liabilities:AccountsPayable
 1970-01-01 open Liabilities:BestBank:Mortgage:Loan                               USD
 1970-01-01 open Liabilities:Credit-Card:VISA                                     USD
 1970-01-01 open Liabilities:Condo-Management                                     USD
 
-1970-01-01 open Equity:Opening-Balances                                          
+1970-01-01 open Equity:Opening-Balances
 
-1970-01-01 open Income:Investments:Interest:Checking                             
-1970-01-01 open Income:Investments:Interest:Savings                              
-1970-01-01 open Income:Investments:Dividends                                     
-1970-01-01 open Income:Investments:Capital-Gains                                 
-1970-01-01 open Income:Salary:AcmeCo                                             
+1970-01-01 open Income:Interest:Checking
+1970-01-01 open Income:Interest:Savings
+1970-01-01 open Income:Dividends
+1970-01-01 open Income:Capital-Gains
+1970-01-01 open Income:Salary:AcmeCo
 
-1970-01-01 open Expenses:Financial:Fees                                          
-1970-01-01 open Expenses:Financial:Commissions                                   
-1970-01-01 open Expenses:Insurance:Life                                          
-1970-01-01 open Expenses:Food:Restaurant                                         
-1970-01-01 open Expenses:Food:Grocery                                            
-1970-01-01 open Expenses:Food:Alcool                                             
-1970-01-01 open Expenses:Communications:Phone                                    
-1970-01-01 open Expenses:Communications:Mail                                     
+1970-01-01 open Expenses:Financial:Fees
+1970-01-01 open Expenses:Financial:Commissions
+1970-01-01 open Expenses:Insurance:Life
+1970-01-01 open Expenses:Food:Restaurant
+1970-01-01 open Expenses:Food:Grocery
+1970-01-01 open Expenses:Food:Alcool
+1970-01-01 open Expenses:Communications:Phone
+1970-01-01 open Expenses:Communications:Mail
 ;defaccount De Expenses:Transportation:Parking
-1970-01-01 open Expenses:Transportation:Taxi                                     
+1970-01-01 open Expenses:Transportation:Taxi
 ;defaccount De Expenses:Transportation:Trains
 ;defaccount De Expenses:Transportation:PublicTrans
 ;defaccount De Expenses:Taxes:US-State-California        USD
 1970-01-01 open Expenses:Taxes:US-Federal                                        USD
 1970-01-01 open Expenses:Govt-Services                                           USD
-1970-01-01 open Expenses:Clothes                                                 
-1970-01-01 open Expenses:Car:Gas                                                 
-1970-01-01 open Expenses:Sports                                                  
-1970-01-01 open Expenses:Sports:Gear                                             
-1970-01-01 open Expenses:Fun:Movie                                               
+1970-01-01 open Expenses:Clothes
+1970-01-01 open Expenses:Car:Gas
+1970-01-01 open Expenses:Sports
+1970-01-01 open Expenses:Sports:Gear
+1970-01-01 open Expenses:Fun:Movie
 ;defaccount De Expenses:Fun:Museum
-1970-01-01 open Expenses:Books                                                   
+1970-01-01 open Expenses:Books
 ;defaccount De Expenses:Travel:Flights
 ;defaccount De Expenses:Travel:Accomodation
 ;defaccount De Expenses:Toys:Photography
 ;defaccount De Expenses:Toys:Computer
 ;defaccount De Expenses:Office-Supplies
-1970-01-01 open Expenses:Medical                                                 
-1970-01-01 open Expenses:Charity                                                 
+1970-01-01 open Expenses:Medical
+1970-01-01 open Expenses:Charity
 ;defaccount De Expenses:Misc
 ;defaccount De Expenses:Home:Repair
 ;defaccount De Expenses:Home:Maintenance
@@ -102,9 +102,9 @@
 ;defaccount De Expenses:Home:Insurance
 ;defaccount De Expenses:Home:Monthly
 ;defaccount De Expenses:Home:Monthly:Internet
-1970-01-01 open Expenses:Home:Monthly:Condo-Fees                                 
+1970-01-01 open Expenses:Home:Monthly:Condo-Fees
 ;defaccount De Expenses:Home:Monthly:Electricity
-1970-01-01 open Expenses:Home:Monthly:Loan-Interest                              
+1970-01-01 open Expenses:Home:Monthly:Loan-Interest
 ;defaccount De Expenses:Home:Monthly:Water
 ;defaccount De Expenses:Home:Acquisition:Furniture
 ;defaccount De Expenses:Home:Acquisition:Renovations
@@ -121,11 +121,11 @@
 ;;; the right account names.
 
 ;;; Account number mappings.
-;;accid "123456789012" Assets:Current:BestBank:Checking
-;;accid "123456789012" Assets:Current:BestBank:Savings
+;;accid "123456789012" Assets:BestBank:Checking
+;;accid "123456789012" Assets:BestBank:Savings
 ;;accid "1234567890" Liabilities:BestBank:Mortgage:Loan
 ;;accid "1234567890123456" Liabilities:Credit-Card:VISA
-;;accid "1234567890" Assets:Investments:UTrade:Account
+;;accid "1234567890" Assets:UTrade:Account
 
 
 
@@ -134,24 +134,24 @@
 
 
 
-* Assets:Current:BestBank:Checking
+* Assets:BestBank:Checking
 
 ;; This entry tells the software to automatically insert an
 ;; entry at this date, of the amount required to fulfill the
 ;; next check directive (chronologically) in the account (for
 ;; all commodities present). If the required amount is 0, no
 ;; entry is added.
-2007-12-31 pad Assets:Current:BestBank:Checking   Equity:Opening-Balances
+2007-12-31 pad Assets:BestBank:Checking   Equity:Opening-Balances
 
 ;; This directive tells the software to assert that at the given
 ;; date, in the given account, a specific amount of the given
 ;; commodity was present.
-2008-01-01 check Assets:Current:BestBank:Checking  1412.24 USD
+2008-01-01 check Assets:BestBank:Checking  1412.24 USD
 
 
 ;; A check deposit, e.g. depositing a government check.
 2008-01-05 * "GST CANADA" | "Deposit from govt for consumer tax rebate"
-  Assets:Current:BestBank:Checking       77.76 USD
+  Assets:BestBank:Checking       77.76 USD
   Expenses:Taxes:US-Federal
 
 
@@ -164,68 +164,68 @@
 ;; from society and placed into your account").
 
 2008-01-10 * "ACME" | "Salary paid from employer"
-  Assets:Current:BestBank:Checking        2000.00 USD
+  Assets:BestBank:Checking        2000.00 USD
   Income:Salary:AcmeCo                    -2000 USD
 
 2008-01-25 * "ACME" | "Salary paid from employer"
-  Assets:Current:BestBank:Checking        2000.00 USD
+  Assets:BestBank:Checking        2000.00 USD
   Income:Salary:AcmeCo
 
 2008-02-10 * "ACME" | "Salary paid from employer"
-  Assets:Current:BestBank:Checking        2000.00 USD
+  Assets:BestBank:Checking        2000.00 USD
   Income:Salary:AcmeCo
 
 2008-02-25 * "ACME" | "Salary paid from employer"
-  Assets:Current:BestBank:Checking        2000.00 USD
+  Assets:BestBank:Checking        2000.00 USD
   Income:Salary:AcmeCo
 
 
 
 ;; Withdrawal from another bank's ATM machine (with fees).
 2008-01-12 * "ATM withdrawal - 00044242"
-  Assets:Current:BestBank:Checking    -301.50 USD
+  Assets:BestBank:Checking    -301.50 USD
   Expenses:Financial:Fees              1.50 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 ;; ATM withdrawal (without fees).
 2008-01-30 * "ATM withdrawal"
-  Assets:Current:BestBank:Checking    -800.00 USD
-  Assets:Current:Cash
+  Assets:BestBank:Checking    -800.00 USD
+  Assets:Cash
 
 2008-02-10 * "ATM withdrawal"
-  Assets:Current:BestBank:Checking    -500.00 USD
-  Assets:Current:Cash
+  Assets:BestBank:Checking    -500.00 USD
+  Assets:Cash
 
 2008-02-24 * "ATM withdrawal"
-  Assets:Current:BestBank:Checking    -500.00 USD
-  Assets:Current:Cash
+  Assets:BestBank:Checking    -500.00 USD
+  Assets:Cash
 
 
 ;; Automated withdrawal for Life insurance payments.
 2008-01-02 * "LIFE INSURANCE -- LONDON LIFE"
-  Assets:Current:BestBank:Checking         -42.69 USD
+  Assets:BestBank:Checking         -42.69 USD
   Expenses:Insurance:Life
 
 2008-02-02 * "LIFE INSURANCE -- LONDON LIFE"
-  Assets:Current:BestBank:Checking         -42.69 USD
+  Assets:BestBank:Checking         -42.69 USD
   Expenses:Insurance:Life
 
 
 ;; A purchase from a store using the bank's debit card.
 2008-01-17 * "Interac Purchase - 1341 - ACCES SPORTS S"
-  Assets:Current:BestBank:Checking      -89.00 USD
+  Assets:BestBank:Checking      -89.00 USD
   Expenses:Sports:Gear
 
 
 ;; A monthly fee that the bank takes for its deposit banking services.
 2008-01-10 * "MONTHLY FEE"
-  Assets:Current:BestBank:Checking                   -4.00 USD
+  Assets:BestBank:Checking                   -4.00 USD
   Expenses:Financial:Fees
 
 ;; A typical bank's return on checking accounts.
 2008-01-12 * "Deposit interest"
-  Assets:Current:BestBank:Checking                0.02 USD
-  Income:Investments:Interest:Checking
+  Assets:BestBank:Checking                0.02 USD
+  Income:Interest:Checking
 
 
 
@@ -238,87 +238,87 @@
 2008-03-26 * "Bought an iPhone to Gilbert (had to use ATM)"
   Assets:AccountsReceivable                      431.92 USD
   Expenses:Financial:Fees                          3.00 USD
-  Assets:Current:Cash                           -434.92 USD
+  Assets:Cash                           -434.92 USD
 
 ;; Notice that the amount pay back was for an approximate
 ;; amount, so the overflow I placed in the cash account.
 2008-04-02 * "Gilbert paid back for iPhone"
-  Assets:Current:Cash                            440.00 CAD
+  Assets:Cash                            440.00 CAD
   Assets:AccountsReceivable                     -431.92 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 
 
 ;; At the end of the month, I take my statements, look at the
 ;; bottom and enter the amount that the bank says was there at
 ;; that date. It should corroborate with the data in my Ledger.
-2008-02-01 check Assets:Current:BestBank:Checking   661.49 USD
+2008-02-01 check Assets:BestBank:Checking   661.49 USD
 
 
 
 
 
 
-* Assets:Current:BestBank:Savings
+* Assets:BestBank:Savings
 
-2007-12-31 pad Assets:Current:BestBank:Savings   Equity:Opening-Balances
+2007-12-31 pad Assets:BestBank:Savings   Equity:Opening-Balances
 
-2008-01-01 check Assets:Current:BestBank:Savings    12000 USD
+2008-01-01 check Assets:BestBank:Savings    12000 USD
 
 ;; Interest paid on balance in savings account.
 2008-01-03 * "DEPOSIT INTEREST"
-  Assets:Current:BestBank:Savings                    95.69 USD
-  Income:Investments:Interest:Savings
+  Assets:BestBank:Savings                    95.69 USD
+  Income:Interest:Savings
 
 
 ;; An entry that indicates a bank transfer from a checking account to a savings account.
 ;; There is a choice to locate this entry with the savings or with the checking, it's up to you.
 2008-01-29 * "Transfer from checking to savings account"
-  Assets:Current:BestBank:Savings       2000.00 USD
-  Assets:Current:BestBank:Checking
+  Assets:BestBank:Savings       2000.00 USD
+  Assets:BestBank:Checking
 
 2008-02-03 * "DEPOSIT INTEREST"
-  Assets:Current:BestBank:Savings                    102.34 USD
-  Income:Investments:Interest:Savings
+  Assets:BestBank:Savings                    102.34 USD
+  Income:Interest:Savings
 
 2008-02-03 * "Transferring money to brokerage account for better investment."
-  Assets:Current:BestBank:Savings       -10000.00 USD
-  Assets:Investments:UTrade:Account
+  Assets:BestBank:Savings       -10000.00 USD
+  Assets:UTrade:Account
 
 
 ;; A monthly check using the amount on the stament.
-2008-03-01 check Assets:Current:BestBank:Savings    2340.19 USD
+2008-03-01 check Assets:BestBank:Savings    2340.19 USD
 
 
 
 ;; Automated mortgage payments from the savings account.
 2008-01-12 * "MORTGAGE PAYMENT"
-  Assets:Current:BestBank:Savings                                             -464.46 USD
+  Assets:BestBank:Savings                                             -464.46 USD
   Liabilities:BestBank:Mortgage:Loan                                           171.01 USD
   Expenses:Home:Monthly:Loan-Interest
 
 2008-01-27 * "MORTGAGE PAYMENT"
-  Assets:Current:BestBank:Savings                                             -464.46 USD
+  Assets:BestBank:Savings                                             -464.46 USD
   Liabilities:BestBank:Mortgage:Loan                                           171.01 USD
   Expenses:Home:Monthly:Loan-Interest
 
 2008-02-12 * "MORTGAGE PAYMENT"
-  Assets:Current:BestBank:Savings                                             -464.46 USD
+  Assets:BestBank:Savings                                             -464.46 USD
   Liabilities:BestBank:Mortgage:Loan                                           171.01 USD
   Expenses:Home:Monthly:Loan-Interest
 
 2008-02-27 * "MORTGAGE PAYMENT"
-  Assets:Current:BestBank:Savings                                             -464.46 USD
+  Assets:BestBank:Savings                                             -464.46 USD
   Liabilities:BestBank:Mortgage:Loan                                           171.01 USD
   Expenses:Home:Monthly:Loan-Interest
 
 2008-03-12 * "MORTGAGE PAYMENT"
-  Assets:Current:BestBank:Savings                                             -464.46 USD
+  Assets:BestBank:Savings                                             -464.46 USD
   Liabilities:BestBank:Mortgage:Loan                                           171.01 USD
   Expenses:Home:Monthly:Loan-Interest
 
 2008-03-27 * "MORTGAGE PAYMENT"
-  Assets:Current:BestBank:Savings                                             -464.46 USD
+  Assets:BestBank:Savings                                             -464.46 USD
   Liabilities:BestBank:Mortgage:Loan                                           171.01 USD
   Expenses:Home:Monthly:Loan-Interest
 
@@ -331,7 +331,7 @@
 
 ;; Paying back my credit card.
 2008-01-22 * "Online Banking payment - 5051 - VISA"
-  Assets:Current:BestBank:Checking     -791.34 USD
+  Assets:BestBank:Checking     -791.34 USD
   Liabilities:Credit-Card:VISA
 
 
@@ -360,11 +360,11 @@
 
 
 
-* Assets:Investments:UTrade:Account
+* Assets:UTrade:Account
 
-2007-12-31 pad Assets:Investments:UTrade:Account  Equity:Opening-Balances
+2007-12-31 pad Assets:UTrade:Account  Equity:Opening-Balances
 
-2008-01-01 check  Assets:Investments:UTrade:Account  31273.02 USD
+2008-01-01 check  Assets:UTrade:Account  31273.02 USD
 
 ;; Some example trades.
 ;;
@@ -389,25 +389,26 @@
 ;;   capital gains at both ends of a trade).
 
 2008-01-08 * "Buy some Apple Computer"
-  Assets:Investments:UTrade:Account:AAPL                     30 AAPL @ 185.40 USD
-  Assets:Investments:UTrade:Account
+  Assets:UTrade:Account:AAPL                     30 AAPL {185.40 USD}
+  Assets:UTrade:Account
   Expenses:Financial:Commissions                        9.95 USD
 
 ;; A divident payment.
 2008-02-02 * "DIVIDEND from AAPL position"
-  Assets:Investments:UTrade:Account    0.68 USD
-  Income:Investments:Dividends
+  Assets:UTrade:Account    0.68 USD
+  Income:Dividends
 
 ;; Because of my skirt-length statistic computation.
 2008-02-28 * "Sell off my Apple"
-  Assets:Investments:UTrade:Account:AAPL        -30 AAPL @ 193.02 USD
-  Assets:Investments:UTrade:Account         5780.65 USD
+  Assets:UTrade:Account:AAPL        -30 AAPL {185.40 USD} @ 193.02 USD
+  Assets:UTrade:Account         5780.65 USD
   Expenses:Financial:Commissions               9.95 USD
-  (Income:Investments:Capital-Gains)           BOOK AAPL
+  Income:Capital-Gains
+
 ;; The line that says "BOOK AAPL" means to insert the amount that
 ;; corresponds to the gains/losses for the commodity "AAPL" within
 ;; the account for the posting in this transaction that includes AAPL
-;; (Assets:Investments:UTrade:Account:AAPL, found automatically).
+;; (Assets:UTrade:Account:AAPL, found automatically).
 ;; The inventory booking is done in FIFO order.
 ;;
 ;; The capital gain will show up as a negative number...
@@ -415,16 +416,16 @@
 
 ;; This position is kept long, so it gets reflected below in the check.
 2008-02-10 * "Buy some japanese ETF from iShares"
-  Assets:Investments:UTrade:Account:EWJ                     100 EWJ @ 13.34 USD
-  Assets:Investments:UTrade:Account
+  Assets:UTrade:Account:EWJ                     100 EWJ {13.34 USD}
+  Assets:UTrade:Account
   Expenses:Financial:Commissions                        9.95 USD
 
 
 ;; Run checks against statement summary of positions that gets
 ;; mailed periodically.
-2008-03-01 check  Assets:Investments:UTrade:Account          40138.45 USD
-2008-03-01 check  Assets:Investments:UTrade:Account:AAPL     0 AAPL
-2008-03-01 check  Assets:Investments:UTrade:Account:EWJ      100 EWJ
+2008-03-01 check  Assets:UTrade:Account          40138.45 USD
+2008-03-01 check  Assets:UTrade:Account:AAPL     0 AAPL
+2008-03-01 check  Assets:UTrade:Account:EWJ      100 EWJ
 
 
 
@@ -468,7 +469,7 @@
 
 2008-01-14 * "(998) Propri-Manage" | "cheque sent by snail mail"
   Liabilities:Condo-Management         800.00 USD
-  Assets:Current:BestBank:Checking
+  Assets:BestBank:Checking
 
 2008-02-01 * "Propri-Manage" | ""
   Expenses:Home:Monthly:Condo-Fees        212.61 USD
@@ -490,14 +491,14 @@
 
 
 
-* Assets:Current:Cash
+* Assets:Cash
 * Expenses:*
 
-2007-12-31 pad  Assets:Current:Cash  Equity:Opening-Balances
+2007-12-31 pad  Assets:Cash  Equity:Opening-Balances
 
 ;; Amount in wallet at a given time.
-2007-12-31 check  Assets:Current:Cash                          200 CAD
-2007-12-31 check  Assets:Current:Cash                          300 USD
+2007-12-31 check  Assets:Cash                          200 CAD
+2007-12-31 check  Assets:Cash                          300 USD
 
 ;; Because I don't track individual cash expenses very tightly,
 ;; I still need to distribute the cash that disappeared into
@@ -509,32 +510,32 @@
 2008-01-02 * "Distribution of cash expenses"
   Expenses:Food:Restaurant   300.00 USD
   Expenses:Food:Alcool       100.00 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 2008-01-16 * "Distribution of cash expenses"
   Expenses:Food:Restaurant   300.00 USD
   Expenses:Food:Alcool       100.00 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 2008-02-02 * "Distribution of cash expenses"
   Expenses:Food:Restaurant   300.00 USD
   Expenses:Food:Alcool       100.00 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 2008-02-16 * "Distribution of cash expenses"
   Expenses:Food:Restaurant   300.00 USD
   Expenses:Food:Alcool       100.00 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 2008-03-02 * "Distribution of cash expenses"
   Expenses:Food:Restaurant   300.00 USD
   Expenses:Food:Alcool       100.00 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 2008-03-16 * "Distribution of cash expenses"
   Expenses:Food:Restaurant   300.00 USD
   Expenses:Food:Alcool       100.00 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 
 
@@ -544,19 +545,19 @@
 
 2008-02-18 * "DMV" | "Renewal of driver's license."
   Expenses:Govt-Services     110.00 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 2008-01-21 * "WHOLE FOODS" | ""
   Expenses:Food:Grocery    54.03 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 2008-01-21 * "USPS" | "sent package to mom"
   Expenses:Communications:Mail      4.43 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 2008-02-04 * "taxi home from meeting"
   Expenses:Transportation:Taxi  12.00 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 
 
@@ -572,23 +573,23 @@ begintag #ski-trip
 
 2008-01-27 * "SUNONO" | "fill'er up"
   Expenses:Car:Gas            40 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 2008-01-27 * "SKII" | "Lift tickets"
   Expenses:Sports        120 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 2008-01-27 * "Dinner at chalet"
   Expenses:Food:Restaurant      35.33 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 2008-01-28 * "breakfast"
   Expenses:Food:Restaurant      17.23 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 2008-01-28 * "a new hat, it was cold"
   Expenses:Clothes              40.02 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 endtag #ski-trip
 
@@ -597,32 +598,26 @@ endtag #ski-trip
 
 2008-03-03 * "ALDO" | "new shoes"
   Expenses:Clothes              121.20 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 2008-02-24 * "AMC" | "movies with girlfriend"
   Expenses:Fun:Movie           24 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 2008-03-06 * "Barnes & Noble" | "books on accounting"
   Expenses:Books            74.43 USD
-  Assets:Current:Cash      -74.43 USD
+  Assets:Cash      -74.43 USD
 
 2008-02-03 * "ITHURTS MEDICAL CENT" | "x-ray for broken bones"
   Expenses:Medical           312.00 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 2008-03-02 * "ZEN CENTER" | "Donation to Zen center"
   Expenses:Charity        50 USD
-  Assets:Current:Cash
+  Assets:Cash
 
 
 
 
-2008-03-01 check  Assets:Current:Cash                          200 CAD
-2008-03-01 check  Assets:Current:Cash                          30.96 USD
-
-
-
-
-
-
+2008-03-01 check  Assets:Cash                          200 CAD
+2008-03-01 check  Assets:Cash                          30.96 USD
