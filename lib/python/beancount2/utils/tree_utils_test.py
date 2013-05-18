@@ -10,11 +10,20 @@ import collections
 
 Node = collections.namedtuple('Node', 'name children')
 
+
+class TreeAdaptor:
+
+    def create_node(self, name):
+        return Node(name, [])
+
+    def get_name(self, node):
+        return node.name.split(':')[-1]
+
+    def get_children(self, node):
+        return node.children
+
 def create_test_tree():
-    return tree_utils.TreeDict(lambda name: Node(name, []),
-                               lambda node: node.name,
-                               lambda node: node.children,
-                               ':')
+    return tree_utils.TreeDict(TreeAdaptor(), ':')
 
 class TestTree(unittest.TestCase):
 
@@ -24,10 +33,14 @@ class TestTree(unittest.TestCase):
         tree['Assets:US:TD']
         tree['Assets:US:HSBC:Savings']
         tree['Assets:US:HSBC:Checking']
-        tree.dump(sys.stdout)
+        print()
+        for line, node in tree.render_lines():
+            print('{:32}: {}'.format(line, repr(node.name)))
 
     def test_simple2(self):
         tree = create_test_tree()
         tree['Assets']
         tree['Assets:US:HSBC:Savings']
-        tree.dump(sys.stdout)
+        print()
+        for line, node in tree.render_lines():
+            print('{:32}: {}'.format(line, repr(node.name)))
