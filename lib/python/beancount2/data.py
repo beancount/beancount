@@ -2,7 +2,12 @@
 Basic data structures used to represent the Ledger entries.
 """
 from collections import namedtuple
-from cdecimal import Decimal
+
+# Attempt to import a fast Decimal implementation if you can.
+try:
+    from cdecimal import Decimal
+except ImportError:
+    from decimal import Decimal
 
 
 # Constants.

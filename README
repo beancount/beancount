@@ -7,10 +7,11 @@
     1  Description
     2  Project Status
     3  Demo
-    4  Download
-    5  Documentation
-    6  Copyright and License
-    7  Author
+    4  Runtime-Dependencies
+    5  Download
+    6  Documentation
+    7  Copyright and License
+    8  Author
 
 Description
 ===========
@@ -71,6 +72,14 @@ directory. To run a local web server on the example demo file, cd into
 - `Demo Output <examples/output/balsheet_end.html>`_
 
 
+Dependencies
+============
+
+- GNU flex and GNU bison (to build the parser)
+- cdecimal (optional but strongly suggested, a faster Decimal type for Python)
+- Bottle (a tiny web server, pure Python)
+
+
 Download
 ========
 
@@ -101,4 +110,3 @@ Author
 ======
 
 Martin Blais <blais@furius.ca>
-

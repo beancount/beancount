@@ -2,6 +2,14 @@
 beancount: TODO
 * NEW
 
+  - Implement options... it just makes sense:
+
+       %option title "Company So and So Ledger"
+
+  - The examples should be drawn from the demo file; the demo file should be
+    rewritten, with multiple years, and with good templates for most of the
+    important operations that can take place.
+
   - Errors from the parser and others should all be accumulated in one place,
     so that we do all the reporting at the very top level.
 
