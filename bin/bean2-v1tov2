@@ -2,7 +2,9 @@
 """
 Try to automatically convert a V1 .ledger beancount input file to the newer .beancount V2 syntax.
 """
-import os, sys, re
+import os
+import sys
+import re
 
 
 def unquote(s):

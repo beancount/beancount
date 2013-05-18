@@ -17,7 +17,7 @@ clean:
 	rm -f lib/python/lexer.h lib/python/lexer.c
 	rm -f lib/python/*.so
 
-CROOT=lib/python/beancount2
+CROOT=lib/python/beancount2/parser
 
 $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
 	bison -o $(CROOT)/grammar.c $<

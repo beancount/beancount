@@ -61,10 +61,19 @@ def main():
     with utils.print_time('parse'):
         contents = beancount2.parser.parse(opts.filename)
 
-    print_entries_by_date(contents.entries)
+    # print_entries_by_date(contents.entries)
 
-    # checks.check(contents.entries, contents.accounts)
-    
+    with utils.print_time('check'):
+
+        # Run the checks.
+        errors = checks.check(contents.entries, contents.accounts)
+
+        # Report all the errors.
+        for error in errors:
+            print('{} {}'.format(checks.render_fileloc(error.fileloc),
+                                 error.message))
+
+
     # with print_time('realize'):
     #     accounts_map = test_realize(entries)
 

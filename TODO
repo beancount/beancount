@@ -2,8 +2,18 @@
 beancount: TODO
 * Urgent
 
+  - More all parser files under beancount2.parser, remove creader.c
+
+
   - Checks need to be re-ordered to be _before_ all the transactions of the same
     date. Do this in the parser.
+
+* Beancount File Review and Fixes
+
+  - Open directives need to be set correct dates
+  - We need to move the account ids on the open directives too
+  - Automatically detect accounts which aren't referred anywhere but open and
+    close, and warn on these!
 
 * Helpers for Documents
 
@@ -223,6 +233,14 @@ beancount: TODO
     functionalities would still work.
 
 * Filtering Methods
+** By Country
+
+  - You should be able to look at only accounts with a particular pattern (and
+    their other legs), e.g. *:CA:*
+
+  - You perhaps should flag all the transactions that have a particular unit
+    (e.g. CAD)
+
 ** By Account Prefix
 
   - Specify a single account, and automatically select all the other accounts
@@ -333,6 +351,8 @@ beancount: TODO
 
 * Emacs Support
 
+  - Set the comment-syntax; currently it thinks it's '# '
+
   - In the new mode, we need to recreate a function that will mark a posting as
     valid (replace '!' by '*').
 
@@ -390,6 +410,9 @@ beancount: TODO
     and automaticalyl attempt to detect which types they are (if any), and
     invoke converters automatically. Other people should be able to add and
     improve this script.
+
+  - The importers should detect the type of files and identify their accounts,
+    and automatically stash the file under the correct documents directory.
 
 ** Avoid Reimporting
 

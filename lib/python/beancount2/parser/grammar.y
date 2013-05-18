@@ -349,10 +349,10 @@ event : DATE EVENT STRING STRING
           DECREF3($1, $3, $4);
       }
 
-note : DATE NOTE STRING
+note : DATE NOTE ACCOUNT STRING
       {
-          $$ = BUILD("note", "siOO", FILE_LINE_ARGS, $1, $3);
-          DECREF2($1, $3);
+          $$ = BUILD("note", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
+          DECREF3($1, $3, $4);
       }
 
 entry : transaction

@@ -59,7 +59,7 @@ Pad         = namedtuple('Pad'         , 'fileloc date account account_pad')
 Check       = namedtuple('Check'       , 'fileloc date account amount')
 Transaction = namedtuple('Transaction' , 'fileloc date flag payee narration tags postings')
 Event       = namedtuple('Event'       , 'fileloc date type description')
-Note        = namedtuple('Note'        , 'fileloc date comment')
+Note        = namedtuple('Note'        , 'fileloc date account comment')
 Price       = namedtuple('Price'       , 'fileloc date currency amount')
 
 # Postings are contained in Transaction entries.

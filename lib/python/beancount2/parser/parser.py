@@ -7,7 +7,7 @@ import copy
 import logging
 from collections import namedtuple
 
-from beancount2 import _parser
+from beancount2.parser import _parser
 from beancount2.utils import render_tree
 from beancount2.data import *
 from beancount2.inventory import Position, Inventory
@@ -120,9 +120,9 @@ class Builder(object):
         fileloc = FileLocation(filename, lineno)
         return Price(fileloc, date, currency, amount)
 
-    def note(self, filename, lineno, date, comment):
+    def note(self, filename, lineno, date, account, comment):
         fileloc = FileLocation(filename, lineno)
-        return Note(fileloc, date, comment)
+        return Note(fileloc, date, account, comment)
 
     def posting(self, account, position, price, istotal, flag):
         # If the price is specified for the entire amount, compute the effective
@@ -166,7 +166,7 @@ class Builder(object):
 FileContents = namedtuple('FileContents', 'entries accounts')
 
 
-SORT_ORDER = {Check: -1
+SORT_ORDER = {Check: -1,
               Open: -1,
               Close: 1}
 
