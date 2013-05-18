@@ -79,19 +79,21 @@ def main():
         real_accounts = realization.realize(contents.entries)
 
         if 1:
-            def render_inventory(real_account):
-                if real_account.postings:
-                    return '        {:32s}'.format(real_account.postings[-1].inventory)
+            lines = list(real_accounts.render_lines())
+            width = max(len(line[0]) for line in lines)
+            for line, real_account in lines:
+                balance = real_account.postings[-1].inventory if real_account.postings else ''
+                print('{:{width}}    {}'.format(line, balance, width=width))
 
-            real_accounts.dump(sys.stdout, render_inventory)
 
-        # real_account = real_accounts['Assets:Cash']
-        # for real_posting in real_account.postings:
-        #     print('{} {:48} {:72} {:72}'.format(real_posting.entry.date,
-        #                                   ' | '.join([real_posting.entry.payee or '', real_posting.entry.narration]),
-        #                                   real_posting.posting.position,
-        #                                   real_posting.inventory,
-        #                                   ))
+        if 0:
+            real_account = real_accounts['Assets:Cash']
+            for real_posting in real_account.postings:
+                print('{} {:48} {:72} {:72}'.format(real_posting.entry.date,
+                                              ' | '.join([real_posting.entry.payee or '', real_posting.entry.narration]),
+                                              real_posting.posting.position,
+                                              real_posting.inventory,
+                                              ))
 
 
 

@@ -69,60 +69,54 @@ class TreeDict(dict):
             dict.__setitem__(self, name, account)
         return account
 
-    def dump(self, out_file, render_node):
-        string = render(self.get_root(), self.adaptor, render_node)
-        print(string, file=out_file)
+    def render_lines(self):
+        """Yield a tree-rendering prefix and a node, so that you can print
+        this out in a tree."""
+        return render(self.get_root(), self.adaptor)
 
 
 # A class to hold the recursion rendering context.
-Context = namedtuple('Context', 'adaptor node_custom_data pfx_leaf pfx_nonleaf pfx_cont pfx_skip')
+Context = namedtuple('Context', 'adaptor pfx_last pfx_nonleaf pfx_cont pfx_skip')
 
 
-def render(root, node_adaptor, node_custom_data=None):
+def render(root, node_adaptor):
     """Render a tree of nodes and return a string for the tree.
 
     Args:
       root: The root node of the hierarchy.
-      fname: A function to get the name of a node.
-      fchildren: A function to obtain the list of children.
-    Returns:
-      A rendered string of the ASCII tree.
+      node_adaptor: An adaptor for nodes, to get the name and children.
+    Yields:
+      Pairs of (line, node).
     """
 
     # Create a rendering context.
-    context = Context(node_adaptor, node_custom_data, '`-- ', '|-- ', '|   ', '    ')
+    context = Context(node_adaptor, '`-- ', '|-- ', '|   ', '    ')
 
     # Render as lines and join in a single string.
-    lines = _render_node(root, context, True, '')
-    return '\n'.join(lines)
+    for line_node in _render_node(root, context, True, ''):
+      yield line_node
 
 
-def _render_node(node, context, is_leaf, prefix):
+def _render_node(node, context, is_last, prefix):
     """Internal recursive node rendering function."""
 
     # Render the current line.
     node_name = context.adaptor.get_name(node)
     if node_name:
-        line_prefix = prefix + (context.pfx_leaf if is_leaf else context.pfx_nonleaf)
-        child_prefix = prefix + (context.pfx_skip if is_leaf else context.pfx_cont)
+        line_prefix = prefix + (context.pfx_last if is_last else context.pfx_nonleaf)
+        child_prefix = prefix + (context.pfx_skip if is_last else context.pfx_cont)
     else:
         line_prefix = ''
         child_prefix = ''
 
     # Compute the text to render.
-    line = [line_prefix, node_name]
-    if context.node_custom_data:
-        custom_data = context.node_custom_data(node)
-        if custom_data is not None:
-            line.append(custom_data)
-    lines = [' '.join(line)]
+    line = line_prefix + node_name
+    yield (line, node)
 
     # Loop over all children.
     children = context.adaptor.get_children(node)
     last_i = len(children) - 1
     for i, child in enumerate(children):
         # Render the child's lines (recurse).
-        child_lines = _render_node(child, context, i == last_i, child_prefix)
-        lines.extend(child_lines)
-
-    return lines
+        for line_node in _render_node(child, context, i == last_i, child_prefix):
+          yield line_node
