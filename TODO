@@ -282,6 +282,11 @@ beancount: TODO
 
 
 * Parser
+** Testing Improvments
+
+  - Allow file objects to parse() and dump_lexer(). This should use fdopen() or
+    whatever else to get this job done at the parser level.
+
 ** General Improvements to Syntax
 
   - Add 1/rate syntax for prices (and anything... really, why not).

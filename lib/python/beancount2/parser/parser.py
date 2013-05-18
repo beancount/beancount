@@ -5,6 +5,7 @@ Basic test to invoke the beancount parser.
 import datetime
 import copy
 import logging
+import tempfile
 from collections import namedtuple
 from os import path
 
@@ -12,15 +13,11 @@ from beancount2.parser import _parser
 from beancount2.utils import tree_utils
 from beancount2.data import *
 from beancount2.inventory import Position, Inventory
+from beancount2 import balance
 
 
 # Options.
 __sanity_checks__ = False
-
-
-# The difference amount at which we consider a transaction to be balanced.
-# Note: This could probably be a little smaller and that would be a good thing.
-SMALL_EPSILON = Decimal('0.005')
 
 
 class ParserError(RuntimeError):
@@ -40,14 +37,18 @@ class Builder(object):
         self.tags = []
 
         # The result from running the parser, a list of entries.
-        self.entries = None
+        self.entries = []
 
         # A mapping of all the accounts created.
         self.accounts = {}
 
+        # Errors that occurred during parsing.
+        self.errors = []
+
     def store_result(self, entries):
         """Start rule stores the final result here."""
-        self.entries = entries
+        if entries:
+            self.entries = entries
 
 
     def begintag(self, tag):
@@ -148,15 +149,15 @@ class Builder(object):
 
         # Balance incomplete auto-postings.
         # print('{}:{}: {}'.format(fileloc.filename, fileloc.lineno, narration))
-        postings, inserted = balance_incomplete_postings(fileloc, postings)
+        postings, inserted = balance.balance_incomplete_postings(fileloc, postings)
 
         # Create the transaction.
         transaction = Transaction(fileloc, date, chr(flag), payee, narration, ctags, postings)
 
         # Check that the balance actually is empty.
         if __sanity_checks__:
-            residual = compute_residual(postings)
-            assert residual.is_small(SMALL_EPSILON), residual
+            residual = balance.compute_residual(postings)
+            assert residual.is_small(balance.SMALL_EPSILON), residual
 
         return transaction
 
@@ -164,7 +165,7 @@ class Builder(object):
 # The result from parsing a set of entries.
 # I want this to remain as simple as possible.
 # The list of entries is sorted by date, and the order of appearance in the input file.
-FileContents = namedtuple('FileContents', 'entries accounts')
+FileContents = namedtuple('FileContents', 'entries accounts parse_errors')
 
 
 SORT_ORDER = {Check: -1,
@@ -185,121 +186,16 @@ def parse(filename):
     _parser.parse(path.abspath(filename), builder)
     entries = sorted(builder.entries, key=entry_sortkey)
     accounts = sorted(builder.accounts.values())
-    return FileContents(entries, accounts)
+    return FileContents(entries, accounts, builder.errors)
 
 
-def compute_residual(postings):
-    """Compute the residual of a set of complete postings.
-    This is used to cross-check a balanced transaction."""
-
-    inventory = Inventory()
-    for posting in postings:
-        position = posting.position
-        lot = position.lot
-
-        # It the position has a cost, use that to balance this posting.
-        if lot.cost:
-            amount = mult_amount(lot.cost, position.number)
-
-        # If there is a price, use that to balance this posting.
-        elif posting.price:
-            amount = mult_amount(posting.price, position.number)
-
-        # Otherwise, just use the amount itself.
-        else:
-            amount = position.get_amount()
-        inventory.add(amount)
-
-    return inventory
-
-
-def balance_incomplete_postings(fileloc, postings):
-    """Replace and complete postings that have no amount specified on them.
-
-    Returns a new list of balanced postings, with the incomplete postings
-    replaced with completed ones. This is probably the only place where there
-    is a bit of non-trivial logic in this entire project (and the rewrite was
-    to make sure it was *that* simple.)
-
-    Note: The 'postings' parameter may be modified or destroyed for performance
-    reasons; don't reuse it.
-    """
-
-    # The list of postings without and with an explicit position.
-    auto_postings_indices = []
-
-    # Currencies seen in complete postings.
-    currencies = set()
-
-    # An inventory to accumulate the residual balance.
-    inventory = Inventory()
-
-    # Process all the postings.
-    for i, posting in enumerate(postings):
-        position = posting.position
-
-        if position is None:
-            # This posting will have to get auto-completed.
-            auto_postings_indices.append(i)
-        else:
-            lot = position.lot
-            currencies.add(lot.currency)
-
-            # It the position has a cost, use that to balance this posting.
-            if lot.cost:
-                amount = mult_amount(lot.cost, position.number)
-
-            # If there is a price, use that to balance this posting.
-            elif posting.price:
-                amount = mult_amount(posting.price, position.number)
-
-            # Otherwise, just use the amount itself.
-            else:
-                amount = position.get_amount()
-            inventory.add(amount)
-
-    # If there are auto-postings, fill them in.
-    if auto_postings_indices:
-        inserted_autopostings = True
-
-        # If there are too many such postings, we can't do anything, barf.
-        if len(auto_postings_indices) > 1:
-            raise ParserError(fileloc, "Too many auto-postings; cannot fill in.")
-
-        index = auto_postings_indices[0]
-        old_posting = postings[index]
-        assert old_posting.price is None
-
-        residual_positions = inventory.get_positions()
-
-        # If there are no residual positions, we want to still insert a posting
-        # but with a zero position, so that the posting shows up anyhow. We
-        # insert one such posting for each currency seen in the complete
-        # postings.
-        new_postings = []
-        if not residual_positions:
-            for currency in currencies:
-                position = Position(Lot(currency, None, None), ZERO)
-                new_postings.append(
-                    Posting(old_posting.account, position, None, old_posting.flag))
-        else:
-            # Convert all the residual positions in inventory into a posting for
-            # each position.
-            for position in residual_positions:
-                position.number = -position.number
-                new_postings.append(
-                    Posting(old_posting.account, position, None, old_posting.flag))
-
-        postings[index:index+1] = new_postings
-
-    else:
-        inserted_autopostings = False
-
-        # Detect complete sets of postings that have residual balance.
-        if not inventory.is_small(SMALL_EPSILON):
-            raise ParserError(fileloc, "Transaction does not balance: {}.".format(inventory))
-
-    return postings, inserted_autopostings
+def parse_string(input_string):
+    """Parse a beancount input file and return Ledger with the list of
+    transactions and tree of accounts."""
+    with tempfile.NamedTemporaryFile('w') as tmp_file:
+        tmp_file.write(input_string)
+        tmp_file.flush()
+        return parse(tmp_file.name)
 
 
 
@@ -315,7 +211,8 @@ class LexOnlyBuilder(object):
     def TAG(self, s):                 pass
     def NUMBER(self, s):              pass
 
-def dump_lexer(filename, fileobj):
+
+def dump_lexer(filename):
     """Parse a beancount input file and return a list of transactions."""
     _parser.lexer_init(filename, LexOnlyBuilder())
     while 1:
@@ -324,3 +221,11 @@ def dump_lexer(filename, fileobj):
             break
         token, text, lineno = x
         print('{:12} {:6d} {}'.format(token, lineno, repr(text)))
+
+
+def dump_lexer_string(input_string):
+    """Parse a beancount input file and return a list of transactions."""
+    with tempfile.NamedTemporaryFile('w') as tmp_file:
+        tmp_file.write(input_string)
+        tmp_file.flush()
+        return dump_lexer(tmp_file.name)

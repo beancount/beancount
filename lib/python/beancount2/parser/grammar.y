@@ -143,7 +143,10 @@ txn : TXN
     }
 
 eol : EOL
+    | INDENT EOL
     | COMMENT EOL
+    | INDENT
+    | COMMENT
 
 tags_list : empty
           {
