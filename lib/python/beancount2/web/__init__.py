@@ -51,13 +51,33 @@ def home():
     """.format(**vars()))
 
 
-@bottle.route('/ledger/byyear/<year>/<rest:path>')
-def ledger_byyear(year, rest):
-    print(year, repr(rest))
-    return str(year)
+
+
+ledger_app = bottle.Bottle()
+
+@ledger_app.route('/index/<no>')
+def ledger_index(no):
+    return str('TEST {}'.format(no))
 
 
 
+
+
+#FIXME: I want to be able to render links with a global index of symbols, not as links, just like I did in my own thing.
+# This makes everything nicer...
+# def route(path, *args):
+#     def decorator(fun):
+#         fun = route(path, *args)
+
+
+# CHeck this out, might be related:
+    # def get_url(self, routename, **kargs):
+
+
+        # bottle.route('/a/:b/c', name='named')(foo)
+        # bottle.request.environ['SCRIPT_NAME'] = ''
+        # self.assertEqual('/a/xxx/c', bottle.url('named', b='xxx'))
+        # self.assertEqual('/a/xxx/c', bottle.app().get_url('named', b='xxx'))
 
 
 
@@ -80,8 +100,10 @@ def main():
     global template
     template = open(path.join(path.dirname(__file__), 'template.html')).read()
 
-    bottle.run(host='localhost', port=8080, debug=True, reloader=True)
+    bottle.mount('/ledger/byyear/2013', ledger_app)
+    bottle.mount('/ledger/byyear/2012', ledger_app)
+    bottle.mount('/ledger/byyear/2011', ledger_app)
 
-
-#FIXME: I want to be able to render links with a global index of symbols, not as links, just like I did in my own thing.
-k# This makes everything nicer...
+    bottle.run(host='localhost', port=8080,
+               # reloader=True,
+               debug=True)

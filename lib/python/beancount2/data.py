@@ -15,15 +15,26 @@ ZERO = Decimal()
 
 
 # An 'Amount' is a representation of an amount of a particular units.
-Amount = namedtuple('Amount', 'number currency')
+class Amount:
 
-def AmountS(number_string, currency):
-    """Create an Amount instance with a string. For convenience."""
-    return Amount(Decimal(number_string), currency)
+    __slots__ = ('number', 'currency')
+
+    def __init__(self, number, currency):
+        self.number = Decimal(number) if isinstance(number, str) else number
+        self.currency = currency
+
+    def __str__(amount):
+        return "{} {}".format(amount.number, amount.currency)
+    __repr__ = __str__
+
+    def __eq__(self, other):
+        return (self.number, self.currency) == other
 
 def mult_amount(amount, number):
     """Multiply the given amount by a number."""
     return Amount(amount.number * number, amount.currency)
+
+
 
 
 # Lots are representation of a commodity with an optional associated cost and optional acquisition date.
@@ -71,6 +82,12 @@ def is_income_statement_account(account):
 
 # The location in a source file where the directive was read from.
 FileLocation = namedtuple('FileLocation', 'filename lineno')
+
+def render_fileloc(fileloc):
+    """Render the fileloc for errors in a way that it will be both detected by
+    Emacs and align and rendered nicely."""
+    return '{}:{:8}'.format(fileloc.filename, '{}:'.format(fileloc.lineno))
+
 
 # All possible types of entries. See the documentation for these.
 Open        = namedtuple('Open'        , 'fileloc date account account_id currencies')

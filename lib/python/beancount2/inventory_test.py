@@ -2,50 +2,127 @@
 Unit tests for the inventory class.
 """
 import unittest
+import copy
 
-from beancount2.data import Amount, AmountS, Lot
+from beancount2.data import Amount, Lot
 from beancount2.inventory import Inventory
+
+
+
+
 
 
 class TestInventory(unittest.TestCase):
 
+    def checkAmount(self, inventory, number, currency):
+        amount = Amount(number, currency)
+        inv_amount = inventory.get_amount(amount.currency)
+        self.assertEqual(inv_amount , amount)
+
+    def test_copy(self):
+        inv = Inventory()
+        inv.add(Amount('100.00', 'USD'))
+        self.checkAmount(inv, '100', 'USD')
+
+        # Test copying.
+        inv2 = copy.copy(inv)
+        inv2.add(Amount('50.00', 'USD'))
+        self.checkAmount(inv2, '150', 'USD')
+
+        # Check that the original object is not modified.
+        self.checkAmount(inv, '100', 'USD')
+
     def test_add(self):
         inv = Inventory()
-        inv.add(AmountS('100.00', 'USD'))
-        print(inv)
+        inv.add(Amount('100.00', 'USD'))
+        self.checkAmount(inv, '100', 'USD')
 
-        inv.add(AmountS('25.01', 'USD'))
-        print(inv)
+        # Add some amount
+        inv.add(Amount('25.01', 'USD'))
+        self.checkAmount(inv, '125.01', 'USD')
 
-        inv.add(AmountS('12.73', 'CAD'))
-        print(inv)
+        # Subtract some amount.
+        inv.add(Amount('-12.73', 'USD'))
+        self.checkAmount(inv, '112.28', 'USD')
 
-        inv.add(AmountS('-84.03', 'USD'))
-        print(inv)
+        # Subtract some to be negative (should be allowed if no lot).
+        inv.add(Amount('-120', 'USD'))
+        self.checkAmount(inv, '-7.72', 'USD')
 
-        self.assertRaises(ValueError, inv.add, AmountS('-40.99', 'USD'))
+        # Subtract some more.
+        inv.add(Amount('-1', 'USD'))
+        self.checkAmount(inv, '-8.72', 'USD')
 
+        # Add to above zero again
+        inv.add(Amount('18.72', 'USD'))
+        self.checkAmount(inv, '10', 'USD')
 
-    def test_add_withcost(self):
+    def test_add_multi_currency(self):
         inv = Inventory()
-        inv.add(AmountS('100.00', 'USD'), AmountS('100', 'USD'))
-        print(inv)
+        inv.add(Amount('100', 'USD'))
+        inv.add(Amount('100', 'CAD'))
+        self.checkAmount(inv, '100', 'USD')
+        self.checkAmount(inv, '100', 'CAD')
 
-        invcopy = inv.copy()
-        self.assertRaises(ValueError, invcopy.add, AmountS('-100.00', 'USD'), AmountS('100.01', 'USD'))
-        print(inv)
+        inv.add(Amount('25', 'USD'))
+        self.checkAmount(inv, '125', 'USD')
+        self.checkAmount(inv, '100', 'CAD')
 
-        invcopy = inv.copy()
-        self.assertRaises(ValueError, invcopy.add, AmountS('-100.01', 'USD'), AmountS('100.00', 'USD'))
-        print(inv)
-
-    def test_get_costs(self):
+    def test_add_withlots(self):
         inv = Inventory()
-        inv.add(AmountS('10.00', 'USD'), AmountS('1.05', 'CAD'))
+        inv.add(Amount('50', 'GOOG'), Amount('700', 'USD'))
+        self.checkAmount(inv, '50', 'GOOG')
+
+        inv.add(Amount('-40', 'GOOG'))
+        self.checkAmount(inv, '10', 'GOOG')
+
+# FIXME: Continue here
+
+        # self.assertRaises(ValueError, inv.add, Amount('-40.99', 'USD'))
+
+
+
+    def __test_add_withcost(self):
+        inv = Inventory()
+        inv.add(Amount('100.00', 'USD'), Amount('100', 'USD'))
+        print(inv)
+
+        # FIXME: Fix inventory
+
+        # invcopy = copy.copy(inv)
+        # self.assertRaises(ValueError, invcopy.add, Amount('-100.00', 'USD'), Amount('100.01', 'USD'))
+        # print(inv)
+
+        # invcopy = copy.copy(inv)
+        # self.assertRaises(ValueError, invcopy.add, Amount('-100.01', 'USD'), Amount('100.00', 'USD'))
+        # print(inv)
+
+
+
+
+    def __test_get_costs(self):
+        inv = Inventory()
+        inv.add(Amount('10.00', 'USD'), Amount('1.05', 'CAD'))
         print(inv.get_amounts())
         print(inv.get_costs())
 
         inv = Inventory()
-        inv.add(AmountS('100', 'AAPL'), AmountS('404.00', 'USD'))
+        inv.add(Amount('100', 'AAPL'), Amount('404.00', 'USD'))
         print(inv.get_amounts())
         print(inv.get_costs())
+# FIXME: We need real checks here.
+
+
+
+# FIXME: Check booking against lots with dates
+
+# FIXME: Test a conversion of shares with lot-date, e.g.:
+#
+#   2000-01-18 * Buy CRA
+#     Assets:CA:RBC-Investing:Taxable-CAD:CRA           4 "CRA1" {232.00 USD / 2000-01-18}
+#     Assets:CA:RBC-Investing:Taxable-CAD               -1395.43 CAD @ 0.665027984206 USD  ; cost
+#   
+#   2000-02-22 * CRA Stock Split 2:1
+#     Assets:CA:RBC-Investing:Taxable-CAD:CRA          -4 "CRA1" {232.00 USD / 2000-01-18}
+#     Assets:CA:RBC-Investing:Taxable-CAD:CRA           8 CRA {116.00 USD / 2000-01-18}
+#   

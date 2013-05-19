@@ -2,6 +2,15 @@
 beancount: TODO
 * NEW
 
+
+  - Check that the currency constraints on accounts are respected.
+    (Implement the currency constraints...)
+
+
+
+  - Implement 'check' directive.
+  - Implement 'pad' directive, and 'check', and all others.
+
   - Implement options... it just makes sense:
 
        %option title "Company So and So Ledger"
@@ -60,6 +69,9 @@ beancount: TODO
 
 * Error Reporting & Detection
 
+  - Don't raise error exceptions anywhere; log everything to an error
+    handler/accumulator class instead, and skip to the next entry/declaration.
+
   - Problematic transactions (!) should spit something of color on stdout, they
     should not be forgotten so easily.
 
@@ -67,6 +79,9 @@ beancount: TODO
 
   - Bug: Invalid account names should only be reported once.
 
+** Lexer Level Errors
+
+  - When an error occurs, skip the lexer to the next empty line and recommence.
 * Checks
 
   - Implement a check that open and close precede / succede all accounts
@@ -275,12 +290,6 @@ beancount: TODO
 
   - You need to clean up the memory of the strings created; call free() on each
     string in the rules.
-
-
-* Error handling
-** Lexer Level Errors
-
-  - When an error occurs, skip the lexer to the next empty line and recommence.
 
 
 * Includes
@@ -772,6 +781,11 @@ beancount: TODO
 * Challenges
 
 A list of ideas to generate new reports.
+
+** Can I generate a nice year-on-year summary of income and expenses?
+
+  - Including RSP contribs, like my bu spreadsheet that I crafted manually? Can
+    I do that? That would be awesome!
 
 ** Maximum Balance
 

@@ -84,6 +84,8 @@ class TestParserEntries(unittest.TestCase):
         """
         self.assertTrue(isinstance(contents.entries[0], Price))
 
+parser.create_parsetest_methods(TestParserEntries)
+
 
 
 class TestParserMisc(unittest.TestCase):
@@ -138,28 +140,4 @@ class TestParserMisc(unittest.TestCase):
         self.assertEqual(len(contents.accounts), 4)
         self.assertEqual(contents.parse_errors, [])
 
-
-def create_parsetest_method(method):
-    """Create a test method that will automatically parse the
-    docstring as beancount syntax and provide the results to
-    the wrapped test function."""
-    input_string = dedent(method.__doc__)
-    def new_method(self):
-        contents = parser.parse_string(input_string)
-        return method(self, contents)
-    new_method.__name__ = method.__name__[5:]
-    return new_method
-
-
-def create_parsetest_methods(klass):
-    """Decorate the test class with convenient test methods that
-    automatically parse the beancount syntax. This avoids a lot
-    of boilerplate."""
-    for attrname, attribute in list(klass.__dict__.items()):
-        if attrname.startswith('parsetest_'):
-            new_method = create_parsetest_method(attribute)
-            setattr(klass, attrname[5:], new_method)
-
-
-create_parsetest_methods(TestParserEntries)
-create_parsetest_methods(TestParserMisc)
+parser.create_parsetest_methods(TestParserMisc)

@@ -35,11 +35,11 @@ as None. This is the case for most of the transactions.
 
 """
 from collections import namedtuple
-from copy import deepcopy
+import copy
 from datetime import date
 import io
 
-from beancount2.data import ZERO, Decimal, Amount, Lot
+from beancount2.data import ZERO, Decimal, Amount, Lot, mult_amount
 
 
 class Position:
@@ -54,6 +54,12 @@ class Position:
 
     def __str__(self):
         return 'Position({}, {})'.format(self.number, self.lot)
+    __repr__ = __str__
+
+    def __copy__(self):
+        # Shallow copy, except for the lot, which can be shared.
+        # This is important for performance reasons; a lot of time is spent here during balancing.
+        return Position(self.lot, Decimal(self.number))
 
     def get_amount(self):
         return Amount(self.number, self.lot.currency)
@@ -69,9 +75,9 @@ class Position:
 class Inventory:
     """An Inventory is a set of positions."""
 
-    def __init__(self):
+    def __init__(self, positions=None):
         # Positions held in this inventory.
-        self.positions = []
+        self.positions = positions or []
 
     def __str__(self):
         lot_strings = []
@@ -88,6 +94,9 @@ class Inventory:
     def __bool__(self):
         return bool(self.positions)
 
+    def __copy__(self):
+        return Inventory(list(map(copy.copy, self.positions)))
+
     def is_empty(self):
         return not bool(self.positions)
 
@@ -99,6 +108,15 @@ class Inventory:
             if abs(position.number) > epsilon:
                 return False
         return True
+
+    def get_amount(self, currency):
+        """Fetch the total amount across all the position in the given currency.
+        This may sum multiple lots in the same currency denomination."""
+        total_units = ZERO
+        for position in self.positions:
+            if position.lot.currency == currency:
+                total_units += position.number
+        return Amount(total_units, currency)
 
     def get_amounts(self):
         """Return a list of Amounts (ignoring cost)."""
@@ -120,15 +138,6 @@ class Inventory:
         "Return the positions in this inventory."
         return self.positions
 
-    # def extract_position(self):
-    #     """Convert this inventory in a single position, if possible. if
-    #     not possible, this returns None."""
-    #     if len(self.positions) == 1:
-    #         return self.positions[0]
-
-    def copy(self):
-        return deepcopy(self)
-
     def find_create(self, lot):
         """Find or create a position associated with a given lot."""
         for position in self.positions:
@@ -146,15 +155,30 @@ class Inventory:
         assert cost is None or isinstance(cost, Amount)
         assert lot_date is None or isinstance(lot_date, date)
         lot = Lot(amount.currency, cost, lot_date)
-        position = self.find_create(lot)
-        position.add(amount.number)
-        if position.number == ZERO:
-            self.positions.remove(position)
+        self._add(amount.number, lot)
+
 
     def add_position(self, new_position):
         """Add using a position (with strict lot matching)."""
         assert isinstance(new_position, Position), new_position
-        position = self.find_create(new_position.lot)
-        position.add(new_position.number)
+        self._add(new_position.number, new_position.lot)
+
+    def has_lots(self, currency):
+        """Return true if the given currency has some positions with lots."""
+        for position in self.positions:
+            if position.lot.currency == currency and (position.lot.cost or
+                                                      position.lot.lot_date):
+                return True
+        return False
+
+    def _add(self, number, lot):
+
+        position = self.find_create(lot)
+        position.add(number)
         if position.number == ZERO:
             self.positions.remove(position)
+
+        if position.number < ZERO and (position.lot.cost or
+                                       position.lot.lot_date or
+                                       self.has_lots(lot.currency)):
+            raise ValueError("Position with lots goes negative: {}".format(self))

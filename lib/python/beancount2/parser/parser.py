@@ -8,6 +8,7 @@ import logging
 import tempfile
 from collections import namedtuple
 from os import path
+import textwrap
 
 from beancount2.parser import _parser
 from beancount2.utils import tree_utils
@@ -23,6 +24,7 @@ __sanity_checks__ = False
 class ParserError(RuntimeError):
     """A parsing error. Formats the file location into the message string."""
 
+    # FIXME: remove this formatting, not needed.
     def __init__(self, fileloc, message):
         RuntimeError.__init__(self, '{:s}:{:d}: {}'.format(
             fileloc.filename, fileloc.lineno, message))
@@ -138,7 +140,8 @@ class Builder(object):
 
         # Detect when a transaction does not have at least two legs.
         if postings is None or len(postings) < 2:
-            raise ParserError("Invalid number of postings", fileloc)
+            # FIXME: Don't raise, log an error and skip instead...
+            raise ParserError(fileloc, "Invalid number of postings")
 
         # Merge the tags from the stach with the explicit tags of this transaction
         ctags = set()
@@ -149,7 +152,9 @@ class Builder(object):
 
         # Balance incomplete auto-postings.
         # print('{}:{}: {}'.format(fileloc.filename, fileloc.lineno, narration))
-        postings, inserted = balance.balance_incomplete_postings(fileloc, postings)
+        postings, inserted, errors = balance.balance_incomplete_postings(fileloc, postings)
+        if errors:
+            self.errors.extend(errors)
 
         # Create the transaction.
         transaction = Transaction(fileloc, date, chr(flag), payee, narration, ctags, postings)
@@ -229,3 +234,28 @@ def dump_lexer_string(input_string):
         tmp_file.write(input_string)
         tmp_file.flush()
         return dump_lexer(tmp_file.name)
+
+
+#
+# Utilities for testing tests.
+#
+def create_parsetest_method(method):
+    """Create a test method that will automatically parse the
+    docstring as beancount syntax and provide the results to
+    the wrapped test function."""
+    input_string = textwrap.dedent(method.__doc__)
+    def new_method(self):
+        contents = parse_string(input_string)
+        return method(self, contents)
+    new_method.__name__ = method.__name__[5:]
+    return new_method
+
+
+def create_parsetest_methods(klass):
+    """Decorate the test class with convenient test methods that
+    automatically parse the beancount syntax. This avoids a lot
+    of boilerplate."""
+    for attrname, attribute in list(klass.__dict__.items()):
+        if attrname.startswith('parsetest_'):
+            new_method = create_parsetest_method(attribute)
+            setattr(klass, attrname[5:], new_method)

@@ -29,8 +29,8 @@ $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 build: $(CROOT)/grammar.c $(CROOT)/grammar.h $(CROOT)/lexer.c $(CROOT)/lexer.h
 	python3 setup2.py build_ext -i
 
-.PHONY: test
-test:
+.PHONY: sandbox
+sandbox:
 	bean2-sandbox $(LEDGER)
 
 dump_lexer:

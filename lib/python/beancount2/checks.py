@@ -121,12 +121,6 @@ def get_account_open_close(entries, accounts):
     return open_closes_map
 
 
-
-def render_fileloc(fileloc):
-    """Render the fileloc for errors in a way that it will be both detected by
-    Emacs and align and rendered nicely."""
-    return '{}:{:8}'.format(fileloc.filename, '{}:'.format(fileloc.lineno))
-
 def check(entries, accounts):
     """Perform all the standard checks on parsed contents."""
 

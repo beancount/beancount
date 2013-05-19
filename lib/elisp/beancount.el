@@ -105,7 +105,10 @@ declarations only."
   "Insert one of the valid account names in this file (using ido
 niceness)."
   (interactive
-   (list (ido-completing-read "Account: " beancount-accounts)))
+   (list (ido-completing-read "Account: " beancount-accounts nil nil (thing-at-point 'word))))
+  (let ((bounds (bounds-of-thing-at-point 'word)))
+    (when bounds
+      (delete-region (car bounds) (cdr bounds))))
   (insert account-name))
 
 

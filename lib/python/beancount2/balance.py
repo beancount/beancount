@@ -5,6 +5,10 @@ from beancount2.data import *
 from beancount2.inventory import Position, Inventory
 
 
+# An error from balancing the postings.
+BalanceError = namedtuple('BalanceError', 'fileloc message')
+
+
 # The difference amount at which we consider a transaction to be balanced.
 # Note: This could probably be a little smaller and that would be a good thing.
 SMALL_EPSILON = Decimal('0.005')
@@ -47,6 +51,9 @@ def balance_incomplete_postings(fileloc, postings):
     reasons; don't reuse it.
     """
 
+    # Errors during balancing.
+    balance_errors = []
+
     # The list of postings without and with an explicit position.
     auto_postings_indices = []
 
@@ -86,7 +93,8 @@ def balance_incomplete_postings(fileloc, postings):
 
         # If there are too many such postings, we can't do anything, barf.
         if len(auto_postings_indices) > 1:
-            raise ParserError(fileloc, "Too many auto-postings; cannot fill in.")
+            balance_errors.append(
+                BalanceError(fileloc, "Too many auto-postings; cannot fill in."))
 
         index = auto_postings_indices[0]
         old_posting = postings[index]
@@ -119,6 +127,7 @@ def balance_incomplete_postings(fileloc, postings):
 
         # Detect complete sets of postings that have residual balance.
         if not inventory.is_small(SMALL_EPSILON):
-            raise ParserError(fileloc, "Transaction does not balance: {}.".format(inventory))
+            balance_errors.append(
+                BalanceError(fileloc, "Transaction does not balance: {}.".format(inventory)))
 
-    return postings, inserted_autopostings
+    return postings, inserted_autopostings, balance_errors

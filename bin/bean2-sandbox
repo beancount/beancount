@@ -76,7 +76,7 @@ def main():
 
 
     with utils.print_time('realize'):
-        real_accounts = realization.realize(contents.entries)
+        real_accounts = realization.realize(contents.entries, check=True)
 
         if 1:
             lines = list(real_accounts.render_lines())
