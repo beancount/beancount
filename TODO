@@ -2,6 +2,8 @@
 beancount: TODO
 * NEW
 
+  - Finish the inventory_test.py, with the guard against negative balances when
+    a position has an associated cost or lot-date, a test is important.
 
   - Check that the currency constraints on accounts are respected.
     (Implement the currency constraints...)

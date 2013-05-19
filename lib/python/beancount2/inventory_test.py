@@ -3,6 +3,7 @@ Unit tests for the inventory class.
 """
 import unittest
 import copy
+from datetime import date
 
 from beancount2.data import Amount, Lot
 from beancount2.inventory import Inventory
@@ -69,36 +70,25 @@ class TestInventory(unittest.TestCase):
         self.checkAmount(inv, '100', 'CAD')
 
     def test_add_withlots(self):
+        # Testing the strict case where everything matches, with only a cost.
         inv = Inventory()
         inv.add(Amount('50', 'GOOG'), Amount('700', 'USD'))
         self.checkAmount(inv, '50', 'GOOG')
 
-        inv.add(Amount('-40', 'GOOG'))
+        inv.add(Amount('-40', 'GOOG') , Amount('700', 'USD'))
         self.checkAmount(inv, '10', 'GOOG')
 
-# FIXME: Continue here
+        self.assertRaises(ValueError, inv.add, Amount('-12', 'GOOG'), Amount('700', 'USD'))
 
-        # self.assertRaises(ValueError, inv.add, Amount('-40.99', 'USD'))
-
-
-
-    def __test_add_withcost(self):
+        # Testing the strict case where everything matches, a cost and a lot-date.
         inv = Inventory()
-        inv.add(Amount('100.00', 'USD'), Amount('100', 'USD'))
-        print(inv)
+        inv.add(Amount('50', 'GOOG'), Amount('700', 'USD'), date(2000, 1, 1))
+        self.checkAmount(inv, '50', 'GOOG')
 
-        # FIXME: Fix inventory
+        inv.add(Amount('-40', 'GOOG') , Amount('700', 'USD'), date(2000, 1, 1))
+        self.checkAmount(inv, '10', 'GOOG')
 
-        # invcopy = copy.copy(inv)
-        # self.assertRaises(ValueError, invcopy.add, Amount('-100.00', 'USD'), Amount('100.01', 'USD'))
-        # print(inv)
-
-        # invcopy = copy.copy(inv)
-        # self.assertRaises(ValueError, invcopy.add, Amount('-100.01', 'USD'), Amount('100.00', 'USD'))
-        # print(inv)
-
-
-
+        self.assertRaises(ValueError, inv.add, Amount('-12', 'GOOG'), Amount('700', 'USD'), date(2000, 1, 1))
 
     def __test_get_costs(self):
         inv = Inventory()
@@ -110,19 +100,31 @@ class TestInventory(unittest.TestCase):
         inv.add(Amount('100', 'AAPL'), Amount('404.00', 'USD'))
         print(inv.get_amounts())
         print(inv.get_costs())
-# FIXME: We need real checks here.
+# FIXME: We need real checks here instead of just prints.
 
 
 
-# FIXME: Check booking against lots with dates
+
 
 # FIXME: Test a conversion of shares with lot-date, e.g.:
 #
 #   2000-01-18 * Buy CRA
 #     Assets:CA:RBC-Investing:Taxable-CAD:CRA           4 "CRA1" {232.00 USD / 2000-01-18}
 #     Assets:CA:RBC-Investing:Taxable-CAD               -1395.43 CAD @ 0.665027984206 USD  ; cost
-#   
+#
 #   2000-02-22 * CRA Stock Split 2:1
 #     Assets:CA:RBC-Investing:Taxable-CAD:CRA          -4 "CRA1" {232.00 USD / 2000-01-18}
 #     Assets:CA:RBC-Investing:Taxable-CAD:CRA           8 CRA {116.00 USD / 2000-01-18}
-#   
+#
+
+
+    def test_sum_inventories(self):
+        inv1 = Inventory()
+        inv1.add(Amount('10', 'USD'))
+
+        inv2 = Inventory()
+        inv2.add(Amount('20', 'CAD'))
+        inv2.add(Amount('55', 'GOOG'))
+
+        inv = inv1 + inv2
+        print(inv)

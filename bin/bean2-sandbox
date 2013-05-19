@@ -76,9 +76,16 @@ def main():
 
 
     with utils.print_time('realize'):
-        real_accounts = realization.realize(contents.entries, check=True)
+        real_accounts, real_errors = realization.realize(contents.entries, check=True)
 
-        if 1:
+        inventory = Inventory()
+        for real_account in real_accounts.values():
+            if real_account.postings:
+                inventory += real_account.postings[-1].inventory
+        print(inventory)
+
+
+        if 0:
             lines = list(real_accounts.render_lines())
             width = max(len(line[0]) for line in lines)
             for line, real_account in lines:

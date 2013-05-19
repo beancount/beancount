@@ -172,7 +172,6 @@ class Inventory:
         return False
 
     def _add(self, number, lot):
-
         position = self.find_create(lot)
         position.add(number)
         if position.number == ZERO:
@@ -181,4 +180,19 @@ class Inventory:
         if position.number < ZERO and (position.lot.cost or
                                        position.lot.lot_date or
                                        self.has_lots(lot.currency)):
+
+            # Note: at this point we have already modified the values, so there
+            # is a side-effect even if we raise an exception. This is on
+            # purpose, we can help the user, but we shouldn't fix this
+            # automatically by ignoring certain numbers (that's worse).
             raise ValueError("Position with lots goes negative: {}".format(self))
+
+    def __add__(self, other):
+        new_inventory = self.__copy__()
+        new_inventory += other
+        return new_inventory
+
+    def __iadd__(self, other):
+        for position in other.positions:
+            self.add_position(position)
+        return self    
