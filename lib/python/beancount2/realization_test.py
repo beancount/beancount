@@ -46,3 +46,21 @@ class TestRealization(unittest.TestCase):
     #     pass
 
 parser.create_parsetest_methods(TestRealization)
+
+
+class TestRealizationPadding(unittest.TestCase):
+
+    def parsetest_pdf(self, contents):
+        """
+          2013-05-01 open Assets:US:Checking   USD
+          2013-05-01 pad  Assets:US:Checking   Equity:OpeningBalances
+          2013-05-03 check Assets:US:Checking   172.45 USD
+        """
+        # errors = checks.check(contents.entries, contents.accounts)
+        # self.assertFalse(errors)
+
+        # real_accounts, real_errors = realization.realize(contents.entries, True)
+        # assert len(real_errors) == 1
+## FIXME: todo
+
+parser.create_parsetest_methods(TestRealization)
