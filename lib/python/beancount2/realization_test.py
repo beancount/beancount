@@ -131,6 +131,54 @@ class TestRealizationPadding(unittest.TestCase):
         self.assertEqual(final_balance.get_positions()[0],
                          Position(Lot('GOOG', Amount('12.00', 'USD'), date(2000, 1, 1)), Decimal('172.45')))
 
+    def parsetest_pad_fail(self, contents):
+        """
+          2013-05-01 open Assets:Checking
+          2013-05-01 open Assets:Cash
+          2013-05-01 open Equity:OpeningBalances
+
+          2013-05-01 pad  Assets:Checking   Equity:OpeningBalances
+
+          2013-05-03 check Assets:Checking   172.45 USD
+
+          2013-05-15 txn "Add 20$"
+            Assets:Checking             20 USD
+            Assets:Cash
+
+          2013-06-01 check Assets:Checking   200 USD
+
+        """
+        real_accounts, real_errors = realization.realize(contents.entries, True)
+        self.assertEqual(len(real_errors), 1)
+
+
+    def parsetest_pad_used_twice(self, contents):
+        """
+          2013-05-01 open Assets:Checking
+          2013-05-01 open Assets:Cash
+          2013-05-01 open Equity:OpeningBalances
+
+          2013-05-01 pad  Assets:Checking   Equity:OpeningBalances
+
+          2013-05-03 check Assets:Checking   172.45 USD
+
+          2013-05-15 txn "Add 20$"
+            Assets:Checking             20 USD
+            Assets:Cash
+
+          2013-05-20 pad  Assets:Checking   Equity:OpeningBalances
+
+          2013-06-01 check Assets:Checking   200 USD
+
+        """
+        real_accounts, real_errors = realization.realize(contents.entries, True)
+        self.assertEqual(len(real_errors), 0)
+        self.checkRealTypes(real_accounts['Assets:Checking'],
+                            [Open, Pad, RealPadPosting, RealCheck, RealPosting, Pad, RealPadPosting, RealCheck])
+
+        # for real_posting in real_accounts['Assets:Checking'].postings:
+        #     print(real_posting)
+        # realization.dump_tree_balances(real_accounts, sys.stderr)
 
 parser.create_parsetest_methods(TestRealizationPadding)
 

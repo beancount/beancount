@@ -2,6 +2,8 @@
 beancount: TODO
 * NEW
 
+  - Add tests for all the cases of realization padding.
+
   - Ha! The current problem with checks has to do with my stupid :Contrib
     account, and the fact that those checks include the CHILDREN accounts (the
     old beancount worked that way... eliminate that). Fix all this, make the

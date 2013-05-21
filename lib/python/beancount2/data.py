@@ -30,6 +30,10 @@ class Amount:
     def __eq__(self, other):
         return (self.number, self.currency) == other
 
+    def __hash__(self):
+        return hash((self.number, self.currency))
+
+
 def mult_amount(amount, number):
     """Multiply the given amount by a number."""
     return Amount(amount.number * number, amount.currency)

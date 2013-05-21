@@ -82,7 +82,7 @@ class RealAccountState:
         self.index_pad = None
 
         # A mapping of currency to the synthesized postings.
-        self.padded_currencies = {}
+        self.padded_lots = set()
 
 
 
@@ -142,7 +142,7 @@ def realize(entries, check=False):
                 # padded since then.
                 pad = real_state.last_pad_entry
                 assert (pad is None) or (pad.account is entry.account)
-                if pad and (lot.currency not in real_state.padded_currencies):
+                if pad and (lot not in real_state.padded_lots):
 
                     # Fix the balance.
                     real_state.balance.add_position(diff_position)
@@ -168,6 +168,8 @@ def realize(entries, check=False):
                         RealPadPosting(pad, other_posting, other_state.balance))
                     real_state.index_pad += 1
 
+                    real_state.padded_lots.add(lot)
+
                 else:
                     # We have no allowed padding ability; the check failed.
                     real_errors.append(
@@ -190,7 +192,7 @@ def realize(entries, check=False):
 
             # Check and warn if the last pad entry was unused.
             real_state = real_states[entry.account]
-            if real_state.last_pad_entry and not real_state.padded_currencies:
+            if real_state.last_pad_entry and not real_state.padded_lots:
                 real_errors.append(
                     RealError(real_state.last_pad.fileloc, "Superfluous padding: {}".format(real_state.last_pad_entry)))
 
@@ -198,6 +200,7 @@ def realize(entries, check=False):
             real_state.last_pad_entry = entry
             real_state.index = len(real_account.postings)
             real_state.index_pad = len(other_account.postings)
+            real_state.padded_lots = set()
 
         elif isinstance(entry, (Open, Close, Note)):
             # Append some other entries in the realized list.
