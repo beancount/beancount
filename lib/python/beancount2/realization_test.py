@@ -45,12 +45,27 @@ class TestRealization(unittest.TestCase):
         self.assertFalse(errors)
 
         real_accounts, real_errors = realization.realize(contents.entries, True)
-        print(real_errors)
         assert len(real_errors) == 0
 
-## FIXME: todo
-    # def parsetest_check_samedate(self, contents):
-    #     pass
+    # This test ensures that the 'check' directives apply at the beginning of
+    # the day.
+    def parsetest_check_samedate(self, contents):
+        """
+          2013-05-01 open Assets:US:Checking   USD
+          2013-05-01 open Expenses:Something
+
+          2013-05-02 txn "Testing!"
+            Assets:US:Checking            100 USD
+            Expenses:Something           -100 USD
+
+          2013-05-02 check Assets:US:Checking   100 USD
+        """
+        errors = checks.check(contents.entries, contents.accounts)
+        self.assertFalse(errors)
+
+        real_accounts, real_errors = realization.realize(contents.entries, True)
+        assert len(real_errors) == 0
+
 
 parser.create_parsetest_methods(TestRealization)
 

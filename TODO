@@ -2,7 +2,19 @@
 beancount: TODO
 * NEW
 
-  - Convert the parstest_* functions into decorators!!! This only makes sense!
+  - Ha! The current problem with checks has to do with my stupid :Contrib
+    account, and the fact that those checks include the CHILDREN accounts (the
+    old beancount worked that way... eliminate that). Fix all this, make the
+    contributions be tracked the correct way. They are old, but it'll be a good
+    exercise...
+
+      Q: Do I want to support checks accross all positions, for a single
+         currency? I rather like the idea of checking a specific "position"...
+
+  - Do I really want all my checks to be at the BEGINNING of the day? Maybe...
+    not sure. Need to convince myself.
+
+  - Convert the parsetest_* functions into decorators!!! This only makes sense!
 
   - You have to implement auto-padding somehow... auto-insert a Pad() directive
     in the list of entries and let the current magic works its magic? This
@@ -450,6 +462,9 @@ beancount: TODO
 
   - The importers should detect the type of files and identify their accounts,
     and automatically stash the file under the correct documents directory.
+
+  - If the import process fails for whatever reason, don't move the files!!
+    This has been *SO* annoying in the past.
 
 ** Avoid Reimporting
 

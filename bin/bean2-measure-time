@@ -3,34 +3,19 @@
 Measure the time it takes to parse, check and realize an input file.
 """
 import argparse
-import contextlib
 import itertools
-import io
-import re
-import sys
-import time
-from collections import defaultdict
 
 import beancount2.parser
 from beancount2 import checks
 from beancount2 import utils
 from beancount2 import data
 from beancount2 import realization
-from beancount2.parser import *
-from beancount2.inventory import Inventory
 
 
 def main():
     parser = argparse.ArgumentParser(__doc__.strip())
-
     parser.add_argument('filename',
                         help='Beancount input filename.')
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help="Print out verbose information")
-
-    parser.add_argument('-l', '--dump-lexer', action='store_true',
-                        help="Run the lexer only, output the tags.")
-
     opts = parser.parse_args()
 
     with utils.print_time('parse'):
@@ -42,8 +27,9 @@ def main():
     with utils.print_time('realize'):
         accounts_tree, real_errors = realization.realize(contents.entries, check=True)
 
-    for error in itertools.chain(contents.parse_errors, check_errors, real_errors):
-        print('{} {}'.format(data.render_fileloc(error.fileloc), error.message))
+    if 0:
+        for error in itertools.chain(contents.parse_errors, check_errors, real_errors):
+            print('{} {}'.format(data.render_fileloc(error.fileloc), error.message))
 
 
 if __name__ == '__main__':

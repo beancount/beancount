@@ -33,6 +33,10 @@ build: $(CROOT)/grammar.c $(CROOT)/grammar.h $(CROOT)/lexer.c $(CROOT)/lexer.h
 sandbox:
 	bean2-sandbox $(LEDGER)
 
+.PHONY: perf
+perf:
+	bean2-measure-time $(LEDGER)
+
 dump_lexer:
 	bean2-dump-lexer $(LEDGER)
 

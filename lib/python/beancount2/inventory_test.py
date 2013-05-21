@@ -5,12 +5,17 @@ import unittest
 import copy
 from datetime import date
 
-from beancount2.data import Amount, Lot
-from beancount2.inventory import Inventory
+from beancount2.data import Amount, Lot, ZERO, Decimal
+from beancount2.inventory import Inventory, Position
 
 
+class TestPosition(unittest.TestCase):
 
-
+    def test_compare_zero_to_none(self):
+        pos1 = Position(Lot("CAD", None, None), ZERO)
+        pos2 = None
+        self.assertEqual(pos1, pos2)
+        self.assertEqual(pos2, pos1)
 
 
 class TestInventory(unittest.TestCase):
@@ -127,4 +132,3 @@ class TestInventory(unittest.TestCase):
         inv2.add(Amount('55', 'GOOG'))
 
         inv = inv1 + inv2
-        print(inv)

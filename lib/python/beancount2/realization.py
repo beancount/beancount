@@ -7,6 +7,7 @@ import copy
 
 from beancount2.utils import tree_utils
 from beancount2.inventory import Inventory, Position
+from beancount2.parser import parser
 from beancount2.data import *
 
 
@@ -93,6 +94,9 @@ def realize(entries, check=False):
     If 'check' is true, verify the inventory balances at the point of
     'Check' entries."""
 
+    # Handle sanity checks when the check is at the beginning of the day.
+    check_is_at_beginning_of_day = parser.SORT_ORDER[Check] < 0
+
     real_accounts = RealAccountTree()
     real_errors = []
 
@@ -126,7 +130,7 @@ def realize(entries, check=False):
             real_state = real_states[entry.account]
             lot = entry.position.lot
             balance_position = real_state.balance.get_position(lot)
-            if balance_position is None or balance_position != entry.position:
+            if entry.position != balance_position:
 
                 # Calculate the difference.
                 balance_number = ZERO if balance_position is None else balance_position.number
@@ -167,8 +171,8 @@ def realize(entries, check=False):
                 else:
                     # We have no allowed padding ability; the check failed.
                     real_errors.append(
-                        RealError(entry.fileloc, "Check failed: {} != {}".format(
-                            balance_position, entry.position)))
+                        RealError(entry.fileloc, "Check failed for '{}': {} != {}".format(
+                            entry.account.name, balance_position, entry.position)))
 
             # Add the check realization to the account.
             real_account = real_accounts[entry.account.name]
@@ -200,15 +204,15 @@ def realize(entries, check=False):
             real_account = real_accounts[entry.account.name]
             real_account.postings.append(entry)
 
-
-        # Note: Check entries are assumed to have been sorted to be before any
-        # other entries with the same date. This is supposed to be done by the
-        # parser. Verify this invariant here.
-        if isinstance(entry, (Check, Open)):
-            assert entry.date > prev_date, (entry, prev_entry)
-        else:
-            prev_entry = entry
-            prev_date = entry.date
+        if check_is_at_beginning_of_day:
+            # Note: Check entries are assumed to have been sorted to be before any
+            # other entries with the same date. This is supposed to be done by the
+            # parser. Verify this invariant here.
+            if isinstance(entry, (Check, Open)):
+                assert entry.date > prev_date, (entry, prev_entry)
+            else:
+                prev_entry = entry
+                prev_date = entry.date
 
     return (real_accounts, real_errors)
 
@@ -221,5 +225,3 @@ def dump_tree_balances(real_accounts, foutput):
         last_entry = real_account.postings[-1] if real_account.postings else None
         balance = getattr(last_entry, 'balance', '')
         foutput.write('{:{width}}    {}\n'.format(line, balance, width=width))
-
-        

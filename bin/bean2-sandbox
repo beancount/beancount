@@ -17,6 +17,7 @@ from beancount2 import data
 from beancount2 import realization
 from beancount2.parser import *
 from beancount2.inventory import Inventory
+from beancount2.data import render_fileloc
 
 
 #-------------------------------------------------------------------------------
@@ -67,18 +68,34 @@ def main():
     with utils.print_time('check'):
 
         # Run the checks.
-        errors = checks.check(contents.entries, contents.accounts)
+        check_errors = checks.check(contents.entries, contents.accounts)
 
-        # Report all the errors.
-        for error in errors:
-            print('{} {}'.format(checks.render_fileloc(error.fileloc),
+        # Report all the basic errors.
+        for error in check_errors:
+            print('{} {}'.format(render_fileloc(error.fileloc),
                                  error.message))
 
 
     with utils.print_time('realize'):
         real_accounts, real_errors = realization.realize(contents.entries, check=True)
 
+        real_account = real_accounts['Assets:CA:RBC-Investing:RRSP']
+
+        if 0:
+            print('--------------------------------------------------------------------------------')
+            for real_posting in real_account.postings:
+                balance = getattr(real_posting, 'balance', None)
+                if balance:
+                    print(real_posting.entry.date, balance)
+            print('--------------------------------------------------------------------------------')
+
+        # Report all the realization errors.
+        for error in real_errors:
+            print('{} {}'.format(render_fileloc(error.fileloc),
+                                 error.message))
+
         realization.dump_tree_balances(real_accounts, sys.stdout)
+
 
 
         if 0:

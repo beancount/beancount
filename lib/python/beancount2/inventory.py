@@ -58,8 +58,11 @@ class Position:
     __repr__ = __str__
 
     def __eq__(self, other):
-        return (self.number == other.number and
-                self.lot == other.lot)
+        if other is None:
+            return self.number == ZERO
+        else:
+            return (self.number == other.number and
+                    self.lot == other.lot)
 
     def __copy__(self):
         # Shallow copy, except for the lot, which can be shared.
