@@ -2,6 +2,41 @@
 beancount: TODO
 * NEW
 
+  - Add unittests for tags, pushtag/poptag
+
+  - Should padding be by lot?
+
+      *REJECTED* No, the way padding is used, it's better not to make it too
+      complicated.
+
+  - Padding for "clamping" is not like realization: we don't have to check
+    anything, we just have to work from the global realization and find out the
+    balance at the point of insertion. Insert regular RealPadPosting pointing to
+    a new AutoPad or Clapm entry. You don't even have to use the realize()
+    routine.
+
+
+  - Document the realization process in ASCII graphics, instead of my dia
+    diagram; this should be best documented in the file's docstring itself.
+
+    * Split this realize() function into a few ones; the code is too large.
+
+  - realize(): When a check fails, fix the balance so that we don't report more
+    than a single check error, so that they don't cascade to multiple ones if
+    the error was made early on.
+
+  - Add new options:
+
+        option name_assets      "Assets"
+        option name_liabilities "Liabilities"
+        option name_equity      "Equity"
+        option name_income      "Income"
+        option name_expenses    "Expenses"
+
+        option earnings_account "Equity:RetainedEarnings"
+
+
+
   - Add tests for all the cases of realization padding.
 
   - Ha! The current problem with checks has to do with my stupid :Contrib
@@ -74,6 +109,7 @@ beancount: TODO
   - Capital gains should not count commissions nor on the buy nor on the
     sell side. How do we book them like this?  Can we count this somehow
     automatically? Misc accounts? Not sure.
+
 * Statements
 ** Capital Statement
 
@@ -614,6 +650,8 @@ beancount: TODO
     :d039f548, these linked transactions just become like tags. Maybe ::d039f548
     is not listed and :d039f548 is listed, or something like that.
 
+  - Do track RRSP eligible amount as document below, we need to do that.
+
 * Importers Library
 
   - Create importer library support in Python for writing beancount importers.
@@ -727,8 +765,6 @@ beancount: TODO
 
   Test: Items of the same kind with and without cost basis
   Test: Multiple items of different types with a cost basis in the same account
-
-
 
 
 * Difficult or Unsolved Ideas
