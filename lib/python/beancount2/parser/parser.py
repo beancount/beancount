@@ -112,9 +112,9 @@ class Builder(object):
         fileloc = FileLocation(filename, lineno)
         return Pad(fileloc, date, account, account_pad)
 
-    def check(self, filename, lineno, date, account, amount):
+    def check(self, filename, lineno, date, account, position):
         fileloc = FileLocation(filename, lineno)
-        return Check(fileloc, date, account, amount)
+        return Check(fileloc, date, account, position)
 
     def event(self, filename, lineno, date, event_type, description):
         fileloc = FileLocation(filename, lineno)
@@ -173,8 +173,9 @@ class Builder(object):
 FileContents = namedtuple('FileContents', 'entries accounts parse_errors')
 
 
-SORT_ORDER = {Check: -1,
-              Open: -1,
+SORT_ORDER = {Open: -2,
+              Check: -1,
+              # Other types
               Close: 1}
 
 def entry_sortkey(entry):

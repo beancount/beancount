@@ -34,6 +34,14 @@ def mult_amount(amount, number):
     """Multiply the given amount by a number."""
     return Amount(amount.number * number, amount.currency)
 
+# def sub_amount(amount1, amount2):
+#     """Multiply the given amount by a number."""
+#     assert amount1.currency == amount2.currency
+#     return Amount(amount1.number - amount2.number, amount1.currency)
+
+# def neg_amount(amount):
+#     return Amount(-amount.number, amount.currency)
+
 
 
 
@@ -93,7 +101,7 @@ def render_fileloc(fileloc):
 Open        = namedtuple('Open'        , 'fileloc date account account_id currencies')
 Close       = namedtuple('Close'       , 'fileloc date account')
 Pad         = namedtuple('Pad'         , 'fileloc date account account_pad')
-Check       = namedtuple('Check'       , 'fileloc date account amount')
+Check       = namedtuple('Check'       , 'fileloc date account position')
 Transaction = namedtuple('Transaction' , 'fileloc date flag payee narration tags postings')
 Event       = namedtuple('Event'       , 'fileloc date type description')
 Note        = namedtuple('Note'        , 'fileloc date account comment')

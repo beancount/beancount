@@ -78,19 +78,7 @@ def main():
     with utils.print_time('realize'):
         real_accounts, real_errors = realization.realize(contents.entries, check=True)
 
-        inventory = Inventory()
-        for real_account in real_accounts.values():
-            if real_account.postings:
-                inventory += real_account.postings[-1].inventory
-        print(inventory)
-
-
-        if 0:
-            lines = list(real_accounts.render_lines())
-            width = max(len(line[0]) for line in lines)
-            for line, real_account in lines:
-                balance = real_account.postings[-1].inventory if real_account.postings else ''
-                print('{:{width}}    {}'.format(line, balance, width=width))
+        realization.dump_tree_balances(real_accounts, sys.stdout)
 
 
         if 0:
@@ -99,7 +87,7 @@ def main():
                 print('{} {:48} {:72} {:72}'.format(real_posting.entry.date,
                                               ' | '.join([real_posting.entry.payee or '', real_posting.entry.narration]),
                                               real_posting.posting.position,
-                                              real_posting.inventory,
+                                              real_posting.balance,
                                               ))
 
 

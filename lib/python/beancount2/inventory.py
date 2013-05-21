@@ -49,12 +49,17 @@ class Position:
     __slots__ = ('lot', 'number')
 
     def __init__(self, lot, number):
+        assert isinstance(lot, Lot)
         self.lot = lot
         self.number = number
 
     def __str__(self):
         return 'Position({}, {})'.format(self.number, self.lot)
     __repr__ = __str__
+
+    def __eq__(self, other):
+        return (self.number == other.number and
+                self.lot == other.lot)
 
     def __copy__(self):
         # Shallow copy, except for the lot, which can be shared.
@@ -70,6 +75,10 @@ class Position:
         # FIXME: We need for some accounts to have inventories that may not go negative, needs to warn, needs to pad, to get fixed properly.
         # if self.number < 0:
         #     raise ValueError("Negative position: {}".format(self))
+
+    def get_negative(self):
+        """Get a copy of this position but with a negative number."""
+        return Position(self.lot, Decimal(-self.number))
 
 
 class Inventory:
@@ -138,7 +147,13 @@ class Inventory:
         "Return the positions in this inventory."
         return self.positions
 
-    def find_create(self, lot):
+    def get_position(self, lot):
+        """Find a position by lot, or return None."""
+        for position in self.positions:
+            if position.lot == lot:
+                return position
+
+    def get_create_position(self, lot):
         """Find or create a position associated with a given lot."""
         for position in self.positions:
             if position.lot == lot:
@@ -157,11 +172,10 @@ class Inventory:
         lot = Lot(amount.currency, cost, lot_date)
         self._add(amount.number, lot)
 
-
-    def add_position(self, new_position):
+    def add_position(self, new_position, allow_negative=False):
         """Add using a position (with strict lot matching)."""
         assert isinstance(new_position, Position), new_position
-        self._add(new_position.number, new_position.lot)
+        self._add(new_position.number, new_position.lot, allow_negative)
 
     def has_lots(self, currency):
         """Return true if the given currency has some positions with lots."""
@@ -171,15 +185,15 @@ class Inventory:
                 return True
         return False
 
-    def _add(self, number, lot):
-        position = self.find_create(lot)
+    def _add(self, number, lot, allow_negative=False):
+        position = self.get_create_position(lot)
         position.add(number)
         if position.number == ZERO:
             self.positions.remove(position)
 
-        if position.number < ZERO and (position.lot.cost or
-                                       position.lot.lot_date or
-                                       self.has_lots(lot.currency)):
+        if (not allow_negative and
+            position.number < ZERO and
+            (position.lot.cost or position.lot.lot_date or self.has_lots(lot.currency))):
 
             # Note: at this point we have already modified the values, so there
             # is a side-effect even if we raise an exception. This is on
@@ -195,4 +209,4 @@ class Inventory:
     def __iadd__(self, other):
         for position in other.positions:
             self.add_position(position)
-        return self    
+        return self

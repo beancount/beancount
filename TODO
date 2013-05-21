@@ -2,6 +2,17 @@
 beancount: TODO
 * NEW
 
+  - Convert the parstest_* functions into decorators!!! This only makes sense!
+
+  - You have to implement auto-padding somehow... auto-insert a Pad() directive
+    in the list of entries and let the current magic works its magic? This
+    might work!!!
+
+
+  - Q: How do we deal with transactions that have multiple postings in the same
+    account? Multiple RealPosting instances?
+
+
   - Finish the inventory_test.py, with the guard against negative balances when
     a position has an associated cost or lot-date, a test is important.
 
