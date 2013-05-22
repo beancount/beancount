@@ -174,10 +174,10 @@ FileContents = namedtuple('FileContents', 'entries accounts parse_errors')
 
 
 # Sort with the checks at the BEGINNING of the day.
-#SORT_ORDER = {Open: -2, Check: -1, Close: 1}
+SORT_ORDER = {Open: -2, Check: -1, Close: 1}
 
 # Sort with the checks at the END of the day.
-SORT_ORDER = {Open: -2, Check: 1, Close: 2}
+#SORT_ORDER = {Open: -2, Check: 1, Close: 2}
 
 
 def entry_sortkey(entry):

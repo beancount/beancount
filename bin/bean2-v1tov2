@@ -5,6 +5,7 @@ Try to automatically convert a V1 .ledger beancount input file to the newer .bea
 import os
 import sys
 import re
+import datetime
 
 
 def unquote(s):
@@ -110,6 +111,15 @@ def convert_tags(line):
     else:
         return line
 
+def check_to_check_after(line):
+    mo = re.match('(\d\d\d\d)-(\d\d)-(\d\d) check (.*)', line)
+    if mo:
+        d = datetime.date(*list(map(int, mo.group(1,2,3))))
+        d += datetime.timedelta(days=1)
+        return '{:%Y-%m-%d} check {}\n'.format(d, mo.group(4))
+    else:
+        return line
+
 
 def main():
     import argparse, logging
@@ -134,6 +144,7 @@ def main():
     lines = map(uncomment_tentative, lines)
     lines = map(add_org_mode_section, lines)
     lines = map(convert_tags, lines)
+    lines = map(check_to_check_after, lines)
 
     for line in lines:
         sys.stdout.write(line)
