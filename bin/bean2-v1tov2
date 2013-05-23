@@ -120,6 +120,14 @@ def check_to_check_after(line):
     else:
         return line
 
+def tags_begin_to_push(line):
+    mo = re.match('^(begin|end)tag', line)
+    if mo:
+        newtag = 'push' if mo.group(1) == 'begin' else 'pop'
+        return re.sub('(begin|end)', newtag, line)
+    else:
+        return line
+
 
 def main():
     import argparse, logging
@@ -145,6 +153,7 @@ def main():
     lines = map(add_org_mode_section, lines)
     lines = map(convert_tags, lines)
     lines = map(check_to_check_after, lines)
+    lines = map(tags_begin_to_push, lines)
 
     for line in lines:
         sys.stdout.write(line)

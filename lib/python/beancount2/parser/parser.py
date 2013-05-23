@@ -53,10 +53,10 @@ class Builder(object):
             self.entries = entries
 
 
-    def begintag(self, tag):
+    def pushtag(self, tag):
         self.tags.append(tag)
 
-    def endtag(self, tag):
+    def poptag(self, tag):
         self.tags.remove(tag)
 
 

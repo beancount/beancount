@@ -112,8 +112,8 @@ pad		{ return PAD; }
 event		{ return EVENT; }
 price		{ return PRICE; }
 note		{ return NOTE; }
-begintag	{ return BEGINTAG; }
-endtag		{ return ENDTAG; }
+pushtag	{ return PUSHTAG; }
+poptag		{ return POPTAG; }
 
  /* Dates. */
 [0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][0-9]	{

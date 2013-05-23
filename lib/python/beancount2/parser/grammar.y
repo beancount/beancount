@@ -91,8 +91,8 @@ const char* getTokenName(int token);
 %token EVENT               /* 'event' keyword */
 %token PRICE               /* 'price' keyword */
 %token NOTE                /* 'note' keyword */
-%token BEGINTAG            /* 'begintag' keyword */
-%token ENDTAG              /* 'endtag' keyword */
+%token PUSHTAG            /* 'pushtag' keyword */
+%token POPTAG              /* 'poptag' keyword */
 %token <pyobj> DATE        /* A date object */
 %token <pyobj> ACCOUNT     /* The name of an account */
 %token <pyobj> CURRENCY    /* A currency specification */
@@ -224,15 +224,15 @@ currency_list : empty
                   DECREF2($1, $3);
               }
 
-begintag : BEGINTAG TAG
+pushtag : PUSHTAG TAG
          {
-             BUILD("begintag", "O", $2);
+             BUILD("pushtag", "O", $2);
              DECREF1($2);
          }
 
-endtag : ENDTAG TAG
+poptag : POPTAG TAG
        {
-           BUILD("endtag", "O", $2);
+           BUILD("poptag", "O", $2);
            DECREF1($2);
        }
 
@@ -327,8 +327,8 @@ entry : transaction
 
 directive : SKIPPED
           | eol
-          | begintag
-          | endtag
+          | pushtag
+          | poptag
 
 declarations : declarations entry
              {
@@ -381,8 +381,8 @@ const char* getTokenName(int token)
         case EVENT    : return "EVENT";
         case PRICE    : return "PRICE";
         case NOTE     : return "NOTE";
-        case BEGINTAG : return "BEGINTAG";
-        case ENDTAG   : return "ENDTAG";
+        case PUSHTAG : return "PUSHTAG";
+        case POPTAG   : return "POPTAG";
         case DATE     : return "DATE";
         case ACCOUNT  : return "ACCOUNT";
         case CURRENCY : return "CURRENCY";
