@@ -6,6 +6,25 @@ beancount: TODO
 
 * NEW
 
+  - Unrealized capital gains could be inserted automatically into special
+    sub-accounts, based on the current price and the cost-basis of particular
+    accounts. This could be inserted automatically! e.g.
+
+        DATE check Assets:US:Ameritrade:AAPL       10 AAPL {200 USD}
+
+        DATE price AAPL  210 USD
+
+      Assets:US:Ameritrade:AAPL                    2000 USD
+      Assets:US:Ameritrade:AAPL:Gains               100 USD
+
+   The "Gains" subaccount could be inserted automatically if the price differs
+   from the cost basis... this would be a clever way to represent this! We
+   could even do this by inserting a transaction automatically with an
+   offsetting account... actually this would be the RIGHT way to do this!
+
+
+
+
   - IDEA! Export to GnuCash format... import in GnuCash?!?! See reports!!
 
   - Look at GnuCash for a lot of the reports... some good ideas maybe? I could
@@ -97,6 +116,7 @@ beancount: TODO
 
   - Checks need to be re-ordered to be _before_ all the transactions of the same
     date. Do this in the parser.
+
 
 * Dealing with Equity
 ** Retained Earnings
