@@ -1,6 +1,15 @@
 -*- mode: org -*-
 beancount: TODO
+* Rename
+
+  - Consider renaming this system as "Daybook" instead of Beancount.
+
 * NEW
+
+  - IDEA! Export to GnuCash format... import in GnuCash?!?! See reports!!
+
+  - Look at GnuCash for a lot of the reports... some good ideas maybe? I could
+    perhaps learn a few things, it looks informed.
 
   - Add unittests for tags, pushtag/poptag
 
@@ -88,6 +97,37 @@ beancount: TODO
 
   - Checks need to be re-ordered to be _before_ all the transactions of the same
     date. Do this in the parser.
+
+* Dealing with Equity
+** Retained Earnings
+
+  - You need a special directive to deal with RetainedEarnings, which are (I-X).
+    This process needs to be documented well...  with examples.
+    Equity:RetainedEarnings contains the sum total of all previous (I-E) before
+    the beginning of the period.
+
+  - Whether the result of I-X before the beginning of the period should be
+    inserted into OpeningBalances depends on whether you want the balance sheet
+    to reflect the absolute amounts. If you're filtering for some particular
+    set of transactions, you may not want that to be done. e.g. Loft expenses,
+    should be separate. In fact, only when we clamp in time do we want that
+    insertion to occur.
+
+** Conversion Differences
+
+  - TODO: Try it out in GnuCash, see how they deal with it. Very curious!
+    (WOW This is really SNAFU'ed. Really fucked up. Finding bugs in GC within the
+    first 10 minutes...)
+
+  - You also need another special account to hold the conversion differences;
+    basically, the sum total of all of the amounts from all of the accounts may
+    not be zero if there are conversions happening. These needs to be inserted
+    into Equity:Conversions in order for the full balance to be equal to zero.
+
+       For the conversion losses: we need two new accounts:
+       Income :conversion pnl
+       Equity : conversion pnl (for the exercise)
+
 
 * Beancount File Review and Fixes
 
