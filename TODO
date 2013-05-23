@@ -1,9 +1,14 @@
 -*- mode: org -*-
 beancount: TODO
-* Urgent
+* NEW
 
   - Checks need to be re-ordered to be _before_ all the transactions of the same
     date. Do this in the parser.
+
+  - note entries should be attached to a particular account
+
+  - Add note entries for new accounts, should be a multiline paragraph that
+    describes the purpose of the account. Add them in my inp0ut file.
 
 * Helpers for Documents
 
@@ -470,13 +475,67 @@ beancount: TODO
   - Write a series of real-life problems solved. This should be really much
     more helpful than boring docs.
 
-  - Examples:
+** Real Usage Examples
+*** Transfers Between Accounts
+*** mortgage, buying a home
+*** capital gains (note about how to do commissions)
+*** cie expenses, the way I'm doing it.
+*** misc, e.g. credit card
+*** stock splits
+*** Tracking IRA or RSP Contributions
 
-    - mortgage, buying a home
-    - capital gains (note about how to do commissions)
-    - cie expenses, the way I'm doing it.
-    - misc, e.g. credit card
-    - stock splits
+2012-10-15 * Contribution 1 to RSP
+  Assets:Checking                           -2500 CAD
+  Assets:Bank1:RSP                           2500 CAD
+  Liabilities:PendingContributions          -2500 RSPCAD
+  Expenses:RSPContrib                       -2500 RSPCAD
+
+2012-11-15 * Contribution 2 to RSP
+  Assets:Checking                           -1500 CAD
+  Assets:Bank1:RSP                           1500 CAD
+  Liabilities:PendingContributions          -1500 RSPCAD
+  Expenses:RSPContrib                       -1500 RSPCAD
+
+2013-04-30 * Filing Taxes
+  Assets:Receivable                           800 CAD
+  Expenses:Taxes                             -800 CAD
+  Assets:RSPContrib                         -3500 RSPCAD  ; Not claiming all
+  Liabilities:PendingContributions          +4000 RSPCAD
+  Assets:RSPContrib:Unclaimed                 500 RSPCAD
+
+2013-05-15 * Paying Taxes - Receiving Amount Due
+  Assets:Checking                             800 CAD
+  Assets:Receivable                          -800 CAD
+  Assets:RSPContrib                          1200 RSPCAD
+  Income:RSPContrib                         -1200 RSPCAD
+
+
+Two RSP investment accounts:
+
+  Assets:Bank1:RSP
+  Assets:Bank1:RSP
+
+An account to hold maximum RSP contributions allowed:
+
+  Assets:RSPContrib
+
+How much I've contributed to RSPs in total:
+
+  Expenses:RSPContrib
+
+How much my maximum contributions have increased from the governement as a
+result of paying taxes:
+
+  Income:RSPContrib
+
+Pending contributions for this year, some of which to be claimed on my tax filing:
+
+  Liabilities:PendingContributions
+
+Unused RSP contributions made, carried forward to future years:
+
+  Assets:RSPContrib:Unclaimed
+
 
 * Future
 
