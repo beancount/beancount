@@ -79,33 +79,33 @@ def main():
     with utils.print_time('realize'):
         real_accounts, real_errors = realization.realize(contents.entries, check=True)
 
-        real_account = real_accounts['Assets:CA:RBC-Investing:RRSP']
+    real_account = real_accounts['Assets:CA:RBC-Investing:RRSP']
 
-        if 0:
-            print('--------------------------------------------------------------------------------')
-            for real_posting in real_account.postings:
-                balance = getattr(real_posting, 'balance', None)
-                if balance:
-                    print(real_posting.entry.date, balance)
-            print('--------------------------------------------------------------------------------')
+    if 0:
+        print('--------------------------------------------------------------------------------')
+        for real_posting in real_account.postings:
+            balance = getattr(real_posting, 'balance', None)
+            if balance:
+                print(real_posting.entry.date, balance)
+        print('--------------------------------------------------------------------------------')
 
-        # Report all the realization errors.
-        for error in real_errors:
-            print('{} {}'.format(render_fileloc(error.fileloc),
-                                 error.message))
+    # Report all the realization errors.
+    for error in real_errors:
+        print('{} {}'.format(render_fileloc(error.fileloc),
+                             error.message))
 
-        realization.dump_tree_balances(real_accounts, sys.stdout)
+    realization.dump_tree_balances(real_accounts, sys.stdout)
 
 
 
-        if 0:
-            real_account = real_accounts['Assets:Cash']
-            for real_posting in real_account.postings:
-                print('{} {:48} {:72} {:72}'.format(real_posting.entry.date,
-                                              ' | '.join([real_posting.entry.payee or '', real_posting.entry.narration]),
-                                              real_posting.posting.position,
-                                              real_posting.balance,
-                                              ))
+    if 0:
+        real_account = real_accounts['Assets:Cash']
+        for real_posting in real_account.postings:
+            print('{} {:48} {:72} {:72}'.format(real_posting.entry.date,
+                                          ' | '.join([real_posting.entry.payee or '', real_posting.entry.narration]),
+                                          real_posting.posting.position,
+                                          real_posting.balance,
+                                          ))
 
 
 
