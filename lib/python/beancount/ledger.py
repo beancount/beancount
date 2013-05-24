@@ -587,8 +587,8 @@ class Ledger(object):
 
 
 
-    # Patterns for comments and empty lines.
-    comment_re = re.compile('^\s*;(.*)$')
+    # Patterns for comments and empty lines. Note: Allow org-mode #+... directives.
+    comment_re = re.compile(r'^\s*(;|#\+)(.*)$')
     skipped_re = re.compile(r'^\*+ ')
     empty_re = re.compile('^[\s\014]*$') # 014 = ^L, FIXME this doesn't work
 

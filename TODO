@@ -713,18 +713,19 @@ beancount: TODO
 *** misc, e.g. credit card
 *** stock splits
 *** Tracking IRA or RSP Contributions
+**** Option 1
 
 2012-10-15 * Contribution 1 to RSP
   Assets:Checking                           -2500 CAD
   Assets:Bank1:RSP                           2500 CAD
   Liabilities:PendingContributions          -2500 RSPCAD
-  Expenses:RSPContrib                       -2500 RSPCAD
+  Expenses:RSPContrib                        2500 RSPCAD
 
 2012-11-15 * Contribution 2 to RSP
   Assets:Checking                           -1500 CAD
   Assets:Bank1:RSP                           1500 CAD
   Liabilities:PendingContributions          -1500 RSPCAD
-  Expenses:RSPContrib                       -1500 RSPCAD
+  Expenses:RSPContrib                        1500 RSPCAD
 
 2013-04-30 * Filing Taxes
   Assets:Receivable                           800 CAD
@@ -765,6 +766,55 @@ Pending contributions for this year, some of which to be claimed on my tax filin
 Unused RSP contributions made, carried forward to future years:
 
   Assets:RSPContrib:Unclaimed
+
+**** Option 2 (favourite)
+
+2012-10-15 * Contribution 1 to RSP
+  Assets:Checking                           -2500 CAD
+  Assets:Bank1:RSP                           2500 CAD
+  Assets:RSPContrib:MaxDeductible           -2500 RSPCAD
+  Assets:RSPContrib:Contributed              2500 RSPCAD
+
+2012-11-15 * Contribution 2 to RSP
+  Assets:Checking                           -1500 CAD
+  Assets:Bank1:RSP                           1500 CAD
+  Assets:RSPContrib:MaxDeductible           -1500 RSPCAD
+  Assets:RSPContrib:Contributed              1500 RSPCAD
+
+2013-04-30 * Filing Taxes
+  Assets:Receivable                           800 CAD
+  Expenses:Taxes                             -800 CAD
+  Assets:RSPContrib:Contributed             -3500 RSPCAD  ; Not claiming all
+  Expenses:RSPContrib                       +3500 RSPCAD
+
+2013-05-15 * Paying Taxes - Receiving Amount Due
+  Assets:Checking                             800 CAD
+  Assets:Receivable                          -800 CAD
+  Assets:RSPContrib:MaxDeductible            1200 RSPCAD
+  Income:RSPContrib                         -1200 RSPCAD
+
+Two RSP investment accounts:
+
+  Assets:Bank1:RSP
+  Assets:Bank1:RSP
+
+An account to hold maximum RSP contributions allowed:
+
+  Assets:RSPContrib:MaxDeductible
+
+Pending unused contributions for this year, some of which to be claimed on my
+tax filing:
+
+  Assets:RSPContrib:Contributed
+
+How much I've contributed to RSPs in total:
+
+  Expenses:RSPContrib
+
+How much my maximum contributions have increased from the governement as a
+result of paying taxes:
+
+  Income:RSPContrib
 
 
 * Future
