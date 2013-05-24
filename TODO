@@ -1049,6 +1049,13 @@ A list of ideas to generate new reports.
 
   - Challenge: Can I obtain a list of my assets at any time?
 
+** Make a report of currency exposure
+
+  - For a particular balance sheet, report the total currency exposure of the
+    ledger. This should be a very simple report, probably in the form of a pie
+    chart.  Maybe this pie chart should be located in the capital report
+    (possibly makes sense).
+
 * Rejected Ideas
 
   - Support Ledger's aliases?

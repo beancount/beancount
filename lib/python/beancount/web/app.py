@@ -447,9 +447,16 @@ def page__balancesheet_end(app, ctx):
                  CLASS='left'),
              )
 
-    total = a_total + l_total + e_total
+    # FIXME: We compute these here only to have the correct amounts. (Don't care,
+    # we're rewriting this whole shebang from scratch anyhow.)
+    i_acc = ledger.find_account(('Income', 'Revenue', 'Revenues'))
+    e_acc = ledger.find_account(('Expenses', 'Expense'))
+    _, i_total = semi_table(i_acc, 'income', conversions=app.opts.conversions)
+    _, e_total = semi_table(e_acc, 'expenses', conversions=app.opts.conversions)
+
+    total = a_total + l_total + e_total + i_total + e_total
     page.add(BR(style="clear: both"),
-             TABLE( TR(TD(B("A + L + E =")), TD(hwallet(total))),
+             TABLE( TR(TD(B("A + L + E + I + X =")), TD(hwallet(total))),
                     id='net', CLASS='treetable') )
 
     return page.render(app)
