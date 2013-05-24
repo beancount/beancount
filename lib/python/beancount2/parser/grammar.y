@@ -125,6 +125,9 @@ const char* getTokenName(int token);
 /* Start symbol. */
 %start file
 
+/* We have four expected shift/reduce conflicts at 'eol'. */
+%expect 4
+
 
 /*--------------------------------------------------------------------------------*/
 /* Grammar Rules */
