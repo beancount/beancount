@@ -564,13 +564,13 @@
 
 ;; Short weekend trip to Skii Mountain.
 ;;
-;; You can use the begintag and endtag directives to mark all
+;; You can use the pushtag and poptag directives to mark all
 ;; transactions between them with a specific tag. Later on you
 ;; can filter the postings to a tag by using a cmdline. This
 ;; allows you to find out what expenses were incurred during a
 ;; specific trip.
 
-begintag #ski-trip
+pushtag #ski-trip
 
 2008-01-27 * "SUNONO" | "fill'er up"
   Expenses:Car:Gas            40 USD
@@ -592,7 +592,7 @@ begintag #ski-trip
   Expenses:Clothes              40.02 USD
   Assets:Cash
 
-endtag #ski-trip
+poptag #ski-trip
 
 
 
