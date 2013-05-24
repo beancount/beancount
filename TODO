@@ -6,6 +6,9 @@ beancount: TODO
 
 * NEW
 
+  - Remove all strings for types (e.g. Assets), this must go into an option
+    context.
+
   - Start documentation so you have a place to put all these ideas.
     Set it up using Sphinx, or something else.
 

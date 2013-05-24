@@ -96,7 +96,30 @@ def main():
 
     realization.dump_tree_balances(real_accounts, sys.stdout)
 
+    # Sum up all the amounts for the trial balance.
+    total_balance = Inventory()
+    for account_type in ('Assets', 'Liabilities', 'Equity', 'Income', 'Expense'):
+        trial_balance = Inventory()
+        for real_account in real_accounts.values():
+            if not real_account.name.startswith(account_type):
+                continue
 
+            for real_posting in reversed(real_account.postings):
+                if isinstance(real_posting, realization.RealPosting):
+                    break
+            else:
+                continue
+            # print('{:64} {}'.format(real_account.name, real_posting.balance))
+            trial_balance += real_posting.balance
+
+        print(account_type)
+        print(trial_balance)
+        print()
+
+        total_balance += trial_balance
+    print('TOTAL')
+    print(total_balance)
+    print()
 
     if 0:
         real_account = real_accounts['Assets:Cash']
