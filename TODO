@@ -995,9 +995,9 @@ A list of ideas to generate new reports.
 
   - For a particular balance sheet, report the total currency exposure of the
     ledger. This should be a very simple report, probably in the form of a pie
-    chart.
+    chart.  Maybe this pie chart should be located in the capital report
+    (possibly makes sense).
 
-    
 * Rejected Ideas
 
   - Support Ledger's aliases?
