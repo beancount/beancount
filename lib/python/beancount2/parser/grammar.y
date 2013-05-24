@@ -384,7 +384,7 @@ const char* getTokenName(int token)
         case EVENT    : return "EVENT";
         case PRICE    : return "PRICE";
         case NOTE     : return "NOTE";
-        case PUSHTAG : return "PUSHTAG";
+        case PUSHTAG  : return "PUSHTAG";
         case POPTAG   : return "POPTAG";
         case DATE     : return "DATE";
         case ACCOUNT  : return "ACCOUNT";

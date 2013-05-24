@@ -18,6 +18,11 @@ is great for sectioning large files with many transactions."
   '(([(control c)(\')] . beancount-insert-account))
   :group 'beancount
 
+  (set (make-local-variable 'comment-start) ";; ")
+  (set (make-local-variable 'comment-end) "")
+
+  (set (make-local-variable 'indent-tabs-mode) nil)
+
   ;; Customize font-lock for beancount.
   ;;
   ;; Important: you have to use 'nil for the mode here because in certain major
@@ -43,11 +48,11 @@ is great for sectioning large files with many transactions."
 ;; font-lock-warning-face
 
 (defvar beancount-font-lock-defaults
-  `(;; Strings
-    ("\".*?\"" . font-lock-string-face)
-
-    ;; Comments
+  `(;; Comments
     (";.+" . font-lock-comment-face)
+
+    ;; Strings
+    ("\".*?\"" . font-lock-string-face)
 
     ;; Reserved keywords
     (,(regexp-opt '("txn" "check" "open" "close" "pad" "event" "price" "note"

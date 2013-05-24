@@ -5,6 +5,12 @@ beancount: TODO
   - Consider renaming this system as "Daybook" instead of Beancount.
 
 * NEW
+  
+  - Clamping: "Closing" is the same as "Opening", except that the accumulation
+    of I+X goes to a different account: OpeningBalances vs. RetainedEarnings.
+
+  - Make RealAccount instances point to an Account instance (or None, if it is a
+    parent node)
 
   - Remove all strings for types (e.g. Assets), this must go into an option
     context.
@@ -119,6 +125,8 @@ beancount: TODO
     (Implement the currency constraints...)
 
 
+  - Implement check on the constraint on the kind of currency each account may
+    contain.
 
   - Implement 'check' directive.
   - Implement 'pad' directive, and 'check', and all others.
@@ -134,12 +142,6 @@ beancount: TODO
   - Errors from the parser and others should all be accumulated in one place,
     so that we do all the reporting at the very top level.
 
-  - More all parser files under beancount2.parser, remove creader.c
-
-  - Checks need to be re-ordered to be _before_ all the transactions of the same
-    date. Do this in the parser.
-
-  - note entries should be attached to a particular account
 
 * Dealing with Equity
 
@@ -155,7 +157,7 @@ beancount: TODO
 ** Retained Earnings
 
   - Add note entries for new accounts, should be a multiline paragraph that
-    describes the purpose of the account. Add them in my inp0ut file.
+    describes the purpose of the account. Add them in my input file.
 
   - You need a special directive to deal with RetainedEarnings, which are (I-X).
     This process needs to be documented well...  with examples.
@@ -214,28 +216,12 @@ beancount: TODO
       Equity:OpeningBalances account.
 
 
-* Beancount File Review and Fixes
-
-  - Open directives need to be set correct dates
-
-  - We need to move the account ids on the open directives too
-
-  - Automatically detect accounts which aren't referred anywhere but open and
-    close, and warn on these!
-
 * Helpers for Documents
 
   - There should be a script that knows about the formats of my various PDF
     files under ~/u/Downloads and that automatically puts them under the right
     subdirectory. Maybe pdf2text and look for account ids, then try to
     automatically match against one of the account_id declared in the Ledger.
-
-
-* Capital Gains
-
-  - Capital gains should not count commissions nor on the buy nor on the
-    sell side. How do we book them like this?  Can we count this somehow
-    automatically? Misc accounts? Not sure.
 
 * Statements
 ** Capital Statement
@@ -488,7 +474,15 @@ beancount: TODO
     that now!
 
 
-* Parser
+* Syntax / Parser
+** Error Messages
+
+  - Syntax errors currently have no location... this is unacceptable. Write an
+    automated test, check for all kinds of errors, in the lexer, in the parser,
+    in the Python. (Just work with the line number, we don't really need
+    character position.) Test everything with automated tests.
+
+
 ** Testing Improvments
 
   - Allow file objects to parse() and dump_lexer(). This should use fdopen() or
@@ -516,6 +510,11 @@ beancount: TODO
        -4 GOOG {790.83 USD}
 
     It's actually a lot more accurate to what's going on...
+
+** Multiline Strings
+
+  - The syntax should support multiline strings naturally...
+
 
 * 'Misc' Accounts
 
@@ -573,11 +572,23 @@ beancount: TODO
     * Automatically indent postings ("a line that begins with an account")
     * Automatically align lines with currency numbers
 
-* Massaging my Input File
+* Beancount File Review, Massaging and Fixes
 
   - Some syntax should be added for tags, e.g. ":tag", tags should all be moved
     to the description line, no tags allowed on postings
 
+  - Open directives need to be set correct dates
+
+  - We need to move the account ids on the open directives too
+
+  - Automatically detect accounts which aren't referred anywhere but open and
+    close, and warn on these!
+
+  - Move Taxes to Expenses/Taxes subdirectories everywhere.
+
+  - Convert all the @d039f548 to
+    :d039f548, these linked transactions just become like tags. Maybe ::d039f548
+    is not listed and :d039f548 is listed, or something like that.
 
 * Dated Postings
 
@@ -601,6 +612,11 @@ beancount: TODO
 
   - Move 'effective date' to the postings in my input file, using the dated
     postings feature.
+
+
+  - Another idea would be to make @pad able to pad for a percentage of the
+    total, so that we're able to use @pad instead of "distribution of expenses"
+    entries.
 
 
 * Events
@@ -694,11 +710,6 @@ beancount: TODO
     This would serve only that realization, and not others. This way I could
     bake only this one in a zip file. This would be useful.
 
-* Distributed Entries
-
-  - Make @pad able to pad for a percentage of the total, so that we're
-    able to use @pad instead of "distribution of expenses" entries.
-
 * Documentation
 
   - Write a simple cheat-sheet with an overview of the syntax
@@ -707,6 +718,10 @@ beancount: TODO
 
   - Write a series of real-life problems solved. This should be really much
     more helpful than boring docs.
+
+  - Document the realization process, need that large zoom-out graphic that
+    shows closing, and opening balances.
+
 
 ** Real Usage Examples
 *** Transfers Between Accounts
@@ -820,10 +835,6 @@ result of paying taxes:
   Income:RSPContrib
 
 
-* Future
-
-  - The syntax should support multiline strings naturally...
-
 * Bugs
 ** Bugs in Beancount v2
 
@@ -863,8 +874,9 @@ result of paying taxes:
 
 * Web Server
 
-  - Use that beautiful new font from Tactile in the new rendering. Totally worth
-    it.
+  - Use that beautiful new font (Roboto) from Tactile in the new rendering.
+    Totally worth it. Use the nice Lucida-like font for numbers, like in
+    TurboTax.
 
   - Render balance sheet/ income statement cells with two numbers for parent
     nodes, so that when you collapse a node, all the amounts of its children sum
@@ -872,14 +884,6 @@ result of paying taxes:
     report regardless of whether nodes are collapsed or not. This will require
     some JavaScript effort.
 
-
-* Fixes to Ledger
-
-  - Convert all the @d039f548 to
-    :d039f548, these linked transactions just become like tags. Maybe ::d039f548
-    is not listed and :d039f548 is listed, or something like that.
-
-  - Do track RRSP eligible amount as document below, we need to do that.
 
 * Importers Library
 
@@ -1073,10 +1077,7 @@ result of paying taxes:
   * For org-mode, highlighting is still present.
   * There is a new function to align the prices of a transaction automatically.
 
-* Challenges
-
-A list of ideas to generate new reports.
-
+* Challenges, Problems Beancount should be able to Solve
 ** Can I generate a nice year-on-year summary of income and expenses?
 
   - Including RSP contribs, like my bu spreadsheet that I crafted manually? Can
@@ -1108,6 +1109,12 @@ A list of ideas to generate new reports.
     ledger. This should be a very simple report, probably in the form of a pie
     chart.  Maybe this pie chart should be located in the capital report
     (possibly makes sense).
+
+** Capital Gains
+
+  - Capital gains should not count commissions nor on the buy nor on the
+    sell side. How do we book them like this?  Can we count this somehow
+    automatically? Misc accounts? Not sure.
 
 * Rejected Ideas
 
