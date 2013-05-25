@@ -113,3 +113,15 @@ Price       = namedtuple('Price'       , 'fileloc date currency amount')
 
 # Postings are contained in Transaction entries.
 Posting = namedtuple('Posting', 'account position price flag')
+
+
+#
+# Common operations on lists of entries.
+#
+
+def get_min_max_dates(entries):
+    """Return the minimum and amximum dates in the list of entries."""
+    if entries:
+        return (entries[0].date, entries[-1].date)
+    else:
+        return (None, None)
