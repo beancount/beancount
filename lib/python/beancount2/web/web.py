@@ -20,17 +20,6 @@ from beancount2.data import Open, Close
 # Generic functions
 
 
-# def get_mount():
-#     """Return the mountpoint of this application request call."""
-#     return request.urlparts.path[:-len(request.path)]
-
-
-def app_url(name, *args, **kw):
-    """Return a URL to the given name.
-    This returns the URL for the current realization app."""
-    return request.app.get_url(name, *args, **kw)
-
-
 class AppMapper:
     """A mapper used to format urls directly into templates.
     Use it in strings like this:
@@ -45,8 +34,20 @@ class AppMapper:
     def __getattr__(self, aname):
         return self.url_function(aname)
 
-A = AppMapper(app_url)
 G = AppMapper(bottle.default_app().router.build)
+
+
+def app_url(name, *args, **kw):
+    "Return a URL to the given name, in the request app."
+    return request.app.get_url(name, *args, **kw)
+
+A = AppMapper(app_url)
+
+
+## FIXME: remove?
+# def get_mount():
+#     """Return the mountpoint of this application request call."""
+#     return request.urlparts.path[:-len(request.path)]
 
 
 #--------------------------------------------------------------------------------
@@ -108,7 +109,6 @@ def stats():
         )
 
 
-
 @bottle.route('/source', name='source')
 def source():
     "Render the source file, allowing scrolling at a specific line."
@@ -118,6 +118,41 @@ def source():
         )
 
 
+@bottle.route('/update', name='update')
+def update():
+    "Render the update activity."
+    return render_global(
+        pagetitle = "Update Activity",
+        contents = ""
+        )
+
+
+@bottle.route('/events', name='events')
+def update():
+    "Render an index for the various kinds of events."
+    return render_global(
+        pagetitle = "Events",
+        contents = ""
+        )
+
+
+@bottle.route('/prices', name='prices')
+def prices():
+    "Render information about prices."
+    return render_global(
+        pagetitle = "Prices",
+        contents = ""
+        )
+
+
+@bottle.route('/positions', name='positions')
+def positions():
+    "Render information about positions."
+    return render_global(
+        pagetitle = "Positions",
+        contents = ""
+        )
+
 
 GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
 <ul>
@@ -125,6 +160,10 @@ GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{G.errors}}">Errors</a></li>
   <li><a href="{{G.source}}">Source</a></li>
   <li><a href="{{G.stats}}">Statistics</a></li>
+  <li><a href="{{G.update}}">Update Activity</a></li>
+  <li><a href="{{G.events}}">Events</a></li>
+  <li><a href="{{G.prices}}">Prices</a></li>
+  <li><a href="{{G.positions}}">Positions</a></li>
 </ul>
 """).render(G=G)
 
@@ -158,7 +197,7 @@ def render_app(*args, **kw):
 
 @app.route('/', name='approot')
 def approot():
-    bottle.redirect(app_url('reports'))
+    bottle.redirect(request.app.get_url('reports'))
 
 
 @app.route('/reports', name='reports')
@@ -166,15 +205,7 @@ def reports():
     "The index of all the available reports for this realization."
     return render_app(
         pagetitle = "Index",
-        contents = """
-        <h2></h2>
-        <ul>
-          <li><a href="{A.balsheet}">Balance Sheet</a></li>
-          <li><a href="{A.income}">Income Statement</a></li>
-          <li><a href="{A.trial}">Trial Balance</a></li>
-          <li><a href="{A.journal}">General Journal</a></li>
-        </ul>
-    """.format(A=A))
+        contents = APP_NAVIGATION.render(G=G, A=A, real_title=request.app.real_title))
 
 
 @app.route('/journal', name='journal')
@@ -188,7 +219,7 @@ def journal():
 
 @app.route('/trial', name='trial')
 def trial():
-    "Trial balance."
+    "Trial balance / Chart of Accounts."
     return render_app(
         pagetitle = "Trial Balance",
         contents = ""
@@ -213,6 +244,24 @@ def income():
         )
 
 
+@app.route('/conversions', name='conversions')
+def positions():
+    "Render the list of transactions with conversions."
+    return render_app(
+        pagetitle = "Conversions",
+        contents = ""
+        )
+
+
+# Opening Balance Sheet
+#         LI(A("Capital Statement", href=umap('@@CapitalStatement')),
+#         LI(A('Cash Flow Statement', href=umap('@@CashFlow'))),
+# Payees
+# Tags
+# Trades
+
+
+
 APP_NAVIGATION = bottle.SimpleTemplate("""
 <ul>
   <li><a href="{{G.toc}}">Table of Contents</a></li>
@@ -222,6 +271,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{A.income}}">Income Statement</a></li>
   <li><a href="{{A.trial}}">Trial Balance</a></li>
   <li><a href="{{A.journal}}">Journal</a></li>
+  <li><a href="{{A.conversions}}">Conversions</a></li>
 </ul>
 """)
 
@@ -247,6 +297,22 @@ def app_mount(real_id, real_title):
 
     # Update the global list of ledgers.
     LEDGERS.append(app_copy)
+
+
+def create_realizations(contents):
+    """Create apps for all the realizations we want to be able to render."""
+
+    # The global realization, with all entries.
+    app_mount('all', 'All Transactions')
+
+    # One realization by-year.
+    for year in reversed(list(data.get_active_years(contents.entries))):
+
+        # FIXME: We need to somehow attach the list of particular entries to the
+        # app, to provide a unique title and a function that will
+        # lazy-compute the filtered list of entries and its associated
+        # realization.
+        app_mount('year{:4d}'.format(year), 'Year {:4d}'.format(year))
 
 
 def main():
@@ -278,73 +344,8 @@ def main():
     with open(path.join(path.dirname(__file__), 'style.css')) as f:
         global STYLE; STYLE = f.read()
 
-    # print(template.render(G=G,
-    #                       pagetitle='DOCTITLE',
-    #                       navigation="<span>Nav</span>"
-    #                       ))
-    # raise SystemExit
+    # Create all the basic realizations.
+    create_realizations(contents)
 
-    app_mount('all', 'All Transactions')
-
-    for year in reversed(list(data.get_active_years(contents.entries))):
-
-        # FIXME: We need to somehow attach the list of particular entries to the
-        # app, to provide a unique title and a function that will
-        # lazy-compute the filtered list of entries and its associated
-        # realization.
-        app_mount('year{:4d}'.format(year), 'Year {:4d}'.format(year))
-
-    bottle.run(host='localhost', port=8080,
-               # reloader=True,
-               debug=True)
-
-
-
-
-
-# print(bottle.url('balsheet', no=10))
-# print(app.get_url('balsheet', no=11))
-
-# Failed attempts at modifying the decorator so that it inserts named route with
-# the name of the wrapped callback automatically. This is impossible; you need
-# to modify bottle itself.
-
-# def route(*args, **kw):
-#     def named_route(fun):
-#         print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX', fun.__name__)
-#         kw['name'] = fun.__name__
-#         return bottle.route(*args, **kw)
-#     return named_route
-
-# def route(*args, **kw):
-#     wrapper = bottle.route(*args, **kw)
-#     def named_route(fun):
-#         kw['name'] = fun.__name__
-#         return wrapper(fun)
-#     return named_route
-
-# def autoroute(*args, **kw):
-#     """Invoke a modified decorator that will have the name of the wrapped function
-#     as the name of the route."""
-#     wrapper = bottle.route(*args, **kw)
-#     def named_wrapper(callback):
-#         name = callback.__name__
-#         print(name)
-#         return wrapper(callback)
-#     return named_wrapper
-
-#FIXME: I want to be able to render links with a global index of symbols, not as links, just like I did in my own thing.
-# This makes everything nicer...
-# def route(path, *args):
-#     def decorator(fun):
-#         fun = route(path, *args)
-
-
-# FIXME: Offer 'autoroute' patch to Bottle.
-
-
-# def render(pagetitle, contents, **kw):
-#     """Render the title and contents in our standard template."""
-#     output = bottle.template(template,
-#                              pagetitle=pagetitle)
-#     return output.format(navigation="", contents=dedent(contents))
+    # Run the server.
+    bottle.run(host='localhost', port=8080, debug=args.debug) # reloader=True

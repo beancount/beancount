@@ -20,7 +20,7 @@ body {
 /* The navigation links. */
 
 div#navigation {
-    font-size: smaller;
+    font-size: x-small;
 }
 
 div#navigation ul {
@@ -33,7 +33,7 @@ div#navigation ul {
 
 div#navigation li {
     display: inline;
-    margin: 0.25em;
+    margin: 4px;
 /* font-size: x-small; */
 }
 
