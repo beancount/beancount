@@ -6,6 +6,8 @@ import argparse
 from os import path
 from textwrap import dedent
 import copy
+import io
+import functools
 
 import bottle
 from bottle import response, request
@@ -13,6 +15,7 @@ from bottle import response, request
 from beancount2 import parser
 from beancount2 import checks
 from beancount2 import data
+from beancount2 import realization
 from beancount2.data import Open, Close
 
 
@@ -229,9 +232,14 @@ def trial():
 @app.route('/balsheet', name='balsheet')
 def balsheet():
     "Balance sheet."
+
+    real_accounts = get_realization(request.app)
+    oss = io.StringIO()
+    realization.dump_tree_balances(real_accounts, oss)
+
     return render_app(
         pagetitle = "Balance Sheet",
-        contents = ""
+        contents = '<pre>{}</pre>'.format(oss.getvalue())
         )
 
 
@@ -294,13 +302,16 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
 LEDGERS = []
 
 
-def app_mount(real_id, real_title):
+def app_mount(real_id, real_title, filter_function):
     "Create and mount a new app for a ledger."
 
     # Create and customize the new app.
     app_copy = copy.copy(app)
     app_copy.real_id = real_id
     app_copy.real_title = real_title
+    app_copy.filter_function = filter_function
+    app_copy.entries = None
+    app_copy.real_accounts = None
 
     # Mount it on the root application.
     bottle.mount('/real/{}'.format(real_id), app_copy, name=real_id)
@@ -309,11 +320,28 @@ def app_mount(real_id, real_title):
     LEDGERS.append(app_copy)
 
 
+def get_realization(app):
+    """Return the realization associated with an app. This runs lazily; it filters
+    the entries and realizes when the realization is needed. Thereafter, the
+    realized accounts is cached in the app. """
+
+    if app.real_accounts is None:
+        # Get the filtered list of entries.
+        contents = bottle.default_app().contents
+        app.entries = app.filter_function(contents.entries)
+
+        # Realize them in a hierarchy.
+        app.real_accounts, _ = realization.realize(app.entries, False)
+        assert app.real_accounts is not None
+
+    return app.real_accounts
+
+
 def create_realizations(contents):
     """Create apps for all the realizations we want to be able to render."""
 
     # The global realization, with all entries.
-    app_mount('all', 'All Transactions')
+    app_mount('all', 'All Transactions', filter_entries_all)
 
     # One realization by-year.
     for year in reversed(list(data.get_active_years(contents.entries))):
@@ -322,7 +350,20 @@ def create_realizations(contents):
         # app, to provide a unique title and a function that will
         # lazy-compute the filtered list of entries and its associated
         # realization.
-        app_mount('year{:4d}'.format(year), 'Year {:4d}'.format(year))
+        app_mount('year{:4d}'.format(year),
+                  'Year {:4d}'.format(year),
+                  functools.partial(filter_entries_byyear, year))
+
+
+def filter_entries_all(entries):
+    "Return the list of entries unmodified."
+    return entries
+
+def filter_entries_byyear(year, entries):
+    "Return entries for only that year."
+    return [entry
+            for entry in entries
+            if entry.date.year == year]
 
 
 def main():
