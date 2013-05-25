@@ -10,6 +10,8 @@ import sys
 import time
 from collections import defaultdict
 
+import pandas
+
 import beancount2.parser
 from beancount2 import checks
 from beancount2 import utils
@@ -122,15 +124,27 @@ def main():
     print(sorted(total_balance.get_costs(), key=data.amount_sortkey))
     print()
 
-    # List positions.
-    print("List of positions:")
+
+    print("List of positions")
+    print(",----------------------------------------------------------------------")
+    rows = []
     for position in total_balance.get_positions():
         if position.lot.cost or position.lot.lot_date:
             cost = position.get_cost()
             print(('{p.number:12.2f} {p.lot.currency:8} '
                    '{p.lot.cost.number:12.2f} {p.lot.cost.currency:8} '
                    '{c.number:12.2f} {c.currency:8}').format(p=position, c=cost))
-    print()
+            rows.append((position.lot.currency, position.lot.cost.currency,
+                         position.number, position.lot.cost.number, cost.number))
+    print("`----------------------------------------------------------------------")
+
+    # Manipulate it a bit with Pandas.
+    df = pandas.DataFrame(rows,
+                          columns=['ccy', 'cost_ccy', 'units', 'unit_cost', 'total_cost'])
+    print(df.to_string())
+    sums = df.groupby(['ccy', 'cost_ccy']).sum()
+    sums['percent'] = 100 * sums['total_cost'] / sums['total_cost'].sum()
+    print(sums.to_string())
 
 
     if 0:
