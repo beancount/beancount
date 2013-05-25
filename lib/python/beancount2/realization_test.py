@@ -58,7 +58,8 @@ class TestRealization(unittest.TestCase):
             Assets:US:Checking            100 USD
             Expenses:Something           -100 USD
 
-          2013-05-02 check Assets:US:Checking   100 USD
+          2013-05-02 check Assets:US:Checking     0 USD
+          2013-05-03 check Assets:US:Checking   100 USD
         """
         errors = checks.check(contents.entries, contents.accounts)
         self.assertFalse(errors)

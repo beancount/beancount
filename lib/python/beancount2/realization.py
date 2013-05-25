@@ -17,15 +17,19 @@ from beancount2.data import *
 RealAccount = namedtuple('RealAccount', 'name children postings')
 
 # A realized posting, that points to a particular posting of transaction entry.
+# The 'entry' attribute may point to a transaction or a Pad entry.
+# If it points to a Pad entry, it also points to a synthesized posting.
 RealPosting = namedtuple('RealPosting', 'entry posting balance')
 
-# A synthesized padding entry, with a synthesized posting, that points to the
-# padding entry that triggered it.
+
+## FIXME: remove
 RealPadPosting = namedtuple('RealPadPosting', 'entry posting balance')
+RealCheck = namedtuple('RealCheck', 'entry balance')
+
 
 # A realized check, that contains the actual balance that was seen at that
 # point.
-RealCheck = namedtuple('RealCheck', 'entry balance')
+RealEntry = namedtuple('RealCheck', 'entry balance')
 
 
 RealError = namedtuple('RealError', 'fileloc message')
@@ -219,6 +223,24 @@ def realize(entries, check=False):
                 prev_date = entry.date
 
     return (real_accounts, real_errors)
+
+
+def get_real_subpostings(real_account):
+    """Given a RealAccount instance, return a sorted list of all its postings and
+    the postings of its child accounts."""
+
+    accumulator = []
+    _get_real_subpostings(real_account, accumulator)
+    accumulator.sort(key=lambda rposting: parser.entry_sortkey(rposting.entry))
+    return accumulator
+
+def _get_real_subpostings(real_account, accumulator):
+    "Internal recursive routine to get all the child postings."
+    accumulator.extend(real_account.postings)
+    for child_account in real_account.children:
+        _get_real_subpostings(child_account, accumulator)
+
+
 
 
 def dump_tree_balances(real_accounts, foutput):

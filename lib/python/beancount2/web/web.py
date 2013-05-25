@@ -214,9 +214,21 @@ def reports():
 @app.route('/journal', name='journal')
 def journal():
     "A list of all the entries in this realization."
+
+    real_accounts = get_realization(request.app)
+    real_postings = realization.get_real_subpostings(real_accounts[''])
+
+    oss = io.StringIO()
+    for real_posting in real_postings:
+        if isinstance(real_posting, (RealPosting, RealPadPosting, RealCheck)):
+            entry = real_posting.entry
+        else:
+            entry = real_posting
+        oss.write(str(entry))
+
     return render_app(
         pagetitle = "Journal",
-        contents = ""
+        contents = '<pre>{}</pre>'.format(oss.getvalue())
         )
 
 
