@@ -1,5 +1,6 @@
 """
 Web server for Beancount ledgers.
+This uses the Bottle single-file micro web framework (with no plugins).
 """
 import argparse
 from os import path
