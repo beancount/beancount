@@ -143,7 +143,12 @@ def main():
                           columns=['ccy', 'cost_ccy', 'units', 'unit_cost', 'total_cost'])
     print(df.to_string())
     sums = df.groupby(['ccy', 'cost_ccy']).sum()
-    sums['percent'] = 100 * sums['total_cost'] / sums['total_cost'].sum()
+
+    total_cost = sums['total_cost'].astype(float)
+    sums['percent'] = 100 * total_cost / total_cost.sum()
+
+    sums.insert(2, 'average_cost', total_cost / sums['units'].astype(float))
+
     print(sums.to_string())
 
 

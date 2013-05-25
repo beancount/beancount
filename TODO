@@ -1,11 +1,21 @@
 -*- mode: org -*-
 beancount: TODO
-* Rename
-
-  - Consider renaming this system as "Daybook" instead of Beancount.
-
 * NEW
-  
+
+  - summarize() step, annul_income() step.
+
+  - Add 'errors', 'statistics', and 'source' to the global pages.
+
+
+  - Create an '--anonymous' mode whereby all the numbers are represented by
+    'XXX.XX' for public presentation.
+
+  - The source page should take a special '?line=ddd' parameter that will
+    scroll the page to the transaction at that line.
+
+  - We need to convert @a0ab45b9aa7e links into tags. Do we need them to be
+    special tags? (Possibly not)
+
   - Clamping: "Closing" is the same as "Opening", except that the accumulation
     of I+X goes to a different account: OpeningBalances vs. RetainedEarnings.
 
@@ -142,6 +152,9 @@ beancount: TODO
   - Errors from the parser and others should all be accumulated in one place,
     so that we do all the reporting at the very top level.
 
+* Checks and Safeguards
+
+  - Auto-detect possible duplicate transactions
 
 * Dealing with Equity
 
@@ -183,6 +196,9 @@ beancount: TODO
        YYYY-MM-DD * "Annul conversions at end of period"
          Equity:Conversions        -56383 CAD @ 0 CONV
          Equity:Conversions        +67000 USD @ 0 CONV
+
+  - Maybe the account that should hold these conversions should be an
+    Income:Conversions account.
 
   - Document the fact that the conversions problem occurs
 
@@ -308,6 +324,31 @@ beancount: TODO
 
   - Figure out how to show balance sheet to market value, perhaps show gains.
 
+** Statement of Retained Earnings
+
+  - This is possible; search online for examples, makes sense that we should
+    have one, it's really, really simple to do.
+
+** Conversions Report
+
+  - List all the transactions that occur at a rate but that do not occur with a
+    cost, all the @ transactions only, as a report on its own, maybe just a
+    filtered journal (not a ledger).
+
+  -
+
+
+** Update Report
+
+  - We should have a nicer way to tell what accounts need to be updated.
+    Highlight them red if they haven't been updated in more a month
+    (configurable).
+
+** Links Report
+
+  - Generate a Graphviz link of all the interaccount transactions that are
+    larger than a certain amount.
+
 ** HTML Rendering
 
   - Rendering: When you collapse a parent account, its aggregate amount should
@@ -402,6 +443,11 @@ beancount: TODO
 
   - Given a list of entries, you should be able to extract a list of positions
     at any point in time.
+
+** Maximum Values Report
+
+  - You should report a trial-balance -like listing of the minimum and maximum
+    values of all the accounts.
 
 ** Event Reports
 
@@ -590,6 +636,7 @@ beancount: TODO
     :d039f548, these linked transactions just become like tags. Maybe ::d039f548
     is not listed and :d039f548 is listed, or something like that.
 
+
 * Dated Postings
 
   - In order to create multiple similar transactions at many dates in one
@@ -669,6 +716,12 @@ beancount: TODO
 
 
 
+** Importer from GnuCash
+
+  - Write an importer from GnuCash's format, for people wanting to make the
+    transition.
+
+
 * Documents Directive
 
   - Tie the Ledger server to a directory hierarchy, where files can be found by
@@ -721,6 +774,8 @@ beancount: TODO
 
   - Document the realization process, need that large zoom-out graphic that
     shows closing, and opening balances.
+
+  - Add a "team project" as an example use case, or even an example file.
 
 
 ** Real Usage Examples
@@ -1116,6 +1171,27 @@ result of paying taxes:
     sell side. How do we book them like this?  Can we count this somehow
     automatically? Misc accounts? Not sure.
 
+** Inflation Adjusted Balance Sheets and Charts
+
+  - It would be AWESOME to look at a balance sheets from the past but
+    inflation-adjusted for any date... Answer this question easily:
+
+      "What was I making in 2010 in today's dollar terms?"
+
+  - How would I produce an inflation adjusted version of some charts. Maybe all
+    charts should have that option?
+
+** Statement of Assets (for Will)
+
+  - In order to have someone else be able to take care of your business, you
+    should be able to produce a list of the accounts open at the end of the
+    period, with the account ids and balances. This should be printable and
+    storable, for someone else to take care of your things in case you die.
+
+* Rename
+
+  - Consider renaming this system as "Daybook" instead of Beancount.
+
 * Rejected Ideas
 
   - Support Ledger's aliases?
@@ -1188,3 +1264,9 @@ result of paying taxes:
     they were read in.
 
       *REJECTED*: Simply not needed.
+
+  - Failing "check" directives should insert a transaction to fix the balance
+    towards the expected balance. This is in order to avoid a single mistake
+    somewhere early before many checks cascading into a torrent of errors.
+
+      *REJECTED*: It's really not that big a problem in practice.

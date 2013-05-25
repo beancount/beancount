@@ -33,9 +33,9 @@ build: $(CROOT)/grammar.c $(CROOT)/grammar.h $(CROOT)/lexer.c $(CROOT)/lexer.h
 sandbox:
 	bean2-sandbox $(LEDGER)
 
-.PHONY: perf
-perf:
-	bean2-measure-time $(LEDGER)
+.PHONY: check
+check:
+	bean2-check $(LEDGER)
 
 dump_lexer:
 	bean2-dump-lexer $(LEDGER)
@@ -52,6 +52,9 @@ convert:
 unittest unittests:
 	nosetests-3.3 -s lib/python/beancount2
 
+.PHONY: web
+web:
+	bean2-web --debug $(LEDGER)
 
 .PHONY: test_scripts
 test_scripts:
