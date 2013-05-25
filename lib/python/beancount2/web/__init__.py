@@ -33,21 +33,31 @@ class AppMapper:
     """A mapper used to format urls directly into templates.
     Use it in strings like this:
 
-       <a href="{M.balsheet}">Balance Sheet</a>
+       <a href="{A.balsheet}">Balance Sheet</a>
 
-    Where 'xxxx' in 'M.xxxxx' refers to a page by its name.
+    Where 'xxxx' in 'A.xxxxx' refers to a page by its name.
     """
-    def __getattribute__(self, aname):
-        return app_url(aname)
+    def __init__(self, url_function):
+        self.url_function = url_function
 
-M = AppMapper()
+    def __getattr__(self, aname):
+        return self.url_function(aname)
+
+A = AppMapper(app_url)
+G = AppMapper(bottle.url)
 
 
-def render(doctitle, contents, **kw):
+# def render(doctitle, contents, **kw):
+#     """Render the title and contents in our standard template."""
+#     output = bottle.template(template,
+#                              doctitle=doctitle)
+#     return output.format(navigation="", contents=dedent(contents))
+
+def render(*args, **kw):
     """Render the title and contents in our standard template."""
-    output = bottle.template(template,
-                             doctitle=doctitle)
-    return output.format(navigation="", contents=dedent(contents))
+    kw['G'] = G # Global mapper
+    kw['A'] = A # Application mapper
+    return template.render(*args, **kw)
 
 
 #--------------------------------------------------------------------------------
@@ -63,21 +73,20 @@ def ghome():
     mindate, maxdate = data.get_min_max_dates([entry for entry in contents.entries
                                                if not isinstance(entry, (Open, Close))])
 
-    all = '<li><a href="{}">{}</a></li>'.format('/real/all', 'all')
-
-    years = '\n'.join(['<li><a href="{}">{}</a></li>'.format('/real/year{:4d}'.format(year), year)
+    years = '\n'.join(['<li><a href="{{G.year{:4d}}}">Year {}</a></li>'.format(year, year)
                        for year in range(mindate.year, maxdate.year + 1)])
 
-    return render("Overview", """
-      <h2>Ledgers</h2>
+    print('GHOME', G.ghome)
 
-      <h2>All</h2>
-      <h2>By-Year</h2>
-      <ul>
-        {all}
-        {years}
-      </ul>
-    """.format(**vars()))
+    return render(
+        doctitle="Overview",
+        contents="""
+          <h2>Ledgers</h2>
+          <ul>
+            <li><a href="{{G.all}}">All Transactions</a></li>
+            {years}
+          </ul>
+        """.format(years=years))
 
 
 
@@ -98,16 +107,18 @@ def root():
 
 @app.route('/index', name='index')
 def index():
-    return render("Index", """
-      <h2>{title}</h2>
-      <ul>
-        <li><a href="{M.balsheet}">Balance Sheet</a></li>
-        <li><a href="{M.income}">Income Statement</a></li>
-        <li><a href="{M.trial}">Trial Balance</a></li>
-        <li><a href="{M.journal}">General Journal</a></li>
-      </ul>
-    """.format(M=M,
-               title='Index for {}'.format(request.app.title)))
+    return render(
+        doctitle="Index",
+        contents="""
+        <h2>{{title}}</h2>
+        <ul>
+          <li><a href="{A.balsheet}">Balance Sheet</a></li>
+          <li><a href="{A.income}">Income Statement</a></li>
+          <li><a href="{A.trial}">Trial Balance</a></li>
+          <li><a href="{A.journal}">General Journal</a></li>
+        </ul>
+    """,
+        title='Index for {}'.format(request.app.title))
 
 @app.route('/journal', name='journal')
 def journal():
@@ -148,7 +159,12 @@ def main():
 
     # Load templates.
     global template
-    template = open(path.join(path.dirname(__file__), 'template.html')).read()
+    template = bottle.SimpleTemplate(open(path.join(path.dirname(__file__), 'template.html')))
+    # print(template.render(G=G,
+    #                       doctitle='DOCTITLE',
+    #                       navigation="<span>Nav</span>"
+    #                       ))
+    # raise SystemExit
 
     app_mount('all')
 
