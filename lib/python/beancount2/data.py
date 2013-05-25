@@ -139,4 +139,3 @@ def get_active_years(entries):
         if year != prev_year:
             prev_year = year
             yield year
-

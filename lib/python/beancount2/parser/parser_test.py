@@ -141,3 +141,18 @@ class TestParserMisc(unittest.TestCase):
         self.assertEqual(contents.parse_errors, [])
 
 parser.create_parsetest_methods(TestParserMisc)
+
+
+class TestParserOptions(unittest.TestCase):
+
+    def parsetest_empty_1(self, contents):
+        """
+          option "title" "Super Rich"
+
+        """
+        self.assertEqual(len(contents.options), 1)
+        option = contents.options['title']
+        option.key == 'title'
+        option.value == 'Super Rich'
+
+parser.create_parsetest_methods(TestParserOptions)

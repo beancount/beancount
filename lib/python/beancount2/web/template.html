@@ -10,16 +10,22 @@
 
     <!-- <script src="/treetable.js" type="text/javascript"> </script> -->
 
-    <title>{{doctitle}}</title>
+    <title>{{title}}: {{pagetitle}}</title>
   </head>
 
   <body>
+
+    <!-- The title of the input file, from the 'title' option. -->
+    <div id="title">{{title}}{{real_title}}</div>
+
     <div id="navigation">
       {{!navigation}}
     </div>
 
-    <div id="title">{{doctitle}}</div>
+    <!-- The title of this page, what information we're displaying. -->
+    <h1 id="pagetitle">{{pagetitle}}</h1>
 
+    <!-- The contents of this page. -->
     <div id="contents">
       {{!contents}}
     </div>

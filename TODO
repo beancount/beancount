@@ -2,6 +2,8 @@
 beancount: TODO
 * NEW
 
+  - FIXME: We need to parse the options using the same argparse parser....
+
   - summarize() step, annul_income() step.
 
   - Add 'errors', 'statistics', and 'source' to the global pages.
@@ -478,6 +480,11 @@ beancount: TODO
     convert the ledger into another ledger, where entries would have
     been replaced by summary entries instead, and all the other
     functionalities would still work.
+
+** Financial Ratio Analysis
+
+  - Add these: http://www.csun.edu/~bjc20362/Controlling-2.pdf
+
 
 * Filtering Methods
 ** By Country

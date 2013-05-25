@@ -48,25 +48,18 @@ A = AppMapper(app_url)
 G = AppMapper(bottle.default_app().router.build)
 
 
-def render(*args, **kw):
-    """Render the title and contents in our standard template."""
-    kw['G'] = G # Global mapper
-    kw['A'] = A # Application mapper
-    return template.render(*args, **kw)
-
-
 #--------------------------------------------------------------------------------
 # Global application pages.
 
 
-@bottle.route('/style.css', name='style')
-def style():
-    "Stylesheet for the entire document."
-    response.content_type = 'text/css'
-    if bottle.default_app().opts.debug:
-        return open(path.join(path.dirname(__file__), 'style.css')).read()
-    else:
-        return STYLE
+def render_global(*args, **kw):
+    """Render the title and contents in our standard template."""
+    kw['G'] = G # Global mapper
+    kw['A'] = A # Application mapper
+    kw['title'] = bottle.default_app().contents.options['title']
+    kw['real_title'] = ''
+    kw['navigation'] = GLOBAL_NAVIGATION
+    return template.render(*args, **kw)
 
 
 @bottle.route('/', name='root')
@@ -82,38 +75,47 @@ def toc():
 
     ledger_items = []
     for ledger in LEDGERS:
-        ledger_items.append('<li><a href="{}">{}</a></li>'.format(getattr(G, ledger.name),
-                                                                  ledger.title))
+        ledger_items.append('<li><a href="{}">{}</a></li>'.format(getattr(G, ledger.real_id),
+                                                                  ledger.real_title))
 
-    return render(
-        doctitle="Overview",
-        navigation=GLOBAL_NAVIGATION,
-        contents="""
+    return render_global(
+        pagetitle = "Table of Contents",
+        contents = """
           <h2>Ledgers</h2>
-
           <ul>
-            {ledgers_items}
+            {ledger_items}
           </ul>
-        """.format(ledgers_items='\n'.join(ledger_items)))
+        """.format(ledger_items='\n'.join(ledger_items)))
 
 
 @bottle.route('/errors', name='errors')
 def errors():
     "Report error encountered during parsing, checking and realization."
-    return 'ERRORS'
+    return render_global(
+        pagetitle = "Errors",
+        contents = ""
+        )
 
 
 @bottle.route('/stats', name='stats')
 def stats():
     "Compute and render statistics about the ledger."
-    # Note: maybe this can fit on the home page, if this is simple.
-    return 'STATS'
+    # Note: maybe the contents of this can fit on the home page, if this is simple.
+    return render_global(
+        pagetitle = "Statistics",
+        contents = ""
+        )
+
 
 
 @bottle.route('/source', name='source')
 def source():
     "Render the source file, allowing scrolling at a specific line."
-    return 'SOURCE'
+    return render_global(
+        pagetitle = "Source",
+        contents = ""
+        )
+
 
 
 GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
@@ -126,6 +128,16 @@ GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
 """).render(G=G)
 
 
+@bottle.route('/style.css', name='style')
+def style():
+    "Stylesheet for the entire document."
+    response.content_type = 'text/css'
+    if bottle.default_app().args.debug:
+        with open(path.join(path.dirname(__file__), 'style.css')) as f:
+            global STYLE; STYLE = f.read()
+    return STYLE
+
+
 #--------------------------------------------------------------------------------
 # Realization application pages.
 
@@ -133,55 +145,78 @@ GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
 app = bottle.Bottle()
 
 
+def render_app(*args, **kw):
+    """Render the title and contents in our standard template."""
+    kw['G'] = G # Global mapper
+    kw['A'] = A # Application mapper
+    kw['title'] = bottle.default_app().contents.options['title']
+    kw['real_title'] = ' - ' + request.app.real_title
+    kw['navigation'] = APP_NAVIGATION.render(G=G, A=A, real_title=request.app.real_title)
+    return template.render(*args, **kw)
+
+
 @app.route('/', name='approot')
 def approot():
-    bottle.redirect(app_url('appindex'))
+    bottle.redirect(app_url('reports'))
 
 
-@app.route('/index', name='appindex')
-def appindex():
-
-    print()
-
-    return render(
-        doctitle="Index",
-        navigation=APP_NAVIGATION.render(G=G, A=A),
-        contents="""
-        <h2>{{title}}</h2>
+@app.route('/reports', name='reports')
+def reports():
+    "The index of all the available reports for this realization."
+    return render_app(
+        pagetitle = "Index",
+        contents = """
+        <h2></h2>
         <ul>
           <li><a href="{A.balsheet}">Balance Sheet</a></li>
           <li><a href="{A.income}">Income Statement</a></li>
           <li><a href="{A.trial}">Trial Balance</a></li>
           <li><a href="{A.journal}">General Journal</a></li>
         </ul>
-    """.format(A=A),
-        title='Index for {}'.format(request.app.title))
+    """.format(A=A))
 
 
 @app.route('/journal', name='journal')
 def journal():
-    return "JOURNAL"
+    "A list of all the entries in this realization."
+    return render_app(
+        pagetitle = "Journal",
+        contents = ""
+        )
 
 
 @app.route('/trial', name='trial')
 def trial():
-    return "TRIAL"
+    "Trial balance."
+    return render_app(
+        pagetitle = "Trial Balance",
+        contents = ""
+        )
 
 
 @app.route('/balsheet', name='balsheet')
 def balsheet():
-    return "BALSHEET"
+    "Balance sheet."
+    return render_app(
+        pagetitle = "Balance Sheet",
+        contents = ""
+        )
 
 
 @app.route('/income', name='income')
 def income():
-    return "INCOME"
+    "Income statement."
+    return render_app(
+        pagetitle = "Income Statement",
+        contents = ""
+        )
 
 
 APP_NAVIGATION = bottle.SimpleTemplate("""
 <ul>
-  <li><a href="{{G.toc}}">Global</a></li>
-  <li><a href="{{A.appindex}}">Index</a></li>
+  <li><a href="{{G.toc}}">Table of Contents</a></li>
+  <li><span class="ledger-name">{{real_title}}:</span></li>
+  <li><a href="{{A.reports}}">Reports</a></li>
   <li><a href="{{A.balsheet}}">Balance Sheet</a></li>
   <li><a href="{{A.income}}">Income Statement</a></li>
   <li><a href="{{A.trial}}">Trial Balance</a></li>
@@ -198,16 +233,16 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
 LEDGERS = []
 
 
-def app_mount(name, title):
+def app_mount(real_id, real_title):
     "Create and mount a new app for a ledger."
 
     # Create and customize the new app.
     app_copy = copy.copy(app)
-    app_copy.name = name
-    app_copy.title = title
+    app_copy.real_id = real_id
+    app_copy.real_title = real_title
 
     # Mount it on the root application.
-    bottle.mount('/real/{}'.format(name), app_copy, name=name)
+    bottle.mount('/real/{}'.format(real_id), app_copy, name=real_id)
 
     # Update the global list of ledgers.
     LEDGERS.append(app_copy)
@@ -218,26 +253,32 @@ def main():
     argparser.add_argument('filename', help="Beancount input filename to serve.")
     argparser.add_argument('--debug', action='store_true',
                            help="Enable debugging features (auto-reloading of css).")
-    opts = argparser.parse_args()
-    bottle.default_app().opts = opts
+    args = argparser.parse_args()
 
     # Parse the beancount file.
     global contents ## FIXME: maybe we can do away with this, and attach it to
                     ## the global application class.
-    contents = parser.parse(opts.filename)
-
+    contents = parser.parse(args.filename)
 
     # Check for errors.
     errors = checks.check(contents.entries, contents.accounts)
     ## FIXME: Not sure what to do with errors yet.
 
+    # Save globals in the global app.
+    global_app = bottle.default_app()
+    global_app.args = args
+    global_app.contents = contents
 
     # Load templates.
-    global template, STYLE
-    template = bottle.SimpleTemplate(open(path.join(path.dirname(__file__), 'template.html')))
-    STYLE = open(path.join(path.dirname(__file__), 'style.css')).read()
+    with open(path.join(path.dirname(__file__), 'template.html')) as f:
+        global template
+        template = bottle.SimpleTemplate(f)
+
+    with open(path.join(path.dirname(__file__), 'style.css')) as f:
+        global STYLE; STYLE = f.read()
+
     # print(template.render(G=G,
-    #                       doctitle='DOCTITLE',
+    #                       pagetitle='DOCTITLE',
     #                       navigation="<span>Nav</span>"
     #                       ))
     # raise SystemExit
@@ -301,8 +342,8 @@ def main():
 # FIXME: Offer 'autoroute' patch to Bottle.
 
 
-# def render(doctitle, contents, **kw):
+# def render(pagetitle, contents, **kw):
 #     """Render the title and contents in our standard template."""
 #     output = bottle.template(template,
-#                              doctitle=doctitle)
+#                              pagetitle=pagetitle)
 #     return output.format(navigation="", contents=dedent(contents))

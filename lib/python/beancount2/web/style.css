@@ -4,9 +4,50 @@
 
 body {
     font-family: 'Roboto Condensed';
-    /* font-family: 'Droid Sans Mono', sans-serif; */
+/* font-family: 'Droid Sans Mono', sans-serif; */
 }
 
+
+/* The document/file title at the top. */
+#title {
+    padding: 5px 15px 10px 15px;
+    border-bottom: medium solid #666;
+    color: #666;
+    font-size: larger;
+}
+
+
+/* The navigation links. */
+
+div#navigation {
+    font-size: smaller;
+}
+
+div#navigation ul {
+    /* margin: 10px 0px 0px 0px; */
+    margin-top: 5px;
+    /* padding-top: 5px; */
+    padding-left: 0px;
+    /* border: thin solid red; */
+}
+
+div#navigation li {
+    display: inline;
+    margin: 0.25em;
+/* font-size: x-small; */
+}
+
+div#navigation li span.ledger-name {
+    margin-left: 1.5em;
+    /* font-weight: bold; */
+}
+
+
+/* The title of the page, what information we're displaying. */
+h1#pagetitle {
+    text-align: center;
+    margin-top: 0px;
+}
 
 
 /* /\* Global page defs *\/ */
@@ -38,16 +79,6 @@ body {
 /*   padding: 0.5em; */
 /* } */
 
-/* div#top-navigation ul { */
-/*   margin: 0px; */
-/*   padding: 0px; */
-/* } */
-
-/* div#top-navigation li { */
-/*   display: inline; */
-/*   margin-left: 1.5em; */
-/*   font-size: x-small; */
-/* } */
 
 /* body h1 { */
 /*   text-align: center; */

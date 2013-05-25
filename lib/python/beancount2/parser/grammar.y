@@ -92,8 +92,9 @@ const char* getTokenName(int token);
 %token EVENT               /* 'event' keyword */
 %token PRICE               /* 'price' keyword */
 %token NOTE                /* 'note' keyword */
-%token PUSHTAG            /* 'pushtag' keyword */
+%token PUSHTAG             /* 'pushtag' keyword */
 %token POPTAG              /* 'poptag' keyword */
+%token OPTION              /* 'option' keyword */
 %token <pyobj> DATE        /* A date object */
 %token <pyobj> ACCOUNT     /* The name of an account */
 %token <pyobj> CURRENCY    /* A currency specification */
@@ -329,10 +330,17 @@ entry : transaction
           $$ = $1;
       }
 
+option : OPTION STRING STRING eol
+       {
+          BUILD("option", "siOO", FILE_LINE_ARGS, $2, $3);
+          DECREF2($2, $3);
+       }
+
 directive : SKIPPED
           | eol
           | pushtag
           | poptag
+          | option
 
 declarations : declarations entry
              {
@@ -387,6 +395,7 @@ const char* getTokenName(int token)
         case NOTE     : return "NOTE";
         case PUSHTAG  : return "PUSHTAG";
         case POPTAG   : return "POPTAG";
+        case OPTION   : return "OPTION";
         case DATE     : return "DATE";
         case ACCOUNT  : return "ACCOUNT";
         case CURRENCY : return "CURRENCY";

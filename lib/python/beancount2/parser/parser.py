@@ -47,6 +47,9 @@ class Builder(object):
         # Errors that occurred during parsing.
         self.errors = []
 
+        # Accumulated and unprocessed options.
+        self.options = []
+
     def store_result(self, entries):
         """Start rule stores the final result here."""
         if entries:
@@ -58,6 +61,11 @@ class Builder(object):
 
     def poptag(self, tag):
         self.tags.remove(tag)
+
+    def option(self, filename, lineno, key, value):
+        fileloc = FileLocation(filename, lineno)
+        assert key not in self.options
+        self.options.append(Option(fileloc, key, value))
 
 
     def DATE(self, year, month, day):
@@ -170,7 +178,10 @@ class Builder(object):
 # The result from parsing a set of entries.
 # I want this to remain as simple as possible.
 # The list of entries is sorted by date, and the order of appearance in the input file.
-FileContents = namedtuple('FileContents', 'entries accounts parse_errors')
+FileContents = namedtuple('FileContents', 'entries accounts parse_errors options')
+
+# A parsed option directive.
+Option = namedtuple('Option', 'fileloc key value')
 
 
 # Sort with the checks at the BEGINNING of the day.
@@ -187,14 +198,33 @@ def entry_sortkey(entry):
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.fileloc.lineno)
 
 
+# A list of option names that can be specified multiple times.
+# FIXME: This shall be removed, we should use an argparse parser to ensure that
+# we offer the same set of options for the command-line as we do in the file.
+LIST_OPTIONS = ['documents', 'currency']
+
+def parse_options(options):
+    """Parse and validate the options into a dictionary."""
+    options_dict = {}
+    for option in options:
+        key = option.key
+        if key in LIST_OPTIONS:
+            options_dict.setdefault(key, []).append(option.value)
+        else:
+            assert key not in options_dict
+            options_dict[key] = option.value
+    return options_dict
+
+
 def parse(filename):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts."""
     builder = Builder()
     _parser.parse(path.abspath(filename), builder)
     entries = sorted(builder.entries, key=entry_sortkey)
-    accounts = sorted(builder.accounts.values())
-    return FileContents(entries, accounts, builder.errors)
+    accounts = sorted(builder.accounts.values(), key=account_sortkey)
+    options = parse_options(builder.options)
+    return FileContents(entries, accounts, builder.errors, options)
 
 
 def parse_string(input_string):

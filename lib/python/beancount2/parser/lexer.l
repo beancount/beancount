@@ -114,8 +114,9 @@ pad		{ return PAD; }
 event		{ return EVENT; }
 price		{ return PRICE; }
 note		{ return NOTE; }
-pushtag	{ return PUSHTAG; }
+pushtag	        { return PUSHTAG; }
 poptag		{ return POPTAG; }
+option		{ return OPTION; }
 
  /* Dates. */
 [0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][0-9]	{
