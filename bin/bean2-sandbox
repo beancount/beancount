@@ -77,7 +77,6 @@ def main():
             print('{} {}'.format(render_fileloc(error.fileloc),
                                  error.message))
 
-
     with utils.print_time('realize'):
         real_accounts, real_errors = realization.realize(contents.entries, check=True)
 
@@ -123,34 +122,6 @@ def main():
     print('TOTAL')
     print(sorted(total_balance.get_costs(), key=data.amount_sortkey))
     print()
-
-
-    print("List of positions")
-    print(",----------------------------------------------------------------------")
-    rows = []
-    for position in total_balance.get_positions():
-        if position.lot.cost or position.lot.lot_date:
-            cost = position.get_cost()
-            print(('{p.number:12.2f} {p.lot.currency:8} '
-                   '{p.lot.cost.number:12.2f} {p.lot.cost.currency:8} '
-                   '{c.number:12.2f} {c.currency:8}').format(p=position, c=cost))
-            rows.append((position.lot.currency, position.lot.cost.currency,
-                         position.number, position.lot.cost.number, cost.number))
-    print("`----------------------------------------------------------------------")
-
-    # Manipulate it a bit with Pandas.
-    df = pandas.DataFrame(rows,
-                          columns=['ccy', 'cost_ccy', 'units', 'unit_cost', 'total_cost'])
-    print(df.to_string())
-    sums = df.groupby(['ccy', 'cost_ccy']).sum()
-
-    total_cost = sums['total_cost'].astype(float)
-    sums['percent'] = 100 * total_cost / total_cost.sum()
-
-    sums.insert(2, 'average_cost', total_cost / sums['units'].astype(float))
-
-    print(sums.to_string())
-
 
     if 0:
         real_account = real_accounts['Assets:Cash']

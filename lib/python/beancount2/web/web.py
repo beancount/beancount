@@ -11,11 +11,14 @@ import functools
 
 import bottle
 from bottle import response, request
+import pandas
+import numpy
 
 from beancount2 import parser
 from beancount2 import checks
 from beancount2 import data
 from beancount2 import realization
+from beancount2.inventory import Inventory
 from beancount2.data import Open, Close, Pad, Check, Transaction, Event, Note, Price
 
 
@@ -150,15 +153,6 @@ def prices():
         )
 
 
-@bottle.route('/positions', name='positions')
-def positions():
-    "Render information about positions."
-    return render_global(
-        pagetitle = "Positions",
-        contents = ""
-        )
-
-
 GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
 <ul>
   <li><a href="{{G.toc}}">Table of Contents</a></li>
@@ -168,7 +162,6 @@ GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{G.update}}">Update Activity</a></li>
   <li><a href="{{G.events}}">Events</a></li>
   <li><a href="{{G.prices}}">Prices</a></li>
-  <li><a href="{{G.positions}}">Positions</a></li>
 </ul>
 """).render(G=G)
 
@@ -298,6 +291,51 @@ def temporary_render_real_account(real_account, transactions_only=False):
     return oss.getvalue()
 
 
+@app.route('/positions', name='positions')
+def positions():
+    "Render information about positions at the end of all entries."
+
+    real_accounts = get_realization(request.app)
+
+    total_balance = Inventory()
+    for real_account in real_accounts.values():
+        for real_posting in reversed(real_account.postings):
+            if isinstance(real_posting, realization.RealPosting):
+                break
+        else:
+            continue
+        total_balance += real_posting.balance
+
+    rows = []
+    for position in total_balance.get_positions():
+        if position.lot.cost or position.lot.lot_date:
+            cost = position.get_cost()
+            # print(('{p.number:12.2f} {p.lot.currency:8} '
+            #        '{p.lot.cost.number:12.2f} {p.lot.cost.currency:8} '
+            #        '{c.number:12.2f} {c.currency:8}').format(p=position, c=cost))
+            rows.append((position.lot.currency, position.lot.cost.currency,
+                         position.number, position.lot.cost.number, cost.number))
+
+    # Manipulate it a bit with Pandas.
+    df = pandas.DataFrame(rows,
+                          columns=['ccy', 'cost_ccy', 'units', 'unit_cost', 'total_cost'])
+
+    # print(df.to_string())
+
+    sums = df.groupby(['ccy', 'cost_ccy']).sum()
+
+    total_cost = sums['total_cost'].astype(float)
+    sums['percent'] = 100 * total_cost / total_cost.sum()
+
+    sums.insert(2, 'average_cost', total_cost / sums['units'].astype(float))
+
+    return render_app(
+        pagetitle = "Positions",
+        contents = '<pre>{}</pre>'.format(escape(sums.to_string()))
+        )
+
+
+
 # Opening Balance Sheet
 #         LI(A("Capital Statement", href=umap('@@CapitalStatement')),
 #         LI(A('Cash Flow Statement', href=umap('@@CashFlow'))),
@@ -316,6 +354,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{A.income}}">Income Statement</a></li>
   <li><a href="{{A.trial}}">Trial Balance</a></li>
   <li><a href="{{A.journal}}">Journal</a></li>
+  <li><a href="{{A.positions}}">Positions</a></li>
   <li><a href="{{A.conversions}}">Conversions</a></li>
 </ul>
 """)
