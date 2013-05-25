@@ -253,6 +253,16 @@ def positions():
         )
 
 
+@app.route('/account/<account_name>', name='account')
+def account(account_name=None):
+    "A list of all the entries for this account realization."
+
+    return render_app(
+        pagetitle = 'Account: {}'.format(account_name),
+        contents = "(Account entries)"
+        )
+
+
 # Opening Balance Sheet
 #         LI(A("Capital Statement", href=umap('@@CapitalStatement')),
 #         LI(A('Cash Flow Statement', href=umap('@@CashFlow'))),
