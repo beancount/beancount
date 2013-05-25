@@ -57,13 +57,13 @@ class TreeDict(dict):
     def get_parent_name(self, name):
       return self.separator.join(name.split(self.separator)[:-1])
 
-    def __getitem__(self, name):
+    def get_create(self, name):
         """Get or create the account with the given name."""
         assert isinstance(name, str)
         try:
             account = dict.__getitem__(self, name)
         except KeyError:
-            parent = self[self.get_parent_name(name)]
+            parent = self.get_create(self.get_parent_name(name))
             account = self.adaptor.create_node(name)
             self.adaptor.get_children(parent).append(account)
             dict.__setitem__(self, name, account)

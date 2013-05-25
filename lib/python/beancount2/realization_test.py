@@ -11,9 +11,9 @@ from beancount2.inventory import Position, Lot
 from beancount2 import parser
 from beancount2 import checks
 from beancount2 import realization
-from beancount2.data import Open, Close, Note, Pad
+from beancount2.data import Open, Close, Note, Pad, Check, Transaction
 from beancount2.data import Decimal, Amount
-from beancount2.realization import RealPosting, RealPadPosting, RealCheck
+from beancount2.realization import RealPosting, RealEntry
 
 
 class TestRealization(unittest.TestCase):
@@ -75,7 +75,7 @@ class TestRealizationPadding(unittest.TestCase):
 
     def checkRealTypes(self, real_account, real_entry_types):
         """Check the types of entries rendered."""
-        self.assertEqual(list(map(type, real_account.postings)),
+        self.assertEqual(list(type(rp.entry) for rp in real_account.postings),
                          real_entry_types)
 
     def parsetest_pad(self, contents):
@@ -89,8 +89,8 @@ class TestRealizationPadding(unittest.TestCase):
         """
         real_accounts, real_errors = realization.realize(contents.entries, True)
         self.assertEqual(len(real_errors), 0)
-        self.checkRealTypes(real_accounts['Assets:Checking'], [Open, Pad, RealPadPosting, RealCheck])
-        self.checkRealTypes(real_accounts['Equity:OpeningBalances'], [Open, Pad, RealPadPosting])
+        self.checkRealTypes(real_accounts['Assets:Checking'], [Open, Pad, Pad, Check])
+        self.checkRealTypes(real_accounts['Equity:OpeningBalances'], [Open, Pad, Pad])
 
         final_balance = real_accounts['Assets:Checking'].postings[-1].balance
         self.assertEqual(final_balance.get_positions()[0],
@@ -107,8 +107,8 @@ class TestRealizationPadding(unittest.TestCase):
         """
         real_accounts, real_errors = realization.realize(contents.entries, True)
         assert len(real_errors) == 0
-        self.checkRealTypes(real_accounts['Assets:Invest'], [Open, Pad, RealPadPosting, RealCheck])
-        self.checkRealTypes(real_accounts['Equity:OpeningBalances'], [Open, Pad, RealPadPosting])
+        self.checkRealTypes(real_accounts['Assets:Invest'], [Open, Pad, Pad, Check])
+        self.checkRealTypes(real_accounts['Equity:OpeningBalances'], [Open, Pad, Pad])
 
         final_balance = real_accounts['Assets:Invest'].postings[-1].balance
         self.assertEqual(final_balance.get_positions()[0],
@@ -125,8 +125,8 @@ class TestRealizationPadding(unittest.TestCase):
         """
         real_accounts, real_errors = realization.realize(contents.entries, True)
         assert len(real_errors) == 0
-        self.checkRealTypes(real_accounts['Assets:Invest'], [Open, Pad, RealPadPosting, RealCheck])
-        self.checkRealTypes(real_accounts['Equity:OpeningBalances'], [Open, Pad, RealPadPosting])
+        self.checkRealTypes(real_accounts['Assets:Invest'], [Open, Pad, Pad, Check])
+        self.checkRealTypes(real_accounts['Equity:OpeningBalances'], [Open, Pad, Pad])
 
         final_balance = real_accounts['Assets:Invest'].postings[-1].balance
         self.assertEqual(final_balance.get_positions()[0],
@@ -175,7 +175,7 @@ class TestRealizationPadding(unittest.TestCase):
         real_accounts, real_errors = realization.realize(contents.entries, True)
         self.assertEqual(len(real_errors), 0)
         self.checkRealTypes(real_accounts['Assets:Checking'],
-                            [Open, Pad, RealPadPosting, RealCheck, RealPosting, Pad, RealPadPosting, RealCheck])
+                            [Open, Pad, Pad, Check, Transaction, Pad, Pad, Check])
 
         # for real_posting in real_accounts['Assets:Checking'].postings:
         #     print(real_posting)

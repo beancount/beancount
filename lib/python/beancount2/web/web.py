@@ -16,11 +16,13 @@ from beancount2 import parser
 from beancount2 import checks
 from beancount2 import data
 from beancount2 import realization
-from beancount2.data import Open, Close
+from beancount2.data import Open, Close, Pad, Check, Transaction, Event, Note, Price
 
 
 #--------------------------------------------------------------------------------
 # Generic functions
+
+escape = bottle.html_escape
 
 
 class AppMapper:
@@ -211,27 +213,6 @@ def reports():
         contents = APP_NAVIGATION.render(G=G, A=A, real_title=request.app.real_title))
 
 
-@app.route('/journal', name='journal')
-def journal():
-    "A list of all the entries in this realization."
-
-    real_accounts = get_realization(request.app)
-    real_postings = realization.get_real_subpostings(real_accounts[''])
-
-    oss = io.StringIO()
-    for real_posting in real_postings:
-        if isinstance(real_posting, (RealPosting, RealPadPosting, RealCheck)):
-            entry = real_posting.entry
-        else:
-            entry = real_posting
-        oss.write(str(entry))
-
-    return render_app(
-        pagetitle = "Journal",
-        contents = '<pre>{}</pre>'.format(oss.getvalue())
-        )
-
-
 @app.route('/trial', name='trial')
 def trial():
     "Trial balance / Chart of Accounts."
@@ -251,7 +232,7 @@ def balsheet():
 
     return render_app(
         pagetitle = "Balance Sheet",
-        contents = '<pre>{}</pre>'.format(oss.getvalue())
+        contents = '<pre>{}</pre>'.format(escape(oss.getvalue()))
         )
 
 
@@ -273,14 +254,48 @@ def positions():
         )
 
 
-@app.route('/account/<account_name>', name='account')
-def account(account_name=None):
+@app.route('/journal', name='journal')
+def journal():
+    "A list of all the entries in this realization."
+
+    real_accounts = get_realization(request.app)
+    temp = temporary_render_real_account(real_accounts[''], transactions_only=True)
+
+    return render_app(
+        pagetitle = "Journal",
+        contents = '<pre>{}</pre>'.format(escape(temp))
+        )
+
+
+@app.route('/account/<slashed_account_name:re:[^:]*>', name='account')
+def account(slashed_account_name=None):
     "A list of all the entries for this account realization."
+
+    account_name = slashed_account_name.strip('/').replace('/', ':')
+    real_accounts = get_realization(request.app)
+    temp = temporary_render_real_account(real_accounts[account_name], transactions_only=True)
 
     return render_app(
         pagetitle = 'Account: {}'.format(account_name),
-        contents = "(Account entries)"
+        contents = '<pre>{}</pre>'.format(escape(temp))
         )
+
+## FIXME: remove - this is temporary, until we get all rendering nicely, this will do for now
+def temporary_render_real_account(real_account, transactions_only=False):
+
+    real_postings = realization.get_real_subpostings(real_account)
+
+    oss = io.StringIO()
+    for real_posting in real_postings:
+        entry = real_posting.entry
+        entry_type = type(entry)
+        if entry_type is Transaction:
+            oss.write('{:%Y-%m-%d} {}  "{}"  {}\n'.format(
+                entry.date, entry_type.__name__, entry.narration, real_posting.balance))
+        elif not transactions_only:
+            oss.write('{:%Y-%m-%d} {}\n'.format(entry.date, entry))
+
+    return oss.getvalue()
 
 
 # Opening Balance Sheet

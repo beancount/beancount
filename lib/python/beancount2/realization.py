@@ -21,15 +21,9 @@ RealAccount = namedtuple('RealAccount', 'name children postings')
 # If it points to a Pad entry, it also points to a synthesized posting.
 RealPosting = namedtuple('RealPosting', 'entry posting balance')
 
-
-## FIXME: remove
-RealPadPosting = namedtuple('RealPadPosting', 'entry posting balance')
-RealCheck = namedtuple('RealCheck', 'entry balance')
-
-
 # A realized check, that contains the actual balance that was seen at that
 # point.
-RealEntry = namedtuple('RealCheck', 'entry balance')
+RealEntry = namedtuple('RealEntry', 'entry balance')
 
 
 RealError = namedtuple('RealError', 'fileloc message')
@@ -126,7 +120,7 @@ def realize(entries, check=False):
                     real_errors.append(
                         RealError(entry.fileloc, str(e)))
 
-                real_account = real_accounts[posting.account.name]
+                real_account = real_accounts.get_create(posting.account.name)
                 real_account.postings.append(
                     RealPosting(entry, posting, copy.copy(balance_inventory)))
 
@@ -153,11 +147,11 @@ def realize(entries, check=False):
                     real_state.balance.add_position(diff_position)
 
                     # Create the leg that will balance this account.
-                    real_account = real_accounts[pad.account.name]
+                    real_account = real_accounts.get_create(pad.account.name)
                     real_posting = Posting(pad.account, diff_position, None, None)
                     real_account.postings.insert(
                         real_state.index,
-                        RealPadPosting(pad, real_posting, real_state.balance))
+                        RealPosting(pad, real_posting, real_state.balance))
                     real_state.index += 1
 
                     # Update the balance of the other leg of the padding.
@@ -166,11 +160,11 @@ def realize(entries, check=False):
                     other_state.balance.add_position(other_position, allow_negative=True)
 
                     # Create the other leg of the other account.
-                    other_account = real_accounts[pad.account_pad.name]
+                    other_account = real_accounts.get_create(pad.account_pad.name)
                     other_posting = Posting(pad.account_pad, other_position, None, None)
                     other_account.postings.insert(
                         real_state.index_pad,
-                        RealPadPosting(pad, other_posting, other_state.balance))
+                        RealPosting(pad, other_posting, other_state.balance))
                     real_state.index_pad += 1
 
                     real_state.padded_lots.add(lot)
@@ -182,18 +176,20 @@ def realize(entries, check=False):
                             entry.account.name, balance_position, entry.position)))
 
             # Add the check realization to the account.
-            real_account = real_accounts[entry.account.name]
+            real_account = real_accounts.get_create(entry.account.name)
             real_account.postings.append(
-                RealCheck(entry, copy.copy(real_state.balance)))
+                RealEntry(entry, copy.copy(real_state.balance)))
 
         elif isinstance(entry, Pad):
 
             # Insert the pad entry in both realized accounts.
-            real_account = real_accounts[entry.account.name]
-            real_account.postings.append(entry)
+            real_entry = RealEntry(entry, None)
 
-            other_account = real_accounts[entry.account_pad.name]
-            other_account.postings.append(entry)
+            real_account = real_accounts.get_create(entry.account.name)
+            real_account.postings.append(real_entry)
+
+            other_account = real_accounts.get_create(entry.account_pad.name)
+            other_account.postings.append(real_entry)
 
             # Check and warn if the last pad entry was unused.
             real_state = real_states[entry.account]
@@ -209,8 +205,9 @@ def realize(entries, check=False):
 
         elif isinstance(entry, (Open, Close, Note)):
             # Append some other entries in the realized list.
-            real_account = real_accounts[entry.account.name]
-            real_account.postings.append(entry)
+            real_account = real_accounts.get_create(entry.account.name)
+            real_account.postings.append(
+                RealEntry(entry, None))
 
         if check_is_at_beginning_of_day:
             # Note: Check entries are assumed to have been sorted to be before any

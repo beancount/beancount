@@ -5,6 +5,12 @@ beancount: TODO
   - FIXME: We need to parse the options using the same argparse parser....
 
   - summarize() step, annul_income() step.
+  - Padding for "clamping" is not like realization: we don't have to check
+    anything, we just have to work from the global realization and find out the
+    balance at the point of insertion. Insert regular RealPadPosting pointing to
+    a new AutoPad or Clamp entry. You don't even have to use the realize()
+    routine.
+
 
   - Add 'errors', 'statistics', and 'source' to the global pages.
 
@@ -77,11 +83,7 @@ beancount: TODO
       *REJECTED* No, the way padding is used, it's better not to make it too
       complicated.
 
-  - Padding for "clamping" is not like realization: we don't have to check
-    anything, we just have to work from the global realization and find out the
-    balance at the point of insertion. Insert regular RealPadPosting pointing to
-    a new AutoPad or Clapm entry. You don't even have to use the realize()
-    routine.
+
 
 
   - Document the realization process in ASCII graphics, instead of my dia
