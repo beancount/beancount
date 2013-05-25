@@ -25,11 +25,11 @@ def compute_residual(postings):
 
         # It the position has a cost, use that to balance this posting.
         if lot.cost:
-            amount = mult_amount(lot.cost, position.number)
+            amount = amount_mult(lot.cost, position.number)
 
         # If there is a price, use that to balance this posting.
         elif posting.price:
-            amount = mult_amount(posting.price, position.number)
+            amount = amount_mult(posting.price, position.number)
 
         # Otherwise, just use the amount itself.
         else:
@@ -76,11 +76,11 @@ def balance_incomplete_postings(fileloc, postings):
 
             # It the position has a cost, use that to balance this posting.
             if lot.cost:
-                amount = mult_amount(lot.cost, position.number)
+                amount = amount_mult(lot.cost, position.number)
 
             # If there is a price, use that to balance this posting.
             elif posting.price:
-                amount = mult_amount(posting.price, position.number)
+                amount = amount_mult(posting.price, position.number)
 
             # Otherwise, just use the amount itself.
             else:

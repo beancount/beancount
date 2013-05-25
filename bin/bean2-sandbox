@@ -113,13 +113,25 @@ def main():
             trial_balance += real_posting.balance
 
         print(account_type)
-        print(trial_balance)
+        print(sorted(trial_balance.get_costs(), key=data.amount_sortkey))
         print()
 
         total_balance += trial_balance
+
     print('TOTAL')
-    print(total_balance)
+    print(sorted(total_balance.get_costs(), key=data.amount_sortkey))
     print()
+
+    # List positions.
+    print("List of positions:")
+    for position in total_balance.get_positions():
+        if position.lot.cost or position.lot.lot_date:
+            cost = position.get_cost()
+            print(('{p.number:12.2f} {p.lot.currency:8} '
+                   '{p.lot.cost.number:12.2f} {p.lot.cost.currency:8} '
+                   '{c.number:12.2f} {c.currency:8}').format(p=position, c=cost))
+    print()
+
 
     if 0:
         real_account = real_accounts['Assets:Cash']

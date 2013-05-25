@@ -98,23 +98,31 @@ def render(root, node_adaptor):
 
 
 def _render_node(node, context, is_last, prefix):
-    """Internal recursive node rendering function."""
+    """Internal recursive node rendering function.
+    Yields (the first line, the subsequent line, the node)."""
+
+    children = context.adaptor.get_children(node)
 
     # Render the current line.
     node_name = context.adaptor.get_name(node)
     if node_name:
         line_prefix = prefix + (context.pfx_last if is_last else context.pfx_nonleaf)
         child_prefix = prefix + (context.pfx_skip if is_last else context.pfx_cont)
+
+        # Compute the text to render for the first line.
+        line = line_prefix + node_name
+
+        # Compute continuation lines.
+        line_next = (prefix +
+                     (context.pfx_skip if is_last else context.pfx_cont) +
+                     (context.pfx_skip if not children else context.pfx_cont))
+
+        yield (line, line_next, node)
+
     else:
-        line_prefix = ''
         child_prefix = ''
 
-    # Compute the text to render.
-    line = line_prefix + node_name
-    yield (line, node)
-
     # Loop over all children.
-    children = context.adaptor.get_children(node)
     last_i = len(children) - 1
     for i, child in enumerate(children):
         # Render the child's lines (recurse).

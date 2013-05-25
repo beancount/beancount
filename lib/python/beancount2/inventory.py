@@ -39,7 +39,7 @@ import copy
 from datetime import date
 import io
 
-from beancount2.data import ZERO, Decimal, Amount, Lot, mult_amount
+from beancount2.data import ZERO, Decimal, Amount, Lot, amount_mult
 
 
 class Position:
@@ -71,6 +71,13 @@ class Position:
 
     def get_amount(self):
         return Amount(self.number, self.lot.currency)
+
+    def get_cost(self):
+        cost = self.lot.cost
+        if cost is None:
+            return Amount(self.number, self.lot.currency)
+        else:
+            return amount_mult(cost, self.number)
 
     def add(self, number):
         self.number += number
@@ -139,11 +146,7 @@ class Inventory:
         """Return a list of Amounts that represent aggregated book values."""
         cost_inventory = Inventory()
         for position in self.positions:
-            cost = position.lot.cost
-            if cost is None:
-                cost_inventory.add(Amount(position.number, position.lot.currency))
-            else:
-                cost_inventory.add(mult_amount(cost, position.number))
+            cost_inventory.add(position.get_cost())
         return cost_inventory.get_amounts()
 
     def get_positions(self):

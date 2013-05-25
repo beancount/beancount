@@ -34,7 +34,11 @@ class Amount:
         return hash((self.number, self.currency))
 
 
-def mult_amount(amount, number):
+def amount_sortkey(amount):
+    """Sort by currency first."""
+    return (amount.currency, amount.number)
+
+def amount_mult(amount, number):
     """Multiply the given amount by a number."""
     return Amount(amount.number * number, amount.currency)
 

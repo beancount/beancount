@@ -20,7 +20,7 @@
 void yyerror(char const* message)
 {
     /* fprintf(stderr, "LOCTEST %d %d: ", yylloc.first_line, s); */
-    fprintf(stderr, "%s: %s\n", yy_filename, message);
+    fprintf(stderr, "%s:%d:: %s\n", yy_filename, yy_lineno, message);
 }
 
 void report_error(char const* message, YYLTYPE* yylloc)
@@ -56,6 +56,7 @@ const char* getTokenName(int token);
 %debug
 %pure_parser
 %locations
+/* %glr-parser */
 
 /* FIXME: Pass this explicitly eventually. */
 /* %parse-param { PyObject* builder} */

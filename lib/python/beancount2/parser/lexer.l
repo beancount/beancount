@@ -31,6 +31,7 @@
 
 /* The filename being parsed. */
 extern const char* yy_filename;
+extern int yy_lineno;
 
 
 /* Handle detecting the beginning of line. */
@@ -64,6 +65,7 @@ int strtonl(const char* buf, size_t nchars);
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
 \n		{
     yy_line_tokens = 0;
+    yy_lineno++;
     return EOL;
 }
 
@@ -166,6 +168,7 @@ poptag		{ return POPTAG; }
 
 const char* yy_filename = 0;
 int yy_line_tokens = 0;
+int yy_lineno = 1;
 
 void yy_skip_line()
 {

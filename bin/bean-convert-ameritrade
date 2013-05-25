@@ -77,7 +77,7 @@ def fmt_conversions(sign, qty, symbol):
     if symbol in (USD,):
         return '%10.2f %s' % (amount, symbol)
     elif symbol in ('MMDA1',):
-        return '%10.2f %s @ 1 %s' % (amount, symbol, USD)
+        return '%10.2f %s {1 %s}' % (amount, symbol, USD)
 
 def main():
     import argparse
