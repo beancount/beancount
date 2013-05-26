@@ -15,11 +15,12 @@ from beancount2.utils import tree_utils
 from beancount2.inventory import Inventory, Position
 from beancount2.parser import parser
 from beancount2.data import *
+from beancount2 import data
 
 
 # A realized account, inserted in a tree, that contains the list of realized
 # entries.
-RealAccount = namedtuple('RealAccount', 'name children postings')
+RealAccount = namedtuple('RealAccount', 'name account children postings')
 
 
 # All realized entries are either one of RealEntry or RealPosting.
@@ -41,17 +42,19 @@ class RealAccountTree(tree_utils.TreeDict):
     """A container for a hierarchy of accounts, that can conveniently
     create and maintain a hierarchy of accounts."""
 
+    def __init__(self, accounts_map):
+        self.accounts_map = accounts_map
+        tree_utils.TreeDict.__init__(self, self, ':')
+
     def create_node(self, account_name):
-        return RealAccount(account_name, [], [])
+        account = self.accounts_map.get(account_name)
+        return RealAccount(account_name, account, [], [])
 
     def get_name(self, real_account):
        return real_account.name.split(':')[-1]
 
     def get_children(self, real_account):
         return real_account.children
-
-    def __init__(self):
-        tree_utils.TreeDict.__init__(self, self, ':')
 
 
 
@@ -70,8 +73,6 @@ class RealAccountTree(tree_utils.TreeDict):
 #
 #         # # A tree of accounts.
 #         # self.real_accounts = RealAccountTree()
-
-
 
 
 class RealAccountState:
@@ -106,7 +107,9 @@ def realize(entries, check=False):
     # Handle sanity checks when the check is at the beginning of the day.
     check_is_at_beginning_of_day = parser.SORT_ORDER[Check] < 0
 
-    real_accounts = RealAccountTree()
+    accounts_map = data.gather_accounts(entries)
+
+    real_accounts = RealAccountTree(accounts_map)
     real_errors = []
 
     # Per-account state.

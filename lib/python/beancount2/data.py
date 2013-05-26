@@ -137,6 +137,44 @@ Price       = namedtuple('Price'       , 'fileloc date currency amount')
 Posting = namedtuple('Posting', 'account position price flag')
 
 
+class GetAccounts:
+    """Gather the list of accounts from the list of entries.
+    (This runs much, much faster than the corresponding generic routine.)
+    """
+    def __call__(self, entries):
+        accounts = {}
+        for entry in entries:
+            for account in getattr(self, entry.__class__.__name__)(entry):
+                accounts[account.name] = account
+        return accounts
+
+    def Transaction(_, entry):
+        for posting in entry.postings:
+            yield posting.account
+
+    def Pad(_, entry):
+        return (entry.account, entry.account_pad)
+
+    def _one(_, entry):
+        return (entry.account,)
+
+    def _zero(_, entry):
+        return ()
+
+    Open = Close = Check = Note = _one
+    Event = Price = _zero
+
+def gather_accounts(entries):
+    return GetAccounts()(entries)
+
+# def gather_accounts(entries):
+#     accounts = {}
+#     for entry in entries:
+#         for account in utils.get_tuple_typed_values(entry, data.Account):
+#             accounts[account.name] = account
+
+
+
 #
 # Common operations on lists of entries.
 #
