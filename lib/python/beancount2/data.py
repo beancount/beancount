@@ -143,6 +143,11 @@ Price       = namedtuple('Price'       , 'fileloc date currency amount')
 Posting = namedtuple('Posting', 'account position price flag')
 
 
+# Special flags
+FLAG_PADDING   = 'P' # Transactions created from padding directives.
+FLAG_SUMMARIZE = 'S' # Transactions created due to summarization.
+
+
 class GetAccounts:
     """Gather the list of accounts from the list of entries.
     (This runs much, much faster than the corresponding generic routine.)

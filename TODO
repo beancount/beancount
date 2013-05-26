@@ -556,6 +556,12 @@ beancount: TODO
   - We could allow '$' to parse as equivalent to 'USD' in the input, or to
     stand on its own as a currency name... why not?
 
+  - Make price syntax like this, to be consistent with positions! 
+    This makes sense!
+
+              @price 2008-03-01  LOFT4530 {235000 CAD}
+
+
 ** Syntax for Skipped
 
   - Dont special case org-mode... Aything that doesnt start with a date or

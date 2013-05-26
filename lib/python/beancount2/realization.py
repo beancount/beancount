@@ -21,9 +21,6 @@ from beancount2 import data
 from beancount2 import utils
 
 
-# Special flag used on padding transactions.
-PADDING_FLAG = 'P'
-
 # A realized account, inserted in a tree, that contains the list of realized
 # entries.
 RealAccount = namedtuple('RealAccount', 'name account children postings')
@@ -61,6 +58,32 @@ class RealAccountTree(tree_utils.TreeDict):
 
     def get_children(self, real_account):
         return real_account.children
+
+
+def group_postings_by_account(entries, only_accounts=None):
+    """Build lists of entries by account. Return a dict of account -> (RealEntry or
+    RealPosting)."""
+
+    by_accounts = defaultdict(list)
+
+    for entry in entries:
+
+        if isinstance(entry, Transaction):
+            for posting in entry.postings:
+                if (only_accounts is not None and
+                    posting.account not in only_accounts):
+                    continue
+                by_accounts[posting.account].append(
+                    RealPosting(entry, posting, None))
+
+        elif isinstance(entry, (Check, Open, Close, Pad, Note)):
+            if (only_accounts is not None and
+                entry.account not in only_accounts):
+                continue
+            by_accounts[entry.account].append(
+                RealEntry(entry, None))
+
+    return by_accounts
 
 
 def pad(entries):
@@ -130,7 +153,7 @@ def pad(entries):
                             Posting(active_pad.account_pad, -diff_position, None, None),
                         ]
                         new_entry = Transaction(
-                            active_pad.fileloc, active_pad.date, PADDING_FLAG, None, narration, set(), postings)
+                            active_pad.fileloc, active_pad.date, FLAG_PADDING, None, narration, set(), postings)
 
                         # Save it for later insertion after the active pad.
                         new_entries[active_pad].append(new_entry)
@@ -158,36 +181,49 @@ def pad(entries):
     return padded_entries, pad_errors
 
 
-def group_postings_by_account(entries, only_accounts=None):
-    """Build lists of entries by account. Return a dict of account -> (RealEntry or
-    RealPosting)."""
-
-    by_accounts = defaultdict(list)
-
-    for entry in entries:
-
-        if isinstance(entry, Transaction):
-            for posting in entry.postings:
-                if (only_accounts is not None and
-                    posting.account not in only_accounts):
-                    continue
-                by_accounts[posting.account].append(
-                    RealPosting(entry, posting, None))
-
-        elif isinstance(entry, (Check, Open, Close, Pad, Note)):
-            if (only_accounts is not None and
-                entry.account not in only_accounts):
-                continue
-            by_accounts[entry.account].append(
-                RealEntry(entry, None))
-
-    return by_accounts
-
-
 def realize(entries, do_check=False):
     """Compute the running balances and realize a list of entries into a tree of
     realized accounts, which contains shadow entries with balances. This is then
-    used to issue reports.
+    used to issue reports. This routine is actually really simple: it runs
+    through a list of entries, and creates per-account list of "realized"
+    postings, which may be of two possible types:
+
+      RealPosting -> points to a specific posting of a transaction entry.
+      RealEntry -> points to any other type of entry.
+
+    These realized entries also have a pre-computed balance used for rendering
+    reports. The function returns a tree of "realized" accounts, which contain
+    lists of these realized entries. Here's a simple diagram that summarizes
+    this seemingly complex, but rather simple data structure:
+
+       +-------------+      +-------------+     +------+
+       | RealAccount |----->|  RealEntry  |---->| Open |
+       +-------------+      +-------------+     +------+
+                                   |
+                                   v
+                            +-------------+     +-------------+
+                            | RealPosting |---->| Transaction |
+                            +-------------+     +-------------+
+                                   |      \        |         \
+                                   |       \  +---------+  +---------+
+                                   |        `>| Posting |  | Posting |
+                                   |          +---------+  +---------+
+                                   v
+                            +-------------+     +-----+
+                            |  RealEntry  |---->| Pad |
+                            +-------------+     +-----+
+                                   |
+                                   v
+                            +-------------+     +-------+
+                            |  RealEntry  |---->| Check |
+                            +-------------+     +-------+
+                                   |
+                                   v
+                            +-------------+     +-------+
+                            |  RealEntry  |---->| Close |
+                            +-------------+     +-------+
+                                   |
+                                   .
 
     If 'check' is true, verify that Check entry balances succeed and issue error
     messages if they fail.
@@ -220,7 +256,8 @@ def realize(entries, do_check=False):
                 balance = balances[posting.account]
                 try:
                     # Note: if this is from a padding transaction, allow negative lots at cost.
-                    balance.add_position(posting.position, allow_negative=entry.flag == PADDING_FLAG)
+                    balance.add_position(posting.position,
+                                         allow_negative=entry.flag in (FLAG_PADDING, FLAG_SUMMARIZE))
                 except ValueError as e:
                     real_errors.append(
                         RealError(entry.fileloc, "Error balancing '{}' -- {}".format(posting.account.name, e)))
@@ -329,3 +366,15 @@ def find_balance(real_account, date=None):
                 return (index+1), real_posting.balance
         else:
             return 0, Inventory()
+
+
+def compute_total_balance(entries):
+    """Simply sum up all the positions in the transactions in the list of entries
+    and return an inventory of it."""
+
+    total_balance = Inventory()
+    for entry in entries:
+        if isinstance(entry, Transaction):
+            for posting in entry.postings:
+                total_balance.add_position(posting.position, False)
+    return total_balance

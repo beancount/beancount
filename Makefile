@@ -31,7 +31,7 @@ build: $(CROOT)/grammar.c $(CROOT)/grammar.h $(CROOT)/lexer.c $(CROOT)/lexer.h
 
 .PHONY: sandbox
 sandbox:
-	bean2-sandbox $(LEDGER)
+	bean2-sandbox $(LEDGER) 2>&1 | sed -e 's/\.beancount/.ledger/g'
 
 .PHONY: check
 check:
