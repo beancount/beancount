@@ -230,3 +230,7 @@ parser.create_parsetest_methods(TestRealizationPadding)
 
 
 # FIXME: please DO test the realization of a transaction that has multiple legs on the same account!
+
+
+
+# FIXME: Write a test that padding a parent account wouldn't pad its child accounts.

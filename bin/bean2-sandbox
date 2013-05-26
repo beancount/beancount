@@ -195,6 +195,12 @@ def print_entries_by_date(entries):
             prev_date = entry.date
         print(entry)
 
+def print_errors(errors):
+    # Report all the realization errors.
+    for error in errors:
+        print('{} {}'.format(render_fileloc(error.fileloc), error.message))
+
+
 def main():
     parser = argparse.ArgumentParser(__doc__.strip())
 
@@ -213,14 +219,19 @@ def main():
         # print_entries_by_date(contents.entries)
 
     with utils.print_time('check'):
-
-        # Run the checks.
         check_errors = checks.check(contents.entries, contents.accounts)
+        print_errors(check_errors)
 
-        # Report all the basic errors.
-        for error in check_errors:
-            print('{} {}'.format(render_fileloc(error.fileloc),
-                                 error.message))
+    with utils.print_time('pad'):
+        padded_entries, pad_errors = realization.pad(contents.entries)
+        print_errors(pad_errors)
+
+    for entry in utils.filter_type(padded_entries, data.Transaction):
+        if entry.flag == 'P':
+            print(entry)
+
+
+    raise SystemExit
 
     with utils.print_time('realize'):
         real_accounts, real_errors = realization.realize(contents.entries, check=True)

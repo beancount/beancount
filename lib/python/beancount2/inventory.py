@@ -54,7 +54,20 @@ class Position:
         self.number = number
 
     def __str__(self):
-        return 'Position({}, {})'.format(self.number, self.lot)
+        lot = self.lot
+        strings = [str(Amount(self.number, lot.currency))]
+
+        # Optionally render the cost and lot-date.
+        if lot.cost or lot.lot_date:
+            strings.append(' {')
+            if lot.cost:
+                strings.append(
+                    str(Amount(lot.cost.number, lot.cost.currency)))
+            if lot.lot_date:
+                strings.append(' / {}'.format(lot.lot_date))
+            strings.append('}')
+        return ''.join(strings)
+
     __repr__ = __str__
 
     def __eq__(self, other):
@@ -95,6 +108,7 @@ class Position:
     def get_negative(self):
         """Get a copy of this position but with a negative number."""
         return Position(self.lot, Decimal(-self.number))
+    __neg__ = get_negative
 
 
 class Inventory:
@@ -105,24 +119,7 @@ class Inventory:
         self.positions = positions or []
 
     def __str__(self):
-        lot_strings = []
-        for position in sorted(self.positions):
-            lot = position.lot
-            strings = [str(Amount(position.number, lot.currency))]
-
-            # Optionally render the cost and lot-date.
-            if lot.cost or lot.lot_date:
-                strings.append(' {')
-                if lot.cost:
-                    strings.append(
-                        str(Amount(lot.cost.number, lot.cost.currency)))
-                if lot.lot_date:
-                    strings.append(' / {}'.format(lot.lot_date))
-                strings.append('}')
-
-            lot_strings.append(''.join(strings))
-
-        return 'Inventory({})'.format(', '.join(lot_strings))
+        return 'Inventory({})'.format(', '.join(map(str, sorted(self.positions))))
 
     def is_empty(self):
         return bool(self.positions)

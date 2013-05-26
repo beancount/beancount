@@ -1,5 +1,6 @@
 """
 Sanity checks.
+(Note that these don't have anything to do with 'Check' directives.
 """
 # FIXME: TODO -- see TODO file, many to implement.
 

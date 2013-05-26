@@ -237,6 +237,9 @@ beancount: TODO
       period; other previous amounts are all folded into the
       Equity:OpeningBalances account.
 
+  - Why is there some FIDO and AMTRAK and other points in my final Conversions
+    account? Shouldn't those just cancel out from Income over the period?
+
 
 * Helpers for Documents
 

@@ -10,12 +10,15 @@ import datetime
 from itertools import chain, repeat
 from collections import namedtuple, defaultdict
 import copy
+import collections
+import pprint
 
 from beancount2.utils import tree_utils
 from beancount2.inventory import Inventory, Position
 from beancount2.parser import parser
 from beancount2.data import *
 from beancount2 import data
+from beancount2 import utils
 
 
 # A realized account, inserted in a tree, that contains the list of realized
@@ -58,21 +61,140 @@ class RealAccountTree(tree_utils.TreeDict):
 
 
 
-## FIXME: remove
-# class Ledger:
-#     """A class that contains a particular list of entries and an
-#     associated account tree. Note: the account tree is redundant and
-#     could be recalculated from the list of entries."""
-#
-#     def __init__(self, entries):
-#
-#         # A list of sorted entries in this ledger.
-#         assert isinstance(entries, list)
-#         # entries.sort(key=lambda x: x.date)
-#         self.entries = entries
-#
-#         # # A tree of accounts.
-#         # self.real_accounts = RealAccountTree()
+
+
+
+def groupby(keyfun, elements):
+    grouped = defaultdict(list)
+    for element in elements:
+        grouped[keyfun(element)].append(element)
+    return grouped
+
+
+def pad(entries):
+    """Synthesize and insert Transaction entries right after Pad entries in order to
+    fulfill checks in the padded accounts. Returns a new list of entries. Note
+    that this doesn't pad across parent-child relationships, it is a very simple
+    kind of pad. (I have found this to be sufficient in practice, and simpler to
+    implement and understand.) """
+
+    # Find all the pad entries and group them by account.
+    pads = list(utils.filter_type(entries, Pad))
+    pad_dict = groupby(lambda x: x.account, pads)
+
+    # Partially realize the postings, so we can iterate them by account.
+    by_account = group_postings_by_account(entries, set(pad_dict.keys()))
+
+    # A dict of pad -> list of entries to be inserted.
+    new_entries = {pad: [] for pad in pads}
+
+    # Process each account that has a padding group.
+    for account, pad_list in sorted(pad_dict.items()):
+
+        # Last encountered / currency active pad entry.
+        active_pad = None
+
+        # A set of currencies already padded so far in this account.
+        padded_lots = set()
+
+        balance = Inventory()
+        for real_entry in by_account[account]:
+
+            if isinstance(real_entry, RealPosting):
+                # This is a transaction; update the running balance for this
+                # account.
+                balance.add_position(real_entry.posting.position, allow_negative=True)
+
+            elif isinstance(real_entry.entry, Pad):
+                # Mark this newly encountered pad as active and allow all lots
+                # to be padded heretofore.
+                active_pad = real_entry.entry
+                padded_lots = set()
+
+            elif isinstance(real_entry.entry, Check):
+                check = real_entry.entry
+                check_position = check.position
+
+                # Compare the current balance position to the expected one from
+                # the check entry.
+                balance_position = balance.get_position(check.position.lot)
+                if check_position != balance_position:
+                    # The check fails; we need to pad.
+
+                    # Pad only if pad entry is active and we haven't already
+                    # padded that lot since it was last encountered.
+                    if active_pad and (check_position.lot not in padded_lots):
+                        # Calculate the difference.
+                        balance_number = (ZERO
+                                          if balance_position is None
+                                          else balance_position.number)
+                        diff_position = Position(check_position.lot,
+                                                 check_position.number - balance_number)
+
+                        # Synthesize a new transaction entry for the difference.
+                        narration = '(Padding inserted for Check of {})'.format(check_position)
+                        postings = [
+                            Posting(active_pad.account, -diff_position, None, None),
+                            Posting(active_pad.account_pad, diff_position, None, None),
+                        ]
+                        new_entry = Transaction(
+                            active_pad.fileloc, active_pad.date, 'P', None, narration, set(), postings)
+
+                        # Save it for later insertion after the active pad.
+                        new_entries[active_pad].append(new_entry)
+
+                        # Fixup the running balance.
+                        balance.add_position(diff_position)
+
+                        # Mark this lot as padded. Further checks should not pad this lot.
+                        padded_lots.add(check_position.lot)
+
+    # Insert the newly created entries right after the pad entries that created them.
+    padded_entries = []
+    for entry in entries:
+        padded_entries.append(entry)
+        if isinstance(entry, Pad):
+            padded_entries.extend(new_entries[entry])
+
+    # Generate errors on unused pad entries.
+    pad_errors = []
+    for pad, entry_list in new_entries.items():
+        if not entry_list:
+            pad_errors.append(
+                RealError(pad.fileloc, "Unused Pad entry: {}".format(pad)))
+
+    return new_entries, pad_errors
+
+
+def group_postings_by_account(entries, only_accounts=None):
+    """Build lists of entries by account. Return a dict of account -> (RealEntry or
+    RealPosting)."""
+
+    by_accounts = defaultdict(list)
+
+    for entry in entries:
+
+        if isinstance(entry, Transaction):
+            for posting in entry.postings:
+                if (only_accounts is not None and
+                    posting.account not in only_accounts):
+                    continue
+                by_accounts[posting.account].append(
+                    RealPosting(entry, posting, None))
+
+        elif isinstance(entry, (Check, Open, Close, Pad)):
+            if (only_accounts is not None and
+                entry.account not in only_accounts):
+                continue
+            by_accounts[entry.account].append(
+                RealEntry(entry, None))
+
+    return by_accounts
+
+
+
+
+
 
 
 class RealAccountState:
@@ -92,7 +214,6 @@ class RealAccountState:
 
         # A mapping of currency to the synthesized postings.
         self.padded_lots = set()
-
 
 
 def realize(entries, check=False):
