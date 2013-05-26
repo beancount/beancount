@@ -2,15 +2,26 @@
 Tests for parser.
 """
 import unittest
-from textwrap import dedent
+import functools
+import textwrap
 
 from beancount2 import parser
 from beancount2.data import *
 
 
+def parsedoc(fun):
+    """Decorator that parses the function's docstring as an argument."""
+    @functools.wraps(fun)
+    def newfun(self):
+        contents = parser.parse_string(textwrap.dedent(fun.__doc__))
+        return fun(self, contents)
+    return newfun
+
+
 class TestParserEntries(unittest.TestCase):
 
-    def parsetest_entry_transaction(self, contents):
+    @parsedoc
+    def test_entry_transaction(self, contents):
         """
 
           2013-05-18 * "Nice dinner at Mermaid Inn"
@@ -20,7 +31,8 @@ class TestParserEntries(unittest.TestCase):
         """
         self.assertTrue(isinstance(contents.entries[0], Transaction))
 
-    def parsetest_entry_check(self, contents):
+    @parsedoc
+    def test_entry_check(self, contents):
         """
 
           2013-05-18 check Assets:US:BestBank:Checking  200 USD
@@ -28,7 +40,8 @@ class TestParserEntries(unittest.TestCase):
         """
         self.assertTrue(isinstance(contents.entries[0], Check))
 
-    def parsetest_entry_open_1(self, contents):
+    @parsedoc
+    def test_entry_open_1(self, contents):
         """
 
           2013-05-18 open Assets:US:BestBank:Checking
@@ -36,7 +49,8 @@ class TestParserEntries(unittest.TestCase):
         """
         self.assertTrue(isinstance(contents.entries[0], Open))
 
-    def parsetest_entry_open_2(self, contents):
+    @parsedoc
+    def test_entry_open_2(self, contents):
         """
 
           2013-05-18 open Assets:US:BestBank:Checking  "123456789"
@@ -44,7 +58,8 @@ class TestParserEntries(unittest.TestCase):
         """
         self.assertTrue(isinstance(contents.entries[0], Open))
 
-    def parsetest_entry_close(self, contents):
+    @parsedoc
+    def test_entry_close(self, contents):
         """
 
           2013-05-18 close Assets:US:BestBank:Checking
@@ -52,7 +67,8 @@ class TestParserEntries(unittest.TestCase):
         """
         self.assertTrue(isinstance(contents.entries[0], Close))
 
-    def parsetest_entry_pad(self, contents):
+    @parsedoc
+    def test_entry_pad(self, contents):
         """
 
           2013-05-18 pad Assets:US:BestBank:Checking  Equity:OpeningBalances
@@ -60,7 +76,8 @@ class TestParserEntries(unittest.TestCase):
         """
         self.assertTrue(isinstance(contents.entries[0], Pad))
 
-    def parsetest_entry_event(self, contents):
+    @parsedoc
+    def test_entry_event(self, contents):
         """
 
           2013-05-18 event "location" "New York, USA"
@@ -68,7 +85,8 @@ class TestParserEntries(unittest.TestCase):
         """
         self.assertTrue(isinstance(contents.entries[0], Event))
 
-    def parsetest_entry_note(self, contents):
+    @parsedoc
+    def test_entry_note(self, contents):
         """
 
           2013-05-18 note Assets:US:BestBank:Checking  "Blah, di blah."
@@ -76,7 +94,8 @@ class TestParserEntries(unittest.TestCase):
         """
         self.assertTrue(isinstance(contents.entries[0], Note))
 
-    def parsetest_entry_price(self, contents):
+    @parsedoc
+    def test_entry_price(self, contents):
         """
 
           2013-05-18 price USD   1.0290 CAD
@@ -84,19 +103,19 @@ class TestParserEntries(unittest.TestCase):
         """
         self.assertTrue(isinstance(contents.entries[0], Price))
 
-parser.create_parsetest_methods(TestParserEntries)
-
 
 
 class TestParserMisc(unittest.TestCase):
 
-    def parsetest_empty_1(self, contents):
+    @parsedoc
+    def test_empty_1(self, contents):
         ""
         self.assertEqual(contents.entries, [])
         self.assertEqual(contents.accounts, [])
         self.assertEqual(contents.parse_errors, [])
 
-    def parsetest_empty_2(self, contents):
+    @parsedoc
+    def test_empty_2(self, contents):
         """
 
         """
@@ -104,7 +123,8 @@ class TestParserMisc(unittest.TestCase):
         self.assertEqual(contents.accounts, [])
         self.assertEqual(contents.parse_errors, [])
 
-    def parsetest_comment(self, contents):
+    @parsedoc
+    def test_comment(self, contents):
         """
         ;; This is some comment.
         """
@@ -112,7 +132,8 @@ class TestParserMisc(unittest.TestCase):
         self.assertEqual(contents.accounts, [])
         self.assertEqual(contents.parse_errors, [])
 
-    def parsetest_simple_1(self, contents):
+    @parsedoc
+    def test_simple_1(self, contents):
         """
 
           2013-05-18 * "Nice dinner at Mermaid Inn"
@@ -124,7 +145,8 @@ class TestParserMisc(unittest.TestCase):
         self.assertEqual(len(contents.accounts), 2)
         self.assertEqual(contents.parse_errors, [])
 
-    def parsetest_simple_2(self, contents):
+    @parsedoc
+    def test_simple_2(self, contents):
         """
 
           2013-05-18 * "Nice dinner at Mermaid Inn"
@@ -140,19 +162,15 @@ class TestParserMisc(unittest.TestCase):
         self.assertEqual(len(contents.accounts), 4)
         self.assertEqual(contents.parse_errors, [])
 
-parser.create_parsetest_methods(TestParserMisc)
-
 
 class TestParserOptions(unittest.TestCase):
 
-    def parsetest_empty_1(self, contents):
+    @parsedoc
+    def test_empty_1(self, contents):
         """
           option "title" "Super Rich"
 
         """
         self.assertEqual(len(contents.options), 1)
         option = contents.options['title']
-        option.key == 'title'
-        option.value == 'Super Rich'
-
-parser.create_parsetest_methods(TestParserOptions)
+        self.assertEqual(option, 'Super Rich')

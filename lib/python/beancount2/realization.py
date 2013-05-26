@@ -11,7 +11,6 @@ from itertools import chain, repeat
 from collections import namedtuple, defaultdict
 from copy import copy
 import collections
-import pprint
 
 from beancount2.utils import tree_utils
 from beancount2.inventory import Inventory, Position
@@ -20,6 +19,9 @@ from beancount2.data import *
 from beancount2 import data
 from beancount2 import utils
 
+
+# Special flag used on padding transactions.
+PADDING_FLAG = 'P'
 
 # A realized account, inserted in a tree, that contains the list of realized
 # entries.
@@ -127,7 +129,7 @@ def pad(entries):
                             Posting(active_pad.account_pad, -diff_position, None, None),
                         ]
                         new_entry = Transaction(
-                            active_pad.fileloc, active_pad.date, 'P', None, narration, set(), postings)
+                            active_pad.fileloc, active_pad.date, PADDING_FLAG, None, narration, set(), postings)
 
                         # Save it for later insertion after the active pad.
                         new_entries[active_pad].append(new_entry)
@@ -152,7 +154,7 @@ def pad(entries):
             pad_errors.append(
                 RealError(pad.fileloc, "Unused Pad entry: {}".format(pad)))
 
-    return new_entries, pad_errors
+    return padded_entries, pad_errors
 
 
 def group_postings_by_account(entries, only_accounts=None):
@@ -214,14 +216,15 @@ def realize(entries, do_check=False):
 
             # Update the balance inventory for each of the postings' accounts.
             for posting in entry.postings:
-                account_name = posting.account.name
-                balance = balances[account_name]
+                balance = balances[posting.account]
                 try:
-                    balance.add_position(posting.position)
+                    # Note: if this is from a padding transaction, allow negative lots at cost.
+                    balance.add_position(posting.position, allow_negative=entry.flag == PADDING_FLAG)
                 except ValueError as e:
-                    real_errors.append(RealError(entry.fileloc, str(e)))
+                    real_errors.append(
+                        RealError(entry.fileloc, "Error balancing '{}' -- {}".format(posting.account.name, e)))
 
-                real_account = real_accounts.get_create(account_name)
+                real_account = real_accounts.get_create(posting.account.name)
                 real_account.postings.append(
                     RealPosting(entry, posting, copy(balance)))
 
@@ -298,3 +301,30 @@ def dump_tree_balances(real_accounts, foutput):
             positions = ['']
         for position, line in zip(positions, chain((line_first,), repeat(line_next))):
             foutput.write('{:{width}}   {:16}\n'.format(line, position, width=width))
+
+
+def find_balance(real_account, date=None):
+    """Find the balance of a realzed right before the given date.
+    If date is None, get the final balance of the entire list of realized entries."""
+
+    postings = real_account.postings
+    if date is None:
+        # Find the last posting that had a non-null balance.
+        index = len(postings) - 1
+    else:
+        index = bisect_left_withkey(postings, date,
+                                    key=lambda real_posting: real_posting.entry.date)
+    if index == 0:
+        return 0, Inventory()
+    else:
+        # Take the balance of the previous element, the last one on previous
+        # dates.
+        index -= 1
+
+        # Find the last posting that had a non-null balance.
+        for i in range(index, -1, -1):
+            real_posting = postings[i]
+            if isinstance(real_posting, RealPosting):
+                return (index+1), real_posting.balance
+        else:
+            return 0, Inventory()

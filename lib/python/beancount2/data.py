@@ -213,5 +213,3 @@ def get_account_open_close(entries, accounts):
         open_closes_map[entry.account][index] = entry
 
     return open_closes_map
-
-

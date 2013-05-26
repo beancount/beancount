@@ -22,25 +22,27 @@ class TreeAdaptor:
     def get_children(self, node):
         return node.children
 
+
 def create_test_tree():
     return tree_utils.TreeDict(TreeAdaptor(), ':')
+
 
 class TestTree(unittest.TestCase):
 
     def test_simple(self):
         tree = create_test_tree()
-        tree['Assets:US:TD:Checking']
-        tree['Assets:US:TD']
-        tree['Assets:US:HSBC:Savings']
-        tree['Assets:US:HSBC:Checking']
-        print()
-        for line, node in tree.render_lines():
-            print('{:32}: {}'.format(line, repr(node.name)))
+        tree.get_create('Assets:US:TD:Checking')
+        tree.get_create('Assets:US:TD')
+        tree.get_create('Assets:US:HSBC:Savings')
+        tree.get_create('Assets:US:HSBC:Checking')
+        # print()
+        # for line, line_cont, node in tree.render_lines():
+        #     print('{:32}: {}'.format(line, repr(node.name)))
 
     def test_simple2(self):
         tree = create_test_tree()
-        tree['Assets']
-        tree['Assets:US:HSBC:Savings']
-        print()
-        for line, node in tree.render_lines():
-            print('{:32}: {}'.format(line, repr(node.name)))
+        tree.get_create('Assets')
+        tree.get_create('Assets:US:HSBC:Savings')
+        # print()
+        # for line, line_cont, node in tree.render_lines():
+        #     print('{:32}: {}'.format(line, repr(node.name)))

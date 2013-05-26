@@ -121,6 +121,8 @@ class Inventory:
     def __str__(self):
         return 'Inventory({})'.format(', '.join(map(str, sorted(self.positions))))
 
+    __repr__ = __str__
+
     def is_empty(self):
         return bool(self.positions)
     __bool__ = is_empty

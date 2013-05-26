@@ -268,27 +268,3 @@ def dump_lexer_string(input_string):
         tmp_file.flush()
         return dump_lexer(tmp_file.name)
 
-
-#
-# Utilities for testing tests.
-#
-def create_parsetest_method(method):
-    """Create a test method that will automatically parse the
-    docstring as beancount syntax and provide the results to
-    the wrapped test function."""
-    input_string = textwrap.dedent(method.__doc__)
-    def new_method(self):
-        contents = parse_string(input_string)
-        return method(self, contents)
-    new_method.__name__ = method.__name__[5:]
-    return new_method
-
-
-def create_parsetest_methods(klass):
-    """Decorate the test class with convenient test methods that
-    automatically parse the beancount syntax. This avoids a lot
-    of boilerplate."""
-    for attrname, attribute in list(klass.__dict__.items()):
-        if attrname.startswith('parsetest_'):
-            new_method = create_parsetest_method(attribute)
-            setattr(klass, attrname[5:], new_method)

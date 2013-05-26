@@ -4,8 +4,9 @@ Unit tests for realizations.
 
 import unittest
 import sys
-from textwrap import dedent
 from datetime import date
+import textwrap
+import functools
 
 from beancount2.inventory import Position, Lot
 from beancount2 import parser
@@ -16,22 +17,52 @@ from beancount2.data import Decimal, Amount
 from beancount2 import data
 from beancount2.realization import RealPosting, RealEntry
 from beancount2.inventory import Inventory
+from beancount2.parser.parser_test import parsedoc
+
+
+do_trace = False
+
+def realizedoc(fun):
+    """Decorator that parses, pads and realizes the function's docstring as an
+    argument."""
+    @functools.wraps(fun)
+    def newfun(self):
+        contents = parser.parse_string(textwrap.dedent(fun.__doc__))
+        entries, pad_errors = realization.pad(contents.entries)
+        real_accounts, real_errors = realization.realize(entries, do_check=True)
+        errors = contents.parse_errors + pad_errors + real_errors
+        if do_trace and errors:
+            trace_errors(real_accounts, errors)
+        return fun(self, entries, real_accounts, errors)
+    return newfun
+
+def trace_errors(real_accounts, errors):
+    print()
+    print("ERRORS")
+    data.print_errors(errors)
+    print()
+    print("REAL_ACCOUNTS")
+    for account_name, real_account in real_accounts.items():
+        if real_account.postings:
+            print('  ', real_account.account.name)
+            for real_posting in real_account.postings:
+                print('      {:32} {}'.format(real_posting.balance, real_posting))
+    print()
+
 
 
 class TestRealization(unittest.TestCase):
 
-    def parsetest_check_error(self, contents):
+    @realizedoc
+    def test_check_error(self, entries, real_accounts, real_errors):
         """
           2013-05-01 open Assets:US:Checking   USD
           2013-05-03 check Assets:US:Checking   100 USD
         """
-        errors = validation.validate(contents.entries, contents.accounts)
-        self.assertFalse(errors)
+        self.assertEqual(len(real_errors), 1)
 
-        real_accounts, real_errors = realization.realize(contents.entries, True)
-        assert len(real_errors) == 1
-
-    def parsetest_check_okay(self, contents):
+    @realizedoc
+    def test_check_okay(self, entries, real_accounts, real_errors):
         """
           2013-05-01 open Assets:US:Checking   USD
           2013-05-01 open Expenses:Something
@@ -43,18 +74,12 @@ class TestRealization(unittest.TestCase):
           2013-05-03 check Assets:US:Checking   100 USD
 
         """
-        errors = validation.validate(contents.entries, contents.accounts)
-        self.assertFalse(errors)
-
-        entries, pad_errors = realization.pad(contents.entries)
-
-        real_accounts, real_errors = realization.realize(entries, True)
-        data.print_errors(real_errors)
         self.assertEqual(len(real_errors), 0)
 
     # This test ensures that the 'check' directives apply at the beginning of
     # the day.
-    def parsetest_check_samedate(self, contents):
+    @realizedoc
+    def test_check_samedate(self, entries, real_accounts, real_errors):
         """
           2013-05-01 open Assets:US:Checking   USD
           2013-05-01 open Expenses:Something
@@ -66,23 +91,23 @@ class TestRealization(unittest.TestCase):
           2013-05-02 check Assets:US:Checking     0 USD
           2013-05-03 check Assets:US:Checking   100 USD
         """
-        errors = validation.validate(contents.entries, contents.accounts)
-        self.assertFalse(errors)
-
-        real_accounts, real_errors = realization.realize(contents.entries, True)
+        data.print_errors(real_errors)
         assert len(real_errors) == 0
-
-parser.create_parsetest_methods(TestRealization)
 
 
 class TestRealizationPadding(unittest.TestCase):
 
-    def checkRealTypes(self, real_account, real_entry_types):
+    def check_real_types(self, real_account, real_entry_types):
         """Check the types of entries rendered."""
         self.assertEqual(list(type(rp.entry) for rp in real_account.postings),
                          real_entry_types)
 
-    def parsetest_pad(self, contents):
+    def check_balance(self, real_account, position):
+        _, final_balance = realization.find_balance(real_account)
+        self.assertEqual(final_balance.get_position(position.lot), position)
+
+    @realizedoc
+    def test_pad(self, entries, real_accounts, real_errors):
         """
           2013-05-01 open Assets:Checking
           2013-05-01 open Equity:OpeningBalances
@@ -91,16 +116,15 @@ class TestRealizationPadding(unittest.TestCase):
 
           2013-05-03 check Assets:Checking   172.45 USD
         """
-        real_accounts, real_errors = realization.realize(contents.entries, True)
         self.assertEqual(len(real_errors), 0)
-        self.checkRealTypes(real_accounts['Assets:Checking'], [Open, Pad, Pad, Check])
-        self.checkRealTypes(real_accounts['Equity:OpeningBalances'], [Open, Pad, Pad])
+        self.check_real_types(real_accounts['Assets:Checking'], [Open, Pad, Transaction, Check])
+        self.check_real_types(real_accounts['Equity:OpeningBalances'], [Open, Pad, Transaction])
 
-        final_balance = real_accounts['Assets:Checking'].postings[-1].balance
-        self.assertEqual(final_balance.get_positions()[0],
-                         Position(Lot('USD', None, None), Decimal('172.45')))
+        self.check_balance(real_accounts['Assets:Checking'],
+                           Position(Lot('USD', None, None), Decimal('172.45')))
 
-    def parsetest_with_cost(self, contents):
+    @realizedoc
+    def test_with_cost(self, entries, real_accounts, real_errors):
         """
           2013-05-01 open Assets:Invest
           2013-05-01 open Equity:OpeningBalances
@@ -109,16 +133,16 @@ class TestRealizationPadding(unittest.TestCase):
 
           2013-05-03 check Assets:Invest   172.45 GOOG {12.00 USD}
         """
-        real_accounts, real_errors = realization.realize(contents.entries, True)
         assert len(real_errors) == 0
-        self.checkRealTypes(real_accounts['Assets:Invest'], [Open, Pad, Pad, Check])
-        self.checkRealTypes(real_accounts['Equity:OpeningBalances'], [Open, Pad, Pad])
+        self.check_real_types(real_accounts['Assets:Invest'], [Open, Pad, Transaction, Check])
+        self.check_real_types(real_accounts['Equity:OpeningBalances'], [Open, Pad, Transaction])
 
-        final_balance = real_accounts['Assets:Invest'].postings[-1].balance
-        self.assertEqual(final_balance.get_positions()[0],
-                         Position(Lot('GOOG', Amount('12.00', 'USD'), None), Decimal('172.45')))
+        self.check_balance(real_accounts['Assets:Invest'],
+                           Position(Lot('GOOG', Amount('12.00', 'USD'), None), Decimal('172.45')))
 
-    def parsetest_with_cost_and_lotdate(self, contents):
+
+    @realizedoc
+    def test_with_cost_and_lotdate(self, entries, real_accounts, real_errors):
         """
           2013-05-01 open Assets:Invest
           2013-05-01 open Equity:OpeningBalances
@@ -127,16 +151,15 @@ class TestRealizationPadding(unittest.TestCase):
 
           2013-05-03 check Assets:Invest   172.45 GOOG {12.00 USD / 2000-01-01}
         """
-        real_accounts, real_errors = realization.realize(contents.entries, True)
         assert len(real_errors) == 0
-        self.checkRealTypes(real_accounts['Assets:Invest'], [Open, Pad, Pad, Check])
-        self.checkRealTypes(real_accounts['Equity:OpeningBalances'], [Open, Pad, Pad])
+        self.check_real_types(real_accounts['Assets:Invest'], [Open, Pad, Transaction, Check])
+        self.check_real_types(real_accounts['Equity:OpeningBalances'], [Open, Pad, Transaction])
 
-        final_balance = real_accounts['Assets:Invest'].postings[-1].balance
-        self.assertEqual(final_balance.get_positions()[0],
-                         Position(Lot('GOOG', Amount('12.00', 'USD'), date(2000, 1, 1)), Decimal('172.45')))
+        self.check_balance(real_accounts['Assets:Invest'],
+                           Position(Lot('GOOG', Amount('12.00', 'USD'), date(2000, 1, 1)), Decimal('172.45')))
 
-    def parsetest_pad_fail(self, contents):
+    @realizedoc
+    def test_pad_fail(self, entries, real_accounts, real_errors):
         """
           2013-05-01 open Assets:Checking
           2013-05-01 open Assets:Cash
@@ -150,14 +173,15 @@ class TestRealizationPadding(unittest.TestCase):
             Assets:Checking             20 USD
             Assets:Cash
 
+          ;; This should fail here:
           2013-06-01 check Assets:Checking   200 USD
 
         """
-        real_accounts, real_errors = realization.realize(contents.entries, True)
         self.assertEqual(len(real_errors), 1)
 
 
-    def parsetest_pad_used_twice(self, contents):
+    @realizedoc
+    def test_pad_used_twice(self, entries, real_accounts, real_errors):
         """
           2013-05-01 open Assets:Checking
           2013-05-01 open Assets:Cash
@@ -176,12 +200,12 @@ class TestRealizationPadding(unittest.TestCase):
           2013-06-01 check Assets:Checking   200 USD
 
         """
-        real_accounts, real_errors = realization.realize(contents.entries, True)
         self.assertEqual(len(real_errors), 0)
-        self.checkRealTypes(real_accounts['Assets:Checking'],
-                            [Open, Pad, Pad, Check, Transaction, Pad, Pad, Check])
+        self.check_real_types(real_accounts['Assets:Checking'],
+                            [Open, Pad, Transaction, Check, Transaction, Pad, Transaction, Check])
 
-    def parsetest_pad_check_balances(self, contents):
+    @realizedoc
+    def test_pad_check_balances(self, entries, real_accounts, real_errors):
         """
           2013-05-01 open Assets:Checking
           2013-05-01 open Assets:Cash
@@ -203,23 +227,14 @@ class TestRealizationPadding(unittest.TestCase):
             Assets:Checking             20 USD
             Assets:Cash
 
-          2013-06-01 check Assets:Checking   125 USD
+          2013-06-01 check Assets:Checking   145 USD
 
         """
-        real_accounts, real_errors = realization.realize(contents.entries, True)
-        # self.assertEqual(len(real_errors), 0)
-        # self.checkRealTypes(real_accounts['Assets:Checking'],
-        #                     [Open, Pad, Pad, Check, Transaction, Pad, Pad, Check])
-
         balances = []
         for real_posting in real_accounts['Assets:Checking'].postings:
             balances.append((type(real_posting.entry),
                              getattr(real_posting, 'balance', Inventory()).get_amount('USD')))
 
-        realization.dump_tree_balances(real_accounts, sys.stderr)
-
-        for entry_type, amount in balances:
-            print(entry_type, amount)
         self.assertEqual(balances, [(Open, Amount('0.00', 'USD')),
                                     (Pad, Amount('0.00', 'USD')),
                                     (Transaction, Amount('95.00', 'USD')),
@@ -230,11 +245,7 @@ class TestRealizationPadding(unittest.TestCase):
                                     (Check, Amount('145.00', 'USD'))])
 
 
-parser.create_parsetest_methods(TestRealizationPadding)
-
-
 # FIXME: please DO test the realization of a transaction that has multiple legs on the same account!
-
 
 
 # FIXME: Write a test that padding a parent account wouldn't pad its child accounts.
