@@ -13,6 +13,7 @@ from copy import copy
 import collections
 
 from beancount2.utils import tree_utils
+from beancount2.utils.bisect_key import bisect_left_withkey
 from beancount2.inventory import Inventory, Position
 from beancount2.parser import parser
 from beancount2.data import *

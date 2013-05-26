@@ -26,21 +26,6 @@ from beancount2.inventory import Inventory
 from beancount2.data import render_fileloc
 
 
-#-------------------------------------------------------------------------------
-
-
-def pretty_transaction(txn):
-    """Format nicely a transaction for printing. Returns a string"""
-    lines = ["{} {} {} | {} {}".format(txn.date, txn.flag, txn.payee or '', txn.description,
-                                         ','.join(txn.tags))]
-    for post in txn.postings:
-        lines.append("  {:1} {:58s} {} {} {}".format(
-            chr(post.flag) if post.flag else '', post.account.name, post.position.number, post.position.lot, post.price or ''))
-    return '\n'.join(lines)
-
-
-#-------------------------------------------------------------------------------
-
 
 # A generic tuple to return various data by account type.
 AccountTypeData = namedtuple('AccountTypeData', 'Assets Liabilities Equity Income Expenses')
@@ -155,20 +140,7 @@ def summarize(real_accounts, date, opening_acount):
     # 3. Insert a conversion error entry.
 
 
-
-
-
 #-------------------------------------------------------------------------------
-
-def print_entries_by_date(entries):
-    prev_date = None
-    for entry in entries:
-        if prev_date != entry.date:
-            print()
-            prev_date = entry.date
-        print(entry)
-
-
 
 def main():
     parser = argparse.ArgumentParser(__doc__.strip())
@@ -185,59 +157,26 @@ def main():
 
     with utils.print_time('parse'):
         contents = beancount2.parser.parse(opts.filename)
-        # print_entries_by_date(contents.entries)
-
-    with utils.print_time('check'):
-        check_errors = validation.validate(contents.entries, contents.accounts)
-        data.print_errors(check_errors)
+        parse_errors = contents.parse_errors
+        data.print_errors(contents.parse_errors)
 
     with utils.print_time('pad'):
         padded_entries, pad_errors = realization.pad(contents.entries)
         data.print_errors(pad_errors)
 
-        # for entry in utils.filter_type(padded_entries, data.Transaction):
-        #     if entry.flag == 'P':
-        #         print(entry)
+    with utils.print_time('validation'):
+        valid_errors = validation.validate(padded_entries, contents.accounts)
+        data.print_errors(valid_errors)
 
     with utils.print_time('realize'):
-        real_accounts, real_errors = realization.realize(contents.entries, check=True)
+        real_accounts, real_errors = realization.realize(padded_entries, do_check=True)
         data.print_errors(real_errors)
 
-    raise SystemExit
+    if opts.verbose:
+        realization.dump_tree_balances(real_accounts, sys.stdout)
 
 
-    # For timing only.
-    with utils.print_time('balance_all'): # 89ms... okay.
-        balance = Inventory()
-        for entry in utils.filter_type(contents.entries, data.Transaction):
-            for posting in entry.postings:
-                balance.add_position(posting.position)
-
-
-    for real_account in sorted(real_accounts.values()):
-        print('{:56} {}'.format(real_account.name, real_account.account))
-
-    raise SystemExit
-
-    # real_account = real_accounts['Assets:CA:RBC-Investing:RRSP']
-
-    if 0:
-        print('--------------------------------------------------------------------------------')
-        for real_posting in real_account.postings:
-            balance = getattr(real_posting, 'balance', None)
-            if balance:
-                print(real_posting.entry.date, balance)
-        print('--------------------------------------------------------------------------------')
-
-    # Report all the realization errors.
-    for error in real_errors:
-        print('{} {}'.format(render_fileloc(error.fileloc),
-                             error.message))
-
-    ##realization.dump_tree_balances(real_accounts, sys.stdout)
-
-    if 1:
-        check_equity_balances(real_accounts)
+    check_equity_balances(real_accounts)
 
     if 0:
         yearly = compute_yearly_balances(real_accounts)
@@ -254,9 +193,6 @@ def main():
         print(sums.to_string())
         total.plot()
         pyplot.show()
-
-
-
 
     if 0:
         # Sum up all the amounts for the trial balance.
@@ -285,40 +221,26 @@ def main():
         print(sorted(total_balance.get_cost().get_amounts(), key=data.amount_sortkey))
         print()
 
-    if 0:
-        real_account = real_accounts['Assets:Cash']
-        for real_posting in real_account.postings:
-            print('{} {:48} {:72} {:72}'.format(real_posting.entry.date,
-                                          ' | '.join([real_posting.entry.payee or '', real_posting.entry.narration]),
-                                          real_posting.posting.position,
-                                          real_posting.balance,
-                                          ))
 
 
-    # find_unique_templates(entries)
+
+def print_debug_account(real_account):
+    for real_posting in real_account.postings:
+        print('{} {:48} {:72} {:72}'.format(real_posting.entry.date,
+                                      ' | '.join([real_posting.entry.payee or '', real_posting.entry.narration]),
+                                      real_posting.posting.position,
+                                      real_posting.balance,
+                                      ))
 
 
-    # Print all the balances
-    if 0:
-        maxlen = max(map(len, accounts_map))
-        for account, inventory in sorted(accounts_map.items()):
-            print("{:{:d}s} {}".format(account, maxlen, inventory))
-
-
-    # for txn in filter_type(ledger.entries, Transaction):
-    #     if not re.search('GOOGLE INC', txn.description):
-    #         continue
-    #     print('-' * 80)
-    #     print(pretty_transaction(txn))
-    #     residual = compute_residual(txn.postings)
-    #     print(residual)
-
-
-    if opts.verbose:
-        for txn in ledger.entries:
-            print(pretty_transaction(txn))
-
-    # print_tags(ledger.entries)
+def pretty_transaction(txn):
+    """Format nicely a transaction for printing. Returns a string"""
+    lines = ["{} {} {} | {} {}".format(txn.date, txn.flag, txn.payee or '', txn.description,
+                                         ','.join(txn.tags))]
+    for post in txn.postings:
+        lines.append("  {:1} {:58s} {} {} {}".format(
+            chr(post.flag) if post.flag else '', post.account.name, post.position.number, post.position.lot, post.price or ''))
+    return '\n'.join(lines)
 
 
 def print_locations(entries):
@@ -379,6 +301,36 @@ def find_unique_templates(entries):
         print(tuple(sorted(account_names, key=data.account_names_sortkey)), len(entry_list))
 
 
+
+def print_entries_by_date(entries):
+    prev_date = None
+    for entry in entries:
+        if prev_date != entry.date:
+            print()
+            prev_date = entry.date
+        print(entry)
+
+def measure_balance_total(entries):
+    # For timing only.
+    with utils.print_time('balance_all'): # 89ms... okay.
+        balance = Inventory()
+        for entry in utils.filter_type(entries, data.Transaction):
+            for posting in entry.postings:
+                balance.add_position(posting.position)
+
+
+def print_real_accounts(real_accounts):
+    for real_account in sorted(real_accounts.values()):
+        print('{:56} {}'.format(real_account.name, real_account.account))
+
+
+def print_real_postings(real_account):
+    print('--------------------------------------------------------------------------------')
+    for real_posting in real_account.postings:
+        balance = getattr(real_posting, 'balance', None)
+        if balance:
+            print(real_posting.entry.date, balance)
+    print('--------------------------------------------------------------------------------')
 
 
 if __name__ == '__main__':
