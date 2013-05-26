@@ -1,5 +1,10 @@
 """
 Realization of specific lists of account postings into reports.
+
+
+FIXME here you need some ascii art
+
+
 """
 import datetime
 from itertools import chain, repeat
@@ -16,14 +21,17 @@ from beancount2.data import *
 # entries.
 RealAccount = namedtuple('RealAccount', 'name children postings')
 
+
+# All realized entries are either one of RealEntry or RealPosting.
+
+# A realized entry, that possibly contains the actual balance that was seen at
+# that point. This is used for all non-posting entries.
+RealEntry = namedtuple('RealEntry', 'entry balance')
+
 # A realized posting, that points to a particular posting of transaction entry.
 # The 'entry' attribute may point to a transaction or a Pad entry.
-# If it points to a Pad entry, it also points to a synthesized posting.
 RealPosting = namedtuple('RealPosting', 'entry posting balance')
 
-# A realized check, that contains the actual balance that was seen at that
-# point.
-RealEntry = namedtuple('RealEntry', 'entry balance')
 
 
 RealError = namedtuple('RealError', 'fileloc message')
@@ -47,20 +55,21 @@ class RealAccountTree(tree_utils.TreeDict):
 
 
 
-class Ledger:
-    """A class that contains a particular list of entries and an
-    associated account tree. Note: the account tree is redundant and
-    could be recalculated from the list of entries."""
-
-    def __init__(self, entries):
-
-        # A list of sorted entries in this ledger.
-        assert isinstance(entries, list)
-        # entries.sort(key=lambda x: x.date)
-        self.entries = entries
-
-        # # A tree of accounts.
-        # self.real_accounts = RealAccountTree()
+## FIXME: remove
+# class Ledger:
+#     """A class that contains a particular list of entries and an
+#     associated account tree. Note: the account tree is redundant and
+#     could be recalculated from the list of entries."""
+#
+#     def __init__(self, entries):
+#
+#         # A list of sorted entries in this ledger.
+#         assert isinstance(entries, list)
+#         # entries.sort(key=lambda x: x.date)
+#         self.entries = entries
+#
+#         # # A tree of accounts.
+#         # self.real_accounts = RealAccountTree()
 
 
 
@@ -86,12 +95,13 @@ class RealAccountState:
 
 
 def realize(entries, check=False):
-    """Realize a list of entries into a Ledger object, which contains
-    placeholders with balances for each entry, and an accounts tree.
-    This is then used to render a report.
+    """Realize a list of entries into a tree of realized accounts, which contains
+    shadow entries with balances. This is then used to make a report.
 
     If 'check' is true, verify the inventory balances at the point of
-    'Check' entries."""
+    'Check' entries.
+
+    """
 
     # Handle sanity checks when the check is at the beginning of the day.
     check_is_at_beginning_of_day = parser.SORT_ORDER[Check] < 0
@@ -125,6 +135,15 @@ def realize(entries, check=False):
                     RealPosting(entry, posting, copy.copy(balance_inventory)))
 
         elif isinstance(entry, Check):
+
+# FIXME: This should insert a transaction.
+#
+# There's really two things going on here: padding, which really
+# should just occur in the original list of entries and is a
+# separate thing, and computing the global balance. We ought to
+# split those two tasks: 1. enrich the list of entries, and 2.
+# compute the balances. Both will be simpler, even if it means we
+# have to compute the balances twice (we have to anyway).
 
             real_state = real_states[entry.account]
             lot = entry.position.lot
@@ -183,13 +202,13 @@ def realize(entries, check=False):
         elif isinstance(entry, Pad):
 
             # Insert the pad entry in both realized accounts.
-            real_entry = RealEntry(entry, None)
-
             real_account = real_accounts.get_create(entry.account.name)
-            real_account.postings.append(real_entry)
+            real_account.postings.append(
+                RealEntry(entry, copy.copy(real_states[entry.account].balance)))
 
             other_account = real_accounts.get_create(entry.account_pad.name)
-            other_account.postings.append(real_entry)
+            other_account.postings.append(
+                RealEntry(entry, copy.copy(real_states[entry.account_pad].balance)))
 
             # Check and warn if the last pad entry was unused.
             real_state = real_states[entry.account]
@@ -207,7 +226,7 @@ def realize(entries, check=False):
             # Append some other entries in the realized list.
             real_account = real_accounts.get_create(entry.account.name)
             real_account.postings.append(
-                RealEntry(entry, None))
+                RealEntry(entry, copy.copy(real_states[entry.account].balance)))
 
         if check_is_at_beginning_of_day:
             # Note: Check entries are assumed to have been sorted to be before any
@@ -238,8 +257,6 @@ def _get_real_subpostings(real_account, accumulator):
         _get_real_subpostings(child_account, accumulator)
 
 
-
-
 def dump_tree_balances(real_accounts, foutput):
     """Dump a simple tree of the account balances, for debugging."""
     lines = list(real_accounts.render_lines())
@@ -248,8 +265,9 @@ def dump_tree_balances(real_accounts, foutput):
         last_entry = real_account.postings[-1] if real_account.postings else None
         balance = getattr(last_entry, 'balance', None)
         if balance:
+            amounts = balance.get_cost().get_amounts()
             positions = ['{0.number:12.2f} {0.currency}'.format(amount)
-                         for amount in sorted(balance.get_costs(), key=amount_sortkey)]
+                         for amount in sorted(amounts, key=amount_sortkey)]
         else:
             positions = ['']
         for position, line in zip(positions, chain((line_first,), repeat(line_next))):

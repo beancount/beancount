@@ -17,8 +17,13 @@ def main():
     import argparse
     optparser = argparse.ArgumentParser(__doc__.strip())
     optparser.add_argument('filename', help='Filename.')
+
     optparser.add_argument('-a', '--account', metavar='REGEXP', action='store',
                            help="Match against the account names.")
+
+    optparser.add_argument('-t', '--tag', metavar='REGEXP', action='store',
+                           help="Match against the tag names of Transactions.")
+
     opts = optparser.parse_args()
 
     # Parse the input file.
@@ -31,16 +36,27 @@ def main():
     # Initialized the reduced list to the entire set of keys.
     filtered_keys = set(entry_map.keys())
 
+    # Filter by matching a regexp against the account name.
     if opts.account:
-        # Filter by matching against the account.
         account_keys = set()
         regexp = re.compile(opts.account)
         for entry in contents.entries:
+            # Iterate over all references to accounts.
             for account in utils.get_tuple_typed_values(entry, data.Account):
                 if regexp.match(account.name):
                     account_keys.add(entry.fileloc)
 
         filtered_keys = filtered_keys.intersection(account_keys)
+
+    # Filter by matching a regexp against the tags.
+    if opts.tag:
+        tag_keys = set()
+        regexp = re.compile(opts.tag)
+        for entry in utils.filter_type(contents.entries, data.Transaction):
+            if any(map(regexp.match, entry.tags)):
+                tag_keys.add(entry.fileloc)
+
+        filtered_keys = filtered_keys.intersection(tag_keys)
 
     # Print out the match results that have filtered through.
     filtered_entries = list(map(entry_map.get, filtered_keys))
@@ -51,7 +67,7 @@ def main():
     # Print out something about each entry.
     for entry in filtered_entries:
         print('{} {}  {}'.format(data.render_fileloc(entry.fileloc),
-                                   entry.date, 
+                                   entry.date,
                                    type(entry).__name__))
 
 

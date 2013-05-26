@@ -123,6 +123,12 @@ class TestInventory(unittest.TestCase):
 #
 
 
+    def test_negative(self):
+        inv = Inventory()
+        inv.add(Amount('10', 'USD'))
+        ninv = -inv
+        self.checkAmount(ninv, '-10', 'USD')
+
     def test_sum_inventories(self):
         inv1 = Inventory()
         inv1.add(Amount('10', 'USD'))

@@ -39,7 +39,7 @@ import copy
 from datetime import date
 import io
 
-from beancount2.data import ZERO, Decimal, Amount, Lot, amount_mult
+from beancount2.data import ZERO, Decimal, Amount, Lot, amount_mult, CURRENCY_ORDER
 
 
 class Position:
@@ -63,6 +63,12 @@ class Position:
         else:
             return (self.number == other.number and
                     self.lot == other.lot)
+
+    def sortkey(self):
+        return (CURRENCY_ORDER.get(self.lot.currency, 10 + len(self.lot.currency)), self.number)
+
+    def __lt__(self, other):
+        return self.sortkey() < other.sortkey()
 
     def __copy__(self):
         # Shallow copy, except for the lot, which can be shared.
@@ -100,18 +106,27 @@ class Inventory:
 
     def __str__(self):
         lot_strings = []
-        for position in self.positions:
+        for position in sorted(self.positions):
             lot = position.lot
-            if lot.cost:
-                cost_string = '{} {}'.format(lot.cost.number, lot.cost.currency)
-            else:
-                cost_string = 'None'
-            lot_strings.append('{} {} {{{} / {}}}'.format(
-                position.number, lot.currency, cost_string, lot.lot_date))
-        return 'Inventory( {} )'.format(', '.join(lot_strings))
+            strings = [str(Amount(position.number, lot.currency))]
 
-    def __bool__(self):
+            # Optionally render the cost and lot-date.
+            if lot.cost or lot.lot_date:
+                strings.append(' {')
+                if lot.cost:
+                    strings.append(
+                        str(Amount(lot.cost.number, lot.cost.currency)))
+                if lot.lot_date:
+                    strings.append(' / {}'.format(lot.lot_date))
+                strings.append('}')
+
+            lot_strings.append(''.join(strings))
+
+        return 'Inventory({})'.format(', '.join(lot_strings))
+
+    def is_empty(self):
         return bool(self.positions)
+    __bool__ = is_empty
 
     def __copy__(self):
         return Inventory(list(map(copy.copy, self.positions)))
@@ -128,6 +143,10 @@ class Inventory:
                 return False
         return True
 
+    def __neg__(self):
+        return Inventory([Position(position.lot, -(position.number))
+                          for position in self.positions])
+
     def get_amount(self, currency):
         """Fetch the total amount across all the position in the given currency.
         This may sum multiple lots in the same currency denomination."""
@@ -142,12 +161,12 @@ class Inventory:
         return [Amount(position.number, position.lot.currency)
                 for position in self.positions]
 
-    def get_costs(self):
+    def get_cost(self):
         """Return a list of Amounts that represent aggregated book values."""
         cost_inventory = Inventory()
         for position in self.positions:
             cost_inventory.add(position.get_cost())
-        return cost_inventory.get_amounts()
+        return cost_inventory
 
     def get_positions(self):
         "Return the positions in this inventory."

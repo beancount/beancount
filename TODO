@@ -11,6 +11,8 @@ beancount: TODO
     a new AutoPad or Clamp entry. You don't even have to use the realize()
     routine.
 
+  - The RealAccount instances need to point to the Account instances (or None).
+
 
   - Add 'errors', 'statistics', and 'source' to the global pages.
 
@@ -547,6 +549,9 @@ beancount: TODO
 
   - Add 1/rate syntax for prices (and anything... really, why not).
     Convert at parsing time.
+
+  - We could allow '$' to parse as equivalent to 'USD' in the input, or to
+    stand on its own as a currency name... why not?
 
 ** Syntax for Skipped
 

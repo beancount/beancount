@@ -14,6 +14,7 @@ from beancount2 import realization
 from beancount2.data import Open, Close, Note, Pad, Check, Transaction
 from beancount2.data import Decimal, Amount
 from beancount2.realization import RealPosting, RealEntry
+from beancount2.inventory import Inventory
 
 
 class TestRealization(unittest.TestCase):
@@ -66,7 +67,6 @@ class TestRealization(unittest.TestCase):
 
         real_accounts, real_errors = realization.realize(contents.entries, True)
         assert len(real_errors) == 0
-
 
 parser.create_parsetest_methods(TestRealization)
 
@@ -177,9 +177,54 @@ class TestRealizationPadding(unittest.TestCase):
         self.checkRealTypes(real_accounts['Assets:Checking'],
                             [Open, Pad, Pad, Check, Transaction, Pad, Pad, Check])
 
-        # for real_posting in real_accounts['Assets:Checking'].postings:
-        #     print(real_posting)
-        # realization.dump_tree_balances(real_accounts, sys.stderr)
+    def parsetest_pad_check_balances(self, contents):
+        """
+          2013-05-01 open Assets:Checking
+          2013-05-01 open Assets:Cash
+          2013-05-01 open Equity:OpeningBalances
+
+          2013-05-01 pad  Assets:Checking   Equity:OpeningBalances
+
+          2013-05-03 txn "Add 20$"
+            Assets:Checking             10 USD
+            Assets:Cash
+
+          2013-05-10 check Assets:Checking   105 USD
+
+          2013-05-15 txn "Add 20$"
+            Assets:Checking             20 USD
+            Assets:Cash
+
+          2013-05-16 txn "Add 20$"
+            Assets:Checking             20 USD
+            Assets:Cash
+
+          2013-06-01 check Assets:Checking   125 USD
+
+        """
+        real_accounts, real_errors = realization.realize(contents.entries, True)
+        # self.assertEqual(len(real_errors), 0)
+        # self.checkRealTypes(real_accounts['Assets:Checking'],
+        #                     [Open, Pad, Pad, Check, Transaction, Pad, Pad, Check])
+
+        balances = []
+        for real_posting in real_accounts['Assets:Checking'].postings:
+            balances.append((type(real_posting.entry),
+                             getattr(real_posting, 'balance', Inventory()).get_amount('USD')))
+
+        realization.dump_tree_balances(real_accounts, sys.stderr)
+
+        for entry_type, amount in balances:
+            print(entry_type, amount)
+        self.assertEqual(balances, [(Open, Amount('0.00', 'USD')),
+                                    (Pad, Amount('0.00', 'USD')),
+                                    (Transaction, Amount('95.00', 'USD')),
+                                    (Transaction, Amount('105.00', 'USD')),
+                                    (Check, Amount('105.00', 'USD')),
+                                    (Transaction, Amount('125.00', 'USD')),
+                                    (Transaction, Amount('145.00', 'USD')),
+                                    (Check, Amount('145.00', 'USD'))])
+
 
 parser.create_parsetest_methods(TestRealizationPadding)
 

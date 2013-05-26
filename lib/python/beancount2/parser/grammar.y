@@ -11,6 +11,7 @@
 %{
 
 #include <stdio.h>
+#include <assert.h>
 #include "parser.h"
 #include "lexer.h"
 
@@ -20,6 +21,7 @@
 void yyerror(char const* message)
 {
     /* fprintf(stderr, "LOCTEST %d %d: ", yylloc.first_line, s); */
+    assert(yy_lineno == yyloc->first_line); /* FIXME: And it is wrong... */
     fprintf(stderr, "%s:%d:: %s\n", yy_filename, yy_lineno, message);
 }
 

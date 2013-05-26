@@ -39,6 +39,7 @@ def pretty_transaction(txn):
     return '\n'.join(lines)
 
 
+#-------------------------------------------------------------------------------
 
 
 def find_balance(real_account, date=None):
@@ -53,7 +54,7 @@ def find_balance(real_account, date=None):
         index = bisect_left_withkey(postings, date,
                                     key=lambda real_posting: real_posting.entry.date)
     if index == 0:
-        return Inventory()
+        return 0, Inventory()
     else:
         # Take the balance of the previous element, the last one on previous
         # dates.
@@ -63,9 +64,9 @@ def find_balance(real_account, date=None):
         for i in range(index, -1, -1):
             real_posting = postings[i]
             if isinstance(real_posting, realization.RealPosting):
-                return real_posting.balance
+                return (index+1), real_posting.balance
         else:
-            return Inventory()
+            return 0, Inventory()
 
 
 # A generic tuple to return various data by account type.
@@ -81,11 +82,10 @@ def compute_balance_by_type(real_accounts, date):
     for real_account in real_accounts.values():
         if real_account.postings:
             typename = data.account_type(real_account.name)
-            balance = find_balance(real_account, date)
+            balance, _ = find_balance(real_account, date)
             balances[typename] += balance
 
     return AccountTypeData(**balances)
-
 
 
 def compute_yearly_balances(real_accounts):
@@ -96,7 +96,7 @@ def compute_yearly_balances(real_accounts):
         balances = compute_balance_by_type(real_accounts, balance_date)
         rows = []
         for account_type, balance in balances._asdict().items():
-            costs = balance.get_costs()
+            costs = balance.get_cost().get_amounts()
             index = [cost.currency for cost in costs]
             series = pandas.Series([cost.number for cost in costs], index=index)
             rows.append(series)
@@ -111,13 +111,75 @@ def check_equity_balances(real_accounts):
     Comparing (I+X) with (A+L), they really should be equal."""
 
     for balance_date in (datetime.date(year, 1, 1) for year in range(2004, 2015)):
-        print(balance_date)
+        print('------------------------', balance_date)
         balances = compute_balance_by_type(real_accounts, balance_date)
-        print(balances.Equity.get_costs())
 
-        balances.Assets + balances.Liabilities + balances.Equity
+        balsheet_inventory = balances.Assets + balances.Liabilities + balances.Equity
+        income_inventory = balances.Income + balances.Expenses
+
+        print('Balance Sheet: {}'.format(balsheet_inventory))
+        print('Income:        {}'.format(income_inventory))
+
+        # We need to synthesize a transaction here instead of doing this.
+        conversions = -(balsheet_inventory + income_inventory)
+        print('Conversions:   {}'.format(conversions.get_cost()))
+        balsheet_inventory += conversions.get_cost()
+
+        assert (balsheet_inventory + income_inventory).get_cost().is_empty()
+        print((balsheet_inventory + income_inventory))
+        print((balsheet_inventory + income_inventory).get_cost())
+        print()
+
+        balances_fwd = compute_balance_by_type(real_accounts, balance_date + datetime.timedelta(days=365))
+        print(balances_fwd)
+        conversions_fwd = -(balances_fwd.Assets +
+                            balances_fwd.Liabilities +
+                            balances_fwd.Equity +
+                            balances_fwd.Income +
+                            balances_fwd.Expenses)
+        print('conversions_fwd', conversions_fwd)
+        print('conversions_diff', conversions.get_cost() + (-conversions_fwd).get_cost())
 
 
+def summarize(real_accounts, date, opening_acount):
+    """Summarize all the accounts before date.
+
+    This function replaces the transactions up to (and not including) the given
+    date with a single opening balance transaction, for each account. Return a
+    new list of realized accounts.
+
+    Note: This routine must operate on a realization (as opposed to on the
+    entries) because the padding entries inserted by the realization will need
+    to be included in the summarization as well.
+    """
+    new_accounts = RealAccountTree()
+
+    for real_account in real_accounts.values():
+        if real_account.postings:
+            balance, index = find_balance(real_account, date)
+            new_account = new_accounts.get_create(real_account.name)
+
+            # Insert an opening balance entry.
+            fileloc = FileLocation('<summary>', 0)
+            # entry = Transaction(
+            ## FIXME: CONTINUE HERE: fix the realization first. It's possible we have to operate on the list of entries. Not sure yet.
+
+            # Copy the list of postings after the index found.
+            new_account.extend(real_account.postings[index:])
+
+    return new_accounts
+
+
+
+
+
+
+
+# a. summarize
+# b. annul_income
+# c. conversion adjustment
+
+    # 3. Insert a conversion error entry.
 
 
 #-------------------------------------------------------------------------------
@@ -218,13 +280,13 @@ def main():
                 trial_balance += real_posting.balance
 
             print(account_type)
-            print(sorted(trial_balance.get_costs(), key=data.amount_sortkey))
+            print(sorted(trial_balance.get_cost().get_amounts(), key=data.amount_sortkey))
             print()
 
             total_balance += trial_balance
 
         print('TOTAL')
-        print(sorted(total_balance.get_costs(), key=data.amount_sortkey))
+        print(sorted(total_balance.get_cost().get_amounts(), key=data.amount_sortkey))
         print()
 
     if 0:
