@@ -15,7 +15,7 @@ import pandas
 import numpy
 
 from beancount2 import parser
-from beancount2 import checks
+from beancount2 import validation
 from beancount2 import data
 from beancount2 import realization
 from beancount2.inventory import Inventory
@@ -445,7 +445,7 @@ def main():
     contents = parser.parse(args.filename)
 
     # Check for errors.
-    errors = checks.check(contents.entries, contents.accounts)
+    errors = validation.checks(contents.entries, contents.accounts)
     ## FIXME: Not sure what to do with errors yet.
 
     # Save globals in the global app.

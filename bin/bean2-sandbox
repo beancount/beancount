@@ -17,7 +17,7 @@ from matplotlib import pyplot
 
 import beancount2.parser
 from beancount2.utils.bisect_key import bisect_left_withkey
-from beancount2 import checks
+from beancount2 import validation
 from beancount2 import utils
 from beancount2 import data
 from beancount2 import realization
@@ -219,7 +219,7 @@ def main():
         # print_entries_by_date(contents.entries)
 
     with utils.print_time('check'):
-        check_errors = checks.check(contents.entries, contents.accounts)
+        check_errors = validation.check(contents.entries, contents.accounts)
         print_errors(check_errors)
 
     with utils.print_time('pad'):

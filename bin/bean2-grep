@@ -8,7 +8,7 @@ from os import path
 import pprint
 
 from beancount2 import parser
-from beancount2 import checks
+from beancount2 import validation
 from beancount2 import utils
 from beancount2 import data
 

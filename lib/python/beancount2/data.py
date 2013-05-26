@@ -195,3 +195,15 @@ def get_active_years(entries):
         if year != prev_year:
             prev_year = year
             yield year
+
+
+def get_account_open_close(entries, accounts):
+    """Fetch the open/close entries for each of the accounts."""
+
+    open_closes_map = {account: [None, None]
+                       for account in accounts}
+    for entry in utils.filter_type(entries, (Open, Close)):
+        index = 0 if isinstance(entry, Open) else 1
+        open_closes_map[entry.account][index] = entry
+
+    return open_closes_map

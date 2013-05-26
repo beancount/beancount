@@ -6,7 +6,7 @@ from os import path
 import pprint
 
 from beancount2 import parser
-from beancount2 import checks
+from beancount2 import data
 from beancount2 import utils
 
 
@@ -19,7 +19,7 @@ def main():
     contents = parser.parse(opts.filename)
 
     with utils.print_time('open/close'):
-        extents = checks.get_account_open_close(contents.entries, contents.accounts)
+        extents = data.get_account_open_close(contents.entries, contents.accounts)
 
     maxlen = max(map(len, (account.name for account in contents.accounts)))
     for account in contents.accounts:
