@@ -23,6 +23,7 @@ from beancount2 import data
 from beancount2 import realization
 from beancount2.parser import *
 from beancount2.inventory import Inventory
+from beancount2.summarize import summarize
 from beancount2.data import render_fileloc
 
 
@@ -68,8 +69,7 @@ def check_equity_balances(real_accounts):
     """Try to figure out which method is best to summarize income/expenses into equity.
     Comparing (I+X) with (A+L), they really should be equal."""
 
-    # year_range = range(2004, 2015)
-    year_range = range(2012, 2015)
+    year_range = range(2004, 2015)
     for balance_date in (datetime.date(year, 1, 1) for year in year_range):
         print('------------------------', balance_date)
         balances = compute_balance_by_type(real_accounts, balance_date)
@@ -101,7 +101,6 @@ def check_equity_balances(real_accounts):
         print('conversions_diff', conversions.get_cost() + (-conversions_fwd).get_cost())
 
 
-        break
 
 
 
@@ -109,114 +108,9 @@ def check_equity_balances(real_accounts):
 
 
 
-## FIXME: Don't do this; operate on the original entries as much as possible.
-
-def summarize_real(real_accounts, date, opening_account):
-    """Summarize all the accounts before date.
-
-    This function replaces the transactions up to (and not including) the given
-    date with a single opening balance transaction, for each account. Return a
-    new list of realized accounts.
-
-    Note: This routine must operate on a realization (as opposed to on the
-    entries) because the padding entries inserted by the realization will need
-    to be included in the summarization as well.
-    """
-    assert date
-    new_accounts = RealAccountTree()
-
-    for real_account in real_accounts.values():
-        if real_account.postings:
-            assert real_account.account
-
-            # Create the new account.
-            index, balance = realization.find_balance(real_account, date)
-            new_account = new_accounts.get_create(real_account.name)
-
-            # Create a summarization / opening balance entry.
-            fileloc = FileLocation('<summarize>', 0)
-            narration = 'Opening balance as of {} (Summarization)'.format(date)
-            summarize_postings = [
-                Posting(real_account.account, balance, None, None),
-                Posting(opening_account, -balance, None, None),
-            ]
-            summarize_entry = Transaction(
-                fileloc, date, FLAG_SUMMARIZE, None, narration, set(),
-                summarize_postings)
-
-            # real_entry = RealPosting(
-            # FIXME: arg... no.
-
-            # Start the new account with the summarization entry.
-            new_account.postings.append(summarize_entry)
-
-            # Copy the list of postings after the index found.
-            new_account.postings.extend(real_account.postings[index:])
-
-    return new_accounts
 
 
 
-## FIXME: Move this to summarize.py, write tests
-
-def summarize(entries, date, opening_account):
-    """Summarize all the entries before date.
-
-    This function replaces the transactions up to (and not including) the given
-    date with a single opening balance transaction, for each account. It return
-    a new list of entries, all of the ones before the give date having been
-    replaced by a few summarization entries. (You can then "realize" that as a
-    second step if desired.)
-    """
-
-    # Sum up the balances up to the data of summarization.
-    balances = defaultdict(Inventory)
-
-    # If an account is opened, keep its open directive to include it in the
-    # summarized list of entries.
-    open_entries = {}
-
-    for index, entry in enumerate(entries):
-        if entry.date >= date:
-            break
-
-        if isinstance(entry, data.Transaction):
-            for posting in entry.postings:
-                balance = balances[posting.account]
-                balance.add_position(posting.position, False)
-
-        elif isinstance(entry, data.Open):
-            assert entry.account not in open_entries
-            open_entries[entry.account] = entry
-
-        elif isinstance(entry, data.Close):
-            assert entry.account in open_entries
-            del open_entries[entry.account]
-
-
-    # Create a summarization / opening balance entries.
-    summarized_entries = []
-    for account, balance in sorted(balances.items()):
-
-        fileloc = data.FileLocation('<summarize>', 0)
-        narration = "Opening balance for '{}' as of {} (Summarization)".format(
-            account.name, date)
-
-        postings = []
-        for position in balance.get_positions():
-            postings.append(data.Posting(account, position, None, None))
-            postings.append(data.Posting(opening_account, -position, None, None))
-
-        summarize_entry = data.Transaction(
-            fileloc, date, data.FLAG_SUMMARIZE, None, narration, set(), postings)
-
-        summarized_entries.append(summarize_entry)
-
-    # Return the list of active open entries encountered before the date, the
-    # summarized entires, and the rest.
-    return (list(open_entries.values()) +
-            summarized_entries +
-            entries[index:])
 
 
 # a. summarize
@@ -264,23 +158,31 @@ def main():
 
 
 
-    real_log = open('/tmp/real.log', 'w')
-    realization.dump_tree_balances(real_accounts, real_log)
-    print(realization.compute_total_balance(entries), file=real_log)
-
-    with utils.print_time('summarize'):
-        account_opening = data.Account('Equity:OpeningBalances', 'Equity')
-        sum_entries = summarize(entries, datetime.date(2012, 3, 1), account_opening)
-        sumreal_accounts, sumreal_errors = realization.realize(sum_entries, do_check=True)
-        data.print_errors(sumreal_errors)
-
-        sum_log = open('/tmp/sum.log', 'w')
-        realization.dump_tree_balances(sumreal_accounts, sum_log)
-        print(realization.compute_total_balance(entries), file=sum_log)
+    if 1:
+        # Test out summarization.
+        real_log = open('/tmp/real.log', 'w')
+        realization.dump_tree_balances(real_accounts, real_log)
+        total_balance = realization.compute_total_balance(entries)
+        print("TRIAL_BALANCE", total_balance, file=real_log)
+        print("TRIAL_BALANCE (cost)", total_balance.get_cost(), file=real_log)
 
 
+        with utils.print_time('summarize'):
+            account_opening = data.Account('Equity:OpeningBalances', 'Equity')
+            before_entries, after_entries = summarize(entries, datetime.date(2012, 1, 1), account_opening)
+            sum_entries = before_entries + after_entries
+            sumreal_accounts, sumreal_errors = realization.realize(sum_entries, do_check=True)
+            data.print_errors(sumreal_errors)
 
-    if 0:
+            sum_log = open('/tmp/sum.log', 'w')
+            realization.dump_tree_balances(sumreal_accounts, sum_log)
+            total_balance = realization.compute_total_balance(sum_entries)
+            print("TRIAL_BALANCE", total_balance, file=sum_log)
+            print("TRIAL_BALANCE (cost)", total_balance.get_cost(), file=sum_log)
+
+
+
+    if 1:
         check_equity_balances(real_accounts)
 
     if 0:

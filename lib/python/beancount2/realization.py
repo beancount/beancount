@@ -1,10 +1,4 @@
-"""
-Realization of specific lists of account postings into reports.
-
-
-FIXME here you need some ascii art
-
-
+"""Realization of specific lists of account postings into reports.
 """
 import datetime
 from itertools import chain, repeat
@@ -376,5 +370,5 @@ def compute_total_balance(entries):
     for entry in entries:
         if isinstance(entry, Transaction):
             for posting in entry.postings:
-                total_balance.add_position(posting.position, False)
+                total_balance.add_position(posting.position, allow_negative=True)
     return total_balance
