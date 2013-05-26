@@ -84,7 +84,7 @@ def check_unused_accounts(entries, accounts):
         if isinstance(entry, Open):
             open_map[entry.account] = entry
             continue
-        referenced_accounts.update(get_ntuple_accounts(entry))
+        referenced_accounts.update(utils.get_tuple_typed_values(entry, Account))
 
     # Unreferenced accounts are unused accounts.
     unused_accounts = set(accounts) - referenced_accounts
@@ -94,19 +94,6 @@ def check_unused_accounts(entries, accounts):
     return [CheckError(open_map[account].fileloc,
                        "Unused account {}.".format(account.name))
             for account in unused_accounts]
-
-
-def get_ntuple_accounts(ntuple):
-    """Return all the accounts referred to by this namedtuple instance.
-    This function also works recursively on its members, and so it
-    can be used for Transaction instances."""
-    for attribute in ntuple:
-        if isinstance(attribute, Account):
-            yield attribute
-        elif isinstance(attribute, list):
-            for sub_attribute in attribute:
-                for account in get_ntuple_accounts(sub_attribute):
-                    yield account
 
 
 def get_account_open_close(entries, accounts):

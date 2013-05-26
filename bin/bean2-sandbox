@@ -2,17 +2,21 @@
 """Various tests for beancount2.
 (This is the main test program I fiddle with during development.)
 """
+import datetime
 import argparse
 import contextlib
 import io
 import re
 import sys
 import time
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 import pandas
+import matplotlib; matplotlib.use('agg')
+from matplotlib import pyplot
 
 import beancount2.parser
+from beancount2.utils.bisect_key import bisect_left_withkey
 from beancount2 import checks
 from beancount2 import utils
 from beancount2 import data
@@ -35,6 +39,83 @@ def pretty_transaction(txn):
     return '\n'.join(lines)
 
 
+
+
+def find_balance(real_account, date=None):
+    """Find the balance right before the given date.
+    If date is None, get the total balance of the entire account."""
+
+    postings = real_account.postings
+    if date is None:
+        # Find the last posting that had a non-null balance.
+        index = len(postings) - 1
+    else:
+        index = bisect_left_withkey(postings, date,
+                                    key=lambda real_posting: real_posting.entry.date)
+    if index == 0:
+        return Inventory()
+    else:
+        # Take the balance of the previous element, the last one on previous
+        # dates.
+        index -= 1
+
+        # Find the last posting that had a non-null balance.
+        for i in range(index, -1, -1):
+            real_posting = postings[i]
+            if isinstance(real_posting, realization.RealPosting):
+                return real_posting.balance
+        else:
+            return Inventory()
+
+
+# A generic tuple to return various data by account type.
+AccountTypeData = namedtuple('AccountTypeData', 'Assets Liabilities Equity Income Expenses')
+
+
+def compute_balance_by_type(real_accounts, date):
+    """Compute the total balance for each account type, evaluated at the given
+    date. Returns a tuple with an inventor for each accoutn type."""
+
+    balances = {typename: Inventory()
+                for typename in AccountTypeData._fields}
+    for real_account in real_accounts.values():
+        if real_account.postings:
+            typename = data.account_type(real_account.name)
+            balance = find_balance(real_account, date)
+            balances[typename] += balance
+
+    return AccountTypeData(**balances)
+
+
+
+def compute_yearly_balances(real_accounts):
+    """Given a realization, compute the yearly balances of each account type."""
+
+    data = {}
+    for balance_date in (datetime.date(year, 1, 1) for year in range(2004, 2015)):
+        balances = compute_balance_by_type(real_accounts, balance_date)
+        rows = []
+        for account_type, balance in balances._asdict().items():
+            costs = balance.get_costs()
+            index = [cost.currency for cost in costs]
+            series = pandas.Series([cost.number for cost in costs], index=index)
+            rows.append(series)
+        date_data = pandas.DataFrame(rows, index=AccountTypeData._fields)
+        data[balance_date] = date_data
+
+    return pandas.Panel.from_dict(data)
+
+
+def check_equity_balances(real_accounts):
+    """Try to figure out which method is best to summarize income/expenses into equity.
+    Comparing (I+X) with (A+L), they really should be equal."""
+
+    for balance_date in (datetime.date(year, 1, 1) for year in range(2004, 2015)):
+        print(balance_date)
+        balances = compute_balance_by_type(real_accounts, balance_date)
+        print(balances.Equity.get_costs())
+
+        balances.Assets + balances.Liabilities + balances.Equity
 
 
 
@@ -95,33 +176,56 @@ def main():
         print('{} {}'.format(render_fileloc(error.fileloc),
                              error.message))
 
-    realization.dump_tree_balances(real_accounts, sys.stdout)
+    ##realization.dump_tree_balances(real_accounts, sys.stdout)
 
-    # Sum up all the amounts for the trial balance.
-    total_balance = Inventory()
-    for account_type in ('Assets', 'Liabilities', 'Equity', 'Income', 'Expense'):
-        trial_balance = Inventory()
-        for real_account in real_accounts.values():
-            if not real_account.name.startswith(account_type):
-                continue
+    if 1:
+        check_equity_balances(real_accounts)
 
-            for real_posting in reversed(real_account.postings):
-                if isinstance(real_posting, realization.RealPosting):
-                    break
-            else:
-                continue
-            # print('{:64} {}'.format(real_account.name, real_posting.balance))
-            trial_balance += real_posting.balance
+    if 0:
+        yearly = compute_yearly_balances(real_accounts)
 
-        print(account_type)
-        print(sorted(trial_balance.get_costs(), key=data.amount_sortkey))
+        print(yearly.to_frame().to_string())
+        # print(yearly.major_xs('Assets').to_string())
+        USD = yearly.minor_xs('USD')
+        CAD = yearly.minor_xs('CAD')
+        total = USD + CAD
+        print(total.to_string())
+        # print(yearly.minor_xs('CAD').to_string())
+
+        sums = total.sum(axis=0)
+        print(sums.to_string())
+        total.plot()
+        pyplot.show()
+
+
+
+
+    if 0:
+        # Sum up all the amounts for the trial balance.
+        total_balance = Inventory()
+        for account_type in ('Assets', 'Liabilities', 'Equity', 'Income', 'Expense'):
+            trial_balance = Inventory()
+            for real_account in real_accounts.values():
+                if not real_account.name.startswith(account_type):
+                    continue
+
+                for real_posting in reversed(real_account.postings):
+                    if isinstance(real_posting, realization.RealPosting):
+                        break
+                else:
+                    continue
+                # print('{:64} {}'.format(real_account.name, real_posting.balance))
+                trial_balance += real_posting.balance
+
+            print(account_type)
+            print(sorted(trial_balance.get_costs(), key=data.amount_sortkey))
+            print()
+
+            total_balance += trial_balance
+
+        print('TOTAL')
+        print(sorted(total_balance.get_costs(), key=data.amount_sortkey))
         print()
-
-        total_balance += trial_balance
-
-    print('TOTAL')
-    print(sorted(total_balance.get_costs(), key=data.amount_sortkey))
-    print()
 
     if 0:
         real_account = real_accounts['Assets:Cash']
@@ -133,20 +237,7 @@ def main():
                                           ))
 
 
-
-    # with print_time('realize'):
-    #     accounts_map = test_realize(entries)
-
     # find_unique_templates(entries)
-
-
-    #if 0:
-        # account = ledger.accounts.get('Assets:CA:RBC-Investing:RRSP:AIS512')
-        # print(account.name)
-        # print(account.parent.name)
-        # print(account.parent.parent.name)
-        # print(account.parent.parent.parent.parent.parent.name)
-
 
 
     # Print all the balances
@@ -155,6 +246,7 @@ def main():
         for account, inventory in sorted(accounts_map.items()):
             print("{:{:d}s} {}".format(account, maxlen, inventory))
 
+
     # for txn in filter_type(ledger.entries, Transaction):
     #     if not re.search('GOOGLE INC', txn.description):
     #         continue
@@ -162,6 +254,7 @@ def main():
     #     print(pretty_transaction(txn))
     #     residual = compute_residual(txn.postings)
     #     print(residual)
+
 
     if opts.verbose:
         for txn in ledger.entries:

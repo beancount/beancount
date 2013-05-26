@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simply print a list of all the accounts.
+Print a list of all the accounts and some associated information.
 """
 from os import path
 import pprint
@@ -27,6 +27,7 @@ def main():
         open_date = open.date if open else ''
         close_date = close.date if close else ''
         print('{:{len}}  {}  {}'.format(account.name, open_date, close_date, len=maxlen))
+
 
 if __name__ == '__main__':
     main()
