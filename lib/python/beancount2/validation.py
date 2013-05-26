@@ -14,7 +14,7 @@ from beancount2 import utils
 CheckError = namedtuple('CheckError', 'fileloc message')
 
 
-def check_open_close(entries, accounts):
+def validate_open_close(entries, accounts):
     """Some entries may not be present more than once for each account or date.
     Open and Close are unique per account, for instance. Check is unique
     for each date. There are more. Return a list of errors on non-unique
@@ -72,7 +72,7 @@ def check_open_close(entries, accounts):
     return check_errors, open_map, close_map
 
 
-def check_unused_accounts(entries, accounts):
+def validate_unused_accounts(entries, accounts):
     """Find the list of accounts referred to by non-open entries,
     and check that against the total list of accounts. Accounts which are only
     referred to by open entries are probably unused."""
@@ -97,14 +97,14 @@ def check_unused_accounts(entries, accounts):
             for account in unused_accounts]
 
 
-def check(entries, accounts):
+def validate(entries, accounts):
     """Perform all the standard checks on parsed contents."""
 
     # Check for unused accounts.
-    unused_errors = check_unused_accounts(entries, accounts)
+    unused_errors = validate_unused_accounts(entries, accounts)
 
     # Validate open/close directives and accounts referred outside of those.
-    check_errors, _, _ = check_open_close(entries, accounts)
+    check_errors, _, _ = validate_open_close(entries, accounts)
 
     errors = unused_errors + check_errors
     return errors

@@ -9,7 +9,7 @@ FIXME here you need some ascii art
 import datetime
 from itertools import chain, repeat
 from collections import namedtuple, defaultdict
-import copy
+from copy import copy
 import collections
 import pprint
 
@@ -60,17 +60,6 @@ class RealAccountTree(tree_utils.TreeDict):
         return real_account.children
 
 
-
-
-
-
-def groupby(keyfun, elements):
-    grouped = defaultdict(list)
-    for element in elements:
-        grouped[keyfun(element)].append(element)
-    return grouped
-
-
 def pad(entries):
     """Synthesize and insert Transaction entries right after Pad entries in order to
     fulfill checks in the padded accounts. Returns a new list of entries. Note
@@ -80,7 +69,7 @@ def pad(entries):
 
     # Find all the pad entries and group them by account.
     pads = list(utils.filter_type(entries, Pad))
-    pad_dict = groupby(lambda x: x.account, pads)
+    pad_dict = utils.groupby(lambda x: x.account, pads)
 
     # Partially realize the postings, so we can iterate them by account.
     by_account = group_postings_by_account(entries, set(pad_dict.keys()))
@@ -134,8 +123,8 @@ def pad(entries):
                         # Synthesize a new transaction entry for the difference.
                         narration = '(Padding inserted for Check of {})'.format(check_position)
                         postings = [
-                            Posting(active_pad.account, -diff_position, None, None),
-                            Posting(active_pad.account_pad, diff_position, None, None),
+                            Posting(active_pad.account, diff_position, None, None),
+                            Posting(active_pad.account_pad, -diff_position, None, None),
                         ]
                         new_entry = Transaction(
                             active_pad.fileloc, active_pad.date, 'P', None, narration, set(), postings)
@@ -182,7 +171,7 @@ def group_postings_by_account(entries, only_accounts=None):
                 by_accounts[posting.account].append(
                     RealPosting(entry, posting, None))
 
-        elif isinstance(entry, (Check, Open, Close, Pad)):
+        elif isinstance(entry, (Check, Open, Close, Pad, Note)):
             if (only_accounts is not None and
                 entry.account not in only_accounts):
                 continue
@@ -192,37 +181,13 @@ def group_postings_by_account(entries, only_accounts=None):
     return by_accounts
 
 
+def realize(entries, do_check=False):
+    """Compute the running balances and realize a list of entries into a tree of
+    realized accounts, which contains shadow entries with balances. This is then
+    used to issue reports.
 
-
-
-
-
-class RealAccountState:
-    """Per-account running state for realization."""
-
-    def __init__(self):
-        # Latest inventory balance.
-        self.balance = Inventory()
-
-        # Pad instance for the last pad seen.
-        self.last_pad_entry = None
-
-        # Insertion point of the last pad instance.
-        # Points to where we'll be adding synthesized postings.
-        self.index = None
-        self.index_pad = None
-
-        # A mapping of currency to the synthesized postings.
-        self.padded_lots = set()
-
-
-def realize(entries, check=False):
-    """Realize a list of entries into a tree of realized accounts, which contains
-    shadow entries with balances. This is then used to make a report.
-
-    If 'check' is true, verify the inventory balances at the point of
-    'Check' entries.
-
+    If 'check' is true, verify that Check entry balances succeed and issue error
+    messages if they fail.
     """
 
     # Handle sanity checks when the check is at the beginning of the day.
@@ -233,124 +198,61 @@ def realize(entries, check=False):
     real_accounts = RealAccountTree(accounts_map)
     real_errors = []
 
-    # Per-account state.
-    real_states = defaultdict(RealAccountState)
+    def add_real_entry(account, entry):
+        "Create RealEntry instances with the running balance."
+        balance = balances[entry.account]
+        real_account = real_accounts.get_create(account.name)
+        real_account.postings.append(RealEntry(entry, copy(balance)))
+
+    # Running balance for each account.
+    balances = defaultdict(Inventory)
 
     prev_date = datetime.date(1900, 1, 1)
     for entry in entries:
 
         if isinstance(entry, Transaction):
 
-            # Realizing a transaction updates the balance inventory for each of
-            # the accounts in its postings.
-            #
-            # Note: we create multiple RealPosting entries for a single
-            # transaction that has multiple legs on the same account.
+            # Update the balance inventory for each of the postings' accounts.
             for posting in entry.postings:
-                balance_inventory = real_states[posting.account].balance
+                account_name = posting.account.name
+                balance = balances[account_name]
                 try:
-                    balance_inventory.add_position(posting.position)
+                    balance.add_position(posting.position)
                 except ValueError as e:
-                    real_errors.append(
-                        RealError(entry.fileloc, str(e)))
+                    real_errors.append(RealError(entry.fileloc, str(e)))
 
-                real_account = real_accounts.get_create(posting.account.name)
+                real_account = real_accounts.get_create(account_name)
                 real_account.postings.append(
-                    RealPosting(entry, posting, copy.copy(balance_inventory)))
+                    RealPosting(entry, posting, copy(balance)))
 
         elif isinstance(entry, Check):
 
-# FIXME: This should insert a transaction.
-#
-# There's really two things going on here: padding, which really
-# should just occur in the original list of entries and is a
-# separate thing, and computing the global balance. We ought to
-# split those two tasks: 1. enrich the list of entries, and 2.
-# compute the balances. Both will be simpler, even if it means we
-# have to compute the balances twice (we have to anyway).
+            # Add the check realization to the account.
+            # FIXME: We somehow need to indicate the success or failure of this check somehow, for rendering.
+            add_real_entry(entry.account, entry)
 
-            real_state = real_states[entry.account]
-            lot = entry.position.lot
-            balance_position = real_state.balance.get_position(lot)
-            if entry.position != balance_position:
+            # Check the balance against the check entry.
+            if do_check:
 
-                # Calculate the difference.
-                balance_number = ZERO if balance_position is None else balance_position.number
-                diff_number = entry.position.number - balance_number
-                diff_position = Position(lot, diff_number)
-
-                # Pad if it was requested, that is, if a pad entry was already
-                # seen for this account, and if it also has not already been
-                # padded since then.
-                pad = real_state.last_pad_entry
-                assert (pad is None) or (pad.account is entry.account)
-                if pad and (lot not in real_state.padded_lots):
-
-                    # Fix the balance.
-                    real_state.balance.add_position(diff_position)
-
-                    # Create the leg that will balance this account.
-                    real_account = real_accounts.get_create(pad.account.name)
-                    real_posting = Posting(pad.account, diff_position, None, None)
-                    real_account.postings.insert(
-                        real_state.index,
-                        RealPosting(pad, real_posting, real_state.balance))
-                    real_state.index += 1
-
-                    # Update the balance of the other leg of the padding.
-                    other_position = diff_position.get_negative()
-                    other_state = real_states[pad.account_pad]
-                    other_state.balance.add_position(other_position, allow_negative=True)
-
-                    # Create the other leg of the other account.
-                    other_account = real_accounts.get_create(pad.account_pad.name)
-                    other_posting = Posting(pad.account_pad, other_position, None, None)
-                    other_account.postings.insert(
-                        real_state.index_pad,
-                        RealPosting(pad, other_posting, other_state.balance))
-                    real_state.index_pad += 1
-
-                    real_state.padded_lots.add(lot)
-
-                else:
-                    # We have no allowed padding ability; the check failed.
+                check_position = entry.position
+                balance = balances[entry.account]
+                balance_position = balance.get_position(check_position.lot)
+                if check_position != balance_position:
+                    # This check failed; issue an error.
                     real_errors.append(
                         RealError(entry.fileloc, "Check failed for '{}': {} != {}".format(
-                            entry.account.name, balance_position, entry.position)))
-
-            # Add the check realization to the account.
-            real_account = real_accounts.get_create(entry.account.name)
-            real_account.postings.append(
-                RealEntry(entry, copy.copy(real_state.balance)))
+                            entry.account.name, balance_position, check_position)))
 
         elif isinstance(entry, Pad):
 
             # Insert the pad entry in both realized accounts.
-            real_account = real_accounts.get_create(entry.account.name)
-            real_account.postings.append(
-                RealEntry(entry, copy.copy(real_states[entry.account].balance)))
-
-            other_account = real_accounts.get_create(entry.account_pad.name)
-            other_account.postings.append(
-                RealEntry(entry, copy.copy(real_states[entry.account_pad].balance)))
-
-            # Check and warn if the last pad entry was unused.
-            real_state = real_states[entry.account]
-            if real_state.last_pad_entry and not real_state.padded_lots:
-                real_errors.append(
-                    RealError(real_state.last_pad.fileloc, "Superfluous padding: {}".format(real_state.last_pad_entry)))
-
-            # Save it in the running state in order to find it later.
-            real_state.last_pad_entry = entry
-            real_state.index = len(real_account.postings)
-            real_state.index_pad = len(other_account.postings)
-            real_state.padded_lots = set()
+            add_real_entry(entry.account, entry)
+            add_real_entry(entry.account_pad, entry)
 
         elif isinstance(entry, (Open, Close, Note)):
+
             # Append some other entries in the realized list.
-            real_account = real_accounts.get_create(entry.account.name)
-            real_account.postings.append(
-                RealEntry(entry, copy.copy(real_states[entry.account].balance)))
+            add_real_entry(entry.account, entry)
 
         if check_is_at_beginning_of_day:
             # Note: Check entries are assumed to have been sorted to be before any

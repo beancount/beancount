@@ -13,6 +13,7 @@ from beancount2 import validation
 from beancount2 import realization
 from beancount2.data import Open, Close, Note, Pad, Check, Transaction
 from beancount2.data import Decimal, Amount
+from beancount2 import data
 from beancount2.realization import RealPosting, RealEntry
 from beancount2.inventory import Inventory
 
@@ -24,7 +25,7 @@ class TestRealization(unittest.TestCase):
           2013-05-01 open Assets:US:Checking   USD
           2013-05-03 check Assets:US:Checking   100 USD
         """
-        errors = validation.checks(contents.entries, contents.accounts)
+        errors = validation.validate(contents.entries, contents.accounts)
         self.assertFalse(errors)
 
         real_accounts, real_errors = realization.realize(contents.entries, True)
@@ -42,11 +43,14 @@ class TestRealization(unittest.TestCase):
           2013-05-03 check Assets:US:Checking   100 USD
 
         """
-        errors = validation.checks(contents.entries, contents.accounts)
+        errors = validation.validate(contents.entries, contents.accounts)
         self.assertFalse(errors)
 
-        real_accounts, real_errors = realization.realize(contents.entries, True)
-        assert len(real_errors) == 0
+        entries, pad_errors = realization.pad(contents.entries)
+
+        real_accounts, real_errors = realization.realize(entries, True)
+        data.print_errors(real_errors)
+        self.assertEqual(len(real_errors), 0)
 
     # This test ensures that the 'check' directives apply at the beginning of
     # the day.
@@ -62,7 +66,7 @@ class TestRealization(unittest.TestCase):
           2013-05-02 check Assets:US:Checking     0 USD
           2013-05-03 check Assets:US:Checking   100 USD
         """
-        errors = validation.checks(contents.entries, contents.accounts)
+        errors = validation.validate(contents.entries, contents.accounts)
         self.assertFalse(errors)
 
         real_accounts, real_errors = realization.realize(contents.entries, True)

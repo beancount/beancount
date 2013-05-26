@@ -195,10 +195,6 @@ def print_entries_by_date(entries):
             prev_date = entry.date
         print(entry)
 
-def print_errors(errors):
-    # Report all the realization errors.
-    for error in errors:
-        print('{} {}'.format(render_fileloc(error.fileloc), error.message))
 
 
 def main():
@@ -219,22 +215,23 @@ def main():
         # print_entries_by_date(contents.entries)
 
     with utils.print_time('check'):
-        check_errors = validation.check(contents.entries, contents.accounts)
-        print_errors(check_errors)
+        check_errors = validation.validate(contents.entries, contents.accounts)
+        data.print_errors(check_errors)
 
     with utils.print_time('pad'):
         padded_entries, pad_errors = realization.pad(contents.entries)
-        print_errors(pad_errors)
+        data.print_errors(pad_errors)
 
-    for entry in utils.filter_type(padded_entries, data.Transaction):
-        if entry.flag == 'P':
-            print(entry)
-
-
-    raise SystemExit
+        # for entry in utils.filter_type(padded_entries, data.Transaction):
+        #     if entry.flag == 'P':
+        #         print(entry)
 
     with utils.print_time('realize'):
         real_accounts, real_errors = realization.realize(contents.entries, check=True)
+        data.print_errors(real_errors)
+
+    raise SystemExit
+
 
     # For timing only.
     with utils.print_time('balance_all'): # 89ms... okay.

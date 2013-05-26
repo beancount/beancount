@@ -445,7 +445,7 @@ def main():
     contents = parser.parse(args.filename)
 
     # Check for errors.
-    errors = validation.checks(contents.entries, contents.accounts)
+    errors = validation.validate(contents.entries, contents.accounts)
     ## FIXME: Not sure what to do with errors yet.
 
     # Save globals in the global app.

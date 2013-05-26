@@ -72,6 +72,7 @@ def amount_mult(amount, number):
 
 
 # Lots are representation of a commodity with an optional associated cost and optional acquisition date.
+# (There are considered immutable and shared between many objects; this makes everything faster.)
 Lot = namedtuple('Lot', 'currency cost lot_date')
 
 
@@ -122,6 +123,11 @@ def render_fileloc(fileloc):
     Emacs and align and rendered nicely."""
     return '{}:{:8}'.format(fileloc.filename, '{}:'.format(fileloc.lineno))
 
+def print_errors(errors):
+    # Report all the realization errors.
+    for error in errors:
+        print('{} {}'.format(render_fileloc(error.fileloc), error.message))
+
 
 # All possible types of entries. See the documentation for these.
 Open        = namedtuple('Open'        , 'fileloc date account account_id currencies')
@@ -129,8 +135,8 @@ Close       = namedtuple('Close'       , 'fileloc date account')
 Pad         = namedtuple('Pad'         , 'fileloc date account account_pad')
 Check       = namedtuple('Check'       , 'fileloc date account position')
 Transaction = namedtuple('Transaction' , 'fileloc date flag payee narration tags postings')
-Event       = namedtuple('Event'       , 'fileloc date type description')
 Note        = namedtuple('Note'        , 'fileloc date account comment')
+Event       = namedtuple('Event'       , 'fileloc date type description')
 Price       = namedtuple('Price'       , 'fileloc date currency amount')
 
 # Postings are contained in Transaction entries.
@@ -207,3 +213,5 @@ def get_account_open_close(entries, accounts):
         open_closes_map[entry.account][index] = entry
 
     return open_closes_map
+
+

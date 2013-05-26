@@ -23,7 +23,7 @@ def main():
         contents = beancount2.parser.parse(opts.filename)
 
     with utils.print_time('validation'):
-        check_errors = validation.check(contents.entries, contents.accounts)
+        check_errors = validation.validate(contents.entries, contents.accounts)
 
     with utils.print_time('realize'):
         accounts_tree, real_errors = realization.realize(contents.entries, check=True)

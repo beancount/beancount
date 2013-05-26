@@ -3,6 +3,7 @@ Generic utility packages and functions.
 """
 from time import time
 import contextlib
+from collections import defaultdict
 
 
 @contextlib.contextmanager
@@ -12,6 +13,15 @@ def print_time(operation_name):
     t2 = time()
     print(">>>>> Operation: '{}'  Time: {:.0f}ms".format(operation_name,
                                                          (t2 - t1)*1000))
+
+
+def groupby(keyfun, elements):
+    """Group the elements as a dict of lists, where the key is computed using the
+    function 'keyfun'."""
+    grouped = defaultdict(list)
+    for element in elements:
+        grouped[keyfun(element)].append(element)
+    return grouped
 
 
 def filter_type(elist, types):
