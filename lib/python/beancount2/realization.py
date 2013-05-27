@@ -334,7 +334,7 @@ def dump_tree_balances(real_accounts, foutput=None):
         balance = getattr(last_entry, 'balance', None)
         if balance:
             amounts = balance.get_cost().get_amounts()
-            positions = ['{0.number:12.2f} {0.currency}'.format(amount)
+            positions = ['{0.number:12,.2f} {0.currency}'.format(amount)
                          for amount in sorted(amounts, key=amount_sortkey)]
         else:
             positions = ['']
