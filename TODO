@@ -2,8 +2,11 @@
 beancount: TODO
 * NEW
 
-  - In web.py, rename some 'real' to 'view'; this is important, views !=
-    realizations. Make these two concepts clear.
+  - FIXME: We need to make the payee mount different and "dynamic", createing
+    a new view automatically. We should do the same for the years and tags as
+    well. Creating the mounts is too expensive; views need to be created
+    on-demand, we need a special mount.
+
 
   - The default validation should check the invariant that Open and Check
     directives come before any Transaction.
@@ -16,12 +19,6 @@ beancount: TODO
     balance at the point of insertion. Insert regular RealPadPosting pointing to
     a new AutoPad or Clamp entry. You don't even have to use the realize()
     routine.
-
-  - The RealAccount instances need to point to the Account instances (or None).
-
-
-  - Add 'errors', 'statistics', and 'source' to the global pages.
-
 
   - Create an '--anonymous' mode whereby all the numbers are represented by
     'XXX.XX' for public presentation.
@@ -163,6 +160,10 @@ beancount: TODO
 
   - Errors from the parser and others should all be accumulated in one place,
     so that we do all the reporting at the very top level.
+
+  - We will want to somehow "normalize" and merge payee names, because some of
+    that differ very little are obvious for the same business... this would be
+    useful.
 
 * Checks and Safeguards
 

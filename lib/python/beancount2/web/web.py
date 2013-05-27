@@ -10,6 +10,7 @@ import copy
 import io
 import re
 import functools
+from collections import defaultdict
 
 import bottle
 from bottle import response, request
@@ -261,7 +262,7 @@ def income():
 
 
 @app.route('/conversions', name='conversions')
-def positions():
+def conversions():
     "Render the list of transactions with conversions."
     return render_app(
         pagetitle = "Conversions",
@@ -357,14 +358,22 @@ def positions():
         )
 
 
+@app.route('/trades', name='trades')
+def trades():
+    "Render a list of the transactions booked against inventory-at-cost."
+    return render_app(
+        pagetitle = "Trades",
+        contents = ""
+        )
 
-# Opening Balance Sheet
-#         LI(A("Capital Statement", href=umap('@@CapitalStatement')),
-#         LI(A('Cash Flow Statement', href=umap('@@CashFlow'))),
-# Payees
-# Tags
-# Trades
 
+@app.route('/documents', name='documents')
+def documents():
+    "Render a tree with the documents found for each."
+    return render_app(
+        pagetitle = "Documents",
+        contents = ""
+        )
 
 
 APP_NAVIGATION = bottle.SimpleTemplate("""
@@ -379,6 +388,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{A.journal}}">Journal</a></li>
   <li><a href="{{A.positions}}">Positions</a></li>
   <li><a href="{{A.conversions}}">Conversions</a></li>
+  <li><a href="{{A.documents}}">Documents</a></li>
 </ul>
 """)
 
@@ -514,6 +524,26 @@ class TagView(View):
         return tagged_entries, None
 
 
+class PayeeView(View):
+
+    def __init__(self, entries, options, id, title, payee):
+        View.__init__(self, entries, options, id, title)
+
+        # The payee to filter.
+        assert isinstance(payee, str)
+        self.payee = payee
+
+    def apply_filter(self, entries, options):
+        "Return only transactions for the given payee."
+
+        payee = self.payee
+        payee_entries = [entry
+                         for entry in entries
+                         if isinstance(entry, data.Transaction) and (entry.payee == payee)]
+
+        return payee_entries, None
+
+
 #--------------------------------------------------------------------------------
 # Bootstrapping and main program.
 
@@ -523,7 +553,7 @@ VIEWS = []
 
 
 def app_mount(view):
-    "Create and mount a new app for a ledger."
+    "Create and mount a new app for a view."
 
     # Create and customize the new app.
     app_copy = copy.copy(app)
@@ -550,14 +580,20 @@ def create_realizations(entries, options):
         app_mount(view)
 
     # Create views for all tags.
-    all_tags = set()
-    for entry in utils.filter_type(entries, data.Transaction):
-        all_tags.update(entry.tags)
-
-    for tag in sorted(all_tags):
-        tagid = re.sub('[^A-Za-z0-9\-\.]', '', tag)
-        view = TagView(entries, options, tagid, 'Tag {}'.format(tag), {tag})
+    for tagid, tag in compute_ids(get_all_tags(entries)):
+        view = TagView(entries, options, tagid, 'Tag "{}"'.format(tag), {tag})
         app_mount(view)
+
+    # FIXME: We need to make the payee mount different and "dynamic", createing
+    # a new view automatically. We should do the same for the years and tags as
+    # well. Creating the mounts is too expensive; views need to be created
+    # on-demand, we need a special mount.
+    if 0:
+        # Create views for all payees.
+        for payeeid, payee in compute_ids(get_all_payees(entries)):
+            view = PayeeView(entries, options, payeeid, 'Payee "{}"'.format(payee), payee)
+            app_mount(view)
+
 
 
 def load_input_file(filename):
@@ -619,3 +655,55 @@ def main():
 
     # Run the server.
     bottle.run(host='localhost', port=8080, debug=args.debug) # reloader=True
+
+
+
+
+
+
+
+
+
+# FIXME: move this to data.py.
+
+def get_all_tags(entries):
+    "Return a list of all the tags seen in the given entries."
+    all_tags = set()
+    for entry in utils.filter_type(entries, data.Transaction):
+        all_tags.update(entry.tags)
+    return all_tags
+
+
+def get_all_payees(entries):
+    "Return a list of all the unique payees seen in the given entries."
+    all_payees = set()
+    for entry in utils.filter_type(entries, data.Transaction):
+        all_payees.add(entry.payee)
+    all_payees.discard(None)
+    return all_payees
+
+
+def compute_ids(strings):
+    """Given a sequence of strings, reduce them to corresponding ids without any
+    funny characters and insure that the list of ids is unique. Yields pairs
+    of (id, string) for the result."""
+
+    string_set = set(strings)
+
+    # Try multiple methods until we get one that has no collisions.
+    for regexp, replacement in [('[^A-Za-z0-9-.]', '_'),
+                                ('[^A-Za-z0-9]', ''),]:
+
+        # Map ids to strings.
+        idmap = defaultdict(list)
+        for string in string_set:
+            id = re.sub(regexp, replacement, string)
+            idmap[id].append(string)
+
+        # Check for collisions.
+        if all(len(stringlist) == 1 for stringlist in idmap.values()):
+            break
+    else:
+        raise RuntimeError("Could not find a unique mapping for {}".format(string_set))
+
+    return sorted((id, stringlist[0]) for id, stringlist in idmap.items())
