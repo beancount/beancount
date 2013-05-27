@@ -69,10 +69,14 @@ class TreeDict(dict):
             dict.__setitem__(self, name, account)
         return account
 
-    def render_lines(self):
+    def render_lines(self, start_node_name=None):
         """Yield a tree-rendering prefix and a node, so that you can print
         this out in a tree."""
-        return render(self.get_root(), self.adaptor)
+        if start_node_name is None:
+           start_node = self.get_root()
+        else:
+           start_node = self[start_node_name]
+        return render(start_node, self.adaptor)
 
 
 # A class to hold the recursion rendering context.
@@ -93,8 +97,8 @@ def render(root, node_adaptor):
     context = Context(node_adaptor, '`-- ', '|-- ', '|   ', '    ')
 
     # Render as lines and join in a single string.
-    for line_node in _render_node(root, context, True, ''):
-      yield line_node
+    for tuples in _render_node(root, context, True, ''):
+      yield tuples
 
 
 def _render_node(node, context, is_last, prefix):
@@ -113,14 +117,14 @@ def _render_node(node, context, is_last, prefix):
         child_prefix = prefix + (context.pfx_skip if is_last else context.pfx_cont)
 
         # Compute the text to render for the first line.
-        line = line_prefix + node_name
+        line = line_prefix
 
         # Compute continuation lines.
         line_next = (prefix +
                      (context.pfx_skip if is_last else context.pfx_cont) +
                      (context.pfx_skip if not children else context.pfx_cont))
 
-        yield (line, line_next, node)
+        yield (line, line_next, node_name, node)
 
     else:
         child_prefix = ''

@@ -35,14 +35,10 @@ class TestTree(unittest.TestCase):
         tree.get_create('Assets:US:TD')
         tree.get_create('Assets:US:HSBC:Savings')
         tree.get_create('Assets:US:HSBC:Checking')
-        # print()
-        # for line, line_cont, node in tree.render_lines():
-        #     print('{:32}: {}'.format(line, repr(node.name)))
+        # FIXME: Need to add assets here.
 
     def test_simple2(self):
         tree = create_test_tree()
         tree.get_create('Assets')
         tree.get_create('Assets:US:HSBC:Savings')
-        # print()
-        # for line, line_cont, node in tree.render_lines():
-        #     print('{:32}: {}'.format(line, repr(node.name)))
+        # FIXME: Need to add assets here.

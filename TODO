@@ -2,6 +2,16 @@
 beancount: TODO
 * NEW
 
+  - In the TOC, list and create views for level 2 (country) and level3
+    (institution).
+
+  - summarize.py: One more operation is needed: when we print out the balance
+    sheet, we need to transfer the period's income to NetIncome
+
+  - Make the parser use the options name_* fields in order to validate and
+    change the lexer to recognize all account names, not specificially the
+    hardcoded ones we have now. (Assets|Liabilities|...).
+
   - FIXME: We need to make the payee mount different and "dynamic", createing
     a new view automatically. We should do the same for the years and tags as
     well. Creating the mounts is too expensive; views need to be created
@@ -164,6 +174,10 @@ beancount: TODO
   - We will want to somehow "normalize" and merge payee names, because some of
     that differ very little are obvious for the same business... this would be
     useful.
+
+  - In the balance sheet and income statement, we need to render the amounts
+    inverted (and in a slightly different style).
+
 
 * Checks and Safeguards
 

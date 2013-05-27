@@ -329,7 +329,7 @@ def dump_tree_balances(real_accounts, foutput=None):
 
     lines = list(real_accounts.render_lines())
     width = max(len(line[0]) for line in lines)
-    for line_first, line_next, real_account in lines:
+    for line_first, line_next, account_name, real_account in lines:
         last_entry = real_account.postings[-1] if real_account.postings else None
         balance = getattr(last_entry, 'balance', None)
         if balance:
@@ -338,7 +338,8 @@ def dump_tree_balances(real_accounts, foutput=None):
                          for amount in sorted(amounts, key=amount_sortkey)]
         else:
             positions = ['']
-        for position, line in zip(positions, chain((line_first,), repeat(line_next))):
+        for position, line in zip(positions, chain((line_first + account_name,),
+                                                   repeat(line_next))):
             foutput.write('{:{width}}   {:16}\n'.format(line, position, width=width))
 
 

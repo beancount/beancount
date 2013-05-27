@@ -3,10 +3,25 @@
  */
 
 body {
-    font-family: 'Roboto Condensed', sans-serif;
+    font-family: 'Roboto', sans-serif;
     /* font-family: 'Droid Sans Mono', sans-serif;  */
 }
 
+table {
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+table td {
+    border: thin solid #eee;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+table td.numcell {
+    text-align: right;
+    font-family: 'Droid Sans Mono', sans-serif;
+}
 
 /* The document/file title at the top. */
 #title {
@@ -225,6 +240,12 @@ h1#pagetitle {
 /* /\*   border: thin solid green; *\/ */
 /* } */
 
+a.account:link, a.account:visited {
+  text-decoration: none;
+  color: blue;
+  /* font-weight: bold; */
+}
+
 
 
 /* /\* Range view. *\/ */
@@ -256,7 +277,97 @@ h1#pagetitle {
 
 
 
-/* /\* Tree tables *\/ */
+/* Tree tables */
+
+table.tree-table {
+    width: 100%;
+    font-size: x-small;
+}
+
+table.tree-table th {
+    color: #888;
+}
+
+/* Accounts row in tree tables. */
+table.tree-table th.first {
+    width: 40%;
+}
+
+table td {
+    white-space: nowrap;
+}
+
+
+/* Side-by-side views */
+
+div.halfleft h3, div.halfright h3 {
+    text-align: center;
+    margin: 10px 0px 10px 0px;
+    /* border: thin dashed red; */
+}
+
+div.halfleft {
+  float: left;
+  left: 1%;
+  width: 50%;
+  margin: 0px;
+  padding: 0px;
+  /* border: thin solid #DDD; */
+}
+
+div.halfright {
+  float: right;
+  left: 50%;
+  width: 49%;
+  margin: 0px;
+  padding: 0px;
+  /* border: thin solid #DDD; */
+}
+
+
+div#equity {
+    margin-top: 12px;
+}
+
+
+
+/* #container2 { */
+/*     clear:left; */
+/*     float:left; */
+/*     width:100%; */
+/*     overflow:hidden; */
+/*     background:#ffa7a7; /\* column 2 background colour *\/ */
+/* } */
+/* #container1 { */
+/*     float:left; */
+/*     width:100%; */
+/*     position:relative; */
+/*     right:50%; */
+/*     background:#fff689; /\* column 1 background colour *\/ */
+/* } */
+
+
+/* div.halfleft { */
+/*     float:left; */
+/*     width:46%; */
+/*     position:relative; */
+/*     left:52%; */
+/*     overflow:hidden; */
+/* } */
+
+/* div.halfright { */
+/*     float:left; */
+/*     width:46%; */
+/*     position:relative; */
+/*     left:56%; */
+/*     overflow:hidden; */
+/* } */
+
+
+
+
+
+
 
 /* thead { */
 /*   font-size: smaller; */
@@ -309,19 +420,6 @@ h1#pagetitle {
 
 
 
-/* /\* Side-by-side views *\/ */
-
-/* div.left { */
-/*   width: 50%; */
-/*   /\* border: thin solid red; *\/ */
-/* } */
-
-/* div.right { */
-/*   float: right; */
-/*   left: 50%; */
-/*   width: 50%; */
-/*   /\* border: thin solid blue; *\/ */
-/* } */
 
 /* div.right h2, div.left h2 { */
 /*   margin-top: 0px; */

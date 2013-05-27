@@ -20,7 +20,9 @@ import numpy
 from beancount2 import parser
 from beancount2 import validation
 from beancount2 import data
+from beancount2.data import account_leaf_name, Account, Lot
 from beancount2 import realization
+from beancount2.realization import RealAccount
 from beancount2 import summarize
 from beancount2 import utils
 from beancount2.inventory import Inventory
@@ -200,7 +202,7 @@ def render_app(*args, **kw):
 
 @app.route('/', name='approot')
 def approot():
-    bottle.redirect(request.app.get_url('reports'))
+    bottle.redirect(request.app.get_url('balsheet'))
 
 
 @app.route('/reports', name='reports')
@@ -220,45 +222,177 @@ def trial():
         )
 
 
-@app.route('/openbal', name='openbal')
-def openbal():
-    "Opening balances."
+EMS_PER_SPACE = 1.5
+_account_link_cache = {}
 
-    real_accounts = request.app.view.get_opening_realization()
-    if real_accounts is None:
-        contents = 'N/A'
-    else:
-        oss = io.StringIO()
-        realization.dump_tree_balances(real_accounts, oss)
-        contents = '<pre>{}</pre>'.format(escape(oss.getvalue()))
+def account_link(account_name):
+    "Render an anchor for the given account name."
+    if isinstance(account_name, (Account, RealAccount)):
+        account_name = account_name.name
+    try:
+        return _account_link_cache[(request.app, account_name)]
+    except KeyError:
+        slashed_name = account_name.replace(':', '/')
+        link = '<a href="{}" class="account">{}</a>'.format(
+            request.app.get_url('account', slashed_account_name=slashed_name),
+            account_leaf_name(account_name))
+        _account_link_cache[account_name] = link
+        return link
 
-    return render_app(
-        pagetitle = "Opening Balances",
-        contents = contents
-        )
+
+def tree_table(oss, tree, start_node_name, header=None, classes=None):
+    """Generator to a tree of accounts as an HTML table.
+    Render only all the nodes under 'start_node_name'.
+    This yields the real_account object for each line and a
+    list object used to return the values for multiple cells.
+    """
+    write = lambda data: (oss.write(data), oss.write('\n'))
+
+    write('<table class="tree-table {}">'.format(
+        ' '.join(classes) if classes else ''))
+
+    if header:
+        write('<thead>')
+        write('</tr>')
+        header_iter = iter(header)
+        write('<th class="first">{}</th>'.format(next(header_iter)))
+        for column in header_iter:
+            write('<th>{}</th>'.format(column))
+        write('</tr>')
+        write('</thead>')
+
+    lines = list(tree.render_lines(start_node_name))
+    for line_first, _, account_name, real_account in lines:
+        write('<tr>')
+        write('<td class="tree-node-name" style="padding-left: {}em">{}</td>'.format(
+            len(line_first)/EMS_PER_SPACE,
+            account_link(real_account)))
+
+        # Let the caller fill in the data to be rendered by adding it to a list
+        # objects. The caller may return multiple cell values; this will create
+        # multiple columns.
+        cells = []
+        yield real_account, cells
+
+        # Add columns for each value rendered.
+        for cell in cells:
+            write('<td class="numcell">{}</td>'.format(cell))
+
+        write('</tr>')
+    write('</table>')
+
+
+def table_of_balances(tree, start_node_name, currencies, classes=None):
+    """Render a table of balances."""
+
+    header = ['Account'] + currencies + ['Other']
+
+    oss = io.StringIO()
+    for real_account, cells in tree_table(oss, tree, start_node_name, 
+                                          header, classes):
+
+        # For each account line, get the final balance of the account (at cost).
+        balance = realization.find_balance(real_account)
+        balance_cost = balance.get_cost()
+
+        # Extract all the positions that the user has identified as home
+        # currencies.
+        positions = list(balance_cost.get_positions())
+        for currency in currencies:
+            position = balance_cost.get_position(Lot(currency, None, None))
+            if position:
+                positions.remove(position)
+                cells.append('{:,.2f}'.format(position.number))
+            else:
+                cells.append('')
+
+        # Render all the rest of the inventory in the last cell.
+        cells.append('\n<br/>'.join(map(str, positions)))
+
+    return oss.getvalue()
+
+
+
+
+
+
+
+def balance_sheet_table(real_accounts, options):
+    """Render an HTML balance sheet of the real_accounts tree."""
+
+    currencies = options['currency']
+    assets      = table_of_balances(real_accounts, options['name_assets'], currencies)
+    liabilities = table_of_balances(real_accounts, options['name_liabilities'], currencies)
+    equity      = table_of_balances(real_accounts, options['name_equity'], currencies)
+
+    return """
+           <div id="assets" class="halfleft">
+            <h3>Assets</h3>
+            {assets}
+           </div>
+           <div id="liabilities" class="halfright">
+            <h3>Liabilities</h3>
+            {liabilities}
+           </div>
+           <div id="equity" class="halfright">
+            <h3>Equity</h3>
+            {equity}
+           </div>
+        """.format(**vars())
 
 
 @app.route('/balsheet', name='balsheet')
 def balsheet():
     "Balance sheet."
 
+    view = request.app.view
     real_accounts = request.app.view.get_realization()
-    oss = io.StringIO()
-    realization.dump_tree_balances(real_accounts, oss)
+    contents = balance_sheet_table(real_accounts, view.options)
 
-    return render_app(
-        pagetitle = "Balance Sheet",
-        contents = '<pre>{}</pre>'.format(escape(oss.getvalue()))
-        )
+    return render_app(pagetitle = "Balance Sheet",
+                      contents = contents)
+
+
+@app.route('/openbal', name='openbal')
+def openbal():
+    "Opening balances."
+
+    view = request.app.view
+    real_accounts = request.app.view.get_opening_realization()
+    if real_accounts is None:
+        contents = 'N/A'
+    else:
+        contents = balance_sheet_table(real_accounts, view.options)
+
+    return render_app(pagetitle = "Opening Balances",
+                      contents = contents)
 
 
 @app.route('/income', name='income')
 def income():
     "Income statement."
-    return render_app(
-        pagetitle = "Income Statement",
-        contents = ""
-        )
+
+    view = request.app.view
+    real_accounts = request.app.view.get_realization()
+
+    # Render the income statement tables.
+    currencies = view.options['currency']
+    income   = table_of_balances(real_accounts, view.options['name_income'], currencies)
+    expenses = table_of_balances(real_accounts, view.options['name_expenses'], currencies)
+
+    contents = """
+       <div id="income" class="halfleft">
+        <h3>Income</h3>
+        {income}
+       </div>
+       <div id="expenses" class="halfright">
+        <h3>Expenses</h3>
+        {expenses}
+       </div>
+    """.format(**vars())
+
+    return render_app(pagetitle = "Income Statement",
+                      contents = contents)
 
 
 @app.route('/conversions', name='conversions')
@@ -292,7 +426,7 @@ def account(slashed_account_name=None):
     temp = temporary_render_real_account(real_accounts[account_name], transactions_only=True)
 
     return render_app(
-        pagetitle = 'Account: {}'.format(account_name),
+        pagetitle = '{}'.format(account_name), # Account:
         contents = '<pre>{}</pre>'.format(escape(temp))
         )
 
@@ -380,7 +514,6 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
 <ul>
   <li><a href="{{G.toc}}">Table of Contents</a></li>
   <li><span class="ledger-name">{{view_title}}:</span></li>
-  <li><a href="{{A.reports}}">Reports</a></li>
   <li><a href="{{A.openbal}}">Opening Balances</a></li>
   <li><a href="{{A.balsheet}}">Balance Sheet</a></li>
   <li><a href="{{A.income}}">Income Statement</a></li>
@@ -389,6 +522,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{A.positions}}">Positions</a></li>
   <li><a href="{{A.conversions}}">Conversions</a></li>
   <li><a href="{{A.documents}}">Documents</a></li>
+  <li><a href="{{A.reports}}">Reports</a></li>
 </ul>
 """)
 
@@ -707,3 +841,8 @@ def compute_ids(strings):
         raise RuntimeError("Could not find a unique mapping for {}".format(string_set))
 
     return sorted((id, stringlist[0]) for id, stringlist in idmap.items())
+
+
+
+
+# FIXME: Move this to generic utilities.
