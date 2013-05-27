@@ -103,7 +103,7 @@ class TestRealizationPadding(unittest.TestCase):
                          real_entry_types)
 
     def check_balance(self, real_account, position):
-        _, final_balance = realization.find_balance(real_account)
+        final_balance = realization.find_balance(real_account)
         self.assertEqual(final_balance.get_position(position.lot), position)
 
     @realizedoc

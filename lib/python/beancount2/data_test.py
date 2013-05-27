@@ -1,5 +1,5 @@
 """
-Unit tests for the inventory class.
+Unit tests for the various basic data types.
 """
 import unittest
 

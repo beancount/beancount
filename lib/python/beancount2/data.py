@@ -110,9 +110,11 @@ def account_type(name):
 
 def is_balance_sheet_account(account):
     return account.type in ('Assets', 'Liabilities', 'Equity')
+    # FIXME: Remove these hardcoded strings; use the options instead.
 
 def is_income_statement_account(account):
     return account.type in ('Income', 'Expenses')
+    # FIXME: Remove these hardcoded strings; use the options instead.
 
 
 # The location in a source file where the directive was read from.
@@ -146,6 +148,7 @@ Posting = namedtuple('Posting', 'account position price flag')
 # Special flags
 FLAG_PADDING   = 'P' # Transactions created from padding directives.
 FLAG_SUMMARIZE = 'S' # Transactions created due to summarization.
+FLAG_TRANSFER  = 'T' # Transactions created due to balance transfers.
 
 
 class GetAccounts:

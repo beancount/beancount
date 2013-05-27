@@ -136,6 +136,9 @@ class Inventory:
     def __len__(self):
         return len(self.positions)
 
+    def __eq__(self, other):
+        return sorted(self.positions) == sorted(other.positions)
+
     def is_small(self, epsilon):
         for position in self.positions:
             if abs(position.number) > epsilon:

@@ -294,7 +294,9 @@ def realize(entries, do_check=False):
             # other entries with the same date. This is supposed to be done by the
             # parser. Verify this invariant here.
             if isinstance(entry, (Check, Open)):
-                assert entry.date > prev_date, (entry, prev_entry)
+                assert entry.date > prev_date, (
+                    "Invalid entry order: Check or Open directive before transaction.",
+                    (entry, prev_entry))
             else:
                 prev_entry = entry
                 prev_date = entry.date
@@ -336,19 +338,17 @@ def dump_tree_balances(real_accounts, foutput):
 
 
 def find_balance(real_account, date=None):
-    """Find the balance of a realzed right before the given date.
+    """Find the balance of a realized account right before the given date.
     If date is None, get the final balance of the entire list of realized entries."""
 
     postings = real_account.postings
     if date is None:
         # Find the last posting that had a non-null balance.
-        index = len(postings) - 1
+        index = len(postings)
     else:
         index = bisect_left_withkey(postings, date,
                                     key=lambda real_posting: real_posting.entry.date)
-    if index == 0:
-        return 0, Inventory()
-    else:
+    if index != 0:
         # Take the balance of the previous element, the last one on previous
         # dates.
         index -= 1
@@ -357,9 +357,10 @@ def find_balance(real_account, date=None):
         for i in range(index, -1, -1):
             real_posting = postings[i]
             if isinstance(real_posting, RealPosting):
-                return (index+1), real_posting.balance
-        else:
-            return 0, Inventory()
+                #index += 1
+                return real_posting.balance
+
+    return Inventory()
 
 
 def compute_total_balance(entries):
@@ -372,3 +373,25 @@ def compute_total_balance(entries):
             for posting in entry.postings:
                 total_balance.add_position(posting.position, allow_negative=True)
     return total_balance
+
+
+def compare_realizations(real_accounts1, real_accounts2):
+    """Compare two realizations; return True if the balances are equal
+    for all accounts."""
+    real1 = real_accounts1.copy()
+    real2 = real_accounts2.copy()
+    for account_name, real_account1 in real1.items():
+        real_account2 = real2.pop(account_name)
+        balance1 = find_balance(real_account1)
+        balance2 = find_balance(real_account2)
+        if balance1 != balance2:
+            return False
+    return True
+
+
+def real_cost_as_dict(real_accounts):
+    """Convert a tree of real accounts as a dict for easily doing
+    comparisons for testing."""
+    return {real_account.name: str(find_balance(real_account).get_cost())
+            for account_name, real_account in real_accounts.items()
+            if real_account.account}

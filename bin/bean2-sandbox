@@ -23,7 +23,7 @@ from beancount2 import data
 from beancount2 import realization
 from beancount2.parser import *
 from beancount2.inventory import Inventory
-from beancount2.summarize import summarize
+from beancount2 import summarize
 from beancount2.data import render_fileloc
 
 
@@ -41,7 +41,7 @@ def compute_balance_by_type(real_accounts, date):
     for real_account in real_accounts.values():
         if real_account.postings:
             typename = data.account_type(real_account.name)
-            _, balance = realization.find_balance(real_account, date)
+            balance = realization.find_balance(real_account, date)
             balances[typename] += balance
 
     return AccountTypeData(**balances)
@@ -113,8 +113,6 @@ def check_equity_balances(real_accounts):
 
 
 
-# a. summarize
-# b. annul_income
 # c. conversion adjustment
 
 # 3. Insert a conversion error entry.
@@ -157,8 +155,28 @@ def main():
 
 
 
-
     if 1:
+        # Test out transfer and summarization, together.
+        account_transfer = data.Account('Equity:PreviousEarnings', 'Equity')
+        account_opening = data.Account('Equity:OpeningBalances', 'Equity')
+        report_date = datetime.date(2013, 1, 1)
+        tran_entries = summarize.transfer(entries, report_date,
+                                          data.is_income_statement_account, account_transfer)
+
+        before_entries, after_entries = summarize.summarize(tran_entries, report_date, account_opening)
+        sum_entries = before_entries # + after_entries
+
+        out = open('/tmp/out.log', 'w')
+        for entry in sum_entries:
+            print(entry, file=out)
+
+        real_accounts, real_errors = realization.realize(sum_entries, do_check=True)
+        assert not real_errors
+
+        realization.dump_tree_balances(real_accounts, sys.stdout)
+
+
+    if 0:
         # Test out summarization.
         real_log = open('/tmp/real.log', 'w')
         realization.dump_tree_balances(real_accounts, real_log)
@@ -169,7 +187,7 @@ def main():
 
         with utils.print_time('summarize'):
             account_opening = data.Account('Equity:OpeningBalances', 'Equity')
-            before_entries, after_entries = summarize(entries, datetime.date(2012, 1, 1), account_opening)
+            before_entries, after_entries = summarize.summarize(entries, datetime.date(2012, 1, 1), account_opening)
             sum_entries = before_entries + after_entries
             sumreal_accounts, sumreal_errors = realization.realize(sum_entries, do_check=True)
             data.print_errors(sumreal_errors)
@@ -182,7 +200,7 @@ def main():
 
 
 
-    if 1:
+    if 0:
         check_equity_balances(real_accounts)
 
     if 0:
