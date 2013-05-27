@@ -21,6 +21,7 @@ from beancount2 import validation
 from beancount2 import utils
 from beancount2 import data
 from beancount2 import realization
+from beancount2.realization import dump_tree_balances
 from beancount2.parser import *
 from beancount2.inventory import Inventory
 from beancount2 import summarize
@@ -143,48 +144,38 @@ def main():
         valid_errors = validation.validate(entries, contents.accounts)
         data.print_errors(valid_errors)
 
+
+
     with utils.print_time('realize'):
         real_accounts, real_errors = realization.realize(entries, do_check=True)
         data.print_errors(real_errors)
 
     if opts.verbose:
-        realization.dump_tree_balances(real_accounts, sys.stdout)
-
+        dump_tree_balances(real_accounts, sys.stdout)
 
 
     if 1:
         # Test out transfer and summarization, together.
-        begin_date = datetime.date(2012, 1, 1)
-        end_date = datetime.date(2013, 1, 1)
-
-        # Transfer income and expenses to equity, closing the year.
-        account_transfer = data.Account('Equity:PreviousEarnings', 'Equity')
-        tran_entries = summarize.transfer(entries, begin_date,
-                                          data.is_income_statement_account, account_transfer)
-
-        # Summarize all the previous balances.
-        account_opening = data.Account('Equity:OpeningBalances', 'Equity')
-        sum_entries, index = summarize.summarize(tran_entries, begin_date, account_opening)
-
-        # Truncate the entries after this.
-        trun_entries = summarize.truncate(sum_entries, end_date)
-
-
+        clamped_entries = summarize.clamp(entries,
+                                          datetime.date(2012, 1, 1), datetime.date(2013, 1, 1),
+                                          data.Account('Equity:PreviousEarnings', 'Equity'),
+                                          data.Account('Equity:OpeningBalances', 'Equity'))
 
         out = open('/tmp/out.log', 'w')
-        for entry in trun_entries:
+        for entry in clamped_entries:
             print(entry, file=out)
 
-        real_accounts, real_errors = realization.realize(trun_entries, do_check=True)
+        real_accounts, real_errors = realization.realize(clamped_entries, do_check=True)
+        print(real_errors)
         assert not real_errors
 
-        realization.dump_tree_balances(real_accounts, sys.stdout)
+        dump_tree_balances(real_accounts)
 
 
     if 0:
         # Test out summarization.
         real_log = open('/tmp/real.log', 'w')
-        realization.dump_tree_balances(real_accounts, real_log)
+        dump_tree_balances(real_accounts, real_log)
         total_balance = realization.compute_total_balance(entries)
         print("TRIAL_BALANCE", total_balance, file=real_log)
         print("TRIAL_BALANCE (cost)", total_balance.get_cost(), file=real_log)
@@ -197,7 +188,7 @@ def main():
             data.print_errors(sumreal_errors)
 
             sum_log = open('/tmp/sum.log', 'w')
-            realization.dump_tree_balances(sumreal_accounts, sum_log)
+            dump_tree_balances(sumreal_accounts, sum_log)
             total_balance = realization.compute_total_balance(sum_entries)
             print("TRIAL_BALANCE", total_balance, file=sum_log)
             print("TRIAL_BALANCE (cost)", total_balance.get_cost(), file=sum_log)

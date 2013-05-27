@@ -3,6 +3,7 @@ Web server for Beancount ledgers.
 This uses the Bottle single-file micro web framework (with no plugins).
 """
 import argparse
+import datetime
 from os import path
 from textwrap import dedent
 import copy
@@ -18,6 +19,8 @@ from beancount2 import parser
 from beancount2 import validation
 from beancount2 import data
 from beancount2 import realization
+from beancount2 import summarize
+from beancount2 import utils
 from beancount2.inventory import Inventory
 from beancount2.data import Open, Close, Pad, Check, Transaction, Event, Note, Price
 
@@ -80,7 +83,7 @@ def root():
 
 @bottle.route('/toc', name='toc')
 def toc():
-    mindate, maxdate = data.get_min_max_dates([entry for entry in contents.entries
+    mindate, maxdate = data.get_min_max_dates([entry for entry in clean_entries
                                                if not isinstance(entry, (Open, Close))])
 
     ledger_items = []
@@ -212,6 +215,22 @@ def trial():
     return render_app(
         pagetitle = "Trial Balance",
         contents = ""
+        )
+
+
+@app.route('/openbal', name='openbal')
+def openbal():
+    "Opening balances."
+
+FIXME: Here, use the begin_index to create the open balance sheet.
+
+    real_accounts = get_realization(request.app)
+    oss = io.StringIO()
+    realization.dump_tree_balances(real_accounts, oss)
+
+    return render_app(
+        pagetitle = "Balance Sheet",
+        contents = '<pre>{}</pre>'.format(escape(oss.getvalue()))
         )
 
 
@@ -350,6 +369,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{G.toc}}">Table of Contents</a></li>
   <li><span class="ledger-name">{{real_title}}:</span></li>
   <li><a href="{{A.reports}}">Reports</a></li>
+  <li><a href="{{A.openbal}}">Opening Balances</a></li>
   <li><a href="{{A.balsheet}}">Balance Sheet</a></li>
   <li><a href="{{A.income}}">Income Statement</a></li>
   <li><a href="{{A.trial}}">Trial Balance</a></li>
@@ -377,6 +397,7 @@ def app_mount(real_id, real_title, filter_function):
     app_copy.real_title = real_title
     app_copy.filter_function = filter_function
     app_copy.entries = None
+    app_copy.begin_index = None
     app_copy.real_accounts = None
 
     # Mount it on the root application.
@@ -393,8 +414,7 @@ def get_realization(app):
 
     if app.real_accounts is None:
         # Get the filtered list of entries.
-        contents = bottle.default_app().contents
-        app.entries = app.filter_function(contents.entries)
+        app.entries, app.begin_index = app.filter_function(clean_entries)
 
         # Realize them in a hierarchy.
         app.real_accounts, _ = realization.realize(app.entries, False)
@@ -403,14 +423,20 @@ def get_realization(app):
     return app.real_accounts
 
 
-def create_realizations(contents):
+def create_realizations(entries, options):
     """Create apps for all the realizations we want to be able to render."""
 
     # The global realization, with all entries.
     app_mount('all', 'All Transactions', filter_entries_all)
 
     # One realization by-year.
-    for year in reversed(list(data.get_active_years(contents.entries))):
+    account_earnings = options['account_earnings']
+    account_earnings = data.Account(account_earnings, data.account_type(account_earnings))
+
+    account_opening = options['account_opening']
+    account_opening = data.Account(account_opening, data.account_type(account_opening))
+
+    for year in reversed(list(data.get_active_years(entries))):
 
         # FIXME: We need to somehow attach the list of particular entries to the
         # app, to provide a unique title and a function that will
@@ -418,18 +444,40 @@ def create_realizations(contents):
         # realization.
         app_mount('year{:4d}'.format(year),
                   'Year {:4d}'.format(year),
-                  functools.partial(filter_entries_byyear, year))
+                  functools.partial(filter_entries_byyear,
+                                    year, account_earnings, account_opening))
 
 
 def filter_entries_all(entries):
     "Return the list of entries unmodified."
-    return entries
+    return entries, None
 
-def filter_entries_byyear(year, entries):
+def filter_entries_byyear(year, account_earnings, account_opening, entries):
     "Return entries for only that year."
-    return [entry
-            for entry in entries
-            if entry.date.year == year]
+    entries, index = summarize.clamp(entries,
+                                     datetime.date(year, 1, 1), datetime.date(year+1, 1, 1),
+                                     account_earnings, account_opening)
+    return entries, index
+
+
+def load_input_file(filename):
+    """Parse the input file, pad the entries and validate it.
+    This also prints out the error messages."""
+
+    with utils.print_time('parse'):
+        contents = parser.parse(filename)
+        parse_errors = contents.parse_errors
+        data.print_errors(contents.parse_errors)
+
+    with utils.print_time('pad'):
+        entries, pad_errors = realization.pad(contents.entries)
+        data.print_errors(pad_errors)
+
+    with utils.print_time('validation'):
+        valid_errors = validation.validate(entries, contents.accounts)
+        data.print_errors(valid_errors)
+
+    return contents, entries
 
 
 def main():
@@ -440,18 +488,19 @@ def main():
     args = argparser.parse_args()
 
     # Parse the beancount file.
-    global contents ## FIXME: maybe we can do away with this, and attach it to
-                    ## the global application class.
-    contents = parser.parse(args.filename)
+    #
+    ## FIXME: maybe we can do away with this, and attach it to
+    ## the global application class.
+    global contents, clean_entries
+    contents, clean_entries = load_input_file(args.filename)
 
-    # Check for errors.
-    errors = validation.validate(contents.entries, contents.accounts)
     ## FIXME: Not sure what to do with errors yet.
 
     # Save globals in the global app.
     global_app = bottle.default_app()
     global_app.args = args
     global_app.contents = contents
+    global_app.entries = clean_entries
 
     # Load templates.
     with open(path.join(path.dirname(__file__), 'template.html')) as f:
@@ -462,7 +511,7 @@ def main():
         global STYLE; STYLE = f.read()
 
     # Create all the basic realizations.
-    create_realizations(contents)
+    create_realizations(clean_entries, contents.options)
 
     # Run the server.
     bottle.run(host='localhost', port=8080, debug=args.debug) # reloader=True

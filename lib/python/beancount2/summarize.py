@@ -13,9 +13,42 @@ from beancount2 import inventory
 from beancount2.data import Transaction, Open, Close, Check
 from beancount2.data import FileLocation, Posting
 from beancount2.data import FLAG_SUMMARIZE, FLAG_TRANSFER
+from beancount2.data import is_income_statement_account
+
+
+def clamp(entries, begin_date, end_date,
+          account_transfer, account_opening):
+    """Filter entries to include only those between begin and end dates.
+
+    This routine performs the standard procedure required to produce reports
+    only for entries between two dates. That is, it
+
+    - transfers the income and expense balances to a "previous retained
+      earnings" account,
+    - summarizes all the entries before the begin date to an "opening balances"
+      account
+    - truncates the entries to only those before the end date.
+
+    A new list of entries is returned, and the index that points to the first
+    original transaction (this is used to create the opening balances report,
+    i.e., the balance sheet with only the summarized entries).
+    """
+
+    # Transfer income and expenses to equity, closing the year.
+    transferred_entries = transfer(entries, begin_date,
+                                   is_income_statement_account, account_transfer)
+
+    # Summarize all the previous balances.
+    summarized_entries, index = summarize(transferred_entries, begin_date, account_opening)
+
+    # Truncate the entries after this.
+    truncated_entries = truncate(summarized_entries, end_date)
+
+    return truncated_entries, index
 
 
 def transfer(entries, date, account_pred, transfer_account):
+
     """For all accounts that match the 'account_pred' predicate, create new
     entries to transfer the balance at the given date 'date' from the account
     to the transfer account. Return a new list of entries, with the new
@@ -111,7 +144,7 @@ def truncate(entries, date):
 
 
 def create_entries_from_balances(balances, date, other_account, direction,
-                                 filename, flag, narration):
+                                 filename, flag, narration_template):
     """"Create a list of new entries to transfer the amounts in the 'balances' dict
     to/from other_account. If 'direction' is True, the new entries transfer TO
     the balances account from the other account; otherwise the new entries
@@ -125,7 +158,7 @@ def create_entries_from_balances(balances, date, other_account, direction,
             continue
 
         fileloc = FileLocation(filename, 0)
-        narration = narration.format(account=account, date=date)
+        narration = narration_template.format(account=account, date=date)
 
         if not direction:
             balance = -balance

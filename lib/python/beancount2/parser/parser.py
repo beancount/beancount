@@ -21,6 +21,26 @@ from beancount2 import balance
 __sanity_checks__ = False
 
 
+# A set of default options.
+#
+# FIXME: This shall be removed, we should use an argparse parser to ensure that
+# we offer the same set of options for the command-line as we do in the file.
+DEFAULT_OPTIONS = {
+    "title"              : "Beancount",
+    "name_assets"        : "Assets",
+    "name_liabilities"   : "Liabilities",
+    "name_equity"        : "Equity",
+    "name_income"        : "Income",
+    "name_expenses"      : "Expenses",
+    "account_unrealized" : "Unrealized",
+    "account_earnings"   : "RetainedEarnings",
+    "account_opening"    : "OpeningBalance",
+    "documents"          : [],
+    "currency"           : [],
+    }
+
+
+
 class ParserError(RuntimeError):
     """A parsing error. Formats the file location into the message string."""
 
@@ -48,7 +68,7 @@ class Builder(object):
         self.errors = []
 
         # Accumulated and unprocessed options.
-        self.options = []
+        self.options = DEFAULT_OPTIONS.copy()
 
     def store_result(self, entries):
         """Start rule stores the final result here."""
@@ -63,9 +83,15 @@ class Builder(object):
         self.tags.remove(tag)
 
     def option(self, filename, lineno, key, value):
-        fileloc = FileLocation(filename, lineno)
-        assert key not in self.options
-        self.options.append(Option(fileloc, key, value))
+        if key not in self.options:
+            fileloc = FileLocation(filename, lineno)
+            raise ParserError(fileloc, "Invalid option: '{}'".format(key))
+
+        option = self.options[key]
+        if isinstance(option, list):
+            option.append(value)
+        else:
+            self.options[key] = value
 
 
     def DATE(self, year, month, day):
@@ -198,24 +224,6 @@ def entry_sortkey(entry):
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.fileloc.lineno)
 
 
-# A list of option names that can be specified multiple times.
-# FIXME: This shall be removed, we should use an argparse parser to ensure that
-# we offer the same set of options for the command-line as we do in the file.
-LIST_OPTIONS = ['documents', 'currency']
-
-def parse_options(options):
-    """Parse and validate the options into a dictionary."""
-    options_dict = {}
-    for option in options:
-        key = option.key
-        if key in LIST_OPTIONS:
-            options_dict.setdefault(key, []).append(option.value)
-        else:
-            assert key not in options_dict
-            options_dict[key] = option.value
-    return options_dict
-
-
 def parse(filename):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts."""
@@ -223,8 +231,7 @@ def parse(filename):
     _parser.parse(path.abspath(filename), builder)
     entries = sorted(builder.entries, key=entry_sortkey)
     accounts = sorted(builder.accounts.values(), key=account_sortkey)
-    options = parse_options(builder.options)
-    return FileContents(entries, accounts, builder.errors, options)
+    return FileContents(entries, accounts, builder.errors, builder.options)
 
 
 def parse_string(input_string):
@@ -267,4 +274,3 @@ def dump_lexer_string(input_string):
         tmp_file.write(input_string)
         tmp_file.flush()
         return dump_lexer(tmp_file.name)
-
