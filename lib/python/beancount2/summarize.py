@@ -15,6 +15,44 @@ from beancount2.data import FileLocation, Posting
 from beancount2.data import FLAG_SUMMARIZE, FLAG_TRANSFER
 
 
+def transfer(entries, date, account_pred, transfer_account):
+    """For all accounts that match the 'account_pred' predicate, create new
+    entries to transfer the balance at the given date 'date' from the account
+    to the transfer account. Return a new list of entries, with the new
+    transfer entries added in.
+
+    This is used to transfer balances from income and expenses from a previous
+    period to a "retained earnings" account. This is accomplished by creating
+    new entries (like every other kind of safe manipulation of entry lists).
+
+    (Note that inserting transfers breaks any Checks that are in the touched
+    accounts. This is basically to be used only on accounts without checks, such
+    as Income or Expense.)
+    """
+
+    # Compute balances at date.
+    index, balances = sum_to_date(entries, date)
+    if index is None:
+        index = len(entries)
+
+    # Filter out to keep only the accounts we want.
+    transfer_balances = {account: balance
+                         for account, balance in balances.items()
+                         if account_pred(account)}
+
+    # We need to insert the entries at the end of the previous day.
+    transfer_date = date - datetime.timedelta(days=1)
+
+    # Create transfer entries.
+    transfer_entries = create_entries_from_balances(
+        transfer_balances, transfer_date, transfer_account, False,
+        '<summarize>', FLAG_TRANSFER,
+        "Transfer balance for '{account.name}' as of {date} (Transfer Balance)")
+
+    # Split the new entries in a new list.
+    return (entries[:index] + transfer_entries + entries[index:])
+
+
 def summarize(entries, date, opening_account):
     """Summarize all the entries before date.
 
@@ -61,42 +99,15 @@ def summarize(entries, date, opening_account):
             len(open_entries) + len(summarizing_entries))
 
 
-def transfer(entries, date, account_pred, transfer_account):
-    """For all accounts that match the 'account_pred' predicate, create new
-    entries to transfer the balance at the given date 'date' from the account
-    to the transfer account. Return a new list of entries, with the new
-    transfer entries added in.
-
-    This is used to transfer balances from income and expenses from a previous
-    period to a "retained earnings" account. This is accomplished by creating
-    new entries (like every other kind of safe manipulation of entry lists).
-
-    (Note that inserting transfers breaks any Checks that are in the touched
-    accounts. This is basically to be used only on accounts without checks, such
-    as Income or Expense.)
-    """
-
-    # Compute balances at date.
-    index, balances = sum_to_date(entries, date)
-    if index is None:
-        index = len(entries)
-
-    # Filter out to keep only the accounts we want.
-    transfer_balances = {account: balance
-                         for account, balance in balances.items()
-                         if account_pred(account)}
-
-    # We need to insert the entries at the end of the previous day.
-    transfer_date = date - datetime.timedelta(days=1)
-
-    # Create transfer entries.
-    transfer_entries = create_entries_from_balances(
-        transfer_balances, transfer_date, transfer_account, False,
-        '<summarize>', FLAG_TRANSFER,
-        "Transfer balance for '{account.name}' as of {date} (Transfer Balance)")
-
-    # Split the new entries in a new list.
-    return (entries[:index] + transfer_entries + entries[index:])
+def truncate(entries, date):
+    """Filter out all the entries at and after date. Returns a new list of entries."""
+    # FIXME: Do a bisect here, the list is sorted.
+    new_entries = []
+    for entry in entries:
+        if entry.date >= date:
+            break # Stop here, we're assuming the entries are sorted.
+        new_entries.append(entry)
+    return new_entries
 
 
 def create_entries_from_balances(balances, date, other_account, direction,

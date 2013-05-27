@@ -22,7 +22,6 @@ from beancount2.parser.parser_test import parsedoc
 from beancount2.summarize import summarize, transfer, open_at_date
 
 
-
 DO_PRINT = object()
 
 def summarizedoc(date, other_account):
@@ -162,9 +161,6 @@ class TestSummarization(unittest.TestCase):
                           'Equity:RetainedEarnings': 'Inventory(-920.00 USD)',
                           'Expenses:Restaurant': 'Inventory()',
                           'Income:Job': 'Inventory(-1000.00 USD)'})
-
-
-
 
 
 class TestTransferBalances(unittest.TestCase):
