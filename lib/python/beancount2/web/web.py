@@ -8,6 +8,7 @@ from os import path
 from textwrap import dedent
 import copy
 import io
+import re
 import functools
 
 import bottle
@@ -70,7 +71,7 @@ def render_global(*args, **kw):
     kw['G'] = G # Global mapper
     kw['A'] = A # Application mapper
     kw['title'] = bottle.default_app().contents.options['title']
-    kw['real_title'] = ''
+    kw['view_title'] = ''
     kw['navigation'] = GLOBAL_NAVIGATION
     return template.render(*args, **kw)
 
@@ -86,19 +87,19 @@ def toc():
     mindate, maxdate = data.get_min_max_dates([entry for entry in clean_entries
                                                if not isinstance(entry, (Open, Close))])
 
-    ledger_items = []
-    for ledger in LEDGERS:
-        ledger_items.append('<li><a href="{}">{}</a></li>'.format(getattr(G, ledger.real_id),
-                                                                  ledger.real_title))
+    view_items = []
+    for view in VIEWS:
+        view_items.append('<li><a href="{}">{}</a></li>'.format(getattr(G, view.id),
+                                                                view.title))
 
     return render_global(
         pagetitle = "Table of Contents",
         contents = """
-          <h2>Ledgers</h2>
+          <h2>Views</h2>
           <ul>
-            {ledger_items}
+            {view_items}
           </ul>
-        """.format(ledger_items='\n'.join(ledger_items)))
+        """.format(view_items='\n'.join(view_items)))
 
 
 @bottle.route('/errors', name='errors')
@@ -112,7 +113,7 @@ def errors():
 
 @bottle.route('/stats', name='stats')
 def stats():
-    "Compute and render statistics about the ledger."
+    "Compute and render statistics about the input file."
     # Note: maybe the contents of this can fit on the home page, if this is simple.
     return render_global(
         pagetitle = "Statistics",
@@ -191,8 +192,8 @@ def render_app(*args, **kw):
     kw['G'] = G # Global mapper
     kw['A'] = A # Application mapper
     kw['title'] = bottle.default_app().contents.options['title']
-    kw['real_title'] = ' - ' + request.app.real_title
-    kw['navigation'] = APP_NAVIGATION.render(G=G, A=A, real_title=request.app.real_title)
+    kw['view_title'] = ' - ' + request.app.view.title
+    kw['navigation'] = APP_NAVIGATION.render(G=G, A=A, view_title=request.app.view.title)
     return template.render(*args, **kw)
 
 
@@ -206,7 +207,7 @@ def reports():
     "The index of all the available reports for this realization."
     return render_app(
         pagetitle = "Index",
-        contents = APP_NAVIGATION.render(G=G, A=A, real_title=request.app.real_title))
+        contents = APP_NAVIGATION.render(G=G, A=A, view_title=request.app.view.title))
 
 
 @app.route('/trial', name='trial')
@@ -222,15 +223,17 @@ def trial():
 def openbal():
     "Opening balances."
 
-FIXME: Here, use the begin_index to create the open balance sheet.
-
-    real_accounts = get_realization(request.app)
-    oss = io.StringIO()
-    realization.dump_tree_balances(real_accounts, oss)
+    real_accounts = request.app.view.get_opening_realization()
+    if real_accounts is None:
+        contents = 'N/A'
+    else:
+        oss = io.StringIO()
+        realization.dump_tree_balances(real_accounts, oss)
+        contents = '<pre>{}</pre>'.format(escape(oss.getvalue()))
 
     return render_app(
-        pagetitle = "Balance Sheet",
-        contents = '<pre>{}</pre>'.format(escape(oss.getvalue()))
+        pagetitle = "Opening Balances",
+        contents = contents
         )
 
 
@@ -238,7 +241,7 @@ FIXME: Here, use the begin_index to create the open balance sheet.
 def balsheet():
     "Balance sheet."
 
-    real_accounts = get_realization(request.app)
+    real_accounts = request.app.view.get_realization()
     oss = io.StringIO()
     realization.dump_tree_balances(real_accounts, oss)
 
@@ -270,7 +273,7 @@ def positions():
 def journal():
     "A list of all the entries in this realization."
 
-    real_accounts = get_realization(request.app)
+    real_accounts = request.app.view.get_realization()
     temp = temporary_render_real_account(real_accounts[''], transactions_only=True)
 
     return render_app(
@@ -284,7 +287,7 @@ def account(slashed_account_name=None):
     "A list of all the entries for this account realization."
 
     account_name = slashed_account_name.strip('/').replace('/', ':')
-    real_accounts = get_realization(request.app)
+    real_accounts = request.app.view.get_realization()
     temp = temporary_render_real_account(real_accounts[account_name], transactions_only=True)
 
     return render_app(
@@ -314,7 +317,7 @@ def temporary_render_real_account(real_account, transactions_only=False):
 def positions():
     "Render information about positions at the end of all entries."
 
-    real_accounts = get_realization(request.app)
+    real_accounts = request.app.view.get_realization()
 
     total_balance = Inventory()
     for real_account in real_accounts.values():
@@ -367,7 +370,7 @@ def positions():
 APP_NAVIGATION = bottle.SimpleTemplate("""
 <ul>
   <li><a href="{{G.toc}}">Table of Contents</a></li>
-  <li><span class="ledger-name">{{real_title}}:</span></li>
+  <li><span class="ledger-name">{{view_title}}:</span></li>
   <li><a href="{{A.reports}}">Reports</a></li>
   <li><a href="{{A.openbal}}">Opening Balances</a></li>
   <li><a href="{{A.balsheet}}">Balance Sheet</a></li>
@@ -381,98 +384,199 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
 
 
 #--------------------------------------------------------------------------------
+# Views.
+
+
+class View:
+    """A container for filtering a subset of entries and realizing that for
+    display."""
+
+    def __init__(self, all_entries, options, id, title):
+
+        # A reference to the full list of padded entries.
+        self.all_entries = all_entries
+
+        # List of filterered entries for this view, and index at the beginning
+        # of the period transactions, past the opening balances. These are
+        # computed lazily.
+        self.entries = None
+        self.begin_index = None
+
+        # Id and title.
+        self.id = id
+        self.title = title
+
+        # A reference to the global list of options.
+        self.options = options
+
+        # Realization of the filtered entries to display.
+        self.real_accounts = None
+
+    def get_realization(self):
+        """Return the realization associated with an app. This runs lazily; it filters
+        the entries and realizes when the realization is needed. Thereafter, the
+        realized accounts is cached in the app. """
+
+        if self.real_accounts is None:
+            # Get the filtered list of entries.
+            self.entries, self.begin_index = self.apply_filter(self.all_entries, self.options)
+
+            # Realize the full set of entries for the balance sheet.
+            with utils.print_time('realize'):
+                self.real_accounts, _ = realization.realize(self.entries, False)
+
+            assert self.real_accounts is not None
+
+        return self.real_accounts
+
+    def get_opening_realization(self):
+        """Return the realization at the index time. This is not cached for now, as this
+        should be fast."""
+
+        # Make sure we've realized.
+        self.get_realization()
+
+        # Check if it is supported by this filter. (Sometimes this doesn't make
+        # sense: if the filtered entries haven't been summarized or don't have a
+        # period of exercise, the opening balances is "all empty". The concept
+        # of opening balances only makes sense for a summarized balance sheet.)
+        if self.begin_index is None:
+            return None
+
+        # Realize the full set of entries for the balance sheet.
+        with utils.print_time('realize'):
+            openbal_entries = self.entries[:self.begin_index]
+            openbal_real_accounts, _ = realization.realize(openbal_entries, False)
+        assert openbal_real_accounts is not None
+        return openbal_real_accounts
+
+    def apply_filter(self, entries):
+        "Filter the list of entries."
+        raise NotImplementedError
+
+
+class AllView(View):
+
+    def apply_filter(self, entries, options):
+        "Return the list of entries unmodified."
+        return (entries, None)
+
+
+class YearView(View):
+
+    def __init__(self, entries, options, id, title, year):
+        View.__init__(self, entries, options, id, title)
+
+        # The year of filtering.
+        self.year = year
+
+    def apply_filter(self, entries, options):
+        "Return entries for only that year."
+
+        # Get the transfer account objects.
+        #
+        # FIXME: We should probably create these globally and then all fetch the
+        # same instances.
+        account_earnings = options['account_earnings']
+        account_earnings = data.Account(account_earnings, data.account_type(account_earnings))
+
+        account_opening = options['account_opening']
+        account_opening = data.Account(account_opening, data.account_type(account_opening))
+
+        # Clamp to the desired period.
+        begin_date = datetime.date(self.year, 1, 1)
+        end_date = datetime.date(self.year+1, 1, 1)
+        with utils.print_time('clamp'):
+            entries, index = summarize.clamp(entries,
+                                             begin_date, end_date,
+                                             account_earnings, account_opening)
+
+        return entries, index
+
+
+class TagView(View):
+
+    def __init__(self, entries, options, id, title, tags):
+        View.__init__(self, entries, options, id, title)
+
+        # The tags we want to include.
+        assert isinstance(tags, (set, list, tuple))
+        self.tags = tags
+
+    def apply_filter(self, entries, options):
+        "Return only entries with the given tag."
+
+        tags = self.tags
+        tagged_entries = [entry
+                          for entry in entries
+                          if isinstance(entry, data.Transaction) and (entry.tags & tags)]
+
+        return tagged_entries, None
+
+
+#--------------------------------------------------------------------------------
 # Bootstrapping and main program.
 
 
 # A global list of all available ledgers (apps).
-LEDGERS = []
+VIEWS = []
 
 
-def app_mount(real_id, real_title, filter_function):
+def app_mount(view):
     "Create and mount a new app for a ledger."
 
     # Create and customize the new app.
     app_copy = copy.copy(app)
-    app_copy.real_id = real_id
-    app_copy.real_title = real_title
-    app_copy.filter_function = filter_function
-    app_copy.entries = None
-    app_copy.begin_index = None
-    app_copy.real_accounts = None
+    app_copy.view = view
 
     # Mount it on the root application.
-    bottle.mount('/real/{}'.format(real_id), app_copy, name=real_id)
+    bottle.mount('/view/{}'.format(view.id), app_copy, name=view.id)
 
     # Update the global list of ledgers.
-    LEDGERS.append(app_copy)
-
-
-def get_realization(app):
-    """Return the realization associated with an app. This runs lazily; it filters
-    the entries and realizes when the realization is needed. Thereafter, the
-    realized accounts is cached in the app. """
-
-    if app.real_accounts is None:
-        # Get the filtered list of entries.
-        app.entries, app.begin_index = app.filter_function(clean_entries)
-
-        # Realize them in a hierarchy.
-        app.real_accounts, _ = realization.realize(app.entries, False)
-        assert app.real_accounts is not None
-
-    return app.real_accounts
+    VIEWS.append(view)
 
 
 def create_realizations(entries, options):
     """Create apps for all the realizations we want to be able to render."""
 
     # The global realization, with all entries.
-    app_mount('all', 'All Transactions', filter_entries_all)
+    app_mount(AllView(entries, options,
+                      'all', 'All Transactions'))
 
     # One realization by-year.
-    account_earnings = options['account_earnings']
-    account_earnings = data.Account(account_earnings, data.account_type(account_earnings))
-
-    account_opening = options['account_opening']
-    account_opening = data.Account(account_opening, data.account_type(account_opening))
-
     for year in reversed(list(data.get_active_years(entries))):
+        view = YearView(entries, options,
+                        'year{:4d}'.format(year), 'Year {:4d}'.format(year), year)
+        app_mount(view)
 
-        # FIXME: We need to somehow attach the list of particular entries to the
-        # app, to provide a unique title and a function that will
-        # lazy-compute the filtered list of entries and its associated
-        # realization.
-        app_mount('year{:4d}'.format(year),
-                  'Year {:4d}'.format(year),
-                  functools.partial(filter_entries_byyear,
-                                    year, account_earnings, account_opening))
+    # Create views for all tags.
+    all_tags = set()
+    for entry in utils.filter_type(entries, data.Transaction):
+        all_tags.update(entry.tags)
 
-
-def filter_entries_all(entries):
-    "Return the list of entries unmodified."
-    return entries, None
-
-def filter_entries_byyear(year, account_earnings, account_opening, entries):
-    "Return entries for only that year."
-    entries, index = summarize.clamp(entries,
-                                     datetime.date(year, 1, 1), datetime.date(year+1, 1, 1),
-                                     account_earnings, account_opening)
-    return entries, index
+    for tag in sorted(all_tags):
+        tagid = re.sub('[^A-Za-z0-9\-\.]', '', tag)
+        view = TagView(entries, options, tagid, 'Tag {}'.format(tag), {tag})
+        app_mount(view)
 
 
 def load_input_file(filename):
     """Parse the input file, pad the entries and validate it.
     This also prints out the error messages."""
 
+    # Parse the input file.
     with utils.print_time('parse'):
         contents = parser.parse(filename)
         parse_errors = contents.parse_errors
         data.print_errors(contents.parse_errors)
 
+    # Pad the resulting entries (create synthetic Pad entries to balance checks
+    # where desired).
     with utils.print_time('pad'):
         entries, pad_errors = realization.pad(contents.entries)
         data.print_errors(pad_errors)
 
+    # Validate the list of entries.
     with utils.print_time('validation'):
         valid_errors = validation.validate(entries, contents.accounts)
         data.print_errors(valid_errors)

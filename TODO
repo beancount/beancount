@@ -2,6 +2,12 @@
 beancount: TODO
 * NEW
 
+  - In web.py, rename some 'real' to 'view'; this is important, views !=
+    realizations. Make these two concepts clear.
+
+  - The default validation should check the invariant that Open and Check
+    directives come before any Transaction.
+
   - FIXME: We need to parse the options using the same argparse parser....
 
   - summarize() step, annul_income() step.
@@ -556,7 +562,7 @@ beancount: TODO
   - We could allow '$' to parse as equivalent to 'USD' in the input, or to
     stand on its own as a currency name... why not?
 
-  - Make price syntax like this, to be consistent with positions! 
+  - Make price syntax like this, to be consistent with positions!
     This makes sense!
 
               @price 2008-03-01  LOFT4530 {235000 CAD}
