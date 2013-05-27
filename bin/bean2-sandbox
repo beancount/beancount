@@ -113,9 +113,6 @@ def check_equity_balances(real_accounts):
 
 
 
-# c. conversion adjustment
-
-# 3. Insert a conversion error entry.
 
 
 #-------------------------------------------------------------------------------
@@ -157,14 +154,19 @@ def main():
 
     if 1:
         # Test out transfer and summarization, together.
+
+        # Transfer income and expenses to equity, closing the year.
         account_transfer = data.Account('Equity:PreviousEarnings', 'Equity')
-        account_opening = data.Account('Equity:OpeningBalances', 'Equity')
         report_date = datetime.date(2013, 1, 1)
         tran_entries = summarize.transfer(entries, report_date,
                                           data.is_income_statement_account, account_transfer)
 
-        before_entries, after_entries = summarize.summarize(tran_entries, report_date, account_opening)
-        sum_entries = before_entries # + after_entries
+        # Summarize all the previous balances.
+        account_opening = data.Account('Equity:OpeningBalances', 'Equity')
+        sum_entries, _ = summarize.summarize(tran_entries, report_date, account_opening)
+
+
+
 
         out = open('/tmp/out.log', 'w')
         for entry in sum_entries:
@@ -187,8 +189,7 @@ def main():
 
         with utils.print_time('summarize'):
             account_opening = data.Account('Equity:OpeningBalances', 'Equity')
-            before_entries, after_entries = summarize.summarize(entries, datetime.date(2012, 1, 1), account_opening)
-            sum_entries = before_entries + after_entries
+            sum_entries, _ = summarize.summarize(entries, datetime.date(2012, 1, 1), account_opening)
             sumreal_accounts, sumreal_errors = realization.realize(sum_entries, do_check=True)
             data.print_errors(sumreal_errors)
 

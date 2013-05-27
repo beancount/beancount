@@ -52,14 +52,13 @@ def summarize(entries, date, opening_account):
     # Gather the list of active open entries at date.
     open_entries = open_at_date(entries, date)
 
-    # Return the list of active open entries encountered before the date, the
-    # summarized entires, and the rest.
-    before_entries = open_entries + summarizing_entries
-
     # We will preserve the entries after the date.
     after_entries = [] if index is None else entries[index:]
 
-    return (before_entries, after_entries)
+    # Return a new list of entries and the index that points after the entries
+    # were inserted.
+    return ((open_entries + summarizing_entries + after_entries),
+            len(open_entries) + len(summarizing_entries))
 
 
 def transfer(entries, date, account_pred, transfer_account):

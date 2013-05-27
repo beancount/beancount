@@ -40,8 +40,7 @@ def summarizedoc(date, other_account):
             real_accounts, real_errors = realize(entries, do_check=True)
             assert not real_errors, real_errors
 
-            before, after = summarize(entries, date, other_account)
-            sum_entries = before + after
+            sum_entries, _ = summarize(entries, date, other_account)
             sum_real_accounts, sum_real_errors = realize(sum_entries, do_check=True)
             assert not sum_real_errors, sum_real_errors
 
@@ -153,8 +152,7 @@ class TestSummarization(unittest.TestCase):
         tran_entries = transfer(contents.entries, report_date,
                                 data.is_income_statement_account, TRANSFER_BALANCES)
 
-        before, after = summarize(tran_entries, report_date, OPENING_BALANCES)
-        sum_entries = before + after
+        sum_entries, _ = summarize(tran_entries, report_date, OPENING_BALANCES)
         real_accounts, real_errors = realize(sum_entries, do_check=True)
         assert not real_errors
 
