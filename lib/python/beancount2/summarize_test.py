@@ -16,15 +16,17 @@ from beancount2.data import Open, Close, Note, Pad, Check, Transaction
 from beancount2.data import Decimal, Amount, Account
 from beancount2 import data
 from beancount2.realization import RealPosting, RealEntry
+from beancount2.realization import pad, realize, dump_tree_balances, compare_realizations, real_cost_as_dict
 from beancount2.inventory import Inventory
 from beancount2.parser.parser_test import parsedoc
-from beancount2 import summarize
+from beancount2.summarize import summarize, transfer, open_at_date
 
 
 
 DO_PRINT = object()
 
-def summarizedoc(date, account):
+def summarizedoc(date, other_account):
+
     def summarizedoc_deco(fun):
         """Decorator that parses, pads and summarizes, and realizes the function's
         docstring as an argument."""
@@ -32,15 +34,15 @@ def summarizedoc(date, account):
         def newfun(self):
             contents = parser.parse_string(textwrap.dedent(fun.__doc__))
             assert not contents.parse_errors, contents.parse_errors
-            entries, pad_errors = realization.pad(contents.entries)
+            entries, pad_errors = pad(contents.entries)
             assert not pad_errors, pad_errors
 
-            real_accounts, real_errors = realization.realize(entries, do_check=True)
+            real_accounts, real_errors = realize(entries, do_check=True)
             assert not real_errors, real_errors
 
-            before, after = summarize.summarize(entries, date, account)
+            before, after = summarize(entries, date, other_account)
             sum_entries = before + after
-            sum_real_accounts, sum_real_errors = realization.realize(sum_entries, do_check=True)
+            sum_real_accounts, sum_real_errors = realize(sum_entries, do_check=True)
             assert not sum_real_errors, sum_real_errors
 
             # print('---')
@@ -58,15 +60,16 @@ def summarizedoc(date, account):
             finally:
                 if result is DO_PRINT:
                     print("REAL")
-                    realization.dump_tree_balances(real_accounts, sys.stdout)
+                    dump_tree_balances(real_accounts, sys.stdout)
                     print("SUM_REAL")
-                    realization.dump_tree_balances(sum_real_accounts, sys.stdout)
+                    dump_tree_balances(sum_real_accounts, sys.stdout)
 
         return newfun
     return summarizedoc_deco
 
 
 OPENING_BALANCES = Account('Equity:OpeningBalances', 'Equity')
+TRANSFER_BALANCES = Account('Equity:RetainedEarnings', 'Equity')
 
 class TestSummarization(unittest.TestCase):
 
@@ -85,7 +88,7 @@ class TestSummarization(unittest.TestCase):
             Income:Job            -1000 USD
             Assets:Checking        1000 USD
         """
-        self.assertTrue(realization.compare_realizations(real_accounts, sum_real_accounts))
+        self.assertTrue(compare_realizations(real_accounts, sum_real_accounts))
         self.assertTrue(sum_real_accounts[OPENING_BALANCES.name].postings)
 
     @summarizedoc(date(2012, 1, 1), OPENING_BALANCES)
@@ -103,7 +106,7 @@ class TestSummarization(unittest.TestCase):
             Assets:Checking       -1000 USD
             Assets:Checking        1000 CAD @ 1 USD
         """
-        self.assertTrue(realization.compare_realizations(real_accounts, sum_real_accounts))
+        self.assertTrue(compare_realizations(real_accounts, sum_real_accounts))
         self.assertTrue(sum_real_accounts[OPENING_BALANCES.name].postings)
 
 
@@ -119,8 +122,51 @@ class TestSummarization(unittest.TestCase):
 
           2012-01-01 check Assets:Checking  1000 USD
         """
-        self.assertTrue(realization.compare_realizations(real_accounts, sum_real_accounts))
+        self.assertTrue(compare_realizations(real_accounts, sum_real_accounts))
         self.assertTrue(sum_real_accounts[OPENING_BALANCES.name].postings)
+
+    @parsedoc
+    def test_transfer_and_summarization(self, contents):
+        """
+          2011-01-01 open Assets:Checking
+          2011-01-01 open Income:Job
+          2011-01-01 open Expenses:Restaurant
+
+          2011-06-01 * "Salary"
+            Income:Job            -1000 USD
+            Assets:Checking        1000 USD
+
+          2011-06-02 * "Eating out"
+            Expenses:Restaurant      80 USD
+            Assets:Checking
+
+          2012-01-01 check Assets:Checking  920 USD
+
+          2012-06-01 * "Salary"
+            Income:Job            -1000 USD
+            Assets:Checking        1000 USD
+        """
+
+        entries, pad_errors = pad(contents.entries)
+
+        report_date = date(2012, 1, 1)
+        tran_entries = transfer(contents.entries, report_date,
+                                data.is_income_statement_account, TRANSFER_BALANCES)
+
+        before, after = summarize(tran_entries, report_date, OPENING_BALANCES)
+        sum_entries = before + after
+        real_accounts, real_errors = realize(sum_entries, do_check=True)
+        assert not real_errors
+
+        self.assertEqual(real_cost_as_dict(real_accounts),
+                         {'Assets:Checking': 'Inventory(1920.00 USD)',
+                          'Equity:OpeningBalances': 'Inventory()',
+                          'Equity:RetainedEarnings': 'Inventory(-920.00 USD)',
+                          'Expenses:Restaurant': 'Inventory()',
+                          'Income:Job': 'Inventory(-1000.00 USD)'})
+
+
+
 
 
 class TestTransferBalances(unittest.TestCase):
@@ -129,7 +175,6 @@ class TestTransferBalances(unittest.TestCase):
     def test_basic_transfer(self, contents):
         """
           2011-01-01 open Assets:Checking
-
           2011-01-01 open Income:Job
 
           2011-02-01 * "Salary"
@@ -140,18 +185,19 @@ class TestTransferBalances(unittest.TestCase):
             Income:Job            -1000 USD
             Assets:Checking        1000 USD
         """
-        tran_entries = summarize.transfer(contents.entries, date(2012, 6, 1), data.is_income_statement_account, OPENING_BALANCES)
-
-        real_accounts, real_errors = realization.realize(contents.entries, do_check=True)
-        self.assertEqual(realization.real_cost_as_dict(real_accounts),
+        real_accounts, real_errors = realize(contents.entries, do_check=True)
+        self.assertEqual(real_cost_as_dict(real_accounts),
                          {'Assets:Checking': 'Inventory(2000.00 USD)',
                           'Income:Job': 'Inventory(-2000.00 USD)'})
 
-        real_accounts, real_errors = realization.realize(tran_entries, do_check=True)
-        self.assertEqual(realization.real_cost_as_dict(real_accounts),
+        tran_entries = transfer(contents.entries, date(2012, 6, 1),
+                                data.is_income_statement_account, TRANSFER_BALANCES)
+
+        real_accounts, real_errors = realize(tran_entries, do_check=True)
+        self.assertEqual(real_cost_as_dict(real_accounts),
                          {'Assets:Checking': 'Inventory(2000.00 USD)',
                           'Income:Job': 'Inventory()',
-                          'Equity:OpeningBalances': 'Inventory(-2000.00 USD)'})
+                          'Equity:RetainedEarnings': 'Inventory(-2000.00 USD)'})
 
 
 class TestOpenAtDate(unittest.TestCase):
@@ -170,6 +216,6 @@ class TestOpenAtDate(unittest.TestCase):
             Assets:Checking        1000 USD
 
         """
-        open_entries = summarize.open_at_date(contents.entries, date(2012, 1, 1))
+        open_entries = open_at_date(contents.entries, date(2012, 1, 1))
         dates = [entry.date for entry in open_entries]
         self.assertEqual(dates, sorted(dates))

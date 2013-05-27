@@ -87,20 +87,14 @@ def transfer(entries, date, account_pred, transfer_account):
                          for account, balance in balances.items()
                          if account_pred(account)}
 
+    # We need to insert the entries at the end of the previous day.
+    transfer_date = date - datetime.timedelta(days=1)
+
     # Create transfer entries.
     transfer_entries = create_entries_from_balances(
-        transfer_balances, date, transfer_account, False,
+        transfer_balances, transfer_date, transfer_account, False,
         '<summarize>', FLAG_TRANSFER,
         "Transfer balance for '{account.name}' as of {date} (Transfer Balance)")
-
-    # Skip Check and Open directives (from other accounts), to maintain the
-    # invariant that they always show up before any transaction (the invariant
-    # is a bit too strong, we could require it only per-account, but that's a
-    # good thing, so we skip them here).
-    for index in range(index, len(entries)):
-        entry = entries[index]
-        if not isinstance(entry, (Check, Open)):
-            break
 
     # Split the new entries in a new list.
     return (entries[:index] + transfer_entries + entries[index:])

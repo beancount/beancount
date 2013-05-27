@@ -1,5 +1,6 @@
 """Realization of specific lists of account postings into reports.
 """
+import sys
 import datetime
 from itertools import chain, repeat
 from collections import namedtuple, defaultdict
@@ -320,8 +321,12 @@ def _get_real_subpostings(real_account, accumulator):
         _get_real_subpostings(child_account, accumulator)
 
 
-def dump_tree_balances(real_accounts, foutput):
+def dump_tree_balances(real_accounts, foutput=None):
     """Dump a simple tree of the account balances, for debugging."""
+
+    if foutput is None:
+        foutput = sys.stdout
+
     lines = list(real_accounts.render_lines())
     width = max(len(line[0]) for line in lines)
     for line_first, line_next, real_account in lines:
