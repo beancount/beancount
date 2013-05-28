@@ -2,17 +2,27 @@
 beancount: TODO
 * NEW
 
-  - balsheet: You need to transfer the net income into the balance sheet before
-    rendering it! This is important!!
+  - We need to realize at least the full set of transactions in order to mark
+    the check errors.
+
+    * We also need a way to mark the check errors... this is probably best done
+      as a single pass on the entries themselves (maybe substitute/filter Check
+      entries that fail with new ones with a special field?). Do this in
+      validate.py.
+
+    * You have to find a way to render failed checks as red.
+
+    * Implement basic error reporting.
+
+  - The default validation should check the invariant that Open and Check
+    directives come before any Transaction.
 
 
-  - inventory: rename get_cost() vs. get_cost_position(). Swap them, change all
-    the code that needs be changed.
 
-  - Consider removing RealEntry and RealPosting... the only purpose they serve
-    at the moment is storing the balance, and for finding a posting's entry, we
-    could create a global map of (posting -> entry) and maintain that. Probably
-    good enough, hashing on the tuple id itself for performance.
+  - In the TOC, list and create views for level 2 (country) and level3
+    (institution).
+
+
 
 
   - The journal rendering should be dedup'ed; right now, each posting leg
@@ -25,16 +35,13 @@ beancount: TODO
     sure this makes any difference in performance. 'tis a choice I think.
 
 
-  - You have to find a way to render failed checks as red. Where does the
-    information get added again?
 
   - Deal with the effective date better, we need to do something with it.
 
-  - In the TOC, list and create views for level 2 (country) and level3
-    (institution).
 
   - summarize.py: One more operation is needed: when we print out the balance
     sheet, we need to transfer the period's income to NetIncome
+
 
   - Make the parser use the options name_* fields in order to validate and
     change the lexer to recognize all account names, not specificially the
@@ -46,20 +53,14 @@ beancount: TODO
     on-demand, we need a special mount.
 
 
-  - The default validation should check the invariant that Open and Check
-    directives come before any Transaction.
 
   - FIXME: We need to parse the options using the same argparse parser....
 
-  - summarize() step, annul_income() step.
-  - Padding for "clamping" is not like realization: we don't have to check
-    anything, we just have to work from the global realization and find out the
-    balance at the point of insertion. Insert regular RealPadPosting pointing to
-    a new AutoPad or Clamp entry. You don't even have to use the realize()
-    routine.
+
 
   - Create an '--anonymous' mode whereby all the numbers are represented by
     'XXX.XX' for public presentation.
+
 
   - The source page should take a special '?line=ddd' parameter that will
     scroll the page to the transaction at that line.
@@ -218,6 +219,31 @@ beancount: TODO
     either in signed or cr/dr format. We should be able to switch between the
     two at render time. This should work across all number-rendering routines
     everywhere--do this centrally.
+
+  - The Equity:Net-Income account cannot render a journal because the account
+    feeds off the mid-entries, not including the closing entries; maybe we need
+    to make an exception for this one.
+
+
+
+* Internal Improvements
+
+  - inventory: rename get_cost() vs. get_cost_position(). Swap them, change all
+    the code that needs be changed.
+
+  - Consider removing RealEntry and RealPosting... the only purpose they serve
+    at the moment is storing the balance, and for finding a posting's entry, we
+    could create a global map of (posting -> entry) and maintain that. Probably
+    good enough, hashing on the tuple id itself for performance.
+
+      FIXME: One idea to simplify things further is to remove the RealEntry and
+    RealPosting objects: computing a running balance is usually fast enough to
+    do on-the-fly, and we could store a 'postmap' mapping of "posting to parent
+    transaction" in return the realization tree object. The drawback, however,
+    is that you would then always require both an account and a 'postmap'
+    together... a real_account by itself would not be independent as it is now.
+    I need to think about this a bit more.
+
 
 * Web Interface
 ** Simplifications

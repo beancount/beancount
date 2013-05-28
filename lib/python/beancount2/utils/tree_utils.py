@@ -11,17 +11,17 @@ from beancount2.data import Account
 
 class NodeAdapter:
 
-   def create_node(self, name):
-       """Return a new node, given its name."""
-       raise NotImplementedError
+    def create_node(self, name):
+        """Return a new node, given its name."""
+        raise NotImplementedError
 
-   def get_name(self, node):
-       """Return the name of a node."""
-       return node.name
+    def get_name(self, node):
+        """Return the name of a node."""
+        return node.name
 
-   def get_children(self, node):
-       """Return a list of the children of a node."""
-       return node.children
+    def get_children(self, node):
+        """Return a list of the children of a node."""
+        return node.children
 
 
 class TreeDict(dict):
@@ -77,6 +77,29 @@ class TreeDict(dict):
         else:
            start_node = self[start_node_name]
         return render(start_node, self.adaptor)
+
+    def mark_from_leaves(self, predicate):
+        """Visit the tree and apply the predicate on each node;
+        return a mapping of nodes where the predicate was true,
+        and of nodes which has children with the predicate true as well."""
+
+        active_nodes = []
+        mark(self.get_root(), predicate, self.adaptor, active_nodes)
+        return active_nodes
+
+
+def mark(node, predicate, node_adaptor, active_nodes):
+    """Recursive routine that implements mark_from_leaves."""
+
+    is_marked = predicate(node)
+    for child in node.children:
+        is_marked |= mark(child, predicate, node_adaptor, active_nodes)
+
+    if is_marked:
+        active_nodes.append(node)
+    return is_marked
+
+
 
 
 # A class to hold the recursion rendering context.

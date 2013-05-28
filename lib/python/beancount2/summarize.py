@@ -11,7 +11,7 @@ from collections import defaultdict
 
 from beancount2 import inventory
 from beancount2.data import Transaction, Open, Close, Check
-from beancount2.data import FileLocation, Posting
+from beancount2.data import FileLocation, Posting, Account
 from beancount2.data import FLAG_SUMMARIZE, FLAG_TRANSFER
 from beancount2.data import is_income_statement_account
 
@@ -34,21 +34,20 @@ def clamp(entries, begin_date, end_date,
     i.e., the balance sheet with only the summarized entries).
     """
 
-    # Transfer income and expenses to equity, closing the year.
-    transferred_entries = transfer(entries, begin_date,
-                                   is_income_statement_account, account_transfer)
+    # Transfer income and expenses before the period to equity.
+    entries = transfer(entries, begin_date,
+                       is_income_statement_account, account_transfer)
 
     # Summarize all the previous balances.
-    summarized_entries, index = summarize(transferred_entries, begin_date, account_opening)
+    entries, index = summarize(entries, begin_date, account_opening)
 
     # Truncate the entries after this.
-    truncated_entries = truncate(summarized_entries, end_date)
+    entries = truncate(entries, end_date)
 
-    return truncated_entries, index
+    return entries, index
 
 
 def transfer(entries, date, account_pred, transfer_account):
-
     """For all accounts that match the 'account_pred' predicate, create new
     entries to transfer the balance at the given date 'date' from the account
     to the transfer account. Return a new list of entries, with the new
@@ -74,7 +73,10 @@ def transfer(entries, date, account_pred, transfer_account):
                          if account_pred(account)}
 
     # We need to insert the entries at the end of the previous day.
-    transfer_date = date - datetime.timedelta(days=1)
+    if date:
+        transfer_date = date - datetime.timedelta(days=1)
+    else:
+        transfer_date = entries[-1].date
 
     # Create transfer entries.
     transfer_entries = create_entries_from_balances(
@@ -182,7 +184,7 @@ def create_entries_from_balances(balances, date, other_account, direction,
     return new_entries
 
 
-def sum_to_date(entries, date):
+def sum_to_date(entries, date=None):
     """Sum up the balances per account for all entries striclty before 'date'.
     Return the index in the list of entries (or None, if all were before the
     date) and a dict of accounts to balance inventory.
@@ -192,7 +194,7 @@ def sum_to_date(entries, date):
     balances = defaultdict(inventory.Inventory)
 
     for index, entry in enumerate(entries):
-        if entry.date >= date:
+        if date and entry.date >= date:
             break
 
         if isinstance(entry, Transaction):

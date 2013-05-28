@@ -263,23 +263,43 @@ def tree_table(oss, tree, start_node_name, header=None, classes=None):
 
     lines = list(tree.render_lines(start_node_name))
     for line_first, _, account_name, real_account in lines:
-        write('<tr>')
-        write('<td class="tree-node-name" style="padding-left: {}em">{}</td>'.format(
-            len(line_first)/EMS_PER_SPACE,
-            account_link(real_account)))
 
         # Let the caller fill in the data to be rendered by adding it to a list
         # objects. The caller may return multiple cell values; this will create
         # multiple columns.
         cells = []
-        yield real_account, cells
+        row_classes = []
+        yield real_account, cells, row_classes
+
+        # If no cells were added, skip the line. If you want to render empty
+        # cells, append empty strings.
+        if not cells:
+            continue
+
+        # Render the row
+        write('<tr class="{}">'.format(' '.join(row_classes)))
+        write('<td class="tree-node-name" style="padding-left: {}em">{}</td>'.format(
+            len(line_first)/EMS_PER_SPACE,
+            account_link(real_account)))
 
         # Add columns for each value rendered.
         for cell in cells:
             write('<td class="num">{}</td>'.format(cell))
 
         write('</tr>')
+
     write('</table>')
+
+
+def is_account_active(real_account):
+    """Return true if the account should be rendered. An inactive account only has
+    an Open directive and nothing else."""
+
+    for real_entry in real_account.postings:
+        if isinstance(real_entry.entry, Open):
+            continue
+        return True
+    return False
 
 
 def table_of_balances(tree, start_node_name, currencies, classes=None):
@@ -287,9 +307,20 @@ def table_of_balances(tree, start_node_name, currencies, classes=None):
 
     header = ['Account'] + currencies + ['Other']
 
+    # Pre-calculate which accounts should be rendered.
+    active_accounts = tree.mark_from_leaves(is_account_active)
+    active_set = set(real_account.name for real_account in active_accounts)
+
     oss = io.StringIO()
-    for real_account, cells in tree_table(oss, tree, start_node_name,
-                                          header, classes):
+    for real_account, cells, row_classes in tree_table(oss, tree, start_node_name,
+                                                       header, classes):
+
+        # Check if this account has had activity; if not, skip rendering it.
+        if real_account.name not in active_set:
+            continue
+
+        if real_account.account is None:
+            row_classes.append('parent-node')
 
         # For each account line, get the final balance of the account (at cost).
         balance = realization.find_balance(real_account)
@@ -351,7 +382,7 @@ def balsheet():
     "Balance sheet."
 
     view = request.app.view
-    real_accounts = request.app.view.get_realization()
+    real_accounts = request.app.view.get_closing_realization()
     contents = balance_sheet_table(real_accounts, view.options)
 
     return render_app(pagetitle = "Balance Sheet",
@@ -535,6 +566,10 @@ def positions():
     total_balance = realization.compute_total_balance(entries)
 
     # FIXME: Make this into a nice table.
+
+    # FIXME: Group the positions by currency, show the price of each position in
+    # the inventory (see year 2006 for a good sample input).
+
     oss = io.StringIO()
     for position in total_balance.get_positions():
         if position.lot.cost or position.lot.lot_date:
@@ -548,9 +583,9 @@ def positions():
 
             oss.write('''
               <div class="position num">
-                 {position}
+                 {position}     {cost}
               </div>
-            '''.format(position=position))
+            '''.format(position=position, cost=position.get_cost()))
 
 
     if 0:
@@ -625,7 +660,8 @@ class View:
         # of the period transactions, past the opening balances. These are
         # computed lazily.
         self.entries = None
-        self.begin_index = None
+        self.opening_entries = None
+        self.closing_entries = None
 
         # Id and title.
         self.id = id
@@ -636,6 +672,8 @@ class View:
 
         # Realization of the filtered entries to display.
         self.real_accounts = None
+        self.opening_real_accounts = None
+        self.closing_real_accounts = None
 
     def _realize(self):
         """Compute the list of filtered entries and transaction tree."""
@@ -643,15 +681,46 @@ class View:
         # Get the filtered list of entries.
         self.entries, self.begin_index = self.apply_filter(self.all_entries, self.options)
 
-        # Realize the full set of entries for the balance sheet.
+        # Compute the list of entries for the opening balances sheet.
+        self.opening_entries = (self.entries[:self.begin_index]
+                                if self.begin_index is not None
+                                else None)
+
+
+        # Compute the list of entries that includes transfer entries of the
+        # income/expenses amounts to the balance sheet's equity (as "net
+        # income"). This is used to render the end-period balance sheet, with
+        # the current period's net income, closing the period.
+        equity = self.options['name_equity']
+        account_netincome = '{}:{}'.format(equity, self.options['account_netincome'])
+        account_netincome = data.Account(account_netincome,
+                                         data.account_type(account_netincome))
+
+        self.closing_entries = summarize.transfer(self.entries, None,
+                                                  data.is_income_statement_account, account_netincome)
+
+        # Realize the three sets of entries.
+        do_check = False
+        if self.opening_entries:
+            with utils.print_time('realize_opening'):
+                self.opening_real_accounts, real_errors = realization.realize(self.opening_entries, do_check)
+        else:
+            self.opening_real_accounts = None
+            data.print_errors(real_errors)
+
         with utils.print_time('realize'):
-            self.real_accounts, _ = realization.realize(self.entries, False)
+            self.real_accounts, real_errors = realization.realize(self.entries, do_check)
+            data.print_errors(real_errors)
+
+        with utils.print_time('realize_closing'):
+            self.closing_real_accounts, real_errors = realization.realize(self.closing_entries, do_check)
+            data.print_errors(real_errors)
 
         assert self.real_accounts is not None
+        assert self.closing_real_accounts is not None
 
     def get_entries(self):
         """Return the list of entries for this view."""
-
         if self.real_accounts is None:
             self._realize()
         return self.entries
@@ -666,25 +735,18 @@ class View:
         return self.real_accounts
 
     def get_opening_realization(self):
-        """Return the realization at the index time. This is not cached for now, as this
-        should be fast."""
+        """Return the realization at the index time."""
 
-        # Make sure we've realized.
-        self.get_realization()
+        if self.real_accounts is None:
+            self._realize()
+        return self.opening_real_accounts
 
-        # Check if it is supported by this filter. (Sometimes this doesn't make
-        # sense: if the filtered entries haven't been summarized or don't have a
-        # period of exercise, the opening balances is "all empty". The concept
-        # of opening balances only makes sense for a summarized balance sheet.)
-        if self.begin_index is None:
-            return None
+    def get_closing_realization(self):
+        """Return the realization that includes the closing transfers."""
 
-        # Realize the full set of entries for the balance sheet.
-        with utils.print_time('realize'):
-            openbal_entries = self.entries[:self.begin_index]
-            openbal_real_accounts, _ = realization.realize(openbal_entries, False)
-        assert openbal_real_accounts is not None
-        return openbal_real_accounts
+        if self.real_accounts is None:
+            self._realize()
+        return self.closing_real_accounts
 
     def apply_filter(self, entries):
         "Filter the list of entries."

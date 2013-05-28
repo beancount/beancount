@@ -101,6 +101,10 @@ table td {
     white-space: nowrap;
 }
 
+table.tree-table tr.parent-node {
+    background-color: #f8f8f8;
+}
+
 
 
 /* Table of entries / Journal */
@@ -142,6 +146,10 @@ table.entry-table tr.Open, table.entry-table tr.Close {
 
 table.entry-table tr.Check {
     background-color: #cfc;
+}
+
+table.entry-table tr.Pad {
+    background-color: #8ff;
 }
 
 table.entry-table tr.Padding, table.entry-table tr.Summarize, table.entry-table tr.Transfer {

@@ -269,7 +269,6 @@ def realize(entries, do_check=False):
 
             # Check the balance against the check entry.
             if do_check:
-
                 check_position = entry.position
                 balance = balances[entry.account]
                 balance_position = balance.get_position(check_position.lot)
@@ -369,16 +368,6 @@ def find_balance(real_account, date=None):
     return Inventory()
 
 
-def compute_total_balance(entries):
-    """Sum up all the positions in the transactions in the list of entries and
-    return an inventory of it."""
-
-    total_balance = Inventory()
-    for entry in entries:
-        if isinstance(entry, Transaction):
-            for posting in entry.postings:
-                total_balance.add_position(posting.position, allow_negative=True)
-    return total_balance
 
 def compute_real_total_balance(real_accounts):
     """Sum up all the positions in the transactions in the realized tree of accounts
@@ -412,3 +401,22 @@ def real_cost_as_dict(real_accounts):
     return {real_account.name: str(find_balance(real_account).get_cost())
             for account_name, real_account in real_accounts.items()
             if real_account.account}
+
+
+
+
+
+
+
+# FIXME: move this to next to sum_to_date in realize.py
+
+def compute_total_balance(entries):
+    """Sum up all the positions in the transactions in the list of entries and
+    return an inventory of it."""
+
+    total_balance = Inventory()
+    for entry in entries:
+        if isinstance(entry, Transaction):
+            for posting in entry.postings:
+                total_balance.add_position(posting.position, allow_negative=True)
+    return total_balance
