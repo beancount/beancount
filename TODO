@@ -3,6 +3,41 @@ beancount: TODO
 * NEW
 
 
+  - The return values from the parser must be cleaned up a bit: remove the
+    "contents" object, return stuff just like the other transformation
+    function, i.e. :
+
+      (entries, parser_errors, options).
+
+    * Cna we get rid of the accounts being returned? These can be derived
+      easily from the list of entries, and I think I'm not using it anywhere
+      serious other than in tests.
+
+  - Run check() in its own phase, that replaces the Check objects and returns a
+    list of entries, with failing checks replaced with ones that have a
+    different flag. This should be easy: add a flag to Check, with value PASS
+    or FAIL or UNKNOWN, and replace all of them (they're just tuples really, so
+    that's cheap, stop worrying).
+
+    We should then have a routine like this:
+
+       parse()
+       pad()
+       check()
+       validate()
+
+    Make a function for this... this should yield all the errors I need for
+    error reporting. Summarization and realization don't yield errors.
+
+  - (validation) In addition to the Check/Open before-constraint, check that
+    the entries are always sorted. Add this sanity check.
+
+
+
+  - Why do I have non-USD/CAD in conversions?  They should not be there AFAIK,
+    because there are no @-priced conversions for those currencies.
+
+
 
   - We need to realize at least the full set of transactions in order to mark
     the check errors.
@@ -34,10 +69,19 @@ beancount: TODO
     renders its own line as a transaction... we need to dedup these. This is
     really important, because it's otherwise confusing.
 
-  - In the journal rendering, if we're rendering transactions for multiple
-    accounts, the pre-computed balance does not work... balances need to be
-    recomputed. Perhaps the balance should _always_ be computed on the fly! Not
-    sure this makes any difference in performance. 'tis a choice I think.
+  - In the journal rendering, rendering transactions for the pre-computed
+    balance does not work... balances need to be recomputed. Perhaps the balance
+    should _always_ be computed on the fly! Not sure this makes any difference
+    in performance. 'tis a choice I think. This is a problem even for single
+    accounts: imagine many legs from a single transaction on a single account.
+    Needs de-duping. We can limit de-duping to work only on the current date
+    (transactions are sorted, no need to keep older dates, clear a set, will be
+    faster).
+
+
+
+
+
 
 
 
@@ -211,10 +255,8 @@ beancount: TODO
     most relevant near the top.
 
 
-* Internal Improvements
+* Internal Improvements - DO THIS
 
-  - inventory: rename get_cost() vs. get_cost_position(). Swap them, change all
-    the code that needs be changed.
 
   - Consider removing RealEntry and RealPosting... the only purpose they serve
     at the moment is storing the balance, and for finding a posting's entry, we
@@ -228,6 +270,23 @@ beancount: TODO
     is that you would then always require both an account and a 'postmap'
     together... a real_account by itself would not be independent as it is now.
     I need to think about this a bit more.
+
+  - Measure the performance of realization on all accounts, and on each
+    account. If small, remove RealEntry/RealPosting and replace by just the
+    regular ones!
+
+  - A realization should just be a tree of RealAccount's, each with a list of
+    entries|Postings and a final balance. Store the final balance in
+    RealAccount, it's worth it.
+
+  - Try making Posting a non-tuple so that you can set a new 'entry' field as a
+    weakref. It has to be mutable for that, just for that field. Does it impact
+    performance?  If not,  do this! This will make our life simpler, and will
+    enforce that a posting has at most a single pater.
+
+
+  - inventory: rename get_cost() vs. get_cost_position(). Swap them, change all
+    the code that needs be changed.
 
 
 * Web Interface
@@ -579,6 +638,13 @@ beancount: TODO
   - Add these: http://www.csun.edu/~bjc20362/Controlling-2.pdf
 
 
+** Documents
+
+  - Do we need a dedicated page for listing all documents? This page could
+    include documents without a date, could be rendered as a tree-table, with
+    the list of each document in the corresponding account. Maybe that's
+    overkill. DK.
+
 * Booking
 
   - We should create a syntax and method for booking to the average value.
@@ -752,6 +818,7 @@ beancount: TODO
     :d039f548, these linked transactions just become like tags. Maybe ::d039f548
     is not listed and :d039f548 is listed, or something like that.
 
+  - Rename all "points" currencies to be similar names, e.g. *PTS.
 
 * Dated Postings
 
