@@ -279,6 +279,9 @@ beancount: TODO
     entries|Postings and a final balance. Store the final balance in
     RealAccount, it's worth it.
 
+  - Rename all 'real_accounts' to 'realization', which is meant to imply a tree
+    of accounts. 
+
   - Try making Posting a non-tuple so that you can set a new 'entry' field as a
     weakref. It has to be mutable for that, just for that field. Does it impact
     performance?  If not,  do this! This will make our life simpler, and will
