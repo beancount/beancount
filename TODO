@@ -2,6 +2,34 @@
 beancount: TODO
 * NEW
 
+  - balsheet: You need to transfer the net income into the balance sheet before
+    rendering it! This is important!!
+
+
+  - inventory: rename get_cost() vs. get_cost_position(). Swap them, change all
+    the code that needs be changed.
+
+  - Consider removing RealEntry and RealPosting... the only purpose they serve
+    at the moment is storing the balance, and for finding a posting's entry, we
+    could create a global map of (posting -> entry) and maintain that. Probably
+    good enough, hashing on the tuple id itself for performance.
+
+
+  - The journal rendering should be dedup'ed; right now, each posting leg
+    renders its own line as a transaction... we need to dedup these. This is
+    really important, because it's otherwise confusing.
+
+  - In the journal rendering, if we're rendering transactions for multiple
+    accounts, the pre-computed balance does not work... balances need to be
+    recomputed. Perhaps the balance should _always_ be computed on the fly! Not
+    sure this makes any difference in performance. 'tis a choice I think.
+
+
+  - You have to find a way to render failed checks as red. Where does the
+    information get added again?
+
+  - Deal with the effective date better, we need to do something with it.
+
   - In the TOC, list and create views for level 2 (country) and level3
     (institution).
 
@@ -177,6 +205,29 @@ beancount: TODO
 
   - In the balance sheet and income statement, we need to render the amounts
     inverted (and in a slightly different style).
+
+  - Validation: Everywhere we have a filter of entries to entries, we should be
+    able to apply a check that the total balances before and the total balances
+    after should have the very same value.
+
+  - Default import syntax should have the narration as the payee by default. We
+    need to use those as default, we don't set nearly enough of them.
+
+  - The new balance sheets should be able to invert the numbers (and then they
+    should get rendered differently). Basically, every number shown should be
+    either in signed or cr/dr format. We should be able to switch between the
+    two at render time. This should work across all number-rendering routines
+    everywhere--do this centrally.
+
+* Web Interface
+** Simplifications
+
+  - Put the last updated date in the balance sheet or perhaps the trial balance
+    page. Should be easy; we don't need a dedicated page for this.
+
+** JavaScript
+
+  - In Journal view, pressing 'C' should toggle the checks on and off.
 
 
 * Checks and Safeguards
@@ -474,6 +525,9 @@ beancount: TODO
   - Given a list of entries, you should be able to extract a list of positions
     at any point in time.
 
+  - The list of positions should provide a way to check the purchase price of
+    each position.
+
 ** Maximum Values Report
 
   - You should report a trial-balance -like listing of the minimum and maximum
@@ -512,6 +566,13 @@ beancount: TODO
 ** Financial Ratio Analysis
 
   - Add these: http://www.csun.edu/~bjc20362/Controlling-2.pdf
+
+
+* Booking
+
+  - We should create a syntax and method for booking to the average value.
+    Figure out how many units of each position to remove in order to obtain the
+    average sale price. This way the user could potentially switch methods.
 
 
 * Filtering Methods
@@ -735,6 +796,9 @@ beancount: TODO
 
   - If the import process fails for whatever reason, don't move the files!!
     This has been *SO* annoying in the past.
+
+  - The new importers should be able to strip the non-payee parts of the payee
+    name, e.g. NEW YO, SAN FR, etc.
 
 ** Avoid Reimporting
 

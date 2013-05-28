@@ -101,7 +101,7 @@ def add_org_mode_section(line):
 def remove_datepair(line):
     mo = re.match('^(\d\d\d\d-\d\d-\d\d)=(\d\d\d\d-\d\d-\d\d) (.*)', line)
     if mo:
-        return '{} {} [[{}]]\n'.format(*mo.group(1,3,2))
+        return '{} {} {{{}}}\n'.format(*mo.group(1,3,2))
     else:
         return line
 

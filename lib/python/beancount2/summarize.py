@@ -148,7 +148,12 @@ def create_entries_from_balances(balances, date, other_account, direction,
     """"Create a list of new entries to transfer the amounts in the 'balances' dict
     to/from other_account. If 'direction' is True, the new entries transfer TO
     the balances account from the other account; otherwise the new entries
-    transfer FROM the balances into the other account."""
+    transfer FROM the balances into the other account.
+
+    IMPORTANT! The other leg of the transfers have to be carried out AT COST in
+    order for the sum total of all the resulting entries to reflect the correct
+    final positions held.
+    """
 
     new_entries = []
     for account, balance in sorted(balances.items()):
@@ -166,7 +171,8 @@ def create_entries_from_balances(balances, date, other_account, direction,
         postings = []
         for position in balance.get_positions():
             postings.append(Posting(account, position, None, None))
-            postings.append(Posting(other_account, -position, None, None))
+            cost = position.get_cost_position()
+            postings.append(Posting(other_account, -cost, None, None))
 
         new_entry = Transaction(
             fileloc, date, flag, None, narration, set(), postings)

@@ -110,15 +110,15 @@ class TestRealizationPadding(unittest.TestCase):
     def test_pad(self, entries, real_accounts, real_errors):
         """
           2013-05-01 open Assets:Checking
-          2013-05-01 open Equity:OpeningBalances
+          2013-05-01 open Equity:Opening-Balancess
 
-          2013-05-01 pad  Assets:Checking   Equity:OpeningBalances
+          2013-05-01 pad  Assets:Checking   Equity:Opening-Balancess
 
           2013-05-03 check Assets:Checking   172.45 USD
         """
         self.assertEqual(len(real_errors), 0)
         self.check_real_types(real_accounts['Assets:Checking'], [Open, Pad, Transaction, Check])
-        self.check_real_types(real_accounts['Equity:OpeningBalances'], [Open, Pad, Transaction])
+        self.check_real_types(real_accounts['Equity:Opening-Balancess'], [Open, Pad, Transaction])
 
         self.check_balance(real_accounts['Assets:Checking'],
                            Position(Lot('USD', None, None), Decimal('172.45')))
@@ -127,15 +127,15 @@ class TestRealizationPadding(unittest.TestCase):
     def test_with_cost(self, entries, real_accounts, real_errors):
         """
           2013-05-01 open Assets:Invest
-          2013-05-01 open Equity:OpeningBalances
+          2013-05-01 open Equity:Opening-Balancess
 
-          2013-05-01 pad  Assets:Invest   Equity:OpeningBalances
+          2013-05-01 pad  Assets:Invest   Equity:Opening-Balancess
 
           2013-05-03 check Assets:Invest   172.45 GOOG {12.00 USD}
         """
         assert len(real_errors) == 0
         self.check_real_types(real_accounts['Assets:Invest'], [Open, Pad, Transaction, Check])
-        self.check_real_types(real_accounts['Equity:OpeningBalances'], [Open, Pad, Transaction])
+        self.check_real_types(real_accounts['Equity:Opening-Balancess'], [Open, Pad, Transaction])
 
         self.check_balance(real_accounts['Assets:Invest'],
                            Position(Lot('GOOG', Amount('12.00', 'USD'), None), Decimal('172.45')))
@@ -145,15 +145,15 @@ class TestRealizationPadding(unittest.TestCase):
     def test_with_cost_and_lotdate(self, entries, real_accounts, real_errors):
         """
           2013-05-01 open Assets:Invest
-          2013-05-01 open Equity:OpeningBalances
+          2013-05-01 open Equity:Opening-Balancess
 
-          2013-05-01 pad  Assets:Invest   Equity:OpeningBalances
+          2013-05-01 pad  Assets:Invest   Equity:Opening-Balancess
 
           2013-05-03 check Assets:Invest   172.45 GOOG {12.00 USD / 2000-01-01}
         """
         assert len(real_errors) == 0
         self.check_real_types(real_accounts['Assets:Invest'], [Open, Pad, Transaction, Check])
-        self.check_real_types(real_accounts['Equity:OpeningBalances'], [Open, Pad, Transaction])
+        self.check_real_types(real_accounts['Equity:Opening-Balancess'], [Open, Pad, Transaction])
 
         self.check_balance(real_accounts['Assets:Invest'],
                            Position(Lot('GOOG', Amount('12.00', 'USD'), date(2000, 1, 1)), Decimal('172.45')))
@@ -163,9 +163,9 @@ class TestRealizationPadding(unittest.TestCase):
         """
           2013-05-01 open Assets:Checking
           2013-05-01 open Assets:Cash
-          2013-05-01 open Equity:OpeningBalances
+          2013-05-01 open Equity:Opening-Balancess
 
-          2013-05-01 pad  Assets:Checking   Equity:OpeningBalances
+          2013-05-01 pad  Assets:Checking   Equity:Opening-Balancess
 
           2013-05-03 check Assets:Checking   172.45 USD
 
@@ -185,9 +185,9 @@ class TestRealizationPadding(unittest.TestCase):
         """
           2013-05-01 open Assets:Checking
           2013-05-01 open Assets:Cash
-          2013-05-01 open Equity:OpeningBalances
+          2013-05-01 open Equity:Opening-Balancess
 
-          2013-05-01 pad  Assets:Checking   Equity:OpeningBalances
+          2013-05-01 pad  Assets:Checking   Equity:Opening-Balancess
 
           2013-05-03 check Assets:Checking   172.45 USD
 
@@ -195,7 +195,7 @@ class TestRealizationPadding(unittest.TestCase):
             Assets:Checking             20 USD
             Assets:Cash
 
-          2013-05-20 pad  Assets:Checking   Equity:OpeningBalances
+          2013-05-20 pad  Assets:Checking   Equity:Opening-Balancess
 
           2013-06-01 check Assets:Checking   200 USD
 
@@ -209,9 +209,9 @@ class TestRealizationPadding(unittest.TestCase):
         """
           2013-05-01 open Assets:Checking
           2013-05-01 open Assets:Cash
-          2013-05-01 open Equity:OpeningBalances
+          2013-05-01 open Equity:Opening-Balancess
 
-          2013-05-01 pad  Assets:Checking   Equity:OpeningBalances
+          2013-05-01 pad  Assets:Checking   Equity:Opening-Balancess
 
           2013-05-03 txn "Add 20$"
             Assets:Checking             10 USD

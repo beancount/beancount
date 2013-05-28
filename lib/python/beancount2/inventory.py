@@ -91,12 +91,23 @@ class Position:
     def get_amount(self):
         return Amount(self.number, self.lot.currency)
 
+    # FIXME: We really should have the default get_cost() return a position, and
+    # then have the caller .get_amount(). This would be the perfect way to do
+    # this; do this.
     def get_cost(self):
         cost = self.lot.cost
         if cost is None:
             return Amount(self.number, self.lot.currency)
         else:
             return amount_mult(cost, self.number)
+
+    def get_cost_position(self):
+        cost = self.lot.cost
+        if cost is None:
+            return self
+        else:
+            return Position(Lot(cost.currency, None, None),
+                            self.number * cost.number)
 
     def add(self, number):
         self.number += number
@@ -235,5 +246,5 @@ class Inventory:
 
     def __iadd__(self, other):
         for position in other.positions:
-            self.add_position(position)
+            self.add_position(position, True)
         return self

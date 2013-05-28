@@ -370,14 +370,25 @@ def find_balance(real_account, date=None):
 
 
 def compute_total_balance(entries):
-    """Simply sum up all the positions in the transactions in the list of entries
-    and return an inventory of it."""
+    """Sum up all the positions in the transactions in the list of entries and
+    return an inventory of it."""
 
     total_balance = Inventory()
     for entry in entries:
         if isinstance(entry, Transaction):
             for posting in entry.postings:
                 total_balance.add_position(posting.position, allow_negative=True)
+    return total_balance
+
+def compute_real_total_balance(real_accounts):
+    """Sum up all the positions in the transactions in the realized tree of accounts
+    and return an inventory of it."""
+
+    total_balance = Inventory()
+    for real_account in real_accounts.values():
+        if real_account.postings:
+            balance = find_balance(real_account)
+            total_balance += balance
     return total_balance
 
 

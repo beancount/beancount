@@ -149,6 +149,7 @@ Posting = namedtuple('Posting', 'account position price flag')
 FLAG_PADDING   = 'P' # Transactions created from padding directives.
 FLAG_SUMMARIZE = 'S' # Transactions created due to summarization.
 FLAG_TRANSFER  = 'T' # Transactions created due to balance transfers.
+FLAG_WARNING   = '!' # Mark by the user as something to be looked at later on.
 
 
 class GetAccounts:

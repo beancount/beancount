@@ -66,8 +66,8 @@ def summarizedoc(date, other_account):
     return summarizedoc_deco
 
 
-OPENING_BALANCES = Account('Equity:OpeningBalances', 'Equity')
-TRANSFER_BALANCES = Account('Equity:RetainedEarnings', 'Equity')
+OPENING_BALANCES = Account('Equity:Opening-Balancess', 'Equity')
+TRANSFER_BALANCES = Account('Equity:Retained-Earnings', 'Equity')
 
 class TestSummarization(unittest.TestCase):
 
@@ -157,8 +157,8 @@ class TestSummarization(unittest.TestCase):
 
         self.assertEqual(real_cost_as_dict(real_accounts),
                          {'Assets:Checking': 'Inventory(1920.00 USD)',
-                          'Equity:OpeningBalances': 'Inventory()',
-                          'Equity:RetainedEarnings': 'Inventory(-920.00 USD)',
+                          'Equity:Opening-Balancess': 'Inventory()',
+                          'Equity:Retained-Earnings': 'Inventory(-920.00 USD)',
                           'Expenses:Restaurant': 'Inventory()',
                           'Income:Job': 'Inventory(-1000.00 USD)'})
 
@@ -191,7 +191,7 @@ class TestTransferBalances(unittest.TestCase):
         self.assertEqual(real_cost_as_dict(real_accounts),
                          {'Assets:Checking': 'Inventory(2000.00 USD)',
                           'Income:Job': 'Inventory()',
-                          'Equity:RetainedEarnings': 'Inventory(-2000.00 USD)'})
+                          'Equity:Retained-Earnings': 'Inventory(-2000.00 USD)'})
 
 
 class TestOpenAtDate(unittest.TestCase):

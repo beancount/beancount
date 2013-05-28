@@ -22,7 +22,7 @@ from beancount2 import validation
 from beancount2 import data
 from beancount2.data import account_leaf_name, Account, Lot
 from beancount2 import realization
-from beancount2.realization import RealAccount
+from beancount2.realization import RealAccount, RealPosting, RealEntry
 from beancount2 import summarize
 from beancount2 import utils
 from beancount2.inventory import Inventory
@@ -222,7 +222,7 @@ def trial():
         )
 
 
-EMS_PER_SPACE = 1.5
+EMS_PER_SPACE = 3
 _account_link_cache = {}
 
 def account_link(account_name):
@@ -276,7 +276,7 @@ def tree_table(oss, tree, start_node_name, header=None, classes=None):
 
         # Add columns for each value rendered.
         for cell in cells:
-            write('<td class="numcell">{}</td>'.format(cell))
+            write('<td class="num">{}</td>'.format(cell))
 
         write('</tr>')
     write('</table>')
@@ -288,7 +288,7 @@ def table_of_balances(tree, start_node_name, currencies, classes=None):
     header = ['Account'] + currencies + ['Other']
 
     oss = io.StringIO()
-    for real_account, cells in tree_table(oss, tree, start_node_name, 
+    for real_account, cells in tree_table(oss, tree, start_node_name,
                                           header, classes):
 
         # For each account line, get the final balance of the account (at cost).
@@ -330,10 +330,15 @@ def balance_sheet_table(real_accounts, options):
             <h3>Assets</h3>
             {assets}
            </div>
+
            <div id="liabilities" class="halfright">
             <h3>Liabilities</h3>
             {liabilities}
            </div>
+
+           <div class="spacer halfright">
+           </div>
+
            <div id="equity" class="halfright">
             <h3>Equity</h3>
             {equity}
@@ -385,6 +390,7 @@ def income():
         <h3>Income</h3>
         {income}
        </div>
+
        <div id="expenses" class="halfright">
         <h3>Expenses</h3>
         {expenses}
@@ -404,91 +410,166 @@ def conversions():
         )
 
 
+
+
+
+
+FLAG_ROWTYPES = {
+    data.FLAG_PADDING  : 'Padding',
+    data.FLAG_SUMMARIZE: 'Summarize',
+    data.FLAG_TRANSFER : 'Transfer',
+    data.FLAG_WARNING : 'TransactionWarning',
+}
+
+def entries_table(oss, real_account):
+    """Render a list of entries into an HTML table.
+    """
+    write = lambda data: (oss.write(data), oss.write('\n'))
+
+    write('''
+      <table class="entry-table">
+      <thead>
+        <tr>
+         <th>Date</th>
+         <th>F</th>
+         <th>Narration/Payee</th>
+         <th></th>
+         <th>Amount</th>
+         <th>Balance</th>
+      </thead>
+    ''')
+
+    real_entries = realization.get_real_subpostings(real_account)
+    for real_entry in real_entries:
+        entry = real_entry.entry
+
+        # Prepare the data to be rendered for this row.
+        date = entry.date
+        balance = '\n<br/>'.join(map(str, real_entry.balance.get_positions()))
+
+        if isinstance(real_entry, RealPosting):
+            rowtype = FLAG_ROWTYPES.get(entry.flag, 'Transaction')
+
+            flag = entry.flag
+
+            description = '<span class="narration">{}</span>'.format(entry.narration)
+            if entry.payee:
+                description = '<span class="payee">{}</span><span class="pnsep">|</span>{}'.format(entry.payee, description)
+            amount = str(real_entry.posting.position)
+            cost = str(real_entry.posting.position.get_cost())
+        elif isinstance(entry, Check):
+            # Check the balance here and possibly change the rowtype
+            rowtype = entry.__class__.__name__
+
+            flag = 'C'
+            description = entry.__class__.__name__
+            amount = str(entry.position)
+            cost = ''
+        else:
+            rowtype = entry.__class__.__name__
+
+            flag = ''
+            description = entry.__class__.__name__
+            amount = ''
+            cost = ''
+
+        # Render a row.
+        write('''
+          <tr class="{}">
+            <td class="datecell">{}</td>
+            <td class="flag">{}</td>
+            <td class="description">{}</td>
+            <td class="number num">{}</td>
+            <td class="amount num">{}</td>
+            <td class="balance num">{}</td>
+          <tr>
+        '''.format(rowtype, date, flag, description, amount, cost, balance))
+
+    write('</table>')
+
+
 @app.route('/journal', name='journal')
 def journal():
     "A list of all the entries in this realization."
 
     real_accounts = request.app.view.get_realization()
-    temp = temporary_render_real_account(real_accounts[''], transactions_only=True)
+
+    oss = io.StringIO()
+    entries_table(oss, real_accounts[''])
 
     return render_app(
         pagetitle = "Journal",
-        contents = '<pre>{}</pre>'.format(escape(temp))
-        )
+        contents = oss.getvalue())
 
 
 @app.route('/account/<slashed_account_name:re:[^:]*>', name='account')
 def account(slashed_account_name=None):
     "A list of all the entries for this account realization."
 
-    account_name = slashed_account_name.strip('/').replace('/', ':')
     real_accounts = request.app.view.get_realization()
-    temp = temporary_render_real_account(real_accounts[account_name], transactions_only=True)
+
+    oss = io.StringIO()
+    account_name = slashed_account_name.strip('/').replace('/', ':')
+    entries_table(oss, real_accounts[account_name])
 
     return render_app(
         pagetitle = '{}'.format(account_name), # Account:
-        contents = '<pre>{}</pre>'.format(escape(temp))
-        )
+        contents = oss.getvalue())
 
-## FIXME: remove - this is temporary, until we get all rendering nicely, this will do for now
-def temporary_render_real_account(real_account, transactions_only=False):
 
-    real_postings = realization.get_real_subpostings(real_account)
 
-    oss = io.StringIO()
-    for real_posting in real_postings:
-        entry = real_posting.entry
-        entry_type = type(entry)
-        if entry_type is Transaction:
-            oss.write('{:%Y-%m-%d} {}  "{}"  {}\n'.format(
-                entry.date, entry_type.__name__, entry.narration, real_posting.balance))
-        elif not transactions_only:
-            oss.write('{:%Y-%m-%d} {}\n'.format(entry.date, entry))
 
-    return oss.getvalue()
+
+
+
+
+
 
 
 @app.route('/positions', name='positions')
 def positions():
     "Render information about positions at the end of all entries."
 
-    real_accounts = request.app.view.get_realization()
+    entries = request.app.view.get_entries()
 
-    total_balance = Inventory()
-    for real_account in real_accounts.values():
-        for real_posting in reversed(real_account.postings):
-            if isinstance(real_posting, realization.RealPosting):
-                break
-        else:
-            continue
-        total_balance += real_posting.balance
+    total_balance = realization.compute_total_balance(entries)
 
-    rows = []
+    # FIXME: Make this into a nice table.
+    oss = io.StringIO()
     for position in total_balance.get_positions():
         if position.lot.cost or position.lot.lot_date:
             cost = position.get_cost()
+
             # print(('{p.number:12.2f} {p.lot.currency:8} '
             #        '{p.lot.cost.number:12.2f} {p.lot.cost.currency:8} '
             #        '{c.number:12.2f} {c.currency:8}').format(p=position, c=cost))
-            rows.append((position.lot.currency, position.lot.cost.currency,
-                         position.number, position.lot.cost.number, cost.number))
+            # rows.append((position.lot.currency, position.lot.cost.currency,
+            #              position.number, position.lot.cost.number, cost.number))
 
-    # Manipulate it a bit with Pandas.
-    df = pandas.DataFrame(rows,
-                          columns=['ccy', 'cost_ccy', 'units', 'unit_cost', 'total_cost'])
+            oss.write('''
+              <div class="position num">
+                 {position}
+              </div>
+            '''.format(position=position))
 
-    # print(df.to_string())
 
-    sums = df.groupby(['ccy', 'cost_ccy']).sum()
+    if 0:
+        # Manipulate it a bit with Pandas.
+        df = pandas.DataFrame(rows,
+                              columns=['ccy', 'cost_ccy', 'units', 'unit_cost', 'total_cost'])
 
-    total_cost = sums['total_cost'].astype(float)
-    sums['percent'] = 100 * total_cost / total_cost.sum()
+        # print(df.to_string())
 
-    sums.insert(2, 'average_cost', total_cost / sums['units'].astype(float))
+        sums = df.groupby(['ccy', 'cost_ccy']).sum()
+
+        total_cost = sums['total_cost'].astype(float)
+        sums['percent'] = 100 * total_cost / total_cost.sum()
+
+        sums.insert(2, 'average_cost', total_cost / sums['units'].astype(float))
 
     return render_app(
         pagetitle = "Positions",
-        contents = '<pre>{}</pre>'.format(escape(sums.to_string()))
+        contents = oss.getvalue()
         )
 
 
@@ -556,21 +637,32 @@ class View:
         # Realization of the filtered entries to display.
         self.real_accounts = None
 
+    def _realize(self):
+        """Compute the list of filtered entries and transaction tree."""
+
+        # Get the filtered list of entries.
+        self.entries, self.begin_index = self.apply_filter(self.all_entries, self.options)
+
+        # Realize the full set of entries for the balance sheet.
+        with utils.print_time('realize'):
+            self.real_accounts, _ = realization.realize(self.entries, False)
+
+        assert self.real_accounts is not None
+
+    def get_entries(self):
+        """Return the list of entries for this view."""
+
+        if self.real_accounts is None:
+            self._realize()
+        return self.entries
+
     def get_realization(self):
         """Return the realization associated with an app. This runs lazily; it filters
         the entries and realizes when the realization is needed. Thereafter, the
         realized accounts is cached in the app. """
 
         if self.real_accounts is None:
-            # Get the filtered list of entries.
-            self.entries, self.begin_index = self.apply_filter(self.all_entries, self.options)
-
-            # Realize the full set of entries for the balance sheet.
-            with utils.print_time('realize'):
-                self.real_accounts, _ = realization.realize(self.entries, False)
-
-            assert self.real_accounts is not None
-
+            self._realize()
         return self.real_accounts
 
     def get_opening_realization(self):
@@ -621,10 +713,11 @@ class YearView(View):
         #
         # FIXME: We should probably create these globally and then all fetch the
         # same instances.
-        account_earnings = options['account_earnings']
+        equity = options['name_equity']
+        account_earnings = '{}:{}'.format(equity, options['account_earnings'])
         account_earnings = data.Account(account_earnings, data.account_type(account_earnings))
 
-        account_opening = options['account_opening']
+        account_opening = '{}:{}'.format(equity, options['account_opening'])
         account_opening = data.Account(account_opening, data.account_type(account_opening))
 
         # Clamp to the desired period.
@@ -846,3 +939,26 @@ def compute_ids(strings):
 
 
 # FIXME: Move this to generic utilities.
+
+
+
+
+
+
+## FIXME: remove this - this was temporary, until we get all rendering nicely, this will do for now
+
+def temporary_render_real_account(real_account, transactions_only=False):
+
+    real_postings = realization.get_real_subpostings(real_account)
+
+    oss = io.StringIO()
+    for real_posting in real_postings:
+        entry = real_posting.entry
+        entry_type = type(entry)
+        if entry_type is Transaction:
+            oss.write('{:%Y-%m-%d} {}  "{}"  {}\n'.format(
+                entry.date, entry_type.__name__, entry.narration, real_posting.balance))
+        elif not transactions_only:
+            oss.write('{:%Y-%m-%d} {}\n'.format(entry.date, entry))
+
+    return oss.getvalue()

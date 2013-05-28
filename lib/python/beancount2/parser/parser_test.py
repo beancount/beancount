@@ -71,7 +71,7 @@ class TestParserEntries(unittest.TestCase):
     def test_entry_pad(self, contents):
         """
 
-          2013-05-18 pad Assets:US:BestBank:Checking  Equity:OpeningBalances
+          2013-05-18 pad Assets:US:BestBank:Checking  Equity:Opening-Balancess
 
         """
         self.assertTrue(isinstance(contents.entries[0], Pad))
@@ -171,6 +171,5 @@ class TestParserOptions(unittest.TestCase):
           option "title" "Super Rich"
 
         """
-        self.assertEqual(len(contents.options), 1)
         option = contents.options['title']
         self.assertEqual(option, 'Super Rich')

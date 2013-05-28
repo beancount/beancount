@@ -42,17 +42,17 @@ DEFAULT_OPTIONS = {
 
     # Leaf name of the equity account used for summarizing previous transactions
     # into opening balances.
-    "account_opening"    : "OpeningBalance",
+    "account_opening"    : "Opening-Balances",
 
     # Leaf name of the equity account used for transferring previous retained
     # earnings from income and expenses accrued before the beginning of the
     # exercise into the balance sheet.
-    "account_earnings"   : "RetainedEarnings",
+    "account_earnings"   : "Previous-Earnings",
 
     # Leaf name of the equity account used for transferring current retained
     # earnings from income and expenses accrued during the current exercise into
     # the balance sheet.
-    "account_netincome"  : "NetIncome",
+    "account_netincome"  : "Net-Income",
 
     # Leaf name of the subaccounts created for unrealized capital gains.
     "account_unrealized" : "Unrealized",
