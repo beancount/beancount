@@ -2,6 +2,13 @@
 beancount: TODO
 * NEW
 
+  - You must issue an error if you close an account that's got a non-zero
+    balance!
+
+
+
+
+
   - You need to convert some of TestRealization to TestCheck.
 
 
@@ -286,6 +293,8 @@ beancount: TODO
 
 
 
+
+
   - Deal with the effective date somehow, we need to do something with it, or
     just remove it?
 
@@ -474,6 +483,15 @@ beancount: TODO
 
 
 * Reports
+** Warnings
+
+  - You should have _some_ way to highlight accounts with either failing checks
+    in them, or '!' on their postings or transactions in the balance sheet
+    and/or trial balance.
+
+  - Perhaps we want to produce a report of all transactions with a highlight on
+    them.
+
 ** General Rendering
 
   - You should insert thousand-commas everywhere... no, really...

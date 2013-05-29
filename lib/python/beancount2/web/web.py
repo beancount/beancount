@@ -549,7 +549,6 @@ FLAG_ROWTYPES = {
     data.FLAG_PADDING  : 'Padding',
     data.FLAG_SUMMARIZE: 'Summarize',
     data.FLAG_TRANSFER : 'Transfer',
-    data.FLAG_WARNING : 'TransactionWarning',
 }
 
 def balance_html(balance):
@@ -586,9 +585,11 @@ def entries_table(oss, real_account, render_postings=True):
 
         rowtype = entry.__class__.__name__
         flag = ''
+        extra_class = ''
 
         if isinstance(entry, Transaction):
             rowtype = FLAG_ROWTYPES.get(entry.flag, 'Transaction')
+            extra_class = 'warning' if entry.flag == data.FLAG_WARNING else ''
             flag = entry.flag
             description = '<span class="narration">{}</span>'.format(entry.narration)
             if entry.payee:
@@ -617,7 +618,7 @@ def entries_table(oss, real_account, render_postings=True):
 
         # Render a row.
         write('''
-          <tr class="{}">
+          <tr class="{} {}">
             <td class="datecell">{}</td>
             <td class="flag">{}</td>
             <td class="description">{}</td>
@@ -625,12 +626,13 @@ def entries_table(oss, real_account, render_postings=True):
             <td class="change num">{}</td>
             <td class="balance num">{}</td>
           <tr>
-        '''.format(rowtype, date, flag, description, cost_str, change_str, balance_str))
+        '''.format(rowtype, extra_class,
+                   date, flag, description, cost_str, change_str, balance_str))
 
         if render_postings and isinstance(entry, Transaction):
             for posting in entry.postings:
                 write('''
-                  <tr class="Posting">
+                  <tr class="Posting {}">
                     <td class="datecell"></td>
                     <td class="flag">{}</td>
                     <td class="description">{}</td>
@@ -638,7 +640,10 @@ def entries_table(oss, real_account, render_postings=True):
                     <td class="change num"></td>
                     <td class="balance num"></td>
                   <tr>
-                '''.format(posting.flag or '', account_link(posting.account), str(posting.position)))
+                '''.format('warning' if posting.flag == data.FLAG_WARNING else '',
+                           posting.flag or '',
+                           account_link(posting.account),
+                           str(posting.position)))
 
     write('</table>')
 

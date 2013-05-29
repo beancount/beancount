@@ -137,7 +137,10 @@ span.pnsep {
 }
 
 table.entry-table tr.Transaction {
-    /* background-color: #e8e8e8; */
+}
+
+table.entry-table tr.Transaction.warning {
+    background-color: #f8a;
 }
 
 table.entry-table tr.Open, table.entry-table tr.Close {
@@ -164,6 +167,10 @@ table.entry-table tr.Posting {
     font-size: x-small;
     background-color: #f0f0f0;
     opacity: 0.6;
+}
+
+table.entry-table tr.Posting.warning {
+    background-color: #f8a;
 }
 
 
