@@ -226,7 +226,7 @@ def trial():
 EMS_PER_SPACE = 3
 _account_link_cache = {}
 
-def account_link(account_name):
+def account_link(account_name, leafonly=False):
     "Render an anchor for the given account name."
     if isinstance(account_name, (Account, RealAccount)):
         account_name = account_name.name
@@ -234,9 +234,13 @@ def account_link(account_name):
         return _account_link_cache[(request.app, account_name)]
     except KeyError:
         slashed_name = account_name.replace(':', '/')
+
+        if leafonly:
+            account_name = account_leaf_name(account_name)
+
         link = '<a href="{}" class="account">{}</a>'.format(
             request.app.get_url('account', slashed_account_name=slashed_name),
-            account_leaf_name(account_name))
+            account_name)
         _account_link_cache[account_name] = link
         return link
 
@@ -281,7 +285,7 @@ def tree_table(oss, tree, start_node_name, header=None, classes=None):
         write('<tr class="{}">'.format(' '.join(row_classes)))
         write('<td class="tree-node-name" style="padding-left: {}em">{}</td>'.format(
             len(line_first)/EMS_PER_SPACE,
-            account_link(real_account)))
+            account_link(real_account, leafonly=True)))
 
         # Add columns for each value rendered.
         for cell in cells:
@@ -530,6 +534,8 @@ def iterate_with_balance(entries):
             for position in positions:
                 change.add_position(position, True)
                 balance.add_position(position, True)
+        else:
+            change = None
         yield date_entry, change, balance
     date_entries.clear()
 
@@ -578,6 +584,9 @@ def entries_table(oss, real_account):
         date = entry.date
         balance_str = balance_html(balance)
 
+        rowtype = entry.__class__.__name__
+        flag = ''
+
         if isinstance(entry, Transaction):
             rowtype = FLAG_ROWTYPES.get(entry.flag, 'Transaction')
             flag = entry.flag
@@ -589,18 +598,20 @@ def entries_table(oss, real_account):
 
         elif isinstance(entry, Check):
             # Check the balance here and possibly change the rowtype
-            rowtype = entry.__class__.__name__
+            if not entry.success:
+                rowtype = 'CheckFail'
 
-            flag = 'C'
-            description = 'Check that {} contains {}'.format(entry.account.name, entry.position)
+            description = 'Check {} has {}'.format(account_link(entry.account), entry.position)
             change_str = str(entry.position)
             cost_str = ''
 
-        else:
-            rowtype = entry.__class__.__name__
+        elif isinstance(entry, (Open, Close)):
+            description = '{} {}'.format(entry.__class__.__name__, account_link(entry.account))
+            change_str = ''
+            cost_str = ''
 
-            flag = ''
-            description = entry.__class__.__name__
+        else:
+            description = ''
             change_str = ''
             cost_str = ''
 
@@ -806,7 +817,6 @@ class View:
                 self.opening_real_accounts, real_errors = realization.realize(self.opening_entries, do_check)
         else:
             self.opening_real_accounts = None
-            data.print_errors(real_errors)
 
         with utils.print_time('realize'):
             self.real_accounts, real_errors = realization.realize(self.entries, do_check)
@@ -1000,6 +1010,10 @@ def load_input_file(filename):
     with utils.print_time('pad'):
         entries, pad_errors = realization.pad(contents.entries)
         data.print_errors(pad_errors)
+
+    with utils.print_time('check'):
+        entries, check_errors = realization.check(entries)
+        data.print_errors(check_errors)
 
     # Validate the list of entries.
     with utils.print_time('validation'):

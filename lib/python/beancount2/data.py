@@ -135,7 +135,7 @@ def print_errors(errors):
 Open        = namedtuple('Open'        , 'fileloc date account account_id currencies')
 Close       = namedtuple('Close'       , 'fileloc date account')
 Pad         = namedtuple('Pad'         , 'fileloc date account account_pad')
-Check       = namedtuple('Check'       , 'fileloc date account position')
+Check       = namedtuple('Check'       , 'fileloc date account position success')
 Transaction = namedtuple('Transaction' , 'fileloc date flag payee narration tags postings')
 Note        = namedtuple('Note'        , 'fileloc date account comment')
 Event       = namedtuple('Event'       , 'fileloc date type description')

@@ -20,8 +20,6 @@ from beancount2 import utils
 # entries.
 RealAccount = namedtuple('RealAccount', 'name account balance children postings')
 
-# A realization error.
-RealError = namedtuple('RealError', 'fileloc message')
 
 
 class RealAccountTree(tree_utils.TreeDict):
@@ -66,6 +64,8 @@ def group_postings_by_account(entries, only_accounts=None):
 
     return by_accounts
 
+
+PadError = namedtuple('PadError', 'fileloc message')
 
 def pad(entries):
     """Synthesize and insert Transaction entries right after Pad entries in order to
@@ -148,19 +148,66 @@ def pad(entries):
 
     # Insert the newly created entries right after the pad entries that created them.
     padded_entries = []
+    pad_errors = []
     for entry in entries:
         padded_entries.append(entry)
         if isinstance(entry, Pad):
-            padded_entries.extend(new_entries[entry])
+            entry_list = new_entries[entry]
+            padded_entries.extend(entry_list)
 
-    # Generate errors on unused pad entries.
-    pad_errors = []
-    for pad, entry_list in new_entries.items():
-        if not entry_list:
-            pad_errors.append(
-                RealError(pad.fileloc, "Unused Pad entry: {}".format(pad)))
+            # Generate errors on unused pad entries.
+            if not entry_list:
+                pad_errors.append(
+                    PadError(pad.fileloc, "Unused Pad entry: {}".format(pad)))
 
     return padded_entries, pad_errors
+
+
+
+CheckError = namedtuple('CheckError', 'fileloc message')
+
+def check(entries):
+    """Check for all the Check directives and replace failing ones by new ones with
+    a flag that indicates failure."""
+
+    check_errors = []
+
+    # Running balance for each account.
+    balances = defaultdict(Inventory)
+
+    new_entries = []
+    for entry in entries:
+
+        if isinstance(entry, Transaction):
+            # Update the balance inventory for each of the postings' accounts.
+            for posting in entry.postings:
+                balance = balances[posting.account]
+                try:
+                    # Note: if this is from a padding transaction, we allow negative lots at cost.
+                    allow_negative = entry.flag in (FLAG_PADDING, FLAG_SUMMARIZE)
+                    balance.add_position(posting.position, allow_negative)
+                except ValueError as e:
+                    check_errors.append(
+                        CheckError(entry.fileloc, "Error balancing '{}' -- {}".format(posting.account.name, e)))
+
+        elif isinstance(entry, Check):
+            # Check the balance against the check entry.
+            check_position = entry.position
+            balance = balances[entry.account]
+            balance_position = balance.get_position(check_position.lot)
+            if check_position != balance_position:
+                check_errors.append(
+                    CheckError(entry.fileloc, "Check failed for '{}': {} != {}".format(
+                        entry.account.name, balance_position, check_position)))
+
+                # Substitute the entry by a failing entry.
+                entry = Check(entry.fileloc, entry.date, entry.account, entry.position, False)
+
+        new_entries.append(entry)
+
+    return new_entries, check_errors
+
+
 
 
 def realize(entries, do_check=False):
@@ -207,13 +254,10 @@ def realize(entries, do_check=False):
     messages if they fail.
     """
 
-    # Handle sanity checks when the check is at the beginning of the day.
-    check_is_at_beginning_of_day = parser.SORT_ORDER[Check] < 0
+    real_errors = []
 
     accounts_map = data.gather_accounts(entries)
-
     real_accounts = RealAccountTree(accounts_map)
-    real_errors = []
 
     def add_to_account(account, entry):
         "Update an account's posting list with the given entry."
@@ -231,32 +275,14 @@ def realize(entries, do_check=False):
             # Update the balance inventory for each of the postings' accounts.
             for posting in entry.postings:
                 balance = balances[posting.account]
-                try:
-                    # Note: if this is from a padding transaction, allow negative lots at cost.
-                    balance.add_position(posting.position,
-                                         allow_negative=entry.flag in (FLAG_PADDING, FLAG_SUMMARIZE))
-                except ValueError as e:
-                    real_errors.append(
-                        RealError(entry.fileloc, "Error balancing '{}' -- {}".format(posting.account.name, e)))
+                balance.add_position(posting.position, allow_negative=True)
 
                 add_to_account(posting.account, posting)
 
-        elif isinstance(entry, Check):
+        elif isinstance(entry, (Open, Close, Check, Note)):
 
-            # Add the check realization to the account.
-            # FIXME: We somehow need to indicate the success or failure of this check somehow, for rendering.
+            # Append some other entries in the realized list.
             add_to_account(entry.account, entry)
-
-            # Check the balance against the check entry.
-            if do_check:
-                check_position = entry.position
-                balance = balances[entry.account]
-                balance_position = balance.get_position(check_position.lot)
-                if check_position != balance_position:
-                    # This check failed; issue an error.
-                    real_errors.append(
-                        RealError(entry.fileloc, "Check failed for '{}': {} != {}".format(
-                            entry.account.name, balance_position, check_position)))
 
         elif isinstance(entry, Pad):
 
@@ -264,28 +290,12 @@ def realize(entries, do_check=False):
             add_to_account(entry.account, entry)
             add_to_account(entry.account_pad, entry)
 
-        elif isinstance(entry, (Open, Close, Note)):
-
-            # Append some other entries in the realized list.
-            add_to_account(entry.account, entry)
-
-        if check_is_at_beginning_of_day:
-            # Note: Check entries are assumed to have been sorted to be before any
-            # other entries with the same date. This is supposed to be done by the
-            # parser. Verify this invariant here.
-            if isinstance(entry, (Check, Open)):
-                assert entry.date > prev_date, (
-                    "Invalid entry order: Check or Open directive before transaction.",
-                    (entry, prev_entry))
-            else:
-                prev_entry = entry
-                prev_date = entry.date
-
+    # Create a tree with updated balances.
     for account, balance in balances.items():
         real_account = real_accounts.get(account.name)
         real_account.balance.update(balance)
 
-    return (real_accounts, real_errors)
+    return real_accounts, []  ## FIXME: fix the callers everywhere, this is now done in check().
 
 
 def get_subpostings(real_account):

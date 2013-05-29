@@ -71,7 +71,7 @@ h1#pagetitle {
 a.account:link, a.account:visited {
   text-decoration: none;
   color: blue;
-  /* font-weight: bold; */
+  font-weight: bold;
 }
 
 
@@ -146,6 +146,10 @@ table.entry-table tr.Open, table.entry-table tr.Close {
 
 table.entry-table tr.Check {
     background-color: #cfc;
+}
+
+table.entry-table tr.CheckFail {
+    background-color: #f8a;
 }
 
 table.entry-table tr.Pad {

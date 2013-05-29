@@ -3,6 +3,37 @@ beancount: TODO
 * NEW
 
 
+  - A realization should just be the root node of a tree of RealAccount's, each
+    with a list of entries|Postings and a final balance. Store the final balance
+    in RealAccount, it's worth it.
+
+    Wouldn't it be great if we could get rid of the TreeDict object? I say this:
+    after you remove the RealEntry and RealPosting objects, make the realization
+    be just the root node of a tree of accounts. The root node should be able to
+    quickly look up any subaccount. One less class, and then you don't have a
+    discrepancy between 'real_accounts' and 'real_account', one less datatype to
+    deal this. I saw DO THIS.
+
+
+  - Rename RealAccount's 'name' to 'leaf_name' and perhaps the full name should
+    still be stored in 'name'.
+
+
+  - Rename all 'real_accounts' to 'realization', which is meant to imply a tree
+    of accounts.
+
+
+  - inventory: rename get_cost() vs. get_cost_position(). Swap them, change all
+    the code that needs be changed.
+
+
+
+
+
+
+  - Fix return value of realize(), remove errors, need not output any errors.
+
+
 
 
   - The return values from the parser must be cleaned up a bit: remove the
@@ -11,28 +42,46 @@ beancount: TODO
 
       (entries, parser_errors, options).
 
-    * Cna we get rid of the accounts being returned? These can be derived
+    * Can we get rid of the accounts being returned? These can be derived
       easily from the list of entries, and I think I'm not using it anywhere
       serious other than in tests.
 
-  - Run check() in its own phase, that replaces the Check objects and returns a
-    list of entries, with failing checks replaced with ones that have a
-    different flag. This should be easy: add a flag to Check, with value PASS
-    or FAIL or UNKNOWN, and replace all of them (they're just tuples really, so
-    that's cheap, stop worrying).
 
-    We should then have a routine like this:
+
+
+  - We should have a routine like this:
 
        parse()
        pad()
        check()
        validate()
 
-    Make a function for this... this should yield all the errors I need for
-    error reporting. Summarization and realization don't yield errors.
+    Make a function for this... web.py should call it, bean2-sandbox too, one
+    routine, that should yield all the errors I need for error reporting.
+    (Summarization and realization don't yield errors anymore.)
+
+    * Implement basic error reporting page from the list of errors out of this.
+
+
+
 
   - (validation) In addition to the Check/Open before-constraint, check that
     the entries are always sorted. Add this sanity check.
+
+  - Implement check on the constraint on the kind of currency each account may
+    contain. -> validate.py
+
+  - The default validation should check the invariant that Open and Check
+    directives come before any Transaction.
+
+
+
+
+
+  - (web) We really need to reorder the accounts in a way that is more
+    sensible... it's annoying to see the accounts I care about at the top of
+    the page. Cash, Points, AU, should be at the bottom... I wonder if there's
+    a nice heuristic. Last updated date? I think that would be good enough.
 
 
 
@@ -41,23 +90,6 @@ beancount: TODO
 
 
 
-  - We need to realize at least the full set of transactions in order to mark
-    the check errors.
-
-    * We also need a way to mark the check errors... this is probably best done
-      as a single pass on the entries themselves (maybe substitute/filter Check
-      entries that fail with new ones with a special field?). Do this in
-      validate.py.
-
-    * You have to find a way to render failed checks as red.
-
-    * Implement basic error reporting.
-
-  - Implement check on the constraint on the kind of currency each account may
-    contain. -> validate.py
-
-  - The default validation should check the invariant that Open and Check
-    directives come before any Transaction.
 
 
 
@@ -87,9 +119,6 @@ beancount: TODO
 
 
 
-  - Deal with the effective date somehow, we need to do something with it.
-
-
 
   - Make the parser use the options name_* fields in order to validate and
     change the lexer to recognize all account names, not specificially the
@@ -102,12 +131,11 @@ beancount: TODO
 
 
 
+  (options)
   - FIXME: We need to parse the options using the same argparse parser....
 
 
 
-  - Create an '--anonymous' mode whereby all the numbers are represented by
-    'XXX.XX' for public presentation.
 
 
   - The source page should take a special '?line=ddd' parameter that will
@@ -170,19 +198,6 @@ beancount: TODO
 
 
 
-
-
-
-
-  - Add new options:
-
-        option name_assets      "Assets"
-        option name_liabilities "Liabilities"
-        option name_equity      "Equity"
-        option name_income      "Income"
-        option name_expenses    "Expenses"
-
-        option earnings_account "Equity:RetainedEarnings"
 
 
 
@@ -263,33 +278,22 @@ beancount: TODO
   - In the balance sheet or trial balance, mark accounts that have errors in
     red, or add a little red start next to them.
 
-  - Move Lot from data.py to inventory.py, just makes sense.
+  - Move 'Lot' class from data.py to inventory.py, just makes sense.
 
 
-* Internal Improvements - DO THIS
-
-  - A realization should just be the root node of a tree of RealAccount's, each
-    with a list of entries|Postings and a final balance. Store the final balance
-    in RealAccount, it's worth it.
-
-    Wouldn't it be great if we could get rid of the TreeDict object? I say this:
-    after you remove the RealEntry and RealPosting objects, make the realization
-    be just the root node of a tree of accounts. The root node should be able to
-    quickly look up any subaccount. One less class, and then you don't have a
-    discrepancy between 'real_accounts' and 'real_account', one less datatype to
-    deal this. I saw DO THIS.
 
 
-  - Rename RealAccount's 'name' to 'leaf_name' and perhaps the full name should
-    still be stored in 'name'.
+
+  - Deal with the effective date somehow, we need to do something with it, or
+    just remove it?
 
 
-  - Rename all 'real_accounts' to 'realization', which is meant to imply a tree
-    of accounts.
+** Incognito Mode
+
+  - Create an '--incognito mode whereby all the numbers are represented by
+    'XXX.XX' for public presentation.
 
 
-  - inventory: rename get_cost() vs. get_cost_position(). Swap them, change all
-    the code that needs be changed.
 
 
 

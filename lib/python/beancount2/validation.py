@@ -108,3 +108,33 @@ def validate(entries, accounts):
 
     errors = unused_errors + check_errors
     return errors
+
+
+
+
+
+
+
+
+
+
+# FIXME: write a dedicated routine to check this invariant
+'''
+
+    # Handle sanity checks when the check is at the beginning of the day.
+    check_is_at_beginning_of_day = parser.SORT_ORDER[Check] < 0
+
+
+
+        if check_is_at_beginning_of_day:
+            # Note: Check entries are assumed to have been sorted to be before any
+            # other entries with the same date. This is supposed to be done by the
+            # parser. Verify this invariant here.
+            if isinstance(entry, (Check, Open)):
+                assert entry.date > prev_date, (
+                    "Invalid entry order: Check or Open directive before transaction.",
+                    (entry, prev_entry))
+            else:
+                prev_entry = entry
+                prev_date = entry.date
+'''

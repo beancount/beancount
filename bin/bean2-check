@@ -21,19 +21,23 @@ def main():
 
     with utils.print_time('parse'):
         contents = beancount2.parser.parse(opts.filename)
-        parse_errors = contents.parse_errors
+        entries, parse_errors = contents.entries, contents.parse_errors
 
     with utils.print_time('pad'):
-        padded_entries, pad_errors = realization.pad(contents.entries)
+        entries, pad_errors = realization.pad(entries)
+
+    with utils.print_time('check'):
+        entries, check_errors = realization.check(entries)
 
     with utils.print_time('validation'):
-        valid_errors = validation.validate(padded_entries, contents.accounts)
+        valid_errors = validation.validate(entries, contents.accounts)
 
     with utils.print_time('realize'):
-        real_accounts, real_errors = realization.realize(padded_entries, do_check=True)
+        real_accounts, real_errors = realization.realize(entries, do_check=True)
 
     for error in itertools.chain(parse_errors,
                                  pad_errors,
+                                 check_errors,
                                  valid_errors,
                                  real_errors):
         print('{} {}'.format(data.render_fileloc(error.fileloc), error.message))
