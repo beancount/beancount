@@ -2,6 +2,16 @@
 beancount: TODO
 * NEW
 
+
+
+  - To fix the prolem rfendering txns from net-income, Use the clisoing
+    realization to render all journals from balance sheet accounts, and the
+    regular on for incokme accounts.
+
+
+
+
+
   - You must issue an error if you close an account that's got a non-zero
     balance!
 
