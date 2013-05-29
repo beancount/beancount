@@ -15,7 +15,6 @@ from beancount2 import realization
 from beancount2.data import Open, Close, Note, Pad, Check, Transaction
 from beancount2.data import Decimal, Amount, Account
 from beancount2 import data
-from beancount2.realization import RealPosting, RealEntry
 from beancount2.realization import pad, realize, dump_tree_balances, compare_realizations, real_cost_as_dict
 from beancount2.inventory import Inventory
 from beancount2.parser.parser_test import parsedoc

@@ -16,7 +16,6 @@ from beancount2 import realization
 from beancount2.data import Open, Close, Note, Pad, Check, Transaction, Posting
 from beancount2.data import Decimal, Amount
 from beancount2 import data
-from beancount2.realization import RealPosting, RealEntry
 from beancount2.inventory import Inventory
 from beancount2.parser.parser_test import parsedoc
 
@@ -46,8 +45,8 @@ def trace_errors(real_accounts, errors):
     for account_name, real_account in real_accounts.items():
         if real_account.postings:
             print('  ', real_account.account.name)
-            for real_posting in real_account.postings:
-                print('      {:32} {}'.format(real_posting.balance, real_posting))
+            for posting in real_account.postings:
+                print('      {}'.format(posting))
     print()
 
 
@@ -98,10 +97,10 @@ class TestRealization(unittest.TestCase):
 
 class TestRealizationPadding(unittest.TestCase):
 
-    def check_real_types(self, real_account, real_entry_types):
+    def check_real_types(self, real_account, entry_types):
         """Check the types of entries rendered."""
         self.assertEqual(list(map(type,  real_account.postings)),
-                         real_entry_types)
+                         entry_types)
 
     def check_balance(self, real_account, position):
         self.assertEqual(real_account.balance.get_position(position.lot), position)

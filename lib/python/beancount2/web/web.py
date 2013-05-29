@@ -22,11 +22,12 @@ from beancount2 import validation
 from beancount2 import data
 from beancount2.data import account_leaf_name, Account, Lot
 from beancount2 import realization
-from beancount2.realization import RealAccount, RealPosting, RealEntry
+from beancount2.realization import RealAccount
 from beancount2 import summarize
 from beancount2 import utils
+from beancount2.utils import index_key
 from beancount2.inventory import Inventory
-from beancount2.data import Open, Close, Pad, Check, Transaction, Event, Note, Price
+from beancount2.data import Open, Close, Pad, Check, Transaction, Event, Note, Price, Posting
 
 
 #--------------------------------------------------------------------------------
@@ -295,8 +296,8 @@ def is_account_active(real_account):
     """Return true if the account should be rendered. An inactive account only has
     an Open directive and nothing else."""
 
-    for real_entry in real_account.postings:
-        if isinstance(real_entry.entry, Open):
+    for entry in real_account.postings:
+        if isinstance(entry, Open):
             continue
         return True
     return False
@@ -444,12 +445,111 @@ def conversions():
 
 
 
+
+
+
+## FIXME: This deserves to be somewhere else, I'm thinking realization.py
+def iterate_with_balance(entries):
+    """Iterate over the entries accumulating the balance.
+    For each entry, it yields
+
+      (entry, change, balance)
+
+    'entry' is the entry for this line. If the list contained Posting instance,
+    this yields the corresponding Transaction object.
+
+    'change' is an Inventory object that reflects the change due to this entry
+    (this may be multiple positions in the case that a single transaction has
+    multiple legs).
+
+    The 'balance' yielded is never None; it's up to the one displaying the entry
+    to decide whether to render for a particular type.
+
+    Also, multiple postings for the same transaction are de-duped
+    and when a Posting is encountered, the parent Transaction entry is yielded,
+    with the balance updated for just the postings that were in the list.
+    (We attempt to preserve the original ordering of the postings as much as
+    possible.)
+    """
+
+    # The running balance.
+    balance = Inventory()
+
+    # Previous date.
+    prev_date = None
+
+    # A list of entries at the current date.
+    date_entries = []
+
+    first = lambda pair: pair[0]
+    for entry in entries:
+
+        # Get the posting if we are dealing with one.
+        if isinstance(entry, Posting):
+            posting = entry
+            entry = posting.entry
+        else:
+            posting = None
+
+        if entry.date != prev_date:
+            prev_date = entry.date
+
+            # Flush the dated entries.
+            for date_entry, positions in date_entries:
+                if positions:
+                    # Compute the change due to this transaction and update the
+                    # total balance at the same time.
+                    change = Inventory()
+                    for position in positions:
+                        change.add_position(position, True)
+                        balance.add_position(position, True)
+                else:
+                    change = None
+                yield date_entry, change, balance
+            date_entries.clear()
+
+        if posting:
+
+            # De-dup multiple postings on the same transaction entry by
+            # grouping their positions together.
+            index = index_key(date_entries, entry, key=first)
+            if index is None:
+                date_entries.append( (entry, [posting.position]) )
+            else:
+                # We are indeed de-duping!
+                positions = date_entries[index][1]
+                positions.append(posting.position)
+        else:
+            # This is a regular entry; nothing to add/remove.
+            date_entries.append( (entry, None) )
+
+    # Flush the final dated entries if any, same as above.
+    for date_entry, positions in date_entries:
+        if positions:
+            change = Inventory()
+            for position in positions:
+                change.add_position(position, True)
+                balance.add_position(position, True)
+        yield date_entry, change, balance
+    date_entries.clear()
+
+
+
+
+
+
+
 FLAG_ROWTYPES = {
     data.FLAG_PADDING  : 'Padding',
     data.FLAG_SUMMARIZE: 'Summarize',
     data.FLAG_TRANSFER : 'Transfer',
     data.FLAG_WARNING : 'TransactionWarning',
 }
+
+def balance_html(balance):
+    return ('\n<br/>'.join(map(str, balance.get_positions()))
+            if balance
+            else '')
 
 def entries_table(oss, real_account):
     """Render a list of entries into an HTML table.
@@ -464,44 +564,45 @@ def entries_table(oss, real_account):
          <th>F</th>
          <th>Narration/Payee</th>
          <th></th>
-         <th>Amount</th>
+         <th>Change</th>
          <th>Balance</th>
       </thead>
     ''')
 
-    real_entries = realization.get_real_subpostings(real_account)
-    for real_entry in real_entries:
-        entry = real_entry.entry
+
+    postings = realization.get_subpostings(real_account)
+    balance = Inventory()
+    for entry, change, balance in iterate_with_balance(postings):
 
         # Prepare the data to be rendered for this row.
         date = entry.date
-        balance = '\n<br/>'.join(map(str, real_entry.balance.get_positions()))
+        balance_str = balance_html(balance)
 
-        if isinstance(real_entry, RealPosting):
+        if isinstance(entry, Transaction):
             rowtype = FLAG_ROWTYPES.get(entry.flag, 'Transaction')
-
             flag = entry.flag
-
             description = '<span class="narration">{}</span>'.format(entry.narration)
             if entry.payee:
                 description = '<span class="payee">{}</span><span class="pnsep">|</span>{}'.format(entry.payee, description)
-            amount = str(real_entry.posting.position)
-            cost = str(real_entry.posting.position.get_cost())
+            change_str = balance_html(change)
+            cost_str = ''
+
         elif isinstance(entry, Check):
             # Check the balance here and possibly change the rowtype
             rowtype = entry.__class__.__name__
 
             flag = 'C'
-            description = entry.__class__.__name__
-            amount = str(entry.position)
-            cost = ''
+            description = 'Check that {} contains {}'.format(entry.account.name, entry.position)
+            change_str = str(entry.position)
+            cost_str = ''
+
         else:
             rowtype = entry.__class__.__name__
 
             flag = ''
             description = entry.__class__.__name__
-            amount = ''
-            cost = ''
+            change_str = ''
+            cost_str = ''
 
         # Render a row.
         write('''
@@ -510,10 +611,10 @@ def entries_table(oss, real_account):
             <td class="flag">{}</td>
             <td class="description">{}</td>
             <td class="number num">{}</td>
-            <td class="amount num">{}</td>
+            <td class="change num">{}</td>
             <td class="balance num">{}</td>
           <tr>
-        '''.format(rowtype, date, flag, description, amount, cost, balance))
+        '''.format(rowtype, date, flag, description, cost_str, change_str, balance_str))
 
     write('</table>')
 
@@ -995,31 +1096,3 @@ def compute_ids(strings):
         raise RuntimeError("Could not find a unique mapping for {}".format(string_set))
 
     return sorted((id, stringlist[0]) for id, stringlist in idmap.items())
-
-
-
-
-# FIXME: Move this to generic utilities.
-
-
-
-
-
-
-## FIXME: remove this - this was temporary, until we get all rendering nicely, this will do for now
-
-def temporary_render_real_account(real_account, transactions_only=False):
-
-    real_postings = realization.get_real_subpostings(real_account)
-
-    oss = io.StringIO()
-    for real_posting in real_postings:
-        entry = real_posting.entry
-        entry_type = type(entry)
-        if entry_type is Transaction:
-            oss.write('{:%Y-%m-%d} {}  "{}"  {}\n'.format(
-                entry.date, entry_type.__name__, entry.narration, real_posting.balance))
-        elif not transactions_only:
-            oss.write('{:%Y-%m-%d} {}\n'.format(entry.date, entry))
-
-    return oss.getvalue()

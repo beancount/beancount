@@ -190,13 +190,6 @@ class GetAccounts:
 def gather_accounts(entries):
     return GetAccounts()(entries)
 
-# def gather_accounts(entries):
-#     accounts = {}
-#     for entry in entries:
-#         for account in utils.get_tuple_typed_values(entry, data.Account):
-#             accounts[account.name] = account
-
-
 
 #
 # Common operations on lists of entries.

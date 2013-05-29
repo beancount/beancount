@@ -264,6 +264,15 @@ def entry_sortkey(entry):
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.fileloc.lineno)
 
 
+def posting_sortkey(entry):
+    """Sort-key for entries or postings. We sort by date, except that checks
+    should be placed in front of every list of entries of that same day,
+    in order to balance linearly."""
+    if isinstance(entry, Posting):
+        entry = entry.entry
+    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.fileloc.lineno)
+
+
 def parse(filename):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts."""

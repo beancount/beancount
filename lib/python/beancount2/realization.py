@@ -20,19 +20,7 @@ from beancount2 import utils
 # entries.
 RealAccount = namedtuple('RealAccount', 'name account balance children postings')
 
-
-# All realized entries are either one of RealEntry or RealPosting.
-
-# A realized entry, that possibly contains the actual balance that was seen at
-# that point. This is used for all non-posting entries.
-RealEntry = namedtuple('RealEntry', 'entry balance')
-
-# A realized posting, that points to a particular posting of transaction entry.
-# The 'entry' attribute may point to a transaction or a Pad entry.
-RealPosting = namedtuple('RealPosting', 'entry posting balance')
-
-
-
+# A realization error.
 RealError = namedtuple('RealError', 'fileloc message')
 
 
@@ -176,48 +164,42 @@ def pad(entries):
 
 
 def realize(entries, do_check=False):
-## FIXME: This is out-of-date, fix this doc
 
-    """Compute the running balances and realize a list of entries into a tree of
-    realized accounts, which contains shadow entries with balances. This is then
-    used to issue reports. This routine is actually really simple: it runs
-    through a list of entries, and creates per-account list of "realized"
-    postings, which may be of two possible types:
+    """Group entries by account, into a "tree" of realized accounts. RealAccount's
+    are essentially containers for lists of postings and the final balance of
+    each account, and may be non-leaf accounts (used strictly for organizing
+    accounts into a hierarchy). This is then used to issue reports.
 
-      RealPosting -> points to a specific posting of a transaction entry.
-      RealEntry -> points to any other type of entry.
+    The lists of postings in each account my be any of the entry types, except
+    for Transaction, whereby Transaction entries are replaced by the specific
+    Posting legs that belong to the account. Here's a simple diagram that
+    summarizes this seemingly complex, but rather simple data structure:
 
-    These realized entries also have a pre-computed balance used for rendering
-    reports. The function returns a tree of "realized" accounts, which contain
-    lists of these realized entries. Here's a simple diagram that summarizes
-    this seemingly complex, but rather simple data structure:
-
-       +-------------+      +-------------+     +------+
-       | RealAccount |----->|  RealEntry  |---->| Open |
-       +-------------+      +-------------+     +------+
+       +-------------+         +------+
+       | RealAccount |---------| Open |
+       +-------------+         +------+
                                    |
                                    v
-                            +-------------+     +-------------+
-                            | RealPosting |---->| Transaction |
-                            +-------------+     +-------------+
-                                   |      \        |         \
-                                   |       \  +---------+  +---------+
-                                   |        `>| Posting |  | Posting |
-                                   |          +---------+  +---------+
-                                   v
-                            +-------------+     +-----+
-                            |  RealEntry  |---->| Pad |
-                            +-------------+     +-----+
+                              +---------+     +-------------+
+                              | Posting |---->| Transaction |
+                              +---------+     +-------------+
+                                   |                         \
+                                   |                       +---------+
+                                   |                       | Posting |
+                                   v                       +---------+
+                                +-----+
+                                | Pad |
+                                +-----+
                                    |
                                    v
-                            +-------------+     +-------+
-                            |  RealEntry  |---->| Check |
-                            +-------------+     +-------+
+                               +-------+
+                               | Check |
+                               +-------+
                                    |
                                    v
-                            +-------------+     +-------+
-                            |  RealEntry  |---->| Close |
-                            +-------------+     +-------+
+                               +-------+
+                               | Close |
+                               +-------+
                                    |
                                    .
 
@@ -306,20 +288,20 @@ def realize(entries, do_check=False):
     return (real_accounts, real_errors)
 
 
-def get_real_subpostings(real_account):
+def get_subpostings(real_account):
     """Given a RealAccount instance, return a sorted list of all its postings and
     the postings of its child accounts."""
 
     accumulator = []
-    _get_real_subpostings(real_account, accumulator)
-    accumulator.sort(key=lambda rposting: parser.entry_sortkey(rposting.entry))
+    _get_subpostings(real_account, accumulator)
+    accumulator.sort(key=parser.posting_sortkey)
     return accumulator
 
-def _get_real_subpostings(real_account, accumulator):
+def _get_subpostings(real_account, accumulator):
     "Internal recursive routine to get all the child postings."
     accumulator.extend(real_account.postings)
     for child_account in real_account.children:
-        _get_real_subpostings(child_account, accumulator)
+        _get_subpostings(child_account, accumulator)
 
 
 def dump_tree_balances(real_accounts, foutput=None):

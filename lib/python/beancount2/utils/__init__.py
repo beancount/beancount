@@ -43,3 +43,13 @@ def get_tuple_typed_values(ntuple, clstype):
             for sub_attribute in attribute:
                 for account in get_tuple_typed_values(sub_attribute, clstype):
                     yield account
+
+
+def index_key(sequence, value, key=None):
+    """Find the index of the first element in 'sequence' whic is equal to 'value'.
+    If 'key' is specified, the value compared to the value returned by this
+    function. If the value is not found, return None."""
+    for index, element in enumerate(sequence):
+        if key(element) == value:
+            return index
+    return None
