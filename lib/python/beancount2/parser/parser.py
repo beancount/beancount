@@ -203,7 +203,7 @@ class Builder(object):
         # price here and forget about that detail of the input syntax.
         if istotal:
             price = Amount(price.number / position.number, price.currency)
-        return Posting(None, account, position, price, flag)
+        return Posting(None, account, position, price, chr(flag) if flag else None)
 
     def transaction(self, filename, lineno, date, flag, payee, narration, tags, postings):
         fileloc = FileLocation(filename, lineno)

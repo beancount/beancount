@@ -12,7 +12,7 @@ table {
 }
 
 table td {
-    border: thin solid #eee;
+    border: thin solid #ddd;
     padding-left: 4px;
     padding-right: 4px;
 }
@@ -158,6 +158,12 @@ table.entry-table tr.Pad {
 
 table.entry-table tr.Padding, table.entry-table tr.Summarize, table.entry-table tr.Transfer {
     background-color: #cff;
+}
+
+table.entry-table tr.Posting {
+    font-size: x-small;
+    background-color: #f0f0f0;
+    opacity: 0.6;
 }
 
 

@@ -557,7 +557,7 @@ def balance_html(balance):
             if balance
             else '')
 
-def entries_table(oss, real_account):
+def entries_table(oss, real_account, render_postings=True):
     """Render a list of entries into an HTML table.
     """
     write = lambda data: (oss.write(data), oss.write('\n'))
@@ -626,6 +626,19 @@ def entries_table(oss, real_account):
             <td class="balance num">{}</td>
           <tr>
         '''.format(rowtype, date, flag, description, cost_str, change_str, balance_str))
+
+        if render_postings and isinstance(entry, Transaction):
+            for posting in entry.postings:
+                write('''
+                  <tr class="Posting">
+                    <td class="datecell"></td>
+                    <td class="flag">{}</td>
+                    <td class="description">{}</td>
+                    <td class="number num">{}</td>
+                    <td class="change num"></td>
+                    <td class="balance num"></td>
+                  <tr>
+                '''.format(posting.flag or '', account_link(posting.account), str(posting.position)))
 
     write('</table>')
 
