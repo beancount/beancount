@@ -35,12 +35,10 @@ def summarizedoc(date, other_account):
             entries, pad_errors = pad(contents.entries)
             assert not pad_errors, pad_errors
 
-            real_accounts, real_errors = realize(entries, do_check=True)
-            assert not real_errors, real_errors
+            real_accounts = realize(entries, do_check=True)
 
             sum_entries, _ = summarize(entries, date, other_account)
-            sum_real_accounts, sum_real_errors = realize(sum_entries, do_check=True)
-            assert not sum_real_errors, sum_real_errors
+            sum_real_accounts = realize(sum_entries, do_check=True)
 
             # print('---')
             # for entry in before: print(entry)
@@ -151,8 +149,7 @@ class TestSummarization(unittest.TestCase):
                                 data.is_income_statement_account, TRANSFER_BALANCES)
 
         sum_entries, _ = summarize(tran_entries, report_date, OPENING_BALANCES)
-        real_accounts, real_errors = realize(sum_entries, do_check=True)
-        assert not real_errors
+        real_accounts = realize(sum_entries, do_check=True)
 
         self.assertEqual(real_cost_as_dict(real_accounts),
                          {'Assets:Checking': 'Inventory(1920.00 USD)',
@@ -178,7 +175,7 @@ class TestTransferBalances(unittest.TestCase):
             Income:Job            -1000 USD
             Assets:Checking        1000 USD
         """
-        real_accounts, real_errors = realize(contents.entries, do_check=True)
+        real_accounts = realize(contents.entries, do_check=True)
         self.assertEqual(real_cost_as_dict(real_accounts),
                          {'Assets:Checking': 'Inventory(2000.00 USD)',
                           'Income:Job': 'Inventory(-2000.00 USD)'})
@@ -186,7 +183,7 @@ class TestTransferBalances(unittest.TestCase):
         tran_entries = transfer(contents.entries, date(2012, 6, 1),
                                 data.is_income_statement_account, TRANSFER_BALANCES)
 
-        real_accounts, real_errors = realize(tran_entries, do_check=True)
+        real_accounts = realize(tran_entries, do_check=True)
         self.assertEqual(real_cost_as_dict(real_accounts),
                          {'Assets:Checking': 'Inventory(2000.00 USD)',
                           'Income:Job': 'Inventory()',

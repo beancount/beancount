@@ -2,6 +2,8 @@
 beancount: TODO
 * NEW
 
+  - You need to convert some of TestRealization to TestCheck.
+
 
   - A realization should just be the root node of a tree of RealAccount's, each
     with a list of entries|Postings and a final balance. Store the final balance

@@ -153,8 +153,7 @@ def main():
 
 
     with utils.print_time('realize'):
-        real_accounts, real_errors = realization.realize(entries, do_check=True)
-        data.print_errors(real_errors)
+        real_accounts = realization.realize(entries, do_check=True)
 
     if opts.verbose:
         dump_tree_balances(real_accounts, sys.stdout)
@@ -172,9 +171,7 @@ def main():
             print(entry, file=out)
 
 
-        real_accounts, real_errors = realization.realize(clamped_entries, do_check=True)
-        print(real_errors)
-        assert not real_errors
+        real_accounts = realization.realize(clamped_entries, do_check=True)
 
         # dump_tree_balances(real_accounts)
 
@@ -191,8 +188,7 @@ def main():
         with utils.print_time('summarize'):
             account_opening = data.Account('Equity:OpeningBalances', 'Equity')
             sum_entries, _ = summarize.summarize(entries, datetime.date(2012, 1, 1), account_opening)
-            sumreal_accounts, sumreal_errors = realization.realize(sum_entries, do_check=True)
-            data.print_errors(sumreal_errors)
+            sumreal_accounts = realization.realize(sum_entries, do_check=True)
 
             sum_log = open('/tmp/sum.log', 'w')
             dump_tree_balances(sumreal_accounts, sum_log)

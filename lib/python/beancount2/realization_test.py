@@ -29,11 +29,12 @@ def realizedoc(fun):
     def newfun(self):
         contents = parser.parse_string(textwrap.dedent(fun.__doc__))
         entries, pad_errors = realization.pad(contents.entries)
-        real_accounts, real_errors = realization.realize(entries, do_check=True)
-        errors = contents.parse_errors + pad_errors + real_errors
+        errors = contents.parse_errors + pad_errors
+
+        real_accounts = realization.realize(entries, do_check=True)
         if do_trace and errors:
             trace_errors(real_accounts, errors)
-        return fun(self, entries, real_accounts, errors)
+        return fun(self, entries, real_accounts)
     return newfun
 
 def trace_errors(real_accounts, errors):
@@ -51,10 +52,12 @@ def trace_errors(real_accounts, errors):
 
 
 
+## FIXME: this needs become TestCheck().
+
 class TestRealization(unittest.TestCase):
 
     @realizedoc
-    def test_check_error(self, entries, real_accounts, real_errors):
+    def test_check_error(self, entries, real_accounts):
         """
           2013-05-01 open Assets:US:Checking   USD
           2013-05-03 check Assets:US:Checking   100 USD
@@ -62,7 +65,7 @@ class TestRealization(unittest.TestCase):
         self.assertEqual(len(real_errors), 1)
 
     @realizedoc
-    def test_check_okay(self, entries, real_accounts, real_errors):
+    def test_check_okay(self, entries, real_accounts):
         """
           2013-05-01 open Assets:US:Checking   USD
           2013-05-01 open Expenses:Something
@@ -79,7 +82,7 @@ class TestRealization(unittest.TestCase):
     # This test ensures that the 'check' directives apply at the beginning of
     # the day.
     @realizedoc
-    def test_check_samedate(self, entries, real_accounts, real_errors):
+    def test_check_samedate(self, entries, real_accounts):
         """
           2013-05-01 open Assets:US:Checking   USD
           2013-05-01 open Expenses:Something
@@ -106,7 +109,7 @@ class TestRealizationPadding(unittest.TestCase):
         self.assertEqual(real_account.balance.get_position(position.lot), position)
 
     @realizedoc
-    def test_pad(self, entries, real_accounts, real_errors):
+    def test_pad(self, entries, real_accounts):
         """
           2013-05-01 open Assets:Checking
           2013-05-01 open Equity:Opening-Balancess
@@ -123,7 +126,7 @@ class TestRealizationPadding(unittest.TestCase):
                            Position(Lot('USD', None, None), Decimal('172.45')))
 
     @realizedoc
-    def test_with_cost(self, entries, real_accounts, real_errors):
+    def test_with_cost(self, entries, real_accounts):
         """
           2013-05-01 open Assets:Invest
           2013-05-01 open Equity:Opening-Balancess
@@ -141,7 +144,7 @@ class TestRealizationPadding(unittest.TestCase):
 
 
     @realizedoc
-    def test_with_cost_and_lotdate(self, entries, real_accounts, real_errors):
+    def test_with_cost_and_lotdate(self, entries, real_accounts):
         """
           2013-05-01 open Assets:Invest
           2013-05-01 open Equity:Opening-Balancess
@@ -158,7 +161,7 @@ class TestRealizationPadding(unittest.TestCase):
                            Position(Lot('GOOG', Amount('12.00', 'USD'), date(2000, 1, 1)), Decimal('172.45')))
 
     @realizedoc
-    def test_pad_fail(self, entries, real_accounts, real_errors):
+    def test_pad_fail(self, entries, real_accounts):
         """
           2013-05-01 open Assets:Checking
           2013-05-01 open Assets:Cash
@@ -180,7 +183,7 @@ class TestRealizationPadding(unittest.TestCase):
 
 
     @realizedoc
-    def test_pad_used_twice(self, entries, real_accounts, real_errors):
+    def test_pad_used_twice(self, entries, real_accounts):
         """
           2013-05-01 open Assets:Checking
           2013-05-01 open Assets:Cash
@@ -204,7 +207,7 @@ class TestRealizationPadding(unittest.TestCase):
                             [Open, Pad, Posting, Check, Posting, Pad, Posting, Check])
 
     @realizedoc
-    def test_pad_check_balances(self, entries, real_accounts, real_errors):
+    def test_pad_check_balances(self, entries, real_accounts):
         """
           2013-05-01 open Assets:Checking
           2013-05-01 open Assets:Cash

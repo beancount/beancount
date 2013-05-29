@@ -814,17 +814,15 @@ class View:
         do_check = False
         if self.opening_entries:
             with utils.print_time('realize_opening'):
-                self.opening_real_accounts, real_errors = realization.realize(self.opening_entries, do_check)
+                self.opening_real_accounts = realization.realize(self.opening_entries, do_check)
         else:
             self.opening_real_accounts = None
 
         with utils.print_time('realize'):
-            self.real_accounts, real_errors = realization.realize(self.entries, do_check)
-            data.print_errors(real_errors)
+            self.real_accounts = realization.realize(self.entries, do_check)
 
         with utils.print_time('realize_closing'):
-            self.closing_real_accounts, real_errors = realization.realize(self.closing_entries, do_check)
-            data.print_errors(real_errors)
+            self.closing_real_accounts = realization.realize(self.closing_entries, do_check)
 
         assert self.real_accounts is not None
         assert self.closing_real_accounts is not None

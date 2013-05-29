@@ -254,8 +254,6 @@ def realize(entries, do_check=False):
     messages if they fail.
     """
 
-    real_errors = []
-
     accounts_map = data.gather_accounts(entries)
     real_accounts = RealAccountTree(accounts_map)
 
@@ -295,7 +293,7 @@ def realize(entries, do_check=False):
         real_account = real_accounts.get(account.name)
         real_account.balance.update(balance)
 
-    return real_accounts, []  ## FIXME: fix the callers everywhere, this is now done in check().
+    return real_accounts
 
 
 def get_subpostings(real_account):
