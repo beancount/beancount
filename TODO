@@ -291,6 +291,13 @@ beancount: TODO
   - inventory: rename get_cost() vs. get_cost_position(). Swap them, change all
     the code that needs be changed.
 
+  - At the same time, wouldn't it be great if we could get rid of the TreeDict
+    object? I say this: after you remove the RealEntry and RealPosting objects,
+    make the realization be just the root node of a tree of accounts. The root
+    node should be able to quickly look up any subaccount. One less class, and
+    then you don't have a discrepancy between 'real_accounts' and
+    'real_account', one less datatype to deal this. I saw DO THIS.
+
 
 * Web Interface
 ** Simplifications
