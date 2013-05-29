@@ -323,8 +323,7 @@ def table_of_balances(tree, start_node_name, currencies, classes=None):
             row_classes.append('parent-node')
 
         # For each account line, get the final balance of the account (at cost).
-        balance = realization.find_balance(real_account)
-        balance_cost = balance.get_cost()
+        balance_cost = real_account.balance.get_cost()
 
         # Extract all the positions that the user has identified as home
         # currencies.

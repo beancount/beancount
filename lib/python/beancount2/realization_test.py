@@ -7,12 +7,13 @@ import sys
 from datetime import date
 import textwrap
 import functools
+from copy import copy
 
 from beancount2.inventory import Position, Lot
 from beancount2 import parser
 from beancount2 import validation
 from beancount2 import realization
-from beancount2.data import Open, Close, Note, Pad, Check, Transaction
+from beancount2.data import Open, Close, Note, Pad, Check, Transaction, Posting
 from beancount2.data import Decimal, Amount
 from beancount2 import data
 from beancount2.realization import RealPosting, RealEntry
@@ -99,12 +100,11 @@ class TestRealizationPadding(unittest.TestCase):
 
     def check_real_types(self, real_account, real_entry_types):
         """Check the types of entries rendered."""
-        self.assertEqual(list(type(rp.entry) for rp in real_account.postings),
+        self.assertEqual(list(map(type,  real_account.postings)),
                          real_entry_types)
 
     def check_balance(self, real_account, position):
-        final_balance = realization.find_balance(real_account)
-        self.assertEqual(final_balance.get_position(position.lot), position)
+        self.assertEqual(real_account.balance.get_position(position.lot), position)
 
     @realizedoc
     def test_pad(self, entries, real_accounts, real_errors):
@@ -117,8 +117,8 @@ class TestRealizationPadding(unittest.TestCase):
           2013-05-03 check Assets:Checking   172.45 USD
         """
         self.assertEqual(len(real_errors), 0)
-        self.check_real_types(real_accounts['Assets:Checking'], [Open, Pad, Transaction, Check])
-        self.check_real_types(real_accounts['Equity:Opening-Balancess'], [Open, Pad, Transaction])
+        self.check_real_types(real_accounts['Assets:Checking'], [Open, Pad, Posting, Check])
+        self.check_real_types(real_accounts['Equity:Opening-Balancess'], [Open, Pad, Posting])
 
         self.check_balance(real_accounts['Assets:Checking'],
                            Position(Lot('USD', None, None), Decimal('172.45')))
@@ -134,8 +134,8 @@ class TestRealizationPadding(unittest.TestCase):
           2013-05-03 check Assets:Invest   172.45 GOOG {12.00 USD}
         """
         assert len(real_errors) == 0
-        self.check_real_types(real_accounts['Assets:Invest'], [Open, Pad, Transaction, Check])
-        self.check_real_types(real_accounts['Equity:Opening-Balancess'], [Open, Pad, Transaction])
+        self.check_real_types(real_accounts['Assets:Invest'], [Open, Pad, Posting, Check])
+        self.check_real_types(real_accounts['Equity:Opening-Balancess'], [Open, Pad, Posting])
 
         self.check_balance(real_accounts['Assets:Invest'],
                            Position(Lot('GOOG', Amount('12.00', 'USD'), None), Decimal('172.45')))
@@ -152,8 +152,8 @@ class TestRealizationPadding(unittest.TestCase):
           2013-05-03 check Assets:Invest   172.45 GOOG {12.00 USD / 2000-01-01}
         """
         assert len(real_errors) == 0
-        self.check_real_types(real_accounts['Assets:Invest'], [Open, Pad, Transaction, Check])
-        self.check_real_types(real_accounts['Equity:Opening-Balancess'], [Open, Pad, Transaction])
+        self.check_real_types(real_accounts['Assets:Invest'], [Open, Pad, Posting, Check])
+        self.check_real_types(real_accounts['Equity:Opening-Balancess'], [Open, Pad, Posting])
 
         self.check_balance(real_accounts['Assets:Invest'],
                            Position(Lot('GOOG', Amount('12.00', 'USD'), date(2000, 1, 1)), Decimal('172.45')))
@@ -202,7 +202,7 @@ class TestRealizationPadding(unittest.TestCase):
         """
         self.assertEqual(len(real_errors), 0)
         self.check_real_types(real_accounts['Assets:Checking'],
-                            [Open, Pad, Transaction, Check, Transaction, Pad, Transaction, Check])
+                            [Open, Pad, Posting, Check, Posting, Pad, Posting, Check])
 
     @realizedoc
     def test_pad_check_balances(self, entries, real_accounts, real_errors):
@@ -230,18 +230,22 @@ class TestRealizationPadding(unittest.TestCase):
           2013-06-01 check Assets:Checking   145 USD
 
         """
+
+
         balances = []
-        for real_posting in real_accounts['Assets:Checking'].postings:
-            balances.append((type(real_posting.entry),
-                             getattr(real_posting, 'balance', Inventory()).get_amount('USD')))
+        balance = Inventory()
+        for posting in real_accounts['Assets:Checking'].postings:
+            if isinstance(posting, Posting):
+                balance.add_position(posting.position)
+            balances.append((type(posting), balance.get_amount('USD')))
 
         self.assertEqual(balances, [(Open, Amount('0.00', 'USD')),
                                     (Pad, Amount('0.00', 'USD')),
-                                    (Transaction, Amount('95.00', 'USD')),
-                                    (Transaction, Amount('105.00', 'USD')),
+                                    (Posting, Amount('95.00', 'USD')),
+                                    (Posting, Amount('105.00', 'USD')),
                                     (Check, Amount('105.00', 'USD')),
-                                    (Transaction, Amount('125.00', 'USD')),
-                                    (Transaction, Amount('145.00', 'USD')),
+                                    (Posting, Amount('125.00', 'USD')),
+                                    (Posting, Amount('145.00', 'USD')),
                                     (Check, Amount('145.00', 'USD'))])
 
 

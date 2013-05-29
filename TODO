@@ -3,6 +3,7 @@ beancount: TODO
 * NEW
 
 
+
   - The return values from the parser must be cleaned up a bit: remove the
     "contents" object, return stuff just like the other transformation
     function, i.e. :
@@ -304,6 +305,9 @@ beancount: TODO
     node should be able to quickly look up any subaccount. One less class, and
     then you don't have a discrepancy between 'real_accounts' and
     'real_account', one less datatype to deal this. I saw DO THIS.
+
+  - Rename RealAccount's 'name' to 'leaf_name' and perhaps the full name should
+    still eb stored in 'name'.
 
 
 * Web Interface

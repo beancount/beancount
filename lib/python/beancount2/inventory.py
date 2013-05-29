@@ -244,7 +244,9 @@ class Inventory:
         new_inventory += other
         return new_inventory
 
-    def __iadd__(self, other):
+    def update(self, other):
         for position in other.positions:
             self.add_position(position, True)
         return self
+
+    __iadd__ = update

@@ -33,6 +33,7 @@ from beancount2.data import render_fileloc
 AccountTypeData = namedtuple('AccountTypeData', 'Assets Liabilities Equity Income Expenses')
 
 
+
 def compute_balance_by_type(real_accounts, date):
     """Compute the total balance for each account type, evaluated at the given
     date. Returns a tuple with an inventor for each accoutn type."""
@@ -42,6 +43,7 @@ def compute_balance_by_type(real_accounts, date):
     for real_account in real_accounts.values():
         if real_account.postings:
             typename = data.account_type(real_account.name)
+            assert False, "FIXME: This doesn't work anymore; we need to use the entries in order to compute the balance at a specific date."
             balance = realization.find_balance(real_account, date)
             balances[typename] += balance
 

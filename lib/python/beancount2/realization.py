@@ -18,7 +18,7 @@ from beancount2 import utils
 
 # A realized account, inserted in a tree, that contains the list of realized
 # entries.
-RealAccount = namedtuple('RealAccount', 'name account children postings')
+RealAccount = namedtuple('RealAccount', 'name account balance children postings')
 
 
 # All realized entries are either one of RealEntry or RealPosting.
@@ -46,7 +46,7 @@ class RealAccountTree(tree_utils.TreeDict):
 
     def create_node(self, account_name):
         account = self.accounts_map.get(account_name)
-        return RealAccount(account_name, account, [], [])
+        return RealAccount(account_name, account, Inventory(), [], [])
 
     def get_name(self, real_account):
        return real_account.name.split(':')[-1]
@@ -176,6 +176,8 @@ def pad(entries):
 
 
 def realize(entries, do_check=False):
+## FIXME: This is out-of-date, fix this doc
+
     """Compute the running balances and realize a list of entries into a tree of
     realized accounts, which contains shadow entries with balances. This is then
     used to issue reports. This routine is actually really simple: it runs
@@ -231,11 +233,10 @@ def realize(entries, do_check=False):
     real_accounts = RealAccountTree(accounts_map)
     real_errors = []
 
-    def add_real_entry(account, entry):
-        "Create RealEntry instances with the running balance."
-        balance = balances[entry.account]
+    def add_to_account(account, entry):
+        "Update an account's posting list with the given entry."
         real_account = real_accounts.get_create(account.name)
-        real_account.postings.append(RealEntry(entry, copy(balance)))
+        real_account.postings.append(entry)
 
     # Running balance for each account.
     balances = defaultdict(Inventory)
@@ -256,15 +257,13 @@ def realize(entries, do_check=False):
                     real_errors.append(
                         RealError(entry.fileloc, "Error balancing '{}' -- {}".format(posting.account.name, e)))
 
-                real_account = real_accounts.get_create(posting.account.name)
-                real_account.postings.append(
-                    RealPosting(entry, posting, copy(balance)))
+                add_to_account(posting.account, posting)
 
         elif isinstance(entry, Check):
 
             # Add the check realization to the account.
             # FIXME: We somehow need to indicate the success or failure of this check somehow, for rendering.
-            add_real_entry(entry.account, entry)
+            add_to_account(entry.account, entry)
 
             # Check the balance against the check entry.
             if do_check:
@@ -280,13 +279,13 @@ def realize(entries, do_check=False):
         elif isinstance(entry, Pad):
 
             # Insert the pad entry in both realized accounts.
-            add_real_entry(entry.account, entry)
-            add_real_entry(entry.account_pad, entry)
+            add_to_account(entry.account, entry)
+            add_to_account(entry.account_pad, entry)
 
         elif isinstance(entry, (Open, Close, Note)):
 
             # Append some other entries in the realized list.
-            add_real_entry(entry.account, entry)
+            add_to_account(entry.account, entry)
 
         if check_is_at_beginning_of_day:
             # Note: Check entries are assumed to have been sorted to be before any
@@ -299,6 +298,10 @@ def realize(entries, do_check=False):
             else:
                 prev_entry = entry
                 prev_date = entry.date
+
+    for account, balance in balances.items():
+        real_account = real_accounts.get(account.name)
+        real_account.balance.update(balance)
 
     return (real_accounts, real_errors)
 
@@ -341,33 +344,6 @@ def dump_tree_balances(real_accounts, foutput=None):
             foutput.write('{:{width}}   {:16}\n'.format(line, position, width=width))
 
 
-def find_balance(real_account, date=None):
-    """Find the balance of a realized account right before the given date.
-    If date is None, get the final balance of the entire list of realized entries."""
-
-    postings = real_account.postings
-    if date is None:
-        # Find the last posting that had a non-null balance.
-        index = len(postings)
-    else:
-        index = bisect_left_withkey(postings, date,
-                                    key=lambda real_posting: real_posting.entry.date)
-    if index != 0:
-        # Take the balance of the previous element, the last one on previous
-        # dates.
-        index -= 1
-
-        # Find the last posting that had a non-null balance.
-        for i in range(index, -1, -1):
-            real_posting = postings[i]
-            if isinstance(real_posting, RealPosting):
-                #index += 1
-                return real_posting.balance
-
-    return Inventory()
-
-
-
 def compute_real_total_balance(real_accounts):
     """Sum up all the positions in the transactions in the realized tree of accounts
     and return an inventory of it."""
@@ -375,7 +351,7 @@ def compute_real_total_balance(real_accounts):
     total_balance = Inventory()
     for real_account in real_accounts.values():
         if real_account.postings:
-            balance = find_balance(real_account)
+            balance = real_account.balance
             total_balance += balance
     return total_balance
 
@@ -387,8 +363,8 @@ def compare_realizations(real_accounts1, real_accounts2):
     real2 = real_accounts2.copy()
     for account_name, real_account1 in real1.items():
         real_account2 = real2.pop(account_name)
-        balance1 = find_balance(real_account1)
-        balance2 = find_balance(real_account2)
+        balance1 = real_account1.balance
+        balance2 = real_account2.balance
         if balance1 != balance2:
             return False
     return True
@@ -397,7 +373,7 @@ def compare_realizations(real_accounts1, real_accounts2):
 def real_cost_as_dict(real_accounts):
     """Convert a tree of real accounts as a dict for easily doing
     comparisons for testing."""
-    return {real_account.name: str(find_balance(real_account).get_cost())
+    return {real_account.name: str(real_account.balance.get_cost())
             for account_name, real_account in real_accounts.items()
             if real_account.account}
 
