@@ -142,7 +142,15 @@ Event       = namedtuple('Event'       , 'fileloc date type description')
 Price       = namedtuple('Price'       , 'fileloc date currency amount')
 
 # Postings are contained in Transaction entries.
-Posting = namedtuple('Posting', 'account position price flag')
+# Note: a posting may only list within a single entry, and that's what the entry
+# field should be set to.
+Posting = namedtuple('Posting', 'entry account position price flag')
+
+def reparent_posting(posting, entry):
+    "Create a new posting entry that has the parent field set."
+    return Posting(entry,
+                   posting.account, posting.position, posting.price, posting.flag)
+
 
 
 # Special flags

@@ -30,7 +30,7 @@ def validate_open_close(entries, accounts):
         open = open_map.get(account)
         if open is None or entry.date < open.date:
             check_errors.append(CheckError(entry.fileloc,
-                                           "Entry before account {} opened.".format(account.name)))
+                                           "Unknown account {} (or perhaps wrong date?).".format(account.name)))
 
         close = close_map.get(account)
         if close is not None and entry.date > close.date:

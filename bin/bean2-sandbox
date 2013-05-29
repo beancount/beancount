@@ -144,6 +144,11 @@ def main():
         valid_errors = validation.validate(entries, contents.accounts)
         data.print_errors(valid_errors)
 
+    for entry in utils.filter_type(entries, data.Transaction):
+        print(entry)
+        # for posting in entry.postings:
+
+
 
 
     with utils.print_time('realize'):
@@ -287,7 +292,7 @@ def print_tags(entries):
 
     tagsmap = defaultdict(list)
     for e in entries:
-        if isinstance(e, Transaction):
+        if isinstance(e, data.Transaction):
             for tag in e.tags:
                 tagsmap[tag].append(e)
 
@@ -310,7 +315,7 @@ def find_unique_templates(entries):
     """Filter out transactions and group them by types of accounts transacted."""
 
     groups = defaultdict(list)
-    for entry in filter_type(entries, Transaction):
+    for entry in utils.filter_type(entries, data.Transaction):
         account_names = frozenset(sorted(unique_alias(posting.account)
                                          for posting in entry.postings))
         groups[account_names].append(entry)

@@ -254,6 +254,13 @@ beancount: TODO
   - We need to figure out how to order the accounts on the balsheet; I want the
     most relevant near the top.
 
+  - In validate.py: differentiate between the case of an entry appearing too
+    early before an Open directive, and an entry appearing for an account that
+    simply just doesn't exist.
+
+  - In the balance sheet or trial balance, mark accounts that have errors in
+    red, or add a little red start next to them.
+
 
 * Internal Improvements - DO THIS
 
@@ -280,7 +287,7 @@ beancount: TODO
     RealAccount, it's worth it.
 
   - Rename all 'real_accounts' to 'realization', which is meant to imply a tree
-    of accounts. 
+    of accounts.
 
   - Try making Posting a non-tuple so that you can set a new 'entry' field as a
     weakref. It has to be mutable for that, just for that field. Does it impact

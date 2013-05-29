@@ -202,7 +202,7 @@ class Builder(object):
         # price here and forget about that detail of the input syntax.
         if istotal:
             price = Amount(price.number / position.number, price.currency)
-        return Posting(account, position, price, flag)
+        return Posting(None, account, position, price, flag)
 
     def transaction(self, filename, lineno, date, flag, payee, narration, tags, postings):
         fileloc = FileLocation(filename, lineno)
@@ -225,8 +225,12 @@ class Builder(object):
         if errors:
             self.errors.extend(errors)
 
-        # Create the transaction.
-        transaction = Transaction(fileloc, date, chr(flag), payee, narration, ctags, postings)
+        # Create the transaction. Note: we need to parent the postings.
+        parented_postings = []
+        transaction = Transaction(fileloc, date, chr(flag), payee, narration, ctags,
+                                  parented_postings)
+        for posting in postings:
+            parented_postings.append(reparent_posting(posting, transaction))
 
         # Check that the balance actually is empty.
         if __sanity_checks__:

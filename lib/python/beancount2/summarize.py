@@ -170,14 +170,15 @@ def create_entries_from_balances(balances, date, other_account, direction,
         if not direction:
             balance = -balance
 
+            
         postings = []
-        for position in balance.get_positions():
-            postings.append(Posting(account, position, None, None))
-            cost = position.get_cost_position()
-            postings.append(Posting(other_account, -cost, None, None))
-
         new_entry = Transaction(
             fileloc, date, flag, None, narration, set(), postings)
+
+        for position in balance.get_positions():
+            postings.append(Posting(new_entry, account, position, None, None))
+            cost = position.get_cost_position()
+            postings.append(Posting(new_entry, other_account, -cost, None, None))
 
         new_entries.append(new_entry)
 

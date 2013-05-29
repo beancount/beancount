@@ -143,12 +143,14 @@ def pad(entries):
 
                         # Synthesize a new transaction entry for the difference.
                         narration = '(Padding inserted for Check of {})'.format(check_position)
-                        postings = [
-                            Posting(active_pad.account, diff_position, None, None),
-                            Posting(active_pad.account_pad, -diff_position, None, None),
-                        ]
+                        postings = []
                         new_entry = Transaction(
-                            active_pad.fileloc, active_pad.date, FLAG_PADDING, None, narration, set(), postings)
+                            active_pad.fileloc, active_pad.date, FLAG_PADDING, None, narration, set(),
+                            postings)
+                        postings.append(
+                            Posting(new_entry, active_pad.account, diff_position, None, None))
+                        postings.append(
+                            Posting(new_entry, active_pad.account_pad, -diff_position, None, None))
 
                         # Save it for later insertion after the active pad.
                         new_entries[active_pad].append(new_entry)

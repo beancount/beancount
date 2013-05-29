@@ -111,14 +111,14 @@ def balance_incomplete_postings(fileloc, postings):
             for currency in currencies:
                 position = Position(Lot(currency, None, None), ZERO)
                 new_postings.append(
-                    Posting(old_posting.account, position, None, old_posting.flag))
+                    Posting(None, old_posting.account, position, None, old_posting.flag))
         else:
             # Convert all the residual positions in inventory into a posting for
             # each position.
             for position in residual_positions:
                 position.number = -position.number
                 new_postings.append(
-                    Posting(old_posting.account, position, None, old_posting.flag))
+                    Posting(None, old_posting.account, position, None, old_posting.flag))
 
         postings[index:index+1] = new_postings
 
