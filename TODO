@@ -268,49 +268,30 @@ beancount: TODO
 
 * Internal Improvements - DO THIS
 
+  - A realization should just be the root node of a tree of RealAccount's, each
+    with a list of entries|Postings and a final balance. Store the final balance
+    in RealAccount, it's worth it.
 
-  - Consider removing RealEntry and RealPosting... the only purpose they serve
-    at the moment is storing the balance, and for finding a posting's entry, we
-    could create a global map of (posting -> entry) and maintain that. Probably
-    good enough, hashing on the tuple id itself for performance.
+    Wouldn't it be great if we could get rid of the TreeDict object? I say this:
+    after you remove the RealEntry and RealPosting objects, make the realization
+    be just the root node of a tree of accounts. The root node should be able to
+    quickly look up any subaccount. One less class, and then you don't have a
+    discrepancy between 'real_accounts' and 'real_account', one less datatype to
+    deal this. I saw DO THIS.
 
-      FIXME: One idea to simplify things further is to remove the RealEntry and
-    RealPosting objects: computing a running balance is usually fast enough to
-    do on-the-fly, and we could store a 'postmap' mapping of "posting to parent
-    transaction" in return the realization tree object. The drawback, however,
-    is that you would then always require both an account and a 'postmap'
-    together... a real_account by itself would not be independent as it is now.
-    I need to think about this a bit more.
 
-  - Measure the performance of realization on all accounts, and on each
-    account. If small, remove RealEntry/RealPosting and replace by just the
-    regular ones!
+  - Rename RealAccount's 'name' to 'leaf_name' and perhaps the full name should
+    still be stored in 'name'.
 
-  - A realization should just be a tree of RealAccount's, each with a list of
-    entries|Postings and a final balance. Store the final balance in
-    RealAccount, it's worth it.
 
   - Rename all 'real_accounts' to 'realization', which is meant to imply a tree
     of accounts.
-
-  - Try making Posting a non-tuple so that you can set a new 'entry' field as a
-    weakref. It has to be mutable for that, just for that field. Does it impact
-    performance?  If not,  do this! This will make our life simpler, and will
-    enforce that a posting has at most a single pater.
 
 
   - inventory: rename get_cost() vs. get_cost_position(). Swap them, change all
     the code that needs be changed.
 
-  - At the same time, wouldn't it be great if we could get rid of the TreeDict
-    object? I say this: after you remove the RealEntry and RealPosting objects,
-    make the realization be just the root node of a tree of accounts. The root
-    node should be able to quickly look up any subaccount. One less class, and
-    then you don't have a discrepancy between 'real_accounts' and
-    'real_account', one less datatype to deal this. I saw DO THIS.
 
-  - Rename RealAccount's 'name' to 'leaf_name' and perhaps the full name should
-    still eb stored in 'name'.
 
 
 * Web Interface
@@ -1497,7 +1478,3 @@ result of paying taxes:
 
   - INVARIANT: All Check and Open entries are always at the beginning of a new
     date in a list of entries.
-
-
- 
-    
