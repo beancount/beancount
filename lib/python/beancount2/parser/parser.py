@@ -229,6 +229,7 @@ class Builder(object):
         parented_postings = []
         transaction = Transaction(fileloc, date, chr(flag), payee, narration, ctags,
                                   parented_postings)
+        # PERF(25ms): could be saved here by avoiding reparenting.
         for posting in postings:
             parented_postings.append(reparent_posting(posting, transaction))
 

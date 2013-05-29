@@ -144,9 +144,8 @@ def main():
         valid_errors = validation.validate(entries, contents.accounts)
         data.print_errors(valid_errors)
 
-    for entry in utils.filter_type(entries, data.Transaction):
-        print(entry)
-        # for posting in entry.postings:
+    with utils.print_time('compute_total_balance'):
+        realization.compute_total_balance(entries)
 
 
 
@@ -161,20 +160,21 @@ def main():
 
     if 1:
         # Test out transfer and summarization, together.
-        clamped_entries = summarize.clamp(entries,
-                                          datetime.date(2012, 1, 1), datetime.date(2013, 1, 1),
-                                          data.Account('Equity:PreviousEarnings', 'Equity'),
-                                          data.Account('Equity:OpeningBalances', 'Equity'))
+        clamped_entries, idnex = summarize.clamp(entries,
+                                                 datetime.date(2012, 1, 1), datetime.date(2013, 1, 1),
+                                                 data.Account('Equity:PreviousEarnings', 'Equity'),
+                                                 data.Account('Equity:OpeningBalances', 'Equity'))
 
         out = open('/tmp/out.log', 'w')
         for entry in clamped_entries:
             print(entry, file=out)
 
+
         real_accounts, real_errors = realization.realize(clamped_entries, do_check=True)
         print(real_errors)
         assert not real_errors
 
-        dump_tree_balances(real_accounts)
+        # dump_tree_balances(real_accounts)
 
 
     if 0:
@@ -219,42 +219,12 @@ def main():
         total.plot()
         pyplot.show()
 
-    if 0:
-        # Sum up all the amounts for the trial balance.
-        total_balance = Inventory()
-        for account_type in ('Assets', 'Liabilities', 'Equity', 'Income', 'Expense'):
-            trial_balance = Inventory()
-            for real_account in real_accounts.values():
-                if not real_account.name.startswith(account_type):
-                    continue
-
-                for real_posting in reversed(real_account.postings):
-                    if isinstance(real_posting, realization.RealPosting):
-                        break
-                else:
-                    continue
-                # print('{:64} {}'.format(real_account.name, real_posting.balance))
-                trial_balance += real_posting.balance
-
-            print(account_type)
-            print(sorted(trial_balance.get_cost().get_amounts(), key=data.amount_sortkey))
-            print()
-
-            total_balance += trial_balance
-
-        print('TOTAL')
-        print(sorted(total_balance.get_cost().get_amounts(), key=data.amount_sortkey))
-        print()
-
-
-
 
 def print_debug_account(real_account):
-    for real_posting in real_account.postings:
-        print('{} {:48} {:72} {:72}'.format(real_posting.entry.date,
-                                      ' | '.join([real_posting.entry.payee or '', real_posting.entry.narration]),
-                                      real_posting.posting.position,
-                                      real_posting.balance,
+    for posting in real_account.postings:
+        print('{} {:48} {:72}'.format(posting.entry.date,
+                                      ' | '.join([posting.entry.payee or '', posting.entry.narration]),
+                                      posting.position,
                                       ))
 
 
@@ -347,15 +317,6 @@ def measure_balance_total(entries):
 def print_real_accounts(real_accounts):
     for real_account in sorted(real_accounts.values()):
         print('{:56} {}'.format(real_account.name, real_account.account))
-
-
-def print_real_postings(real_account):
-    print('--------------------------------------------------------------------------------')
-    for real_posting in real_account.postings:
-        balance = getattr(real_posting, 'balance', None)
-        if balance:
-            print(real_posting.entry.date, balance)
-    print('--------------------------------------------------------------------------------')
 
 
 if __name__ == '__main__':

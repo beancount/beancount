@@ -56,8 +56,8 @@ class RealAccountTree(tree_utils.TreeDict):
 
 
 def group_postings_by_account(entries, only_accounts=None):
-    """Build lists of entries by account. Return a dict of account -> (RealEntry or
-    RealPosting)."""
+    """Build lists of entries by account.
+    Return a dict of account -> (entry or Posting instance)."""
 
     by_accounts = defaultdict(list)
 
@@ -68,15 +68,13 @@ def group_postings_by_account(entries, only_accounts=None):
                 if (only_accounts is not None and
                     posting.account not in only_accounts):
                     continue
-                by_accounts[posting.account].append(
-                    RealPosting(entry, posting, None))
+                by_accounts[posting.account].append(posting)
 
         elif isinstance(entry, (Check, Open, Close, Pad, Note)):
             if (only_accounts is not None and
                 entry.account not in only_accounts):
                 continue
-            by_accounts[entry.account].append(
-                RealEntry(entry, None))
+            by_accounts[entry.account].append(entry)
 
     return by_accounts
 
@@ -108,26 +106,25 @@ def pad(entries):
         padded_lots = set()
 
         balance = Inventory()
-        for real_entry in by_account[account]:
+        for entry in by_account[account]:
 
-            if isinstance(real_entry, RealPosting):
+            if isinstance(entry, Posting):
                 # This is a transaction; update the running balance for this
                 # account.
-                balance.add_position(real_entry.posting.position, allow_negative=True)
+                balance.add_position(entry.position, allow_negative=True)
 
-            elif isinstance(real_entry.entry, Pad):
+            elif isinstance(entry, Pad):
                 # Mark this newly encountered pad as active and allow all lots
                 # to be padded heretofore.
-                active_pad = real_entry.entry
+                active_pad = entry
                 padded_lots = set()
 
-            elif isinstance(real_entry.entry, Check):
-                check = real_entry.entry
-                check_position = check.position
+            elif isinstance(entry, Check):
+                check_position = entry.position
 
                 # Compare the current balance position to the expected one from
                 # the check entry.
-                balance_position = balance.get_position(check.position.lot)
+                balance_position = balance.get_position(entry.position.lot)
                 if check_position != balance_position:
                     # The check fails; we need to pad.
 
