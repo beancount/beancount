@@ -355,10 +355,10 @@ def table_of_balances(tree, start_node_name, currencies, classes=None):
 def balance_sheet_table(real_accounts, options):
     """Render an HTML balance sheet of the real_accounts tree."""
 
-    currencies = options['currency']
-    assets      = table_of_balances(real_accounts, options['name_assets'], currencies)
-    liabilities = table_of_balances(real_accounts, options['name_liabilities'], currencies)
-    equity      = table_of_balances(real_accounts, options['name_equity'], currencies)
+    operating_currencies = options['operating_currency']
+    assets      = table_of_balances(real_accounts, options['name_assets'], operating_currencies)
+    liabilities = table_of_balances(real_accounts, options['name_liabilities'], operating_currencies)
+    equity      = table_of_balances(real_accounts, options['name_equity'], operating_currencies)
 
     return """
            <div id="assets" class="halfleft">
@@ -416,9 +416,9 @@ def income():
     real_accounts = request.app.view.get_realization()
 
     # Render the income statement tables.
-    currencies = view.options['currency']
-    income   = table_of_balances(real_accounts, view.options['name_income'], currencies)
-    expenses = table_of_balances(real_accounts, view.options['name_expenses'], currencies)
+    operating_currencies = view.options['operating_currency']
+    income   = table_of_balances(real_accounts, view.options['name_income'], operating_currencies)
+    expenses = table_of_balances(real_accounts, view.options['name_expenses'], operating_currencies)
 
     contents = """
        <div id="income" class="halfleft">

@@ -2,9 +2,54 @@
 beancount: TODO
 * NEW
 
+  - Allow '$' as currency symbol, don't translate to anything, it can just
+    stand on its own as a unique kind of currency, it doesn't matter, no
+    changes anywhere.
+
+  - A multi-year report is a global report.
+
+  - Create "bean2-bake" instead of "bean-suck".
+
+  - @links are tags that don't show up in the index. That's all. Global link:
+    serve them at: /link/e77f3fa7e738
+
+  - Check-in/commit the lexer and parser generated files in order to minimize
+    the dependencies (no flex/bison required).
+
+  - In journal, render the price too, and the cost for each transaction. Merge
+    those columns in the description.
+
+  - For rendering an entries_table, add an option not to render a balance. It
+    should be possible to render a list of entries without adding up the
+    balance at all. Perhaps we also want an option to add a spacer between the
+    transactions being rendered too.
+
+  - "How much did I make during the period of this event", e.g. while I was
+    working at CompanyX, while I was in school at UniversityY. This provides
+    two dates, generate a view for them:
+
+      /view/event
+
+    This could sum up all the entries for all the internals where the event's
+    value was the same.
+
+  - Implemented a JavaScript cursor in JS. J, K up down. SPC = toggle.
+
+  - Add a unit test for pushtag/poptag errors.
+
+  - Sorting accounts: compute a score made up of
+
+    * nb. txns from the last 3 months
+    * nb. checks from the last 3 months (weighted more heavily)
+    * line-no of Open directive in the file.
+    * last updated date.
 
 
-  - To fix the prolem rfendering txns from net-income, Use the clisoing
+
+
+
+
+  - To fix the prolem rendering txns from net-income, Use the clisoing
     realization to render all journals from balance sheet accounts, and the
     regular on for incokme accounts.
 
@@ -311,6 +356,7 @@ beancount: TODO
   - You will need to render prices from postings, for sales, we want to see the
     closing price.
 
+  - Clean up code: remove all significant codes from __init__.py files.
 
 ** Incognito Mode
 
@@ -751,6 +797,8 @@ beancount: TODO
 
 ** General Improvements to Syntax
 
+  - You should accept commas in the input; simply ignore their value.
+
   - Add 1/rate syntax for prices (and anything... really, why not).
     Convert at parsing time.
 
@@ -841,26 +889,6 @@ beancount: TODO
 
     * Automatically indent postings ("a line that begins with an account")
     * Automatically align lines with currency numbers
-
-* Beancount File Review, Massaging and Fixes
-
-  - Some syntax should be added for tags, e.g. ":tag", tags should all be moved
-    to the description line, no tags allowed on postings
-
-  - Open directives need to be set correct dates
-
-  - We need to move the account ids on the open directives too
-
-  - Automatically detect accounts which aren't referred anywhere but open and
-    close, and warn on these!
-
-  - Move Taxes to Expenses/Taxes subdirectories everywhere.
-
-  - Convert all the @d039f548 to
-    :d039f548, these linked transactions just become like tags. Maybe ::d039f548
-    is not listed and :d039f548 is listed, or something like that.
-
-  - Rename all "points" currencies to be similar names, e.g. *PTS.
 
 * Dated Postings
 
@@ -1524,3 +1552,11 @@ result of paying taxes:
 
   - INVARIANT: All Check and Open entries are always at the beginning of a new
     date in a list of entries.
+
+
+* Preso / Presentation
+
+  - Begin with a USB key in hand. "On this 8 GB USB key, I have all of 8 years
+    history of financial transactions in my life. Every single price paid that
+    went recorded into an account it these.
+

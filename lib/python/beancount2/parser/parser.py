@@ -64,14 +64,16 @@ DEFAULT_OPTIONS = {
 
     # A list of currencies that we single out during reporting and create
     # dedicated columns for. This is used to indicate the main currencies that
-    # you work with in real life.
+    # you work with in real life. (Refrain from listing all the possible 
+    # currencies here, this is not what it is made for; just list the very
+    # principal currencies you use daily only.)
     #
     # Because our system is agnostic to any unit definition that occurs in the
     # input file, we use this to display these values in table cells without
     # their associated unit strings. This allows you to import the numbers in a
     # spreadsheet (e.g, "101.00 USD" does not get parsed by a spreadsheet
     # import, but "101.00" does).
-    "currency"           : [],
+    "operating_currency" : [],
     }
 
 
