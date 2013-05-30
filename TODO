@@ -2,6 +2,12 @@
 beancount: TODO
 * NEW
 
+  - Close HSBC account on 2013-06-02
+
+
+  - "Padding" really should be called "balance adjustment." That's the official
+    name for this type of thing.
+
   - Allow '$' as currency symbol, don't translate to anything, it can just
     stand on its own as a unique kind of currency, it doesn't matter, no
     changes anywhere.
@@ -732,6 +738,19 @@ beancount: TODO
     include documents without a date, could be rendered as a tree-table, with
     the list of each document in the corresponding account. Maybe that's
     overkill. DK.
+
+** Budgeting / Goals
+
+  - We could easily add features for budgeting, e.g. somehow set goals and then
+    report on the difference between actual and the goal, and project in the
+    future according to rate, e.g.:
+
+       ;; Check that the total for this position between 2013-06-01 and 2013-12-31 < 800 USD
+       2013-12-31 goal  Expenses:US:Restaurant  2013-06-01  < 800 USD
+
+       ;; Check that the balance of this account on 2013-12-31 is >= 1000 USD
+       2013-12-31 goal  Assets:Savings  >= 1000 USD
+
 
 * Booking
 
