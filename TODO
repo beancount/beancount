@@ -2,6 +2,14 @@
 beancount: TODO
 * NEW
 
+  - Implement auto-reload by checking of the file.
+
+  - In the entries table HTML, highlight the relevant posting leg somehow,
+    maybe use a '>>' marker, or make it bold. Something.
+
+  - Render "as of YYYY-MM-DD" under the title for Balance Sheet, and "from
+    YYYY-MM-DD to YYYY-MM-DD" under the title for Income Statement
+
   - Allow '$' as currency symbol, don't translate to anything, it can just
     stand on its own as a unique kind of currency, it doesn't matter, no
     changes anywhere.
@@ -369,6 +377,10 @@ beancount: TODO
 
 
 * Web Interface
+** Features
+
+  - Add an option to render the entries table upwards, not just downwards.
+
 ** Simplifications
 
   - Put the last updated date in the balance sheet or perhaps the trial balance

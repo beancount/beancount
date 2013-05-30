@@ -499,44 +499,45 @@ def iterate_with_balance(entries):
             prev_date = entry.date
 
             # Flush the dated entries.
-            for date_entry, positions in date_entries:
-                if positions:
+            for date_entry, date_postings in date_entries:
+                if date_postings:
                     # Compute the change due to this transaction and update the
                     # total balance at the same time.
                     change = Inventory()
-                    for position in positions:
-                        change.add_position(position, True)
-                        balance.add_position(position, True)
+                    for date_posting in date_postings:
+                        change.add_position(date_posting.position, True)
+                        balance.add_position(date_posting.position, True)
                 else:
                     change = None
-                yield date_entry, change, balance
+                yield date_entry, date_postings, change, balance
+
             date_entries.clear()
+            assert not date_entries
 
-        if posting:
-
+        if posting is not None:
             # De-dup multiple postings on the same transaction entry by
             # grouping their positions together.
             index = index_key(date_entries, entry, key=first)
             if index is None:
-                date_entries.append( (entry, [posting.position]) )
+                date_entries.append( (entry, [posting]) )
             else:
                 # We are indeed de-duping!
-                positions = date_entries[index][1]
-                positions.append(posting.position)
+                postings = date_entries[index][1]
+                postings.append(posting)
         else:
             # This is a regular entry; nothing to add/remove.
             date_entries.append( (entry, None) )
 
     # Flush the final dated entries if any, same as above.
-    for date_entry, positions in date_entries:
-        if positions:
+    for date_entry, date_postings in date_entries:
+        if date_postings:
             change = Inventory()
-            for position in positions:
-                change.add_position(position, True)
-                balance.add_position(position, True)
+            for date_posting in date_postings:
+                change.add_position(date_posting.position, True)
+                balance.add_position(date_posting.position, True)
         else:
             change = None
-        yield date_entry, change, balance
+        yield date_entry, date_postings, change, balance
     date_entries.clear()
 
 
@@ -568,16 +569,18 @@ def entries_table(oss, real_account, render_postings=True):
          <th>Date</th>
          <th>F</th>
          <th>Narration/Payee</th>
-         <th></th>
+         <th>Position</th>
+         <th>Price</th>
+         <th>Cost</th>
          <th>Change</th>
          <th>Balance</th>
       </thead>
     ''')
 
 
-    postings = realization.get_subpostings(real_account)
+    account_postings = realization.get_subpostings(real_account)
     balance = Inventory()
-    for entry, change, balance in iterate_with_balance(postings):
+    for entry, leg_postings, change, balance in iterate_with_balance(account_postings):
 
         # Prepare the data to be rendered for this row.
         date = entry.date
@@ -595,7 +598,6 @@ def entries_table(oss, real_account, render_postings=True):
             if entry.payee:
                 description = '<span class="payee">{}</span><span class="pnsep">|</span>{}'.format(entry.payee, description)
             change_str = balance_html(change)
-            cost_str = ''
 
         elif isinstance(entry, Check):
             # Check the balance here and possibly change the rowtype
@@ -604,46 +606,53 @@ def entries_table(oss, real_account, render_postings=True):
 
             description = 'Check {} has {}'.format(account_link(entry.account), entry.position)
             change_str = str(entry.position)
-            cost_str = ''
 
         elif isinstance(entry, (Open, Close)):
             description = '{} {}'.format(entry.__class__.__name__, account_link(entry.account))
             change_str = ''
-            cost_str = ''
 
         else:
             description = ''
             change_str = ''
-            cost_str = ''
 
         # Render a row.
         write('''
           <tr class="{} {}">
             <td class="datecell">{}</td>
             <td class="flag">{}</td>
-            <td class="description">{}</td>
-            <td class="number num">{}</td>
+            <td class="description" colspan="4">{}</td>
             <td class="change num">{}</td>
             <td class="balance num">{}</td>
           <tr>
         '''.format(rowtype, extra_class,
-                   date, flag, description, cost_str, change_str, balance_str))
+                   date, flag, description, change_str, balance_str))
 
         if render_postings and isinstance(entry, Transaction):
             for posting in entry.postings:
+
+                classes = ['Posting']
+                if posting.flag == data.FLAG_WARNING:
+                    classes.append('warning')
+                if posting in leg_postings:
+                    classes.append('leg')
+
                 write('''
-                  <tr class="Posting {}">
+                  <tr class="{}">
                     <td class="datecell"></td>
                     <td class="flag">{}</td>
                     <td class="description">{}</td>
-                    <td class="number num">{}</td>
+                    <td class="position num">{}</td>
+                    <td class="price num">{}</td>
+                    <td class="cost num">{}</td>
                     <td class="change num"></td>
                     <td class="balance num"></td>
                   <tr>
-                '''.format('warning' if posting.flag == data.FLAG_WARNING else '',
+                '''.format(' '.join(classes),
                            posting.flag or '',
                            account_link(posting.account),
-                           str(posting.position)))
+                           str(posting.position),
+                           'PRICE', ## FIXME: todo
+                           str(posting.position.get_cost())))
 
     write('</table>')
 
@@ -704,6 +713,7 @@ def positions():
         if position.lot.cost or position.lot.lot_date:
             cost = position.get_cost()
 
+            ## FIXME: remove
             # print(('{p.number:12.2f} {p.lot.currency:8} '
             #        '{p.lot.cost.number:12.2f} {p.lot.cost.currency:8} '
             #        '{c.number:12.2f} {c.currency:8}').format(p=position, c=cost))

@@ -50,6 +50,8 @@ def index_key(sequence, value, key=None):
     If 'key' is specified, the value compared to the value returned by this
     function. If the value is not found, return None."""
     for index, element in enumerate(sequence):
+        # FIXME: Use a version with 'is' comparison for performance? Test it, measure the difference.
         if key(element) == value:
             return index
     return None
+
