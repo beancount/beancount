@@ -5,6 +5,16 @@ beancount: TODO
   - Close HSBC account on 2013-06-02
 
 
+
+  - You're missing a step: There needs to be a step that inserts an entry for
+    Conversions. After running this step, the balance sheet's cost should sum
+    to ZERO. Do ASSERT that it is indeed the case.
+
+
+  - Move all the main files to "beancount2.core"? Think about how you'd
+    reimplement this in other languages with the very same file structure...
+    this would help.
+
   - "Padding" really should be called "balance adjustment." That's the official
     name for this type of thing.
 
@@ -367,12 +377,8 @@ beancount: TODO
 ** Incognito Mode
 
   - Create an '--incognito mode whereby all the numbers are represented by
-    'XXX.XX' for public presentation.
-
-
-
-
-
+    'XXX.XX' for public presentation. For simplicity, this could be implemented
+    as a filter on the raw characters coming out of the web server.
 
 * Web Interface
 ** Simplifications
@@ -1578,4 +1584,3 @@ result of paying taxes:
   - Begin with a USB key in hand. "On this 8 GB USB key, I have all of 8 years
     history of financial transactions in my life. Every single price paid that
     went recorded into an account it these.
-

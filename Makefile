@@ -7,7 +7,7 @@ LEDGER = $(HOME)/q/office/accounting/blais.beancount
 all: build
 
 # V1
-demo:
+demo-v1:
 	python bin/bean-web --debug examples/demo.ledger
 
 clean:
@@ -51,6 +51,9 @@ convert:
 
 unittest unittests:
 	nosetests-3.3 -s lib/python/beancount2
+
+demo:
+	bin/bean2-web --debug examples/demo.beancount
 
 .PHONY: web
 web:

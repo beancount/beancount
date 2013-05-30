@@ -14,8 +14,6 @@ from collections import defaultdict
 
 import bottle
 from bottle import response, request
-import pandas
-import numpy
 
 from beancount2 import parser
 from beancount2 import validation
@@ -719,6 +717,8 @@ def positions():
 
     if 0:
         # Manipulate it a bit with Pandas.
+        import pandas
+        import numpy
         df = pandas.DataFrame(rows,
                               columns=['ccy', 'cost_ccy', 'units', 'unit_cost', 'total_cost'])
 
