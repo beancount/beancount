@@ -617,7 +617,7 @@ def entries_table(oss, real_account, render_postings=True):
             cost_str = ''
 
         else:
-            description = ''
+            description = entry.__class__.__name__
             change_str = ''
             cost_str = ''
 
