@@ -210,8 +210,7 @@ def check(entries):
 
 
 
-def realize(entries, do_check=False):
-
+def realize(entries, do_check=False, min_accounts=None):
     """Group entries by account, into a "tree" of realized accounts. RealAccount's
     are essentially containers for lists of postings and the final balance of
     each account, and may be non-leaf accounts (used strictly for organizing
@@ -250,12 +249,20 @@ def realize(entries, do_check=False):
                                    |
                                    .
 
-    If 'check' is true, verify that Check entry balances succeed and issue error
+    If 'do_check' is true, verify that Check entry balances succeed and issue error
     messages if they fail.
+
+    'min_accounts' provides a sequence of accounts to ensure that we create no matter
+    what, even if empty. This is typically used for the root accounts.
     """
 
     accounts_map = data.gather_accounts(entries)
     real_accounts = RealAccountTree(accounts_map)
+
+    # Ensure the minimal list of accounts has been created.
+    if min_accounts:
+      for account_name in min_accounts:
+        real_accounts.get_create(account_name)
 
     def add_to_account(account, entry):
         "Update an account's posting list with the given entry."

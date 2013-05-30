@@ -6,6 +6,9 @@ beancount: TODO
 
 
 
+  - Rename beancount/examples -> beancount/demo
+
+
   - You're missing a step: There needs to be a step that inserts an entry for
     Conversions. After running this step, the balance sheet's cost should sum
     to ZERO. Do ASSERT that it is indeed the case.

@@ -64,7 +64,7 @@ DEFAULT_OPTIONS = {
 
     # A list of currencies that we single out during reporting and create
     # dedicated columns for. This is used to indicate the main currencies that
-    # you work with in real life. (Refrain from listing all the possible 
+    # you work with in real life. (Refrain from listing all the possible
     # currencies here, this is not what it is made for; just list the very
     # principal currencies you use daily only.)
     #
@@ -186,7 +186,7 @@ class Builder(object):
     def check(self, filename, lineno, date, account, position):
         fileloc = FileLocation(filename, lineno)
         # Note: Success by default. We replace the failing ones in check().
-        return Check(fileloc, date, account, position, True) 
+        return Check(fileloc, date, account, position, True)
 
     def event(self, filename, lineno, date, event_type, description):
         fileloc = FileLocation(filename, lineno)
@@ -251,6 +251,16 @@ FileContents = namedtuple('FileContents', 'entries accounts parse_errors options
 
 # A parsed option directive.
 Option = namedtuple('Option', 'fileloc key value')
+
+# A tuple that contains the names of the root accounts. This is a subset of options.
+AccountTypes = namedtuple('AccountTypes', "assets liabilities equity income expenses")
+
+def get_account_types(options):
+    """Extract the account type names from the parser's options."""
+    return AccountTypes(
+        *(options["name_{}".format(x)]
+          for x in "assets liabilities equity income expenses".split()))
+
 
 
 # Sort with the checks at the BEGINNING of the day.

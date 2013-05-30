@@ -18,7 +18,9 @@ from bottle import response, request
 from beancount2 import parser
 from beancount2 import validation
 from beancount2 import data
-from beancount2.data import account_leaf_name, Account, Lot
+from beancount2.data import account_leaf_name, is_account_root
+from beancount2.data import Account, Lot
+from beancount2.parser import get_account_types
 from beancount2 import realization
 from beancount2.realization import RealAccount
 from beancount2 import summarize
@@ -264,6 +266,10 @@ def tree_table(oss, tree, start_node_name, header=None, classes=None):
         write('</tr>')
         write('</thead>')
 
+    if start_node_name not in tree:
+        write('</table>')
+        return
+
     lines = list(tree.render_lines(start_node_name))
     for line_first, _, account_name, real_account in lines:
 
@@ -319,7 +325,8 @@ def table_of_balances(tree, start_node_name, currencies, classes=None):
                                                        header, classes):
 
         # Check if this account has had activity; if not, skip rendering it.
-        if real_account.name not in active_set:
+        if (real_account.name not in active_set and
+            not is_account_root(real_account.name)):
             continue
 
         if real_account.account is None:
@@ -796,8 +803,9 @@ class View:
         self.id = id
         self.title = title
 
-        # A reference to the global list of options.
+        # A reference to the global list of options and the account type names.
         self.options = options
+        self.account_types = get_account_types(options)
 
         # Realization of the filtered entries to display.
         self.real_accounts = None
@@ -832,15 +840,15 @@ class View:
         do_check = False
         if self.opening_entries:
             with utils.print_time('realize_opening'):
-                self.opening_real_accounts = realization.realize(self.opening_entries, do_check)
+                self.opening_real_accounts = realization.realize(self.opening_entries, do_check, self.account_types)
         else:
             self.opening_real_accounts = None
 
         with utils.print_time('realize'):
-            self.real_accounts = realization.realize(self.entries, do_check)
+            self.real_accounts = realization.realize(self.entries, do_check, self.account_types)
 
         with utils.print_time('realize_closing'):
-            self.closing_real_accounts = realization.realize(self.closing_entries, do_check)
+            self.closing_real_accounts = realization.realize(self.closing_entries, do_check, self.account_types)
 
         assert self.real_accounts is not None
         assert self.closing_real_accounts is not None

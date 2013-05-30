@@ -102,11 +102,16 @@ def account_names_sortkey(account_name):
     account_type = account_name.split(':')[0]
     return (TYPES_ORDER[account_type], account_name)
 
+# FIXME: This may not be hard-coded, needs to be read from options.
 TYPES_ORDER = dict((x,i) for (i,x) in enumerate('Assets Liabilities Equity Income Expenses'.split()))
 
 def account_type(name):
     """Return the type of this account's name."""
     return name.split(':')[0]
+
+def is_account_root(account_name):
+    """Return true if the account name is one of the five root accounts."""
+    return ':' not in account_name
 
 def is_balance_sheet_account(account):
     return account.type in ('Assets', 'Liabilities', 'Equity')
