@@ -143,9 +143,13 @@ table.entry-table tr.Transaction.warning {
     background-color: #f8a;
 }
 
-table.entry-table tr.Open, table.entry-table tr.Close {
+table.entry-table tr.Open {
     background-color: #e8e8e8;
 }
+table.entry-table tr.Close {
+    background-color: #606060;
+}
+
 
 table.entry-table tr.Check {
     background-color: #cfc;
@@ -165,12 +169,16 @@ table.entry-table tr.Padding, table.entry-table tr.Summarize, table.entry-table 
 
 table.entry-table tr.Posting {
     font-size: x-small;
-    background-color: #f0f0f0;
+    background-color: #e8e8e8;
     opacity: 0.6;
 }
 
 table.entry-table tr.Posting.warning {
-    background-color: #f8a;
+    background-color: #f66;
+}
+
+table.entry-table tr.Posting.leg {
+    opacity: 1.0;
 }
 
 
