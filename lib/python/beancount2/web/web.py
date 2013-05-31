@@ -1156,6 +1156,55 @@ def create_realizations(entries, options):
 
 
 
+
+
+## FIXME: remove
+    # app_copy = copy.copy(app)
+    # #app_copy.view = view
+    # bottle.mount(r'/view/byyear/<year:re:\d\d\d\d>', app_copy, name='byyear')
+    #     # view = ByYearView(entries, options,
+    #     #                 'year{:4d}'.format(year), 'Year {:4d}'.format(year), year)
+
+if 1:
+    if 1:
+        path_depth = 3
+
+        def mountpoint_wrapper():
+            print('PATH', request.path)
+            try:
+                request.path_shift(path_depth)
+                rs = bottle.HTTPResponse([])
+                def start_response(status, headerlist, exc_info=None):
+                    if exc_info:
+                        try:
+                            _raise(*exc_info)
+                        finally:
+                            exc_info = None
+                    rs.status = status
+                    for name, value in headerlist: rs.add_header(name, value)
+                    return rs.body.append
+                body = app(request.environ, start_response)
+                if body and rs.body: body = itertools.chain(rs.body, body)
+                rs.body = body or rs.body
+                return rs
+            finally:
+                request.path_shift(-path_depth)
+
+
+@bottle.route(r'/view/byyear/<year:re:\d\d\d\d>/', name='byyear')
+def byyear(year=None):
+    year = int(year)
+    view = YearView(contents.entries, contents.options,
+                    'year{:4d}'.format(year), 'Year {:4d}'.format(year), year)
+
+    print('BYYEAR', year)
+    return mountpoint_wrapper()
+
+
+
+
+
+
 def load_input_file(filename):
     """Parse the input file, pad the entries and validate it.
     This also prints out the error messages."""
