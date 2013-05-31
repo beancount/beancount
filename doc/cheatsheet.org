@@ -37,7 +37,7 @@ Beancount v2 Syntax Summary
 
 ** Documents
 
-  YYYY-MM-DD note ACCOUNT "FILENAME"
+  YYYY-MM-DD document ACCOUNT "FILENAME"
 
 
 ** Tags and Links
