@@ -114,6 +114,10 @@ table.entry-table {
     font-size: smaller;
 }
 
+table.trial {
+    width: auto;
+}
+
 table.entry-table th {
     color: #888;
 }

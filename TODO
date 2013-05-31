@@ -390,6 +390,10 @@ beancount: TODO
 
   - Clean up code: remove all significant codes from __init__.py files.
 
+  - We really need to list the '!' entries somewhere; they should be annoying.
+
+
+
 ** Incognito Mode
 
   - Create an '--incognito mode whereby all the numbers are represented by

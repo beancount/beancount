@@ -214,13 +214,9 @@ def reports():
         contents = APP_NAVIGATION.render(G=G, A=A, view_title=request.app.view.title))
 
 
-@app.route('/trial', name='trial')
-def trial():
-    "Trial balance / Chart of Accounts."
-    return render_app(
-        pagetitle = "Trial Balance",
-        contents = ""
-        )
+
+
+
 
 
 EMS_PER_SPACE = 3
@@ -355,6 +351,27 @@ def table_of_balances(tree, start_node_name, currencies, classes=None):
 
 
 
+@app.route('/trial', name='trial')
+def trial():
+    "Trial balance / Chart of Accounts."
+
+    view = request.app.view
+    real_accounts = view.get_realization()
+    operating_currencies = view.options['operating_currency']
+    table = table_of_balances(real_accounts, '', operating_currencies, 
+                              classes=['trial'])
+
+    
+    ## FIXME: After conversions is fixed, this should always be zero.
+    total_balance = realization.compute_total_balance(view.get_entries())
+    table += """
+      Total Balance: <span class="num">{}</span>
+    """.format(total_balance.get_cost())
+
+    return render_app(
+        pagetitle = "Trial Balance",
+        contents = table
+        )
 
 
 def balance_sheet_table(real_accounts, options):
