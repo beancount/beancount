@@ -39,6 +39,29 @@ def compute_residual(postings):
     return inventory
 
 
+def get_balance_amount(posting):
+    """Get the amount that will need to be balanced from a posting
+    of a transaction. (This is a *key* element of the semantics of transactions
+    in this software.)"""
+
+
+    # It the position has a cost, use that to balance this posting.
+    position = posting.position
+    lot = position.lot
+    if lot.cost:
+        amount = amount_mult(lot.cost, position.number)
+
+    # If there is a price, use that to balance this posting.
+    elif posting.price:
+        amount = amount_mult(posting.price, position.number)
+
+    # Otherwise, just use the amount itself.
+    else:
+        amount = position.get_amount()
+
+    return amount
+
+
 def balance_incomplete_postings(fileloc, postings):
     """Replace and complete postings that have no amount specified on them.
 
@@ -71,21 +94,11 @@ def balance_incomplete_postings(fileloc, postings):
             # This posting will have to get auto-completed.
             auto_postings_indices.append(i)
         else:
-            lot = position.lot
-            currencies.add(lot.currency)
+            currencies.add(position.lot.currency)
 
-            # It the position has a cost, use that to balance this posting.
-            if lot.cost:
-                amount = amount_mult(lot.cost, position.number)
-
-            # If there is a price, use that to balance this posting.
-            elif posting.price:
-                amount = amount_mult(posting.price, position.number)
-
-            # Otherwise, just use the amount itself.
-            else:
-                amount = position.get_amount()
-            inventory.add(amount)
+            # Compute the amount to balance and update the inventory.
+            balance_amount = get_balance_amount(posting)
+            inventory.add(balance_amount)
 
     # If there are auto-postings, fill them in.
     if auto_postings_indices:

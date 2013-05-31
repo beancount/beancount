@@ -165,6 +165,24 @@ def reparent_posting(posting, entry):
     return Posting(entry,
                    posting.account, posting.position, posting.price, posting.flag)
 
+def posting_has_conversion(posting):
+    """Return true if this position involves a conversion. A conversion is when
+    there is a price attached to the amount but no cost. This is used on
+    transactions to convert between units."""
+    return (posting.position.lot.cost is None and
+            posting.price is not None)
+
+def transaction_has_conversion(transaction):
+    """Given a Transaction entry, return true if at least one of
+    the postings has a price conversion (without an associated
+    cost). These are the source of non-zero conversion balances."""
+    assert isinstance(transaction, Transaction)
+    for posting in transaction.postings:
+        if posting_has_conversion(posting):
+            return True
+    return False
+
+
 
 
 # Special flags

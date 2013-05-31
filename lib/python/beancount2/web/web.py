@@ -21,6 +21,7 @@ from beancount2 import data
 from beancount2.data import account_leaf_name, is_account_root
 from beancount2.data import Account, Lot
 from beancount2.parser import get_account_types
+from beancount2.balance import get_balance_amount
 from beancount2 import realization
 from beancount2.realization import RealAccount
 from beancount2 import summarize
@@ -206,12 +207,12 @@ def approot():
     bottle.redirect(request.app.get_url('balsheet'))
 
 
-@app.route('/reports', name='reports')
-def reports():
-    "The index of all the available reports for this realization."
-    return render_app(
-        pagetitle = "Index",
-        contents = APP_NAVIGATION.render(G=G, A=A, view_title=request.app.view.title))
+# @app.route('/reports', name='reports')
+# def reports():
+#     "The index of all the available reports for this realization."
+#     return render_app(
+#         pagetitle = "Index",
+#         contents = APP_NAVIGATION.render(G=G, A=A, view_title=request.app.view.title))
 
 
 
@@ -358,10 +359,10 @@ def trial():
     view = request.app.view
     real_accounts = view.get_realization()
     operating_currencies = view.options['operating_currency']
-    table = table_of_balances(real_accounts, '', operating_currencies, 
+    table = table_of_balances(real_accounts, '', operating_currencies,
                               classes=['trial'])
 
-    
+
     ## FIXME: After conversions is fixed, this should always be zero.
     total_balance = realization.compute_total_balance(view.get_entries())
     table += """
@@ -458,13 +459,10 @@ def income():
                       contents = contents)
 
 
-@app.route('/conversions', name='conversions')
-def conversions():
-    "Render the list of transactions with conversions."
-    return render_app(
-        pagetitle = "Conversions",
-        contents = ""
-        )
+
+
+
+
 
 
 
@@ -568,6 +566,7 @@ def iterate_with_balance(entries):
 
 
 
+
 FLAG_ROWTYPES = {
     data.FLAG_PADDING  : 'Padding',
     data.FLAG_SUMMARIZE: 'Summarize',
@@ -579,7 +578,7 @@ def balance_html(balance):
             if balance
             else '')
 
-def entries_table(oss, real_account, render_postings=True):
+def entries_table_with_balance(oss, account_postings, render_postings=True):
     """Render a list of entries into an HTML table.
     """
     write = lambda data: (oss.write(data), oss.write('\n'))
@@ -599,8 +598,6 @@ def entries_table(oss, real_account, render_postings=True):
       </thead>
     ''')
 
-
-    account_postings = realization.get_subpostings(real_account)
     balance = Inventory()
     for entry, leg_postings, change, balance in iterate_with_balance(account_postings):
 
@@ -672,9 +669,94 @@ def entries_table(oss, real_account, render_postings=True):
                 '''.format(' '.join(classes),
                            posting.flag or '',
                            account_link(posting.account),
-                           str(posting.position),
-                           'PRICE', ## FIXME: todo
-                           str(posting.position.get_cost())))
+                           posting.position,
+                           posting.price or '',
+                           get_balance_amount(posting)))
+
+    write('</table>')
+
+
+def entries_table(oss, account_postings, render_postings=True):
+    """Render a list of entries into an HTML table.
+    """
+    write = lambda data: (oss.write(data), oss.write('\n'))
+
+    write('''
+      <table class="entry-table">
+      <thead>
+        <tr>
+         <th class="datecell">Date</th>
+         <th class="flag">F</th>
+         <th class="description">Narration/Payee</th>
+         <th class="position">Position</th>
+         <th class="price">Price</th>
+         <th class="cost">Cost</th>
+      </thead>
+    ''')
+
+    balance = Inventory()
+    for entry, leg_postings, change, balance in iterate_with_balance(account_postings):
+
+        # Prepare the data to be rendered for this row.
+        date = entry.date
+        rowtype = entry.__class__.__name__
+        flag = ''
+        extra_class = ''
+
+        if isinstance(entry, Transaction):
+            rowtype = FLAG_ROWTYPES.get(entry.flag, 'Transaction')
+            extra_class = 'warning' if entry.flag == data.FLAG_WARNING else ''
+            flag = entry.flag
+            description = '<span class="narration">{}</span>'.format(entry.narration)
+            if entry.payee:
+                description = '<span class="payee">{}</span><span class="pnsep">|</span>{}'.format(entry.payee, description)
+            change_str = balance_html(change)
+
+        elif isinstance(entry, Check):
+            # Check the balance here and possibly change the rowtype
+            if not entry.success:
+                rowtype = 'CheckFail'
+
+            description = 'Check {} has {}'.format(account_link(entry.account), entry.position)
+
+        elif isinstance(entry, (Open, Close)):
+            description = '{} {}'.format(entry.__class__.__name__, account_link(entry.account))
+
+        else:
+            description = entry.__class__.__name__
+
+        # Render a row.
+        write('''
+          <tr class="{} {}">
+            <td class="datecell">{}</td>
+            <td class="flag">{}</td>
+            <td class="description" colspan="4">{}</td>
+          <tr>
+        '''.format(rowtype, extra_class,
+                   date, flag, description))
+
+        if render_postings and isinstance(entry, Transaction):
+            for posting in entry.postings:
+
+                classes = ['Posting']
+                if posting.flag == data.FLAG_WARNING:
+                    classes.append('warning')
+
+                write('''
+                  <tr class="{}">
+                    <td class="datecell"></td>
+                    <td class="flag">{}</td>
+                    <td class="description">{}</td>
+                    <td class="position num">{}</td>
+                    <td class="price num">{}</td>
+                    <td class="cost num">{}</td>
+                  <tr>
+                '''.format(' '.join(classes),
+                           posting.flag or '',
+                           account_link(posting.account),
+                           posting.position,
+                           posting.price or '',
+                           get_balance_amount(posting)))
 
     write('</table>')
 
@@ -698,11 +780,43 @@ def account(slashed_account_name=None):
     else:
         real_accounts = request.app.view.get_realization()
 
+    account_postings = realization.get_subpostings(real_accounts[account_name])
+
     oss = io.StringIO()
-    entries_table(oss, real_accounts[account_name])
+    entries_table_with_balance(oss, account_postings)
     return render_app(
         pagetitle = '{}'.format(account_name), # Account:
         contents = oss.getvalue())
+
+
+def get_conversion_entries(entries):
+    """Return the subset of transaction entries which have a conversion."""
+    return [entry
+            for entry in utils.filter_type(entries, Transaction)
+            if data.transaction_has_conversion(entry)]
+
+
+@app.route('/conversions', name='conversions')
+def conversions():
+    "Render the list of transactions with conversions."
+
+    view = request.app.view
+
+    oss = io.StringIO()
+    conversion_entries = get_conversion_entries(view.get_entries())
+    entries_table(oss, conversion_entries, render_postings=True)
+
+    balance = realization.compute_total_balance(conversion_entries)
+
+    return render_app(
+        pagetitle = "Conversions",
+        contents = """
+          <div id="table">
+            {}
+          </div>
+          <span class="num">{}</span>
+        """.format(oss.getvalue(), balance))
+
 
 
 
@@ -798,7 +912,6 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{A.positions}}">Positions</a></li>
   <li><a href="{{A.conversions}}">Conversions</a></li>
   <li><a href="{{A.documents}}">Documents</a></li>
-  <li><a href="{{A.reports}}">Reports</a></li>
 </ul>
 """)
 

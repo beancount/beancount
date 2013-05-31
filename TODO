@@ -17,9 +17,7 @@ beancount: TODO
     well. Creating the mounts is too expensive; views need to be created
     on-demand, we need a special mount.
 
-  - You're missing a step: There needs to be a step that inserts an entry for
-    Conversions. After running this step, the balance sheet's cost should sum
-    to ZERO. Do ASSERT that it is indeed the case.
+
 
   - We need to figure out how to order the accounts on the balsheet; I want the
     most relevant near the top. Sorting accounts: compute a score made up of
@@ -28,6 +26,12 @@ beancount: TODO
     * nb. checks from the last 3 months (weighted more heavily)
     * line-no of Open directive in the file.
     * last updated date.
+
+
+  - You're missing a step: There needs to be a step that inserts an entry for
+    Conversions. After running this step, the balance sheet's cost should sum
+    to ZERO. Do ASSERT that it is indeed the case.
+
 
 
 
@@ -392,6 +396,8 @@ beancount: TODO
 
   - We really need to list the '!' entries somewhere; they should be annoying.
 
+
+  - Render the Conversions amount at the bottom of the Conversions page...
 
 
 ** Incognito Mode

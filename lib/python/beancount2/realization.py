@@ -380,6 +380,7 @@ def real_cost_as_dict(real_accounts):
 
 
 
+
 # FIXME: move this to next to sum_to_date in realize.py
 
 def compute_total_balance(entries):
