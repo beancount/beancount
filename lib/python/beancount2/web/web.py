@@ -571,14 +571,14 @@ def entries_table(oss, real_account, render_postings=True):
       <table class="entry-table">
       <thead>
         <tr>
-         <th>Date</th>
-         <th>F</th>
-         <th>Narration/Payee</th>
-         <th>Position</th>
-         <th>Price</th>
-         <th>Cost</th>
-         <th>Change</th>
-         <th>Balance</th>
+         <th class="datecell">Date</th>
+         <th class="flag">F</th>
+         <th class="description">Narration/Payee</th>
+         <th class="position">Position</th>
+         <th class="price">Price</th>
+         <th class="cost">Cost</th>
+         <th class="change">Change</th>
+         <th class="balance">Balance</th>
       </thead>
     ''')
 
@@ -665,27 +665,24 @@ def entries_table(oss, real_account, render_postings=True):
 @app.route('/journal', name='journal')
 def journal():
     "A list of all the entries in this realization."
-
-    real_accounts = request.app.view.get_realization()
-
-    oss = io.StringIO()
-    entries_table(oss, real_accounts[''])
-
-    return render_app(
-        pagetitle = "Journal",
-        contents = oss.getvalue())
+    bottle.redirect(app_url('account', slashed_account_name=''))
 
 
 @app.route('/account/<slashed_account_name:re:[^:]*>', name='account')
 def account(slashed_account_name=None):
     "A list of all the entries for this account realization."
 
-    real_accounts = request.app.view.get_realization()
+    # Get the appropriate realization: if we're looking at the balance sheet, we
+    # want to include the net-income transferred from the exercise period.
+    account_name = slashed_account_name.strip('/').replace('/', ':')
+    options = bottle.default_app().contents.options
+    if data.is_balance_sheet_account_name(account_name, options):
+        real_accounts = request.app.view.get_closing_realization()
+    else:
+        real_accounts = request.app.view.get_realization()
 
     oss = io.StringIO()
-    account_name = slashed_account_name.strip('/').replace('/', ':')
     entries_table(oss, real_accounts[account_name])
-
     return render_app(
         pagetitle = '{}'.format(account_name), # Account:
         contents = oss.getvalue())

@@ -119,8 +119,12 @@ table.entry-table th {
 }
 
 
-table.entry-table tr td.balance {
+table.entry-table tr td.change {
     font-weight: bold;
+}
+
+table.entry-table tr td.balance {
+    /* font-weight: bold; */
 }
 
 table.entry-table tr td.description {
@@ -135,6 +139,11 @@ span.pnsep {
     margin-left: 5px;
     margin-right: 5px;
 }
+
+table.entry-table th.description {
+    width: 90%;
+}
+
 
 table.entry-table tr.Transaction {
 }
@@ -180,6 +189,7 @@ table.entry-table tr.Posting.warning {
 table.entry-table tr.Posting.leg {
     opacity: 1.0;
 }
+
 
 
 

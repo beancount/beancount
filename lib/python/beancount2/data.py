@@ -117,6 +117,15 @@ def is_balance_sheet_account(account):
     return account.type in ('Assets', 'Liabilities', 'Equity')
     # FIXME: Remove these hardcoded strings; use the options instead.
 
+def is_balance_sheet_account_name(account_name, options):
+    return account_type(account_name) in (
+        options[x] for x in ('name_assets',
+                             'name_liabilities',
+                             'name_equity'))
+
+('Assets', 'Liabilities', 'Equity')
+    # FIXME: Remove these hardcoded strings; use the options instead.
+
 def is_income_statement_account(account):
     return account.type in ('Income', 'Expenses')
     # FIXME: Remove these hardcoded strings; use the options instead.
