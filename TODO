@@ -32,6 +32,9 @@ beancount: TODO
     Conversions. After running this step, the balance sheet's cost should sum
     to ZERO. Do ASSERT that it is indeed the case.
 
+  - Shove more information in the Trial Balance page, info about errors,
+    documents, etc.
+
 
 
 

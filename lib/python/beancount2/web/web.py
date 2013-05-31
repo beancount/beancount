@@ -688,9 +688,10 @@ def entries_table(oss, account_postings, render_postings=True):
          <th class="datecell">Date</th>
          <th class="flag">F</th>
          <th class="description">Narration/Payee</th>
-         <th class="position">Position</th>
-         <th class="price">Price</th>
+         <th class="amount">Amount</th>
          <th class="cost">Cost</th>
+         <th class="price">Price</th>
+         <th class="balance">Balance</th>
       </thead>
     ''')
 
@@ -730,7 +731,7 @@ def entries_table(oss, account_postings, render_postings=True):
           <tr class="{} {}">
             <td class="datecell">{}</td>
             <td class="flag">{}</td>
-            <td class="description" colspan="4">{}</td>
+            <td class="description" colspan="5">{}</td>
           <tr>
         '''.format(rowtype, extra_class,
                    date, flag, description))
@@ -747,14 +748,16 @@ def entries_table(oss, account_postings, render_postings=True):
                     <td class="datecell"></td>
                     <td class="flag">{}</td>
                     <td class="description">{}</td>
-                    <td class="position num">{}</td>
-                    <td class="price num">{}</td>
+                    <td class="amount num">{}</td>
                     <td class="cost num">{}</td>
+                    <td class="price num">{}</td>
+                    <td class="balance num">{}</td>
                   <tr>
                 '''.format(' '.join(classes),
                            posting.flag or '',
                            account_link(posting.account),
-                           posting.position,
+                           posting.position.get_amount(),
+                           posting.position.lot.cost or '',
                            posting.price or '',
                            get_balance_amount(posting)))
 
@@ -814,7 +817,7 @@ def conversions():
           <div id="table">
             {}
           </div>
-          <span class="num">{}</span>
+          <h3>Conversion Total:<span class="num">{}</span></h3>
         """.format(oss.getvalue(), balance))
 
 
