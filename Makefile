@@ -2,6 +2,7 @@
 
 # Just my big old fat ledger file.
 INPUT = $(HOME)/q/office/accounting/blais.beancount
+DOWNLOADS = $(HOME)/u/Downloads $(HOME)/q/office/accounting/new/vanguard $(HOME)/q/office/accounting/new/hsbc
 
 all: build
 
@@ -61,13 +62,20 @@ demo:
 	bin/bean2-web --debug examples/demo.beancount
 
 
-# run the web server.
+# Run the web server.
 .PHONY: web
 web:
 	bean2-web --debug $(INPUT)
 
 
+# Run the importer.
+.PHONY: import
+import:
+	bean2-import $(INPUT) $(DOWNLOADS)
+
 # My development sandbox script. This is messy and it's okay.
 .PHONY: sandbox
 sandbox:
 	bean2-sandbox $(INPUT)
+
+

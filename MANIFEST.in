@@ -1,4 +1,0 @@
-prune old
-prune test
-prune lib/haskell
-prune lib/ocaml

@@ -45,7 +45,7 @@ def render_global(*args, **kw):
     """Render the title and contents in our standard template."""
     kw['A'] = A # Application mapper
     kw['V'] = V # View mapper
-    kw['title'] = app.contents.options['title']
+    kw['title'] = app.options['title']
     kw['view_title'] = ''
     kw['navigation'] = GLOBAL_NAVIGATION
     return template.render(*args, **kw)
@@ -59,16 +59,18 @@ def root():
 
 @app.route('/toc', name='toc')
 def toc():
-    mindate, maxdate = data.get_min_max_dates([entry for entry in clean_entries
+    mindate, maxdate = data.get_min_max_dates([entry for entry in app.entries
                                                if not isinstance(entry, (Open, Close))])
 
+    # Create links to all the possible views.
     views = []
-    views.append((app.router.build('all', path=''),
-                  'All Transactions'))
+    views.append((app.router.build('all', path=''), 'All Transactions'))
 
-    for year in reversed(list(data.get_active_years(contents.entries))):
-        views.append((app.get_url('year', path='', year=year),
-                      'Year: {}'.format(year)))
+    for year in reversed(list(data.get_active_years(app.entries))):
+        views.append((app.get_url('year', path='', year=year), 'Year: {}'.format(year)))
+
+    for tag in get_all_tags(app.entries):
+        views.append((app.get_url('tag', path='', tag=tag), 'Tag: {}'.format(tag)))
 
     view_items = ['<li><a href="{}">{}</a></li>'.format(url, title)
                   for url, title in views]
@@ -207,7 +209,7 @@ def render_app(*args, **kw):
     """Render the title and contents in our standard template."""
     kw['A'] = A # Application mapper
     kw['V'] = V # View mapper
-    kw['title'] = app.contents.options['title']
+    kw['title'] = app.options['title']
     kw['view_title'] = ' - ' + request.view.title
     kw['navigation'] = APP_NAVIGATION.render(A=A, V=V, view_title=request.view.title)
     return template.render(*args, **kw)
@@ -787,7 +789,7 @@ def entries_table(oss, account_postings, render_postings=True):
 @viewapp.route('/journal', name='journal')
 def journal():
     "A list of all the entries in this realization."
-    bottle.redirect(app_url('account', slashed_account_name=''))
+    bottle.redirect(request.app.get_url('account', slashed_account_name=''))
 
 
 @viewapp.route('/account/<slashed_account_name:re:[^:]*>', name='account')
@@ -797,7 +799,7 @@ def account(slashed_account_name=None):
     # Get the appropriate realization: if we're looking at the balance sheet, we
     # want to include the net-income transferred from the exercise period.
     account_name = slashed_account_name.strip('/').replace('/', ':')
-    options = app.contents.options
+    options = app.options
     if data.is_balance_sheet_account_name(account_name, options):
         real_accounts = request.view.closing_real_accounts
     else:
@@ -1022,7 +1024,7 @@ class AllView(View):
 @app.route(r'/view/all/<path:re:.*>', name='all')
 @handle_view(2)
 def all(path=None):
-    return AllView(contents.entries, contents.options, 'All Transactions')
+    return AllView(app.entries, app.options, 'All Transactions')
 
 
 
@@ -1060,7 +1062,7 @@ class YearView(View):
 @handle_view(3)
 def year(year=None, path=None):
     year = int(year)
-    return YearView(contents.entries, contents.options, 'Year {:4d}'.format(year), year)
+    return YearView(app.entries, app.options, 'Year {:4d}'.format(year), year)
 
 
 
@@ -1083,10 +1085,18 @@ class TagView(View):
 
         return tagged_entries, None
 
-@app.route(r'/view/tag/<tag:re:\d\d\d\d>/<path:re:.*>', name='tag')
+@app.route(r'/view/tag/<tag:re:[^/]*>/<path:re:.*>', name='tag')
 @handle_view(3)
 def tag(tag=None, path=None):
-    return TagView(contents.entries, contents.options, 'Tag {:4d}'.format(tag), tag)
+    return TagView(app.entries, app.options, 'Tag {}'.format(tag), set([tag]))
+
+
+# ## FIXME: We need to figure out how to deal with id-ification for paths.
+# We need some sort of mapping from idified tag to "real" tag. Either of don't idify at all.
+# Is the syntax compatible?
+#     # Create views for all tags.
+#     for tagid, tag in compute_ids(get_all_tags(entries)):
+
 
 
 
@@ -1109,10 +1119,10 @@ class PayeeView(View):
 
         return payee_entries, None
 
-@app.route(r'/view/payee/<payee:re:\d\d\d\d>/<path:re:.*>', name='payee')
+@app.route(r'/view/payee/<payee:re:[^/]*>/<path:re:.*>', name='payee')
 @handle_view(3)
 def payee(payee=None, path=None):
-    return PayeeView(contents.entries, contents.options, 'Payee {:4d}'.format(payee), payee)
+    return PayeeView(app.entries, app.options, 'Payee {}'.format(payee), payee)
 
 
 
@@ -1138,51 +1148,6 @@ def app_mount(view):
     VIEWS.append(view)
 
 
-def create_realizations(entries, options):
-    """Create apps for all the realizations we want to be able to render."""
-
-    # The global realization, with all entries.
-    app_mount(AllView(entries, options,
-                      'all', 'All Transactions'))
-
-    # One realization by-year.
-    for year in reversed(list(data.get_active_years(entries))):
-        view = YearView(entries, options,
-                        'year{:4d}'.format(year), 'Year {:4d}'.format(year), year)
-        app_mount(view)
-
-    # Create views for all tags.
-    for tagid, tag in compute_ids(get_all_tags(entries)):
-        view = TagView(entries, options, tagid, 'Tag "{}"'.format(tag), {tag})
-        app_mount(view)
-
-    # FIXME: We need to make the payee mount different and "dynamic", createing
-    # a new view automatically. We should do the same for the years and tags as
-    # well. Creating the mounts is too expensive; views need to be created
-    # on-demand, we need a special mount.
-    if 0:
-        # Create views for all payees.
-        for payeeid, payee in compute_ids(get_all_payees(entries)):
-            view = PayeeView(entries, options, payeeid, 'Payee "{}"'.format(payee), payee)
-            app_mount(view)
-
-
-
-
-
-## FIXME: remove
-# def stopwatch(callback):
-#     def wrapper(*args, **kwargs):
-#         start = time.time()
-#         body = callback(*args, **kwargs)
-#         end = time.time()
-#         response.headers['X-Exec-Time'] = str(end - start)
-#         print(str(end - start))
-#         return body
-#     return wrapper
-
-
-
 def main():
     argparser = argparse.ArgumentParser(__doc__.strip())
     argparser.add_argument('filename', help="Beancount input filename to serve.")
@@ -1191,19 +1156,13 @@ def main():
     args = argparser.parse_args()
 
     # Parse the beancount file.
-    #
-    ## FIXME: maybe we can do away with this, and attach it to
-    ## the global application class.
-    global contents, clean_entries
-    contents, clean_entries = parser.load(args.filename)
-
-    ## FIXME: Not sure what to do with errors yet.
+    entries, errors, options = parser.load(args.filename)
 
     # Save globals in the global app.
-    global app
     app.args = args
-    app.contents = contents
-    app.entries = clean_entries
+    app.entries = entries
+    app.errors = errors
+    app.options = options
 
     # Load templates.
     with open(path.join(path.dirname(__file__), 'template.html')) as f:
@@ -1277,15 +1236,6 @@ def compute_ids(strings):
 
 
 
-
-# def app_url(global_name, global_kwargs, name, kwargs=None):
-#     if global_kwargs is None:
-#         global_kwargs = {}
-#     if kwargs is None:
-#         kwargs = {}
-#     view_url = viewapp.router.build(name, **kwargs)
-#     view_url = view_url.lstrip('/')
-#     return app.router.build(global_name, view_url, **global_kwargs)
 
 
 

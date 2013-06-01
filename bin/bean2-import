@@ -3,19 +3,35 @@
 convert the files in the directory. There is also an option to automatically
 file succesfully detected and converted input files.
 """
-from beancount2.parser import parser
+import os
+from os import path
+
+from beancount2.parser import load
 
 
+
+def walk_files(directories):
+    for directory in directories:
+        for root, dirs, filenames in os.walk(directory):
+            for filename in filenames:
+                yield path.join(root, filename)
 
 def main():
     import argparse, logging
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     parser = argparse.ArgumentParser(__doc__.strip())
 
-    parser.add_argument('beancount', help='Beancount input file')
+    parser.add_argument('filename', help='Beancount input file')
     parser.add_argument('directories', nargs='+', help='Directories to inspect')
 
     opts = parser.parse_args()
+
+    entries, errors, options = load(opts.filename)
+
+    for filename in walk_files(opts.directories):
+        print(filename)
+
+
 
 
 if __name__ == '__main__':

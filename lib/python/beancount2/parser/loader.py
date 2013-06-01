@@ -11,7 +11,7 @@ from beancount2.core import realization
 from beancount2.core import validation
 
 
-def load(filename):
+def load(filename, do_print_errors=False):
     """Parse the input file, pad the entries, check and validate it.
     This also prints out the error messages."""
 
@@ -19,21 +19,23 @@ def load(filename):
     with utils.print_time('parse'):
         contents = parser.parse(filename)
         parse_errors = contents.parse_errors
-        data.print_errors(contents.parse_errors)
+        options = contents.options
 
     # Pad the resulting entries (create synthetic Pad entries to balance checks
     # where desired).
     with utils.print_time('pad'):
         entries, pad_errors = realization.pad(contents.entries)
-        data.print_errors(pad_errors)
 
     with utils.print_time('check'):
         entries, check_errors = realization.check(entries)
-        data.print_errors(check_errors)
 
     # Validate the list of entries.
-    with utils.print_time('validation'):
+    with utils.print_time('validate'):
         valid_errors = validation.validate(entries, contents.accounts)
-        data.print_errors(valid_errors)
 
-    return contents, entries
+    errors = parse_errors + pad_errors + check_errors + valid_errors
+
+    if do_print_errors:
+        data.print_errors(errors)
+
+    return entries, errors, options

@@ -6,44 +6,22 @@ This also measures the time it takes to run all these steps.
 import argparse
 import itertools
 
-import beancount2.parser
-from beancount2 import validation
+from beancount2.parser import load
+from beancount2.core import realization
 from beancount2 import utils
-from beancount2 import data
-from beancount2 import realization
 
 
 def main():
     parser = argparse.ArgumentParser(__doc__.strip())
-    parser.add_argument('filename',
-                        help='Beancount input filename.')
+    parser.add_argument('filename', help='Beancount input filename.')
     opts = parser.parse_args()
 
+    # Load up the file, print errors.
+    entries, errors, options = load(opts.filename, do_print_errors=True)
 
-    # FIXME: build a dedicated routine for this. Reuse in web.py.
-    with utils.print_time('parse'):
-        contents = beancount2.parser.parse(opts.filename)
-        entries, parse_errors = contents.entries, contents.parse_errors
-
-    with utils.print_time('pad'):
-        entries, pad_errors = realization.pad(entries)
-
-    with utils.print_time('check'):
-        entries, check_errors = realization.check(entries)
-
-    with utils.print_time('validation'):
-        valid_errors = validation.validate(entries, contents.accounts)
-
-
-
+    # Realize the entries.
     with utils.print_time('realize'):
         real_accounts = realization.realize(entries, do_check=True)
-
-    for error in itertools.chain(parse_errors,
-                                 pad_errors,
-                                 check_errors,
-                                 valid_errors):
-        print('{} {}'.format(data.render_fileloc(error.fileloc), error.message))
 
 
 if __name__ == '__main__':
