@@ -3,6 +3,7 @@ Web server for Beancount ledgers.
 This uses the Bottle single-file micro web framework (with no plugins).
 """
 import argparse
+import time
 import datetime
 from os import path
 from textwrap import dedent
@@ -13,7 +14,7 @@ import functools
 from collections import defaultdict
 
 import bottle
-from bottle import response, request
+from bottle import install, response, request
 
 from beancount2 import parser
 from beancount2 import validation
@@ -192,6 +193,11 @@ def style():
 app = bottle.Bottle()
 
 
+
+
+
+
+
 def render_app(*args, **kw):
     """Render the title and contents in our standard template."""
     kw['G'] = G # Global mapper
@@ -207,12 +213,6 @@ def approot():
     bottle.redirect(request.app.get_url('balsheet'))
 
 
-# @app.route('/reports', name='reports')
-# def reports():
-#     "The index of all the available reports for this realization."
-#     return render_app(
-#         pagetitle = "Index",
-#         contents = APP_NAVIGATION.render(G=G, A=A, view_title=request.app.view.title))
 
 
 
@@ -1161,6 +1161,10 @@ def create_realizations(entries, options):
 
 
 
+
+
+
+
 ## FIXME: remove
     # app_copy = copy.copy(app)
     # #app_copy.view = view
@@ -1168,7 +1172,7 @@ def create_realizations(entries, options):
     #     # view = ByYearView(entries, options,
     #     #                 'year{:4d}'.format(year), 'Year {:4d}'.format(year), year)
 
-if 1:
+if 0:
     if 1:
         path_depth = 3
 
@@ -1193,15 +1197,134 @@ if 1:
             finally:
                 request.path_shift(-path_depth)
 
+    @bottle.route(r'/view/byyear/<year:re:\d\d\d\d>/', name='byyear')
+    def byyear(year=None):
+        # year = int(year)
+        # view = YearView(contents.entries, contents.options,
+        #                 'year{:4d}'.format(year), 'Year {:4d}'.format(year), year)
 
-@bottle.route(r'/view/byyear/<year:re:\d\d\d\d>/', name='byyear')
+        # print('BYYEAR', year)
+        return mountpoint_wrapper()
+
+
+if 0:
+    @bottle.route(r'/view/byyear/<year:re:\d\d\d\d>/', name='byyear')
+    def byyear(year=None):
+        print(year)
+        app.call(request.path)
+
+
+if 0:
+    @bottle.route(r'/view/byyear/<year:re:\d\d\d\d>/', name='byyear')
+    def byyear(year=None):
+        print('REDIRECTING', request.path)
+
+        year = int(year)
+        app_copy = copy.copy(app)
+        app_copy.view = YearView(request.app.entries,
+                                 request.app.contents.options,
+                                 'year{:4d}'.format(year), 'Year {:4d}'.format(year), year)
+
+        bottle.mount(request.path, app_copy, name='byyear')
+
+        bottle.redirect(request.path)
+
+
+if 0:
+    def dynamic_view(callback):
+        def wrapper(*args, **kwargs):
+
+            # bottle.mount('/view/{}'.format(view.id), app_copy, name=view.id)
+
+            return callback(*args, **kwargs)
+        return wrapper
+
+    app.install(dynamic_view)
+
+    bottle.mount('/view/byyear/<year:re:\d\d\d\d>', app, name='byyear')
+
+
+
+
+if 0:
+    def list_filter(config):
+        ''' Matches a comma separated list of numbers. '''
+        delimiter = config or ','
+        regexp = r'\d+(%s\d)*' % re.escape(delimiter)
+
+        def to_python(match):
+            return []
+
+        def to_url(numbers):
+            return delimiter.join(map(str, numbers))
+
+        return regexp, to_python, to_url
+
+    bottle.default_app().router.add_filter('list', list_filter)
+
+    @bottle.route('/follow/<ids:list>')
+    def follow_users(ids):
+        print(ids)
+
+
+if 0:
+    def dynamic_view(callback):
+        def wrapper(*args, **kwargs):
+            print('DYNAMIC fullpath', request.fullpath)
+            print('DYNAMIC args', args)
+            print('DYNAMIC kwargs', kwargs)
+            return callback(*args, **kwargs)
+        return wrapper
+
+    app.install(dynamic_view)
+
+    # bottle.mount('/view/byyear/2012', app, name='byyear')
+    bottle.mount('/view/byyear/<year:re:\d\d\d\d>', app, name='byyear')
+
+
+
+
+
+
+@bottle.route(r'/view/byyear/<year:re:\d\d\d\d>/<:re:.*>', name='byyear')
 def byyear(year=None):
+    print('BYYEAR', request.fullpath)
     year = int(year)
     view = YearView(contents.entries, contents.options,
                     'year{:4d}'.format(year), 'Year {:4d}'.format(year), year)
+    
 
-    print('BYYEAR', year)
-    return mountpoint_wrapper()
+    print('url', bottle.default_app().router.build(
+        'byyear', app.get_url('balsheet'), year=year))
+    app.view = view
+    return mountpoint_wrapper(app, 3)
+
+
+def mountpoint_wrapper(app, path_depth):
+    try:
+        request.path_shift(path_depth)
+        print('sub PATH', request.path)
+        rs = bottle.HTTPResponse([])
+        def start_response(status, headerlist, exc_info=None):
+            if exc_info:
+                try:
+                    _raise(*exc_info)
+                finally:
+                    exc_info = None
+            rs.status = status
+            for name, value in headerlist: rs.add_header(name, value)
+            return rs.body.append
+        body = app(request.environ, start_response)
+        if body and rs.body: body = itertools.chain(rs.body, body)
+        rs.body = body or rs.body
+        return rs
+    finally:
+        request.path_shift(-path_depth)
+
+
+
+
+
 
 
 
@@ -1234,6 +1357,20 @@ def load_input_file(filename):
         data.print_errors(valid_errors)
 
     return contents, entries
+
+
+
+## FIXME: remove
+# def stopwatch(callback):
+#     def wrapper(*args, **kwargs):
+#         start = time.time()
+#         body = callback(*args, **kwargs)
+#         end = time.time()
+#         response.headers['X-Exec-Time'] = str(end - start)
+#         print(str(end - start))
+#         return body
+#     return wrapper
+
 
 
 def main():
