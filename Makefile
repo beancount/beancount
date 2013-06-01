@@ -1,22 +1,22 @@
 #!/usr/bin/env make
 
-# Just my big old test ledger, converted automatically.
-OLDINPUT = $(HOME)/q/office/accounting/blais.ledger
-LEDGER = $(HOME)/q/office/accounting/blais.beancount
+# Just my big old fat ledger file.
+INPUT = $(HOME)/q/office/accounting/blais.beancount
 
 all: build
 
-# V1
-demo-v1:
-	python bin/bean-web --debug examples/demo.ledger
 
+# Clean everything up.
 clean:
 	rm -f core
 	rm -rf build
 	rm -f $(CROOT)/grammar.h $(CROOT)/grammar.c
 	rm -f $(CROOT)/lexer.h $(CROOT)/lexer.c
 	rm -f $(CROOT)/*.so
+	find . -name __pycache__ -exec rmdir "{}" \;
 
+
+# Targets to generate and build the C parser.
 CROOT=lib/python/beancount2/parser
 
 $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
@@ -29,37 +29,45 @@ $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 build: $(CROOT)/grammar.c $(CROOT)/grammar.h $(CROOT)/lexer.c $(CROOT)/lexer.h
 	python3 setup2.py build_ext -i
 
-.PHONY: sandbox
-sandbox:
-	bean2-sandbox $(LEDGER) 2>&1 | sed -e 's/\.beancount/.ledger/g'
 
-.PHONY: check
-check:
-	bean2-check $(LEDGER)
-
+# Dump the lexer parsed output. This can be used to check across languages.
 dump_lexer:
-	bean2-dump-lexer $(LEDGER)
+	bean2-dump-lexer $(INPUT)
 
+
+# Check for memory leaks.
 grind:
-	valgrind --leak-check=full /usr/local/bin/python3 bean2-sandbox $(LEDGER)
+	valgrind --leak-check=full /usr/local/bin/python3 bean2-sandbox $(INPUT)
 
+
+# Run in the debugger.
 debug:
-	gdb --args /usr/local/bin/python3 /home/blais/p/beancount/bin/bean2-sandbox $(LEDGER)
+	gdb --args /usr/local/bin/python3 /home/blais/p/beancount/bin/bean2-sandbox $(INPUT)
 
-convert:
-	bean2-v1tov2 $(OLDINPUT) > $(LEDGER)
 
+# Run the unittests.
 unittest unittests:
 	nosetests-3.3 -s lib/python/beancount2
 
+
+# Run the parser and measure its performance.
+.PHONY: check
+check:
+	bean2-check $(INPUT)
+
+
+# Run the demo program.
 demo:
 	bin/bean2-web --debug examples/demo.beancount
 
+
+# run the web server.
 .PHONY: web
 web:
-	bean2-web --debug $(LEDGER)
+	bean2-web --debug $(INPUT)
 
-.PHONY: test_scripts
-test_scripts:
-	bin/bean2-dump-lexer $(LEDGER) > /tmp/bean2-dump-lexer.log
-	bin/bean2-sandbox $(LEDGER) > /tmp/bean2-sandbox.log
+
+# My development sandbox script. This is messy and it's okay.
+.PHONY: sandbox
+sandbox:
+	bean2-sandbox $(INPUT)
