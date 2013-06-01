@@ -36,27 +36,6 @@ from beancount2.data import Open, Close, Pad, Check, Transaction, Event, Note, P
 
 
 #--------------------------------------------------------------------------------
-# Generic functions
-
-escape = bottle.html_escape
-
-
-# class AttrMapper:
-#     """A mapper used to format urls directly into templates.
-#     Use it in strings like this:
-
-#        <a href="{V.balsheet}">Balance Sheet</a>
-
-#     Where 'xxxx' in 'V.xxxxx' refers to a page by its name.
-#     """
-#     def __init__(self, url_function):
-#         self.url_function = url_function
-
-#     def __getattr__(self, aname):
-#         return self.url_function(aname)
-
-
-#--------------------------------------------------------------------------------
 # Global application pages.
 
 
@@ -85,12 +64,16 @@ def toc():
     mindate, maxdate = data.get_min_max_dates([entry for entry in clean_entries
                                                if not isinstance(entry, (Open, Close))])
 
-    view_items = []
-    for view in VIEWS:
-        pass
-        # view_items.append('<li><a href="{}">{}</a></li>'.format(getattr(A, view.id),
-        #                                                         view.title))
+    views = []
+    views.append((app.router.build('all', path=''),
+                  'All Transactions'))
 
+    for year in reversed(list(data.get_active_years(contents.entries))):
+        views.append((app.get_url('year', path='', year=year),
+                      'Year: {}'.format(year)))
+
+    view_items = ['<li><a href="{}">{}</a></li>'.format(url, title)
+                  for url, title in views]
     return render_global(
         pagetitle = "Table of Contents",
         contents = """
@@ -207,7 +190,7 @@ def handle_view(path_depth):
             # Save for hte subrequest and redirect. populate_view() picks this
             # up and saves it in request.view.
             request.environ['VIEW'] = view
-            return internal_redirect(viewapp, 2)
+            return internal_redirect(viewapp, path_depth)
         return wrapper
     return view_populator
 
@@ -956,7 +939,7 @@ class View:
     """A container for filtering a subset of entries and realizing that for
     display."""
 
-    def __init__(self, all_entries, options, id, title):
+    def __init__(self, all_entries, options, title):
 
         # A reference to the full list of padded entries.
         self.all_entries = all_entries
@@ -968,8 +951,7 @@ class View:
         self.opening_entries = None
         self.closing_entries = None
 
-        # Id and title.
-        self.id = id
+        # Title.
         self.title = title
 
         # A reference to the global list of options and the account type names.
@@ -1056,45 +1038,24 @@ class View:
         raise NotImplementedError
 
 
+
 class AllView(View):
 
     def apply_filter(self, entries, options):
         "Return the list of entries unmodified."
         return (entries, None)
 
-
-
-
-
-
-
-
 @app.route(r'/view/all/<path:re:.*>', name='all')
 @handle_view(2)
 def all(path=None):
-    print('CREATING ALL VIEW')
-    return AllView(contents.entries, contents.options, 'all', 'All Transactions')
-
-
-# @app.route(r'/view/year/<year:re:\d\d\d\d>/<path:re:.*>', name='year')
-# def year(year=None, path=None):
-#     request.environ['VIEW'] = get_view('year/{:4}'.format(int(year)))
-#     return internal_redirect(viewapp, 3)
-
-
-# # Map /view/tag/TAGNAME/...
-
-# @app.route(r'/view/tag/<tag:re:[^/]*>/<path:re:.*>', name='tag')
-# def year(tag=None, path=None):
-#     request.environ['VIEW'] = get_view('tag/{}'.format(tag))
-#     return internal_redirect(viewapp, 3)
+    return AllView(contents.entries, contents.options, 'All Transactions')
 
 
 
 class YearView(View):
 
-    def __init__(self, entries, options, id, title, year):
-        View.__init__(self, entries, options, id, title)
+    def __init__(self, entries, options, title, year):
+        View.__init__(self, entries, options, title)
 
         # The year of filtering.
         self.year = year
@@ -1123,11 +1084,18 @@ class YearView(View):
 
         return entries, index
 
+@app.route(r'/view/year/<year:re:\d\d\d\d>/<path:re:.*>', name='year')
+@handle_view(3)
+def year(year=None, path=None):
+    year = int(year)
+    return YearView(contents.entries, contents.options, 'Year {:4d}'.format(year), year)
+
+
 
 class TagView(View):
 
-    def __init__(self, entries, options, id, title, tags):
-        View.__init__(self, entries, options, id, title)
+    def __init__(self, entries, options, title, tags):
+        View.__init__(self, entries, options, title)
 
         # The tags we want to include.
         assert isinstance(tags, (set, list, tuple))
@@ -1143,11 +1111,17 @@ class TagView(View):
 
         return tagged_entries, None
 
+@app.route(r'/view/tag/<tag:re:\d\d\d\d>/<path:re:.*>', name='tag')
+@handle_view(3)
+def tag(tag=None, path=None):
+    return TagView(contents.entries, contents.options, 'Tag {:4d}'.format(tag), tag)
+
+
 
 class PayeeView(View):
 
-    def __init__(self, entries, options, id, title, payee):
-        View.__init__(self, entries, options, id, title)
+    def __init__(self, entries, options, title, payee):
+        View.__init__(self, entries, options, title)
 
         # The payee to filter.
         assert isinstance(payee, str)
@@ -1162,6 +1136,12 @@ class PayeeView(View):
                          if isinstance(entry, data.Transaction) and (entry.payee == payee)]
 
         return payee_entries, None
+
+@app.route(r'/view/payee/<payee:re:\d\d\d\d>/<path:re:.*>', name='payee')
+@handle_view(3)
+def payee(payee=None, path=None):
+    return PayeeView(contents.entries, contents.options, 'Payee {:4d}'.format(payee), payee)
+
 
 
 #--------------------------------------------------------------------------------
