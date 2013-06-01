@@ -5,17 +5,17 @@ import bottle
 from bottle import request
 
 
-class AppMapper:
+class AttrMapper:
     "A URL mapper that allows attribute access for view-links."
 
-    def __init__(self, app):
-        self.app = app
+    def __init__(self, mapper_function):
+        self.mapper_function = mapper_function
 
-    def __getattr__(self, aname):
-        return self.app.get_url(aname)
+    def __getattr__(self, name):
+        return self.mapper_function(name)
 
-    def build(self, name, **kwargs):
-        return self.app.get_url(name, **kwargs)
+    def build(self, *args, **kwargs):
+        return self.mapper_function(*args, **kwargs)
 
 
 def internal_redirect(app, path_depth):
@@ -42,9 +42,4 @@ def internal_redirect(app, path_depth):
         request.path_shift(-path_depth)
 
 
-def populate_view(callback):
-    "A plugin that will populate the request with the current view instance."
-    def wrapper(*args, **kwargs):
-        request.view = request.environ['VIEW']
-        return callback(*args, **kwargs)
-    return wrapper
+

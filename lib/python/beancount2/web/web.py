@@ -17,6 +17,8 @@ from collections import defaultdict
 import bottle
 from bottle import install, response, request
 
+from beancount2.web.bottle_utils import AttrMapper, internal_redirect
+
 from beancount2 import parser
 from beancount2 import validation
 from beancount2 import data
@@ -39,65 +41,55 @@ from beancount2.data import Open, Close, Pad, Check, Transaction, Event, Note, P
 escape = bottle.html_escape
 
 
-class AppMapper:
-    """A mapper used to format urls directly into templates.
-    Use it in strings like this:
+# class AttrMapper:
+#     """A mapper used to format urls directly into templates.
+#     Use it in strings like this:
 
-       <a href="{A.balsheet}">Balance Sheet</a>
+#        <a href="{V.balsheet}">Balance Sheet</a>
 
-    Where 'xxxx' in 'A.xxxxx' refers to a page by its name.
-    """
-    def __init__(self, url_function):
-        self.url_function = url_function
+#     Where 'xxxx' in 'V.xxxxx' refers to a page by its name.
+#     """
+#     def __init__(self, url_function):
+#         self.url_function = url_function
 
-    def __getattr__(self, aname):
-        return self.url_function(aname)
-
-G = AppMapper(bottle.default_app().router.build)
-
-
-def app_url(name, *args, **kw):
-    "Return a URL to the given name, in the request app."
-    return request.app.get_url(name, *args, **kw)
-
-A = AppMapper(app_url)
-
-
-## FIXME: remove?
-# def get_mount():
-#     """Return the mountpoint of this application request call."""
-#     return request.urlparts.path[:-len(request.path)]
+#     def __getattr__(self, aname):
+#         return self.url_function(aname)
 
 
 #--------------------------------------------------------------------------------
 # Global application pages.
 
 
+app = bottle.Bottle()
+A = AttrMapper(app.router.build)
+
+
 def render_global(*args, **kw):
     """Render the title and contents in our standard template."""
-    kw['G'] = G # Global mapper
     kw['A'] = A # Application mapper
-    kw['title'] = bottle.default_app().contents.options['title']
+    kw['V'] = V # View mapper
+    kw['title'] = app.contents.options['title']
     kw['view_title'] = ''
     kw['navigation'] = GLOBAL_NAVIGATION
     return template.render(*args, **kw)
 
 
-@bottle.route('/', name='root')
+@app.route('/', name='root')
 def root():
     "Redirect the root page to the home page."
-    bottle.redirect(bottle.url('toc'))
+    bottle.redirect(app.get_url('toc'))
 
 
-@bottle.route('/toc', name='toc')
+@app.route('/toc', name='toc')
 def toc():
     mindate, maxdate = data.get_min_max_dates([entry for entry in clean_entries
                                                if not isinstance(entry, (Open, Close))])
 
     view_items = []
     for view in VIEWS:
-        view_items.append('<li><a href="{}">{}</a></li>'.format(getattr(G, view.id),
-                                                                view.title))
+        pass
+        # view_items.append('<li><a href="{}">{}</a></li>'.format(getattr(A, view.id),
+        #                                                         view.title))
 
     return render_global(
         pagetitle = "Table of Contents",
@@ -109,7 +101,7 @@ def toc():
         """.format(view_items='\n'.join(view_items)))
 
 
-@bottle.route('/errors', name='errors')
+@app.route('/errors', name='errors')
 def errors():
     "Report error encountered during parsing, checking and realization."
     return render_global(
@@ -118,7 +110,7 @@ def errors():
         )
 
 
-@bottle.route('/stats', name='stats')
+@app.route('/stats', name='stats')
 def stats():
     "Compute and render statistics about the input file."
     # Note: maybe the contents of this can fit on the home page, if this is simple.
@@ -128,7 +120,7 @@ def stats():
         )
 
 
-@bottle.route('/source', name='source')
+@app.route('/source', name='source')
 def source():
     "Render the source file, allowing scrolling at a specific line."
     return render_global(
@@ -137,7 +129,7 @@ def source():
         )
 
 
-@bottle.route('/update', name='update')
+@app.route('/update', name='update')
 def update():
     "Render the update activity."
     return render_global(
@@ -146,7 +138,7 @@ def update():
         )
 
 
-@bottle.route('/events', name='events')
+@app.route('/events', name='events')
 def update():
     "Render an index for the various kinds of events."
     return render_global(
@@ -155,7 +147,7 @@ def update():
         )
 
 
-@bottle.route('/prices', name='prices')
+@app.route('/prices', name='prices')
 def prices():
     "Render information about prices."
     return render_global(
@@ -166,22 +158,22 @@ def prices():
 
 GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
 <ul>
-  <li><a href="{{G.toc}}">Table of Contents</a></li>
-  <li><a href="{{G.errors}}">Errors</a></li>
-  <li><a href="{{G.source}}">Source</a></li>
-  <li><a href="{{G.stats}}">Statistics</a></li>
-  <li><a href="{{G.update}}">Update Activity</a></li>
-  <li><a href="{{G.events}}">Events</a></li>
-  <li><a href="{{G.prices}}">Prices</a></li>
+  <li><a href="{{A.toc}}">Table of Contents</a></li>
+  <li><a href="{{A.errors}}">Errors</a></li>
+  <li><a href="{{A.source}}">Source</a></li>
+  <li><a href="{{A.stats}}">Statistics</a></li>
+  <li><a href="{{A.update}}">Update Activity</a></li>
+  <li><a href="{{A.events}}">Events</a></li>
+  <li><a href="{{A.prices}}">Prices</a></li>
 </ul>
-""").render(G=G)
+""").render(A=A)
 
 
-@bottle.route('/style.css', name='style')
+@app.route('/style.css', name='style')
 def style():
     "Stylesheet for the entire document."
     response.content_type = 'text/css'
-    if bottle.default_app().args.debug:
+    if app.args.debug:
         with open(path.join(path.dirname(__file__), 'style.css')) as f:
             global STYLE; STYLE = f.read()
     return STYLE
@@ -191,25 +183,71 @@ def style():
 # Realization application pages.
 
 
-app = bottle.Bottle()
+viewapp = bottle.Bottle()
+V = AttrMapper(lambda *args, **kw: request.app.get_url(*args, **kw))
 
 
+def handle_view(path_depth):
+    """A decorator for handlers which create views lazily.
+    If you decorate a method with this, the wrapper does the redirect
+    handling and your method is just a factory for a View instance,
+    which is cached."""
+
+    def view_populator(callback):
+        def wrapper(*args, **kwargs):
+            components = request.path.split('/')
+            viewid = '/'.join(components[:path_depth+1])
+            try:
+                # Try fetching the view from the cache.
+                view = app.views[viewid]
+            except KeyError:
+                # We need to create the view.
+                view = app.views[viewid] = callback(*args, **kwargs)
+
+            # Save for hte subrequest and redirect. populate_view() picks this
+            # up and saves it in request.view.
+            request.environ['VIEW'] = view
+            return internal_redirect(viewapp, 2)
+        return wrapper
+    return view_populator
 
 
+def populate_view(callback):
+    "A plugin that will populate the request with the current view instance."
+    def wrapper(*args, **kwargs):
+        request.view = request.environ['VIEW']
+        return callback(*args, **kwargs)
+    return wrapper
 
+viewapp.install(populate_view)
 
 
 def render_app(*args, **kw):
     """Render the title and contents in our standard template."""
-    kw['G'] = G # Global mapper
     kw['A'] = A # Application mapper
-    kw['title'] = bottle.default_app().contents.options['title']
-    kw['view_title'] = ' - ' + request.app.view.title
-    kw['navigation'] = APP_NAVIGATION.render(G=G, A=A, view_title=request.app.view.title)
+    kw['V'] = V # View mapper
+    kw['title'] = app.contents.options['title']
+    kw['view_title'] = ' - ' + request.view.title
+    kw['navigation'] = APP_NAVIGATION.render(A=A, V=V, view_title=request.view.title)
     return template.render(*args, **kw)
 
+APP_NAVIGATION = bottle.SimpleTemplate("""
+<ul>
+  <li><a href="{{A.toc}}">Table of Contents</a></li>
+  <li><span class="ledger-name">{{view_title}}:</span></li>
+  <li><a href="{{V.openbal}}">Opening Balances</a></li>
+  <li><a href="{{V.balsheet}}">Balance Sheet</a></li>
+  <li><a href="{{V.income}}">Income Statement</a></li>
+  <li><a href="{{V.trial}}">Trial Balance</a></li>
+  <li><a href="{{V.journal}}">Journal</a></li>
+  <li><a href="{{V.positions}}">Positions</a></li>
+  <li><a href="{{V.conversions}}">Conversions</a></li>
+  <li><a href="{{V.documents}}">Documents</a></li>
+</ul>
+""")
 
-@app.route('/', name='approot')
+
+@viewapp.route('/', name='approot')
 def approot():
     bottle.redirect(request.app.get_url('balsheet'))
 
@@ -353,11 +391,11 @@ def table_of_balances(tree, start_node_name, currencies, classes=None):
 
 
 
-@app.route('/trial', name='trial')
+@viewapp.route('/trial', name='trial')
 def trial():
     "Trial balance / Chart of Accounts."
 
-    view = request.app.view
+    view = request.view
     real_accounts = view.get_realization()
     operating_currencies = view.options['operating_currency']
     table = table_of_balances(real_accounts, '', operating_currencies,
@@ -405,24 +443,24 @@ def balance_sheet_table(real_accounts, options):
         """.format(**vars())
 
 
-@app.route('/balsheet', name='balsheet')
+@viewapp.route('/balsheet', name='balsheet')
 def balsheet():
     "Balance sheet."
 
-    view = request.app.view
-    real_accounts = request.app.view.get_closing_realization()
+    view = request.view
+    real_accounts = request.view.get_closing_realization()
     contents = balance_sheet_table(real_accounts, view.options)
 
     return render_app(pagetitle = "Balance Sheet",
                       contents = contents)
 
 
-@app.route('/openbal', name='openbal')
+@viewapp.route('/openbal', name='openbal')
 def openbal():
     "Opening balances."
 
-    view = request.app.view
-    real_accounts = request.app.view.get_opening_realization()
+    view = request.view
+    real_accounts = request.view.get_opening_realization()
     if real_accounts is None:
         contents = 'N/A'
     else:
@@ -432,12 +470,12 @@ def openbal():
                       contents = contents)
 
 
-@app.route('/income', name='income')
+@viewapp.route('/income', name='income')
 def income():
     "Income statement."
 
-    view = request.app.view
-    real_accounts = request.app.view.get_realization()
+    view = request.view
+    real_accounts = request.view.get_realization()
 
     # Render the income statement tables.
     operating_currencies = view.options['operating_currency']
@@ -765,24 +803,24 @@ def entries_table(oss, account_postings, render_postings=True):
     write('</table>')
 
 
-@app.route('/journal', name='journal')
+@viewapp.route('/journal', name='journal')
 def journal():
     "A list of all the entries in this realization."
     bottle.redirect(app_url('account', slashed_account_name=''))
 
 
-@app.route('/account/<slashed_account_name:re:[^:]*>', name='account')
+@viewapp.route('/account/<slashed_account_name:re:[^:]*>', name='account')
 def account(slashed_account_name=None):
     "A list of all the entries for this account realization."
 
     # Get the appropriate realization: if we're looking at the balance sheet, we
     # want to include the net-income transferred from the exercise period.
     account_name = slashed_account_name.strip('/').replace('/', ':')
-    options = bottle.default_app().contents.options
+    options = app.contents.options
     if data.is_balance_sheet_account_name(account_name, options):
-        real_accounts = request.app.view.get_closing_realization()
+        real_accounts = request.view.get_closing_realization()
     else:
-        real_accounts = request.app.view.get_realization()
+        real_accounts = request.view.get_realization()
 
     account_postings = realization.get_subpostings(real_accounts[account_name])
 
@@ -800,11 +838,11 @@ def get_conversion_entries(entries):
             if data.transaction_has_conversion(entry)]
 
 
-@app.route('/conversions', name='conversions')
+@viewapp.route('/conversions', name='conversions')
 def conversions():
     "Render the list of transactions with conversions."
 
-    view = request.app.view
+    view = request.view
 
     oss = io.StringIO()
     conversion_entries = get_conversion_entries(view.get_entries())
@@ -832,11 +870,11 @@ def conversions():
 
 
 
-@app.route('/positions', name='positions')
+@viewapp.route('/positions', name='positions')
 def positions():
     "Render information about positions at the end of all entries."
 
-    entries = request.app.view.get_entries()
+    entries = request.view.get_entries()
 
     total_balance = realization.compute_total_balance(entries)
 
@@ -886,7 +924,7 @@ def positions():
         )
 
 
-@app.route('/trades', name='trades')
+@viewapp.route('/trades', name='trades')
 def trades():
     "Render a list of the transactions booked against inventory-at-cost."
     return render_app(
@@ -895,7 +933,7 @@ def trades():
         )
 
 
-@app.route('/documents', name='documents')
+@viewapp.route('/documents', name='documents')
 def documents():
     "Render a tree with the documents found for each."
     return render_app(
@@ -904,24 +942,14 @@ def documents():
         )
 
 
-APP_NAVIGATION = bottle.SimpleTemplate("""
-<ul>
-  <li><a href="{{G.toc}}">Table of Contents</a></li>
-  <li><span class="ledger-name">{{view_title}}:</span></li>
-  <li><a href="{{A.openbal}}">Opening Balances</a></li>
-  <li><a href="{{A.balsheet}}">Balance Sheet</a></li>
-  <li><a href="{{A.income}}">Income Statement</a></li>
-  <li><a href="{{A.trial}}">Trial Balance</a></li>
-  <li><a href="{{A.journal}}">Journal</a></li>
-  <li><a href="{{A.positions}}">Positions</a></li>
-  <li><a href="{{A.conversions}}">Conversions</a></li>
-  <li><a href="{{A.documents}}">Documents</a></li>
-</ul>
-""")
 
 
 #--------------------------------------------------------------------------------
 # Views.
+
+
+# A cache for views that have been created (on access).
+app.views = {}
 
 
 class View:
@@ -1033,6 +1061,34 @@ class AllView(View):
     def apply_filter(self, entries, options):
         "Return the list of entries unmodified."
         return (entries, None)
+
+
+
+
+
+
+
+
+@app.route(r'/view/all/<path:re:.*>', name='all')
+@handle_view(2)
+def all(path=None):
+    print('CREATING ALL VIEW')
+    return AllView(contents.entries, contents.options, 'all', 'All Transactions')
+
+
+# @app.route(r'/view/year/<year:re:\d\d\d\d>/<path:re:.*>', name='year')
+# def year(year=None, path=None):
+#     request.environ['VIEW'] = get_view('year/{:4}'.format(int(year)))
+#     return internal_redirect(viewapp, 3)
+
+
+# # Map /view/tag/TAGNAME/...
+
+# @app.route(r'/view/tag/<tag:re:[^/]*>/<path:re:.*>', name='tag')
+# def year(tag=None, path=None):
+#     request.environ['VIEW'] = get_view('tag/{}'.format(tag))
+#     return internal_redirect(viewapp, 3)
+
 
 
 class YearView(View):
@@ -1218,10 +1274,10 @@ def main():
     ## FIXME: Not sure what to do with errors yet.
 
     # Save globals in the global app.
-    global_app = bottle.default_app()
-    global_app.args = args
-    global_app.contents = contents
-    global_app.entries = clean_entries
+    global app
+    app.args = args
+    app.contents = contents
+    app.entries = clean_entries
 
     # Load templates.
     with open(path.join(path.dirname(__file__), 'template.html')) as f:
@@ -1231,11 +1287,11 @@ def main():
     with open(path.join(path.dirname(__file__), 'style.css')) as f:
         global STYLE; STYLE = f.read()
 
-    # Create all the basic realizations.
-    create_realizations(clean_entries, contents.options)
+    # # Create all the basic realizations.
+    # create_realizations(clean_entries, contents.options)
 
     # Run the server.
-    bottle.run(host='localhost', port=8080, debug=args.debug) # reloader=True
+    app.run(host='localhost', port=8080, debug=args.debug) # reloader=True
 
 
 
