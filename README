@@ -1,5 +1,5 @@
 ========================================================
-   BeanCount: Double-Entry Accounting with Text Input
+   BeanCount: Double-Entry Accounting from Text Input
 ========================================================
 
 .. contents::
@@ -12,6 +12,15 @@
     6  Documentation
     7  Copyright and License
     8  Author
+
+.. important::
+
+   This project, which has long been stable and in active use, is currently
+   being rewritten from scratch (2013-06-01). The new project is called
+   'daybook' and will provide most of the features that 'beancount' did, and
+   much more, with simpler data structures and a better implementation. See
+   http://furius.ca/daybook/ for details. Beancount will remain here for the
+   foreseeable future.
 
 Description
 ===========
