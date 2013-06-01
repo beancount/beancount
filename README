@@ -1,5 +1,5 @@
 ========================================================
-   BeanCount: Double-Entry Accounting with Text Input
+   beancount: Double-Entry Accounting from Text Input
 ========================================================
 
 .. contents::
@@ -7,10 +7,11 @@
     1  Description
     2  Project Status
     3  Demo
-    4  Download
-    5  Documentation
-    6  Copyright and License
-    7  Author
+    4  Runtime-Dependencies
+    5  Download
+    6  Documentation
+    7  Copyright and License
+    8  Author
 
 .. important::
 
@@ -47,6 +48,14 @@ an active project, I depend on it for my personal finances and my company's.
 
 V2 is a rewrite, and I *think* it is already better than V1 (2013-06-01).
 It is in active development.
+
+
+Dependencies
+============
+
+- GNU flex and GNU bison (to build the parser)
+- cdecimal (optional but strongly suggested, a faster Decimal type for Python)
+- Bottle (a tiny web server, pure Python)
 
 
 Download

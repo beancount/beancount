@@ -1,0 +1,231 @@
+/*
+ * CSS for beancount server pages.
+ */
+
+body {
+    font-family: 'Roboto Condensed', sans-serif;
+    /* font-family: 'Droid Sans Mono', sans-serif;  */
+}
+
+table {
+    border-collapse: collapse;
+}
+
+table td {
+    border: thin solid #ddd;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+/* The document/file title at the top. */
+#title {
+    padding: 5px 15px 10px 15px;
+    border-bottom: medium solid #666;
+    color: #666;
+    font-size: larger;
+}
+
+
+/* All numbers everywhere. */
+.num {
+    text-align: right;
+    font-family: 'Droid Sans Mono', sans-serif;
+}
+
+
+
+/* The navigation links. */
+
+div#navigation {
+    font-size: small;
+}
+
+div#navigation ul {
+    /* margin: 10px 0px 0px 0px; */
+    margin-top: 5px;
+    /* padding-top: 5px; */
+    padding-left: 0px;
+    /* border: thin solid red; */
+}
+
+div#navigation li {
+    display: inline;
+    margin: 4px;
+/* font-size: x-small; */
+}
+
+div#navigation li span.ledger-name {
+    margin-left: 1.5em;
+    /* font-weight: bold; */
+}
+
+
+/* The title of the page, what information we're displaying. */
+h1#pagetitle {
+    text-align: center;
+    margin-top: 0px;
+}
+
+
+
+a.account:link, a.account:visited {
+  text-decoration: none;
+  color: blue;
+  font-weight: bold;
+}
+
+
+
+
+
+
+
+/* Tree tables */
+
+table.tree-table {
+    width: 100%;
+    font-size: smaller;
+    table-layout: fixed;
+}
+
+table.tree-table th {
+    color: #888;
+}
+
+/* Accounts row in tree tables. */
+table.tree-table th.first {
+    width: 40%;
+}
+
+table td {
+    white-space: nowrap;
+}
+
+table.tree-table tr.parent-node {
+    background-color: #f8f8f8;
+}
+
+
+
+/* Table of entries / Journal */
+
+table.entry-table {
+    width: 100%;
+    font-size: smaller;
+}
+
+table.trial {
+    width: auto;
+}
+
+table.entry-table th {
+    color: #888;
+}
+
+
+table.entry-table tr td.change {
+    font-weight: bold;
+}
+
+table.entry-table tr td.balance {
+    /* font-weight: bold; */
+}
+
+table.entry-table tr td.description {
+    white-space: normal;
+}
+
+span.payee {
+    font-weight: bold;
+}
+
+span.pnsep {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+table.entry-table th.description {
+    width: 90%;
+}
+
+
+table.entry-table tr.Transaction {
+}
+
+table.entry-table tr.Transaction.warning {
+    background-color: #f8a;
+}
+
+table.entry-table tr.Open {
+    background-color: #e8e8e8;
+}
+table.entry-table tr.Close {
+    background-color: #606060;
+}
+
+
+table.entry-table tr.Check {
+    background-color: #cfc;
+}
+
+table.entry-table tr.CheckFail {
+    background-color: #f8a;
+}
+
+table.entry-table tr.Pad {
+    background-color: #8ff;
+}
+
+table.entry-table tr.Padding, table.entry-table tr.Summarize, table.entry-table tr.Transfer {
+    background-color: #cff;
+}
+
+table.entry-table tr.Posting {
+    font-size: x-small;
+    background-color: #e8e8e8;
+    opacity: 0.6;
+}
+
+table.entry-table tr.Posting.warning {
+    background-color: #f66;
+}
+
+table.entry-table tr.Posting.leg {
+    opacity: 1.0;
+}
+
+
+
+
+
+
+/* Side-by-side views */
+
+div.halfleft h3, div.halfright h3 {
+    text-align: center;
+    margin: 10px 0px 10px 0px;
+    /* border: thin dashed red; */
+}
+
+div.halfleft {
+  float: left;
+  left: 1%;
+  width: 50%;
+  margin: 0px;
+  padding: 0px;
+  /* border: thin solid #DDD; */
+}
+
+div.halfright {
+  float: right;
+  left: 50%;
+  width: 49%;
+  margin: 0px;
+  padding: 0px;
+  /* border: thin solid #DDD; */
+}
+
+/* For balance sheet, add a little more spacing between liabilities and equity. */
+div.spacer {
+    height: 14px;
+}

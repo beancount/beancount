@@ -348,7 +348,7 @@ class Inventory(object):
             assert realized_pnl == 0, realized_pnl
         else:
             booked.append( (obj, -total_booked) )
-            
+
         # Append the remainder of our trade to the inventory if not all was
         # booked.
         if quant != 0:
@@ -375,5 +375,3 @@ class AvgInventory(Inventory):
         Inventory.__init__(self, booking=BOOKING_FIFO, pricing=PRICING_AVERAGE)
         # Note: the booking method matters little here, other than for the
         # ordering of the trades that get closed.
-
-

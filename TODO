@@ -1,32 +1,984 @@
-=====================
-   beancount: TODO
-=====================
+-*- mode: org -*-
+beancount: TODO
+* File Reorganization
 
-.. contents::
-..
-    1  Beancount (Accounting)
-    2  Ideas
-      2.1  Links
-    3  Redesign
-    4  Idea for Integrating the Cost Basis in Beancount
+  - DO rename this as 'daybook', it's a better name (more positive).
+  - Create core submodule
+  - Rename beancount/examples -> beancount/demo
+  - web: Move table stuff into files, also bottle_utils.py, smaller files.
+  
+* NEW
 
-
-Beancount (Accounting)
-======================
-
-  - Remove support for virtual postings, hack not needed anymore!
-  - Remove support for BOOK <> IN ... do it now!
+  - Positions should attempt to fetch current values using this:
+    http://www.google.com/ig/api?stock=RGAGX
 
 
-  - Support Ledger's aliases?
-  - Support Ledger's "root account"?  I can only see it being useful for
-    includes.
 
-  - Change my syntax: start with date no matter what, everything has a date,
-    simpler
+  - Realization should be made into a simple tree; the hash-map is only
+    required temporarily, see if you can simplify this even further.
 
-  - Rename actual and effective to date and aux-date, like Ledger, I'm not even
-    sure we do anything with the aux-date actually.
+
+
+
+  - Importers: You should have some way to record instructions for what you did
+    in order to get the input files. This is useful. Not sure a comment is
+    enough; this is importer data, user-specific. Maybe there should be some
+    way to configure the importers?  Ideally not, but maybe this is hard-coded
+    in each importer., e.g.
+
+    Vanguard:
+
+    - Home >> Plan Summary >> Transaction History
+      Select: "View by:" Both
+      Click on Download.
+      Select "Download each fund in separate Quicken or Money accounts."
+      Click on Microsoft Money.
+
+
+
+
+  - Complete all the views in the TOC.
+
+  - FIXME: We need to make the payee mount different and "dynamic", creating
+    a new view automatically. We should do the same for the years and tags as
+    well. Creating the mounts is too expensive; views need to be created
+    on-demand, we need a special mount.
+
+
+
+
+
+  - We need to figure out how to order the accounts on the balsheet; I want the
+    most relevant near the top. Sorting accounts: compute a score made up of
+
+    * nb. txns from the last 3 months
+    * nb. checks from the last 3 months (weighted more heavily)
+    * line-no of Open directive in the file.
+    * last updated date.
+
+
+  - You're missing a step: There needs to be a step that inserts an entry for
+    Conversions. After running this step, the balance sheet's cost should sum
+    to ZERO. Do ASSERT that it is indeed the case.
+
+  - Shove more information in the Trial Balance page, info about errors,
+    documents, etc.
+
+
+
+
+
+
+  - Implement auto-reload by checking of the file.
+
+
+
+
+
+  - Move all the main files to "beancount2.core"? Think about how you'd
+    reimplement this in other languages with the very same file structure...
+    this would help.
+
+  - "Padding" really should be called "balance adjustment." That's the official
+    name for this type of thing.
+
+
+  - In the entries table HTML, highlight the relevant posting leg somehow,
+    maybe use a '>>' marker, or make it bold. Something.
+
+  - Render "as of YYYY-MM-DD" under the title for Balance Sheet, and "from
+    YYYY-MM-DD to YYYY-MM-DD" under the title for Income Statement
+
+  - Allow '$' as currency symbol, don't translate to anything, it can just
+    stand on its own as a unique kind of currency, it doesn't matter, no
+    changes anywhere.
+
+  - A multi-year report is a global report.
+
+  - Create "bean2-bake" instead of "bean-suck".
+
+  - @links are tags that don't show up in the index. That's all. Global link:
+    serve them at: /link/e77f3fa7e738
+
+  - Check-in/commit the lexer and parser generated files in order to minimize
+    the dependencies (no flex/bison required).
+
+  - In journal, render the price too, and the cost for each transaction. Merge
+    those columns in the description.
+
+  - For rendering an entries_table, add an option not to render a balance. It
+    should be possible to render a list of entries without adding up the
+    balance at all. Perhaps we also want an option to add a spacer between the
+    transactions being rendered too.
+
+  - "How much did I make during the period of this event", e.g. while I was
+    working at CompanyX, while I was in school at UniversityY. This provides
+    two dates, generate a view for them:
+
+      /view/event
+
+    This could sum up all the entries for all the internals where the event's
+    value was the same.
+
+  - Implemented a JavaScript cursor in JS. J, K up down. SPC = toggle.
+
+  - Add a unit test for pushtag/poptag errors.
+
+
+
+
+
+
+
+
+
+
+
+  - You must issue an error if you close an account that's got a non-zero
+    balance!
+
+
+
+
+
+  - You need to convert some of TestRealization to TestCheck.
+
+
+  - A realization should just be the root node of a tree of RealAccount's, each
+    with a list of entries|Postings and a final balance. Store the final balance
+    in RealAccount, it's worth it.
+
+    Wouldn't it be great if we could get rid of the TreeDict object? I say this:
+    after you remove the RealEntry and RealPosting objects, make the realization
+    be just the root node of a tree of accounts. The root node should be able to
+    quickly look up any subaccount. One less class, and then you don't have a
+    discrepancy between 'real_accounts' and 'real_account', one less datatype to
+    deal this. I saw DO THIS.
+
+
+  - Rename RealAccount's 'name' to 'leaf_name' and perhaps the full name should
+    still be stored in 'name'.
+
+
+  - Rename all 'real_accounts' to 'realization', which is meant to imply a tree
+    of accounts.
+
+
+  - inventory: rename get_cost() vs. get_cost_position(). Swap them, change all
+    the code that needs be changed.
+
+
+
+
+
+
+  - Fix return value of realize(), remove errors, need not output any errors.
+
+
+
+
+  - The return values from the parser must be cleaned up a bit: remove the
+    "contents" object, return stuff just like the other transformation
+    function, i.e. :
+
+      (entries, parser_errors, options).
+
+    * Can we get rid of the accounts being returned? These can be derived
+      easily from the list of entries, and I think I'm not using it anywhere
+      serious other than in tests.
+
+
+
+
+  - We should have a routine like this:
+
+       parse()
+       pad()
+       check()
+       validate()
+
+    Make a function for this... web.py should call it, bean2-sandbox too, one
+    routine, that should yield all the errors I need for error reporting.
+    (Summarization and realization don't yield errors anymore.)
+
+    * Implement basic error reporting page from the list of errors out of this.
+
+
+
+
+  - (validation) In addition to the Check/Open before-constraint, check that
+    the entries are always sorted. Add this sanity check.
+
+  - Implement check on the constraint on the kind of currency each account may
+    contain. -> validate.py
+
+  - The default validation should check the invariant that Open and Check
+    directives come before any Transaction.
+
+
+
+
+
+  - (web) We really need to reorder the accounts in a way that is more
+    sensible... it's annoying to see the accounts I care about at the top of
+    the page. Cash, Points, AU, should be at the bottom... I wonder if there's
+    a nice heuristic. Last updated date? I think that would be good enough.
+
+
+
+  - Why do I have non-USD/CAD in conversions?  They should not be there AFAIK,
+    because there are no @-priced conversions for those currencies.
+
+
+
+
+
+
+  - In the TOC, list and create views for level 2 (country) and level3
+    (institution).
+
+
+
+
+  - The journal rendering should be dedup'ed; right now, each posting leg
+    renders its own line as a transaction... we need to dedup these. This is
+    really important, because it's otherwise confusing.
+
+  - In the journal rendering, rendering transactions for the pre-computed
+    balance does not work... balances need to be recomputed. Perhaps the balance
+    should _always_ be computed on the fly! Not sure this makes any difference
+    in performance. 'tis a choice I think. This is a problem even for single
+    accounts: imagine many legs from a single transaction on a single account.
+    Needs de-duping. We can limit de-duping to work only on the current date
+    (transactions are sorted, no need to keep older dates, clear a set, will be
+    faster).
+
+
+
+
+
+
+
+
+
+  - Make the parser use the options name_* fields in order to validate and
+    change the lexer to recognize all account names, not specificially the
+    hardcoded ones we have now. (Assets|Liabilities|...).
+
+
+
+
+  (options)
+  - FIXME: We need to parse the options using the same argparse parser....
+
+
+
+
+
+  - The source page should take a special '?line=ddd' parameter that will
+    scroll the page to the transaction at that line.
+
+  - We need to convert @a0ab45b9aa7e links into tags. Do we need them to be
+    special tags? (Possibly not)
+
+
+
+  - Remove all strings for types (e.g. Assets), this must go into an option
+    context.
+
+
+  - Start documentation so you have a place to put all these ideas.
+    Set it up using Sphinx, or something else.
+
+
+  - Unrealized capital gains could be inserted automatically into special
+    sub-accounts, based on the current price and the cost-basis of particular
+    accounts. This could be inserted automatically! e.g.
+
+        DATE check Assets:US:Ameritrade:AAPL       10 AAPL {200 USD}
+
+        DATE price AAPL  210 USD
+
+      Assets:US:Ameritrade:AAPL                    2000 USD
+      Assets:US:Ameritrade:AAPL:Gains               100 USD
+
+    The "Gains" subaccount could be inserted automatically if the price differs
+    from the cost basis... this would be a clever way to represent this! We
+    could even do this by inserting a transaction automatically with an
+    offsetting account... actually this would be the RIGHT way to do this!
+
+      This could be done as a simple filter function:
+
+        entries = add_unrealized(entries)
+
+      We would need an option to designate which subaccount leaf to create all
+      the new transactions for:
+
+        %option account_unrealized  "Unrealized"
+
+        2013-05-23 A "Booking unrealized gains for AAPL"
+          Assets:US:Ameritrade:AAPL:Unrealized              230.45 USD
+          Income:Unrealized                                -230.45 USD
+
+      By doing this, the reporting does not have anything to do... it can choose
+      to report positions at cost or in held units, and whether the gains are
+      included or not entirely depends on whether these transactions have been
+      inserted in or not.
+
+
+  - IDEA! Export to GnuCash format... import in GnuCash?!?! See reports!!
+
+  - Look at GnuCash for a lot of the reports... some good ideas maybe? I could
+    perhaps learn a few things, it looks informed.
+
+  - Add unittests for tags, pushtag/poptag
+
+
+
+
+
+
+  - Add tests for all the cases of realization padding.
+
+  - Ha! The current problem with checks has to do with my stupid :Contrib
+    account, and the fact that those checks include the CHILDREN accounts (the
+    old beancount worked that way... eliminate that). Fix all this, make the
+    contributions be tracked the correct way. They are old, but it'll be a good
+    exercise...
+
+      Q: Do I want to support checks accross all positions, for a single
+         currency? I rather like the idea of checking a specific "position"...
+
+  - Do I really want all my checks to be at the BEGINNING of the day? Maybe...
+    not sure. Need to convince myself.
+
+  - Convert the parsetest_* functions into decorators!!! This only makes sense!
+
+  - You have to implement auto-padding somehow... auto-insert a Pad() directive
+    in the list of entries and let the current magic works its magic? This
+    might work!!!
+
+
+  - Q: How do we deal with transactions that have multiple postings in the same
+    account? Multiple RealPosting instances?
+
+
+  - Finish the inventory_test.py, with the guard against negative balances when
+    a position has an associated cost or lot-date, a test is important.
+
+  - Check that the currency constraints on accounts are respected.
+    (Implement the currency constraints...)
+
+
+
+
+  - The examples should be drawn from the demo file; the demo file should be
+    rewritten, with multiple years, and with good templates for most of the
+    important operations that can take place.
+
+  - Errors from the parser and others should all be accumulated in one place,
+    so that we do all the reporting at the very top level.
+
+  - We will want to somehow "normalize" and merge payee names, because some of
+    that differ very little are obvious for the same business... this would be
+    useful.
+
+  - In the balance sheet and income statement, we need to render the amounts
+    inverted (and in a slightly different style).
+
+
+  - Validation: Everywhere we have a filter of entries to entries, we should be
+    able to apply a check that the total balances before and the total balances
+    after should have the very same value.
+
+  - Default import syntax should have the narration as the payee by default. We
+    need to use those as default, we don't set nearly enough of them.
+
+  - The new balance sheets should be able to invert the numbers (and then they
+    should get rendered differently). Basically, every number shown should be
+    either in signed or cr/dr format. We should be able to switch between the
+    two at render time. This should work across all number-rendering routines
+    everywhere--do this centrally.
+
+
+
+
+  - In validate.py: differentiate between the case of an entry appearing too
+    early before an Open directive, and an entry appearing for an account that
+    simply just doesn't exist.
+
+  - In the balance sheet or trial balance, mark accounts that have errors in
+    red, or add a little red start next to them.
+
+  - Move 'Lot' class from data.py to inventory.py, just makes sense.
+
+
+
+
+
+
+
+  - Deal with the effective date somehow, we need to do something with it, or
+    just remove it?
+
+  - You will need to render prices from postings, for sales, we want to see the
+    closing price.
+
+  - Clean up code: remove all significant codes from __init__.py files.
+
+  - We really need to list the '!' entries somewhere; they should be annoying.
+
+
+  - Render the Conversions amount at the bottom of the Conversions page...
+
+  - Answer to favicon.ico request.
+
+** Incognito Mode
+
+  - Create an '--incognito mode whereby all the numbers are represented by
+    'XXX.XX' for public presentation. For simplicity, this could be implemented
+    as a filter on the raw characters coming out of the web server.
+
+* Web Interface
+** Features
+
+  - Add an option to render the entries table upwards, not just downwards.
+
+** Simplifications
+
+  - Put the last updated date in the balance sheet or perhaps the trial balance
+    page. Should be easy; we don't need a dedicated page for this.
+
+** JavaScript
+
+  - In Journal view, pressing 'C' should toggle the checks on and off.
+
+
+* Checks and Safeguards
+
+  - Auto-detect possible duplicate transactions
+
+* Dealing with Equity
+
+    * Choose one of these:
+
+         Equity                         Equity
+         `--+-- OpeningBalances         `--+-- OpeningBalances
+            |-- RetainedEarnings           `-- Exercise
+            `-- Conversion                     |-- RetainedEarnings
+                                               `-- Conversion
+
+
+** Retained Earnings
+
+  - Add note entries for new accounts, should be a multiline paragraph that
+    describes the purpose of the account. Add them in my input file.
+
+  - You need a special directive to deal with RetainedEarnings, which are (I-X).
+    This process needs to be documented well...  with examples.
+    Equity:RetainedEarnings contains the sum total of all previous (I-E) before
+    the beginning of the period.
+
+  - Whether the result of I-X before the beginning of the period should be
+    inserted into OpeningBalances depends on whether you want the balance sheet
+    to reflect the absolute amounts. If you're filtering for some particular
+    set of transactions, you may not want that to be done. e.g. Loft expenses,
+    should be separate. In fact, only when we clamp in time do we want that
+    insertion to occur.
+
+** Conversion Differences
+
+  - TODO: Try it out in GnuCash, see how they deal with it. Very curious!
+    (WOW This is really SNAFU'ed. Really fucked up. Finding bugs in GC within the
+    first 10 minutes...)
+
+
+  - One idea is that you could enter a transaction like this:
+
+       YYYY-MM-DD * "Annul conversions at end of period"
+         Equity:Conversions        -56383 CAD @ 0 CONV
+         Equity:Conversions        +67000 USD @ 0 CONV
+
+  - Maybe the account that should hold these conversions should be an
+    Income:Conversions account.
+
+  - Document the fact that the conversions problem occurs
+
+    * Because we don't reduce to a single "home" currency, and
+    * That if you do all your work in a single currency with accounts with
+      costs, the value will always be zero, and
+    * Explain that currency trading accounts have little to do with this,
+      because they are contained, and all in and out flows are in a single
+      currency (the base currency of the account). The differences can be
+      accounted like positions in financial assets, with corresponding PnLs.
+
+
+  - You also need another special account to hold the conversion differences;
+    basically, the sum total of all of the amounts from all of the accounts may
+    not be zero if there are conversions happening. These needs to be inserted
+    into Equity:Conversions in order for the full balance to be equal to zero.
+
+       For the conversion losses: we need two new accounts:
+       Income :conversion pnl
+       Equity : conversion pnl (for the exercise)
+
+
+  - Automatically insert a 'Equity:Conversions' account with a corresponding
+    transaction, so that A + L + E = 0 (for real).
+
+    * The conversion profit/loss only materializes if we convert amounts at the
+      real current rate, vs. the rate implied by the conversions.
+
+    * Also, this Equity:Conversions only applies to the exercise/reporting
+      period; other previous amounts are all folded into the
+      Equity:OpeningBalances account.
+
+  - Why is there some FIDO and AMTRAK and other points in my final Conversions
+    account? Shouldn't those just cancel out from Income over the period?
+
+
+* Helpers for Documents
+
+  - There should be a script that knows about the formats of my various PDF
+    files under ~/u/Downloads and that automatically puts them under the right
+    subdirectory. Maybe pdf2text and look for account ids, then try to
+    automatically match against one of the account_id declared in the Ledger.
+
+* Statements
+** Capital Statement
+
+  - Implement the Capital Statement report
+
+** Cash Flow Statement
+** Positions Statement
+
+  - Implement a Positions report
+
+
+* Prices
+
+  - beancount: Make USD/CAD also specify CAD/USD in the price table;
+    the lookup procedure should be able to compute the reverse prices.
+
+* Code Organization
+
+  - More everything under src/*
+
+* Error Reporting & Detection
+
+  - Don't raise error exceptions anywhere; log everything to an error
+    handler/accumulator class instead, and skip to the next entry/declaration.
+
+  - Problematic transactions (!) should spit something of color on stdout, they
+    should not be forgotten so easily.
+
+  - When using @@ the signs should match; warn if they don't
+
+  - Bug: Invalid account names should only be reported once.
+
+** Lexer Level Errors
+
+  - When an error occurs, skip the lexer to the next empty line and recommence.
+* Checks
+
+  - Implement a check that open and close precede / succede all accounts
+
+  - Remove entries that are outside the open/close dates, at render time
+
+  - Implement checks for balances
+
+  - Barf on unmatched inventory (only for lots with a cost/lot-date).
+
+  - Automatically detect and find potential duplicates at the same date.
+
+
+* Options
+
+  - Maybe we should create an "option" directive to specify some of the common
+    parameters that related to the file:
+
+    * document roots, e.g.:
+
+          option document_root "documents/2011"
+          option document_root "documents/2012"
+          option document_root "documents/2013"
+
+    * "aggregate" (or "base") currencies, to specify the list of currencies to
+      be aggregated and converted, e.g.:
+
+          option base_currency USD
+          option base_currency CAD
+
+    If we do this, these directives should correspond one-to-one with the
+    command-line parameters.
+
+
+* Reports
+** Warnings
+
+  - You should have _some_ way to highlight accounts with either failing checks
+    in them, or '!' on their postings or transactions in the balance sheet
+    and/or trial balance.
+
+  - Perhaps we want to produce a report of all transactions with a highlight on
+    them.
+
+** General Rendering
+
+  - You should insert thousand-commas everywhere... no, really...
+
+
+** Balance Sheet
+
+  - beancount: Available balance sheet reports should be: at begin, at
+    end, both. Perhaps the "both" statement is only in report format.
+    Really, at any time, should be easy to generate.
+
+
+
+  - Figure out how to show balance sheet to market value, perhaps show gains.
+
+** Statement of Retained Earnings
+
+  - This is possible; search online for examples, makes sense that we should
+    have one, it's really, really simple to do.
+
+** Conversions Report
+
+  - List all the transactions that occur at a rate but that do not occur with a
+    cost, all the @ transactions only, as a report on its own, maybe just a
+    filtered journal (not a ledger).
+
+  -
+
+
+** Update Report
+
+  - We should have a nicer way to tell what accounts need to be updated.
+    Highlight them red if they haven't been updated in more a month
+    (configurable).
+
+** Links Report
+
+  - Generate a Graphviz link of all the interaccount transactions that are
+    larger than a certain amount.
+
+** HTML Rendering
+
+  - Rendering: When you collapse a parent account, its aggregate amount should
+    render, and disappear when not collapsed.
+
+  - Numbers should align to the right.
+
+  - USD and CAD should be aggregated in their own columns for balance sheet and
+    income statements. These should be specified from the command-line.
+
+  - All entries should have collapsing a-la-JavaScript, along with
+    collapse/reveal all buttons. All JS.
+
+  - If the software is finally fast enough in Go, render RESTful on the fly for
+    any date:
+
+    * REST:  /balsheet/20121231/
+    * REST:  /income/20121231/20131231/
+
+    This way, you could have any year on the same run. No need to restart, even
+    have a menu with all the years, and perhaps even some of the latest months.
+
+  - It would be really nice to render the line numbers to the source in the HTML
+
+  - (Performance) Implement buffered output for faster response using a separate
+    thread and an iterator that yields from app.write when the data buffer is
+    large enough.
+
+  - Postings that have a "!" flag should have at least their
+    background red.
+
+  - You should more explicitly state the beginning and ending period
+    on each statement pages (it is super important information).
+    Just below the title.
+
+
+
+** Excel Output
+
+  - Find good ways to transfer data to an Excel spreadsheet. A link to download
+    a file should be supported.
+
+
+** Credits and Debits Rendering
+
+  - Color the background of numbers with an inverted sign (e.g. payments in a
+    liability account) differently! There should be modes to rendering balance
+    sheets and income statements with inverted amounts, and it should all be
+    done client-side. When amounts are rendered as credits/debits, color their
+    background distinctly, so that it's obvious what kind of sign convention is
+    in use.
+
+
+** Links to Source
+
+  - The new format code should keep and optionally render the source file/line
+    of any transaction, and allow clicking to get to the source line in the
+    rendering.
+
+  - Maybe there should be a script that can take a report specification and
+    output a list of emacs-compatible links to the entries, interspersed with
+    the text format rendering! You could go "next-error" to go through the
+    entries in time order, emacs taking you there one-by-one.
+
+** Multi-Period Reports
+
+  - One kind of report that would be GREAT is a single grid with all income accounts
+    on the left with year by year on the horizontal. An overview of all the years.
+
+** CSV Reports / Text Reports
+
+ - Using an intermediate data structure, produce text and csv / xls reports,
+   downloadable from the web front-end, or even generatable directly. All of
+   this reporting infrastructure should be reusable, ideally.
+
+  - A text rendering of the balance sheet / income statement would be
+    _very_ useful for collaboration/communication with others. Add a link to
+    download a text version of any report. This would be made easy if we only
+    have a few distinct types of reports.
+
+** Plots / Time-Series
+
+  - Create a command to extract time series for any account, as a csv file. You
+    could then easily use this for plotting!
+
+  - Render this with gviz (you have to learn it at work anyway).
+
+  - Generate graphs of account amounts over time
+  - Include average amounts, average delta amount
+
+** List of Positions
+
+  - Given a list of entries, you should be able to extract a list of positions
+    at any point in time.
+
+  - The list of positions should provide a way to check the purchase price of
+    each position.
+
+** Maximum Values Report
+
+  - You should report a trial-balance -like listing of the minimum and maximum
+    values of all the accounts.
+
+** Event Reports
+
+  - We should be able to count the days of each event type.
+
+** Account Graphs
+
+  - beancount: Generate a graph for the main kinds of account
+    interchanges, by looking at the most significant transactions
+    between the accounts. For example, ignore transactions which are
+    too small in absolute value, or whose total is too small a portion
+    of the total.
+
+  - Fun little project: Create a graphviz output from a Ledger, where
+    transactions above a certain amount would generate a link between
+    accounts. Note:  the threshold could be either for single
+    transactions, or for aggregate amounts (absolute value).
+
+
+** Income Statement
+
+  - Add a pie chart to visualize the constitution of the Income Statement.
+
+
+** Summary Reports
+
+  - To create custom views, for example, weekly summaries, you could
+    convert the ledger into another ledger, where entries would have
+    been replaced by summary entries instead, and all the other
+    functionalities would still work.
+
+** Financial Ratio Analysis
+
+  - Add these: http://www.csun.edu/~bjc20362/Controlling-2.pdf
+
+
+** Documents
+
+  - Do we need a dedicated page for listing all documents? This page could
+    include documents without a date, could be rendered as a tree-table, with
+    the list of each document in the corresponding account. Maybe that's
+    overkill. DK.
+
+** Budgeting / Goals
+
+  - We could easily add features for budgeting, e.g. somehow set goals and then
+    report on the difference between actual and the goal, and project in the
+    future according to rate, e.g.:
+
+       ;; Check that the total for this position between 2013-06-01 and 2013-12-31 < 800 USD
+       2013-12-31 goal  Expenses:US:Restaurant  2013-06-01  < 800 USD
+
+       ;; Check that the balance of this account on 2013-12-31 is >= 1000 USD
+       2013-12-31 goal  Assets:Savings  >= 1000 USD
+
+
+* Booking
+
+  - We should create a syntax and method for booking to the average value.
+    Figure out how many units of each position to remove in order to obtain the
+    average sale price. This way the user could potentially switch methods.
+
+
+* Filtering Methods
+** By Country
+
+  - You should be able to look at only accounts with a particular pattern (and
+    their other legs), e.g. *:CA:*
+
+  - You perhaps should flag all the transactions that have a particular unit
+    (e.g. CAD)
+
+** By Account Prefix
+
+  - Specify a single account, and automatically select all the other accounts
+    which are linked by any transaction in this account; generate a balance
+    sheet from this list of accounts. e.g. Expenses:Trading, Income:PnL,
+    Assets:Trading.
+
+
+** By Amount Size
+
+  - I'd love a way to filter down a journal by omitting all the small
+    items and keeping just the larger ones, to get an automatic
+    overview of the large amounts in a long series of transactions.
+    All the small amounts could be lumped together under a special
+    entry.
+
+
+* Cleaning up for final release
+
+  - Clean up: add unit tests for everything, and docstrings everywhere.
+    This new version will be really, really clean!
+
+  - You need to clean up the memory of the strings created; call free() on each
+    string in the rules.
+
+
+* Includes
+
+  - With the new format... support includes, it makes a lot more sense to do
+    that now!
+
+
+* Syntax / Parser
+** Error Messages
+
+  - Syntax errors currently have no location... this is unacceptable. Write an
+    automated test, check for all kinds of errors, in the lexer, in the parser,
+    in the Python. (Just work with the line number, we don't really need
+    character position.) Test everything with automated tests.
+
+
+** Testing Improvments
+
+  - Allow file objects to parse() and dump_lexer(). This should use fdopen() or
+    whatever else to get this job done at the parser level.
+
+** General Improvements to Syntax
+
+  - You should accept commas in the input; simply ignore their value.
+
+  - Add 1/rate syntax for prices (and anything... really, why not).
+    Convert at parsing time.
+
+  - We could allow '$' to parse as equivalent to 'USD' in the input, or to
+    stand on its own as a currency name... why not?
+
+  - Make price syntax like this, to be consistent with positions!
+    This makes sense!
+
+              @price 2008-03-01  LOFT4530 {235000 CAD}
+
+
+** Syntax for Skipped
+
+  - Dont special case org-mode... Aything that doesnt start with a date or
+    pushtag/poptag should be skipped; this should work with LaTeX or any
+    of the text-modes.
+
+** Syntax for Lots
+
+  - Consider making the lot syntax like this:
+
+       -4 {GOOG @ 790.83 USD}
+
+    instead of:
+
+       -4 GOOG {790.83 USD}
+
+    It's actually a lot more accurate to what's going on...
+
+** Multiline Strings
+
+  - The syntax should support multiline strings naturally...
+
+
+* 'Misc' Accounts
+
+  - Support a category called "Misc:*" in order to deal with non-summable things
+    like RRSP contributsions. There's no need to do anything else special, just
+    goes to/from some Misc accounts. Those don't need to balance against anything.
+
+** Parser Testing
+
+  - Support a mode for the lexer to spit out its results on stdout, so that we
+    can cross-check with parsers in other languages.
+
+* Realizations
+
+  - The account realiization *is* the report. Create a "Realization" object for
+    each entry, pointing back to its entry (for all entries), and it should
+    have a "balance" field.
+
+    Then, reporting routines should work off of that realization object!
+
+  - Whether an account shows up in a particular Ledger (realization) really only
+    should depend on whether the account was open during the period (we now have
+    account open/close dates... let's use them instead of a heuristic!).
+    Create a routine to figure out if an account was open during a specific
+    time period?
+
+  - In the new design:
+
+    * Split the concepts of "Account" (name, global attributes) and
+      "AccountRealization" (list of postings and accumulated balances). A Ledger
+      contains AccountRealization instances. There should be a global Ledger
+      with AccountRealization's that contains all of the actual parsed postings.
+      Other Ledger instances can be filtered from this one.  All the
+      AccountRealization's share the same Account objects.
+
+    * Wallet -> "Inventory". An "Inventory" contains "Lots", which are comprised
+      of ((Commodity, Cost, Date) -> Amount) mappings, where Cost and Date may
+      be null.
+
+
+  - We need an option to automatically add opening balances entries when
+    filtering by time... this is important, otherwise the balances are
+    incorrect if you don't start at the very beginning.
+
+
+* Emacs Support
+
+  - Set the comment-syntax; currently it thinks it's '# '
+
+  - In the new mode, we need to recreate a function that will mark a posting as
+    valid (replace '!' by '*').
+
+  - A new ledger mode should have functions to
+
+    * Automatically indent postings ("a line that begins with an account")
+    * Automatically align lines with currency numbers
+
+* Dated Postings
 
   - In order to create multiple similar transactions at many dates in one
     syntax' entry, you could allow overriding the date on each posting, e.g.:
@@ -46,97 +998,75 @@ Beancount (Accounting)
 
     Could be a nice way to make distributed transactions.
 
-
-  - In the new design:
-
-    * Split the concepts of "Account" (name, global attributes) and
-      "AccountRealization" (list of postings and accumulated balances). A Ledger
-      contains AccountRealization instances. There should be a global Ledger
-      with AccountRealization's that contains all of the actual parsed postings.
-      Other Ledger instances can be filtered from this one.  All the
-      AccountRealization's share the same Account objects.
-
-    * Wallet -> "Inventory". An "Inventory" contains "Lots", which are comprised
-      of ((Commodity, Cost, Date) -> Amount) mappings, where Cost and Date may
-      be null.
-
-  - Matching on Inventory Lots should be loose: try to match automatically
-    against the most SPECIFIC lots.
-
-         (AAPL, 18.45, nil) -> +1
-         (AAPL, 17.93, nil) -> +1
-         (AAPL, nil, nil)   -> -1    ... should choose any of the inventory
-
-    Also, maybe the inventory's date should be filled in automatically by the
-    parser... just an idea. Maybe date doesn't have to be allowed to be nil.
+  - Move 'effective date' to the postings in my input file, using the dated
+    postings feature.
 
 
-  - One kind of report that would be GREAT is a single grid with all income accounts
-    on the left with year by year on the horizontal. An overview of all the years.
+  - Another idea would be to make @pad able to pad for a percentage of the
+    total, so that we're able to use @pad instead of "distribution of expenses"
+    entries.
 
 
-  - Create a command to extract time series for any account, as a csv file. You
-    could then easily use this for plotting!
+* Events
+** Locations
 
-  - The new syntax should support (ignore) org-mode headers, I need this. In
-    fact, because everything starts with a date, the parser should be able to
-    automatically pick up transactions from an arbitrary text file (line that
-    starts with a date and a word, followed by at least one line with
-    some indentation).
+  - @location really should just convert into a generic event "location", just
+    as address and school should; they're just events with forward fill...
+    Serve this at:
 
-  - The new format code should keep and optionally render the source file/line
-    of any transaction, and allow clicking to get to the source line in the
-    rendering.
+       http://localhost:8080/20120101/20130101/events/location/days
 
-  - Comments should use '#' not ';' anymore, it's just more common
+  - Add a "reason" field for @location, and display as trips, with
+    some sort of meaning to them. Ok, this contradicts the previous idea.
 
-  - Remove @begin / @end support-- simplify, put the tags on each txn as {tag}
-    instead. Simpler.
+* Import Automation
+** Find and Convert
 
-  - Inventory lots should have a date: (commodity, price, date). Use the same syntax as Ledger:
-      {price} [date]
+  - There should be a script that is able to go through a directory of files
+    and automaticalyl attempt to detect which types they are (if any), and
+    invoke converters automatically. Other people should be able to add and
+    improve this script.
 
-  - Rendering: When you collapse a parent account, its aggregate amount should
-    render, and disappear when not collapsed
+  - The importers should detect the type of files and identify their accounts,
+    and automatically stash the file under the correct documents directory.
 
-  - All entries should have collapsing a-la-JavaScript, along with
-    collapse/reveal all buttons. All JS.
+  - If the import process fails for whatever reason, don't move the files!!
+    This has been *SO* annoying in the past.
 
-  - If the software is finally fast enough in Go, render RESTful on the fly for
-    any date:
+  - The new importers should be able to strip the non-payee parts of the payee
+    name, e.g. NEW YO, SAN FR, etc.
 
-    * REST:  /balsheet/20121231/
-    * REST:  /income/20121231/20131231/
+** Avoid Reimporting
 
-    This way, you could have any year on the same run. No need to restart, even
-    have a menu with all the years, and perhaps even some of the latest months.
+  - Modify all import scripts so that they avoid reimporting already
+    imported stuff. All the import scripts should take an existing
+    Ledger file as input; they should be smarter.
 
-  - All entries should be generic... everything should show up.
+** Misc Importer Bugs
 
-  - Each account has basically many dimensions; it would be nice to be able to
-    group them as such:
+  - The OFX importer needs to unescape &amp; and other odd chars.
 
-      * COUNTRY: Canada, USA
-      * CURRENCY: CAD, USD, other
-      * TYPE: Asset, Income, Liability
-      * INSTITUTION: RBC, RBC-Investment, HSBC, TD, etc.
-      * SOURCE: Google, Eladian, MarketFactory, etc.
-      * DESTINATION: IRS, CRA, State-NewYork, State-California
 
-    Ideally, one should be able to generate report by querying on a subset of
-    these dimensions!!
+** SQL Import
 
-      Note: we can restrict each account to hold only a single currency, and
-      encode the name of the currency in the account's name. This is reasonable.
+  - Write a script to laod the data into an SQL database.
 
-  - Add a report for the maximum value of each account at the end of every year
-    (for foreign assets decl)
 
-  - About the discrepancy between the concept of "Payee" and a superfluous lead
-    account, e.g. Internet:TimeWarner, which typically contains only
-    transactions from that payee: maybe we can elide the account name if it
-    contains only a single payee, or perhaps a warning may be issued? I don't
-    know.
+** Auto-Reconcile
+
+  - Write a generic import routine that will try to heuristically match
+    partially completed transactions from an existing Ledger. Use some NLP or
+    somesuch matching algorithm.
+
+
+
+** Importer from GnuCash
+
+  - Write an importer from GnuCash's format, for people wanting to make the
+    transition.
+
+
+* Documents Directive
 
   - Tie the Ledger server to a directory hierarchy, where files can be found by
     account, automatically. Serve the files.
@@ -145,371 +1075,106 @@ Beancount (Accounting)
       of a transaction, if a file anywhere in the document store has @UUID in
       it, a link should be rendered to view the file directly.
 
-  - Require an @open directive for all accounts... would replace @defaccount,
-    can still search the entire file for them! Simpler...
 
-  - Problematic transactions (!) should spit something of color on stdout, they
-    should not be forgotten so easily.
+  - Add a new kind of directive::
 
-  - Add a diective for adding a link to a pdf document, for statements.
+      2013-05-15 document  Assets:US:TDBank:Checking  statement.pdf
 
-  - Idea: Add @close directive in order to mark the end of a specific
-    account.
 
-  - Idea: Add @comment directive in order to insert parsed comments at
-    dates.
+  - Add a '--documents' option that will look for a directory hierarchy matching
+    the beancount file one, and then automatically add "document" directives as
+    above from filenames like this::
 
-  - Idea: When an invalid check occurs and the amount is the same as
-    the other but with a negative sign, you can detect this and flag
-    it as an incorrect sign (a milder error) than an invalid check.
+      2013-05-15.blablabalastatement.pdf
 
-  - Idea: color entries with an inverted sign (e.g. payments in a
-    liability account) differently!
+    The filename should be relative to CWD. Also, maybe we want to have
+    a special  "documents_root documents/2013" directive within the file that
+    specifies that, so we don't have to put it in cmdline arguments everytime?
 
-  - Idea: a @check that works on differences, like a clamp on an
-    income statement between two dates. This would be useful for
-    OANDA, for example.
 
-  - Find good ways to transfer data to an Excel spreadsheet
+* Baking to Zip File
 
-  - Generate graphs of account amounts over time
-  - Include average amounts, average delta amount
+  - Idea: for condo & baking files into a zip file: allow serving only one
+    ledger realization.
 
-  - All Ledger objects should have begin/end dates.
+    * One option is to use the same base/root straing as for the web URL:
 
-  - Optimize: rewrite 'wallet' in C. __iadd__ is where all the time is
-    being spent.
+         http://localhost:8080/byyear/2013/...
 
-  - Awesome idea!!! Specify a single account, and automatically select
-    all the other accounts which are linked by any transaction in this
-    account; generate a balance sheet from this list of accounts. e.g.
-    Expenses:Trading, Income:PnL, Assets:Trading.
+      server_one_ledger(getledger('byyear/2013'), port=8080)
+      --realization='byyear/2013'
 
-  - It would be really nice to render the line numbers in the HTML
+    This would serve only that realization, and not others. This way I could
+    bake only this one in a zip file. This would be useful.
 
-  - A text rendering of the balance sheet / income statement would be
-    _very_ useful for collaboration/communication with others.
+* Bugs
+** Bugs in Beancount v2
 
-  - Allow entering "Comment" fields that show up in a specific
-    account's log!!
+  - Propagate exception from Python
 
-  - Add a "reason" field for @location, and display as trips, with
-    some sort of meaning to them.
+  - Add lineno is incorrect, it points to the next entry, not the previous one,
+    fix this bug.
 
-  - When using @@ the signs should match; warn if they don't
+  - Set a correct filename in grammar.y
 
-  - Postings that have a "!" flag should have at least their
-    background red.
+  - Fix all FIXMEs
 
-  - Have beancount-convert-ofx parse description NUM USD @ NUM and insert an
-    appropriate line in the output, perhaps as a comment
+  - Review the dates inequalities, incl + excl, like compsci
 
-  - beancount: Figure out problem with autopadding for beginning of a trip!
+    * Clarify this for @check as well, it should probably be at the end
+      of the day.
 
-  - beancount: look at booking warnings in blais.ledger.
 
-  - I'd love a way to filter down a journal by omitting all the small
-    items and keeping just the larger ones, to get an automatic
-    overview of the large amounts in a long series of transactions.
-    All the small amounts could be lumped together under a special
-    entry.
+** Bugs in Beancount v1
 
-  - Add JavaScript menus in order to include everything from the
-    top-level, so that it looks more like a real application, it'll
-    look goodx (see if bean-suck still works on that).
+  - This is causing me a problem::
 
-  - Implement beginning balance sheet. Beginning and end of periods
-    should be clearly indicated on both pages.
+      2008-02-14 * FUNDS TRANSFER
+        Assets:Current:RBC:Checking-US                                -89050.66 USD @ 0.9901 CAD
+        Assets:Current:RBC:Savings                                     88169.06 CAD
 
-  - I need a TEXT version of the Balance Sheet, to paste in my TODO
-    file.
+    The costs are::
 
-  - You should more explicitly state the beginning and ending period
-    on each statement pages (it is super important information).
-    Just below the title.
+      2008-02-14 * FUNDS TRANSFER
+        Assets:Current:RBC:Checking-US                                -88169.06 CAD
+        Assets:Current:RBC:Savings                                     88169.06 CAD
 
-  - Remove checks that are outside the postings dates, at
-    render time
+    So when I show the balance sheet "at cost", it shows the account
+    Assets:Current:RBC:Checking-US as having had some CAD debited from
+    it.
 
-  - Add a pie chart to visualize the constitution of the Income
-    Statement.
 
-  - Make the conversions be applied everywhere consistently.
+* Web Server
 
-  - beancount: Enter trade costs with BOOK for all personal trading
-    too, check that it works well. Check that capital gains
-    calculations do not include commissions.
+  - Use that beautiful new font (Roboto) from Tactile in the new rendering.
+    Totally worth it. Use the nice Lucida-like font for numbers, like in
+    TurboTax.
 
-    * Add 1/rate syntax.
-    * Add account numbers for classification and sorting.
-    * Add a cash account flag in @defaccount, to generate the Cashflow Statement.
+  - Render balance sheet/ income statement cells with two numbers for parent
+    nodes, so that when you collapse a node, all the amounts of its children sum
+    up automatically and display in its cell. You should have a consistent
+    report regardless of whether nodes are collapsed or not. This will require
+    some JavaScript effort.
 
-    * beancount: remove @checks that are outside of begin/end, it
-      looks bad.
 
-    * beancount: Make the --close place its Equity into
-      RetainedEarnings rather than Opening Balances?
-    * beancount: When you --close, make the balance transferred in
-      RetainedEarnings rather than the OpeningBalances
-    * Figure out what Yves means by "Retained Earnings", where do they
-      show in my report?
+* Importers Library
 
+  - Create importer library support in Python for writing beancount importers.
+    See OANDA script to being. Formatting transactions should be code in common.
+    Finding accounts with ids too.
 
+  - Write some smarter code to identify which transactions have alreader been
+    imported in the ledger. Do not rely on checks. This means that the importers
+    should create incomplete transaction objects and supply that to this
+    function, which will then attempt to identify for each of the supplied
+    transactions, which ones are already there.
 
+  - Given some incomplete transactions, complete them heuristically based on
+    previous contents of the ledger. This should make import a lot easier. This
+    should be generic and work across all importers, a single function call.
 
-app:
 
-  - beancount: figure out how to render a wallet with 5 significant
-    digits (for xrates in trades page).
-
-price tables:
-
-  - beancount: Make USD/CAD also specify CAD/USD in the price table;
-    the lookup procedure should be able to compute the reverse prices.
-  - beancount: Change the --conversion option to use rates from our
-    price table instead.
-
-graphs:
-
-  - beancount: Generate a graph for the main kinds of account
-    interchanges, by looking at the most significant transactions
-    between the accounts. For example, ignore transactions which are
-    too small in absolute value, or whose total is too small a portion
-    of the total.
-
-
-reports:
-
-  - beancount: Available balance sheet reports should be: at begin, at
-    end, both. Perhaps the "both" statement is only in report foramt.
-
-
-trade booking:
-
-  - beancount: figure out how to solve trades with share splits.
-
-
-
-main focus:
-
-- beancount: Add a page for the hedged values of everything.
-
-- Finish the Capital Statement and Positions page
-
-- Add a check to insure that parents do not contain mixed Dr and Cr
-  account types as children.
-
-- You need to write a test with dates that are close by between
-  @checks and with @pad in between, for date inequalities.
-
-- Add account numbers, to be able to sort in order of liquidity.
-
-- 'Tag' should be renamed 'project' (pretty standard naming).
-
-
-
-
-
-parser:
-
-- Bug: A transaction without postings should barf.
-
-- Bug: Invalid account names should only be reported once.
-
-- Review the dates inequalities, incl + excl, like compsci
-
-  * Clarify this for @check as well, it should probably be at the end
-    of the day.
-
-- make De and Cr just D and C
-
-- Allow commas in amounts. I like commas sometimes.
-
-- Maybe add a @defcomm directive, that checks validity for the
-  commodities that are seen.
-
-- IMPORTANT: Using the pickle, the errors only get reported when you
-  parse initially. We must make the balance checks in a separate
-  stage!!! Fix that, save the errors in the Ledger object and report
-  them every time.
-
-- Figure out why we get 1.0 USD when we import OFX, we should get 1.00 USD
-
-- Accounts unused for the filtered postings could simply be removed.
-
-- Add a syntax to convert between currencies without having to fetch
-  the values by hand, e.g. "3467.02 USD in CAD".
-
-- We may want to add a new syntax for comments that get parsed into
-  entries, something like this::
-
-    @comment <Account>
-      bla bhlablablabl blabla
-      bla bhlablablabl blabla
-      bla bhlablablabl blabla
-
-  This could get displayed in the register, to show significant events
-  in the life of some accounts.
-
-- Make @pad able to pad for a percentage of the total, so that we're
-  able to use @pad instead of "distribution of expenses" entries.
-
-
-capital gains:
-
-- Capital gains should not count commissions nor on the buy nor on the
-  sell side. How do we book them like this?  Create a small example.
-
-- Make my Capital-Gains use the most appropriate syntax and make sure
-  that the commissions aren't counted in (add a test).
-
-    You need to do a test for capital gains.
-
-views:
-
-- To create custom views, for example, weekly summaries, you could
-  convert the ledger into another ledger, where entries would have
-  been replaced by summary entries instead, and all the other
-  functionalities would still work.
-
-- Fun little project: Create a graphviz output from a Ledger, where
-  transactions above a certain amount would generate a link between
-  accounts. Note:  the threshold could be either for single
-  transactions, or for aggregate amounts (absolute value).
-
-
-checks:
-
-- Detect and find potential duplicates.
-
-
-import:
-
-- Modify all import scripts so that they avoid reimporting already
-  imported stuff. All the import scripts should take an existing
-  Ledger file as input.
-
-- The OFX importer needs to unescape &amp; and others.
-
-- Write a generic import routine that will try to heuristically match
-  partially completed transactions from an existing Ledger.
-
-
-filtering:
-
-- We need an option to automatically add opening balances entries when
-  filtering by time... this is important, otherwise the balances are
-  incorrect if you don't start at the very beginning.
-
-
-
-scripts:
-
-- Write a script to laod the data into an SQL database.
-
-- Figure out how to show balance to market value.
-
-- Figure out how to do stock splits properly.
-
-- Output reports using the debits and credits format.
-
-- Check time ranges should also output the ranges of transactions
-  present in the file.
-
-- Add a command to print the parsed transactions register in the order
-  they were read in.
-
-- Add declarations for important dates:
-
-  * @date 2007-01-01  'Q1 07'
-  * The date parsing should automatically recognize these
-
-- Add directives specific to conversion scripts as well::
-
-     @defvar ofx accid 000016726282       Assets:Current:RBC:Checking
-
-     @defvar paypal acc_sales    Income:Book-Sales
-     @defvar paypal acc_deposit  Assets:Current:PayPal
-     @defvar paypal acc_fee      Expenses:Financial:Commissions:PayPal
-
-
-
-tests:
-
-- Test Wallet += None
-
-- Write functional tests
-- Write automated tests for everything.
-
-
-doc/examples/demos:
-
-- Make a presentation
-
-- Write simple documentation, maybe tests should be part of the
-  documentation?
-
-- Create an 'examples' subdirectory, with typical use cases.
-
-- Examples:
-
-  - mortgage, buying a home
-  - capital gains (with commissions correctly)
-  - cie expenses, the way I'm doing it.
-  - misc, e.g. credit card
-
-- Include examples
-
-- This is causing me a problem::
-
-    2008-02-14 * FUNDS TRANSFER
-      Assets:Current:RBC:Checking-US                                -89050.66 USD @ 0.9901 CAD
-      Assets:Current:RBC:Savings                                     88169.06 CAD
-
-  The costs are::
-
-    2008-02-14 * FUNDS TRANSFER
-      Assets:Current:RBC:Checking-US                                -88169.06 CAD
-      Assets:Current:RBC:Savings                                     88169.06 CAD
-
-  So when I show the balance sheet "at cost", it shows the account
-  Assets:Current:RBC:Checking-US as having had some CAD debited from
-  it.
-
-
-
-serve:
-
-- Implement buffered output for faster response using a separate
-  thread and an iterator that yields from app.write when the data
-  buffer is large enough.
-
-- Make it possible to upload a new file to the server to be parsed.
-  This way, I wouldn't even have to log in ssh in order to update the
-  in-memory database...
-
-- BUG: There is a JavaScrap bug with collapsing the tree nodes in the
-  ranges page.
-
-- We really should display the code/check number in the web register
-  output.
-
-
-reporting:
-
-- Implement `--code-as-payee' combined with `--by-payee', this
-  provides an interesting view.
-
-  Implement a view ...
-
-  * By code
-  * By payee
-
-
-
-
-Ideas
-=====
+* Ideas
 
 - Create a script to support generating lists of file locations for
   navigating the input file in a certain order.
@@ -548,74 +1213,437 @@ Ideas
 - You should be able to click on a payee to view its transactions.
 
 
+* Cost Basis
+** Lots
+
+  - Matching on Inventory Lots should be *loose*: try to match automatically
+    against the most SPECIFIC lots.
+
+         (AAPL, 18.45, nil) -> +1
+         (AAPL, 17.93, nil) -> +1
+         (AAPL, nil, nil)   -> -1    ... should choose any of the inventory
+
+    Also, maybe the inventory's date should be filled in automatically by the
+    parser... just an idea. Maybe date doesn't have to be allowed to be nil.
 
 
-Links
------
+** Original Idea Description for Integrating the Cost Basis in Beancount
 
-Description of a data model very similar to my idea.
-http://homepages.tcp.co.uk/~m-wigley/gc_wp_ded.html
+  - Every account carries a cost basis.
 
+  - You can have posting with or without a cost-basis.
 
+  - If the posting has a cost-basis posting, the cost-basis is used to balance the
+    transaction.
 
+  - As you sum up the postings in the account, keep track of the full inventory as
 
+      (commodity, cost) -> quantity
 
-Redesign
-========
+    As a special case, "cost" can be null. This is the case where there is no cost
+    tracking for this commodity item. We maintain the full inventory of positions
+    with a cost basis in the account; as a default case, the cost is null.
 
-Here is an idea for a redesign:
+  - BALANCE CHECK: When balancing a transaction, if an amount has an associated
+    cost basis, use the cost basis instead of the actual amount to balance.
 
-  The Ledger object should always contain all the transactions.
-  Instead of filtering the postings on input, you should create
-  specialized iterator objects that are used to filter the postings on
-  the fly. This would allow removing all the special shit that needs
-  to be ordered correctly, that happens at load-time.
+  - INVENTORY CHECK: When a position is modified in the inverse direction,
+    require a cost to book against. If no cost is specified, it just degrades to
+    decrease from the bucket of commodities with a null cost (it all works out!)
 
+  - ZERO CHECK: Insure that the quantity can never be negative for any bucket.
 
+  - Optional extended check syntax: You could extend the @check syntax to include
+    the cost, so that technically you could check that there are a specific number
 
-Idea for Integrating the Cost Basis in Beancount
-================================================
+  2013-03-01 * buy
+    Assets:Checking        10 GOOG # 700 USD
+    Assets:Investment     -7000 USD
 
-- Every account carries a cost basis.
-
-- You can have posting with or without a cost-basis.
-
-- If the posting has a cost-basis posting, the cost-basis is used to balance the
-  transaction.
-
-- As you sum up the postings in the account, keep track of the full inventory as
-
-    (commodity, cost) -> quantity
-
-  As a special case, "cost" can be null. This is the case where there is no cost
-  tracking for this commodity item. We maintain the full inventory of positions
-  with a cost basis in the account; as a default case, the cost is null.
-
-- BALANCE CHECK: When balancing a transaction, if an amount has an associated
-  cost basis, use the cost basis instead of the actual amount to balance.
-
-- INVENTORY CHECK: When a position is modified in the inverse direction,
-  require a cost to book against. If no cost is specified, it just degrades to
-  decrease from the bucket of commodities with a null cost (it all works out!)
-
-- ZERO CHECK: Insure that the quantity can never be negative for any bucket.
-
-- Optional extended check syntax: You could extend the @check syntax to include
-  the cost, so that technically you could check that there are a specific number
+  2013-03-15 * sell
+    Assets:Checking       -10 GOOG # 700 USD @ 800 USD
+    Income:RealizedPnL    -1000 USD
+    Assets:Investment      8000 USD
 
 
+  Syntax
 
-2013-03-01 * buy
-  Assets:Checking        10 GOOG # 700 USD
-  Assets:Investment     -7000 USD
-
-2013-03-15 * sell
-  Assets:Checking       -10 GOOG # 700 USD @ 800 USD
-  Income:RealizedPnL    -1000 USD
-  Assets:Investment      8000 USD
+  Test: Items of the same kind with and without cost basis
+  Test: Multiple items of different types with a cost basis in the same account
 
 
-Syntax
+* Difficult or Unsolved Ideas
+** Payee Elision vs. Account Leaf Name
 
-Test: Items of the same kind with and without cost basis
-Test: Multiple items of different types with a cost basis in the same account
+  - About the discrepancy between the concept of "Payee" and a superfluous lead
+    account, e.g. Internet:TimeWarner, which typically contains only
+    transactions from that payee: maybe we can elide the account name if it
+    contains only a single payee, or perhaps a warning may be issued? I don't
+    know.
+
+    Basically, it would be nice to be ablet to have multiple payees in the same
+    category over time (e.g. Electricity, Internet) but to be able to separate
+    them somehow, without having to put the payee into the name. This is a
+    little fuzzy, and I'm not sure how to do it, because the imported payee
+    names are often not very clear and often truncated as well.
+
+
+* List of New features in Beancount v2 (Complete Rewrite) - Idealized
+
+- Implemented in Python 3, from scratch.
+
+- Internal data structures are more functional, immutable, allowing you to more
+  easily create scripts that use the in-memory data. Overall, the new code is
+  way simpler and much easier to understand because of this. It's actually
+  become dead simple.
+
+- New, simplified, and more consistent (and rigid) syntax will make it possible
+  to add more features in the future, and to have parsers in other languages too
+  (e.g. Go).
+
+- Booking trades with capital gain tracking should now work.
+
+- The new parser is written in C, so it is much much faster, and future changes
+  will be easier
+
+- The new web server fixes annoying rendering issues.
+
+  * Balance sheet amounts can now reported in terms of book values.
+  * Debit accounts can now be rendered with positive numbers (color-coded).
+  * The internal data structure changes are much more general, and allow, for
+    instance, creating a balance sheet at any point in time. In particular, you
+    can have a balance sheet at the beginning and end of an exercise.
+
+- Some internal design flaws were fixed, like checks on filtered ledgers showing
+  up from incorrect periods.
+
+- Various outputs to text, csv, and xls are now supported for easier sharing.
+
+- The input file is monitored by the server, and can be automatically reloaded.
+  This makes it easier to just start the web server, then edit the file to
+  update what you need.
+
+- There is no need to specify a filter period anymore; the interface is able to
+  realize any required periods, and the GUI provides access to most common
+  cross-sections (all, by year, by tag, by payee, transactions with bookings,
+  etc.). You should be able to just specify the GUI.
+
+- Client-side javascript has been added for a neater, more compact rendering of
+  journals.
+
+- There is a new library for code common to all importers; it should be easier
+  to write importers now.
+
+- There is a new module that allows you to automatically book new transactions
+  on import, based on the previous contents of your ledger file.
+
+- New scripts to extract a list of current positions at any time, and global
+  summaries over many years or months.
+
+- There is no more Emacs major mode, but only a minor mode; you may now use any
+  text mode you like, most especially org-mode, which allows you to hide and
+  show large sections of your file. This is really convenient or organize your
+  input file in sections.  Less Emacs customization is better.
+
+  * The account completer function is still there.
+  * For org-mode, highlighting is still present.
+  * There is a new function to align the prices of a transaction automatically.
+
+* Challenges, Problems Beancount should be able to Solve
+** Can I generate a nice year-on-year summary of income and expenses?
+
+  - Including RSP contribs, like my bu spreadsheet that I crafted manually? Can
+    I do that? That would be awesome!
+
+** Maximum Balance
+
+  - Can I compute the maximum value of each account at the end of every year
+    (for foreign assets decl.) This would be useful for FBAR / FATCA
+    declarations.
+
+** Complete Return (IRR) on Condo
+
+  - Challenge: Can I compute IRR return on my condo accurately?
+    TODO: Add benefits received as an Income, as transactions.
+    You should be able to compute the IRR of any Ledger!
+
+** Taxation Rate
+
+  - Challenge: Can I automatically compute my taxation rate for every year?
+
+** List of Assets
+
+  - Challenge: Can I obtain a list of my assets at any time?
+
+** Make a report of currency exposure
+
+  - For a particular balance sheet, report the total currency exposure of the
+    ledger. This should be a very simple report, probably in the form of a pie
+    chart.  Maybe this pie chart should be located in the capital report
+    (possibly makes sense).
+
+** Capital Gains
+
+  - Capital gains should not count commissions nor on the buy nor on the
+    sell side. How do we book them like this?  Can we count this somehow
+    automatically? Misc accounts? Not sure.
+
+** Inflation Adjusted Balance Sheets and Charts
+
+  - It would be AWESOME to look at a balance sheets from the past but
+    inflation-adjusted for any date... Answer this question easily:
+
+      "What was I making in 2010 in today's dollar terms?"
+
+  - How would I produce an inflation adjusted version of some charts. Maybe all
+    charts should have that option?
+
+** Statement of Assets (for Will)
+
+  - In order to have someone else be able to take care of your business, you
+    should be able to produce a list of the accounts open at the end of the
+    period, with the account ids and balances. This should be printable and
+    storable, for someone else to take care of your things in case you die.
+
+* Rename
+
+  - Consider renaming this system as "Daybook" instead of Beancount.
+
+* Rejected Ideas
+
+  - Support Ledger's aliases?
+
+      *REJECTED*: This is not necessary, and it adds yet another special case for
+      directives; right now, all we have is pushtag/poptag...
+
+  - Comments should use '#' not ';' anymore, it's just more common...
+
+      *REJECTED*: '#tag' syntax is really common; I would need some other comment
+      syntax. Not sure what. //?
+
+
+  - Each account has basically many dimensions; it would be nice to be able to
+    group them as such:
+
+      * COUNTRY: Canada, USA
+      * CURRENCY: CAD, USD, other
+      * TYPE: Asset, Income, Liability
+      * INSTITUTION: RBC, RBC-Investment, HSBC, TD, etc.
+      * SOURCE: Google, Eladian, MarketFactory, etc.
+      * DESTINATION: IRS, CRA, State-NewYork, State-California
+
+    Ideally, one should be able to generate report by querying on a subset of
+    these dimensions!!
+
+      Note: we can restrict each account to hold only a single currency, and
+      encode the name of the currency in the account's name. This is reasonable.
+
+        *REJECTED*: I'm not sure this is useful actually.
+
+  - Idea: When an invalid check occurs and the amount is the same as the other
+    but with a negative sign, you can detect this and flag the last one as an
+    incorrect sign (a milder error) than an invalid check. Why? Because this is
+    one of the most common errors.
+
+      *REJECTED*: You impure bastard, just get your data right.
+
+
+  - Idea: a @check that works on differences, like a clamp on an
+    income statement between two dates. This would be useful for
+    OANDA, for example.
+
+      *REJECTED*: I don't see how I could use this anymore. I don't understand
+      what I came up with.
+
+  - Make it possible to upload a new file to the server to be parsed.
+    This way, I wouldn't even have to log in ssh in order to update the
+    in-memory database...
+
+      *REJECTED*: You could easily create a separate process to do this, this
+      does not belong in the basic server.
+
+
+  - Have beancount-convert-ofx parse description NUM USD @ NUM and insert an
+    appropriate line in the output, perhaps as a comment
+
+      *REJECTED*: That's just not necessary. Let's keep things simple.
+
+
+  - Add a syntax to convert between currencies without having to fetch
+    the values by hand, e.g. "3467.02 USD in CAD".
+
+      *REJECTED*: This is a cool idea, but we would have to have correct prices
+    at every requested time in order to balance transactions, and that's simply
+    too much of a dependency to require.
+
+
+  - Add a command to print the parsed transactions register in the order
+    they were read in.
+
+      *REJECTED*: Simply not needed.
+
+  - Failing "check" directives should insert a transaction to fix the balance
+    towards the expected balance. This is in order to avoid a single mistake
+    somewhere early before many checks cascading into a torrent of errors.
+    (realize(): When a check fails, fix the balance so that we don't report more
+    than a single check error, so that they don't cascade to multiple ones if
+    the error was made early on.)
+
+      *REJECTED*: It's really not that big a problem in practice.
+
+  - Should padding be by lot?
+
+      *REJECTED* No, the way padding is used, it's better not to make it too
+      complicated.
+
+
+* Documentation
+** Documentation
+
+  - Write a simple cheat-sheet with an overview of the syntax
+
+  - Include the nice diagram made for DGreenberg, we need a 3D version of it.
+
+  - Write a series of real-life problems solved. This should be really much
+    more helpful than boring docs.
+
+  - Document the realization process, need that large zoom-out graphic that
+    shows closing, and opening balances.
+
+  - Add a "team project" as an example use case, or even an example file.
+
+** Real Usage Examples
+*** Transfers Between Accounts
+*** mortgage, buying a home
+*** capital gains (note about how to do commissions)
+*** cie expenses, the way I'm doing it.
+*** misc, e.g. credit card
+*** stock splits
+*** Tracking IRA or RSP Contributions
+**** Option 1
+
+2012-10-15 * Contribution 1 to RSP
+  Assets:Checking                           -2500 CAD
+  Assets:Bank1:RSP                           2500 CAD
+  Liabilities:PendingContributions          -2500 RSPCAD
+  Expenses:RSPContrib                        2500 RSPCAD
+
+2012-11-15 * Contribution 2 to RSP
+  Assets:Checking                           -1500 CAD
+  Assets:Bank1:RSP                           1500 CAD
+  Liabilities:PendingContributions          -1500 RSPCAD
+  Expenses:RSPContrib                        1500 RSPCAD
+
+2013-04-30 * Filing Taxes
+  Assets:Receivable                           800 CAD
+  Expenses:Taxes                             -800 CAD
+  Assets:RSPContrib                         -3500 RSPCAD  ; Not claiming all
+  Liabilities:PendingContributions          +4000 RSPCAD
+  Assets:RSPContrib:Unclaimed                 500 RSPCAD
+
+2013-05-15 * Paying Taxes - Receiving Amount Due
+  Assets:Checking                             800 CAD
+  Assets:Receivable                          -800 CAD
+  Assets:RSPContrib                          1200 RSPCAD
+  Income:RSPContrib                         -1200 RSPCAD
+
+
+Two RSP investment accounts:
+
+  Assets:Bank1:RSP
+  Assets:Bank1:RSP
+
+An account to hold maximum RSP contributions allowed:
+
+  Assets:RSPContrib
+
+How much I've contributed to RSPs in total:
+
+  Expenses:RSPContrib
+
+How much my maximum contributions have increased from the governement as a
+result of paying taxes:
+
+  Income:RSPContrib
+
+Pending contributions for this year, some of which to be claimed on my tax filing:
+
+  Liabilities:PendingContributions
+
+Unused RSP contributions made, carried forward to future years:
+
+  Assets:RSPContrib:Unclaimed
+
+**** Option 2 (favourite)
+
+2012-10-15 * Contribution 1 to RSP
+  Assets:Checking                           -2500 CAD
+  Assets:Bank1:RSP                           2500 CAD
+  Assets:RSPContrib:MaxDeductible           -2500 RSPCAD
+  Assets:RSPContrib:Contributed              2500 RSPCAD
+
+2012-11-15 * Contribution 2 to RSP
+  Assets:Checking                           -1500 CAD
+  Assets:Bank1:RSP                           1500 CAD
+  Assets:RSPContrib:MaxDeductible           -1500 RSPCAD
+  Assets:RSPContrib:Contributed              1500 RSPCAD
+
+2013-04-30 * Filing Taxes
+  Assets:Receivable                           800 CAD
+  Expenses:Taxes                             -800 CAD
+  Assets:RSPContrib:Contributed             -3500 RSPCAD  ; Not claiming all
+  Expenses:RSPContrib                       +3500 RSPCAD
+
+2013-05-15 * Paying Taxes - Receiving Amount Due
+  Assets:Checking                             800 CAD
+  Assets:Receivable                          -800 CAD
+  Assets:RSPContrib:MaxDeductible            1200 RSPCAD
+  Income:RSPContrib                         -1200 RSPCAD
+
+Two RSP investment accounts:
+
+  Assets:Bank1:RSP
+  Assets:Bank1:RSP
+
+An account to hold maximum RSP contributions allowed:
+
+  Assets:RSPContrib:MaxDeductible
+
+Pending unused contributions for this year, some of which to be claimed on my
+tax filing:
+
+  Assets:RSPContrib:Contributed
+
+How much I've contributed to RSPs in total:
+
+  Expenses:RSPContrib
+
+How much my maximum contributions have increased from the governement as a
+result of paying taxes:
+
+  Income:RSPContrib
+
+
+
+** User Documentation
+
+  - Defining your accounts
+    - Basic structures: *:Country:Institution:SubAccounts
+    - "When and why to put accounts together under a single subaccount?"
+      - When it makes sense to sum the total together.
+        e.g. IRA employer contribution and your own contribution.
+
+* Developer Documentation
+
+  - INVARIANT: All the entries lists are assumed to be sorted by date
+    everywhere.
+
+  - INVARIANT: All Check and Open entries are always at the beginning of a new
+    date in a list of entries.
+
+
+* Preso / Presentation
+
+  - Begin with a USB key in hand. "On this 8 GB USB key, I have all of 8 years
+    history of financial transactions in my life. Every single price paid that
+    went recorded into an account it these.

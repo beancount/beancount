@@ -1,4 +1,4 @@
-;;; -*- mode: ledger; coding: utf-8; -*-
+;;; -*- mode: org; mode: beancount; coding: utf-8; -*-
 ;;;
 ;;; This is an example/demo file, with some example accounts and
 ;;; some example transactions. A real-life Ledger file has a lot

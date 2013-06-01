@@ -9,11 +9,11 @@ from os import path
 
 # beancount imports
 from beancount import cmdline
-from beancount.utils import render_tree
+from beancount.utils import tree_utils
 
 
 def get_accounts(ledger):
-    for acc, branch, line in render_tree(ledger.get_root_account()):
+    for acc, branch, line in tree_utils(ledger.get_root_account()):
         yield acc.fullname
 
 def find_files(rootdir):

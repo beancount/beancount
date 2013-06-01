@@ -1,0 +1,67 @@
+Beancount v2 Syntax Summary
+* Main Features
+
+  YYYY-MM-DD open ACCOUNT
+
+
+  YYYY-MM-DD txn "PAYEE" | "DESCRIPTION"
+    ACCOUNT  POSITION
+    ACCOUNT  POSITION
+    ...
+
+  (...repeat...)
+
+  YYYY-MM-DD check ACCOUNT POSITION
+
+  (...more transactions and checks...)
+
+
+  YYYY-MM-DD close ACCOUNT
+
+
+* Optional Features
+** Options
+
+  option "NAME" "VALUE"
+
+
+** Padding (Automatic Balance Adjustment)
+
+  YYYY-MM-DD pad  ACCOUNT ACCOUNT_PAD
+
+
+** Notes
+
+  YYYY-MM-DD note ACCOUNT "TEXT"
+
+
+** Documents
+
+  YYYY-MM-DD document ACCOUNT "FILENAME"
+
+
+** Tags and Links
+
+  pushtag #TAG
+  ...
+  poptag #TAG
+
+
+  YYYY-MM-DD * ...  #TAG
+    ...
+
+
+  YYYY-MM-DD * ...  @LINK
+    ...
+
+
+** Prices
+
+  YYYY-MM-DD price CURRENCY  AMOUNT
+
+
+** Events
+
+  YYYY-MM-DD event "NAME" "VALUE"
+
+
