@@ -122,9 +122,14 @@ template_view = bottle.SimpleTemplate("""
 viewapp = bottle.Bottle()
 
 
-def get_request_view():
-    "Return the current request's associated view."
-    return request.environ['VIEW']
+def populate_view(callback):
+    "A plugin that will populate the request with the current view instance."
+    def wrapper(*args, **kwargs):
+        request.view = request.environ['VIEW']
+        return callback(*args, **kwargs)
+    return wrapper
+
+viewapp.install(populate_view)
 
 
 def render_view(*args, **kw):
@@ -141,7 +146,7 @@ def render_view(*args, **kw):
     """.format(M=M,
                positions=M.build('positions', date='20130501'))
 
-    return template_view.render(view=get_request_view().name,
+    return template_view.render(view=request.view.name,
                                 navigation=navigation,
                                 toc=app.router.build('root'),
                                 *args, **kw)
