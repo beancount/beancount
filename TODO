@@ -2,11 +2,9 @@
 beancount: TODO
 * File Reorganization
 
-  - DO rename this as 'daybook', it's a better name (more positive).
-  - Create core submodule
-  - Rename beancount/examples -> beancount/demo
-  - web: Move table stuff into files, also bottle_utils.py, smaller files.
+  - web: Move table stuff into files, smaller files.
   
+
 * NEW
 
   - Positions should attempt to fetch current values using this:
