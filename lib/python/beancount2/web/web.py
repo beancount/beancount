@@ -379,14 +379,14 @@ def trial():
     "Trial balance / Chart of Accounts."
 
     view = request.view
-    real_accounts = view.get_realization()
+    real_accounts = view.real_accounts
     operating_currencies = view.options['operating_currency']
     table = table_of_balances(real_accounts, '', operating_currencies,
                               classes=['trial'])
 
 
     ## FIXME: After conversions is fixed, this should always be zero.
-    total_balance = realization.compute_total_balance(view.get_entries())
+    total_balance = realization.compute_total_balance(view.entries)
     table += """
       Total Balance: <span class="num">{}</span>
     """.format(total_balance.get_cost())
@@ -431,7 +431,7 @@ def balsheet():
     "Balance sheet."
 
     view = request.view
-    real_accounts = request.view.get_closing_realization()
+    real_accounts = request.view.closing_real_accounts
     contents = balance_sheet_table(real_accounts, view.options)
 
     return render_app(pagetitle = "Balance Sheet",
@@ -443,7 +443,7 @@ def openbal():
     "Opening balances."
 
     view = request.view
-    real_accounts = request.view.get_opening_realization()
+    real_accounts = request.view.opening_real_accounts
     if real_accounts is None:
         contents = 'N/A'
     else:
@@ -458,7 +458,7 @@ def income():
     "Income statement."
 
     view = request.view
-    real_accounts = request.view.get_realization()
+    real_accounts = request.view.real_accounts
 
     # Render the income statement tables.
     operating_currencies = view.options['operating_currency']
@@ -801,9 +801,9 @@ def account(slashed_account_name=None):
     account_name = slashed_account_name.strip('/').replace('/', ':')
     options = app.contents.options
     if data.is_balance_sheet_account_name(account_name, options):
-        real_accounts = request.view.get_closing_realization()
+        real_accounts = request.view.closing_real_accounts
     else:
-        real_accounts = request.view.get_realization()
+        real_accounts = request.view.real_accounts
 
     account_postings = realization.get_subpostings(real_accounts[account_name])
 
@@ -828,7 +828,7 @@ def conversions():
     view = request.view
 
     oss = io.StringIO()
-    conversion_entries = get_conversion_entries(view.get_entries())
+    conversion_entries = get_conversion_entries(view.entries)
     entries_table(oss, conversion_entries, render_postings=True)
 
     balance = realization.compute_total_balance(conversion_entries)
@@ -857,7 +857,7 @@ def conversions():
 def positions():
     "Render information about positions at the end of all entries."
 
-    entries = request.view.get_entries()
+    entries = request.view.entries
 
     total_balance = realization.compute_total_balance(entries)
 
@@ -963,6 +963,8 @@ class View:
         self.opening_real_accounts = None
         self.closing_real_accounts = None
 
+        self._realize()
+
     def _realize(self):
         """Compute the list of filtered entries and transaction tree."""
 
@@ -1004,35 +1006,6 @@ class View:
         assert self.real_accounts is not None
         assert self.closing_real_accounts is not None
 
-    def get_entries(self):
-        """Return the list of entries for this view."""
-        if self.real_accounts is None:
-            self._realize()
-        return self.entries
-
-    def get_realization(self):
-        """Return the realization associated with an app. This runs lazily; it filters
-        the entries and realizes when the realization is needed. Thereafter, the
-        realized accounts is cached in the app. """
-
-        if self.real_accounts is None:
-            self._realize()
-        return self.real_accounts
-
-    def get_opening_realization(self):
-        """Return the realization at the index time."""
-
-        if self.real_accounts is None:
-            self._realize()
-        return self.opening_real_accounts
-
-    def get_closing_realization(self):
-        """Return the realization that includes the closing transfers."""
-
-        if self.real_accounts is None:
-            self._realize()
-        return self.closing_real_accounts
-
     def apply_filter(self, entries):
         "Filter the list of entries."
         raise NotImplementedError
@@ -1055,10 +1028,8 @@ def all(path=None):
 class YearView(View):
 
     def __init__(self, entries, options, title, year):
-        View.__init__(self, entries, options, title)
-
-        # The year of filtering.
         self.year = year
+        View.__init__(self, entries, options, title)
 
     def apply_filter(self, entries, options):
         "Return entries for only that year."
@@ -1095,11 +1066,11 @@ def year(year=None, path=None):
 class TagView(View):
 
     def __init__(self, entries, options, title, tags):
-        View.__init__(self, entries, options, title)
-
         # The tags we want to include.
         assert isinstance(tags, (set, list, tuple))
         self.tags = tags
+
+        View.__init__(self, entries, options, title)
 
     def apply_filter(self, entries, options):
         "Return only entries with the given tag."
@@ -1121,11 +1092,11 @@ def tag(tag=None, path=None):
 class PayeeView(View):
 
     def __init__(self, entries, options, title, payee):
-        View.__init__(self, entries, options, title)
-
         # The payee to filter.
         assert isinstance(payee, str)
         self.payee = payee
+
+        View.__init__(self, entries, options, title)
 
     def apply_filter(self, entries, options):
         "Return only transactions for the given payee."
