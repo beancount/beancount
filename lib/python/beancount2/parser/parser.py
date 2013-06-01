@@ -12,9 +12,9 @@ import textwrap
 
 from beancount2.parser import _parser
 from beancount2.utils import tree_utils
-from beancount2.data import *
-from beancount2.inventory import Position, Inventory
-from beancount2 import balance
+from beancount2.core.data import *
+from beancount2.core.inventory import Position, Inventory
+from beancount2.core import balance
 
 
 # Options.

@@ -6,9 +6,6 @@ Note: this is generic code; it could be shared/moved/reused.
 from collections import namedtuple
 
 
-from beancount2.data import Account
-
-
 class NodeAdapter:
 
     def create_node(self, name):

@@ -6,7 +6,7 @@ import functools
 import textwrap
 
 from beancount2 import parser
-from beancount2.data import *
+from beancount2.core.data import *
 
 
 def parsedoc(fun):

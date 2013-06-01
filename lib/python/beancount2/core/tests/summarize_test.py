@@ -8,17 +8,16 @@ from datetime import date
 import textwrap
 import functools
 
-from beancount2.inventory import Position, Lot
+from beancount2.core import validation
+from beancount2.core import realization
+from beancount2.core import data
+from beancount2.core.inventory import Position, Lot, Inventory
+from beancount2.core.data import Open, Close, Note, Pad, Check, Transaction, Decimal, Amount, Account
+from beancount2.core.realization import pad, realize, dump_tree_balances, compare_realizations, real_cost_as_dict
+from beancount2.core.summarize import summarize, transfer, open_at_date
+
 from beancount2 import parser
-from beancount2 import validation
-from beancount2 import realization
-from beancount2.data import Open, Close, Note, Pad, Check, Transaction
-from beancount2.data import Decimal, Amount, Account
-from beancount2 import data
-from beancount2.realization import pad, realize, dump_tree_balances, compare_realizations, real_cost_as_dict
-from beancount2.inventory import Inventory
-from beancount2.parser.parser_test import parsedoc
-from beancount2.summarize import summarize, transfer, open_at_date
+from beancount2.parser.tests.parser_test import parsedoc
 
 
 DO_PRINT = object()

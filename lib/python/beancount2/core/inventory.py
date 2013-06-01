@@ -39,7 +39,7 @@ import copy
 from datetime import date
 import io
 
-from beancount2.data import ZERO, Decimal, Amount, Lot, amount_mult, CURRENCY_ORDER
+from beancount2.core.data import ZERO, Decimal, Amount, Lot, amount_mult, CURRENCY_ORDER
 
 
 class Position:

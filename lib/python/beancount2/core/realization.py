@@ -9,10 +9,10 @@ import collections
 
 from beancount2.utils import tree_utils
 from beancount2.utils.bisect_key import bisect_left_withkey
-from beancount2.inventory import Inventory, Position
 from beancount2.parser import parser
-from beancount2.data import *
-from beancount2 import data
+from beancount2.core.inventory import Inventory, Position
+from beancount2.core.data import *
+from beancount2.core import data
 from beancount2 import utils
 
 

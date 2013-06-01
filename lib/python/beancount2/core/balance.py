@@ -1,8 +1,8 @@
 """
 Code used to balance a list of postings.
 """
-from beancount2.data import *
-from beancount2.inventory import Position, Inventory
+from beancount2.core.data import *
+from beancount2.core.inventory import Position, Inventory
 
 
 # An error from balancing the postings.

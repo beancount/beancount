@@ -3,8 +3,8 @@ Unit tests for the various basic data types.
 """
 import unittest
 
-from beancount2.data import Amount, Decimal
-from beancount2.inventory import Inventory
+from beancount2.core.data import Amount, Decimal
+from beancount2.core.inventory import Inventory
 
 
 class TestAmount(unittest.TestCase):

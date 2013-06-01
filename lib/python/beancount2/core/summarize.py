@@ -9,11 +9,11 @@ total amount of that account.
 import datetime
 from collections import defaultdict
 
-from beancount2 import inventory
-from beancount2.data import Transaction, Open, Close, Check
-from beancount2.data import FileLocation, Posting, Account
-from beancount2.data import FLAG_SUMMARIZE, FLAG_TRANSFER
-from beancount2.data import is_income_statement_account
+from beancount2.core import inventory
+from beancount2.core.data import Transaction, Open, Close, Check
+from beancount2.core.data import FileLocation, Posting, Account
+from beancount2.core.data import FLAG_SUMMARIZE, FLAG_TRANSFER
+from beancount2.core.data import is_income_statement_account
 
 
 def clamp(entries, begin_date, end_date,

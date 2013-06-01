@@ -6,7 +6,7 @@ Sanity checks.
 
 from collections import namedtuple
 
-from beancount2.data import Account, Open, Close, Transaction
+from beancount2.core.data import Account, Open, Close, Transaction
 from beancount2 import utils
 
 
