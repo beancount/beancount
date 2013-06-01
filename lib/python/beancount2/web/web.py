@@ -12,6 +12,7 @@ import io
 import re
 import functools
 from collections import defaultdict
+from collections import defaultdict
 
 import bottle
 from bottle import install, response, request
@@ -1300,10 +1301,10 @@ def byyear(year=None):
     return mountpoint_wrapper(app, 3)
 
 
-def mountpoint_wrapper(app, path_depth):
+def internal_redirect(app, path_depth):
+    "A version of mountpoint_wrapper() that we call internally."
     try:
         request.path_shift(path_depth)
-        print('sub PATH', request.path)
         rs = bottle.HTTPResponse([])
         def start_response(status, headerlist, exc_info=None):
             if exc_info:
@@ -1460,3 +1461,19 @@ def compute_ids(strings):
         raise RuntimeError("Could not find a unique mapping for {}".format(string_set))
 
     return sorted((id, stringlist[0]) for id, stringlist in idmap.items())
+
+
+
+
+
+
+
+
+# def app_url(global_name, global_kwargs, name, kwargs=None):
+#     if global_kwargs is None:
+#         global_kwargs = {}
+#     if kwargs is None:
+#         kwargs = {}
+#     view_url = viewapp.router.build(name, **kwargs)
+#     view_url = view_url.lstrip('/')
+#     return app.router.build(global_name, view_url, **global_kwargs)
