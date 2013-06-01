@@ -3,6 +3,7 @@ Web server for Beancount ledgers.
 This uses the Bottle single-file micro web framework (with no plugins).
 """
 import argparse
+import time
 import datetime
 from os import path
 from textwrap import dedent
@@ -11,9 +12,10 @@ import io
 import re
 import functools
 from collections import defaultdict
+from collections import defaultdict
 
 import bottle
-from bottle import response, request
+from bottle import install, response, request
 
 from beancount2 import parser
 from beancount2 import validation
@@ -192,6 +194,11 @@ def style():
 app = bottle.Bottle()
 
 
+
+
+
+
+
 def render_app(*args, **kw):
     """Render the title and contents in our standard template."""
     kw['G'] = G # Global mapper
@@ -207,12 +214,6 @@ def approot():
     bottle.redirect(request.app.get_url('balsheet'))
 
 
-# @app.route('/reports', name='reports')
-# def reports():
-#     "The index of all the available reports for this realization."
-#     return render_app(
-#         pagetitle = "Index",
-#         contents = APP_NAVIGATION.render(G=G, A=A, view_title=request.app.view.title))
 
 
 
@@ -1158,56 +1159,6 @@ def create_realizations(entries, options):
             app_mount(view)
 
 
-
-
-
-## FIXME: remove
-    # app_copy = copy.copy(app)
-    # #app_copy.view = view
-    # bottle.mount(r'/view/byyear/<year:re:\d\d\d\d>', app_copy, name='byyear')
-    #     # view = ByYearView(entries, options,
-    #     #                 'year{:4d}'.format(year), 'Year {:4d}'.format(year), year)
-
-if 1:
-    if 1:
-        path_depth = 3
-
-        def mountpoint_wrapper():
-            print('PATH', request.path)
-            try:
-                request.path_shift(path_depth)
-                rs = bottle.HTTPResponse([])
-                def start_response(status, headerlist, exc_info=None):
-                    if exc_info:
-                        try:
-                            _raise(*exc_info)
-                        finally:
-                            exc_info = None
-                    rs.status = status
-                    for name, value in headerlist: rs.add_header(name, value)
-                    return rs.body.append
-                body = app(request.environ, start_response)
-                if body and rs.body: body = itertools.chain(rs.body, body)
-                rs.body = body or rs.body
-                return rs
-            finally:
-                request.path_shift(-path_depth)
-
-
-@bottle.route(r'/view/byyear/<year:re:\d\d\d\d>/', name='byyear')
-def byyear(year=None):
-    year = int(year)
-    view = YearView(contents.entries, contents.options,
-                    'year{:4d}'.format(year), 'Year {:4d}'.format(year), year)
-
-    print('BYYEAR', year)
-    return mountpoint_wrapper()
-
-
-
-
-
-
 def load_input_file(filename):
     """Parse the input file, pad the entries and validate it.
     This also prints out the error messages."""
@@ -1234,6 +1185,20 @@ def load_input_file(filename):
         data.print_errors(valid_errors)
 
     return contents, entries
+
+
+
+## FIXME: remove
+# def stopwatch(callback):
+#     def wrapper(*args, **kwargs):
+#         start = time.time()
+#         body = callback(*args, **kwargs)
+#         end = time.time()
+#         response.headers['X-Exec-Time'] = str(end - start)
+#         print(str(end - start))
+#         return body
+#     return wrapper
+
 
 
 def main():
@@ -1323,3 +1288,19 @@ def compute_ids(strings):
         raise RuntimeError("Could not find a unique mapping for {}".format(string_set))
 
     return sorted((id, stringlist[0]) for id, stringlist in idmap.items())
+
+
+
+
+
+
+
+
+# def app_url(global_name, global_kwargs, name, kwargs=None):
+#     if global_kwargs is None:
+#         global_kwargs = {}
+#     if kwargs is None:
+#         kwargs = {}
+#     view_url = viewapp.router.build(name, **kwargs)
+#     view_url = view_url.lstrip('/')
+#     return app.router.build(global_name, view_url, **global_kwargs)

@@ -1,12 +1,39 @@
 -*- mode: org -*-
 beancount: TODO
+* File Reorganization
+
+  - DO rename this as 'daybook', it's a better name (more positive).
+  - Create core submodule
+  - Rename beancount/examples -> beancount/demo
+  - web: Move table stuff into files, also bottle_utils.py, smaller files.
+  
 * NEW
 
-  - Close HSBC account on 2013-06-02
+  - Positions should attempt to fetch current values using this:
+    http://www.google.com/ig/api?stock=RGAGX
 
 
 
-  - Rename beancount/examples -> beancount/demo
+  - Realization should be made into a simple tree; the hash-map is only
+    required temporarily, see if you can simplify this even further.
+
+
+
+
+  - Importers: You should have some way to record instructions for what you did
+    in order to get the input files. This is useful. Not sure a comment is
+    enough; this is importer data, user-specific. Maybe there should be some
+    way to configure the importers?  Ideally not, but maybe this is hard-coded
+    in each importer., e.g.
+
+    Vanguard:
+
+    - Home >> Plan Summary >> Transaction History
+      Select: "View by:" Both
+      Click on Download.
+      Select "Download each fund in separate Quicken or Money accounts."
+      Click on Microsoft Money.
+
 
 
 
@@ -16,6 +43,8 @@ beancount: TODO
     a new view automatically. We should do the same for the years and tags as
     well. Creating the mounts is too expensive; views need to be created
     on-demand, we need a special mount.
+
+
 
 
 
