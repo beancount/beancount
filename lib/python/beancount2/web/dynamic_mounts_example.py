@@ -10,6 +10,8 @@ import collections
 import bottle
 from bottle import request
 
+from beancount2.web.bottle_utils import AppMapper, internal_redirect, populate_view
+
 
 #--------------------------------------------------------------------------------
 # Global pages.
@@ -29,30 +31,6 @@ template = bottle.SimpleTemplate("""
 
 
 app = bottle.Bottle()
-
-
-class Mapper:
-    "A URL mapper that is required to render view links from global pages."
-
-    def __init__(self, name, **kwargs):
-        self.global_name = name
-        self.global_kwargs = kwargs
-        if self.global_kwargs is None:
-            self.global_kwargs = {}
-
-    def __getattr__(self, aname):
-        "Convenience for using the new Python formatting syntax with attribute access."
-        return self.build(name)
-
-    def build(self, name, **kwargs):
-        # Render the within-view url.
-        if kwargs is None:
-            kwargs = {}
-        view_url = viewapp.router.build(name, **kwargs)
-        view_url = view_url.lstrip('/')
-
-        # Render the global url for that specific view.
-        return app.router.build(self.global_name, view_url, **self.global_kwargs)
 
 
 @app.route('/', name='root')
@@ -75,14 +53,14 @@ def root():
 
       </ul>
     """.format(
-        Mapper('all').build('balsheet'),
-        Mapper('year', year=2010).build('balsheet'),
-        Mapper('year', year=2011).build('balsheet'),
-        Mapper('year', year=2012).build('balsheet'),
-        Mapper('year', year=2013).build('balsheet'),
-        Mapper('tag', tag='apples').build('balsheet'),
-        Mapper('tag', tag='oranges').build('balsheet'),
-        Mapper('tag', tag='bananas').build('balsheet'),
+        app.router.build('all', path=''),
+        app.get_url('year', path='', year=2010),
+        app.get_url('year', path='', year=2011),
+        app.get_url('year', path='', year=2012),
+        app.get_url('year', path='', year=2013),
+        app.get_url('tag', path='', tag='apples'),
+        app.get_url('tag', path='', tag='oranges'),
+        app.get_url('tag', path='', tag='bananas'),
     ))
 
 
@@ -91,17 +69,6 @@ def root():
 # Views.
 
 
-class ViewMapper:
-    "A URL mapper that allows attribute access for view-links."
-
-    def __init__(self, app):
-        self.app = app
-
-    def __getattr__(self, aname):
-        return self.app.get_url(aname)
-
-    def build(self, name, **kwargs):
-        return self.app.get_url(name, **kwargs)
 
 
 template_view = bottle.SimpleTemplate("""
@@ -120,22 +87,13 @@ template_view = bottle.SimpleTemplate("""
 
 
 viewapp = bottle.Bottle()
-
-
-def populate_view(callback):
-    "A plugin that will populate the request with the current view instance."
-    def wrapper(*args, **kwargs):
-        request.view = request.environ['VIEW']
-        return callback(*args, **kwargs)
-    return wrapper
-
 viewapp.install(populate_view)
 
 
 def render_view(*args, **kw):
     "Render a view's template with appropriate links for it."
 
-    M = ViewMapper(request.app)
+    M = AppMapper(request.app)
 
     navigation = """
       <ul id="navigation">
@@ -194,50 +152,28 @@ def get_view(name):
 
 # Map /view/all/...
 
-@app.route(r'/view/all/<:re:.*>', name='all')
-def all():
+@app.route(r'/view/all/<path:re:.*>', name='all')
+def all(path=None):
     request.environ['VIEW'] = get_view('all')
     return internal_redirect(viewapp, 2)
 
 
 # Map /view/year/YYYY/...
 
-@app.route(r'/view/year/<year:re:\d\d\d\d>/<:re:.*>', name='year')
-def year(year=None):
+@app.route(r'/view/year/<year:re:\d\d\d\d>/<path:re:.*>', name='year')
+def year(year=None, path=None):
     request.environ['VIEW'] = get_view('year/{:4}'.format(int(year)))
     return internal_redirect(viewapp, 3)
 
 
 # Map /view/tag/TAGNAME/...
 
-@app.route(r'/view/tag/<tag:re:[^/]*>/<:re:.*>', name='tag')
-def year(tag=None):
+@app.route(r'/view/tag/<tag:re:[^/]*>/<path:re:.*>', name='tag')
+def year(tag=None, path=None):
     request.environ['VIEW'] = get_view('tag/{}'.format(tag))
     return internal_redirect(viewapp, 3)
 
 
-def internal_redirect(app, path_depth):
-    """A version of mountpoint_wrapper() that we call internally.
-    This is directly lifted from Bottle.mount() and edited
-    minimally."""
-    try:
-        request.path_shift(path_depth)
-        rs = bottle.HTTPResponse([])
-        def start_response(status, headerlist, exc_info=None):
-            if exc_info:
-                try:
-                    _raise(*exc_info)
-                finally:
-                    exc_info = None
-            rs.status = status
-            for name, value in headerlist: rs.add_header(name, value)
-            return rs.body.append
-        body = app(request.environ, start_response)
-        if body and rs.body: body = itertools.chain(rs.body, body)
-        rs.body = body or rs.body
-        return rs
-    finally:
-        request.path_shift(-path_depth)
 
 
 def main():
