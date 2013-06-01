@@ -9,7 +9,6 @@ import collections
 
 from beancount2.utils import tree_utils
 from beancount2.utils.bisect_key import bisect_left_withkey
-from beancount2.parser import parser
 from beancount2.core.inventory import Inventory, Position
 from beancount2.core.data import *
 from beancount2.core import data
@@ -64,6 +63,8 @@ def group_postings_by_account(entries, only_accounts=None):
 
     return by_accounts
 
+
+## FIXME: This doesn't really belong in realization anymore; more this somewhere else.
 
 PadError = namedtuple('PadError', 'fileloc message')
 
@@ -163,6 +164,9 @@ def pad(entries):
     return padded_entries, pad_errors
 
 
+
+
+## FIXME: Move this to validation.
 
 CheckError = namedtuple('CheckError', 'fileloc message')
 
@@ -309,7 +313,7 @@ def get_subpostings(real_account):
 
     accumulator = []
     _get_subpostings(real_account, accumulator)
-    accumulator.sort(key=parser.posting_sortkey)
+    accumulator.sort(key=data.posting_sortkey)
     return accumulator
 
 def _get_subpostings(real_account, accumulator):

@@ -13,7 +13,7 @@ clean:
 	rm -f $(CROOT)/grammar.h $(CROOT)/grammar.c
 	rm -f $(CROOT)/lexer.h $(CROOT)/lexer.c
 	rm -f $(CROOT)/*.so
-	find . -name __pycache__ -exec rmdir "{}" \;
+	find . -name __pycache__ -exec rm -r "{}" \;
 
 
 # Targets to generate and build the C parser.

@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+"""Read a beancount input file and a directory name, and attempt to identify and
+convert the files in the directory. There is also an option to automatically
+file succesfully detected and converted input files.
+"""
+from beancount2.parser import parser
+
+
+
+def main():
+    import argparse, logging
+    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    parser = argparse.ArgumentParser(__doc__.strip())
+
+    parser.add_argument('beancount', help='Beancount input file')
+    parser.add_argument('directories', nargs='+', help='Directories to inspect')
+
+    opts = parser.parse_args()
+
+
+if __name__ == '__main__':
+    main()

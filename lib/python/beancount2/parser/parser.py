@@ -12,6 +12,7 @@ import textwrap
 
 from beancount2.parser import _parser
 from beancount2.utils import tree_utils
+from beancount2.core import data
 from beancount2.core.data import *
 from beancount2.core.inventory import Position, Inventory
 from beancount2.core import balance
@@ -262,36 +263,12 @@ def get_account_types(options):
           for x in "assets liabilities equity income expenses".split()))
 
 
-
-# Sort with the checks at the BEGINNING of the day.
-SORT_ORDER = {Open: -2, Check: -1, Close: 1}
-
-# Sort with the checks at the END of the day.
-#SORT_ORDER = {Open: -2, Check: 1, Close: 2}
-
-
-def entry_sortkey(entry):
-    """Sort-key for entries. We sort by date, except that checks
-    should be placed in front of every list of entries of that same day,
-    in order to balance linearly."""
-    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.fileloc.lineno)
-
-
-def posting_sortkey(entry):
-    """Sort-key for entries or postings. We sort by date, except that checks
-    should be placed in front of every list of entries of that same day,
-    in order to balance linearly."""
-    if isinstance(entry, Posting):
-        entry = entry.entry
-    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.fileloc.lineno)
-
-
 def parse(filename):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts."""
     builder = Builder()
     _parser.parse(path.abspath(filename), builder)
-    entries = sorted(builder.entries, key=entry_sortkey)
+    entries = sorted(builder.entries, key=data.entry_sortkey)
     accounts = sorted(builder.accounts.values(), key=account_sortkey)
     return FileContents(entries, accounts, builder.errors, builder.options)
 

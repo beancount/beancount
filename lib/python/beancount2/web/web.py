@@ -29,7 +29,6 @@ from beancount2.core.inventory import Inventory
 from beancount2.core import realization
 from beancount2.core.realization import RealAccount
 from beancount2 import parser
-from beancount2.parser import get_account_types
 from beancount2 import utils
 from beancount2.utils import index_key
 
@@ -955,7 +954,7 @@ class View:
 
         # A reference to the global list of options and the account type names.
         self.options = options
-        self.account_types = get_account_types(options)
+        self.account_types = parser.get_account_types(options)
 
         # Realization of the filtered entries to display. These are computed in
         # _realize().
@@ -1168,32 +1167,6 @@ def create_realizations(entries, options):
             app_mount(view)
 
 
-def load_input_file(filename):
-    """Parse the input file, pad the entries and validate it.
-    This also prints out the error messages."""
-
-    # Parse the input file.
-    with utils.print_time('parse'):
-        contents = parser.parse(filename)
-        parse_errors = contents.parse_errors
-        data.print_errors(contents.parse_errors)
-
-    # Pad the resulting entries (create synthetic Pad entries to balance checks
-    # where desired).
-    with utils.print_time('pad'):
-        entries, pad_errors = realization.pad(contents.entries)
-        data.print_errors(pad_errors)
-
-    with utils.print_time('check'):
-        entries, check_errors = realization.check(entries)
-        data.print_errors(check_errors)
-
-    # Validate the list of entries.
-    with utils.print_time('validation'):
-        valid_errors = validation.validate(entries, contents.accounts)
-        data.print_errors(valid_errors)
-
-    return contents, entries
 
 
 
@@ -1222,7 +1195,7 @@ def main():
     ## FIXME: maybe we can do away with this, and attach it to
     ## the global application class.
     global contents, clean_entries
-    contents, clean_entries = load_input_file(args.filename)
+    contents, clean_entries = parser.load(args.filename)
 
     ## FIXME: Not sure what to do with errors yet.
 
@@ -1313,3 +1286,7 @@ def compute_ids(strings):
 #     view_url = viewapp.router.build(name, **kwargs)
 #     view_url = view_url.lstrip('/')
 #     return app.router.build(global_name, view_url, **global_kwargs)
+
+
+
+# FIXME: Move the table rendering routines to their own files.

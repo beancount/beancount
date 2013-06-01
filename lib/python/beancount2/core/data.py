@@ -185,6 +185,30 @@ def transaction_has_conversion(transaction):
 
 
 
+# Sort with the checks at the BEGINNING of the day.
+SORT_ORDER = {Open: -2, Check: -1, Close: 1}
+
+# Sort with the checks at the END of the day.
+#SORT_ORDER = {Open: -2, Check: 1, Close: 2}
+
+
+def entry_sortkey(entry):
+    """Sort-key for entries. We sort by date, except that checks
+    should be placed in front of every list of entries of that same day,
+    in order to balance linearly."""
+    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.fileloc.lineno)
+
+
+def posting_sortkey(entry):
+    """Sort-key for entries or postings. We sort by date, except that checks
+    should be placed in front of every list of entries of that same day,
+    in order to balance linearly."""
+    if isinstance(entry, Posting):
+        entry = entry.entry
+    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.fileloc.lineno)
+
+
+
 # Special flags
 FLAG_PADDING   = 'P' # Transactions created from padding directives.
 FLAG_SUMMARIZE = 'S' # Transactions created due to summarization.
