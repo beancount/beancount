@@ -946,7 +946,7 @@ class View:
 
         # List of filterered entries for this view, and index at the beginning
         # of the period transactions, past the opening balances. These are
-        # computed lazily.
+        # computed in _realize().
         self.entries = None
         self.opening_entries = None
         self.closing_entries = None
@@ -958,11 +958,14 @@ class View:
         self.options = options
         self.account_types = get_account_types(options)
 
-        # Realization of the filtered entries to display.
+        # Realization of the filtered entries to display. These are computed in
+        # _realize().
         self.real_accounts = None
         self.opening_real_accounts = None
         self.closing_real_accounts = None
 
+        # Realize now, we don't need to do this lazily because we create these
+        # view objects on-demand and cache them.
         self._realize()
 
     def _realize(self):
