@@ -17,10 +17,7 @@ def load(filename, do_print_errors=False):
 
     # Parse the input file.
     with utils.print_time('parse'):
-        contents = parser.parse(filename)
-        entries = contents.entries
-        parse_errors = contents.errors
-        options = contents.options
+        entries, parse_errors, options = parser.parse(filename)
 
     # Pad the resulting entries (create synthetic Pad entries to balance checks
     # where desired).

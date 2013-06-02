@@ -29,9 +29,9 @@ def summarizedoc(date, other_account):
         docstring as an argument."""
         @functools.wraps(fun)
         def newfun(self):
-            contents = parser.parse_string(textwrap.dedent(fun.__doc__))
-            assert not contents.errors, contents.errors
-            entries, pad_errors = pad(contents.entries)
+            entries, parse_errors, options = parser.parse_string(textwrap.dedent(fun.__doc__))
+            assert not parse_errors, parse_errors
+            entries, pad_errors = pad(entries)
             assert not pad_errors, pad_errors
 
             real_accounts = realize(entries, do_check=True)
@@ -120,7 +120,7 @@ class TestSummarization(unittest.TestCase):
         self.assertTrue(sum_real_accounts[OPENING_BALANCES.name].postings)
 
     @parsedoc
-    def test_transfer_and_summarization(self, contents):
+    def test_transfer_and_summarization(self, entries, errors, options):
         """
           2011-01-01 open Assets:Checking
           2011-01-01 open Income:Job
@@ -141,10 +141,10 @@ class TestSummarization(unittest.TestCase):
             Assets:Checking        1000 USD
         """
 
-        entries, pad_errors = pad(contents.entries)
+        entries, pad_errors = pad(entries)
 
         report_date = date(2012, 1, 1)
-        tran_entries = transfer(contents.entries, report_date,
+        tran_entries = transfer(entries, report_date,
                                 data.is_income_statement_account, TRANSFER_BALANCES)
 
         sum_entries, _ = summarize(tran_entries, report_date, OPENING_BALANCES)
@@ -161,7 +161,7 @@ class TestSummarization(unittest.TestCase):
 class TestTransferBalances(unittest.TestCase):
 
     @parsedoc
-    def test_basic_transfer(self, contents):
+    def test_basic_transfer(self, entries, errors, options):
         """
           2011-01-01 open Assets:Checking
           2011-01-01 open Income:Job
@@ -174,12 +174,12 @@ class TestTransferBalances(unittest.TestCase):
             Income:Job            -1000 USD
             Assets:Checking        1000 USD
         """
-        real_accounts = realize(contents.entries, do_check=True)
+        real_accounts = realize(entries, do_check=True)
         self.assertEqual(real_cost_as_dict(real_accounts),
                          {'Assets:Checking': 'Inventory(2000.00 USD)',
                           'Income:Job': 'Inventory(-2000.00 USD)'})
 
-        tran_entries = transfer(contents.entries, date(2012, 6, 1),
+        tran_entries = transfer(entries, date(2012, 6, 1),
                                 data.is_income_statement_account, TRANSFER_BALANCES)
 
         real_accounts = realize(tran_entries, do_check=True)
@@ -192,7 +192,7 @@ class TestTransferBalances(unittest.TestCase):
 class TestOpenAtDate(unittest.TestCase):
 
     @parsedoc
-    def test_open_at_date(self, contents):
+    def test_open_at_date(self, entries, errors, options):
         """
           2011-02-01 open Assets:CheckingA
           2011-02-28 open Assets:CheckingB
@@ -205,6 +205,6 @@ class TestOpenAtDate(unittest.TestCase):
             Assets:Checking        1000 USD
 
         """
-        open_entries = open_at_date(contents.entries, date(2012, 1, 1))
+        open_entries = open_at_date(entries, date(2012, 1, 1))
         dates = [entry.date for entry in open_entries]
         self.assertEqual(dates, sorted(dates))

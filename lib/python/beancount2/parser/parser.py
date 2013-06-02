@@ -245,11 +245,6 @@ class Builder(object):
         return transaction
 
 
-# The result from parsing a set of entries.
-# I want this to remain as simple as possible.
-# The list of entries is sorted by date, and the order of appearance in the input file.
-FileContents = namedtuple('FileContents', 'entries errors options')
-
 # A parsed option directive.
 Option = namedtuple('Option', 'fileloc key value')
 
@@ -270,7 +265,7 @@ def parse(filename):
     _parser.parse(path.abspath(filename), builder)
     entries = sorted(builder.entries, key=data.entry_sortkey)
     # accounts = sorted(builder.accounts.values(), key=account_sortkey)
-    return FileContents(entries, builder.errors, builder.options)
+    return (entries, builder.errors, builder.options)
 
 
 def parse_string(input_string):
