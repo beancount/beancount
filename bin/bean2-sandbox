@@ -15,17 +15,17 @@ import pandas
 import matplotlib; matplotlib.use('agg')
 from matplotlib import pyplot
 
+from beancount2.core import data
+from beancount2.core import realization
+from beancount2.core import summarize
+from beancount2.core import validation
+from beancount2.core.data import render_fileloc
+from beancount2.core.inventory import Inventory
+from beancount2.core.realization import dump_tree_balances
 import beancount2.parser
-from beancount2.utils.bisect_key import bisect_left_withkey
-from beancount2 import validation
-from beancount2 import utils
-from beancount2 import data
-from beancount2 import realization
-from beancount2.realization import dump_tree_balances
 from beancount2.parser import *
-from beancount2.inventory import Inventory
-from beancount2 import summarize
-from beancount2.data import render_fileloc
+from beancount2 import utils
+from beancount2.utils.bisect_key import bisect_left_withkey
 
 
 
@@ -133,18 +133,11 @@ def main():
 
     opts = parser.parse_args()
 
-    with utils.print_time('parse'):
-        contents = beancount2.parser.parse(opts.filename)
-        parse_errors = contents.parse_errors
-        data.print_errors(contents.parse_errors)
+    with utils.print_time('load'):
+        entries, errors, options = beancount2.parser.load(opts.filename)
 
-    with utils.print_time('pad'):
-        entries, pad_errors = realization.pad(contents.entries)
-        data.print_errors(pad_errors)
 
-    with utils.print_time('validation'):
-        valid_errors = validation.validate(entries, contents.accounts)
-        data.print_errors(valid_errors)
+
 
     with utils.print_time('compute_total_balance'):
         realization.compute_total_balance(entries)

@@ -30,7 +30,7 @@ def realizedoc(fun):
     def newfun(self):
         contents = parser.parse_string(textwrap.dedent(fun.__doc__))
         entries, pad_errors = realization.pad(contents.entries)
-        errors = contents.parse_errors + pad_errors
+        errors = contents.errors + pad_errors
 
         real_accounts = realization.realize(entries, do_check=True)
         if do_trace and errors:

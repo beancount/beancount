@@ -111,8 +111,7 @@ class TestParserMisc(unittest.TestCase):
     def test_empty_1(self, contents):
         ""
         self.assertEqual(contents.entries, [])
-        self.assertEqual(contents.accounts, [])
-        self.assertEqual(contents.parse_errors, [])
+        self.assertEqual(contents.errors, [])
 
     @parsedoc
     def test_empty_2(self, contents):
@@ -120,8 +119,7 @@ class TestParserMisc(unittest.TestCase):
 
         """
         self.assertEqual(contents.entries, [])
-        self.assertEqual(contents.accounts, [])
-        self.assertEqual(contents.parse_errors, [])
+        self.assertEqual(contents.errors, [])
 
     @parsedoc
     def test_comment(self, contents):
@@ -129,8 +127,7 @@ class TestParserMisc(unittest.TestCase):
         ;; This is some comment.
         """
         self.assertEqual(contents.entries, [])
-        self.assertEqual(contents.accounts, [])
-        self.assertEqual(contents.parse_errors, [])
+        self.assertEqual(contents.errors, [])
 
     @parsedoc
     def test_simple_1(self, contents):
@@ -142,8 +139,7 @@ class TestParserMisc(unittest.TestCase):
 
         """
         self.assertEqual(len(contents.entries), 1)
-        self.assertEqual(len(contents.accounts), 2)
-        self.assertEqual(contents.parse_errors, [])
+        self.assertEqual(contents.errors, [])
 
     @parsedoc
     def test_simple_2(self, contents):
@@ -159,8 +155,7 @@ class TestParserMisc(unittest.TestCase):
 
         """
         self.assertEqual(len(contents.entries), 2)
-        self.assertEqual(len(contents.accounts), 4)
-        self.assertEqual(contents.parse_errors, [])
+        self.assertEqual(contents.errors, [])
 
 
 class TestParserOptions(unittest.TestCase):

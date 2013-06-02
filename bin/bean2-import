@@ -4,17 +4,96 @@ convert the files in the directory. There is also an option to automatically
 file succesfully detected and converted input files.
 """
 import os
+import re
 from os import path
+import mimetypes
+import logging
+import subprocess
 
 from beancount2.parser import load
 
+try:
+    import magic
+except ImportError:
+    magic = None
 
 
-def walk_files(directories):
+def walk_files(directories, ignore_dirs=['.hg', '.svn', '.git']):
+    """Enumerate the files under the given directories."""
     for directory in directories:
         for root, dirs, filenames in os.walk(directory):
+            dirs[:] = [dirname for dirname in dirs if dirname not in ignore_dirs]
             for filename in filenames:
                 yield path.join(root, filename)
+
+
+
+
+
+EXTRA_FILE_TYPES = [
+    (re.compile(regexp, re.I), filetype)
+    for regexp, filetype in (
+            (r'.*\.qbo$', 'application/vnd.intu.qbo'),
+            (r'.*\.(qfx|ofx)$', 'application/x-ofx'),
+    )]
+
+def guess_file_type(filename):
+    """Attempt to guess the type of the input file.
+    Return a suitable mimetype, or None if we don't know."""
+
+    # Try the regular mimetypes association.
+    filetype, _ = mimetypes.guess_type(filename, False)
+
+    if filetype is None:
+        # Try out some extra ones that we know about.
+        for regexp, mimtype in EXTRA_FILE_TYPES:
+            if regexp.match(filename):
+                filetype = mimtype
+                break
+
+    # FIXME: Add python-magic, optionally (if imported).
+    if filetype is None:
+        if not magic:
+            pass # FIXME: issue a warning
+        else:
+            # Okay, we couldn't figure it out from the filename; use libmagic
+            # (if installed).
+            bfiletype = magic.from_file(filename, mime=True)
+            filetype = bfiletype.decode()
+
+    return filetype
+
+
+
+def identify_pdf(filename):
+    p = subprocess.Popen(('pdftotext', filename, '-'),
+                         shell=False,
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = p.communicate()
+    if p.returncode != 0 or stderr:
+        logging.error("Error running pdftotext: {}".format(stderr))
+        return
+        
+    text = stdout.decode()
+    print(text)
+
+
+
+HANDLERS = {
+    'application/pdf'          : identify_pdf,
+    # 'application/vnd.intu.qbo' : find_account_quickbooks,
+    # 'application/x-ofx'        : find_account_ofx,
+    # 'text/csv'                 : find_account_csv,
+    # HTML?
+}
+
+# Handler:
+# - find corresponding account (for filing)
+#   * rename with import date
+# - import transactions
+
+#   - Write some code to detect when a transaction is already there
+#   - Write some code to convert from entries into text
 
 def main():
     import argparse, logging
@@ -29,7 +108,23 @@ def main():
     entries, errors, options = load(opts.filename)
 
     for filename in walk_files(opts.directories):
-        print(filename)
+        filetype = guess_file_type(filename)
+        logging.info('{:100} {}'.format(filename, filetype))
+
+        identify = HANDLERS.get(filetype, None)
+        if identify is None:
+            logging.error("No handler for filetype '{}'".format(filetype))
+            continue
+
+
+        print(identify(filename))
+        break
+
+
+
+
+
+
 
 
 

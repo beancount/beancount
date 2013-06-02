@@ -30,7 +30,7 @@ def summarizedoc(date, other_account):
         @functools.wraps(fun)
         def newfun(self):
             contents = parser.parse_string(textwrap.dedent(fun.__doc__))
-            assert not contents.parse_errors, contents.parse_errors
+            assert not contents.errors, contents.errors
             entries, pad_errors = pad(contents.entries)
             assert not pad_errors, pad_errors
 

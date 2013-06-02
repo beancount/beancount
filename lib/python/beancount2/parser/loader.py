@@ -18,20 +18,21 @@ def load(filename, do_print_errors=False):
     # Parse the input file.
     with utils.print_time('parse'):
         contents = parser.parse(filename)
-        parse_errors = contents.parse_errors
+        entries = contents.entries
+        parse_errors = contents.errors
         options = contents.options
 
     # Pad the resulting entries (create synthetic Pad entries to balance checks
     # where desired).
     with utils.print_time('pad'):
-        entries, pad_errors = realization.pad(contents.entries)
+        entries, pad_errors = realization.pad(entries)
 
     with utils.print_time('check'):
         entries, check_errors = realization.check(entries)
 
     # Validate the list of entries.
     with utils.print_time('validate'):
-        valid_errors = validation.validate(entries, contents.accounts)
+        valid_errors = validation.validate(entries)
 
     errors = parse_errors + pad_errors + check_errors + valid_errors
 

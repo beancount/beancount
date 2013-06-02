@@ -34,8 +34,13 @@ is great for sectioning large files with many transactions."
 
   (when beancount-mode
     (make-variable-buffer-local 'beancount-accounts)
-    (setq beancount-accounts (beancount-get-accounts)))
+    (beancount-init-accounts))
   )
+
+(defun beancount-init-accounts ()
+  "Initialize or reset the list of accounts."
+  (interactive)
+  (setq beancount-accounts (beancount-get-accounts)))
 
 
 ;; font-lock-builtin-face 	font-lock-comment-delimiter-face

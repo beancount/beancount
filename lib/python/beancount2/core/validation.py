@@ -7,6 +7,7 @@ Sanity checks.
 from collections import namedtuple
 
 from beancount2.core.data import Account, Open, Close, Transaction
+from beancount2.core import data
 from beancount2 import utils
 
 
@@ -97,8 +98,10 @@ def validate_unused_accounts(entries, accounts):
             for account in unused_accounts]
 
 
-def validate(entries, accounts):
+def validate(entries):
     """Perform all the standard checks on parsed contents."""
+
+    accounts = data.gather_accounts(entries).values()
 
     # Check for unused accounts.
     unused_errors = validate_unused_accounts(entries, accounts)

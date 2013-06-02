@@ -1173,7 +1173,7 @@ def main():
         global STYLE; STYLE = f.read()
 
     # # Create all the basic realizations.
-    # create_realizations(clean_entries, contents.options)
+    # create_realizations(clean_entries, options)
 
     # Run the server.
     app.run(host='localhost', port=8080, debug=args.debug) # reloader=True

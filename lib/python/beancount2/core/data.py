@@ -1,7 +1,8 @@
 """
 Basic data structures used to represent the Ledger entries.
 """
-from collections import namedtuple
+from collections import namedtuple, defaultdict
+from beancount2 import utils
 
 # Attempt to import a fast Decimal implementation if you can.
 try:
@@ -269,13 +270,16 @@ def get_active_years(entries):
             yield year
 
 
-def get_account_open_close(entries, accounts):
+def get_account_open_close(entries):
     """Fetch the open/close entries for each of the accounts."""
 
-    open_closes_map = {account: [None, None]
-                       for account in accounts}
+    open_closes_map = defaultdict(lambda: [None, None])
     for entry in utils.filter_type(entries, (Open, Close)):
         index = 0 if isinstance(entry, Open) else 1
         open_closes_map[entry.account][index] = entry
 
     return open_closes_map
+
+
+# def get_account_ids(entries):
+#     """

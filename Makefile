@@ -2,7 +2,7 @@
 
 # Just my big old fat ledger file.
 INPUT = $(HOME)/q/office/accounting/blais.beancount
-DOWNLOADS = $(HOME)/u/Downloads $(HOME)/q/office/accounting/new/vanguard $(HOME)/q/office/accounting/new/hsbc
+DOWNLOADS = $(HOME)/u/Downloads $(HOME)/q/office/accounting/new $(HOME)/new
 
 all: build
 

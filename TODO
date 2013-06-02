@@ -1,11 +1,16 @@
 -*- mode: org -*-
 beancount: TODO
-* File Reorganization
+* NEW
+
+  - balsheet: Add a sum Total line at the bottom of every table.
+  - balsheet: For Equity, separately report the total net worth in terms of EACH
+    of the operating currencies, using the latest prices.
+
+  - web: balsheet/income: make only two parent divs: div id=left and div
+    id=right; the other divs should be children of them.
+    
 
   - web: Move table stuff into files, smaller files.
-
-
-* NEW
 
 
   - Implement basic error reporting page from the list of errors.
@@ -1038,8 +1043,21 @@ beancount: TODO
   - The default import syntax should have the narration as the payee by default. We
     need to use those as default, we don't set nearly enough of them.
 
+  - Create importer library support in Python for writing beancount importers.
+    See OANDA script to being. Formatting transactions should be code in common.
+    Finding accounts with ids too.
 
-** Auto-Reconcile
+  - Write some smarter code to identify which transactions have alreader been
+    imported in the ledger. Do not rely on checks. This means that the importers
+    should create incomplete transaction objects and supply that to this
+    function, which will then attempt to identify for each of the supplied
+    transactions, which ones are already there.
+
+  - Given some incomplete transactions, complete them heuristically based on
+    previous contents of the ledger. This should make import a lot easier. This
+    should be generic and work across all importers, a single function call.
+
+** Auto-Categorization
 
   - Write a generic import routine that will try to heuristically match
     partially completed transactions from an existing Ledger. Use some NLP or
@@ -1141,23 +1159,6 @@ beancount: TODO
     up automatically and display in its cell. You should have a consistent
     report regardless of whether nodes are collapsed or not. This will require
     some JavaScript effort.
-
-
-* Importers Library
-
-  - Create importer library support in Python for writing beancount importers.
-    See OANDA script to being. Formatting transactions should be code in common.
-    Finding accounts with ids too.
-
-  - Write some smarter code to identify which transactions have alreader been
-    imported in the ledger. Do not rely on checks. This means that the importers
-    should create incomplete transaction objects and supply that to this
-    function, which will then attempt to identify for each of the supplied
-    transactions, which ones are already there.
-
-  - Given some incomplete transactions, complete them heuristically based on
-    previous contents of the ledger. This should make import a lot easier. This
-    should be generic and work across all importers, a single function call.
 
 
 * Ideas

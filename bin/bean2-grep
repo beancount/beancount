@@ -27,11 +27,11 @@ def main():
     opts = optparser.parse_args()
 
     # Parse the input file.
-    contents = parser.parse(opts.filename)
+    entries, errors, options = parser.load(opts.filename)
 
     # Create a mapping from a unique value (we're using the fileloc) to the
     # entry objects.
-    entry_map = {entry.fileloc: entry for entry in contents.entries}
+    entry_map = {entry.fileloc: entry for entry in entries}
 
     # Initialized the reduced list to the entire set of keys.
     filtered_keys = set(entry_map.keys())
@@ -40,7 +40,7 @@ def main():
     if opts.account:
         account_keys = set()
         regexp = re.compile(opts.account)
-        for entry in contents.entries:
+        for entry in entries:
             # Iterate over all references to accounts.
             for account in utils.get_tuple_typed_values(entry, data.Account):
                 if regexp.match(account.name):
@@ -52,7 +52,7 @@ def main():
     if opts.tag:
         tag_keys = set()
         regexp = re.compile(opts.tag)
-        for entry in utils.filter_type(contents.entries, data.Transaction):
+        for entry in utils.filter_type(entries, data.Transaction):
             if any(map(regexp.match, entry.tags)):
                 tag_keys.add(entry.fileloc)
 
