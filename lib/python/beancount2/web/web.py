@@ -1134,18 +1134,34 @@ def payee(payee=None, path=None):
 VIEWS = []
 
 
-def app_mount(view):
-    "Create and mount a new app for a view."
+def auto_reload_input_file(callback):
+    """A plugin that automatically reloads the input file if it changed since the
+    last page was loaded."""
+    def wrapper(*posargs, **kwargs):
 
-    # Create and customize the new app.
-    app_copy = copy.copy(app)
-    app_copy.view = view
+        filename = app.args.filename
+        mtime = path.getmtime(filename)
+        if mtime > app.last_mtime:
+            app.last_mtime = mtime
 
-    # Mount it on the root application.
-    bottle.mount('/view/{}'.format(view.id), app_copy, name=view.id)
+            print('RELOADING')
 
-    # Update the global list of ledgers.
-    VIEWS.append(view)
+            # Parse the beancount file.
+            entries, errors, options = parser.load(filename)
+
+            # Save globals in the global app.
+            app.entries = entries
+            app.errors = errors
+            app.options = options
+
+            # Reset the view cache.
+            app.views.clear()
+
+        return callback(*posargs, **kwargs)
+    return wrapper
+
+app.install(auto_reload_input_file)
+
 
 
 def main():
@@ -1154,15 +1170,10 @@ def main():
     argparser.add_argument('--debug', action='store_true',
                            help="Enable debugging features (auto-reloading of css).")
     args = argparser.parse_args()
-
-    # Parse the beancount file.
-    entries, errors, options = parser.load(args.filename)
-
-    # Save globals in the global app.
     app.args = args
-    app.entries = entries
-    app.errors = errors
-    app.options = options
+
+    # Initialize to a small value in order to insure a reload on the first page.
+    app.last_mtime = 0
 
     # Load templates.
     with open(path.join(path.dirname(__file__), 'template.html')) as f:
@@ -1176,7 +1187,7 @@ def main():
     # create_realizations(clean_entries, options)
 
     # Run the server.
-    app.run(host='localhost', port=8080, debug=args.debug) # reloader=True
+    app.run(host='localhost', port=8080, debug=args.debug, reloader=True)
 
 
 
