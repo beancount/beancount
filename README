@@ -53,9 +53,16 @@ It is in active development.
 Dependencies
 ============
 
-- GNU flex and GNU bison (to build the parser)
+For users:
+
 - cdecimal (optional but strongly suggested, a faster Decimal type for Python)
 - Bottle (a tiny web server, pure Python)
+- BeautifulSoup (v4) - for Import only
+
+
+For developers:
+
+- GNU flex and GNU bison (to build the parser)
 
 
 Download

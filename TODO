@@ -8,7 +8,7 @@ beancount: TODO
 
   - web: balsheet/income: make only two parent divs: div id=left and div
     id=right; the other divs should be children of them.
-    
+
 
   - web: Move table stuff into files, smaller files.
 
@@ -32,7 +32,7 @@ beancount: TODO
 
 
 
-  - Complete all the views in the TOC.
+  - Complete listing all the views really nicely in the TOC.
 
   - FIXME: We need to make the payee mount different and "dynamic", creating
     a new view automatically. We should do the same for the years and tags as
@@ -1003,7 +1003,7 @@ beancount: TODO
 
   - Filing: The importers should detect the type of files and identify their
     accounts, and automatically stash the file under the correct documents
-    directory.
+    directory, prepended with the date in the format we expect.
 
   - Bail Cleanly: If the import process fails for whatever reason, don't move
     the files!! This has been *SO* annoying in the past.
@@ -1013,9 +1013,12 @@ beancount: TODO
 
   - Re-Import Safe: Modify all import scripts so that they avoid reimporting already
     imported stuff. All the import scripts should take an existing Ledger file
-    as input; they should be smarter.
+    as input; they should be smarter. This functionality should be in common,
+    work from a list of entries; this should not have to be reimplemented in
+    each importer.
 
-  - The OFX importer needs to unescape &amp; and other odd chars.
+  - The OFX importer needs to unescape &amp; and other odd chars, I think
+    there's a bug currnetly.
 
   - Importers: You should have some way to record instructions for what you did
     in order to get the input files. This is useful. Not sure a comment is

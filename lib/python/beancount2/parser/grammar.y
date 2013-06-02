@@ -124,6 +124,7 @@ const char* getTokenName(int token);
 %type <pyobj> entry
 %type <pyobj> declarations
 %type <pyobj> tags_list
+%type <pyobj> account_id
 
 
 /* Start symbol. */
@@ -243,12 +244,14 @@ poptag : POPTAG TAG
            DECREF1($2);
        }
 
+account_id : STRING
+
 open : DATE OPEN ACCOUNT currency_list
      {
          $$ = BUILD("open", "siOOOO", FILE_LINE_ARGS, $1, $3, Py_None, $4);
          DECREF3($1, $3, $4);
      }
-     | DATE OPEN ACCOUNT STRING currency_list
+     | DATE OPEN ACCOUNT account_id currency_list
      {
          $$ = BUILD("open", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $5);
          DECREF4($1, $3, $4, $5);

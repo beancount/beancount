@@ -9,14 +9,21 @@ from os import path
 import mimetypes
 import logging
 import subprocess
+from pprint import pprint
+from xml.etree import ElementTree
+from bs4 import BeautifulSoup
 
 from beancount2.parser import load
+from beancount2.core import data
 
-try:
-    import magic
-except ImportError:
-    magic = None
 
+
+
+
+
+#
+# Generic utility.
+#
 
 def walk_files(directories, ignore_dirs=['.hg', '.svn', '.git']):
     """Enumerate the files under the given directories."""
@@ -30,12 +37,22 @@ def walk_files(directories, ignore_dirs=['.hg', '.svn', '.git']):
 
 
 
+
+#
+# Getting the file types.
+#
+
 EXTRA_FILE_TYPES = [
     (re.compile(regexp, re.I), filetype)
     for regexp, filetype in (
             (r'.*\.qbo$', 'application/vnd.intu.qbo'),
             (r'.*\.(qfx|ofx)$', 'application/x-ofx'),
     )]
+
+try:
+    import magic
+except ImportError:
+    magic = None
 
 def guess_file_type(filename):
     """Attempt to guess the type of the input file.
@@ -65,7 +82,31 @@ def guess_file_type(filename):
 
 
 
-def identify_pdf(filename):
+
+
+
+#
+# Identification of files to specific accounts.
+#
+
+def sliced_match(string):
+    """Return a regexp that will match the given string with possibly any number of
+    spaces in between. For example, '123' would become '1 *2 * 3'."""
+    return '[ -]*'.join(string)
+
+
+def identify_string(text, account_ids):
+    """Given some string 'text', find if any of the account-ids in the 'account_ids'
+    map is present in the text and return the corresponding account, or None."""
+
+    for account_id, account in account_ids.items():
+        mo = re.search(sliced_match(account_id), text)
+        if mo:
+            return account_id, account
+
+def identify_pdf(filename, account_ids):
+    "Attempt to identify the account for the given PDF file."""
+
     p = subprocess.Popen(('pdftotext', filename, '-'),
                          shell=False,
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -73,19 +114,122 @@ def identify_pdf(filename):
     if p.returncode != 0 or stderr:
         logging.error("Error running pdftotext: {}".format(stderr))
         return
-        
+
     text = stdout.decode()
-    print(text)
+    return identify_string(text, account_ids)
 
+def identify_csv(filename, account_ids):
+    "Attempt to identify the account for the given CSV file."""
 
+    text = open(filename).read()
+    return identify_string(text, account_ids)
 
-HANDLERS = {
+def identify_ofx(filename, account_ids):
+    "Attempt to identify the account for the given OFX file."""
+
+    # Parse the XML and find the 'acctid' node.
+    soup = BeautifulSoup(open(filename), 'lxml')
+    acctid = soup.find('acctid')
+
+    # There's some garbage in here sometimes; clean it up.
+    acctid = acctid.text.split('\n')[0]
+
+    # Look up the account.
+    try:
+        return (acctid, account_ids[acctid])
+    except KeyError:
+        return None
+
+IDENTIFY_HANDLERS = {
     'application/pdf'          : identify_pdf,
-    # 'application/vnd.intu.qbo' : find_account_quickbooks,
-    # 'application/x-ofx'        : find_account_ofx,
-    # 'text/csv'                 : find_account_csv,
-    # HTML?
+    'text/csv'                 : identify_csv,
+    'application/x-ofx'        : identify_ofx,
+    'application/vnd.intu.qbo' : identify_ofx,
 }
+
+def identify_account(filename, entries):
+    """Given a filename, return the filetype and account that this file corresponds
+    to, or None if it could not be identified."""
+
+    filetype = guess_file_type(filename)
+
+    identify_fun = IDENTIFY_HANDLERS.get(filetype, None)
+    if identify_fun is None:
+        # No handler was found; bail out.
+        return
+
+    account_ids = data.get_account_ids(entries)
+    account_id, account = identify_fun(filename, account_ids)
+
+    return filetype, account
+
+
+
+
+
+
+
+
+
+
+
+
+
+#
+# OFX Parser.
+#
+
+def import_ofx(filename, account):
+    """Extract transaction info from the given OFX file into transactions for the
+    given account. This function returns a list of entries possibly partially
+    filled entries, and a dictionary of annotations to be attached to entries
+    and postings.
+    """
+
+    entries = []
+    annotations = {}
+
+
+    soup = BeautifulSoup(open(filename), 'lxml')
+    acctid = soup.find('acctid')
+
+
+    open(filename)
+
+
+
+
+
+    return entries, annotations
+
+
+
+
+
+
+
+
+#
+# Importers.
+#
+
+IMPORTER_HANDLERS = {
+    # 'text/csv'                 : identify_csv,
+    'application/x-ofx'        : import_ofx,
+    'application/vnd.intu.qbo' : import_ofx,
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Handler:
 # - find corresponding account (for filing)
@@ -108,17 +252,23 @@ def main():
     entries, errors, options = load(opts.filename)
 
     for filename in walk_files(opts.directories):
-        filetype = guess_file_type(filename)
-        logging.info('{:100} {}'.format(filename, filetype))
+        print(filename)
+        identification = identify_account(filename, entries)
+        if not identification:
+            continue # Skip file.
+        filetype, account = identification
 
-        identify = HANDLERS.get(filetype, None)
-        if identify is None:
-            logging.error("No handler for filetype '{}'".format(filetype))
-            continue
+        importer = IMPORTER_HANDLERS.get(filetype)
+        if importer is None:
+            continue # No importer available for this filetype.
+
+        importer(filename, account)
 
 
-        print(identify(filename))
-        break
+## FIXME: What do we do when there are mutiple accounts?
+
+
+
 
 
 

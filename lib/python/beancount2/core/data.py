@@ -281,5 +281,9 @@ def get_account_open_close(entries):
     return open_closes_map
 
 
-# def get_account_ids(entries):
-#     """
+def get_account_ids(entries):
+    """Return a mapping of account-ids to account objects."""
+    return {entry.account_id: entry.account
+            for entry in utils.filter_type(entries, Open)
+            if entry.account_id is not None}
+
