@@ -33,6 +33,8 @@ CURRENCY_ORDER = {
 }
 
 
+DISPLAY_QUANTIZE = Decimal('.01')
+
 # An 'Amount' is a representation of an amount of a particular units.
 class Amount:
 
@@ -42,8 +44,12 @@ class Amount:
         self.number = Decimal(number) if isinstance(number, str) else number
         self.currency = currency
 
-    def __str__(amount):
-        return "{:.2f} {}".format(amount.number, amount.currency)
+    def __str__(self):
+        number = self.number
+        if number == number.quantize(DISPLAY_QUANTIZE):
+            return "{:.2f} {}".format(number, self.currency)
+        else:
+            return "{:f} {}".format(number, self.currency)
     __repr__ = __str__
 
     def __eq__(self, other):
@@ -53,6 +59,8 @@ class Amount:
         return hash((self.number, self.currency))
 
 
+# Note: We don't implement operators here in favour of the more explicit functional style.
+
 def amount_sortkey(amount):
     """Sort by currency first."""
     return (amount.currency, amount.number)
@@ -61,10 +69,10 @@ def amount_mult(amount, number):
     """Multiply the given amount by a number."""
     return Amount(amount.number * number, amount.currency)
 
-# def sub_amount(amount1, amount2):
-#     """Multiply the given amount by a number."""
-#     assert amount1.currency == amount2.currency
-#     return Amount(amount1.number - amount2.number, amount1.currency)
+def amount_sub(amount1, amount2):
+    """Multiply the given amount by a number."""
+    assert amount1.currency == amount2.currency
+    return Amount(amount1.number - amount2.number, amount1.currency)
 
 # def neg_amount(amount):
 #     return Amount(-amount.number, amount.currency)
@@ -154,7 +162,7 @@ def print_errors(errors):
 Open        = namedtuple('Open'        , 'fileloc date account account_id currencies')
 Close       = namedtuple('Close'       , 'fileloc date account')
 Pad         = namedtuple('Pad'         , 'fileloc date account account_pad')
-Check       = namedtuple('Check'       , 'fileloc date account position success')
+Check       = namedtuple('Check'       , 'fileloc date account amount errdiff')
 Transaction = namedtuple('Transaction' , 'fileloc date flag payee narration tags postings')
 Note        = namedtuple('Note'        , 'fileloc date account comment')
 Event       = namedtuple('Event'       , 'fileloc date type description')
@@ -215,10 +223,11 @@ def posting_sortkey(entry):
 
 
 # Special flags
+FLAG_OKAY      = '*' # Transactions that have been checked.
+FLAG_WARNING   = '!' # Mark by the user as something to be looked at later on.
 FLAG_PADDING   = 'P' # Transactions created from padding directives.
 FLAG_SUMMARIZE = 'S' # Transactions created due to summarization.
 FLAG_TRANSFER  = 'T' # Transactions created due to balance transfers.
-FLAG_WARNING   = '!' # Mark by the user as something to be looked at later on.
 
 
 class GetAccounts:

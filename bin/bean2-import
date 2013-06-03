@@ -259,6 +259,8 @@ def import_ofx(filename, entries):
     securities_map = {security['uniqueid']: security
                       for security in securities}
 
+    transaction_flag = data.FLAG_OKAY
+
     # For each statement.
     txn_counter = itertools.count()
     for stmtrs in soup.find_all(re.compile('.*stmtrs$')):
@@ -290,22 +292,35 @@ def import_ofx(filename, entries):
                     # date_end = parse_ofx_time(trndict['dtend']).date()
                     date = parse_ofx_time(trndict['dtposted']).date()
                     fileloc = data.FileLocation(filename, next(txn_counter))
-                    flag = data.FLAG_WARNING
                     payee = None
                     narration = ' / '.join(filter(None, (trndict.get(x, None) for x in ('trntype', 'name', 'memo'))))
-                    entry = Transaction(fileloc, date, flag, payee, narration, set(), [])
+                    entry = Transaction(fileloc, date, transaction_flag, payee, narration, set(), [])
 
                     # Create a posting for it.
                     position = Position(Lot(currency, None, None), Decimal(trndict['trnamt']))
-                    price = None # FIXME: Does it sometime make sense?
-                    flag = None
                     account = data.account_from_name(account_name)
-                    entry.postings.append(Posting(entry, account, position, price, flag))
+                    entry.postings.append(Posting(entry, account, position, None, None))
 
                     entries.append(entry)
 
 
 #FIXME: Farm this out to a Vanguard-specific function.
+#FIXME: We need to be able to deduce these automatically, somehow, maybe the importers have their own configuration.
+            # FIXME: This needs to be parameterized.
+            source_subaccounts = {
+                'PRETAX' : 'Assets:US:Vanguard:PreTax',
+                'MATCH'  : 'Assets:US:Vanguard:Match',
+            }
+            def get_cash_account(trantype, source, incometype):
+                if trantype == 'BUYMF' and source == 'MATCH':
+                    return 'Income:US:Google:Match401k'
+                elif trantype == 'REINVEST':
+                    return 'Income:US:Vanguard:Dividend'
+                elif trantype == 'TRANSFER':
+                    return 'Expenses:US:Vanguard:Fee'
+                else:
+                    return 'Assets:US:Vanguard:Cash'
+
 
             # Process all investment transaction lists.
             # Note: this was developed for Vanguard.
@@ -324,27 +339,34 @@ def import_ofx(filename, entries):
                     total = soup_get(tran, 'total', Decimal)
 
                     fileloc = data.FileLocation(filename, next(txn_counter))
-                    flag = data.FLAG_WARNING
                     payee = None
 
                     trantype = tran.name.upper()
                     incometype = soup_get(tran, 'incometype')
                     source = soup_get(tran, 'inv401ksource')
-                    narration = ' - '.join(filter(None, (trantype, incometype, source)))
+                    memo = soup_get(tran, 'memo')
+                    narration = ' - '.join(filter(None, (trantype, incometype, source, memo)))
 
-                    entry = Transaction(fileloc, date, flag, payee, narration, set(), [])
+                    entry = Transaction(fileloc, date, transaction_flag, payee, narration, set(), [])
 
                     # Create a posting for it.
-                    position = Position(Lot(security, Amount(unitprice, currency), None), units)
-                    price = None # FIXME: Does it sometime make sense?
-                    flag = None
-                    account = data.account_from_name('{}:{}'.format(account_name, security))
-                    entry.postings.append(Posting(entry, account, position, price, flag))
+                    tferaction = soup_get(tran, 'tferaction')
+                    if tferaction == 'OUT':
+                        units = -units
 
-                    if total is not None:
-                        position = Position(Lot(currency, None, None), -total)
-                        account = data.account_from_name(account_name)
-                        entry.postings.append(Posting(entry, account, position, None, None))
+                    position = Position(Lot(security, Amount(unitprice, currency), None), units)
+
+                    account = data.account_from_name('{}:{}'.format(
+                        source_subaccounts[source], security))
+                    entry.postings.append(Posting(entry, account, position, None, None))
+
+                    if total is None:
+                        total = units * unitprice
+                        ##print('{:.9f} {:.9f} = {:.9f}'.format(units, unitprice, total))
+
+                    position = Position(Lot(currency, None, None), -total)
+                    account = data.account_from_name(get_cash_account(trantype, source, incometype))
+                    entry.postings.append(Posting(entry, account, position, None, None))
 
                     entries.append(entry)
 
@@ -361,12 +383,14 @@ def import_ofx(filename, entries):
                         unitprice = soup_get(invpos, 'unitprice', Decimal)
 
                         fileloc = data.FileLocation(filename, next(txn_counter))
-                        account = data.account_from_name('{}:{}'.format(account_name, security))
+                        source = soup_get(invpos, 'inv401ksource')
+                        account = data.account_from_name('{}:{}'.format(
+                            source_subaccounts[source], security))
 
                         amount = Amount(units, security)
                         entries.append(Check(fileloc, date, account, amount, None))
 
-    entries.sort()
+    entries.sort(key=lambda entry: entry.date)
     return entries, annotations
 
 
@@ -425,7 +449,7 @@ class EntryPrinter:
             oss.write('  {}{:64} {} {}\n'.format(flag, posting.account.name, posting.position, posting.price or ''))
 
     def Check(_, entry, oss):
-        oss.write('{e.date} check {e.account.name} {e.position}\n'.format(e=entry))
+        oss.write('{e.date} check {e.account.name} {e.amount}\n'.format(e=entry))
 
     def Pad(_, entry, oss):   raise NotImplementedError
     def Open(_, entry, oss):  raise NotImplementedError

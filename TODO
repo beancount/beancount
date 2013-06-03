@@ -2,6 +2,10 @@
 beancount: TODO
 * NEW
 
+  - You now HAVE to implement average price tracking... not an option. Thanks
+    to Vanguard #$(*#(*$.
+
+
   - For Check, don't check a Position, check just an amount, it's a bit crazy
     to check for lots, and not necessary at all.
 

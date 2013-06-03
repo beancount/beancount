@@ -184,10 +184,10 @@ class Builder(object):
         fileloc = FileLocation(filename, lineno)
         return Pad(fileloc, date, account, account_pad)
 
-    def check(self, filename, lineno, date, account, position):
+    def check(self, filename, lineno, date, account, amount):
         fileloc = FileLocation(filename, lineno)
         # Note: Success by default. We replace the failing ones in check().
-        return Check(fileloc, date, account, position, True)
+        return Check(fileloc, date, account, amount, None)
 
     def event(self, filename, lineno, date, event_type, description):
         fileloc = FileLocation(filename, lineno)

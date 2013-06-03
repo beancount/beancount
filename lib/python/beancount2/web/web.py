@@ -651,11 +651,16 @@ def entries_table_with_balance(oss, account_postings, render_postings=True):
 
         elif isinstance(entry, Check):
             # Check the balance here and possibly change the rowtype
-            if not entry.success:
+            if entry.errdiff is None:
+                description = 'Check {} has {}'.format(account_link(entry.account), entry.amount)
+            else:
+                description = 'Check in {} fails; expected = {}, balance = {}, difference = {}'.format(
+                    account_link(entry.account), entry.amount,
+                    balance.get_amount(entry.amount.currency),
+                    entry.errdiff)
                 rowtype = 'CheckFail'
 
-            description = 'Check {} has {}'.format(account_link(entry.account), entry.position)
-            change_str = str(entry.position)
+            change_str = str(entry.amount)
 
         elif isinstance(entry, (Open, Close)):
             description = '{} {}'.format(entry.__class__.__name__, account_link(entry.account))
@@ -746,10 +751,14 @@ def entries_table(oss, account_postings, render_postings=True):
 
         elif isinstance(entry, Check):
             # Check the balance here and possibly change the rowtype
-            if not entry.success:
+            if entry.errdiff is None:
+                description = 'Check {} has {}'.format(account_link(entry.account), entry.amount)
+            else:
+                description = 'Check in {} fails; expected = {}, balance = {}, difference = {}'.format(
+                    account_link(entry.account), entry.amount,
+                    balance.get_amount(entry.amount.currency),
+                    entry.errdiff)
                 rowtype = 'CheckFail'
-
-            description = 'Check {} has {}'.format(account_link(entry.account), entry.position)
 
         elif isinstance(entry, (Open, Close)):
             description = '{} {}'.format(entry.__class__.__name__, account_link(entry.account))
@@ -1156,7 +1165,7 @@ def auto_reload_input_file(callback):
             print('RELOADING')
 
             # Parse the beancount file.
-            entries, errors, options = parser.load(filename)
+            entries, errors, options = parser.load(filename, True)
 
             # Save globals in the global app.
             app.entries = entries

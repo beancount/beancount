@@ -184,12 +184,19 @@ class Inventory:
     def get_positions(self):
         "Return the positions in this inventory."
         return self.positions
+        
+    def get_positions_with_currency(self, currency):
+        "Return a list of the positions with lots in the given currency."
+        return [position
+                for position in self.positions
+                if position.lot.currency == currency]
 
     def get_position(self, lot):
         """Find a position by lot, or return None."""
         for position in self.positions:
             if position.lot == lot:
                 return position
+
 
     def get_create_position(self, lot):
         """Find or create a position associated with a given lot."""

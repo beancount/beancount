@@ -257,3 +257,8 @@ class TestPadding(unittest.TestCase):
 
 
 # FIXME: Write a test that padding a parent account wouldn't pad its child accounts.
+
+
+
+# FIXME: We need a test that triggers all the possible kinds of errors that we
+# may issue, everywhere actually. That's a great way to start coverage.

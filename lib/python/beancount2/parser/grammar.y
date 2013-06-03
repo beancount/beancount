@@ -269,7 +269,7 @@ pad : DATE PAD ACCOUNT ACCOUNT
         DECREF3($1, $3, $4);
     }
 
-check : DATE CHECK ACCOUNT position
+check : DATE CHECK ACCOUNT amount
       {
           $$ = BUILD("check", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
           DECREF3($1, $3, $4);

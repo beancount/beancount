@@ -109,33 +109,49 @@ def pad(entries):
                 padded_lots = set()
 
             elif isinstance(entry, Check):
-                check_position = entry.position
+                check_amount = entry.amount
 
-                # Compare the current balance position to the expected one from
-                # the check entry.
-                balance_position = balance.get_position(entry.position.lot)
-                if check_position != balance_position:
+                # Compare the current balance amount to the expected one from
+                # the check entry. IMPORTANT: You need to understand that this
+                # does not check a single position, but rather checks that the
+                # total amount for a particular currency (which itself is
+                # distinct from the cost).
+                balance_amount = balance.get_amount(check_amount.currency)
+                diff_amount = amount_sub(balance_amount, check_amount)
+                if diff_amount.number.abs() > CHECK_PRECISION:
                     # The check fails; we need to pad.
 
                     # Pad only if pad entry is active and we haven't already
                     # padded that lot since it was last encountered.
-                    if active_pad and (check_position.lot not in padded_lots):
+                    if active_pad and (check_amount.currency not in padded_lots):
+
                         # Calculate the difference.
                         balance_number = (ZERO
-                                          if balance_position is None
-                                          else balance_position.number)
-                        diff_position = Position(check_position.lot,
-                                                 check_position.number - balance_number)
+                                          if balance_amount is None
+                                          else balance_amount.number)
+
+                        # Note: we decide that it's an error to try to pad
+                        # position at cost; we check here that all the existing
+                        # positions with that currency have no cost.
+                        positions = balance.get_positions_with_currency(check_amount.currency)
+                        for position in positions:
+                            if position.lot.cost is not None:
+                                pad_errors.append(
+                                    PadError(entry.fileloc, "Attempt to pad an entry with cost for balance: {}".format(balance)))
+
+                        # Thus our padding lot is without cost by default.
+                        lot = Lot(check_amount.currency, None, None)
+                        diff_position = Position(lot, check_amount.number - balance_amount.number)
 
                         # Synthesize a new transaction entry for the difference.
-                        narration = '(Padding inserted for Check of {})'.format(check_position)
-                        postings = []
+                        narration = '(Padding inserted for Check of {} for difference {})'.format(
+                            check_amount, diff_position)
                         new_entry = Transaction(
-                            active_pad.fileloc, active_pad.date, FLAG_PADDING, None, narration, set(),
-                            postings)
-                        postings.append(
+                            active_pad.fileloc, active_pad.date, FLAG_PADDING, None, narration, set(), [])
+
+                        new_entry.postings.append(
                             Posting(new_entry, active_pad.account, diff_position, None, None))
-                        postings.append(
+                        new_entry.postings.append(
                             Posting(new_entry, active_pad.account_pad, -diff_position, None, None))
 
                         # Save it for later insertion after the active pad.
@@ -145,7 +161,7 @@ def pad(entries):
                         balance.add_position(diff_position)
 
                         # Mark this lot as padded. Further checks should not pad this lot.
-                        padded_lots.add(check_position.lot)
+                        padded_lots.add(check_amount.currency)
 
     # Insert the newly created entries right after the pad entries that created them.
     padded_entries = []
@@ -169,6 +185,8 @@ def pad(entries):
 ## FIXME: Move this to validation.
 
 CheckError = namedtuple('CheckError', 'fileloc message')
+
+CHECK_PRECISION = Decimal('.001')
 
 def check(entries):
     """Check for all the Check directives and replace failing ones by new ones with
@@ -196,16 +214,17 @@ def check(entries):
 
         elif isinstance(entry, Check):
             # Check the balance against the check entry.
-            check_position = entry.position
+            check_amount = entry.amount
             balance = balances[entry.account]
-            balance_position = balance.get_position(check_position.lot)
-            if check_position != balance_position:
+            balance_amount = balance.get_amount(check_amount.currency)
+            diff_amount = amount_sub(balance_amount, check_amount)
+            if diff_amount.number.abs() > CHECK_PRECISION:
                 check_errors.append(
                     CheckError(entry.fileloc, "Check failed for '{}': {} != {}".format(
-                        entry.account.name, balance_position, check_position)))
+                        entry.account.name, balance_amount, check_amount)))
 
                 # Substitute the entry by a failing entry.
-                entry = Check(entry.fileloc, entry.date, entry.account, entry.position, False)
+                entry = Check(entry.fileloc, entry.date, entry.account, entry.amount, diff_amount)
 
         new_entries.append(entry)
 
