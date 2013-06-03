@@ -302,7 +302,7 @@ def import_ofx(filename, entries):
 
 
 #FIXME: Farm this out to a Vanguard-specific function.
-#FIXME: We need to be able to deduce these automatically, somehow, maybe the importers have their own configuration.
+#FIXME: This needs to move into an import config and be provided as input.
             # FIXME: This needs to be parameterized.
             source_subaccounts = {
                 'PRETAX' : 'Assets:US:Vanguard:PreTax',
@@ -318,6 +318,8 @@ def import_ofx(filename, entries):
                 else:
                     return 'Assets:US:Vanguard:Cash'
 
+
+# FIXME: Make this into a function its own
 
             # Process all investment transaction lists.
             # Note: this was developed for Vanguard.
@@ -366,6 +368,8 @@ def import_ofx(filename, entries):
                     entry.postings.append(Posting(entry, account, position, None, None))
 
                     new_entries.append(entry)
+
+# FIXME: Make this into a function its own
 
                 # Process all positions, convert them to Check directives.
                 # Note: this was developed for Vanguard.
@@ -604,32 +608,18 @@ def import_csv_oanda(filename, entries):
 
 # FIXME: Temporary; these would have been done manually. For debugging now, ignore, while developing.
 OANDA_IGNORED = set(['873690057', '980400948', '1051458865'])
-
-
-
-# FIXME: We need to obtain this structure somehow from the configuration.
-ACC_ASSET    = Account('Assets:US:OANDA:Primary', 'Assets')
-ACC_INTEREST = Account('Income:US:OANDA:Primary:Interest', 'Income')
-ACC_PNL      = Account('Income:US:OANDA:Primary:PnL', 'Income')
-ACC_OTHER    = Account('Assets:US:OANDA:Transfer', 'Assets')
+# FIXME: We need to book fees
 
 # FIXME TODO:
 # - Check that ignored transactions have zero amounts
-# - Render tran link with @, and the ticket nuembr too
-# - Compress the interest
+# - Render tran link with @, and the ticket number too, as @links from my system
+# - Compress the interest (in a separate routine)
 # - Render the transaction prices
 # - Automatically fill in accounts for API and deposits / transfers (based on the currency)
 # - Add the positions taken into subaccounts, a large positive number and a large negative number, this should be possible, under e.g. 'Income:US:OANDA:Primary:Positions:EUR_USD'
 
 
 
-
-
-## FIXME: remove
-# def format_transaction(date, ticket, description, currency, postings):
-#     return ("{date} * ({ticket}) {description}\n".format(**vars()) +
-#             '\n'.join("  {:48} {:14.4f} {}".format(account, amount, currency)
-#                       for (account, amount) in postings))
 
 
 
@@ -793,7 +783,40 @@ def main():
 
 
 
+# FIXME: Write a routine that will allow each importer to declare the list of
+# accounts that it requires in order to run.
 
+importer_config = {
+
+    ('oanda', 'text/csv', '912333'):
+    {
+        'asset'    : account_from_name('Assets:US:OANDA:Primary'),
+        'interest' : account_from_name('Income:US:OANDA:Primary:Interest'),
+        'pnl'      : account_from_name('Income:US:OANDA:Primary:PnL'),
+        'other'    : account_from_name('Assets:US:OANDA:Limbo'),
+        'fees'     : account_from_name('Expenses:US:OANDA:Fees'),
+    },
+
+    ('vanguard', 'application/x-ofx', '093926'):
+    {
+        'pretax_asset' : account_from_name('Assets:US:Vanguard:PreTax'),
+        'match_asset'  : account_from_name('Assets:US:Vanguard:Match'),
+        'match_income' : account_from_name('Income:US:Google:Match401k'),
+        'dividend'     : account_from_name('Income:US:Vanguard:Dividend'),
+        'fees'         : account_from_name('Expenses:US:Vanguard:Fee'),
+        'cash_asset'   : account_from_name('Assets:US:Vanguard:Cash'),
+    },
+}
+
+# FIXME: make this into accounts-map, send it to the importer
+
+# FIXME: We need to obtain this structure somehow from the configuration.
+# Accounts-map for OANDA
+ACC_ASSET    = Account('Assets:US:OANDA:Primary', 'Assets')
+ACC_INTEREST = Account('Income:US:OANDA:Primary:Interest', 'Income')
+ACC_PNL      = Account('Income:US:OANDA:Primary:PnL', 'Income')
+ACC_OTHER    = Account('Assets:US:OANDA:Limbo', 'Assets')
+ACC_FEES     = Account('Expenses:US:OANDA:Fees', 'Expenses')
 
 
 
