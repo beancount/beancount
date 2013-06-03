@@ -15,7 +15,10 @@ is great for sectioning large files with many transactions."
   :init-value nil
   :lighter " Beancount"
   :keymap
-  '(([(control c)(\')] . beancount-insert-account))
+  '(
+    ([(control c)(\')] . beancount-insert-account)
+    ([(control c)(control g)] . beancount-transaction-set-flag)
+    )
   :group 'beancount
 
   (set (make-local-variable 'comment-start) ";; ")
@@ -37,6 +40,7 @@ is great for sectioning large files with many transactions."
     (beancount-init-accounts))
   )
 
+
 (defun beancount-init-accounts ()
   "Initialize or reset the list of accounts."
   (interactive)
@@ -51,6 +55,7 @@ is great for sectioning large files with many transactions."
 ;; font-lock-string-face 	font-lock-syntactic-face-function
 ;; font-lock-type-face 	font-lock-variable-name-face
 ;; font-lock-warning-face
+
 
 (defvar beancount-font-lock-defaults
   `(;; Comments
@@ -80,6 +85,7 @@ is great for sectioning large files with many transactions."
 
     ))
 
+
 (defvar beancount-account-regexp (concat (regexp-opt '("Assets"
                                                        "Liabilities"
                                                        "Equity"
@@ -88,9 +94,11 @@ is great for sectioning large files with many transactions."
                                          "\\(:[A-Z][A-Za-z0-9-_:]+\\)")
   "A regular expression to match account names.")
 
+
 (defvar beancount-accounts nil
   "A list of the accounts available in this buffer. This is a
   cache of the value computed by beancount-get-accounts.")
+
 
 (defun beancount-hash-keys (hashtable)
   "Extract all the keys of the given hashtable. Return a sorted list."
@@ -111,6 +119,7 @@ declarations only."
         (puthash (match-string-no-properties 0) nil accounts)))
     (sort (beancount-hash-keys accounts) 'string<)))
 
+
 (defun beancount-insert-account (account-name)
   "Insert one of the valid account names in this file (using ido
 niceness)."
@@ -120,6 +129,14 @@ niceness)."
     (when bounds
       (delete-region (car bounds) (cdr bounds))))
   (insert account-name))
+
+
+(defun beancount-transaction-set-flag ()
+  (interactive)
+  (save-excursion
+    (backward-paragraph 1)
+    (forward-line 1)
+    (replace-string "!" "*" nil (line-beginning-position) (line-end-position))))
 
 
 (provide 'beancount)

@@ -333,7 +333,7 @@ def is_account_active(real_account):
 def table_of_balances(tree, start_node_name, currencies, classes=None):
     """Render a table of balances."""
 
-    header = ['Account'] + currencies + ['Other']
+    header = ['Account'] + list(currencies) + ['Other']
 
     # Pre-calculate which accounts should be rendered.
     active_accounts = tree.mark_from_leaves(is_account_active)
@@ -360,7 +360,17 @@ def table_of_balances(tree, start_node_name, currencies, classes=None):
         for currency in currencies:
             position = balance_cost.get_position(Lot(currency, None, None))
             if position:
-                positions.remove(position)
+                ## FIXME: remove the exception handling, it's temporary.
+                try:
+                    positions.remove(position)
+                except Exception:
+                    print(balance_cost.get_positions())
+                    print(positions)
+                    print(position)
+                    print(currency)
+                    print(currencies)
+                    raise
+
                 cells.append('{:,.2f}'.format(position.number))
             else:
                 cells.append('')
@@ -381,8 +391,7 @@ def trial():
     view = request.view
     real_accounts = view.real_accounts
     operating_currencies = view.options['operating_currency']
-    table = table_of_balances(real_accounts, '', operating_currencies,
-                              classes=['trial'])
+    table = table_of_balances(real_accounts, '', operating_currencies, classes=['trial'])
 
 
     ## FIXME: After conversions is fixed, this should always be zero.

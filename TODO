@@ -2,6 +2,11 @@
 beancount: TODO
 * NEW
 
+  - For Check, don't check a Position, check just an amount, it's a bit crazy
+    to check for lots, and not necessary at all.
+
+
+
   - balsheet: Add a sum Total line at the bottom of every table.
   - balsheet: For Equity, separately report the total net worth in terms of EACH
     of the operating currencies, using the latest prices.
@@ -992,6 +997,7 @@ beancount: TODO
 
 * Import Automation
 
+
   - Import: in order to guess the currency of an instrument for which you don't
     have a mapping (e.g. there's only a CUSIP), find the currency in use in the
     corresponding account... or look at the constraints on the account!
@@ -1050,6 +1056,17 @@ beancount: TODO
   - Given some incomplete transactions, complete them heuristically based on
     previous contents of the ledger. This should make import a lot easier. This
     should be generic and work across all importers, a single function call.
+
+
+  - Idea: Subaccounts, like in Vanguard, are many. We should find a way to
+    provide some account-identification information that could be used by
+    importers. In other words, the account_id should just be an account_id....
+    we need to give this a larger role in order to make this more automated. We
+    need for a single parent account to have a structure of subaccounts that the
+    importer can understand.
+
+
+
 
 ** Auto-Categorization
 

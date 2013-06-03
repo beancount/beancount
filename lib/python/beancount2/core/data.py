@@ -80,6 +80,10 @@ Lot = namedtuple('Lot', 'currency cost lot_date')
 # A type used to represent an account read in.
 Account = namedtuple('Account', 'name type')
 
+def account_from_name(account_name):
+    "Create a new account solely from its name."
+    return Account(account_name, account_type(account_name))
+
 def account_parent_name(name):
     """Return the name of the parent account of the given account."""
     components = name.split(':')
@@ -286,4 +290,3 @@ def get_account_ids(entries):
     return {entry.account_id: entry.account
             for entry in utils.filter_type(entries, Open)
             if entry.account_id is not None}
-
