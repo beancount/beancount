@@ -885,7 +885,11 @@ def positions():
     # the inventory (see year 2006 for a good sample input).
 
     oss = io.StringIO()
+    oss.write("<table class='positions'>\n")
+    oss.write(total_balance.average())
+
     for position in total_balance.get_positions():
+
         if position.lot.cost or position.lot.lot_date:
             cost = position.get_cost()
 
@@ -901,6 +905,9 @@ def positions():
                  {position}     {cost}
               </div>
             '''.format(position=position, cost=position.get_cost()))
+
+    oss.write("</table>\n")
+
 
 
     if 0:

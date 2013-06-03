@@ -34,10 +34,11 @@ as None. This is the case for most of the transactions.
   or that we may instead provide the convenience for the user not having to match
 
 """
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 import copy
 from datetime import date
 import io
+import logging
 
 from beancount2.core.data import ZERO, Decimal, Amount, Lot, amount_mult, CURRENCY_ORDER
 
@@ -171,6 +172,7 @@ class Inventory:
 
     def get_amounts(self):
         """Return a list of Amounts (ignoring cost)."""
+        # FIXME: This needs fixing, what if you have multiple lots for the same currency?
         return [Amount(position.number, position.lot.currency)
                 for position in self.positions]
 
@@ -184,7 +186,7 @@ class Inventory:
     def get_positions(self):
         "Return the positions in this inventory."
         return self.positions
-        
+
     def get_positions_with_currency(self, currency):
         "Return a list of the positions with lots in the given currency."
         return [position
@@ -257,3 +259,22 @@ class Inventory:
         return self
 
     __iadd__ = update
+
+
+    def average(self):
+        """Merge all lots of the same currency together at their average cost."""
+
+        logging.warn('FIXME: continue here, this will be needed to report positions')
+
+        units_map = defaultdict(Decimal)
+        costs_map = defaultdict(Decimal)
+        for position in self.positions:
+            units_map[position.lot.currency] += position.number
+            costs_map[position.lot.currency] += position.get_cost().number
+
+        inventory = Inventory()
+        for currency, units in units_map.items():
+            costs = costs_map[currency]
+            inventory.add(Amount(units, currency), costs)
+
+        return inventory

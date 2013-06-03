@@ -2,7 +2,7 @@
 
 # Just my big old fat ledger file.
 INPUT = $(HOME)/q/office/accounting/blais.beancount
-DOWNLOADS = $(HOME)/u/Downloads $(HOME)/q/office/accounting/new $(HOME)/new
+DOWNLOADS = $(HOME)/u/Downloads $(HOME)/q/office/accounting/new/oanda/oanda.912333.csv
 
 all: build
 

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Read a beancount input file and a directory name, and attempt to identify and
+"""
+Read a beancount input file and a directory name, and attempt to identify and
 convert the files in the directory. There is also an option to automatically
 file succesfully detected and converted input files.
 """
 import io
+import sys
 import itertools
 import os
 import re
@@ -16,28 +18,26 @@ from pprint import pprint
 from xml.etree import ElementTree
 import bs4
 import collections
+import csv
+from pprint import pprint
 
 from beancount2.parser import load
 from beancount2.core import data
 from beancount2.core.data import Account, Posting, Transaction, Check, Decimal, Lot, Amount
 from beancount2.core.inventory import Position
+from beancount2 import utils
+
+
+
+# FIXME: This needs to be an option for the importer.
+FLAG_IMPORT = data.FLAG_OKAY
 
 
 
 
 
 
-#
-# Generic utility.
-#
 
-def walk_files(directories, ignore_dirs=['.hg', '.svn', '.git']):
-    """Enumerate the files under the given directories."""
-    for directory in directories:
-        for root, dirs, filenames in os.walk(directory):
-            dirs[:] = [dirname for dirname in dirs if dirname not in ignore_dirs]
-            for filename in filenames:
-                yield path.join(root, filename)
 
 
 
@@ -129,7 +129,6 @@ def identify_pdf(filename, account_ids):
 
 def identify_csv(filename, account_ids):
     "Attempt to identify the account for the given CSV file."""
-
     text = open(filename).read()
     return identify_string(text, account_ids)
 
@@ -248,7 +247,7 @@ def import_ofx(filename, entries):
     """
     account_ids = data.get_account_ids(entries)
 
-    entries = []
+    new_entries = []
     annotations = {}
 
     # Parse the XML file.
@@ -258,8 +257,6 @@ def import_ofx(filename, entries):
     securities = get_securities(soup)
     securities_map = {security['uniqueid']: security
                       for security in securities}
-
-    transaction_flag = data.FLAG_OKAY
 
     # For each statement.
     txn_counter = itertools.count()
@@ -294,14 +291,14 @@ def import_ofx(filename, entries):
                     fileloc = data.FileLocation(filename, next(txn_counter))
                     payee = None
                     narration = ' / '.join(filter(None, (trndict.get(x, None) for x in ('trntype', 'name', 'memo'))))
-                    entry = Transaction(fileloc, date, transaction_flag, payee, narration, set(), [])
+                    entry = Transaction(fileloc, date, FLAG_IMPORT, payee, narration, set(), [])
 
                     # Create a posting for it.
                     position = Position(Lot(currency, None, None), Decimal(trndict['trnamt']))
                     account = data.account_from_name(account_name)
                     entry.postings.append(Posting(entry, account, position, None, None))
 
-                    entries.append(entry)
+                    new_entries.append(entry)
 
 
 #FIXME: Farm this out to a Vanguard-specific function.
@@ -347,7 +344,7 @@ def import_ofx(filename, entries):
                     memo = soup_get(tran, 'memo')
                     narration = ' - '.join(filter(None, (trantype, incometype, source, memo)))
 
-                    entry = Transaction(fileloc, date, transaction_flag, payee, narration, set(), [])
+                    entry = Transaction(fileloc, date, FLAG_IMPORT, payee, narration, set(), [])
 
                     # Create a posting for it.
                     tferaction = soup_get(tran, 'tferaction')
@@ -368,7 +365,7 @@ def import_ofx(filename, entries):
                     account = data.account_from_name(get_cash_account(trantype, source, incometype))
                     entry.postings.append(Posting(entry, account, position, None, None))
 
-                    entries.append(entry)
+                    new_entries.append(entry)
 
                 # Process all positions, convert them to Check directives.
                 # Note: this was developed for Vanguard.
@@ -388,10 +385,262 @@ def import_ofx(filename, entries):
                             source_subaccounts[source], security))
 
                         amount = Amount(units, security)
-                        entries.append(Check(fileloc, date, account, amount, None))
+                        new_entries.append(Check(fileloc, date, account, amount, None))
 
-    entries.sort(key=lambda entry: entry.date)
-    return entries, annotations
+    new_entries.sort(key=lambda entry: entry.date)
+    return new_centries, annotations
+
+
+
+
+
+
+
+
+
+
+
+#
+# OANDA Importer.
+#
+
+IGNORE_TRANSACTIONS = """
+Buy Market
+Sell Market
+Buy Order
+Sell Order
+Change Margin
+Change Order
+Change Trade
+Order Cancelled
+Order Expired
+Order Filled
+""".strip().splitlines()
+
+RELEVANT_TRANSACTIONS = """
+API Fee
+API License Fee
+Wire Fee
+Buy Market Filled
+Close Position
+Close Trade
+Fund Deposit
+Fund Withdrawal
+Fund Withdrawal (Transfer)
+Interest
+Sell Market Filled
+Stop Loss
+Stop Loss (Cancelled)
+Take Profit
+Trade Cancel
+""".strip().splitlines()
+
+
+def find_changing_types(filename):
+    bytype = collections.defaultdict(list)
+    for obj in utils.csv_dict_reader(filename):
+        txntype = obj['transaction']
+        bytype[txntype].append(obj)
+
+    unchanging_types = set(bytype.keys())
+    prev_balance = Decimal()
+    for obj in utils.csv_dict_reader(filename):
+        balance = obj['balance'].strip()
+        if balance and balance != prev_balance:
+            if obj['transaction'] in unchanging_types:
+                print(obj)
+            unchanging_types.discard(obj['transaction'])
+            prev_balance = balance
+
+    print("Unchanging types:")
+    for txntype in unchanging_types:
+        print(txntype)
+    print()
+
+    print("Changing types:")
+    changing_types = set(bytype.keys()) - unchanging_types
+    for txntype in changing_types:
+        print(txntype)
+    print()
+
+
+def get_number(obj, aname):
+    str_value = obj[aname].strip()
+    if str_value:
+        return Decimal(str_value)
+    else:
+        return Decimal()
+
+
+def is_balanced_txn(obj):
+    "Return true if the transaction is supposed to be balanced."
+    txntype = obj['transaction']
+    return (not txntype.startswith('Fund ') and
+            not txntype.startswith('API ') and
+            txntype != 'Wire Fee')
+
+
+ZERO = Decimal()
+ONE_CENT = Decimal('0.01')
+
+
+def guess_currency(filename):
+    """Try to guess the base currency of the account.
+    We use the first transaction with a deposit or something
+    that does not involve an instrument."""
+    for obj in utils.csv_dict_reader(filename):
+        if re.match('[A-Z]+$', obj['pair']):
+            return obj['pair']
+
+
+def oanda_add_posting(entry, account, number, currency):
+    position = Position(Lot(currency, None, None), number)
+    posting = Posting(entry, account, position, None, None)
+    entry.postings.append(posting)
+
+
+def import_csv_oanda(filename, entries):
+    new_entries = []
+    annotations = {}
+
+    ## return find_changing_types(filename)
+
+    currency = guess_currency(filename)
+
+    # Iterate over all the transactions in the OANDA account.
+    prev_balance = Decimal('0')
+    prev_date = datetime.date(1970, 1, 1)
+    for lineno, obj in enumerate(utils.csv_dict_reader(filename)):
+        txntype = obj['transaction']
+        date = datetime.datetime.strptime(obj['date'], '%B %d %H:%M:%S %Y %Z').date()
+
+        # Insert some Check entries every month or so.
+        if date.month != prev_date.month:
+            prev_date = date
+            fileloc = data.FileLocation(filename, lineno)
+            amount = Amount(prev_balance, currency)
+            new_entries.append(Check(fileloc, date, ACC_ASSET, amount, None))
+
+        # Ignore certain ones that have no effect on the balance, they just
+        # change our positions.
+        if txntype in IGNORE_TRANSACTIONS:
+            continue
+
+        # Get the change amounts.
+        interest = get_number(obj, 'interest')
+        pnl = get_number(obj, 'p_l')
+        amount = get_number(obj, 'amount')
+        other = None
+
+        # If the amount of change is supposed to balance, assert the
+        # interest/pnl components match the amount.
+        if is_balanced_txn(obj):
+            assert interest + pnl == amount, (interest, pnl, amount, obj)
+        else:
+            # Otherwise use the amount itself.
+            assert interest == ZERO
+            assert pnl == ZERO
+            other = amount
+
+            # THe wire fee amount is inverted...
+            if txntype == 'Wire Fee':
+                other = -other
+
+        del amount
+
+        # Compute the change in any case.
+        change = pnl + interest + (other or ZERO)
+
+        # Compute the running balance and cross-check against what they report.
+        balance = get_number(obj, 'balance')
+        computed_balance = prev_balance + change
+
+        # # (Note: there appeared to be a bug in how the balance was reported in
+        # # 2007 for "Trade Cancel" entries; for that one we don't check)
+        # if (abs(computed_balance - balance) > ONE_CENT and
+        #     not (txntype == 'Trade Cancel' and date.year == 2007)):
+        #     print("CANCEL_BUG")
+        #     print((prev_balance, balance, change), (computed_balance - balance))
+        #     pprint(obj)
+        #     # raise SystemExit
+
+        # Save the balance to compute the next one.
+        prev_balance = balance
+
+        # Create the transaction.
+        fileloc = data.FileLocation(filename, lineno)
+        narration = '({}) {} - {}'.format(obj['ticket'], txntype, obj['pair'])
+        entry = Transaction(fileloc, date, FLAG_IMPORT, None, narration, set(), [])
+
+        # FIXME: Add the rate for transfers
+        if pnl != ZERO:
+            oanda_add_posting(entry, ACC_PNL, -pnl, currency)
+
+        if interest != ZERO:
+            oanda_add_posting(entry, ACC_INTEREST, -interest, currency)
+
+        if other is not None:
+            oanda_add_posting(entry, ACC_OTHER, -other, currency)
+
+        oanda_add_posting(entry, ACC_ASSET, change, currency)
+
+        if len(entry.postings) < 2:
+            continue
+
+        # FIXME: temporary
+        if obj['ticket'] in OANDA_IGNORED:
+            continue
+
+        new_entries.append(entry)
+
+        assert len(entry.postings) > 1, format_entry(entry)
+
+        # FIXME: You need to compress the interest amounts together...
+        # FIXME: Add some regularly spaced check directives (!) - EASY.
+
+
+    new_entries.sort(key=lambda entry: entry.date)
+    return new_entries, annotations
+
+# FIXME: Temporary; these would have been done manually. For debugging now, ignore, while developing.
+OANDA_IGNORED = set(['873690057', '980400948', '1051458865'])
+
+
+
+# FIXME: We need to obtain this structure somehow from the configuration.
+ACC_ASSET    = Account('Assets:US:OANDA:Primary', 'Assets')
+ACC_INTEREST = Account('Income:US:OANDA:Primary:Interest', 'Income')
+ACC_PNL      = Account('Income:US:OANDA:Primary:PnL', 'Income')
+ACC_OTHER    = Account('Assets:US:OANDA:Transfer', 'Assets')
+
+# FIXME TODO:
+# - Check that ignored transactions have zero amounts
+# - Render tran link with @, and the ticket nuembr too
+# - Compress the interest
+# - Render the transaction prices
+# - Automatically fill in accounts for API and deposits / transfers (based on the currency)
+# - Add the positions taken into subaccounts, a large positive number and a large negative number, this should be possible, under e.g. 'Income:US:OANDA:Primary:Positions:EUR_USD'
+
+
+
+
+
+## FIXME: remove
+# def format_transaction(date, ticket, description, currency, postings):
+#     return ("{date} * ({ticket}) {description}\n".format(**vars()) +
+#             '\n'.join("  {:48} {:14.4f} {}".format(account, amount, currency)
+#                       for (account, amount) in postings))
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -404,11 +653,17 @@ def import_ofx(filename, entries):
 # Importers.
 #
 
+def import_csv(filename, entries):
+    ## FIXME: You need to somehow identify the institution separately.
+    return import_csv_oanda(filename, entries)
+
 IMPORTER_HANDLERS = {
-    # 'text/csv'                 : identify_csv,
+    'text/csv'                 : import_csv,
     'application/x-ofx'        : import_ofx,
     'application/vnd.intu.qbo' : import_ofx,
 }
+
+
 
 
 
@@ -446,7 +701,7 @@ class EntryPrinter:
             flag = '{} '.format(posting.flag) if posting.flag else ''
             assert posting.account is not None
             assert posting.position is not None
-            oss.write('  {}{:64} {} {}\n'.format(flag, posting.account.name, posting.position, posting.price or ''))
+            oss.write('  {}{:64} {:>16} {:>16}\n'.format(flag, posting.account.name, posting.position, posting.price or ''))
 
     def Check(_, entry, oss):
         oss.write('{e.date} check {e.account.name} {e.amount}\n'.format(e=entry))
@@ -465,6 +720,9 @@ def format_string(string):
 
 def format_entry(entry):
     return EntryPrinter()(entry)
+
+
+
 
 
 
@@ -501,14 +759,19 @@ def main():
 
     entries, errors, options = load(opts.filename)
 
-    for filename in walk_files(opts.directories):
+    for filename in utils.walk_files_or_dirs(opts.directories):
         print(',--------------------------------------------------------------------------------')
         print(filename)
         print()
+
         identification = identify_account(filename, entries)
         if not identification:
             continue # Skip file.
         filetype, account = identification
+        print(filetype, account)
+
+        # FIXME: Maybe the identification triple should be (mimetype, institution, account-id)?
+
 
         importer = IMPORTER_HANDLERS.get(filetype)
         if importer is None:
@@ -517,6 +780,11 @@ def main():
         new_entries, annotations = importer(filename, entries)
 
         for entry in new_entries:
+
+            # # Skip transfer posting for now.
+            # if isinstance(entry, Transaction) and any(posting.account is ACC_OTHER for posting in entry.postings):
+            #     continue
+
             print(format_entry(entry))
 
 

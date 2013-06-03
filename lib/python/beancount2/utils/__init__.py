@@ -4,6 +4,10 @@ Generic utility packages and functions.
 from time import time
 import contextlib
 from collections import defaultdict
+import csv
+import re
+import os
+from os import path
 
 
 @contextlib.contextmanager
@@ -55,3 +59,20 @@ def index_key(sequence, value, key=None):
             return index
     return None
 
+
+def csv_dict_reader(filename):
+    "Read a CSV file yielding namedtuples."
+    reader = csv.DictReader(open(filename))
+    reader.fieldnames = [re.sub('[^a-z]', '_', x.lower()).strip(' _') for x in reader.fieldnames]
+    return reader
+
+def walk_files_or_dirs(fords, ignore_dirs=['.hg', '.svn', '.git']):
+    """Enumerate the files under the given directories."""
+    for ford in fords:
+        if path.isdir(ford):
+            for root, dirs, filenames in os.walk(ford):
+                dirs[:] = [dirname for dirname in dirs if dirname not in ignore_dirs]
+                for filename in filenames:
+                    yield path.join(root, filename)
+        else:
+            yield ford

@@ -1,6 +1,18 @@
 -*- mode: org -*-
 beancount: TODO
+* Pending
+
+
 * NEW
+  
+  - Restore the Check threshold to its normal value; figure out rounding errors
+    in OANDA
+
+  - Inventory: Implement a test for Inventory.get_amounts() with multiple lots of the same
+    currency; they really should have been aggregated.  
+  - Inventory: Implement averaging of lots in order to report positions nicely.
+
+
 
   - You now HAVE to implement average price tracking... not an option. Thanks
     to Vanguard #$(*#(*$.
@@ -1506,6 +1518,9 @@ beancount: TODO
 ** Documentation
 
   - Write a simple cheat-sheet with an overview of the syntax
+
+  - Describe and document the data structures in a language-independent way,
+    this is really important.  I have a really nice subset by now.
 
   - Include the nice diagram made for DGreenberg, we need a 3D version of it.
 
