@@ -800,55 +800,7 @@ def main():
 # FIXME: Write a routine that will allow each importer to declare the list of
 # accounts that it requires in order to run.
 
-IMPORTER_CONFIG = {
 
-    ('oanda', 'text/csv', '912333'):
-    {
-        'FILE'     : account_from_name('Assets:US:OANDA:Primary'),
-        'asset'    : account_from_name('Assets:US:OANDA:Primary'),
-        'interest' : account_from_name('Income:US:OANDA:Primary:Interest'),
-        'pnl'      : account_from_name('Income:US:OANDA:Primary:PnL'),
-        'transfer' : account_from_name('Assets:US:OANDA:Transfer'),
-        'limbo'    : account_from_name('Assets:US:OANDA:Limbo'),
-        'fees'     : account_from_name('Expenses:Financial:Fees:OANDA'),
-    },
-
-    ('oanda', 'text/csv', '207359'):
-    {
-        'FILE'     : account_from_name('Assets:US:OANDA:Canadian'),
-        'asset'    : account_from_name('Assets:US:OANDA:Canadian'),
-        'interest' : account_from_name('Income:US:OANDA:Canadian:Interest'),
-        'pnl'      : account_from_name('Income:US:OANDA:Canadian:PnL'),
-        'transfer' : account_from_name('Assets:US:OANDA:Transfer'),
-        'limbo'    : account_from_name('Assets:US:OANDA:Limbo'),
-        'fees'     : account_from_name('Expenses:Financial:Fees:OANDA'),
-    },
-
-    ('oanda', 'text/csv', '742070'):
-    {
-        'FILE'     : account_from_name('Assets:US:OANDA:Hedging'),
-        'asset'    : account_from_name('Assets:US:OANDA:Hedging'),
-        'interest' : account_from_name('Income:US:OANDA:Hedging:Interest'),
-        'pnl'      : account_from_name('Income:US:OANDA:Hedging:PnL'),
-        'transfer' : account_from_name('Assets:US:OANDA:Transfer'),
-        'limbo'    : account_from_name('Assets:US:OANDA:Limbo'),
-        'fees'     : account_from_name('Expenses:Financial:Fees:OANDA'),
-    },
-
-    ('vanguard', 'application/x-ofx', '093926'):
-    {
-        'FILE'         : account_from_name('Assets:US:Vanguard'),
-        'asset_pretax' : account_from_name('Assets:US:Vanguard:PreTax'),
-        'asset_match'  : account_from_name('Assets:US:Vanguard:Match'),
-        'income_match' : account_from_name('Income:US:Google:Match401k'),
-        'dividend'     : account_from_name('Income:US:Vanguard:Dividend'),
-        'fees'         : account_from_name('Expenses:US:Vanguard:Fee'),
-        'asset_cash'   : account_from_name('Assets:US:Vanguard:Cash'),
-        'unknown'      : account_from_name('Equity:Unknown'),
-    },
-}
-
-# FIXME: make this into accounts-map, send it to the importer
 
 
 
