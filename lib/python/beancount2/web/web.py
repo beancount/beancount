@@ -333,7 +333,7 @@ def is_account_active(real_account):
 def table_of_balances(tree, start_node_name, currencies, classes=None):
     """Render a table of balances."""
 
-    header = ['Account'] + list(currencies) + ['Other']
+    header = ['Account'] + currencies + ['Other']
 
     # Pre-calculate which accounts should be rendered.
     active_accounts = tree.mark_from_leaves(is_account_active)
@@ -357,20 +357,11 @@ def table_of_balances(tree, start_node_name, currencies, classes=None):
         # Extract all the positions that the user has identified as home
         # currencies.
         positions = list(balance_cost.get_positions())
+
         for currency in currencies:
             position = balance_cost.get_position(Lot(currency, None, None))
             if position:
-                ## FIXME: remove the exception handling, it's temporary.
-                try:
-                    positions.remove(position)
-                except Exception:
-                    print(balance_cost.get_positions())
-                    print(positions)
-                    print(position)
-                    print(currency)
-                    print(currencies)
-                    raise
-
+                positions.remove(position)
                 cells.append('{:,.2f}'.format(position.number))
             else:
                 cells.append('')

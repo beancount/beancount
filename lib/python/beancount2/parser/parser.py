@@ -106,7 +106,7 @@ class Builder(object):
         self.errors = []
 
         # Accumulated and unprocessed options.
-        self.options = DEFAULT_OPTIONS.copy()
+        self.options = copy.deepcopy(DEFAULT_OPTIONS)
 
     def store_result(self, entries):
         """Start rule stores the final result here."""

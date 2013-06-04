@@ -1,6 +1,7 @@
 """
 Generic utility packages and functions.
 """
+import datetime
 from time import time
 import contextlib
 from collections import defaultdict
@@ -11,7 +12,9 @@ from os import path
 
 
 @contextlib.contextmanager
-def print_time(operation_name):
+def print_time(operation_name, quiet=False):
+    if quiet:
+        yield; return
     t1 = time()
     yield
     t2 = time()
@@ -66,6 +69,7 @@ def csv_dict_reader(filename):
     reader.fieldnames = [re.sub('[^a-z]', '_', x.lower()).strip(' _') for x in reader.fieldnames]
     return reader
 
+
 def walk_files_or_dirs(fords, ignore_dirs=['.hg', '.svn', '.git']):
     """Enumerate the files under the given directories."""
     for ford in fords:
@@ -76,3 +80,13 @@ def walk_files_or_dirs(fords, ignore_dirs=['.hg', '.svn', '.git']):
                     yield path.join(root, filename)
         else:
             yield ford
+
+
+ONEDAY = datetime.timedelta(days=1)
+
+def iter_dates(start_date, end_date):
+    "Yield all the dates between 'start_date' and 'end_date'."
+    date = start_date
+    while date < end_date:
+        yield date
+        date += ONEDAY
