@@ -1,7 +1,10 @@
 """
 Basic data structures used to represent the Ledger entries.
 """
+import io
+import os
 from collections import namedtuple, defaultdict
+
 from beancount2 import utils
 
 # Attempt to import a fast Decimal implementation if you can.
@@ -299,3 +302,54 @@ def get_account_ids(entries):
     return {entry.account_id: entry.account
             for entry in utils.filter_type(entries, Open)
             if entry.account_id is not None}
+
+
+#
+# Conversion to text.
+#
+
+class EntryPrinter:
+    "Multi-method for printing an entry."
+
+    @classmethod
+    def __call__(cls, obj):
+        oss = io.StringIO()
+        getattr(cls, obj.__class__.__name__)(cls, obj, oss)
+        return oss.getvalue()
+
+    def Transaction(_, entry, oss):
+        # Compute the string for the payee and narration line.
+        strings = []
+        if entry.payee:
+            strings.append('"{}" |'.format(entry.payee))
+            format_string(entry.payee)
+        if entry.narration:
+            strings.append('"{}"'.format(entry.narration))
+
+        oss.write('{e.date} {e.flag} {}\n'.format(' '.join(strings), e=entry))
+
+        for posting in entry.postings:
+            flag = '{} '.format(posting.flag) if posting.flag else ''
+            assert posting.account is not None
+            assert posting.position is not None
+            oss.write('  {}{:64} {:>16} {:>16}\n'.format(flag, posting.account.name, posting.position, posting.price or ''))
+
+    def Check(_, entry, oss):
+        oss.write('{e.date} check {e.account.name} {e.amount}\n'.format(e=entry))
+
+    def Note(_, entry, oss):
+        oss.write('{e.date} note {e.account.name} {e.comment}\n'.format(e=entry))
+
+    def Pad(_, entry, oss):   raise NotImplementedError
+    def Open(_, entry, oss):  raise NotImplementedError
+    def Close(_, entry, oss): raise NotImplementedError
+    def Event(_, entry, oss): raise NotImplementedError
+    def Price(_, entry, oss): raise NotImplementedError
+
+
+def format_string(string):
+    return '"%s"' % string if string is not None else ''
+
+
+def format_entry(entry):
+    return EntryPrinter()(entry)

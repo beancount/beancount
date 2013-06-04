@@ -25,7 +25,7 @@ from pprint import pprint
 from beancount2.parser import load
 from beancount2.core import data
 from beancount2.core.data import Account, Posting, Transaction, Check, Note, Decimal, Lot, Amount
-from beancount2.core.data import account_from_name
+from beancount2.core.data import account_from_name, format_entry
 from beancount2.core.inventory import Position
 from beancount2 import utils
 
@@ -175,7 +175,7 @@ def identify_account(filename, entries):
     account_ids = data.get_account_ids(entries)
     account_id, account = identify_fun(filename, account_ids)
 
-    return filetype, account
+    return filetype, account_id
 
 
 
@@ -192,10 +192,6 @@ def identify_account(filename, entries):
 #
 # OFX Parser.
 #
-
-
-UNKNOWN_ACCOUNT = Account('Assets:?', 'Assets')
-
 
 def souptodict(node):
     """Convert all of the child nodes from BeautifulSoup node into a dict.
@@ -241,7 +237,7 @@ def get_securities(soup):
     return securities
 
 
-def import_ofx(filename, entries):
+def import_ofx(filename, config, entries):
     """Extract transaction info from the given OFX file into transactions for the
     given account. This function returns a list of entries possibly partially
     filled entries, and a dictionary of annotations to be attached to entries
@@ -273,10 +269,11 @@ def import_ofx(filename, entries):
             # Extract account-wide information.
             acctid = ofx_get_account(stmtrs)
 
+## FIXME: We probably don't need this anymore; use the config
             # Attempt to get an account from the ledger entries.
             account_name = account_ids.get(acctid).name
             if account_name is None:
-                account_name = UNKNOWN_ACCOUNT.name
+                account_name = config['unknown']
 
             # Process all regular or credit-card transaction lists.
             for tranlist in stmtrs.find_all(re.compile('(|cc)tranlist')):
@@ -307,18 +304,18 @@ def import_ofx(filename, entries):
 #FIXME: This needs to move into an import config and be provided as input.
             # FIXME: This needs to be parameterized.
             source_subaccounts = {
-                'PRETAX' : 'Assets:US:Vanguard:PreTax',
-                'MATCH'  : 'Assets:US:Vanguard:Match',
+                'PRETAX' : config['asset_pretax'],
+                'MATCH'  : config['asset_match'],
             }
             def get_cash_account(trantype, source, incometype):
                 if trantype == 'BUYMF' and source == 'MATCH':
-                    return 'Income:US:Google:Match401k'
+                    return config['income_match']
                 elif trantype == 'REINVEST':
-                    return 'Income:US:Vanguard:Dividend'
+                    return config['dividend']
                 elif trantype == 'TRANSFER':
-                    return 'Expenses:US:Vanguard:Fee'
+                    return config['fees']
                 else:
-                    return 'Assets:US:Vanguard:Cash'
+                    return config['asset_cash']
 
 
 # FIXME: Make this into a function its own
@@ -440,6 +437,8 @@ Take Profit
 Trade Cancel
 Buy Market
 Sell Market
+FXGlobalTransfer Sent
+FXGlobalTransfer Fee
 """.strip().splitlines()
 
 
@@ -482,9 +481,11 @@ def get_number(obj, aname):
 def is_balanced_txn(obj):
     "Return true if the transaction is supposed to be balanced."
     txntype = obj['transaction']
-    return (not txntype.startswith('Fund ') and
-            not txntype.startswith('API ') and
-            txntype != 'Wire Fee')
+    return not (txntype.startswith('Fund ') or
+                txntype.startswith('FXGlobalTransfer ') or
+                txntype.startswith('API ') or
+                re.search(txntype, 'Wire Fee') or
+                re.search(txntype, 'FXGlobalTransfer Fee'))
 
 
 ZERO = Decimal()
@@ -506,13 +507,9 @@ def oanda_add_posting(entry, account, number, currency):
     entry.postings.append(posting)
 
 
-def import_csv_oanda(filename, entries):
+def import_csv_oanda(filename, config, entries):
     new_entries = []
     annotations = {}
-
-    # FIXME: This should be passed in.
-    accounts = importer_config[('oanda', 'text/csv', '912333')]
-
 
     max_diff = Decimal()
     ## return find_changing_types(filename)
@@ -531,12 +528,13 @@ def import_csv_oanda(filename, entries):
             prev_date = date
             fileloc = data.FileLocation(filename, lineno)
             amount = Amount(prev_balance, currency)
-            new_entries.append(Check(fileloc, date, accounts['asset'], amount, None))
+            new_entries.append(Check(fileloc, date, config['asset'], amount, None))
 
         # Ignore certain ones that have no effect on the balance, they just
         # change our positions.
         if txntype in IGNORE_TRANSACTIONS:
             continue
+        assert txntype in RELEVANT_TRANSACTIONS, txntype
 
         # Get the change amounts.
         interest = get_number(obj, 'interest')
@@ -557,14 +555,14 @@ def import_csv_oanda(filename, entries):
             if re.search('Wire Fee', txntype):
                 # The wire fee amount is inverted, and book to fees account.
                 other = -other
-                other_account = accounts['fees']
+                other_account = config['fees']
 
             elif re.search('Transfer', txntype):
                 # For transfers, use the other OANDA account.
-                other_account = accounts['transfer']
+                other_account = config['transfer']
             else:
                 # Otherwise, well... we just don't know.
-                other_account = accounts['limbo']
+                other_account = config['limbo']
 
         del amount
 
@@ -593,11 +591,11 @@ def import_csv_oanda(filename, entries):
         entry = Transaction(fileloc, date, FLAG_IMPORT, None, narration, set(), [])
 
         # FIXME: Add the rates for transfers
-        oanda_add_posting(entry, accounts['asset'], change, currency)
+        oanda_add_posting(entry, config['asset'], change, currency)
         if pnl != ZERO:
-            oanda_add_posting(entry, accounts['pnl'], -pnl, currency)
+            oanda_add_posting(entry, config['pnl'], -pnl, currency)
         if interest != ZERO:
-            oanda_add_posting(entry, accounts['interest'], -interest, currency)
+            oanda_add_posting(entry, config['interest'], -interest, currency)
         if other is not None:
             oanda_add_posting(entry, other_account, -other, currency)
 
@@ -623,7 +621,7 @@ def import_csv_oanda(filename, entries):
             max_diff = diff
 
         if 0:
-            balance_entry = Note(entry.fileloc, entry.date, accounts['asset'],
+            balance_entry = Note(entry.fileloc, entry.date, config['asset'],
                                  'balance {}  -  {}  =  {}'.format(balance,
                                                                    computed_balance,
                                                                    diff))
@@ -637,8 +635,8 @@ def import_csv_oanda(filename, entries):
         # FIXME: You need to compress the interest amounts together...
         # FIXME: Add some regularly spaced check directives (!) - EASY.
 
-    print(';;; MAX_DIFF', max_diff)
-    print()
+    # print(';;; MAX_DIFF', max_diff)
+    # print()
 
 
 
@@ -648,16 +646,14 @@ def import_csv_oanda(filename, entries):
 
 # FIXME: Temporary; these would have been done manually. For debugging now, ignore, while developing.
 OANDA_IGNORED = set(['873690057', '980400948', '1051458865'])
-# FIXME: We need to book fees
 
 # FIXME TODO:
+# - Compress the interest (in a separate routine that is functional, operates on a list of entries...)
 # - Check that ignored transactions have zero amounts
 # - Render tran link with @, and the ticket number too, as @links from my system
-# - Compress the interest (in a separate routine)
 # - Render the transaction prices
 # - Automatically fill in accounts for API and deposits / transfers (based on the currency)
 # - Add the positions taken into subaccounts, a large positive number and a large negative number, this should be possible, under e.g. 'Income:US:OANDA:Primary:Positions:EUR_USD'
-
 
 
 
@@ -683,9 +679,9 @@ OANDA_IGNORED = set(['873690057', '980400948', '1051458865'])
 # Importers.
 #
 
-def import_csv(filename, entries):
+def import_csv(filename, config, entries):
     ## FIXME: You need to somehow identify the institution separately.
-    return import_csv_oanda(filename, entries)
+    return import_csv_oanda(filename, config, entries)
 
 IMPORTER_HANDLERS = {
     'text/csv'                 : import_csv,
@@ -702,56 +698,6 @@ IMPORTER_HANDLERS = {
 
 
 
-#
-# Conversion to text.
-#
-
-
-class EntryPrinter:
-    "Multi-method for printing an entry."
-
-    @classmethod
-    def __call__(cls, obj):
-        oss = io.StringIO()
-        getattr(cls, obj.__class__.__name__)(cls, obj, oss)
-        return oss.getvalue()
-
-    def Transaction(_, entry, oss):
-        # Compute the string for the payee and narration line.
-        strings = []
-        if entry.payee:
-            strings.append('"{}" |'.format(entry.payee))
-            format_string(entry.payee)
-        if entry.narration:
-            strings.append('"{}"'.format(entry.narration))
-
-        oss.write('{e.date} {e.flag} {}\n'.format(' '.join(strings), e=entry))
-
-        for posting in entry.postings:
-            flag = '{} '.format(posting.flag) if posting.flag else ''
-            assert posting.account is not None
-            assert posting.position is not None
-            oss.write('  {}{:64} {:>16} {:>16}\n'.format(flag, posting.account.name, posting.position, posting.price or ''))
-
-    def Check(_, entry, oss):
-        oss.write('{e.date} check {e.account.name} {e.amount}\n'.format(e=entry))
-
-    def Note(_, entry, oss):
-        oss.write('{e.date} note {e.account.name} {e.comment}\n'.format(e=entry))
-
-    def Pad(_, entry, oss):   raise NotImplementedError
-    def Open(_, entry, oss):  raise NotImplementedError
-    def Close(_, entry, oss): raise NotImplementedError
-    def Event(_, entry, oss): raise NotImplementedError
-    def Price(_, entry, oss): raise NotImplementedError
-
-
-def format_string(string):
-    return '"%s"' % string if string is not None else ''
-
-
-def format_entry(entry):
-    return EntryPrinter()(entry)
 
 
 
@@ -799,32 +745,46 @@ def main():
     entries, errors, options = load(opts.filename, quiet=True)
 
     for filename in utils.walk_files_or_dirs(opts.directories):
-        print(';;')
-        print(';; {}'.format(filename))
-        print(';;\n')
 
+        # Figure out the account's filetype and account-id.
         identification = identify_account(filename, entries)
         if not identification:
             continue # Skip file.
-        filetype, account = identification
+        filetype, account_id = identification
+
+        # We need to guess the institution too, somehow.
+
 
         # FIXME: Maybe the identification triple should be (mimetype, institution, account-id)?
 
-
+        # Get the relevant importer function/module.
         importer = IMPORTER_HANDLERS.get(filetype)
         if importer is None:
             continue # No importer available for this filetype.
 
-        new_entries, annotations = importer(filename, entries)
+        institution = 'oanda'  ## FIXME: We need a routine to guess the institution
+
+
+        # Get the relevant importer config.
+        key = (institution, filetype, account_id)
+        config = IMPORTER_CONFIG[key]
+
+        # Run the importer.
+        new_entries, annotations = importer(filename, config, entries)
 
         # Filter out entries with dates before 'mindate'.
         if opts.mindate:
             new_entries = list(itertools.dropwhile(lambda x: x.date < opts.mindate,
                                                    new_entries))
 
-
         # Find potential matching entries.
         duplicate_entries = find_duplicate_entries(new_entries, entries)
+
+        print(';;')
+        print(';; {}'.format(filename))
+        print(';; ({}, {}, {})'.format(institution, filetype, account_id))
+        print(';;\n')
+
 
         for entry in new_entries:
             entry_string = format_entry(entry)
@@ -837,6 +797,58 @@ def main():
             print(entry_string)
 
 
+# FIXME: Write a routine that will allow each importer to declare the list of
+# accounts that it requires in order to run.
+
+IMPORTER_CONFIG = {
+
+    ('oanda', 'text/csv', '912333'):
+    {
+        'FILE'     : account_from_name('Assets:US:OANDA:Primary'),
+        'asset'    : account_from_name('Assets:US:OANDA:Primary'),
+        'interest' : account_from_name('Income:US:OANDA:Primary:Interest'),
+        'pnl'      : account_from_name('Income:US:OANDA:Primary:PnL'),
+        'transfer' : account_from_name('Assets:US:OANDA:Transfer'),
+        'limbo'    : account_from_name('Assets:US:OANDA:Limbo'),
+        'fees'     : account_from_name('Expenses:Financial:Fees:OANDA'),
+    },
+
+    ('oanda', 'text/csv', '207359'):
+    {
+        'FILE'     : account_from_name('Assets:US:OANDA:Canadian'),
+        'asset'    : account_from_name('Assets:US:OANDA:Canadian'),
+        'interest' : account_from_name('Income:US:OANDA:Canadian:Interest'),
+        'pnl'      : account_from_name('Income:US:OANDA:Canadian:PnL'),
+        'transfer' : account_from_name('Assets:US:OANDA:Transfer'),
+        'limbo'    : account_from_name('Assets:US:OANDA:Limbo'),
+        'fees'     : account_from_name('Expenses:Financial:Fees:OANDA'),
+    },
+
+    ('oanda', 'text/csv', '742070'):
+    {
+        'FILE'     : account_from_name('Assets:US:OANDA:Hedging'),
+        'asset'    : account_from_name('Assets:US:OANDA:Hedging'),
+        'interest' : account_from_name('Income:US:OANDA:Hedging:Interest'),
+        'pnl'      : account_from_name('Income:US:OANDA:Hedging:PnL'),
+        'transfer' : account_from_name('Assets:US:OANDA:Transfer'),
+        'limbo'    : account_from_name('Assets:US:OANDA:Limbo'),
+        'fees'     : account_from_name('Expenses:Financial:Fees:OANDA'),
+    },
+
+    ('vanguard', 'application/x-ofx', '093926'):
+    {
+        'FILE'         : account_from_name('Assets:US:Vanguard'),
+        'asset_pretax' : account_from_name('Assets:US:Vanguard:PreTax'),
+        'asset_match'  : account_from_name('Assets:US:Vanguard:Match'),
+        'income_match' : account_from_name('Income:US:Google:Match401k'),
+        'dividend'     : account_from_name('Income:US:Vanguard:Dividend'),
+        'fees'         : account_from_name('Expenses:US:Vanguard:Fee'),
+        'asset_cash'   : account_from_name('Assets:US:Vanguard:Cash'),
+        'unknown'      : account_from_name('Equity:Unknown'),
+    },
+}
+
+# FIXME: make this into accounts-map, send it to the importer
 
 
 
@@ -845,7 +857,11 @@ def main():
 
 
 
-# FIXME: Move in core/diff.py somewhere.
+
+
+
+
+# FIXME: Move in core/diff.py somewhere, this is purely an operation on a list of entries that returns a filtered list.
 
 def find_duplicate_entries(new_entries, entries):
     """Find which entries from 'new_entries' are potential duplicates of
@@ -920,57 +936,6 @@ def find_duplicate_entries(new_entries, entries):
 
 
 
-# FIXME: Write a routine that will allow each importer to declare the list of
-# accounts that it requires in order to run.
-
-importer_config = {
-
-    ('oanda', 'text/csv', '912333'):
-    {
-        'FILE'     : account_from_name('Assets:US:OANDA:Primary'),
-        'asset'    : account_from_name('Assets:US:OANDA:Primary'),
-        'interest' : account_from_name('Income:US:OANDA:Primary:Interest'),
-        'pnl'      : account_from_name('Income:US:OANDA:Primary:PnL'),
-        'transfer' : account_from_name('Assets:US:OANDA:Canadian'),
-        'limbo'    : account_from_name('Assets:US:OANDA:Limbo'),
-        'fees'     : account_from_name('Expenses:Financial:Fees:OANDA'),
-    },
-
-    ('oanda', 'text/csv', '207359'):
-    {
-        'FILE'     : account_from_name('Assets:US:OANDA:Canadian'),
-        'asset'    : account_from_name('Assets:US:OANDA:Canadian'),
-        'interest' : account_from_name('Income:US:OANDA:Canadian:Interest'),
-        'pnl'      : account_from_name('Income:US:OANDA:Canadian:PnL'),
-        'transfer' : account_from_name('Assets:US:OANDA:Primary'),
-        'limbo'    : account_from_name('Assets:US:OANDA:Limbo'),
-        'fees'     : account_from_name('Expenses:Financial:Fees:OANDA'),
-    },
-
-    ('oanda', 'text/csv', '742070'):
-    {
-        'FILE'     : account_from_name('Assets:US:OANDA:Hedging'),
-        'asset'    : account_from_name('Assets:US:OANDA:Hedging'),
-        'interest' : account_from_name('Income:US:OANDA:Hedging:Interest'),
-        'pnl'      : account_from_name('Income:US:OANDA:Hedging:PnL'),
-        'transfer' : account_from_name('Assets:US:OANDA:Primary'),
-        'limbo'    : account_from_name('Assets:US:OANDA:Limbo'),
-        'fees'     : account_from_name('Expenses:Financial:Fees:OANDA'),
-    },
-
-    ('vanguard', 'application/x-ofx', '093926'):
-    {
-        'FILE'         : account_from_name('Assets:US:Vanguard'),
-        'pretax_asset' : account_from_name('Assets:US:Vanguard:PreTax'),
-        'match_asset'  : account_from_name('Assets:US:Vanguard:Match'),
-        'match_income' : account_from_name('Income:US:Google:Match401k'),
-        'dividend'     : account_from_name('Income:US:Vanguard:Dividend'),
-        'fees'         : account_from_name('Expenses:US:Vanguard:Fee'),
-        'cash_asset'   : account_from_name('Assets:US:Vanguard:Cash'),
-    },
-}
-
-# FIXME: make this into accounts-map, send it to the importer
 
 
 

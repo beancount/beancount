@@ -78,7 +78,7 @@ def walk_files_or_dirs(fords, ignore_dirs=['.hg', '.svn', '.git']):
                 dirs[:] = [dirname for dirname in dirs if dirname not in ignore_dirs]
                 for filename in filenames:
                     yield path.join(root, filename)
-        else:
+        elif path.isfile(ford) or path.islink(ford):
             yield ford
 
 
