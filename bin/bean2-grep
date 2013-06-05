@@ -33,7 +33,7 @@ def main():
     opts = optparser.parse_args()
 
     # Parse the input file.
-    entries, errors, options = parser.load(opts.filename, False)
+    entries, errors, options = parser.load(opts.filename, quiet=True)
 
     # Create a mapping from a unique value (we're using the fileloc) to the
     # entry objects.
