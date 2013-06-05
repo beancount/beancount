@@ -243,8 +243,6 @@ def import_ofx(filename, config, entries):
     filled entries, and a dictionary of annotations to be attached to entries
     and postings.
     """
-    account_ids = data.get_account_ids(entries)
-
     new_entries = []
     annotations = {}
 
@@ -253,8 +251,9 @@ def import_ofx(filename, config, entries):
 
     # Get the description of securities used in this file.
     securities = get_securities(soup)
-    securities_map = {security['uniqueid']: security
-                      for security in securities}
+    if securities:
+        securities_map = {security['uniqueid']: security
+                          for security in securities}
 
     # For each statement.
     txn_counter = itertools.count()
@@ -269,11 +268,8 @@ def import_ofx(filename, config, entries):
             # Extract account-wide information.
             acctid = ofx_get_account(stmtrs)
 
-## FIXME: We probably don't need this anymore; use the config
             # Attempt to get an account from the ledger entries.
-            account_name = account_ids.get(acctid).name
-            if account_name is None:
-                account_name = config['unknown']
+            account_name = config['asset']
 
             # Process all regular or credit-card transaction lists.
             for tranlist in stmtrs.find_all(re.compile('(|cc)tranlist')):
@@ -286,6 +282,11 @@ def import_ofx(filename, config, entries):
                     # Build the transaction.
                     # date_start = parse_ofx_time(trndict['dtstart']).date()
                     # date_end = parse_ofx_time(trndict['dtend']).date()
+
+# FIXME: Debug this with TD, the XML is crap
+                    print(stmttrn.prettify())
+                    print(trndict)
+
                     date = parse_ofx_time(trndict['dtposted']).date()
                     fileloc = data.FileLocation(filename, next(txn_counter))
                     payee = None
@@ -524,7 +525,7 @@ def import_csv_oanda(filename, config, entries):
         date = datetime.datetime.strptime(obj['date'], '%B %d %H:%M:%S %Y %Z').date()
 
         # Insert some Check entries every month or so.
-        if date.day != prev_date.day:
+        if date.month != prev_date.month:
             prev_date = date
             fileloc = data.FileLocation(filename, lineno)
             amount = Amount(prev_balance, currency)
@@ -642,6 +643,13 @@ def import_csv_oanda(filename, config, entries):
 
 
     new_entries.sort(key=lambda entry: entry.date)
+
+
+    if True:
+        # Compress all the interest entries for a shorter and cleaner set of
+        # imported transactions.
+        new_entries = compress(new_entries, lambda entry: re.search('Interest', entry.narration))
+
     return new_entries, annotations
 
 # FIXME: Temporary; these would have been done manually. For debugging now, ignore, while developing.
@@ -733,6 +741,7 @@ def main():
     parser.add_argument('-m', '--mindate', metavar='DATA', action='store',
                         help="Filter entries before this date.")
     parser.add_argument('filename', help='Beancount input file')
+    parser.add_argument('config', help='Importer config file')
     parser.add_argument('directories', nargs='+', help='Directories to inspect')
     opts = parser.parse_args()
 
@@ -742,6 +751,12 @@ def main():
             parser.error("Invalid date format; must be YYYY-MM-DD")
         opts.mindate = datetime.date(*map(int, mo.groups()))
 
+    # Load up the importer config.
+    config = {}
+    config_module = exec(compile(open(opts.config).read(), opts.config, 'exec'), globals(), config)
+    IMPORTER_CONFIG = config['IMPORTER_CONFIG']
+
+    # Parse the ledger and get the entries from it.
     entries, errors, options = load(opts.filename, quiet=True)
 
     for filename in utils.walk_files_or_dirs(opts.directories):
@@ -767,10 +782,10 @@ def main():
 
         # Get the relevant importer config.
         key = (institution, filetype, account_id)
-        config = IMPORTER_CONFIG[key]
+        accounts = IMPORTER_CONFIG[key]
 
         # Run the importer.
-        new_entries, annotations = importer(filename, config, entries)
+        new_entries, annotations = importer(filename, accounts, entries)
 
         # Filter out entries with dates before 'mindate'.
         if opts.mindate:
@@ -877,7 +892,74 @@ def find_duplicate_entries(new_entries, entries):
     return duplicates
 
 
+def compress(entries, predicate):
+    """Replace consecutive sequences of Transaction entries that fulfill the given
+    predicate by a single entry at the date of the last entry found. 'predicate'
+    is a function that accepts an entry as an argument and returns a boolean,
+    true if the entry should be compressed.
 
+    This can be used to simply a list of transactions that are similar and occur
+    frequently. As an example, in a retail FOREX trading account, differential
+    interest of very small amounts is paid every day; it is not relevant to look
+    at the full detail of this interest unless there are other transactions. You
+    can use this to compress it into single entries between other types of
+    transactions.
+    """
+
+    new_entries = []
+
+    pending = []
+    for entry in entries:
+        if isinstance(entry, Transaction) and predicate(entry):
+            # Save for compressing later.
+            pending.append(entry)
+        else:
+            # Compress and output all the pending entries.
+            if pending:
+                new_entries.append(merge(pending, pending[-1]))
+                pending.clear()
+
+            # Output the differing entry.
+            new_entries.append(entry)
+
+    if pending:
+        new_entries.append(merge(pending, pending[-1]))
+
+    return new_entries
+
+
+def merge(entries, prototype_entry):
+    """Merge the given entries into a single entry with the characteristics of the
+    prototype. Return the new entry. The combined list of postings are merged if
+    everything about the postings is the same except the number.
+    """
+
+    # Aggregate the postings together.
+    postings_map = collections.defaultdict(Decimal)
+    for entry in entries:
+        for posting in entry.postings:
+            # Strip the number off the posting to act as an aggregation key.
+            lot = posting.position.lot
+            key = Posting(None, posting.account, lot, posting.price, posting.flag)
+
+            postings_map[key] += posting.position.number
+
+    # Create a new transaction with the aggregated postings.
+    new_entry = Transaction(prototype_entry.fileloc,
+                            prototype_entry.date,
+                            prototype_entry.flag,
+                            prototype_entry.payee,
+                            prototype_entry.narration,
+                            set(), [])
+
+    for posting, number in sorted(postings_map.items()):
+        lot = posting.position
+        position = Position(lot, number)
+        new_entry.postings.append(
+            Posting(new_entry,
+                    posting.account, position, posting.price, posting.flag))
+
+    return new_entry
 
 
 

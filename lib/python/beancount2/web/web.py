@@ -663,7 +663,7 @@ def entries_table_with_balance(oss, account_postings, render_postings=True):
 
         # Render a row.
         write('''
-          <tr class="{} {}">
+          <tr class="{} {}" title="{}">
             <td class="datecell">{}</td>
             <td class="flag">{}</td>
             <td class="description" colspan="4">{}</td>
@@ -671,6 +671,7 @@ def entries_table_with_balance(oss, account_postings, render_postings=True):
             <td class="balance num">{}</td>
           <tr>
         '''.format(rowtype, extra_class,
+                   '{}:{}'.format(entry.fileloc.filename, entry.fileloc.lineno),
                    date, flag, description, change_str, balance_str))
 
         if render_postings and isinstance(entry, Transaction):
@@ -759,12 +760,13 @@ def entries_table(oss, account_postings, render_postings=True):
 
         # Render a row.
         write('''
-          <tr class="{} {}">
+          <tr class="{} {}" title="{}">
             <td class="datecell">{}</td>
             <td class="flag">{}</td>
             <td class="description" colspan="5">{}</td>
           <tr>
         '''.format(rowtype, extra_class,
+                   '{}:{}'.format(entry.fileloc.filename, entry.fileloc.lineno),
                    date, flag, description))
 
         if render_postings and isinstance(entry, Transaction):
@@ -1203,7 +1205,7 @@ def main():
     # create_realizations(clean_entries, options)
 
     # Run the server.
-    app.run(host='localhost', port=8080, debug=args.debug, reloader=True)
+    app.run(host='localhost', port=8080, debug=args.debug, reloader=False)
 
 
 

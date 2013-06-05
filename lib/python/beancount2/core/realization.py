@@ -189,7 +189,7 @@ CheckError = namedtuple('CheckError', 'fileloc message')
 # This is based on some real-world usage: FOREX brokerage, for instance,
 # accumulates error up to 1bp, and we need to tolerate that if our importers
 # insert checks on at regular spaces, so we set the maximum limit at 1bp.
-CHECK_PRECISION = Decimal('.01')
+CHECK_PRECISION = Decimal('.015')
 
 def check(entries):
     """Check for all the Check directives and replace failing ones by new ones with

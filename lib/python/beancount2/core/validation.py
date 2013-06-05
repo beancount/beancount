@@ -141,3 +141,9 @@ def validate(entries):
                 prev_entry = entry
                 prev_date = entry.date
 '''
+
+
+
+# FIXME: Sanity check: Check that all postings of Transaction entries point to their actual parent.
+
+
