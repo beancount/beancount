@@ -105,6 +105,14 @@ table.tree-table tr.parent-node {
     background-color: #f8f8f8;
 }
 
+table tr.totals {
+    background-color: #d0d0d0;
+}
+
+span.totals-label {
+    font-weight: bold;
+}
+
 
 
 /* Table of entries / Journal */

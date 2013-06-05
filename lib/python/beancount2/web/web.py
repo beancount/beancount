@@ -264,6 +264,9 @@ def account_link(account_name, leafonly=False):
         return link
 
 
+# A special enum for the "Totals" line at the bottom of the table.
+TOTALS_LINE = object()
+
 def tree_table(oss, tree, start_node_name, header=None, classes=None):
     """Generator to a tree of accounts as an HTML table.
     Render only all the nodes under 'start_node_name'.
@@ -290,6 +293,10 @@ def tree_table(oss, tree, start_node_name, header=None, classes=None):
         return
 
     lines = list(tree.render_lines(start_node_name))
+
+    # Yield with a None for the final line.
+    lines.append((None, None, None, TOTALS_LINE))
+
     for line_first, _, account_name, real_account in lines:
 
         # Let the caller fill in the data to be rendered by adding it to a list
@@ -306,9 +313,16 @@ def tree_table(oss, tree, start_node_name, header=None, classes=None):
 
         # Render the row
         write('<tr class="{}">'.format(' '.join(row_classes)))
+
+        if real_account is TOTALS_LINE:
+            indent = 0
+            label = '<span class="totals-label">Totals</span>'
+        else:
+            indent = len(line_first)/EMS_PER_SPACE
+            label = account_link(real_account, leafonly=True)
+
         write('<td class="tree-node-name" style="padding-left: {}em">{}</td>'.format(
-            len(line_first)/EMS_PER_SPACE,
-            account_link(real_account, leafonly=True)))
+            indent, label))
 
         # Add columns for each value rendered.
         for cell in cells:
@@ -339,27 +353,35 @@ def table_of_balances(tree, start_node_name, currencies, classes=None):
     active_accounts = tree.mark_from_leaves(is_account_active)
     active_set = set(real_account.name for real_account in active_accounts)
 
+    balance_totals = Inventory()
     oss = io.StringIO()
     for real_account, cells, row_classes in tree_table(oss, tree, start_node_name,
                                                        header, classes):
 
-        # Check if this account has had activity; if not, skip rendering it.
-        if (real_account.name not in active_set and
-            not is_account_root(real_account.name)):
-            continue
+        if real_account is TOTALS_LINE:
+            balance = balance_totals
+            row_classes.append('totals')
+        else:
+            # Check if this account has had activity; if not, skip rendering it.
+            if (real_account.name not in active_set and
+                not is_account_root(real_account.name)):
+                continue
 
-        if real_account.account is None:
-            row_classes.append('parent-node')
+            if real_account.account is None:
+                row_classes.append('parent-node')
 
-        # For each account line, get the final balance of the account (at cost).
-        balance_cost = real_account.balance.get_cost()
+            # For each account line, get the final balance of the account (at cost).
+            balance = real_account.balance.get_cost()
+
+            # Update the total balance for the totals line.
+            balance_totals += balance
 
         # Extract all the positions that the user has identified as home
         # currencies.
-        positions = list(balance_cost.get_positions())
+        positions = list(balance.get_positions())
 
         for currency in currencies:
-            position = balance_cost.get_position(Lot(currency, None, None))
+            position = balance.get_position(Lot(currency, None, None))
             if position:
                 positions.remove(position)
                 cells.append('{:,.2f}'.format(position.number))
