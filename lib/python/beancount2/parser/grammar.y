@@ -40,6 +40,7 @@ const char* getTokenName(int token);
 #define DECREF3(x1, x2, x3)
 #define DECREF4(x1, x2, x3, x4)
 #define DECREF5(x1, x2, x3, x4, x5)
+#define DECREF6(x1, x2, x3, x4, x5, x6)
 
 
 #define FILE_LINE_ARGS  yy_filename, yylloc.first_line
@@ -103,6 +104,7 @@ const char* getTokenName(int token);
 %token <pyobj> STRING      /* A quoted string, with any characters inside */
 %token <pyobj> NUMBER      /* A floating-point number */
 %token <pyobj> TAG         /* A tag that can be associated with a transaction */
+%token <pyobj> LINK        /* A link that can be associated with a transaction */
 
 /* Types for non-terminal symbols. */
 %type <character> txn
@@ -124,6 +126,7 @@ const char* getTokenName(int token);
 %type <pyobj> entry
 %type <pyobj> declarations
 %type <pyobj> tags_list
+%type <pyobj> links_list
 %type <pyobj> account_id
 
 
@@ -167,15 +170,26 @@ tags_list : empty
               DECREF2($1, $2);
           }
 
-transaction : DATE txn STRING tags_list eol posting_list
+links_list : empty
+          {
+              Py_INCREF(Py_None);
+              $$ = Py_None;
+          }
+          | links_list LINK
+          {
+              $$ = BUILD("handle_list", "OO", $1, $2);
+              DECREF2($1, $2);
+          }
+
+transaction : DATE txn STRING tags_list links_list eol posting_list
             {
-                $$ = BUILD("transaction", "siObOOOO", FILE_LINE_ARGS, $1, $2, Py_None, $3, $4, $6);
-                DECREF4($1, $3, $4, $6);
+                $$ = BUILD("transaction", "siObOOOOO", FILE_LINE_ARGS, $1, $2, Py_None, $3, $4, $5, $7);
+                DECREF5($1, $3, $4, $5, $7);
             }
-            | DATE txn STRING PIPE STRING tags_list eol posting_list
+            | DATE txn STRING PIPE STRING tags_list links_list eol posting_list
             {
-                $$ = BUILD("transaction", "siObOOOO", FILE_LINE_ARGS, $1, $2, $3, $5, $6, $8);
-                DECREF5($1, $3, $5, $6, $8);
+                $$ = BUILD("transaction", "siObOOOOO", FILE_LINE_ARGS, $1, $2, $3, $5, $6, $7, $9);
+                DECREF6($1, $3, $5, $6, $7, $9);
             }
 
 optflag : empty
@@ -407,6 +421,7 @@ const char* getTokenName(int token)
         case STRING   : return "STRING";
         case NUMBER   : return "NUMBER";
         case TAG      : return "TAG";
+        case LINK     : return "LINK";
     }
     return 0;
 }

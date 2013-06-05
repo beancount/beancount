@@ -5,6 +5,15 @@ beancount: TODO
 
 * NEW
   
+  - Store links in parser.py and establish that empty tags and empty links can
+    be None.  
+
+  - Parser performance: don't call back builder for simple types that just
+    return their value; measure difference.
+
+
+
+
   - Restore the Check threshold to its normal value; figure out rounding errors
     in OANDA
 
@@ -876,6 +885,9 @@ beancount: TODO
     whatever else to get this job done at the parser level.
 
 ** General Improvements to Syntax
+
+  - For Links vs. Tags: dont impose an order, parse as tags_or_links.
+    Right now the order is tags_list and links_list.
 
   - You should accept commas in the input; simply ignore their value.
 

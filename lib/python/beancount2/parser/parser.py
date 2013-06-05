@@ -152,6 +152,9 @@ class Builder(object):
     def TAG(self, tag):
         return tag
 
+    def LINK(self, link):
+        return link
+
     def NUMBER(self, s):
         return Decimal(s)
 
@@ -208,7 +211,7 @@ class Builder(object):
             price = Amount(price.number / position.number, price.currency)
         return Posting(None, account, position, price, chr(flag) if flag else None)
 
-    def transaction(self, filename, lineno, date, flag, payee, narration, tags, postings):
+    def transaction(self, filename, lineno, date, flag, payee, narration, tags, links, postings):
         fileloc = FileLocation(filename, lineno)
 
         # Detect when a transaction does not have at least two legs.
@@ -231,7 +234,7 @@ class Builder(object):
 
         # Create the transaction. Note: we need to parent the postings.
         parented_postings = []
-        transaction = Transaction(fileloc, date, chr(flag), payee, narration, ctags,
+        transaction = Transaction(fileloc, date, chr(flag), payee, narration, ctags,  ## FIXME: Add the links here.
                                   parented_postings)
         # PERF(25ms): could be saved here by avoiding reparenting.
         for posting in postings:

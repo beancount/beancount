@@ -589,6 +589,13 @@ def import_csv_oanda(filename, config, entries):
         # Create the transaction.
         fileloc = data.FileLocation(filename, lineno)
         narration = '{} - {}  (@{})'.format(txntype, obj['pair'], obj['ticket'])
+
+## FIXME: Complete rendering the links
+        link = obj['tran_link'].strip()
+        links = set([link]) if link else None
+        if links:
+            print(links)
+
         entry = Transaction(fileloc, date, FLAG_IMPORT, None, narration, set(), [])
 
         # FIXME: Add the rates for transfers

@@ -158,6 +158,12 @@ option		{ return OPTION; }
     return TAG;
 }
 
+ /* Links */
+^[A-Za-z0-9\-_/.]+ 		{
+    yylval->pyobj = BUILD("LINK", "s", &(yytext[1]));
+    return LINK;
+}
+
  /* Default rule. This should never be reached. */
 .	{ report_error("Syntax error.", yylloc); }
 
