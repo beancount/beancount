@@ -162,7 +162,7 @@ def print_errors(errors):
 
 
 # All possible types of entries. See the documentation for these.
-Open        = namedtuple('Open'        , 'fileloc date account account_id currencies')
+Open        = namedtuple('Open'        , 'fileloc date account currencies')
 Close       = namedtuple('Close'       , 'fileloc date account')
 Pad         = namedtuple('Pad'         , 'fileloc date account account_pad')
 Check       = namedtuple('Check'       , 'fileloc date account amount errdiff')
@@ -295,13 +295,6 @@ def get_account_open_close(entries):
         open_closes_map[entry.account][index] = entry
 
     return open_closes_map
-
-
-def get_account_ids(entries):
-    """Return a mapping of account-ids to account objects."""
-    return {entry.account_id: entry.account
-            for entry in utils.filter_type(entries, Open)
-            if entry.account_id is not None}
 
 
 #

@@ -175,9 +175,9 @@ class Builder(object):
         object_list.append(object)
         return object_list
 
-    def open(self, filename, lineno, date, account, account_id, currencies):
+    def open(self, filename, lineno, date, account, currencies):
         fileloc = FileLocation(filename, lineno)
-        return Open(fileloc, date, account, account_id, currencies)
+        return Open(fileloc, date, account, currencies)
 
     def close(self, filename, lineno, date, account):
         fileloc = FileLocation(filename, lineno)

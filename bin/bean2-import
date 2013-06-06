@@ -113,10 +113,10 @@ def identify_string(text, account_ids):
     """Given some string 'text', find if any of the account-ids in the 'account_ids'
     map is present in the text and return the corresponding account, or None."""
 
-    for account_id, account in account_ids.items():
+    for account_id in account_ids:
         mo = re.search(sliced_match(account_id), text)
         if mo:
-            return account_id, account
+            return account_id
 
 
 def identify_pdf(filename, account_ids):
@@ -142,13 +142,13 @@ def identify_csv(filename, account_ids):
 
 
 
-def identify_ofx(filename, account_ids):
+def identify_ofx(filename, __account_ids):
     "Attempt to identify the account for the given OFX file."""
 
     soup = bs4.BeautifulSoup(open(filename), 'lxml')
     acctid = ofx_get_account(soup)
     try:
-        return (acctid, account_ids[acctid])
+        return acctid
     except KeyError:
         return None
 
@@ -161,7 +161,7 @@ IDENTIFY_HANDLERS = {
 }
 
 
-def identify_account(filename, entries):
+def identify_account(filename, entries, account_ids):
     """Given a filename, return the filetype and account that this file corresponds
     to, or None if it could not be identified."""
 
@@ -174,8 +174,7 @@ def identify_account(filename, entries):
         return
 
     # Attempt to find the corresponding account.
-    account_ids = data.get_account_ids(entries)
-    account_id, account = identify_fun(filename, account_ids)
+    account_id = identify_fun(filename, account_ids)
 
     # Attempt to find the corresponding institution.
     institution = None
@@ -777,13 +776,16 @@ def main():
     config_module = exec(compile(open(opts.config).read(), opts.config, 'exec'), globals(), config)
     IMPORTER_CONFIG = config['IMPORTER_CONFIG']
 
+    # Get the list of account-ids.
+    account_ids = [account_id for (_, _, account_id) in IMPORTER_CONFIG]
+
     # Parse the ledger and get the entries from it.
     entries, errors, options = load(opts.filename, quiet=True)
 
     for filename in utils.walk_files_or_dirs(opts.directories):
 
         # Figure out the account's filetype and account-id.
-        identification = identify_account(filename, entries)
+        identification = identify_account(filename, entries, account_ids)
         if not identification:
             continue # Skip file.
         institution, filetype, account_id = identification
