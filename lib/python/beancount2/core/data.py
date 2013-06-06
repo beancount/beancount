@@ -331,8 +331,8 @@ class EntryPrinter:
         for posting in entry.postings:
             flag = '{} '.format(posting.flag) if posting.flag else ''
             assert posting.account is not None
-            assert posting.position is not None
-            oss.write('  {}{:64} {:>16} {:>16}\n'.format(flag, posting.account.name, posting.position, posting.price or ''))
+            position = str(posting.position) if posting.position else ''
+            oss.write('  {}{:64} {:>16} {:>16}\n'.format(flag, posting.account.name, position, posting.price or ''))
 
     def Check(_, entry, oss):
         oss.write('{e.date} check {e.account.name} {e.amount}\n'.format(e=entry))

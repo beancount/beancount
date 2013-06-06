@@ -24,7 +24,7 @@ from pprint import pprint
 
 from beancount2.parser import load
 from beancount2.core import data
-from beancount2.core.data import Account, Posting, Transaction, Check, Note, Decimal, Lot, Amount
+from beancount2.core.data import Account, Posting, Transaction, Check, Open, Note, Decimal, Lot, Amount
 from beancount2.core.data import account_from_name, format_entry
 from beancount2.core.inventory import Position
 from beancount2 import utils
@@ -178,14 +178,20 @@ def identify_account(filename, entries, account_ids):
 
     # Attempt to find the corresponding institution.
     institution = None
+    contents = open(filename).read()
+    header = contents[:4096]
     if filetype == 'application/x-ofx':
-        contents = open(filename).read()
         # Test for signature strings... we could go further and look at the
         # bankid/org ofx tags.
-        if re.search(r'\bVanguard\b', contents):
+        if re.search(r'\bVanguard\b', header):
             institution = 'vanguard'
-        elif re.search(r'\b011103093\b', contents):
+        elif re.search(r'\b011103093\b', header):
             institution = 'td'
+    elif filetype == 'text/csv':
+        if re.match(r'Ticket\b.*\bPipettes\b', header):
+            institution = 'oanda'
+        elif re.search(r'MONEY MARKET PURCHASE \(MMDA1\)', header):
+            institution = 'ameritrade'
 
     return (institution, filetype, account_id)
 
@@ -484,13 +490,13 @@ FXGlobalTransfer Fee
 
 def find_changing_types(filename):
     bytype = collections.defaultdict(list)
-    for obj in utils.csv_dict_reader(filename):
+    for obj in utils.csv_dict_reader(open(filename)):
         txntype = obj['transaction']
         bytype[txntype].append(obj)
 
     unchanging_types = set(bytype.keys())
     prev_balance = Decimal()
-    for obj in utils.csv_dict_reader(filename):
+    for obj in utils.csv_dict_reader(open(filename)):
         balance = obj['balance'].strip()
         if balance and balance != prev_balance:
             if obj['transaction'] in unchanging_types:
@@ -537,7 +543,7 @@ def guess_currency(filename):
     """Try to guess the base currency of the account.
     We use the first transaction with a deposit or something
     that does not involve an instrument."""
-    for obj in utils.csv_dict_reader(filename):
+    for obj in utils.csv_dict_reader(open(filename)):
         if re.match('[A-Z]+$', obj['pair']):
             return obj['pair']
 
@@ -560,7 +566,7 @@ def import_csv_oanda(filename, config, entries):
     # Iterate over all the transactions in the OANDA account.
     prev_balance = Decimal('0')
     prev_date = datetime.date(1970, 1, 1)
-    for lineno, obj in enumerate(utils.csv_dict_reader(filename)):
+    for lineno, obj in enumerate(utils.csv_dict_reader(open(filename))):
         txntype = obj['transaction']
         date = datetime.datetime.strptime(obj['date'], '%B %d %H:%M:%S %Y %Z').date()
 
@@ -710,6 +716,179 @@ OANDA_IGNORED = set(['873690057', '980400948', '1051458865'])
 
 
 
+"""
+Convert an Ameritrade CSV file into a Ledger-compatible output.
+"""
+
+ACCOUNT_CASH = 'Assets:Investments:Ameritrade:Main'
+ACCOUNT_MONEYMARKET = 'Assets:Investments:Ameritrade:Main:MMDA1'
+ACCOUNT_FUNDING = 'Assets:Current:TD:Checking'
+ACCOUNT_FUNDING_WIRE = 'Assets:Investments:OANDA:Primary'
+ACCOUNT_INTEREST = 'Income:Investments:Interest'
+ACCOUNT_FEES = 'Expenses:Financial:Fees'
+
+AccTypes = collections.namedtuple('AccTypes', 'account other_account sign')
+
+ACCOUNTS_MAP = {
+    'CLIENT REQUESTED ELECTRONIC FUNDING DISBURSEMENT (FUNDS NOW)' : AccTypes('asset_cash'         , 'transfer',    +1),
+    'CLIENT REQUESTED ELECTRONIC FUNDING RECEIPT (FUNDS NOW)'      : AccTypes('asset_cash'         , 'transfer',    +1),
+    'MONEY MARKET INTEREST (MMDA1)'                                : AccTypes('asset_money_market' , 'interest',    +1),
+    'MONEY MARKET PURCHASE'                                        : AccTypes('asset_cash'         , None,          +1),
+    'MONEY MARKET PURCHASE (MMDA1)'                                : AccTypes('asset_money_market' , None,          +1),
+    'MONEY MARKET REDEMPTION'                                      : AccTypes('asset_cash'         , None,          +1),
+    'MONEY MARKET REDEMPTION (MMDA1)'                              : AccTypes('asset_money_market' , None,          -1),
+    'WIRE CHARGE (FEE)'                                            : AccTypes('asset_cash'         , 'fees',        +1),
+    'WIRE OUTGOING (ACD WIRE DISBURSEMENTS)'                       : AccTypes('asset_cash'         , 'third_party', +1),
+    'TRANSFER TO FOREX ACCOUNT'                                    : AccTypes('asset_cash'         , 'forex',       +1)
+}
+
+
+
+# def fmt_conversions(sign, qty, symbol):
+#     amount = Decimal(qty) * sign
+#     if symbol in (USD,):
+#         return '%10.2f %s' % (amount, symbol)
+#     elif symbol in ('MMDA1',):
+#         return '%10.2f %s {1 %s}' % (amount, symbol, USD)
+
+
+
+_GROUPS = [
+    ('MONEY MARKET PURCHASE',
+     'MONEY MARKET PURCHASE (MMDA1)'),
+    ('MONEY MARKET REDEMPTION',
+     'MONEY MARKET REDEMPTION (MMDA1)'),
+    ]
+_GROUPS_MAP = {description: index
+               for index, group in enumerate(_GROUPS)
+               for description in group}
+
+def group_grouped_rows(reader):
+    """Yield lists of rows that belong together. Money market purchase and
+    redemption belong in the same transaction but are listed as two separate
+    rows, so we yield them as a group; everything else is yielded
+    independently.
+    """
+    last_index = None
+    pending = []
+    for obj in reader:
+        index =_GROUPS_MAP.get(obj.description, None)
+        if index is None or index != last_index:
+            if pending:
+                yield pending
+                pending.clear()
+
+        pending.append(obj)
+        last_index = index
+
+    if pending:
+        yield pending
+
+
+ALWAYS_EMPTY_FIELDS = ('reg_fee',
+                       'short_term_rdm_fee',
+                       'fund_redemption_fee',
+                       'deferred_sales_charge')
+
+def import_csv_ameritrade(filename, config, entries):
+    """Import a CSV file from Ameritrade."""
+
+    # We'll need to find the currency of some of the config accounts for cash
+    # amounts without a symbol.
+    open_entries = {entry.account.name: entry.currencies
+                    for entry in  utils.filter_type(entries, Open)}
+
+    new_entries = []
+    annotations = {}
+
+    # Iterate over the groups of entries, which will form transactions.
+    rdr = utils.csv_tuple_reader(open(filename))
+    for index, rows in enumerate(group_grouped_rows(rdr)):
+        print(',----------------------------------------')
+        for row in rows:
+            print('       ', row)
+        print()
+
+        # Check that the fields we're not dealing with are empty.
+        for row in rows:
+            assert all(not getattr(row, fieldname)
+                       for fieldname in ALWAYS_EMPTY_FIELDS)
+
+        # Create a new transaction.
+        date = datetime.datetime.strptime(rows[-1].date, '%m/%d/%Y').date()
+        narration = longest(row.description for row in rows)
+        links = {row.transaction_id for row in rows}
+
+        fileloc = data.FileLocation(filename, index)
+        entry = Transaction(fileloc, date, FLAG_IMPORT, None, narration, None, links, [])
+
+        for row in rows:
+
+            try:
+                acctype = ACCOUNTS_MAP[row.description]
+                account = config[acctype.account]
+            except KeyError:
+                raise row
+
+            # If the row has no symbol, you need to find the symbol from the
+            # opening directives. Also, where the amounts come from is
+            # different.
+            if not row.symbol:
+                currencies = open_entries[account.name]
+                assert len(currencies) == 1, (account, currencies)
+                currency = currencies[0]
+                number = row.amount
+            else:
+                currency = row.symbol
+                number = row.quantity
+
+            position = Position(Lot(currency, None, None), Decimal(number))
+            entry.postings.append(
+                Posting(entry, account, position, None, None))
+
+        # Automatically add the final posting, if any.
+        try:
+            acctype = ACCOUNTS_MAP[rows[0].description]
+            if acctype.other_account is not None:
+                other_account = config[acctype.other_account]
+                entry.postings.append(
+                    Posting(entry, other_account, None, None, None))
+        except KeyError:
+            continue ## FIXME: remove
+            raise row
+
+        new_entries.append(entry)
+
+
+        # FIXME: TODO - add 'check' directives using the balance each time.
+
+    return new_entries, annotations
+
+
+
+
+
+
+        # # Create a posting for it.
+        # tferaction = soup_get(tran, 'tferaction')
+        # if tferaction == 'OUT':
+        #     units = -units
+
+        # position = Position(Lot(security, Amount(unitprice, currency), None), units)
+
+        # account = data.account_from_name('{}:{}'.format(
+        #     source_subaccounts[source], security))
+        # entry.postings.append(Posting(entry, account, position, None, None))
+
+        # if total is None:
+        #     total = units * unitprice
+        #     ##print('{:.9f} {:.9f} = {:.9f}'.format(units, unitprice, total))
+
+        # position = Position(Lot(currency, None, None), -total)
+        # account = get_cash_account(trantype, source, incometype)
+        # entry.postings.append(Posting(entry, account, position, None, None))
+
+
 
 
 
@@ -747,9 +926,10 @@ OANDA_IGNORED = set(['873690057', '980400948', '1051458865'])
 
 # FIXME: This can be done via an import and a standard entry point under beancounts.importer.NAME
 IMPORTER_HANDLERS = {
-    'vanguard' : import_ofx_invest,
-    'td'       : import_ofx_bank,
-    'oanda'    : import_csv_oanda,
+    'vanguard'   : import_ofx_invest,
+    'td'         : import_ofx_bank,
+    'oanda'      : import_csv_oanda,
+    'ameritrade' : import_csv_ameritrade,
 }
 
 
@@ -777,7 +957,7 @@ def main():
     IMPORTER_CONFIG = config['IMPORTER_CONFIG']
 
     # Get the list of account-ids.
-    account_ids = [account_id for (_, _, account_id) in IMPORTER_CONFIG]
+    account_ids = [account_id for (_, _, account_id) in IMPORTER_CONFIG if account_id]
 
     # Parse the ledger and get the entries from it.
     entries, errors, options = load(opts.filename, quiet=True)
@@ -795,7 +975,9 @@ def main():
         # Get the relevant importer function/module.
         importer = IMPORTER_HANDLERS.get(institution)
         if importer is None:
-            continue # No importer available for this filetype.
+            logging.warn("No importer available for '{}'; id = {}.".format(filename,
+                                                                           identification))
+            continue #
 
         accounts = IMPORTER_CONFIG[identification]
 
@@ -863,7 +1045,8 @@ def find_duplicate_entries(new_entries, entries):
         # Compute a mapping of accounts -> amounts.
         new_amounts = collections.defaultdict(Decimal)
         for posting in new_entry.postings:
-            new_amounts[posting.account.name] += posting.position.number
+            number = posting.position.number if posting.position else 0
+            new_amounts[posting.account.name] += number
 
         # Iterate over the window dates.
         for date in utils.iter_dates(new_entry.date - window_size,
@@ -985,6 +1168,16 @@ def merge(entries, prototype_entry):
 
 
 
+# FIXME: Move to generic utils
+
+def longest(seq):
+    """Return the longest of the given subsequences."""
+    longest, length = None, -1
+    for x in seq:
+        lenx = len(x)
+        if lenx > length:
+            longest, length = x, lenx
+    return longest
 
 
 

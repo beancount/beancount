@@ -2,6 +2,19 @@
 beancount: TODO
 * NEW
 
+  - Add a ^LINK to the document directive in order to associate a PDF with a
+    document?!? -> For trade tickets
+
+  - Auto-doc from directories of files should ignore files already associated
+    via an explicit documents directive; just ignore files with the same
+    absolute name.
+
+
+
+
+
+
+
   - (import) Get rid of the account_id on the accounts open directives...
     really this goes into the importers, this makes more sense.
 
@@ -1033,6 +1046,9 @@ beancount: TODO
 
 * Import Automation
 
+  - The code that auto-files statements needs to detect and de-dup files which
+    have the same contents, because it is likely some files will be downloaded
+    twice, it happens a lot.
 
   - Import: in order to guess the currency of an instrument for which you don't
     have a mapping (e.g. there's only a CUSIP), find the currency in use in the

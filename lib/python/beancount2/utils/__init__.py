@@ -4,11 +4,12 @@ Generic utility packages and functions.
 import datetime
 from time import time
 import contextlib
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import csv
 import re
 import os
 from os import path
+import itertools
 
 
 @contextlib.contextmanager
@@ -63,11 +64,27 @@ def index_key(sequence, value, key=None):
     return None
 
 
-def csv_dict_reader(filename):
-    "Read a CSV file yielding namedtuples."
-    reader = csv.DictReader(open(filename))
+def csv_dict_reader(fileobj):
+    "Read a CSV file yielding normalized dictionary fields."
+    reader = csv.DictReader(fileobj)
     reader.fieldnames = [re.sub('[^a-z]', '_', x.lower()).strip(' _') for x in reader.fieldnames]
     return reader
+
+
+def csv_tuple_reader(fileobj):
+    "Read a CSV file yielding namedtuple instances. The CSV file must have a header line."
+    reader = csv.reader(fileobj)
+    ireader = iter(reader)
+    header = next(ireader)
+    fieldnames = [re.sub('[^a-z]', '_', x.lower()).strip(' _') for x in header]
+    Tuple = namedtuple('Tuple', fieldnames)
+    for row in ireader:
+        try:
+            yield Tuple(*row)
+        except TypeError:
+            # If there's an error, it's usually from a line that has a 'END OF
+            # LINE' marker at the end, or some comment line.
+            assert len(row) == 1
 
 
 def walk_files_or_dirs(fords, ignore_dirs=['.hg', '.svn', '.git']):
@@ -80,6 +97,8 @@ def walk_files_or_dirs(fords, ignore_dirs=['.hg', '.svn', '.git']):
                     yield path.join(root, filename)
         elif path.isfile(ford) or path.islink(ford):
             yield ford
+        elif not path.exists(ford):
+            raise IOError("File or directory '{}' does not exist.".format(ford))
 
 
 ONEDAY = datetime.timedelta(days=1)
