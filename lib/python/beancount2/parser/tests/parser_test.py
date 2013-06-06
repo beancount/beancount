@@ -168,3 +168,16 @@ class TestParserOptions(unittest.TestCase):
         """
         option = options['title']
         self.assertEqual(option, 'Super Rich')
+
+
+class TestParserLinks(unittest.TestCase):
+
+    @parsedoc
+    def test_links(self, entries, errors, options):
+        """
+          2013-05-18 * "Something something" ^38784734873
+            Expenses:Restaurant         100 USD
+            Assets:US:Cash
+
+        """
+        print(entries[0])

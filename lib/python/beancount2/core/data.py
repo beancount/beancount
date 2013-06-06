@@ -326,6 +326,13 @@ class EntryPrinter:
         if entry.narration:
             strings.append('"{}"'.format(entry.narration))
 
+        if entry.tags:
+            for tag in entry.tags:
+                strings.append('#{}'.format(tag))
+        if entry.links:
+            for link in entry.links:
+                strings.append('^{}'.format(link))
+
         oss.write('{e.date} {e.flag} {}\n'.format(' '.join(strings), e=entry))
 
         for posting in entry.postings:

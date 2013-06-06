@@ -431,6 +431,10 @@ beancount: TODO
   - (web) Make the two sides of the balance sheet within a left and right div,
     rather than three separate ones.
 
+  - (web) Render links to the right of descriptions, and the link href link
+    should actually render a page of the related linked entries.
+
+
 ** Incognito Mode
 
   - Create an '--incognito mode whereby all the numbers are represented by

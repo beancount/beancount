@@ -159,7 +159,7 @@ option		{ return OPTION; }
 }
 
  /* Links */
-^[A-Za-z0-9\-_/.]+ 		{
+\^[A-Za-z0-9\-_/.]+ 		{
     yylval->pyobj = BUILD("LINK", "s", &(yytext[1]));
     return LINK;
 }

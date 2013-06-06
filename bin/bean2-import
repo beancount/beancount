@@ -492,6 +492,7 @@ def is_balanced_txn(obj):
 ZERO = Decimal()
 ONE_CENT = Decimal('0.01')
 
+LINK_FORMAT = 'oanda-{}'
 
 def guess_currency(filename):
     """Try to guess the base currency of the account.
@@ -588,15 +589,15 @@ def import_csv_oanda(filename, config, entries):
 
         # Create the transaction.
         fileloc = data.FileLocation(filename, lineno)
-        narration = '{} - {}  (@{})'.format(txntype, obj['pair'], obj['ticket'])
+        narration = '{} - {}'.format(txntype, obj['pair'], obj['ticket'])
 
-## FIXME: Complete rendering the links
+        # Create links
+        links = set([LINK_FORMAT.format(obj['ticket'].strip())])
         link = obj['tran_link'].strip()
-        links = set([link]) if link else None
-        if links:
-            print(links)
+        if link:
+            links.add(LINK_FORMAT.format(link))
 
-        entry = Transaction(fileloc, date, FLAG_IMPORT, None, narration, None, None, [])
+        entry = Transaction(fileloc, date, FLAG_IMPORT, None, narration, None, links, [])
 
         # FIXME: Add the rates for transfers
         oanda_add_posting(entry, config['asset'], change, currency)
