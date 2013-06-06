@@ -68,8 +68,8 @@ is great for sectioning large files with many transactions."
     (,(regexp-opt '("txn" "check" "open" "close" "pad" "event" "price" "note"
                     "begintag" "endtag")) . font-lock-keyword-face)
 
-    ;; Tags
-    ("#[A-Za-z0-9\-_/.]+" . font-lock-type-face)
+    ;; Tags & Links
+    ("[#\\^][A-Za-z0-9\-_/.]+" . font-lock-type-face)
 
     ;; Date
     ("[0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][0-9]" . font-lock-constant-face)

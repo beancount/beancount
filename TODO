@@ -2,8 +2,15 @@
 beancount: TODO
 * NEW
 
-  - Parser performance: don't call back builder for simple types that just
-    return their value; measure difference.
+  - (import) Get rid of the account_id on the accounts open directives...
+    really this goes into the importers, this makes more sense.
+
+
+
+  - Parser performance: try not calling back to builder for simple types that
+    just return their value; measure the difference, it may be worth it, and we
+    wouldn't lose much of flexibility, especially for the lexer types, which are
+    aplenty.
 
 
 

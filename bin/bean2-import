@@ -93,6 +93,11 @@ def guess_file_type(filename):
 
 
 
+
+
+
+
+
 #
 # Identification of files to specific accounts.
 #
@@ -135,11 +140,6 @@ def identify_csv(filename, account_ids):
     return identify_string(text, account_ids)
 
 
-def ofx_get_account(node):
-    "Given a beautifulsoup node, get the corresponding account id."
-    acctid = node.find('acctid')
-    # There's some garbage in here sometimes; clean it up.
-    return acctid.text.split('\n')[0]
 
 
 def identify_ofx(filename, account_ids):
@@ -165,6 +165,7 @@ def identify_account(filename, entries):
     """Given a filename, return the filetype and account that this file corresponds
     to, or None if it could not be identified."""
 
+    # Attempt to find the corresponding file type.
     filetype = guess_file_type(filename)
 
     identify_fun = IDENTIFY_HANDLERS.get(filetype, None)
@@ -172,10 +173,22 @@ def identify_account(filename, entries):
         # No handler was found; bail out.
         return
 
+    # Attempt to find the corresponding account.
     account_ids = data.get_account_ids(entries)
     account_id, account = identify_fun(filename, account_ids)
 
-    return filetype, account_id
+    # Attempt to find the corresponding institution.
+    institution = None
+    if filetype == 'application/x-ofx':
+        contents = open(filename).read()
+        # Test for signature strings... we could go further and look at the
+        # bankid/org ofx tags.
+        if re.search(r'\bVanguard\b', contents):
+            institution = 'vanguard'
+        elif re.search(r'\b011103093\b', contents):
+            institution = 'td'
+
+    return (institution, filetype, account_id)
 
 
 
@@ -193,6 +206,7 @@ def identify_account(filename, entries):
 # OFX Parser.
 #
 
+
 def souptodict(node):
     """Convert all of the child nodes from BeautifulSoup node into a dict.
     This assumes the direct children are uniquely named, but this is often the
@@ -205,7 +219,7 @@ def soup_get(node, name, conversion=None):
     "Find a child anywhere below node and return its value or None."
     child = node.find(name)
     if child:
-        value = child.contents[0]
+        value = child.contents[0].strip()
         if conversion:
             value = conversion(value)
         return value
@@ -217,6 +231,13 @@ def parse_ofx_time(ofx_date_str):
         return datetime.datetime.strptime(ofx_date_str[:8], '%Y%m%d')
     else:
         return datetime.datetime.strptime(ofx_date_str[:14], '%Y%m%d%H%M%S')
+
+
+def ofx_get_account(node):
+    "Given a beautifulsoup node, get the corresponding account id."
+    acctid = node.find('acctid')
+    # There's some garbage in here sometimes; clean it up.
+    return acctid.text.split('\n')[0]
 
 
 def get_securities(soup):
@@ -237,12 +258,83 @@ def get_securities(soup):
     return securities
 
 
-def import_ofx(filename, config, entries):
+def import_ofx_bank(filename, config, entries):
     """Extract transaction info from the given OFX file into transactions for the
     given account. This function returns a list of entries possibly partially
     filled entries, and a dictionary of annotations to be attached to entries
     and postings.
     """
+
+    # Attempt to get an account from the ledger entries.
+    account_asset = config['asset']
+
+    new_entries = []
+    annotations = {}
+
+    # Parse the XML file.
+    soup = bs4.BeautifulSoup(open(filename), 'lxml')
+
+    # For each statement.
+    txn_counter = itertools.count()
+    for stmtrs in soup.find_all(re.compile('.*stmtrs$')):
+        # account_type = st.find('accttype').text.strip()
+        # bank_id = st.find('bankid').text.strip()
+
+        # For each currnecy.
+        for currency_node in stmtrs.find_all('curdef'):
+            currency = currency_node.contents[0].strip()
+
+            # Extract account-wide information.
+            acctid = ofx_get_account(stmtrs)
+
+            # Process all regular or credit-card transaction lists.
+            for tranlist in stmtrs.find_all(re.compile('(|cc)tranlist')):
+                ## print(tranlist.prettify())
+
+                # Process the transactions from that list.
+                for stmttrn in tranlist.find_all('stmttrn'):
+
+                    # Build the transaction.
+                    date = parse_ofx_time(soup_get(stmttrn, 'dtposted')).date()
+                    fileloc = data.FileLocation(filename, next(txn_counter))
+                    payee = None
+                    narration = ' / '.join(filter(None, (soup_get(stmttrn, x)
+                                                         for x in ('trntype', 'name', 'memo'))))
+                    entry = Transaction(fileloc, date, FLAG_IMPORT, payee, narration, None, None, [])
+
+                    # Create a posting for it.
+                    position = Position(Lot(currency, None, None), soup_get(stmttrn, 'trnamt', Decimal))
+                    entry.postings.append(Posting(entry, account_asset, position, None, None))
+
+                    new_entries.append(entry)
+
+    new_entries.sort(key=lambda entry: entry.date)
+    return new_entries, annotations
+
+
+def import_ofx_invest(filename, config, entries):
+    """Extract transaction info from the given OFX file into transactions for the
+    given account. This function returns a list of entries possibly partially
+    filled entries, and a dictionary of annotations to be attached to entries
+    and postings.
+    """
+
+    # Prepare mappings to accounts from the config provided.
+    source_subaccounts = {
+        'PRETAX' : config['asset_pretax'],
+        'MATCH'  : config['asset_match'],
+    }
+
+    def get_cash_account(trantype, source, incometype):
+        if trantype == 'BUYMF' and source == 'MATCH':
+            return config['income_match']
+        elif trantype == 'REINVEST':
+            return config['dividend']
+        elif trantype == 'TRANSFER':
+            return config['fees']
+        else:
+            return config['asset_cash']
+
     new_entries = []
     annotations = {}
 
@@ -264,62 +356,6 @@ def import_ofx(filename, config, entries):
         # For each currnecy.
         for currency_node in stmtrs.find_all('curdef'):
             currency = currency_node.contents[0].strip()
-
-            # Extract account-wide information.
-            acctid = ofx_get_account(stmtrs)
-
-            # Attempt to get an account from the ledger entries.
-            account_name = config['asset']
-
-            # Process all regular or credit-card transaction lists.
-            for tranlist in stmtrs.find_all(re.compile('(|cc)tranlist')):
-                ## print(tranlist.prettify())
-
-                # Process the transactions from that list.
-                for stmttrn in tranlist.find_all('stmttrn'):
-                    trndict = souptodict(stmttrn)
-
-                    # Build the transaction.
-                    # date_start = parse_ofx_time(trndict['dtstart']).date()
-                    # date_end = parse_ofx_time(trndict['dtend']).date()
-
-# FIXME: Debug this with TD, the XML is crap
-                    print(stmttrn.prettify())
-                    print(trndict)
-
-                    date = parse_ofx_time(trndict['dtposted']).date()
-                    fileloc = data.FileLocation(filename, next(txn_counter))
-                    payee = None
-                    narration = ' / '.join(filter(None, (trndict.get(x, None) for x in ('trntype', 'name', 'memo'))))
-                    entry = Transaction(fileloc, date, FLAG_IMPORT, payee, narration, None, None, [])
-
-                    # Create a posting for it.
-                    position = Position(Lot(currency, None, None), Decimal(trndict['trnamt']))
-                    account = data.account_from_name(account_name)
-                    entry.postings.append(Posting(entry, account, position, None, None))
-
-                    new_entries.append(entry)
-
-
-#FIXME: Farm this out to a Vanguard-specific function.
-#FIXME: This needs to move into an import config and be provided as input.
-            # FIXME: This needs to be parameterized.
-            source_subaccounts = {
-                'PRETAX' : config['asset_pretax'],
-                'MATCH'  : config['asset_match'],
-            }
-            def get_cash_account(trantype, source, incometype):
-                if trantype == 'BUYMF' and source == 'MATCH':
-                    return config['income_match']
-                elif trantype == 'REINVEST':
-                    return config['dividend']
-                elif trantype == 'TRANSFER':
-                    return config['fees']
-                else:
-                    return config['asset_cash']
-
-
-# FIXME: Make this into a function its own
 
             # Process all investment transaction lists.
             # Note: this was developed for Vanguard.
@@ -364,7 +400,7 @@ def import_ofx(filename, config, entries):
                         ##print('{:.9f} {:.9f} = {:.9f}'.format(units, unitprice, total))
 
                     position = Position(Lot(currency, None, None), -total)
-                    account = data.account_from_name(get_cash_account(trantype, source, incometype))
+                    account = get_cash_account(trantype, source, incometype)
                     entry.postings.append(Posting(entry, account, position, None, None))
 
                     new_entries.append(entry)
@@ -392,7 +428,11 @@ def import_ofx(filename, config, entries):
                         new_entries.append(Check(fileloc, date, account, amount, None))
 
     new_entries.sort(key=lambda entry: entry.date)
-    return new_centries, annotations
+    return new_entries, annotations
+
+
+
+
 
 
 
@@ -591,7 +631,7 @@ def import_csv_oanda(filename, config, entries):
         fileloc = data.FileLocation(filename, lineno)
         narration = '{} - {}'.format(txntype, obj['pair'], obj['ticket'])
 
-        # Create links
+        # Create links.
         links = set([LINK_FORMAT.format(obj['ticket'].strip())])
         link = obj['tran_link'].strip()
         if link:
@@ -633,15 +673,6 @@ def import_csv_oanda(filename, config, entries):
 
         assert len(entry.postings) > 1, format_entry(entry)
 
-        # FIXME: You need to compress the interest amounts together...
-        # FIXME: Add some regularly spaced check directives (!) - EASY.
-
-    # print(';;; MAX_DIFF', max_diff)
-    # print()
-
-
-
-
     new_entries.sort(key=lambda entry: entry.date)
 
 
@@ -655,13 +686,11 @@ def import_csv_oanda(filename, config, entries):
 # FIXME: Temporary; these would have been done manually. For debugging now, ignore, while developing.
 OANDA_IGNORED = set(['873690057', '980400948', '1051458865'])
 
-# FIXME TODO:
-# - Compress the interest (in a separate routine that is functional, operates on a list of entries...)
+# Future work:
 # - Check that ignored transactions have zero amounts
-# - Render tran link with @, and the ticket number too, as @links from my system
-# - Render the transaction prices
-# - Automatically fill in accounts for API and deposits / transfers (based on the currency)
-# - Add the positions taken into subaccounts, a large positive number and a large negative number, this should be possible, under e.g. 'Income:US:OANDA:Primary:Positions:EUR_USD'
+# - Render trades into positions from subaccounts, just like we do for stocks. A
+#   large positive number and a large negative number, this should be possible,
+#   under e.g. 'Income:US:OANDA:Primary:Positions:EUR_USD'
 
 
 
@@ -683,19 +712,6 @@ OANDA_IGNORED = set(['873690057', '980400948', '1051458865'])
 
 
 
-#
-# Importers.
-#
-
-def import_csv(filename, config, entries):
-    ## FIXME: You need to somehow identify the institution separately.
-    return import_csv_oanda(filename, config, entries)
-
-IMPORTER_HANDLERS = {
-    'text/csv'                 : import_csv,
-    'application/x-ofx'        : import_ofx,
-    'application/vnd.intu.qbo' : import_ofx,
-}
 
 
 
@@ -727,11 +743,16 @@ IMPORTER_HANDLERS = {
 
 
 # Handler:
-# - rename with import date
-# - import transactions
+# - file input file with import date
 
-#   - Write some code to detect when a transaction is already there
-#   - Write some code to convert from entries into text
+
+# FIXME: This can be done via an import and a standard entry point under beancounts.importer.NAME
+IMPORTER_HANDLERS = {
+    'vanguard' : import_ofx_invest,
+    'td'       : import_ofx_bank,
+    'oanda'    : import_csv_oanda,
+}
+
 
 def main():
     import argparse, logging
@@ -765,24 +786,16 @@ def main():
         identification = identify_account(filename, entries)
         if not identification:
             continue # Skip file.
-        filetype, account_id = identification
-
-        # We need to guess the institution too, somehow.
-
+        institution, filetype, account_id = identification
 
         # FIXME: Maybe the identification triple should be (mimetype, institution, account-id)?
 
         # Get the relevant importer function/module.
-        importer = IMPORTER_HANDLERS.get(filetype)
+        importer = IMPORTER_HANDLERS.get(institution)
         if importer is None:
             continue # No importer available for this filetype.
 
-        institution = 'oanda'  ## FIXME: We need a routine to guess the institution
-
-
-        # Get the relevant importer config.
-        key = (institution, filetype, account_id)
-        accounts = IMPORTER_CONFIG[key]
+        accounts = IMPORTER_CONFIG[identification]
 
         # Run the importer.
         new_entries, annotations = importer(filename, accounts, entries)
