@@ -13,6 +13,7 @@ Core: Data Structures & Basic Operations
 
 - Balancing & Cost
 
+- Tags & Links
 
 
 Functional Operations

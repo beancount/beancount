@@ -291,7 +291,7 @@ def import_ofx(filename, config, entries):
                     fileloc = data.FileLocation(filename, next(txn_counter))
                     payee = None
                     narration = ' / '.join(filter(None, (trndict.get(x, None) for x in ('trntype', 'name', 'memo'))))
-                    entry = Transaction(fileloc, date, FLAG_IMPORT, payee, narration, set(), [])
+                    entry = Transaction(fileloc, date, FLAG_IMPORT, payee, narration, None, None, [])
 
                     # Create a posting for it.
                     position = Position(Lot(currency, None, None), Decimal(trndict['trnamt']))
@@ -346,7 +346,7 @@ def import_ofx(filename, config, entries):
                     memo = soup_get(tran, 'memo')
                     narration = ' - '.join(filter(None, (trantype, incometype, source, memo)))
 
-                    entry = Transaction(fileloc, date, FLAG_IMPORT, payee, narration, set(), [])
+                    entry = Transaction(fileloc, date, FLAG_IMPORT, payee, narration, None, None, [])
 
                     # Create a posting for it.
                     tferaction = soup_get(tran, 'tferaction')
@@ -596,7 +596,7 @@ def import_csv_oanda(filename, config, entries):
         if links:
             print(links)
 
-        entry = Transaction(fileloc, date, FLAG_IMPORT, None, narration, set(), [])
+        entry = Transaction(fileloc, date, FLAG_IMPORT, None, narration, None, None, [])
 
         # FIXME: Add the rates for transfers
         oanda_add_posting(entry, config['asset'], change, currency)
@@ -609,14 +609,6 @@ def import_csv_oanda(filename, config, entries):
 
         if len(entry.postings) < 2:
             continue
-
-        # # FIXME: temporary
-        # if obj['ticket'] in OANDA_IGNORED:
-        #     continue
-
-        # if obj['transaction'] == 'Interest':
-        #     continue
-        #     ##print(, file=sys.stderr)
 
         new_entries.append(entry)
 
@@ -957,7 +949,7 @@ def merge(entries, prototype_entry):
                             prototype_entry.flag,
                             prototype_entry.payee,
                             prototype_entry.narration,
-                            set(), [])
+                            None, None, [])
 
     for posting, number in sorted(postings_map.items()):
         lot = posting.position

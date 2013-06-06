@@ -1121,7 +1121,7 @@ class TagView(View):
         tags = self.tags
         tagged_entries = [entry
                           for entry in entries
-                          if isinstance(entry, data.Transaction) and (entry.tags & tags)]
+                          if isinstance(entry, data.Transaction) and entry.tags and (entry.tags & tags)]
 
         return tagged_entries, None
 
@@ -1243,7 +1243,8 @@ def get_all_tags(entries):
     "Return a list of all the tags seen in the given entries."
     all_tags = set()
     for entry in utils.filter_type(entries, data.Transaction):
-        all_tags.update(entry.tags)
+        if entry.tags:
+            all_tags.update(entry.tags)
     return all_tags
 
 

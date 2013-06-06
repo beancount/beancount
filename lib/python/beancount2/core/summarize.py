@@ -173,7 +173,7 @@ def create_entries_from_balances(balances, date, other_account, direction,
             
         postings = []
         new_entry = Transaction(
-            fileloc, date, flag, None, narration, set(), postings)
+            fileloc, date, flag, None, narration, None, None, postings)
 
         for position in balance.get_positions():
             postings.append(Posting(new_entry, account, position, None, None))

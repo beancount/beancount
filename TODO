@@ -1,12 +1,6 @@
 -*- mode: org -*-
 beancount: TODO
-* Pending
-
-
 * NEW
-  
-  - Store links in parser.py and establish that empty tags and empty links can
-    be None.  
 
   - Parser performance: don't call back builder for simple types that just
     return their value; measure difference.
@@ -18,7 +12,7 @@ beancount: TODO
     in OANDA
 
   - Inventory: Implement a test for Inventory.get_amounts() with multiple lots of the same
-    currency; they really should have been aggregated.  
+    currency; they really should have been aggregated.
   - Inventory: Implement averaging of lots in order to report positions nicely.
 
 
@@ -433,6 +427,9 @@ beancount: TODO
   - Render the Conversions amount at the bottom of the Conversions page...
 
   - Answer to favicon.ico request.
+
+  - (web) Make the two sides of the balance sheet within a left and right div,
+    rather than three separate ones.
 
 ** Incognito Mode
 

@@ -225,6 +225,8 @@ class Builder(object):
             ctags.update(tags)
         if self.tags:
             ctags.update(self.tags)
+        if not ctags:
+            ctags = None
 
         # Balance incomplete auto-postings.
         # print('{}:{}: {}'.format(fileloc.filename, fileloc.lineno, narration))
@@ -234,7 +236,7 @@ class Builder(object):
 
         # Create the transaction. Note: we need to parent the postings.
         parented_postings = []
-        transaction = Transaction(fileloc, date, chr(flag), payee, narration, ctags,  ## FIXME: Add the links here.
+        transaction = Transaction(fileloc, date, chr(flag), payee, narration, ctags, links,
                                   parented_postings)
         # PERF(25ms): could be saved here by avoiding reparenting.
         for posting in postings:
