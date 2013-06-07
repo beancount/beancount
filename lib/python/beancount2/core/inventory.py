@@ -211,13 +211,13 @@ class Inventory:
             self.positions.append(found)
         return found
 
-    def add(self, amount, cost=None, lot_date=None):
+    def add(self, amount, cost=None, lot_date=None, allow_negative=False):
         """Add using position components (with strict lot matching)."""
         assert isinstance(amount, Amount)
-        assert cost is None or isinstance(cost, Amount)
+        assert cost is None or isinstance(cost, Amount), repr(cost)
         assert lot_date is None or isinstance(lot_date, date)
         lot = Lot(amount.currency, cost, lot_date)
-        self._add(amount.number, lot)
+        self._add(amount.number, lot, allow_negative)
 
     def add_position(self, new_position, allow_negative=False):
         """Add using a position (with strict lot matching)."""
@@ -265,16 +265,24 @@ class Inventory:
         """Merge all lots of the same currency together at their average cost."""
 
         logging.warn('FIXME: continue here, this will be needed to report positions')
+        # FIXME: This is ill-defined, the grouping must also take into account the cost currency.
 
         units_map = defaultdict(Decimal)
         costs_map = defaultdict(Decimal)
         for position in self.positions:
-            units_map[position.lot.currency] += position.number
-            costs_map[position.lot.currency] += position.get_cost().number
+            lot = position.lot
+
+            cost_currency = lot.cost.currency if lot.cost else None
+            key = (lot.currency, cost_currency)
+            units_map[key] += position.number
+            costs_map[key] += position.get_cost().number
 
         inventory = Inventory()
-        for currency, units in units_map.items():
-            costs = costs_map[currency]
-            inventory.add(Amount(units, currency), costs)
+        for lotcost_currencies, units in units_map.items():
+            lot_currency, cost_currency = lotcost_currencies
+            cost_number = costs_map[lotcost_currencies]
+            inventory.add(Amount(units, lot_currency),
+                          Amount(cost_number, cost_currency),
+                          allow_negative=True)
 
         return inventory

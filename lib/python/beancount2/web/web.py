@@ -901,7 +901,7 @@ def positions():
 
     oss = io.StringIO()
     oss.write("<table class='positions'>\n")
-    oss.write(total_balance.average())
+    oss.write("{}".format(total_balance.average()))
 
     for position in total_balance.get_positions():
 

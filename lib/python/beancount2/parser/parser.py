@@ -227,6 +227,8 @@ class Builder(object):
             ctags.update(self.tags)
         if not ctags:
             ctags = None
+        else:
+            ctags = frozenset(ctags)
 
         # Balance incomplete auto-postings.
         # print('{}:{}: {}'.format(fileloc.filename, fileloc.lineno, narration))

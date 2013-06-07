@@ -720,38 +720,6 @@ OANDA_IGNORED = set(['873690057', '980400948', '1051458865'])
 Convert an Ameritrade CSV file into a Ledger-compatible output.
 """
 
-ACCOUNT_CASH = 'Assets:Investments:Ameritrade:Main'
-ACCOUNT_MONEYMARKET = 'Assets:Investments:Ameritrade:Main:MMDA1'
-ACCOUNT_FUNDING = 'Assets:Current:TD:Checking'
-ACCOUNT_FUNDING_WIRE = 'Assets:Investments:OANDA:Primary'
-ACCOUNT_INTEREST = 'Income:Investments:Interest'
-ACCOUNT_FEES = 'Expenses:Financial:Fees'
-
-AccTypes = collections.namedtuple('AccTypes', 'account other_account sign')
-
-ACCOUNTS_MAP = {
-    'CLIENT REQUESTED ELECTRONIC FUNDING DISBURSEMENT (FUNDS NOW)' : AccTypes('asset_cash'         , 'transfer',    +1),
-    'CLIENT REQUESTED ELECTRONIC FUNDING RECEIPT (FUNDS NOW)'      : AccTypes('asset_cash'         , 'transfer',    +1),
-    'MONEY MARKET INTEREST (MMDA1)'                                : AccTypes('asset_money_market' , 'interest',    +1),
-    'MONEY MARKET PURCHASE'                                        : AccTypes('asset_cash'         , None,          +1),
-    'MONEY MARKET PURCHASE (MMDA1)'                                : AccTypes('asset_money_market' , None,          +1),
-    'MONEY MARKET REDEMPTION'                                      : AccTypes('asset_cash'         , None,          +1),
-    'MONEY MARKET REDEMPTION (MMDA1)'                              : AccTypes('asset_money_market' , None,          -1),
-    'WIRE CHARGE (FEE)'                                            : AccTypes('asset_cash'         , 'fees',        +1),
-    'WIRE OUTGOING (ACD WIRE DISBURSEMENTS)'                       : AccTypes('asset_cash'         , 'third_party', +1),
-    'TRANSFER TO FOREX ACCOUNT'                                    : AccTypes('asset_cash'         , 'forex',       +1)
-}
-
-
-
-# def fmt_conversions(sign, qty, symbol):
-#     amount = Decimal(qty) * sign
-#     if symbol in (USD,):
-#         return '%10.2f %s' % (amount, symbol)
-#     elif symbol in ('MMDA1',):
-#         return '%10.2f %s {1 %s}' % (amount, symbol, USD)
-
-
 
 _GROUPS = [
     ('MONEY MARKET PURCHASE',
@@ -790,77 +758,132 @@ ALWAYS_EMPTY_FIELDS = ('reg_fee',
                        'fund_redemption_fee',
                        'deferred_sales_charge')
 
+
+def create_simple_posting(entry, account, number, currency):
+    position = Position(Lot(currency, None, None), Decimal(number))
+    posting = Posting(entry, account, position, None, None)
+    entry.postings.append(posting)
+    return posting
+
+
+
 def import_csv_ameritrade(filename, config, entries):
     """Import a CSV file from Ameritrade."""
 
-    # We'll need to find the currency of some of the config accounts for cash
-    # amounts without a symbol.
-    open_entries = {entry.account.name: entry.currencies
-                    for entry in  utils.filter_type(entries, Open)}
 
     new_entries = []
     annotations = {}
 
+    # Find out which is the base currency.
+    base_currency = get_currency_for_account(config['asset_cash'], entries)
+
     # Iterate over the groups of entries, which will form transactions.
+    prev_balance = Amount(Decimal(), base_currency)
+    prev_date = datetime.date(1970, 1, 1)
     rdr = utils.csv_tuple_reader(open(filename))
-    for index, rows in enumerate(group_grouped_rows(rdr)):
-        print(',----------------------------------------')
-        for row in rows:
-            print('       ', row)
-        print()
+    ##for index, rows in enumerate(group_grouped_rows(rdr)):
+    for index, row in enumerate(rdr):
 
         # Check that the fields we're not dealing with are empty.
-        for row in rows:
-            assert all(not getattr(row, fieldname)
-                       for fieldname in ALWAYS_EMPTY_FIELDS)
+        assert all(not getattr(row, fieldname) for fieldname in ALWAYS_EMPTY_FIELDS)
+
+        # Get the new entry's date.
+        date = datetime.datetime.strptime(row.date, '%m/%d/%Y').date()
+
+        # Insert some Check entries every time the day changed.
+        if date != prev_date:
+            prev_date = date
+            fileloc = data.FileLocation(filename, index)
+            new_entries.append(Check(fileloc, date, config['asset_cash'], prev_balance, None))
 
         # Create a new transaction.
-        date = datetime.datetime.strptime(rows[-1].date, '%m/%d/%Y').date()
-        narration = longest(row.description for row in rows)
-        links = {row.transaction_id for row in rows}
-
+        narration = row.description
+        links = set([row.transaction_id])
         fileloc = data.FileLocation(filename, index)
+
         entry = Transaction(fileloc, date, FLAG_IMPORT, None, narration, None, links, [])
 
-        for row in rows:
+        amount = Decimal(row.amount)
 
-            try:
-                acctype = ACCOUNTS_MAP[row.description]
-                account = config[acctype.account]
-            except KeyError:
-                raise row
+        # Process the transaction, each code specialized for its specific case.
+        if row.description in (
+                'CLIENT REQUESTED ELECTRONIC FUNDING RECEIPT (FUNDS NOW)',
+                'CLIENT REQUESTED ELECTRONIC FUNDING DISBURSEMENT (FUNDS NOW)'):
 
-            # If the row has no symbol, you need to find the symbol from the
-            # opening directives. Also, where the amounts come from is
-            # different.
-            if not row.symbol:
-                currencies = open_entries[account.name]
-                assert len(currencies) == 1, (account, currencies)
-                currency = currencies[0]
-                number = row.amount
-            else:
-                currency = row.symbol
-                number = row.quantity
+            create_simple_posting(entry, config['asset_cash'], amount, base_currency)
+            create_simple_posting(entry, config['transfer'], -amount, base_currency)
 
-            position = Position(Lot(currency, None, None), Decimal(number))
-            entry.postings.append(
-                Posting(entry, account, position, None, None))
+        elif row.description in (
+                'MONEY MARKET INTEREST (MMDA1)',):
 
-        # Automatically add the final posting, if any.
-        try:
-            acctype = ACCOUNTS_MAP[rows[0].description]
-            if acctype.other_account is not None:
-                other_account = config[acctype.other_account]
-                entry.postings.append(
-                    Posting(entry, other_account, None, None, None))
-        except KeyError:
-            continue ## FIXME: remove
-            raise row
+            create_simple_posting(entry, config['asset_money_market'], amount, base_currency)
+            create_simple_posting(entry, config['interest'], -amount, base_currency)
+
+        elif row.description in (
+                'MONEY MARKET PURCHASE',
+                'MONEY MARKET REDEMPTION'):
+
+            create_simple_posting(entry, config['asset_cash'], amount, base_currency)
+            create_simple_posting(entry, config['asset_money_market'], -amount, base_currency)
+
+        elif row.description in (
+                'MONEY MARKET PURCHASE (MMDA1)',
+                'MONEY MARKET REDEMPTION (MMDA1)',
+                'MONEY MARKET PURCHASE (MMDA10)',
+                'MONEY MARKET REDEMPTION (MMDA10)',):
+
+            # Ignore these, they are complementary to the other side of the
+            # transaction and the amounts are rounded anyhow! This is so wrong.
+            continue
+
+        elif row.description in (
+                'WIRE CHARGE (FEE)',):
+
+            create_simple_posting(entry, config['asset_cash'], amount, base_currency)
+            create_simple_posting(entry, config['fees'], -amount, base_currency)
+
+        elif row.description in (
+                'WIRE OUTGOING (ACD WIRE DISBURSEMENTS)',
+                'THIRD PARTY',):
+
+            create_simple_posting(entry, config['asset_cash'], amount, base_currency)
+            create_simple_posting(entry, config['third_party'], -amount, base_currency)
+
+        elif row.description in (
+                'TRANSFER TO FOREX ACCOUNT',
+                'TRANSFER FROM FOREX ACCOUNT',):
+
+            create_simple_posting(entry, config['asset_cash'], amount, base_currency)
+            create_simple_posting(entry, config['asset_forex'], -amount, base_currency)
+
+        elif row.description in (
+                'OFF-CYCLE INTEREST (MMDA1)',
+                'FREE BALANCE INTEREST ADJUSTMENT'):
+
+            # Ignore this for now; it might vanish when we download later.
+            continue
+
+        elif re.match('Bought ([^ ]+) ([^ ]+) @ ([^ ]+)', row.description):
+
+            account = account_from_name('{}:{}'.format(config['asset_position'].name, row.symbol))
+            cost = Amount(row.price, base_currency)
+            position = Position(Lot(row.symbol, cost, None), Decimal(row.quantity))
+            posting = Posting(entry, account, position, None, None)
+            entry.postings.append(posting)
+
+            create_simple_posting(entry, config['asset_cash'], amount, base_currency)
+
+        elif re.match(r'NON-TAXABLE DIVIDENDS \((.*)\)', row.description):
+
+            create_simple_posting(entry, config['asset_cash'], amount, base_currency)
+            create_simple_posting(entry, config['dividend_nontax'], -amount, base_currency)
+
+        else:
+            raise ValueError("Unknown transaction {}".format(row))
 
         new_entries.append(entry)
 
-
-        # FIXME: TODO - add 'check' directives using the balance each time.
+        prev_balance = Amount(Decimal(row.net_cash_balance), base_currency)
 
     return new_entries, annotations
 
@@ -869,28 +892,8 @@ def import_csv_ameritrade(filename, config, entries):
 
 
 
-        # # Create a posting for it.
-        # tferaction = soup_get(tran, 'tferaction')
-        # if tferaction == 'OUT':
-        #     units = -units
 
-        # position = Position(Lot(security, Amount(unitprice, currency), None), units)
-
-        # account = data.account_from_name('{}:{}'.format(
-        #     source_subaccounts[source], security))
-        # entry.postings.append(Posting(entry, account, position, None, None))
-
-        # if total is None:
-        #     total = units * unitprice
-        #     ##print('{:.9f} {:.9f} = {:.9f}'.format(units, unitprice, total))
-
-        # position = Position(Lot(currency, None, None), -total)
-        # account = get_cash_account(trantype, source, incometype)
-        # entry.postings.append(Posting(entry, account, position, None, None))
-
-
-
-
+## FIXME: Screw all this, use Think-or-Swim transactions list instead!!!!
 
 
 
@@ -997,7 +1000,11 @@ def main():
         print(';; ({}, {}, {})'.format(institution, filetype, account_id))
         print(';;\n')
 
+        # Ensure that the entries are typed correctly.
+        for entry in new_entries:
+            data.sanity_check_types(entry)
 
+        # Print out the entries.
         for entry in new_entries:
             entry_string = format_entry(entry)
 
@@ -1009,7 +1016,12 @@ def main():
             print(entry_string)
 
 
-# FIXME: Write a routine that will allow each importer to declare the list of
+
+
+
+
+
+# fixme: Write a routine that will allow each importer to declare the list of
 # accounts that it requires in order to run.
 
 
@@ -1161,6 +1173,25 @@ def merge(entries, prototype_entry):
 
 
 
+
+
+
+
+
+def get_currency_for_account(account, entries):
+    """Find the single currency used in the given account.
+    This assumes that there is exactly one currency.
+    May return None."""
+
+    for entry in utils.filter_type(entries, Open):
+        if entry.account.name == account.name:
+            found = entry
+            break
+    else:
+        return None
+
+    assert len(entry.currencies) == 1, (account, entry.currencies)
+    return entry.currencies[0]
 
 
 

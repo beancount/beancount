@@ -3,6 +3,7 @@ Basic data structures used to represent the Ledger entries.
 """
 import io
 import os
+import datetime
 from collections import namedtuple, defaultdict
 
 from beancount2 import utils
@@ -175,6 +176,31 @@ Price       = namedtuple('Price'       , 'fileloc date currency amount')
 # Note: a posting may only list within a single entry, and that's what the entry
 # field should be set to.
 Posting = namedtuple('Posting', 'entry account position price flag')
+
+
+NoneType = type(None)
+
+def sanity_check_types(entry):
+    """Check that the entry and its postings has all correct data types."""
+    from beancount2.core.inventory import Position
+    assert isinstance(entry, (Transaction, Open, Close, Pad, Check, Note, Event, Price))
+    assert isinstance(entry.fileloc, FileLocation)
+    assert isinstance(entry.date, datetime.date)
+    if isinstance(entry, Transaction):
+        assert isinstance(entry.flag, (NoneType, str))
+        assert isinstance(entry.payee, (NoneType, str))
+        assert isinstance(entry.narration, (NoneType, str))
+        assert isinstance(entry.tags, (NoneType, set, frozenset))
+        assert isinstance(entry.links, (NoneType, set, frozenset))
+        assert isinstance(entry.postings, list)
+        for posting in entry.postings:
+            assert isinstance(posting, Posting)
+            assert posting.entry is entry
+            assert isinstance(posting.account, Account)
+            assert isinstance(posting.position, Position)
+            assert isinstance(posting.price, (Amount, NoneType))
+            assert isinstance(posting.flag, (str, NoneType))
+        
 
 def reparent_posting(posting, entry):
     "Create a new posting entry that has the parent field set."
