@@ -2,6 +2,11 @@
 beancount: TODO
 * NEW
 
+  - Complete Think-or-Swim parser
+
+  - (views) You should be able to filter to all transactions related to some
+    account, e.g. Immigration
+
   - Add a ^LINK to the document directive in order to associate a PDF with a
     document?!? -> For trade tickets
 
