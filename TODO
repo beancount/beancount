@@ -2,7 +2,10 @@
 beancount: TODO
 * NEW
 
-  - Complete Think-or-Swim parser
+  - (import) --dry-run option, that prints the identification, and (account,
+    date) for filing, if needed.  --file --dry-run to try it out.
+
+  - Complete Think-or-Swim file parser
 
   - (views) You should be able to filter to all transactions related to some
     account, e.g. Immigration
@@ -14,14 +17,6 @@ beancount: TODO
     via an explicit documents directive; just ignore files with the same
     absolute name.
 
-
-
-
-
-
-
-  - (import) Get rid of the account_id on the accounts open directives...
-    really this goes into the importers, this makes more sense.
 
 
 
@@ -46,12 +41,7 @@ beancount: TODO
     to Vanguard #$(*#(*$.
 
 
-  - For Check, don't check a Position, check just an amount, it's a bit crazy
-    to check for lots, and not necessary at all.
 
-
-
-  - balsheet: Add a sum Total line at the bottom of every table.
   - balsheet: For Equity, separately report the total net worth in terms of EACH
     of the operating currencies, using the latest prices.
 
@@ -59,7 +49,7 @@ beancount: TODO
     id=right; the other divs should be children of them.
 
 
-  - web: Move table stuff into files, smaller files.
+  - (web) Move table rendering functions into their own files, smaller files.
 
 
   - Implement basic error reporting page from the list of errors.
@@ -73,8 +63,6 @@ beancount: TODO
 
   - Realization should be made into a simple tree; the hash-map is only
     required temporarily, see if you can simplify this even further.
-
-
 
 
 
@@ -652,18 +640,10 @@ beancount: TODO
 
 ** General Rendering
 
-  - You should insert thousand-commas everywhere... no, really...
+  - You should insert thousand-commas everywhere... no, really.... This should
+    be in the same routine that renders amounts by account type, with a sign
+    possibly inverted.
 
-
-** Balance Sheet
-
-  - beancount: Available balance sheet reports should be: at begin, at
-    end, both. Perhaps the "both" statement is only in report format.
-    Really, at any time, should be easy to generate.
-
-
-
-  - Figure out how to show balance sheet to market value, perhaps show gains.
 
 ** Statement of Retained Earnings
 
