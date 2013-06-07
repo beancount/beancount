@@ -559,25 +559,14 @@ beancount: TODO
     subdirectory. Maybe pdf2text and look for account ids, then try to
     automatically match against one of the account_id declared in the Ledger.
 
-* Statements
-** Capital Statement
-
-  - Implement the Capital Statement report
-
-** Cash Flow Statement
-** Positions Statement
-
-  - Implement a Positions report
-
-
 * Prices
 
-  - beancount: Make USD/CAD also specify CAD/USD in the price table;
-    the lookup procedure should be able to compute the reverse prices.
+  - beancount: Make USD/CAD also able to specify CAD/USD in the price table; the
+    lookup procedure should be able to compute the reverse prices.
 
 * Code Organization
 
-  - More everything under src/*
+  - More everything under src/* for an obvious multi-language support.
 
 * Error Reporting & Detection
 
@@ -596,36 +585,12 @@ beancount: TODO
   - When an error occurs, skip the lexer to the next empty line and recommence.
 * Checks
 
-  - Implement a check that open and close precede / succede all accounts
-
-  - Remove entries that are outside the open/close dates, at render time
+  - Remove entries that are outside the open/close dates, at render time, come
+    up with a good heuristic.
 
   - Implement checks for balances
 
   - Barf on unmatched inventory (only for lots with a cost/lot-date).
-
-  - Automatically detect and find potential duplicates at the same date.
-
-
-* Options
-
-  - Maybe we should create an "option" directive to specify some of the common
-    parameters that related to the file:
-
-    * document roots, e.g.:
-
-          option document_root "documents/2011"
-          option document_root "documents/2012"
-          option document_root "documents/2013"
-
-    * "aggregate" (or "base") currencies, to specify the list of currencies to
-      be aggregated and converted, e.g.:
-
-          option base_currency USD
-          option base_currency CAD
-
-    If we do this, these directives should correspond one-to-one with the
-    command-line parameters.
 
 
 * Reports
@@ -643,6 +608,17 @@ beancount: TODO
   - You should insert thousand-commas everywhere... no, really.... This should
     be in the same routine that renders amounts by account type, with a sign
     possibly inverted.
+
+** Capital Statement
+
+  - Implement the Capital Statement report
+
+** Cash Flow Statement
+
+
+** Positions Statement
+
+  - Implement a Positions report
 
 
 ** Statement of Retained Earnings
@@ -860,6 +836,13 @@ beancount: TODO
     All the small amounts could be lumped together under a special
     entry.
 
+** By Institution
+
+** By Country
+
+** By Tag
+
+
 
 * Cleaning up for final release
 
@@ -873,7 +856,7 @@ beancount: TODO
 * Includes
 
   - With the new format... support includes, it makes a lot more sense to do
-    that now!
+    that now! People want this too.
 
 
 * Syntax / Parser
