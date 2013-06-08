@@ -12,9 +12,9 @@ def main():
     import optparse
     parser = optparse.OptionParser(__doc__.strip())
     opts, args = parser.parse_args()
-    if len(args) != 2:
-        parser.error("Usage: [LEDGER] [ACTIVITY]")
-    ledgerfn, excelfn = args
+    if len(args) != 1:
+        parser.error("Usage: [ACTIVITY]")
+    excelfn, = args
 
     ss = 'urn:schemas-microsoft-com:office:spreadsheet'
 

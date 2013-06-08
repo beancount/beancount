@@ -1,6 +1,9 @@
 -*- mode: org -*-
 beancount: TODO
-* Code Organization
+* Current
+
+  - Finish converting all the importers to the new system; RBC Direct
+    Investing, Google AdSense.
 
   - More everything under src/* for an obvious multi-language support.
 
@@ -945,6 +948,9 @@ beancount: TODO
 * Import
 
   - Add a check at the end of the OFX bank import. Missing right now.
+
+  - For guessing the account, you should pass through the filename, not just
+    the contents, we need that, unfortunately.
 
 
   - Implement FOREX transaction log parsing for FOREX account, so that we count
