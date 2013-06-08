@@ -1,0 +1,183 @@
+Rejected TODO Items & Ideas
+* Rejected Ideas
+
+  - Support Ledger's aliases?
+
+      *REJECTED*: This is not necessary, and it adds yet another special case for
+      directives; right now, all we have is pushtag/poptag. Let's keep it simple.
+
+  - Comments should use '#' not ';' anymore, it's just more common...
+
+      *REJECTED*: '#tag' syntax is really common; I would need some other comment
+      syntax. Not sure what. //?
+
+
+  - Each account has basically many dimensions; it would be nice to be able to
+    group them as such:
+
+      * COUNTRY: Canada, USA
+      * CURRENCY: CAD, USD, other
+      * TYPE: Asset, Income, Liability
+      * INSTITUTION: RBC, RBC-Investment, HSBC, TD, etc.
+      * SOURCE: Google, Eladian, MarketFactory, etc.
+      * DESTINATION: IRS, CRA, State-NewYork, State-California
+
+    Ideally, one should be able to generate report by querying on a subset of
+    these dimensions!!
+
+      Note: we can restrict each account to hold only a single currency, and
+      encode the name of the currency in the account's name. This is reasonable.
+
+        *REJECTED*: I'm not sure this is useful actually.
+
+  - Idea: When an invalid check occurs and the amount is the same as the other
+    but with a negative sign, you can detect this and flag the last one as an
+    incorrect sign (a milder error) than an invalid check. Why? Because this is
+    one of the most common errors.
+
+      *REJECTED*: You impure bastard, just get your data right.
+
+
+  - Idea: a @check that works on differences, like a clamp on an
+    income statement between two dates. This would be useful for
+    OANDA, for example.
+
+      *REJECTED*: I don't see how I could use this anymore. I don't understand
+      what I came up with.
+
+  - Make it possible to upload a new file to the server to be parsed.
+    This way, I wouldn't even have to log in ssh in order to update the
+    in-memory database...
+
+      *REJECTED*: You could easily create a separate process to do this, this
+      does not belong in the basic server.
+
+
+  - Have beancount-convert-ofx parse description NUM USD @ NUM and insert an
+    appropriate line in the output, perhaps as a comment
+
+      *REJECTED*: That's just not necessary. Let's keep things simple.
+
+
+  - Add a syntax to convert between currencies without having to fetch
+    the values by hand, e.g. "3467.02 USD in CAD".
+
+      *REJECTED*: This is a cool idea, but we would have to have correct prices
+    at every requested time in order to balance transactions, and that's simply
+    too much of a dependency to require.
+
+
+  - Add a command to print the parsed transactions register in the order
+    they were read in.
+
+      *REJECTED*: Simply not needed.
+
+  - Failing "check" directives should insert a transaction to fix the balance
+    towards the expected balance. This is in order to avoid a single mistake
+    somewhere early before many checks cascading into a torrent of errors.
+    (realize(): When a check fails, fix the balance so that we don't report more
+    than a single check error, so that they don't cascade to multiple ones if
+    the error was made early on.)
+
+      *REJECTED*: It's really not that big a problem in practice.
+
+  - Should padding be by lot?
+
+      *REJECTED* No, the way padding is used, it's better not to make it too
+      complicated.
+
+  - Add directives to support import::
+
+     @imported <FROMDATE> <TODATE> <ACCOUNT>
+
+    Using the intersection of these date intervals and the account name,
+    you can determine what has already been imported and avoid importing
+    twice.
+
+    * We need central support for these tasks as well.
+    * The conversion scripts should always parse a ledger file.
+
+    *REJECTED* This is a bad idea, I don't want the import to depend on
+    meta-data, it should be able to find relevant information from the entries
+    itself.
+
+  - "Padding" really should be called "balance adjustment." That's the official
+    name for this type of thing.
+
+    *REJECTED* "Padding" has a nicer ring to it, and also it really should be
+    called "automatic balance adjustment" and that's obviously too long.
+
+  - Ha! The current problem with checks has to do with my stupid :Contrib
+    account, and the fact that those checks include the CHILDREN accounts (the
+    old beancount worked that way... eliminate that). Fix all this, make the
+    contributions be tracked the correct way. They are old, but it'll be a good
+    exercise...
+
+      Q: Do I want to support checks accross all positions, for a single
+         currency? I rather like the idea of checking a specific "position"...
+
+    *REJECTED* No, it's simpler to just consider checks on the current account,
+    not including the transactions in the children. In all cases I've
+    encountered so far I've been able to do it.
+
+  - Do I really want all my checks to be at the BEGINNING of the day? Maybe...
+    not sure. Need to convince myself.
+
+    *REJECTED* Yes, I do. It makes sense, and it works. I supposed I could
+    otherwise create a special directive, like "check_after" but I haven't
+    needed this so far, adjusting the date has been easy enough.
+
+  - Deal with the effective date somehow, we need to do something with it, or
+    just remove it?
+
+    *REJECTED* We choose to just remove it. Choose a date, be done with it.
+    Maybe we'll revive this by adding an optional date on postings eventually,
+    but I'm not entirely sure how that would get handled. Perhaps with a "limbo
+    transfer" account and splitting the transaction in two, with a link?
+
+    Idea:
+
+      entries = split_differing_dates(entries)
+
+  - Choose one of these:
+
+       Equity                         Equity
+       `--+-- OpeningBalances         `--+-- OpeningBalances
+          |-- RetainedEarnings           `-- Exercise
+          `-- Conversion                     |-- RetainedEarnings
+                                             `-- Conversion
+
+    *REJECTED* We choose the left one.
+
+  - Support note entries for new accounts, should be a multiline paragraph that
+    describes the purpose of the account. Add them in my input file.
+
+    *REJECTED* This can be done as a comment for now. We want to keep the
+    syntax simple, and since we've moved account-id information to a separate
+    configuration file for importers, this doesn't fit in the context of a
+    as-simple-as-possible syntax for transactions. Just add a comment in the
+    file, this doesn't need be parsed.
+
+  - Support a category called "Misc:*" in order to deal with non-summable things
+    like RRSP contributsions. There's no need to do anything else special, just
+    goes to/from some Misc accounts. Those don't need to balance against anything.
+
+    *REJECTED* I've managed to reduce all these issues using new synthetic
+    currencies, which do a much better job at it. These "Misc" accounts are a
+    cop-out, don't give in.
+
+
+  - Not sure if we need this with the @imported directive, but how about
+    a special field in the transaction's posting::
+
+      Assets:Investments:HSBC-Broker           -100 IVV @@ 136.2901 USD  {HD7egE62}
+      Income:Investment:Capital-Gains
+
+    This special kind of id would get computed in a uniform way from the
+    date and the account being imported, so that we could check if this
+    posting or transaction had already been imported before.
+
+    *REJECTED* A nice idea, but the new importers often generate transactions
+    with more than a single leg. I think ensuring a ^link on the transaction is
+    good enough, this doesn't make as much sense on postings. Won't implement.
+
