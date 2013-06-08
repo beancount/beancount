@@ -8,10 +8,14 @@ import re
 import datetime
 
 from beancount2.core import data
+from beancount2.core.data import create_simple_posting
 from beancount2.core.data import Posting, Transaction, Check, Decimal, Lot, Amount
 from beancount2.core.data import account_from_name
 from beancount2.core.inventory import Position
 from beancount2 import utils
+
+
+debug = False
 
 
 # This importer has been tested wtih the following sources.
@@ -58,14 +62,6 @@ ALWAYS_EMPTY_FIELDS = ('reg_fee',
                        'deferred_sales_charge')
 
 
-def create_simple_posting(entry, account, number, currency):
-    position = Position(Lot(currency, None, None), Decimal(number))
-    posting = Posting(entry, account, position, None, None)
-    entry.postings.append(posting)
-    return posting
-
-
-
 def import_file(filename, config, entries):
     """Import a CSV file from Ameritrade."""
 
@@ -89,7 +85,9 @@ def import_file(filename, config, entries):
         date = datetime.datetime.strptime(row.date, '%m/%d/%Y').date()
 
         # Insert some Check entries every time the day changed.
-        if date != prev_date:
+        if ((debug and date != prev_date) or
+            (not debug and date.month != prev_date.month)):
+
             prev_date = date
             fileloc = data.FileLocation(filename, index)
             new_entries.append(Check(fileloc, date, config['asset_cash'], prev_balance, None))
@@ -160,8 +158,8 @@ def import_file(filename, config, entries):
                 'OFF-CYCLE INTEREST (MMDA1)',
                 'FREE BALANCE INTEREST ADJUSTMENT'):
 
-            # Ignore this for now; it might vanish when we download later.
-            continue
+            create_simple_posting(entry, config['asset_cash'], amount, base_currency)
+            create_simple_posting(entry, config['interest'], -amount, base_currency)
 
         elif re.match('Bought ([^ ]+) ([^ ]+) @ ([^ ]+)', row.description):
 
@@ -171,7 +169,11 @@ def import_file(filename, config, entries):
             posting = Posting(entry, account, position, None, None)
             entry.postings.append(posting)
 
+            if row.commission:
+                create_simple_posting(entry, config['commission'], row.commission, base_currency)
+
             create_simple_posting(entry, config['asset_cash'], amount, base_currency)
+
 
         elif re.match(r'NON-TAXABLE DIVIDENDS \((.*)\)', row.description):
 
@@ -184,5 +186,10 @@ def import_file(filename, config, entries):
         new_entries.append(entry)
 
         prev_balance = Amount(Decimal(row.net_cash_balance), base_currency)
+
+    fileloc = data.FileLocation(filename, index)
+    new_entries.append(Check(fileloc,
+                             date + datetime.timedelta(days=1),
+                             config['asset_cash'], prev_balance, None))
 
     return new_entries, annotations

@@ -170,7 +170,7 @@ def create_entries_from_balances(balances, date, other_account, direction,
         if not direction:
             balance = -balance
 
-            
+
         postings = []
         new_entry = Transaction(
             fileloc, date, flag, None, narration, None, None, postings)
@@ -219,7 +219,7 @@ def open_at_date(entries, date):
             break
 
         if isinstance(entry, Open):
-            assert entry.account not in open_entries
+            assert entry.account not in open_entries, entry.account
             open_entries[entry.account] = (index, entry)
 
         elif isinstance(entry, Close):

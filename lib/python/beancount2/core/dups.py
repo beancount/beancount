@@ -3,8 +3,11 @@ Code that deals with duplicate entries, mostly for use during import.
 """
 import collections
 
-from beancount2.core.data import Transaction, Decimal
+from beancount2.core.data import Transaction, Decimal, format_entry
 from beancount2 import utils
+
+
+debug = False
 
 
 def find_duplicate_entries(new_entries, entries):
@@ -32,6 +35,7 @@ def find_duplicate_entries(new_entries, entries):
         for date in utils.iter_dates(new_entry.date - window_size,
                                      new_entry.date + window_size):
 
+            # For all candidate entries in the window...
             for entry in date_index[date]:
 
                 # Only consider entries of the same type.
@@ -55,8 +59,24 @@ def find_duplicate_entries(new_entries, entries):
                             continue
                         else:
                             # We found at least one common account with a close
-                            # amount. Close enough.
+                            # amount.
+
+                            # Now, require that at least one of the other
+                            # postings shares an account.
+                            common_accounts = set(new_amounts) & set(amounts)
+                            if len(common_accounts) < 2:
+                                continue
+
+                            # Okay, this is good enough.
                             duplicates.append(new_entry)
+
+                            if debug:
+                                print(',--------------------------------------------------------------------------------')
+                                print("FOUND DUPLICATE")
+                                print()
+                                print(format_entry(new_entry))
+                                print(format_entry(entry))
+                                print('`--------------------------------------------------------------------------------')
 
                             break
 

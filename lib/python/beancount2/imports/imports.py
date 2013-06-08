@@ -160,8 +160,7 @@ def identify_account(filename, entries, account_ids):
     return (institution, filetype, account_id)
 
 
-# FIXME: This can be done via an import and a standard entry point under beancounts.importer.NAME
-
+# FIXME: Figure out how obtain this list automatically...
 IMPORTERS = {
     'vanguard'    : ofx_invest,
     'td'          : ofx_bank,
@@ -214,10 +213,10 @@ def run_importer(importer_config, files_or_directories, output,
         duplicate_entries = find_duplicate_entries(new_entries, entries)
 
         pr = lambda *args: print(*args, file=output)
-        pr(';;')
-        pr(';; {}'.format(filename))
-        pr(';; ({}, {}, {})'.format(institution, filetype, account_id))
-        pr(';;\n')
+        # pr(';;')
+        # pr(';; {}'.format(filename))
+        # pr(';; ({}, {}, {})'.format(institution, filetype, account_id))
+        # pr(';;\n')
 
         # Ensure that the entries are typed correctly.
         for entry in new_entries:

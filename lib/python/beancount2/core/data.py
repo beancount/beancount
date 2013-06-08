@@ -172,17 +172,27 @@ Note        = namedtuple('Note'        , 'fileloc date account comment')
 Event       = namedtuple('Event'       , 'fileloc date type description')
 Price       = namedtuple('Price'       , 'fileloc date currency amount')
 
+
 # Postings are contained in Transaction entries.
 # Note: a posting may only list within a single entry, and that's what the entry
 # field should be set to.
 Posting = namedtuple('Posting', 'entry account position price flag')
+
+def create_simple_posting(entry, account, number, currency):
+    """Create a simple posting on the entry, with just a number and currency (no
+    cost)."""
+    from beancount2.core.inventory import Position ## FIXME: fix dependency
+    position = Position(Lot(currency, None, None), Decimal(number))
+    posting = Posting(entry, account, position, None, None)
+    entry.postings.append(posting)
+    return posting
 
 
 NoneType = type(None)
 
 def sanity_check_types(entry):
     """Check that the entry and its postings has all correct data types."""
-    from beancount2.core.inventory import Position
+    from beancount2.core.inventory import Position ## FIXME: fix dependency
     assert isinstance(entry, (Transaction, Open, Close, Pad, Check, Note, Event, Price))
     assert isinstance(entry.fileloc, FileLocation)
     assert isinstance(entry.date, datetime.date)
@@ -385,7 +395,9 @@ class EntryPrinter:
     def Note(_, entry, oss):
         oss.write('{e.date} note {e.account.name} {e.comment}\n'.format(e=entry))
 
-    def Pad(_, entry, oss):   raise NotImplementedError
+    def Pad(_, entry, oss): 
+        oss.write('{e.date} pad {e.account.name} {e.account_pad.name}\n'.format(e=entry))
+
     def Open(_, entry, oss):  raise NotImplementedError
     def Close(_, entry, oss): raise NotImplementedError
     def Event(_, entry, oss): raise NotImplementedError

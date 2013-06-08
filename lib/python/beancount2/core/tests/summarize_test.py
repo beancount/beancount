@@ -208,3 +208,9 @@ class TestOpenAtDate(unittest.TestCase):
         open_entries = open_at_date(entries, date(2012, 1, 1))
         dates = [entry.date for entry in open_entries]
         self.assertEqual(dates, sorted(dates))
+
+
+
+# FIXME: Add a test of two open directives for the same account, should fail.
+
+
