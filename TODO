@@ -235,11 +235,6 @@ beancount: TODO
 
   - When an error occurs, skip the lexer to the next empty line and recommence.
 
-** Misc
-
-  - Check-in/commit the lexer and parser generated files in order to minimize
-    the dependencies (no flex/bison required).
-
 ** Options
 
   - FIXME: We need to parse the options using the same argparse parser....
