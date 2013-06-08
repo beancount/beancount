@@ -4,11 +4,13 @@ Read a beancount input file and a directory name, and attempt to identify and
 convert the files in the directory. There is also an option to automatically
 file succesfully detected and converted input files.
 """
+import sys
 import re
 import datetime
 import logging
 
-from beancount2.imports import run_importer
+from beancount2.parser import load
+from beancount2.imports import imports
 
 
 def main():
@@ -19,19 +21,23 @@ def main():
     parser.add_argument('config',
                         help=('Importer configuration file. '
                               'This is a Python file with a data structure that '
-                              'is specific to your accounts.'))
+                              'is specific to your accounts'))
 
     parser.add_argument('ford', nargs='+',
                         help='Filenames or directories to search for files to import')
 
+    parser.add_argument('-o', '--output', action='store',
+                        help='Output filename (default: stdout)')
+
     parser.add_argument('-f', '--beancount', action='store',
-                        help='Beancount file used to filter out duplicates.')
+                        help='Beancount file used to filter out duplicates')
 
     parser.add_argument('-m', '--mindate', metavar='DATA', action='store',
-                        help="Exclude imported entries earlier than this date.")
+                        help="Exclude imported entries earlier than this date")
 
     opts = parser.parse_args()
 
+    # Parse the options.
     if opts.mindate:
         mo = re.match('(\d\d\d\d)-(\d\d)-(\d\d)', opts.mindate)
         if not mo:
@@ -39,9 +45,22 @@ def main():
         opts.mindate = datetime.date(*map(int, mo.groups()))
 
     # If specified, parse the ledger and get the entries from it.
-    entries, _, _ = load(entries, quiet=True) if opts.beancount else []
+    if opts.beancount:
+        entries, _, _ = load(opts.beancount, quiet=True)
+    else:
+        entries = []
 
-    run_importer(opts.config, opts.ford, entries, opts.mindate)
+    # Load the importer config from its Python file.
+    code = compile(open(opts.config).read(), opts.config, 'exec')
+    config_env = {}
+    exec(code, globals(), config_env)
+    config = config_env['CONFIG']
+
+    # Create a suitable output file.
+    output = open(opts.output, 'w') if opts.output else sys.stdout
+
+    # Run the importer.
+    imports.run_importer(config, opts.ford, output, entries, opts.mindate)
 
 
 if __name__ == '__main__':

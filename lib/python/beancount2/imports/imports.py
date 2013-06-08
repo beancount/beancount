@@ -1,4 +1,4 @@
-"""Driver for the importers. 
+"""Driver for the importers.
 
 This is code that guesses the file types, identifies the source of data, selects
 a suitable configuration, finds an import module, runs and filters it, and
@@ -171,17 +171,19 @@ IMPORTERS = {
 }
 
 
-def run_importer(config_filename, files_or_directories, entries, mindate):
-
-    # Load up the importer config.
-    config = {}
-    config_module = exec(compile(open(config_filename).read(), config_filename, 'exec'), globals(), config)
-    IMPORTER_CONFIG = config['IMPORTER_CONFIG']
+def run_importer(importer_config, files_or_directories, output,
+                 entries=[], mindate=None):
+    """Given an importer configuration, search for files that can be imported in the
+    list of files or directories, identify them, try to find a suitable importer
+    and run it on the files. A list of entries for an existing ledger can be
+    provided in order to perform de-duplication and a minimum date can be
+    provided to filter out old entries.
+    """
 
     # Get the list of account-ids.
-    account_ids = [account_id for (_, _, account_id) in IMPORTER_CONFIG if account_id]
+    account_ids = [account_id for (_, _, account_id) in importer_config if account_id]
 
-    for filename in utils.walk_files_or_dirs(opts.directories):
+    for filename in utils.walk_files_or_dirs(files_or_directories):
 
         # Figure out the account's filetype and account-id.
         identification = identify_account(filename, entries, account_ids)
@@ -198,38 +200,36 @@ def run_importer(config_filename, files_or_directories, entries, mindate):
                                                                            identification))
             continue #
 
-        accounts = IMPORTER_CONFIG[identification]
+        accounts = importer_config[identification]
 
         # Run the importer.
         new_entries, annotations = importer.import_file(filename, accounts, entries)
 
         # Filter out entries with dates before 'mindate'.
-        if opts.mindate:
+        if mindate:
             new_entries = list(itertools.dropwhile(lambda x: x.date < opts.mindate,
                                                    new_entries))
 
         # Find potential matching entries.
         duplicate_entries = find_duplicate_entries(new_entries, entries)
 
-        print(';;')
-        print(';; {}'.format(filename))
-        print(';; ({}, {}, {})'.format(institution, filetype, account_id))
-        print(';;\n')
+        pr = lambda *args: print(*args, file=output)
+        pr(';;')
+        pr(';; {}'.format(filename))
+        pr(';; ({}, {}, {})'.format(institution, filetype, account_id))
+        pr(';;\n')
 
         # Ensure that the entries are typed correctly.
         for entry in new_entries:
             data.sanity_check_types(entry)
 
-        # Print out the entries.
+        # Pr out the entries.
         for entry in new_entries:
             entry_string = format_entry(entry)
 
             # Indicate that this entry may be a duplicate.
             if entry in duplicate_entries:
-                print(';;;; POTENTIAL DUPLICATE ENTRY')
+                pr(';;;; POTENTIAL DUPLICATE ENTRY')
                 entry_string = textwrap.indent(entry_string, ';; ')
 
-            print(entry_string)
-
-
-
+            pr(entry_string)
