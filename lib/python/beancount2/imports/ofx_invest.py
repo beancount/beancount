@@ -9,12 +9,6 @@ from beancount2.core.data import Posting, Transaction, Check, Decimal, Lot, Amou
 from beancount2.imports.ofx_bank import souptodict, soup_get, parse_ofx_time
 
 
-# This importer has been tested wtih the following sources.
-SOURCES = [
-    ('Vanguard' , 'US'),
-    ]
-
-
 def import_file(filename, config, _):
     """Extract transaction info from the given OFX file into transactions for the
     given account. This function returns a list of entries possibly partially

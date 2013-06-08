@@ -10,14 +10,6 @@ from beancount2.core.data import Posting, Transaction, Decimal, Lot
 from beancount2.core.inventory import Position
 
 
-# This importer has been tested wtih the following sources:
-SOURCES = [
-    ('TD Bank'          , 'US'),
-    ('HSBC Credit Card' , 'US'),
-    ('RBC'              , 'CA'),
-    ]
-
-
 def souptodict(node):
     """Convert all of the child nodes from BeautifulSoup node into a dict.
     This assumes the direct children are uniquely named, but this is often the

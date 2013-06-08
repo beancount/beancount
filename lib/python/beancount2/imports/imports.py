@@ -11,13 +11,14 @@ import re
 import logging
 import subprocess
 import bs4
+import importlib
 
 from beancount2.core import data
 from beancount2.core.data import format_entry
 from beancount2.core.dups import find_duplicate_entries
 from beancount2 import utils
-from beancount2.imports import ofx_invest, ofx_bank, oanda, ameritrade, thinkorswim
 from beancount2.imports.filetype import guess_file_type
+from beancount2.imports import ofx_bank
 
 
 #
@@ -30,131 +31,64 @@ def sliced_match(string):
     to grep a file for broken-up ids, such as '123456789' appearing as '123
     45-6789'.
     """
-    return '[ -]*'.join(string)
+    return '[ \-\­]*'.join(string)
 
 
-def find_account_ids_string(text, account_ids):
-    """Given some string 'text', find if any of the account-ids in the 'account_ids'
-    map is present in the text and return the corresponding account, or None."""
-
-    for account_id in account_ids:
-        mo = re.search(sliced_match(account_id), text)
-        if mo:
-            return account_id
-
-
-def find_account_ids_pdf(filename, account_ids):
-    "Attempt to identify the account for the given PDF file."""
-
-    p = subprocess.Popen(('pdftotext', filename, '-'),
-                         shell=False,
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = p.communicate()
-    if p.returncode != 0 or stderr:
-        logging.error("Error running pdftotext: {}".format(stderr))
-        return
-
-    text = stdout.decode()
-    return find_account_ids_string(text, account_ids)
-
-
-def find_account_ids_csv(filename, account_ids):
-    "Attempt to identify the account for the given CSV file."""
-    text = open(filename).read()
-    return find_account_ids_string(text, account_ids)
-
-
-def find_account_ids_ofx(filename, __account_ids):
-    "Attempt to identify the account for the given OFX file."""
-
-    soup = bs4.BeautifulSoup(open(filename), 'lxml')
-
-##FIXME: This may have multiple values
-    acctid = ofx_bank.ofx_get_account(soup)
-    try:
-        return acctid
-    except KeyError:
-        return None
-
-
-FIND_ACCOUNT_IDS_HANDLERS = {
-    'application/pdf'          : find_account_ids_pdf,
-    'text/csv'                 : find_account_ids_csv,
-    'application/x-ofx'        : find_account_ids_ofx,
-    'application/vnd.intu.qbo' : find_account_ids_ofx,
-}
-
-def find_account_ids(filename, all_account_ids):
-    """Given a filename, return the filetype and account that this file corresponds
-    to, or None if it could not be identified."""
+def find_account_ids(contents, filetype, all_account_ids):
+    """Given file contents, yield all the account ids found from all_account_ids."""
 
     # Try to find corresponding account-ids, using the list of those we already
     # know about from the importers config.
-    filetype = guess_file_type(filename)
-    if filetype == 'application/pdf':
-        account_ids = find_account_ids_pdf(filename, all_account_ids)
-    elif filetype == 'text/csv':
-        account_ids = find_account_ids_csv(filename, all_account_ids)
+    if filetype in ('application/pdf', 'text/csv'):
+        for account_id in all_account_ids:
+            mo = re.search(sliced_match(account_id), contents)
+            if mo:
+                yield account_id
+
     elif filetype in ('application/x-ofx', 'application/vnd.intu.qbo'):
-        account_ids = find_account_ids_ofx(filename, all_account_ids)
-    else:
-        account_ids = []
+        soup = bs4.BeautifulSoup(contents, 'lxml')
+        acctids = soup.find_all('acctid')
+        for acctid in acctids:
+            # There's some garbage in here sometimes; clean it up.
+            yield acctid.text.split('\n')[0]
 
-    return account_ids
 
-
-def guess_institution(filename):
+def guess_institution(contents, filetype, all_sources):
+    """Attempt to guess the institution of the file in contents.
+    Returns an institution ID."""
 
     # Read the file contents, grab some of the header.
-    contents = open(filename).read()
-    header = contents[:4096]
+    for source in all_sources:
+        if source.is_matching_file(contents, filetype):
+            return source.ID
 
-##FIXME: This needs to move to the source files themselves
+
+def read_file(filename):
+    """Read the file contents in a format that it can be examined."""
+
+    # Get the filetype.
     filetype = guess_file_type(filename)
 
-    if filetype == 'application/x-ofx':
-        # Test for signature strings... we could go further and look at the
-        # bankid/org ofx tags.
-        if re.search(r'\bVanguard\b', header):
-            institution = 'vanguard'
+    if filetype == 'application/pdf':
+        # If the file is a PDF file, convert to text so we can grep through it.
+        p = subprocess.Popen(('pdftotext', filename, '-'),
+                             shell=False,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
+        if p.returncode != 0 or stderr:
+            logging.error("Error running pdftotext: {}".format(stderr))
+            contents = ''
+        else:
+            contents = stdout.decode()
 
-        elif re.search(r'\b011103093\b', header):
-            institution = 'td'
+    else:
+        # Otherwise just read it.
+        contents = open(filename).read()
 
-        elif re.search(r'<\?OFX OFXHEADER="200" VERSION="200" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="NONE"\?>', header):
-            institution = 'hsbc'
-
-    elif filetype == 'text/csv':
-        if re.match(r'Ticket\b.*\bPipettes\b', header):
-            institution = 'oanda'
-
-        elif re.search(r'MONEY MARKET PURCHASE \(MMDA1\)', header):
-            institution = 'ameritrade'
-
-        elif re.search(r'DATE,TIME,TYPE,REF #,DESCRIPTION,FEES,COMMISSIONS,AMOUNT,BALANCE', header):
-            institution = 'thinkorswim'
-
-    elif filetype == 'application/vnd.intu.qbo':
-
-        if re.search(r'<INTU.BID>00015', header):
-            institution = 'rbc'
-
-    return institution
+    return contents, filetype
 
 
-# FIXME: Figure out how obtain this list automatically...
-IMPORTERS = {
-    'td'          : ofx_bank,
-    'hsbc'        : ofx_bank,
-    'rbc'         : ofx_bank,
-    'vanguard'    : ofx_invest,
-    'oanda'       : oanda,
-    'ameritrade'  : ameritrade,
-    'thinkorswim' : thinkorswim,
-}
-
-
-def identify(files_or_directories, all_account_ids):
+def identify(files_or_directories, importer_config):
     """Walk over the list of files or directories, and attempt to identify the
     filetype, institution/source, and list of account-ids for each file that
     we can grok. Yield a list of
@@ -162,18 +96,29 @@ def identify(files_or_directories, all_account_ids):
       (filename, (institution, filetype, [list-of-account-ids]))
 
     """
+
+    # Get the list of account-ids.
+    all_account_ids = [account_id
+                       for (_, _, account_id) in importer_config
+                       if account_id]
+
+    # Get the list of sources.
+    all_sources = []
+    for source, _, _ in importer_config:
+        module = importlib.import_module('beancount2.imports.sources.{}'.format(source))
+        all_sources.append(module)
+
     for filename in utils.walk_files_or_dirs(files_or_directories):
 
-        # Get the filetype.
-        filetype = guess_file_type(filename)
+        contents, filetype = read_file(filename)
 
         # Figure out the account's filetype and account-id.
-        account_ids = find_account_ids(filename, all_account_ids)
+        account_ids = find_account_ids(contents, filetype, all_account_ids)
 
         # Get the institution / data source.
-        institution = guess_institution(filename)
+        institution = guess_institution(contents, filetype, all_sources)
 
-        yield filename, (institution, filetype, account_ids)
+        yield filename, (institution, filetype, list(account_ids))
 
 
 def run_importer(importer_config, files_or_directories, output,
@@ -185,16 +130,25 @@ def run_importer(importer_config, files_or_directories, output,
     provided to filter out old entries.
     """
 
-    # Get the list of account-ids.
-    all_account_ids = [account_id
-                       for (_, _, account_id) in importer_config
-                       if account_id]
-
     for filename, (institution, filetype, account_ids) in identify(files_or_directories,
-                                                                   all_account_ids):
+                                                                   importer_config):
 
+        print('---------------------------------------- {}'.format(filename))
         print( (institution, filetype, account_ids) )
         continue
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         # institution, filetype, account_id = identification
 
@@ -278,3 +232,17 @@ def run_importer(importer_config, files_or_directories, output,
 ## FIXME: Move all sources to sources/ subdirectory; add one for td, one for rbc, etc.
 
 ## FIXME: Add configuraiton in the sources to describe all required accounts
+
+
+
+
+# FIXME: Figure out how obtain this list automatically...
+# IMPORTERS = {
+#     'td'          : ofx_bank,
+#     'hsbc'        : ofx_bank,
+#     'rbc'         : ofx_bank,
+#     'vanguard'    : ofx_invest,
+#     'oanda'       : oanda,
+#     'ameritrade'  : ameritrade,
+#     'thinkorswim' : thinkorswim,
+# }

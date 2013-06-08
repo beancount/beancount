@@ -15,13 +15,18 @@ from beancount2.core.inventory import Position
 from beancount2 import utils
 
 
+ID = 'ameritrade'
+INSTITUTION = ('Ameritrade' , 'US')
+
+
+def is_matching_file(contents, filetype):
+    return ((filetype == 'text/csv' and
+             re.search(r'MONEY MARKET PURCHASE \(MMDA1\)', contents)) or
+            (filetype == 'application/pdf' and
+             re.search(r'TD Ameritrade', contents, re.I)))
+
+
 debug = False
-
-
-# This importer has been tested wtih the following sources.
-SOURCES = [
-    ('Ameritrade' , 'US'),
-    ]
 
 
 _GROUPS = [

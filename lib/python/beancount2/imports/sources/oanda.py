@@ -12,10 +12,14 @@ from beancount2.core import compress
 from beancount2 import utils
 
 
-# This importer has been tested wtih the following sources.
-SOURCES = [
-    ('OANDA Corporation' , 'US'),
-    ]
+ID = 'oanda'
+INSTITUTION = ('OANDA Corporation' , 'US')
+
+
+def is_matching_file(contents, filetype):
+    return (filetype == 'text/csv' and
+            re.match(r'Ticket\b.*\bPipettes\b', contents))
+
 
 
 IGNORE_TRANSACTIONS = """

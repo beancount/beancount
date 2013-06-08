@@ -16,13 +16,16 @@ from beancount2.core.inventory import Position, Lot
 from beancount2 import utils
 
 
+ID = 'thinkorswim'
+INSTITUTION = ('Think-or-Swim', 'US')
+
+
+def is_matching_file(contents, filetype):
+    return (filetype == 'text/csv' and
+            re.search(r'DATE,TIME,TYPE,REF #,DESCRIPTION,FEES,COMMISSIONS,AMOUNT,BALANCE', contents))
+
+
 debug = False
-
-
-# This importer has been tested wtih the following sources.
-SOURCES = [
-    ('Think-or-Swim' , 'US'),
-    ]
 
 
 def import_file(filename, config, entries):
