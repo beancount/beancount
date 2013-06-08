@@ -944,6 +944,9 @@ beancount: TODO
 
 * Import
 
+  - Add a check at the end of the OFX bank import. Missing right now.
+
+
   - Implement FOREX transaction log parsing for FOREX account, so that we count
     losses properly.
 

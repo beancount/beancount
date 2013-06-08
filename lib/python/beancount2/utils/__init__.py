@@ -160,13 +160,12 @@ def csv_parse_header(header_row):
 
     fieldnames = []
     for index, column in enumerate(header_row):
-        if not column:
+        field = column.lower()
+        field = re.sub(r'\bp/l\b', 'pnl', field)
+        field = re.sub('[^a-z0-9]', '_', field)
+        field = field.strip(' _')
+        if not field:
             field = 'col{}'.format(index)
-        else:
-            field = column.lower()
-            field = re.sub(r'\bp/l\b', 'pnl', field)
-            field = re.sub('[^a-z]', '_', field)
-            field = field.strip(' _')
         assert field not in fieldnames, field
         fieldnames.append(field)
 

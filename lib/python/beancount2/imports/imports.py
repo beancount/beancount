@@ -12,6 +12,7 @@ import logging
 import subprocess
 import bs4
 import importlib
+import datetime
 
 from beancount2.core import data
 from beancount2.core.data import format_entry
@@ -115,34 +116,34 @@ def identify(files_or_directories, importer_config):
 
         # Figure out the account's filetype and account-id.
         account_ids = find_account_ids(contents, filetype, all_account_ids)
+        account_ids = list(account_ids)
+
+        # If there are no account-ids, insert a "None" to hold place for the
+        # unknown account that this file is for.
+        if not account_ids:
+            account_ids.append(None)
 
         # Get the source / data source.
         source = guess_source(contents, filetype, all_sources)
 
-        yield filename, (source, filetype, list(account_ids))
+        yield filename, (source, filetype, account_ids)
 
 
 def get_required_accounts_for_config(config_account_names, all_accounts):
     """Given a dict of account names from the configuration, and a mapping of
     al the accounts, get the accounts required for this configuration."""
 
-    # Convert account names into Account objects.
-    if entries:
-        # Find the account objects in the list of entries.
-        accounts = {}
-        error = False
-        for kind, account_name in config_account_names.items():
-            try:
-                account = all_accounts[account_name]
-                accounts[kind] = account
-            except KeyError:
-                logging.error("No account found for '{}'; id = {}.".format(account, identification))
-    else:
-        # There are no entries provided; don't bail out, just create them by name.
-        accounts = {kind: data.account_from_name(account_name)
-                    for kind, account_name in config_account_names.items()}
+    # Find the Account objects in the list of entries, as much as possible;
+    # create new ones on-demand, by name.
+    accounts = {}
+    error = False
+    for kind, account_name in config_account_names.items():
+        account = all_accounts.get(account_name, None)
+        if account is None:
+            account = data.account_from_name(account_name)
+        accounts[kind] = account
 
-    return account
+    return accounts
 
 
 def import_file(filename, identification, importer_config, entries, accounts):
@@ -166,9 +167,9 @@ def import_file(filename, identification, importer_config, entries, accounts):
     # required by the source importer. Just to make sure.
     config_types = set(config_account_names)
     source_types = set(source.CONFIG_ACCOUNTS[filetype])
-    for account_type in (source_names - config_names):
+    for account_type in (source_types - config_types):
         logging.error("Missing account from configuration: {}".format(account_type))
-    for account_type in (config_names - source_names):
+    for account_type in (config_types - source_types):
         logging.error("Extra account in configuration: {}".format(account_type))
 
     # Convert the account names into account objects before passing it into the
@@ -176,7 +177,7 @@ def import_file(filename, identification, importer_config, entries, accounts):
     config = get_required_accounts_for_config(config_account_names, accounts)
 
     # Run the importer.
-    new_entries = source.import_file(filename, config, entries)
+    return source.import_file(filename, config, entries)
 
 
 def run_importer(importer_config, files_or_directories, output,
@@ -198,12 +199,19 @@ def run_importer(importer_config, files_or_directories, output,
     # Iterate over all files found.
     for filename, (source, filetype, account_ids) in identify(files_or_directories,
                                                               importer_config):
+
         for account_id in account_ids:
             identification = (source, filetype, account_id)
             print(';;; IMPORT {} - {} - {}'.format(datetime.date.today(), filename, identification))
 
             # Import entries for file for specified account.
             new_entries = import_file(filename, identification, importer_config, entries, accounts)
+
+            if new_entries is None:
+                logging.error("Error importing '{}'; no entries produced.".format(filename))
+                continue
+
+            new_entries.sort(key=lambda x: x.date)
 
             # Filter out entries with dates before 'mindate'.
             if mindate:

@@ -49,7 +49,7 @@ def is_matching_file(contents, filetype):
 
 
 def import_file(filename, config, entries):
-    if filetype.guess_type(filename) == 'text/csv':
+    if filetype.guess_file_type(filename) == 'text/csv':
         return import_csv_file(filename, config, entries)
 
 

@@ -5,6 +5,7 @@ from . import td
 from . import hsbc
 from . import rbc
 from . import vanguard
+from . import paypal
 
 SOURCES = [ameritrade,
            oanda,
@@ -12,5 +13,6 @@ SOURCES = [ameritrade,
            td,
            hsbc,
            rbc,
-           vanguard]
+           vanguard,
+           paypal]
 
