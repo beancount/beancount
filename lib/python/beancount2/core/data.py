@@ -220,8 +220,12 @@ def sanity_check_types(entry):
 
 def reparent_posting(posting, entry):
     "Create a new posting entry that has the parent field set."
-    return Posting(entry,
-                   posting.account, posting.position, posting.price, posting.flag)
+    if posting.entry is entry:
+        return posting
+    else:
+        return Posting(entry,
+                       posting.account, posting.position, posting.price, posting.flag)
+
 
 def posting_has_conversion(posting):
     """Return true if this position involves a conversion. A conversion is when
@@ -229,6 +233,7 @@ def posting_has_conversion(posting):
     transactions to convert between units."""
     return (posting.position.lot.cost is None and
             posting.price is not None)
+
 
 def transaction_has_conversion(transaction):
     """Given a Transaction entry, return true if at least one of

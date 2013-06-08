@@ -230,27 +230,28 @@ class Builder(object):
         else:
             ctags = frozenset(ctags)
 
+        # Create the transaction. Note: we need to parent the postings.
+        entry = Transaction(fileloc, date, chr(flag), payee, narration, ctags, links, postings)
+
         # Balance incomplete auto-postings.
         # print('{}:{}: {}'.format(fileloc.filename, fileloc.lineno, narration))
-        postings, inserted, errors = balance.balance_incomplete_postings(fileloc, postings)
+        postings, inserted, errors = balance.balance_incomplete_postings(fileloc, entry)
         if errors:
             self.errors.extend(errors)
 
-        # Create the transaction. Note: we need to parent the postings.
-        parented_postings = []
-        transaction = Transaction(fileloc, date, chr(flag), payee, narration, ctags, links,
-                                  parented_postings)
+        # FIXME: Make this faster, there's unnecessary copying IMO.
 
         # PERF(25ms): could be saved here by avoiding reparenting.
+        entry.postings.clear()
         for posting in postings:
-            parented_postings.append(reparent_posting(posting, transaction))
+            entry.postings.append(reparent_posting(posting, entry))
 
         # Check that the balance actually is empty.
         if __sanity_checks__:
             residual = balance.compute_residual(postings)
             assert residual.is_small(balance.SMALL_EPSILON), residual
 
-        return transaction
+        return entry
 
 
 # A parsed option directive.

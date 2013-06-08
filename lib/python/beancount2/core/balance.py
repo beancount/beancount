@@ -62,7 +62,7 @@ def get_balance_amount(posting):
     return amount
 
 
-def balance_incomplete_postings(fileloc, postings):
+def balance_incomplete_postings(fileloc, entry):
     """Replace and complete postings that have no amount specified on them.
 
     Returns a new list of balanced postings, with the incomplete postings
@@ -73,6 +73,8 @@ def balance_incomplete_postings(fileloc, postings):
     Note: The 'postings' parameter may be modified or destroyed for performance
     reasons; don't reuse it.
     """
+
+    postings = list(entry.postings)
 
     # Errors during balancing.
     balance_errors = []
@@ -107,7 +109,7 @@ def balance_incomplete_postings(fileloc, postings):
         # If there are too many such postings, we can't do anything, barf.
         if len(auto_postings_indices) > 1:
             balance_errors.append(
-                BalanceError(fileloc, "Too many auto-postings; cannot fill in.", None)) # FIXME: Add entry
+                BalanceError(fileloc, "Too many auto-postings; cannot fill in.", entry))
 
         index = auto_postings_indices[0]
         old_posting = postings[index]
@@ -124,14 +126,14 @@ def balance_incomplete_postings(fileloc, postings):
             for currency in currencies:
                 position = Position(Lot(currency, None, None), ZERO)
                 new_postings.append(
-                    Posting(None, old_posting.account, position, None, old_posting.flag))
+                    Posting(entry, old_posting.account, position, None, old_posting.flag))
         else:
             # Convert all the residual positions in inventory into a posting for
             # each position.
             for position in residual_positions:
                 position.number = -position.number
                 new_postings.append(
-                    Posting(None, old_posting.account, position, None, old_posting.flag))
+                    Posting(entry, old_posting.account, position, None, old_posting.flag))
 
         postings[index:index+1] = new_postings
 
@@ -141,6 +143,6 @@ def balance_incomplete_postings(fileloc, postings):
         # Detect complete sets of postings that have residual balance.
         if not inventory.is_small(SMALL_EPSILON):
             balance_errors.append(
-                BalanceError(fileloc, "Transaction does not balance: {}.".format(inventory), None)) # FIXME: Add entry
+                BalanceError(fileloc, "Transaction does not balance: {}.".format(inventory), entry))
 
     return postings, inserted_autopostings, balance_errors

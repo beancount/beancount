@@ -150,7 +150,7 @@ def import_csv_file(filename, config, entries):
             entry.postings.append(posting)
 
             if row.commissions:
-                create_simple_posting(entry, config['commission'], row.commissions, base_currency)
+                create_simple_posting(entry, config['commission'], -row.commissions, base_currency)
                 amount += Decimal(row.commissions)
 
             create_simple_posting(entry, config['asset_cash'], amount, base_currency)
