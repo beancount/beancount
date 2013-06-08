@@ -10,6 +10,12 @@ from beancount2.core.data import Posting, Transaction, Decimal, Lot
 from beancount2.core.inventory import Position
 
 
+ACCOUNTS = {
+    'FILE'               : 'Account for filing',
+    'asset'              : 'Cash or credit card account',
+}
+
+
 def souptodict(node):
     """Convert all of the child nodes from BeautifulSoup node into a dict.
     This assumes the direct children are uniquely named, but this is often the
@@ -39,15 +45,13 @@ def parse_ofx_time(ofx_date_str):
 def import_file(filename, config, _):
     """Extract transaction info from the given OFX file into transactions for the
     given account. This function returns a list of entries possibly partially
-    filled entries, and a dictionary of annotations to be attached to entries
-    and postings.
+    filled entries.
     """
 
     # Attempt to get an account from the ledger entries.
     account_asset = config['asset']
 
     new_entries = []
-    annotations = {}
 
     # Parse the XML file.
     soup = bs4.BeautifulSoup(open(filename), 'lxml')
@@ -92,7 +96,7 @@ def import_file(filename, config, _):
                     new_entries.append(entry)
 
     new_entries.sort(key=lambda entry: entry.date)
-    return new_entries, annotations
+    return new_entries
 
 
 def ofx_get_account(node):

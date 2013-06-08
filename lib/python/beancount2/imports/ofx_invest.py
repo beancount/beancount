@@ -9,11 +9,21 @@ from beancount2.core.data import Posting, Transaction, Check, Decimal, Lot, Amou
 from beancount2.imports.ofx_bank import souptodict, soup_get, parse_ofx_time
 
 
+ACCOUNTS = {
+    'FILE'         : 'Account for filing',
+    'asset_cash'   : 'Cash account that receives the contributions',
+    'asset_pretax' : 'Root of positions from pre-tax contributions',
+    'asset_match'  : 'Root of positions from matching contributions',
+    'income_match' : 'Income from matching contributions',
+    'dividend'     : 'Dividends',
+    'fees'         : 'Fees',
+}
+
+
 def import_file(filename, config, _):
     """Extract transaction info from the given OFX file into transactions for the
     given account. This function returns a list of entries possibly partially
-    filled entries, and a dictionary of annotations to be attached to entries
-    and postings.
+    filled entries.
     """
 
     # Prepare mappings to accounts from the config provided.
@@ -22,7 +32,7 @@ def import_file(filename, config, _):
         'MATCH'  : config['asset_match'],
     }
 
-    def get_cash_account(trantype, source, incometype):
+    def get_cash_account(trantype, source, _incometype):
         if trantype == 'BUYMF' and source == 'MATCH':
             return config['income_match']
         elif trantype == 'REINVEST':
@@ -33,7 +43,6 @@ def import_file(filename, config, _):
             return config['asset_cash']
 
     new_entries = []
-    annotations = {}
 
     # Parse the XML file.
     soup = bs4.BeautifulSoup(open(filename), 'lxml')
@@ -102,8 +111,6 @@ def import_file(filename, config, _):
 
                     new_entries.append(entry)
 
-# FIXME: Make this into a function its own
-
                 # Process all positions, convert them to Check directives.
                 # Note: this was developed for Vanguard.
                 for invposlist in stmtrs.find_all('invposlist'):
@@ -125,7 +132,7 @@ def import_file(filename, config, _):
                         new_entries.append(Check(fileloc, date, account, amount, None))
 
     new_entries.sort(key=lambda entry: entry.date)
-    return new_entries, annotations
+    return new_entries
 
 
 def get_securities(soup):

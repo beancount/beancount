@@ -53,9 +53,9 @@ def find_account_ids(contents, filetype, all_account_ids):
             yield acctid.text.split('\n')[0]
 
 
-def guess_institution(contents, filetype, all_sources):
-    """Attempt to guess the institution of the file in contents.
-    Returns an institution ID."""
+def guess_source(contents, filetype, all_sources):
+    """Attempt to guess the source of the file in contents.
+    Returns an source ID."""
 
     # Read the file contents, grab some of the header.
     for source in all_sources:
@@ -88,25 +88,26 @@ def read_file(filename):
     return contents, filetype
 
 
+def import_source(source_id):
+    return importlib.import_module('beancount2.imports.sources.{}'.format(source_id))
+
+
 def identify(files_or_directories, importer_config):
     """Walk over the list of files or directories, and attempt to identify the
-    filetype, institution/source, and list of account-ids for each file that
+    filetype, source/source, and list of account-ids for each file that
     we can grok. Yield a list of
 
-      (filename, (institution, filetype, [list-of-account-ids]))
+      (filename, (source, filetype, [list-of-account-ids]))
 
     """
-
     # Get the list of account-ids.
     all_account_ids = [account_id
                        for (_, _, account_id) in importer_config
                        if account_id]
 
     # Get the list of sources.
-    all_sources = []
-    for source, _, _ in importer_config:
-        module = importlib.import_module('beancount2.imports.sources.{}'.format(source))
-        all_sources.append(module)
+    all_sources = [import_source(source_id)
+                   for (source_id, _, _) in importer_config]
 
     for filename in utils.walk_files_or_dirs(files_or_directories):
 
@@ -115,10 +116,67 @@ def identify(files_or_directories, importer_config):
         # Figure out the account's filetype and account-id.
         account_ids = find_account_ids(contents, filetype, all_account_ids)
 
-        # Get the institution / data source.
-        institution = guess_institution(contents, filetype, all_sources)
+        # Get the source / data source.
+        source = guess_source(contents, filetype, all_sources)
 
-        yield filename, (institution, filetype, list(account_ids))
+        yield filename, (source, filetype, list(account_ids))
+
+
+def get_required_accounts_for_config(config_account_names, all_accounts):
+    """Given a dict of account names from the configuration, and a mapping of
+    al the accounts, get the accounts required for this configuration."""
+
+    # Convert account names into Account objects.
+    if entries:
+        # Find the account objects in the list of entries.
+        accounts = {}
+        error = False
+        for kind, account_name in config_account_names.items():
+            try:
+                account = all_accounts[account_name]
+                accounts[kind] = account
+            except KeyError:
+                logging.error("No account found for '{}'; id = {}.".format(account, identification))
+    else:
+        # There are no entries provided; don't bail out, just create them by name.
+        accounts = {kind: data.account_from_name(account_name)
+                    for kind, account_name in config_account_names.items()}
+
+    return account
+
+
+def import_file(filename, identification, importer_config, entries, accounts):
+    """Run the importer on 'filename' as identified in 'identification'.
+    (This imports only the transactions for the account specified in the
+    identification, which is of the form (source, filetype, account-if).
+    """
+
+    # Get the list of accounts for this importer id.
+    try:
+        config_account_names = importer_config[identification]
+    except KeyError:
+        logging.error("Configuration not found for id: {}".format(identification))
+        return
+
+    # Import the source module.
+    source_id, filetype, account_id = identification
+    source = import_source(source_id)
+
+    # Check the configuration account provided by the user against the accounts
+    # required by the source importer. Just to make sure.
+    config_types = set(config_account_names)
+    source_types = set(source.CONFIG_ACCOUNTS[filetype])
+    for account_type in (source_names - config_names):
+        logging.error("Missing account from configuration: {}".format(account_type))
+    for account_type in (config_names - source_names):
+        logging.error("Extra account in configuration: {}".format(account_type))
+
+    # Convert the account names into account objects before passing it into the
+    # importer.
+    config = get_required_accounts_for_config(config_account_names, accounts)
+
+    # Run the importer.
+    new_entries = source.import_file(filename, config, entries)
 
 
 def run_importer(importer_config, files_or_directories, output,
@@ -127,122 +185,46 @@ def run_importer(importer_config, files_or_directories, output,
     list of files or directories, identify them, try to find a suitable importer
     and run it on the files. A list of entries for an existing ledger can be
     provided in order to perform de-duplication and a minimum date can be
-    provided to filter out old entries.
+    provided to filter out old entries. This is the main import driver loop.
     """
 
-    for filename, (institution, filetype, account_ids) in identify(files_or_directories,
-                                                                   importer_config):
+    # Compute a mapping of all the available accounts in the entries from the
+    # beancount file.
+    accounts = data.gather_accounts(entries)
 
-        print('---------------------------------------- {}'.format(filename))
-        print( (institution, filetype, account_ids) )
-        continue
+    # Printing function.
+    pr = lambda *args: print(*args, file=output)
 
+    # Iterate over all files found.
+    for filename, (source, filetype, account_ids) in identify(files_or_directories,
+                                                              importer_config):
+        for account_id in account_ids:
+            identification = (source, filetype, account_id)
+            print(';;; IMPORT {} - {} - {}'.format(datetime.date.today(), filename, identification))
 
+            # Import entries for file for specified account.
+            new_entries = import_file(filename, identification, importer_config, entries, accounts)
 
+            # Filter out entries with dates before 'mindate'.
+            if mindate:
+                new_entries = list(itertools.dropwhile(lambda x: x.date < opts.mindate,
+                                                       new_entries))
 
-
-
-
-
-
-
-
-
-
-
-        # institution, filetype, account_id = identification
-
-        # Get the list of accounts for this importer id.
-        try:
-            account_names = importer_config[identification]
-        except KeyError:
-            logging.error("Configuration not foudn for id: {}".format(identification))
-            continue
-
-        # Convert account names into Account objects.
-        if entries:
-            # Find the account objects in the list of entries.
-            accounts = {}
-            all_accounts = data.gather_accounts(entries)
-            error = False
-            for kind, account_name in account_names.items():
-                try:
-                    account = all_accounts[account_name]
-                    accounts[kind] = account
-                except KeyError:
-                    logging.error("No account found for '{}'; id = {}.".format(account, identification))
-                    error = True
-            if error:
-                continue
-        else:
-            # There are no entries provided; don't bail out, just create them by name.
-            accounts = {kind: data.account_from_name(account_name)
-                        for kind, account_name in account_names.items()}
+            # Find potential matching entries.
+            duplicate_entries = find_duplicate_entries(new_entries, entries)
 
 
+            # Ensure that the entries are typed correctly.
+            for entry in new_entries:
+                data.sanity_check_types(entry)
 
+            # Pr out the entries.
+            for entry in new_entries:
+                entry_string = format_entry(entry)
 
-        # Get the relevant importer function/module.
-        importer = IMPORTERS.get(institution)
-        if importer is None:
-            logging.warn("No importer available for '{}'; id: {}.".format(filename,
-                                                                           identification))
-            continue
+                # Indicate that this entry may be a duplicate.
+                if entry in duplicate_entries:
+                    pr(';;;; POTENTIAL DUPLICATE')
+                    entry_string = textwrap.indent(entry_string, ';; ')
 
-        # Run the importer.
-        new_entries, annotations = importer.import_file(filename, accounts, entries)
-
-        # Filter out entries with dates before 'mindate'.
-        if mindate:
-            new_entries = list(itertools.dropwhile(lambda x: x.date < opts.mindate,
-                                                   new_entries))
-
-        # Find potential matching entries.
-        duplicate_entries = find_duplicate_entries(new_entries, entries)
-
-        pr = lambda *args: print(*args, file=output)
-        # pr(';;')
-        # pr(';; {}'.format(filename))
-        # pr(';; ({}, {}, {})'.format(institution, filetype, account_id))
-        # pr(';;\n')
-
-        # Ensure that the entries are typed correctly.
-        for entry in new_entries:
-            data.sanity_check_types(entry)
-
-        # Pr out the entries.
-        for entry in new_entries:
-            entry_string = format_entry(entry)
-
-            # Indicate that this entry may be a duplicate.
-            if entry in duplicate_entries:
-                pr(';;;; POTENTIAL DUPLICATE ENTRY')
-                entry_string = textwrap.indent(entry_string, ';; ')
-
-            pr(entry_string)
-
-
-
-## FIXME: You shoudl be able to identify without importing
-
-## FIXME: One file may contain more than one account
-
-## FIXME: validate that the configuration has all the right accounts before you call the importer.
-
-## FIXME: Move all sources to sources/ subdirectory; add one for td, one for rbc, etc.
-
-## FIXME: Add configuraiton in the sources to describe all required accounts
-
-
-
-
-# FIXME: Figure out how obtain this list automatically...
-# IMPORTERS = {
-#     'td'          : ofx_bank,
-#     'hsbc'        : ofx_bank,
-#     'rbc'         : ofx_bank,
-#     'vanguard'    : ofx_invest,
-#     'oanda'       : oanda,
-#     'ameritrade'  : ameritrade,
-#     'thinkorswim' : thinkorswim,
-# }
+                pr(entry_string)

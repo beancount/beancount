@@ -26,6 +26,9 @@ def main():
     parser.add_argument('ford', nargs='+',
                         help='Filenames or directories to search for files to import')
 
+    parser.add_argument('-n', '--dry-run', action='store_true',
+                        help="Just print the identification of files out; don't import anything")
+
     parser.add_argument('-o', '--output', action='store',
                         help='Output filename (default: stdout)')
 
@@ -56,11 +59,20 @@ def main():
     exec(code, globals(), config_env)
     config = config_env['CONFIG']
 
-    # Create a suitable output file.
-    output = open(opts.output, 'w') if opts.output else sys.stdout
+    # If a suitable option has been specific, run one of the commands only.
+    if opts.dry_run:
+        for filename, (institution, filetype, account_ids) in imports.identify(opts.ford, config):
+            print(filename)
+            for account_id in account_ids:
+                print('   {}'.format((institution, filetype, account_id)))
+            print()
 
-    # Run the importer.
-    imports.run_importer(config, opts.ford, output, entries, opts.mindate)
+    else:
+        # Create a suitable output file.
+        output = open(opts.output, 'w') if opts.output else sys.stdout
+
+        # Run the importer.
+        imports.run_importer(config, opts.ford, output, entries, opts.mindate)
 
 
 if __name__ == '__main__':

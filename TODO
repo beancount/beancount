@@ -944,8 +944,13 @@ beancount: TODO
 
 * Import
 
-  - Write a routine that will allow each importer to declare the list of
-    accounts that it requires in order to run.
+  - Implement FOREX transaction log parsing for FOREX account, so that we count
+    losses properly.
+
+  - Implement: 'bean-file', a new program, with its own dry-run.
+
+  - There is a problem in detecting Ameritrade: there is no account ID in the
+    .csv file, you need to find some way to figure out which it is.
 
   - (import) --dry-run option, that prints the identification, and (account,
     date) for filing, if needed.  --file --dry-run to try it out.
@@ -1013,6 +1018,7 @@ beancount: TODO
   - Given some incomplete transactions, complete them heuristically based on
     previous contents of the ledger. This should make import a lot easier. This
     should be generic and work across all importers, a single function call.
+
 
 
 ** Filing

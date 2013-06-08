@@ -10,16 +10,40 @@ from beancount2.core.data import format_entry
 from beancount2.core.inventory import Position
 from beancount2.core import compress
 from beancount2 import utils
+from beancount2.imports import filetype
 
 
 ID = 'oanda'
+
 INSTITUTION = ('OANDA Corporation' , 'US')
+
+CONFIG_ACCOUNTS = {
+    'text/csv' : {
+        'FILE'     : 'Account for filing',
+        'asset'    : 'Account holding the cash margin',
+        'interest' : 'Interest income',
+        'pnl'      : 'PnL income',
+        'transfer' : 'Other account for wire transfers',
+        'limbo'    : "Account used to book against transfer where we don't know",
+        'fees'     : 'Wire and API fees',
+    },
+    'application/pdf' : {
+        'FILE'               : 'Account for filing',
+    },
+}
 
 
 def is_matching_file(contents, filetype):
     return (filetype == 'text/csv' and
             re.match(r'Ticket\b.*\bPipettes\b', contents))
 
+
+def import_file(filename, config, _):
+    if filetype.guess_type(filename) == 'text/csv':
+        return import_csv_file(filename, config, _)
+
+
+#--------------------------------------------------------------------------------
 
 
 IGNORE_TRANSACTIONS = """
@@ -123,9 +147,8 @@ def oanda_add_posting(entry, account, number, currency):
     entry.postings.append(posting)
 
 
-def import_file(filename, config, _):
+def import_csv_file(filename, config, _):
     new_entries = []
-    annotations = {}
 
     max_diff = Decimal()
     ## return find_changing_types(filename)
@@ -255,7 +278,7 @@ def import_file(filename, config, _):
         # imported transactions.
         new_entries = compress.compress(new_entries, lambda entry: re.search('Interest', entry.narration))
 
-    return new_entries, annotations
+    return new_entries
 
 # FIXME: Temporary; these would have been done manually. For debugging now, ignore, while developing.
 OANDA_IGNORED = set(['873690057', '980400948', '1051458865'])

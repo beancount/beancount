@@ -1,11 +1,19 @@
 """HSBC OFX importer.
 """
 import re
-from beancount2.imports.ofx_bank import import_file
+from beancount2.imports import ofx_bank
 
 
 ID = 'hsbc'
+
 INSTITUTION = ('HSBC' , 'US')
+
+CONFIG_ACCOUNTS = {
+    'application/x-ofx': ofx_bank.ACCOUNTS,
+    'application/pdf': {
+        'FILE'               : 'Account for filing',
+    },
+}
 
 
 def is_matching_file(contents, filetype):
@@ -17,5 +25,4 @@ def is_matching_file(contents, filetype):
     )
 
 
-
-
+import_file = ofx_bank.import_file
