@@ -61,11 +61,13 @@ def find_duplicate_entries(new_entries, entries):
                             # We found at least one common account with a close
                             # amount.
 
-                            # Now, require that at least one of the other
+                            # Now, if there new transaction has more than one
+                            # posting, require that at least one of the other
                             # postings shares an account.
-                            common_accounts = set(new_amounts) & set(amounts)
-                            if len(common_accounts) < 2:
-                                continue
+                            if len(new_amounts) > 1:
+                                common_accounts = set(new_amounts) & set(amounts)
+                                if len(common_accounts) < 2:
+                                    continue
 
                             # Okay, this is good enough.
                             duplicates.append(new_entry)

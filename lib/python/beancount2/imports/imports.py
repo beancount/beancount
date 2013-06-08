@@ -8,7 +8,6 @@ directory hierarchy. This is the driver program for importing stuff from files.
 import textwrap
 import itertools
 import re
-import mimetypes
 import logging
 import subprocess
 import bs4
@@ -18,49 +17,7 @@ from beancount2.core.data import format_entry
 from beancount2.core.dups import find_duplicate_entries
 from beancount2 import utils
 from beancount2.imports import ofx_invest, ofx_bank, oanda, ameritrade, thinkorswim
-
-
-#
-# Getting the file types.
-#
-
-EXTRA_FILE_TYPES = [
-    (re.compile(regexp, re.I), filetype)
-    for regexp, filetype in (
-            (r'.*\.qbo$', 'application/vnd.intu.qbo'),
-            (r'.*\.(qfx|ofx)$', 'application/x-ofx'),
-    )]
-
-try:
-    import magic
-except ImportError:
-    magic = None
-
-def guess_file_type(filename):
-    """Attempt to guess the type of the input file.
-    Return a suitable mimetype, or None if we don't know."""
-
-    # Try the regular mimetypes association.
-    filetype, _ = mimetypes.guess_type(filename, False)
-
-    if filetype is None:
-        # Try out some extra ones that we know about.
-        for regexp, mimtype in EXTRA_FILE_TYPES:
-            if regexp.match(filename):
-                filetype = mimtype
-                break
-
-    # FIXME: Add python-magic, optionally (if imported).
-    if filetype is None:
-        if not magic:
-            pass # FIXME: issue a warning
-        else:
-            # Okay, we couldn't figure it out from the filename; use libmagic
-            # (if installed).
-            bfiletype = magic.from_file(filename, mime=True)
-            filetype = bfiletype.decode()
-
-    return filetype
+from beancount2.imports.filetype import guess_file_type
 
 
 #
@@ -69,11 +26,14 @@ def guess_file_type(filename):
 
 def sliced_match(string):
     """Return a regexp that will match the given string with possibly any number of
-    spaces in between. For example, '123' would become '1 *2 * 3'."""
+    spaces in between. For example, '123' would become '1 *2 * 3'. This is used
+    to grep a file for broken-up ids, such as '123456789' appearing as '123
+    45-6789'.
+    """
     return '[ -]*'.join(string)
 
 
-def identify_string(text, account_ids):
+def find_account_ids_string(text, account_ids):
     """Given some string 'text', find if any of the account-ids in the 'account_ids'
     map is present in the text and return the corresponding account, or None."""
 
@@ -83,7 +43,7 @@ def identify_string(text, account_ids):
             return account_id
 
 
-def identify_pdf(filename, account_ids):
+def find_account_ids_pdf(filename, account_ids):
     "Attempt to identify the account for the given PDF file."""
 
     p = subprocess.Popen(('pdftotext', filename, '-'),
@@ -95,79 +55,125 @@ def identify_pdf(filename, account_ids):
         return
 
     text = stdout.decode()
-    return identify_string(text, account_ids)
+    return find_account_ids_string(text, account_ids)
 
 
-def identify_csv(filename, account_ids):
+def find_account_ids_csv(filename, account_ids):
     "Attempt to identify the account for the given CSV file."""
     text = open(filename).read()
-    return identify_string(text, account_ids)
+    return find_account_ids_string(text, account_ids)
 
 
-def identify_ofx(filename, __account_ids):
+def find_account_ids_ofx(filename, __account_ids):
     "Attempt to identify the account for the given OFX file."""
 
     soup = bs4.BeautifulSoup(open(filename), 'lxml')
-    acctid = ofx_get_account(soup)
+
+##FIXME: This may have multiple values
+    acctid = ofx_bank.ofx_get_account(soup)
     try:
         return acctid
     except KeyError:
         return None
 
 
-IDENTIFY_HANDLERS = {
-    'application/pdf'          : identify_pdf,
-    'text/csv'                 : identify_csv,
-    'application/x-ofx'        : identify_ofx,
-    'application/vnd.intu.qbo' : identify_ofx,
+FIND_ACCOUNT_IDS_HANDLERS = {
+    'application/pdf'          : find_account_ids_pdf,
+    'text/csv'                 : find_account_ids_csv,
+    'application/x-ofx'        : find_account_ids_ofx,
+    'application/vnd.intu.qbo' : find_account_ids_ofx,
 }
 
-
-def identify_account(filename, entries, account_ids):
+def find_account_ids(filename, all_account_ids):
     """Given a filename, return the filetype and account that this file corresponds
     to, or None if it could not be identified."""
 
-    # Attempt to find the corresponding file type.
+    # Try to find corresponding account-ids, using the list of those we already
+    # know about from the importers config.
     filetype = guess_file_type(filename)
+    if filetype == 'application/pdf':
+        account_ids = find_account_ids_pdf(filename, all_account_ids)
+    elif filetype == 'text/csv':
+        account_ids = find_account_ids_csv(filename, all_account_ids)
+    elif filetype in ('application/x-ofx', 'application/vnd.intu.qbo'):
+        account_ids = find_account_ids_ofx(filename, all_account_ids)
+    else:
+        account_ids = []
 
-    identify_fun = IDENTIFY_HANDLERS.get(filetype, None)
-    if identify_fun is None:
-        # No handler was found; bail out.
-        return
+    return account_ids
 
-    # Attempt to find the corresponding account.
-    account_id = identify_fun(filename, account_ids)
 
-    # Attempt to find the corresponding institution.
-    institution = None
+def guess_institution(filename):
+
+    # Read the file contents, grab some of the header.
     contents = open(filename).read()
     header = contents[:4096]
+
+##FIXME: This needs to move to the source files themselves
+    filetype = guess_file_type(filename)
+
     if filetype == 'application/x-ofx':
         # Test for signature strings... we could go further and look at the
         # bankid/org ofx tags.
         if re.search(r'\bVanguard\b', header):
             institution = 'vanguard'
+
         elif re.search(r'\b011103093\b', header):
             institution = 'td'
+
+        elif re.search(r'<\?OFX OFXHEADER="200" VERSION="200" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="NONE"\?>', header):
+            institution = 'hsbc'
+
     elif filetype == 'text/csv':
         if re.match(r'Ticket\b.*\bPipettes\b', header):
             institution = 'oanda'
+
         elif re.search(r'MONEY MARKET PURCHASE \(MMDA1\)', header):
             institution = 'ameritrade'
+
         elif re.search(r'DATE,TIME,TYPE,REF #,DESCRIPTION,FEES,COMMISSIONS,AMOUNT,BALANCE', header):
             institution = 'thinkorswim'
 
-    return (institution, filetype, account_id)
+    elif filetype == 'application/vnd.intu.qbo':
+
+        if re.search(r'<INTU.BID>00015', header):
+            institution = 'rbc'
+
+    return institution
 
 
 # FIXME: Figure out how obtain this list automatically...
 IMPORTERS = {
-    'vanguard'    : ofx_invest,
     'td'          : ofx_bank,
+    'hsbc'        : ofx_bank,
+    'rbc'         : ofx_bank,
+    'vanguard'    : ofx_invest,
     'oanda'       : oanda,
     'ameritrade'  : ameritrade,
     'thinkorswim' : thinkorswim,
 }
+
+
+def identify(files_or_directories, all_account_ids):
+    """Walk over the list of files or directories, and attempt to identify the
+    filetype, institution/source, and list of account-ids for each file that
+    we can grok. Yield a list of
+
+      (filename, (institution, filetype, [list-of-account-ids]))
+
+    """
+    for filename in utils.walk_files_or_dirs(files_or_directories):
+
+        # Get the filetype.
+        filetype = guess_file_type(filename)
+
+        # Figure out the account's filetype and account-id.
+        account_ids = find_account_ids(filename, all_account_ids)
+
+        # Get the institution / data source.
+        institution = guess_institution(filename)
+
+        yield filename, (institution, filetype, account_ids)
 
 
 def run_importer(importer_config, files_or_directories, output,
@@ -180,26 +186,54 @@ def run_importer(importer_config, files_or_directories, output,
     """
 
     # Get the list of account-ids.
-    account_ids = [account_id for (_, _, account_id) in importer_config if account_id]
+    all_account_ids = [account_id
+                       for (_, _, account_id) in importer_config
+                       if account_id]
 
-    for filename in utils.walk_files_or_dirs(files_or_directories):
+    for filename, (institution, filetype, account_ids) in identify(files_or_directories,
+                                                                   all_account_ids):
 
-        # Figure out the account's filetype and account-id.
-        identification = identify_account(filename, entries, account_ids)
-        if not identification:
-            continue # Skip file.
-        institution, filetype, account_id = identification
+        print( (institution, filetype, account_ids) )
+        continue
 
-        # FIXME: Maybe the identification triple should be (mimetype, institution, account-id)?
+        # institution, filetype, account_id = identification
+
+        # Get the list of accounts for this importer id.
+        try:
+            account_names = importer_config[identification]
+        except KeyError:
+            logging.error("Configuration not foudn for id: {}".format(identification))
+            continue
+
+        # Convert account names into Account objects.
+        if entries:
+            # Find the account objects in the list of entries.
+            accounts = {}
+            all_accounts = data.gather_accounts(entries)
+            error = False
+            for kind, account_name in account_names.items():
+                try:
+                    account = all_accounts[account_name]
+                    accounts[kind] = account
+                except KeyError:
+                    logging.error("No account found for '{}'; id = {}.".format(account, identification))
+                    error = True
+            if error:
+                continue
+        else:
+            # There are no entries provided; don't bail out, just create them by name.
+            accounts = {kind: data.account_from_name(account_name)
+                        for kind, account_name in account_names.items()}
+
+
+
 
         # Get the relevant importer function/module.
         importer = IMPORTERS.get(institution)
         if importer is None:
-            logging.warn("No importer available for '{}'; id = {}.".format(filename,
+            logging.warn("No importer available for '{}'; id: {}.".format(filename,
                                                                            identification))
-            continue #
-
-        accounts = importer_config[identification]
+            continue
 
         # Run the importer.
         new_entries, annotations = importer.import_file(filename, accounts, entries)
@@ -232,3 +266,15 @@ def run_importer(importer_config, files_or_directories, output,
                 entry_string = textwrap.indent(entry_string, ';; ')
 
             pr(entry_string)
+
+
+
+## FIXME: You shoudl be able to identify without importing
+
+## FIXME: One file may contain more than one account
+
+## FIXME: validate that the configuration has all the right accounts before you call the importer.
+
+## FIXME: Move all sources to sources/ subdirectory; add one for td, one for rbc, etc.
+
+## FIXME: Add configuraiton in the sources to describe all required accounts

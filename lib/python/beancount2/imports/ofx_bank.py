@@ -84,8 +84,13 @@ def import_file(filename, config, _):
                     date = parse_ofx_time(soup_get(stmttrn, 'dtposted')).date()
                     fileloc = data.FileLocation(filename, next(txn_counter))
                     payee = None
+
+                    narration_fields = ['name', 'memo']
+                    if stmtrs.name != 'ccstmtrs':
+                        narration_fields.insert(0, 'trntype')
+
                     narration = ' / '.join(filter(None, (soup_get(stmttrn, x)
-                                                         for x in ('trntype', 'name', 'memo'))))
+                                                         for x in narration_fields)))
                     entry = Transaction(fileloc, date, data.FLAG_IMPORT, payee, narration, None, None, [])
 
                     # Create a posting for it.

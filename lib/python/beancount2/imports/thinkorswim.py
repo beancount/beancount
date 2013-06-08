@@ -25,8 +25,6 @@ SOURCES = [
     ]
 
 
-
-
 def import_file(filename, config, entries):
     """Import a CSV file from Think-or-Swim."""
 

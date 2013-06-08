@@ -181,3 +181,9 @@ Rejected TODO Items & Ideas
     with more than a single leg. I think ensuring a ^link on the transaction is
     good enough, this doesn't make as much sense on postings. Won't implement.
 
+
+  - Postings should have documents associated with them, for example, a trade's
+    leg.
+
+    *REJECTED* We can do everything at the transaction level.
+

@@ -1015,19 +1015,18 @@ beancount: TODO
     should be generic and work across all importers, a single function call.
 
 
-  - Idea: Subaccounts, like in Vanguard, are many. We should find a way to
-    provide some account-identification information that could be used by
-    importers. In other words, the account_id should just be an account_id....
-    we need to give this a larger role in order to make this more automated. We
-    need for a single parent account to have a structure of subaccounts that the
-    importer can understand.
-
 ** Filing
 
   - There should be a script that knows about the formats of my various PDF
     files under ~/u/Downloads and that automatically puts them under the right
     subdirectory. Maybe pdf2text and look for account ids, then try to
     automatically match against one of the account_id declared in the Ledger.
+
+  - When grepping in PDF files, we should also grep to transaction-id's /
+    beancount "links", in order to automatically associate trade ticket PDFs to
+    transactions. Add a LINK to the document directive, in order to link them
+    together.
+
 
 ** Payee Normalization
 
