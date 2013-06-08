@@ -487,15 +487,23 @@ beancount: TODO
 * Tools
 ** Scripts
 
-- Create a script to support generating lists of file locations for
-  navigating the input file in a certain order.
+  - Build some common pandas.DataFrame command-line exporting routine;
+    basically, a new script should be able to load a ledger, filter some
+    entries, and build a DataFrame of some kind, and then with some COMMON
+    OPTIONS provide the ability to generate an output file in either string,
+    csv, excel, or html format.
 
-    Let's say that I would want to inspect the input for some
-    arbitrary list of filtered transactions that relate to
-    postings: all I have to do is write a script that outputs
-    "errors" in a way that Emacs knows to parse, and then
-    'next-error and 'previous-error takes my cursor there with
-    a single keystroke!
+    The point is, the option to generate the output should all be the same.
+
+  - Create a script to support generating lists of file locations for
+    navigating the input file in a certain order.
+
+      Let's say that I would want to inspect the input for some
+      arbitrary list of filtered transactions that relate to
+      postings: all I have to do is write a script that outputs
+      "errors" in a way that Emacs knows to parse, and then
+      'next-error and 'previous-error takes my cursor there with
+      a single keystroke!
 
 ** Emacs Support
 
@@ -936,6 +944,9 @@ beancount: TODO
 
 * Import
 
+  - Write a routine that will allow each importer to declare the list of
+    accounts that it requires in order to run.
+
   - (import) --dry-run option, that prints the identification, and (account,
     date) for filing, if needed.  --file --dry-run to try it out.
 
@@ -1043,7 +1054,7 @@ beancount: TODO
 
 * Export
 ** HTML Export as File
-  
+
   - Test "bean2-bake" with the v2, it doesn't appear to work.
 
 ** SQL Export
@@ -1336,4 +1347,3 @@ result of paying taxes:
     should be able to produce a list of the accounts open at the end of the
     period, with the account ids and balances. This should be printable and
     storable, for someone else to take care of your things in case you die.
-

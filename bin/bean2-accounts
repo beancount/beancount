@@ -16,10 +16,9 @@ def main():
     optparser.add_argument('filename', help='Filename.')
     opts = optparser.parse_args()
 
-    entries, errors, options = load(opts.filename)
+    entries, errors, options = load(opts.filename, quiet=True)
 
-    with utils.print_time('open/close'):
-        open_close = data.get_account_open_close(entries)
+    open_close = data.get_account_open_close(entries)
 
     maxlen = max(len(account.name) for account in open_close)
     for account, (open, close) in sorted(open_close.items(), key=lambda x: data.account_sortkey(x[0])):

@@ -3,11 +3,8 @@
 Check that a hierarchy of directories matches a list of accounts.
 """
 
-# stdlib imports
 import os, logging, re
-from os import path
 
-# beancount imports
 from beancount import cmdline
 from beancount.utils import tree_utils
 

@@ -3,10 +3,10 @@
 Import the Excel files which can be downloaded from the RBC website. No more
 Generated Source business.
 """
-import re
 from StringIO import StringIO
 from xml.etree import ElementTree
 from collections import namedtuple
+
 
 def main():
     import optparse

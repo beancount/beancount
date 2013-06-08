@@ -40,6 +40,16 @@ def filter_type(elist, types):
         yield element
 
 
+def longest(seq):
+    """Return the longest of the given subsequences."""
+    longest, length = None, -1
+    for x in seq:
+        lenx = len(x)
+        if lenx > length:
+            longest, length = x, lenx
+    return longest
+
+
 def get_tuple_typed_values(ntuple, clstype):
     """Return all the accounts referred to by this namedtuple instance.
     This function also works recursively on its members, and so it

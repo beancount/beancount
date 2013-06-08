@@ -258,6 +258,9 @@ FLAG_PADDING   = 'P' # Transactions created from padding directives.
 FLAG_SUMMARIZE = 'S' # Transactions created due to summarization.
 FLAG_TRANSFER  = 'T' # Transactions created due to balance transfers.
 
+# Default flag for import.
+FLAG_IMPORT = FLAG_OKAY
+
 
 class GetAccounts:
     """Gather the list of accounts from the list of entries.
@@ -321,6 +324,22 @@ def get_account_open_close(entries):
         open_closes_map[entry.account][index] = entry
 
     return open_closes_map
+
+
+def get_currency_for_account(account, entries):
+    """Find the single currency used in the given account.
+    This assumes that there is exactly one currency.
+    May return None."""
+
+    for entry in utils.filter_type(entries, Open):
+        if entry.account.name == account.name:
+            found = entry
+            break
+    else:
+        return None
+
+    assert len(entry.currencies) == 1, (account, entry.currencies)
+    return entry.currencies[0]
 
 
 #
