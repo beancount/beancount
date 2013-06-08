@@ -4,6 +4,7 @@ Basic data structures used to represent the Ledger entries.
 import io
 import os
 import datetime
+import textwrap
 from collections import namedtuple, defaultdict
 
 from beancount2 import utils
@@ -156,10 +157,15 @@ def render_fileloc(fileloc):
     Emacs and align and rendered nicely."""
     return '{}:{:8}'.format(fileloc.filename, '{}:'.format(fileloc.lineno))
 
-def print_errors(errors):
+def print_errors(errors, file=None):
     # Report all the realization errors.
     for error in errors:
-        print('{} {}'.format(render_fileloc(error.fileloc), error.message))
+        print('{} {}'.format(render_fileloc(error.fileloc), error.message),
+              file=file)
+        if error.entry is not None:
+            error_string = format_entry(error.entry)
+            print()
+            print(textwrap.indent(error_string, '   '), file=file)
 
 
 # All possible types of entries. See the documentation for these.
@@ -210,7 +216,7 @@ def sanity_check_types(entry):
             assert isinstance(posting.position, Position)
             assert isinstance(posting.price, (Amount, NoneType))
             assert isinstance(posting.flag, (str, NoneType))
-        
+
 
 def reparent_posting(posting, entry):
     "Create a new posting entry that has the parent field set."
@@ -395,10 +401,12 @@ class EntryPrinter:
     def Note(_, entry, oss):
         oss.write('{e.date} note {e.account.name} {e.comment}\n'.format(e=entry))
 
-    def Pad(_, entry, oss): 
+    def Pad(_, entry, oss):
         oss.write('{e.date} pad {e.account.name} {e.account_pad.name}\n'.format(e=entry))
 
-    def Open(_, entry, oss):  raise NotImplementedError
+    def Open(_, entry, oss):
+        oss.write('{e.date} open {e.account.name} {currencies}\n'.format(e=entry, currencies=','.join(entry.currencies)))
+
     def Close(_, entry, oss): raise NotImplementedError
     def Event(_, entry, oss): raise NotImplementedError
     def Price(_, entry, oss): raise NotImplementedError

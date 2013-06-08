@@ -66,7 +66,7 @@ def group_postings_by_account(entries, only_accounts=None):
 
 ## FIXME: This doesn't really belong in realization anymore; more this somewhere else.
 
-PadError = namedtuple('PadError', 'fileloc message')
+PadError = namedtuple('PadError', 'fileloc message entry')
 
 def pad(entries):
     """Synthesize and insert Transaction entries right after Pad entries in order to
@@ -137,7 +137,9 @@ def pad(entries):
                         for position in positions:
                             if position.lot.cost is not None:
                                 pad_errors.append(
-                                    PadError(entry.fileloc, "Attempt to pad an entry with cost for balance: {}".format(balance)))
+                                    PadError(entry.fileloc, 
+                                             "Attempt to pad an entry with cost for balance: {}".format(balance),
+                                             active_pad))
 
                         # Thus our padding lot is without cost by default.
                         lot = Lot(check_amount.currency, None, None)
@@ -175,7 +177,7 @@ def pad(entries):
             # Generate errors on unused pad entries.
             if not entry_list:
                 pad_errors.append(
-                    PadError(entry.fileloc, "Unused Pad entry: {}".format(pad)))
+                    PadError(entry.fileloc, "Unused Pad entry: {}".format(pad), entry))
 
     return padded_entries, pad_errors
 
@@ -184,7 +186,7 @@ def pad(entries):
 
 ## FIXME: Move this to validation.
 
-CheckError = namedtuple('CheckError', 'fileloc message')
+CheckError = namedtuple('CheckError', 'fileloc message entry')
 
 # This is based on some real-world usage: FOREX brokerage, for instance,
 # accumulates error up to 1bp, and we need to tolerate that if our importers
@@ -213,7 +215,9 @@ def check(entries):
                     balance.add_position(posting.position, allow_negative)
                 except ValueError as e:
                     check_errors.append(
-                        CheckError(entry.fileloc, "Error balancing '{}' -- {}".format(posting.account.name, e)))
+                        CheckError(entry.fileloc,
+                                   "Error balancing '{}' -- {}".format(posting.account.name, e),
+                                   entry))
 
         elif isinstance(entry, Check):
             # Check the balance against the check entry.
@@ -223,8 +227,10 @@ def check(entries):
             diff_amount = amount_sub(balance_amount, check_amount)
             if diff_amount.number.abs() > CHECK_PRECISION:
                 check_errors.append(
-                    CheckError(entry.fileloc, "Check failed for '{}': {} != {}".format(
-                        entry.account.name, balance_amount, check_amount)))
+                    CheckError(entry.fileloc, 
+                               "Check failed for '{}': {} != {}".format(entry.account.name,
+                                                                        balance_amount,
+                                                                        check_amount), entry))
 
                 # Substitute the entry by a failing entry.
                 entry = Check(entry.fileloc, entry.date, entry.account, entry.amount, diff_amount)

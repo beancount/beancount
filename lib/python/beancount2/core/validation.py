@@ -12,7 +12,7 @@ from beancount2 import utils
 
 
 # An error from one of the checks.
-ValidationError = namedtuple('ValidationError', 'fileloc message')
+ValidationError = namedtuple('ValidationError', 'fileloc message entry')
 
 
 def validate_open_close(entries, accounts):
@@ -31,12 +31,14 @@ def validate_open_close(entries, accounts):
         open = open_map.get(account)
         if open is None or entry.date < open.date:
             check_errors.append(ValidationError(entry.fileloc,
-                                           "Unknown account {} (or perhaps wrong date?).".format(account.name)))
+                                                "Unknown account {} (or perhaps wrong date?).".format(account.name),
+                                                entry))
 
         close = close_map.get(account)
         if close is not None and entry.date > close.date:
             check_errors.append(ValidationError(entry.fileloc,
-                                           "Entry after account {} closed.".format(account.name)))
+                                                "Entry after account {} closed.".format(account.name),
+                                                entry))
 
     # Check all entries for missing open directives and references to accounts
     # which haven't been opened.
@@ -49,7 +51,8 @@ def validate_open_close(entries, accounts):
             account = entry.account
             if account in open_map:
                 check_errors.append(ValidationError(entry.fileloc,
-                                               "Duplicate open entry for {}.".format(account.name)))
+                                                    "Duplicate open entry for {}.".format(account.name),
+                                                    entry))
             else:
                 open_map[account] = entry
 
@@ -57,7 +60,8 @@ def validate_open_close(entries, accounts):
             account = entry.account
             if account in close_map:
                 check_errors.append(ValidationError(entry.fileloc,
-                                               "Duplicate close entry for {}.".format(account.name)))
+                                                    "Duplicate close entry for {}.".format(account.name),
+                                                    entry))
             else:
                 close_map[account] = entry
 
@@ -68,7 +72,8 @@ def validate_open_close(entries, accounts):
     for account in accounts:
         if account not in open_map:
             check_errors.append(ValidationError(entry.fileloc,
-                                           "No open directive for account {}.".format(account.name)))
+                                                "No open directive for account {}.".format(account.name),
+                                                entry))
 
     return check_errors, open_map, close_map
 
@@ -94,7 +99,8 @@ def validate_unused_accounts(entries, accounts):
     # Create a list of suitable errors, with the location of the spurious Open
     # directives.
     return [ValidationError(open_map[account].fileloc,
-                       "Unused account {}.".format(account.name))
+                            "Unused account {}.".format(account.name),
+                            open_map[account])
             for account in unused_accounts]
 
 

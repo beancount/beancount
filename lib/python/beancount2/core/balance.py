@@ -6,7 +6,7 @@ from beancount2.core.inventory import Position, Inventory
 
 
 # An error from balancing the postings.
-BalanceError = namedtuple('BalanceError', 'fileloc message')
+BalanceError = namedtuple('BalanceError', 'fileloc message entry')
 
 
 # The difference amount at which we consider a transaction to be balanced.
@@ -107,7 +107,7 @@ def balance_incomplete_postings(fileloc, postings):
         # If there are too many such postings, we can't do anything, barf.
         if len(auto_postings_indices) > 1:
             balance_errors.append(
-                BalanceError(fileloc, "Too many auto-postings; cannot fill in."))
+                BalanceError(fileloc, "Too many auto-postings; cannot fill in.", None)) # FIXME: Add entry
 
         index = auto_postings_indices[0]
         old_posting = postings[index]
@@ -141,6 +141,6 @@ def balance_incomplete_postings(fileloc, postings):
         # Detect complete sets of postings that have residual balance.
         if not inventory.is_small(SMALL_EPSILON):
             balance_errors.append(
-                BalanceError(fileloc, "Transaction does not balance: {}.".format(inventory)))
+                BalanceError(fileloc, "Transaction does not balance: {}.".format(inventory), None)) # FIXME: Add entry
 
     return postings, inserted_autopostings, balance_errors
