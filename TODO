@@ -12,6 +12,10 @@ beancount: TODO
 
   - Fix all FIXMEs everywhere.
 
+  - BUG: A posting with a following line that has some whitespace on it fails
+    with a parsing error... this should not be the case. Review what happened,
+    fix this now.
+
 * Core
 ** General
 

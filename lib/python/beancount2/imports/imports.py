@@ -13,6 +13,7 @@ import subprocess
 import bs4
 import importlib
 import datetime
+from collections import defaultdict
 
 from beancount2.core import data
 from beancount2.core.data import format_entry
@@ -196,13 +197,14 @@ def run_importer(importer_config, files_or_directories, output,
     # Printing function.
     pr = lambda *args: print(*args, file=output)
 
-    # Iterate over all files found.
+    # Iterate over all files found; accumulate the entries by identification.
+    entries_byid = defaultdict(list)
+    all_duplicate_entries = []
     for filename, (source, filetype, account_ids) in identify(files_or_directories,
                                                               importer_config):
 
         for account_id in account_ids:
             identification = (source, filetype, account_id)
-            print(';;; IMPORT {} - {} - {}'.format(datetime.date.today(), filename, identification))
 
             # Import entries for file for specified account.
             new_entries = import_file(filename, identification, importer_config, entries, accounts)
@@ -218,21 +220,33 @@ def run_importer(importer_config, files_or_directories, output,
                 new_entries = list(itertools.dropwhile(lambda x: x.date < opts.mindate,
                                                        new_entries))
 
+            # Save entries for printing later.
+            entries_byid[identification].extend(new_entries)
+
             # Find potential matching entries.
             duplicate_entries = find_duplicate_entries(new_entries, entries)
-
+            all_duplicate_entries.extend(duplicate_entries)
 
             # Ensure that the entries are typed correctly.
             for entry in new_entries:
                 data.sanity_check_types(entry)
 
-            # Pr out the entries.
-            for entry in new_entries:
-                entry_string = format_entry(entry)
+    # Print out the entries by identification.
+    for identification, entries in sorted(entries_byid.items()):
+        print('')
+        print(';;; IMPORT {} on {}'.format(identification, datetime.date.today()))
+        print('')
 
-                # Indicate that this entry may be a duplicate.
-                if entry in duplicate_entries:
-                    pr(';;;; POTENTIAL DUPLICATE')
-                    entry_string = textwrap.indent(entry_string, ';; ')
+        # Sort all the source's entries.
+        entries.sort(key=data.entry_sortkey)
 
-                pr(entry_string)
+        # Print out the entries.
+        for entry in entries:
+            entry_string = format_entry(entry)
+
+            # Indicate that this entry may be a duplicate.
+            if entry in all_duplicate_entries:
+                pr(';;;; POTENTIAL DUPLICATE')
+                entry_string = textwrap.indent(entry_string, ';; ')
+
+            pr(entry_string)

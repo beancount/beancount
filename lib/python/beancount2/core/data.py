@@ -188,7 +188,23 @@ def create_simple_posting(entry, account, number, currency):
     """Create a simple posting on the entry, with just a number and currency (no
     cost)."""
     from beancount2.core.inventory import Position ## FIXME: fix dependency
+    if not isinstance(number, Decimal):
+        number = Decimal(number.replace(',', ''))
     position = Position(Lot(currency, None, None), Decimal(number))
+    posting = Posting(entry, account, position, None, None)
+    entry.postings.append(posting)
+    return posting
+
+def create_simple_posting_with_cost(entry, account, number, currency, cost_number, cost_currency):
+    """Create a simple posting on the entry, with just a number and currency (no
+    cost)."""
+    from beancount2.core.inventory import Position ## FIXME: fix dependency
+    if not isinstance(number, Decimal):
+        number = Decimal(number.replace(',', ''))
+    if cost_number and not isinstance(cost_number, Decimal):
+        cost_number = Decimal(cost_number.replace(',', ''))
+    cost = Amount(cost_number, cost_currency)
+    position = Position(Lot(currency, cost, None), Decimal(number))
     posting = Posting(entry, account, position, None, None)
     entry.postings.append(posting)
     return posting
@@ -223,8 +239,7 @@ def reparent_posting(posting, entry):
     if posting.entry is entry:
         return posting
     else:
-        return Posting(entry,
-                       posting.account, posting.position, posting.price, posting.flag)
+        return posting._replace(entry=entry)
 
 
 def posting_has_conversion(posting):
