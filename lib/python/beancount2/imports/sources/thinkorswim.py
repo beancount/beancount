@@ -14,6 +14,7 @@ from beancount2.core.data import create_simple_posting
 from beancount2.core.data import Transaction, Posting, Pad, Decimal, Amount, Check
 from beancount2.core.inventory import Position, Lot
 from beancount2 import utils
+from beancount2.utils.text_utils import Matcher
 from beancount2.imports import filetype
 
 
@@ -86,7 +87,7 @@ def import_csv_file(filename, config, entries):
     prev_balance = Amount(Decimal(), base_currency)
     prev_date = datetime.date(1970, 1, 1)
     Tuple = utils.csv_parse_header(next(irows))
-    matcher = utils.Matcher()
+    matcher = Matcher()
     for index, row in enumerate(itertools.starmap(Tuple, irows)):
         # Skip the empty balances; these aren't interesting.
         if re.search('balance at the start of business day', row.description):

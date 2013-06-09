@@ -67,6 +67,10 @@ demo:
 web:
 	bean2-web --debug $(INPUT)
 
+.PHONY: web-incognito
+web-incognito:
+	bean2-web --incognito --debug $(INPUT)
+
 
 # Run the importer.
 .PHONY: import

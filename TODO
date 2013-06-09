@@ -770,12 +770,6 @@ beancount: TODO
 
 
 * Web Interface
-** Incognito Mode
-
-  - Create an '--incognito mode whereby all the numbers are represented by
-    'XXX.XX' for public presentation. For simplicity, this could be implemented
-    as a filter on the raw characters coming out of the web server.
-
 ** Error reporting
 
   - We really need to list all the '!' entries somewhere; they should be

@@ -105,18 +105,6 @@ def iter_dates(start_date, end_date):
         date += ONEDAY
 
 
-class Matcher:
-    "A convenience to do regular expression matching in a conditional."
-
-    def match(self, *args, **kw):
-        self.mo = re.match(*args, **kw)
-        return self.mo
-
-    def search(self, *args, **kw):
-        self.mo = re.match(*args, **kw)
-        return self.mo
-
-
 ## FIXME: Move these into csv_utils.py.
 
 def csv_tuple_reader(fileobj):

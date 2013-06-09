@@ -410,7 +410,7 @@ class EntryPrinter:
         oss.write('{e.date} pad {e.account.name} {e.account_pad.name}\n'.format(e=entry))
 
     def Open(_, entry, oss):
-        oss.write('{e.date} open {e.account.name} {currencies}\n'.format(e=entry, currencies=','.join(entry.currencies)))
+        oss.write('{e.date} open {e.account.name} {currencies}\n'.format(e=entry, currencies=','.join(entry.currencies or [])))
 
     def Close(_, entry, oss): raise NotImplementedError
     def Event(_, entry, oss): raise NotImplementedError

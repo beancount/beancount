@@ -31,6 +31,7 @@ from beancount2.core.realization import RealAccount
 from beancount2 import parser
 from beancount2 import utils
 from beancount2.utils import index_key
+from beancount2.utils.text_utils import replace_numbers
 
 
 #--------------------------------------------------------------------------------
@@ -43,6 +44,7 @@ A = AttrMapper(app.router.build)
 
 def render_global(*args, **kw):
     """Render the title and contents in our standard template."""
+    response.content_type = 'text/html'
     kw['A'] = A # Application mapper
     kw['V'] = V # View mapper
     kw['title'] = app.options['title']
@@ -207,6 +209,7 @@ viewapp.install(populate_view)
 
 def render_app(*args, **kw):
     """Render the title and contents in our standard template."""
+    response.content_type = 'text/html'
     kw['A'] = A # Application mapper
     kw['V'] = V # View mapper
     kw['title'] = app.options['title']
@@ -1203,14 +1206,44 @@ def auto_reload_input_file(callback):
 app.install(auto_reload_input_file)
 
 
+def incognito(callback):
+    """A plugin that converts all numbers rendered into X's, in order
+    to hide the actual values in the ledger. This is used for doing
+    public demos using my real ledger, where I don't necessarily
+    want to share the detail of my financial life with the viewers
+    but when I still want an interesting ledger, with enough
+    detail that looks realistic."""
+
+    def wrapper(*posargs, **kwargs):
+        contents = callback(*posargs, **kwargs)
+        if (response.content_type in ('text/html', '') and
+            isinstance(contents, str)):
+            contents = replace_numbers(contents)
+        return contents
+
+    return wrapper
+
 
 def main():
     argparser = argparse.ArgumentParser(__doc__.strip())
+
     argparser.add_argument('filename', help="Beancount input filename to serve.")
+
     argparser.add_argument('--debug', action='store_true',
                            help="Enable debugging features (auto-reloading of css).")
+
+    argparser.add_argument('--incognito', action='store_true',
+                           help=("Filter the output in order to hide all the numbers. "
+                                 "This is great for demos using my real file."))
+
     args = argparser.parse_args()
     app.args = args
+
+    # Hide the numbers in incognito mode. We do this on response text via a plug-in.
+    if args.incognito:
+        app.install(incognito)
+        viewapp.install(incognito)
+
 
     # Initialize to a small value in order to insure a reload on the first page.
     app.last_mtime = 0
