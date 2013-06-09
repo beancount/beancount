@@ -139,10 +139,7 @@ def import_excel_file(filename, config, entries):
                 create_simple_posting(entry, config['dividend'],
                                       -(row.quantity * description_amount), row.currency)
 
-            elif row.action == 'Buy':
-                pass
-
-            elif row.action == 'Sell':
+            elif row.action in ('Buy', 'Sell'):
 
                 create_simple_posting_with_cost(entry, account_position,
                                                 row.quantity, row.symbol,
@@ -151,8 +148,11 @@ def import_excel_file(filename, config, entries):
                 create_simple_posting(entry, config['cash'],
                                       row.amount, row.currency)
 
-            elif row.action == 'SEL FF':
-                print(row)
+            elif row.action in ('SEL FF', 'PUR FF'):
+                assert not description_amount
+
+                create_simple_posting(entry, account_position,
+                                      row.quantity, row.symbol)
 
             elif row.action == 'DIST':
                 assert not description_amount
@@ -165,9 +165,6 @@ def import_excel_file(filename, config, entries):
                 # Insert the otherwise unused price per-share in the
                 # description.
                 extra_narration.append('{} per share'.format(row.price))
-
-            elif row.action == 'PUR FF':
-                pass
 
             else:
                 raise ValueError("Unknown action: '{}'".format(row.action))
