@@ -19,6 +19,21 @@ except ImportError:
 # Constants.
 ZERO = Decimal()
 
+def to_decimal(strord):
+    """Convert a string, possibly with commas, into a Decimal object.
+    This function just returns the argument if it is already a Decimal
+    object, for convenience. This is used in parsing amounts from files
+    in the importers."""
+    if isinstance(strord, Decimal):
+        return strord
+    else:
+        assert isinstance(strord, str)
+        if not strord:
+            return Decimal()
+        else:
+            return Decimal(strord.replace(',', ''))
+
+
 
 # Lookup for ordering a list of currencies: we want the majors first, then the
 # cross-currencies, and then all the rest of the stuff a user might define
@@ -413,7 +428,8 @@ class EntryPrinter:
             flag = '{} '.format(posting.flag) if posting.flag else ''
             assert posting.account is not None
             position = str(posting.position) if posting.position else ''
-            oss.write('  {}{:64} {:>16} {:>16}\n'.format(flag, posting.account.name, position, posting.price or ''))
+            oss.write('  {}{:64} {:>16} {:>16}'.format(flag, posting.account.name, position, posting.price or '').rstrip())
+            oss.write('\n')
 
     def Check(_, entry, oss):
         oss.write('{e.date} check {e.account.name} {e.amount}\n'.format(e=entry))

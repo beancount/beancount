@@ -392,7 +392,7 @@ def table_of_balances(tree, start_node_name, currencies, classes=None):
                 cells.append('')
 
         # Render all the rest of the inventory in the last cell.
-        cells.append('\n<br/>'.join(map(str, positions)))
+        cells.append('<br/>'.join(map(str, positions)))
 
     return oss.getvalue()
 
@@ -621,7 +621,7 @@ FLAG_ROWTYPES = {
 }
 
 def balance_html(balance):
-    return ('\n<br/>'.join(map(str, balance.get_positions()))
+    return ('<br/>'.join(map(str, balance.get_positions()))
             if balance
             else '')
 

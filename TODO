@@ -2,6 +2,18 @@
 beancount: TODO
 * Current
 
+  - Convert the imports configuration, try it out, to map from
+
+       signatures (a list of strings, possibly including account-ids)
+       to module + configuration
+
+    Remove all the other bullshit detection...
+
+
+
+
+
+
   - Finish converting all the importers to the new system; RBC Direct
     Investing, Google AdSense.
 
@@ -326,6 +338,10 @@ beancount: TODO
 
 * Parser
 ** Errors
+
+  - We need to gather realization errors in a single place and report them like
+    the others; right now I'm catching them in sum_to_date() and writing using
+    the logging module; but they really should be trickled up with the rest.
 
   - Syntax errors currently have no location... this is unacceptable. Write an
     automated test, check for all kinds of errors, in the lexer, in the parser,

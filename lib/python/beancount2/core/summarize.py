@@ -7,6 +7,7 @@ of time, so we fold them into a single transaction per account that has the sum
 total amount of that account.
 """
 import datetime
+import logging
 from collections import defaultdict
 
 from beancount2.core import inventory
@@ -201,7 +202,10 @@ def sum_to_date(entries, date=None):
         if isinstance(entry, Transaction):
             for posting in entry.postings:
                 balance = balances[posting.account]
-                balance.add_position(posting.position, False)
+                try:
+                    balance.add_position(posting.position, False)
+                except ValueError as e:
+                    logging.error("Error during realization: {}".format(e))
 
     else:
         index = None
