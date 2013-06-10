@@ -15,37 +15,15 @@ from beancount2.core.data import Transaction, Posting, Check, Decimal, Amount
 from beancount2 import utils
 
 
-ID = 'paypal'
-
-INSTITUTION = ('PayPal' , 'US')
-
-CONFIG_ACCOUNTS = {
-    'text/csv': {
-        'FILE'    : 'Account for filing',
-        'cash'    : 'Cash account / Net change',
-        'gross'   : 'Gross amount of transaction',
-        'fees'    : 'Paypal Fees',
-    },
+CONFIG = {
+    'FILE'    : 'Account for filing',
+    'cash'    : 'Cash account / Net change',
+    'gross'   : 'Gross amount of transaction',
+    'fees'    : 'Paypal Fees',
 }
 
 
-def is_matching_file(contents, filetype):
-    return (filetype == 'text/csv' and
-            re.search(r'Date, Time, Time Zone, Name, Type, Status, '
-                      r'Currency, Gross, Fee, Net, From Email Address, '
-                      r'To Email Address, Transaction ID, '
-                      r'Counterparty Status, Shipping Address', contents))
-
-
-def import_file(filename, config, entries):
-    if filetype.guess_file_type(filename) == 'text/csv':
-        return import_csv_file(filename, config, entries)
-
-
-#--------------------------------------------------------------------------------
-
-
-def import_csv_file(filename, config, entries):
+def import_file(filename, config):
     """Import a PayPal CSV file."""
 
     new_entries = []

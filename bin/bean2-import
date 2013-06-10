@@ -29,6 +29,9 @@ def main():
     parser.add_argument('-n', '--dry-run', action='store_true',
                         help="Just print the identification of files out; don't import anything")
 
+    parser.add_argument('-d', '--debug', action='store_true',
+                        help="Print extra debugging output.")
+
     parser.add_argument('-o', '--output', action='store',
                         help='Output filename (default: stdout)')
 
@@ -72,7 +75,9 @@ def main():
         output = open(opts.output, 'w') if opts.output else sys.stdout
 
         # Run the importer.
-        imports.run_importer(config, opts.ford, output, entries, opts.mindate)
+        ##imports.run_importer(config, opts.ford, output, entries, opts.mindate)
+
+        imports.run_importer2(config, opts.ford, output, entries, opts.mindate, opts.debug)
 
 
 if __name__ == '__main__':

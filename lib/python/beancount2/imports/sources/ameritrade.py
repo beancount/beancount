@@ -16,100 +16,34 @@ from beancount2 import utils
 from beancount2.imports import filetype
 
 
-ID = 'ameritrade'
-
-INSTITUTION = ('Ameritrade' , 'US')
-
-CONFIG_ACCOUNTS = {
-    'text/csv': {
-        'FILE'               : 'Account for filing',
-        'asset_cash'         : 'Cash account',
-        'asset_money_market' : 'Money market account associated with this account',
-        'asset_forex'        : 'Retail foreign exchange trading account',
-        'asset_position'     : 'Root account for all position sub-accounts',
-        'fees'               : 'Fees',
-        'commission'         : 'Commissions',
-        'interest'           : 'Interest income',
-        'dividend_nontax'    : 'Non-taxable dividend income',
-        'dividend'           : 'Taxable dividend income',
-        'transfer'           : 'Other account for inter-bank transfers',
-        'third_party'        : 'Other account for third-party transfers (wires)',
-    },
-    'application/pdf': {
-        'FILE'               : 'Account for filing',
-    },
+CONFIG = {
+    'FILE'               : 'Account for filing',
+    'cash_currency'      : 'Currency used for cash account',
+    'asset_cash'         : 'Cash account',
+    'asset_money_market' : 'Money market account associated with this account',
+    'asset_forex'        : 'Retail foreign exchange trading account',
+    'asset_position'     : 'Root account for all position sub-accounts',
+    'fees'               : 'Fees',
+    'commission'         : 'Commissions',
+    'interest'           : 'Interest income',
+    'dividend_nontax'    : 'Non-taxable dividend income',
+    'dividend'           : 'Taxable dividend income',
+    'transfer'           : 'Other account for inter-bank transfers',
+    'third_party'        : 'Other account for third-party transfers (wires)',
 }
 
 
-def is_matching_file(contents, filetype):
-    return ((filetype == 'text/csv' and
-             re.search(r'MONEY MARKET PURCHASE \(MMDA1\)', contents)) or
-            (filetype == 'application/pdf' and
-             re.search(r'TD Ameritrade', contents, re.I)))
-
-
-def import_file(filename, config, entries):
-    if filetype.guess_file_type(filename) == 'text/csv':
-        return import_csv_file(filename, config, entries)
-
-
-#--------------------------------------------------------------------------------
-
-
-debug = False
-
-
-_GROUPS = [
-    ('MONEY MARKET PURCHASE',
-     'MONEY MARKET PURCHASE (MMDA1)'),
-    ('MONEY MARKET REDEMPTION',
-     'MONEY MARKET REDEMPTION (MMDA1)'),
-    ]
-_GROUPS_MAP = {description: index
-               for index, group in enumerate(_GROUPS)
-               for description in group}
-
-def group_grouped_rows(reader):
-    """Yield lists of rows that belong together. Money market purchase and
-    redemption belong in the same transaction but are listed as two separate
-    rows, so we yield them as a group; everything else is yielded
-    independently.
-    """
-    last_index = None
-    pending = []
-    for obj in reader:
-        index =_GROUPS_MAP.get(obj.description, None)
-        if index is None or index != last_index:
-            if pending:
-                yield pending
-                pending.clear()
-
-        pending.append(obj)
-        last_index = index
-
-    if pending:
-        yield pending
-
-
-ALWAYS_EMPTY_FIELDS = ('reg_fee',
-                       'short_term_rdm_fee',
-                       'fund_redemption_fee',
-                       'deferred_sales_charge')
-
-
-def import_csv_file(filename, config, entries):
+def import_file(filename, config):
     """Import a CSV file from Ameritrade."""
 
     new_entries = []
 
-    # Find out which is the base currency.
-    base_currency = data.get_currency_for_account(config['asset_cash'], entries)
+    cash_currency = config['cash_currency']
 
     # Iterate over the groups of entries, which will form transactions.
-    prev_balance = Amount(Decimal(), base_currency)
+    prev_balance = Amount(Decimal(), cash_currency)
     prev_date = datetime.date(1970, 1, 1)
     rdr = utils.csv_tuple_reader(open(filename))
-    ##for index, rows in enumerate(group_grouped_rows(rdr)):
     for index, row in enumerate(rdr):
 
         # Check that the fields we're not dealing with are empty.
@@ -140,21 +74,21 @@ def import_csv_file(filename, config, entries):
                 'CLIENT REQUESTED ELECTRONIC FUNDING RECEIPT (FUNDS NOW)',
                 'CLIENT REQUESTED ELECTRONIC FUNDING DISBURSEMENT (FUNDS NOW)'):
 
-            create_simple_posting(entry, config['asset_cash'], amount, base_currency)
-            create_simple_posting(entry, config['transfer'], -amount, base_currency)
+            create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
+            create_simple_posting(entry, config['transfer'], -amount, cash_currency)
 
         elif row.description in (
                 'MONEY MARKET INTEREST (MMDA1)',):
 
-            create_simple_posting(entry, config['asset_money_market'], amount, base_currency)
-            create_simple_posting(entry, config['interest'], -amount, base_currency)
+            create_simple_posting(entry, config['asset_money_market'], amount, cash_currency)
+            create_simple_posting(entry, config['interest'], -amount, cash_currency)
 
         elif row.description in (
                 'MONEY MARKET PURCHASE',
                 'MONEY MARKET REDEMPTION'):
 
-            create_simple_posting(entry, config['asset_cash'], amount, base_currency)
-            create_simple_posting(entry, config['asset_money_market'], -amount, base_currency)
+            create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
+            create_simple_posting(entry, config['asset_money_market'], -amount, cash_currency)
 
         elif row.description in (
                 'MONEY MARKET PURCHASE (MMDA1)',
@@ -170,56 +104,56 @@ def import_csv_file(filename, config, entries):
                 'PAPER STATEMENT FEE',
                 'WIRE CHARGE (FEE)',):
 
-            create_simple_posting(entry, config['asset_cash'], amount, base_currency)
-            create_simple_posting(entry, config['fees'], -amount, base_currency)
+            create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
+            create_simple_posting(entry, config['fees'], -amount, cash_currency)
 
         elif row.description in (
                 'WIRE OUTGOING (ACD WIRE DISBURSEMENTS)',
                 'THIRD PARTY',
                 'CASH RECEIPTS THIRD PARTY',):
 
-            create_simple_posting(entry, config['asset_cash'], amount, base_currency)
-            create_simple_posting(entry, config['third_party'], -amount, base_currency)
+            create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
+            create_simple_posting(entry, config['third_party'], -amount, cash_currency)
 
         elif row.description in (
                 'TRANSFER TO FOREX ACCOUNT',
                 'TRANSFER FROM FOREX ACCOUNT',):
 
-            create_simple_posting(entry, config['asset_cash'], amount, base_currency)
-            create_simple_posting(entry, config['asset_forex'], -amount, base_currency)
+            create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
+            create_simple_posting(entry, config['asset_forex'], -amount, cash_currency)
 
         elif row.description in (
                 'OFF-CYCLE INTEREST (MMDA1)',
                 'FREE BALANCE INTEREST ADJUSTMENT'):
 
-            create_simple_posting(entry, config['asset_cash'], amount, base_currency)
-            create_simple_posting(entry, config['interest'], -amount, base_currency)
+            create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
+            create_simple_posting(entry, config['interest'], -amount, cash_currency)
 
         elif re.match('Bought ([^ ]+) ([^ ]+) @ ([^ ]+)', row.description):
 
             account = account_from_name('{}:{}'.format(config['asset_position'].name, row.symbol))
-            cost = Amount(row.price, base_currency)
+            cost = Amount(row.price, cash_currency)
             position = Position(Lot(row.symbol, cost, None), Decimal(row.quantity))
             posting = Posting(entry, account, position, None, None)
             entry.postings.append(posting)
 
             if row.commission:
-                create_simple_posting(entry, config['commission'], row.commission, base_currency)
+                create_simple_posting(entry, config['commission'], row.commission, cash_currency)
 
-            create_simple_posting(entry, config['asset_cash'], amount, base_currency)
+            create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
 
 
         elif re.match(r'NON-TAXABLE DIVIDENDS \((.*)\)', row.description):
 
-            create_simple_posting(entry, config['asset_cash'], amount, base_currency)
-            create_simple_posting(entry, config['dividend_nontax'], -amount, base_currency)
+            create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
+            create_simple_posting(entry, config['dividend_nontax'], -amount, cash_currency)
 
         else:
             raise ValueError("Unknown transaction {}".format(row))
 
         new_entries.append(entry)
 
-        prev_balance = Amount(Decimal(row.net_cash_balance), base_currency)
+        prev_balance = Amount(Decimal(row.net_cash_balance), cash_currency)
 
     fileloc = data.FileLocation(filename, index)
     new_entries.append(Check(fileloc,
@@ -227,3 +161,12 @@ def import_csv_file(filename, config, entries):
                              config['asset_cash'], prev_balance, None))
 
     return new_entries
+
+
+debug = False
+
+
+ALWAYS_EMPTY_FIELDS = ('reg_fee',
+                       'short_term_rdm_fee',
+                       'fund_redemption_fee',
+                       'deferred_sales_charge')

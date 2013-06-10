@@ -6,10 +6,10 @@ import bs4
 
 from beancount2.core import data
 from beancount2.core.data import Posting, Transaction, Check, Decimal, Lot, Amount
-from beancount2.imports.ofx_bank import souptodict, soup_get, parse_ofx_time
+from beancount2.imports.sources.ofx import souptodict, soup_get, parse_ofx_time
 
 
-ACCOUNTS = {
+CONFIG = {
     'FILE'         : 'Account for filing',
     'asset_cash'   : 'Cash account that receives the contributions',
     'asset_pretax' : 'Root of positions from pre-tax contributions',
@@ -20,7 +20,7 @@ ACCOUNTS = {
 }
 
 
-def import_file(filename, config, _):
+def import_file(filename, config):
     """Extract transaction info from the given OFX file into transactions for the
     given account. This function returns a list of entries possibly partially
     filled entries.

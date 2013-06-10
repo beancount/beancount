@@ -2,6 +2,7 @@
 Generic utility packages and functions.
 """
 import datetime
+import logging
 from time import time
 import contextlib
 from collections import defaultdict, namedtuple
@@ -92,7 +93,7 @@ def walk_files_or_dirs(fords, ignore_dirs=['.hg', '.svn', '.git']):
         elif path.isfile(ford) or path.islink(ford):
             yield ford
         elif not path.exists(ford):
-            raise IOError("File or directory '{}' does not exist.".format(ford))
+            logging.error("File or directory '{}' does not exist.".format(ford))
 
 
 ONEDAY = datetime.timedelta(days=1)

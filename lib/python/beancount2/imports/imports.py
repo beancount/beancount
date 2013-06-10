@@ -7,6 +7,7 @@ directory hierarchy. This is the driver program for importing stuff from files.
 """
 import textwrap
 import itertools
+import tempfile
 import re
 import logging
 import subprocess
@@ -14,13 +15,13 @@ import bs4
 import importlib
 import datetime
 from collections import defaultdict
+from pprint import pprint, pformat
 
 from beancount2.core import data
 from beancount2.core.data import format_entry
 from beancount2.core.dups import find_duplicate_entries
 from beancount2 import utils
 from beancount2.imports.filetype import guess_file_type
-from beancount2.imports import ofx_bank
 
 
 #
@@ -83,8 +84,18 @@ def read_file(filename):
         else:
             contents = stdout.decode()
 
+    elif filetype == 'application/vnd.ms-excel':
+        # If the file is an Excel spreadsheet, convert to a CSV file so we can
+        # grep through it.
+        with tempfile.NamedTemporaryFile(suffix='.csv') as f:
+            r = subprocess.call(('ssconvert', '--export-type=Gnumeric_stf:stf_csv',
+                                 filename, f.name),
+                                stdout=subprocess.PIPE)
+            assert r == 0, r
+            contents = open(f.name).read()
+
     else:
-        # Otherwise just read it.
+        # Otherwise just read it as it is.
         contents = open(filename).read()
 
     return contents, filetype
@@ -185,9 +196,10 @@ def run_importer(importer_config, files_or_directories, output,
                  entries=[], mindate=None):
     """Given an importer configuration, search for files that can be imported in the
     list of files or directories, identify them, try to find a suitable importer
-    and run it on the files. A list of entries for an existing ledger can be
-    provided in order to perform de-duplication and a minimum date can be
-    provided to filter out old entries. This is the main import driver loop.
+    and run it on the files.
+
+    A list of entries for an existing ledger can be provided in order to perform
+    de-duplication and a minimum date can be provided to filter out old entries.
     """
 
     # Compute a mapping of all the available accounts in the entries from the
@@ -250,3 +262,120 @@ def run_importer(importer_config, files_or_directories, output,
                 entry_string = textwrap.indent(entry_string, ';; ')
 
             pr(entry_string)
+
+
+
+
+def run_importer2(importer_config, files_or_directories, output,
+                  entries=[], mindate=None, debug=False):
+    """Given an importer configuration, search for files that can be imported in the
+    list of files or directories, run the signature checks on them, and if it
+    succeeds, run the importer on the file. This is the main import driver loop.
+
+    A list of entries for an existing ledger can be provided in order to perform
+    de-duplication and a minimum date can be provided to filter out old entries.
+    """
+
+    # # Compute a mapping of all the available accounts in the entries from the
+    # # beancount file.
+    # accounts = data.gather_accounts(entries)
+
+
+    # Printing function.
+    pr = lambda *args: print(*args, file=output)
+
+    # Iterate over all files found; accumulate the entries by identification.
+    entries_byid = defaultdict(list)
+    all_duplicate_entries = []
+    for filename in utils.walk_files_or_dirs(files_or_directories):
+        print(filename)
+
+        # Read the file in a parseable form.
+        contents, filetype = read_file(filename)
+
+        # Build up a string to match the configuration signatures against.
+        match_text = textwrap.dedent("""\
+        Filename: {}
+        FileType: {}
+        Contents: {}
+        """).format(filename, filetype, contents)
+
+        # If in debugging mode, print out the text the signatures have to match against.
+        if debug:
+            print(',--------------------------------------------------------------------------------')
+            print(match_text)
+            print('`--------------------------------------------------------------------------------')
+
+        # For each of the sources the user has declared, find the matching
+        # signature sets.
+        matches = []
+        for signatures, module, config in importer_config:
+            # Attempt to match all of the signatures against the text.
+            if all(re.search(signature, match_text, re.DOTALL)
+                   for signature in signatures):
+                matches.append( (module, config) )
+
+        if matches:
+            print()
+        for module, accounts in matches:
+            print('  Importer: {}'.format(module.__name__ if module else '-'))
+            print(textwrap.indent(pformat(accounts), '    '))
+            print()
+
+
+
+
+
+
+
+
+    # for filename, (source, filetype, account_ids) in identify(files_or_directories,
+    #                                                           importer_config):
+
+    #     for account_id in account_ids:
+    #         identification = (source, filetype, account_id)
+
+    #         # Import entries for file for specified account.
+    #         new_entries = import_file(filename, identification, importer_config, entries, accounts)
+
+    #         if new_entries is None:
+    #             logging.error("Error importing '{}'; no entries produced.".format(filename))
+    #             continue
+
+    #         new_entries.sort(key=lambda x: x.date)
+
+    #         # Filter out entries with dates before 'mindate'.
+    #         if mindate:
+    #             new_entries = list(itertools.dropwhile(lambda x: x.date < opts.mindate,
+    #                                                    new_entries))
+
+    #         # Save entries for printing later.
+    #         entries_byid[identification].extend(new_entries)
+
+    #         # Find potential matching entries.
+    #         duplicate_entries = find_duplicate_entries(new_entries, entries)
+    #         all_duplicate_entries.extend(duplicate_entries)
+
+    #         # Ensure that the entries are typed correctly.
+    #         for entry in new_entries:
+    #             data.sanity_check_types(entry)
+
+    # # Print out the entries by identification.
+    # for identification, entries in sorted(entries_byid.items()):
+    #     print('')
+    #     print(';;; IMPORT {} on {}'.format(identification, datetime.date.today()))
+    #     print('')
+
+    #     # Sort all the source's entries.
+    #     entries.sort(key=data.entry_sortkey)
+
+    #     # Print out the entries.
+    #     for entry in entries:
+    #         entry_string = format_entry(entry)
+
+    #         # Indicate that this entry may be a duplicate.
+    #         if entry in all_duplicate_entries:
+    #             pr(';;;; POTENTIAL DUPLICATE')
+    #             entry_string = textwrap.indent(entry_string, ';; ')
+
+    #         pr(entry_string)

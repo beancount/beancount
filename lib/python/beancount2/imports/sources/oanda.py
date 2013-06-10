@@ -1,4 +1,8 @@
-"""OANDA transaction detail CSV file importer.
+"""OANDA Corporation transaction detail CSV file importer.
+
+Go to the old transaction detail page, select CSV detail, and and cut-n-paste
+the output into a file (you have to do this manually, unfortunately, there is no
+option).
 """
 import re
 import datetime
@@ -13,37 +17,19 @@ from beancount2 import utils
 from beancount2.imports import filetype
 
 
-ID = 'oanda'
-
-INSTITUTION = ('OANDA Corporation' , 'US')
-
-CONFIG_ACCOUNTS = {
-    'text/csv' : {
-        'FILE'     : 'Account for filing',
-        'asset'    : 'Account holding the cash margin',
-        'interest' : 'Interest income',
-        'pnl'      : 'PnL income',
-        'transfer' : 'Other account for wire transfers',
-        'limbo'    : "Account used to book against transfer where we don't know",
-        'fees'     : 'Wire and API fees',
-    },
-    'application/pdf' : {
-        'FILE'               : 'Account for filing',
-    },
+CONFIG = {
+    'FILE'     : 'Account for filing',
+    'asset'    : 'Account holding the cash margin',
+    'interest' : 'Interest income',
+    'pnl'      : 'PnL income',
+    'transfer' : 'Other account for wire transfers',
+    'limbo'    : "Account used to book against transfer where we don't know",
+    'fees'     : 'Wire and API fees',
 }
 
 
-def is_matching_file(contents, filetype):
-    return (filetype == 'text/csv' and
-            re.match(r'Ticket\b.*\bPipettes\b', contents))
-
-
-def import_file(filename, config, _):
-    if filetype.guess_file_type(filename) == 'text/csv':
-        return import_csv_file(filename, config, _)
-
-
-#--------------------------------------------------------------------------------
+def import_file(filename, config):
+    return import_csv_file(filename, config)
 
 
 IGNORE_TRANSACTIONS = """
@@ -280,8 +266,6 @@ def import_csv_file(filename, config, _):
 
     return new_entries
 
-# FIXME: Temporary; these would have been done manually. For debugging now, ignore, while developing.
-OANDA_IGNORED = set(['873690057', '980400948', '1051458865'])
 
 # Future work:
 # - Check that ignored transactions have zero amounts

@@ -41,41 +41,19 @@ from beancount2 import utils
 from beancount2.imports import filetype
 
 
-ID = 'rbcinvesting'
-
-INSTITUTION = ('RBC Direct Investing' , 'CA')
-
-CONFIG_ACCOUNTS = {
-    'application/vnd.ms-excel': {
-        'FILE'            : 'Account for filing',
-        'cash'            : 'Cash account',
-        'positions'       : 'Root account for all position sub-accounts',
-        'fees'            : 'Fees',
-        'commission'      : 'Commissions',
-        'interest'        : 'Interest income',
-        'dividend'        : 'Dividend income',
-        'transfer'        : 'Other account for inter-bank transfers',
-    },
-    'application/pdf' : {
-        'FILE'               : 'Account for filing',
-    },
+CONFIG = {
+    'FILE'       : 'Account for filing',
+    'cash'       : 'Cash account',
+    'positions'  : 'Root account for all position sub-accounts',
+    'fees'       : 'Fees',
+    'commission' : 'Commissions',
+    'interest'   : 'Interest income',
+    'dividend'   : 'Dividend income',
+    'transfer'   : 'Other account for inter-bank transfers',
 }
 
 
-def is_matching_file(contents, filetype):
-    return (filetype == 'application/vnd.ms-excel' and
-            re.search('Activity\d\d\d\d\d\d\d\d - \d\d\d\d\d\d\d\d', contents))
-
-
-def import_file(filename, config, entries):
-    if filetype.guess_file_type(filename) == 'application/vnd.ms-excel':
-        return import_excel_file(filename, config, entries)
-
-
-#--------------------------------------------------------------------------------
-
-
-def import_excel_file(filename, config, entries):
+def import_file(filename, config):
     """Import an Excel file from RBC Direct Investing's Activity Statement."""
 
     new_entries = []
