@@ -57,7 +57,7 @@ def main():
         entries = []
 
     # Load the importer config from its Python file.
-    config = imports.load_user_config(opt.config)
+    config = imports.load_user_config(opts.config)
 
     # Create a suitable output file.
     output = open(opts.output, 'w') if opts.output else sys.stdout

@@ -2,7 +2,7 @@
 beancount: TODO
 * Current
 
-  - Google AdSense importer.
+  - Complete Google AdSense importer.
 
   - More everything under src/* for an obvious multi-language support.
 
