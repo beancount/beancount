@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+"""Read an user's import configuration, a target directory, and a list of files
+or directories, and for each file under the list of files and directories that
+we can identify as being importable, move the file under the
+directory that corresponds to the 'FILE' account in the module configuration.
+
+Usage:
+
+  bean2-file [IMPORT-CONFIG] [TARGET] [...files or directories...]
+
+The files are renamed by prepending the date to them, in a format that Beancount
+will be able to automatically create 'documents' directives for them.
+"""
+
+import sys
+import re
+import datetime
+import logging
+
+from beancount2.imports import imports, filing
+
+
+def main():
+    import argparse, logging
+    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    parser = argparse.ArgumentParser(__doc__.strip())
+
+    parser.add_argument('config',
+                        help=('Importer configuration file. '
+                              'This is a Python file with a data structure that '
+                              'is specific to your accounts'))
+
+    parser.add_argument('dest',
+                        help=('Root directory where we should file away the imported file.'))
+
+    parser.add_argument('ford', nargs='+',
+                        help='Filenames or directories to search for files to import (file)')
+
+    parser.add_argument('-n', '--dry-run', action='store_true',
+                        help="Just print the identification of files out; don't import anything")
+
+    opts = parser.parse_args()
+
+    # Load the importer config from its Python file.
+    config = imports.load_user_config(opts.config)
+
+    # Run the filer.
+    filing.run_filer(config, opts.ford, opts.dest, opts.dry_run)
+
+
+if __name__ == '__main__':
+    main()

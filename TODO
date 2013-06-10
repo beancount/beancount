@@ -2,20 +2,7 @@
 beancount: TODO
 * Current
 
-  - Convert the imports configuration, try it out, to map from
-
-       signatures (a list of strings, possibly including account-ids)
-       to module + configuration
-
-    Remove all the other bullshit detection...
-
-
-
-
-
-
-  - Finish converting all the importers to the new system; RBC Direct
-    Investing, Google AdSense.
+  - Google AdSense importer.
 
   - More everything under src/* for an obvious multi-language support.
 
@@ -320,6 +307,10 @@ beancount: TODO
   - Write a generic import routine that will try to heuristically match
     partially completed transactions from an existing Ledger. Use some NLP or
     somesuch matching algorithm.
+
+    Given some incomplete transactions, complete them heuristically based on
+    previous contents of the ledger. This should make import a lot easier. This
+    should be generic and work across all importers, a single function call.
 
 ** Payee Elision / Auto-Account Leaf Name
 
@@ -961,35 +952,13 @@ beancount: TODO
 
 * Import
 
-  - Add an option to the impoter so merge all the entries before printing them
-    out. This would be useful if we have multiple files for the same
-    account.
+  - Add an option to the importer so merge all the entries before printing them
+    out. This would be useful if we have multiple files for the same account.
 
   - Add a check at the end of the OFX bank import. Missing right now.
 
-  - For guessing the account, you should pass through the filename, not just
-    the contents, we need that, unfortunately.
-
-
   - Implement FOREX transaction log parsing for FOREX account, so that we count
     losses properly.
-
-  - Implement: 'bean-file', a new program, with its own dry-run.
-
-  - There is a problem in detecting Ameritrade: there is no account ID in the
-    .csv file, you need to find some way to figure out which it is.
-
-  - (import) --dry-run option, that prints the identification, and (account,
-    date) for filing, if needed.  --file --dry-run to try it out.
-
-
-  - The code that auto-files statements needs to detect and de-dup files which
-    have the same contents, because it is likely some files will be downloaded
-    twice, it happens a lot.
-
-  - Import: in order to guess the currency of an instrument for which you don't
-    have a mapping (e.g. there's only a CUSIP), find the currency in use in the
-    corresponding account... or look at the constraints on the account!
 
   - There should be a script that is able to go through a directory of files
     and automaticalyl attempt to detect which types they are (if any), and
@@ -1000,66 +969,38 @@ beancount: TODO
     accounts, and automatically stash the file under the correct documents
     directory, prepended with the date in the format we expect.
 
-  - Bail Cleanly: If the import process fails for whatever reason, don't move
-    the files!! This has been *SO* annoying in the past.
-
   - Clean Import: The new importers should be able to strip the non-payee parts
     of the payee name, e.g. NEW YO, SAN FR, etc.
 
-  - Re-Import Safe: Modify all import scripts so that they avoid reimporting already
-    imported stuff. All the import scripts should take an existing Ledger file
-    as input; they should be smarter. This functionality should be in common,
-    work from a list of entries; this should not have to be reimplemented in
-    each importer.
-
   - The OFX importer needs to unescape &amp; and other odd chars, I think
-    there's a bug currnetly.
+    there's a bug currently, I've seen a few here and there.
 
-  - Importers: You should have some way to record instructions for what you did
-    in order to get the input files. This is useful. Not sure a comment is
-    enough; this is importer data, user-specific. Maybe there should be some
-    way to configure the importers?  Ideally not, but maybe this is hard-coded
-    in each importer., e.g.
-
-    For example, for "Vanguard", I do this:
-
-      Home >> Plan Summary >> Transaction History
-      Select: "View by:" Both
-      Click on Download.
-      Select "Download each fund in separate Quicken or Money accounts."
-      Click on Microsoft Money.
-
-  - The default import syntax should have the narration as the payee by default. We
-    need to use those as default, we don't set nearly enough of them.
-
-  - Create importer library support in Python for writing beancount importers.
-    See OANDA script to being. Formatting transactions should be code in common.
-    Finding accounts with ids too.
+** Dup Detection / Re-Import Safe
 
   - Write some smarter code to identify which transactions have alreader been
     imported in the ledger. Do not rely on checks. This means that the importers
     should create incomplete transaction objects and supply that to this
     function, which will then attempt to identify for each of the supplied
     transactions, which ones are already there.
-
-  - Given some incomplete transactions, complete them heuristically based on
-    previous contents of the ledger. This should make import a lot easier. This
-    should be generic and work across all importers, a single function call.
-
-
+    Re-Import Safe: Modify all import scripts so that they avoid reimporting already
+    imported stuff. All the import scripts should take an existing Ledger file
+    as input; they should be smarter.
 
 ** Filing
 
-  - There should be a script that knows about the formats of my various PDF
-    files under ~/u/Downloads and that automatically puts them under the right
-    subdirectory. Maybe pdf2text and look for account ids, then try to
-    automatically match against one of the account_id declared in the Ledger.
+  - Complete the bean2-filter script; it's almost there.
 
   - When grepping in PDF files, we should also grep to transaction-id's /
     beancount "links", in order to automatically associate trade ticket PDFs to
     transactions. Add a LINK to the document directive, in order to link them
     together.
 
+  - The code that auto-files statements needs to detect and de-dup files which
+    have the same contents, because it is likely some files will be downloaded
+    twice, it happens a lot.
+
+  - Check for the existence of the destination files before moving anything.
+    Basically, if there's anything smelly anywhere, no file gets moved.
 
 ** Payee Normalization
 
@@ -1067,19 +1008,7 @@ beancount: TODO
     that differ very little are obvious for the same business... this would be
     useful. What kinds of tools will we need for that?
 
-** Importers
-*** Think-or-Swim
-
-  - Complete Think-or-Swim file parser
-
-*** PayPal
-
-*** RBC
-
-*** RBC Direct Investing
-
-
-*** Importer from GnuCash
+** GnuCash Import
 
   - Write an importer from GnuCash's format, for people wanting to make the
     transition or even just to try it out.

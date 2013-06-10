@@ -57,10 +57,7 @@ def main():
         entries = []
 
     # Load the importer config from its Python file.
-    code = compile(open(opts.config).read(), opts.config, 'exec')
-    config_env = {}
-    exec(code, globals(), config_env)
-    config = config_env['CONFIG']
+    config = imports.load_user_config(opt.config)
 
     # Create a suitable output file.
     output = open(opts.output, 'w') if opts.output else sys.stdout

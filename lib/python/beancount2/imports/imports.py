@@ -27,6 +27,17 @@ from beancount2 import utils
 from beancount2.imports.filetype import guess_file_type
 
 
+def load_user_config(filename):
+    """Load the user configuration file and extract the configuration object."""
+    code = compile(open(filename).read(), filename, 'exec')
+    config_env = {}
+    exec(code, globals(), config_env)
+    config = config_env['CONFIG']
+    assert isinstance(config, list)
+    assert all(isinstance(element, (tuple, list)) for element in config)
+    return config
+
+
 def read_file(filename):
     """Read the file contents in a format that it can be examined."""
 

@@ -187,3 +187,13 @@ Rejected TODO Items & Ideas
 
     *REJECTED* We can do everything at the transaction level.
 
+
+  - Import: in order to guess the currency of an instrument for which you don't
+    have a mapping (e.g. there's only a CUSIP), find the currency in use in the
+    corresponding account... or look at the constraints on the account!
+
+    *REJECTED* This would add a dependency to the ledger for importing; right
+    now, we can do pretty well without a ledger and it's nice. I'd like to keep
+    them as independent as is possible (of course using a ledger during import
+    allows you to do de-duplication and auto-categorization, but it's still a
+    really nice property to be able to import without it).
