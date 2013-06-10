@@ -137,7 +137,7 @@ def pad(entries):
                         for position in positions:
                             if position.lot.cost is not None:
                                 pad_errors.append(
-                                    PadError(entry.fileloc, 
+                                    PadError(entry.fileloc,
                                              "Attempt to pad an entry with cost for balance: {}".format(balance),
                                              active_pad))
 
@@ -227,7 +227,7 @@ def check(entries):
             diff_amount = amount_sub(balance_amount, check_amount)
             if diff_amount.number.abs() > CHECK_PRECISION:
                 check_errors.append(
-                    CheckError(entry.fileloc, 
+                    CheckError(entry.fileloc,
                                "Check failed for '{}': {} != {}".format(entry.account.name,
                                                                         balance_amount,
                                                                         check_amount), entry))

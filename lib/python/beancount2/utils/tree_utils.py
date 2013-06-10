@@ -97,8 +97,6 @@ def mark(node, predicate, node_adaptor, active_nodes):
     return is_marked
 
 
-
-
 # A class to hold the recursion rendering context.
 Context = namedtuple('Context', 'adaptor pfx_last pfx_nonleaf pfx_cont pfx_skip')
 
