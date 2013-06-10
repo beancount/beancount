@@ -3,6 +3,7 @@ Basic data structures used to represent the Ledger entries.
 """
 import io
 import os
+import re
 import datetime
 import textwrap
 from collections import namedtuple, defaultdict
@@ -142,8 +143,12 @@ def account_type(name):
     """Return the type of this account's name."""
     return name.split(':')[0]
 
+def is_account_name(string):
+    """Return true if the given string is an account name."""
+    return re.match('(Asset|Liabilities|Equity|Income|Expenses)', string)
+
 def is_account_root(account_name):
-    """Return true if the account name is one of the five root accounts."""
+    """Return true if the account name is one of the root accounts."""
     return ':' not in account_name
 
 def is_balance_sheet_account(account):
@@ -155,9 +160,6 @@ def is_balance_sheet_account_name(account_name, options):
         options[x] for x in ('name_assets',
                              'name_liabilities',
                              'name_equity'))
-
-('Assets', 'Liabilities', 'Equity')
-    # FIXME: Remove these hardcoded strings; use the options instead.
 
 def is_income_statement_account(account):
     return account.type in ('Income', 'Expenses')

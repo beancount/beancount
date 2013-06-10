@@ -11,59 +11,20 @@ import tempfile
 import re
 import logging
 import subprocess
-import bs4
+import sys
 import importlib
 import datetime
 from collections import defaultdict
 from pprint import pprint, pformat
 
+import bs4
+
 from beancount2.core import data
 from beancount2.core.data import format_entry
+from beancount2.core.data import is_account_name, account_from_name
 from beancount2.core.dups import find_duplicate_entries
 from beancount2 import utils
 from beancount2.imports.filetype import guess_file_type
-
-
-#
-# Identification of files to specific accounts.
-#
-
-def sliced_match(string):
-    """Return a regexp that will match the given string with possibly any number of
-    spaces in between. For example, '123' would become '1 *2 * 3'. This is used
-    to grep a file for broken-up ids, such as '123456789' appearing as '123
-    45-6789'.
-    """
-    return '[ \-\­]*'.join(string)
-
-
-def find_account_ids(contents, filetype, all_account_ids):
-    """Given file contents, yield all the account ids found from all_account_ids."""
-
-    # Try to find corresponding account-ids, using the list of those we already
-    # know about from the importers config.
-    if filetype in ('application/pdf', 'text/csv'):
-        for account_id in all_account_ids:
-            mo = re.search(sliced_match(account_id), contents)
-            if mo:
-                yield account_id
-
-    elif filetype in ('application/x-ofx', 'application/vnd.intu.qbo'):
-        soup = bs4.BeautifulSoup(contents, 'lxml')
-        acctids = soup.find_all('acctid')
-        for acctid in acctids:
-            # There's some garbage in here sometimes; clean it up.
-            yield acctid.text.split('\n')[0]
-
-
-def guess_source(contents, filetype, all_sources):
-    """Attempt to guess the source of the file in contents.
-    Returns an source ID."""
-
-    # Read the file contents, grab some of the header.
-    for source in all_sources:
-        if source.is_matching_file(contents, filetype):
-            return source.ID
 
 
 def read_file(filename):
@@ -101,210 +62,29 @@ def read_file(filename):
     return contents, filetype
 
 
-def import_source(source_id):
-    return importlib.import_module('beancount2.imports.sources.{}'.format(source_id))
-
-
-def identify(files_or_directories, importer_config):
-    """Walk over the list of files or directories, and attempt to identify the
-    filetype, source/source, and list of account-ids for each file that
-    we can grok. Yield a list of
-
-      (filename, (source, filetype, [list-of-account-ids]))
-
-    """
-    # Get the list of account-ids.
-    all_account_ids = [account_id
-                       for (_, _, account_id) in importer_config
-                       if account_id]
-
-    # Get the list of sources.
-    all_sources = [import_source(source_id)
-                   for (source_id, _, _) in importer_config]
-
-    for filename in utils.walk_files_or_dirs(files_or_directories):
-
-        contents, filetype = read_file(filename)
-
-        # Figure out the account's filetype and account-id.
-        account_ids = find_account_ids(contents, filetype, all_account_ids)
-        account_ids = list(account_ids)
-
-        # If there are no account-ids, insert a "None" to hold place for the
-        # unknown account that this file is for.
-        if not account_ids:
-            account_ids.append(None)
-
-        # Get the source / data source.
-        source = guess_source(contents, filetype, all_sources)
-
-        yield filename, (source, filetype, account_ids)
-
-
-def get_required_accounts_for_config(config_account_names, all_accounts):
-    """Given a dict of account names from the configuration, and a mapping of
-    al the accounts, get the accounts required for this configuration."""
-
-    # Find the Account objects in the list of entries, as much as possible;
-    # create new ones on-demand, by name.
-    accounts = {}
-    error = False
-    for kind, account_name in config_account_names.items():
-        account = all_accounts.get(account_name, None)
-        if account is None:
-            account = data.account_from_name(account_name)
-        accounts[kind] = account
-
-    return accounts
-
-
-def import_file(filename, identification, importer_config, entries, accounts):
-    """Run the importer on 'filename' as identified in 'identification'.
-    (This imports only the transactions for the account specified in the
-    identification, which is of the form (source, filetype, account-if).
-    """
-
-    # Get the list of accounts for this importer id.
-    try:
-        config_account_names = importer_config[identification]
-    except KeyError:
-        logging.error("Configuration not found for id: {}".format(identification))
-        return
-
-    # Import the source module.
-    source_id, filetype, account_id = identification
-    source = import_source(source_id)
-
-    # Check the configuration account provided by the user against the accounts
-    # required by the source importer. Just to make sure.
-    config_types = set(config_account_names)
-    source_types = set(source.CONFIG_ACCOUNTS[filetype])
-    for account_type in (source_types - config_types):
-        logging.error("Missing account from configuration: {}".format(account_type))
-    for account_type in (config_types - source_types):
-        logging.error("Extra account in configuration: {}".format(account_type))
-
-    # Convert the account names into account objects before passing it into the
-    # importer.
-    config = get_required_accounts_for_config(config_account_names, accounts)
-
-    # Run the importer.
-    return source.import_file(filename, config, entries)
-
-
-def run_importer(importer_config, files_or_directories, output,
-                 entries=[], mindate=None):
+def find_imports(importer_config, files_or_directories):
     """Given an importer configuration, search for files that can be imported in the
-    list of files or directories, identify them, try to find a suitable importer
-    and run it on the files.
+    list of files or directories, run the signature checks on them and return a list
+    of (filename, matches), where 'matches' is a list of (module, module_config) for
+    each importer module that matched the file."""
 
-    A list of entries for an existing ledger can be provided in order to perform
-    de-duplication and a minimum date can be provided to filter out old entries.
-    """
-
-    # Compute a mapping of all the available accounts in the entries from the
-    # beancount file.
-    accounts = data.gather_accounts(entries)
-
-    # Printing function.
-    pr = lambda *args: print(*args, file=output)
+    match_template = textwrap.dedent("""\
+           Filename: {}
+           FileType: {}
+           Contents: {}
+        """)
 
     # Iterate over all files found; accumulate the entries by identification.
-    entries_byid = defaultdict(list)
-    all_duplicate_entries = []
-    for filename, (source, filetype, account_ids) in identify(files_or_directories,
-                                                              importer_config):
-
-        for account_id in account_ids:
-            identification = (source, filetype, account_id)
-
-            # Import entries for file for specified account.
-            new_entries = import_file(filename, identification, importer_config, entries, accounts)
-
-            if new_entries is None:
-                logging.error("Error importing '{}'; no entries produced.".format(filename))
-                continue
-
-            new_entries.sort(key=lambda x: x.date)
-
-            # Filter out entries with dates before 'mindate'.
-            if mindate:
-                new_entries = list(itertools.dropwhile(lambda x: x.date < opts.mindate,
-                                                       new_entries))
-
-            # Save entries for printing later.
-            entries_byid[identification].extend(new_entries)
-
-            # Find potential matching entries.
-            duplicate_entries = find_duplicate_entries(new_entries, entries)
-            all_duplicate_entries.extend(duplicate_entries)
-
-            # Ensure that the entries are typed correctly.
-            for entry in new_entries:
-                data.sanity_check_types(entry)
-
-    # Print out the entries by identification.
-    for identification, entries in sorted(entries_byid.items()):
-        print('')
-        print(';;; IMPORT {} on {}'.format(identification, datetime.date.today()))
-        print('')
-
-        # Sort all the source's entries.
-        entries.sort(key=data.entry_sortkey)
-
-        # Print out the entries.
-        for entry in entries:
-            entry_string = format_entry(entry)
-
-            # Indicate that this entry may be a duplicate.
-            if entry in all_duplicate_entries:
-                pr(';;;; POTENTIAL DUPLICATE')
-                entry_string = textwrap.indent(entry_string, ';; ')
-
-            pr(entry_string)
-
-
-
-
-def run_importer2(importer_config, files_or_directories, output,
-                  entries=[], mindate=None, debug=False):
-    """Given an importer configuration, search for files that can be imported in the
-    list of files or directories, run the signature checks on them, and if it
-    succeeds, run the importer on the file. This is the main import driver loop.
-
-    A list of entries for an existing ledger can be provided in order to perform
-    de-duplication and a minimum date can be provided to filter out old entries.
-    """
-
-    # # Compute a mapping of all the available accounts in the entries from the
-    # # beancount file.
-    # accounts = data.gather_accounts(entries)
-
-
-    # Printing function.
-    pr = lambda *args: print(*args, file=output)
-
-    # Iterate over all files found; accumulate the entries by identification.
-    entries_byid = defaultdict(list)
-    all_duplicate_entries = []
+    all_matches = []
     for filename in utils.walk_files_or_dirs(files_or_directories):
-        print(filename)
 
         # Read the file in a parseable form.
         contents, filetype = read_file(filename)
 
         # Build up a string to match the configuration signatures against.
-        match_text = textwrap.dedent("""\
-        Filename: {}
-        FileType: {}
-        Contents: {}
-        """).format(filename, filetype, contents)
+        match_text = match_template.format(filename, filetype, contents)
 
         # If in debugging mode, print out the text the signatures have to match against.
-        if debug:
-            print(',--------------------------------------------------------------------------------')
-            print(match_text)
-            print('`--------------------------------------------------------------------------------')
 
         # For each of the sources the user has declared, find the matching
         # signature sets.
@@ -315,67 +95,134 @@ def run_importer2(importer_config, files_or_directories, output,
                    for signature in signatures):
                 matches.append( (module, config) )
 
+        yield (filename, match_text, matches)
+
+    return all_matches
+
+
+def verify_config(module, module_config):
+    """Check the configuration account provided by the user against the accounts
+    required by the source importer. Just to make sure."""
+
+    module_options = set(module.CONFIG)
+    user_options = set(module_config)
+
+    success = True
+    for option in (module_options - user_options):
+        logging.error("Missing value from user configuration for module {}: {}".format(
+            module.__name__, option))
+        success = False
+
+    for option in (user_options - module_options):
+        logging.error("Unknown value in user configuration for module {}: {}".format(
+            module.__name__, option))
+        success = False
+
+    return success
+
+
+def module_config_accountify(module_config):
+    """Convert module config options that have values that are account names into
+    Account instances. This is a convenience designed to be used by the
+    importers.
+    """
+    return {key: account_from_name(value) if is_account_name(value) else value
+            for key, value in module_config.items()}
+
+
+def import_file(filename, matches):
+    """Import entries from a single file.
+    Matches is a list of (module, module_config) tuples to run on this file."""
+
+
+    # Import with the various modules.
+    new_entries = []
+    for module, module_config in matches:
+        # Skip if there is no importer for this match (this occurs when we
+        # have a configuration used for filing only, e.g. with PDF files).
+        if module is None:
+            continue
+
+        # Verify that the user configuration has all the required module
+        # configuration options.
+        if not verify_config(module, module_config):
+            # Skip a failing config.
+            continue
+
+        # Import the new entries.
+        new_entries.extend(
+            module.import_file(filename, module_config))
+
+    # Make sure the newly imported entries are sorted; don't trust the importer.
+    new_entries.sort(key=data.entry_sortkey)
+
+    # Ensure that the entries are typed correctly.
+    for entry in new_entries:
+        data.sanity_check_types(entry)
+
+    return new_entries
+
+
+def run_importer(importer_config, files_or_directories, output,
+                 entries=None, mindate=None, debug=False, dry_run=False):
+    """Given an importer configuration, search for files that can be imported in the
+    list of files or directories, run the signature checks on them, and if it
+    succeeds, run the importer on the file. This is the main import driver loop.
+
+    A list of entries for an existing ledger can be provided in order to perform
+    de-duplication and a minimum date can be provided to filter out old entries.
+    """
+
+    trace = lambda *args: print(*args, file=sys.stderr)
+    for filename, match_text, matches in find_imports(importer_config, files_or_directories):
+        # Print the filename and which modules matched.
+        trace('=== {}'.format(filename))
         if matches:
-            print()
-        for module, accounts in matches:
-            print('  Importer: {}'.format(module.__name__ if module else '-'))
-            print(textwrap.indent(pformat(accounts), '    '))
-            print()
+            trace('')
+        for module, module_config in matches:
+            trace('  Importer: {}'.format(module.__name__ if module else '-'))
+            trace(textwrap.indent(pformat(module_config), '    '))
+            trace('')
 
+        # If we're debugging, print out the match text.
+        # This option is useful when we're building our importer configuration,
+        # to figure out which patterns to create as unique signatures.
+        if debug:
+            trace(',--------------------------------------------------------------------------------')
+            trace(match_text)
+            trace('`--------------------------------------------------------------------------------')
 
+        if dry_run:
+            continue
 
+        # Import the entires.
+        new_entries = import_file(filename, matches)
+        if new_entries is None:
+            logging.error("Error importing '{}'; no entries produced.".format(filename))
+            continue
 
+        # Filter out entries with dates before 'mindate'.
+        if mindate:
+            new_entries = list(itertools.dropwhile(lambda x: x.date < opts.mindate,
+                                                   new_entries))
 
+        # Find potential matching entries.
+        if entries:
+            duplicate_entries = find_duplicate_entries(new_entries, entries)
 
+        # Print out the entries.
+        pr = lambda *args: print(*args, file=output)
+        if new_entries:
+            pr()
+            pr(';; {}'.format(filename))
+            pr()
 
+        for entry in new_entries:
+            entry_string = format_entry(entry)
 
-    # for filename, (source, filetype, account_ids) in identify(files_or_directories,
-    #                                                           importer_config):
+            # Check if this entry is a dup, and if so, comment it out.
+            if entries and entry in duplicate_entries:
+                pr(';;;; POTENTIAL DUPLICATE')
+                entry_string = textwrap.indent(entry_string, ';; ')
 
-    #     for account_id in account_ids:
-    #         identification = (source, filetype, account_id)
-
-    #         # Import entries for file for specified account.
-    #         new_entries = import_file(filename, identification, importer_config, entries, accounts)
-
-    #         if new_entries is None:
-    #             logging.error("Error importing '{}'; no entries produced.".format(filename))
-    #             continue
-
-    #         new_entries.sort(key=lambda x: x.date)
-
-    #         # Filter out entries with dates before 'mindate'.
-    #         if mindate:
-    #             new_entries = list(itertools.dropwhile(lambda x: x.date < opts.mindate,
-    #                                                    new_entries))
-
-    #         # Save entries for printing later.
-    #         entries_byid[identification].extend(new_entries)
-
-    #         # Find potential matching entries.
-    #         duplicate_entries = find_duplicate_entries(new_entries, entries)
-    #         all_duplicate_entries.extend(duplicate_entries)
-
-    #         # Ensure that the entries are typed correctly.
-    #         for entry in new_entries:
-    #             data.sanity_check_types(entry)
-
-    # # Print out the entries by identification.
-    # for identification, entries in sorted(entries_byid.items()):
-    #     print('')
-    #     print(';;; IMPORT {} on {}'.format(identification, datetime.date.today()))
-    #     print('')
-
-    #     # Sort all the source's entries.
-    #     entries.sort(key=data.entry_sortkey)
-
-    #     # Print out the entries.
-    #     for entry in entries:
-    #         entry_string = format_entry(entry)
-
-    #         # Indicate that this entry may be a duplicate.
-    #         if entry in all_duplicate_entries:
-    #             pr(';;;; POTENTIAL DUPLICATE')
-    #             entry_string = textwrap.indent(entry_string, ';; ')
-
-    #         pr(entry_string)
+            pr(entry_string)

@@ -13,7 +13,7 @@ from beancount2.core.data import Posting, Transaction, Check, Decimal, Lot, Amou
 from beancount2.core.data import account_from_name
 from beancount2.core.inventory import Position
 from beancount2 import utils
-from beancount2.imports import filetype
+from beancount2.imports import imports
 
 
 CONFIG = {
@@ -36,6 +36,7 @@ CONFIG = {
 def import_file(filename, config):
     """Import a CSV file from Ameritrade."""
 
+    config = imports.module_config_accountify(config)
     new_entries = []
 
     cash_currency = config['cash_currency']

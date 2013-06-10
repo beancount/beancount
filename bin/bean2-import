@@ -62,22 +62,11 @@ def main():
     exec(code, globals(), config_env)
     config = config_env['CONFIG']
 
-    # If a suitable option has been specific, run one of the commands only.
-    if opts.dry_run:
-        for filename, (institution, filetype, account_ids) in imports.identify(opts.ford, config):
-            print(filename)
-            for account_id in account_ids:
-                print('   {}'.format((institution, filetype, account_id)))
-            print()
+    # Create a suitable output file.
+    output = open(opts.output, 'w') if opts.output else sys.stdout
 
-    else:
-        # Create a suitable output file.
-        output = open(opts.output, 'w') if opts.output else sys.stdout
-
-        # Run the importer.
-        ##imports.run_importer(config, opts.ford, output, entries, opts.mindate)
-
-        imports.run_importer2(config, opts.ford, output, entries, opts.mindate, opts.debug)
+    # Run the importer.
+    imports.run_importer(config, opts.ford, output, entries, opts.mindate, opts.debug, opts.dry_run)
 
 
 if __name__ == '__main__':

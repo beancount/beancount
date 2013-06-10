@@ -14,7 +14,7 @@ from beancount2.core.data import format_entry
 from beancount2.core.inventory import Position
 from beancount2.core import compress
 from beancount2 import utils
-from beancount2.imports import filetype
+from beancount2.imports import imports
 
 
 CONFIG = {
@@ -29,6 +29,7 @@ CONFIG = {
 
 
 def import_file(filename, config):
+    config = imports.module_config_accountify(config)
     return import_csv_file(filename, config)
 
 

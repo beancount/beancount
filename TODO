@@ -961,6 +961,10 @@ beancount: TODO
 
 * Import
 
+  - Add an option to the impoter so merge all the entries before printing them
+    out. This would be useful if we have multiple files for the same
+    account.
+
   - Add a check at the end of the OFX bank import. Missing right now.
 
   - For guessing the account, you should pass through the filename, not just

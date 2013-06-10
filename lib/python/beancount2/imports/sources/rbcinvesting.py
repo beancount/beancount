@@ -38,7 +38,7 @@ from beancount2.core.data import FileLocation, format_entry, account_from_name
 from beancount2.core.inventory import Position
 from beancount2.core import compress
 from beancount2 import utils
-from beancount2.imports import filetype
+from beancount2.imports import imports
 
 
 CONFIG = {
@@ -56,6 +56,7 @@ CONFIG = {
 def import_file(filename, config):
     """Import an Excel file from RBC Direct Investing's Activity Statement."""
 
+    config = imports.module_config_accountify(config)
     new_entries = []
 
     with tempfile.NamedTemporaryFile(suffix='.csv') as f:

@@ -9,13 +9,14 @@ import itertools
 import datetime
 
 from beancount2.core import data
+from beancount2.core.data import to_decimal
 from beancount2.core.data import account_from_name
 from beancount2.core.data import create_simple_posting
 from beancount2.core.data import Transaction, Posting, Pad, Decimal, Amount, Check
 from beancount2.core.inventory import Position, Lot
 from beancount2 import utils
 from beancount2.utils.text_utils import Matcher
-from beancount2.imports import filetype
+from beancount2.imports import imports
 
 
 CONFIG = {
@@ -39,6 +40,7 @@ CONFIG = {
 def import_file(filename, config):
     """Import a CSV file from Think-or-Swim."""
 
+    config = imports.module_config_accountify(config)
     new_entries = []
 
     cash_currency = config['cash_currency']
@@ -126,7 +128,7 @@ def import_file(filename, config):
             entry.postings.append(posting)
 
             if row.commissions:
-                create_simple_posting(entry, config['commission'], -row.commissions, cash_currency)
+                create_simple_posting(entry, config['commission'], -to_decimal(row.commissions), cash_currency)
                 amount += Decimal(row.commissions)
 
             create_simple_posting(entry, config['asset_cash'], amount, cash_currency)

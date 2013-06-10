@@ -14,6 +14,7 @@ import bs4
 from beancount2.core import data
 from beancount2.core.data import Posting, Transaction, Decimal, Lot
 from beancount2.core.inventory import Position
+from beancount2.imports import imports
 
 
 CONFIG = {
@@ -28,6 +29,7 @@ def import_file(filename, config):
     given account. This function returns a list of entries possibly partially
     filled entries.
     """
+    config = imports.module_config_accountify(config)
 
     # Attempt to get an account from the ledger entries.
     account_asset = config['asset']

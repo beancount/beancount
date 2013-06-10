@@ -7,6 +7,7 @@ import bs4
 from beancount2.core import data
 from beancount2.core.data import Posting, Transaction, Check, Decimal, Lot, Amount
 from beancount2.imports.sources.ofx import souptodict, soup_get, parse_ofx_time
+from beancount2.imports import imports
 
 
 CONFIG = {
@@ -25,6 +26,7 @@ def import_file(filename, config):
     given account. This function returns a list of entries possibly partially
     filled entries.
     """
+    config = imports.module_config_accountify(config)
 
     # Prepare mappings to accounts from the config provided.
     source_subaccounts = {
