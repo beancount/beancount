@@ -5,14 +5,16 @@ suitable for Ledger.
 """
 
 import re, time, codecs
-from datetime import date
+import datetime
 from decimal import Decimal
 from itertools import count
 from collections import namedtuple
 
+from beancount2.core import data
 from beancount2.core.data import to_decimal
-from beancount2.core.data import Transaction, Posting
-from beancount2.utils import csv_tuple_reader
+from beancount2.core.data import Transaction, Check, Posting, Amount
+from beancount2.utils import csv_tuple_reader, DateIntervalTicker
+from beancount2.imports import imports
 
 
 CONFIG = {
@@ -29,48 +31,61 @@ CONFIG = {
 def import_file(filename, config):
     """Import a Google AdSense file."""
 
-    f = codecs.open(fn, "rb", encoding='utf-16')
-    rows = list(parse_csv_file(f, delimiter='\t'))
-    i = 0
-    for x in rows:
-        i += 1
-        date_ = datetime.datetime.strptime(x.date, '%m/%d/%y').date()
+    config = imports.module_config_accountify(config)
+    new_entries = []
 
-        ispayment = re.search('payment.*issued', x.description, re.I)
+    currency = config['cash_currency']
+    payee = "Google AdSense"
 
-        if not ispayment:
-            print('%s * %s | %s' % (date_, payee, x.description))
-            print('  %-50s    %s %s' % (acc_asset, x.amount, currency))
-            print('  %-50s    %s %s' % (acc_income, '', ''))
-            print()
+    ticker = DateIntervalTicker(
+        lambda date: ((date.year * 12 + (date.month - 1)) // 3))
+    prev_row = None
+
+    f = open(filename, "r", encoding='utf-16')
+    for index, row in enumerate(csv_tuple_reader(f, delimiter='\t')):
+
+        # Convert the datatypes.
+        row = row._replace(
+            date = datetime.datetime.strptime(row.date, '%m/%d/%y').date(),
+            amount = to_decimal(row.amount),
+            account_balance = to_decimal(row.account_balance))
+
+        fileloc = data.FileLocation(filename, index)
+
+        # Insert some Check entries every 3 months or so.
+        n3mths = (row.date.year * 12 + row.date.month) // 3
+
+        if ticker.check(row.date):
+            if prev_row:
+                check = Check(fileloc, row.date, config['cash'],
+                              Amount(prev_row.account_balance, currency), None)
+                new_entries.append(check)
+        prev_row = row
+
+        entry = Transaction(fileloc, row.date, data.FLAG_IMPORT, payee, row.description, None, None, [])
+
+        if row.description == 'Payment issued':
+            data.create_simple_posting(entry, config['cash'], row.amount, currency)
+            data.create_simple_posting(entry, config['transfer'], -row.amount, currency)
+
+        elif row.description.startswith('Earnings '):
+            data.create_simple_posting(entry, config['cash'], row.amount, currency)
+            data.create_simple_posting(entry, config['income'], -row.amount, currency)
+
+        elif row.description.startswith('EFT not successful - earnings credited back'):
+            data.create_simple_posting(entry, config['cash'], row.amount, currency)
+            data.create_simple_posting(entry, config['transfer'], -row.amount, currency)
+
         else:
-            print('%s ! %s | %s' % (date_, payee, x.description))
-            print('  %-50s    %s %s' % (acc_income, x.amount, currency))
-            print('  %-50s    %s %s' % (acc_deposit, '', ''))
-            print()
+            raise ValueError('Unknown row type: {}'.format(row))
 
-    balance = to_decimal(x.account_balance)
-    print('@check %s  %-50s  %s %s' % (date_, acc_asset, balance, currency))
+        new_entries.append(entry)
+
+    check = Check(fileloc, row.date + datetime.timedelta(days=1), config['cash'],
+                  Amount(row.account_balance, currency), None)
+    new_entries.append(check)
+
+    return new_entries
 
 
-# Use the generic one from utils.
-
-# def parse_csv_file(f, **kw):
-#     """
-#     Parse a CSV file and return a list of rows as named_tuple objects.
-#     We assume that the first row is a title row.
-#     """
-#     import csv
-#     reader = csv.reader(f, **kw)
-#     ireader = iter(reader)
-
-#     cols = []
-#     dummycount = count().next
-#     for x in ireader.next():
-#         cx = x.strip().lower().replace(' ', '_')
-#         if not cx:
-#             cx = 'dummy_%d' % dummycount()
-#         cols.append(cx)
-
-#     Row = namedtuple('Row', cols)
-#     return (Row(*x) for x in ireader)
+debug = False

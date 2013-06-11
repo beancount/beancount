@@ -42,14 +42,14 @@ def find_duplicate_entries(new_entries, entries):
                 if type(entry) is not type(new_entry):
                     continue
 
-                # Compute a mapping of accounts -> amounts.
+                # Compute a mapping of accounts -> total amounts.
                 amounts = collections.defaultdict(Decimal)
                 for posting in entry.postings:
                     amounts[posting.account.name] += posting.position.number
 
                 # Look for amounts on common accounts.
-                common_amounts = {}
                 for new_account, new_amount in new_amounts.items():
+
                     amount = amounts.get(new_account, None)
                     if amount:
                         dsub = float(new_amount - amount)

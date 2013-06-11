@@ -75,11 +75,6 @@ def index_key(sequence, value, key=None):
     return None
 
 
-def csv_dict_reader(fileobj):
-    "Read a CSV file yielding normalized dictionary fields."
-    reader = csv.DictReader(fileobj)
-    reader.fieldnames = [re.sub('[^a-z]', '_', x.lower()).strip(' _') for x in reader.fieldnames]
-    return reader
 
 
 def walk_files_or_dirs(fords, ignore_dirs=['.hg', '.svn', '.git']):
@@ -96,6 +91,7 @@ def walk_files_or_dirs(fords, ignore_dirs=['.hg', '.svn', '.git']):
             logging.error("File or directory '{}' does not exist.".format(ford))
 
 
+
 ONEDAY = datetime.timedelta(days=1)
 
 def iter_dates(start_date, end_date):
@@ -106,11 +102,39 @@ def iter_dates(start_date, end_date):
         date += ONEDAY
 
 
+class DateIntervalTicker:
+    """An object that will tick when the dates cross specific intervals."""
+
+    def __init__(self, compute_value):
+        self.last_value = None
+
+        # Compute the new tick value from the date; default implementation
+        # returns the date itself, thus ticking every time the date changes.
+        if compute_value is None:
+            compute_value = lambda new_date: new_date
+        self.compute_value = compute_value
+
+    def check(self, new_date):
+        """Return True if the interval has been crossed; False otherwise."""
+        new_value = self.compute_value(new_date)
+        if new_value != self.last_value:
+            self.last_value = new_value
+            return True
+        else:
+            return False
+
 ## FIXME: Move these into csv_utils.py.
 
-def csv_tuple_reader(fileobj):
+def csv_dict_reader(fileobj):
+    "Read a CSV file yielding normalized dictionary fields."
+    reader = csv.DictReader(fileobj)
+    reader.fieldnames = [re.sub('[^a-z]', '_', x.lower()).strip(' _') for x in reader.fieldnames]
+    return reader
+
+
+def csv_tuple_reader(fileobj, **kw):
     """Read a CSV file yielding namedtuple instances. The CSV file must have a header line."""
-    reader = csv.reader(fileobj)
+    reader = csv.reader(fileobj, **kw)
     ireader = iter(reader)
     Tuple = csv_parse_header(next(ireader))
     for row in ireader:

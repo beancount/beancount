@@ -2,7 +2,7 @@
 beancount: TODO
 * Current
 
-  - Complete Google AdSense importer.
+  - Convert all the importers to use the DateIntervalTicker.
 
   - More everything under src/* for an obvious multi-language support.
 
@@ -951,6 +951,9 @@ beancount: TODO
   - Render the Conversions amount at the bottom of the Conversions page...
 
 * Import
+
+  - Each import module should have a third function to extract the report date;
+    if not present, the file mtime date should be used.
 
   - Add an option to the importer so merge all the entries before printing them
     out. This would be useful if we have multiple files for the same account.

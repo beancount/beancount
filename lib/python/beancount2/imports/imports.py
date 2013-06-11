@@ -5,6 +5,7 @@ a suitable configuration, finds an import module, runs and filters it, and
 outputs the imported entries. It can also rename and file documents in a
 directory hierarchy. This is the driver program for importing stuff from files.
 """
+import codecs
 import textwrap
 import itertools
 import tempfile
@@ -67,8 +68,16 @@ def read_file(filename):
             contents = open(f.name).read()
 
     else:
+        # Attempt to guess the encoding of the file (we should use 'chardet'
+        # here but we want to minimize dependencies).
+        rb = open(filename, 'rb').read(12)
+        if rb.startswith(codecs.BOM_UTF16):
+            encoding = 'utf-16'
+        else:
+            encoding = None
+
         # Otherwise just read it as it is.
-        contents = open(filename).read()
+        contents = open(filename, encoding=encoding).read()
 
     return contents, filetype
 
@@ -212,9 +221,13 @@ def run_importer(importer_config, files_or_directories, output,
             logging.error("Error importing '{}'; no entries produced.".format(filename))
             continue
 
+        # Validate the data types of the new entries returned by the importer.
+        for new_entry in new_entries:
+            data.sanity_check_types(new_entry)
+
         # Filter out entries with dates before 'mindate'.
         if mindate:
-            new_entries = list(itertools.dropwhile(lambda x: x.date < opts.mindate,
+            new_entries = list(itertools.dropwhile(lambda x: x.date < mindate,
                                                    new_entries))
 
         # Find potential matching entries.
