@@ -4,6 +4,8 @@ beancount: TODO
 
   - Convert all the importers to use the DateIntervalTicker.
 
+  - Render tags and links
+
   - More everything under src/* for an obvious multi-language support.
 
   - Clean up: add unit tests for everything, and docstrings everywhere.

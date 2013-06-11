@@ -245,7 +245,7 @@ def approot():
 
 
 
-EMS_PER_SPACE = 3
+EMS_PER_SPACE = 2.5
 _account_link_cache = {}
 
 def account_link(account_name, leafonly=False):
@@ -318,10 +318,10 @@ def tree_table(oss, tree, start_node_name, header=None, classes=None):
         write('<tr class="{}">'.format(' '.join(row_classes)))
 
         if real_account is TOTALS_LINE:
-            indent = 0
+            indent = '0'
             label = '<span class="totals-label">Totals</span>'
         else:
-            indent = len(line_first)/EMS_PER_SPACE
+            indent = '{:.1f}'.format(len(line_first)/EMS_PER_SPACE)
             label = account_link(real_account, leafonly=True)
 
         write('<td class="tree-node-name" style="padding-left: {}em">{}</td>'.format(

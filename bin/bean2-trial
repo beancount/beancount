@@ -11,28 +11,47 @@ from beancount2.core import realization
 from beancount2 import utils
 
 
-# FIXME: This will more into beancount2.core.realization.
+# FIXME: This will move into beancount2.core.realization.
 
 def reorder_accounts_tree(real_accounts):
     """Reorder the children in a way that is sensible for display.
     We want the most active accounts near the top, and the least
     important ones at the bottom."""
 
-    reorder_accounts_node(real_accounts.get_root())
+    reorder_accounts_node_by_declaration(real_accounts.get_root())
 
 
-def reorder_accounts_node(real_account):
+def reorder_accounts_node_by_declaration(real_account):
 
     children = []
     for child_account in real_account.children:
-        child_date = reorder_accounts_node(child_account)
+        fileloc = reorder_accounts_node_by_declaration(child_account)
+        children.append( (fileloc, child_account) )
+
+    children.sort()
+    real_account.children[:] = [x[1] for x in children]
+
+    print(real_account.name)
+    for fileloc, child in children:
+        print('  {:64}  {}'.format(child.name, fileloc))
+    print()
+
+    if real_account.postings:
+        fileloc = real_account.postings[0].fileloc
+    else:
+        fileloc = children[0][0]
+    return fileloc
+
+
+
+def reorder_accounts_node_by_date(real_account):
+
+    children = []
+    for child_account in real_account.children:
+        reorder_accounts_node_by_date(child_account)
         children.append( (child_date, child_account) )
     children.sort(reverse=True)
 
-    # print(real_account.name)
-    # print(real_account.children)
-    # print(children)
-    # print('')
     real_account.children[:] = [x[1] for x in children]
 
     last_date = children[0][0] if children else datetime.date(1970, 1, 1)

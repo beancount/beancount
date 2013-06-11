@@ -125,9 +125,6 @@ def _render_node(node, context, is_last, prefix):
 
     children = context.adaptor.get_children(node)
 
-    # Make sure we render the graph in a consistent order.
-    children.sort()
-
     # Render the current line.
     node_name = context.adaptor.get_name(node)
     if node_name:
