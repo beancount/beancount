@@ -231,3 +231,15 @@ def open_at_date(entries, date):
             del open_entries[entry.account]
 
     return [entry for (index, entry) in sorted(open_entries.values())]
+
+
+def compute_total_balance(entries):
+    """Sum up all the positions in the transactions in the list of entries and
+    return an inventory of it."""
+
+    total_balance = inventory.Inventory()
+    for entry in entries:
+        if isinstance(entry, Transaction):
+            for posting in entry.postings:
+                total_balance.add_position(posting.position, allow_negative=True)
+    return total_balance

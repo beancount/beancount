@@ -104,6 +104,7 @@ def check_equity_balances(real_accounts):
         print('conversions_diff', conversions.get_cost() + (-conversions_fwd).get_cost())
 
 
+#-------------------------------------------------------------------------------
 
 
 
@@ -140,7 +141,7 @@ def main():
 
 
     with utils.print_time('compute_total_balance'):
-        realization.compute_total_balance(entries)
+        summarize.compute_total_balance(entries)
 
 
 
@@ -173,7 +174,7 @@ def main():
         # Test out summarization.
         real_log = open('/tmp/real.log', 'w')
         dump_tree_balances(real_accounts, real_log)
-        total_balance = realization.compute_total_balance(entries)
+        total_balance = summarize.compute_total_balance(entries)
         print("TRIAL_BALANCE", total_balance, file=real_log)
         print("TRIAL_BALANCE (cost)", total_balance.get_cost(), file=real_log)
 
@@ -185,7 +186,7 @@ def main():
 
             sum_log = open('/tmp/sum.log', 'w')
             dump_tree_balances(sumreal_accounts, sum_log)
-            total_balance = realization.compute_total_balance(sum_entries)
+            total_balance = summarize.compute_total_balance(sum_entries)
             print("TRIAL_BALANCE", total_balance, file=sum_log)
             print("TRIAL_BALANCE (cost)", total_balance.get_cost(), file=sum_log)
 

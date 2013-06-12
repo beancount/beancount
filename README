@@ -58,7 +58,7 @@ For users:
 - cdecimal (optional but strongly suggested, a faster Decimal type for Python)
 - Bottle (a tiny web server, pure Python)
 - BeautifulSoup (v4) - for Import only
-
+- sqlite3 and Pandas (OPTIONAL: only for calculating and rendering positions)
 
 For developers:
 

@@ -373,18 +373,6 @@ def dump_tree_balances(real_accounts, foutput=None):
             foutput.write('{:{width}}   {:16}\n'.format(line, position, width=width))
 
 
-def compute_real_total_balance(real_accounts):
-    """Sum up all the positions in the transactions in the realized tree of accounts
-    and return an inventory of it."""
-
-    total_balance = Inventory()
-    for real_account in real_accounts.values():
-        if real_account.postings:
-            balance = real_account.balance
-            total_balance += balance
-    return total_balance
-
-
 def compare_realizations(real_accounts1, real_accounts2):
     """Compare two realizations; return True if the balances are equal
     for all accounts."""
@@ -409,19 +397,14 @@ def real_cost_as_dict(real_accounts):
 
 
 
+# FIXME: I don't think I need this at all?
 
-
-
-
-# FIXME: move this to next to sum_to_date in realize.py
-
-def compute_total_balance(entries):
-    """Sum up all the positions in the transactions in the list of entries and
-    return an inventory of it."""
-
-    total_balance = Inventory()
-    for entry in entries:
-        if isinstance(entry, Transaction):
-            for posting in entry.postings:
-                total_balance.add_position(posting.position, allow_negative=True)
-    return total_balance
+# def compute_real_total_balance(real_accounts):
+#     """Sum up all the positions in the transactions in the realized tree of accounts
+#     and return an inventory of it."""
+#     total_balance = Inventory()
+#     for real_account in real_accounts.values():
+#         if real_account.postings:
+#             balance = real_account.balance
+#             total_balance += balance
+#     return total_balance

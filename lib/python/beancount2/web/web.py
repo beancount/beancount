@@ -13,13 +13,25 @@ import re
 import functools
 from collections import defaultdict
 from collections import defaultdict
+from urllib.request import urlopen
+import json
 
+import bs4
 import bottle
 from bottle import install, response, request
 
+try:
+    import pandas
+except ImportError:
+    pandas = None
+try:
+    import sqlite3
+except ImportError:
+    sqlite3 = None
+
 from beancount2.web.bottle_utils import AttrMapper, internal_redirect
 from beancount2.core import data
-from beancount2.core.data import Account, Lot
+from beancount2.core.data import Account, Lot, Decimal, Amount
 from beancount2.core.data import Open, Close, Pad, Check, Transaction, Event, Note, Price, Posting
 from beancount2.core.data import account_leaf_name, is_account_root
 from beancount2.core import summarize
@@ -411,7 +423,7 @@ def trial():
 
 
     ## FIXME: After conversions is fixed, this should always be zero.
-    total_balance = realization.compute_total_balance(view.entries)
+    total_balance = summarize.compute_total_balance(view.entries)
     table += """
       Total Balance: <span class="num">{}</span>
     """.format(total_balance.get_cost())
@@ -867,7 +879,7 @@ def conversions():
     conversion_entries = get_conversion_entries(view.entries)
     entries_table(oss, conversion_entries, render_postings=True)
 
-    balance = realization.compute_total_balance(conversion_entries)
+    balance = summarize.compute_total_balance(conversion_entries)
 
     return render_app(
         pagetitle = "Conversions",
@@ -883,7 +895,42 @@ def conversions():
 
 
 
+#--------------------------------------------------------------------------------
 
+class PriceModule:
+
+    def __init__(self, filename):
+        self.filename = filename
+        self.connection = sqlite3.connect(self.filename)
+
+    def lookup(self, symbol):
+        cursor.execute("""
+           SELECT * FROM prices WHERE symbol = ?
+        """, (symbol,))
+        row = cursor.fetchone()
+        print(row)
+
+        return
+
+
+        cursor = self.connection.cursor()
+        cursor.execute("""
+           insert into
+        """)
+
+        price[currency] = last_price
+
+
+# PRICES = PriceModule('/tmp/prices.db')
+
+#--------------------------------------------------------------------------------
+
+def get_latest_prices(entries):
+    """Return a dictionary of the latest prices."""
+    prices = {}
+    for entry in utils.filter_type(entries, Price):
+        prices[entry.currency] = entry
+    return prices
 
 
 
@@ -893,56 +940,132 @@ def conversions():
 def positions():
     "Render information about positions at the end of all entries."
 
+    if pandas is None:
+        return "You must install Pandas in order to render this page."
+
+## FIXME: This is complete poop -- I need to clean this up very very soon.
+
     entries = request.view.entries
+    total_balance = summarize.compute_total_balance(entries)
 
-    total_balance = realization.compute_total_balance(entries)
+    cost_balance = total_balance.get_cost()
+    # total_balance = total_balance + (-cost_balance)
 
-    # FIXME: Make this into a nice table.
+    # Build a DataFrame for the list of positions.
+    columns = 'currency cost_currency number price book_value'.split()
+    table_rows = []
+    for position in total_balance.get_positions():
+        if position.lot.cost or position.lot.lot_date:
+            cost = position.get_cost()
+            table_rows.append((position.lot.currency, position.lot.cost.currency,
+                               position.number,
+                               position.lot.cost.number,
+                               cost.number))
+        else:
+            table_rows.append((position.lot.currency, None,
+                               position.number,
+                               None,
+                               None))
+
+    dataframe = pandas.DataFrame(table_rows, columns=columns)
+    dataframe.sort(['currency', 'cost_currency'], inplace=True)
+
+    by_position = dataframe.groupby(['currency', 'cost_currency']).sum()
+    by_position['price'] = (by_position['book_value'] / by_position['number']).astype(float)
+    # by_position = by_position.reset_index()
+    by_position.sort(['book_value'], inplace=True, ascending=False)
+
+    latest_prices = get_latest_prices(entries)
+
+    price_series = pandas.Series(index=by_position.index, dtype=Decimal)
+    for index, row in by_position.iterrows():
+        currency, cost_currency = index
+        last_price = None
+        try:
+            price_entry = latest_prices[currency]
+            assert price_entry.amount.currency == cost_currency
+            last_price = price_entry.amount.number
+        except KeyError:
+            print(';; FETCHING {}'.format(currency))
+            if cost_currency == 'CAD' and currency.startswith('RBF'):
+                instrument = 'MUTF_CA:{}'.format(currency)
+            elif cost_currency == 'CAD':
+                instrument = 'TSE:{}'.format(currency)
+            else:
+                instrument = currency
+
+            #http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22YHOO%22%2C%22AAPL%22%2C%22GOOG%22%2C%22MSFT%22)%0A%09%09&diagnostics=true&env=http%3A%2F%2Fdatatables.org%2Falltables.enva
+
+            # response = urlopen("http://www.google.com/ig/api?stock={}".format(instrument))
+            response = urlopen("http://finance.google.com/finance/info?client=ig&q={}".format(instrument))
+
+            string = response.read().decode().strip()
+            mo = re.match(r"// \[\n(.*)\]", string, re.DOTALL)
+            json_string = mo.group(1)
+            data = json.loads(json_string)
+            last_price = Decimal(data['l'])
+
+            # soup = bs4.BeautifulSoup(response, 'lxml')
+            # # print(soup.prettify())
+            # last_node = soup.find('last')
+            # if last_node is not None:
+            #     last_price = Decimal(last_node['data'])
+
+            if 1:
+                print('{} price {:8} {:>20}'.format(datetime.date.today(),
+                                                    currency,
+                                                    Amount(last_price, cost_currency)))
+        if last_price:
+            price_series[(currency, cost_currency)] = last_price
+
+    by_position['mark'] = price_series
+    by_position['market_value'] = by_position['number'] * by_position['mark']
+    by_position['pnl'] = by_position['market_value'] - by_position['book_value']
+    by_position['gain_pcent'] = (by_position['market_value'] / by_position['book_value'] - 1) * 100
+
+
+    # by_position = pandas.merge(by_position, price_series,
+    #                            left_index=True, right_index=True)
+
+    oss = io.StringIO()
+    oss.write(by_position.to_html(float_format='{:.2f}'.format))
+    oss.write(dataframe.to_html(float_format='{:.2f}'.format))
+
 
     # FIXME: Group the positions by currency, show the price of each position in
     # the inventory (see year 2006 for a good sample input).
 
-    oss = io.StringIO()
-    oss.write("<table class='positions'>\n")
-    oss.write("{}".format(total_balance.average()))
+    # oss.write("<table class='positions'>\n")
+    # oss.write("{}".format(total_balance.average()))
 
-    for position in total_balance.get_positions():
+    ## FIXME: remove
+    # print(('{p.number:12.2f} {p.lot.currency:8} '
+    #        '{p.lot.cost.number:12.2f} {p.lot.cost.currency:8} '
+    #        '{c.number:12.2f} {c.currency:8}').format(p=position, c=cost))
 
-        if position.lot.cost or position.lot.lot_date:
-            cost = position.get_cost()
+    # oss.write('''
+    #   <div class="position num">
+    #      {position}     {cost}
+    #   </div>
+    # '''.format(position=position, cost=position.get_cost()))
 
-            ## FIXME: remove
-            # print(('{p.number:12.2f} {p.lot.currency:8} '
-            #        '{p.lot.cost.number:12.2f} {p.lot.cost.currency:8} '
-            #        '{c.number:12.2f} {c.currency:8}').format(p=position, c=cost))
-            # rows.append((position.lot.currency, position.lot.cost.currency,
-            #              position.number, position.lot.cost.number, cost.number))
+    # oss.write("</table>\n")
 
-            oss.write('''
-              <div class="position num">
-                 {position}     {cost}
-              </div>
-            '''.format(position=position, cost=position.get_cost()))
+    # if 0:
+    #     # Manipulate it a bit with Pandas.
+    #     import pandas
+    #     import numpy
+    #     df = pandas.DataFrame(rows,
+    #                           columns=['ccy', 'cost_ccy', 'units', 'unit_cost', 'total_cost'])
 
-    oss.write("</table>\n")
+    #     # print(df.to_string())
 
+    #     sums = df.groupby(['ccy', 'cost_ccy']).sum()
 
+    #     total_cost = sums['total_cost'].astype(float)
+    #     sums['percent'] = 100 * total_cost / total_cost.sum()
 
-    if 0:
-        # Manipulate it a bit with Pandas.
-        import pandas
-        import numpy
-        df = pandas.DataFrame(rows,
-                              columns=['ccy', 'cost_ccy', 'units', 'unit_cost', 'total_cost'])
-
-        # print(df.to_string())
-
-        sums = df.groupby(['ccy', 'cost_ccy']).sum()
-
-        total_cost = sums['total_cost'].astype(float)
-        sums['percent'] = 100 * total_cost / total_cost.sum()
-
-        sums.insert(2, 'average_cost', total_cost / sums['units'].astype(float))
+    #     sums.insert(2, 'average_cost', total_cost / sums['units'].astype(float))
 
     return render_app(
         pagetitle = "Positions",
