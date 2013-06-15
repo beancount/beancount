@@ -197,3 +197,10 @@ Rejected TODO Items & Ideas
     them as independent as is possible (of course using a ledger during import
     allows you to do de-duplication and auto-categorization, but it's still a
     really nice property to be able to import without it).
+
+  - In documents: Correlate the files by uuid, e.g. if a @UUID is found in the
+    description of a transaction, if a file anywhere in the document store has
+    @UUID in it, a link should be rendered to view the file directly.
+
+    *REJECTED* Nobody will bother renaming their filenames to match link ids,
+    that's just too much manual work during download/import.

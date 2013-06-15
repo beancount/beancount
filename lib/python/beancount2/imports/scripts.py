@@ -6,6 +6,7 @@ import sys
 import argparse
 
 from beancount2.imports import imports
+from beancount2.imports import filing
 from beancount2 import parser
 
 
@@ -76,11 +77,11 @@ def import_with_options(importer_config, opts):
 
     if opts.file_only:
         # Run the filer.
-        imports.run_filer_loop(importer_config,
-                               opts.files_or_directories,
-                               opts.file_only,
-                               opts.dry_run,
-                               mkdirs=True)
+        filing.run_filer_loop(importer_config,
+                              opts.files_or_directories,
+                              opts.file_only,
+                              opts.dry_run,
+                              mkdirs=True)
     else:
         # Create a suitable output file.
         output = open(opts.output, 'w') if opts.output else sys.stdout

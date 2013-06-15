@@ -128,8 +128,6 @@ beancount: TODO
 
   - Fix return value of realize(), remove errors, need not output any errors.
 
-
-
   - The account realiization *is* the report. Create a "Realization" object for
     each entry, pointing back to its entry (for all entries), and it should
     have a "balance" field.
@@ -142,8 +140,6 @@ beancount: TODO
     Create a routine to figure out if an account was open during a specific
     time period?
 
-
-
 *** Testing
 
   - Finish the inventory_test.py, with the guard against negative balances when
@@ -153,7 +149,6 @@ beancount: TODO
 
   - You now HAVE to implement average price tracking... not an option. Thanks
     to Vanguard #$(*#(*$.
-
 
 ** Prices
 
@@ -178,6 +173,9 @@ beancount: TODO
 
       option "check_precision"  "0.01"
 
+    Note: Maybe this check is per-currency, maybe different currencies need
+    different precisions.
+
   - (validation) In addition to the Check/Open before-constraint, check that
     the entries are always sorted. Add this sanity check.
 
@@ -198,7 +196,7 @@ beancount: TODO
     early before an Open directive, and an entry appearing for an account that
     simply just doesn't exist.
 
-  - Auto-detect and warn on likely duplicate transactions
+  - Auto-detect and warn on likely duplicate transactions within the file.
 
 ** Conversions
 
@@ -384,17 +382,15 @@ beancount: TODO
   - FIXME: We need to parse the options using the same argparse parser....
 
   - Remove all strings for types (e.g. Assets), this must go into an option
-    context.
+    context. Make the parser use the options name_* fields in order to validate
+    and change the lexer to recognize all account names, not specificially the
+    hardcoded ones we have now. (Assets|Liabilities|...).
 
 ** Syntax
 
-  - Make the parser use the options name_* fields in order to validate and
-    change the lexer to recognize all account names, not specificially the
-    hardcoded ones we have now. (Assets|Liabilities|...).
-
   - Allow '$' as currency symbol, don't translate to anything, it can just
     stand on its own as a unique kind of currency, it doesn't matter, no
-    changes anywhere.
+    changes anywhere. Also add the Euro, GBP and yen symbols.
 
   - The syntax should support multiline strings naturally...
 
@@ -406,8 +402,6 @@ beancount: TODO
   - Add 1/rate syntax for prices (and anything... really, why not).
     Convert at parsing time.
 
-  - We could allow '$' to parse as equivalent to 'USD' in the input, or to
-    stand on its own as a currency name... why not?
 
 *** Parser Testing
 
@@ -439,41 +433,22 @@ beancount: TODO
     wouldn't lose much of flexibility, especially for the lexer types, which are
     aplenty.
 
+  - Write the builder object in C... it won't change very much anymore, and
+    that's probably simple enough.
 
 ** Documents
 
-  - Add a ^LINK to the document directive in order to associate a PDF with a
-    document?!? -> For trade tickets
+  - Figure out why file:///documents links don't bring up the files when
+    clicked on.
+
+  - Can we automatically add a ^LINK to the document directive in order to
+    associate a PDF with a document?!? -> For trade tickets. Maybe let the
+    modules provide a import_link() function on the associated PDF files?
+    (This is related to ^64647f10b2fd)
 
   - Auto-doc from directories of files should ignore files already associated
     via an explicit documents directive; just ignore files with the same
     absolute name.
-
-
-
-  - Tie the Ledger server to a directory hierarchy, where files can be found by
-    account, automatically. Serve the files.
-
-    * Correlate the files by uuid, e.g. if a @UUID is found in the description
-      of a transaction, if a file anywhere in the document store has @UUID in
-      it, a link should be rendered to view the file directly.
-
-
-  - Add a new kind of directive::
-
-      2013-05-15 document  Assets:US:TDBank:Checking  statement.pdf
-
-
-  - Add a '--documents' option that will look for a directory hierarchy matching
-    the beancount file one, and then automatically add "document" directives as
-    above from filenames like this::
-
-      2013-05-15.blablabalastatement.pdf
-
-    The filename should be relative to CWD. Also, maybe we want to have
-    a special  "documents_root documents/2013" directive within the file that
-    specifies that, so we don't have to put it in cmdline arguments everytime?
-
 
 ** Testing
 
@@ -526,16 +501,6 @@ beancount: TODO
 
     The point is, the option to generate the output should all be the same.
 
-  - Create a script to support generating lists of file locations for
-    navigating the input file in a certain order.
-
-      Let's say that I would want to inspect the input for some
-      arbitrary list of filtered transactions that relate to
-      postings: all I have to do is write a script that outputs
-      "errors" in a way that Emacs knows to parse, and then
-      'next-error and 'previous-error takes my cursor there with
-      a single keystroke!
-
 ** Emacs Support
 
   - Set the comment-syntax; currently it thinks it's '# '
@@ -545,9 +510,8 @@ beancount: TODO
 
   - A new ledger mode should have functions to
 
-    * Automatically indent postings ("a line that begins with an account")
+    * Automatically indent postings sensibly (for the amounts)
     * Automatically align lines with currency numbers
-
 
 * Reports
 ** Warnings
@@ -558,6 +522,11 @@ beancount: TODO
 
   - Perhaps we want to produce a report of all transactions with a highlight on
     them.
+
+** Total Net Worth Report
+
+  - balsheet: For Equity, separately report the total net worth in terms of EACH
+    of the operating currencies, using the latest prices.
 
 ** General Rendering
 
@@ -580,11 +549,6 @@ beancount: TODO
     * line-no of Open directive in the file.
     * last updated date.
 
-** Total Net Worth Report
-
-  - balsheet: For Equity, separately report the total net worth in terms of EACH
-    of the operating currencies, using the latest prices.
-
 ** Capital Statement
 
   - Implement the Capital Statement report
@@ -592,35 +556,37 @@ beancount: TODO
 ** Cash Flow Statement
 
 
-** Positions Statement
-
-  - Implement a Positions report
-
-
 ** Statement of Retained Earnings
 
   - This is possible; search online for examples, makes sense that we should
     have one, it's really, really simple to do.
 
-** Conversions Report
-
-  - List all the transactions that occur at a rate but that do not occur with a
-    cost, all the @ transactions only, as a report on its own, maybe just a
-    filtered journal (not a ledger).
-
-  -
-
-
-** Update Report
+** Trial Balance
 
   - We should have a nicer way to tell what accounts need to be updated.
     Highlight them red if they haven't been updated in more a month
     (configurable).
 
-** Links Report
+  - Do we need a dedicated page for listing all documents? This page could
+    include documents without a date, could be rendered as a tree-table, with
+    the list of each document in the corresponding account. Maybe that's
+    overkill. DK.
+
+** Account Linkage Report
 
   - Generate a Graphviz link of all the interaccount transactions that are
     larger than a certain amount.
+
+    Generate a graph for the main kinds of account
+    interchanges, by looking at the most significant transactions
+    between the accounts. For example, ignore transactions which are
+    too small in absolute value, or whose total is too small a portion
+    of the total.
+
+    Fun little project: Create a graphviz output from a Ledger, where
+    transactions above a certain amount would generate a link between
+    accounts. Note:  the threshold could be either for single
+    transactions, or for aggregate amounts (absolute value).
 
 ** HTML Rendering
 
@@ -715,7 +681,8 @@ beancount: TODO
 ** List of Positions
 
   - Given a list of entries, you should be able to extract a list of positions
-    at any point in time.
+    at any point in time. Provide this as a simple function that can just be
+    reused.
 
   - The list of positions should provide a way to check the purchase price of
     each position.
@@ -733,24 +700,10 @@ beancount: TODO
 
   - We should be able to count the days of each event type.
 
-** Account Graphs
+** Distribution of Expenses and Income
 
-  - beancount: Generate a graph for the main kinds of account
-    interchanges, by looking at the most significant transactions
-    between the accounts. For example, ignore transactions which are
-    too small in absolute value, or whose total is too small a portion
-    of the total.
-
-  - Fun little project: Create a graphviz output from a Ledger, where
-    transactions above a certain amount would generate a link between
-    accounts. Note:  the threshold could be either for single
-    transactions, or for aggregate amounts (absolute value).
-
-
-** Income Statement
-
-  - Add a pie chart to visualize the constitution of the Income Statement.
-
+  - Add a pie chart to visualize the constitution of the Income Statement for
+    Expenses and Income.
 
 ** Summary Reports
 
@@ -763,14 +716,6 @@ beancount: TODO
 
   - Add these: http://www.csun.edu/~bjc20362/Controlling-2.pdf
 
-
-** Documents
-
-  - Do we need a dedicated page for listing all documents? This page could
-    include documents without a date, could be rendered as a tree-table, with
-    the list of each document in the corresponding account. Maybe that's
-    overkill. DK.
-
 ** Budgeting / Goals
 
   - We could easily add features for budgeting, e.g. somehow set goals and then
@@ -782,19 +727,6 @@ beancount: TODO
 
        ;; Check that the balance of this account on 2013-12-31 is >= 1000 USD
        2013-12-31 goal  Assets:Savings  >= 1000 USD
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 * Web Interface
@@ -842,7 +774,6 @@ beancount: TODO
 
     This would serve only that realization, and not others. This way I could
     bake only this one in a zip file. This would be useful.
-
 
 ** Code Org
 
@@ -974,16 +905,13 @@ beancount: TODO
 
 * Import
 
-  - Each import module should have a third function to extract the report date;
-    if not present, the file mtime date should be used.
+  - Implement FOREX transaction log parsing for FOREX account, so that we count
+    losses correctly.
 
   - Add an option to the importer so merge all the entries before printing them
     out. This would be useful if we have multiple files for the same account.
 
   - Add a check at the end of the OFX bank import. Missing right now.
-
-  - Implement FOREX transaction log parsing for FOREX account, so that we count
-    losses properly.
 
   - There should be a script that is able to go through a directory of files
     and automaticalyl attempt to detect which types they are (if any), and
@@ -994,44 +922,32 @@ beancount: TODO
     accounts, and automatically stash the file under the correct documents
     directory, prepended with the date in the format we expect.
 
-  - Clean Import: The new importers should be able to strip the non-payee parts
-    of the payee name, e.g. NEW YO, SAN FR, etc.
-
   - The OFX importer needs to unescape &amp; and other odd chars, I think
     there's a bug currently, I've seen a few here and there.
 
-** Dup Detection / Re-Import Safe
-
-  - Write some smarter code to identify which transactions have alreader been
-    imported in the ledger. Do not rely on checks. This means that the importers
-    should create incomplete transaction objects and supply that to this
-    function, which will then attempt to identify for each of the supplied
-    transactions, which ones are already there.
-    Re-Import Safe: Modify all import scripts so that they avoid reimporting already
-    imported stuff. All the import scripts should take an existing Ledger file
-    as input; they should be smarter.
-
 ** Filing
-
-  - Complete the bean2-filter script; it's almost there.
 
   - When grepping in PDF files, we should also grep to transaction-id's /
     beancount "links", in order to automatically associate trade ticket PDFs to
     transactions. Add a LINK to the document directive, in order to link them
-    together.
+    together. (^64647f10b2fd)
 
   - The code that auto-files statements needs to detect and de-dup files which
     have the same contents, because it is likely some files will be downloaded
     twice, it happens a lot.
-
-  - Check for the existence of the destination files before moving anything.
-    Basically, if there's anything smelly anywhere, no file gets moved.
 
 ** Payee Normalization
 
   - We will want to somehow "normalize" and merge payee names, because some of
     that differ very little are obvious for the same business... this would be
     useful. What kinds of tools will we need for that?
+
+    Clean Import: The new importers should be able to strip the non-payee parts
+    of the payee name, e.g. NEW YO, SAN FR, etc. Maybe we could let the user
+    provide a filter function to sanitize the names of the payees, or maybe more
+    generally just a filter on the entries before printing them out. This way
+    you could provide your very own custom filter function that cleans up
+    anything you don't like.
 
 ** GnuCash Import
 
