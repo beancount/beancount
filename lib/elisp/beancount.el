@@ -44,6 +44,8 @@ is great for sectioning large files with many transactions."
     (make-variable-buffer-local 'beancount-accounts)
     (beancount-init-accounts))
 
+  ;; Set the default compilation command to run a check on the current buffer's
+  ;; file.
   (setq compile-command 
         (format "%s %s" beancount-check-program (buffer-file-name)))
   )
