@@ -16,6 +16,7 @@ import matplotlib; matplotlib.use('agg')
 from matplotlib import pyplot
 
 from beancount2.core import data
+from beancount2.core.data import Transaction, Price
 from beancount2.core import realization
 from beancount2.core import summarize
 from beancount2.core import validation
@@ -107,6 +108,27 @@ def check_equity_balances(real_accounts):
 #-------------------------------------------------------------------------------
 
 
+def build_price_database(entries):
+
+    for entry in entries:
+
+        if isinstance(entry, Price):
+            print(data.format_entry(entry))
+
+        elif isinstance(entry, Transaction):
+            for posting in entry.postings:
+                if posting.price:
+                    print('{e.date} price {p.position.lot.currency} {p.price}'.format(
+                        e=entry, p=posting))
+
+                    # FIXME: Do we want to also add cost for postings with no
+                    # price? This wouldn't work with postings for sales. AH! Add
+                    # those where the postings do not book against anything!
+
+
+#-------------------------------------------------------------------------------
+
+
 def main():
     parser = argparse.ArgumentParser(__doc__.strip())
 
@@ -122,6 +144,14 @@ def main():
 
     with utils.print_time('load'):
         entries, errors, options = beancount2.parser.load(opts.filename)
+
+    price_db = build_price_database(entries)
+
+
+
+    raise SystemExit
+
+
 
     with utils.print_time('compute_total_balance'):
         summarize.compute_total_balance(entries)
@@ -194,7 +224,6 @@ def print_debug_account(real_account):
                                       ' | '.join([posting.entry.payee or '', posting.entry.narration]),
                                       posting.position,
                                       ))
-
 
 def pretty_transaction(txn):
     """Format nicely a transaction for printing. Returns a string"""
