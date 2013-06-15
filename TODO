@@ -154,6 +154,14 @@ beancount: TODO
 
 ** Prices
 
+  - Build a simple Price database, it should contain all the prices at
+    conversion point sin the history, and an ability to query it.
+
+  - Build helpers to create a script that will allow you to spit out a list of
+    prices for the price DB. Includes will be necessary, because it will enable
+    including the file of prices only. The prices should be in beancount
+    language too, this should all be a single file format.
+
   - beancount: Make USD/CAD also able to specify CAD/USD in the price table; the
     lookup procedure should be able to compute the reverse prices.
 
@@ -162,6 +170,10 @@ beancount: TODO
 
 * Operations
 ** Validation
+
+  - Add a special option to set the EPSILON for the check.
+
+      option "check_precision"  "0.01"
 
   - (validation) In addition to the Check/Open before-constraint, check that
     the entries are always sorted. Add this sanity check.
@@ -832,6 +844,11 @@ beancount: TODO
 ** Code Org
 
   - (web) Move table rendering functions into their own files, smaller files.
+
+** Entries Table
+
+  - Render all the different types of entries; finish this, e.g. Note,
+    Document, etc.
 
 ** Aesthetics
 

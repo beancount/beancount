@@ -694,9 +694,15 @@ def entries_table_with_balance(oss, account_postings, render_postings=True):
             description = '{} {}'.format(entry.__class__.__name__, account_link(entry.account))
             change_str = ''
 
+        elif isinstance(entry, Note):
+            description = '{} {}'.format(entry.__class__.__name__, entry.comment)
+            change_str = ''
+            balance_str = ''
+
         else:
             description = entry.__class__.__name__
             change_str = ''
+            balance_str = ''
 
         # Render a row.
         write('''

@@ -10,60 +10,36 @@ import datetime
 import logging
 
 from beancount2.parser import load
-from beancount2.imports import imports
+from beancount2.imports import scripts
 
 
 def main():
-    import argparse, logging
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = argparse.ArgumentParser(__doc__.strip())
+    """This function uses the same import mechanism as beancount2.imports.script
+    does. We put our main program there so that users are able to create their
+    own embedded import script instead of calling this with a filename. This is
+    because the process of specifying imports is very much customized to the
+    user and should not change very often. We provide evertyhing so that the
+    user can create their own Python script, which specifies the import
+    configuration as a simple Python object.
+    """
 
-    parser.add_argument('config',
+    # Create a parser and parse the arguments. We add the configuration file
+    # from which we'll extract the Python object that drives the importer
+    # matching process.
+    parser = scripts.create_parser(None, None)
+
+    parser.add_argument('-c', '--config', action='store', metavar='FILENAME',
                         help=('Importer configuration file. '
                               'This is a Python file with a data structure that '
                               'is specific to your accounts'))
 
-    parser.add_argument('ford', nargs='+',
-                        help='Filenames or directories to search for files to import')
-
-    parser.add_argument('-n', '--dry-run', action='store_true',
-                        help="Just print the identification of files out; don't import anything")
-
-    parser.add_argument('-d', '--debug', action='store_true',
-                        help="Print extra debugging output.")
-
-    parser.add_argument('-o', '--output', action='store',
-                        help='Output filename (default: stdout)')
-
-    parser.add_argument('-f', '--beancount', action='store',
-                        help='Beancount file used to filter out duplicates')
-
-    parser.add_argument('-m', '--mindate', metavar='DATA', action='store',
-                        help="Exclude imported entries earlier than this date")
-
     opts = parser.parse_args()
 
-    # Parse the options.
-    if opts.mindate:
-        mo = re.match('(\d\d\d\d)-(\d\d)-(\d\d)', opts.mindate)
-        if not mo:
-            parser.error("Invalid date format; must be YYYY-MM-DD")
-        opts.mindate = datetime.date(*map(int, mo.groups()))
-
-    # If specified, parse the ledger and get the entries from it.
-    if opts.beancount:
-        entries, _, _ = load(opts.beancount, quiet=True)
-    else:
-        entries = []
-
     # Load the importer config from its Python file.
-    config = imports.load_user_config(opts.config)
-
-    # Create a suitable output file.
-    output = open(opts.output, 'w') if opts.output else sys.stdout
+    importer_config = scripts.load_module_attribute(opts.config, 'CONFIG')
 
     # Run the importer.
-    imports.run_importer(config, opts.ford, output, entries, opts.mindate, opts.debug, opts.dry_run)
+    scripts.import_with_options(importer_config, opts)
 
 
 if __name__ == '__main__':

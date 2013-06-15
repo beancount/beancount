@@ -28,17 +28,6 @@ from beancount2 import utils
 from beancount2.imports.filetype import guess_file_type
 
 
-def load_user_config(filename):
-    """Load the user configuration file and extract the configuration object."""
-    code = compile(open(filename).read(), filename, 'exec')
-    config_env = {}
-    exec(code, globals(), config_env)
-    config = config_env['CONFIG']
-    assert isinstance(config, list)
-    assert all(isinstance(element, (tuple, list)) for element in config)
-    return config
-
-
 def read_file(filename):
     """Read the file contents in a format that it can be examined."""
 
@@ -183,8 +172,37 @@ def import_file(filename, matches):
     return new_entries
 
 
-def run_importer(importer_config, files_or_directories, output,
-                 entries=None, mindate=None, debug=False, dry_run=False):
+def import_file_and_process(filename, matches, existing_entries, mindate):
+    """Import entries from file 'filename' with the given matches,
+    and cross-check against a list of provided 'existing_entries' entries,
+    de-duplicating and possibly auto-categorizing.
+
+    Returns a list of new imported entries and a subset of these which have been
+    identified as possible duplicates."""
+
+    # Import the entires.
+    new_entries = import_file(filename, matches)
+    if new_entries is None:
+        return None, None
+
+    # Filter out entries with dates before 'mindate'.
+    if mindate:
+        new_entries = list(itertools.dropwhile(lambda x: x.date < mindate,
+                                               new_entries))
+
+    # Find potential matching entries.
+    if existing_entries:
+        duplicate_entries = find_duplicate_entries(new_entries, existing_entries)
+
+    ## FIXME: Auto-categorize here.
+
+    return new_entries, duplicate_entries
+
+
+def run_importer_loop(importer_config,
+                      files_or_directories,
+                      output,
+                      entries=None, mindate=None, dry_run=False):
     """Given an importer configuration, search for files that can be imported in the
     list of files or directories, run the signature checks on them, and if it
     succeeds, run the importer on the file. This is the main import driver loop.
@@ -192,7 +210,10 @@ def run_importer(importer_config, files_or_directories, output,
     A list of entries for an existing ledger can be provided in order to perform
     de-duplication and a minimum date can be provided to filter out old entries.
     """
+    if isinstance(files_or_directories, str):
+        files_or_directories = [files_or_directories]
 
+    debug = False
     trace = lambda *args: print(*args, file=sys.stderr)
     for filename, match_text, matches in find_imports(importer_config, files_or_directories):
         # Print the filename and which modules matched.
@@ -215,24 +236,14 @@ def run_importer(importer_config, files_or_directories, output,
         if dry_run:
             continue
 
-        # Import the entires.
-        new_entries = import_file(filename, matches)
+        # Import and process the file.
+        new_entries, duplicate_entries = import_file_and_process(filename,
+                                                                 matches,
+                                                                 entries,
+                                                                 mindate)
         if new_entries is None:
             logging.error("Error importing '{}'; no entries produced.".format(filename))
             continue
-
-        # Validate the data types of the new entries returned by the importer.
-        for new_entry in new_entries:
-            data.sanity_check_types(new_entry)
-
-        # Filter out entries with dates before 'mindate'.
-        if mindate:
-            new_entries = list(itertools.dropwhile(lambda x: x.date < mindate,
-                                                   new_entries))
-
-        # Find potential matching entries.
-        if entries:
-            duplicate_entries = find_duplicate_entries(new_entries, entries)
 
         # Print out the entries.
         pr = lambda *args: print(*args, file=output)

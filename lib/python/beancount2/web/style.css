@@ -12,7 +12,7 @@ table {
 }
 
 table td {
-    border: thin solid #ddd;
+    border: thin solid white;
     padding-left: 4px;
     padding-right: 4px;
 }
@@ -167,10 +167,14 @@ table.entry-table tr.Transaction.warning {
 table.entry-table tr.Open {
     background-color: #e8e8e8;
 }
+
 table.entry-table tr.Close {
     background-color: #606060;
 }
 
+table.entry-table tr.Note {
+    background-color: #aad0ff;
+}
 
 table.entry-table tr.Check {
     background-color: #cfc;
@@ -198,10 +202,9 @@ table.entry-table tr.Posting.warning {
     background-color: #f66;
 }
 
-table.entry-table tr.Posting.leg {
-    opacity: 1.0;
-}
-
+/* table.entry-table tr.Posting.leg { */
+/*     opacity: 0.6; */
+/* } */
 
 
 
