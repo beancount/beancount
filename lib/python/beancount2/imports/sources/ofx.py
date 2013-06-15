@@ -85,6 +85,15 @@ def import_file(filename, config):
     return new_entries
 
 
+def import_date(filename, match_text):
+    """Extract the report date from the file."""
+    soup = bs4.BeautifulSoup(open(filename), 'lxml')
+    ledgerbal = soup.find('ledgerbal')
+    dtasof = ledgerbal.find('dtasof')
+    date = parse_ofx_time(dtasof.contents[0]).date()
+    return date
+
+
 def souptodict(node):
     """Convert all of the child nodes from BeautifulSoup node into a dict.
     This assumes the direct children are uniquely named, but this is often the

@@ -1,4 +1,4 @@
-"""OANDA transaction detail CSV file importer.
+"""RBC Investing Excel download file importer.
 
 About the implementation [2013-06-09]:
 
