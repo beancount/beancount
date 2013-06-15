@@ -107,20 +107,6 @@ def check_equity_balances(real_accounts):
 #-------------------------------------------------------------------------------
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-#-------------------------------------------------------------------------------
-
 def main():
     parser = argparse.ArgumentParser(__doc__.strip())
 
@@ -137,21 +123,14 @@ def main():
     with utils.print_time('load'):
         entries, errors, options = beancount2.parser.load(opts.filename)
 
-
-
-
     with utils.print_time('compute_total_balance'):
         summarize.compute_total_balance(entries)
-
-
-
 
     with utils.print_time('realize'):
         real_accounts = realization.realize(entries, do_check=True)
 
     if opts.verbose:
         dump_tree_balances(real_accounts, sys.stdout)
-
 
     if 1:
         # Test out transfer and summarization, together.
@@ -168,7 +147,6 @@ def main():
         real_accounts = realization.realize(clamped_entries, do_check=True)
 
         # dump_tree_balances(real_accounts)
-
 
     if 0:
         # Test out summarization.
@@ -189,8 +167,6 @@ def main():
             total_balance = summarize.compute_total_balance(sum_entries)
             print("TRIAL_BALANCE", total_balance, file=sum_log)
             print("TRIAL_BALANCE (cost)", total_balance.get_cost(), file=sum_log)
-
-
 
     if 0:
         check_equity_balances(real_accounts)

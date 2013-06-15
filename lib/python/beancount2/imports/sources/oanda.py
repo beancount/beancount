@@ -14,6 +14,7 @@ from beancount2.core.data import format_entry
 from beancount2.core.inventory import Position
 from beancount2.core import compress
 from beancount2 import utils
+from beancount2.utils import csv_utils
 from beancount2.imports import imports
 
 
@@ -70,13 +71,13 @@ FXGlobalTransfer Fee
 
 def find_changing_types(filename):
     bytype = collections.defaultdict(list)
-    for obj in utils.csv_dict_reader(open(filename)):
+    for obj in csv_utils.csv_dict_reader(open(filename)):
         txntype = obj['transaction']
         bytype[txntype].append(obj)
 
     unchanging_types = set(bytype.keys())
     prev_balance = Decimal()
-    for obj in utils.csv_dict_reader(open(filename)):
+    for obj in csv_utils.csv_dict_reader(open(filename)):
         balance = obj['balance'].strip()
         if balance and balance != prev_balance:
             if obj['transaction'] in unchanging_types:
@@ -123,7 +124,7 @@ def guess_currency(filename):
     """Try to guess the base currency of the account.
     We use the first transaction with a deposit or something
     that does not involve an instrument."""
-    for obj in utils.csv_dict_reader(open(filename)):
+    for obj in csv_utils.csv_dict_reader(open(filename)):
         if re.match('[A-Z]+$', obj['pair']):
             return obj['pair']
 
@@ -145,7 +146,7 @@ def import_csv_file(filename, config, _):
     # Iterate over all the transactions in the OANDA account.
     prev_balance = Decimal('0')
     prev_date = datetime.date(1970, 1, 1)
-    for lineno, obj in enumerate(utils.csv_dict_reader(open(filename))):
+    for lineno, obj in enumerate(csv_utils.csv_dict_reader(open(filename))):
         txntype = obj['transaction']
         date = datetime.datetime.strptime(obj['date'], '%B %d %H:%M:%S %Y %Z').date()
 

@@ -15,6 +15,7 @@ from beancount2.core.data import create_simple_posting
 from beancount2.core.data import Transaction, Posting, Pad, Decimal, Amount, Check
 from beancount2.core.inventory import Position, Lot
 from beancount2 import utils
+from beancount2.utils import csv_utils
 from beancount2.utils.text_utils import Matcher
 from beancount2.imports import imports
 
@@ -45,7 +46,7 @@ def import_file(filename, config):
 
     cash_currency = config['cash_currency']
 
-    sections = utils.csv_split_sections(csv.reader(open(filename)))
+    sections = csv_utils.csv_split_sections(csv.reader(open(filename)))
     if 0:
         for section_name, rows in sections.items():
             if re.search(r'\bSummary\b', section_name):
@@ -54,7 +55,7 @@ def import_file(filename, config):
             if not rows:
                 continue
             irows = iter(rows)
-            Tuple = utils.csv_parse_header(next(irows))
+            Tuple = csv_utils.csv_parse_header(next(irows))
             for row in irows:
                 obj = Tuple(*row)
                 print(obj)
@@ -63,7 +64,7 @@ def import_file(filename, config):
     irows = iter(sections['Cash Balance'])
     prev_balance = Amount(Decimal(), cash_currency)
     prev_date = datetime.date(1970, 1, 1)
-    Tuple = utils.csv_parse_header(next(irows))
+    Tuple = csv_utils.csv_parse_header(next(irows))
     matcher = Matcher()
     for index, row in enumerate(itertools.starmap(Tuple, irows)):
         # Skip the empty balances; these aren't interesting.

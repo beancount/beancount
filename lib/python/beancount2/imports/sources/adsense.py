@@ -13,7 +13,8 @@ from collections import namedtuple
 from beancount2.core import data
 from beancount2.core.data import to_decimal
 from beancount2.core.data import Transaction, Check, Posting, Amount
-from beancount2.utils import csv_tuple_reader, DateIntervalTicker
+from beancount2.utils import DateIntervalTicker
+from beancount2.utils import csv_utils
 from beancount2.imports import imports
 
 
@@ -42,7 +43,7 @@ def import_file(filename, config):
     prev_row = None
 
     f = open(filename, "r", encoding='utf-16')
-    for index, row in enumerate(csv_tuple_reader(f, delimiter='\t')):
+    for index, row in enumerate(csv_utils.csv_tuple_reader(f, delimiter='\t')):
 
         # Convert the datatypes.
         row = row._replace(

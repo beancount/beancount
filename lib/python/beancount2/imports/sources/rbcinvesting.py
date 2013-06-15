@@ -39,6 +39,7 @@ from beancount2.core.inventory import Position
 from beancount2.core import compress
 from beancount2 import utils
 from beancount2.imports import imports
+from beancount2.utils import csv_utils
 
 
 CONFIG = {
@@ -64,7 +65,7 @@ def import_file(filename, config):
                             stdout=subprocess.PIPE)
         assert r == 0, r
 
-        rdr = utils.csv_tuple_reader(open(f.name))
+        rdr = csv_utils.csv_tuple_reader(open(f.name))
         for index, row in enumerate(rdr):
             row = fixup_row(row)
             # print(row)

@@ -13,6 +13,7 @@ from beancount2.imports import filetype
 from beancount2.core import data
 from beancount2.core.data import Transaction, Posting, Check, Decimal, Amount
 from beancount2 import utils
+from beancount2.utils import csv_utils
 from beancount2.imports import imports
 
 
@@ -31,7 +32,7 @@ def import_file(filename, config):
     new_entries = []
 
     # Read and reverse the entire file, it's ordered wrong.
-    rows = utils.csv_tuple_reader(open(filename))
+    rows = csv_utils.csv_tuple_reader(open(filename))
     rows = reversed(list(rows))
     
     for index, row in enumerate(rows):

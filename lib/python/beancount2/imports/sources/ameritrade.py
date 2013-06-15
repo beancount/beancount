@@ -14,6 +14,7 @@ from beancount2.core.data import account_from_name
 from beancount2.core.inventory import Position
 from beancount2 import utils
 from beancount2.imports import imports
+from beancount2.utils import csv_utils
 
 
 CONFIG = {
@@ -44,7 +45,7 @@ def import_file(filename, config):
     # Iterate over the groups of entries, which will form transactions.
     prev_balance = Amount(Decimal(), cash_currency)
     prev_date = datetime.date(1970, 1, 1)
-    rdr = utils.csv_tuple_reader(open(filename))
+    rdr = csv_utils.csv_tuple_reader(open(filename))
     for index, row in enumerate(rdr):
 
         # Check that the fields we're not dealing with are empty.
