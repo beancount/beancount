@@ -12,10 +12,10 @@ table {
 }
 
 table td {
-    border: thin solid white;
     padding-left: 4px;
     padding-right: 4px;
 }
+
 
 /* The document/file title at the top. */
 #title {
@@ -75,17 +75,16 @@ a.account:link, a.account:visited {
 }
 
 
-
-
-
-
-
 /* Tree tables */
 
 table.tree-table {
     width: 100%;
     font-size: smaller;
     table-layout: fixed;
+}
+
+table.tree-table td {
+    border: thin solid #eee;
 }
 
 table.tree-table th {
@@ -120,6 +119,10 @@ span.totals-label {
 table.entry-table {
     width: 100%;
     font-size: smaller;
+}
+
+table.entry-table td {
+    border: thin solid white;
 }
 
 table.trial {
@@ -174,6 +177,10 @@ table.entry-table tr.Close {
 
 table.entry-table tr.Note {
     background-color: #aad0ff;
+}
+
+table.entry-table tr.Document {
+    background-color: #ffc8ff;
 }
 
 table.entry-table tr.Check {

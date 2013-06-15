@@ -95,6 +95,7 @@ const char* getTokenName(int token);
 %token EVENT               /* 'event' keyword */
 %token PRICE               /* 'price' keyword */
 %token NOTE                /* 'note' keyword */
+%token DOCUMENT            /* 'document' keyword */
 %token PUSHTAG             /* 'pushtag' keyword */
 %token POPTAG              /* 'poptag' keyword */
 %token OPTION              /* 'option' keyword */
@@ -123,10 +124,12 @@ const char* getTokenName(int token);
 %type <pyobj> price
 %type <pyobj> event
 %type <pyobj> note
+%type <pyobj> document
 %type <pyobj> entry
 %type <pyobj> declarations
 %type <pyobj> tags_list
 %type <pyobj> links_list
+%type <pyobj> filename
 
 
 /* Start symbol. */
@@ -329,6 +332,14 @@ note : DATE NOTE ACCOUNT STRING
           DECREF3($1, $3, $4);
       }
 
+filename : STRING
+
+document : DATE DOCUMENT ACCOUNT filename
+      {
+          $$ = BUILD("document", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
+          DECREF3($1, $3, $4);
+      }
+
 entry : transaction
       | check
       | open
@@ -336,6 +347,7 @@ entry : transaction
       | pad
       | event
       | note
+      | document
       | price
       {
           $$ = $1;
@@ -404,6 +416,7 @@ const char* getTokenName(int token)
         case EVENT    : return "EVENT";
         case PRICE    : return "PRICE";
         case NOTE     : return "NOTE";
+        case DOCUMENT : return "DOCUMENT";
         case PUSHTAG  : return "PUSHTAG";
         case POPTAG   : return "POPTAG";
         case OPTION   : return "OPTION";

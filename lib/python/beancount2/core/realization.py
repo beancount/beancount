@@ -55,7 +55,7 @@ def group_postings_by_account(entries, only_accounts=None):
                     continue
                 by_accounts[posting.account].append(posting)
 
-        elif isinstance(entry, (Check, Open, Close, Pad, Note)):
+        elif isinstance(entry, (Check, Open, Close, Pad, Note, Document)):
             if (only_accounts is not None and
                 entry.account not in only_accounts):
                 continue
@@ -316,7 +316,7 @@ def realize(entries, do_check=False, min_accounts=None):
 
                 add_to_account(posting.account, posting)
 
-        elif isinstance(entry, (Open, Close, Check, Note)):
+        elif isinstance(entry, (Open, Close, Check, Note, Document)):
 
             # Append some other entries in the realized list.
             add_to_account(entry.account, entry)

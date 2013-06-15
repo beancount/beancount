@@ -114,6 +114,7 @@ pad		{ return PAD; }
 event		{ return EVENT; }
 price		{ return PRICE; }
 note		{ return NOTE; }
+document	{ return DOCUMENT; }
 pushtag	        { return PUSHTAG; }
 poptag		{ return POPTAG; }
 option		{ return OPTION; }

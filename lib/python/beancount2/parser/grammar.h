@@ -59,16 +59,17 @@
      EVENT = 277,
      PRICE = 278,
      NOTE = 279,
-     PUSHTAG = 280,
-     POPTAG = 281,
-     OPTION = 282,
-     DATE = 283,
-     ACCOUNT = 284,
-     CURRENCY = 285,
-     STRING = 286,
-     NUMBER = 287,
-     TAG = 288,
-     LINK = 289
+     DOCUMENT = 280,
+     PUSHTAG = 281,
+     POPTAG = 282,
+     OPTION = 283,
+     DATE = 284,
+     ACCOUNT = 285,
+     CURRENCY = 286,
+     STRING = 287,
+     NUMBER = 288,
+     TAG = 289,
+     LINK = 290
    };
 #endif
 
@@ -88,7 +89,7 @@ typedef union YYSTYPE
 
 
 /* Line 2068 of yacc.c  */
-#line 92 "lib/python/beancount2/parser/grammar.h"
+#line 93 "lib/python/beancount2/parser/grammar.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

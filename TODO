@@ -2,6 +2,9 @@
 beancount: TODO
 * Current
 
+  - Reconcile entries_table() with entries_table_with_balance().
+    We really need some common code there.
+
   - Convert all the importers to use the DateIntervalTicker.
 
   - Render tags and links

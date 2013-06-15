@@ -194,6 +194,7 @@ Transaction = namedtuple('Transaction' , 'fileloc date flag payee narration tags
 Note        = namedtuple('Note'        , 'fileloc date account comment')
 Event       = namedtuple('Event'       , 'fileloc date type description')
 Price       = namedtuple('Price'       , 'fileloc date currency amount')
+Document    = namedtuple('Document'    , 'fileloc date account filename')
 
 
 # Postings are contained in Transaction entries.
@@ -339,7 +340,7 @@ class GetAccounts:
     def _zero(_, entry):
         return ()
 
-    Open = Close = Check = Note = _one
+    Open = Close = Check = Note = Document = _one
     Event = Price = _zero
 
 def gather_accounts(entries):
@@ -438,6 +439,9 @@ class EntryPrinter:
 
     def Note(_, entry, oss):
         oss.write('{e.date} note {e.account.name} {e.comment}\n'.format(e=entry))
+
+    def Document(_, entry, oss):
+        oss.write('{e.date} document {e.account.name} "{e.filename}"\n'.format(e=entry))
 
     def Pad(_, entry, oss):
         oss.write('{e.date} pad {e.account.name} {e.account_pad.name}\n'.format(e=entry))

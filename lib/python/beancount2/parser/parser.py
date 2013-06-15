@@ -204,6 +204,10 @@ class Builder(object):
         fileloc = FileLocation(filename, lineno)
         return Note(fileloc, date, account, comment)
 
+    def document(self, filename, lineno, date, account, document_filename):
+        fileloc = FileLocation(filename, lineno)
+        return Document(fileloc, date, account, document_filename)
+
     def posting(self, account, position, price, istotal, flag):
         # If the price is specified for the entire amount, compute the effective
         # price here and forget about that detail of the input syntax.

@@ -32,7 +32,7 @@ except ImportError:
 from beancount2.web.bottle_utils import AttrMapper, internal_redirect
 from beancount2.core import data
 from beancount2.core.data import Account, Lot, Decimal, Amount
-from beancount2.core.data import Open, Close, Pad, Check, Transaction, Event, Note, Price, Posting
+from beancount2.core.data import Open, Close, Pad, Check, Transaction, Event, Note, Document, Price, Posting
 from beancount2.core.data import account_leaf_name, is_account_root
 from beancount2.core import summarize
 from beancount2.core import validation
@@ -696,6 +696,13 @@ def entries_table_with_balance(oss, account_postings, render_postings=True):
 
         elif isinstance(entry, Note):
             description = '{} {}'.format(entry.__class__.__name__, entry.comment)
+            change_str = ''
+            balance_str = ''
+
+        elif isinstance(entry, Document):
+            description = 'Document: "<a href="file://{filename}" class="filename">{basename}</a>"'.format(
+                filename=entry.filename,
+                basename=path.basename(entry.filename))
             change_str = ''
             balance_str = ''
 

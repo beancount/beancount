@@ -96,6 +96,8 @@ def validate_unused_accounts(entries, accounts):
     # Unreferenced accounts are unused accounts.
     unused_accounts = set(accounts) - referenced_accounts
 
+    list(map(print, sorted(unused_accounts)))
+
     # Create a list of suitable errors, with the location of the spurious Open
     # directives.
     return [ValidationError(open_map[account].fileloc,
