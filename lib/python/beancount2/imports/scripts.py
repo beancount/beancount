@@ -1,4 +1,6 @@
-"""Support to create importer scripts.
+"""Support functions to create importer scripts.
+
+Call the import_main() function to build your own very personal import script.
 """
 import sys
 import argparse
@@ -47,6 +49,10 @@ def create_parser(beancount_file=None,
                         default=beancount_file,
                         help='Beancount files to parse for cross-checking, de-duplication')
 
+    parser.add_argument('--file-only', '--file', action='store', metavar='DIRECTORY',
+                        help=("Don't import from the files; "
+                              "just file them under the given directory."))
+
     return parser
 
 
@@ -68,28 +74,36 @@ def import_with_options(importer_config, opts):
     """
     assert isinstance(opts, argparse.Namespace), opts
 
-    # Create a suitable output file.
-    output = open(opts.output, 'w') if opts.output else sys.stdout
-
-    # Parse the options.
-    if opts.mindate:
-        mo = re.match('(\d\d\d\d)-(\d\d)-(\d\d)', opts.mindate)
-        if not mo:
-            parser.error("Invalid date format; must be YYYY-MM-DD")
-        opts.mindate = datetime.date(*map(int, mo.groups()))
-
-    # If specified, parse the ledger and get the entries from it.
-    if opts.beancount:
-        crosscheck_entries, _, _ = parser.load(opts.beancount, quiet=True)
+    if opts.file_only:
+        # Run the filer.
+        imports.run_filer_loop(importer_config,
+                               opts.files_or_directories,
+                               opts.file_only,
+                               opts.dry_run,
+                               mkdirs=True)
     else:
-        crosscheck_entries = []
+        # Create a suitable output file.
+        output = open(opts.output, 'w') if opts.output else sys.stdout
 
-    # Run the importer.
-    imports.run_importer_loop(importer_config,
-                              opts.files_or_directories,
-                              output,
-                              crosscheck_entries,
-                              opts.mindate, opts.dry_run)
+        # Parse the options.
+        if opts.mindate:
+            mo = re.match('(\d\d\d\d)-(\d\d)-(\d\d)', opts.mindate)
+            if not mo:
+                parser.error("Invalid date format; must be YYYY-MM-DD")
+            opts.mindate = datetime.date(*map(int, mo.groups()))
+
+        # If specified, parse the ledger and get the entries from it.
+        if opts.beancount:
+            crosscheck_entries, _, _ = parser.load(opts.beancount, quiet=True)
+        else:
+            crosscheck_entries = []
+
+        # Run the importer.
+        imports.run_importer_loop(importer_config,
+                                  opts.files_or_directories,
+                                  output,
+                                  crosscheck_entries,
+                                  opts.mindate, opts.dry_run)
 
 
 def load_module_attribute(filename, attribute_name='CONFIG'):
@@ -134,9 +148,12 @@ def import_main(importer_config,
       output file (stdout by default).
     """
 
-    # Create a parser, parse the arguments, and run the driver function.
-    # If you like, you can copy this and add your own custom arguments to
-    # the parser. See bean-import for an example.
-    parser = create_parser(beancount_file, files_or_directories)
-    opts = parser.parse_args()
-    import_with_options(importer_config, opts)
+    try:
+        # Create a parser, parse the arguments, and run the driver function.
+        # If you like, you can copy this and add your own custom arguments to
+        # the parser. See bean-import for an example.
+        parser = create_parser(beancount_file, files_or_directories)
+        opts = parser.parse_args()
+        import_with_options(importer_config, opts)
+    except KeyboardInterrupt:
+        print("INTERRUPTED. Exiting.", file=sys.stderr)

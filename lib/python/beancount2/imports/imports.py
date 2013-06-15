@@ -5,18 +5,20 @@ a suitable configuration, finds an import module, runs and filters it, and
 outputs the imported entries. It can also rename and file documents in a
 directory hierarchy. This is the driver program for importing stuff from files.
 """
+from collections import defaultdict
+from os import path
+from pprint import pprint, pformat
 import codecs
-import textwrap
+import datetime
+import importlib
 import itertools
-import tempfile
-import re
 import logging
+import re
 import subprocess
 import sys
-import importlib
-import datetime
-from collections import defaultdict
-from pprint import pprint, pformat
+import tempfile
+import textwrap
+import os
 
 import bs4
 
@@ -261,3 +263,91 @@ def run_importer_loop(importer_config,
                 entry_string = textwrap.indent(entry_string, ';; ')
 
             pr(entry_string)
+
+
+def run_filer_loop(importer_config,
+                   files_or_directories,
+                   destination,
+                   dry_run=False,
+                   mkdirs=False):
+    """File importable files under a destination directory.
+
+    Given an importer configuration object, search for files that can be
+    imported under the given list of files or directories and moved them under
+    the given destination directory with the date computed by the module
+    prepended to the filename. If the date cannot be extracted, use a reasonable
+    default for the date (e.g. the last modified time of the file itself).
+
+    If 'mkdirs' is True, create the destination directories before moving the
+    files.
+    """
+    if isinstance(files_or_directories, str):
+        files_or_directories = [files_or_directories]
+
+    trace = lambda *args: print(*args, file=sys.stdout)
+    for filename, match_text, matches in find_imports(importer_config, files_or_directories):
+        if not matches:
+            continue
+
+        module, module_config = matches[0]
+        # if len(matches) > 1:
+        #     logging.error("Ambiguous match. Using the first matching module ({}).".format(
+        #         module.__name__))
+
+        # Get the account corresponding to the file.
+        file_account = module_config['FILE']
+
+        # Compute the date from the last modified time.
+        mtime = path.getmtime(filename)
+        mtime_date = datetime.datetime.fromtimestamp(mtime).date()
+
+        # Try to get the file's date by calling a module support function. The
+        # module may be able to extract the date from the filename, from the
+        # contents of the file itself (e.g. scraping some text from the PDF
+        # contents, or grabbing the last line of a CSV file).
+        file_date = None
+        if hasattr(module, 'import_date'):
+            file_date = module.import_date(filename, match_text)
+        if file_date is None:
+            # Fallback on the last modified time of the file.
+            file_date = mtime_date
+
+        # Find out where the file needs to go.
+        new_filename = path.normpath(path.join(
+            destination,
+            file_account.replace(':', os.sep),
+            '{0:%Y-%m-%d}.{1}'.format(file_date,
+                                      path.basename(filename))))
+
+        # Print the filename and which modules matched.
+        trace('=== {}'.format(filename))
+        if matches:
+            trace('')
+        for _, _module_config in matches:
+            trace('  Account:     {}'.format(_module_config['FILE']))
+        trace('  Importer:    {}'.format(module.__name__ if module else '-'))
+        trace('  Mtime Date:  {}'.format(mtime_date))
+        trace('  Date:        {}'.format(file_date))
+        trace('  Destination: {}'.format(new_filename))
+        trace('')
+
+        if dry_run:
+            continue
+
+        # Check if the destination directory exists.
+        new_dirname = path.dirname(new_filename)
+        if not path.exists(new_dirname):
+            if mkdirs:
+                os.makedirs(new_dirname)
+            else:
+                logging.error("Destination directory '{}' does not exists.".format(new_dirname))
+                continue
+
+        # Check if the destinatino file already exists; we don't want to clobber
+        # it by accident.
+        if path.exists(new_filename):
+            logging.error("Destination file '{}' already exists.".format(new_filename))
+            continue
+
+        # Move the file to its new name.
+        os.rename(filename, new_filename)
