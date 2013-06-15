@@ -87,7 +87,7 @@ def import_file(filename, config):
             new_entries.append(Check(fileloc, date, config['asset_cash'], prev_balance, None))
 
         # Create a new transaction.
-        narration = row.description
+        narration = "({0.type}) {0.description}".format(row)
         links = set([row.ref])
         entry = Transaction(fileloc, date, data.FLAG_IMPORT, None, narration, None, links, [])
 
@@ -107,6 +107,10 @@ def import_file(filename, config):
         elif re.match('TRANSFER (TO|FROM) FOREX ACCOUNT', row.description):
             create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
             create_simple_posting(entry, config['asset_forex'], -amount, cash_currency)
+
+        elif re.match('ORDINARY DIVIDEND', row.description):
+            create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
+            create_simple_posting(entry, config['dividend'], -amount, cash_currency)
 
         elif re.match('NON-TAXABLE DIVIDENDS', row.description):
             create_simple_posting(entry, config['asset_cash'], amount, cash_currency)

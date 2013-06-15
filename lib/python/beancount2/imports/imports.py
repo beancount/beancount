@@ -214,7 +214,7 @@ def run_importer_loop(importer_config,
         files_or_directories = [files_or_directories]
 
     debug = False
-    trace = lambda *args: print(*args, file=sys.stderr)
+    trace = lambda *args: print(*args, file=sys.stdout)
     for filename, match_text, matches in find_imports(importer_config, files_or_directories):
         # Print the filename and which modules matched.
         trace('=== {}'.format(filename))

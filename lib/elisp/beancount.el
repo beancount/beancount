@@ -8,6 +8,11 @@
 (require 'font-lock)
 
 
+(defvar beancount-check-program "bean2-check"
+  "Program to run to run just the parser and validator on an
+  input file.")
+
+
 (define-minor-mode beancount-mode
   "A minor mode to help editing Beancount files.
 This can be used within other text modes, in particular, org-mode
@@ -38,6 +43,9 @@ is great for sectioning large files with many transactions."
   (when beancount-mode
     (make-variable-buffer-local 'beancount-accounts)
     (beancount-init-accounts))
+
+  (setq compile-command 
+        (format "%s %s" beancount-check-program (buffer-file-name)))
   )
 
 
