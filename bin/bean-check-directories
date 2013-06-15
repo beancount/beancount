@@ -1,47 +1,46 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
-Check that a hierarchy of directories matches a list of accounts.
+Check that the auto-doc directories matches a list of accounts.
 """
+from os import path
+import argparse
+import itertools
 
-import os, logging, re
+from beancount2.parser import load
+from beancount2.parser import documents
+from beancount2.core import data
+from beancount2 import utils
 
-from beancount import cmdline
-from beancount.utils import tree_utils
-
-
-def get_accounts(ledger):
-    for acc, branch, line in tree_utils(ledger.get_root_account()):
-        yield acc.fullname
-
-def find_files(rootdir):
-    for root, dirs, files in os.walk(rootdir):
-        yield root[len(rootdir)+1:]
 
 def main():
-    import optparse
-    parser = optparse.OptionParser(__doc__.strip())
-    cmdline.addopts(parser)
-    opts, ledger, args = cmdline.main(parser, 1)
-    logging.getLogger().setLevel(logging.INFO)
-    logging.info("TESTING")
-    print logging.getLogger().level, logging.INFO
+    parser = argparse.ArgumentParser(__doc__.strip())
+    parser.add_argument('filename', help='Beancount input filename.')
+    opts = parser.parse_args()
 
-    accounts = set(get_accounts(ledger))
-    for arg in args:
-        logging.info("Checking '%s'" % arg)
-        for dname in find_files(arg):
-            dircomps = dname.split('/')
-            if not all(re.match('[A-Z].*', x) for x in dircomps):
-                logging.debug("Directory '%s' skipped." % dname)
-                continue
+    # Load up the file, print errors.
+    entries, errors, options = load(opts.filename, do_print_errors=True)
 
-            if dircomps[0] == 'Misc':
-                logging.debug("Directory '%s' skipped." % dname)
-                continue
+    root = path.dirname(opts.filename)
+    document_dirs = [dn if path.isabs(dn) else path.join(root, dn)
+                     for dn in options['documents']]
 
-            aname = dname.replace('/', ':')
-            if aname not in accounts:
-                logging.error("Directory '%s' is invalid." % dname)
+    accounts = data.gather_accounts(entries)
+    for document_dir in document_dirs:
+        validate_directories(accounts, document_dir)
+
+
+def validate_directories(accounts, document_dir):
+
+# FIXME: You need to realize here and use the tree to validate the hierarchy.
+# This is unfinished but is beancount2 material.
+
+    for root, account_name, dirs, files in documents.walk_accounts(document_dir):
+        print(account_name)
+
+
+
+
+
 
 if __name__ == '__main__':
     main()

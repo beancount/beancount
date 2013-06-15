@@ -57,7 +57,7 @@ def verify_document_entries(entries):
     return document_errors
 
 
-def process_auto_documents(input_filename, documents, entries):
+def process_auto_documents(input_filename, document_dirs, entries):
     """Gather all the documents from the specified document roots in the
     options."""
 
@@ -65,7 +65,7 @@ def process_auto_documents(input_filename, documents, entries):
     errors = []
 
     root = path.dirname(input_filename)
-    for document_dir in documents:
+    for document_dir in document_dirs:
         # Compute the documents directory name relative to the beancount input
         # file itself.
         if not path.isabs(document_dir):
@@ -82,9 +82,18 @@ def process_auto_documents(input_filename, documents, entries):
             # Find the documents under this root.
             document_entries = find_documents(document_dir, input_filename, entries)
             new_entries.extend(document_entries)
-                
+
     new_entries.sort(key=data.entry_sortkey)
     return new_entries, errors
+
+
+def walk_accounts(root_directory):
+    """A version of os.walk() which provides the directory as account name."""
+    for root, dirs, files in os.walk(root_directory):
+        relroot = root[len(root_directory)+1:]
+        account_name = relroot.replace(os.sep, ':')
+        yield (root, account_name, dirs, files)
+
 
 
 def find_documents(root_directory, input_filename, entries):
@@ -95,12 +104,10 @@ def find_documents(root_directory, input_filename, entries):
     new_entries = []
 
     accounts = data.gather_accounts(entries)
-    for root, dirs, files in os.walk(root_directory):
-        relroot = root[len(root_directory)+1:]
+    for root, account_name, dirs, files in walk_accounts(root_directory):
 
         # Only look for files in subdirectories that correspond to an account
         # name.
-        account_name = relroot.replace(os.sep, ':')
         if account_name not in accounts:
             continue
 
