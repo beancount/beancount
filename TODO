@@ -559,17 +559,6 @@ beancount: TODO
   - This is possible; search online for examples, makes sense that we should
     have one, it's really, really simple to do.
 
-** Trial Balance
-
-  - We should have a nicer way to tell what accounts need to be updated.
-    Highlight them red if they haven't been updated in more a month
-    (configurable).
-
-  - Do we need a dedicated page for listing all documents? This page could
-    include documents without a date, could be rendered as a tree-table, with
-    the list of each document in the corresponding account. Maybe that's
-    overkill. DK.
-
 ** Account Linkage Report
 
   - Generate a Graphviz link of all the interaccount transactions that are
@@ -777,11 +766,6 @@ beancount: TODO
 
   - (web) Move table rendering functions into their own files, smaller files.
 
-** Entries Table
-
-  - Render all the different types of entries; finish this, e.g. Note,
-    Document, etc.
-
 ** Aesthetics
 
   - web: balsheet/income: make only two parent divs: div id=left and div
@@ -881,11 +865,18 @@ beancount: TODO
 
 ** Trial Balance
 
-  - Put the last updated date in the balance sheet or perhaps the trial balance
+  - We should have a nicer way to tell what accounts need to be updated.
+    Highlight them red if they haven't been updated in more a month
+    (configurable).
+    Put the last updated date in the balance sheet or perhaps the trial balance
     page. Should be easy; we don't need a dedicated page for this.
 
-  - Shove more information in the Trial Balance page, info about errors,
-    documents, etc.
+  - Do we need a dedicated page for listing all documents? This page could
+    include documents without a date, could be rendered as a tree-table, with
+    the list of each document in the corresponding account. Maybe that's
+    overkill. DK.
+
+  - Shove more information in the Trial Balance page, info about errors, documents, etc.
 
 ** Multi-Year
 
@@ -895,7 +886,6 @@ beancount: TODO
 
   - The source page should take a special '?line=ddd' parameter that will
     scroll the page to the transaction at that line.
-
 
 ** Conversions
 
@@ -1279,3 +1269,6 @@ Three major books of account are at the direct basis of this system: the memoria
     should be able to produce a list of the accounts open at the end of the
     period, with the account ids and balances. This should be printable and
     storable, for someone else to take care of your things in case you die.
+
+
+

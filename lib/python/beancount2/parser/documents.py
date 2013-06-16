@@ -7,6 +7,7 @@ import os
 import re
 import datetime
 import heapq
+import logging
 from os import path
 from collections import namedtuple
 
@@ -69,7 +70,7 @@ def process_auto_documents(input_filename, document_dirs, entries):
         # Compute the documents directory name relative to the beancount input
         # file itself.
         if not path.isabs(document_dir):
-            document_dir = path.join(root, document_dir)
+            document_dir = path.normpath(path.join(root, document_dir))
 
         # Ensure the path exists.
         if not path.exists(document_dir):
@@ -106,22 +107,35 @@ def find_documents(root_directory, input_filename, entries):
     accounts = data.gather_accounts(entries)
     for root, account_name, dirs, files in walk_accounts(root_directory):
 
-        # Only look for files in subdirectories that correspond to an account
-        # name.
-        if account_name not in accounts:
-            continue
-
         # Look for files that have a dated filename.
         for filename in files:
             mo = re.match('(\d\d\d\d)-(\d\d)-(\d\d).(.*)', filename)
             if not mo:
                 continue
 
+            # FIXME: Decide how we'll add documents that belong in parent
+            # accounts with no declarations. This generates errors if we enable
+            # it due to our tight error checking.
+            if 1:
+                # Only look for files in subdirectories that correspond to an account
+                # name.
+                if account_name not in accounts:
+                    # logging.warn("Skipping document '{}' because no corresponding account.".format(
+                    #     path.join(root, filename)))
+                    continue
+                account = accounts[account_name]
+            else:
+                # Try to find a corresponding account. If this is in a parent
+                # account, just create the account.
+                try:
+                    account = accounts[account_name]
+                except KeyError:
+                    account = data.account_from_name(account_name)
+
             # Found one! Create a new directive.
             fileloc = FileLocation(input_filename, -1)
             date = datetime.date(*map(int, mo.group(1,2,3)))
-            entry = Document(fileloc, date, accounts[account_name],
-                             path.abspath(path.join(root, filename)))
+            entry = Document(fileloc, date, account, path.join(root, filename))
             new_entries.append(entry)
 
     return new_entries

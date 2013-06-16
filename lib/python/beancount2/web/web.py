@@ -180,11 +180,21 @@ def style():
 
 @app.route('/doc/<filename:re:.*>', name='servedoc')
 def servedoc(filename=None):
-    "Serve document filenames."
+    "Serve static filenames for documents directives."
 
-    # FIXME: We need to restrict the set of documents here to the documents
-    # directives that we have, for security reasons.
-    return bottle.static_file(path.basename(filename), '/' + path.dirname(filename))
+    filename = '/' + filename
+
+    # Check that there is a document directive that has this filename.
+    # This is for security; we don't want to be able to serve just any file.
+    for entry in utils.filter_type(app.entries, Document):
+        if entry.filename == filename:
+            break
+    else:
+        raise bottle.HTTPError(404, "Not found.")
+
+    # Just serve the file ourselves.
+    return bottle.static_file(path.basename(filename),
+                              path.dirname(filename))
 
 
 #--------------------------------------------------------------------------------
@@ -711,7 +721,8 @@ def entries_table_with_balance(oss, account_postings, render_postings=True):
             balance_str = ''
 
         elif isinstance(entry, Document):
-            description = 'Document: "<a href="{}" class="filename">{}</a>"'.format(
+            description = 'Document for {}: "<a href="{}" class="filename">{}</a>"'.format(
+                account_link(entry.account),
                 app.router.build('servedoc', filename=entry.filename.lstrip('/')),
                 path.basename(entry.filename))
             change_str = ''
@@ -815,6 +826,19 @@ def entries_table(oss, account_postings, render_postings=True):
 
         elif isinstance(entry, (Open, Close)):
             description = '{} {}'.format(entry.__class__.__name__, account_link(entry.account))
+
+        elif isinstance(entry, Note):
+            description = '{} {}'.format(entry.__class__.__name__, entry.comment)
+            change_str = ''
+            balance_str = ''
+
+        elif isinstance(entry, Document):
+            description = 'Document for {}: "<a href="{}" class="filename">{}</a>"'.format(
+                account_link(entry.account),
+                app.router.build('servedoc', filename=entry.filename.lstrip('/')),
+                path.basename(entry.filename))
+            change_str = ''
+            balance_str = ''
 
         else:
             description = entry.__class__.__name__
@@ -1033,11 +1057,13 @@ def trades():
 
 @viewapp.route('/documents', name='documents')
 def documents():
-    "Render a tree with the documents found for each account."
+    "Render a tree with all the documents found."
+    document_entries = utils.filter_type(request.view.entries, Document)
+    oss = io.StringIO()
+    entries_table(oss, document_entries)
     return render_app(
         pagetitle = "Documents",
-        contents = ""
-        )
+        contents = oss.getvalue())
 
 
 #--------------------------------------------------------------------------------
