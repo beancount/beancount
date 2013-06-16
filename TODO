@@ -2,6 +2,15 @@
 beancount: TODO
 * Current
 
+  - CONVERSIONS
+  - AUTO-CATEGORIZATION
+  - Realization as a simple tree
+  - Flip balances for rendering
+  - Implement Average Booking for Vanguard
+  - Write an importer for the Ameritrade FOREX log
+  - We need checks for subaccounts for joint accounts - implement this
+  - Implement txt and xls export.
+
   - Rename "transfer()" into something more meaningful, like "clear_income()"
     and perhaps parameterize the account roots.
 
