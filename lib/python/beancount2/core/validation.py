@@ -71,9 +71,9 @@ def validate_open_close(entries, accounts):
     # Check to make sure that all accounts parsed have a corresponding open directive.
     for account in accounts:
         if account not in open_map:
-            check_errors.append(ValidationError(entry.fileloc,
+            check_errors.append(ValidationError(data.FileLocation('<validate_open_close>', 0),
                                                 "No open directive for account {}.".format(account.name),
-                                                entry))
+                                                None))
 
     return check_errors, open_map, close_map
 
@@ -95,8 +95,6 @@ def validate_unused_accounts(entries, accounts):
 
     # Unreferenced accounts are unused accounts.
     unused_accounts = set(accounts) - referenced_accounts
-
-    list(map(print, sorted(unused_accounts)))
 
     # Create a list of suitable errors, with the location of the spurious Open
     # directives.

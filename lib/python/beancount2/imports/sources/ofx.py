@@ -71,8 +71,12 @@ def import_file(filename, config):
                     if stmtrs.name != 'ccstmtrs':
                         narration_fields.insert(0, 'trntype')
 
-                    narration = ' / '.join(filter(None, (soup_get(stmttrn, x)
-                                                         for x in narration_fields)))
+                    # Get field values and remove fields that aren't useful.
+                    field_values = [soup_get(stmttrn, x) for x in narration_fields]
+                    if field_values[0] in ('DEBIT', 'CREDIT'):
+                        field_values.pop(0)
+
+                    narration = ' / '.join(filter(None, field_values))
                     entry = Transaction(fileloc, date, data.FLAG_IMPORT, payee, narration, None, None, [])
 
                     # Create a posting for it.

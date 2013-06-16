@@ -1185,6 +1185,21 @@ result of paying taxes:
     history of financial transactions in my life. Every single price paid that
     went recorded into an account it these.
 
+
+* New Name
+
+"Comptroller"
+"Bottom Line"
+"Messari"
+
+"Summa" - already taken, printer tools
+"Quaderno" - already taken, invoicing software
+"Daycount" - already taken, many other accounting software
+
+"Imprest system"
+"Latency"
+"Real, Personal and Nominal accounts"
+
   "Accounting is thousands of years old; the earliest accounting records, which
   date back more than 7,000 years, were found in Mesopotamia (Assyrians). The
   people of that time relied on primitive accounting methods to record the
@@ -1198,20 +1213,6 @@ The oldest discovered record of a complete double-entry system is the Messari (I
 "In Summa Arithmetica, Pacioli introduced symbols for plus and minus for the first time in a printed book, symbols that became standard notation in Italian Renaissance mathematics. Summa Arithmetica was also the first known book printed in Italy to contain algebra.[26]"
 
 Three major books of account are at the direct basis of this system: the memoriale (Italian: memorandum), the giornale (Journal), and the quaderno (ledger). The ledger is considered as the central one and is accompanied by an alphabetical index.[30]
-
-* New Name
-
-"Comptroller"
-"Bottom Line
-"Messari"
-"Quaderno"
-
-"Imprest system"
-"Latency"
-"Real, Personal and Nominal accounts"
-
-
-
 
 
 * Challenges, Problems Beancount should be able to Solve
@@ -1269,6 +1270,3 @@ Three major books of account are at the direct basis of this system: the memoria
     should be able to produce a list of the accounts open at the end of the
     period, with the account ids and balances. This should be printable and
     storable, for someone else to take care of your things in case you die.
-
-
-
