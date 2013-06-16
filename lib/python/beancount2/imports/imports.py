@@ -61,7 +61,11 @@ def read_file(filename):
             encoding = None
 
         # Otherwise just read it as it is.
-        contents = open(filename, encoding=encoding).read()
+        try:
+            contents = open(filename, encoding=encoding).read()
+        except UnicodeDecodeError as e:
+            logging.error("Error decoding '{}'.".format(filename))
+            contents = ''
 
     return contents, filetype
 
