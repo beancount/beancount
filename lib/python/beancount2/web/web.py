@@ -178,6 +178,15 @@ def style():
     return STYLE
 
 
+@app.route('/doc/<filename:re:.*>', name='servedoc')
+def servedoc(filename=None):
+    "Serve document filenames."
+
+    # FIXME: We need to restrict the set of documents here to the documents
+    # directives that we have, for security reasons.
+    return bottle.static_file(path.basename(filename), '/' + path.dirname(filename))
+
+
 #--------------------------------------------------------------------------------
 # Realization application pages.
 
@@ -702,9 +711,9 @@ def entries_table_with_balance(oss, account_postings, render_postings=True):
             balance_str = ''
 
         elif isinstance(entry, Document):
-            description = 'Document: "<a href="file://{filename}" class="filename">{basename}</a>"'.format(
-                filename=entry.filename,
-                basename=path.basename(entry.filename))
+            description = 'Document: "<a href="{}" class="filename">{}</a>"'.format(
+                app.router.build('servedoc', filename=entry.filename.lstrip('/')),
+                path.basename(entry.filename))
             change_str = ''
             balance_str = ''
 

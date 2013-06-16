@@ -2,8 +2,6 @@
 beancount: TODO
 * Current
 
-  - Serve local documents on a URL.
-
   - Rename "transfer()" into something more meaningful, like "clear_income()"
     and perhaps parameterize the account roots.
 
@@ -440,9 +438,6 @@ beancount: TODO
     that's probably simple enough.
 
 ** Documents
-
-  - Figure out why file:///documents links don't bring up the files when
-    clicked on.
 
   - Can we automatically add a ^LINK to the document directive in order to
     associate a PDF with a document?!? -> For trade tickets. Maybe let the

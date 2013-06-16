@@ -40,6 +40,3 @@ def internal_redirect(app, path_depth):
         return rs
     finally:
         request.path_shift(-path_depth)
-
-
-
