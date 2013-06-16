@@ -25,6 +25,11 @@ beancount: TODO
 
   - Convert all print() in web.py to calls to logging.
 
+  - I need Text and XLS exports for sharing with Julie and otherwise.
+
+  - (check) A check on a parent account is necessary for joint accounts with subaccounts...
+  - (import) We need to be able to invert the input (this is easy, rendering only)
+
 * Core
 ** General
 
