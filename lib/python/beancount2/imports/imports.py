@@ -6,6 +6,7 @@ outputs the imported entries. It can also rename and file documents in a
 directory hierarchy. This is the driver program for importing stuff from files.
 """
 from pprint import pformat
+import sys
 import codecs
 import itertools
 import logging

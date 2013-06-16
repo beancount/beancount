@@ -111,11 +111,9 @@ class Position:
                             self.number * cost.number)
 
     def add(self, number):
+        # Note: Checks for positions going negative do not belong here, but
+        # rather belong in the inventory.
         self.number += number
-
-        # FIXME: We need for some accounts to have inventories that may not go negative, needs to warn, needs to pad, to get fixed properly.
-        # if self.number < 0:
-        #     raise ValueError("Negative position: {}".format(self))
 
     def get_negative(self):
         """Get a copy of this position but with a negative number."""
@@ -212,17 +210,19 @@ class Inventory:
         return found
 
     def add(self, amount, cost=None, lot_date=None, allow_negative=False):
-        """Add using position components (with strict lot matching)."""
+        """Add using position components (with strict lot matching).
+        Return True if this position was booked against and reduced another."""
         assert isinstance(amount, Amount)
         assert cost is None or isinstance(cost, Amount), repr(cost)
         assert lot_date is None or isinstance(lot_date, date)
         lot = Lot(amount.currency, cost, lot_date)
-        self._add(amount.number, lot, allow_negative)
+        return self._add(amount.number, lot, allow_negative)
 
     def add_position(self, new_position, allow_negative=False):
-        """Add using a position (with strict lot matching)."""
+        """Add using a position (with strict lot matching).
+        Return True if this position was booked against and reduced another."""
         assert isinstance(new_position, Position), new_position
-        self._add(new_position.number, new_position.lot, allow_negative)
+        return self._add(new_position.number, new_position.lot, allow_negative)
 
     def has_lots(self, currency):
         """Return true if the given currency has some positions with lots."""
@@ -233,7 +233,10 @@ class Inventory:
         return False
 
     def _add(self, number, lot, allow_negative=False):
+        """Return True if this position was booked against and reduced another."""
+
         position = self.get_create_position(lot)
+        reducing = (position.number * number) < 0
         position.add(number)
         if position.number == ZERO:
             self.positions.remove(position)
@@ -247,6 +250,8 @@ class Inventory:
             # purpose, we can help the user, but we shouldn't fix this
             # automatically by ignoring certain numbers (that's worse).
             raise ValueError("Position with lots goes negative: {}".format(self))
+
+        return reducing
 
     def __add__(self, other):
         new_inventory = self.__copy__()

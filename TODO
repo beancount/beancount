@@ -2,6 +2,9 @@
 beancount: TODO
 * Current
 
+  - Rename "transfer()" into something more meaningful, like "clear_income()"
+    and perhaps parameterize the account roots.
+
   - Reconcile entries_table() with entries_table_with_balance().
     We really need some common code there.
 
@@ -19,6 +22,8 @@ beancount: TODO
   - BUG: A posting with a following line that has some whitespace on it fails
     with a parsing error... this should not be the case. Review what happened,
     fix this now.
+
+  - Convert all print() in web.py to calls to logging.
 
 * Core
 ** General

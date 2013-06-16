@@ -44,7 +44,6 @@ def get_balance_amount(posting):
     of a transaction. (This is a *key* element of the semantics of transactions
     in this software.)"""
 
-
     # It the position has a cost, use that to balance this posting.
     position = posting.position
     lot = position.lot

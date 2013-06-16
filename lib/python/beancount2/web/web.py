@@ -40,6 +40,7 @@ from beancount2.core.balance import get_balance_amount
 from beancount2.core.inventory import Inventory
 from beancount2.core import realization
 from beancount2.core.realization import RealAccount
+from beancount2.core import prices
 from beancount2 import parser
 from beancount2 import utils
 from beancount2.utils import index_key
@@ -144,8 +145,8 @@ def update():
         )
 
 
-@app.route('/prices', name='prices')
-def prices():
+@app.route('/pricedb', name='pricedb')
+def pricedb():
     "Render information about prices."
     return render_global(
         pagetitle = "Prices",
@@ -161,7 +162,7 @@ GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{A.stats}}">Statistics</a></li>
   <li><a href="{{A.update}}">Update Activity</a></li>
   <li><a href="{{A.events}}">Events</a></li>
-  <li><a href="{{A.prices}}">Prices</a></li>
+  <li><a href="{{A.pricedb}}">Prices</a></li>
 </ul>
 """).render(A=A)
 
@@ -938,14 +939,6 @@ class PriceModule:
 
 #--------------------------------------------------------------------------------
 
-def get_latest_prices(entries):
-    """Return a dictionary of the latest prices."""
-    prices = {}
-    for entry in utils.filter_type(entries, Price):
-        prices[entry.currency] = entry
-    return prices
-
-
 
 
 
@@ -959,28 +952,7 @@ def positions():
 ## FIXME: This is complete poop -- I need to clean this up very very soon.
 
     entries = request.view.entries
-    total_balance = summarize.compute_total_balance(entries)
-
-    cost_balance = total_balance.get_cost()
-    # total_balance = total_balance + (-cost_balance)
-
-    # Build a DataFrame for the list of positions.
-    columns = 'currency cost_currency number price book_value'.split()
-    table_rows = []
-    for position in total_balance.get_positions():
-        if position.lot.cost or position.lot.lot_date:
-            cost = position.get_cost()
-            table_rows.append((position.lot.currency, position.lot.cost.currency,
-                               position.number,
-                               position.lot.cost.number,
-                               cost.number))
-        else:
-            table_rows.append((position.lot.currency, None,
-                               position.number,
-                               None,
-                               None))
-
-    dataframe = pandas.DataFrame(table_rows, columns=columns)
+    dataframe = get_latest_positions(entries)
     dataframe.sort(['currency', 'cost_currency'], inplace=True)
 
     by_position = dataframe.groupby(['currency', 'cost_currency']).sum()

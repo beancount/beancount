@@ -16,6 +16,7 @@ from beancount2.core.data import Document
 from beancount2.core import data
 from beancount2.core import realization
 from beancount2.core import validation
+from beancount2.core import prices
 
 
 def load(filename, do_print_errors=False, quiet=False):
@@ -43,6 +44,10 @@ def load(filename, do_print_errors=False, quiet=False):
     # Validate the list of entries.
     with utils.print_time('validate', quiet):
         valid_errors = validation.validate(entries)
+
+    # Add unrealized gains.
+    with utils.print_time('unrealized', quiet):
+        entries = prices.unrealized_gains(entries)
 
     # Print out the list of errors.
     errors = parse_errors + pad_errors + check_errors + valid_errors + doc_errors

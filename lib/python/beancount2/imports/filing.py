@@ -5,6 +5,8 @@ from os import path
 import datetime
 import logging
 import os
+import sys
+import shutil
 
 from beancount2.imports import imports
 
@@ -29,6 +31,7 @@ def run_filer_loop(importer_config,
         files_or_directories = [files_or_directories]
 
     trace = lambda *args: print(*args, file=sys.stdout)
+    jobs = []
     nerrors = 0
     for filename, match_text, matches in imports.find_imports(importer_config, files_or_directories):
         if not matches:
@@ -108,8 +111,13 @@ def run_filer_loop(importer_config,
         else:
             assert path.exists(new_dirname)
 
-        # Move the file to its new name.
+        # Copy the file to its new name.
         assert not path.exists(new_filename)
-        os.rename(filename, new_filename)
+        shutil.copyfile(filename, new_filename)
+
+        # Remove the old file.
+        # (Note: we copy and remove to support cross-device moves, because it's
+        # sensible that the destination will be on an encrypted device.)
+        os.remove(filename)
 
     return jobs

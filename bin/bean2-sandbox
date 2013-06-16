@@ -12,11 +12,11 @@ import time
 from collections import defaultdict, namedtuple
 
 import pandas
-import matplotlib; matplotlib.use('agg')
+import matplotlib; matplotlib.use('qt4agg')
 from matplotlib import pyplot
 
 from beancount2.core import data
-from beancount2.core.data import Transaction, Price
+from beancount2.core.data import Transaction, Price, Decimal
 from beancount2.core import realization
 from beancount2.core import summarize
 from beancount2.core import validation
@@ -27,6 +27,7 @@ import beancount2.parser
 from beancount2.parser import *
 from beancount2 import utils
 from beancount2.utils.bisect_key import bisect_left_withkey
+from beancount2.core import prices
 
 
 
@@ -108,27 +109,6 @@ def check_equity_balances(real_accounts):
 #-------------------------------------------------------------------------------
 
 
-def build_price_database(entries):
-
-    for entry in entries:
-
-        if isinstance(entry, Price):
-            print(data.format_entry(entry))
-
-        elif isinstance(entry, Transaction):
-            for posting in entry.postings:
-                if posting.price:
-                    print('{e.date} price {p.position.lot.currency} {p.price}'.format(
-                        e=entry, p=posting))
-
-                    # FIXME: Do we want to also add cost for postings with no
-                    # price? This wouldn't work with postings for sales. AH! Add
-                    # those where the postings do not book against anything!
-
-
-#-------------------------------------------------------------------------------
-
-
 def main():
     parser = argparse.ArgumentParser(__doc__.strip())
 
@@ -145,9 +125,25 @@ def main():
     with utils.print_time('load'):
         entries, errors, options = beancount2.parser.load(opts.filename)
 
-    price_db = build_price_database(entries)
+    ##price_db = PriceDatabase(entries)
+
+    prices.unrealized_gains(entries)
 
 
+
+
+
+
+    # series_list = []
+    # if 0:
+    #     series_name = '{}/{}'.format(base, quote)
+    #     series_list.append( pandas.Series(rates, index=dates, name=series_name) )
+
+    # dataframe = pandas.concat(series_list, axis=1)
+    # # print(dataframe[:10].to_string())
+    # dataframe = dataframe.fillna(method='ffill')
+    # dataframe.plot(style='-')
+    # pyplot.show()
 
     raise SystemExit
 

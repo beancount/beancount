@@ -240,8 +240,6 @@ def check(entries):
     return new_entries, check_errors
 
 
-
-
 def realize(entries, do_check=False, min_accounts=None):
     """Group entries by account, into a "tree" of realized accounts. RealAccount's
     are essentially containers for lists of postings and the final balance of
