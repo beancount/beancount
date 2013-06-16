@@ -6,6 +6,7 @@ import bs4
 
 from beancount2.core import data
 from beancount2.core.data import Posting, Transaction, Check, Decimal, Lot, Amount
+from beancount2.core.inventory import Position
 from beancount2.imports.sources.ofx import souptodict, soup_get, parse_ofx_time
 from beancount2.imports import imports
 
@@ -100,7 +101,7 @@ def import_file(filename, config):
                     position = Position(Lot(security, Amount(unitprice, currency), None), units)
 
                     account = data.account_from_name('{}:{}'.format(
-                        source_subaccounts[source], security))
+                        source_subaccounts[source].name, security))
                     entry.postings.append(Posting(entry, account, position, None, None))
 
                     if total is None:
@@ -128,7 +129,7 @@ def import_file(filename, config):
                         fileloc = data.FileLocation(filename, next(txn_counter))
                         source = soup_get(invpos, 'inv401ksource')
                         account = data.account_from_name('{}:{}'.format(
-                            source_subaccounts[source], security))
+                            source_subaccounts[source].name, security))
 
                         amount = Amount(units, security)
                         new_entries.append(Check(fileloc, date, account, amount, None))
