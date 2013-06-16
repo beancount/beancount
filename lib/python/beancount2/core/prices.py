@@ -149,10 +149,13 @@ def get_latest_positions(entries):
     return positions
 
 
-def unrealized_gains(entries):
-    """A function that inserts entries that represent unrealized gains, at the end
-    of the available history. Returns a new list of entries, with the new gains
-    inserted."""
+
+def get_priced_positions(entries):
+    """Get a list of positions, groups by (account, currency, cost_currency),
+    with the latest prices fetched and dated.
+    Returns:
+      A dict of (account, currency, cost_currency) -> position dict.
+    """
 
     # Get the latest prices from the entries.
     prices_db = PriceDatabase(entries)
@@ -171,43 +174,66 @@ def unrealized_gains(entries):
             grouped_positions[key].append(position)
 
     # For each group, synthesize entries for unrealized gains.
-    new_entries = []
     for (account, currency, cost_currency), position_list in grouped_positions.items():
 
         # Get the latest price.
-        date, price_number = prices_db.get_latest_price(currency, cost_currency)
+        price_date, price_number = prices_db.get_latest_price(currency, cost_currency)
+
+        for position in position_list:
+            position['price_number'] = price_number
+            position['price_date'] = price_date
+
+    return grouped_positions
+
+
+def unrealized_gains(entries, subaccount_name):
+    """A function that inserts entries that represent unrealized gains, at the end
+    of the available history. Returns a new list of entries, with the new gains
+    inserted."""
+
+    new_entries = []
+
+    # Work through the list of priced positions.
+    priced_positions = get_priced_positions(entries)
+    for (account, currency, cost_currency), position_list in priced_positions.items():
 
         # Compute the total number of units and book value of the position.
         total_units = Decimal()
+        market_value = Decimal()
         book_value = Decimal()
         for position in position_list:
             number = position['number']
-            total_units += number
-            book_value += number * position['cost_number']
+            total_units  += number
+            market_value += number * position['price_number']
+            book_value   += number * position['cost_number']
 
-            # print('M', number * price_number)
-            # print('C', number * position['cost_number'])
-            # print(' ', number * (price_number - position['cost_number']))
-
-        market_value = total_units * price_number
         pnl = market_value - book_value
+
+        # Note: the price_number and price_date should be the same for all these
+        # positions; use the latest one in the list.
+        price_number = position['price_number']
+        price_date = position['price_date']
 
         # Create a new transaction to account for this difference in gain.
         fileloc = FileLocation('<unrealized_gains>', 0)
         narration = "Unrealized gains for {} in {}".format(currency, cost_currency)
-        entry = Transaction(fileloc, date, data.FLAG_UNREALIZED, None, narration, None, None, [])
+        entry = Transaction(fileloc, price_date, data.FLAG_UNREALIZED, None, narration, None, None, [])
 
-        # FIXME: This obviously needs review.
-        pnl_subaccount = 'PnL'
-        asset_account = data.account_from_name(':'.join([account.name, pnl_subaccount]))
-        income_account = data.account_from_name(':'.join([account.name.replace('Assets', 'Income'), pnl_subaccount]))
-
+        # Add the gain/loss as a subaccount to the asset account.
+        asset_account = data.account_from_name(':'.join([account.name,
+                                                         subaccount_name]))
         entry.postings.append(
             Posting(entry, asset_account,
                     Position(Lot(cost_currency, None, None), pnl),
                     Amount(price_number, cost_currency),
                     None))
 
+        # Book this as income, converting the account name to be the same, but as income.
+        # Note: this is a rather convenient but arbitraty choice--maybe it would be best to let
+        # the user decide to what account to book it, but I don't a nice way to let the user
+        # specify this.
+        income_account = data.account_from_name(':'.join([account.name.replace('Assets', 'Income'),
+                                                          subaccount_name]))
         entry.postings.append(
             Posting(entry, income_account,
                     Position(Lot(cost_currency, None, None), -pnl),
@@ -217,13 +243,3 @@ def unrealized_gains(entries):
         new_entries.append(entry)
 
     return entries + new_entries
-
-
-    # if 0:
-    #     import pandas
-    #     positions_dataframe = pandas.DataFrame(positions, columns=['number', 'currency',
-    #                                                                'cost_number', 'cost_currency', 'account'])
-    #     #positions_dataframe = positions_dataframe.sort(['currency', 'cost_currency'])
-    #     positions_dataframe = positions_dataframe.sort(['account'])
-    #     print(positions_dataframe.to_string())
-    #     # print(positions_dataframe.groupby('currency').sum().to_string())

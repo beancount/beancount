@@ -20,6 +20,7 @@ import bs4
 import bottle
 from bottle import install, response, request
 
+import numpy
 try:
     import pandas
 except ImportError:
@@ -905,157 +906,111 @@ def conversions():
         """.format(oss.getvalue(), balance))
 
 
-
-
-
-
 #--------------------------------------------------------------------------------
 
-class PriceModule:
+def get_positions_as_dataframe(entries):
+    priced_positions = prices.get_priced_positions(entries)
 
-    def __init__(self, filename):
-        self.filename = filename
-        self.connection = sqlite3.connect(self.filename)
+    rows = [position
+            for position_list in priced_positions.values()
+            for position in position_list]
 
-    def lookup(self, symbol):
-        cursor.execute("""
-           SELECT * FROM prices WHERE symbol = ?
-        """, (symbol,))
-        row = cursor.fetchone()
-        print(row)
+    dataframe = pandas.DataFrame.from_records(
+        rows, columns=['account', 'number', 'currency', 'cost_number', 'price_number', 'cost_currency'])
+    dataframe['account'] = dataframe['account'].map(lambda x: x.name)
 
-        return
+    dataframe['number'] = dataframe['number'].astype(numpy.float)
+    dataframe['cost_number'] = dataframe['cost_number'].astype(numpy.float)
+    dataframe['price_number'] = dataframe['price_number'].astype(numpy.float)
 
+    dataframe['book_value'] = dataframe['number'] * dataframe['cost_number']
+    dataframe['market_value'] = dataframe['number'] * dataframe['price_number']
+    dataframe['pnl'] = dataframe['market_value'] - dataframe['book_value']
 
-        cursor = self.connection.cursor()
-        cursor.execute("""
-           insert into
-        """)
-
-        price[currency] = last_price
+    return dataframe
 
 
-# PRICES = PriceModule('/tmp/prices.db')
-
-#--------------------------------------------------------------------------------
-
-
+FORMATTERS = {
+    'number': '{:.3f}'.format,
+    'book_value': '{:.0f}'.format,
+    'market_value': '{:.0f}'.format,
+    'pnl': '{:.2f}'.format,
+    'avg_cost': '{:.3f}'.format,
+    'price_number': '{:.3f}'.format,
+    }
 
 
 @viewapp.route('/positions', name='positions')
 def positions():
-    "Render information about positions at the end of all entries."
+    "Render an index of the pages detailing positions."
+    return render_app(
+        pagetitle = "Positions",
+        contents = """
+          <ul>
+            <li><a href="{V.positions_detail}">Detailed Positions List</a></li>
+            <li><a href="{V.positions_byinstrument}">By Instrument</a></li>
+          </ul>
+        """.format(V=V))
 
+
+@viewapp.route('/positions/detail', name='positions_detail')
+def positions_detail():
+    "Render a detailed table of all positions."
     if pandas is None:
         return "You must install Pandas in order to render this page."
 
-## FIXME: This is complete poop -- I need to clean this up very very soon.
-
-    entries = request.view.entries
-    dataframe = get_latest_positions(entries)
-    dataframe.sort(['currency', 'cost_currency'], inplace=True)
-
-    by_position = dataframe.groupby(['currency', 'cost_currency']).sum()
-    by_position['price'] = (by_position['book_value'] / by_position['number']).astype(float)
-    # by_position = by_position.reset_index()
-    by_position.sort(['book_value'], inplace=True, ascending=False)
-
-    latest_prices = get_latest_prices(entries)
-
-    price_series = pandas.Series(index=by_position.index, dtype=Decimal)
-    for index, row in by_position.iterrows():
-        currency, cost_currency = index
-        last_price = None
-        try:
-            price_entry = latest_prices[currency]
-            assert price_entry.amount.currency == cost_currency
-            last_price = price_entry.amount.number
-        except KeyError:
-            print(';; FETCHING {}'.format(currency))
-            if cost_currency == 'CAD' and currency.startswith('RBF'):
-                instrument = 'MUTF_CA:{}'.format(currency)
-            elif cost_currency == 'CAD':
-                instrument = 'TSE:{}'.format(currency)
-            else:
-                instrument = currency
-
-            #http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22YHOO%22%2C%22AAPL%22%2C%22GOOG%22%2C%22MSFT%22)%0A%09%09&diagnostics=true&env=http%3A%2F%2Fdatatables.org%2Falltables.enva
-
-            # response = urlopen("http://www.google.com/ig/api?stock={}".format(instrument))
-            response = urlopen("http://finance.google.com/finance/info?client=ig&q={}".format(instrument))
-
-            string = response.read().decode().strip()
-            mo = re.match(r"// \[\n(.*)\]", string, re.DOTALL)
-            json_string = mo.group(1)
-            data = json.loads(json_string)
-            last_price = Decimal(data['l'])
-
-            # soup = bs4.BeautifulSoup(response, 'lxml')
-            # # print(soup.prettify())
-            # last_node = soup.find('last')
-            # if last_node is not None:
-            #     last_price = Decimal(last_node['data'])
-
-            if 1:
-                print('{} price {:8} {:>20}'.format(datetime.date.today(),
-                                                    currency,
-                                                    Amount(last_price, cost_currency)))
-        if last_price:
-            price_series[(currency, cost_currency)] = last_price
-
-    by_position['mark'] = price_series
-    by_position['market_value'] = by_position['number'] * by_position['mark']
-    by_position['pnl'] = by_position['market_value'] - by_position['book_value']
-    by_position['gain_pcent'] = (by_position['market_value'] / by_position['book_value'] - 1) * 100
-
-
-    # by_position = pandas.merge(by_position, price_series,
-    #                            left_index=True, right_index=True)
+    dataframe = get_positions_as_dataframe(request.view.entries)
 
     oss = io.StringIO()
-    oss.write(by_position.to_html(float_format='{:.2f}'.format))
-    oss.write(dataframe.to_html(float_format='{:.2f}'.format))
-
-
-    # FIXME: Group the positions by currency, show the price of each position in
-    # the inventory (see year 2006 for a good sample input).
-
-    # oss.write("<table class='positions'>\n")
-    # oss.write("{}".format(total_balance.average()))
-
-    ## FIXME: remove
-    # print(('{p.number:12.2f} {p.lot.currency:8} '
-    #        '{p.lot.cost.number:12.2f} {p.lot.cost.currency:8} '
-    #        '{c.number:12.2f} {c.currency:8}').format(p=position, c=cost))
-
-    # oss.write('''
-    #   <div class="position num">
-    #      {position}     {cost}
-    #   </div>
-    # '''.format(position=position, cost=position.get_cost()))
-
-    # oss.write("</table>\n")
-
-    # if 0:
-    #     # Manipulate it a bit with Pandas.
-    #     import pandas
-    #     import numpy
-    #     df = pandas.DataFrame(rows,
-    #                           columns=['ccy', 'cost_ccy', 'units', 'unit_cost', 'total_cost'])
-
-    #     # print(df.to_string())
-
-    #     sums = df.groupby(['ccy', 'cost_ccy']).sum()
-
-    #     total_cost = sums['total_cost'].astype(float)
-    #     sums['percent'] = 100 * total_cost / total_cost.sum()
-
-    #     sums.insert(2, 'average_cost', total_cost / sums['units'].astype(float))
+    oss.write("<center>\n")
+    oss.write(dataframe.to_html(classes=['positions', 'detail-table']))
+    oss.write("</center>\n")
 
     return render_app(
-        pagetitle = "Positions",
-        contents = oss.getvalue()
-        )
+        pagetitle = "Positions - Detailed List",
+        contents = oss.getvalue())
+
+
+@viewapp.route('/positions/byinstrument', name='positions_byinstrument')
+def positions_byinstrument():
+    "Render a table of positions by instrument."
+    if pandas is None:
+        return "You must install Pandas in order to render this page."
+
+    dataframe = get_positions_as_dataframe(request.view.entries)
+
+    oss = io.StringIO()
+
+    oss.write('<h2>With Account</h2>\n')
+
+    byinst = dataframe.groupby(['account', 'currency', 'cost_currency'])
+    byinst_agg = byinst['number', 'book_value', 'market_value', 'pnl'].sum()
+    byinst_agg['avg_cost'] = byinst['cost_number'].mean()
+    byinst_agg['price_number'] = byinst['price_number'].mean()
+    byinst_agg = byinst_agg.sort('market_value', ascending=False)
+    oss.write("<center>\n")
+    oss.write(byinst_agg.to_html(classes=['positions', 'byinst-account-table'],
+                                 formatters=FORMATTERS))
+    oss.write("</center>\n")
+
+    oss.write('<h2>Aggregated by Instrument Only</h2>\n')
+
+    byinst = dataframe.groupby(['currency', 'cost_currency'])
+    byinst_agg = byinst['number', 'book_value', 'market_value', 'pnl'].sum()
+    byinst_agg['avg_cost'] = byinst['cost_number'].mean()
+    byinst_agg['price_number'] = byinst['price_number'].mean()
+    byinst_agg = byinst_agg.sort('market_value', ascending=False)
+    oss.write("<center>\n")
+    oss.write(byinst_agg.to_html(classes=['positions', 'byinst-table'],
+                                 formatters=FORMATTERS))
+    oss.write("</center>\n")
+
+    return render_app(
+        pagetitle = "Positions - By Instrument",
+        contents = oss.getvalue())
+
+
+#--------------------------------------------------------------------------------
 
 
 @viewapp.route('/trades', name='trades')
@@ -1069,13 +1024,11 @@ def trades():
 
 @viewapp.route('/documents', name='documents')
 def documents():
-    "Render a tree with the documents found for each."
+    "Render a tree with the documents found for each account."
     return render_app(
         pagetitle = "Documents",
         contents = ""
         )
-
-
 
 
 #--------------------------------------------------------------------------------
@@ -1298,7 +1251,9 @@ def auto_reload_input_file(callback):
             print('RELOADING')
 
             # Parse the beancount file.
-            entries, errors, options = parser.load(filename, True)
+            entries, errors, options = parser.load(filename,
+                                                   add_unrealized_gains=True,
+                                                   do_print_errors=True)
 
             # Save globals in the global app.
             app.entries = entries

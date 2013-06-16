@@ -260,5 +260,3 @@ def run_importer_loop(importer_config,
                 entry_string = textwrap.indent(entry_string, ';; ')
 
             pr(entry_string)
-
-

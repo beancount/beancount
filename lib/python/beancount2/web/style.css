@@ -247,3 +247,22 @@ div.halfright {
 div.spacer {
     height: 14px;
 }
+
+
+
+/* Position tables. */
+
+table.positions tbody td {
+    font-family: 'Droid Sans Mono', sans-serif;
+    text-align: right;
+}
+
+table.positions.detail-table td:nth-child(2) {
+    font-family: 'Roboto Condensed', sans-serif;
+    text-align: left;
+}
+
+table.positions.byinst-account-table td:nth-child(1) {
+    font-family: 'Roboto Condensed', sans-serif;
+    text-align: left;
+}

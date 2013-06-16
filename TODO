@@ -2,6 +2,8 @@
 beancount: TODO
 * Current
 
+  - Serve local documents on a URL.
+
   - Rename "transfer()" into something more meaningful, like "clear_income()"
     and perhaps parameterize the account roots.
 
@@ -157,19 +159,15 @@ beancount: TODO
 
 ** Prices
 
-  - Build a simple Price database, it should contain all the prices at
-    conversion point sin the history, and an ability to query it.
-
-  - Build helpers to create a script that will allow you to spit out a list of
-    prices for the price DB. Includes will be necessary, because it will enable
-    including the file of prices only. The prices should be in beancount
-    language too, this should all be a single file format.
-
-  - beancount: Make USD/CAD also able to specify CAD/USD in the price table; the
-    lookup procedure should be able to compute the reverse prices.
-
   - There should be a corresponding view/presentation for rendering information
     that we have about prices.
+
+  - Build helpers tools for users to create their own scripts that will allow
+    you to spit out a list of prices for the price DB.
+
+  - Include directives will be necessary for update, because it will enable
+    including the file of prices only. The prices should be in beancount
+    language too, this should all be a single file format.
 
 * Operations
 ** Validation
@@ -1218,7 +1216,7 @@ Three major books of account are at the direct basis of this system: the memoria
 
 * New Name
 
-"Comptroller" 
+"Comptroller"
 "Bottom Line
 "Messari"
 "Quaderno"
