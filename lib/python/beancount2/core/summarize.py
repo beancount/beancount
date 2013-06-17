@@ -8,6 +8,7 @@ total amount of that account.
 """
 import datetime
 import logging
+import itertools
 from collections import defaultdict
 
 from beancount2.core import inventory
@@ -42,8 +43,42 @@ def clamp(entries, begin_date, end_date,
     # Summarize all the previous balances.
     entries, index = summarize(entries, begin_date, account_opening)
 
+
+
+
+
+
+## FIXME: complete Conversions transfer.
+    if 0:
+
+        # Insert entries to account for conversions until the begin date.
+        iter_entries = iter(entries)
+        balance = inventory.Inventory()
+        for begin_index, entry in enumerate(iter_entries):
+            if entry.date >= begin_date:
+                last_entry = entry
+                break
+            if isinstance(entry, Transaction):
+                for posting in entry.postings:
+                    balance.add_position(posting.position, allow_negative=True)
+
+        print('XXX', balance.get_cost())
+
+        for entry in itertools.chain((last_entry,), iter_entries):
+            if isinstance(entry, Transaction):
+                for posting in entry.postings:
+                    balance.add_position(posting.position, allow_negative=True)
+
+        print('YYY', balance.get_cost())
+
+
+
+
+
+
     # Truncate the entries after this.
     entries = truncate(entries, end_date)
+
 
     return entries, index
 

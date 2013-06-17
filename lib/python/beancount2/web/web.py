@@ -1177,15 +1177,9 @@ class YearView(View):
         "Return entries for only that year."
 
         # Get the transfer account objects.
-        #
-        # FIXME: We should probably create these globally and then all fetch the
-        # same instances.
-        equity = options['name_equity']
-        account_earnings = '{}:{}'.format(equity, options['account_earnings'])
-        account_earnings = data.Account(account_earnings, data.account_type(account_earnings))
-
-        account_opening = '{}:{}'.format(equity, options['account_opening'])
-        account_opening = data.Account(account_opening, data.account_type(account_opening))
+        (account_opening,
+         account_earnings,
+         account_conversions) = parser.get_equity_accounts(options)
 
         # Clamp to the desired period.
         begin_date = datetime.date(self.year, 1, 1)

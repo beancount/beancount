@@ -29,31 +29,37 @@ __sanity_checks__ = False
 DEFAULT_OPTIONS = {
 
     # The title of this ledger / input file. This shows up at the top of every page.
-    "title"              : "Beancount",
+    "title" : "Beancount",
 
     # Root names of every account. This can be used to customize your category
     # names, so that if you prefer "Revenue" over "Income" or "Capital" over
     # "Equity", you can set them here. The account names in your input files
     # must match, and the parser will validate these.
-    "name_assets"        : "Assets",
-    "name_liabilities"   : "Liabilities",
-    "name_equity"        : "Equity",
-    "name_income"        : "Income",
-    "name_expenses"      : "Expenses",
+    "name_assets"      : "Assets",
+    "name_liabilities" : "Liabilities",
+    "name_equity"      : "Equity",
+    "name_income"      : "Income",
+    "name_expenses"    : "Expenses",
 
     # Leaf name of the equity account used for summarizing previous transactions
     # into opening balances.
-    "account_opening"    : "Opening-Balances",
+    "account_opening" : "Opening-Balances",
 
     # Leaf name of the equity account used for transferring previous retained
     # earnings from income and expenses accrued before the beginning of the
     # exercise into the balance sheet.
-    "account_earnings"   : "Previous-Earnings",
+    "account_earnings" : "Previous-Earnings",
 
     # Leaf name of the equity account used for transferring current retained
     # earnings from income and expenses accrued during the current exercise into
     # the balance sheet.
-    "account_netincome"  : "Net-Income",
+    "account_netincome" : "Net-Income",
+
+    # Leaf name of the equity account used for inserting conversions that will
+    # zero out remaining amounts due to transfers. This will essentially "fixup"
+    # the basic accounting equation due to the errors that priced conversions
+    # introduce.
+    "account_conversions" : "Conversions",
 
     # Leaf name of the subaccounts created for unrealized capital gains.
     "account_unrealized" : "Unrealized",
@@ -61,7 +67,7 @@ DEFAULT_OPTIONS = {
     # A list of directory roots, relative to the CWD, which should be searched
     # for document files. For the document files to be automatically found they
     # must have the following filename format: YYYY-MM-DD.(.*)
-    "documents"          : [],
+    "documents" : [],
 
     # A list of currencies that we single out during reporting and create
     # dedicated columns for. This is used to indicate the main currencies that
@@ -77,6 +83,22 @@ DEFAULT_OPTIONS = {
     "operating_currency" : [],
     }
 
+
+def get_equity_accounts(options):
+    """Return Account objects for the opening, earnings, and conversion accounts."""
+
+    equity = options['name_equity']
+
+    account_opening = data.account_from_name(
+        '{}:{}'.format(equity, options['account_opening']))
+
+    account_earnings = data.account_from_name(
+        '{}:{}'.format(equity, options['account_earnings']))
+
+    account_conversions = data.account_from_name(
+        '{}:{}'.format(equity, options['account_conversions']))
+
+    return (account_opening, account_earnings, account_conversions)
 
 
 class ParserError(RuntimeError):

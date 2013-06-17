@@ -23,8 +23,7 @@ from beancount2.core import validation
 from beancount2.core.data import render_fileloc
 from beancount2.core.inventory import Inventory
 from beancount2.core.realization import dump_tree_balances
-import beancount2.parser
-from beancount2.parser import *
+from beancount2 import parser
 from beancount2 import utils
 from beancount2.utils.bisect_key import bisect_left_withkey
 from beancount2.core import prices
@@ -110,44 +109,15 @@ def check_equity_balances(real_accounts):
 
 
 def main():
-    parser = argparse.ArgumentParser(__doc__.strip())
+    argparser = argparse.ArgumentParser(__doc__.strip())
 
-    parser.add_argument('filename',
+    argparser.add_argument('filename',
                         help='Beancount input filename.')
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help="Print out verbose information")
 
-    parser.add_argument('-l', '--dump-lexer', action='store_true',
-                        help="Run the lexer only, output the tags.")
-
-    opts = parser.parse_args()
+    opts = argparser.parse_args()
 
     with utils.print_time('load'):
-        entries, errors, options = beancount2.parser.load(opts.filename)
-
-    ##price_db = PriceDatabase(entries)
-
-    prices.unrealized_gains(entries)
-
-
-
-
-
-
-    # series_list = []
-    # if 0:
-    #     series_name = '{}/{}'.format(base, quote)
-    #     series_list.append( pandas.Series(rates, index=dates, name=series_name) )
-
-    # dataframe = pandas.concat(series_list, axis=1)
-    # # print(dataframe[:10].to_string())
-    # dataframe = dataframe.fillna(method='ffill')
-    # dataframe.plot(style='-')
-    # pyplot.show()
-
-    raise SystemExit
-
-
+        entries, errors, options = parser.load(opts.filename)
 
     with utils.print_time('compute_total_balance'):
         summarize.compute_total_balance(entries)
@@ -155,10 +125,32 @@ def main():
     with utils.print_time('realize'):
         real_accounts = realization.realize(entries, do_check=True)
 
-    if opts.verbose:
+    print('LEN', len(entries))
+
+    with utils.print_time('clamp'):
+        (account_opening,
+         account_earnings,
+         account_conversions) = parser.parser.get_equity_accounts(options)
+
+
+        entries, index = summarize.clamp(entries,
+                                         datetime.date(2013, 1, 1),
+                                         datetime.date(2014, 1, 1),
+                                         account_earnings,
+                                         account_opening)
+
+
+
+
+
+
+
+    if 0:
         dump_tree_balances(real_accounts, sys.stdout)
 
-    if 1:
+
+
+    if 0:
         # Test out transfer and summarization, together.
         clamped_entries, idnex = summarize.clamp(entries,
                                                  datetime.date(2012, 1, 1), datetime.date(2013, 1, 1),
@@ -182,7 +174,6 @@ def main():
         print("TRIAL_BALANCE", total_balance, file=real_log)
         print("TRIAL_BALANCE (cost)", total_balance.get_cost(), file=real_log)
 
-
         with utils.print_time('summarize'):
             account_opening = data.Account('Equity:OpeningBalances', 'Equity')
             sum_entries, _ = summarize.summarize(entries, datetime.date(2012, 1, 1), account_opening)
@@ -193,6 +184,7 @@ def main():
             total_balance = summarize.compute_total_balance(sum_entries)
             print("TRIAL_BALANCE", total_balance, file=sum_log)
             print("TRIAL_BALANCE (cost)", total_balance.get_cost(), file=sum_log)
+
 
     if 0:
         check_equity_balances(real_accounts)
