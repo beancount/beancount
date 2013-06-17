@@ -291,8 +291,8 @@ def realize(entries, do_check=False, min_accounts=None):
 
     # Ensure the minimal list of accounts has been created.
     if min_accounts:
-      for account_name in min_accounts:
-        real_accounts.get_create(account_name)
+        for account_name in min_accounts:
+            real_accounts.get_create(account_name)
 
     def add_to_account(account, entry):
         "Update an account's posting list with the given entry."
