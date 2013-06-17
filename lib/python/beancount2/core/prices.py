@@ -222,10 +222,13 @@ def unrealized_gains(entries, subaccount_name):
         # Add the gain/loss as a subaccount to the asset account.
         asset_account = data.account_from_name(':'.join([account.name,
                                                          subaccount_name]))
+
+        # Note: don't set a price because we don't want these to end up in Conversions.
+        #price = Amount(price_number, cost_currency)
         entry.postings.append(
             Posting(entry, asset_account,
                     Position(Lot(cost_currency, None, None), pnl),
-                    Amount(price_number, cost_currency),
+                    None,
                     None))
 
         # Book this as income, converting the account name to be the same, but as income.
