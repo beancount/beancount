@@ -6,10 +6,10 @@ from os import path
 import argparse
 import itertools
 
-from beancount2.parser import load
-from beancount2.parser import documents
-from beancount2.core import data
-from beancount2 import utils
+from beancount.parser import load
+from beancount.parser import documents
+from beancount.core import data
+from beancount import utils
 
 
 def main():
@@ -32,7 +32,7 @@ def main():
 def validate_directories(accounts, document_dir):
 
 # FIXME: You need to realize here and use the tree to validate the hierarchy.
-# This is unfinished but is beancount2 material.
+# This is unfinished but is beancount material.
 
     for root, account_name, dirs, files in documents.walk_accounts(document_dir):
         print(account_name)

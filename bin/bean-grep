@@ -7,10 +7,10 @@ import re
 from os import path
 import pprint
 
-from beancount2 import parser
-from beancount2 import utils
-from beancount2.core import validation
-from beancount2.core import data
+from beancount import parser
+from beancount import utils
+from beancount.core import validation
+from beancount.core import data
 
 
 def main():

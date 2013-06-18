@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Various tests for beancount2.
+"""Various tests for beancount.
 (This is the main test program I fiddle with during development.)
 """
 import datetime
@@ -15,18 +15,18 @@ import pandas
 import matplotlib; matplotlib.use('qt4agg')
 from matplotlib import pyplot
 
-from beancount2.core import data
-from beancount2.core.data import Transaction, Price, Decimal
-from beancount2.core import realization
-from beancount2.core import summarize
-from beancount2.core import validation
-from beancount2.core.data import render_fileloc
-from beancount2.core.inventory import Inventory
-from beancount2.core.realization import dump_tree_balances
-from beancount2 import parser
-from beancount2 import utils
-from beancount2.utils.bisect_key import bisect_left_withkey
-from beancount2.core import prices
+from beancount.core import data
+from beancount.core.data import Transaction, Price, Decimal
+from beancount.core import realization
+from beancount.core import summarize
+from beancount.core import validation
+from beancount.core.data import render_fileloc
+from beancount.core.inventory import Inventory
+from beancount.core.realization import dump_tree_balances
+from beancount import parser
+from beancount import utils
+from beancount.utils.bisect_key import bisect_left_withkey
+from beancount.core import prices
 
 
 

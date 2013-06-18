@@ -21,8 +21,6 @@ beancount: TODO
 
   - Render tags and links
 
-  - More everything under src/* for an obvious multi-language support.
-
   - Clean up: add unit tests for everything, and docstrings everywhere.
     This new version will be really, really clean!
 
@@ -959,7 +957,7 @@ beancount: TODO
 * Export
 ** HTML Export as File
 
-  - Test "bean2-bake" with the v2, it doesn't appear to work.
+  - Test "bean-bake" with the v2, it doesn't appear to work.
 
 ** SQL Export
 

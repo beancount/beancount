@@ -3,13 +3,13 @@ from distutils.core import setup, Extension
 
 setup(
     name="beancount",
-    package_dir = {'': 'lib/python'},
-    packages = ['beancount2'],
+    package_dir = {'': 'src/python'},
+    packages = ['beancount'],
     ext_modules=[
-        Extension("beancount2/parser/_parser", [
-            "lib/python/beancount2/parser/lexer.c",
-            "lib/python/beancount2/parser/grammar.c",
-            "lib/python/beancount2/parser/parser.c"
+        Extension("beancount/parser/_parser", [
+            "src/python/beancount/parser/lexer.c",
+            "src/python/beancount/parser/grammar.c",
+            "src/python/beancount/parser/parser.c"
             ]),
     ],
 )

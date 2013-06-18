@@ -6,12 +6,12 @@ import argparse
 import itertools
 import datetime
 
-from beancount2.parser import load
-from beancount2.core import realization
-from beancount2 import utils
+from beancount.parser import load
+from beancount.core import realization
+from beancount import utils
 
 
-# FIXME: This will move into beancount2.core.realization.
+# FIXME: This will move into beancount.core.realization.
 
 def reorder_accounts_tree(real_accounts):
     """Reorder the children in a way that is sensible for display.

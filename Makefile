@@ -18,7 +18,7 @@ clean:
 
 
 # Targets to generate and build the C parser.
-CROOT=lib/python/beancount2/parser
+CROOT=src/python/beancount/parser
 
 $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
 	bison -o $(CROOT)/grammar.c $<
@@ -33,53 +33,53 @@ build: $(CROOT)/grammar.c $(CROOT)/grammar.h $(CROOT)/lexer.c $(CROOT)/lexer.h
 
 # Dump the lexer parsed output. This can be used to check across languages.
 dump_lexer:
-	bean2-dump-lexer $(INPUT)
+	bean-dump-lexer $(INPUT)
 
 
 # Check for memory leaks.
 grind:
-	valgrind --leak-check=full /usr/local/bin/python3 bean2-sandbox $(INPUT)
+	valgrind --leak-check=full /usr/local/bin/python3 bean-sandbox $(INPUT)
 
 
 # Run in the debugger.
 debug:
-	gdb --args /usr/local/bin/python3 /home/blais/p/beancount/bin/bean2-sandbox $(INPUT)
+	gdb --args /usr/local/bin/python3 /home/blais/p/beancount/bin/bean-sandbox $(INPUT)
 
 
 # Run the unittests.
 unittest unittests:
-	nosetests-3.3 -s lib/python/beancount2
+	nosetests-3.3 -s src/python/beancount
 
 
 # Run the parser and measure its performance.
 .PHONY: check
 check:
-	bean2-check $(INPUT)
+	bean-check $(INPUT)
 
 
 # Run the demo program.
 demo:
-	bin/bean2-web --debug examples/demo.beancount
+	bin/bean-web --debug examples/demo.beancount
 
 
 # Run the web server.
 .PHONY: web
 web:
-	bean2-web --debug $(INPUT)
+	bean-web --debug $(INPUT)
 
 .PHONY: web-incognito
 web-incognito:
-	bean2-web --incognito --debug $(INPUT)
+	bean-web --incognito --debug $(INPUT)
 
 
 # Run the importer.
 .PHONY: import
 import:
-	bean2-import $(INPUT) $(DOWNLOADS)
+	bean-import $(INPUT) $(DOWNLOADS)
 
 # My development sandbox script. This is messy and it's okay.
 .PHONY: sandbox
 sandbox:
-	bean2-sandbox $(INPUT)
+	bean-sandbox $(INPUT)
 
 

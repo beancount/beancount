@@ -3,5 +3,5 @@
 # My environment initialization for this project.
 
 USERPATH=$USERPATH:$PROJDIR/bin
-PYTHONPATH=$PYTHONPATH:$PROJDIR/lib/python
+PYTHONPATH=$PYTHONPATH:$PROJDIR/src/python
 

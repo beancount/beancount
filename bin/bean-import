@@ -9,12 +9,12 @@ import re
 import datetime
 import logging
 
-from beancount2.parser import load
-from beancount2.imports import scripts
+from beancount.parser import load
+from beancount.imports import scripts
 
 
 def main():
-    """This function uses the same import mechanism as beancount2.imports.script
+    """This function uses the same import mechanism as beancount.imports.script
     does. We put our main program there so that users are able to create their
     own embedded import script instead of calling this with a filename. This is
     because the process of specifying imports is very much customized to the

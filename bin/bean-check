@@ -6,9 +6,9 @@ This also measures the time it takes to run all these steps.
 import argparse
 import itertools
 
-from beancount2.parser import load
-from beancount2.core import realization
-from beancount2 import utils
+from beancount.parser import load
+from beancount.core import realization
+from beancount import utils
 
 
 def main():
