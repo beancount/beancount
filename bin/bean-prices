@@ -1,94 +1,188 @@
+#!/usr/bin/env python3
+"""
+Read either a Beancount input file or a CSV of positions, and fetch
+corresponding latest prices from the internet.
+"""
+import csv
+from os import path
+import time
+import re
+import shelve
+from collections import namedtuple
 
-    # if 0:
-    #     import pandas
-    #     positions_dataframe = pandas.DataFrame(positions, columns=['number', 'currency',
-    #                                                                'cost_number', 'cost_currency', 'account'])
-    #     #positions_dataframe = positions_dataframe.sort(['currency', 'cost_currency'])
-    #     positions_dataframe = positions_dataframe.sort(['account'])
-    #     print(positions_dataframe.to_string())
-    #     # print(positions_dataframe.groupby('currency').sum().to_string())
+import dateutil
+import bs4
+
+from beancount.core import prices
+from beancount.core import data
+from beancount.core.data import Decimal, FileLocation, Price, Amount
+from beancount.parser import load
+from urllib.request import urlopen
+from urllib.parse import quote
 
 
 
+def read_positions_from_csv(filename):
+    "Read the list of positions from an temporary CSV file."
+    csv_reader = csv.DictReader(open(filename))
+    return list(csv_reader)
 
-    by_position = dataframe.groupby(['currency', 'cost_currency']).sum()
-    by_position['price'] = (by_position['book_value'] / by_position['number']).astype(float)
-    # by_position = by_position.reset_index()
-    by_position.sort(['book_value'], inplace=True, ascending=False)
 
-    latest_prices = get_latest_prices(entries)
+def write_positions_to_csv(filename, positions):
+    "Write the list of positions to a CSV file."
+    fieldnames = 'account currency cost_currency number cost_number price_number price_date'.split()
+    csv_writer = csv.DictWriter(open(filename, 'w'), fieldnames)
+    csv_writer.writeheader()
+    for position in positions:
+        csv_writer.writerow(position)
 
-    price_series = pandas.Series(index=by_position.index, dtype=Decimal)
-    for index, row in by_position.iterrows():
-        currency, cost_currency = index
-        last_price = None
+
+def read_positions_from_beancount(filename):
+    "Read the beancount ledger and get the list of positions from it."
+    entries, errors, options = load(filename, quiet=True)
+    _, positions = prices.get_priced_positions(entries)
+    # Fixup for accounts, convert to account names.
+    for position in positions:
+        position['account'] = position['account'].name
+    return positions
+
+
+urlcache = shelve.open('/tmp/urls.db')
+
+def urlopen_retry(url, timeout=2):
+    """Open and download the given URL, retrying if it times out."""
+    ##print(url)
+    try:
+        contents = urlcache[url]
+    except KeyError:
+        while 1:
+            response = urlopen(url, timeout=timeout)
+            if response:
+                break
+        if response.getcode() != 200:
+            contents = None
+        else:
+            contents = response.read()
+            urlcache[url] = contents
+    return contents
+
+
+def fetch_google_historical(currency, cost_currency):
+
+    # Convert the symbol to one that Google may accept.
+    if cost_currency == 'CAD':
+        if re.match('RBF\d\d\d\d', currency):
+            #symbol = 'MUTF_CA:{}'.format(currency)
+            symbol = currency
+        else:
+            symbol = 'TSE:{}'.format(currency)
+    elif cost_currency == 'AUD':
+        symbol = None
+    else:
+        symbol = currency
+
+    if symbol is None:
+        return None
+
+    #url = "http://www.google.com/ig/api?stock={}".format(quote(symbol))
+    url = "http://www.google.com/finance/historical?q={}".format(symbol)
+    response = urlopen_retry(url)
+    if response is None:
+        return None
+
+    soup = bs4.BeautifulSoup(response, 'lxml')
+    table = soup.find('table', {'class': 'historical_price'})
+
+    headers = [th.contents[0].strip()
+               for th in table.find_all('th')]
+
+    RowClass = namedtuple('Row', headers)
+    price_list = []
+    for tr in table.find_all('tr'):
+        if 'class' in tr.attrs and 'bb' in tr['class']:
+            continue
+
+        td_contents = [td.contents[0].strip()
+                       for td in tr.find_all('td')]
+        dt = dateutil.parser.parse(td_contents[0]).date()
+        values = [(Decimal(value.replace(',', '')) if value != '-' else None)
+                  for value in td_contents[1:]]
+        row = RowClass(dt, *values)
+        price_list.append((row.Date, row.Close))
+
+    return price_list
+
+
+def main():
+    import argparse, logging
+    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    parser = argparse.ArgumentParser(__doc__.strip())
+
+    parser.add_argument('filename', help='Beancount of CSV Filename')
+
+    parser.add_argument('-d', '--dump', action='store',
+                        help="Filename to store updated CSV positions and prices.")
+
+    opts = parser.parse_args()
+
+    # Read the input file.
+    if path.splitext(opts.filename)[1] == '.csv':
+        read_positions = read_positions_from_csv
+    else:
+        read_positions = read_positions_from_beancount
+    positions = read_positions(opts.filename)
+
+    # Get the list of instruments to price.
+    instruments = sorted(set((position['currency'],position['cost_currency'])
+                             for position in positions))
+
+    new_entries = []
+    price_map = {}
+    for currency, cost_currency in instruments:
+        # print('------------------------------------------------------------------------------------------------------------------------')
+        # print(currency, cost_currency)
+
+            price_list = fetch_google_historical(currency, cost_currency)
+            if price_list is None:
+                continue
+
+            for date, price in price_list:
+                fileloc = FileLocation('<fetch_google_historical>', 0)
+                new_entries.append(
+                    Price(fileloc, date, currency, Amount(price, cost_currency)))
+
+
+
+    for entry in new_entries:
+        print(data.format_entry(entry))
+
+
+    for position in positions:
+        curkey = (position['currency'], position['cost_currency'])
         try:
-            price_entry = latest_prices[currency]
-            assert price_entry.amount.currency == cost_currency
-            last_price = price_entry.amount.number
+            date, close = price_map[curkey]
+            position['price_date'] = date
+            position['price_number'] = close
         except KeyError:
-            print(';; FETCHING {}'.format(currency))
-            if cost_currency == 'CAD' and currency.startswith('RBF'):
-                instrument = 'MUTF_CA:{}'.format(currency)
-            elif cost_currency == 'CAD':
-                instrument = 'TSE:{}'.format(currency)
-            else:
-                instrument = currency
+            pass
 
-            #http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22YHOO%22%2C%22AAPL%22%2C%22GOOG%22%2C%22MSFT%22)%0A%09%09&diagnostics=true&env=http%3A%2F%2Fdatatables.org%2Falltables.enva
-
-            # response = urlopen("http://www.google.com/ig/api?stock={}".format(instrument))
-            response = urlopen("http://finance.google.com/finance/info?client=ig&q={}".format(instrument))
-
-            string = response.read().decode().strip()
-            mo = re.match(r"// \[\n(.*)\]", string, re.DOTALL)
-            json_string = mo.group(1)
-            data = json.loads(json_string)
-            last_price = Decimal(data['l'])
-
-            # soup = bs4.BeautifulSoup(response, 'lxml')
-            # # print(soup.prettify())
-            # last_node = soup.find('last')
-            # if last_node is not None:
-            #     last_price = Decimal(last_node['data'])
-
-            if 1:
-                print('{} price {:8} {:>20}'.format(datetime.date.today(),
-                                                    currency,
-                                                    Amount(last_price, cost_currency)))
-        if last_price:
-            price_series[(currency, cost_currency)] = last_price
-
-    by_position['mark'] = price_series
-    by_position['market_value'] = by_position['number'] * by_position['mark']
-    by_position['pnl'] = by_position['market_value'] - by_position['book_value']
-    by_position['gain_pcent'] = (by_position['market_value'] / by_position['book_value'] - 1) * 100
+    # If requested, dump the updated list of positions and prices.
+    if opts.dump:
+        write_positions_to_csv(opts.dump, positions)
 
 
-    # by_position = pandas.merge(by_position, price_series,
-    #                            left_index=True, right_index=True)
-
-    oss = io.StringIO()
-    oss.write(by_position.to_html(float_format='{:.2f}'.format))
-    oss.write(dataframe.to_html(float_format='{:.2f}'.format))
+if __name__ == '__main__':
+    main()
 
 
-    # FIXME: Group the positions by currency, show the price of each position in
-    # the inventory (see year 2006 for a good sample input).
+"""
+http://finance.google.com/finance/info?client=ig&q={}"
+mo = re.match(r"// \[\n(.*)\]", string, re.DOTALL)
+json_string = mo.group(1)
+data = json.loads(json_string)
+last_price = Decimal(data['l'])
 
-    # oss.write("<table class='positions'>\n")
-    # oss.write("{}".format(total_balance.average()))
+response = urlopen("http://finance.yahoo.com/d/quotes.csv?s={}&f=snc1l1d1".format(currency))
+print(response.read())
 
-    ## FIXME: remove
-    # print(('{p.number:12.2f} {p.lot.currency:8} '
-    #        '{p.lot.cost.number:12.2f} {p.lot.cost.currency:8} '
-    #        '{c.number:12.2f} {c.currency:8}').format(p=position, c=cost))
-
-    # oss.write('''
-    #   <div class="position num">
-    #      {position}     {cost}
-    #   </div>
-    # '''.format(position=position, cost=position.get_cost()))
-
-    # oss.write("</table>\n")
-
+"""

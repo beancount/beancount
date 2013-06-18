@@ -941,27 +941,6 @@ def conversions():
 
 #--------------------------------------------------------------------------------
 
-def get_positions_as_dataframe(entries):
-    priced_positions = prices.get_priced_positions(entries)
-
-    rows = [position
-            for position_list in priced_positions.values()
-            for position in position_list]
-
-    dataframe = pandas.DataFrame.from_records(
-        rows, columns=['account', 'number', 'currency', 'cost_number', 'price_number', 'cost_currency'])
-    dataframe['account'] = dataframe['account'].map(lambda x: x.name)
-
-    dataframe['number'] = dataframe['number'].astype(numpy.float)
-    dataframe['cost_number'] = dataframe['cost_number'].astype(numpy.float)
-    dataframe['price_number'] = dataframe['price_number'].astype(numpy.float)
-
-    dataframe['book_value'] = dataframe['number'] * dataframe['cost_number']
-    dataframe['market_value'] = dataframe['number'] * dataframe['price_number']
-    dataframe['pnl'] = dataframe['market_value'] - dataframe['book_value']
-
-    return dataframe
-
 
 FORMATTERS = {
     'number': '{:.3f}'.format,
@@ -992,7 +971,7 @@ def positions_detail():
     if pandas is None:
         return "You must install Pandas in order to render this page."
 
-    dataframe = get_positions_as_dataframe(request.view.entries)
+    dataframe = prices.get_positions_as_dataframe(request.view.entries)
 
     oss = io.StringIO()
     oss.write("<center>\n")
@@ -1010,7 +989,7 @@ def positions_byinstrument():
     if pandas is None:
         return "You must install Pandas in order to render this page."
 
-    dataframe = get_positions_as_dataframe(request.view.entries)
+    dataframe = prices.get_positions_as_dataframe(request.view.entries)
 
     oss = io.StringIO()
 

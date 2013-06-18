@@ -15,6 +15,12 @@ from beancount import utils
 from beancount.core import summarize
 from beancount.core import realization
 
+try:
+    import pandas
+    import numpy
+except ImportError:
+    pandas = None
+
 
 
 class PriceDatabase(object):
@@ -183,7 +189,12 @@ def get_priced_positions(entries):
             position['price_number'] = price_number
             position['price_date'] = price_date
 
-    return grouped_positions
+    # Flatten the grouped positions.
+    flat_positions = [position
+                      for position_list in grouped_positions.values()
+                      for position in position_list]
+
+    return grouped_positions, flat_positions
 
 
 def unrealized_gains(entries, subaccount_name):
@@ -194,7 +205,7 @@ def unrealized_gains(entries, subaccount_name):
     new_entries = []
 
     # Work through the list of priced positions.
-    priced_positions = get_priced_positions(entries)
+    priced_positions, _ = get_priced_positions(entries)
     for (account, currency, cost_currency), position_list in priced_positions.items():
 
         # Compute the total number of units and book value of the position.
@@ -246,3 +257,26 @@ def unrealized_gains(entries, subaccount_name):
         new_entries.append(entry)
 
     return entries + new_entries
+
+
+def get_positions_as_dataframe(entries):
+    """Return a dataframe with a detailed list of positions."""
+
+    if pandas is None:
+        return None
+
+    _, flat_positions = get_priced_positions(entries)
+
+    dataframe = pandas.DataFrame.from_records(
+        flat_positions, columns=['account', 'number', 'currency', 'cost_number', 'price_number', 'cost_currency', 'price_date'])
+    dataframe['account'] = dataframe['account'].map(lambda x: x.name)
+
+    dataframe['number'] = dataframe['number'].astype(numpy.float)
+    dataframe['cost_number'] = dataframe['cost_number'].astype(numpy.float)
+    dataframe['price_number'] = dataframe['price_number'].astype(numpy.float)
+
+    dataframe['book_value'] = dataframe['number'] * dataframe['cost_number']
+    dataframe['market_value'] = dataframe['number'] * dataframe['price_number']
+    dataframe['pnl'] = dataframe['market_value'] - dataframe['book_value']
+
+    return dataframe

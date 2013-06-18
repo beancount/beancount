@@ -4,7 +4,7 @@
 INPUT = $(HOME)/q/office/accounting/blais.beancount
 DOWNLOADS = $(HOME)/u/Downloads $(HOME)/q/office/accounting/new/oanda/oanda.912333.csv
 
-all: build
+all: compile
 
 
 # Clean everything up.
@@ -17,7 +17,7 @@ clean:
 	find . -name __pycache__ -exec rm -r "{}" \;
 
 
-# Targets to generate and build the C parser.
+# Targets to generate and compile the C parser.
 CROOT=src/python/beancount/parser
 
 $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
@@ -27,8 +27,11 @@ $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 	flex --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
 # cd $(CROOT) && flex $(notdir $<)
 
-build: $(CROOT)/grammar.c $(CROOT)/grammar.h $(CROOT)/lexer.c $(CROOT)/lexer.h
+compile: $(CROOT)/grammar.c $(CROOT)/grammar.h $(CROOT)/lexer.c $(CROOT)/lexer.h
 	python3 setup2.py build_ext -i
+
+.PHONY: build
+build: compile
 
 
 # Dump the lexer parsed output. This can be used to check across languages.

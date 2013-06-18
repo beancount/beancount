@@ -4,7 +4,7 @@
 ;;
 
 ;; Add the emacs path.
-(add-to-list 'load-path (concat project-current "/lib/elisp"))
+(add-to-list 'load-path (concat project-current "/src/elisp"))
 
 (if t
     (progn ;; New Beancount-only configuration.
