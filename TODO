@@ -2,6 +2,11 @@
 beancount: TODO
 * Current
 
+  - Have another script that takes that as input and spits out current positions
+    in the market on a web page; CGI script, should be served on Furius. Update
+    via a Mercurial repo push.
+
+
   - CONVERSIONS
   - AUTO-CATEGORIZATION
   - Realization as a simple tree
