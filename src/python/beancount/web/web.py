@@ -464,22 +464,27 @@ def balance_sheet_table(real_accounts, options):
     equity      = table_of_balances(real_accounts, options['name_equity'], operating_currencies)
 
     return """
-           <div id="assets" class="halfleft">
-            <h3>Assets</h3>
-            {assets}
-           </div>
+           <div class="halfleft">
 
-           <div id="liabilities" class="halfright">
-            <h3>Liabilities</h3>
-            {liabilities}
-           </div>
+             <div id="assets">
+              <h3>Assets</h3>
+              {assets}
+             </div>
 
-           <div class="spacer halfright">
            </div>
+           <div class="halfright">
 
-           <div id="equity" class="halfright">
-            <h3>Equity</h3>
-            {equity}
+             <div id="liabilities">
+              <h3>Liabilities</h3>
+              {liabilities}
+             </div>
+             <div class="spacer">
+             </div>
+             <div id="equity">
+              <h3>Equity</h3>
+              {equity}
+             </div>
+
            </div>
         """.format(**vars())
 
@@ -525,13 +530,20 @@ def income():
 
     contents = """
        <div id="income" class="halfleft">
-        <h3>Income</h3>
-        {income}
-       </div>
 
-       <div id="expenses" class="halfright">
-        <h3>Expenses</h3>
-        {expenses}
+         <div id="income">
+          <h3>Income</h3>
+          {income}
+         </div>
+
+       </div>
+       <div class="halfright">
+
+         <div id="expenses">
+          <h3>Expenses</h3>
+          {expenses}
+         </div>
+
        </div>
     """.format(**vars())
 

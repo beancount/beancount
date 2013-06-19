@@ -785,11 +785,6 @@ beancount: TODO
 
 ** Aesthetics
 
-  - web: balsheet/income: make only two parent divs: div id=left and div
-    id=right; the other divs should be children of them.
-  - (web) Make the two sides of the balance sheet within a left and right div,
-    rather than three separate ones.
-
   - In the entries table HTML, highlight the relevant posting leg somehow, maybe
     use a '>>' marker, or make it bold. Something. (Bold is too much, use >>.)
 
