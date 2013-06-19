@@ -874,6 +874,10 @@ beancount: TODO
       This could sum up all the entries for all the internals where the event's
       value was the same.
 
+  - By Currency/Cost-Currency
+
+      You could then possibly compute the IRR around that commodity...
+
 
 ** Trial Balance
 
