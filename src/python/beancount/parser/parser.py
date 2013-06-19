@@ -28,7 +28,8 @@ __sanity_checks__ = False
 # we offer the same set of options for the command-line as we do in the file.
 DEFAULT_OPTIONS = {
 
-    # The title of this ledger / input file. This shows up at the top of every page.
+    # The title of this ledger / input file. This shows up at the top of every
+    # page.
     "title" : "Beancount",
 
     # Root names of every account. This can be used to customize your category
@@ -228,6 +229,10 @@ class Builder(object):
 
     def document(self, filename, lineno, date, account, document_filename):
         fileloc = FileLocation(filename, lineno)
+        if not path.isabs(document_filename):
+          document_filename = path.abspath(path.join(path.dirname(filename),
+                                                     document_filename))
+
         return Document(fileloc, date, account, document_filename)
 
     def posting(self, account, position, price, istotal, flag):

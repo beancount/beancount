@@ -20,8 +20,8 @@ import bs4
 import bottle
 from bottle import install, response, request
 
-import numpy
 try:
+    import numpy
     import pandas
 except ImportError:
     pandas = None
