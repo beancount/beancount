@@ -18,7 +18,7 @@ from beancount.core import realization
 try:
     import pandas
     import numpy
-except ImportError:
+except (ImportError, ValueError):
     pandas = None
 
 
@@ -27,6 +27,12 @@ class PriceDatabase(object):
 
     def __init__(self, entries):
         self.price_map = build_price_database(entries)
+
+    def __getitem__(self, key):
+        return self.price_map.__getitem__(key)
+
+    def __iter__(self):
+        return iter(self.price_map)
 
     def get_latest_price(self, base, quote):
         dates, rates = self.price_map[(base, quote)]

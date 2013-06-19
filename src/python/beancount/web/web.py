@@ -23,7 +23,7 @@ from bottle import install, response, request
 try:
     import numpy
     import pandas
-except ImportError:
+except (ImportError, ValueError):
     pandas = None
 try:
     import sqlite3
@@ -146,13 +146,35 @@ def update():
         )
 
 
-@app.route('/pricedb', name='pricedb')
-def pricedb():
-    "Render information about prices."
+@app.route('/prices', name='prices')
+def prices_():
+    "Render a list of links to instruments, to list their prices."
+
+    links = ['<a href="{link}">{0} ({1})</a>'.format(
+        base, quote,
+        link = request.app.get_url('prices_graph', base=base, quote=quote))
+             for (base, quote) in app.price_db]
+
     return render_global(
         pagetitle = "Prices",
-        contents = ""
-        )
+        contents = """
+          <ul>
+            {}
+          </ul>
+        """.format('\n'.join(links)))
+
+@app.route('/prices/<base:re:[A-Z]+>_<quote:re:[A-Z]+>', name='prices_graph')
+def prices_graph(base=None, quote=None):
+
+
+    print('prices_graph')
+
+    # FIXME: TODO - Render as a gviz graph.
+
+
+
+
+
 
 
 GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
@@ -163,7 +185,7 @@ GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{A.stats}}">Statistics</a></li>
   <li><a href="{{A.update}}">Update Activity</a></li>
   <li><a href="{{A.events}}">Events</a></li>
-  <li><a href="{{A.pricedb}}">Prices</a></li>
+  <li><a href="{{A.prices}}">Prices</a></li>
 </ul>
 """).render(A=A)
 
@@ -1279,6 +1301,9 @@ def auto_reload_input_file(callback):
             app.entries = entries
             app.errors = errors
             app.options = options
+
+            # Pre-compute the price database.
+            app.price_db = prices.PriceDatabase(app.entries)
 
             # Reset the view cache.
             app.views.clear()

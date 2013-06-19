@@ -964,8 +964,6 @@ beancount: TODO
   - Write a script to load the data into an SQL database.
 
 
-
-
 * Documentation
 ** Design Doc & Developer Info
 
