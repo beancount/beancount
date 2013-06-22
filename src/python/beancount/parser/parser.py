@@ -239,7 +239,7 @@ class Builder(object):
         # If the price is specified for the entire amount, compute the effective
         # price here and forget about that detail of the input syntax.
         if istotal:
-            price = Amount(price.number / position.number, price.currency)
+            price = Amount(ZERO if position.number == ZERO else price.number / position.number, price.currency)
         return Posting(None, account, position, price, chr(flag) if flag else None)
 
     def transaction(self, filename, lineno, date, flag, payee, narration, tags, links, postings):
