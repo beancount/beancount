@@ -158,8 +158,9 @@ def import_file(filename, matches):
             continue
 
         # Import the new entries.
-        new_entries.extend(
-            module.import_file(filename, module_config))
+        imported_entries = module.import_file(filename, module_config)
+        if imported_entries:
+            new_entries.extend(imported_entries)
 
     # Make sure the newly imported entries are sorted; don't trust the importer.
     new_entries.sort(key=data.entry_sortkey)
@@ -201,7 +202,7 @@ def import_file_and_process(filename, matches, existing_entries, mindate):
 def run_importer_loop(importer_config,
                       files_or_directories,
                       output,
-                      entries=None, mindate=None, dry_run=False):
+                      entries=None, mindate=None, dry_run=False, debug=False):
     """Given an importer configuration, search for files that can be imported in the
     list of files or directories, run the signature checks on them, and if it
     succeeds, run the importer on the file. This is the main import driver loop.
@@ -212,7 +213,6 @@ def run_importer_loop(importer_config,
     if isinstance(files_or_directories, str):
         files_or_directories = [files_or_directories]
 
-    debug = False
     trace = lambda *args: print(*args, file=sys.stdout)
     for filename, match_text, matches in find_imports(importer_config, files_or_directories):
         # Print the filename and which modules matched.
