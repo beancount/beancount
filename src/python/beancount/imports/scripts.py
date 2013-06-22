@@ -104,7 +104,7 @@ def import_with_options(importer_config, opts):
                                   opts.files_or_directories,
                                   output,
                                   crosscheck_entries,
-                                  opts.mindate, opts.dry_run)
+                                  opts.mindate, opts.dry_run, opts.debug)
 
 
 def load_module_attribute(filename, attribute_name='CONFIG'):
