@@ -1200,7 +1200,9 @@ class YearView(View):
         with utils.print_time('clamp'):
             entries, index = summarize.clamp(entries,
                                              begin_date, end_date,
-                                             account_earnings, account_opening)
+                                             account_earnings,
+                                             account_opening,
+                                             account_conversions)
 
         return entries, index
 

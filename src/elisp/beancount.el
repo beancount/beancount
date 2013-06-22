@@ -23,6 +23,7 @@ is great for sectioning large files with many transactions."
   '(
     ([(control c)(\')] . beancount-insert-account)
     ([(control c)(control g)] . beancount-transaction-set-flag)
+    ([(control c)(r)] . beancount-init-accounts)
     )
   :group 'beancount
 

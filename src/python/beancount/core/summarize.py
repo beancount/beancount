@@ -9,17 +9,18 @@ total amount of that account.
 import datetime
 import logging
 import itertools
+import copy
 from collections import defaultdict
 
 from beancount.core import inventory
 from beancount.core.data import Transaction, Open, Close, Check
 from beancount.core.data import FileLocation, Posting, Account
-from beancount.core.data import FLAG_SUMMARIZE, FLAG_TRANSFER
+from beancount.core.data import FLAG_SUMMARIZE, FLAG_TRANSFER, FLAG_CONVERSIONS
 from beancount.core.data import is_income_statement_account
 
 
 def clamp(entries, begin_date, end_date,
-          account_transfer, account_opening):
+          account_transfer, account_opening, account_conversions):
     """Filter entries to include only those between begin and end dates.
 
     This routine performs the standard procedure required to produce reports
@@ -49,36 +50,44 @@ def clamp(entries, begin_date, end_date,
 
 
 ## FIXME: complete Conversions transfer.
-    if 0:
+    __TEST_CONVERSIONS__ = True
+    if __TEST_CONVERSIONS__:
 
         # Insert entries to account for conversions until the begin date.
         iter_entries = iter(entries)
-        balance = inventory.Inventory()
+        prev_balance = inventory.Inventory()
         for begin_index, entry in enumerate(iter_entries):
             if entry.date >= begin_date:
                 last_entry = entry
                 break
             if isinstance(entry, Transaction):
                 for posting in entry.postings:
-                    balance.add_position(posting.position, allow_negative=True)
+                    prev_balance.add_position(posting.position, allow_negative=True)
 
-        print('XXX', balance.get_cost())
+        print('prev_balance', prev_balance.get_cost())
 
+        next_balance = copy.copy(prev_balance)
         for entry in itertools.chain((last_entry,), iter_entries):
             if isinstance(entry, Transaction):
                 for posting in entry.postings:
-                    balance.add_position(posting.position, allow_negative=True)
+                    next_balance.add_position(posting.position, allow_negative=True)
 
-        print('YYY', balance.get_cost())
+        print('next_balance', next_balance.get_cost())
 
-
-
-
-
+        fileloc = FileLocation('<conversions>', -1)
+        narration = 'Conversion for {}'.format(next_balance)
+        conversion_entry = Transaction(fileloc, end_date, FLAG_CONVERSIONS, None, narration, None, None, [])
+        for position in next_balance.get_cost().get_positions():
+            conversion_entry.postings.append(
+                Posting(conversion_entry, account_conversions, -position, None, None))
 
     # Truncate the entries after this.
     entries = truncate(entries, end_date)
 
+
+
+    if __TEST_CONVERSIONS__:
+        entries.append(conversion_entry)
 
     return entries, index
 

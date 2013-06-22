@@ -27,7 +27,7 @@ def gviz_timeline(time_array, data_array_map, css_id='chart'):
     oss = io.StringIO()
     oss.write("""\
       google.load('visualization', '1', {packages: ['annotatedtimeline']});
-      function drawVisualization() {
+      function draw() {
         var data = new google.visualization.DataTable();
       """)
 
@@ -43,7 +43,23 @@ def gviz_timeline(time_array, data_array_map, css_id='chart'):
                        '{0.hour}, {0.minute}, {0.second})').format(dtime)
         oss.write('  [new {}, {}],\n'.format(js_datetime,
                                              ', '.join(map(..., series))))
-    # oss.write(']);\n')
+    oss.write(']);\n')
+
+    oss.write("""
+        var annotatedtimeline = new google.visualization.AnnotatedTimeLine(
+            document.getElementById('{css_id}')
+        );
+
+        var options = {{
+          'legendPosition'    : 'newRow',
+          'displayAnnotations': true,
+        }};
+
+        annotatedtimeline.draw(data, options);
+      }}
+
+      google.setOnLoadCallback(draw);
+    """.format(css_id=css_id))
 
     return oss.getvalue()
 

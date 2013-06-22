@@ -2,9 +2,19 @@
 beancount: TODO
 * Current
 
+  - Parser errors should not throw exceptions... we need to recover from these
+    gracefully.
+
+  - Code org: do split up the inventory and data.py with the files that provide
+    operations; these really should be two separate modules.
+
+
   - Have another script that takes that as input and spits out current positions
     in the market on a web page; CGI script, should be served on Furius. Update
     via a Mercurial repo push.
+
+  - IDEA: Render the transactions into an in-memory SQL database, and provide
+    an interface to query it and report results in a table, in the web UI.
 
 
   - CONVERSIONS
@@ -64,6 +74,36 @@ beancount: TODO
   - We should create a syntax and method for booking to the average value.
     Figure out how many units of each position to remove in order to obtain the
     average sale price. This way the user could potentially switch methods.
+
+*** Making adjustments of capital
+
+  - Figure out how to make these kinds of adjustments:
+
+      My name is Ian and I will help you with profit/loss and book value reporting.
+      2013-04-19 RTC RR -- XSP -- ISHARES S&P 500 INDEX FUND (CAD-HEDGED) 2012 RETURN OF CAPITAL ADJUSTMENT TO BOOK COST $60.71
+      2013-04-25 ADJ RR -- XSP -- ISHARES S&P 500 INDEX FUND (CAD-HEDGED) 2012 NOTIONAL DISTRIBUTION ADJUSTMENT TO BOOK VALUE $2,963.13
+      Before you make accounting entries, it is a good idea to understand the underlying transactions.
+
+      ETFs such as XSP, make distributions throughout the year, however they do not know the composition of the income distributed until
+      after year end when the trust completes their tax return. When the income in the trust from dividends, capital gains, and income
+      are not sufficient to account for all the distributions, the excess distribution is classified as 'return of capital'. Return of
+      capital (ROC) is simply some of the capital you paid to buy the fund being returned to you. The ROC amounts are not taxable and
+      you deduct them from your XSP book value. The XSP deduction for 2012 is C$60.71 and should be deducted from your book value in
+      your April 2013 statement.
+
+      Notional dividends result from the exchange traded fund (ETF) realizing capital gains and/or dividend income then reinvesting the
+      gains/dividends in some other security(ies). No cash or reinvested units were distributed to investors but they still have to pay
+      tax on the gains/dividends realized within the ETF. When a notional dividend is made, the dividend is included in income and the
+      amount of the notional dividend is added to the book value of the underlying security. So you end up paying tax on the dividend up
+      front and get a reduced capital gain or increased capital loss when you eventually sell the ETF.
+
+      In your XSP example, if you held the ETF in a taxable account, the notional dividend would be fully taxable as C$2,963.13 income
+      for your 2012 return. Your book value would increase by C$2,963.13.
+
+      The book value of XSP for 4,100 units in your March 2013 statement was C$57,127.11. The return of capital reduces your book value
+      and the notional dividend increases it so your book value at the end of April 2013 would be C$57,127.11 - C$60.71 (return of
+      capital) + C$2,963.13 (notional dividend) = C$60,029.53.
+
 
 *** Lots
 
