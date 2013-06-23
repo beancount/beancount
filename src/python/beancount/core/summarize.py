@@ -50,7 +50,7 @@ def clamp(entries, begin_date, end_date,
 
 
 ## FIXME: complete Conversions transfer.
-    __TEST_CONVERSIONS__ = True
+    __TEST_CONVERSIONS__ = False
     if __TEST_CONVERSIONS__:
 
         # Insert entries to account for conversions until the begin date.

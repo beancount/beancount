@@ -190,12 +190,12 @@ GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
 """).render(A=A)
 
 
-@app.route('/style.css', name='style')
+@app.route('/web.css', name='style')
 def style():
     "Stylesheet for the entire document."
     response.content_type = 'text/css'
     if app.args.debug:
-        with open(path.join(path.dirname(__file__), 'style.css')) as f:
+        with open(path.join(path.dirname(__file__), 'web.css')) as f:
             global STYLE; STYLE = f.read()
     return STYLE
 
@@ -1361,11 +1361,11 @@ def main():
     app.last_mtime = 0
 
     # Load templates.
-    with open(path.join(path.dirname(__file__), 'template.html')) as f:
+    with open(path.join(path.dirname(__file__), 'web.html')) as f:
         global template
         template = bottle.SimpleTemplate(f)
 
-    with open(path.join(path.dirname(__file__), 'style.css')) as f:
+    with open(path.join(path.dirname(__file__), 'web.css')) as f:
         global STYLE; STYLE = f.read()
 
     # # Create all the basic realizations.
