@@ -2,7 +2,6 @@
 Basic data structures used to represent the Ledger entries.
 """
 import io
-import os
 import re
 import datetime
 import textwrap
@@ -177,12 +176,12 @@ def render_fileloc(fileloc):
 def print_errors(errors, file=None):
     # Report all the realization errors.
     for error in errors:
-        print('{} {}'.format(render_fileloc(error.fileloc), error.message),
-              file=file)
+        file.write('{} {}\n'.format(render_fileloc(error.fileloc), error.message))
         if error.entry is not None:
             error_string = format_entry(error.entry)
-            print()
-            print(textwrap.indent(error_string, '   '), file=file)
+            file.write('\n')
+            file.write(textwrap.indent(error_string, '   '))
+            file.write('\n')
 
 
 # All possible types of entries. See the documentation for these.

@@ -158,8 +158,8 @@ def main():
                                                  data.Account('Equity:OpeningBalances', 'Equity'))
 
         out = open('/tmp/out.log', 'w')
-        for entry in clamped_entries:
-            print(entry, file=out)
+        # for entry in clamped_entries:
+        #     print(entry, file=out)
 
 
         real_accounts = realization.realize(clamped_entries, do_check=True)

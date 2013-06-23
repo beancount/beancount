@@ -6,13 +6,11 @@ Go to
 
 Download the file, import it.
 """
-import sys, re, cgi, logging, time, csv
+import re
 import datetime
 
-from beancount.imports import filetype
 from beancount.core import data
-from beancount.core.data import Transaction, Posting, Check, Decimal, Amount
-from beancount import utils
+from beancount.core.data import Transaction, Check, Decimal, Amount
 from beancount.utils import csv_utils
 from beancount.imports import imports
 

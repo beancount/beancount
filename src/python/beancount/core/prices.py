@@ -12,7 +12,6 @@ from beancount.core import data
 from beancount.core.data import Transaction, Posting, Price, Amount, Decimal, FileLocation, Lot
 from beancount.core.inventory import Inventory, Position
 from beancount import utils
-from beancount.core import summarize
 from beancount.core import realization
 
 try:

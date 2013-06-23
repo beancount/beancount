@@ -3,19 +3,14 @@ Unit tests for realizations.
 """
 
 import unittest
-import sys
-from datetime import date
 import textwrap
 import functools
-from copy import copy
 
 from beancount import parser
-from beancount.parser.tests.parser_test import parsedoc
 
 from beancount.core.inventory import Position, Lot, Inventory
-from beancount.core import validation
 from beancount.core import realization
-from beancount.core.data import Open, Close, Note, Pad, Check, Transaction, Posting
+from beancount.core.data import Open, Pad, Check, Posting
 from beancount.core.data import Decimal, Amount
 from beancount.core import data
 

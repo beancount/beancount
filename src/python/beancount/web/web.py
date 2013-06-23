@@ -3,40 +3,22 @@ Web server for Beancount ledgers.
 This uses the Bottle single-file micro web framework (with no plugins).
 """
 import argparse
-import time
 import datetime
 from os import path
-from textwrap import dedent
-import copy
 import io
 import re
-import functools
 from collections import defaultdict
 from collections import defaultdict
-from urllib.request import urlopen
-import json
 
-import bs4
 import bottle
-from bottle import install, response, request
-
-try:
-    import numpy
-    import pandas
-except (ImportError, ValueError):
-    pandas = None
-try:
-    import sqlite3
-except ImportError:
-    sqlite3 = None
+from bottle import response, request
 
 from beancount.web.bottle_utils import AttrMapper, internal_redirect
 from beancount.core import data
-from beancount.core.data import Account, Lot, Decimal, Amount
-from beancount.core.data import Open, Close, Pad, Check, Transaction, Event, Note, Document, Price, Posting
+from beancount.core.data import Account, Lot
+from beancount.core.data import Open, Close, Check, Transaction, Note, Document, Posting
 from beancount.core.data import account_leaf_name, is_account_root
 from beancount.core import summarize
-from beancount.core import validation
 from beancount.core.balance import get_balance_amount
 from beancount.core.inventory import Inventory
 from beancount.core import realization
@@ -1004,10 +986,10 @@ def positions():
 @viewapp.route('/positions/detail', name='positions_detail')
 def positions_detail():
     "Render a detailed table of all positions."
-    if pandas is None:
-        return "You must install Pandas in order to render this page."
 
     dataframe = prices.get_positions_as_dataframe(request.view.entries)
+    if dataframe is None:
+        return "You must install Pandas in order to render this page."
 
     oss = io.StringIO()
     oss.write("<center>\n")
@@ -1022,10 +1004,10 @@ def positions_detail():
 @viewapp.route('/positions/byinstrument', name='positions_byinstrument')
 def positions_byinstrument():
     "Render a table of positions by instrument."
-    if pandas is None:
-        return "You must install Pandas in order to render this page."
 
     dataframe = prices.get_positions_as_dataframe(request.view.entries)
+    if dataframe is None:
+        return "You must install Pandas in order to render this page."
 
     oss = io.StringIO()
 

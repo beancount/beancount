@@ -3,18 +3,16 @@
 Basic test to invoke the beancount parser.
 """
 import datetime
+import functools
 import copy
-import logging
 import tempfile
 from collections import namedtuple
 from os import path
-import textwrap
 
 from beancount.parser import _parser
-from beancount.utils import tree_utils
 from beancount.core import data
 from beancount.core.data import *
-from beancount.core.inventory import Position, Inventory
+from beancount.core.inventory import Position
 from beancount.core import balance
 
 
@@ -317,6 +315,13 @@ def parse_string(input_string):
         return parse(tmp_file.name)
 
 
+def parsedoc(fun):
+    """Decorator that parses the function's docstring as an argument."""
+    @functools.wraps(fun)
+    def newfun(self):
+        entries, errors, options = parse_string(textwrap.dedent(fun.__doc__))
+        return fun(self, entries, errors, options)
+    return newfun
 
 
 

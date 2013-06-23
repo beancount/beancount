@@ -6,17 +6,12 @@ This is more related to the parser than the core.
 import os
 import re
 import datetime
-import heapq
-import logging
 from os import path
 from collections import namedtuple
 
 from beancount import utils
-from beancount.parser import parser
 from beancount.core.data import FileLocation, Document
 from beancount.core import data
-from beancount.core import realization
-from beancount.core import validation
 
 
 # An error from trying to find the documents.

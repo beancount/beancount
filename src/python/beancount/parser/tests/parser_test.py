@@ -6,16 +6,8 @@ import functools
 import textwrap
 
 from beancount import parser
+from beancount.parser import parsedoc
 from beancount.core.data import *
-
-
-def parsedoc(fun):
-    """Decorator that parses the function's docstring as an argument."""
-    @functools.wraps(fun)
-    def newfun(self):
-        entries, errors, options = parser.parse_string(textwrap.dedent(fun.__doc__))
-        return fun(self, entries, errors, options)
-    return newfun
 
 
 class TestParserEntries(unittest.TestCase):

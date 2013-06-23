@@ -4,15 +4,9 @@ This file provides convenience routines that do all that's necessary to obtain a
 list of entries ready for realization and working with them. This is the most
 common entry point.
 """
-import os
-import re
-import datetime
-from os import path
-
 from beancount import utils
 from beancount.parser import parser
 from beancount.parser import documents
-from beancount.core.data import Document
 from beancount.core import data
 from beancount.core import realization
 from beancount.core import validation

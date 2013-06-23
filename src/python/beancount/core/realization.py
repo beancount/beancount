@@ -4,11 +4,8 @@ import sys
 import datetime
 from itertools import chain, repeat
 from collections import namedtuple, defaultdict
-from copy import copy
-import collections
 
 from beancount.utils import tree_utils
-from beancount.utils.bisect_key import bisect_left_withkey
 from beancount.core.inventory import Inventory, Position
 from beancount.core.data import *
 from beancount.core import data

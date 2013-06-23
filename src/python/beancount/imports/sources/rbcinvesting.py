@@ -24,20 +24,16 @@ About the implementation [2013-06-09]:
 
 import re
 import datetime
-import collections
 import subprocess
 import tempfile
-from pprint import pprint
 
 from beancount.core import data
-from beancount.core.data import to_decimal, format_entry
+from beancount.core.data import to_decimal
 from beancount.core.data import create_simple_posting
 from beancount.core.data import create_simple_posting_with_cost
-from beancount.core.data import Posting, Transaction, Check, Note, Decimal, Lot, Amount
-from beancount.core.data import FileLocation, format_entry, account_from_name
+from beancount.core.data import Posting, Transaction
+from beancount.core.data import FileLocation, account_from_name
 from beancount.core.inventory import Position
-from beancount.core import compress
-from beancount import utils
 from beancount.imports import imports
 from beancount.utils import csv_utils
 

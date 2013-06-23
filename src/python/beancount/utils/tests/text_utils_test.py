@@ -3,7 +3,6 @@ Tests for text_utils.
 """
 from beancount.utils.text_utils import replace_numbers
 
-import re
 import unittest
 
 

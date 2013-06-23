@@ -34,10 +34,9 @@ as None. This is the case for most of the transactions.
   or that we may instead provide the convenience for the user not having to match
 
 """
-from collections import namedtuple, defaultdict
+from collections import defaultdict
 import copy
 from datetime import date
-import io
 import logging
 
 from beancount.core.data import ZERO, Decimal, Amount, Lot, amount_mult, CURRENCY_ORDER

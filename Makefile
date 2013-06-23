@@ -44,6 +44,47 @@ grind:
 	valgrind --leak-check=full /usr/local/bin/python3 bean-sandbox $(INPUT)
 
 
+# Check for unused imports.
+check-imports:
+	sfood-checker bin src/python
+
+
+# Compute and plot inter-module dependencies.
+# We want to insure a really strict set of relationships between the modules,
+# and this is the high-level picture.
+build/beancount.deps:
+	sfood -i bin src/python > $@
+
+CLUSTERS = 					\
+	beancount/imports/sources		\
+	beancount/core/tests			\
+	beancount/parser/tests			\
+	beancount/imports/tests			\
+	beancount/utils/tests			\
+	beancount/web/tests			\
+	beancount/core				\
+	beancount/parser			\
+	beancount/imports			\
+	beancount/utils				\
+	beancount/web
+
+build/beancount.pdf: build/beancount.deps
+	cat $< | sfood-cluster $(CLUSTERS) | sfood-graph | dot -Tps | ps2pdf - $@
+
+showdeps: build/beancount.pdf
+	evince $<
+
+# Compute ahd plot the dependencies within the core.
+# We are considering a separation of the basic data structure and the basic operations.
+# This provides the detail of the relationships between these sets of fils.
+build/beancount-core.pdf: build/beancount-core.deps
+	sfood -ii src/python/beancount/core/*.py | sfood-graph | dot -Tps | ps2pdf - $@
+
+showdeps-core: build/beancount-core.pdf
+	evince $<
+
+
+
 # Run in the debugger.
 debug:
 	gdb --args /usr/local/bin/python3 /home/blais/p/beancount/bin/bean-sandbox $(INPUT)
@@ -84,5 +125,3 @@ import:
 .PHONY: sandbox
 sandbox:
 	bean-sandbox $(INPUT)
-
-

@@ -14,7 +14,6 @@ from beancount.core.data import account_from_name
 from beancount.core.data import create_simple_posting
 from beancount.core.data import Transaction, Posting, Pad, Decimal, Amount, Check
 from beancount.core.inventory import Position, Lot
-from beancount import utils
 from beancount.utils import csv_utils
 from beancount.utils.text_utils import Matcher
 from beancount.imports import imports

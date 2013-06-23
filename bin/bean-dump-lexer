@@ -4,7 +4,7 @@ This is used for testing.
 """
 import sys
 import argparse
-import beancount.parser
+from beancount.parser import parser
 
 
 def main():
@@ -12,7 +12,7 @@ def main():
     parser.add_argument('filename', help='Beancount input filename.')
     opts = parser.parse_args()
 
-    beancount.parser.dump_lexer(opts.filename, sys.stdout)
+    parser.dump_lexer(opts.filename, sys.stdout)
 
 
 if __name__ == '__main__':

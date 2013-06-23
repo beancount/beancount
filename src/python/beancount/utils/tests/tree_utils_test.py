@@ -3,7 +3,6 @@ Tests for tree_utils.
 """
 from beancount.utils import tree_utils
 
-import sys
 import unittest
 import collections
 

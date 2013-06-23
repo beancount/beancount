@@ -157,4 +157,4 @@ def import_main(importer_config,
         opts = parser.parse_args()
         import_with_options(importer_config, opts)
     except KeyboardInterrupt:
-        print("INTERRUPTED. Exiting.", file=sys.stderr)
+        sys.stderr.write("INTERRUPTED. Exiting.\n")

@@ -4,7 +4,6 @@ Unit tests for the various basic data types.
 import unittest
 
 from beancount.core.data import Amount, Decimal
-from beancount.core.inventory import Inventory
 
 
 class TestAmount(unittest.TestCase):

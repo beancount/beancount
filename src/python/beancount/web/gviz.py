@@ -41,8 +41,8 @@ def gviz_timeline(time_array, data_array_map, css_id='chart'):
     for dtime, datas in zip(time_array, zip(x[1] for x in data_array_map)):
         js_datetime = ('Date({0.year}, {0.month}, {0.day}, '
                        '{0.hour}, {0.minute}, {0.second})').format(dtime)
-        oss.write('  [new {}, {}],\n'.format(js_datetime,
-                                             ', '.join(map(..., series))))
+        # oss.write('  [new {}, {}],\n'.format(js_datetime,
+        #                                      ', '.join(map(..., series))))
     oss.write(']);\n')
 
     oss.write("""

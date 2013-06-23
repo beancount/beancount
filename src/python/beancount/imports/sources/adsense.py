@@ -3,16 +3,11 @@
 Interpret the Google AdSense CSV file and output transactions in a format
 suitable for Ledger.
 """
-
-import re, time, codecs
 import datetime
-from decimal import Decimal
-from itertools import count
-from collections import namedtuple
 
 from beancount.core import data
 from beancount.core.data import to_decimal
-from beancount.core.data import Transaction, Check, Posting, Amount
+from beancount.core.data import Transaction, Check, Amount
 from beancount.utils import DateIntervalTicker
 from beancount.utils import csv_utils
 from beancount.imports import imports
