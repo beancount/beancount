@@ -11,11 +11,12 @@ from collections import namedtuple
 from os import path
 
 from beancount.parser import _parser
+from beancount.core.account import account_from_name
 from beancount.core import data
 from beancount.core.amount import ZERO, Decimal, Amount
 from beancount.core.position import Lot, Position
-from beancount.core.data import Account, Transaction, Check, Open, Close, Pad, Event, Close, Price, Note, Document, FileLocation, Posting
-from beancount.core.data import account_type
+from beancount.core.data import Transaction, Check, Open, Close, Pad, Event, Close, Price, Note, Document, FileLocation, Posting
+from beancount.core.account import Account, account_type
 from beancount.core.data import reparent_posting
 from beancount.core import balance
 
@@ -92,13 +93,13 @@ def get_equity_accounts(options):
 
     equity = options['name_equity']
 
-    account_opening = data.account_from_name(
+    account_opening = account_from_name(
         '{}:{}'.format(equity, options['account_opening']))
 
-    account_earnings = data.account_from_name(
+    account_earnings = account_from_name(
         '{}:{}'.format(equity, options['account_earnings']))
 
-    account_conversions = data.account_from_name(
+    account_conversions = account_from_name(
         '{}:{}'.format(equity, options['account_conversions']))
 
     return (account_opening, account_earnings, account_conversions)

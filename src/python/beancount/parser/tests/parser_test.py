@@ -178,4 +178,5 @@ class TestParserLinks(unittest.TestCase):
             Assets:US:Cash
 
         """
-        print(entries[0])
+        # FIXME: check it here.
+        ##print(entries[0])

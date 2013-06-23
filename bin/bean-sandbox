@@ -27,6 +27,7 @@ from beancount import parser
 from beancount import utils
 from beancount.utils.bisect_key import bisect_left_withkey
 from beancount.core import prices
+from beancount.core.account import account_type, account_names_sortkey
 
 
 
@@ -43,7 +44,7 @@ def compute_balance_by_type(real_accounts, date):
                 for typename in AccountTypeData._fields}
     for real_account in real_accounts.values():
         if real_account.postings:
-            typename = data.account_type(real_account.name)
+            typename = account_type(real_account.name)
             assert False, "FIXME: This doesn't work anymore; we need to use the entries in order to compute the balance at a specific date."
             balance = realization.find_balance(real_account, date)
             balances[typename] += balance
@@ -278,7 +279,7 @@ def find_unique_templates(entries):
     print(len(groups))
 
     for account_names, entry_list in sorted(groups.items(), key=lambda x: len(x[1]), reverse=True):
-        print(tuple(sorted(account_names, key=data.account_names_sortkey)), len(entry_list))
+        print(tuple(sorted(account_names, key=account_names_sortkey)), len(entry_list))
 
 
 

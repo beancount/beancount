@@ -4,6 +4,7 @@ import itertools
 import re
 import bs4
 
+from beancount.core.account import account_from_name
 from beancount.core.amount import Decimal, Amount
 from beancount.core import data
 from beancount.core.data import Posting, Transaction, Check
@@ -101,7 +102,7 @@ def import_file(filename, config):
 
                     position = Position(Lot(security, Amount(unitprice, currency), None), units)
 
-                    account = data.account_from_name('{}:{}'.format(
+                    account = account_from_name('{}:{}'.format(
                         source_subaccounts[source].name, security))
                     entry.postings.append(Posting(entry, account, position, None, None))
 
@@ -129,7 +130,7 @@ def import_file(filename, config):
 
                         fileloc = data.FileLocation(filename, next(txn_counter))
                         source = soup_get(invpos, 'inv401ksource')
-                        account = data.account_from_name('{}:{}'.format(
+                        account = account_from_name('{}:{}'.format(
                             source_subaccounts[source].name, security))
 
                         amount = Amount(units, security)

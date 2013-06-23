@@ -8,8 +8,7 @@ from datetime import date
 import textwrap
 import functools
 
-from beancount.core import data
-from beancount.core.data import Account
+from beancount.core.account import Account, is_income_statement_account
 from beancount.core.realization import pad, realize, dump_tree_balances, compare_realizations, real_cost_as_dict
 from beancount.core.summarize import summarize, transfer, open_at_date
 
@@ -142,7 +141,7 @@ class TestSummarization(unittest.TestCase):
 
         report_date = date(2012, 1, 1)
         tran_entries = transfer(entries, report_date,
-                                data.is_income_statement_account, TRANSFER_BALANCES)
+                                is_income_statement_account, TRANSFER_BALANCES)
 
         sum_entries, _ = summarize(tran_entries, report_date, OPENING_BALANCES)
         real_accounts = realize(sum_entries, do_check=True)
@@ -177,7 +176,7 @@ class TestTransferBalances(unittest.TestCase):
                           'Income:Job': 'Inventory(-2000.00 USD)'})
 
         tran_entries = transfer(entries, date(2012, 6, 1),
-                                data.is_income_statement_account, TRANSFER_BALANCES)
+                                is_income_statement_account, TRANSFER_BALANCES)
 
         real_accounts = realize(tran_entries, do_check=True)
         self.assertEqual(real_cost_as_dict(real_accounts),

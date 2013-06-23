@@ -10,6 +10,7 @@ from os import path
 from collections import namedtuple
 
 from beancount import utils
+from beancount.core.account import account_from_name
 from beancount.core.data import FileLocation, Document
 from beancount.core import data
 
@@ -126,7 +127,7 @@ def find_documents(root_directory, input_filename, entries):
                 try:
                     account = accounts[account_name]
                 except KeyError:
-                    account = data.account_from_name(account_name)
+                    account = account_from_name(account_name)
 
             # Found one! Create a new directive.
             fileloc = FileLocation(input_filename, -1)

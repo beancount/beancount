@@ -5,7 +5,7 @@ Sanity checks.
 from os import path
 from collections import namedtuple
 
-from beancount.core.data import Account
+from beancount.core.account import Account
 from beancount.core.data import Open, Close, Transaction, Document
 from beancount.core import data
 from beancount import utils

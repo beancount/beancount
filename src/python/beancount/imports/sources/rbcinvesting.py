@@ -32,7 +32,8 @@ from beancount.core.data import to_decimal
 from beancount.core.data import create_simple_posting
 from beancount.core.data import create_simple_posting_with_cost
 from beancount.core.data import Posting, Transaction
-from beancount.core.data import FileLocation, account_from_name
+from beancount.core.data import FileLocation
+from beancount.core.account import account_from_name
 from beancount.core.position import Position
 from beancount.imports import imports
 from beancount.utils import csv_utils

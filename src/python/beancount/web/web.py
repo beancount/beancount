@@ -14,11 +14,11 @@ import bottle
 from bottle import response, request
 
 from beancount.web.bottle_utils import AttrMapper, internal_redirect
+from beancount.core.account import account_type
 from beancount.core import data
-from beancount.core.data import Account
+from beancount.core.account import Account, account_leaf_name, is_account_root
 from beancount.core.position import Lot
 from beancount.core.data import Open, Close, Check, Transaction, Note, Document, Posting
-from beancount.core.data import account_leaf_name, is_account_root
 from beancount.core import summarize
 from beancount.core.balance import get_balance_amount
 from beancount.core.inventory import Inventory
@@ -29,6 +29,8 @@ from beancount import parser
 from beancount import utils
 from beancount.utils import index_key
 from beancount.utils.text_utils import replace_numbers
+from beancount.core.account import Account, account_type
+from beancount.core.account import is_balance_sheet_account_name, is_income_statement_account
 
 
 #--------------------------------------------------------------------------------
@@ -915,7 +917,7 @@ def account(slashed_account_name=None):
     # want to include the net-income transferred from the exercise period.
     account_name = slashed_account_name.strip('/').replace('/', ':')
     options = app.options
-    if data.is_balance_sheet_account_name(account_name, options):
+    if is_balance_sheet_account_name(account_name, options):
         real_accounts = request.view.closing_real_accounts
     else:
         real_accounts = request.view.real_accounts
@@ -1123,11 +1125,11 @@ class View:
         # the current period's net income, closing the period.
         equity = self.options['name_equity']
         account_netincome = '{}:{}'.format(equity, self.options['account_netincome'])
-        account_netincome = data.Account(account_netincome,
-                                         data.account_type(account_netincome))
+        account_netincome = Account(account_netincome,
+                                    account_type(account_netincome))
 
         self.closing_entries = summarize.transfer(self.entries, None,
-                                                  data.is_income_statement_account, account_netincome)
+                                                  is_income_statement_account, account_netincome)
 
         # Realize the three sets of entries.
         do_check = False
