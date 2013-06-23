@@ -1,14 +1,16 @@
 """
 Code used to balance a list of postings.
 """
+import collections
+
 from beancount.core.amount import Decimal, amount_mult, ZERO
-from beancount.core.data import *
 from beancount.core.inventory import Inventory
-from beancount.core.position import Position
+from beancount.core.position import Lot, Position
+from beancount.core.data import Posting
 
 
 # An error from balancing the postings.
-BalanceError = namedtuple('BalanceError', 'fileloc message entry')
+BalanceError = collections.namedtuple('BalanceError', 'fileloc message entry')
 
 
 # The difference amount at which we consider a transaction to be balanced.

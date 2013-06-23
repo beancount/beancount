@@ -4,7 +4,7 @@ Tests for parser.
 import unittest
 
 from beancount.parser import parsedoc
-from beancount.core.data import *
+from beancount.core.data import Transaction, Check, Open, Close, Pad, Event, Close, Price, Note
 
 
 class TestParserEntries(unittest.TestCase):

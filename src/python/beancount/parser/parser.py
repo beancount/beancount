@@ -4,6 +4,7 @@ Basic test to invoke the beancount parser.
 """
 import datetime
 import functools
+import textwrap
 import copy
 import tempfile
 from collections import namedtuple
@@ -11,9 +12,11 @@ from os import path
 
 from beancount.parser import _parser
 from beancount.core import data
-from beancount.core.amount import Decimal, Amount
-from beancount.core.data import *
+from beancount.core.amount import ZERO, Decimal, Amount
 from beancount.core.position import Lot, Position
+from beancount.core.data import Account, Transaction, Check, Open, Close, Pad, Event, Close, Price, Note, Document, FileLocation, Posting
+from beancount.core.data import account_type
+from beancount.core.data import reparent_posting
 from beancount.core import balance
 
 

@@ -9,8 +9,8 @@ from beancount.utils import tree_utils
 from beancount.core.position import Lot, Position
 from beancount.core.inventory import Inventory
 from beancount.core.amount import Decimal, amount_sub, amount_sortkey
-from beancount.core.data import *
 from beancount.core import data
+from beancount.core.data import Transaction, Check, Open, Close, Pad, Close, Note, Document, Posting
 from beancount import utils
 
 
@@ -148,7 +148,7 @@ def pad(entries):
                         narration = '(Padding inserted for Check of {} for difference {})'.format(
                             check_amount, diff_position)
                         new_entry = Transaction(
-                            active_pad.fileloc, active_pad.date, FLAG_PADDING, None, narration, None, None, [])
+                            active_pad.fileloc, active_pad.date, data.FLAG_PADDING, None, narration, None, None, [])
 
                         new_entry.postings.append(
                             Posting(new_entry, active_pad.account, diff_position, None, None))
@@ -210,7 +210,7 @@ def check(entries):
                 balance = balances[posting.account]
                 try:
                     # Note: if this is from a padding transaction, we allow negative lots at cost.
-                    allow_negative = entry.flag in (FLAG_PADDING, FLAG_SUMMARIZE)
+                    allow_negative = entry.flag in (data.FLAG_PADDING, data.FLAG_SUMMARIZE)
                     balance.add_position(posting.position, allow_negative)
                 except ValueError as e:
                     check_errors.append(
