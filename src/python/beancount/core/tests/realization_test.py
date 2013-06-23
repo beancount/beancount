@@ -127,41 +127,6 @@ class TestPadding(unittest.TestCase):
                            Position(Lot('USD', None, None), Decimal('172.45')))
 
     @realizedoc
-    def test_with_cost(self, entries, real_accounts, errors):
-        """
-          2013-05-01 open Assets:Invest
-          2013-05-01 open Equity:Opening-Balancess
-
-          2013-05-01 pad  Assets:Invest   Equity:Opening-Balancess
-
-          2013-05-03 check Assets:Invest   172.45 GOOG {12.00 USD}
-        """
-        assert len(errors) == 0
-        self.check_real_types(real_accounts['Assets:Invest'], [Open, Pad, Posting, Check])
-        self.check_real_types(real_accounts['Equity:Opening-Balancess'], [Open, Pad, Posting])
-
-        self.check_balance(real_accounts['Assets:Invest'],
-                           Position(Lot('GOOG', Amount('12.00', 'USD'), None), Decimal('172.45')))
-
-
-    @realizedoc
-    def test_with_cost_and_lotdate(self, entries, real_accounts, errors):
-        """
-          2013-05-01 open Assets:Invest
-          2013-05-01 open Equity:Opening-Balancess
-
-          2013-05-01 pad  Assets:Invest   Equity:Opening-Balancess
-
-          2013-05-03 check Assets:Invest   172.45 GOOG {12.00 USD / 2000-01-01}
-        """
-        assert len(errors) == 0
-        self.check_real_types(real_accounts['Assets:Invest'], [Open, Pad, Posting, Check])
-        self.check_real_types(real_accounts['Equity:Opening-Balancess'], [Open, Pad, Posting])
-
-        self.check_balance(real_accounts['Assets:Invest'],
-                           Position(Lot('GOOG', Amount('12.00', 'USD'), date(2000, 1, 1)), Decimal('172.45')))
-
-    @realizedoc
     def test_pad_fail(self, entries, real_accounts, errors):
         """
           2013-05-01 open Assets:Checking

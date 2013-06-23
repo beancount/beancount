@@ -53,7 +53,16 @@ class TestParserEntries(unittest.TestCase):
     def test_entry_open_2(self, entries, errors, options):
         """
 
-          2013-05-18 open Assets:US:BestBank:Checking  "123456789"
+          2013-05-18 open Assets:US:BestBank:Checking   USD
+
+        """
+        self.assertTrue(isinstance(entries[0], Open))
+
+    @parsedoc
+    def test_entry_open_3(self, entries, errors, options):
+        """
+
+          2013-05-18 open Assets:Cash   USD,CAD,EUR
 
         """
         self.assertTrue(isinstance(entries[0], Open))
