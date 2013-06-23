@@ -9,7 +9,8 @@ import datetime
 import collections
 
 from beancount.core import data
-from beancount.core.data import Posting, Transaction, Check, Note, Decimal, Amount
+from beancount.core.amount import Decimal, Amount
+from beancount.core.data import Posting, Transaction, Check, Note
 from beancount.core.data import format_entry
 from beancount.core.position import Lot, Position
 from beancount.core import compress

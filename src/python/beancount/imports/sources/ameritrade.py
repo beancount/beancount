@@ -8,8 +8,9 @@ import re
 import datetime
 
 from beancount.core import data
+from beancount.core.amount import Decimal, Amount
 from beancount.core.data import create_simple_posting
-from beancount.core.data import Posting, Transaction, Check, Decimal, Amount
+from beancount.core.data import Posting, Transaction, Check
 from beancount.core.data import account_from_name
 from beancount.core.position import Lot, Position
 from beancount.imports import imports

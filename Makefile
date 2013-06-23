@@ -45,7 +45,7 @@ grind:
 
 
 # Check for unused imports.
-check-deps:
+check-deps checkdeps:
 	sfood-checker bin src/python 2>&1 | grep -v bean-sandbox
 
 

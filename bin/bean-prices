@@ -14,7 +14,8 @@ import bs4
 
 from beancount.core import prices
 from beancount.core import data
-from beancount.core.data import Decimal, FileLocation, Price, Amount
+from beancount.core.data import FileLocation, Price
+from beancount.core.amount import Decimal, Amount
 from beancount.parser import load
 from urllib.request import urlopen
 

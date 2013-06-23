@@ -9,10 +9,10 @@ import itertools
 import datetime
 
 from beancount.core import data
-from beancount.core.data import to_decimal
+from beancount.core.amount import to_decimal, Decimal, Amount
 from beancount.core.data import account_from_name
 from beancount.core.data import create_simple_posting
-from beancount.core.data import Transaction, Posting, Pad, Decimal, Amount, Check
+from beancount.core.data import Transaction, Posting, Pad, Check
 from beancount.core.position import Lot, Position
 from beancount.utils import csv_utils
 from beancount.utils.text_utils import Matcher

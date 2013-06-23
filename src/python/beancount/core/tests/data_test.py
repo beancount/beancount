@@ -3,7 +3,7 @@ Unit tests for the various basic data types.
 """
 import unittest
 
-from beancount.core.data import Amount, Decimal
+from beancount.core.amount import Decimal, Amount
 
 
 class TestAmount(unittest.TestCase):

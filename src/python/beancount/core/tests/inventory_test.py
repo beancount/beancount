@@ -5,7 +5,7 @@ import unittest
 import copy
 from datetime import date
 
-from beancount.core.data import Amount
+from beancount.core.amount import Amount
 from beancount.core.inventory import Inventory
 
 

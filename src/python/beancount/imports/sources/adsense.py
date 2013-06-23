@@ -6,8 +6,8 @@ suitable for Ledger.
 import datetime
 
 from beancount.core import data
-from beancount.core.data import to_decimal
-from beancount.core.data import Transaction, Check, Amount
+from beancount.core.amount import to_decimal, Amount
+from beancount.core.data import Transaction, Check
 from beancount.utils import DateIntervalTicker
 from beancount.utils import csv_utils
 from beancount.imports import imports

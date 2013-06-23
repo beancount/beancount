@@ -38,7 +38,7 @@ import copy
 from datetime import date
 import logging
 
-from beancount.core.data import ZERO, Decimal, Amount
+from beancount.core.amount import ZERO, Decimal, Amount
 from beancount.core.position import Lot, Position
 
 

@@ -8,8 +8,9 @@ live prices online and create entries on-the-fly).
 """
 from collections import defaultdict
 
+from beancount.core.amount import Decimal, Amount
 from beancount.core import data
-from beancount.core.data import Transaction, Posting, Price, Amount, Decimal, FileLocation
+from beancount.core.data import Transaction, Posting, Price, FileLocation
 from beancount.core.position import Lot, Position
 from beancount.core.inventory import Inventory
 from beancount import utils

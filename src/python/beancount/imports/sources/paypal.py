@@ -10,7 +10,8 @@ import re
 import datetime
 
 from beancount.core import data
-from beancount.core.data import Transaction, Check, Decimal, Amount
+from beancount.core.amount import Decimal, Amount
+from beancount.core.data import Transaction, Check
 from beancount.utils import csv_utils
 from beancount.imports import imports
 

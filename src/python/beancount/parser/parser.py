@@ -11,8 +11,9 @@ from os import path
 
 from beancount.parser import _parser
 from beancount.core import data
+from beancount.core.amount import Decimal, Amount
 from beancount.core.data import *
-from beancount.core.position import Position
+from beancount.core.position import Lot, Position
 from beancount.core import balance
 
 
