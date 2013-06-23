@@ -3,8 +3,8 @@ Unit tests for the Position class.
 """
 import unittest
 
-from beancount.core.data import Lot, ZERO
-from beancount.core.position import Position
+from beancount.core.data import ZERO
+from beancount.core.position import Lot, Position
 
 
 class TestPosition(unittest.TestCase):

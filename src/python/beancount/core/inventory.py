@@ -38,8 +38,8 @@ import copy
 from datetime import date
 import logging
 
-from beancount.core.data import ZERO, Decimal, Amount, Lot
-from beancount.core.position import Position
+from beancount.core.data import ZERO, Decimal, Amount
+from beancount.core.position import Lot, Position
 
 
 class Inventory:

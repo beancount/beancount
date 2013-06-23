@@ -100,9 +100,6 @@ def amount_sub(amount1, amount2):
 
 
 
-# Lots are representation of a commodity with an optional associated cost and optional acquisition date.
-# (There are considered immutable and shared between many objects; this makes everything faster.)
-Lot = namedtuple('Lot', 'currency cost lot_date')
 
 
 # A type used to represent an account read in.

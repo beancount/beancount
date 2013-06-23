@@ -15,7 +15,8 @@ from bottle import response, request
 
 from beancount.web.bottle_utils import AttrMapper, internal_redirect
 from beancount.core import data
-from beancount.core.data import Account, Lot
+from beancount.core.data import Account
+from beancount.core.position import Lot
 from beancount.core.data import Open, Close, Check, Transaction, Note, Document, Posting
 from beancount.core.data import account_leaf_name, is_account_root
 from beancount.core import summarize

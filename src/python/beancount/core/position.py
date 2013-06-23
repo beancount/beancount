@@ -16,7 +16,12 @@ A "Position" represents a specific number of units of an associated lot:
   (number, lot)
 
 """
-from beancount.core.data import ZERO, Decimal, Amount, Lot, amount_mult, CURRENCY_ORDER
+from beancount.core.data import ZERO, Decimal, Amount, amount_mult, CURRENCY_ORDER
+
+
+# Lots are representation of a commodity with an optional associated cost and optional acquisition date.
+# (There are considered immutable and shared between many objects; this makes everything faster.)
+Lot = namedtuple('Lot', 'currency cost lot_date')
 
 
 class Position:
