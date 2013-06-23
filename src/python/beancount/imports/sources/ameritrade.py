@@ -15,6 +15,7 @@ from beancount.core.account import account_from_name
 from beancount.core.position import Lot, Position
 from beancount.imports import imports
 from beancount.utils import csv_utils
+from beancount.core import flags
 
 
 CONFIG = {
@@ -67,7 +68,7 @@ def import_file(filename, config):
         links = set([row.transaction_id])
         fileloc = data.FileLocation(filename, index)
 
-        entry = Transaction(fileloc, date, data.FLAG_IMPORT, None, narration, None, links, [])
+        entry = Transaction(fileloc, date, flags.FLAG_IMPORT, None, narration, None, links, [])
 
         amount = Decimal(row.amount)
 

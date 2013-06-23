@@ -11,6 +11,7 @@ from beancount.core.data import Posting, Transaction, Check
 from beancount.core.position import Lot, Position
 from beancount.imports.sources.ofx import souptodict, soup_get, parse_ofx_time
 from beancount.imports import imports
+from beancount.core import flags
 
 
 CONFIG = {
@@ -93,7 +94,7 @@ def import_file(filename, config):
                     memo = soup_get(tran, 'memo')
                     narration = ' - '.join(filter(None, (trantype, incometype, source, memo)))
 
-                    entry = Transaction(fileloc, date, data.FLAG_IMPORT, payee, narration, None, None, [])
+                    entry = Transaction(fileloc, date, flags.FLAG_IMPORT, payee, narration, None, None, [])
 
                     # Create a posting for it.
                     tferaction = soup_get(tran, 'tferaction')

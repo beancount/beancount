@@ -14,6 +14,7 @@ import bs4
 from beancount.core import data
 from beancount.core.data import Posting, Transaction, Decimal
 from beancount.core.position import Lot, Position
+from beancount.core import flags
 from beancount.imports import imports
 
 
@@ -77,7 +78,7 @@ def import_file(filename, config):
                         field_values.pop(0)
 
                     narration = ' / '.join(filter(None, field_values))
-                    entry = Transaction(fileloc, date, data.FLAG_IMPORT, payee, narration, None, None, [])
+                    entry = Transaction(fileloc, date, flags.FLAG_IMPORT, payee, narration, None, None, [])
 
                     # Create a posting for it.
                     position = Position(Lot(currency, None, None), soup_get(stmttrn, 'trnamt', Decimal))

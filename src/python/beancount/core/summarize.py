@@ -15,7 +15,7 @@ from collections import defaultdict
 from beancount.core import inventory
 from beancount.core.data import Transaction, Open, Close
 from beancount.core.data import FileLocation, Posting
-from beancount.core.data import FLAG_SUMMARIZE, FLAG_TRANSFER, FLAG_CONVERSIONS
+from beancount.core import flags
 from beancount.core.account import is_income_statement_account
 
 
@@ -76,7 +76,7 @@ def clamp(entries, begin_date, end_date,
 
         fileloc = FileLocation('<conversions>', -1)
         narration = 'Conversion for {}'.format(next_balance)
-        conversion_entry = Transaction(fileloc, end_date, FLAG_CONVERSIONS, None, narration, None, None, [])
+        conversion_entry = Transaction(fileloc, end_date, flags.FLAG_CONVERSIONS, None, narration, None, None, [])
         for position in next_balance.get_cost().get_positions():
             conversion_entry.postings.append(
                 Posting(conversion_entry, account_conversions, -position, None, None))
@@ -126,7 +126,7 @@ def transfer(entries, date, account_pred, transfer_account):
     # Create transfer entries.
     transfer_entries = create_entries_from_balances(
         transfer_balances, transfer_date, transfer_account, False,
-        '<summarize>', FLAG_TRANSFER,
+        '<summarize>', flags.FLAG_TRANSFER,
         "Transfer balance for '{account.name}' as of {date} (Transfer Balance)")
 
     # Split the new entries in a new list.
@@ -164,7 +164,7 @@ def summarize(entries, date, opening_account):
     # Create summarization / opening balance entries.
     summarizing_entries = create_entries_from_balances(
         balances, summarize_date, opening_account, True,
-        '<summarize>', FLAG_SUMMARIZE,
+        '<summarize>', flags.FLAG_SUMMARIZE,
         "Opening balance for '{account.name}' as of {date} (Summarization)")
 
     # Gather the list of active open entries at date.

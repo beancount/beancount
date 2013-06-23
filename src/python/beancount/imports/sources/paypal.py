@@ -14,6 +14,7 @@ from beancount.core.amount import Decimal, Amount
 from beancount.core.data import Transaction, Check
 from beancount.utils import csv_utils
 from beancount.imports import imports
+from beancount.core import flags
 
 
 CONFIG = {
@@ -50,7 +51,7 @@ def import_file(filename, config):
                                             row.shipping_address,
                                             email_address)))
 
-        entry = Transaction(fileloc, date, data.FLAG_IMPORT, payee, narration, None, links, [])
+        entry = Transaction(fileloc, date, flags.FLAG_IMPORT, payee, narration, None, links, [])
 
         # Create postings on this transaction.
         data.create_simple_posting(entry, config['gross'], -Decimal(row.gross), row.currency)

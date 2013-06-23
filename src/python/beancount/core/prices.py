@@ -10,12 +10,12 @@ from collections import defaultdict
 
 from beancount.core.account import account_from_name
 from beancount.core.amount import Decimal, Amount
-from beancount.core import data
 from beancount.core.data import Transaction, Posting, Price, FileLocation
 from beancount.core.position import Lot, Position
 from beancount.core.inventory import Inventory
 from beancount import utils
 from beancount.core import realization
+from beancount.core import flags
 
 try:
     import pandas
@@ -236,7 +236,7 @@ def unrealized_gains(entries, subaccount_name):
         # Create a new transaction to account for this difference in gain.
         fileloc = FileLocation('<unrealized_gains>', 0)
         narration = "Unrealized gains for {} in {}".format(currency, cost_currency)
-        entry = Transaction(fileloc, price_date, data.FLAG_UNREALIZED, None, narration, None, None, [])
+        entry = Transaction(fileloc, price_date, flags.FLAG_UNREALIZED, None, narration, None, None, [])
 
         # Add the gain/loss as a subaccount to the asset account.
         asset_account = account_from_name(':'.join([account.name,

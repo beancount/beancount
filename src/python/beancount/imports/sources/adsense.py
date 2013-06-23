@@ -11,6 +11,7 @@ from beancount.core.data import Transaction, Check
 from beancount.utils import DateIntervalTicker
 from beancount.utils import csv_utils
 from beancount.imports import imports
+from beancount.core import flags
 
 
 CONFIG = {
@@ -58,7 +59,7 @@ def import_file(filename, config):
                 new_entries.append(check)
         prev_row = row
 
-        entry = Transaction(fileloc, row.date, data.FLAG_IMPORT, payee, row.description, None, None, [])
+        entry = Transaction(fileloc, row.date, flags.FLAG_IMPORT, payee, row.description, None, None, [])
 
         if row.description == 'Payment issued':
             data.create_simple_posting(entry, config['cash'], row.amount, currency)

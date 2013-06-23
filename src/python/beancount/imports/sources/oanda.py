@@ -14,6 +14,7 @@ from beancount.core.data import Posting, Transaction, Check, Note
 from beancount.core.data import format_entry
 from beancount.core.position import Lot, Position
 from beancount.core import compress
+from beancount.core import flags
 from beancount.utils import csv_utils
 from beancount.imports import imports
 
@@ -222,7 +223,7 @@ def import_csv_file(filename, config, _):
         if link:
             links.add(LINK_FORMAT.format(link))
 
-        entry = Transaction(fileloc, date, data.data.FLAG_IMPORT, None, narration, None, links, [])
+        entry = Transaction(fileloc, date, flags.FLAG_IMPORT, None, narration, None, links, [])
 
         # FIXME: Add the rates for transfers
         oanda_add_posting(entry, config['asset'], change, currency)

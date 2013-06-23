@@ -31,6 +31,7 @@ from beancount.utils import index_key
 from beancount.utils.text_utils import replace_numbers
 from beancount.core.account import Account, account_type
 from beancount.core.account import is_balance_sheet_account_name, is_income_statement_account
+from beancount.core import flags
 
 
 #--------------------------------------------------------------------------------
@@ -667,9 +668,9 @@ def iterate_with_balance(entries):
 
 
 FLAG_ROWTYPES = {
-    data.FLAG_PADDING  : 'Padding',
-    data.FLAG_SUMMARIZE: 'Summarize',
-    data.FLAG_TRANSFER : 'Transfer',
+    flags.FLAG_PADDING  : 'Padding',
+    flags.FLAG_SUMMARIZE: 'Summarize',
+    flags.FLAG_TRANSFER : 'Transfer',
 }
 
 def balance_html(balance):
@@ -710,7 +711,7 @@ def entries_table_with_balance(oss, account_postings, render_postings=True):
 
         if isinstance(entry, Transaction):
             rowtype = FLAG_ROWTYPES.get(entry.flag, 'Transaction')
-            extra_class = 'warning' if entry.flag == data.FLAG_WARNING else ''
+            extra_class = 'warning' if entry.flag == flags.FLAG_WARNING else ''
             flag = entry.flag
             description = '<span class="narration">{}</span>'.format(entry.narration)
             if entry.payee:
@@ -770,7 +771,7 @@ def entries_table_with_balance(oss, account_postings, render_postings=True):
             for posting in entry.postings:
 
                 classes = ['Posting']
-                if posting.flag == data.FLAG_WARNING:
+                if posting.flag == flags.FLAG_WARNING:
                     classes.append('warning')
                 if posting in leg_postings:
                     classes.append('leg')
@@ -826,7 +827,7 @@ def entries_table(oss, account_postings, render_postings=True):
 
         if isinstance(entry, Transaction):
             rowtype = FLAG_ROWTYPES.get(entry.flag, 'Transaction')
-            extra_class = 'warning' if entry.flag == data.FLAG_WARNING else ''
+            extra_class = 'warning' if entry.flag == flags.FLAG_WARNING else ''
             flag = entry.flag
             description = '<span class="narration">{}</span>'.format(entry.narration)
             if entry.payee:
@@ -879,7 +880,7 @@ def entries_table(oss, account_postings, render_postings=True):
             for posting in entry.postings:
 
                 classes = ['Posting']
-                if posting.flag == data.FLAG_WARNING:
+                if posting.flag == flags.FLAG_WARNING:
                     classes.append('warning')
 
                 write('''

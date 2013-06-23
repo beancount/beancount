@@ -17,6 +17,7 @@ from beancount.core.position import Lot, Position
 from beancount.utils import csv_utils
 from beancount.utils.text_utils import Matcher
 from beancount.imports import imports
+from beancount.core import flags
 
 
 CONFIG = {
@@ -89,7 +90,7 @@ def import_file(filename, config):
         # Create a new transaction.
         narration = "({0.type}) {0.description}".format(row)
         links = set([row.ref])
-        entry = Transaction(fileloc, date, data.FLAG_IMPORT, None, narration, None, links, [])
+        entry = Transaction(fileloc, date, flags.FLAG_IMPORT, None, narration, None, links, [])
 
         amount = Decimal(row.amount.replace(',', ''))
         assert not row.fees, row

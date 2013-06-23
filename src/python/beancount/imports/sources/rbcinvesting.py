@@ -27,14 +27,14 @@ import datetime
 import subprocess
 import tempfile
 
-from beancount.core import data
-from beancount.core.data import to_decimal
+from beancount.core.amount import to_decimal
 from beancount.core.data import create_simple_posting
 from beancount.core.data import create_simple_posting_with_cost
 from beancount.core.data import Posting, Transaction
 from beancount.core.data import FileLocation
 from beancount.core.account import account_from_name
 from beancount.core.position import Position
+from beancount.core import flags
 from beancount.imports import imports
 from beancount.utils import csv_utils
 
@@ -90,7 +90,7 @@ def import_file(filename, config):
             # Create a new transaction.
             narration = ' -- '.join(filter(None,
                                            [row.action, row.symbol, row.description, settlement]))
-            entry = Transaction(fileloc, row.date, data.FLAG_IMPORT, None, narration, None, None, [])
+            entry = Transaction(fileloc, row.date, flags.FLAG_IMPORT, None, narration, None, None, [])
 
             # Figure out an account for the position.
             if row.symbol:
