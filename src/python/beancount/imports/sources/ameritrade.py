@@ -11,7 +11,7 @@ from beancount.core import data
 from beancount.core.data import create_simple_posting
 from beancount.core.data import Posting, Transaction, Check, Decimal, Lot, Amount
 from beancount.core.data import account_from_name
-from beancount.core.inventory import Position
+from beancount.core.position import Position
 from beancount.imports import imports
 from beancount.utils import csv_utils
 

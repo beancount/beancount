@@ -5,7 +5,6 @@ corresponding latest prices from the internet.
 """
 import csv
 from os import path
-import time
 import re
 import shelve
 from collections import namedtuple
@@ -18,7 +17,6 @@ from beancount.core import data
 from beancount.core.data import Decimal, FileLocation, Price, Amount
 from beancount.parser import load
 from urllib.request import urlopen
-from urllib.parse import quote
 
 
 

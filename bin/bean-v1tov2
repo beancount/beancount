@@ -2,7 +2,6 @@
 """
 Try to automatically convert a V1 .ledger beancount input file to the newer .beancount V2 syntax.
 """
-import os
 import sys
 import re
 import datetime

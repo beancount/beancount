@@ -4,12 +4,9 @@ Load up a ledger and match against various parts of the entries in a way
 that one can iterate with Emacs.
 """
 import re
-from os import path
-import pprint
 
 from beancount import parser
 from beancount import utils
-from beancount.core import validation
 from beancount.core import data
 
 

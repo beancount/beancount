@@ -45,8 +45,8 @@ grind:
 
 
 # Check for unused imports.
-check-imports:
-	sfood-checker bin src/python
+check-deps:
+	sfood-checker bin src/python 2>&1 | grep -v bean-sandbox
 
 
 # Compute and plot inter-module dependencies.

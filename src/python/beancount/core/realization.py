@@ -6,7 +6,8 @@ from itertools import chain, repeat
 from collections import namedtuple, defaultdict
 
 from beancount.utils import tree_utils
-from beancount.core.inventory import Inventory, Position
+from beancount.core.position import Position
+from beancount.core.inventory import Inventory
 from beancount.core.data import *
 from beancount.core import data
 from beancount import utils

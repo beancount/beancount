@@ -1,21 +1,12 @@
 """
-Unit tests for the inventory class.
+Unit tests for the Inventory class.
 """
 import unittest
 import copy
 from datetime import date
 
-from beancount.core.data import Amount, Lot, ZERO
-from beancount.core.inventory import Inventory, Position
-
-
-class TestPosition(unittest.TestCase):
-
-    def test_compare_zero_to_none(self):
-        pos1 = Position(Lot("CAD", None, None), ZERO)
-        pos2 = None
-        self.assertEqual(pos1, pos2)
-        self.assertEqual(pos2, pos1)
+from beancount.core.data import Amount
+from beancount.core.inventory import Inventory
 
 
 class TestInventory(unittest.TestCase):

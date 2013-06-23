@@ -2,10 +2,7 @@
 Tests for parser.
 """
 import unittest
-import functools
-import textwrap
 
-from beancount import parser
 from beancount.parser import parsedoc
 from beancount.core.data import *
 

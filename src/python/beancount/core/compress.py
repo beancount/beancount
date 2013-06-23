@@ -4,7 +4,7 @@ Code to compress multiple entries into a single one, as is done during import.
 import collections
 
 from beancount.core.data import Transaction, Posting
-from beancount.core.inventory import Position
+from beancount.core.position import Position
 
 
 def compress(entries, predicate):

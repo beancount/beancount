@@ -6,7 +6,7 @@ import bs4
 
 from beancount.core import data
 from beancount.core.data import Posting, Transaction, Check, Decimal, Lot, Amount
-from beancount.core.inventory import Position
+from beancount.core.position import Position
 from beancount.imports.sources.ofx import souptodict, soup_get, parse_ofx_time
 from beancount.imports import imports
 

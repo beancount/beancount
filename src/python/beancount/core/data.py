@@ -204,7 +204,7 @@ Posting = namedtuple('Posting', 'entry account position price flag')
 def create_simple_posting(entry, account, number, currency):
     """Create a simple posting on the entry, with just a number and currency (no
     cost)."""
-    from beancount.core.inventory import Position ## FIXME: fix dependency
+    from beancount.core.position import Position ## FIXME: fix dependency
     if not isinstance(number, Decimal):
         number = Decimal(number.replace(',', ''))
     position = Position(Lot(currency, None, None), Decimal(number))
@@ -215,7 +215,7 @@ def create_simple_posting(entry, account, number, currency):
 def create_simple_posting_with_cost(entry, account, number, currency, cost_number, cost_currency):
     """Create a simple posting on the entry, with just a number and currency (no
     cost)."""
-    from beancount.core.inventory import Position ## FIXME: fix dependency
+    from beancount.core.position import Position ## FIXME: fix dependency
     if not isinstance(number, Decimal):
         number = Decimal(number.replace(',', ''))
     if cost_number and not isinstance(cost_number, Decimal):
@@ -231,7 +231,7 @@ NoneType = type(None)
 
 def sanity_check_types(entry):
     """Check that the entry and its postings has all correct data types."""
-    from beancount.core.inventory import Position ## FIXME: fix dependency
+    from beancount.core.position import Position ## FIXME: fix dependency
     assert isinstance(entry, (Transaction, Open, Close, Pad, Check, Note, Event, Price))
     assert isinstance(entry.fileloc, FileLocation)
     assert isinstance(entry.date, datetime.date)

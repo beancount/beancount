@@ -8,7 +8,9 @@ import functools
 
 from beancount import parser
 
-from beancount.core.inventory import Position, Lot, Inventory
+from beancount.core.data import Lot
+from beancount.core.position import Position
+from beancount.core.inventory import Inventory
 from beancount.core import realization
 from beancount.core.data import Open, Pad, Check, Posting
 from beancount.core.data import Decimal, Amount

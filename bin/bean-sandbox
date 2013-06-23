@@ -171,8 +171,8 @@ def main():
         real_log = open('/tmp/real.log', 'w')
         dump_tree_balances(real_accounts, real_log)
         total_balance = summarize.compute_total_balance(entries)
-        print("TRIAL_BALANCE", total_balance, file=real_log)
-        print("TRIAL_BALANCE (cost)", total_balance.get_cost(), file=real_log)
+        # print("TRIAL_BALANCE", total_balance, file=real_log)
+        # print("TRIAL_BALANCE (cost)", total_balance.get_cost(), file=real_log)
 
         with utils.print_time('summarize'):
             account_opening = data.Account('Equity:OpeningBalances', 'Equity')
@@ -182,8 +182,8 @@ def main():
             sum_log = open('/tmp/sum.log', 'w')
             dump_tree_balances(sumreal_accounts, sum_log)
             total_balance = summarize.compute_total_balance(sum_entries)
-            print("TRIAL_BALANCE", total_balance, file=sum_log)
-            print("TRIAL_BALANCE (cost)", total_balance.get_cost(), file=sum_log)
+            # print("TRIAL_BALANCE", total_balance, file=sum_log)
+            # print("TRIAL_BALANCE (cost)", total_balance.get_cost(), file=sum_log)
 
 
     if 0:

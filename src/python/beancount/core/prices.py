@@ -10,7 +10,8 @@ from collections import defaultdict
 
 from beancount.core import data
 from beancount.core.data import Transaction, Posting, Price, Amount, Decimal, FileLocation, Lot
-from beancount.core.inventory import Inventory, Position
+from beancount.core.position import Position
+from beancount.core.inventory import Inventory
 from beancount import utils
 from beancount.core import realization
 

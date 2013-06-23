@@ -3,12 +3,10 @@
 Parse and realize a beancount input file and output a tree of balances.
 """
 import argparse
-import itertools
 import datetime
 
 from beancount.parser import load
 from beancount.core import realization
-from beancount import utils
 
 
 # FIXME: This will move into beancount.core.realization.

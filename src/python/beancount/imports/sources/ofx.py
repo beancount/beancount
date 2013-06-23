@@ -13,7 +13,7 @@ import bs4
 
 from beancount.core import data
 from beancount.core.data import Posting, Transaction, Decimal, Lot
-from beancount.core.inventory import Position
+from beancount.core.position import Position
 from beancount.imports import imports
 
 

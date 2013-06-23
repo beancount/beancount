@@ -4,12 +4,6 @@ Read a beancount input file and a directory name, and attempt to identify and
 convert the files in the directory. There is also an option to automatically
 file succesfully detected and converted input files.
 """
-import sys
-import re
-import datetime
-import logging
-
-from beancount.parser import load
 from beancount.imports import scripts
 
 
