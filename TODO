@@ -68,14 +68,18 @@ beancount: TODO
   - (check) A check on a parent account is necessary for joint accounts with subaccounts...
   - (import) We need to be able to invert the input (this is easy, rendering only)
 
+
 * Core
 ** General
 
   - Clean up code: remove all significant codes from __init__.py files.
 
-** Inventory
+  - Run pylint on the entire codebase.
 
-  - Move 'Lot' class from data.py to inventory.py, just makes sense.
+  - Make all imports outside of packages import from the package root, and have
+    the package export those symbols explicitly.
+
+** Inventory
 
   - inventory: rename get_cost() vs. get_cost_position(). Swap them, change all
     the code that needs be changed.
