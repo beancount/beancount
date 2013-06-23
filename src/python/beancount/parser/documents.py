@@ -105,6 +105,7 @@ def find_documents(root_directory, input_filename, entries):
     new_entries = []
 
     accounts = data.gather_accounts(entries)
+    root_directory = path.abspath(root_directory)
     for root, account_name, dirs, files in walk_accounts(root_directory):
 
         # Look for files that have a dated filename.

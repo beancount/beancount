@@ -2,8 +2,14 @@
 beancount: TODO
 * Current
 
-  - Parser errors should not throw exceptions... we need to recover from these
-    gracefully.
+  - BUG: Don't crap out when you can't read the file; error should be reported
+    like the other ones.
+
+  - BUG: Parser errors should not throw exceptions... we need to recover from
+    these gracefully.
+
+  - BUG: Max recursion error accessing this URL:
+    http://localhost:8080/view/year/2013/account/Assets/US/Vanguard
 
   - Code org: do split up the inventory and data.py with the files that provide
     operations; these really should be two separate modules.

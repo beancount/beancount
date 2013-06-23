@@ -200,8 +200,8 @@ def style():
     return STYLE
 
 
-@app.route('/doc/<filename:re:.*>', name='servedoc')
-def servedoc(filename=None):
+@app.route('/doc/<filename:re:.*>', name='doc')
+def doc(filename=None):
     "Serve static filenames for documents directives."
 
     filename = '/' + filename
@@ -755,9 +755,10 @@ def entries_table_with_balance(oss, account_postings, render_postings=True):
             balance_str = ''
 
         elif isinstance(entry, Document):
+            assert path.isabs(entry.filename)
             description = 'Document for {}: "<a href="{}" class="filename">{}</a>"'.format(
                 account_link(entry.account),
-                app.router.build('servedoc', filename=entry.filename.lstrip('/')),
+                app.router.build('doc', filename=entry.filename.lstrip('/')),
                 path.basename(entry.filename))
             change_str = ''
             balance_str = ''
@@ -867,9 +868,10 @@ def entries_table(oss, account_postings, render_postings=True):
             balance_str = ''
 
         elif isinstance(entry, Document):
+            assert path.isabs(entry.filename)
             description = 'Document for {}: "<a href="{}" class="filename">{}</a>"'.format(
                 account_link(entry.account),
-                app.router.build('servedoc', filename=entry.filename.lstrip('/')),
+                app.router.build('doc', filename=entry.filename.lstrip('/')),
                 path.basename(entry.filename))
             change_str = ''
             balance_str = ''

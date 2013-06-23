@@ -2,11 +2,11 @@
 Sanity checks.
 (Note that these don't have anything to do with 'Check' directives.
 """
-# FIXME: TODO -- see TODO file, many to implement.
-
+from os import path
 from collections import namedtuple
 
-from beancount.core.data import Account, Open, Close, Transaction
+from beancount.core.data import Account
+from beancount.core.data import Open, Close, Transaction, Document
 from beancount.core import data
 from beancount import utils
 
@@ -104,6 +104,14 @@ def validate_unused_accounts(entries, accounts):
             for account in unused_accounts]
 
 
+def validate_documents_paths(entries):
+    """Check that all filenames in Document entries are absolute filenames."""
+
+    return [ValidationError(entry.fileloc, "Invalid relative path for entry.", entry)
+            for entry in utils.filter_type(entries, Document)
+            if not path.isabs(entry.filename)]
+
+
 def validate(entries):
     """Perform all the standard checks on parsed contents."""
 
@@ -115,7 +123,10 @@ def validate(entries):
     # Validate open/close directives and accounts referred outside of those.
     check_errors, _, _ = validate_open_close(entries, accounts)
 
-    errors = unused_errors + check_errors
+    # Sanity checks for documents.
+    doc_errors = validate_documents_paths(entries)
+
+    errors = unused_errors + check_errors + doc_errors
     return errors
 
 
@@ -155,3 +166,4 @@ def validate(entries):
 
 
 
+# FIXME: TODO -- see TODO file, many to implement.
