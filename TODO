@@ -2,6 +2,17 @@
 beancount: TODO
 * Current
 
+  - CONVERSIONS
+    * Remove manual entries in my own
+    * Build good examples to understand, with positions held at cost, as tests
+    * Finalize adding the code in
+
+
+  - Data vs. Ops:
+      Data: amount, account, inventory, position, realization
+      Ops: all the rest, including validation
+
+
   - BUG: Don't crap out when you can't read the file; error should be reported
     like the other ones.
 
@@ -23,11 +34,10 @@ beancount: TODO
     an interface to query it and report results in a table, in the web UI.
 
 
-  - CONVERSIONS
   - AUTO-CATEGORIZATION
   - Realization as a simple tree
   - Flip balances for rendering
-  - Implement Average Booking for Vanguard
+  - Implement Average Booking for Vanguard & RBC Adjustment
   - Write an importer for the Ameritrade FOREX log
   - We need checks for subaccounts for joint accounts - implement this
   - Implement txt and xls export.
