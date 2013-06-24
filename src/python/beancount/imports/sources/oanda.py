@@ -10,13 +10,13 @@ import collections
 
 from beancount.core import data
 from beancount.core.amount import Decimal, Amount
+from beancount.core.account import accountify_dict
 from beancount.core.data import Posting, Transaction, Check, Note
 from beancount.core.data import format_entry
 from beancount.core.position import Lot, Position
 from beancount.ops import compress
 from beancount.core import flags
 from beancount.utils import csv_utils
-from beancount.imports import imports
 
 
 CONFIG = {
@@ -31,7 +31,7 @@ CONFIG = {
 
 
 def import_file(filename, config):
-    config = imports.module_config_accountify(config)
+    config = accountify_dict(config)
     return import_csv_file(filename, config)
 
 

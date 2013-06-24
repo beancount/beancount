@@ -129,15 +129,6 @@ def verify_config(module, module_config):
     return success
 
 
-def module_config_accountify(module_config):
-    """Convert module config options that have values that are account names into
-    Account instances. This is a convenience designed to be used by the
-    importers.
-    """
-    return {key: account_from_name(value) if is_account_name(value) else value
-            for key, value in module_config.items()}
-
-
 def import_file(filename, matches):
     """Import entries from a single file.
     Matches is a list of (module, module_config) tuples to run on this file."""

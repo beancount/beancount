@@ -16,7 +16,7 @@ from beancount.core.data import Transaction, Posting, Pad, Check
 from beancount.core.position import Lot, Position
 from beancount.utils import csv_utils
 from beancount.utils.text_utils import Matcher
-from beancount.imports import imports
+from beancount.core.account import accountify_dict
 from beancount.core import flags
 
 
@@ -41,7 +41,7 @@ CONFIG = {
 def import_file(filename, config):
     """Import a CSV file from Think-or-Swim."""
 
-    config = imports.module_config_accountify(config)
+    config = accountify_dict(config)
     new_entries = []
 
     cash_currency = config['cash_currency']

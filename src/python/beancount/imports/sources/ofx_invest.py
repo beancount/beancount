@@ -10,7 +10,7 @@ from beancount.core import data
 from beancount.core.data import Posting, Transaction, Check
 from beancount.core.position import Lot, Position
 from beancount.imports.sources.ofx import souptodict, soup_get, parse_ofx_time
-from beancount.imports import imports
+from beancount.core.account import accountify_dict
 from beancount.core import flags
 
 
@@ -30,7 +30,7 @@ def import_file(filename, config):
     given account. This function returns a list of entries possibly partially
     filled entries.
     """
-    config = imports.module_config_accountify(config)
+    config = accountify_dict(config)
 
     # Prepare mappings to accounts from the config provided.
     source_subaccounts = {

@@ -66,3 +66,16 @@ def is_balance_sheet_account_name(account_name, options):
 def is_income_statement_account(account):
     return account.type in ('Income', 'Expenses')
     # FIXME: Remove these hardcoded strings; use the options instead.
+
+
+def accountify_dict(string_dict):
+    """Convert the dictionary itms that have values which are account names into
+    Account instances. This is a simple core convenience designed to be used by the
+    importers, so that configurations can be specified in terms of strings, like this:
+
+       {'asset': 'Assets:US:Checking', <---- See how this is just a string.
+        ...}
+
+    """
+    return {key: account_from_name(value) if is_account_name(value) else value
+            for key, value in string_dict.items()}

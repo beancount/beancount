@@ -13,7 +13,7 @@ from beancount.core import data
 from beancount.core.amount import Decimal, Amount
 from beancount.core.data import Transaction, Check
 from beancount.utils import csv_utils
-from beancount.imports import imports
+from beancount.core.account import accountify_dict
 from beancount.core import flags
 
 
@@ -28,7 +28,7 @@ CONFIG = {
 def import_file(filename, config):
     """Import a PayPal CSV file."""
 
-    config = imports.module_config_accountify(config)
+    config = accountify_dict(config)
     new_entries = []
 
     # Read and reverse the entire file, it's ordered wrong.
