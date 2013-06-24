@@ -32,7 +32,7 @@ from beancount.utils.text_utils import replace_numbers
 from beancount.core.account import Account, account_type
 from beancount.core.account import is_balance_sheet_account_name, is_income_statement_account
 from beancount.core import flags
-from beancount import load
+from beancount.loader import load
 
 
 #--------------------------------------------------------------------------------

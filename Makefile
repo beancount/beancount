@@ -70,14 +70,16 @@ CLUSTERS = 					\
 	beancount/utils				\
 	beancount/web
 
+GRAPHER = dot
+
 build/beancount.pdf: build/beancount.deps
-	cat $< | sfood-cluster $(CLUSTERS) | sfood-graph | dot -Tps | ps2pdf - $@
+	cat $< | sfood-cluster $(CLUSTERS) | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
 
 showdeps: build/beancount.pdf
 	evince $<
 
 build/beancount-notests.pdf: build/beancount.deps
-	cat $< | grep -v /tests/ | sfood-cluster $(CLUSTERS) | sfood-graph | dot -Tps | ps2pdf - $@
+	cat $< | grep -v /tests | sfood-cluster $(CLUSTERS) | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
 
 showdeps-notests: build/beancount-notests.pdf
 	evince $<
@@ -87,7 +89,7 @@ showdeps-notests: build/beancount-notests.pdf
 # We are considering a separation of the basic data structure and the basic operations.
 # This provides the detail of the relationships between these sets of fils.
 build/beancount-core.pdf: build/beancount-core.deps
-	sfood -ii src/python/beancount/core/*.py | sfood-graph | dot -Tps | ps2pdf - $@
+	sfood -ii src/python/beancount/core/*.py | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
 
 showdeps-core: build/beancount-core.pdf
 	evince $<

@@ -8,7 +8,7 @@ import argparse
 from beancount.imports import imports
 from beancount.imports import filing
 from beancount import parser
-from beancount import load
+from beancount.loader import load
 
 
 def create_parser(beancount_file=None,
