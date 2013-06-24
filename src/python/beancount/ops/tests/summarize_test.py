@@ -210,4 +210,3 @@ class TestOpenAtDate(unittest.TestCase):
 
 # FIXME: Add a test of two open directives for the same account, should fail.
 
-

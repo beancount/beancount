@@ -8,9 +8,10 @@ from beancount.core.position import Lot, Position
 from beancount.core.inventory import Inventory
 from beancount.core.data import Open, Pad, Check, Posting
 from beancount.core.amount import Decimal, Amount
+from beancount.core.tests.realization_test import realizedoc
 
 
-class TestPadding(unittest.TestCase):
+class __TestPadding(unittest.TestCase):
 
     def check_real_types(self, real_account, entry_types):
         """Check the types of entries rendered."""

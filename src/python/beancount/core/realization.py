@@ -147,22 +147,24 @@ def _get_subpostings(real_account, accumulator):
 
 
 def dump_tree_balances(real_accounts, foutput=None):
-    """Dump a simple tree of the account balances, for debugging."""
+    """Dump a simple tree of the account balances at cost, for debugging."""
 
     if foutput is None:
         foutput = sys.stdout
 
     lines = list(real_accounts.render_lines())
-    width = max(len(line[0]) for line in lines)
+    width = max(len(line[0] + line[2]) for line in lines)
+
     for line_first, line_next, account_name, real_account in lines:
         last_entry = real_account.postings[-1] if real_account.postings else None
-        balance = getattr(last_entry, 'balance', None)
+        balance = getattr(real_account, 'balance', None)
         if balance:
             amounts = balance.get_cost().get_amounts()
             positions = ['{0.number:12,.2f} {0.currency}'.format(amount)
                          for amount in sorted(amounts, key=amount_sortkey)]
         else:
             positions = ['']
+
         for position, line in zip(positions, chain((line_first + account_name,),
                                                    repeat(line_next))):
             foutput.write('{:{width}}   {:16}\n'.format(line, position, width=width))

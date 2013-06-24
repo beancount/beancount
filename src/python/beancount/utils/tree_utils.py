@@ -108,7 +108,7 @@ def render(root, node_adaptor):
       root: The root node of the hierarchy.
       node_adaptor: An adaptor for nodes, to get the name and children.
     Yields:
-      Pairs of (line, node).
+      Tuples of (line, next-line, node-name, node).
     """
 
     # Create a rendering context.

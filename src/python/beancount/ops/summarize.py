@@ -44,50 +44,8 @@ def clamp(entries, begin_date, end_date,
     # Summarize all the previous balances.
     entries, index = summarize(entries, begin_date, account_opening)
 
-
-
-
-
-
-## FIXME: complete Conversions transfer.
-    __TEST_CONVERSIONS__ = False
-    if __TEST_CONVERSIONS__:
-
-        # Insert entries to account for conversions until the begin date.
-        iter_entries = iter(entries)
-        prev_balance = inventory.Inventory()
-        for begin_index, entry in enumerate(iter_entries):
-            if entry.date >= begin_date:
-                last_entry = entry
-                break
-            if isinstance(entry, Transaction):
-                for posting in entry.postings:
-                    prev_balance.add_position(posting.position, allow_negative=True)
-
-        print('prev_balance', prev_balance.get_cost())
-
-        next_balance = copy.copy(prev_balance)
-        for entry in itertools.chain((last_entry,), iter_entries):
-            if isinstance(entry, Transaction):
-                for posting in entry.postings:
-                    next_balance.add_position(posting.position, allow_negative=True)
-
-        print('next_balance', next_balance.get_cost())
-
-        fileloc = FileLocation('<conversions>', -1)
-        narration = 'Conversion for {}'.format(next_balance)
-        conversion_entry = Transaction(fileloc, end_date, flags.FLAG_CONVERSIONS, None, narration, None, None, [])
-        for position in next_balance.get_cost().get_positions():
-            conversion_entry.postings.append(
-                Posting(conversion_entry, account_conversions, -position, None, None))
-
     # Truncate the entries after this.
     entries = truncate(entries, end_date)
-
-
-
-    if __TEST_CONVERSIONS__:
-        entries.append(conversion_entry)
 
     return entries, index
 
