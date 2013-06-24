@@ -3,18 +3,11 @@ Unit tests for padding.
 """
 
 import unittest
-import textwrap
-import functools
-
-from beancount import parser
 
 from beancount.core.position import Lot, Position
 from beancount.core.inventory import Inventory
-from beancount.core import realization
 from beancount.core.data import Open, Pad, Check, Posting
 from beancount.core.amount import Decimal, Amount
-from beancount.core import data
-from beancount.ops import pad
 
 
 class TestPadding(unittest.TestCase):
