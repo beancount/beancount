@@ -20,7 +20,7 @@ from beancount.core.account import Account, account_leaf_name, is_account_root
 from beancount.core.position import Lot
 from beancount.core.data import Open, Close, Check, Transaction, Note, Document, Posting
 from beancount.ops import summarize
-from beancount.ops.balance import get_balance_amount
+from beancount.core.balance import get_balance_amount
 from beancount.core.inventory import Inventory
 from beancount.core import realization
 from beancount.core.realization import RealAccount

@@ -47,28 +47,6 @@ Document    = namedtuple('Document'    , 'fileloc date account filename')
 Posting = namedtuple('Posting', 'entry account position price flag')
 
 
-def get_balance_amount(posting):
-    """Get the amount that will need to be balanced from a posting
-    of a transaction. (This is a *key* element of the semantics of transactions
-    in this software.)"""
-
-    # It the position has a cost, use that to balance this posting.
-    position = posting.position
-    lot = position.lot
-    if lot.cost:
-        amount = amount_mult(lot.cost, position.number)
-
-    # If there is a price, use that to balance this posting.
-    elif posting.price:
-        amount = amount_mult(posting.price, position.number)
-
-    # Otherwise, just use the amount itself.
-    else:
-        amount = position.get_amount()
-
-    return amount
-
-
 def create_simple_posting(entry, account, number, currency):
     """Create a simple posting on the entry, with just a number and currency (no
     cost)."""
