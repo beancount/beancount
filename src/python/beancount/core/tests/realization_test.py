@@ -14,7 +14,7 @@ from beancount.core import realization
 from beancount.core.data import Open, Pad, Check, Posting
 from beancount.core.amount import Decimal, Amount
 from beancount.core import data
-from beancount.core import pad
+from beancount.ops import pad
 
 
 

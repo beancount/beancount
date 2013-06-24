@@ -13,7 +13,7 @@ from beancount.core.amount import Decimal, Amount
 from beancount.core.data import Posting, Transaction, Check, Note
 from beancount.core.data import format_entry
 from beancount.core.position import Lot, Position
-from beancount.core import compress
+from beancount.ops import compress
 from beancount.core import flags
 from beancount.utils import csv_utils
 from beancount.imports import imports

@@ -18,15 +18,15 @@ from matplotlib import pyplot
 from beancount.core import data
 from beancount.core.data import Transaction, Price, Decimal
 from beancount.core import realization
-from beancount.core import summarize
-from beancount.core import validation
+from beancount.ops import summarize
+from beancount.ops import validation
 from beancount.core.data import render_fileloc
 from beancount.core.inventory import Inventory
 from beancount.core.realization import dump_tree_balances
 from beancount import parser
 from beancount import utils
 from beancount.utils.bisect_key import bisect_left_withkey
-from beancount.core import prices
+from beancount.ops import prices
 from beancount.core.account import account_type, account_names_sortkey
 
 

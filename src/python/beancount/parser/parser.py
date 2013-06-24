@@ -18,7 +18,7 @@ from beancount.core.position import Lot, Position
 from beancount.core.data import Transaction, Check, Open, Close, Pad, Event, Price, Note, Document, FileLocation, Posting
 from beancount.core.account import Account, account_type
 from beancount.core.data import reparent_posting
-from beancount.core import balance
+from beancount.ops import balance
 
 
 # Options.

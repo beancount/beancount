@@ -19,12 +19,12 @@ from beancount.core import data
 from beancount.core.account import Account, account_leaf_name, is_account_root
 from beancount.core.position import Lot
 from beancount.core.data import Open, Close, Check, Transaction, Note, Document, Posting
-from beancount.core import summarize
-from beancount.core.balance import get_balance_amount
+from beancount.ops import summarize
+from beancount.ops.balance import get_balance_amount
 from beancount.core.inventory import Inventory
 from beancount.core import realization
 from beancount.core.realization import RealAccount
-from beancount.core import prices
+from beancount.ops import prices
 from beancount import parser
 from beancount import utils
 from beancount.utils import index_key

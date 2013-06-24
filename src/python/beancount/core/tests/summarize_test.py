@@ -10,8 +10,8 @@ import functools
 
 from beancount.core.account import Account, is_income_statement_account
 from beancount.core.realization import realize, dump_tree_balances, compare_realizations, real_cost_as_dict
-from beancount.core.pad import pad
-from beancount.core.summarize import summarize, transfer, open_at_date
+from beancount.ops.pad import pad
+from beancount.ops.summarize import summarize, transfer, open_at_date
 
 from beancount import parser
 from beancount.parser import parsedoc

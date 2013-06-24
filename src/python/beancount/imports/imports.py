@@ -18,7 +18,7 @@ import textwrap
 from beancount.core import data
 from beancount.core.data import format_entry
 from beancount.core.account import is_account_name, account_from_name
-from beancount.core.dups import find_duplicate_entries
+from beancount.ops.dups import find_duplicate_entries
 from beancount import utils
 from beancount.imports.filetype import guess_file_type
 

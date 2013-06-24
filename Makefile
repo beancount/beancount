@@ -58,11 +58,13 @@ build/beancount.deps:
 CLUSTERS = 					\
 	beancount/imports/sources		\
 	beancount/core/tests			\
+	beancount/ops/tests			\
 	beancount/parser/tests			\
 	beancount/imports/tests			\
 	beancount/utils/tests			\
 	beancount/web/tests			\
 	beancount/core				\
+	beancount/ops				\
 	beancount/parser			\
 	beancount/imports			\
 	beancount/utils				\

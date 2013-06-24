@@ -6,7 +6,7 @@ import collections
 from beancount.core.amount import Decimal, amount_mult, ZERO
 from beancount.core.inventory import Inventory
 from beancount.core.position import Lot, Position
-from beancount.core.data import Posting
+from beancount.core.data import Posting, get_balance_amount
 
 
 # An error from balancing the postings.
@@ -41,28 +41,6 @@ def compute_residual(postings):
         inventory.add(amount)
 
     return inventory
-
-
-def get_balance_amount(posting):
-    """Get the amount that will need to be balanced from a posting
-    of a transaction. (This is a *key* element of the semantics of transactions
-    in this software.)"""
-
-    # It the position has a cost, use that to balance this posting.
-    position = posting.position
-    lot = position.lot
-    if lot.cost:
-        amount = amount_mult(lot.cost, position.number)
-
-    # If there is a price, use that to balance this posting.
-    elif posting.price:
-        amount = amount_mult(posting.price, position.number)
-
-    # Otherwise, just use the amount itself.
-    else:
-        amount = position.get_amount()
-
-    return amount
 
 
 def balance_incomplete_postings(fileloc, entry):
