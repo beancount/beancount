@@ -11,7 +11,7 @@ import functools
 from beancount.core.account import Account, is_income_statement_account
 from beancount.core.realization import realize, dump_tree_balances, compare_realizations, real_cost_as_dict
 from beancount.ops.pad import pad
-from beancount.ops.summarize import summarize, transfer, open_at_date
+from beancount.ops.summarize import summarize, transfer_balances, open_at_date
 
 from beancount import parser
 from beancount.parser import parsedoc
@@ -141,8 +141,8 @@ class TestSummarization(unittest.TestCase):
         entries, pad_errors = pad(entries)
 
         report_date = date(2012, 1, 1)
-        tran_entries = transfer(entries, report_date,
-                                is_income_statement_account, TRANSFER_BALANCES)
+        tran_entries = transfer_balances(entries, report_date,
+                                         is_income_statement_account, TRANSFER_BALANCES)
 
         sum_entries, _ = summarize(tran_entries, report_date, OPENING_BALANCES)
         real_accounts = realize(sum_entries, do_check=True)
@@ -176,8 +176,8 @@ class TestTransferBalances(unittest.TestCase):
                          {'Assets:Checking': 'Inventory(2000.00 USD)',
                           'Income:Job': 'Inventory(-2000.00 USD)'})
 
-        tran_entries = transfer(entries, date(2012, 6, 1),
-                                is_income_statement_account, TRANSFER_BALANCES)
+        tran_entries = transfer_balances(entries, date(2012, 6, 1),
+                                         is_income_statement_account, TRANSFER_BALANCES)
 
         real_accounts = realize(tran_entries, do_check=True)
         self.assertEqual(real_cost_as_dict(real_accounts),

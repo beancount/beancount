@@ -38,8 +38,8 @@ def clamp(entries, begin_date, end_date,
     """
 
     # Transfer income and expenses before the period to equity.
-    entries = transfer(entries, begin_date,
-                       is_income_statement_account, account_transfer)
+    entries = transfer_balances(entries, begin_date,
+                                is_income_statement_account, account_transfer)
 
     # Summarize all the previous balances.
     entries, index = summarize(entries, begin_date, account_opening)
@@ -50,7 +50,7 @@ def clamp(entries, begin_date, end_date,
     return entries, index
 
 
-def transfer(entries, date, account_pred, transfer_account):
+def transfer_balances(entries, date, account_pred, transfer_account):
     """For all accounts that match the 'account_pred' predicate, create new
     entries to transfer the balance at the given date 'date' from the account
     to the transfer account. Return a new list of entries, with the new

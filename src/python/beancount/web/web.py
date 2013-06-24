@@ -1130,8 +1130,8 @@ class View:
         account_netincome = Account(account_netincome,
                                     account_type(account_netincome))
 
-        self.closing_entries = summarize.transfer(self.entries, None,
-                                                  is_income_statement_account, account_netincome)
+        self.closing_entries = summarize.transfer_balances(self.entries, None,
+                                                           is_income_statement_account, account_netincome)
 
         # Realize the three sets of entries.
         do_check = False

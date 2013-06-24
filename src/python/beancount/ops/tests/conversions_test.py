@@ -10,7 +10,7 @@ import functools
 from beancount.core.account import Account, is_income_statement_account
 from beancount.core import realization
 from beancount.ops.pad import pad
-from beancount.ops.summarize import summarize, transfer, open_at_date
+from beancount.ops.summarize import summarize, transfer_balances, open_at_date
 from beancount import parser
 from beancount.parser import parsedoc
 from beancount.loader import loaddoc

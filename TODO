@@ -47,9 +47,6 @@ beancount: TODO
   - We need checks for subaccounts for joint accounts - implement this
   - Implement txt and xls export.
 
-  - Rename "transfer()" into something more meaningful, like "clear_income()"
-    and perhaps parameterize the account roots.
-
   - Reconcile entries_table() with entries_table_with_balance().
     We really need some common code there.
 
