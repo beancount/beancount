@@ -14,6 +14,7 @@ from beancount.core import realization
 from beancount.core.data import Open, Pad, Check, Posting
 from beancount.core.amount import Decimal, Amount
 from beancount.core import data
+from beancount.core import pad
 
 
 
@@ -25,7 +26,7 @@ def realizedoc(fun):
     @functools.wraps(fun)
     def newfun(self):
         entries, parse_errors, options = parser.parse_string(textwrap.dedent(fun.__doc__))
-        entries, pad_errors = realization.pad(entries)
+        entries, pad_errors = pad.pad(entries)
         errors = parse_errors + pad_errors
 
         real_accounts = realization.realize(entries, do_check=True)

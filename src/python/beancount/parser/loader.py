@@ -8,9 +8,11 @@ from beancount import utils
 from beancount.parser import parser
 from beancount.parser import documents
 from beancount.core import data
+from beancount.core import pad
 from beancount.core import realization
 from beancount.core import validation
 from beancount.core import prices
+from beancount.core import check
 
 
 def load(filename,
@@ -27,10 +29,10 @@ def load(filename,
     # Pad the resulting entries (create synthetic Pad entries to balance checks
     # where desired).
     with utils.print_time('pad', quiet):
-        entries, pad_errors = realization.pad(entries)
+        entries, pad_errors = pad.pad(entries)
 
     with utils.print_time('check', quiet):
-        entries, check_errors = realization.check(entries)
+        entries, check_errors = check.check(entries)
 
     # Process the document entries and find documents automatically.
     with utils.print_time('documents', quiet):

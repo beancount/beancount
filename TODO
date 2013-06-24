@@ -7,10 +7,16 @@ beancount: TODO
     * Build good examples to understand, with positions held at cost, as tests
     * Finalize adding the code in
 
-
   - Data vs. Ops:
       Data: amount, account, inventory, position, realization
       Ops: all the rest, including validation
+    - Cleanup : bottom of web.py, and entries_table.
+
+  - Before we start importing, validate that the importer modules all have a
+    CONFIG, import_file and import_date functions.  This will help thirdparty
+    implementors.
+
+
 
 
   - BUG: Don't crap out when you can't read the file; error should be reported
