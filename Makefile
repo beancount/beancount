@@ -76,6 +76,13 @@ build/beancount.pdf: build/beancount.deps
 showdeps: build/beancount.pdf
 	evince $<
 
+build/beancount-notests.pdf: build/beancount.deps
+	cat $< | grep -v /tests/ | sfood-cluster $(CLUSTERS) | sfood-graph | dot -Tps | ps2pdf - $@
+
+showdeps-notests: build/beancount-notests.pdf
+	evince $<
+
+
 # Compute ahd plot the dependencies within the core.
 # We are considering a separation of the basic data structure and the basic operations.
 # This provides the detail of the relationships between these sets of fils.
