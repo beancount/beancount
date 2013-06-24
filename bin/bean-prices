@@ -16,7 +16,7 @@ from beancount.ops import prices
 from beancount.core import data
 from beancount.core.data import FileLocation, Price
 from beancount.core.amount import Decimal, Amount
-from beancount.parser import load
+from beancount import load
 from urllib.request import urlopen
 
 

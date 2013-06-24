@@ -5,7 +5,7 @@ This also measures the time it takes to run all these steps.
 """
 import argparse
 
-from beancount.parser import load
+from beancount import load
 from beancount.core import realization
 from beancount import utils
 

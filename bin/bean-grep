@@ -5,6 +5,7 @@ that one can iterate with Emacs.
 """
 import re
 
+from beancount import load
 from beancount import parser
 from beancount import utils
 from beancount.core import data
@@ -30,7 +31,7 @@ def main():
     opts = optparser.parse_args()
 
     # Parse the input file.
-    entries, errors, options = parser.load(opts.filename, quiet=True)
+    entries, errors, options = load(opts.filename, quiet=True)
 
     # Create a mapping from a unique value (we're using the fileloc) to the
     # entry objects.

@@ -23,6 +23,7 @@ from beancount.ops import validation
 from beancount.core.data import render_fileloc
 from beancount.core.inventory import Inventory
 from beancount.core.realization import dump_tree_balances
+from beancount import load
 from beancount import parser
 from beancount import utils
 from beancount.utils.bisect_key import bisect_left_withkey
@@ -118,7 +119,7 @@ def main():
     opts = argparser.parse_args()
 
     with utils.print_time('load'):
-        entries, errors, options = parser.load(opts.filename)
+        entries, errors, options = load(opts.filename)
 
     with utils.print_time('compute_total_balance'):
         summarize.compute_total_balance(entries)

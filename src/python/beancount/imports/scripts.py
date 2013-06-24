@@ -8,6 +8,7 @@ import argparse
 from beancount.imports import imports
 from beancount.imports import filing
 from beancount import parser
+from beancount import load
 
 
 def create_parser(beancount_file=None,
@@ -95,7 +96,7 @@ def import_with_options(importer_config, opts):
 
         # If specified, parse the ledger and get the entries from it.
         if opts.beancount:
-            crosscheck_entries, _, _ = parser.load(opts.beancount, quiet=True)
+            crosscheck_entries, _, _ = load(opts.beancount, quiet=True)
         else:
             crosscheck_entries = []
 

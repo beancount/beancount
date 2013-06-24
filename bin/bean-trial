@@ -5,7 +5,7 @@ Parse and realize a beancount input file and output a tree of balances.
 import argparse
 import datetime
 
-from beancount.parser import load
+from beancount import load
 from beancount.core import realization
 
 

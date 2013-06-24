@@ -32,6 +32,7 @@ from beancount.utils.text_utils import replace_numbers
 from beancount.core.account import Account, account_type
 from beancount.core.account import is_balance_sheet_account_name, is_income_statement_account
 from beancount.core import flags
+from beancount import load
 
 
 #--------------------------------------------------------------------------------
@@ -1283,9 +1284,9 @@ def auto_reload_input_file(callback):
             print('RELOADING')
 
             # Parse the beancount file.
-            entries, errors, options = parser.load(filename,
-                                                   add_unrealized_gains=True,
-                                                   do_print_errors=True)
+            entries, errors, options = load(filename,
+                                            add_unrealized_gains=True,
+                                            do_print_errors=True)
 
             # Save globals in the global app.
             app.entries = entries

@@ -2,7 +2,7 @@
 """
 Print a list of all the accounts and some associated information.
 """
-from beancount.parser import load
+from beancount import load
 from beancount.core import data
 from beancount.core.account import account_sortkey
 
