@@ -8,6 +8,7 @@ from collections import namedtuple
 from beancount.core.account import Account
 from beancount.core.data import Open, Close, Transaction, Document
 from beancount.core import data
+from beancount.core import getters
 from beancount import utils
 
 
@@ -115,7 +116,7 @@ def validate_documents_paths(entries):
 def validate(entries):
     """Perform all the standard checks on parsed contents."""
 
-    accounts = data.gather_accounts(entries).values()
+    accounts = getters.gather_accounts(entries).values()
 
     # Check for unused accounts.
     unused_errors = validate_unused_accounts(entries, accounts)

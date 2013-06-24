@@ -4,7 +4,11 @@ beancount: TODO
 
   - Teasing out groups:
       Can we move documents to ops?
-      Cleanup : bottom of web.py, and entries_table.
+      Move data.GetAccoutns and other get functions to ops.getters.py
+      Cleanup : entries_table.
+      web.py: Move the table rendering routines to their own files.
+      web.py: Move the views to their own file.
+
 
   - CONVERSIONS
     * Remove manual entries in my own

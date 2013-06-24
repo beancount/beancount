@@ -8,8 +8,6 @@ total amount of that account.
 """
 import datetime
 import logging
-import itertools
-import copy
 from collections import defaultdict
 
 from beancount.core import inventory

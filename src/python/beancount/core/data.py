@@ -3,11 +3,11 @@
 import io
 import datetime
 import textwrap
-from collections import namedtuple, defaultdict
+from collections import namedtuple
 
-from beancount import utils
 from beancount.core.amount import Amount
 from beancount.core.account import Account
+from beancount.core.position import Position
 
 
 # The location in a source file where the directive was read from.
@@ -50,7 +50,6 @@ Posting = namedtuple('Posting', 'entry account position price flag')
 def create_simple_posting(entry, account, number, currency):
     """Create a simple posting on the entry, with just a number and currency (no
     cost)."""
-    from beancount.core.position import Position ## FIXME: fix dependency
     if not isinstance(number, Decimal):
         number = Decimal(number.replace(',', ''))
     position = Position(Lot(currency, None, None), Decimal(number))
@@ -61,7 +60,6 @@ def create_simple_posting(entry, account, number, currency):
 def create_simple_posting_with_cost(entry, account, number, currency, cost_number, cost_currency):
     """Create a simple posting on the entry, with just a number and currency (no
     cost)."""
-    from beancount.core.position import Position ## FIXME: fix dependency
     if not isinstance(number, Decimal):
         number = Decimal(number.replace(',', ''))
     if cost_number and not isinstance(cost_number, Decimal):
@@ -77,7 +75,6 @@ NoneType = type(None)
 
 def sanity_check_types(entry):
     """Check that the entry and its postings has all correct data types."""
-    from beancount.core.position import Position ## FIXME: fix dependency
     assert isinstance(entry, (Transaction, Open, Close, Pad, Check, Note, Event, Price))
     assert isinstance(entry.fileloc, FileLocation)
     assert isinstance(entry.date, datetime.date)
@@ -124,8 +121,6 @@ def transaction_has_conversion(transaction):
     return False
 
 
-
-
 # Sort with the checks at the BEGINNING of the day.
 SORT_ORDER = {Open: -2, Check: -1, Close: 1}
 
@@ -147,86 +142,6 @@ def posting_sortkey(entry):
     if isinstance(entry, Posting):
         entry = entry.entry
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.fileloc.lineno)
-
-
-class GetAccounts:
-    """Gather the list of accounts from the list of entries.
-    (This runs much, much faster than the corresponding generic routine.)
-    """
-    def __call__(self, entries):
-        accounts = {}
-        for entry in entries:
-            for account in getattr(self, entry.__class__.__name__)(entry):
-                accounts[account.name] = account
-        return accounts
-
-    def Transaction(_, entry):
-        for posting in entry.postings:
-            yield posting.account
-
-    def Pad(_, entry):
-        return (entry.account, entry.account_pad)
-
-    def _one(_, entry):
-        return (entry.account,)
-
-    def _zero(_, entry):
-        return ()
-
-    Open = Close = Check = Note = Document = _one
-    Event = Price = _zero
-
-def gather_accounts(entries):
-    return GetAccounts()(entries)
-
-
-#
-# Common operations on lists of entries.
-#
-
-def get_min_max_dates(entries):
-    """Return the minimum and amximum dates in the list of entries."""
-    if entries:
-        return (entries[0].date, entries[-1].date)
-    else:
-        return (None, None)
-
-
-def get_active_years(entries):
-    """Yield all the years that have at least one entry in them."""
-    prev_year = None
-    for entry in entries:
-        year = entry.date.year
-        if year != prev_year:
-            prev_year = year
-            yield year
-
-
-def get_account_open_close(entries):
-    """Fetch the open/close entries for each of the accounts."""
-
-    open_closes_map = defaultdict(lambda: [None, None])
-    for entry in utils.filter_type(entries, (Open, Close)):
-        index = 0 if isinstance(entry, Open) else 1
-        open_closes_map[entry.account][index] = entry
-
-    return open_closes_map
-
-
-def get_currency_for_account(account, entries):
-    """Find the single currency used in the given account.
-    This assumes that there is exactly one currency.
-    May return None."""
-
-    for entry in utils.filter_type(entries, Open):
-        if entry.account.name == account.name:
-            found = entry
-            break
-    else:
-        return None
-
-    assert len(entry.currencies) == 1, (account, entry.currencies)
-    return entry.currencies[0]
 
 
 #

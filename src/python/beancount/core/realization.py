@@ -9,6 +9,7 @@ from beancount.utils import tree_utils
 from beancount.core.inventory import Inventory
 from beancount.core.amount import amount_sortkey
 from beancount.core import data
+from beancount.core import getters
 from beancount.core.data import Transaction, Check, Open, Close, Pad, Note, Document
 
 
@@ -83,7 +84,7 @@ def realize(entries, do_check=False, min_accounts=None):
     what, even if empty. This is typically used for the root accounts.
     """
 
-    accounts_map = data.gather_accounts(entries)
+    accounts_map = getters.gather_accounts(entries)
     real_accounts = RealAccountTree(accounts_map)
 
     # Ensure the minimal list of accounts has been created.

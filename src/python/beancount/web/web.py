@@ -6,9 +6,6 @@ import argparse
 import datetime
 from os import path
 import io
-import re
-from collections import defaultdict
-from collections import defaultdict
 
 import bottle
 from bottle import response, request
@@ -19,6 +16,7 @@ from beancount.core import data
 from beancount.core.account import Account, account_leaf_name, is_account_root
 from beancount.core.position import Lot
 from beancount.core.data import Open, Close, Check, Transaction, Note, Document, Posting
+from beancount.core import getters
 from beancount.ops import summarize
 from beancount.core.balance import get_balance_amount
 from beancount.core.inventory import Inventory
@@ -62,17 +60,17 @@ def root():
 
 @app.route('/toc', name='toc')
 def toc():
-    mindate, maxdate = data.get_min_max_dates([entry for entry in app.entries
-                                               if not isinstance(entry, (Open, Close))])
+    mindate, maxdate = getters.get_min_max_dates([entry for entry in app.entries
+                                                  if not isinstance(entry, (Open, Close))])
 
     # Create links to all the possible views.
     views = []
     views.append((app.router.build('all', path=''), 'All Transactions'))
 
-    for year in reversed(list(data.get_active_years(app.entries))):
+    for year in reversed(list(getters.get_active_years(app.entries))):
         views.append((app.get_url('year', path='', year=year), 'Year: {}'.format(year)))
 
-    for tag in get_all_tags(app.entries):
+    for tag in getters.get_all_tags(app.entries):
         views.append((app.get_url('tag', path='', tag=tag), 'Tag: {}'.format(tag)))
 
     view_items = ['<li><a href="{}">{}</a></li>'.format(url, title)
@@ -1232,7 +1230,7 @@ def tag(tag=None, path=None):
 # We need some sort of mapping from idified tag to "real" tag. Either of don't idify at all.
 # Is the syntax compatible?
 #     # Create views for all tags.
-#     for tagid, tag in compute_ids(get_all_tags(entries)):
+#     for tagid, tag in utils.compute_ids(get_all_tags(entries)):
 
 
 
@@ -1355,9 +1353,6 @@ def main():
     with open(path.join(path.dirname(__file__), 'web.css')) as f:
         global STYLE; STYLE = f.read()
 
-    # # Create all the basic realizations.
-    # create_realizations(clean_entries, options)
-
     # Run the server.
     app.run(host='localhost', port=8080, debug=args.debug, reloader=False)
 
@@ -1366,61 +1361,3 @@ def main():
 
 
 
-
-
-
-# FIXME: move this to data.py.
-
-def get_all_tags(entries):
-    "Return a list of all the tags seen in the given entries."
-    all_tags = set()
-    for entry in utils.filter_type(entries, data.Transaction):
-        if entry.tags:
-            all_tags.update(entry.tags)
-    return all_tags
-
-
-def get_all_payees(entries):
-    "Return a list of all the unique payees seen in the given entries."
-    all_payees = set()
-    for entry in utils.filter_type(entries, data.Transaction):
-        all_payees.add(entry.payee)
-    all_payees.discard(None)
-    return all_payees
-
-
-def compute_ids(strings):
-    """Given a sequence of strings, reduce them to corresponding ids without any
-    funny characters and insure that the list of ids is unique. Yields pairs
-    of (id, string) for the result."""
-
-    string_set = set(strings)
-
-    # Try multiple methods until we get one that has no collisions.
-    for regexp, replacement in [('[^A-Za-z0-9-.]', '_'),
-                                ('[^A-Za-z0-9]', ''),]:
-
-        # Map ids to strings.
-        idmap = defaultdict(list)
-        for string in string_set:
-            id = re.sub(regexp, replacement, string)
-            idmap[id].append(string)
-
-        # Check for collisions.
-        if all(len(stringlist) == 1 for stringlist in idmap.values()):
-            break
-    else:
-        raise RuntimeError("Could not find a unique mapping for {}".format(string_set))
-
-    return sorted((id, stringlist[0]) for id, stringlist in idmap.items())
-
-
-
-
-
-
-
-
-
-
-# FIXME: Move the table rendering routines to their own files.
