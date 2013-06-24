@@ -116,7 +116,7 @@ def validate_documents_paths(entries):
 def validate(entries):
     """Perform all the standard checks on parsed contents."""
 
-    accounts = getters.gather_accounts(entries).values()
+    accounts = getters.get_accounts(entries).values()
 
     # Check for unused accounts.
     unused_errors = validate_unused_accounts(entries, accounts)

@@ -22,7 +22,7 @@ def main():
     document_dirs = [dn if path.isabs(dn) else path.join(root, dn)
                      for dn in options['documents']]
 
-    accounts = data.gather_accounts(entries)
+    accounts = data.get_accounts(entries)
     for document_dir in document_dirs:
         validate_directories(accounts, document_dir)
 

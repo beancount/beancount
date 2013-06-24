@@ -39,7 +39,7 @@ class GetAccounts:
     Open = Close = Check = Note = Document = _one
     Event = Price = _zero
 
-def gather_accounts(entries):
+def get_accounts(entries):
     return GetAccounts()(entries)
 
 

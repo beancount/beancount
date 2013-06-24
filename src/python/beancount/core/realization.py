@@ -84,7 +84,7 @@ def realize(entries, do_check=False, min_accounts=None):
     what, even if empty. This is typically used for the root accounts.
     """
 
-    accounts_map = getters.gather_accounts(entries)
+    accounts_map = getters.get_accounts(entries)
     real_accounts = RealAccountTree(accounts_map)
 
     # Ensure the minimal list of accounts has been created.
