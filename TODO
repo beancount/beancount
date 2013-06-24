@@ -3,8 +3,23 @@ beancount: TODO
 * Current
 
   - Teasing out groups:
-      Can we move documents to ops?
+      Can we move documents.py to ops? Look at that.
       Can core.getters move to ops.getters?
+      Can we move imports.sources to sources/importers, or even outside of beancount?
+
+          .
+          |-- core
+          |   `-- tests
+          |-- imports
+          |   `-- sources
+          |-- ops
+          |   `-- tests
+          |-- parser
+          |   `-- tests
+          |-- utils
+          |   `-- tests
+          `-- web
+
       Cleanup : entries_table.
       web.py: Move the table rendering routines to their own files.
       web.py: Move the views to their own file.
