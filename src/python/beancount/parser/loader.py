@@ -5,11 +5,10 @@ list of entries ready for realization and working with them. This is the most
 common entry point.
 """
 from beancount import utils
+from beancount.core import data
 from beancount.parser import parser
 from beancount.parser import documents
-from beancount.core import data
 from beancount.ops import pad
-from beancount.core import realization
 from beancount.ops import validation
 from beancount.ops import prices
 from beancount.ops import check

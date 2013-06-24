@@ -6,7 +6,7 @@ import textwrap
 from collections import namedtuple, defaultdict
 
 from beancount import utils
-from beancount.core.amount import Amount, amount_mult
+from beancount.core.amount import Amount
 from beancount.core.account import Account
 
 

@@ -2,15 +2,15 @@
 beancount: TODO
 * Current
 
+  - Teasing out groups:
+      Can we move loader.py out of the parser?
+      Can we move documents to ops?
+      Cleanup : bottom of web.py, and entries_table.
+
   - CONVERSIONS
     * Remove manual entries in my own
     * Build good examples to understand, with positions held at cost, as tests
-    * Finalize adding the code in
-
-  - Data vs. Ops:
-      Data: amount, account, inventory, position, realization
-      Ops: all the rest, including validation
-    - Cleanup : bottom of web.py, and entries_table.
+    * Finalize adding the code in summarize.py
 
   - Before we start importing, validate that the importer modules all have a
     CONFIG, import_file and import_date functions.  This will help thirdparty
