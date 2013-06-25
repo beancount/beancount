@@ -14,7 +14,7 @@ from beancount.web import views
 from beancount.core import data
 from beancount.core.account import Account, account_leaf_name, is_account_root
 from beancount.core.position import Lot
-from beancount.core.data import Open, Close, Check, Transaction, Note, Document, Posting
+from beancount.core.data import Open, Close, Check, Transaction, Note, Document
 from beancount.core import getters
 from beancount.ops import summarize
 from beancount.core.balance import get_balance_amount
@@ -23,7 +23,6 @@ from beancount.core import realization
 from beancount.core.realization import RealAccount
 from beancount.ops import prices
 from beancount import utils
-from beancount.utils import index_key
 from beancount.utils.text_utils import replace_numbers
 from beancount.core.account import Account
 from beancount.core.account import is_balance_sheet_account_name

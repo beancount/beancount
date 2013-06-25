@@ -8,9 +8,11 @@ from collections import namedtuple, defaultdict
 from beancount.utils import tree_utils
 from beancount.core.inventory import Inventory
 from beancount.core.amount import amount_sortkey
+from beancount.utils import index_key
 from beancount.core import data
 from beancount.core import getters
 from beancount.core.data import Transaction, Check, Open, Close, Pad, Note, Document
+from beancount.core.data import Posting
 
 
 # A realized account, inserted in a tree, that contains the list of realized
