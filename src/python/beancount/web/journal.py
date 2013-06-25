@@ -185,7 +185,7 @@ def entries_table(app, oss, account_postings, render_postings=True):
     ''')
 
     balance = Inventory()
-    for entry, leg_postings, change, balance in iterate_with_balance(account_postings):
+    for entry, leg_postings, change, balance in realization.iterate_with_balance(account_postings):
 
         # Prepare the data to be rendered for this row.
         date = entry.date

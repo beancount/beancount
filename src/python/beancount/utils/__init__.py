@@ -62,13 +62,14 @@ def get_tuple_typed_values(ntuple, clstype):
                     yield account
 
 
-def index_key(sequence, value, key=None):
-    """Find the index of the first element in 'sequence' whic is equal to 'value'.
+from pprint import pprint, pformat
+
+def index_key(sequence, value, key, cmp):
+    """Find the index of the first element in 'sequence' which is equal to 'value'.
     If 'key' is specified, the value compared to the value returned by this
     function. If the value is not found, return None."""
     for index, element in enumerate(sequence):
-        # FIXME: Use a version with 'is' comparison for performance? Test it, measure the difference.
-        if key(element) == value:
+        if cmp(key(element), value):
             return index
     return None
 

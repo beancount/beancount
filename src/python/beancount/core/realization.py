@@ -4,6 +4,7 @@ import sys
 import datetime
 from itertools import chain, repeat
 from collections import namedtuple, defaultdict
+import operator
 
 from beancount.utils import tree_utils
 from beancount.core.inventory import Inventory
@@ -259,7 +260,7 @@ def iterate_with_balance(postings_or_entries):
         if posting is not None:
             # De-dup multiple postings on the same transaction entry by
             # grouping their positions together.
-            index = index_key(date_entries, entry, key=first)
+            index = index_key(date_entries, entry, first, operator.is_)
             if index is None:
                 date_entries.append( (entry, [posting]) )
             else:
