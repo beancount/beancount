@@ -3,7 +3,8 @@ Code that deals with duplicate entries, mostly for use during import.
 """
 import collections
 
-from beancount.core.data import Transaction, Decimal, format_entry
+from beancount.core.amount import Decimal
+from beancount.core.data import Transaction, format_entry
 from beancount import utils
 
 

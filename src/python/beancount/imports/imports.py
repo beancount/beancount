@@ -238,9 +238,9 @@ def run_importer_loop(importer_config,
         # Print out the entries.
         pr = lambda arg: output.write(arg + '\n')
         if new_entries:
-            pr()
+            pr('')
             pr(';; {}'.format(filename))
-            pr()
+            pr('')
 
         for entry in new_entries:
             entry_string = format_entry(entry)

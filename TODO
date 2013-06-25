@@ -1044,6 +1044,10 @@ beancount: TODO
 
   - Test "bean-bake" with the v2, it doesn't appear to work.
 
+** Ledger
+
+  - Export the compatible subset to Ledger format, so you can compare the reports.
+
 ** SQL Export
 
   - Write a script to load the data into an SQL database.

@@ -2,6 +2,7 @@
 """
 from collections import defaultdict
 
+from beancount.core.data import Transaction
 from beancount import utils
 
 
@@ -46,7 +47,7 @@ def get_accounts(entries):
 def get_all_tags(entries):
     "Return a list of all the tags seen in the given entries."
     all_tags = set()
-    for entry in utils.filter_type(entries, data.Transaction):
+    for entry in utils.filter_type(entries, Transaction):
         if entry.tags:
             all_tags.update(entry.tags)
     return all_tags
@@ -55,7 +56,7 @@ def get_all_tags(entries):
 def get_all_payees(entries):
     "Return a list of all the unique payees seen in the given entries."
     all_payees = set()
-    for entry in utils.filter_type(entries, data.Transaction):
+    for entry in utils.filter_type(entries, Transaction):
         all_payees.add(entry.payee)
     all_payees.discard(None)
     return all_payees

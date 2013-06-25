@@ -12,7 +12,8 @@ import datetime
 import bs4
 
 from beancount.core import data
-from beancount.core.data import Posting, Transaction, Decimal
+from beancount.core.amount import Decimal
+from beancount.core.data import Posting, Transaction
 from beancount.core.position import Lot, Position
 from beancount.core.account import accountify_dict
 from beancount.core import flags

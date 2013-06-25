@@ -5,9 +5,9 @@ import datetime
 import textwrap
 from collections import namedtuple
 
-from beancount.core.amount import Amount
+from beancount.core.amount import Amount, Decimal
 from beancount.core.account import Account
-from beancount.core.position import Position
+from beancount.core.position import Lot, Position
 
 
 # The location in a source file where the directive was read from.
