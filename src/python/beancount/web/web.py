@@ -3,7 +3,6 @@ Web server for Beancount ledgers.
 This uses the Bottle single-file micro web framework (with no plugins).
 """
 import argparse
-import datetime
 from os import path
 import io
 
@@ -11,7 +10,7 @@ import bottle
 from bottle import response, request
 
 from beancount.web.bottle_utils import AttrMapper, internal_redirect
-from beancount.core.account import account_type
+from beancount.web import views
 from beancount.core import data
 from beancount.core.account import Account, account_leaf_name, is_account_root
 from beancount.core.position import Lot
@@ -23,12 +22,11 @@ from beancount.core.inventory import Inventory
 from beancount.core import realization
 from beancount.core.realization import RealAccount
 from beancount.ops import prices
-from beancount import parser
 from beancount import utils
 from beancount.utils import index_key
 from beancount.utils.text_utils import replace_numbers
-from beancount.core.account import Account, account_type
-from beancount.core.account import is_balance_sheet_account_name, is_income_statement_account
+from beancount.core.account import Account
+from beancount.core.account import is_balance_sheet_account_name
 from beancount.core import flags
 from beancount.loader import load
 
@@ -210,41 +208,6 @@ def doc(filename=None):
 
 viewapp = bottle.Bottle()
 V = AttrMapper(lambda *args, **kw: request.app.get_url(*args, **kw))
-
-
-def handle_view(path_depth):
-    """A decorator for handlers which create views lazily.
-    If you decorate a method with this, the wrapper does the redirect
-    handling and your method is just a factory for a View instance,
-    which is cached."""
-
-    def view_populator(callback):
-        def wrapper(*args, **kwargs):
-            components = request.path.split('/')
-            viewid = '/'.join(components[:path_depth+1])
-            try:
-                # Try fetching the view from the cache.
-                view = app.views[viewid]
-            except KeyError:
-                # We need to create the view.
-                view = app.views[viewid] = callback(*args, **kwargs)
-
-            # Save for hte subrequest and redirect. populate_view() picks this
-            # up and saves it in request.view.
-            request.environ['VIEW'] = view
-            return internal_redirect(viewapp, path_depth)
-        return wrapper
-    return view_populator
-
-
-def populate_view(callback):
-    "A plugin that will populate the request with the current view instance."
-    def wrapper(*args, **kwargs):
-        request.view = request.environ['VIEW']
-        return callback(*args, **kwargs)
-    return wrapper
-
-viewapp.install(populate_view)
 
 
 def render_app(*args, **kw):
@@ -1119,145 +1082,64 @@ def documents():
 app.views = {}
 
 
-class View:
-    """A container for filtering a subset of entries and realizing that for
-    display."""
+def handle_view(path_depth):
+    """A decorator for handlers which create views lazily.
+    If you decorate a method with this, the wrapper does the redirect
+    handling and your method is just a factory for a View instance,
+    which is cached."""
 
-    def __init__(self, all_entries, options, title):
+    def view_populator(callback):
+        def wrapper(*args, **kwargs):
+            components = request.path.split('/')
+            viewid = '/'.join(components[:path_depth+1])
+            try:
+                # Try fetching the view from the cache.
+                view = app.views[viewid]
+            except KeyError:
+                # We need to create the view.
+                view = app.views[viewid] = callback(*args, **kwargs)
 
-        # A reference to the full list of padded entries.
-        self.all_entries = all_entries
-
-        # List of filterered entries for this view, and index at the beginning
-        # of the period transactions, past the opening balances. These are
-        # computed in _realize().
-        self.entries = None
-        self.opening_entries = None
-        self.closing_entries = None
-
-        # Title.
-        self.title = title
-
-        # A reference to the global list of options and the account type names.
-        self.options = options
-        self.account_types = parser.get_account_types(options)
-
-        # Realization of the filtered entries to display. These are computed in
-        # _realize().
-        self.real_accounts = None
-        self.opening_real_accounts = None
-        self.closing_real_accounts = None
-
-        # Realize now, we don't need to do this lazily because we create these
-        # view objects on-demand and cache them.
-        self._realize()
-
-    def _realize(self):
-        """Compute the list of filtered entries and transaction tree."""
-
-        # Get the filtered list of entries.
-        self.entries, self.begin_index = self.apply_filter(self.all_entries, self.options)
-
-        # Compute the list of entries for the opening balances sheet.
-        self.opening_entries = (self.entries[:self.begin_index]
-                                if self.begin_index is not None
-                                else None)
+            # Save for hte subrequest and redirect. populate_view() picks this
+            # up and saves it in request.view.
+            request.environ['VIEW'] = view
+            return internal_redirect(viewapp, path_depth)
+        return wrapper
+    return view_populator
 
 
-        # Compute the list of entries that includes transfer entries of the
-        # income/expenses amounts to the balance sheet's equity (as "net
-        # income"). This is used to render the end-period balance sheet, with
-        # the current period's net income, closing the period.
-        current_accounts = parser.get_current_accounts(self.options)
-        self.closing_entries = summarize.close(self.entries, *current_accounts)
+def populate_view(callback):
+    "A plugin that will populate the request with the current view instance."
+    def wrapper(*args, **kwargs):
+        request.view = request.environ['VIEW']
+        return callback(*args, **kwargs)
+    return wrapper
 
-        # Realize the three sets of entries.
-        do_check = False
-        if self.opening_entries:
-            with utils.print_time('realize_opening'):
-                self.opening_real_accounts = realization.realize(self.opening_entries, do_check, self.account_types)
-        else:
-            self.opening_real_accounts = None
+viewapp.install(populate_view)
 
-        with utils.print_time('realize'):
-            self.real_accounts = realization.realize(self.entries, do_check, self.account_types)
-
-        with utils.print_time('realize_closing'):
-            self.closing_real_accounts = realization.realize(self.closing_entries, do_check, self.account_types)
-
-        assert self.real_accounts is not None
-        assert self.closing_real_accounts is not None
-
-    def apply_filter(self, entries):
-        "Filter the list of entries."
-        raise NotImplementedError
-
-
-
-class AllView(View):
-
-    def apply_filter(self, entries, options):
-        "Return the list of entries unmodified."
-        return (entries, None)
 
 @app.route(r'/view/all/<path:re:.*>', name='all')
 @handle_view(2)
 def all(path=None):
-    return AllView(app.entries, app.options, 'All Transactions')
+    return views.AllView(app.entries, app.options, 'All Transactions')
 
-
-
-class YearView(View):
-
-    def __init__(self, entries, options, title, year):
-        self.year = year
-        View.__init__(self, entries, options, title)
-
-    def apply_filter(self, entries, options):
-        "Return entries for only that year."
-
-        # Get the transfer account objects.
-        previous_accounts = parser.get_previous_accounts(options)
-
-        # Clamp to the desired period.
-        begin_date = datetime.date(self.year, 1, 1)
-        end_date = datetime.date(self.year+1, 1, 1)
-        with utils.print_time('clamp'):
-            entries, index = summarize.clamp(entries, begin_date, end_date, *previous_accounts)
-
-        return entries, index
 
 @app.route(r'/view/year/<year:re:\d\d\d\d>/<path:re:.*>', name='year')
 @handle_view(3)
 def year(year=None, path=None):
     year = int(year)
-    return YearView(app.entries, app.options, 'Year {:4d}'.format(year), year)
+    return views.YearView(app.entries, app.options, 'Year {:4d}'.format(year), year)
 
-
-
-class TagView(View):
-
-    def __init__(self, entries, options, title, tags):
-        # The tags we want to include.
-        assert isinstance(tags, (set, list, tuple))
-        self.tags = tags
-
-        View.__init__(self, entries, options, title)
-
-    def apply_filter(self, entries, options):
-        "Return only entries with the given tag."
-
-        tags = self.tags
-        tagged_entries = [entry
-                          for entry in entries
-                          if isinstance(entry, data.Transaction) and entry.tags and (entry.tags & tags)]
-
-        return tagged_entries, None
 
 @app.route(r'/view/tag/<tag:re:[^/]*>/<path:re:.*>', name='tag')
 @handle_view(3)
 def tag(tag=None, path=None):
-    return TagView(app.entries, app.options, 'Tag {}'.format(tag), set([tag]))
+    return views.TagView(app.entries, app.options, 'Tag {}'.format(tag), set([tag]))
+
+
+@app.route(r'/view/payee/<payee:re:[^/]*>/<path:re:.*>', name='payee')
+@handle_view(3)
+def payee(payee=None, path=None):
+    return views.PayeeView(app.entries, app.options, 'Payee {}'.format(payee), payee)
 
 
 # ## FIXME: We need to figure out how to deal with id-ification for paths.
@@ -1268,39 +1150,8 @@ def tag(tag=None, path=None):
 
 
 
-
-class PayeeView(View):
-
-    def __init__(self, entries, options, title, payee):
-        # The payee to filter.
-        assert isinstance(payee, str)
-        self.payee = payee
-
-        View.__init__(self, entries, options, title)
-
-    def apply_filter(self, entries, options):
-        "Return only transactions for the given payee."
-
-        payee = self.payee
-        payee_entries = [entry
-                         for entry in entries
-                         if isinstance(entry, data.Transaction) and (entry.payee == payee)]
-
-        return payee_entries, None
-
-@app.route(r'/view/payee/<payee:re:[^/]*>/<path:re:.*>', name='payee')
-@handle_view(3)
-def payee(payee=None, path=None):
-    return PayeeView(app.entries, app.options, 'Payee {}'.format(payee), payee)
-
-
-
 #--------------------------------------------------------------------------------
 # Bootstrapping and main program.
-
-
-# A global list of all available ledgers (apps).
-VIEWS = []
 
 
 def auto_reload_input_file(callback):

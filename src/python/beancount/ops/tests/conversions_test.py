@@ -5,12 +5,7 @@ import unittest
 import sys
 import datetime
 
-from beancount.core.account import Account
-from beancount.core import data
-from beancount.core import inventory
 from beancount.core import realization
-from beancount.core import data
-from beancount.core import flags
 from beancount.ops import summarize
 from beancount.loader import loaddoc
 from beancount.parser import parser
