@@ -9,7 +9,7 @@ from beancount.core.amount import Decimal, Amount
 from beancount.core import data
 from beancount.core.data import Posting, Transaction, Check
 from beancount.core.position import Lot, Position
-from beancount.imports.sources.ofx import souptodict, soup_get, parse_ofx_time
+from beancount.importers.ofx import souptodict, soup_get, parse_ofx_time
 from beancount.core.account import accountify_dict
 from beancount.core import flags
 
