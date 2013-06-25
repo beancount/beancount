@@ -193,6 +193,92 @@ def real_cost_as_dict(real_accounts):
             if real_account.account}
 
 
+def iterate_with_balance(postings_or_entries):
+    """Iterate over the entries accumulating the balance.
+    For each entry, it yields
+
+      (entry, change, balance)
+
+    'entry' is the entry for this line. If the list contained Posting instance,
+    this yields the corresponding Transaction object.
+
+    'change' is an Inventory object that reflects the change due to this entry
+    (this may be multiple positions in the case that a single transaction has
+    multiple legs).
+
+    The 'balance' yielded is never None; it's up to the one displaying the entry
+    to decide whether to render for a particular type.
+
+    Also, multiple postings for the same transaction are de-duped
+    and when a Posting is encountered, the parent Transaction entry is yielded,
+    with the balance updated for just the postings that were in the list.
+    (We attempt to preserve the original ordering of the postings as much as
+    possible.)
+    """
+
+    # The running balance.
+    balance = Inventory()
+
+    # Previous date.
+    prev_date = None
+
+    # A list of entries at the current date.
+    date_entries = []
+
+    first = lambda pair: pair[0]
+    for entry in postings_or_entries:
+
+        # Get the posting if we are dealing with one.
+        if isinstance(entry, Posting):
+            posting = entry
+            entry = posting.entry
+        else:
+            posting = None
+
+        if entry.date != prev_date:
+            prev_date = entry.date
+
+            # Flush the dated entries.
+            for date_entry, date_postings in date_entries:
+                if date_postings:
+                    # Compute the change due to this transaction and update the
+                    # total balance at the same time.
+                    change = Inventory()
+                    for date_posting in date_postings:
+                        change.add_position(date_posting.position, True)
+                        balance.add_position(date_posting.position, True)
+                else:
+                    change = None
+                yield date_entry, date_postings, change, balance
+
+            date_entries.clear()
+            assert not date_entries
+
+        if posting is not None:
+            # De-dup multiple postings on the same transaction entry by
+            # grouping their positions together.
+            index = index_key(date_entries, entry, key=first)
+            if index is None:
+                date_entries.append( (entry, [posting]) )
+            else:
+                # We are indeed de-duping!
+                postings = date_entries[index][1]
+                postings.append(posting)
+        else:
+            # This is a regular entry; nothing to add/remove.
+            date_entries.append( (entry, None) )
+
+    # Flush the final dated entries if any, same as above.
+    for date_entry, date_postings in date_entries:
+        if date_postings:
+            change = Inventory()
+            for date_posting in date_postings:
+                change.add_position(date_posting.position, True)
+                balance.add_position(date_posting.position, True)
+        else:
+            change = None
+        yield date_entry, date_postings, change, balance
+    date_entries.clear()
 
 
 # FIXME: I don't think I need this at all?
