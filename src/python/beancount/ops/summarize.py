@@ -303,9 +303,21 @@ def compute_total_balance(entries):
     """Sum up all the positions in the transactions in the list of entries and
     return an inventory of it."""
 
-    total_balance = inventory.Inventory()
+    balance = inventory.Inventory()
     for entry in entries:
         if isinstance(entry, Transaction):
             for posting in entry.postings:
-                total_balance.add_position(posting.position, allow_negative=True)
-    return total_balance
+                balance.add_position(posting.position, allow_negative=True)
+    return balance
+
+
+def compute_balance_for_prefix(entries, account_prefix):
+    """Compute the balance of all the accounts that match the given prefix."""
+
+    balance = inventory.Inventory()
+    for entry in entries:
+        if isinstance(entry, Transaction):
+            for posting in entry.postings:
+                if posting.account.name.startswith(account_prefix):
+                    balance.add_position(posting.position, allow_negative=True)
+    return balance

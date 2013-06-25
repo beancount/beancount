@@ -264,6 +264,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{V.openbal}}">Opening Balances</a></li>
   <li><a href="{{V.balsheet}}">Balance Sheet</a></li>
   <li><a href="{{V.income}}">Income Statement</a></li>
+  <li><a href="{{V.equity}}">Shareholder's Equity</a></li>
   <li><a href="{{V.trial}}">Trial Balance</a></li>
   <li><a href="{{V.journal}}">Journal</a></li>
   <li><a href="{{V.positions}}">Positions</a></li>
@@ -558,6 +559,50 @@ def income():
                       contents = contents)
 
 
+@viewapp.route('/equity', name='equity')
+def equity():
+    "Render a table of the net worth at the beginning, end, and net income."
+
+    view = request.view
+
+    balance = summarize.compute_balance_for_prefix(view.closing_entries,
+                                                   view.options['name_equity'] + ':')
+    header = io.StringIO()
+    header.write('<th>Currency</th>\n')
+    header.write('<th>Amount</th>\n')
+    operating_currencies = view.options['operating_currency']
+    header.write('\n'.join('<th>{}</th>\n'.format(currency)
+                           for currency in operating_currencies))
+
+    body = io.StringIO()
+    for position in balance.get_positions():
+        body.write('<tr>')
+        body.write('<td>{}</td>'.format(position.lot.currency))
+        body.write('<td>{}</td>'.format(position.number))
+
+        ## FIXME: complete this.
+        body.write('\n'.join('<th>{}</th>\n'.format('FIXME')
+                             for currency in operating_currencies))
+        body.write('</tr>')
+
+    contents = """
+       <div id="equity-table">
+         <table>
+           <thead>
+             {header}
+           </thead>
+           <tbody>
+             {body}
+           </tbody>
+         </table>
+       </div>
+    """.format(header=header.getvalue(), body=body.getvalue())
+
+    ## FIXME: Render the equity at opening too.
+    ## FIXME: Insert a summary of the net income.
+
+    return render_app(pagetitle = "Shareholder's Equity",
+                      contents = contents)
 
 
 
@@ -1124,7 +1169,6 @@ class View:
         # income"). This is used to render the end-period balance sheet, with
         # the current period's net income, closing the period.
         current_accounts = parser.get_current_accounts(self.options)
-        print(current_accounts)
         self.closing_entries = summarize.close(self.entries, *current_accounts)
 
         # Realize the three sets of entries.
