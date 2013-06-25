@@ -6,8 +6,6 @@ beancount: TODO
       Can we move documents.py to ops? Look at that.
       Can core.getters move to ops.getters?
       Cleanup : entries_table.
-      web.py: Move the table rendering routines to their own files.
-      web.py: Move the views to their own file.
 
   - Equity
     * Remove manual entries in my own

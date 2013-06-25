@@ -55,8 +55,7 @@ check-deps checkdeps:
 build/beancount.deps:
 	sfood -i bin src/python > $@
 
-CLUSTERS = 					\
-	beancount/imports/sources		\
+CLUSTERS =					\
 	beancount/core/tests			\
 	beancount/ops/tests			\
 	beancount/parser/tests			\
@@ -67,6 +66,7 @@ CLUSTERS = 					\
 	beancount/ops				\
 	beancount/parser			\
 	beancount/imports			\
+	beancount/sources			\
 	beancount/utils				\
 	beancount/web
 
