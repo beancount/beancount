@@ -3,9 +3,10 @@ beancount: TODO
 * Current
 
   - Teasing out groups:
-      Can we move documents.py to ops? Look at that.
-      Can core.getters move to ops.getters?
-      Cleanup : entries_table.
+    - Can we move documents.py to ops? Look at that.
+    - Can core.getters move to ops.getters?
+    - Reconcile entries_table() with entries_table_with_balance().
+      We really need some common code there.
 
   - Equity
     * Remove manual entries in my own
@@ -14,11 +15,12 @@ beancount: TODO
     CONFIG, import_file and import_date functions.  This will help thirdparty
     implementors.
 
-
   - Render the OFX / QBO files in a <pre> tag, or figure out why the mimetype
     is incorrect and they don't render properly.
 
+  - Make front web look good with all the views, implement all global pages.
 
+  - Complete price rendering
 
   - BUG: Don't crap out when you can't read the file; error should be reported
     like the other ones.
@@ -26,17 +28,15 @@ beancount: TODO
   - BUG: Parser errors should not throw exceptions... we need to recover from
     these gracefully.
 
-  - Code org: do split up the inventory and data.py with the files that provide
-    operations; these really should be two separate modules.
-
-
   - Have another script that takes that as input and spits out current positions
     in the market on a web page; CGI script, should be served on Furius. Update
     via a Mercurial repo push.
 
+    * Move the price fetching utilities somewhere it can be reused by others;
+      move code from bean-prices.
+
   - IDEA: Render the transactions into an in-memory SQL database, and provide
     an interface to query it and report results in a table, in the web UI.
-
 
   - AUTO-CATEGORIZATION
   - Realization as a simple tree
@@ -46,9 +46,6 @@ beancount: TODO
   - We need checks for subaccounts for joint accounts - implement this
   - Implement txt and xls export.
 
-  - Reconcile entries_table() with entries_table_with_balance().
-    We really need some common code there.
-
   - Convert all the importers to use the DateIntervalTicker.
 
   - Render tags and links
@@ -56,7 +53,6 @@ beancount: TODO
   - Clean up: add unit tests for everything, and docstrings everywhere.
     This new version will be really, really clean!
 
-  - Fix all FIXMEs everywhere.
 
   - BUG: A posting with a following line that has some whitespace on it fails
     with a parsing error... this should not be the case. Review what happened,
@@ -69,7 +65,6 @@ beancount: TODO
   - (check) A check on a parent account is necessary for joint accounts with subaccounts...
   - (import) We need to be able to invert the input (this is easy, rendering only)
 
-
   - Do we need to insert Open entries for the equity accounts described in
     options? I think we could safely plop that at the very beginning of the
     entries list in the parser.
@@ -80,10 +75,13 @@ beancount: TODO
 
   - Clean up code: remove all significant codes from __init__.py files.
 
+  - Fix all FIXMEs everywhere.
+
   - Run pylint on the entire codebase.
 
   - Make all imports outside of packages import from the package root, and have
     the package export those symbols explicitly.
+
 
 ** Inventory
 
