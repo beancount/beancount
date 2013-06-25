@@ -51,6 +51,10 @@ def read_file(filename):
             assert r == 0, r
             contents = open(f.name).read()
 
+    elif filetype.startswith('image/'):
+        # Skip these file types.
+        contents = ''
+
     else:
         # Attempt to guess the encoding of the file (we should use 'chardet'
         # here but we want to minimize dependencies).
