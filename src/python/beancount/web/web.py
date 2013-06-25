@@ -1123,13 +1123,9 @@ class View:
         # income/expenses amounts to the balance sheet's equity (as "net
         # income"). This is used to render the end-period balance sheet, with
         # the current period's net income, closing the period.
-        equity = self.options['name_equity']
-        account_netincome = '{}:{}'.format(equity, self.options['account_netincome'])
-        account_netincome = Account(account_netincome,
-                                    account_type(account_netincome))
-
-        self.closing_entries = summarize.transfer_balances(self.entries, None,
-                                                           is_income_statement_account, account_netincome)
+        current_accounts = parser.get_current_accounts(self.options)
+        print(current_accounts)
+        self.closing_entries = summarize.close(self.entries, *current_accounts)
 
         # Realize the three sets of entries.
         do_check = False
@@ -1177,19 +1173,13 @@ class YearView(View):
         "Return entries for only that year."
 
         # Get the transfer account objects.
-        (account_opening,
-         account_earnings,
-         account_conversions) = parser.get_equity_accounts(options)
+        previous_accounts = parser.get_previous_accounts(options)
 
         # Clamp to the desired period.
         begin_date = datetime.date(self.year, 1, 1)
         end_date = datetime.date(self.year+1, 1, 1)
         with utils.print_time('clamp'):
-            entries, index = summarize.clamp(entries,
-                                             begin_date, end_date,
-                                             account_earnings,
-                                             account_opening,
-                                             account_conversions)
+            entries, index = summarize.clamp(entries, begin_date, end_date, *previous_accounts)
 
         return entries, index
 
@@ -1355,9 +1345,3 @@ def main():
 
     # Run the server.
     app.run(host='localhost', port=8080, debug=args.debug, reloader=False)
-
-
-
-
-
-

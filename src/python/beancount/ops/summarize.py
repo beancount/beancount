@@ -18,7 +18,9 @@ from beancount.core.account import is_income_statement_account
 
 
 def clamp(entries, begin_date, end_date,
-          account_transfer, account_opening, account_conversions):
+          account_previous_earnings,
+          account_previous_balances,
+          account_previous_conversions):
     """Filter entries to include only those between begin and end dates.
 
     This routine performs the standard procedure required to produce reports
@@ -37,15 +39,33 @@ def clamp(entries, begin_date, end_date,
 
     # Transfer income and expenses before the period to equity.
     entries = transfer_balances(entries, begin_date,
-                                is_income_statement_account, account_transfer)
+                                is_income_statement_account, account_previous_earnings)
 
     # Summarize all the previous balances.
-    entries, index = summarize(entries, begin_date, account_opening)
+    entries, index = summarize(entries, begin_date, account_previous_balances)
 
     # Truncate the entries after this.
     entries = truncate(entries, end_date)
 
+    # Insert conversion entries.
+    entries = conversions(entries, account_previous_conversions, begin_date)
+
     return entries, index
+
+
+def close(entries,
+          account_current_earnings,
+          account_current_conversions):
+    """Transfer net income to equity and insert a final conversion entry."""
+
+    # Transfer the balances as net-income.
+    entries = transfer_balances(entries, None,
+                                is_income_statement_account, account_current_earnings)
+
+    # Insert final conversion entries.
+    entries = conversions(entries, account_current_conversions, None)
+
+    return entries
 
 
 def transfer_balances(entries, date, account_pred, transfer_account):
@@ -133,6 +153,52 @@ def summarize(entries, date, opening_account):
     # were inserted.
     return ((open_entries + summarizing_entries + after_entries),
             len(open_entries) + len(summarizing_entries))
+
+
+def conversions(entries, account, date=None):
+    """Insert a conversion entry at date 'date' at the given account.
+
+    Args:
+      entries: A list of entries.
+      account: The Account object to book against.
+      date: The date at which to insert the conversion entry. The new
+            entry will be inserted as the last entry and the date just previous
+            to this date.
+    Returns:
+      A modified list of entries.
+    """
+
+    # Compute the balance at the given date.
+    balance = inventory.Inventory()
+    for index, entry in enumerate(entries):
+        if not (date is None or entry.date < date):
+            break
+        if isinstance(entry, Transaction):
+            for posting in entry.postings:
+                balance.add_position(posting.position, allow_negative=True)
+
+    # Early exit if there is nothing to do.
+    if balance.is_empty():
+        return entries
+
+    new_entries = list(entries)
+
+    last_date = entries[-1].date - datetime.timedelta(days=1)
+
+    fileloc = FileLocation('<conversions>', -1)
+    narration = 'Conversion for {}'.format(balance)
+    conversion_entry = Transaction(fileloc, last_date, flags.FLAG_CONVERSIONS, None, narration, None, None, [])
+    for position in balance.get_cost().get_positions():
+        # FIXME: Set the cost to zero here to maintain the balance invariant.
+        # (This is the only single place we cheap on the balance rule in the
+        # entire system and this is necessary; see documentation on
+        # Conversions.)
+        conversion_entry.postings.append(
+            Posting(conversion_entry, account, -position, None, None))
+
+    new_entries.insert(index, conversion_entry)
+
+    return new_entries
 
 
 def truncate(entries, date):

@@ -5,35 +5,16 @@ beancount: TODO
   - Teasing out groups:
       Can we move documents.py to ops? Look at that.
       Can core.getters move to ops.getters?
-      Can we move imports.sources to sources/importers, or even outside of beancount?
-
-          .
-          |-- core
-          |   `-- tests
-          |-- imports
-          |   `-- sources
-          |-- ops
-          |   `-- tests
-          |-- parser
-          |   `-- tests
-          |-- utils
-          |   `-- tests
-          `-- web
-
       Cleanup : entries_table.
       web.py: Move the table rendering routines to their own files.
       web.py: Move the views to their own file.
 
-
-  - CONVERSIONS
+  - Equity
     * Remove manual entries in my own
-    * Build good examples to understand, with positions held at cost, as tests
-    * Finalize adding the code in summarize.py
 
   - Before we start importing, validate that the importer modules all have a
     CONFIG, import_file and import_date functions.  This will help thirdparty
     implementors.
-
 
 
 
@@ -88,6 +69,11 @@ beancount: TODO
 
   - (check) A check on a parent account is necessary for joint accounts with subaccounts...
   - (import) We need to be able to invert the input (this is easy, rendering only)
+
+
+  - Do we need to insert Open entries for the equity accounts described in
+    options? I think we could safely plop that at the very beginning of the
+    entries list in the parser.
 
 
 * Core
@@ -299,63 +285,22 @@ beancount: TODO
 
 ** Conversions
 
-  - You're missing a step: There needs to be a step that inserts an entry for
-    Conversions. After running this step, the balance sheet's cost should sum
-    to ZERO. Do ASSERT that it is indeed the case.
-
   - Why do I have non-USD/CAD in conversions?  They should not be there AFAIK,
     because there are no @-priced conversions for those currencies.
-
 
   - TODO: Try it out in GnuCash, see how they deal with it. Very curious!
     (WOW This is really SNAFU'ed. Really fucked up. Finding bugs in GC within the
     first 10 minutes...)
 
+  - TODO: Try it out in Ledger, see how they deal with it.
 
-  - One idea is that you could enter a transaction like this:
+
+  - Make the conversions entry use a price of zero, to maintain the invariants
+    for sanity checks, something like this:
 
        YYYY-MM-DD * "Annul conversions at end of period"
          Equity:Conversions        -56383 CAD @ 0 CONV
          Equity:Conversions        +67000 USD @ 0 CONV
-
-  - Maybe the account that should hold these conversions should be an
-    Income:Conversions account.
-
-  - Document the fact that the conversions problem occurs
-
-    * Because we don't reduce to a single "home" currency, and
-    * That if you do all your work in a single currency with accounts with
-      costs, the value will always be zero, and
-    * Explain that currency trading accounts have little to do with this,
-      because they are contained, and all in and out flows are in a single
-      currency (the base currency of the account). The differences can be
-      accounted like positions in financial assets, with corresponding PnLs.
-
-
-  - You also need another special account to hold the conversion differences;
-    basically, the sum total of all of the amounts from all of the accounts may
-    not be zero if there are conversions happening. These needs to be inserted
-    into Equity:Conversions in order for the full balance to be equal to zero.
-
-       For the conversion losses: we need two new accounts:
-       Income :conversion pnl
-       Equity : conversion pnl (for the exercise)
-
-
-  - Automatically insert a 'Equity:Conversions' account with a corresponding
-    transaction, so that A + L + E = 0 (for real).
-
-    * The conversion profit/loss only materializes if we convert amounts at the
-      real current rate, vs. the rate implied by the conversions.
-
-    * Also, this Equity:Conversions only applies to the exercise/reporting
-      period; other previous amounts are all folded into the
-      Equity:OpeningBalances account.
-
-  - Why is there some FIDO and AMTRAK and other points in my final Conversions
-    account? Shouldn't those just cancel out from Income over the period?
-
-
 
 
 ** Unrealized Gains
@@ -1205,6 +1150,17 @@ result of paying taxes:
     - "When and why to put accounts together under a single subaccount?"
       - When it makes sense to sum the total together.
         e.g. IRA employer contribution and your own contribution.
+
+
+  - Document the fact that the conversions problem occurs
+
+    * Because we don't reduce to a single "home" currency, and
+    * That if you do all your work in a single currency with accounts with
+      costs, the value will always be zero, and
+    * Explain that currency trading accounts have little to do with this,
+      because they are contained, and all in and out flows are in a single
+      currency (the base currency of the account). The differences can be
+      accounted like positions in financial assets, with corresponding PnLs.
 
 
 ** List of New features in Beancount v2 (Complete Rewrite) - Idealized

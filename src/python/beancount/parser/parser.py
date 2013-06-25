@@ -47,23 +47,27 @@ DEFAULT_OPTIONS = {
 
     # Leaf name of the equity account used for summarizing previous transactions
     # into opening balances.
-    "account_opening" : "Opening-Balances",
+    "account_previous_balances" : "Opening-Balances",
 
     # Leaf name of the equity account used for transferring previous retained
     # earnings from income and expenses accrued before the beginning of the
     # exercise into the balance sheet.
-    "account_earnings" : "Previous-Earnings",
+    "account_previous_earnings" : "Earnings:Previous",
+
+    # Leaf name of the equity account used for inserting conversions that will
+    # zero out remaining amounts due to transfers before the opening date. This
+    # will essentially "fixup" the basic accounting equation due to the errors
+    # that priced conversions introduce.
+    "account_previous_conversions" : "Conversions:Previous",
 
     # Leaf name of the equity account used for transferring current retained
     # earnings from income and expenses accrued during the current exercise into
-    # the balance sheet.
-    "account_netincome" : "Net-Income",
+    # the balance sheet. This is most often called "Net Income".
+    "account_current_earnings" : "Earnings:Current",
 
     # Leaf name of the equity account used for inserting conversions that will
-    # zero out remaining amounts due to transfers. This will essentially "fixup"
-    # the basic accounting equation due to the errors that priced conversions
-    # introduce.
-    "account_conversions" : "Conversions",
+    # zero out remaining amounts due to transfers during the exercise period.
+    "account_current_conversions" : "Conversions:Current",
 
     # Leaf name of the subaccounts created for unrealized capital gains.
     "account_unrealized" : "Unrealized",
@@ -85,24 +89,41 @@ DEFAULT_OPTIONS = {
     # spreadsheet (e.g, "101.00 USD" does not get parsed by a spreadsheet
     # import, but "101.00" does).
     "operating_currency" : [],
-    }
+}
 
 
-def get_equity_accounts(options):
+def get_previous_accounts(options):
     """Return Account objects for the opening, earnings, and conversion accounts."""
 
     equity = options['name_equity']
 
-    account_opening = account_from_name(
-        '{}:{}'.format(equity, options['account_opening']))
+    account_previous_earnings = account_from_name(
+        '{}:{}'.format(equity, options['account_previous_earnings']))
 
-    account_earnings = account_from_name(
-        '{}:{}'.format(equity, options['account_earnings']))
+    account_previous_balances = account_from_name(
+        '{}:{}'.format(equity, options['account_previous_balances']))
 
-    account_conversions = account_from_name(
-        '{}:{}'.format(equity, options['account_conversions']))
+    account_previous_conversions = account_from_name(
+        '{}:{}'.format(equity, options['account_previous_conversions']))
 
-    return (account_opening, account_earnings, account_conversions)
+    return (account_previous_earnings,
+            account_previous_balances,
+            account_previous_conversions)
+
+
+def get_current_accounts(options):
+    """Return Account objects for the opening, earnings, and conversion accounts."""
+
+    equity = options['name_equity']
+
+    account_current_earnings = account_from_name(
+        '{}:{}'.format(equity, options['account_current_earnings']))
+
+    account_current_conversions = account_from_name(
+        '{}:{}'.format(equity, options['account_current_conversions']))
+
+    return (account_current_earnings,
+            account_current_conversions)
 
 
 class ParserError(RuntimeError):
