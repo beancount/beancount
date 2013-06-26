@@ -1,6 +1,7 @@
 """Basic data structures used to represent the Ledger entries.
 """
 import io
+import sys
 import datetime
 import textwrap
 from collections import namedtuple
@@ -20,6 +21,8 @@ def render_fileloc(fileloc):
 
 def print_errors(errors, file=None):
     # Report all the realization errors.
+    if file is None:
+        file = sys.stderr
     for error in errors:
         file.write('{} {}\n'.format(render_fileloc(error.fileloc), error.message))
         if error.entry is not None:

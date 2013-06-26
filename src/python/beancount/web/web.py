@@ -55,26 +55,62 @@ def toc():
     mindate, maxdate = getters.get_min_max_dates([entry for entry in app.entries
                                                   if not isinstance(entry, (Open, Close))])
 
-    # Create links to all the possible views.
-    views = []
-    views.append((app.router.build('all', path=''), 'All Transactions'))
+    def view_url(name, **kw):
+        return app.router.build(name, path='', **kw)
 
-    for year in reversed(list(getters.get_active_years(app.entries))):
-        views.append((app.get_url('year', path='', year=year), 'Year: {}'.format(year)))
+    viewboxes = []
 
-    for tag in getters.get_all_tags(app.entries):
-        views.append((app.get_url('tag', path='', tag=tag), 'Tag: {}'.format(tag)))
+    # Global views.
+    viewboxes.append(('global', None,
+                      [(view_url('all'), 'All Transactions')]))
 
-    view_items = ['<li><a href="{}">{}</a></li>'.format(url, title)
-                  for url, title in views]
+    # By year views.
+    viewboxes.append(('year', 'By Year',
+                      [(view_url('year', year=year), 'Year {}'.format(year))
+                       for year in reversed(list(getters.get_active_years(app.entries)))]))
+
+    # By tag views.
+    viewboxes.append(('tag', 'Tags',
+                      [(view_url('tag', tag=tag), '#{}'.format(tag))
+                       for tag in getters.get_all_tags(app.entries)]))
+
+    # By level.
+    viewboxes.append(('level1', 'Level 1',
+                      [(view_url('level1', level=level), '{}'.format(level))
+                       for level in getters.get_leveln_parent_accounts(app.entries, 1, nrepeats=0)]))
+
+    viewboxes.append(('level2', 'Level 2',
+                      [(view_url('level2', level=level), '{}'.format(level))
+                       for level in getters.get_leveln_parent_accounts(app.entries, 2, nrepeats=0)]))
+
+    # FIXME: This deserves its own page, with options for cleanup (or a helper tool).
+    if 0:
+        # By payee views.
+        viewboxes.append(('payee', 'Payees',
+                          [(view_url('payee', payee=payee), '{}'.format(payee))
+                           for payee in sorted(getters.get_all_payees(app.entries))]))
+
+    oss = io.StringIO()
+    oss.write('<div id="viewboxes">\n')
+    for cssid, title, viewbox in viewboxes:
+        view_items = ['<li><a href="{}">{}</a></li>'.format(url, title)
+                      for url, title in viewbox]
+        oss.write("""
+          <div id="{cssid}" class="viewbox">
+            {title}
+            <ul>
+              {view_items}
+            </ul>
+          </div>
+          <hr/>
+        """.format(cssid=cssid,
+                   title='<h2>{}</h2>'.format(title) if title else '',
+                   view_items='\n'.join(view_items)))
+    oss.write('</div> <!-- viewboxes -->\n')
+
     return render_global(
         pagetitle = "Table of Contents",
-        contents = """
-          <h2>Views</h2>
-          <ul>
-            {view_items}
-          </ul>
-        """.format(view_items='\n'.join(view_items)))
+        contents = oss.getvalue())
 
 
 @app.route('/errors', name='errors')
@@ -643,6 +679,17 @@ def tag(tag=None, path=None):
 @handle_view(3)
 def payee(payee=None, path=None):
     return views.PayeeView(app.entries, app.options, 'Payee {}'.format(payee), payee)
+
+
+@app.route(r'/view/level1/<level:re:[^/]*>/<path:re:.*>', name='level1')
+@handle_view(3)
+def level1(level=None, path=None):
+    return views.EmptyView(app.entries, app.options, 'Level 1: {}'.format(level), level)
+
+@app.route(r'/view/level2/<level:re:[^/]*>/<path:re:.*>', name='level2')
+@handle_view(3)
+def level2(level=None, path=None):
+    return views.EmptyView(app.entries, app.options, 'Level 2: {}'.format(level), level)
 
 
 # ## FIXME: We need to figure out how to deal with id-ification for paths.

@@ -62,6 +62,20 @@ def get_all_payees(entries):
     return all_payees
 
 
+def get_leveln_parent_accounts(entries, n, nrepeats=0):
+    "Return a list of all the unique level[n] accounts seen in the given entries."
+    accounts = get_accounts(entries)
+    leveldict = defaultdict(int)
+    for account_name in accounts:
+        components = account_name.split(':')
+        if n < len(components):
+            leveldict[components[n]] += 1
+    levels = {level
+              for level, count in leveldict.items()
+              if count > nrepeats}
+    return sorted(levels)
+
+
 def get_min_max_dates(entries):
     """Return the minimum and amximum dates in the list of entries."""
     if entries:

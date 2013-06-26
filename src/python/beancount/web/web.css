@@ -228,21 +228,21 @@ div.halfleft h3, div.halfright h3 {
 }
 
 div.halfleft {
-  float: left;
-  left: 1%;
-  width: 50%;
-  margin: 0px;
-  padding: 0px;
-  /* border: thin solid #DDD; */
+    float: left;
+    left: 1%;
+    width: 50%;
+    margin: 0px;
+    padding: 0px;
+    /* border: thin solid #DDD; */
 }
 
 div.halfright {
-  float: right;
-  left: 50%;
-  width: 49%;
-  margin: 0px;
-  padding: 0px;
-  /* border: thin solid #DDD; */
+    float: right;
+    left: 50%;
+    width: 49%;
+    margin: 0px;
+    padding: 0px;
+    /* border: thin solid #DDD; */
 }
 
 /* For balance sheet, add a little more spacing between liabilities and equity. */
@@ -267,4 +267,57 @@ table.positions.detail-table td:nth-child(2) {
 table.positions.byinst-account-table td:nth-child(1) {
     font-family: 'Roboto Condensed', sans-serif;
     text-align: left;
+}
+
+
+
+
+div#viewboxes {
+    /* margin-left: auto; */
+    /* margin-right: auto; */
+    /* border: medium solid blue; */
+    /* display: box; */
+    /* box-orient: horizontal; */
+    /* box-pack: center; */
+}
+
+div#viewboxes hr {
+    margin-left:20px;
+    margin-right:20px;
+}
+
+div.viewbox {
+    /* box-flex: 1; */
+    /* display: block; */
+    /* width: 300px; */
+    /* float: left; */
+    padding: 0px;
+    /* border: thin solid red; */
+}
+
+div.viewbox ul {
+    padding: 3px;
+    margin: 0px;
+}
+
+div.viewbox h2 {
+    margin-top: 5px;
+    margin-bottom: 0px;
+    display: inline-block;
+}
+
+div.viewbox ul li {
+    display: inline-block;
+    white-space: nowrap;
+    margin: 2px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+div.viewbox#year ul li {
+    min-width: 80px;
+}
+
+div.viewbox ul li {
+    min-width: 200px;
 }

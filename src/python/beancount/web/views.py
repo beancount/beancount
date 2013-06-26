@@ -49,18 +49,22 @@ class View:
         # Get the filtered list of entries.
         self.entries, self.begin_index = self.apply_filter(self.all_entries, self.options)
 
-        # Compute the list of entries for the opening balances sheet.
-        self.opening_entries = (self.entries[:self.begin_index]
-                                if self.begin_index is not None
-                                else None)
+        if not self.entries:
+            self.opening_entries = []
+            self.closing_entries = []
+        else:
+            # Compute the list of entries for the opening balances sheet.
+            self.opening_entries = (self.entries[:self.begin_index]
+                                    if self.begin_index is not None
+                                    else None)
 
 
-        # Compute the list of entries that includes transfer entries of the
-        # income/expenses amounts to the balance sheet's equity (as "net
-        # income"). This is used to render the end-period balance sheet, with
-        # the current period's net income, closing the period.
-        current_accounts = parser.get_current_accounts(self.options)
-        self.closing_entries = summarize.close(self.entries, *current_accounts)
+            # Compute the list of entries that includes transfer entries of the
+            # income/expenses amounts to the balance sheet's equity (as "net
+            # income"). This is used to render the end-period balance sheet, with
+            # the current period's net income, closing the period.
+            current_accounts = parser.get_current_accounts(self.options)
+            self.closing_entries = summarize.close(self.entries, *current_accounts)
 
         # Realize the three sets of entries.
         do_check = False
@@ -82,6 +86,17 @@ class View:
     def apply_filter(self, entries):
         "Filter the list of entries."
         raise NotImplementedError
+
+
+class EmptyView(View):
+    """An empty view, as a placeholder until we implement one."""
+
+    def __init__(self, entries, options, title, *args, **kw):
+        View.__init__(self, entries, options, title)
+
+    def apply_filter(self, _, __):
+        "Return the list of entries unmodified."
+        return ([], None)
 
 
 class AllView(View):
