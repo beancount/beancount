@@ -50,11 +50,11 @@ class TestConversions(unittest.TestCase):
         # entries = conversions(entries, ACCOUNT_CONVERSIONS2)
 
         converted_balance = summarize.compute_total_balance(entries)
-        print(converted_balance.get_cost())
+        #print(converted_balance.get_cost())
         # assert converted_balance.get_cost().is_empty()
 
         real_accounts = realization.realize(entries)
-        realization.dump_tree_balances(real_accounts, sys.stdout)
+        #realization.dump_tree_balances(real_accounts, sys.stdout)
 
 
 

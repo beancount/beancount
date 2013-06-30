@@ -64,11 +64,11 @@ def gviz_timeline(time_array, data_array_map, css_id='chart'):
     return oss.getvalue()
 
 
-times = [datetime.datetime(2013, 1, day) for day in range(1, 11)]
-data1 = [random.random() for _ in range(10)]
-data2 = [random.random() for _ in range(10)]
-datas = {'A': data1,
-         'B': data2}
+# times = [datetime.datetime(2013, 1, day) for day in range(1, 11)]
+# data1 = [random.random() for _ in range(10)]
+# data2 = [random.random() for _ in range(10)]
+# datas = {'A': data1,
+#          'B': data2}
 
-javascript = gviz_timeline(times, datas)
-print(javascript)
+# javascript = gviz_timeline(times, datas)
+# print(javascript)

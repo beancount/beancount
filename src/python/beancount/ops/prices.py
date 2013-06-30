@@ -40,6 +40,9 @@ class PriceDatabase(object):
         dates, rates = self.price_map[(base, quote)]
         return (dates[-1], rates[-1])
 
+    def get_prices(self, base, quote):
+        return self.price_map[(base, quote)]
+
 
 def build_price_database(entries):
 

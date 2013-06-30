@@ -23,6 +23,7 @@ from beancount import utils
 from beancount.utils.text_utils import replace_numbers
 from beancount.core.account import is_balance_sheet_account_name
 from beancount.loader import load
+from beancount.web import gviz
 
 
 #--------------------------------------------------------------------------------
@@ -163,24 +164,47 @@ def update():
 def prices_():
     "Render a list of links to instruments, to list their prices."
 
-    links = ['<a href="{link}">{0} ({1})</a>'.format(
-        base, quote,
-        link = request.app.get_url('prices_values', base=base, quote=quote))
-             for (base, quote) in app.price_db]
+    oss = io.StringIO()
+    for quote, baselist in utils.groupby(lambda x: x[1], list(app.price_db)):
+        links = ['<a href="{link}">{0} ({1})</a>'.format(
+            base, quote,
+            link=request.app.get_url('prices_values', base=base, quote=quote)
+        ) for base in baselist]
+
+        oss.write("""
+          <td>
+            <ul>
+              {}
+            </ul>
+          </td>
+        """.format('\n'.join(map('<li>{}</li>'.format, links))))
 
     return render_global(
         pagetitle = "Prices",
         contents = """
-          <ul>
+          <table>
+            <tr>
             {}
-          </ul>
-        """.format('\n'.join(map('<li>{}</li>'.format, links))))
+            </tr>
+          </table>
+        """.format(oss.getvalue()))
 
 @app.route('/prices/<base:re:[A-Z]+>_<quote:re:[A-Z]+>', name='prices_values')
 def prices_values(base=None, quote=None):
-    print('bla')
+    dates, rates = get_prices(base, quotes)
+
+    return render_global(
+        pagetitle = "Price: {} / {}".format(base, quote),
+        contents = """
+           <pre>
+             {}
+           </pre>
+        """.format("{} {}\n".format(date, rate)
+                   for (date, rate) in zip(dates, rates)))
 
     # FIXME: TODO - Render as a gviz graph.
+    # gviz.gviz_timeline(
+
 
 
 
