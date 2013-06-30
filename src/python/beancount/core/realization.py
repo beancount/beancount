@@ -134,6 +134,115 @@ def realize(entries, do_check=False, min_accounts=None):
     return real_accounts
 
 
+
+
+
+
+def realize2(entries, do_check=False, min_accounts=None):
+    """Group entries by account, into a "tree" of realized accounts. RealAccount's
+    are essentially containers for lists of postings and the final balance of
+    each account, and may be non-leaf accounts (used strictly for organizing
+    accounts into a hierarchy). This is then used to issue reports.
+
+    The lists of postings in each account my be any of the entry types, except
+    for Transaction, whereby Transaction entries are replaced by the specific
+    Posting legs that belong to the account. Here's a simple diagram that
+    summarizes this seemingly complex, but rather simple data structure:
+
+       +-------------+         +------+
+       | RealAccount |---------| Open |
+       +-------------+         +------+
+                                   |
+                                   v
+                              +---------+     +-------------+
+                              | Posting |---->| Transaction |
+                              +---------+     +-------------+
+                                   |                         \
+                                   |                       +---------+
+                                   |                       | Posting |
+                                   v                       +---------+
+                                +-----+
+                                | Pad |
+                                +-----+
+                                   |
+                                   v
+                               +-------+
+                               | Check |
+                               +-------+
+                                   |
+                                   v
+                               +-------+
+                               | Close |
+                               +-------+
+                                   |
+                                   .
+
+    If 'do_check' is true, verify that Check entry balances succeed and issue error
+    messages if they fail.
+
+    'min_accounts' provides a sequence of accounts to ensure that we create no matter
+    what, even if empty. This is typically used for the root accounts.
+    """
+
+    # A mapping of account-name -> Account objects.
+    accounts_map = getters.get_accounts(entries)
+
+    real_dict = {}
+
+    # Ensure the minimal list of accounts has been created.
+    if min_accounts:
+        for account_name in min_accounts:
+            assoc_entry_with_real_account(real_dict, accounts_map[account_name], None)
+
+    for entry in entries:
+
+        if isinstance(entry, Transaction):
+            # Update the balance inventory for each of the postings' accounts.
+            for posting in entry.postings:
+                real_account = assoc_entry_with_real_account(real_dict, posting.account, posting)
+                real_account.balance.add_position(posting.position, allow_negative=True)
+
+        elif isinstance(entry, (Open, Close, Check, Note, Document)):
+            # Append some other entries in the realized list.
+            assoc_entry_with_real_account(real_dict, entry.account, entry)
+
+        elif isinstance(entry, Pad):
+            # Insert the pad entry in both realized accounts.
+            assoc_entry_with_real_account(real_dict, entry.account, entry)
+            assoc_entry_with_real_account(real_dict, entry.account_pad, entry)
+
+    #real_accounts = RealAccountTree(accounts_map)
+    return real_accounts
+
+
+def assoc_entry_with_real_account(real_dict, account, entry):
+    """Create a RealAccount instance on-demand and update an account's posting
+    list with the given entry."""
+
+    # Create the account, if not already there.
+    try:
+        real_account = real_dict[account.name]
+    except KeyError:
+        account = accounts_map[account.name]
+        real_account = RealAccount(account.name, account, Inventory(), [], [])
+        real_dict[account.name] = real_account
+
+    # If specified, add the new entry to the list of postings.
+    if entry is not None:
+        real_account.postings.append(entry)
+
+    return real_account
+
+
+
+
+
+
+
+
+
+
+
 def get_subpostings(real_account):
     """Given a RealAccount instance, return a sorted list of all its postings and
     the postings of its child accounts."""

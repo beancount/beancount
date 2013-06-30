@@ -8,6 +8,7 @@ import functools
 
 from beancount import parser
 
+from beancount.parser import parsedoc
 from beancount.core import realization
 from beancount.core import data
 
@@ -40,6 +41,25 @@ def trace_errors(real_accounts, errors):
             for posting in real_account.postings:
                 print('      {}'.format(posting))
     print()
+
+
+
+class TestRealization(unittest.TestCase):
+
+    @parsedoc
+    def test_simple_realize(self, entries, errors, options):
+        """
+          2013-05-01 open Assets:US:Checking   USD
+          2013-05-01 open Expenses:Stuff
+          2013-05-02 txn "Testing!"
+            Assets:US:Checking            100 USD
+            Expenses:Stuff           -100 USD
+        """
+        real_accounts = realization.realize(entries)
+        assert isinstance(next(iter(real_accounts.values())), realization.RealAccount)
+
+
+
 
 
 
