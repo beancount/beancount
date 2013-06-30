@@ -18,8 +18,10 @@ _account_link_cache = {}
 
 def account_link(account_name, leafonly=False):
     "Render an anchor for the given account name."
-    if isinstance(account_name, (Account, RealAccount)):
+    if isinstance(account_name, Account):
         account_name = account_name.name
+    elif isinstance(account_name, RealAccount):
+        account_name = account_name.fullname
     try:
         return _account_link_cache[(request.app, account_name)]
     except KeyError:

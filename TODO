@@ -198,10 +198,6 @@ beancount: TODO
   - Realization should be made into a simple tree; the hash-map is only
     required temporarily, see if you can simplify this even further.
 
-  - Rename RealAccount's 'name' to 'leaf_name' and perhaps the full name should
-    still be stored in 'name'.
-
-
   - You need to convert some of TestRealization to TestCheck.
 
   - A realization should just be the root node of a tree of RealAccount's, each

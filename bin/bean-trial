@@ -29,7 +29,7 @@ def reorder_accounts_node_by_declaration(real_account):
     children.sort()
     real_account.children[:] = [x[1] for x in children]
 
-    print(real_account.name)
+    print(real_account.fullname)
     for fileloc, child in children:
         print('  {:64}  {}'.format(child.name, fileloc))
     print()

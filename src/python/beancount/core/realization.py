@@ -14,11 +14,30 @@ from beancount.core import data
 from beancount.core import getters
 from beancount.core.data import Transaction, Check, Open, Close, Pad, Note, Document
 from beancount.core.data import Posting
+from beancount.core.account import Account, account_leaf_name
 
 
 # A realized account, inserted in a tree, that contains the list of realized
 # entries.
-RealAccount = namedtuple('RealAccount', 'name account balance children postings')
+RealAccount = namedtuple('RealAccount', 'fullname leafname account balance children postings')
+
+
+
+def create_real_account(account_name, account):
+    """Create a RealAccount instance.
+    Args:
+      account_name: a string, which may be empty (but never None).
+      account: an Account instance, which may be None if there is no associated
+               account to this node.
+    Returns:
+      A new RealAccount instance.
+    """
+    if account:
+        # Make sure to use the same string instance.
+        assert account.name == account_name, (account_name, account)
+        account_name = account.name
+    return RealAccount(account_name, account_leaf_name(account_name), account,
+                       Inventory(), [], [])
 
 
 
@@ -31,11 +50,11 @@ class RealAccountTree(tree_utils.TreeDict):
         tree_utils.TreeDict.__init__(self, self, ':')
 
     def create_node(self, account_name):
-        account = self.accounts_map.get(account_name)
-        return RealAccount(account_name, account, Inventory(), [], [])
+        account = self.accounts_map.get(account_name, None)
+        return create_real_account(account_name, account)
 
     def get_name(self, real_account):
-       return real_account.name.split(':')[-1]
+       return real_account.fullname.split(':')[-1]
 
     def get_children(self, real_account):
         return real_account.children
@@ -223,8 +242,9 @@ def assoc_entry_with_real_account(real_dict, account, entry):
     try:
         real_account = real_dict[account.name]
     except KeyError:
-        account = accounts_map[account.name]
-        real_account = RealAccount(account.name, account, Inventory(), [], [])
+        # Note: for non-leaf accounts there will be no Account instance.
+        account = accounts_map.get(account.name, None)
+        real_account = create_real_account(account.name, account)
         real_dict[account.name] = real_account
 
     # If specified, add the new entry to the list of postings.
@@ -300,7 +320,7 @@ def compare_realizations(real_accounts1, real_accounts2):
 def real_cost_as_dict(real_accounts):
     """Convert a tree of real accounts as a dict for easily doing
     comparisons for testing."""
-    return {real_account.name: str(real_account.balance.get_cost())
+    return {real_account.fullaname: str(real_account.balance.get_cost())
             for account_name, real_account in real_accounts.items()
             if real_account.account}
 

@@ -46,7 +46,7 @@ def compute_balance_by_type(real_accounts, date):
                 for typename in AccountTypeData._fields}
     for real_account in real_accounts.values():
         if real_account.postings:
-            typename = account_type(real_account.name)
+            typename = account_type(real_account.fullname)
             assert False, "FIXME: This doesn't work anymore; we need to use the entries in order to compute the balance at a specific date."
             balance = realization.find_balance(real_account, date)
             balances[typename] += balance
@@ -273,7 +273,7 @@ def measure_balance_total(entries):
 
 def print_real_accounts(real_accounts):
     for real_account in sorted(real_accounts.values()):
-        print('{:56} {}'.format(real_account.name, real_account.account))
+        print('{:56} {}'.format(real_account.fullname, real_account.account))
 
 
 if __name__ == '__main__':

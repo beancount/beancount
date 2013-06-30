@@ -56,8 +56,9 @@ class TestRealization(unittest.TestCase):
             Expenses:Stuff           -100 USD
         """
         real_accounts = realization.realize(entries)
-        assert isinstance(next(iter(real_accounts.values())), realization.RealAccount)
-
+        for real_account in real_accounts.values():
+            assert isinstance(real_account, realization.RealAccount)
+            print(real_account)
 
 
 
