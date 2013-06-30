@@ -139,6 +139,7 @@ def get_latest_prices(entries):
 
 
 def get_latest_positions(entries):
+    """Get a dictionary of the latest positions by account."""
 
     # Realize the accounts into a tree (because we want the positions by-qaccount).
     real_accounts = realization.realize(entries, do_check=False)

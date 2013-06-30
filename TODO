@@ -34,7 +34,17 @@ beancount: TODO
     an interface to query it and report results in a table, in the web UI.
 
   - AUTO-CATEGORIZATION
-  - Realization as a simple tree
+  - Realization as a simple tree; operations on real_accounts are:
+
+    * Iterate over all real_accounts: real_accounts.values()
+    * real_account.balance, real_account.account, real_account.name, real_account.postings
+    * get_subpostings(real_account)
+    * account not in real_accounts (tree)
+    * tree.render_lines()
+    * tree.mark_from_leaves(fun)
+
+
+
   - Flip balances for rendering
   - Implement Average Booking for Vanguard & RBC Adjustment
   - Write an importer for the Ameritrade FOREX log
@@ -188,6 +198,10 @@ beancount: TODO
   - Realization should be made into a simple tree; the hash-map is only
     required temporarily, see if you can simplify this even further.
 
+  - Rename RealAccount's 'name' to 'leaf_name' and perhaps the full name should
+    still be stored in 'name'.
+
+
   - You need to convert some of TestRealization to TestCheck.
 
   - A realization should just be the root node of a tree of RealAccount's, each
@@ -200,9 +214,6 @@ beancount: TODO
     quickly look up any subaccount. One less class, and then you don't have a
     discrepancy between 'real_accounts' and 'real_account', one less datatype to
     deal this. I saw DO THIS.
-
-  - Rename RealAccount's 'name' to 'leaf_name' and perhaps the full name should
-    still be stored in 'name'.
 
   - Rename all 'real_accounts' to 'realization', which is meant to imply a tree
     of accounts.
