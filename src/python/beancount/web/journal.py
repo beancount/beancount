@@ -42,35 +42,21 @@ FLAG_ROWTYPES = {
 }
 
 def balance_html(balance):
+    """Render a list of balance position for an HTML table cell."""
     return ('<br/>'.join(map(str, balance.get_positions()))
             if balance
             else '')
 
-def entries_table_with_balance(app, oss, account_postings, render_postings=True):
-    """Render a list of entries into an HTML table.
+
+def iterate_render_transactions(app, postings):
+    """Iterate through the list of transactions with rendered strings
+    for each cell.
+    Yields:
     """
-    write = lambda data: (oss.write(data), oss.write('\n'))
-
-    write('''
-      <table class="entry-table">
-      <thead>
-        <tr>
-         <th class="datecell">Date</th>
-         <th class="flag">F</th>
-         <th class="description">Narration/Payee</th>
-         <th class="position">Position</th>
-         <th class="price">Price</th>
-         <th class="cost">Cost</th>
-         <th class="change">Change</th>
-         <th class="balance">Balance</th>
-      </thead>
-    ''')
-
     balance = Inventory()
-    for entry, leg_postings, change, balance in realization.iterate_with_balance(account_postings):
+    for entry, leg_postings, change, balance in realization.iterate_with_balance(postings):
 
         # Prepare the data to be rendered for this row.
-        date = entry.date
         balance_str = balance_html(balance)
 
         rowtype = entry.__class__.__name__
@@ -122,6 +108,36 @@ def entries_table_with_balance(app, oss, account_postings, render_postings=True)
             change_str = ''
             balance_str = ''
 
+        yield (entry, leg_postings,
+               rowtype, extra_class,
+               flag, description, change_str, balance_str)
+
+
+def entries_table_with_balance(app, oss, account_postings, render_postings=True):
+    """Render a list of entries into an HTML table.
+    """
+    write = lambda data: (oss.write(data), oss.write('\n'))
+
+    write('''
+      <table class="entry-table">
+      <thead>
+        <tr>
+         <th class="datecell">Date</th>
+         <th class="flag">F</th>
+         <th class="description">Narration/Payee</th>
+         <th class="position">Position</th>
+         <th class="price">Price</th>
+         <th class="cost">Cost</th>
+         <th class="change">Change</th>
+         <th class="balance">Balance</th>
+      </thead>
+    ''')
+
+    for (entry, leg_postings,
+         rowtype, extra_class,
+         flag, description, 
+         change_str, balance_str) in iterate_render_transactions(app, account_postings):
+
         # Render a row.
         write('''
           <tr class="{} {}" title="{}">
@@ -133,7 +149,7 @@ def entries_table_with_balance(app, oss, account_postings, render_postings=True)
           <tr>
         '''.format(rowtype, extra_class,
                    '{}:{}'.format(entry.fileloc.filename, entry.fileloc.lineno),
-                   date, flag, description, change_str, balance_str))
+                   entry.date, flag, description, change_str, balance_str))
 
         if render_postings and isinstance(entry, Transaction):
             for posting in entry.postings:
@@ -184,54 +200,10 @@ def entries_table(app, oss, account_postings, render_postings=True):
       </thead>
     ''')
 
-    balance = Inventory()
-    for entry, leg_postings, change, balance in realization.iterate_with_balance(account_postings):
-
-        # Prepare the data to be rendered for this row.
-        date = entry.date
-        rowtype = entry.__class__.__name__
-        flag = ''
-        extra_class = ''
-
-        if isinstance(entry, Transaction):
-            rowtype = FLAG_ROWTYPES.get(entry.flag, 'Transaction')
-            extra_class = 'warning' if entry.flag == flags.FLAG_WARNING else ''
-            flag = entry.flag
-            description = '<span class="narration">{}</span>'.format(entry.narration)
-            if entry.payee:
-                description = '<span class="payee">{}</span><span class="pnsep">|</span>{}'.format(entry.payee, description)
-            change_str = balance_html(change)
-
-        elif isinstance(entry, Check):
-            # Check the balance here and possibly change the rowtype
-            if entry.errdiff is None:
-                description = 'Check {} has {}'.format(account_link(entry.account), entry.amount)
-            else:
-                description = 'Check in {} fails; expected = {}, balance = {}, difference = {}'.format(
-                    account_link(entry.account), entry.amount,
-                    balance.get_amount(entry.amount.currency),
-                    entry.errdiff)
-                rowtype = 'CheckFail'
-
-        elif isinstance(entry, (Open, Close)):
-            description = '{} {}'.format(entry.__class__.__name__, account_link(entry.account))
-
-        elif isinstance(entry, Note):
-            description = '{} {}'.format(entry.__class__.__name__, entry.comment)
-            change_str = ''
-            balance_str = ''
-
-        elif isinstance(entry, Document):
-            assert path.isabs(entry.filename)
-            description = 'Document for {}: "<a href="{}" class="filename">{}</a>"'.format(
-                account_link(entry.account),
-                app.router.build('doc', filename=entry.filename.lstrip('/')),
-                path.basename(entry.filename))
-            change_str = ''
-            balance_str = ''
-
-        else:
-            description = entry.__class__.__name__
+    for (entry, leg_postings,
+         rowtype, extra_class,
+         flag, description, 
+         _, _) in iterate_render_transactions(app, account_postings):
 
         # Render a row.
         write('''
@@ -242,7 +214,7 @@ def entries_table(app, oss, account_postings, render_postings=True):
           <tr>
         '''.format(rowtype, extra_class,
                    '{}:{}'.format(entry.fileloc.filename, entry.fileloc.lineno),
-                   date, flag, description))
+                   entry.date, flag, description))
 
         if render_postings and isinstance(entry, Transaction):
             for posting in entry.postings:

@@ -153,7 +153,7 @@ def main():
 
 
     for entry in new_entries:
-        print(data.format_entry(entry))
+        print(data.format_entry(entry), end='')
 
 
     for position in positions:

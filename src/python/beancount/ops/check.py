@@ -50,9 +50,10 @@ def check(entries):
             if diff_amount.number.abs() > CHECK_PRECISION:
                 check_errors.append(
                     CheckError(entry.fileloc,
-                               "Check failed for '{}': {} != {}".format(entry.account.name,
-                                                                        balance_amount,
-                                                                        check_amount), entry))
+                               "Check failed for '{}': {} != {} (diff: {})".format(
+                                   entry.account.name, balance_amount, check_amount,
+                                   amount_sub(balance_amount, check_amount)), 
+                               entry))
 
                 # Substitute the entry by a failing entry.
                 entry = Check(entry.fileloc, entry.date, entry.account, entry.amount, diff_amount)
