@@ -165,7 +165,7 @@ def prices_():
 
     links = ['<a href="{link}">{0} ({1})</a>'.format(
         base, quote,
-        link = request.app.get_url('prices_graph', base=base, quote=quote))
+        link = request.app.get_url('prices_values', base=base, quote=quote))
              for (base, quote) in app.price_db]
 
     return render_global(
@@ -174,13 +174,11 @@ def prices_():
           <ul>
             {}
           </ul>
-        """.format('\n'.join(links)))
+        """.format('\n'.join(map('<li>{}</li>'.format, links))))
 
-@app.route('/prices/<base:re:[A-Z]+>_<quote:re:[A-Z]+>', name='prices_graph')
-def prices_graph(base=None, quote=None):
-
-
-    print('prices_graph')
+@app.route('/prices/<base:re:[A-Z]+>_<quote:re:[A-Z]+>', name='prices_values')
+def prices_values(base=None, quote=None):
+    print('bla')
 
     # FIXME: TODO - Render as a gviz graph.
 
