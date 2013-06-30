@@ -49,73 +49,23 @@ class TestRealization(unittest.TestCase):
     @parsedoc
     def test_simple_realize(self, entries, errors, options):
         """
-          2013-05-01 open Assets:US:Checking   USD
+          2013-05-01 open Assets:US:Checking:Sub   USD
           2013-05-01 open Expenses:Stuff
           2013-05-02 txn "Testing!"
-            Assets:US:Checking            100 USD
+            Assets:US:Checking:Sub            100 USD
             Expenses:Stuff           -100 USD
         """
         real_accounts = realization.realize(entries)
         for real_account in real_accounts.values():
             assert isinstance(real_account, realization.RealAccount)
-            print(real_account)
+
+        real_accounts2 = realization.realize2(entries)
+
+        for real_account in real_accounts2:
+            print(real_account.fullname)
 
 
 
-
-
-## FIXME: this needs become TestCheck().
-
-class __TestRealization(unittest.TestCase):
-
-    @realizedoc
-    def test_check_error(self, entries, real_accounts, errors):
-        """
-          2013-05-01 open Assets:US:Checking   USD
-          2013-05-03 check Assets:US:Checking   100 USD
-        """
-        self.assertEqual(len(errors), 1)
-
-    @realizedoc
-    def test_check_okay(self, entries, real_accounts, errors):
-        """
-          2013-05-01 open Assets:US:Checking   USD
-          2013-05-01 open Expenses:Something
-
-          2013-05-02 txn "Testing!"
-            Assets:US:Checking            100 USD
-            Expenses:Something           -100 USD
-
-          2013-05-03 check Assets:US:Checking   100 USD
-
-        """
-        self.assertEqual(len(errors), 0)
-
-    # This test ensures that the 'check' directives apply at the beginning of
-    # the day.
-    @realizedoc
-    def test_check_samedate(self, entries, real_accounts, errors):
-        """
-          2013-05-01 open Assets:US:Checking   USD
-          2013-05-01 open Expenses:Something
-
-          2013-05-02 txn "Testing!"
-            Assets:US:Checking            100 USD
-            Expenses:Something           -100 USD
-
-          2013-05-02 check Assets:US:Checking     0 USD
-          2013-05-03 check Assets:US:Checking   100 USD
-        """
-        data.print_errors(errors)
-        assert len(errors) == 0
 
 
 # FIXME: please DO test the realization of a transaction that has multiple legs on the same account!
-
-
-
-
-
-
-# FIXME: We need a test that triggers all the possible kinds of errors that we
-# may issue, everywhere actually. That's a great way to start coverage.

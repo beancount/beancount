@@ -12,6 +12,10 @@ class NodeAdapter:
         """Return a new node, given its name."""
         raise NotImplementedError
 
+    def add_child(self, node, child):
+        """Add a new child 'child' to node 'node'."""
+        raise NotImplementedError
+
     def get_name(self, node):
         """Return the name of a node."""
         return node.name
@@ -62,7 +66,7 @@ class TreeDict(dict):
         except KeyError:
             parent = self.get_create(self.get_parent_name(name))
             account = self.adaptor.create_node(name)
-            self.adaptor.get_children(parent).append(account)
+            self.adaptor.add_child(parent, account)
             dict.__setitem__(self, name, account)
         return account
 
@@ -89,7 +93,7 @@ def mark(node, predicate, node_adaptor, active_nodes):
     """Recursive routine that implements mark_from_leaves."""
 
     is_marked = predicate(node)
-    for child in node.children:
+    for child in node_adaptor.get_children(node):
         is_marked |= mark(child, predicate, node_adaptor, active_nodes)
 
     if is_marked:

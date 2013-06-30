@@ -2,6 +2,9 @@
 beancount: TODO
 * Current
 
+  - Move bean-trial reorder() function to realization.py
+  - Move utility functions from bean-prices to a reusable place.
+
   - Teasing out groups:
     - Can we move documents.py to ops? Look at that.
     - Can core.getters move to ops.getters?
@@ -73,6 +76,8 @@ beancount: TODO
   - Do we need to insert Open entries for the equity accounts described in
     options? I think we could safely plop that at the very beginning of the
     entries list in the parser.
+
+  - Create an account_join() function in account.py to remove ':' everywhere.
 
 
 * Core

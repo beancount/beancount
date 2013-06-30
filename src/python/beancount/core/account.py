@@ -17,6 +17,8 @@ def account_from_name(account_name):
 
 def account_parent_name(name):
     """Return the name of the parent account of the given account."""
+    if not name:
+        return None
     components = name.split(':')
     components.pop(-1)
     return ':'.join(components)
