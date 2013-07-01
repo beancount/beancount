@@ -56,13 +56,17 @@ class TestRealization(unittest.TestCase):
             Expenses:Stuff           -100 USD
         """
         real_accounts = realization.realize(entries)
-        for real_account in real_accounts.values():
+        for real_account in real_accounts:
             assert isinstance(real_account, realization.RealAccount)
 
         real_accounts2 = realization.realize2(entries)
 
-        for real_account in real_accounts2:
-            print(real_account.fullname)
+        for name in 'Assets:US:Checking:Sub', 'Expenses:Stuff':
+            lookup_account1 = real_accounts[name]
+            assert lookup_account1.fullname == name
+            lookup_account2 = real_accounts2[name]
+            assert lookup_account2.fullname == name
+
 
 
 

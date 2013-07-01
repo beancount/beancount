@@ -146,7 +146,7 @@ def get_latest_positions(entries):
 
     # For each account, look at the list of positions and build a list.
     positions = []
-    for real_account in real_accounts.values():
+    for real_account in real_accounts:
         for position in real_account.balance.get_positions():
             if position.lot.cost or position.lot.lot_date:
                 posdict = {'account': real_account.account,

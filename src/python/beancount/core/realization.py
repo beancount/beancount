@@ -48,7 +48,13 @@ class RealAccount:
         self.postings = []
 
     def __getitem__(self, childname):
-        self.children[childname]
+        if ':' in childname:
+            directname = childname.split(':', 1)[0]
+            restname = childname[len(directname)+1:]
+            child = self.children[directname]
+            return child[restname]
+        else:
+            return self.children[childname]
 
     def __iter__(self):
         yield self
@@ -183,6 +189,9 @@ def realize(entries, do_check=False, min_accounts=None):
 
 
 
+
+
+# FIXME: This will replace the previous implementation and we can remove a whole bunch of code.
 
 def realize2(entries, do_check=False, min_accounts=None):
     """Group entries by account, into a "tree" of realized accounts. RealAccount's
