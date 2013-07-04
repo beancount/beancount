@@ -191,7 +191,7 @@ def realize(entries, do_check=False, min_accounts=None):
 
 
 
-# FIXME: This will replace the previous implementation and we can remove a whole bunch of code.
+# FIXME: This will replace the previous implementation and we can remove a whole bunch of
 
 def realize2(entries, do_check=False, min_accounts=None):
     """Group entries by account, into a "tree" of realized accounts. RealAccount's
