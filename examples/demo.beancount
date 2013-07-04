@@ -20,6 +20,7 @@
 * Options
 
 option "operating_currency" "USD"
+;;option "operating_currency" "CAD"
 
 
 * Initialization
@@ -625,5 +626,9 @@ poptag #ski-trip
 
 
 
-2008-03-01 check  Assets:Cash                          200 CAD
+2008-03-01 check  Assets:Cash                          200.00 CAD
 2008-03-01 check  Assets:Cash                          30.96 USD
+
+
+2013-07-03 event "location" "New York City"
+

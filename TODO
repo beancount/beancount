@@ -2,6 +2,8 @@
 beancount: TODO
 * Current
 
+  - Rename "check" to "test/balance/verify/assert" (see what Ledger calls it)
+
   - Move bean-trial reorder() function to realization.py
   - Move utility functions from bean-prices to a reusable place.
 
