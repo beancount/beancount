@@ -9,7 +9,7 @@ import re
 import shelve
 from collections import namedtuple
 
-import dateutil
+import dateutil.parser
 import bs4
 
 from beancount.ops import prices
