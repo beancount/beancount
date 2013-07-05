@@ -215,6 +215,7 @@ def unrealized_gains(entries, subaccount_name):
     inserted."""
 
     new_entries = []
+    latest_date = entries[-1].date
 
     # Work through the list of priced positions.
     priced_positions, _ = get_priced_positions(entries)
@@ -239,8 +240,9 @@ def unrealized_gains(entries, subaccount_name):
 
         # Create a new transaction to account for this difference in gain.
         fileloc = FileLocation('<unrealized_gains>', 0)
-        narration = "Unrealized gains for {} in {}".format(currency, cost_currency)
-        entry = Transaction(fileloc, price_date, flags.FLAG_UNREALIZED, None, narration, None, None, [])
+        narration = "Unrealized gains for {} in {} (price: {}, as of {})".format(
+            currency, cost_currency, price_number, price_date)
+        entry = Transaction(fileloc, latest_date, flags.FLAG_UNREALIZED, None, narration, None, None, [])
 
         # Add the gain/loss as a subaccount to the asset account.
         asset_account = account_from_name(':'.join([account.name,

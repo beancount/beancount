@@ -207,7 +207,7 @@ class EntryPrinter:
         oss.write('{e.date} price {e.currency} {e.amount}\n'.format(e=entry))
 
     def Event(_, entry, oss):
-        raise NotImplementedError
+        oss.write('{e.date} event "{e.type}" "{e.description}"\n'.format(e=entry))
 
 
 def format_string(string):

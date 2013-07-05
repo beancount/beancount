@@ -2,10 +2,27 @@
 beancount: TODO
 * Current
 
+  - Realization as a simple tree; operations on real_accounts are:
+
+    * Iterate over all real_accounts: real_accounts.values()
+    * real_account.balance, real_account.account, real_account.name, real_account.postings
+    * get_subpostings(real_account)
+    * account not in real_accounts (tree)
+    * tree.render_lines()
+    * tree.mark_from_leaves(fun)
+
+
   - Rename "check" to "test/balance/verify/assert" (see what Ledger calls it)
+
+  - Text/XLS exports
+  - Average booking
 
   - Move bean-trial reorder() function to realization.py
   - Move utility functions from bean-prices to a reusable place.
+
+  - Flip balances for rendering
+
+  - Implement Think or Swim FOREX log importer
 
   - Teasing out groups:
     - Can we move documents.py to ops? Look at that.
@@ -39,16 +56,6 @@ beancount: TODO
     an interface to query it and report results in a table, in the web UI.
 
   - AUTO-CATEGORIZATION
-  - Realization as a simple tree; operations on real_accounts are:
-
-    * Iterate over all real_accounts: real_accounts.values()
-    * real_account.balance, real_account.account, real_account.name, real_account.postings
-    * get_subpostings(real_account)
-    * account not in real_accounts (tree)
-    * tree.render_lines()
-    * tree.mark_from_leaves(fun)
-
-
 
   - Flip balances for rendering
   - Implement Average Booking for Vanguard & RBC Adjustment
@@ -81,6 +88,8 @@ beancount: TODO
 
   - Create an account_join() function in account.py to remove ':' everywhere.
 
+  - Idea: include should have a "prefix" option, to add a prefix to all
+    accounts from the included file.
 
 * Core
 ** General
@@ -916,6 +925,9 @@ beancount: TODO
 
   - The OFX importer needs to unescape &amp; and other odd chars, I think
     there's a bug currently, I've seen a few here and there.
+
+  - Add an option --file=delete, that offers to delete (with confirmation) all
+    the files that it was able to identify.
 
 ** Filing
 

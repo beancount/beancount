@@ -12,7 +12,7 @@ import time
 from collections import defaultdict, namedtuple
 
 import pandas
-import matplotlib; matplotlib.use('qt4agg')
+import matplotlib #; matplotlib.use('qt4agg')
 from matplotlib import pyplot
 
 from beancount.core import data
@@ -21,7 +21,7 @@ from beancount.core.data import Transaction, Price
 from beancount.core import realization
 from beancount.ops import summarize
 from beancount.ops import validation
-from beancount.core.data import render_fileloc
+from beancount.core.data import render_fileloc, format_entry
 from beancount.core.inventory import Inventory
 from beancount.core.realization import dump_tree_balances
 from beancount import load
@@ -122,6 +122,10 @@ def main():
     with utils.print_time('load'):
         entries, errors, options = load(opts.filename)
 
+    for entry in entries:
+        print(format_entry(entry))
+    raise SystemExit
+
     with utils.print_time('compute_total_balance'):
         summarize.compute_total_balance(entries)
 
@@ -198,7 +202,7 @@ def pretty_transaction(txn):
 def print_locations(entries):
     for e in entries:
         if isinstance(e, Event) and e.type == 'location':
-            print (e)
+            print(e)
 
 
 def print_open_close(entries):

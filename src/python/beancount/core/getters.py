@@ -86,11 +86,14 @@ def get_min_max_dates(entries):
 
 def get_active_years(entries):
     """Yield all the years that have at least one entry in them."""
+    seen = set()
     prev_year = None
     for entry in entries:
         year = entry.date.year
         if year != prev_year:
             prev_year = year
+            assert year not in seen
+            seen.add(year)
             yield year
 
 
