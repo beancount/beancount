@@ -91,6 +91,9 @@ beancount: TODO
   - Idea: include should have a "prefix" option, to add a prefix to all
     accounts from the included file.
 
+  - Idea! View by currency; extract cash flows by filtering by currency (i.e.,
+    commodity, e.g. RBF1005) and then you can calcuate the IRR. Is this possible?
+
 * Core
 ** General
 
