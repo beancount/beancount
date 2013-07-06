@@ -266,7 +266,7 @@ viewapp = bottle.Bottle()
 V = AttrMapper(lambda *args, **kw: request.app.get_url(*args, **kw))
 
 
-def render_app(*args, **kw):
+def render_view(*args, **kw):
     """Render the title and contents in our standard template."""
     response.content_type = 'text/html'
     kw['A'] = A # Application mapper
@@ -328,7 +328,7 @@ def trial():
       Total Balance: <span class="num">{}</span>
     """.format(total_balance.get_cost())
 
-    return render_app(
+    return render_view(
         pagetitle = "Trial Balance",
         contents = table
         )
@@ -376,7 +376,7 @@ def balsheet():
     real_accounts = request.view.closing_real_accounts
     contents = balance_sheet_table(real_accounts, view.options)
 
-    return render_app(pagetitle = "Balance Sheet",
+    return render_view(pagetitle = "Balance Sheet",
                       contents = contents)
 
 
@@ -391,7 +391,7 @@ def openbal():
     else:
         contents = balance_sheet_table(real_accounts, view.options)
 
-    return render_app(pagetitle = "Opening Balances",
+    return render_view(pagetitle = "Opening Balances",
                       contents = contents)
 
 
@@ -426,7 +426,7 @@ def income():
        </div>
     """.format(**vars())
 
-    return render_app(pagetitle = "Income Statement",
+    return render_view(pagetitle = "Income Statement",
                       contents = contents)
 
 
@@ -472,7 +472,7 @@ def equity():
     ## FIXME: Render the equity at opening too.
     ## FIXME: Insert a summary of the net income.
 
-    return render_app(pagetitle = "Shareholder's Equity",
+    return render_view(pagetitle = "Shareholder's Equity",
                       contents = contents)
 
 
@@ -499,7 +499,7 @@ def account(slashed_account_name=None):
 
     oss = io.StringIO()
     journal.entries_table_with_balance(app, oss, account_postings)
-    return render_app(
+    return render_view(
         pagetitle = '{}'.format(account_name), # Account:
         contents = oss.getvalue())
 
@@ -523,7 +523,7 @@ def conversions():
 
     balance = summarize.compute_total_balance(conversion_entries)
 
-    return render_app(
+    return render_view(
         pagetitle = "Conversions",
         contents = """
           <div id="table">
@@ -549,7 +549,7 @@ FORMATTERS = {
 @viewapp.route('/positions', name='positions')
 def positions():
     "Render an index of the pages detailing positions."
-    return render_app(
+    return render_view(
         pagetitle = "Positions",
         contents = """
           <ul>
@@ -572,7 +572,7 @@ def positions_detail():
     oss.write(dataframe.to_html(classes=['positions', 'detail-table']))
     oss.write("</center>\n")
 
-    return render_app(
+    return render_view(
         pagetitle = "Positions - Detailed List",
         contents = oss.getvalue())
 
@@ -611,7 +611,7 @@ def positions_byinstrument():
                                  formatters=FORMATTERS))
     oss.write("</center>\n")
 
-    return render_app(
+    return render_view(
         pagetitle = "Positions - By Instrument",
         contents = oss.getvalue())
 
@@ -622,7 +622,7 @@ def positions_byinstrument():
 @viewapp.route('/trades', name='trades')
 def trades():
     "Render a list of the transactions booked against inventory-at-cost."
-    return render_app(
+    return render_view(
         pagetitle = "Trades",
         contents = ""
         )
@@ -634,7 +634,7 @@ def documents():
     document_entries = utils.filter_type(request.view.entries, Document)
     oss = io.StringIO()
     journal.entries_table(app, oss, document_entries)
-    return render_app(
+    return render_view(
         pagetitle = "Documents",
         contents = oss.getvalue())
 
