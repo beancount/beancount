@@ -2,16 +2,6 @@
 beancount: TODO
 * Current
 
-  - Realization as a simple tree; operations on real_accounts are:
-
-    * Iterate over all real_accounts: real_accounts.values()
-    * real_account.balance, real_account.account, real_account.name, real_account.postings
-    * get_subpostings(real_account)
-    * account not in real_accounts (tree)
-    * tree.render_lines()
-    * tree.mark_from_leaves(fun)
-
-
   - Rename "check" to "test/balance/verify/assert" (see what Ledger calls it)
 
   - Text/XLS exports
@@ -214,32 +204,7 @@ beancount: TODO
 
 ** Realization
 
-  - Realization should be made into a simple tree; the hash-map is only
-    required temporarily, see if you can simplify this even further.
-
   - You need to convert some of TestRealization to TestCheck.
-
-  - A realization should just be the root node of a tree of RealAccount's, each
-    with a list of entries|Postings and a final balance. Store the final balance
-    in RealAccount, it's worth it.
-
-    Wouldn't it be great if we could get rid of the TreeDict object? I say this:
-    after you remove the RealEntry and RealPosting objects, make the realization
-    be just the root node of a tree of accounts. The root node should be able to
-    quickly look up any subaccount. One less class, and then you don't have a
-    discrepancy between 'real_accounts' and 'real_account', one less datatype to
-    deal this. I saw DO THIS.
-
-  - Rename all 'real_accounts' to 'realization', which is meant to imply a tree
-    of accounts.
-
-  - Fix return value of realize(), remove errors, need not output any errors.
-
-  - The account realiization *is* the report. Create a "Realization" object for
-    each entry, pointing back to its entry (for all entries), and it should
-    have a "balance" field.
-
-    Then, reporting routines should work off of that realization object!
 
   - Whether an account shows up in a particular Ledger (realization) really only
     should depend on whether the account was open during the period (we now have
@@ -363,9 +328,9 @@ beancount: TODO
 * Parser
 ** Errors
 
-  - We need to gather realization errors in a single place and report them like
-    the others; right now I'm catching them in sum_to_date() and writing using
-    the logging module; but they really should be trickled up with the rest.
+  - We need to gather errors in a single place and report them like the others;
+    right now I'm catching them in sum_to_date() and writing using the logging
+    module; but they really should be trickled up with the rest.
 
   - Syntax errors currently have no location... this is unacceptable. Write an
     automated test, check for all kinds of errors, in the lexer, in the parser,
@@ -773,7 +738,7 @@ beancount: TODO
 
          http://localhost:8080/byyear/2013/...
 
-      server_one_ledger(getledger('byyear/2013'), port=8080)
+      serve_one_ledger(getledger('byyear/2013'), port=8080)
       --realization='byyear/2013'
 
     This would serve only that realization, and not others. This way I could

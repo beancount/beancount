@@ -189,6 +189,7 @@ def prices_():
           </table>
         """.format(oss.getvalue()))
 
+
 @app.route('/prices/<base:re:[A-Z]+>_<quote:re:[A-Z]+>', name='prices_values')
 def prices_values(base=None, quote=None):
     dates, rates = app.price_db.get_prices(base, quote)

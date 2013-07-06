@@ -2,7 +2,6 @@
 Test conversions insertion.
 """
 import unittest
-import sys
 import datetime
 
 from beancount.core import realization
