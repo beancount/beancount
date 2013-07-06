@@ -2,6 +2,9 @@
 beancount: TODO
 * Current
 
+  - Extra whitespace with nothing after should not trump the parser (this is
+    especially bad during demos).
+
   - Rename "check" to "test/balance/verify/assert" (see what Ledger calls it)
 
   - Text/XLS exports
@@ -27,8 +30,6 @@ beancount: TODO
 
   - Make front web look good with all the views, implement all global pages.
 
-  - Complete price rendering
-
   - BUG: Don't crap out when you can't read the file; error should be reported
     like the other ones.
 
@@ -47,7 +48,6 @@ beancount: TODO
 
   - AUTO-CATEGORIZATION
 
-  - Flip balances for rendering
   - Implement Average Booking for Vanguard & RBC Adjustment
   - Write an importer for the Ameritrade FOREX log
   - We need checks for subaccounts for joint accounts - implement this
@@ -59,7 +59,6 @@ beancount: TODO
 
   - Clean up: add unit tests for everything, and docstrings everywhere.
     This new version will be really, really clean!
-
 
   - BUG: A posting with a following line that has some whitespace on it fails
     with a parsing error... this should not be the case. Review what happened,
@@ -76,7 +75,7 @@ beancount: TODO
     options? I think we could safely plop that at the very beginning of the
     entries list in the parser.
 
-  - Create an account_join() function in account.py to remove ':' everywhere.
+  - (cleanup) Create an account_join() function in account.py to remove ':' everywhere.
 
   - Idea: include should have a "prefix" option, to add a prefix to all
     accounts from the included file.

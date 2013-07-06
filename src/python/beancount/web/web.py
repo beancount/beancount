@@ -42,6 +42,7 @@ def render_global(*args, **kw):
     kw['title'] = app.options['title']
     kw['view_title'] = ''
     kw['navigation'] = GLOBAL_NAVIGATION
+    kw['scripts'] = kw.get('scripts', '')
     return template.render(*args, **kw)
 
 
@@ -165,11 +166,12 @@ def prices_():
     "Render a list of links to instruments, to list their prices."
 
     oss = io.StringIO()
-    for quote, baselist in utils.groupby(lambda x: x[1], list(app.price_db)).items():
+    for quote, baselist in sorted(utils.groupby(lambda x: x[1], list(app.price_db)).items(),
+                                  key=lambda x: -len(x[1])):
         links = ['<a href="{link}">{0} ({1})</a>'.format(
             base_, quote_,
             link=request.app.get_url('prices_values', base=base_, quote=quote_)
-        ) for base_, quote_ in baselist]
+        ) for base_, quote_ in sorted(baselist)]
 
         oss.write("""
           <td>
@@ -182,7 +184,7 @@ def prices_():
     return render_global(
         pagetitle = "Prices",
         contents = """
-          <table>
+          <table id="price-index">
             <tr>
             {}
             </tr>
@@ -190,24 +192,33 @@ def prices_():
         """.format(oss.getvalue()))
 
 
-@app.route('/prices/<base:re:[A-Z]+>_<quote:re:[A-Z]+>', name='prices_values')
+@app.route('/prices/<base:re:[A-Z0-9.]+>_<quote:re:[A-Z0-9.]+>', name='prices_values')
 def prices_values(base=None, quote=None):
     dates, rates = app.price_db.get_prices(base, quote)
 
-    print(dates)
-    print(rates)
+    scripts = gviz.gviz_timeline(dates, {'rates': rates, 'rates2': rates})
 
     return render_global(
         pagetitle = "Price: {} / {}".format(base, quote),
+        scripts = """
+          <script src="//www.google.com/jsapi" type="text/javascript"></script>
+          <script type="text/javascript">
+            {}
+          </script>
+        """.format(scripts),
         contents = """
-           <pre>
-             {}
-           </pre>
-        """.format("\n".join("{} {}".format(date, rate)
+           <div id="chart" style="height: 800px"></div>
+           <div id="price-table">
+             <table id="prices">
+               <thead>
+                 <tr><td>Date</td><td>Price</td></tr>
+               </thead>
+               {}
+             </table>
+           </div>
+        """.format("\n".join("<tr><td>{}</td><td>{}</td></tr>".format(date, rate)
                              for (date, rate) in zip(dates, rates))))
 
-    # FIXME: TODO - Render as a gviz graph.
-    # gviz.gviz_timeline(
 
 
 
@@ -237,6 +248,12 @@ def style():
         with open(path.join(path.dirname(__file__), 'web.css')) as f:
             global STYLE; STYLE = f.read()
     return STYLE
+
+
+@app.get('/favicon.ico')
+def favicon():
+    return bottle.static_file('favicon.ico', path.dirname(__file__))
+
 
 
 @app.route('/doc/<filename:re:.*>', name='doc')
@@ -274,6 +291,7 @@ def render_view(*args, **kw):
     kw['title'] = app.options['title']
     kw['view_title'] = ' - ' + request.view.title
     kw['navigation'] = APP_NAVIGATION.render(A=A, V=V, view_title=request.view.title)
+    kw['scripts'] = kw.get('scripts', '')
     return template.render(*args, **kw)
 
 APP_NAVIGATION = bottle.SimpleTemplate("""

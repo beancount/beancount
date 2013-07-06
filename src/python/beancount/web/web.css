@@ -321,3 +321,15 @@ div.viewbox#year ul li {
 div.viewbox ul li {
     min-width: 200px;
 }
+
+
+
+
+table#price-index {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+table#price-index td {
+    vertical-align: top;
+}
