@@ -5,6 +5,7 @@ import datetime
 from itertools import chain, repeat
 from collections import namedtuple, defaultdict, OrderedDict
 import operator
+import copy
 
 from beancount.utils import tree_utils
 from beancount.core.inventory import Inventory
@@ -14,7 +15,7 @@ from beancount.core import data
 from beancount.core import getters
 from beancount.core.data import Transaction, Check, Open, Close, Pad, Note, Document
 from beancount.core.data import Posting
-from beancount.core.account import Account, account_leaf_name, account_parent_name
+from beancount.core.account import Account, account_leaf_name, account_parent_name, account_from_name
 
 
 # A realized account, inserted in a tree, that contains the list of realized
@@ -61,8 +62,31 @@ class RealAccount:
         for child in self.children.values():
             yield from child
 
+    def __contains__(self, account_name):
+        directname = account_name.split(':', 1)[0]
+        restname = account_name[len(directname)+1:]
+        try:
+            child = self.children[directname]
+            if restname:
+                return child.__contains__(restname)
+            else:
+                return True
+        except KeyError:
+            return False
 
 
+
+
+
+class RealAdaptor(tree_utils.NodeAdapter):
+    """A container for a hierarchy of accounts, that can conveniently
+    create and maintain a hierarchy of accounts."""
+
+    def get_name(self, real_account):
+       return real_account.fullname.split(':')[-1]
+
+    def get_children(self, real_account):
+        return real_account.children.values()
 
 
 
@@ -93,7 +117,7 @@ class RealAccountTree(tree_utils.TreeDict):
         return iter(self.get_root())
 
 
-def realize(entries, do_check=False, min_accounts=None):
+def realize1(entries, do_check=False, min_accounts=None):
     """Group entries by account, into a "tree" of realized accounts. RealAccount's
     are essentially containers for lists of postings and the final balance of
     each account, and may be non-leaf accounts (used strictly for organizing
@@ -244,32 +268,33 @@ def realize2(entries, do_check=False, min_accounts=None):
 
     real_dict = {}
 
-    # Ensure the minimal list of accounts has been created.
-    if min_accounts:
-        for account_name in min_accounts:
-            assoc_entry_with_real_account(real_dict, accounts_map, accounts_map[account_name], None)
-
     for entry in entries:
 
         if isinstance(entry, Transaction):
             # Update the balance inventory for each of the postings' accounts.
             for posting in entry.postings:
-                real_account = assoc_entry_with_real_account(real_dict, accounts_map, posting.account, posting)
+                real_account = assoc_entry_with_real_account(real_dict, posting.account, posting)
                 real_account.balance.add_position(posting.position, allow_negative=True)
 
         elif isinstance(entry, (Open, Close, Check, Note, Document)):
             # Append some other entries in the realized list.
-            assoc_entry_with_real_account(real_dict, accounts_map, entry.account, entry)
+            assoc_entry_with_real_account(real_dict, entry.account, entry)
 
         elif isinstance(entry, Pad):
             # Insert the pad entry in both realized accounts.
-            assoc_entry_with_real_account(real_dict, accounts_map, entry.account, entry)
-            assoc_entry_with_real_account(real_dict, accounts_map, entry.account_pad, entry)
+            assoc_entry_with_real_account(real_dict, entry.account, entry)
+            assoc_entry_with_real_account(real_dict, entry.account_pad, entry)
+
+    # Ensure the minimal list of accounts has been created.
+    if min_accounts:
+        for account_name in min_accounts:
+            if account_name not in real_dict:
+                real_dict[account_name] = RealAccount(account_name, None)
 
     return create_real_accounts_tree(real_dict)
 
 
-def assoc_entry_with_real_account(real_dict, accounts_map, account, entry):
+def assoc_entry_with_real_account(real_dict, account, entry):
     """Create a RealAccount instance on-demand and update an account's posting
     list with the given entry."""
 
@@ -277,8 +302,6 @@ def assoc_entry_with_real_account(real_dict, accounts_map, account, entry):
     try:
         real_account = real_dict[account.name]
     except KeyError:
-        # Note: for non-leaf accounts there will be no Account instance.
-        account = accounts_map.get(account.name, None)
         real_account = RealAccount(account.name, account)
         real_dict[account.name] = real_account
 
@@ -314,6 +337,25 @@ def create_real_accounts_tree(real_dict):
             real_account = parent_account
 
     return full_dict['']
+
+
+def filter_tree(real_account, predicate):
+    """Visit the tree and apply the predicate on each node;
+    return a mapping of nodes where the predicate was true,
+    and of nodes which has children with the predicate true as well."""
+    assert isinstance(real_account, RealAccount)
+
+    children_copy = OrderedDict()
+    for child_name, child in real_account.children.items():
+        child_copy = filter_tree(child, predicate)
+        if child_copy is not None:
+            children_copy[child_name] = child_copy
+
+    if children_copy or predicate(real_account):
+        real_account_copy = copy.copy(real_account)
+        real_account_copy.children = children_copy
+        return real_account_copy
+
 
 
 
@@ -483,3 +525,7 @@ def iterate_with_balance(postings_or_entries):
 #             balance = real_account.balance
 #             total_balance += balance
 #     return total_balance
+
+
+
+realize = realize2

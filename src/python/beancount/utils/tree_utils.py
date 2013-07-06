@@ -73,6 +73,7 @@ class TreeDict(dict):
     def render_lines(self, start_node_name=None):
         """Yield a tree-rendering prefix and a node, so that you can print
         this out in a tree."""
+
         if start_node_name is None:
            start_node = self.get_root()
         else:
@@ -120,7 +121,7 @@ def render(root, node_adaptor):
 
     # Render as lines and join in a single string.
     for tuples in _render_node(root, context, True, ''):
-      yield tuples
+        yield tuples
 
 
 def _render_node(node, context, is_last, prefix):

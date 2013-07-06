@@ -8,6 +8,8 @@ from beancount.core.account import is_account_root
 from beancount.core.position import Lot
 from beancount.core.data import Open
 from beancount.core.inventory import Inventory
+from beancount.core import realization
+from beancount.utils import tree_utils
 
 
 # A special enum for the "Totals" line at the bottom of the table.
@@ -40,7 +42,11 @@ def tree_table(oss, tree, start_node_name, header=None, classes=None):
         write('</table>')
         return
 
-    lines = list(tree.render_lines(start_node_name))
+    if realization.realize is realization.realize2:
+        start_node = tree[start_node_name]
+        lines = list(tree_utils.render(start_node, realization.RealAdaptor()))
+    else:
+        lines = list(tree.render_lines(start_node_name))
 
     # Yield with a None for the final line.
     lines.append((None, None, None, TOTALS_LINE))
@@ -98,8 +104,12 @@ def table_of_balances(tree, start_node_name, currencies, classes=None):
     header = ['Account'] + currencies + ['Other']
 
     # Pre-calculate which accounts should be rendered.
-    active_accounts = tree.mark_from_leaves(is_account_active)
-    active_set = set(real_account.fullname for real_account in active_accounts)
+    if realization.realize is realization.realize2:
+        active_accounts = realization.filter_tree(tree, is_account_active)
+        active_set = set(real_account.fullname for real_account in active_accounts)
+    else:
+        active_accounts = tree.mark_from_leaves(is_account_active)
+        active_set = set(real_account.fullname for real_account in active_accounts)
 
     balance_totals = Inventory()
     oss = io.StringIO()
