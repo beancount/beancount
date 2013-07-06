@@ -165,11 +165,11 @@ def prices_():
     "Render a list of links to instruments, to list their prices."
 
     oss = io.StringIO()
-    for quote, baselist in utils.groupby(lambda x: x[1], list(app.price_db)):
+    for quote, baselist in utils.groupby(lambda x: x[1], list(app.price_db)).items():
         links = ['<a href="{link}">{0} ({1})</a>'.format(
-            base, quote,
-            link=request.app.get_url('prices_values', base=base, quote=quote)
-        ) for base in baselist]
+            base_, quote_,
+            link=request.app.get_url('prices_values', base=base_, quote=quote_)
+        ) for base_, quote_ in baselist]
 
         oss.write("""
           <td>
@@ -191,7 +191,10 @@ def prices_():
 
 @app.route('/prices/<base:re:[A-Z]+>_<quote:re:[A-Z]+>', name='prices_values')
 def prices_values(base=None, quote=None):
-    dates, rates = get_prices(base, quotes)
+    dates, rates = app.price_db.get_prices(base, quote)
+
+    print(dates)
+    print(rates)
 
     return render_global(
         pagetitle = "Price: {} / {}".format(base, quote),
@@ -199,8 +202,8 @@ def prices_values(base=None, quote=None):
            <pre>
              {}
            </pre>
-        """.format("{} {}\n".format(date, rate)
-                   for (date, rate) in zip(dates, rates)))
+        """.format("\n".join("{} {}".format(date, rate)
+                             for (date, rate) in zip(dates, rates))))
 
     # FIXME: TODO - Render as a gviz graph.
     # gviz.gviz_timeline(

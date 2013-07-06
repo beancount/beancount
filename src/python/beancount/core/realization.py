@@ -49,6 +49,8 @@ class RealAccount:
         self.postings = []
 
     def __getitem__(self, childname):
+        if not childname:
+            return self
         if ':' in childname:
             directname = childname.split(':', 1)[0]
             restname = childname[len(directname)+1:]
