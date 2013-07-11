@@ -3,9 +3,13 @@ Code that can guess a MIME type for a filename.
 We've had to enrich what is provided by default by magic because of some oddball types.
 """
 import re
+import warnings
 import mimetypes
 try:
     import magic
+    if not hasattr(magic, 'from_file'):
+        warnings.warn("You have an old version of magic; disabling.")
+        magic = None
 except ImportError:
     magic = None
 

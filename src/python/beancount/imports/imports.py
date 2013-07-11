@@ -136,7 +136,6 @@ def import_file(filename, matches):
     """Import entries from a single file.
     Matches is a list of (module, module_config) tuples to run on this file."""
 
-
     # Import with the various modules.
     new_entries = []
     for module, module_config in matches:
@@ -151,6 +150,10 @@ def import_file(filename, matches):
             # Skip a failing config.
             continue
 
+        # If the module does not implement entry extraction, skip.
+        if not hasattr(module, 'import_file'):
+            continue
+            
         # Import the new entries.
         imported_entries = module.import_file(filename, module_config)
         if imported_entries:
@@ -174,7 +177,7 @@ def import_file_and_process(filename, matches, existing_entries, mindate):
     Returns a list of new imported entries and a subset of these which have been
     identified as possible duplicates."""
 
-    # Import the entires.
+    # Import the entries.
     new_entries = import_file(filename, matches)
     if new_entries is None:
         return None, None
