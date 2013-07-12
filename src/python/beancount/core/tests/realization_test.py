@@ -59,7 +59,7 @@ class TestRealization(unittest.TestCase):
         for real_account in real_accounts:
             assert isinstance(real_account, realization.RealAccount)
 
-        real_accounts2 = realization.realize2(entries)
+        real_accounts2 = realization.realize(entries)
 
         for name in 'Assets:US:Checking:Sub', 'Expenses:Stuff':
             lookup_account1 = real_accounts[name]

@@ -69,10 +69,17 @@ int strtonl(const char* buf, size_t nchars);
     return EOL;
 }
 
- /* Ignore whitespace, except when found at the beginning of a line. This is how we group indented postings. */
+ /* Ignore whitespace, except when found at the beginning of a line and followed by a non-comment regular character.
+    This is how we group indented postings. */
 [ \t\r]+	{
     if ( yy_line_tokens == 1 ) {
-        return INDENT;
+        /* If the next character completes the line, skip it. */
+        if ( yy_hold_char == '\n' || yy_hold_char == '\r' || yy_hold_char == '\0' || yy_hold_char == ';' ) {
+            return SKIPPED;
+        }
+        else {
+            return INDENT;
+        }
     }
 }
 
@@ -142,7 +149,7 @@ option		{ return OPTION; }
 
  /* String literals. */
 \"[^\"]*\" 			{
-    yytext[strlen(yytext)-1] = '\0';
+    yytext[yyleng-1] = '\0';
     yylval->pyobj = BUILD("STRING", "s", &(yytext[1]));
     return STRING;
 }
@@ -181,12 +188,12 @@ int yy_lineno = 1;
 void yy_skip_line()
 {
     int c;
-    while ( (c = input()) != 0 ) {
+    while ( (c = input()) != EOF ) {
         if ( c == '\n' ) {
+            unput(c);
             break;
         }
     }
-    unput(c);
 }
 
 int strtonl(const char* buf, size_t nchars)

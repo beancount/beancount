@@ -272,7 +272,7 @@ class Builder(object):
         # Detect when a transaction does not have at least two legs.
         if postings is None or len(postings) < 2:
             # FIXME: Don't raise, log an error and skip instead...
-            raise ParserError(fileloc, "Invalid number of postings")
+            raise ParserError(fileloc, "Invalid number of postings: {}".format(postings))
 
         # Merge the tags from the stach with the explicit tags of this transaction
         ctags = set()
@@ -322,23 +322,23 @@ def get_account_types(options):
           for x in "assets liabilities equity income expenses".split()))
 
 
-def parse(filename):
+def parse(filename, **kw):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts."""
     builder = Builder()
-    _parser.parse(path.abspath(filename), builder)
+    _parser.parse(path.abspath(filename), builder, **kw)
     entries = sorted(builder.entries, key=data.entry_sortkey)
     # accounts = sorted(builder.accounts.values(), key=account_sortkey)
     return (entries, builder.errors, builder.options)
 
 
-def parse_string(input_string):
+def parse_string(input_string, **kw):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts."""
     with tempfile.NamedTemporaryFile('w') as tmp_file:
         tmp_file.write(input_string)
         tmp_file.flush()
-        return parse(tmp_file.name)
+        return parse(tmp_file.name, **kw)
 
 
 def parsedoc(fun):

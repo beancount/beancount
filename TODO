@@ -2,6 +2,10 @@
 beancount: TODO
 * Current
 
+  - Modify the lexer to emit EOF and add that in the grammar rules for empty_line.
+
+
+
   - Extra whitespace with nothing after should not trump the parser (this is
     especially bad during demos).
 

@@ -1,3 +1,6 @@
+from beancount.core.tests.realization_test import realizedoc
+import unittest
+
 
 ## FIXME: this needs become TestCheck().
 

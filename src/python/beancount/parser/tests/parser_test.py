@@ -2,8 +2,10 @@
 Tests for parser.
 """
 import unittest
+import textwrap
 
 from beancount.parser import parsedoc
+from beancount.parser import parser
 from beancount.core.data import Transaction, Check, Open, Close, Pad, Event, Price, Note
 
 
@@ -127,6 +129,35 @@ class TestParserMisc(unittest.TestCase):
         self.assertEqual(entries, [])
         self.assertEqual(errors, [])
 
+
+    def test_extra_whitespace_note(self):
+        input_ = '\n2013-07-11 note Assets:Cash "test"\n\n  ;;\n'
+        entries, errors, options = parser.parse_string(input_)
+        self.assertEqual(1, len(entries))
+
+    def test_extra_whitespace_transaction(self):
+        input_ = '\n'.join([
+          '2013-05-18 * "Nice dinner at Mermaid Inn"',
+          '  Expenses:Restaurant         100 USD',
+          '  Assets:US:Cash',
+          '  ',
+          ';; End of file',
+          ])
+
+        entries, errors, options = parser.parse_string(input_, yydebug=0)
+        self.assertEqual(1, len(entries))
+
+    def test_extra_whitespace_comment(self):
+        input_ = '\n'.join([
+          '2013-05-18 * "Nice dinner at Mermaid Inn"',
+          '  Expenses:Restaurant         100 USD',
+          '  Assets:US:Cash',
+          '  ;;',
+          ])
+        entries, errors, options = parser.parse_string(input_)
+        self.assertEqual(1, len(entries))
+
+
     @parsedoc
     def test_simple_1(self, entries, errors, options):
         """
@@ -154,6 +185,8 @@ class TestParserMisc(unittest.TestCase):
         """
         self.assertEqual(len(entries), 2)
         self.assertEqual(errors, [])
+
+
 
 
 class TestParserOptions(unittest.TestCase):

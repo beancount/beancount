@@ -156,10 +156,14 @@ txn : TXN
     }
 
 eol : EOL
-    | INDENT EOL
     | COMMENT EOL
-    | INDENT
-    | COMMENT
+
+/* FIXME: I want to add INDENT EOF and COMMENT EOF here.*/
+empty_line : EOL
+           | COMMENT EOL
+           | INDENT EOL
+           | INDENT
+           | COMMENT
 
 tags_list : empty
           {
@@ -248,37 +252,37 @@ currency_list : empty
                   DECREF2($1, $3);
               }
 
-pushtag : PUSHTAG TAG
+pushtag : PUSHTAG TAG eol
          {
              BUILD("pushtag", "O", $2);
              DECREF1($2);
          }
 
-poptag : POPTAG TAG
+poptag : POPTAG TAG eol
        {
            BUILD("poptag", "O", $2);
            DECREF1($2);
        }
 
-open : DATE OPEN ACCOUNT currency_list
+open : DATE OPEN ACCOUNT currency_list eol
      {
          $$ = BUILD("open", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
          DECREF3($1, $3, $4);
      }
 
-close : DATE CLOSE ACCOUNT
+close : DATE CLOSE ACCOUNT eol
       {
           $$ = BUILD("close", "siOO", FILE_LINE_ARGS, $1, $3);
           DECREF2($1, $3);
       }
 
-pad : DATE PAD ACCOUNT ACCOUNT
+pad : DATE PAD ACCOUNT ACCOUNT eol
     {
         $$ = BUILD("pad", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
         DECREF3($1, $3, $4);
     }
 
-check : DATE CHECK ACCOUNT amount
+check : DATE CHECK ACCOUNT amount eol
       {
           $$ = BUILD("check", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
           DECREF3($1, $3, $4);
@@ -314,19 +318,19 @@ lot_cost_date : LCURL amount RCURL
          }
 
 
-price : DATE PRICE CURRENCY amount
+price : DATE PRICE CURRENCY amount eol
       {
           $$ = BUILD("price", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
           DECREF3($1, $3, $4);
       }
 
-event : DATE EVENT STRING STRING
+event : DATE EVENT STRING STRING eol
       {
           $$ = BUILD("event", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
           DECREF3($1, $3, $4);
       }
 
-note : DATE NOTE ACCOUNT STRING
+note : DATE NOTE ACCOUNT STRING eol
       {
           $$ = BUILD("note", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
           DECREF3($1, $3, $4);
@@ -334,7 +338,7 @@ note : DATE NOTE ACCOUNT STRING
 
 filename : STRING
 
-document : DATE DOCUMENT ACCOUNT filename
+document : DATE DOCUMENT ACCOUNT filename eol
       {
           $$ = BUILD("document", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
           DECREF3($1, $3, $4);
@@ -360,19 +364,19 @@ option : OPTION STRING STRING eol
        }
 
 directive : SKIPPED
-          | eol
+          | empty_line
           | pushtag
           | poptag
           | option
 
-declarations : declarations entry
+declarations : declarations directive
+             {
+                 $$ = $1;
+             }
+             | declarations entry
              {
                  $$ = BUILD("handle_list", "OO", $1, $2);
                  DECREF2($1, $2);
-             }
-             | declarations directive
-             {
-                 $$ = $1;
              }
              | empty
              {

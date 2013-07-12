@@ -37,11 +37,15 @@ PyDoc_STRVAR(parse_doc,
 "Parse the filename, calling back methods on the builder.\
 Your builder is responsible to accumulating results.");
 
-PyObject* parse(PyObject *self, PyObject *args)
+PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
 {
     /* Unpack and validate arguments */
     const char* filename = 0;
-    if ( !PyArg_ParseTuple(args, "sO", &filename, &builder) ) {
+    extern int yydebug;
+    /* FIXME: You could support flex debugging too: yyset_debug(int bdebug) */
+    static char *kwlist[] = {"filename", "builder", "yydebug", NULL};
+    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "sO|p", kwlist,
+                                      &filename, &builder, &yydebug) ) {
         return NULL;
     }
     Py_XINCREF(builder);
@@ -55,7 +59,6 @@ PyObject* parse(PyObject *self, PyObject *args)
     /* Initialize the parser. */
     yyin = fp;
     yy_filename = filename;
-    /* yydebug = 1; */
 
     /* Parse! This will call back methods on the builder instance. */
     int result = yyparse();
@@ -74,9 +77,6 @@ PyObject* parse(PyObject *self, PyObject *args)
         return PyErr_Format(PyExc_RuntimeError, "Parsing error.");
     }
 
-#if 0
-    yylval->pyobj;
-#endif
     Py_RETURN_NONE;
 }
 
@@ -126,9 +126,9 @@ PyObject* lexer_next(PyObject *self, PyObject *args)
 
 
 static PyMethodDef module_functions[] = {
-    {"parse", parse, METH_VARARGS, parse_doc},
-    {"lexer_init", lexer_init, METH_VARARGS, NULL},
-    {"lexer_next", lexer_next, METH_VARARGS, NULL},
+    {"parse",      (PyCFunction)parse, METH_VARARGS|METH_KEYWORDS, parse_doc},
+    {"lexer_init", lexer_init,         METH_VARARGS, NULL},
+    {"lexer_next", lexer_next,         METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL} /* Sentinel */
 };
 
