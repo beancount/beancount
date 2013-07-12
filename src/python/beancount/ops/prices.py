@@ -245,8 +245,10 @@ def unrealized_gains(entries, subaccount_name):
         entry = Transaction(fileloc, latest_date, flags.FLAG_UNREALIZED, None, narration, None, None, [])
 
         # Add the gain/loss as a subaccount to the asset account.
-        asset_account = account_from_name(':'.join([account.name,
-                                                    subaccount_name]))
+        if subaccount_name:
+            asset_account = account_from_name(':'.join([account.name, subaccount_name]))
+        else:
+            asset_account = account
 
         # Note: don't set a price because we don't want these to end up in Conversions.
         #price = Amount(price_number, cost_currency)
@@ -260,8 +262,12 @@ def unrealized_gains(entries, subaccount_name):
         # Note: this is a rather convenient but arbitraty choice--maybe it would be best to let
         # the user decide to what account to book it, but I don't a nice way to let the user
         # specify this.
-        income_account = account_from_name(':'.join([account.name.replace('Assets', 'Income'),
-                                                     subaccount_name]))
+        income_account_name = account.name.replace('Assets', 'Income')
+        if subaccount_name:
+            income_account = account_from_name(':'.join([income_account_name, subaccount_name]))
+        else:
+            income_account = account_from_name(income_account_name)
+
         entry.postings.append(
             Posting(entry, income_account,
                     Position(Lot(cost_currency, None, None), -pnl),

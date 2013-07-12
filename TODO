@@ -4,6 +4,13 @@ beancount: TODO
 
   - Modify the lexer to emit EOF and add that in the grammar rules for empty_line.
 
+  - You need to validate the account name options (empty, or no :, use regex to constrain).
+
+  - Ameritrade dividends should have an associated stock name;
+    right now we don't know which positions the dividends are associated with.
+    (The input file doesn't appear to have it... call Ameritrade to let them know.)
+
+
 
 
   - Extra whitespace with nothing after should not trump the parser (this is
