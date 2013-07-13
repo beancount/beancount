@@ -15,7 +15,8 @@
 
 /* The filename being parsed. */
 extern const char* yy_filename;
-extern int yy_lineno;
+extern int yycolumn;
+
 
 
 /* Handle detecting the beginning of line. */
@@ -24,6 +25,9 @@ extern int yy_line_tokens; /* Number of tokens since the bol */
 #define YY_USER_ACTION  {                               \
     yy_line_tokens++;                                   \
     yylloc->first_line = yylloc->last_line = yylineno;  \
+    yylloc->first_column = yycolumn;                    \
+    yylloc->last_column = yycolumn+yyleng-1;            \
+    yycolumn += yyleng;                                 \
   }
 
 
@@ -42,7 +46,7 @@ int strtonl(const char* buf, size_t nchars);
 
 
 
-#line 46 "src/python/beancount/parser/lexer.h"
+#line 50 "src/python/beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -375,9 +379,9 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-#line 180 "src/python/beancount/parser/lexer.l"
+#line 185 "src/python/beancount/parser/lexer.l"
 
 
-#line 382 "src/python/beancount/parser/lexer.h"
+#line 386 "src/python/beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

@@ -188,6 +188,20 @@ class TestParserMisc(unittest.TestCase):
 
 
 
+class TestLineNumbers(unittest.TestCase):
+
+    @parsedoc
+    def test_line_numbers_simple(self, entries, errors, options):
+        """
+
+          2013-05-18 * "Nice dinner at Mermaid Inn"
+            Expenses:Restaurant         100 USD
+            Assets:US:Cash
+
+
+        """
+        self.assertTrue(isinstance(entries[0], Transaction))
+
 
 class TestParserOptions(unittest.TestCase):
 

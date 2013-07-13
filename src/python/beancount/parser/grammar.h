@@ -80,7 +80,7 @@ typedef union YYSTYPE
 {
 
 /* Line 2068 of yacc.c  */
-#line 69 "src/python/beancount/parser/grammar.y"
+#line 67 "src/python/beancount/parser/grammar.y"
 
     char character;
     const char* string;

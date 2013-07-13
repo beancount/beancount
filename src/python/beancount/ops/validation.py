@@ -67,32 +67,38 @@ def validate_open_close(entries, accounts):
                 close_map[account] = entry
 
         elif isinstance(entry, Check):
-            # Check that there exist at least one sub-account that is currently
-            # open for the check, where the check is valid.
-            error_entry = None
-            for account, open in open_map.items():
-                if not account.name.startswith(entry.account.name):
-                    continue
-                if open.date < entry.date:
-                    close = close_map.get(account)
-                    if close is None or entry.date < close.date:
-                        error_entry = None
-                        break
+            if entry.account in accounts:
+                # The account is an account with transactions; check the fast
+                # path.
+                check_one(entry, entry.account)
+            else:
+                # Parent accounts with subaccounts. Check that there exist at
+                # least one sub-account that is currently open for the check,
+                # where the check is valid.
+                error_entry = None
+                for account, open in open_map.items():
+                    if not account.name.startswith(entry.account.name):
+                        continue
+                    if entry.date >= open.date:
+                        close = close_map.get(account)
+                        if close is None or entry.date <= close.date:
+                            error_entry = None
+                            break
+                        else:
+                            error_entry = close
                     else:
-                        error_entry = close
-                else:
-                    error_entry = open
+                        error_entry = open
 
-            if error_entry:
-                if isinstance(error_entry, Open):
-                    check_errors.append(ValidationError(error_entry.fileloc,
-                                                        "No Unknown account {} (or perhaps wrong date?).".format(account.name),
-                                                        error_entry))
-                else:
-                    assert isinstance(error_entry, Close)
-                    check_errors.append(ValidationError(error_entry.fileloc,
-                                                        "Entry after account {} closed.".format(account.name),
-                                                        error_entry))
+                if error_entry:
+                    if isinstance(error_entry, Open):
+                        check_errors.append(ValidationError(error_entry.fileloc,
+                                                            "Unknown account {} (or perhaps wrong date?).".format(error_entry.account.name),
+                                                            error_entry))
+                    else:
+                        assert isinstance(error_entry, Close)
+                        check_errors.append(ValidationError(error_entry.fileloc,
+                                                            "Entry after account {} closed.".format(error_entry.account.name),
+                                                            error_entry))
 
         elif hasattr(entry, 'account'):
             check_one(entry, entry.account)

@@ -31,7 +31,8 @@
 
 /* The filename being parsed. */
 extern const char* yy_filename;
-extern int yy_lineno;
+extern int yycolumn;
+
 
 
 /* Handle detecting the beginning of line. */
@@ -40,6 +41,9 @@ extern int yy_line_tokens; /* Number of tokens since the bol */
 #define YY_USER_ACTION  {                               \
     yy_line_tokens++;                                   \
     yylloc->first_line = yylloc->last_line = yylineno;  \
+    yylloc->first_column = yycolumn;                    \
+    yylloc->last_column = yycolumn+yyleng-1;            \
+    yycolumn += yyleng;                                 \
   }
 
 
@@ -57,6 +61,7 @@ int strtonl(const char* buf, size_t nchars);
 
 }
 
+
 /*------------------------------------------------------------------------------------------------------------------------*/
 /* Rules */
 %%
@@ -65,7 +70,7 @@ int strtonl(const char* buf, size_t nchars);
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
 \n		{
     yy_line_tokens = 0;
-    yy_lineno++;
+    yycolumn = 1;
     return EOL;
 }
 
@@ -183,7 +188,7 @@ option		{ return OPTION; }
 
 const char* yy_filename = 0;
 int yy_line_tokens = 0;
-int yy_lineno = 1;
+int yycolumn = 1;
 
 void yy_skip_line()
 {

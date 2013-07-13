@@ -20,9 +20,7 @@
 /* Error-handling function. */
 void yyerror(char const* message)
 {
-    /* fprintf(stderr, "LOCTEST %d %d: ", yylloc.first_line, s); */
-    assert(yy_lineno == yyloc->first_line); /* FIXME: And it is wrong... */
-    fprintf(stderr, "%s:%d:: %s\n", yy_filename, yy_lineno, message);
+    fprintf(stderr, "%s:%d:: %s\n", yy_filename, yylineno, message);
 }
 
 void report_error(char const* message, YYLTYPE* yylloc)
@@ -43,7 +41,7 @@ const char* getTokenName(int token);
 #define DECREF6(x1, x2, x3, x4, x5, x6)
 
 
-#define FILE_LINE_ARGS  yy_filename, yylloc.first_line
+#define FILE_LINE_ARGS  yy_filename, (yyloc).first_line
 
 
 %}
