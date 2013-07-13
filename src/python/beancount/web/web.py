@@ -513,6 +513,9 @@ def account(slashed_account_name=None):
     else:
         real_accounts = request.view.real_accounts
 
+    if account_name not in real_accounts:
+        raise bottle.HTTPError(404, "Not found.")
+        
     account_postings = realization.get_subpostings(real_accounts[account_name])
 
     oss = io.StringIO()

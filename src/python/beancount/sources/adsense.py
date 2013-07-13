@@ -52,7 +52,7 @@ def import_file(filename, config):
         # Insert some Check entries every 3 months or so.
         n3mths = (row.date.year * 12 + row.date.month) // 3
 
-        if ticker.check(row.date):
+        if ticker(row.date):
             if prev_row:
                 check = Check(fileloc, row.date, config['cash'],
                               Amount(prev_row.account_balance, currency), None)

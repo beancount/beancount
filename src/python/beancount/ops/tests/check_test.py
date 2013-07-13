@@ -50,3 +50,7 @@ class __TestRealization(unittest.TestCase):
 
 # FIXME: We need a test that triggers all the possible kinds of errors that we
 # may issue, everywhere actually. That's a great way to start coverage.
+
+
+
+# FIXME: Check a test for the amounts in the subaccounts.

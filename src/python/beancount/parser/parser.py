@@ -235,9 +235,11 @@ class Builder(object):
         return Pad(fileloc, date, account, account_pad)
 
     def check(self, filename, lineno, date, account, amount):
+        # Note: No errors by default. We replace the failing ones in the routine
+        # that does the verification that these have succeeded or failed.
+        errdiff = None
         fileloc = FileLocation(filename, lineno)
-        # Note: Success by default. We replace the failing ones in check().
-        return Check(fileloc, date, account, amount, None)
+        return Check(fileloc, date, account, amount, errdiff)
 
     def event(self, filename, lineno, date, event_type, description):
         fileloc = FileLocation(filename, lineno)

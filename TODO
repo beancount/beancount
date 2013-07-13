@@ -61,7 +61,6 @@ beancount: TODO
 
   - Implement Average Booking for Vanguard & RBC Adjustment
   - Write an importer for the Ameritrade FOREX log
-  - We need checks for subaccounts for joint accounts - implement this
   - Implement txt and xls export.
 
   - Convert all the importers to use the DateIntervalTicker.
@@ -79,7 +78,6 @@ beancount: TODO
 
   - I need Text and XLS exports for sharing with Julie and otherwise.
 
-  - (check) A check on a parent account is necessary for joint accounts with subaccounts...
   - (import) We need to be able to invert the input (this is easy, rendering only)
 
   - Do we need to insert Open entries for the equity accounts described in
@@ -1103,6 +1101,8 @@ result of paying taxes:
       - When it makes sense to sum the total together.
         e.g. IRA employer contribution and your own contribution.
 
+  - Checks
+    - Checks work for subaccount balances too (add joint account example)
 
   - Document the fact that the conversions problem occurs
 

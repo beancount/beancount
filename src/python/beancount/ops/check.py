@@ -1,6 +1,7 @@
 """Automatic padding of gaps between entries.
 """
-from collections import namedtuple, defaultdict
+import re
+from collections import namedtuple
 
 from beancount.core.inventory import Inventory
 from beancount.core.amount import Decimal, amount_sub
@@ -22,7 +23,7 @@ def check(entries):
     check_errors = []
 
     # Running balance for each account.
-    balances = defaultdict(Inventory)
+    balances = {}
 
     new_entries = []
     for entry in entries:
@@ -30,7 +31,10 @@ def check(entries):
         if isinstance(entry, Transaction):
             # Update the balance inventory for each of the postings' accounts.
             for posting in entry.postings:
-                balance = balances[posting.account]
+                try:
+                    balance = balances[posting.account]
+                except KeyError:
+                    balance = balances[posting.account] = Inventory()
                 try:
                     # Note: if this is from a padding transaction, we allow negative lots at cost.
                     allow_negative = entry.flag in (flags.FLAG_PADDING, flags.FLAG_SUMMARIZE)
@@ -44,15 +48,27 @@ def check(entries):
         elif isinstance(entry, Check):
             # Check the balance against the check entry.
             check_amount = entry.amount
-            balance = balances[entry.account]
+            try:
+                # If the check is for a leaf account, just look up the current balance.
+                balance = balances[entry.account]
+            except KeyError:
+                # If the check is for a parent account, sum up the current
+                # balances for all the sub-accounts. We want to support checks
+                # for parent accounts for the total sum of their subaccounts.
+                balance = Inventory()
+                match = lambda account_name: account_name.startswith(entry.account.name)
+                for account, balance_account in balances.items():
+                    if match(account.name):
+                        balance += balance_account
             balance_amount = balance.get_amount(check_amount.currency)
+                        
             diff_amount = amount_sub(balance_amount, check_amount)
             if diff_amount.number.abs() > CHECK_PRECISION:
                 check_errors.append(
                     CheckError(entry.fileloc,
                                "Check failed for '{}': {} != {} (diff: {})".format(
                                    entry.account.name, balance_amount, check_amount,
-                                   amount_sub(balance_amount, check_amount)), 
+                                   amount_sub(balance_amount, check_amount)),
                                entry))
 
                 # Substitute the entry by a failing entry.

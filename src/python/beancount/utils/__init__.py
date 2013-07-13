@@ -113,7 +113,7 @@ class DateIntervalTicker:
             compute_value = lambda new_date: new_date
         self.compute_value = compute_value
 
-    def check(self, new_date):
+    def __call__(self, new_date):
         """Return True if the interval has been crossed; False otherwise."""
         new_value = self.compute_value(new_date)
         if new_value != self.last_value:

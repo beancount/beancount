@@ -6,7 +6,7 @@ from os import path
 from collections import namedtuple
 
 from beancount.core.account import Account
-from beancount.core.data import Open, Close, Transaction, Document
+from beancount.core.data import Open, Close, Check, Transaction, Document
 from beancount.core import data
 from beancount.core import getters
 from beancount import utils
@@ -65,6 +65,34 @@ def validate_open_close(entries, accounts):
                                                     entry))
             else:
                 close_map[account] = entry
+
+        elif isinstance(entry, Check):
+            # Check that there exist at least one sub-account that is currently
+            # open for the check, where the check is valid.
+            error_entry = None
+            for account, open in open_map.items():
+                if not account.name.startswith(entry.account.name):
+                    continue
+                if open.date < entry.date:
+                    close = close_map.get(account)
+                    if close is None or entry.date < close.date:
+                        error_entry = None
+                        break
+                    else:
+                        error_entry = close
+                else:
+                    error_entry = open
+
+            if error_entry:
+                if isinstance(error_entry, Open):
+                    check_errors.append(ValidationError(error_entry.fileloc,
+                                                        "No Unknown account {} (or perhaps wrong date?).".format(account.name),
+                                                        error_entry))
+                else:
+                    assert isinstance(error_entry, Close)
+                    check_errors.append(ValidationError(error_entry.fileloc,
+                                                        "Entry after account {} closed.".format(account.name),
+                                                        error_entry))
 
         elif hasattr(entry, 'account'):
             check_one(entry, entry.account)
