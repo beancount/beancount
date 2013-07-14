@@ -153,7 +153,7 @@ def import_file(filename, matches):
         # If the module does not implement entry extraction, skip.
         if not hasattr(module, 'import_file'):
             continue
-            
+
         # Import the new entries.
         imported_entries = module.import_file(filename, module_config)
         if imported_entries:

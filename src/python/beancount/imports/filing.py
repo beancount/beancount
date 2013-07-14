@@ -5,6 +5,7 @@ from os import path
 import datetime
 import logging
 import os
+import re
 import sys
 import shutil
 
@@ -15,6 +16,7 @@ def run_filer_loop(importer_config,
                    files_or_directories,
                    destination,
                    dry_run=False,
+                   debug=False,
                    mkdirs=False):
     """File importable files under a destination directory.
 
@@ -33,7 +35,15 @@ def run_filer_loop(importer_config,
     trace = lambda arg: sys.stdout.write(arg + '\n')
     jobs = []
     nerrors = 0
-    for filename, match_text, matches in imports.find_imports(importer_config, files_or_directories):
+    for filename, match_text, matches in imports.find_imports(importer_config, files_or_directories) :
+        # If we're debugging, print out the match text.
+        # This option is useful when we're building our importer configuration,
+        # to figure out which patterns to create as unique signatures.
+        if debug:
+            trace(',--------------------------------------------------------------------------------')
+            trace(match_text)
+            trace('`--------------------------------------------------------------------------------')
+
         if not matches:
             continue
 
@@ -65,7 +75,7 @@ def run_filer_loop(importer_config,
             destination,
             file_account.replace(':', os.sep),
             '{0:%Y-%m-%d}.{1}'.format(file_date,
-                                      path.basename(filename))))
+                                      path.basename(idify(filename)))))
 
         # Print the filename and which modules matched.
         trace('=== {}'.format(filename))
@@ -121,3 +131,11 @@ def run_filer_loop(importer_config,
         os.remove(filename)
 
     return jobs
+
+
+def idify(string):
+    """Return characters objectionable for a filename."""
+    for from_, to in [(r'[ \(\)]+', '_'),
+                      (r'_*\._*', '.')]:
+        string = re.sub(from_, to, string)
+    return string

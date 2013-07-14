@@ -81,7 +81,7 @@ def import_with_options(importer_config, opts):
         filing.run_filer_loop(importer_config,
                               opts.files_or_directories,
                               opts.file_only,
-                              opts.dry_run,
+                              opts.dry_run, opts.debug,
                               mkdirs=True)
     else:
         # Create a suitable output file.

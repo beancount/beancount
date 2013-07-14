@@ -1,8 +1,9 @@
 """TD Ameritrade investment account CSV file importer.
 
 This module parses the file that can be downloaded from the Activity &
-Statements tab on their website. For a more accurate import, you ought to use
-the Think-or-Swim importer (only provided if you opted-in to TOS).
+Statements tab on their website, NOT the file that can be downloaded from
+Think-or-Swim. For a more accurate import, you ought to use the Think-or-Swim
+importer (only provided if you opted-in to TOS).
 """
 import re
 import datetime
