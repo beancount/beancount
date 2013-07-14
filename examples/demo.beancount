@@ -229,6 +229,7 @@ option "operating_currency" "USD"
   Assets:BestBank:Checking                   -4.00 USD
   Expenses:Financial:Fees
 
+
 ;; A typical bank's return on checking accounts.
 2008-01-12 * "Deposit interest"
   Assets:BestBank:Checking                0.02 USD
@@ -400,7 +401,7 @@ option "operating_currency" "USD"
   Assets:UTrade:Account
   Expenses:Financial:Commissions                        9.95 USD
 
-;; A divident payment.
+;; A dividend payment.
 2008-02-02 * "DIVIDEND from AAPL position"
   Assets:UTrade:Account    0.68 USD
   Income:Dividends
