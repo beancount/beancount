@@ -9,7 +9,7 @@ import itertools
 import datetime
 
 from beancount.core import data
-from beancount.core.amount import to_decimal, Decimal, Amount
+from beancount.core.amount import to_decimal, Decimal, Amount, ZERO
 from beancount.core.account import account_from_name
 from beancount.core.data import create_simple_posting
 from beancount.core.data import Transaction, Posting, Pad, Check
@@ -32,6 +32,7 @@ CONFIG = {
     'interest'           : 'Interest income',
     'dividend_nontax'    : 'Non-taxable dividend income',
     'dividend'           : 'Taxable dividend income',
+    'pnl'                : 'Capital Gains/Losses',
     'transfer'           : 'Other account for inter-bank transfers',
     'third_party'        : 'Other account for third-party transfers (wires)',
     'adjustment'         : 'Opening balances account, used to make transfer when you opt-in',
@@ -42,10 +43,6 @@ def import_file(filename, config):
     """Import a CSV file from Think-or-Swim."""
 
     config = accountify_dict(config)
-    new_entries = []
-
-    cash_currency = config['cash_currency']
-
     sections = csv_utils.csv_split_sections(csv.reader(open(filename)))
     if 0:
         for section_name, rows in sections.items():
@@ -60,8 +57,22 @@ def import_file(filename, config):
                 obj = Tuple(*row)
                 print(obj)
 
-    # Process the cash balance report.
-    irows = iter(sections['Cash Balance'])
+    ##cash_entries = process_cash(sections['Cash Balance'], filename, config)
+    cash_entries = []
+
+    forex_entries = process_forex(sections['Forex Statements'], filename, config)
+
+    return cash_entries + forex_entries
+
+
+def process_cash(section, filename, config):
+    """Process the cash balance report, which contains stocks; this is the main
+    account.
+    """
+    new_entries = []
+    cash_currency = config['cash_currency']
+
+    irows = iter(section)
     prev_balance = Amount(Decimal(), cash_currency)
     prev_date = datetime.date(1970, 1, 1)
     Tuple = csv_utils.csv_parse_header(next(irows))
@@ -92,10 +103,10 @@ def import_file(filename, config):
         links = set([row.ref])
         entry = Transaction(fileloc, date, flags.FLAG_IMPORT, None, narration, None, links, [])
 
-        amount = Decimal(row.amount.replace(',', ''))
+        amount = convert_number(row.amount)
         assert not row.fees, row
 
-        balance = Amount(Decimal(row.balance.replace(',', '')), cash_currency)
+        balance = Amount(convert_number(row.balance), cash_currency)
 
         if row.description == 'CLIENT REQUESTED ELECTRONIC FUNDING RECEIPT (FUNDS NOW)':
             create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
@@ -155,6 +166,85 @@ def import_file(filename, config):
         prev_balance = balance
 
     return new_entries
+
+
+def process_forex(section, filename, config):
+    """Process the FOREX subaccount entries."""
+    new_entries = []
+    cash_currency = config['cash_currency']
+
+    irows = iter(section)
+    prev_balance = Decimal()
+    running_balance = Decimal()
+    prev_date = datetime.date(1970, 1, 1)
+    Tuple = csv_utils.csv_parse_header(next(irows))
+    matcher = Matcher()
+    for index, row in enumerate(itertools.starmap(Tuple, irows)):
+
+        # For transfers, they don't put the date in (WTF?) so use the previous
+        # day's date, because the rows are otherwise correctly sorted. Then
+        # parse the date.
+        if not row.date:
+            date = prev_date
+        else:
+            date = datetime.datetime.strptime(row.date, '%d/%m/%y').date()
+
+        balance = convert_number(row.balance)
+
+        row_amount = convert_number(row.amount_usd)
+        running_balance += row_amount
+
+        ##print('RUNNING_BALANCE', running_balance, balance)
+        assert(abs(running_balance - balance) <= Decimal('0.01'))
+
+        amount = balance - prev_balance
+        assert(abs(row_amount - amount) <= Decimal('0.01'))
+
+        # Check some invariants.
+        assert row.commissions == '--'
+
+        if row.type not in ('BAL',):
+
+            # Create a new transaction.
+            narration = re.sub('[ ]+', ' ', "({0.type}) {0.description}".format(row).replace('\n', ' ')).strip()
+            fileloc = data.FileLocation(filename, index)
+            links = set([row.ref] if row.ref != '--' else [])
+            entry = Transaction(fileloc, date, flags.FLAG_IMPORT, None, narration, None, links, [])
+
+            if row.type in ('FND', 'WDR'):
+                create_simple_posting(entry, config['asset_forex'], amount, cash_currency)
+                create_simple_posting(entry, config['asset_cash'], -amount, cash_currency)
+
+            elif row.type == 'TRD':
+                create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
+                create_simple_posting(entry, config['pnl'], -amount, cash_currency)
+
+            elif row.type == 'ROLL':
+                if amount != ZERO:
+                    create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
+                    create_simple_posting(entry, config['pnl'], -amount, cash_currency)
+
+            if entry.postings:
+                new_entries.append(entry)
+
+        prev_date = date
+        prev_balance = balance
+
+    return new_entries
+
+
+def convert_number(string):
+    if string == '--':
+        return Decimal()
+    mo = re.match(r'\((.*)\)', string)
+    if mo:
+        sign = -1
+        string = mo.group(1)
+    else:
+        sign = 1
+
+    number = Decimal(re.sub('[\$,]', '', string)) if string != '--' else Decimal()
+    return number * sign
 
 
 debug = False
