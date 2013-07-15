@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Interpret the Google AdSense CSV file and output transactions in a format
 suitable for Ledger.
@@ -22,8 +21,6 @@ CONFIG = {
     'transfer'      : 'Default account where money gets transferred to',
 }
 
-
-#### FIXME: This is incomplete, I need to finish porting this one (this is the last one).
 
 def import_file(filename, config):
     """Import a Google AdSense file."""
