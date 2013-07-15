@@ -2,12 +2,6 @@
 beancount: TODO
 * Current
 
-  - Move the Ameritrade:Forex source importer to a different file/module.
-
-
-
-
-
   - Modify the lexer to emit EOF and add that in the grammar rules for empty_line.
 
   - You need to validate the account name options (empty, or no :, use regex to constrain).
@@ -31,8 +25,6 @@ beancount: TODO
   - Move utility functions from bean-prices to a reusable place.
 
   - Flip balances for rendering
-
-  - Implement Think or Swim FOREX log importer
 
   - Teasing out groups:
     - Can we move documents.py to ops? Look at that.
@@ -66,7 +58,6 @@ beancount: TODO
   - AUTO-CATEGORIZATION
 
   - Implement Average Booking for Vanguard & RBC Adjustment
-  - Write an importer for the Ameritrade FOREX log
   - Implement txt and xls export.
 
   - Convert all the importers to use the DateIntervalTicker.
@@ -887,9 +878,6 @@ beancount: TODO
   - Render the Conversions amount at the bottom of the Conversions page...
 
 * Import
-
-  - Implement FOREX transaction log parsing for FOREX account, so that we count
-    losses correctly.
 
   - Add an option to the importer so merge all the entries before printing them
     out. This would be useful if we have multiple files for the same account.

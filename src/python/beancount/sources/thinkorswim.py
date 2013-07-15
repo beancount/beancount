@@ -57,12 +57,7 @@ def import_file(filename, config):
                 obj = Tuple(*row)
                 print(obj)
 
-    ##cash_entries = process_cash(sections['Cash Balance'], filename, config)
-    cash_entries = []
-
-    forex_entries = process_forex(sections['Forex Statements'], filename, config)
-
-    return cash_entries + forex_entries
+    return process_cash(sections['Cash Balance'], filename, config)
 
 
 def process_cash(section, filename, config):
@@ -163,71 +158,6 @@ def process_cash(section, filename, config):
             raise ValueError("Unknown transaction {}".format(row))
 
         new_entries.append(entry)
-        prev_balance = balance
-
-    return new_entries
-
-
-def process_forex(section, filename, config):
-    """Process the FOREX subaccount entries."""
-    new_entries = []
-    cash_currency = config['cash_currency']
-
-    irows = iter(section)
-    prev_balance = Decimal()
-    running_balance = Decimal()
-    prev_date = datetime.date(1970, 1, 1)
-    Tuple = csv_utils.csv_parse_header(next(irows))
-    matcher = Matcher()
-    for index, row in enumerate(itertools.starmap(Tuple, irows)):
-
-        # For transfers, they don't put the date in (WTF?) so use the previous
-        # day's date, because the rows are otherwise correctly sorted. Then
-        # parse the date.
-        if not row.date:
-            date = prev_date
-        else:
-            date = datetime.datetime.strptime(row.date, '%d/%m/%y').date()
-
-        balance = convert_number(row.balance)
-
-        row_amount = convert_number(row.amount_usd)
-        running_balance += row_amount
-
-        ##print('RUNNING_BALANCE', running_balance, balance)
-        assert(abs(running_balance - balance) <= Decimal('0.01'))
-
-        amount = balance - prev_balance
-        assert(abs(row_amount - amount) <= Decimal('0.01'))
-
-        # Check some invariants.
-        assert row.commissions == '--'
-
-        if row.type not in ('BAL',):
-
-            # Create a new transaction.
-            narration = re.sub('[ ]+', ' ', "({0.type}) {0.description}".format(row).replace('\n', ' ')).strip()
-            fileloc = data.FileLocation(filename, index)
-            links = set([row.ref] if row.ref != '--' else [])
-            entry = Transaction(fileloc, date, flags.FLAG_IMPORT, None, narration, None, links, [])
-
-            if row.type in ('FND', 'WDR'):
-                create_simple_posting(entry, config['asset_forex'], amount, cash_currency)
-                create_simple_posting(entry, config['asset_cash'], -amount, cash_currency)
-
-            elif row.type == 'TRD':
-                create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
-                create_simple_posting(entry, config['pnl'], -amount, cash_currency)
-
-            elif row.type == 'ROLL':
-                if amount != ZERO:
-                    create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
-                    create_simple_posting(entry, config['pnl'], -amount, cash_currency)
-
-            if entry.postings:
-                new_entries.append(entry)
-
-        prev_date = date
         prev_balance = balance
 
     return new_entries
