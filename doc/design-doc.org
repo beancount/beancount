@@ -2,7 +2,7 @@
 
 Author: Martin Blais
 Email: blais@furius.ca
-Date: 2013-07-14
+Last Update: 2013-07-20
 
 * Introduction
 
@@ -15,7 +15,10 @@ understand how Beancount works better.
 
 This document is language-independent; the components it and operations it
 describes should be implementable across different computer languages and
-systems. The purpose of the document is twofold:
+systems. The descriptions of the structures I have provided are conceptual, and
+how they get mapped to each language is a matter of choice.
+
+The purpose of the document is twofold:
 
 1. to provide a human-readable overview of the internals of Beancount for
    contributors and people who want to process the data structures with custom
@@ -48,7 +51,6 @@ A *Number* is simply a Decimal object that represents a quantity, rounded by
 any number of decimal digits. In the Python3 implementation, this is an
 instance of `cdecimal.Decimal` or `decimal.Decimal`.
 
-
 ** Currency
 
 A *Currency* is a string that represents a unit for the kinds of "things" that
@@ -78,13 +80,11 @@ short: if it's something you can count, it should have an associated currency.
 In the Python3 implementation, we do not create an explicit type for currency
 objects; we just use the string itself.
 
-
 ** Amount
 
 An *Amount* is the combination of a number and an associated currency:
 
   Amount = (Number, Currency)
-
 
 *** About Prices
 
@@ -92,7 +92,6 @@ A price does not have an explicit representation; rather, it is represented as
 an amount; for example you could say "GOOG" shares are worth a price (amount) or
 (510.00, "USD") by associating that amount with the "GOOG" currency or with a
 *Position* in that currency (more below).
-
 
 ** Lot
 
@@ -124,7 +123,6 @@ most of these shares don't usually end up tracking the date explicitly. It's up
 to you to include the lot-date in the input syntax or not; if it is not
 included, the lot-date is a null.
 
-
 ** Positions
 
 A position is simply the number of units of a specific lot:
@@ -146,7 +144,6 @@ equivalent position "at cost" by multiplying the number by the cost number:
   cost of (  12.00, ("GOOG", (510.00, "USD"), -))
  ------------------------------------------------
           (6120.00, ("USD", -, -))
-
 
 ** Inventory
 
@@ -223,7 +220,6 @@ It is typically indicative of a user error, however, to subtract units held at
 cost to a negative number of units, so that will be flagged as an error by
 default (this is a choice).
 
-
 *** Cost of an Inventory
 
 Similarly to a Position's cost, you can compute the cost of an Inventory by
@@ -260,7 +256,6 @@ categories. The names as read in the input syntax may be customized with
 "option" directives, so you can change the names to french, or even just rename
 "Income" to "Revenue" if you prefer to do that.
 
-
 ** Flags
 
 Flags may be associated with transactions and postings to indicate whether they
@@ -268,52 +263,170 @@ are assumed to be correct ("reconciled") or flagged as suspicious. They are
 represented in Python by a single-character string, or by a null value (if
 absent).
 
-
 ** Posting
 
 Each transaction entry is composed of multiple legs, or *Postings*. Each of
-these postings is composed of an account, a position and an optional price and
-an optional flag.
+these postings is associated with an account, a position and an optional price
+and an optional flag:
 
-  Posting = (Account, Position, Price, Flag)
+  Posting = (Account, Position, Price, Flag, Entry)
 
-The price is most often elided to a null value, and is used to declare
-conversions that do not track the cost of units, such as currency conversions
-(these have an impact on the accounting equation and should show up
-sparingly-most conversions within one country, such as purchases and sales in an
-investment account, take place using the cost). Flags on postings are also rare;
-usually a user will flag an entire transaction instead of a specific posting.
+The price is most often a null value, and when it is set, it is used to declare
+conversions that do not track the cost of their units, such as currency
+conversions. This have an impact on the accounting equation and in general you
+will have a limited number of them-they typically correspond to currrency
+conversions. Almost always, transactions that have postings with positions in
+different types of units, such as purchases and sales in an investment account
+(e.g. giving cash for shares, or vice-versa) use cost tracking and the price
+slot is not used.
 
-See the section on "Balancing Postings" below to see how postings are used.
+Also, flags on postings are also relatively rare, but supported; usually users
+will find it sufficient to flag an entire transaction instead of a specific
+posting.
+
+A Posting can ever only be contained by a single entry, and so each Posting
+instance should refer to the Entry that contains it. This is necessary because
+when we realize a particular view of a subset of entries, we will create lists
+of postings and need to be able to refer to their transactions. However, this
+creates a cycle of references, as the Transaction entries contain a list of
+their postings and must be dealt with in the implementation depending on how the
+host language does memory management.
+
+See the section on "Balancing Postings" below to see how postings are checked
+against each other.
 
 ** Transaction
 
-A *Transaction* is a kind of *Entry*.
+A *Transaction* is a kind of *Entry*. This is by far the most common and
+important type of entry found in Beancount files. The function of a book-keeping
+system is to organize these entries' postings in different groups and compute
+balances and sums within these groups of associated postings. All the other
+types of entries occupy supporting roles in our system.
+
+  Transaction = (Date, Flag, Payee, Narration, Postings, Tags, Links)
+
+Description of fields:
+
+- Date: Each transaction has a single date. Sometimes different postings of the
+  same transaction will appear at different dates, so eventually we will allow a
+  posting to have its own date to override the transaction's date, to be used as
+  documentation; in the simplest version, we enforce all transactions to occur
+  punctually, which is simple to understand and was not found to be a
+  significant problem in practice. Eventually we might deal with transactions
+  with postings at differing dates by implicitly converting them into multiple
+  transaction entries and using some sort of transfer accounts.
+
+- Flag: A transaction is sometimes marked as incomplete or suspicious by the
+  author. For that purpose, a flag can be set to various values. "!" can be
+  indicate that this transaction needs review and will appear highlighted in the
+  journals. The default value is "*", which means that the transaction is
+  thought to be correct. Other flags are also supported; see the parser to for
+  details.
+
+- Payee & Narration: The narration is a user-provided description of the
+  transaction, such as "Dinner with Mary-Ann." Yon can put any information in
+  this string. It shows up in the journal report. Oftentimes it is used to
+  enrich the transaction with context that cannot be imported automatically,
+  such as "transfer from savings account to pay for car repairs."
+
+  The payee name is optional, and exists to describe the entity with which the
+  transaction is conducted, such as "Whole Foods Market" or "Shell." Note that
+  you can view reports for all transactions associated with a particular payee,
+  so it's a nice extra to enter consistent payee names if the effort is not too
+  great.
+
+  If the transactions were written by one of the importers, the OFX source files
+  will most often contain the name of the payee in a somewhat unnormalized name,
+  like "BARNES&NOBLE BKSTRE #2000NEW YOR". We leave it up to importer code to
+  clean up these names into names that can be reconciled with each other, and
+  will provide tools to help do this manually if this ends up being the only
+  workable solution. In any case, even if you choose to leave your payee names
+  are all ugly and not fully de-dupped, it's really not a big deal. It's just a
+  nice extra to be able to group transactions by payee.
+
+- Postings: a list of the posting instances associated with this transaction.
+
+- Tags & Links: These are both meant to be unique sets of strings, and in
+  practice will be usually empty for most transactions. See section below on
+  their use and meaning.
+
+*** Tags
+
+Tags are strings that can be used to group sets of transactions. A view of this
+subset of transactions can then be generated, including all the usual reports
+(balance sheet, income statement, journals, etc.). You can tag transactions for
+a variety of purposes; here are some examples:
+
+- All transactions during a particular travel might be tagged to later summarize
+  your trip expenses. Those transactions will usually occur around the same date
+  and therefore there is convenient syntax used to automatically tag many
+  transactions that are declared together in a file.
+
+- Transactions related to a particular project to be accomplished. I took some
+  classes in an online program once, and tagged all related expenses to it. I
+  use this to track all my immigration-related expenses for a particular stage
+  (e.g. green card).
+
+- Declaring a group of expenses to be paid back by an employer (or your own
+  company) later on.
+
+- Expenses related to moving between locations.
+
+Typical tag names that I use for tags look like "#trip-israel-2012",
+"#conference-siggraph", and "#course-cfa".
+
+In general, tags are useful where adding a sub-accounts won't do. This is often
+the case where a group of related expenses are of differing types, and so they
+would not belong to a single account. Feel free to get creative.
+
+*** Links
+
+Links work similarly to tags, that is, grouping a set of transactions, but have
+a different purpose: to link groups of financially-related transactions not for
+the purpose of summarizing, but for associating them for whatever reason,
+usually for tracking related amounts. Examples include: transaction-ids from
+trading accounts (these often provide an id to a "related" or "other"
+transaction); account entries associated with related corrections, for example a
+reversed fee following a phone call could be linked to the original invalid fee
+from several weeks before; the purchase and sale of a home, and related
+acquisition expenses.
+
+In contrast to tags, their strings are most often unique numbers produced by the
+importers. No views are produced for links; only a journal of a particular links
+transactions can be produced and a rendered transaction should be accompanied by
+an actual "link" icon you can click on to view all the other related
+transactions.
+
+** Balancing Postings
+
+The fundamental principle of double-entry book-keeping is enforced in each of
+the the Transaction entries: the sum of all postings must be zero. This section
+describes the specific way in which we do this.
+
+Postings may be associated with positions in any currency unit. This position
+may or may not be associated with a particular cost amount. Furthermore,
+postings may have an associated price. How do we balance?
+
+Each of the posting's positions are first converted into a "balance amount":
+
+- If the posting has an associated cost, the cost of the
 
 
-This is by far the most common and important type of entry found in files. The
-function of a book-keeping system is to contain these entries and compute
-amounts from different groupings of their associated postings. All the other
-types of entries occupy supporting roles.
 
 
 
 
-*** Balancing Postings
 
 
-The fundamental principle of double-entry book-keeping is enforced here:
 
 balancing
 
 
 
-** Tags & Links
 
 
 
-** Entries
-
+** Other Entries
 
 Open        = namedtuple('Open'        , 'fileloc date account currencies')
 Close       = namedtuple('Close'       , 'fileloc date account')
@@ -324,11 +437,6 @@ Note        = namedtuple('Note'        , 'fileloc date account comment')
 Event       = namedtuple('Event'       , 'fileloc date type description')
 Price       = namedtuple('Price'       , 'fileloc date currency amount')
 Document    = namedtuple('Document'    , 'fileloc date account filename')
-
-
-
-
-
 
 * Functional Operations
 ** Padding
@@ -341,6 +449,16 @@ Document    = namedtuple('Document'    , 'fileloc date account filename')
 
 ** Realizing
   Describe operations used in balanace sheet and income statement
+
+* Ideas
+
+** Subaccounts vs. Payees vs. Tags
+
+Expenses:Legal:Immigration vs. #immigration
+
+Typically, if the kinds of expenses vary, using tags is more appropriate.
+
+
 
 
 * Documents & Other Features

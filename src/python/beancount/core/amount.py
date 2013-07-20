@@ -26,10 +26,10 @@ def to_decimal(strord):
     if isinstance(strord, Decimal):
         return strord
     else:
-        assert isinstance(strord, str)
         if not strord:
             return Decimal()
         else:
+            assert isinstance(strord, str)
             return Decimal(strord.replace(',', ''))
 
 
@@ -41,7 +41,7 @@ class Amount:
     __slots__ = ('number', 'currency')
 
     def __init__(self, number, currency):
-        self.number = Decimal(number) if isinstance(number, str) else number
+        self.number = to_decimal(number)
         self.currency = currency
 
     def __str__(self):
@@ -53,13 +53,15 @@ class Amount:
     __repr__ = __str__
 
     def __eq__(self, other):
-        return (self.number, self.currency) == other
+        return (self.number, self.currency) == (other.number, other.currency)
 
     def __hash__(self):
         return hash((self.number, self.currency))
 
 
-# Note: We don't implement operators here in favour of the more explicit functional style.
+# Note: We don't implement operators on Amount here in favour of the more
+# explicit functional style. This should all be LISP anyhow. I like dumb data
+# objects with functions instead of objects with methods...
 
 def amount_sortkey(amount):
     """Sort by currency first."""
@@ -67,10 +69,14 @@ def amount_sortkey(amount):
 
 def amount_mult(amount, number):
     """Multiply the given amount by a number."""
+    assert isinstance(amount, Amount)
+    assert isinstance(number, Decimal)
     return Amount(amount.number * number, amount.currency)
 
 def amount_sub(amount1, amount2):
     """Multiply the given amount by a number."""
+    assert isinstance(amount1, Amount)
+    assert isinstance(amount2, Amount)
     assert amount1.currency == amount2.currency
     return Amount(amount1.number - amount2.number, amount1.currency)
 

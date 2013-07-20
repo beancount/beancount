@@ -13,10 +13,14 @@ Account = namedtuple('Account', 'name type')
 
 def account_from_name(account_name):
     "Create a new account solely from its name."
-    return Account(account_name, account_type(account_name))
+    assert isinstance(account_name, str)
+    atype = account_type(account_name)
+    assert atype in TYPES_ORDER, "Invalid account type: {}".format(atype)
+    return Account(account_name, atype)
 
 def account_parent_name(name):
     """Return the name of the parent account of the given account."""
+    assert isinstance(name, str)
     if not name:
         return None
     components = name.split(':')
@@ -25,7 +29,7 @@ def account_parent_name(name):
 
 def account_leaf_name(name):
     """Get the name of the leaf of this account."""
-    return name.split(':')[-1]
+    return name.split(':')[-1] if name else None
 
 def account_sortkey(account):
     """Sort a list of accounts, taking into account the type of account.
@@ -37,15 +41,18 @@ def account_names_sortkey(account_name):
     """Sort a list of accounts, taking into account the type of account.
     Assets, Liabilities, Equity, Income and Expenses, in this order, then
     in the order of the account's name."""
-    account_type = account_name.split(':')[0]
-    return (TYPES_ORDER[account_type], account_name)
+    type_ = account_type(account_name)
+    return (TYPES_ORDER[type_], account_name)
 
 # FIXME: This may not be hard-coded, needs to be read from options.
 TYPES_ORDER = dict((x,i) for (i,x) in enumerate('Assets Liabilities Equity Income Expenses'.split()))
 
 def account_type(name):
     """Return the type of this account's name."""
-    return name.split(':')[0]
+    assert isinstance(name, str)
+    atype = name.split(':')[0]
+    assert atype in TYPES_ORDER
+    return atype
 
 def is_account_name(string):
     """Return true if the given string is an account name."""
