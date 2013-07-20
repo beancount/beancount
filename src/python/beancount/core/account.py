@@ -73,7 +73,7 @@ def is_income_statement_account(account, options):
                                                  'name_expenses'))
 
 def accountify_dict(string_dict):
-    """Convert the dictionary itms that have values which are account names into
+    """Convert the dictionary items that have values which are account names into
     Account instances. This is a simple core convenience designed to be used by the
     importers, so that configurations can be specified in terms of strings, like this:
 

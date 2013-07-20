@@ -125,8 +125,11 @@ class TestAccount(unittest.TestCase):
                                                          self.OPTIONS))
 
     def test_accountify_dict(self):
-        accountify_dict
-
-
-
-unittest.main()
+        accvalue_dict = {"b6edc1bf714a": "Assets:US:RBS:Savings",
+                         "21a4647fe535": "Liabilities:US:RBS:MortgageLoan",
+                         "6d17539d6c32": "Equity:OpeningBalances",
+                         "421833fa2cb9": "Income:US:Intel",
+                         "391bb475127e": "Expenses:Toys:Computer"}
+        newdict = accountify_dict(accvalue_dict)
+        self.assertTrue(isinstance(newdict, dict))
+        self.assertEqual("Income:US:Intel", newdict["421833fa2cb9"].name)
