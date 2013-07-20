@@ -4,7 +4,7 @@ import io
 
 from beancount.web.journal import account_link
 from beancount.core import data
-from beancount.core.account import is_account_root
+from beancount.core.account import is_account_name_root
 from beancount.core.position import Lot
 from beancount.core.data import Open
 from beancount.core.inventory import Inventory
@@ -116,7 +116,7 @@ def table_of_balances(tree, start_node_name, currencies, classes=None):
         else:
             # Check if this account has had activity; if not, skip rendering it.
             if (real_account.fullname not in active_set and
-                not is_account_root(real_account.fullname)):
+                not is_account_name_root(real_account.fullname)):
                 continue
 
             if real_account.account is None:

@@ -77,8 +77,8 @@ class TestAccount(unittest.TestCase):
     def test_is_account_name(self):
         is_account_name
 
-    def test_is_account_root(self):
-        is_account_root
+    def test_is_account_name_root(self):
+        is_account_name_root
 
     def test_is_balance_sheet_account(self):
         is_balance_sheet_account

@@ -58,7 +58,7 @@ def is_account_name(string):
     """Return true if the given string is an account name."""
     return re.match('(Asset|Liabilities|Equity|Income|Expenses)', string)
 
-def is_account_root(account_name):
+def is_account_name_root(account_name):
     """Return true if the account name is one of the root accounts."""
     return ':' not in account_name
 
