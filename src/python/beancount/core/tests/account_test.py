@@ -49,9 +49,9 @@ class TestAccount(unittest.TestCase):
             "Expenses:Toys:Computer",
         ]
 
-        # Test account_names_sortkey.
+        # Test account_name_sortkey.
         account_names_actual = sorted(account_names_input,
-                                      key=account_names_sortkey)
+                                      key=account_name_sortkey)
         self.assertEqual(account_names_expected, account_names_actual)
 
         # Test account_sortkey.

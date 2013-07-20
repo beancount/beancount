@@ -37,7 +37,7 @@ def account_sortkey(account):
     in the order of the account's name."""
     return (TYPES_ORDER[account.type], account.name)
 
-def account_names_sortkey(account_name):
+def account_name_sortkey(account_name):
     """Sort a list of accounts, taking into account the type of account.
     Assets, Liabilities, Equity, Income and Expenses, in this order, then
     in the order of the account's name."""

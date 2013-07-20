@@ -29,7 +29,7 @@ from beancount import parser
 from beancount import utils
 from beancount.utils.bisect_key import bisect_left_withkey
 from beancount.ops import prices
-from beancount.core.account import account_type, account_names_sortkey
+from beancount.core.account import account_type, account_name_sortkey
 
 
 
@@ -254,7 +254,7 @@ def find_unique_templates(entries):
     print(len(groups))
 
     for account_names, entry_list in sorted(groups.items(), key=lambda x: len(x[1]), reverse=True):
-        print(tuple(sorted(account_names, key=account_names_sortkey)), len(entry_list))
+        print(tuple(sorted(account_names, key=account_name_sortkey)), len(entry_list))
 
 
 
