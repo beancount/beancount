@@ -190,10 +190,12 @@ const char* yy_filename = 0;
 int yy_line_tokens = 0;
 int yycolumn = 1;
 
+#define LEXEOF 0
+
 void yy_skip_line()
 {
     int c;
-    while ( (c = input()) != EOF ) {
+    while ( (c = input()) != LEXEOF ) {
         if ( c == '\n' ) {
             unput(c);
             break;
