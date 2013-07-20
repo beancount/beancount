@@ -21,11 +21,11 @@ class TestAccount(unittest.TestCase):
         self.assertEqual("", account_name_parent("Expenses"))
         self.assertEqual(None, account_name_parent(""))
 
-    def test_account_leaf_name(self):
-        self.assertEqual("Computer", account_leaf_name("Expenses:Toys:Computer"))
-        self.assertEqual("Toys", account_leaf_name("Expenses:Toys"))
-        self.assertEqual("Expenses", account_leaf_name("Expenses"))
-        self.assertEqual(None, account_leaf_name(""))
+    def test_account_name_leaf(self):
+        self.assertEqual("Computer", account_name_leaf("Expenses:Toys:Computer"))
+        self.assertEqual("Toys", account_name_leaf("Expenses:Toys"))
+        self.assertEqual("Expenses", account_name_leaf("Expenses"))
+        self.assertEqual(None, account_name_leaf(""))
 
     def test_account_sortkey(self):
         account_names_input = [

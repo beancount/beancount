@@ -13,7 +13,7 @@ from beancount.core import data
 from beancount.core import getters
 from beancount.core.data import Transaction, Check, Open, Close, Pad, Note, Document
 from beancount.core.data import Posting
-from beancount.core.account import account_leaf_name, account_name_parent
+from beancount.core.account import account_name_leaf, account_name_parent
 
 
 class RealAccount:
@@ -36,7 +36,7 @@ class RealAccount:
             account_name = account.name
 
         self.fullname = account_name
-        self.leafname = account_leaf_name(account_name)
+        self.leafname = account_name_leaf(account_name)
         self.account = account
 
         self.balance = Inventory()

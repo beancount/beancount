@@ -8,7 +8,7 @@ from beancount.core import data
 from beancount.core.data import Open, Close, Check, Transaction, Note, Document
 from beancount.core.balance import get_balance_amount
 from beancount.core.inventory import Inventory
-from beancount.core.account import Account, account_leaf_name
+from beancount.core.account import Account, account_name_leaf
 from beancount.core.realization import RealAccount
 from beancount.core import realization
 from beancount.core import flags
@@ -28,7 +28,7 @@ def account_link(account_name, leafonly=False):
         slashed_name = account_name.replace(':', '/')
 
         if leafonly:
-            account_name = account_leaf_name(account_name)
+            account_name = account_name_leaf(account_name)
 
         link = '<a href="{}" class="account">{}</a>'.format(
             request.app.get_url('account', slashed_account_name=slashed_name),

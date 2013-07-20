@@ -53,6 +53,8 @@ class Amount:
     __repr__ = __str__
 
     def __eq__(self, other):
+        if other is None:
+            return False
         return (self.number, self.currency) == (other.number, other.currency)
 
     def __hash__(self):

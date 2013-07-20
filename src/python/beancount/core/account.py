@@ -27,7 +27,7 @@ def account_name_parent(name):
     components.pop(-1)
     return ':'.join(components)
 
-def account_leaf_name(name):
+def account_name_leaf(name):
     """Get the name of the leaf of this account."""
     return name.split(':')[-1] if name else None
 
