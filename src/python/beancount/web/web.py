@@ -5,6 +5,7 @@ This uses the Bottle single-file micro web framework (with no plugins).
 import argparse
 from os import path
 import io
+import logging
 
 import bottle
 from bottle import response, request
@@ -517,7 +518,7 @@ def account(slashed_account_name=None):
 
     if account.name not in real_accounts:
         raise bottle.HTTPError(404, "Not found.")
-        
+
     account_postings = realization.get_subpostings(real_accounts[account.name])
 
     oss = io.StringIO()
@@ -763,7 +764,7 @@ def auto_reload_input_file(callback):
         if mtime > app.last_mtime:
             app.last_mtime = mtime
 
-            print('RELOADING')
+            logging.info('RELOADING')
 
             # Parse the beancount file.
             entries, errors, options = load(filename,
@@ -819,6 +820,9 @@ def main():
 
     args = argparser.parse_args()
     app.args = args
+
+    logging.basicConfig(level=logging.INFO,
+                        format='%(levelname)-8s: %(message)s')
 
     # Hide the numbers in incognito mode. We do this on response text via a plug-in.
     if args.incognito:

@@ -9,8 +9,15 @@ from beancount.core.position import Lot, Position
 
 class TestPosition(unittest.TestCase):
 
+    def test_ctor(self):
+        pass
+
+
     def test_compare_zero_to_none(self):
         pos1 = Position(Lot("CAD", None, None), ZERO)
         pos2 = None
         self.assertEqual(pos1, pos2)
         self.assertEqual(pos2, pos1)
+
+
+unittest.main()

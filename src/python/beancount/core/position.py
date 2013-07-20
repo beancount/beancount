@@ -22,8 +22,9 @@ from beancount.core.amount import ZERO, Decimal, Amount, amount_mult
 from beancount.core import CURRENCY_ORDER
 
 
-# Lots are representation of a commodity with an optional associated cost and optional acquisition date.
-# (There are considered immutable and shared between many objects; this makes everything faster.)
+# Lots are a representations of a commodity with an optional associated cost and
+# optional acquisition date. (There are considered immutable and shared between
+# many objects; this makes everything much faster.)
 Lot = namedtuple('Lot', 'currency cost lot_date')
 
 

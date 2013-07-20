@@ -8,6 +8,7 @@ from time import time
 import contextlib
 from collections import defaultdict
 import os
+import logging
 from os import path
 
 
@@ -18,8 +19,8 @@ def print_time(operation_name, quiet=False):
     t1 = time()
     yield
     t2 = time()
-    print(">>>>> Operation: '{}'  Time: {:.0f}ms".format(operation_name,
-                                                         (t2 - t1)*1000))
+    logging.info(">>>>> Operation: '{}'  Time: {:.0f}ms".format(operation_name,
+                                                                (t2 - t1)*1000))
 
 
 def groupby(keyfun, elements):

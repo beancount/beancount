@@ -19,10 +19,10 @@ def render_fileloc(fileloc):
     Emacs and align and rendered nicely."""
     return '{}:{:8}'.format(fileloc.filename, '{}:'.format(fileloc.lineno))
 
-def print_errors(errors, file=None):
-    # Report all the realization errors.
-    if file is None:
-        file = sys.stderr
+def format_errors(errors):
+    """Given the list of error objects, return a formatted string of all the
+    errors."""
+    file = io.StringIO()
     for error in errors:
         file.write('{} {}\n'.format(render_fileloc(error.fileloc), error.message))
         if error.entry is not None:
@@ -30,7 +30,7 @@ def print_errors(errors, file=None):
             file.write('\n')
             file.write(textwrap.indent(error_string, '   '))
             file.write('\n')
-
+    return file.getvalue()
 
 # All possible types of entries. See the documentation for these.
 Open        = namedtuple('Open'        , 'fileloc date account currencies')

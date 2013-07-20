@@ -16,6 +16,15 @@ class TestInventory(unittest.TestCase):
         inv_amount = inventory.get_amount(amount.currency)
         self.assertEqual(inv_amount , amount)
 
+    def test_ctor(self):
+        inv = Inventory()
+        self.assertTrue(inv.is_empt())
+
+## FIXME: ctor with positions
+
+
+
+
     def test_copy(self):
         inv = Inventory()
         inv.add(Amount('100.00', 'USD'))
@@ -129,3 +138,7 @@ class TestInventory(unittest.TestCase):
         inv2.add(Amount('55', 'GOOG'))
 
         inv = inv1 + inv2
+
+
+
+unittest.main()

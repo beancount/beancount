@@ -61,7 +61,10 @@ def load(filename,
     # Print out the list of errors.
     errors = parse_errors + pad_errors + check_errors + valid_errors + doc_errors
     if do_print_errors:
-        data.print_errors(errors)
+        error_text = data.format_errors(errors)
+        print(',--------------------------------------------------------------------------------')
+        print(error_text)
+        print('`--------------------------------------------------------------------------------')
 
     return entries, errors, options
 

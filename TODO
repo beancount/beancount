@@ -2,34 +2,33 @@
 beancount: TODO
 * Current
 
+  - Remove all "unittest.main()" I used on the train; install nosetests on mac box
+
   - Complete design doc
+  - Complete core tests
 
 
-
-
-  - Modify the lexer to emit EOF and add that in the grammar rules for empty_line.
+  - Complete parser tests
+    * Modify the lexer to emit EOF and add that in the grammar rules for empty_line.
+    * BUG: Parser errors should not throw exceptions... we need to recover from
+      these gracefully, skipping to the next entry (delete partially parsed entries).
+    * BUG: Don't crap out when you can't read the file; error should be reported
+      like the other ones.
 
   - You need to validate the account name options (empty, or no :, use regex to constrain).
 
-  - Ameritrade dividends should have an associated stock name;
-    right now we don't know which positions the dividends are associated with.
-    (The input file doesn't appear to have it... call Ameritrade to let them know.)
+
+
+  - Implement all the missing global pages.
 
 
 
 
-  - Extra whitespace with nothing after should not trump the parser (this is
-    especially bad during demos).
-
-  - Rename "check" to "test/balance/verify/assert" (see what Ledger calls it)
-
-  - Text/XLS exports
-  - Average booking
+  - Rename "check" to "test/balance/verify/assert" (see what Ledger calls it these days)
+  - Implement average booking and associated syntax
 
   - Move bean-trial reorder() function to realization.py
   - Move utility functions from bean-prices to a reusable place.
-
-  - Flip balances for rendering
 
   - Teasing out groups:
     - Can we move documents.py to ops? Look at that.
@@ -42,13 +41,6 @@ beancount: TODO
   - Render the OFX / QBO files in a <pre> tag, or figure out why the mimetype
     is incorrect and they don't render properly.
 
-  - Make front web look good with all the views, implement all global pages.
-
-  - BUG: Don't crap out when you can't read the file; error should be reported
-    like the other ones.
-
-  - BUG: Parser errors should not throw exceptions... we need to recover from
-    these gracefully.
 
   - Have another script that takes that as input and spits out current positions
     in the market on a web page; CGI script, should be served on Furius. Update
@@ -57,45 +49,33 @@ beancount: TODO
     * Move the price fetching utilities somewhere it can be reused by others;
       move code from bean-prices.
 
-  - IDEA: Render the transactions into an in-memory SQL database, and provide
-    an interface to query it and report results in a table, in the web UI.
 
-  - AUTO-CATEGORIZATION
-
-  - Implement Average Booking for Vanguard & RBC Adjustment
-  - Implement txt and xls export.
+  - IMPORTANT FEATURE: Text/XLS exports
+  - IMPORTANT FEATURE: Flip balances for rendering
+  - IMPORTANT FEATURE: Auto-categorization
+  - IMPORTANT FEATURE: Implement Average Booking for Vanguard & RBC Adjustment
 
   - Convert all the importers to use the DateIntervalTicker.
 
   - Render tags and links
 
-  - Clean up: add unit tests for everything, and docstrings everywhere.
-    This new version will be really, really clean!
 
   - BUG: A posting with a following line that has some whitespace on it fails
     with a parsing error... this should not be the case. Review what happened,
     fix this now.
 
-  - Convert all print() in web.py to calls to logging.
-
-  - I need Text and XLS exports for sharing with Julie and otherwise.
-
-  - (import) We need to be able to invert the input (this is easy, rendering only)
+  - (import) We need to be able to invert the input (this is easy, conversion
+    only, could be applied across any importer)
 
   - Do we need to insert Open entries for the equity accounts described in
     options? I think we could safely plop that at the very beginning of the
     entries list in the parser.
 
-  - (cleanup) Create an account_join() function in account.py to remove ':' everywhere.
-
-  - Idea: include should have a "prefix" option, to add a prefix to all
-    accounts from the included file.
-
-  - Idea! View by currency; extract cash flows by filtering by currency (i.e.,
-    commodity, e.g. RBF1005) and then you can calcuate the IRR. Is this possible?
-
 * Core
 ** General
+
+  - Clean up: add unit tests for everything, and docstrings everywhere.
+    This new version will be really, really clean!
 
   - Clean up code: remove all significant codes from __init__.py files.
 
@@ -106,6 +86,7 @@ beancount: TODO
   - Make all imports outside of packages import from the package root, and have
     the package export those symbols explicitly.
 
+  - (cleanup) Create an account_join() function in account.py to remove ':' everywhere.
 
 ** Inventory
 
@@ -406,6 +387,8 @@ beancount: TODO
   - With the new format... support includes, it makes a lot more sense to do
     that now! People want this too.
 
+  - Idea: an include directive should have a "prefix" option, to add a prefix to
+    all accounts from the included file.
 
 *** Sensible Syntax for Lots
 
@@ -854,6 +837,11 @@ beancount: TODO
       You could then possibly compute the IRR around that commodity...
 
 
+** Search
+
+  - IDEA: Render the transactions into an in-memory SQL database, and provide
+    an interface to query it and report results in a table, in the web UI.
+
 ** Trial Balance
 
   - We should have a nicer way to tell what accounts need to be updated.
@@ -883,6 +871,10 @@ beancount: TODO
   - Render the Conversions amount at the bottom of the Conversions page...
 
 * Import
+
+  - Ameritrade dividends should have an associated stock name;
+    right now we don't know which positions the dividends are associated with.
+    (The input file doesn't appear to have it... call Ameritrade to let them know.)
 
   - Add an option to the importer so merge all the entries before printing them
     out. This would be useful if we have multiple files for the same account.
