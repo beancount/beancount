@@ -18,7 +18,7 @@ def account_from_name(account_name):
     assert atype in TYPES_ORDER, "Invalid account type: {}".format(atype)
     return Account(account_name, atype)
 
-def account_parent_name(name):
+def account_name_parent(name):
     """Return the name of the parent account of the given account."""
     assert isinstance(name, str)
     if not name:

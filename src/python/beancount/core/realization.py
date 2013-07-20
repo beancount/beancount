@@ -13,7 +13,7 @@ from beancount.core import data
 from beancount.core import getters
 from beancount.core.data import Transaction, Check, Open, Close, Pad, Note, Document
 from beancount.core.data import Posting
-from beancount.core.account import account_leaf_name, account_parent_name
+from beancount.core.account import account_leaf_name, account_name_parent
 
 
 class RealAccount:
@@ -186,7 +186,7 @@ def create_real_accounts_tree(real_dict):
     full_dict = real_dict.copy()
     for real_account in real_dict.values():
         while True:
-            parent_name = account_parent_name(real_account.fullname)
+            parent_name = account_name_parent(real_account.fullname)
             if parent_name is None:
                 break
             try:
