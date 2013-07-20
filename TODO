@@ -2,6 +2,11 @@
 beancount: TODO
 * Current
 
+  - Complete design doc
+
+
+
+
   - Modify the lexer to emit EOF and add that in the grammar rules for empty_line.
 
   - You need to validate the account name options (empty, or no :, use regex to constrain).
