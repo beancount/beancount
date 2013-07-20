@@ -63,16 +63,16 @@ class TestAccount(unittest.TestCase):
         accounts_expected = list(map(account_from_name, account_names_expected))
         self.assertEqual(accounts_expected, accounts_actual)
 
-    def test_account_type(self):
-        self.assertEqual("Assets", account_type("Assets:US:RBS:Checking"))
-        self.assertEqual("Assets", account_type("Assets:US:RBS:Savings"))
-        self.assertEqual("Liabilities", account_type("Liabilities:US:RBS:MortgageLoan"))
-        self.assertEqual("Equity", account_type("Equity:NetIncome"))
-        self.assertEqual("Equity", account_type("Equity:OpeningBalances"))
-        self.assertEqual("Income", account_type("Income:US:ETrade:Dividends"))
-        self.assertEqual("Income", account_type("Income:US:Intel"))
-        self.assertEqual("Expenses", account_type("Expenses:Toys:Computer"))
-        self.assertRaises(AssertionError, account_type, "Invalid:Toys:Computer")
+    def test_account_name_type(self):
+        self.assertEqual("Assets", account_name_type("Assets:US:RBS:Checking"))
+        self.assertEqual("Assets", account_name_type("Assets:US:RBS:Savings"))
+        self.assertEqual("Liabilities", account_name_type("Liabilities:US:RBS:MortgageLoan"))
+        self.assertEqual("Equity", account_name_type("Equity:NetIncome"))
+        self.assertEqual("Equity", account_name_type("Equity:OpeningBalances"))
+        self.assertEqual("Income", account_name_type("Income:US:ETrade:Dividends"))
+        self.assertEqual("Income", account_name_type("Income:US:Intel"))
+        self.assertEqual("Expenses", account_name_type("Expenses:Toys:Computer"))
+        self.assertRaises(AssertionError, account_name_type, "Invalid:Toys:Computer")
 
     def test_is_account_name(self):
         is_account_name

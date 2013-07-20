@@ -44,7 +44,7 @@ def import_file(filename, config):
     # For each statement.
     txn_counter = itertools.count()
     for stmtrs in soup.find_all(re.compile('.*stmtrs$')):
-        # account_type = st.find('accttype').text.strip()
+        # account_typee = st.find('accttype').text.strip()
         # bank_id = st.find('bankid').text.strip()
 
         # For each currency.

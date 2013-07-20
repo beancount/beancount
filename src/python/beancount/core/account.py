@@ -14,7 +14,7 @@ Account = namedtuple('Account', 'name type')
 def account_from_name(account_name):
     "Create a new account solely from its name."
     assert isinstance(account_name, str)
-    atype = account_type(account_name)
+    atype = account_name_type(account_name)
     assert atype in TYPES_ORDER, "Invalid account type: {}".format(atype)
     return Account(account_name, atype)
 
@@ -41,13 +41,13 @@ def account_names_sortkey(account_name):
     """Sort a list of accounts, taking into account the type of account.
     Assets, Liabilities, Equity, Income and Expenses, in this order, then
     in the order of the account's name."""
-    type_ = account_type(account_name)
+    type_ = account_name_type(account_name)
     return (TYPES_ORDER[type_], account_name)
 
 # FIXME: This may not be hard-coded, needs to be read from options.
 TYPES_ORDER = dict((x,i) for (i,x) in enumerate('Assets Liabilities Equity Income Expenses'.split()))
 
-def account_type(name):
+def account_name_type(name):
     """Return the type of this account's name."""
     assert isinstance(name, str)
     atype = name.split(':')[0]
@@ -67,7 +67,7 @@ def is_balance_sheet_account(account):
     # FIXME: Remove these hardcoded strings; use the options instead.
 
 def is_balance_sheet_account_name(account_name, options):
-    return account_type(account_name) in (
+    return account_name_type(account_name) in (
         options[x] for x in ('name_assets',
                              'name_liabilities',
                              'name_equity'))

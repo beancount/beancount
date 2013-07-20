@@ -16,7 +16,7 @@ from beancount.core import data
 from beancount.core.amount import ZERO, Decimal, Amount
 from beancount.core.position import Lot, Position
 from beancount.core.data import Transaction, Check, Open, Close, Pad, Event, Price, Note, Document, FileLocation, Posting
-from beancount.core.account import Account, account_type
+from beancount.core.account import account_from_name
 from beancount.core.data import reparent_posting
 from beancount.core import balance
 
@@ -186,7 +186,7 @@ class Builder(object):
         try:
             account = self.accounts[account_name]
         except KeyError:
-            account = Account(account_name, account_type(account_name))
+            account = account_from_name(account_name)
             self.accounts[account_name] = account
         return account
 
