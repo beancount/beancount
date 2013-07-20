@@ -6,8 +6,8 @@ import datetime
 import textwrap
 from collections import namedtuple
 
-from beancount.core.amount import Amount, Decimal
-from beancount.core.account import Account
+from beancount.core.amount import Amount, Decimal, to_decimal
+from beancount.core.account import Account, account_from_name
 from beancount.core.position import Lot, Position
 
 
@@ -53,24 +53,30 @@ Posting = namedtuple('Posting', 'entry account position price flag')
 def create_simple_posting(entry, account, number, currency):
     """Create a simple posting on the entry, with just a number and currency (no
     cost)."""
+    if isinstance(account, str):
+        account = account_from_name(account)
     if not isinstance(number, Decimal):
-        number = Decimal(number.replace(',', ''))
+        number = to_decimal(number)
     position = Position(Lot(currency, None, None), Decimal(number))
     posting = Posting(entry, account, position, None, None)
-    entry.postings.append(posting)
+    if entry is not None:
+        entry.postings.append(posting)
     return posting
 
 def create_simple_posting_with_cost(entry, account, number, currency, cost_number, cost_currency):
     """Create a simple posting on the entry, with just a number and currency (no
     cost)."""
+    if isinstance(account, str):
+        account = account_from_name(account)
     if not isinstance(number, Decimal):
-        number = Decimal(number.replace(',', ''))
+        number = to_decimal(number)
     if cost_number and not isinstance(cost_number, Decimal):
-        cost_number = Decimal(cost_number.replace(',', ''))
+        cost_number = to_decimal(cost_number)
     cost = Amount(cost_number, cost_currency)
     position = Position(Lot(currency, cost, None), Decimal(number))
     posting = Posting(entry, account, position, None, None)
-    entry.postings.append(posting)
+    if entry is not None:
+        entry.postings.append(posting)
     return posting
 
 

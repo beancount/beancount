@@ -8,16 +8,16 @@ from beancount.core.amount import amount_sortkey, amount_mult, amount_sub
 class TestToDecimal(unittest.TestCase):
 
     def test_ZERO(self):
-      self.assertEqual(ZERO, Decimal('0'))
+        self.assertEqual(ZERO, Decimal('0'))
 
     def test_to_decimal(self):
-      d = Decimal('10.345')
-      self.assertEqual(to_decimal(d), d)
-      self.assertEqual(to_decimal('10.345'), d)
-      self.assertEqual(to_decimal('10,034.45'), Decimal('10034.45'))
-      self.assertEqual(to_decimal('-83,434,309.10'), Decimal('-83434309.10'))
-      self.assertEqual(to_decimal(''), Decimal())
-      self.assertEqual(to_decimal(None), Decimal())
+        d = Decimal('10.345')
+        self.assertEqual(to_decimal(d), d)
+        self.assertEqual(to_decimal('10.345'), d)
+        self.assertEqual(to_decimal('10,034.45'), Decimal('10034.45'))
+        self.assertEqual(to_decimal('-83,434,309.10'), Decimal('-83434309.10'))
+        self.assertEqual(to_decimal(''), Decimal())
+        self.assertEqual(to_decimal(None), Decimal())
 
 
 class TestAmount(unittest.TestCase):
@@ -80,7 +80,6 @@ class TestAmount(unittest.TestCase):
                          amount_mult(amount, Decimal('1.021')))
 
     def test_sub(self):
-        self.assertEqual(Amount('82.98', 'CAD'), 
+        self.assertEqual(Amount('82.98', 'CAD'),
                          amount_sub(Amount('100', 'CAD'),
                                     Amount('17.02', 'CAD')))
-

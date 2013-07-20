@@ -23,9 +23,10 @@ def get_balance_amount(posting):
     of a transaction. (This is a *key* element of the semantics of transactions
     in this software.)"""
 
-    # It the position has a cost, use that to balance this posting.
     position = posting.position
     lot = position.lot
+
+    # It the position has a cost, use that to balance this posting.
     if lot.cost:
         amount = amount_mult(lot.cost, position.number)
 
@@ -43,25 +44,9 @@ def get_balance_amount(posting):
 def compute_residual(postings):
     """Compute the residual of a set of complete postings.
     This is used to cross-check a balanced transaction."""
-
     inventory = Inventory()
     for posting in postings:
-        position = posting.position
-        lot = position.lot
-
-        # It the position has a cost, use that to balance this posting.
-        if lot.cost:
-            amount = amount_mult(lot.cost, position.number)
-
-        # If there is a price, use that to balance this posting.
-        elif posting.price:
-            amount = amount_mult(posting.price, position.number)
-
-        # Otherwise, just use the amount itself.
-        else:
-            amount = position.get_amount()
-        inventory.add(amount)
-
+        inventory.add(get_balance_amount(posting))
     return inventory
 
 
