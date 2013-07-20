@@ -49,11 +49,12 @@ extern int yy_line_tokens; /* Number of tokens since the bol */
 
 /* Skip the rest of the input line. */
 void yy_skip_line(void);
+void yy_skip_until_empty(void);
 
 
 /* Error handlers. */
 extern void yyerror(char const *s);
-extern void report_error(char const *s, YYLTYPE* yylloc);
+extern void yyerror2(char const *s, YYLTYPE* yylloc);
 
 
 /* Utility functions. */
@@ -178,7 +179,12 @@ option		{ return OPTION; }
 }
 
  /* Default rule. This should never be reached. */
-.	{ report_error("Syntax error.", yylloc); }
+.	{
+    yyerror2("Syntax error; lexer cannot parse token.", yylloc);
+    yy_skip_line();
+    yy_skip_until_empty();
+    /* FIXME: I need to somehow tell the parser to abandon the current entry! */
+}
 
 
 
@@ -201,6 +207,18 @@ void yy_skip_line()
             break;
         }
     }
+}
+
+/* Skip tokens until we hit an empty line.
+   This is used to recover from syntax errors. */
+void yy_skip_until_empty()
+{
+/* FIXME: How do we pull all the tokens until we hit an empty line? */
+/* I need to read about flex error handling here, maybe we have to call a function
+   in the parser otherwise. */
+    /* for ( ;; ) { */
+    /*     int token = yylex(&yylval, &yylloc); */
+    /*     if ( token == 0 ) { */
 }
 
 int strtonl(const char* buf, size_t nchars)

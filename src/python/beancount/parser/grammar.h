@@ -114,7 +114,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 67 "src/python/beancount/parser/grammar.y"
+#line 68 "src/python/beancount/parser/grammar.y"
 {
     char character;
     const char* string;

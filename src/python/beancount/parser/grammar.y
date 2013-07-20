@@ -20,12 +20,13 @@
 /* Error-handling function. */
 void yyerror(char const* message)
 {
-    fprintf(stderr, "%s:%d:: %s\n", yy_filename, yylineno, message);
+    /* FIXME: How do I get a hold of yylloc here and call the other function with it? */
+    fprintf(stderr, "%s:%d:: (yyerror) %s\n", yy_filename, yylineno, message);
 }
 
-void report_error(char const* message, YYLTYPE* yylloc)
+void yyerror2(char const* message, YYLTYPE* yylloc)
 {
-    fprintf(stderr, "%s:%d:: %s\n", yy_filename, yylloc->first_line, message);
+    fprintf(stderr, "%s:%d:: (yyerror2) %s\n", yy_filename, yylloc->first_line, message);
 }
 
 /* Get a printable version of a token name. */

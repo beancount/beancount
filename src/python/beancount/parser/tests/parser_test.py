@@ -157,13 +157,34 @@ class TestSyntaxErrors(unittest.TestCase):
     bailing out with an exception."""
 
     @parsedoc
-    def ___test_syntax_1(self, entries, errors, options):
+    def __test_lexer_default_rule_1(self, entries, errors, options):
+        """
+          Account:*:Bla
+
+        """
+##        self.assertEqual(entries, [])
+##        self.assertEqual(errors, [])
+
+    @parsedoc
+    def test_lexer_default_rule_2(self, entries, errors, options):
         """
           2013-05-18 * "Nice dinner at Mermaid Inn"
-            100 USD
+            Expenses:Resta(urant        100 USD
+            Expenses:Tips                10 USD
+            Assets:US:Cash             -110 USD
+
+          2013-05-20 check Assets:US:Cash  -110 USD
         """
-        self.assertEqual(entries, [])
-        self.assertEqual(errors, [])
+
+        parser.dump_lexer_string(TestSyntaxErrors.test_lexer_default_rule_2.__doc__)
+
+        self.assertEqual(1, len(entries))
+        self.assertEqual(1, len(errors))
+        self.assertTrue(isinstance(entries[0], Check))
+
+## FIXME: HERE
+
+
 
 
 

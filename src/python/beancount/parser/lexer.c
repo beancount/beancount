@@ -29,11 +29,12 @@ extern int yy_line_tokens; /* Number of tokens since the bol */
 
 /* Skip the rest of the input line. */
 void yy_skip_line(void);
+void yy_skip_until_empty(void);
 
 
 /* Error handlers. */
 extern void yyerror(char const *s);
-extern void report_error(char const *s, YYLTYPE* yylloc);
+extern void yyerror2(char const *s, YYLTYPE* yylloc);
 
 
 /* Utility functions. */
@@ -42,7 +43,7 @@ int strtonl(const char* buf, size_t nchars);
 
 
 
-#line 46 "src/python/beancount/parser/lexer.c"
+#line 47 "src/python/beancount/parser/lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -632,7 +633,7 @@ char *yytext;
 
 /*------------------------------------------------------------------------------------------------------------------------*/
 /* Rules */
-#line 636 "src/python/beancount/parser/lexer.c"
+#line 637 "src/python/beancount/parser/lexer.c"
 
 #define INITIAL 0
 
@@ -828,12 +829,12 @@ YY_DECL
     
         YYLTYPE * yylloc;
     
-#line 67 "src/python/beancount/parser/lexer.l"
+#line 68 "src/python/beancount/parser/lexer.l"
 
 
 
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
-#line 837 "src/python/beancount/parser/lexer.c"
+#line 838 "src/python/beancount/parser/lexer.c"
 
     yylval = yylval_param;
 
@@ -929,7 +930,7 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 71 "src/python/beancount/parser/lexer.l"
+#line 72 "src/python/beancount/parser/lexer.l"
 {
     yy_line_tokens = 0;
     yycolumn = 1;
@@ -940,7 +941,7 @@ YY_RULE_SETUP
     This is how we group indented postings. */
 case 2:
 YY_RULE_SETUP
-#line 79 "src/python/beancount/parser/lexer.l"
+#line 80 "src/python/beancount/parser/lexer.l"
 {
     if ( yy_line_tokens == 1 ) {
         /* If the next character completes the line, skip it. */
@@ -956,48 +957,48 @@ YY_RULE_SETUP
 /* Characters with special meanings have their own tokens. */
 case 3:
 YY_RULE_SETUP
-#line 92 "src/python/beancount/parser/lexer.l"
+#line 93 "src/python/beancount/parser/lexer.l"
 { return PIPE; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 93 "src/python/beancount/parser/lexer.l"
+#line 94 "src/python/beancount/parser/lexer.l"
 { return ATAT; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 94 "src/python/beancount/parser/lexer.l"
+#line 95 "src/python/beancount/parser/lexer.l"
 { return AT; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 95 "src/python/beancount/parser/lexer.l"
+#line 96 "src/python/beancount/parser/lexer.l"
 { return LCURL; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 96 "src/python/beancount/parser/lexer.l"
+#line 97 "src/python/beancount/parser/lexer.l"
 { return RCURL; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 97 "src/python/beancount/parser/lexer.l"
+#line 98 "src/python/beancount/parser/lexer.l"
 { return EQUAL; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 98 "src/python/beancount/parser/lexer.l"
+#line 99 "src/python/beancount/parser/lexer.l"
 { return COMMA; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 99 "src/python/beancount/parser/lexer.l"
+#line 100 "src/python/beancount/parser/lexer.l"
 { return SLASH; }
 	YY_BREAK
 /* Skip commented output (but not the accompanying newline). */
 case 11:
 YY_RULE_SETUP
-#line 102 "src/python/beancount/parser/lexer.l"
+#line 103 "src/python/beancount/parser/lexer.l"
 {
     yy_skip_line();
     return COMMENT;
@@ -1007,7 +1008,7 @@ YY_RULE_SETUP
     Other lines are just skipped. This allows us to use org-mode or other separators in the input syntax. */
 case 12:
 YY_RULE_SETUP
-#line 109 "src/python/beancount/parser/lexer.l"
+#line 110 "src/python/beancount/parser/lexer.l"
 {
     if ( yy_line_tokens != 1 ) {
         yylval->character = yytext[0];
@@ -1022,68 +1023,68 @@ YY_RULE_SETUP
 /* Keywords. */
 case 13:
 YY_RULE_SETUP
-#line 121 "src/python/beancount/parser/lexer.l"
+#line 122 "src/python/beancount/parser/lexer.l"
 { return TXN; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 122 "src/python/beancount/parser/lexer.l"
+#line 123 "src/python/beancount/parser/lexer.l"
 { return CHECK; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 123 "src/python/beancount/parser/lexer.l"
+#line 124 "src/python/beancount/parser/lexer.l"
 { return OPEN; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 124 "src/python/beancount/parser/lexer.l"
+#line 125 "src/python/beancount/parser/lexer.l"
 { return CLOSE; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 125 "src/python/beancount/parser/lexer.l"
+#line 126 "src/python/beancount/parser/lexer.l"
 { return PAD; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 126 "src/python/beancount/parser/lexer.l"
+#line 127 "src/python/beancount/parser/lexer.l"
 { return EVENT; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 127 "src/python/beancount/parser/lexer.l"
+#line 128 "src/python/beancount/parser/lexer.l"
 { return PRICE; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 128 "src/python/beancount/parser/lexer.l"
+#line 129 "src/python/beancount/parser/lexer.l"
 { return NOTE; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 129 "src/python/beancount/parser/lexer.l"
+#line 130 "src/python/beancount/parser/lexer.l"
 { return DOCUMENT; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 130 "src/python/beancount/parser/lexer.l"
+#line 131 "src/python/beancount/parser/lexer.l"
 { return PUSHTAG; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 131 "src/python/beancount/parser/lexer.l"
+#line 132 "src/python/beancount/parser/lexer.l"
 { return POPTAG; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 132 "src/python/beancount/parser/lexer.l"
+#line 133 "src/python/beancount/parser/lexer.l"
 { return OPTION; }
 	YY_BREAK
 /* Dates. */
 case 25:
 YY_RULE_SETUP
-#line 135 "src/python/beancount/parser/lexer.l"
+#line 136 "src/python/beancount/parser/lexer.l"
 {
     int year = strtonl(yytext, 4);
     int month = strtonl(yytext+5, 2);
@@ -1095,7 +1096,7 @@ YY_RULE_SETUP
 /* Account names. */
 case 26:
 YY_RULE_SETUP
-#line 144 "src/python/beancount/parser/lexer.l"
+#line 145 "src/python/beancount/parser/lexer.l"
 {
     yylval->pyobj = BUILD("ACCOUNT", "s", yytext);
     return ACCOUNT;
@@ -1104,7 +1105,7 @@ YY_RULE_SETUP
 /* Currencies. These are defined as uppercase only in order to disambiguate the syntax. */
 case 27:
 YY_RULE_SETUP
-#line 150 "src/python/beancount/parser/lexer.l"
+#line 151 "src/python/beancount/parser/lexer.l"
 {
     yylval->pyobj = BUILD("CURRENCY", "s", yytext);
     return CURRENCY;
@@ -1114,7 +1115,7 @@ YY_RULE_SETUP
 case 28:
 /* rule 28 can match eol */
 YY_RULE_SETUP
-#line 156 "src/python/beancount/parser/lexer.l"
+#line 157 "src/python/beancount/parser/lexer.l"
 {
     yytext[yyleng-1] = '\0';
     yylval->pyobj = BUILD("STRING", "s", &(yytext[1]));
@@ -1124,7 +1125,7 @@ YY_RULE_SETUP
 /* Numbers */
 case 29:
 YY_RULE_SETUP
-#line 163 "src/python/beancount/parser/lexer.l"
+#line 164 "src/python/beancount/parser/lexer.l"
 {
     yylval->pyobj = BUILD("NUMBER", "s", yytext);
     return NUMBER;
@@ -1133,7 +1134,7 @@ YY_RULE_SETUP
 /* Tags */
 case 30:
 YY_RULE_SETUP
-#line 169 "src/python/beancount/parser/lexer.l"
+#line 170 "src/python/beancount/parser/lexer.l"
 {
     yylval->pyobj = BUILD("TAG", "s", &(yytext[1]));
     return TAG;
@@ -1142,7 +1143,7 @@ YY_RULE_SETUP
 /* Links */
 case 31:
 YY_RULE_SETUP
-#line 175 "src/python/beancount/parser/lexer.l"
+#line 176 "src/python/beancount/parser/lexer.l"
 {
     yylval->pyobj = BUILD("LINK", "s", &(yytext[1]));
     return LINK;
@@ -1151,15 +1152,20 @@ YY_RULE_SETUP
 /* Default rule. This should never be reached. */
 case 32:
 YY_RULE_SETUP
-#line 181 "src/python/beancount/parser/lexer.l"
-{ report_error("Syntax error.", yylloc); }
+#line 182 "src/python/beancount/parser/lexer.l"
+{
+    yyerror2("Syntax error; lexer cannot parse token.", yylloc);
+    yy_skip_line();
+    yy_skip_until_empty();
+    /* FIXME: I need to somehow tell the parser to abandon the current entry! */
+}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 185 "src/python/beancount/parser/lexer.l"
+#line 191 "src/python/beancount/parser/lexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1163 "src/python/beancount/parser/lexer.c"
+#line 1169 "src/python/beancount/parser/lexer.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2165,7 +2171,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 185 "src/python/beancount/parser/lexer.l"
+#line 191 "src/python/beancount/parser/lexer.l"
 
 
 /*------------------------------------------------------------------------------------------------------------------------*/
@@ -2186,6 +2192,18 @@ void yy_skip_line()
             break;
         }
     }
+}
+
+/* Skip tokens until we hit an empty line.
+   This is used to recover from syntax errors. */
+void yy_skip_until_empty()
+{
+/* FIXME: How do we pull all the tokens until we hit an empty line? */
+/* I need to read about flex error handling here, maybe we have to call a function
+   in the parser otherwise. */
+    /* for ( ;; ) { */
+    /*     int token = yylex(&yylval,&yylloc); */
+    /*     if ( token == 0 ) { */
 }
 
 int strtonl(const char* buf, size_t nchars)
