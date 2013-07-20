@@ -21,7 +21,8 @@ from beancount.core import realization
 from beancount.ops import prices
 from beancount import utils
 from beancount.utils.text_utils import replace_numbers
-from beancount.core.account import is_balance_sheet_account_name
+from beancount.core.account import account_from_name
+from beancount.core.account import is_balance_sheet_account
 from beancount.loader import load
 from beancount.web import gviz
 
@@ -507,21 +508,22 @@ def account(slashed_account_name=None):
     # Get the appropriate realization: if we're looking at the balance sheet, we
     # want to include the net-income transferred from the exercise period.
     account_name = slashed_account_name.strip('/').replace('/', ':')
+    account = account_from_name(account_name)
     options = app.options
-    if is_balance_sheet_account_name(account_name, options):
+    if is_balance_sheet_account(account, options):
         real_accounts = request.view.closing_real_accounts
     else:
         real_accounts = request.view.real_accounts
 
-    if account_name not in real_accounts:
+    if account.name not in real_accounts:
         raise bottle.HTTPError(404, "Not found.")
         
-    account_postings = realization.get_subpostings(real_accounts[account_name])
+    account_postings = realization.get_subpostings(real_accounts[account.name])
 
     oss = io.StringIO()
     journal.entries_table_with_balance(app, oss, account_postings)
     return render_view(
-        pagetitle = '{}'.format(account_name), # Account:
+        pagetitle = '{}'.format(account.name), # Account:
         contents = oss.getvalue())
 
 

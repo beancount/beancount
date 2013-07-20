@@ -139,6 +139,7 @@ def main():
         entries, index = summarize.clamp(entries,
                                          datetime.date(2013, 1, 1),
                                          datetime.date(2014, 1, 1),
+                                         options, 
                                          *previous_accounts)
 
 

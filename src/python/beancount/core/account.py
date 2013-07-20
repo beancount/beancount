@@ -56,26 +56,21 @@ def account_name_type(name):
 
 def is_account_name(string):
     """Return true if the given string is an account name."""
-    return re.match('(Asset|Liabilities|Equity|Income|Expenses)', string)
+    return bool(re.match(
+        '(Assets|Liabilities|Equity|Income|Expenses)(:[A-Z][A-Za-z0-9\-]+)*$', string))
 
 def is_account_name_root(account_name):
     """Return true if the account name is one of the root accounts."""
-    return ':' not in account_name
+    return account_name in TYPES_ORDER
 
-def is_balance_sheet_account(account):
-    return account.type in ('Assets', 'Liabilities', 'Equity')
-    # FIXME: Remove these hardcoded strings; use the options instead.
+def is_balance_sheet_account(account, options):
+    return account.type in (options[x] for x in ('name_assets',
+                                                 'name_liabilities',
+                                                 'name_equity'))
 
-def is_balance_sheet_account_name(account_name, options):
-    return account_name_type(account_name) in (
-        options[x] for x in ('name_assets',
-                             'name_liabilities',
-                             'name_equity'))
-
-def is_income_statement_account(account):
-    return account.type in ('Income', 'Expenses')
-    # FIXME: Remove these hardcoded strings; use the options instead.
-
+def is_income_statement_account(account, options):
+    return account.type in (options[x] for x in ('name_income',
+                                                 'name_expenses'))
 
 def accountify_dict(string_dict):
     """Convert the dictionary itms that have values which are account names into

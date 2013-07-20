@@ -75,19 +75,54 @@ class TestAccount(unittest.TestCase):
         self.assertRaises(AssertionError, account_name_type, "Invalid:Toys:Computer")
 
     def test_is_account_name(self):
-        is_account_name
+        self.assertTrue(is_account_name("Assets:US:RBS:Checking"))
+        self.assertTrue(is_account_name("Equity:OpeningBalances"))
+        self.assertTrue(is_account_name("Income:US:ETrade:Dividends-USD"))
+        self.assertTrue(is_account_name("Assets:US:RBS"))
+        self.assertTrue(is_account_name("Assets:US"))
+        self.assertTrue(is_account_name("Assets"))
+        self.assertFalse(is_account_name("Invalid"))
+        self.assertFalse(is_account_name("Other"))
+        self.assertFalse(is_account_name("Assets:US:RBS*Checking"))
+        self.assertFalse(is_account_name("Assets:US:RBS:Checking&"))
+        self.assertFalse(is_account_name("Assets:US:RBS:checking"))
+        self.assertFalse(is_account_name("Assets:us:RBS:checking"))
 
     def test_is_account_name_root(self):
-        is_account_name_root
+        for account_name, expected in [
+                ("Assets:US:RBS:Checking", False),
+                ("Equity:OpeningBalances", False),
+                ("Income:US:ETrade:Dividends-USD", False),
+                ("Assets", True),
+                ("Liabilities", True),
+                ("Equity", True),
+                ("Income", True),
+                ("Expenses", True),
+                ("Invalid", False),
+                ]:
+            self.assertEqual(expected, is_account_name_root(account_name), account_name)
 
-    def test_is_balance_sheet_account(self):
-        is_balance_sheet_account
+    OPTIONS = {'name_assets'      : 'Assets',
+               'name_liabilities' : 'Liabilities',
+               'name_equity'      : 'Equity',
+               'name_income'      : 'Income',
+               'name_expenses'    : 'Expenses'}
 
-    def test_is_balance_sheet_account_name(self):
-        is_balance_sheet_account_name
+    def test_is_account_categories(self):
+        for account_name, expected in [
+                ("Assets:US:RBS:Savings", True),
+                ("Liabilities:US:RBS:MortgageLoan", True),
+                ("Equity:OpeningBalances", True),
+                ("Income:US:ETrade:Dividends", False),
+                ("Expenses:Toys:Computer", False),
+                ]:
+            self.assertEqual(expected,
+                             is_balance_sheet_account(account_from_name(account_name),
+                                                      self.OPTIONS))
 
-    def test_is_income_statement_account(self):
-        is_income_statement_account
+            self.assertEqual(not expected,
+                             is_income_statement_account(account_from_name(account_name),
+                                                         self.OPTIONS))
 
     def test_accountify_dict(self):
         accountify_dict

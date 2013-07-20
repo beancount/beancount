@@ -18,6 +18,7 @@ from beancount.core.account import is_income_statement_account
 
 
 def clamp(entries, begin_date, end_date,
+          options,
           account_previous_earnings,
           account_previous_balances,
           account_previous_conversions):
@@ -37,9 +38,12 @@ def clamp(entries, begin_date, end_date,
     i.e., the balance sheet with only the summarized entries).
     """
 
+    income_statement_account_pred = (
+        lambda account: is_income_statement_account(account, options))
+
     # Transfer income and expenses before the period to equity.
     entries = transfer_balances(entries, begin_date,
-                                is_income_statement_account, account_previous_earnings)
+                                income_statement_account_pred, account_previous_earnings)
 
     # Summarize all the previous balances.
     entries, index = summarize(entries, begin_date, account_previous_balances)
@@ -54,13 +58,17 @@ def clamp(entries, begin_date, end_date,
 
 
 def close(entries,
+          options,
           account_current_earnings,
           account_current_conversions):
     """Transfer net income to equity and insert a final conversion entry."""
 
+    income_statement_account_pred = (
+        lambda account: is_income_statement_account(account, options))
+
     # Transfer the balances as net-income.
     entries = transfer_balances(entries, None,
-                                is_income_statement_account, account_current_earnings)
+                                income_statement_account_pred, account_current_earnings)
 
     # Insert final conversion entries.
     entries = conversions(entries, account_current_conversions, None)

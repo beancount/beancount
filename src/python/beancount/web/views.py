@@ -64,7 +64,7 @@ class View:
             # income"). This is used to render the end-period balance sheet, with
             # the current period's net income, closing the period.
             current_accounts = parser.get_current_accounts(self.options)
-            self.closing_entries = summarize.close(self.entries, *current_accounts)
+            self.closing_entries = summarize.close(self.entries, self.options, *current_accounts)
 
         # Realize the three sets of entries.
         do_check = False
@@ -122,7 +122,7 @@ class YearView(View):
         begin_date = datetime.date(self.year, 1, 1)
         end_date = datetime.date(self.year+1, 1, 1)
         with utils.print_time('clamp'):
-            entries, index = summarize.clamp(entries, begin_date, end_date, *previous_accounts)
+            entries, index = summarize.clamp(entries, begin_date, end_date, options, *previous_accounts)
 
         return entries, index
 
