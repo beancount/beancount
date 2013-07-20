@@ -2,6 +2,8 @@
 beancount: TODO
 * Current
 
+  - entries_table() really should be called postings_table().
+
   - Remove all "unittest.main()" I used on the train; install nosetests on mac box
 
   - Complete design doc
@@ -22,10 +24,7 @@ beancount: TODO
   - Implement all the missing global pages.
 
 
-
-
   - Rename "check" to "test/balance/verify/assert" (see what Ledger calls it these days)
-  - Implement average booking and associated syntax
 
   - Move bean-trial reorder() function to realization.py
   - Move utility functions from bean-prices to a reusable place.
@@ -38,8 +37,6 @@ beancount: TODO
     CONFIG, import_file and import_date functions.  This will help thirdparty
     implementors.
 
-  - Render the OFX / QBO files in a <pre> tag, or figure out why the mimetype
-    is incorrect and they don't render properly.
 
 
   - Have another script that takes that as input and spits out current positions
@@ -49,27 +46,29 @@ beancount: TODO
     * Move the price fetching utilities somewhere it can be reused by others;
       move code from bean-prices.
 
+  - Render tags
+
 
   - IMPORTANT FEATURE: Text/XLS exports
+
   - IMPORTANT FEATURE: Flip balances for rendering
+
   - IMPORTANT FEATURE: Auto-categorization
-  - IMPORTANT FEATURE: Implement Average Booking for Vanguard & RBC Adjustment
 
-  - Convert all the importers to use the DateIntervalTicker.
+  - IMPORTANT FEATURE: Implement Average Booking for Vanguard & RBC Adjustment,
+    with associated tests and syntax in the parser.
 
-  - Render tags and links
-
-
-  - BUG: A posting with a following line that has some whitespace on it fails
-    with a parsing error... this should not be the case. Review what happened,
-    fix this now.
-
-  - (import) We need to be able to invert the input (this is easy, conversion
-    only, could be applied across any importer)
+  - IMPORTANT FEATURE: We need to be able to invert the input on import (this is
+    easy, conversion to text only, could be applied across any importer)
 
   - Do we need to insert Open entries for the equity accounts described in
     options? I think we could safely plop that at the very beginning of the
     entries list in the parser.
+
+  - Render the OFX / QBO files in a <pre> tag, or figure out why the mimetype
+    is incorrect and they don't render properly. Right now the default
+    rendering of the browser is insufficient.
+
 
 * Core
 ** General
@@ -895,6 +894,8 @@ beancount: TODO
 
   - Add an option --file=delete, that offers to delete (with confirmation) all
     the files that it was able to identify.
+
+  - (cleanup) Convert all the importers to use the DateIntervalTicker.
 
 ** Filing
 

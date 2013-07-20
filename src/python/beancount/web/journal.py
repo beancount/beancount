@@ -30,11 +30,14 @@ def account_link(account_name, leafonly=False):
         if leafonly:
             account_name = account_name_leaf(account_name)
 
-        link = '<a href="{}" class="account">{}</a>'.format(
-            request.app.get_url('account', slashed_account_name=slashed_name),
-            account_name)
-        _account_link_cache[account_name] = link
-        return link
+        if hasattr(request, 'view'):
+            link = '<a href="{}" class="account">{}</a>'.format(
+                request.app.get_url('account', slashed_account_name=slashed_name),
+                account_name)
+            _account_link_cache[account_name] = link
+            return link
+        else:
+            return account_name
 
 
 FLAG_ROWTYPES = {
@@ -64,6 +67,7 @@ def iterate_render_transactions(app, postings):
         rowtype = entry.__class__.__name__
         flag = ''
         extra_class = ''
+        links = None
 
         if isinstance(entry, Transaction):
             rowtype = FLAG_ROWTYPES.get(entry.flag, 'Transaction')
@@ -73,6 +77,10 @@ def iterate_render_transactions(app, postings):
             if entry.payee:
                 description = '<span class="payee">{}</span><span class="pnsep">|</span>{}'.format(entry.payee, description)
             change_str = balance_html(change)
+
+            if entry.links:
+                links = [app.router.build('link', link=link)
+                         for link in entry.links]
 
         elif isinstance(entry, Check):
             # Check the balance here and possibly change the rowtype
@@ -112,7 +120,7 @@ def iterate_render_transactions(app, postings):
 
         yield (entry, leg_postings,
                rowtype, extra_class,
-               flag, description, change_str, balance_str)
+               flag, description, links, change_str, balance_str)
 
 
 def entries_table_with_balance(app, oss, account_postings, render_postings=True):
@@ -137,8 +145,11 @@ def entries_table_with_balance(app, oss, account_postings, render_postings=True)
 
     for (entry, leg_postings,
          rowtype, extra_class,
-         flag, description, 
+         flag, description, links,
          change_str, balance_str) in iterate_render_transactions(app, account_postings):
+
+        if links:
+            description += render_links(links)
 
         # Render a row.
         write('''
@@ -204,8 +215,11 @@ def entries_table(app, oss, account_postings, render_postings=True):
 
     for (entry, leg_postings,
          rowtype, extra_class,
-         flag, description, 
+         flag, description, links,
          _, _) in iterate_render_transactions(app, account_postings):
+
+        if links:
+            description += render_links(links)
 
         # Render a row.
         write('''
@@ -244,3 +258,10 @@ def entries_table(app, oss, account_postings, render_postings=True):
                            get_balance_amount(posting)))
 
     write('</table>')
+
+
+def render_links(links):
+    "Render the Transaction links as part of the description."
+    return '<span class="links">{}</span>'.format(
+        ''.join('<a href="{}">^</a>'.format(link)
+                for link in links))

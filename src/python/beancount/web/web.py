@@ -223,6 +223,28 @@ def prices_values(base=None, quote=None):
 
 
 
+@app.route('/link/<link:re:.*>', name='link')
+def link(link=None):
+    "Serve journals for links."
+
+    linked_entries = entries_for_link(link, app.entries)
+
+    oss = io.StringIO()
+    journal.entries_table_with_balance(app, oss, linked_entries)
+    return render_global(
+        pagetitle = "Link: {}".format(link),
+        contents = oss.getvalue())
+
+# FIXME: Move this somewhere else.
+def entries_for_link(link, entries):
+    """Yield all the entries which have the given link."""
+    for entry in utils.filter_type(entries, Transaction):
+        if entry.links and link in entry.links:
+            yield entry
+
+
+
+
 
 
 
@@ -257,7 +279,6 @@ def favicon():
     return bottle.static_file('favicon.ico', path.dirname(__file__))
 
 
-
 @app.route('/doc/<filename:re:.*>', name='doc')
 def doc(filename=None):
     "Serve static filenames for documents directives."
@@ -279,7 +300,6 @@ def doc(filename=None):
 
 #--------------------------------------------------------------------------------
 # View application pages.
-
 
 viewapp = bottle.Bottle()
 V = AttrMapper(lambda *args, **kw: request.app.get_url(*args, **kw))

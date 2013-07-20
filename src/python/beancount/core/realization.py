@@ -355,7 +355,7 @@ def iterate_with_balance(postings_or_entries):
                 postings.append(posting)
         else:
             # This is a regular entry; nothing to add/remove.
-            date_entries.append( (entry, None) )
+            date_entries.append( (entry, []) )
 
     # Flush the final dated entries if any, same as above.
     for date_entry, date_postings in date_entries:

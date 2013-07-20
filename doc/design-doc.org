@@ -381,15 +381,17 @@ would not belong to a single account. Feel free to get creative.
 
 *** Links
 
-Links work similarly to tags, that is, grouping a set of transactions, but have
-a different purpose: to link groups of financially-related transactions not for
-the purpose of summarizing, but for associating them for whatever reason,
-usually for tracking related amounts. Examples include: transaction-ids from
-trading accounts (these often provide an id to a "related" or "other"
-transaction); account entries associated with related corrections, for example a
-reversed fee following a phone call could be linked to the original invalid fee
-from several weeks before; the purchase and sale of a home, and related
-acquisition expenses.
+Links are a way for a transaction to refer to other transactions. They work
+similarly to tags, that is, grouping a set of transactions, but have a different
+purpose: they are not meant to be used for summarizing. Instead, they are used
+to associate transactions for whatever reason you may have, usually for tracking
+related events.
+
+Examples include:  transaction-ids from trading accounts (these often provide an
+id to a "related" or "other" transaction); account entries associated with
+related corrections, for example a reversed fee following a phone call could be
+linked to the original invalid fee from several weeks before; the purchase and
+sale of a home, and related acquisition expenses.
 
 In contrast to tags, their strings are most often unique numbers produced by the
 importers. No views are produced for links; only a journal of a particular links

@@ -148,6 +148,12 @@ table.entry-table tr td.description {
     white-space: normal;
 }
 
+table.entry-table tr td.description span.links {
+    margin-left: 1em;
+    margin-right: 1em;
+    text-decoration: none;
+}
+
 span.payee {
     font-weight: bold;
 }
