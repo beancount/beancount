@@ -135,35 +135,36 @@ def main():
     instruments = sorted(set((position['currency'],position['cost_currency'])
                              for position in positions))
 
-    new_entries = []
-    price_map = {}
-    for currency, cost_currency in instruments:
-        # print('------------------------------------------------------------------------------------------------------------------------')
-        # print(currency, cost_currency)
+    if 1::
+        new_entries = []
+        price_map = {}
+        for currency, cost_currency in instruments:
+            # print('------------------------------------------------------------------------------------------------------------------------')
+            # print(currency, cost_currency)
 
-            price_list = fetch_google_historical(currency, cost_currency)
-            if price_list is None:
-                continue
+                price_list = fetch_google_historical(currency, cost_currency)
+                if price_list is None:
+                    continue
 
-            for date, price in price_list:
-                fileloc = FileLocation('<fetch_google_historical>', 0)
-                new_entries.append(
-                    Price(fileloc, date, currency, Amount(price, cost_currency)))
-
-
-
-    for entry in new_entries:
-        print(data.format_entry(entry), end='')
+                for date, price in price_list:
+                    fileloc = FileLocation('<fetch_google_historical>', 0)
+                    new_entries.append(
+                        Price(fileloc, date, currency, Amount(price, cost_currency)))
 
 
-    for position in positions:
-        curkey = (position['currency'], position['cost_currency'])
-        try:
-            date, close = price_map[curkey]
-            position['price_date'] = date
-            position['price_number'] = close
-        except KeyError:
-            pass
+
+        for entry in new_entries:
+            print(data.format_entry(entry), end='')
+
+
+        for position in positions:
+            curkey = (position['currency'], position['cost_currency'])
+            try:
+                date, close = price_map[curkey]
+                position['price_date'] = date
+                position['price_number'] = close
+            except KeyError:
+                pass
 
     # If requested, dump the updated list of positions and prices.
     if opts.dump:
