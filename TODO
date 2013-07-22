@@ -2,6 +2,10 @@
 beancount: TODO
 * Current
 
+  - Create a 3rd-party dependencies building script for Mac OSX users (fxt).
+
+
+
   - entries_table() really should be called postings_table().
 
   - Remove all "unittest.main()" I used on the train; install nosetests on mac box
@@ -68,6 +72,47 @@ beancount: TODO
   - Render the OFX / QBO files in a <pre> tag, or figure out why the mimetype
     is incorrect and they don't render properly. Right now the default
     rendering of the browser is insufficient.
+
+
+
+
+  - (IDEA) Why aren't we using the price on the first leg of this transaction?
+    This is an interesting variation on the meaning of the price: it could mean
+    either (a) the price of the lot, or (b) the conversion price of the cost of
+    the lot. This would enable the following:
+
+        2013-07-22 * "Bought some US investment in a CAD account"
+          Assets:Investment:GOOG           50 GOOG {700 USD} @ 1.01 USD   ;; 35350 CAD
+          Assets:Investment:Cash          -35359.95 CAD
+          Expenses:Commissions                 9.95 CAD
+
+  - (IDEA) In order to create suitable stock split entries that would look like
+    this:
+
+      2013-04-01 * "split 4:1"
+        Assets:CA:ITrade:AAPL             -40 AAPL {{5483.09 USD}}
+        Assets:CA:ITrade:AAPL             160 AAPL {{5483.09 USD}}
+
+    You could easily add support for a directive that looks like this:
+
+      2013-04-01 split Assets:CA:ITrade:AAPL  4:1  AAPL
+
+    This would allow the user to do some processing specific to stock splits by
+    processing the explicit stock split entries.
+
+
+  - Include this in the user examples, + stock splits:
+
+       2013-04-01 * "name change"
+
+         Assets:CA:ITrade:AAPL             -40 AAPL {{5483.09 USD}}
+         Assets:CA:ITrade:NEWAAPL             40 NEWAAPL {{5483.09 USD}}
+
+       2013-04-01 * "spinoff"
+         Assets:CA:ITrade:KRFT             -100 KRFT {{20000 USD}}
+         Assets:CA:ITrade:KRFT              100 KRFT {{17000 USD}}
+         Assets:CA:ITrade:FOO                20 FOO  {{ 3000 USD}}
+
 
 
 * Core
@@ -190,6 +235,21 @@ beancount: TODO
   Test: Items of the same kind with and without cost basis
   Test: Multiple items of different types with a cost basis in the same account
 
+** Smarter elision
+
+  - It would be nice extra feature to allow the user to at least specify the
+    currency when a posting's amount is elided; this would constraint the
+    elision, and further allow multiple postingsto be elided, like this:
+
+     2013-07-05 * "COMPANY INC PAYROLL"
+       Assets:US:TD:Checking                                    USD
+       Income:US:Company:GroupTermLife                   -25.38 USD
+       Income:US:Company:Salary                        -5000.00 USD
+       Assets:US:Vanguard:Cash                           540.00 USD
+       Assets:US:Federal:IRAContrib                     -540.00 IRAUSD
+       Expenses:Taxes:US:Federal:IRAContrib                     IRAUSD
+       Assets:US:Company:Vacation                          4.62 VACHR
+       Income:US:Company:Vacation                               VACHR
 
 
 ** Realization

@@ -403,32 +403,98 @@ transactions.
 
 The fundamental principle of double-entry book-keeping is enforced in each of
 the the Transaction entries: the sum of all postings must be zero. This section
-describes the specific way in which we do this.
+describes the specific way in which we do this, and is the key piece of logic
+that allow the entire system to balance nicely. This is also one of the few
+places in this system where the logic goes beyond grouping and aggregation and
+simple sums-Beancount is surprisingly simple overall.
 
-Postings may be associated with positions in any currency unit. This position
-may or may not be associated with a particular cost amount. Furthermore,
-postings may have an associated price. How do we balance?
+Postings are associated with positions which are associated with a specific lot,
+which may or may not have an associated cost (in fact, most lots have no cost
+associated with them, e.g., to represent just an amount of dollars).
+Furthermore, postings may or may not have an associated price for conversion.
+Given all this, how do we balance?
 
-Each of the posting's positions are first converted into a "balance amount":
+It's really simple: each of the posting's positions are first converted into a
+"balance amount", which depends on the presence of these optional fields:
 
-- If the posting has an associated cost, the cost of the
+1. If the posting has an associated cost, we calculate the cost of the position,
+   that is, the number of units of the lot times its cost, and use that as the
+   balance amount (regardless of whether a price is present or not);
+
+2. If the posting has no associated cost, but has a conversion price, we convert
+   the position into the price currency, that is the number of units times the
+   price number, and used that as the balance amount;
+
+3. Finally, if the posting has no associated cost nor conversion price, the
+   number of units of the lot are used directly.
+
+What we obtain is a list of balance amounts, one for each posting. These
+amounts are summed together by currency, and the final sums for each currency
+have to be equal to zero.
+
+This example provides an exmaple of case 2, with a price conversion, and a
+regular leg with neither a cost nor a price (case 3):
+
+   2013-07-22 * "Wired money to foreign account"
+     Assets:Investment:GOOG     -35350 CAD @ 1.01 USD        ;; -35000 USD (2)
+     Assets:Investment:Cash      35000 USD                   ;;  35000 USD (3)
+                                                             ;;------------------
+                                                             ;;      0 USD
+
+In the next example, the posting for the first leg has a cost, the second
+posting has neither:
+
+   2013-07-22 * "Bought some investment"
+     Assets:Investment:GOOG     50 GOOG {700 USD}            ;;  35000 USD (1)
+     Assets:Investment:Cash    -35000 USD                    ;; -35000 USD (3)
+                                                             ;;------------------
+                                                             ;;      0 USD
+
+Finally, here's a more complex example with both a price and a cost; the price
+here is used only to enter a data-point in the internal price database:
+
+   2013-07-22 * "Sold some investment"
+     Assets:Investment:GOOG    -50 GOOG {700 USD} @ 920 USD  ;; -35000 USD (1)
+     Assets:Investment:Cash     46000 USD                    ;;  46000 USD (3)
+     Income:CapitalGains       -11000 USD                    ;; -11000 USD (3)
+                                                             ;;------------------
+                                                             ;;      0 USD
+
+Note that an alternative semantic for the price could have been for it to value
+the cost amount, like this:
+
+   2013-07-22 * "Bought some investment in a foreign account"
+     Assets:Investment:GOOG     50 GOOG {700 USD} @ 1.01 CAD ;;  35350.00 CAD (1)
+     Assets:Investment:Cash    -35359.95 CAD                 ;; -35359.95 CAD (3)
+     Expenses:Commissions           9.95 CAD                 ;;      9.95 CAD (3)
+                                                             ;;------------------
+                                                             ;;         0 CAD
+
+Transactions allow for at most one posting to be elided and automatically set;
+if an amount was elided, the final balance of all the other postings is
+attributed to the balance.
+
+  An interesting idea, for the future, would be to allow the elided postings to
+  at least spceify the currency they're using. This would allow the user to
+  elide multiple postings, like this:
+
+     2013-07-05 * "COMPANY INC PAYROLL"
+       Assets:US:TD:Checking                                    USD
+       Income:US:Company:GroupTermLife                   -25.38 USD
+       Income:US:Company:Salary                        -5000.00 USD
+       Assets:US:Vanguard:Cash                           540.00 USD
+       Assets:US:Federal:IRAContrib                     -540.00 IRAUSD
+       Expenses:Taxes:US:Federal:IRAContrib                     IRAUSD
+       Assets:US:Company:Vacation                          4.62 VACHR
+       Income:US:Company:Vacation                               VACHR
 
 
-
-
-
-
-
-
-
-balancing
-
-
-
-
-
+Note: when we will introduce average price booking in the future, some of the
+details above may be impacted to accomodate for it.
 
 ** Other Entries
+
+Beyond transactions, there are a number of entries, which are described in this section.
 
 Open        = namedtuple('Open'        , 'fileloc date account currencies')
 Close       = namedtuple('Close'       , 'fileloc date account')
@@ -439,6 +505,11 @@ Note        = namedtuple('Note'        , 'fileloc date account comment')
 Event       = namedtuple('Event'       , 'fileloc date type description')
 Price       = namedtuple('Price'       , 'fileloc date currency amount')
 Document    = namedtuple('Document'    , 'fileloc date account filename')
+
+
+
+
+
 
 * Functional Operations
 ** Padding
