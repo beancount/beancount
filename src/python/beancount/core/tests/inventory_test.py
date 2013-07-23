@@ -141,4 +141,5 @@ class TestInventory(unittest.TestCase):
 
 
 
+## FIXME: remove
 unittest.main()

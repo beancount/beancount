@@ -1,8 +1,13 @@
 import unittest
 import re
+from collections import namedtuple
 
-from beancount.core.balance import *
-from beancount.core.data import Posting, create_simple_posting, create_simple_posting_with_cost
+from beancount.core.balance import get_balance_amount
+from beancount.core.balance import compute_residual
+from beancount.core.balance import get_incomplete_postings
+from beancount.core.balance import balance_incomplete_postings
+from beancount.core.data import FileLocation, Posting, Transaction
+from beancount.core.data import create_simple_posting, create_simple_posting_with_cost
 from beancount.core.account import account_from_name
 from beancount.core.amount import Amount
 
@@ -47,8 +52,86 @@ class TestBalance(unittest.TestCase):
             ])
         self.assertEqual([Amount("5", "AAPL")], balance.get_amounts())
 
+    def test_get_incomplete_postings_pathological(self):
+        fileloc = FileLocation(__file__, 0)
 
-## FIXME: TODO - Balance incomplete postings.
+        # Test with no entries.
+        entry = Transaction(fileloc, None, None, None, None, None, None, [])
+        new_postings, has_inserted, errors = get_incomplete_postings(entry)
+        self.assertFalse(has_inserted)
+        self.assertEqual(0, len(new_postings))
+        self.assertEqual(0, len(errors))
+
+        # Test with only a single leg (and check that it does not balance).
+        entry = Transaction(fileloc, None, None, None, None, None, None, [
+            create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD"),
+            ])
+        new_postings, has_inserted, errors = get_incomplete_postings(entry)
+        self.assertFalse(has_inserted)
+        self.assertEqual(1, len(new_postings))
+        self.assertEqual(1, len(errors))
+
+        # Test with two legs that balance.
+        entry = Transaction(fileloc, None, None, None, None, None, None, [
+            create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD"),
+            create_simple_posting(None, "Assets:Bank:Savings", "-105.50", "USD"),
+            ])
+        new_postings, has_inserted, errors = get_incomplete_postings(entry)
+        self.assertFalse(has_inserted)
+        self.assertEqual(2, len(new_postings))
+        self.assertEqual(0, len(errors))
+
+        # Test with two legs that do not balance.
+        entry = Transaction(fileloc, None, None, None, None, None, None, [
+            create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD"),
+            create_simple_posting(None, "Assets:Bank:Savings", "-115.50", "USD"),
+            ])
+        new_postings, has_inserted, errors = get_incomplete_postings(entry)
+        self.assertFalse(has_inserted)
+        self.assertEqual(2, len(new_postings))
+        self.assertEqual(1, len(errors))
+
+        # Test with only one auto-posting.
+        entry = Transaction(fileloc, None, None, None, None, None, None, [
+            create_simple_posting(None, "Assets:Bank:Checking", None, None),
+            ])
+        new_postings, has_inserted, errors = get_incomplete_postings(entry)
+        self.assertTrue(has_inserted)
+        print(new_postings)
+        self.assertEqual(1, len(new_postings))
+        # self.assertEqual(1, len(errors))
+
+## FIXME: Continue here.
 
 
+
+
+
+    def ___test_get_incomplete_postings_normal(self):
+
+        # Test with a single auto-posting.
+        entry = Transaction(fileloc, None, None, None, None, None, None, [
+            create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD"),
+            create_simple_posting(None, "Assets:Bank:Savings", "-115.50", "USD"),
+            ])
+        new_postings, has_inserted, errors = get_incomplete_postings(entry)
+        self.assertFalse(has_inserted)
+        self.assertEqual(2, len(new_postings))
+        self.assertEqual(1, len(errors))
+
+
+
+
+# Test with normal full case
+# Test with too many empty postings
+
+
+# Test through parser.
+
+
+
+
+
+
+## FIXME: remove
 unittest.main()

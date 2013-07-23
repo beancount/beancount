@@ -55,9 +55,12 @@ def create_simple_posting(entry, account, number, currency):
     cost)."""
     if isinstance(account, str):
         account = account_from_name(account)
-    if not isinstance(number, Decimal):
-        number = to_decimal(number)
-    position = Position(Lot(currency, None, None), Decimal(number))
+    if number is None:
+        position = None
+    else:
+        if not isinstance(number, Decimal):
+            number = to_decimal(number)
+        position = Position(Lot(currency, None, None), Decimal(number))
     posting = Posting(entry, account, position, None, None)
     if entry is not None:
         entry.postings.append(posting)

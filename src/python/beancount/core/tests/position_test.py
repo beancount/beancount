@@ -20,4 +20,6 @@ class TestPosition(unittest.TestCase):
         self.assertEqual(pos2, pos1)
 
 
+
+## FIXME: remove
 unittest.main()

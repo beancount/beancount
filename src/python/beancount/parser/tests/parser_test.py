@@ -268,4 +268,5 @@ class TestSimple(unittest.TestCase):
 
 
 
+## FIXME: remove
 unittest.main()

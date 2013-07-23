@@ -6,7 +6,7 @@ import collections
 from beancount.core.amount import Decimal, amount_mult, ZERO
 from beancount.core.inventory import Inventory
 from beancount.core.position import Lot, Position
-from beancount.core.data import Posting
+from beancount.core.data import Posting, reparent_posting
 
 
 # An error from balancing the postings.
@@ -50,8 +50,9 @@ def compute_residual(postings):
     return inventory
 
 
-def balance_incomplete_postings(fileloc, entry):
-    """Replace and complete postings that have no amount specified on them.
+def get_incomplete_postings(entry):
+    """Return new postings to balance an incomplete entry, that is, and entry
+    with postings that have no amounts on them.
 
     Returns a new list of balanced postings, with the incomplete postings
     replaced with completed ones. This is probably the only place where there
@@ -97,7 +98,9 @@ def balance_incomplete_postings(fileloc, entry):
         # If there are too many such postings, we can't do anything, barf.
         if len(auto_postings_indices) > 1:
             balance_errors.append(
-                BalanceError(fileloc, "Too many auto-postings; cannot fill in.", entry))
+                BalanceError(entry.fileloc,
+                             "Too many auto-postings; cannot fill in.",
+                             entry))
 
         index = auto_postings_indices[0]
         old_posting = postings[index]
@@ -128,9 +131,30 @@ def balance_incomplete_postings(fileloc, entry):
     else:
         inserted_autopostings = False
 
-        # Detect complete sets of postings that have residual balance.
+        # Detect complete sets of postings that have residual balance;
+        # this is where we detect that the user has made a mistake.
         if not inventory.is_small(SMALL_EPSILON):
             balance_errors.append(
-                BalanceError(fileloc, "Transaction does not balance: {}.".format(inventory), entry))
+                BalanceError(entry.fileloc,
+                             "Transaction does not balance: {}.".format(inventory),
+                             entry))
 
     return postings, inserted_autopostings, balance_errors
+
+
+def balance_incomplete_postings(entry):
+    """Balance an entry with incomplete postings, modifying the
+    empty postings on the entry itself.
+    """
+
+    # print('{}:{}: {}'.format(fileloc.filename, fileloc.lineno, narration))
+    postings, inserted, errors = get_incomplete_postings(entry)
+    if errors:
+        self.errors.extend(errors)
+
+    # FIXME: Make this faster, there's unnecessary copying IMO.
+
+    # PERF(25ms): could be saved here by avoiding reparenting.
+    entry.postings.clear()
+    for posting in postings:
+        entry.postings.append(reparent_posting(posting, entry))

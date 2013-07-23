@@ -17,8 +17,8 @@ from beancount.core.amount import ZERO, Decimal, Amount
 from beancount.core.position import Lot, Position
 from beancount.core.data import Transaction, Check, Open, Close, Pad, Event, Price, Note, Document, FileLocation, Posting
 from beancount.core.account import account_from_name
-from beancount.core.data import reparent_posting
-from beancount.core import balance
+from beancount.core.balance import balance_incomplete_postings
+from beancount.core.balance import compute_residual, SMALL_EPSILON
 
 
 # Options.
@@ -291,22 +291,12 @@ class Builder(object):
         entry = Transaction(fileloc, date, chr(flag), payee, narration, ctags, links, postings)
 
         # Balance incomplete auto-postings.
-        # print('{}:{}: {}'.format(fileloc.filename, fileloc.lineno, narration))
-        postings, inserted, errors = balance.balance_incomplete_postings(fileloc, entry)
-        if errors:
-            self.errors.extend(errors)
-
-        # FIXME: Make this faster, there's unnecessary copying IMO.
-
-        # PERF(25ms): could be saved here by avoiding reparenting.
-        entry.postings.clear()
-        for posting in postings:
-            entry.postings.append(reparent_posting(posting, entry))
+        balance_incomplete_postings(entry)
 
         # Check that the balance actually is empty.
         if __sanity_checks__:
-            residual = balance.compute_residual(postings)
-            assert residual.is_small(balance.SMALL_EPSILON), residual
+            residual = compute_residual(entry.postings)
+            assert residual.is_small(SMALL_EPSILON), residual
 
         return entry
 
