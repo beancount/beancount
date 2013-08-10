@@ -135,7 +135,7 @@ def main():
     instruments = sorted(set((position['currency'],position['cost_currency'])
                              for position in positions))
 
-    if 1::
+    if 1:
         new_entries = []
         price_map = {}
         for currency, cost_currency in instruments:

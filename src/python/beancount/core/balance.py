@@ -146,11 +146,7 @@ def balance_incomplete_postings(entry):
     """Balance an entry with incomplete postings, modifying the
     empty postings on the entry itself.
     """
-
-    # print('{}:{}: {}'.format(fileloc.filename, fileloc.lineno, narration))
-    postings, inserted, errors = get_incomplete_postings(entry)
-    if errors:
-        self.errors.extend(errors)
+    postings, inserted, _ = get_incomplete_postings(entry)
 
     # FIXME: Make this faster, there's unnecessary copying IMO.
 

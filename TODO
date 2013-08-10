@@ -6,11 +6,18 @@ beancount: TODO
 
 
 
+  (Cost Basis)
+  - Cost basis issue: How do I take into account the commissions and fees
+    adjustment on the cost basis for a position?
+  - How do I take into account Wash Sale Adjustments to the cost basis?
+
+
+
   - entries_table() really should be called postings_table().
 
   - Remove all "unittest.main()" I used on the train; install nosetests on mac box
 
-  - Complete design doc
+  - Complete the design doc
   - Complete core tests
 
 
@@ -368,11 +375,17 @@ beancount: TODO
     contains only a single payee, or perhaps a warning may be issued? I don't
     know.
 
-    Basically, it would be nice to be ablet to have multiple payees in the same
+    Basically, it would be nice to be able to have multiple payees in the same
     category over time (e.g. Electricity, Internet) but to be able to separate
     them somehow, without having to put the payee into the name. This is a
     little fuzzy, and I'm not sure how to do it, because the imported payee
     names are often not very clear and often truncated as well.
+
+      Have you ever thought that Payees often end up functioning like an extra
+    subaccount? I've come to realize that for Payees that only ever touch a
+    single account, the line is really fuzzy there. I've been entertaining the
+    idea of automatically creating subaccounts for payees like that.
+
 
 
 * Parser

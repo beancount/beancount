@@ -99,60 +99,88 @@ def process_cash(section, filename, config):
         entry = Transaction(fileloc, date, flags.FLAG_IMPORT, None, narration, None, links, [])
 
         amount = convert_number(row.amount)
-        assert not row.fees, row
+        if row.type != 'TRD':
+            assert not row.fees, row
+            assert not row.commissions, row
 
         balance = Amount(convert_number(row.balance), cash_currency)
 
-        if row.description == 'CLIENT REQUESTED ELECTRONIC FUNDING RECEIPT (FUNDS NOW)':
+        if row.type == 'EFN':
+            assert row.description == 'CLIENT REQUESTED ELECTRONIC FUNDING RECEIPT (FUNDS NOW)'
             create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
             create_simple_posting(entry, config['transfer'], -amount, cash_currency)
 
-        elif re.match('MONEY MARKET INTEREST', row.description):
+        elif row.type == 'RAD':
+            assert re.match('MONEY MARKET INTEREST', row.description)
             create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
             create_simple_posting(entry, config['interest'], -amount, cash_currency)
 
-        elif re.match('TRANSFER (TO|FROM) FOREX ACCOUNT', row.description):
+        elif row.type == 'JRN':
+            assert re.match('TRANSFER (TO|FROM) FOREX ACCOUNT', row.description)
             create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
             create_simple_posting(entry, config['asset_forex'], -amount, cash_currency)
 
-        elif re.match('ORDINARY DIVIDEND', row.description):
-            create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
-            create_simple_posting(entry, config['dividend'], -amount, cash_currency)
+        elif row.type == 'DOI':
+            if re.match('ORDINARY DIVIDEND', row.description):
+                create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
+                create_simple_posting(entry, config['dividend'], -amount, cash_currency)
 
-        elif re.match('NON-TAXABLE DIVIDENDS', row.description):
-            create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
-            create_simple_posting(entry, config['dividend_nontax'], -amount, cash_currency)
+            elif re.match('NON-TAXABLE DIVIDENDS', row.description):
+                create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
+                create_simple_posting(entry, config['dividend_nontax'], -amount, cash_currency)
+            else:
+                assert False, row.description
 
-        elif row.description == 'THIRD PARTY':
+        elif row.type == 'WIN':
+            assert row.description == 'THIRD PARTY'
             create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
             create_simple_posting(entry, config['third_party'], -amount, cash_currency)
 
-        elif matcher.match(r'WEB:WEB_UNIF(?:_SNAP)? BOT ([+\-0-9]+) (.+) @([0-9\.]+)', row.description):
-            quantity = Decimal(matcher.mo.group(1))
-            symbol = matcher.mo.group(2)
-            price = Decimal(matcher.mo.group(3))
+        elif row.type == 'TRD':
+            matcher.match(r'WEB:WEB_UNIF(?:_SNAP)? (BOT|SOLD) ([+\-0-9]+) (.+) @([0-9\.]+)', row.description)
+
+            quantity = Decimal(matcher.mo.group(2))
+            isbuy = matcher.mo.group(1) == 'BOT'
+            symbol = matcher.mo.group(3)
+            price_number = Decimal(matcher.mo.group(4))
 
             account = account_from_name('{}:{}'.format(config['asset_position'].name, symbol))
-            cost = Amount(price, cash_currency)
-            position = Position(Lot(symbol, cost, None), Decimal(quantity))
-            posting = Posting(entry, account, position, None, None)
+            price = Amount(price_number, cash_currency)
+            position = Position(Lot(symbol, price, None), Decimal(quantity))
+            if isbuy:
+                posting = Posting(entry, account, position, None, None)
+            else:
+                position = Position(Lot(symbol, price, None), Decimal(quantity))
+                posting = Posting(entry, account, position, price, None)
             entry.postings.append(posting)
 
             if row.commissions:
                 create_simple_posting(entry, config['commission'], -to_decimal(row.commissions), cash_currency)
                 amount += Decimal(row.commissions)
 
+            if row.fees:
+                create_simple_posting(entry, config['fees'], -to_decimal(row.fees), cash_currency)
+                amount += Decimal(row.fees)
+
             create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
+            if not isbuy:
+                create_simple_posting(entry, config['pnl'], None, None)
 
-        elif row.description == 'Account Opt In':
-            # If this is the first year, an opt-in probably requires an adjustment.
-            entry = Pad(fileloc, date, config['asset_cash'], config['adjustment'])
-            new_entries.append(entry)
+        elif row.type == 'ADJ':
+            if row.description == 'Account Opt In':
 
-            # And an associated check.
-            new_entries.append(Check(fileloc, date, config['asset_cash'], balance, None))
+                # If this is the first year, an opt-in probably requires an adjustment.
+                entry = Pad(fileloc, date, config['asset_cash'], config['adjustment'])
+                new_entries.append(entry)
 
-            continue # No entry.
+                # And an associated check.
+                new_entries.append(Check(fileloc, date, config['asset_cash'], balance, None))
+
+                continue # No entry.
+
+            elif row.description == 'Courtesy Credit':
+                create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
+                create_simple_posting(entry, config['dividend_nontax'], -amount, cash_currency)
 
         else:
             raise ValueError("Unknown transaction {}".format(row))
