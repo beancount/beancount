@@ -57,8 +57,14 @@ def import_file(filename, config):
     config = accountify_dict(config)
     new_entries = []
 
+    # Tidy up the Excel filenames from RBC.
+    tidy_file = tempfile.NamedTemporaryFile(suffix='.xls', mode='w')
+    new_contents = re.sub('S&P 500', 'S&amp;P 500', open(filename).read())
+    tidy_file.write(new_contents)
+    tidy_file.flush()
+
     with tempfile.NamedTemporaryFile(suffix='.csv') as f:
-        r = subprocess.call(('ssconvert', filename, f.name),
+        r = subprocess.call(('ssconvert', tidy_file.name, f.name),
                             stdout=subprocess.PIPE)
         assert r == 0, r
 
@@ -155,6 +161,7 @@ def import_file(filename, config):
 
             new_entries.append(entry)
 
+    tidy_file.close()
 
     new_entries = join_fractional_transactions(new_entries)
     new_entries = join_full_shares_for_fractions(new_entries)

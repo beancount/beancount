@@ -101,7 +101,7 @@ def sanity_check_types(entry):
             assert isinstance(posting, Posting)
             assert posting.entry is entry
             assert isinstance(posting.account, Account)
-            assert isinstance(posting.position, Position)
+            assert isinstance(posting.position, (Position, NoneType))
             assert isinstance(posting.price, (Amount, NoneType))
             assert isinstance(posting.flag, (str, NoneType))
 
@@ -191,7 +191,8 @@ class EntryPrinter:
             flag = '{} '.format(posting.flag) if posting.flag else ''
             assert posting.account is not None
             position = str(posting.position) if posting.position else ''
-            oss.write('  {}{:64} {:>16} {:>16}'.format(flag, posting.account.name, position, posting.price or '').rstrip())
+            price_str = '@ {}'.format(posting.price) if posting.price else ''
+            oss.write('  {}{:64} {:>16} {:>16}'.format(flag, posting.account.name, position, price_str).rstrip())
             oss.write('\n')
 
     def Check(_, entry, oss):

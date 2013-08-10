@@ -14,6 +14,7 @@ import re
 import subprocess
 import tempfile
 import textwrap
+import bs4
 
 from beancount.core import data
 from beancount.core.data import format_entry
@@ -43,12 +44,26 @@ def read_file(filename):
     elif filetype == 'application/vnd.ms-excel':
         # If the file is an Excel spreadsheet, convert to a CSV file so we can
         # grep through it.
-        with tempfile.NamedTemporaryFile(suffix='.csv') as f:
-            r = subprocess.call(('ssconvert', '--export-type=Gnumeric_stf:stf_csv',
-                                 filename, f.name),
-                                stdout=subprocess.PIPE)
-            assert r == 0, r
-            contents = open(f.name).read()
+        excel_filename = filename
+        while 1:
+            with tempfile.NamedTemporaryFile(suffix='.csv') as f:
+                command = ('ssconvert', '--export-type=Gnumeric_stf:stf_csv',
+                           excel_filename, f.name)
+                p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                output, errors = p.communicate()
+                if p.returncode == 0:
+                    contents = open(f.name).read()
+                    break
+                elif re.search('XML document not well formed', errors.decode()):
+                    # Try again, after fixing up some well-known erronerous strings.
+                    # This manifests itself in RBC Direct Investing Excel files.
+                    tidy_file = tempfile.NamedTemporaryFile(suffix='.xls', mode='w', delete=False)
+                    new_contents = re.sub('S&P 500', 'S&amp;P 500', open(excel_filename).read())
+                    tidy_file.write(new_contents)
+                    tidy_file.flush()
+                    excel_filename = tidy_file.name
+                else:
+                    raise IOError("Could not convert Excel file '{}': {}".format(filename, errors))
 
     elif filetype.startswith('image/'):
         # Skip these file types.

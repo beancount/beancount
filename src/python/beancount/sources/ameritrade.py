@@ -146,6 +146,10 @@ def import_file(filename, config):
 
             create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
 
+        elif re.match(r'ORDINARY DIVIDEND \((.*)\)', row.description):
+
+            create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
+            create_simple_posting(entry, config['dividend'], -amount, cash_currency)
 
         elif re.match(r'NON-TAXABLE DIVIDENDS \((.*)\)', row.description):
 

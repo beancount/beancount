@@ -10,7 +10,7 @@ import re
 import datetime
 
 from beancount.core import data
-from beancount.core.amount import Decimal, Amount
+from beancount.core.amount import Decimal, Amount, ZERO
 from beancount.core.data import Transaction, Check
 from beancount.utils import csv_utils
 from beancount.core.account import accountify_dict
@@ -55,7 +55,7 @@ def import_file(filename, config):
 
         # Create postings on this transaction.
         data.create_simple_posting(entry, config['gross'], -Decimal(row.gross), row.currency)
-        if row.fee:
+        if row.fee != ZERO:
             data.create_simple_posting(entry, config['fees'], -Decimal(row.fee), row.currency)
 
         data.create_simple_posting(entry, config['cash'], Decimal(row.net), row.currency)
