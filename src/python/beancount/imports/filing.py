@@ -71,11 +71,18 @@ def run_filer_loop(importer_config,
             file_date = mtime_date
 
         # Find out where the file needs to go.
-        new_filename = path.normpath(path.join(
-            destination,
-            file_account.replace(':', os.sep),
-            '{0:%Y-%m-%d}.{1}'.format(file_date,
-                                      path.basename(idify(filename)))))
+        new_basename = '{0:%Y-%m-%d}.{1}'.format(file_date,
+                                                 path.basename(idify(filename)))
+
+        # Apply filename renaming, if implemented.
+        if hasattr(module, 'file_rename'):
+            # We provide the renamed basename.
+            new_basename = module.file_rename(new_basename)
+
+        # Prepend destination directory.
+        new_filename = path.normpath(path.join(destination,
+                                               file_account.replace(':', os.sep),
+                                               new_basename))
 
         # Print the filename and which modules matched.
         trace('=== {}'.format(filename))
