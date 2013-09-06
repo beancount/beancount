@@ -35,11 +35,24 @@ def read_file(filename):
                              shell=False,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
-        if p.returncode != 0 or stderr:
-            logging.error("Error running pdftotext: {}".format(stderr))
-            contents = ''
-        else:
+        if not (p.returncode != 0 or stderr):
             contents = stdout.decode()
+        else:
+            # Try first conversion using the LibreOffice tool.
+            p1 = subprocess.Popen(('unoconv', '--format', 'pdf', '--stdout', filename),
+                                  shell=False,
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p2 = subprocess.Popen(('pdftotext', '-', '-'),
+                                  shell=False,
+                                  stdin=p1.stdout,
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout2, stderr2 = p2.communicate()
+            if not (p2.returncode != 0 or stderr2):
+                contents = stdout2.decode()
+            else:
+                logging.error("Error running pdftotext: {}".format(stderr))
+                logging.error("Error running pdftotext via unoconv: {}".format(stderr2))
+                contents = ''
 
     elif filetype == 'application/vnd.ms-excel':
         # If the file is an Excel spreadsheet, convert to a CSV file so we can
