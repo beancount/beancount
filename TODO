@@ -434,6 +434,9 @@ beancount: TODO
 
 ** Syntax
 
+  - You should support a payee with no description! This generates a parser
+    error right now.
+
   - Allow '$' as currency symbol, don't translate to anything, it can just
     stand on its own as a unique kind of currency, it doesn't matter, no
     changes anywhere. Also add the Euro, GBP and yen symbols.

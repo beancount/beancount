@@ -131,6 +131,9 @@ def import_file(filename, config):
 
                         fileloc = data.FileLocation(filename, next(txn_counter))
                         source = soup_get(invpos, 'inv401ksource')
+                        if source is None:
+                            continue
+
                         account = account_from_name('{}:{}'.format(
                             source_subaccounts[source].name, security))
 
