@@ -18,7 +18,7 @@ class TestInventory(unittest.TestCase):
 
     def test_ctor(self):
         inv = Inventory()
-        self.assertTrue(inv.is_empt())
+        self.assertTrue(inv.is_empty())
 
 ## FIXME: ctor with positions
 
@@ -138,8 +138,3 @@ class TestInventory(unittest.TestCase):
         inv2.add(Amount('55', 'GOOG'))
 
         inv = inv1 + inv2
-
-
-
-## FIXME: remove
-unittest.main()

@@ -175,6 +175,7 @@ class TestSyntaxErrors(unittest.TestCase):
 
           2013-05-20 check Assets:US:Cash  -110 USD
         """
+        # This should fail to parse the "Expenses:Resta(urant" account name.
 
         parser.dump_lexer_string(TestSyntaxErrors.test_lexer_default_rule_2.__doc__)
 
@@ -264,9 +265,3 @@ class TestSimple(unittest.TestCase):
         """
         self.assertEqual(len(entries), 2)
         self.assertEqual(errors, [])
-
-
-
-
-## FIXME: remove
-unittest.main()

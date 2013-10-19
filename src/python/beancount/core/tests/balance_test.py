@@ -127,11 +127,3 @@ class TestBalance(unittest.TestCase):
 
 
 # Test through parser.
-
-
-
-
-
-
-## FIXME: remove
-unittest.main()

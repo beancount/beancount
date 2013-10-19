@@ -18,8 +18,3 @@ class TestPosition(unittest.TestCase):
         pos2 = None
         self.assertEqual(pos1, pos2)
         self.assertEqual(pos2, pos1)
-
-
-
-## FIXME: remove
-unittest.main()
