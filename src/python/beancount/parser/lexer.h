@@ -33,7 +33,6 @@ extern int yy_line_tokens; /* Number of tokens since the bol */
 
 /* Skip the rest of the input line. */
 void yy_skip_line(void);
-void yy_skip_until_empty(void);
 
 
 /* Utility functions. */
@@ -42,7 +41,7 @@ int strtonl(const char* buf, size_t nchars);
 
 
 
-#line 46 "src/python/beancount/parser/lexer.h"
+#line 45 "src/python/beancount/parser/lexer.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -375,9 +374,9 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-#line 183 "src/python/beancount/parser/lexer.l"
+#line 182 "src/python/beancount/parser/lexer.l"
 
 
-#line 382 "src/python/beancount/parser/lexer.h"
+#line 381 "src/python/beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

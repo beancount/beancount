@@ -4,6 +4,7 @@ Tests for parser.
 import unittest
 import textwrap
 import inspect
+import sys
 
 from beancount.parser import parsedoc
 from beancount.parser import parser
@@ -127,31 +128,29 @@ class TestUglyBugs(unittest.TestCase):
         self.assertEqual(1, len(entries))
         self.assertEqual(errors, [])
 
-# FIXME: These next two run into an infinite loop.
-#    def test_extra_whitespace_transaction(self):
-#        input_ = '\n'.join([
-#          '2013-05-18 * "Nice dinner at Mermaid Inn"',
-#          '  Expenses:Restaurant         100 USD',
-#          '  Assets:US:Cash',
-#          '  ',
-#          ';; End of file',
-#          ])
-#
-#        entries, errors, options = parser.parse_string(input_, yydebug=0)
-#        self.assertEqual(1, len(entries))
-#        self.assertEqual(errors, [])
-#
-#    def test_extra_whitespace_comment(self):
-#        input_ = '\n'.join([
-#          '2013-05-18 * "Nice dinner at Mermaid Inn"',
-#          '  Expenses:Restaurant         100 USD',
-#          '  Assets:US:Cash',
-#          '  ;;',
-#          ])
-#        entries, errors, options = parser.parse_string(input_)
-#        self.assertEqual(1, len(entries))
-#        self.assertEqual(errors, [])
+    def test_extra_whitespace_transaction(self):
+        input_ = '\n'.join([
+          '2013-05-18 * "Nice dinner at Mermaid Inn"',
+          '  Expenses:Restaurant         100 USD',
+          '  Assets:US:Cash',
+          '  ',
+          ';; End of file',
+          ])
 
+        entries, errors, options = parser.parse_string(input_, yydebug=0)
+        self.assertEqual(1, len(entries))
+        self.assertEqual(errors, [])
+
+    def test_extra_whitespace_comment(self):
+        input_ = '\n'.join([
+          '2013-05-18 * "Nice dinner at Mermaid Inn"',
+          '  Expenses:Restaurant         100 USD',
+          '  Assets:US:Cash',
+          '  ;;',
+          ])
+        entries, errors, options = parser.parse_string(input_)
+        self.assertEqual(1, len(entries))
+        self.assertEqual(errors, [])
 
 
 class TestSyntaxErrors(unittest.TestCase):
@@ -178,8 +177,6 @@ class TestSyntaxErrors(unittest.TestCase):
           2013-05-20 check Assets:US:Cash  -110 USD
         """
         # This should fail to parse the "Expenses:Resta(urant" account name.
-
-        parser.dump_lexer_string(TestSyntaxErrors.test_lexer_default_rule_2.__doc__)
 
         # Check that we indeed read the 'check' entry that comes after the one
         # with the error.
