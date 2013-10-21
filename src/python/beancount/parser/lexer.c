@@ -32,18 +32,13 @@ void yy_skip_line(void);
 void yy_skip_until_empty(void);
 
 
-/* Error handlers. */
-extern void yyerror(char const *s);
-extern void yyerror2(char const *s, YYLTYPE* yylloc);
-
-
 /* Utility functions. */
 int strtonl(const char* buf, size_t nchars);
 
 
 
 
-#line 47 "src/python/beancount/parser/lexer.c"
+#line 42 "src/python/beancount/parser/lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -90,7 +85,6 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
-typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -98,7 +92,6 @@ typedef int flex_int32_t;
 typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
-#endif /* ! C99 */
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -128,6 +121,8 @@ typedef unsigned int flex_uint32_t;
 #ifndef UINT32_MAX
 #define UINT32_MAX             (4294967295U)
 #endif
+
+#endif /* ! C99 */
 
 #endif /* ! FLEXINT_H */
 
@@ -185,7 +180,15 @@ typedef unsigned int flex_uint32_t;
 
 /* Size of default input buffer. */
 #ifndef YY_BUF_SIZE
+#ifdef __ia64__
+/* On IA-64, the buffer size is 16k, not 8k.
+ * Moreover, YY_BUF_SIZE is 2*YY_READ_BUF_SIZE in the general case.
+ * Ditto for the __ia64__ case accordingly.
+ */
+#define YY_BUF_SIZE 32768
+#else
 #define YY_BUF_SIZE 16384
+#endif /* __ia64__ */
 #endif
 
 /* The state buf must be large enough to hold one state per character in the main buffer.
@@ -197,12 +200,7 @@ typedef unsigned int flex_uint32_t;
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
 #endif
 
-#ifndef YY_TYPEDEF_YY_SIZE_T
-#define YY_TYPEDEF_YY_SIZE_T
-typedef size_t yy_size_t;
-#endif
-
-extern yy_size_t yyleng;
+extern int yyleng;
 
 extern FILE *yyin, *yyout;
 
@@ -219,7 +217,7 @@ extern FILE *yyin, *yyout;
      */
     #define  YY_LESS_LINENO(n) \
             do { \
-                yy_size_t yyl;\
+                int yyl;\
                 for ( yyl = n; yyl < yyleng; ++yyl )\
                     if ( yytext[yyl] == '\n' )\
                         --yylineno;\
@@ -241,6 +239,11 @@ extern FILE *yyin, *yyout;
 
 #define unput(c) yyunput( c, (yytext_ptr)  )
 
+#ifndef YY_TYPEDEF_YY_SIZE_T
+#define YY_TYPEDEF_YY_SIZE_T
+typedef size_t yy_size_t;
+#endif
+
 #ifndef YY_STRUCT_YY_BUFFER_STATE
 #define YY_STRUCT_YY_BUFFER_STATE
 struct yy_buffer_state
@@ -258,7 +261,7 @@ struct yy_buffer_state
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	yy_size_t yy_n_chars;
+	int yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -328,8 +331,8 @@ static YY_BUFFER_STATE * yy_buffer_stack = 0; /**< Stack as an array. */
 
 /* yy_hold_char holds the character lost when yytext is formed. */
 static char yy_hold_char;
-static yy_size_t yy_n_chars;		/* number of characters read into yy_ch_buf */
-yy_size_t yyleng;
+static int yy_n_chars;		/* number of characters read into yy_ch_buf */
+int yyleng;
 
 /* Points to current character in buffer. */
 static char *yy_c_buf_p = (char *) 0;
@@ -357,7 +360,7 @@ static void yy_init_buffer (YY_BUFFER_STATE b,FILE *file  );
 
 YY_BUFFER_STATE yy_scan_buffer (char *base,yy_size_t size  );
 YY_BUFFER_STATE yy_scan_string (yyconst char *yy_str  );
-YY_BUFFER_STATE yy_scan_bytes (yyconst char *bytes,yy_size_t len  );
+YY_BUFFER_STATE yy_scan_bytes (yyconst char *bytes,int len  );
 
 void *yyalloc (yy_size_t  );
 void *yyrealloc (void *,yy_size_t  );
@@ -415,7 +418,7 @@ static void yy_fatal_error (yyconst char msg[]  );
  */
 #define YY_DO_BEFORE_ACTION \
 	(yytext_ptr) = yy_bp; \
-	yyleng = (yy_size_t) (yy_cp - yy_bp); \
+	yyleng = (size_t) (yy_cp - yy_bp); \
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
@@ -633,7 +636,7 @@ char *yytext;
 
 /*------------------------------------------------------------------------------------------------------------------------*/
 /* Rules */
-#line 637 "src/python/beancount/parser/lexer.c"
+#line 640 "src/python/beancount/parser/lexer.c"
 
 #define INITIAL 0
 
@@ -672,7 +675,7 @@ FILE *yyget_out (void );
 
 void yyset_out  (FILE * out_str  );
 
-yy_size_t yyget_leng (void );
+int yyget_leng (void );
 
 char *yyget_text (void );
 
@@ -722,7 +725,12 @@ static int input (void );
 
 /* Amount of stuff to slurp up with each read. */
 #ifndef YY_READ_BUF_SIZE
+#ifdef __ia64__
+/* On IA-64, the buffer size is 16k, not 8k */
+#define YY_READ_BUF_SIZE 16384
+#else
 #define YY_READ_BUF_SIZE 8192
+#endif /* __ia64__ */
 #endif
 
 /* Copy whatever the last rule matched to the standard output. */
@@ -730,7 +738,7 @@ static int input (void );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO fwrite( yytext, yyleng, 1, yyout )
+#define ECHO do { if (fwrite( yytext, yyleng, 1, yyout )) {} } while (0)
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -741,7 +749,7 @@ static int input (void );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		yy_size_t n; \
+		size_t n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -829,12 +837,12 @@ YY_DECL
     
         YYLTYPE * yylloc;
     
-#line 68 "src/python/beancount/parser/lexer.l"
+#line 63 "src/python/beancount/parser/lexer.l"
 
 
 
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
-#line 838 "src/python/beancount/parser/lexer.c"
+#line 846 "src/python/beancount/parser/lexer.c"
 
     yylval = yylval_param;
 
@@ -908,7 +916,7 @@ yy_find_action:
 
 		if ( yy_act != YY_END_OF_BUFFER && yy_rule_can_match_eol[yy_act] )
 			{
-			yy_size_t yyl;
+			int yyl;
 			for ( yyl = 0; yyl < yyleng; ++yyl )
 				if ( yytext[yyl] == '\n' )
 					   
@@ -930,7 +938,7 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 72 "src/python/beancount/parser/lexer.l"
+#line 67 "src/python/beancount/parser/lexer.l"
 {
     yy_line_tokens = 0;
     yycolumn = 1;
@@ -941,7 +949,7 @@ YY_RULE_SETUP
     This is how we group indented postings. */
 case 2:
 YY_RULE_SETUP
-#line 80 "src/python/beancount/parser/lexer.l"
+#line 75 "src/python/beancount/parser/lexer.l"
 {
     if ( yy_line_tokens == 1 ) {
         /* If the next character completes the line, skip it. */
@@ -957,48 +965,48 @@ YY_RULE_SETUP
 /* Characters with special meanings have their own tokens. */
 case 3:
 YY_RULE_SETUP
-#line 93 "src/python/beancount/parser/lexer.l"
+#line 88 "src/python/beancount/parser/lexer.l"
 { return PIPE; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 94 "src/python/beancount/parser/lexer.l"
+#line 89 "src/python/beancount/parser/lexer.l"
 { return ATAT; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 95 "src/python/beancount/parser/lexer.l"
+#line 90 "src/python/beancount/parser/lexer.l"
 { return AT; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 96 "src/python/beancount/parser/lexer.l"
+#line 91 "src/python/beancount/parser/lexer.l"
 { return LCURL; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 97 "src/python/beancount/parser/lexer.l"
+#line 92 "src/python/beancount/parser/lexer.l"
 { return RCURL; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 98 "src/python/beancount/parser/lexer.l"
+#line 93 "src/python/beancount/parser/lexer.l"
 { return EQUAL; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 99 "src/python/beancount/parser/lexer.l"
+#line 94 "src/python/beancount/parser/lexer.l"
 { return COMMA; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 100 "src/python/beancount/parser/lexer.l"
+#line 95 "src/python/beancount/parser/lexer.l"
 { return SLASH; }
 	YY_BREAK
 /* Skip commented output (but not the accompanying newline). */
 case 11:
 YY_RULE_SETUP
-#line 103 "src/python/beancount/parser/lexer.l"
+#line 98 "src/python/beancount/parser/lexer.l"
 {
     yy_skip_line();
     return COMMENT;
@@ -1008,7 +1016,7 @@ YY_RULE_SETUP
     Other lines are just skipped. This allows us to use org-mode or other separators in the input syntax. */
 case 12:
 YY_RULE_SETUP
-#line 110 "src/python/beancount/parser/lexer.l"
+#line 105 "src/python/beancount/parser/lexer.l"
 {
     if ( yy_line_tokens != 1 ) {
         yylval->character = yytext[0];
@@ -1023,68 +1031,68 @@ YY_RULE_SETUP
 /* Keywords. */
 case 13:
 YY_RULE_SETUP
-#line 122 "src/python/beancount/parser/lexer.l"
+#line 117 "src/python/beancount/parser/lexer.l"
 { return TXN; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 123 "src/python/beancount/parser/lexer.l"
+#line 118 "src/python/beancount/parser/lexer.l"
 { return CHECK; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 124 "src/python/beancount/parser/lexer.l"
+#line 119 "src/python/beancount/parser/lexer.l"
 { return OPEN; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 125 "src/python/beancount/parser/lexer.l"
+#line 120 "src/python/beancount/parser/lexer.l"
 { return CLOSE; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 126 "src/python/beancount/parser/lexer.l"
+#line 121 "src/python/beancount/parser/lexer.l"
 { return PAD; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 127 "src/python/beancount/parser/lexer.l"
+#line 122 "src/python/beancount/parser/lexer.l"
 { return EVENT; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 128 "src/python/beancount/parser/lexer.l"
+#line 123 "src/python/beancount/parser/lexer.l"
 { return PRICE; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 129 "src/python/beancount/parser/lexer.l"
+#line 124 "src/python/beancount/parser/lexer.l"
 { return NOTE; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 130 "src/python/beancount/parser/lexer.l"
+#line 125 "src/python/beancount/parser/lexer.l"
 { return DOCUMENT; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 131 "src/python/beancount/parser/lexer.l"
+#line 126 "src/python/beancount/parser/lexer.l"
 { return PUSHTAG; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 132 "src/python/beancount/parser/lexer.l"
+#line 127 "src/python/beancount/parser/lexer.l"
 { return POPTAG; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 133 "src/python/beancount/parser/lexer.l"
+#line 128 "src/python/beancount/parser/lexer.l"
 { return OPTION; }
 	YY_BREAK
 /* Dates. */
 case 25:
 YY_RULE_SETUP
-#line 136 "src/python/beancount/parser/lexer.l"
+#line 131 "src/python/beancount/parser/lexer.l"
 {
     int year = strtonl(yytext, 4);
     int month = strtonl(yytext+5, 2);
@@ -1096,7 +1104,7 @@ YY_RULE_SETUP
 /* Account names. */
 case 26:
 YY_RULE_SETUP
-#line 145 "src/python/beancount/parser/lexer.l"
+#line 140 "src/python/beancount/parser/lexer.l"
 {
     yylval->pyobj = BUILD("ACCOUNT", "s", yytext);
     return ACCOUNT;
@@ -1105,7 +1113,7 @@ YY_RULE_SETUP
 /* Currencies. These are defined as uppercase only in order to disambiguate the syntax. */
 case 27:
 YY_RULE_SETUP
-#line 151 "src/python/beancount/parser/lexer.l"
+#line 146 "src/python/beancount/parser/lexer.l"
 {
     yylval->pyobj = BUILD("CURRENCY", "s", yytext);
     return CURRENCY;
@@ -1115,7 +1123,7 @@ YY_RULE_SETUP
 case 28:
 /* rule 28 can match eol */
 YY_RULE_SETUP
-#line 157 "src/python/beancount/parser/lexer.l"
+#line 152 "src/python/beancount/parser/lexer.l"
 {
     yytext[yyleng-1] = '\0';
     yylval->pyobj = BUILD("STRING", "s", &(yytext[1]));
@@ -1125,7 +1133,7 @@ YY_RULE_SETUP
 /* Numbers */
 case 29:
 YY_RULE_SETUP
-#line 164 "src/python/beancount/parser/lexer.l"
+#line 159 "src/python/beancount/parser/lexer.l"
 {
     yylval->pyobj = BUILD("NUMBER", "s", yytext);
     return NUMBER;
@@ -1134,7 +1142,7 @@ YY_RULE_SETUP
 /* Tags */
 case 30:
 YY_RULE_SETUP
-#line 170 "src/python/beancount/parser/lexer.l"
+#line 165 "src/python/beancount/parser/lexer.l"
 {
     yylval->pyobj = BUILD("TAG", "s", &(yytext[1]));
     return TAG;
@@ -1143,7 +1151,7 @@ YY_RULE_SETUP
 /* Links */
 case 31:
 YY_RULE_SETUP
-#line 176 "src/python/beancount/parser/lexer.l"
+#line 171 "src/python/beancount/parser/lexer.l"
 {
     yylval->pyobj = BUILD("LINK", "s", &(yytext[1]));
     return LINK;
@@ -1152,20 +1160,17 @@ YY_RULE_SETUP
 /* Default rule. This should never be reached. */
 case 32:
 YY_RULE_SETUP
-#line 182 "src/python/beancount/parser/lexer.l"
+#line 177 "src/python/beancount/parser/lexer.l"
 {
-    yyerror2("Syntax error; lexer cannot parse token.", yylloc);
-    yy_skip_line();
-    yy_skip_until_empty();
-    /* FIXME: I need to somehow tell the parser to abandon the current entry! */
+    return ERROR;
 }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 191 "src/python/beancount/parser/lexer.l"
+#line 183 "src/python/beancount/parser/lexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1169 "src/python/beancount/parser/lexer.c"
+#line 1174 "src/python/beancount/parser/lexer.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1352,7 +1357,7 @@ static int yy_get_next_buffer (void)
 
 	else
 		{
-			yy_size_t num_to_read =
+			int num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
@@ -1366,7 +1371,7 @@ static int yy_get_next_buffer (void)
 
 			if ( b->yy_is_our_buffer )
 				{
-				yy_size_t new_size = b->yy_buf_size * 2;
+				int new_size = b->yy_buf_size * 2;
 
 				if ( new_size <= 0 )
 					b->yy_buf_size += b->yy_buf_size / 8;
@@ -1397,7 +1402,7 @@ static int yy_get_next_buffer (void)
 
 		/* Read in more data. */
 		YY_INPUT( (&YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move]),
-			(yy_n_chars), num_to_read );
+			(yy_n_chars), (size_t) num_to_read );
 
 		YY_CURRENT_BUFFER_LVALUE->yy_n_chars = (yy_n_chars);
 		}
@@ -1507,7 +1512,7 @@ static int yy_get_next_buffer (void)
 	if ( yy_cp < YY_CURRENT_BUFFER_LVALUE->yy_ch_buf + 2 )
 		{ /* need to shift things up to make room */
 		/* +2 for EOB chars. */
-		register yy_size_t number_to_move = (yy_n_chars) + 2;
+		register int number_to_move = (yy_n_chars) + 2;
 		register char *dest = &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[
 					YY_CURRENT_BUFFER_LVALUE->yy_buf_size + 2];
 		register char *source =
@@ -1560,7 +1565,7 @@ static int yy_get_next_buffer (void)
 
 		else
 			{ /* need more input */
-			yy_size_t offset = (yy_c_buf_p) - (yytext_ptr);
+			int offset = (yy_c_buf_p) - (yytext_ptr);
 			++(yy_c_buf_p);
 
 			switch ( yy_get_next_buffer(  ) )
@@ -1584,7 +1589,7 @@ static int yy_get_next_buffer (void)
 				case EOB_ACT_END_OF_FILE:
 					{
 					if ( yywrap( ) )
-						return 0;
+						return EOF;
 
 					if ( ! (yy_did_buffer_switch_on_eof) )
 						YY_NEW_FILE;
@@ -1837,7 +1842,7 @@ void yypop_buffer_state (void)
  */
 static void yyensure_buffer_stack (void)
 {
-	yy_size_t num_to_alloc;
+	int num_to_alloc;
     
 	if (!(yy_buffer_stack)) {
 
@@ -1929,16 +1934,17 @@ YY_BUFFER_STATE yy_scan_string (yyconst char * yystr )
 
 /** Setup the input buffer state to scan the given bytes. The next call to yylex() will
  * scan from a @e copy of @a bytes.
- * @param bytes the byte buffer to scan
- * @param len the number of bytes in the buffer pointed to by @a bytes.
+ * @param yybytes the byte buffer to scan
+ * @param _yybytes_len the number of bytes in the buffer pointed to by @a bytes.
  * 
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_len )
+YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, int  _yybytes_len )
 {
 	YY_BUFFER_STATE b;
 	char *buf;
-	yy_size_t n, i;
+	yy_size_t n;
+	int i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = _yybytes_len + 2;
@@ -2020,7 +2026,7 @@ FILE *yyget_out  (void)
 /** Get the length of the current token.
  * 
  */
-yy_size_t yyget_leng  (void)
+int yyget_leng  (void)
 {
         return yyleng;
 }
@@ -2171,7 +2177,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 191 "src/python/beancount/parser/lexer.l"
+#line 183 "src/python/beancount/parser/lexer.l"
 
 
 /*------------------------------------------------------------------------------------------------------------------------*/

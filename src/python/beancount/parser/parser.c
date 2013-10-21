@@ -15,6 +15,8 @@ extern int yyparse(void);
 
 extern const char* getTokenName(int token);
 
+extern int yy_firstline;
+
 
 /* The current builder during parsing (as a global variable for now). */
 PyObject* builder = 0;
@@ -41,11 +43,17 @@ PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
 {
     /* Unpack and validate arguments */
     const char* filename = 0;
+    const char* report_filename = 0;
+    int report_firstline = 0;
     extern int yydebug;
     /* FIXME: You could support flex debugging too: yyset_debug(int bdebug) */
-    static char *kwlist[] = {"filename", "builder", "yydebug", NULL};
-    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "sO|p", kwlist,
-                                      &filename, &builder, &yydebug) ) {
+    static char *kwlist[] = {"filename", "builder",
+                             "report_filename", "report_firstline",
+                             "yydebug", NULL};
+    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "sO|sip", kwlist,
+                                      &filename, &builder,
+                                      &report_filename, &report_firstline,
+                                      &yydebug) ) {
         return NULL;
     }
     Py_XINCREF(builder);
@@ -58,7 +66,13 @@ PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
 
     /* Initialize the parser. */
     yyin = fp;
-    yy_filename = filename;
+    if ( report_filename != 0 ) {
+        yy_filename = report_filename;
+    }
+    else {
+        yy_filename = filename;
+    }
+    yy_firstline = report_firstline;
 
     /* Parse! This will call back methods on the builder instance. */
     int result = yyparse();

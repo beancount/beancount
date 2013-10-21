@@ -180,7 +180,7 @@ def create_real_accounts_tree(real_dict):
       real_dict: a dict of of name -> RealAccount instances.
     Returns:
       A RealAccount instance, the root node that contains the full tree
-      of RealAccoutn instances implied by the nodes given as input.
+      of RealAccount instances implied by the nodes given as input.
     """
     assert isinstance(real_dict, dict)
     full_dict = real_dict.copy()

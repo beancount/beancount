@@ -52,11 +52,6 @@ void yy_skip_line(void);
 void yy_skip_until_empty(void);
 
 
-/* Error handlers. */
-extern void yyerror(char const *s);
-extern void yyerror2(char const *s, YYLTYPE* yylloc);
-
-
 /* Utility functions. */
 int strtonl(const char* buf, size_t nchars);
 
@@ -180,10 +175,7 @@ option		{ return OPTION; }
 
  /* Default rule. This should never be reached. */
 .	{
-    yyerror2("Syntax error; lexer cannot parse token.", yylloc);
-    yy_skip_line();
-    yy_skip_until_empty();
-    /* FIXME: I need to somehow tell the parser to abandon the current entry! */
+    return ERROR;
 }
 
 

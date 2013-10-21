@@ -19,12 +19,14 @@ clean:
 
 # Targets to generate and compile the C parser.
 CROOT=src/python/beancount/parser
+LEX=flex
+YACC=bison3
 
 $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
-	bison -o $(CROOT)/grammar.c $<
+	$(YACC) -o $(CROOT)/grammar.c $<
 
 $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
-	flex --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
+	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
 # cd $(CROOT) && flex $(notdir $<)
 
 compile: $(CROOT)/grammar.c $(CROOT)/grammar.h $(CROOT)/lexer.c $(CROOT)/lexer.h

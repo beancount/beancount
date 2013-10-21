@@ -15,18 +15,16 @@
 #include "parser.h"
 #include "lexer.h"
 
-/* FIXME: set real filename here. */
+/* First line of reported file/line string. This is used as #line. */
+int yy_firstline;
+
+#define FILE_LINE_ARGS  yy_filename, ((yyloc).first_line + yy_firstline)
 
 /* Error-handling function. */
 void yyerror(char const* message)
 {
-    /* FIXME: How do I get a hold of yylloc here and call the other function with it? */
-    fprintf(stderr, "%s:%d:: (yyerror) %s\n", yy_filename, yylineno, message);
-}
-
-void yyerror2(char const* message, YYLTYPE* yylloc)
-{
-    fprintf(stderr, "%s:%d:: (yyerror2) %s\n", yy_filename, yylloc->first_line, message);
+    /* Register a syntax error with the builder. */
+    BUILD("error", "ssi", message, yy_filename, yylineno + yy_firstline);
 }
 
 /* Get a printable version of a token name. */
@@ -41,10 +39,6 @@ const char* getTokenName(int token);
 #define DECREF5(x1, x2, x3, x4, x5)
 #define DECREF6(x1, x2, x3, x4, x5, x6)
 
-
-#define FILE_LINE_ARGS  yy_filename, (yyloc).first_line
-
-
 %}
 
 
@@ -56,7 +50,7 @@ const char* getTokenName(int token);
 %defines
 %error-verbose
 %debug
-%pure_parser
+%pure-parser
 %locations
 /* %glr-parser */
 
@@ -368,6 +362,7 @@ directive : SKIPPED
           | poptag
           | option
 
+
 declarations : declarations directive
              {
                  $$ = $1;
@@ -376,6 +371,10 @@ declarations : declarations directive
              {
                  $$ = BUILD("handle_list", "OO", $1, $2);
                  DECREF2($1, $2);
+             }
+             | declarations error
+             {
+                 $$ = $1;
              }
              | empty
              {

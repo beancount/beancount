@@ -4,6 +4,7 @@ Basic test to invoke the beancount parser.
 """
 import datetime
 import functools
+import inspect
 import textwrap
 import copy
 import tempfile
@@ -134,6 +135,15 @@ class ParserError(RuntimeError):
         RuntimeError.__init__(self, '{:s}:{:d}: {}'.format(
             fileloc.filename, fileloc.lineno, message))
 
+class ParserSyntaxError(RuntimeError):
+    """A syntax error."""
+
+    # FIXME: remove this formatting, not needed.
+    def __init__(self, fileloc, message):
+        RuntimeError.__init__(self, '{:s}:{:d}: {}'.format(
+            fileloc.filename, fileloc.lineno, message))
+
+
 
 class Builder(object):
     """A builder used by the lexer and grammer parser as callbacks to create
@@ -221,6 +231,10 @@ class Builder(object):
             object_list = []
         object_list.append(object)
         return object_list
+
+    def error(self, message, filename, lineno):
+        fileloc = FileLocation(filename, lineno)
+        self.errors.append(ParserSyntaxError(fileloc, message))
 
     def open(self, filename, lineno, date, account, currencies):
         fileloc = FileLocation(filename, lineno)
@@ -335,9 +349,20 @@ def parse_string(input_string, **kw):
 
 def parsedoc(fun):
     """Decorator that parses the function's docstring as an argument."""
+    import sys
+    filename = inspect.getfile(fun)
+    lines, lineno = inspect.getsourcelines(fun)
+
+    # decorator line + function definition line (I realize this is largely
+    # imperfect, but it's only for reporting in our tests) - empty first line
+    # stripped away.
+    lineno += 1
+
     @functools.wraps(fun)
     def newfun(self):
-        entries, errors, options = parse_string(textwrap.dedent(fun.__doc__))
+        entries, errors, options = parse_string(textwrap.dedent(fun.__doc__),
+                                                report_filename=filename,
+                                                report_firstline=lineno)
         return fun(self, entries, errors, options)
     return newfun
 
