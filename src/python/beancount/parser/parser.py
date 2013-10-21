@@ -180,13 +180,14 @@ class Builder(object):
     def option(self, filename, lineno, key, value):
         if key not in self.options:
             fileloc = FileLocation(filename, lineno)
-            raise ParserError(fileloc, "Invalid option: '{}'".format(key))
-
-        option = self.options[key]
-        if isinstance(option, list):
-            option.append(value)
+            self.errors.append(
+                ParserError(fileloc, "Invalid option: '{}'".format(key)))
         else:
-            self.options[key] = value
+            option = self.options[key]
+            if isinstance(option, list):
+                option.append(value)
+            else:
+                self.options[key] = value
 
 
     def DATE(self, year, month, day):
@@ -229,7 +230,8 @@ class Builder(object):
     def handle_list(self, object_list, object):
         if object_list is None:
             object_list = []
-        object_list.append(object)
+        if object is not None:
+            object_list.append(object)
         return object_list
 
     def error(self, message, filename, lineno):
@@ -287,8 +289,9 @@ class Builder(object):
 
         # Detect when a transaction does not have at least two legs.
         if postings is None or len(postings) < 2:
-            # FIXME: Don't raise, log an error and skip instead...
-            raise ParserError(fileloc, "Invalid number of postings: {}".format(postings))
+            self.errors.append(
+                ParserError(fileloc, "Invalid number of postings: {}".format(postings)))
+            return None
 
         # Merge the tags from the stach with the explicit tags of this transaction
         ctags = set()

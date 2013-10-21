@@ -34,6 +34,16 @@ class TestParserEntries(unittest.TestCase):
         self.assertTrue(isinstance(entries[0], Transaction))
 
     @parsedoc
+    def test_entry_transaction_invalid_npostings(self, entries, errors, options):
+        """
+          2013-05-18 * "Nice dinner at Mermaid Inn"
+            Expenses:Restaurant         100 USD
+
+        """
+        self.assertEqual(0, len(entries))
+        self.assertEqual(1, len(errors))
+
+    @parsedoc
     def test_entry_check(self, entries, errors, options):
         """
           2013-05-18 check Assets:US:BestBank:Checking  200 USD
@@ -221,6 +231,15 @@ class TestParserOptions(unittest.TestCase):
         """
         option = options['title']
         self.assertEqual(option, 'Super Rich')
+
+    @parsedoc
+    def test_invalid_option(self, entries, errors, options):
+        """
+          option "bladibla_invalid" "Some value"
+
+        """
+        self.assertEqual(len(errors), 1)
+        self.assertTrue(isinstance(errors[0], parser.ParserError))
 
 
 class TestParserLinks(unittest.TestCase):
