@@ -63,7 +63,8 @@ class Amount:
 
 # Note: We don't implement operators on Amount here in favour of the more
 # explicit functional style. This should all be LISP anyhow. I like dumb data
-# objects with functions instead of objects with methods...
+# objects with functions instead of objects with methods... alright, this is
+# okay.
 
 def amount_sortkey(amount):
     """Sort by currency first."""
@@ -81,6 +82,3 @@ def amount_sub(amount1, amount2):
     assert isinstance(amount2, Amount)
     assert amount1.currency == amount2.currency
     return Amount(amount1.number - amount2.number, amount1.currency)
-
-# def neg_amount(amount):
-#     return Amount(-amount.number, amount.currency)

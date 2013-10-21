@@ -12,6 +12,20 @@ from beancount.core.data import Transaction, Check, Open, Close, Pad, Event, Pri
 from beancount.core.data import format_entry
 
 
+def checkList(self, objlist, explist):
+    """Check the the list of objects against the expected specification.
+    'explist' can be an integer, to check the length of the list; if it
+    is a list of types, the types are checked against the types of the objects
+    in the list. This is meant to be a convenient method.
+    """
+    if isinstance(explist, int):
+        self.assertEqual(explist, len(objlist))
+    elif isinstance(explist, (tuple, list)):
+        self.assertEqual(len(explist), len(objlist))
+        for obj, exp in zip(objlist, explist):
+            self.assertTrue(isinstance(type(obj), type(exp)))
+
+
 class TestParserEntries(unittest.TestCase):
     """Basic smoke test one entry of each kind."""
 
@@ -22,16 +36,16 @@ class TestParserEntries(unittest.TestCase):
             Expenses:Restaurant         100 USD
             Assets:US:Cash
         """
-        self.assertTrue(isinstance(entries[0], Transaction))
+        checkList(self, entries, [Transaction])
 
     @parsedoc
-    def __test_entry_transaction_2(self, entries, errors, options):
+    def test_entry_transaction_2(self, entries, errors, options):
         """
           2013-05-18 txn "Nice dinner at Mermaid Inn"
             Expenses:Restaurant         100 USD
             Assets:US:Cash
         """
-        self.assertTrue(isinstance(entries[0], Transaction))
+        checkList(self, entries, [Transaction])
 
     @parsedoc
     def test_entry_transaction_invalid_npostings(self, entries, errors, options):
@@ -40,71 +54,71 @@ class TestParserEntries(unittest.TestCase):
             Expenses:Restaurant         100 USD
 
         """
-        self.assertEqual(0, len(entries))
-        self.assertEqual(1, len(errors))
+        checkList(self, entries, [])
+        checkList(self, errors, 1)
 
     @parsedoc
     def test_entry_check(self, entries, errors, options):
         """
           2013-05-18 check Assets:US:BestBank:Checking  200 USD
         """
-        self.assertTrue(isinstance(entries[0], Check))
+        checkList(self, entries, [Check])
 
     @parsedoc
     def test_entry_open_1(self, entries, errors, options):
         """
           2013-05-18 open Assets:US:BestBank:Checking
         """
-        self.assertTrue(isinstance(entries[0], Open))
+        checkList(self, entries, [Open])
 
     @parsedoc
     def test_entry_open_2(self, entries, errors, options):
         """
           2013-05-18 open Assets:US:BestBank:Checking   USD
         """
-        self.assertTrue(isinstance(entries[0], Open))
+        checkList(self, entries, [Open])
 
     @parsedoc
     def test_entry_open_3(self, entries, errors, options):
         """
           2013-05-18 open Assets:Cash   USD,CAD,EUR
         """
-        self.assertTrue(isinstance(entries[0], Open))
+        checkList(self, entries, [Open])
 
     @parsedoc
     def test_entry_close(self, entries, errors, options):
         """
           2013-05-18 close Assets:US:BestBank:Checking
         """
-        self.assertTrue(isinstance(entries[0], Close))
+        checkList(self, entries, [Close])
 
     @parsedoc
     def test_entry_pad(self, entries, errors, options):
         """
           2013-05-18 pad Assets:US:BestBank:Checking  Equity:Opening-Balancess
         """
-        self.assertTrue(isinstance(entries[0], Pad))
+        checkList(self, entries, [Pad])
 
     @parsedoc
     def test_entry_event(self, entries, errors, options):
         """
           2013-05-18 event "location" "New York, USA"
         """
-        self.assertTrue(isinstance(entries[0], Event))
+        checkList(self, entries, [Event])
 
     @parsedoc
     def test_entry_note(self, entries, errors, options):
         """
           2013-05-18 note Assets:US:BestBank:Checking  "Blah, di blah."
         """
-        self.assertTrue(isinstance(entries[0], Note))
+        checkList(self, entries, [Note])
 
     @parsedoc
     def test_entry_price(self, entries, errors, options):
         """
           2013-05-18 price USD   1.0290 CAD
         """
-        self.assertTrue(isinstance(entries[0], Price))
+        checkList(self, entries, [Price])
 
 
 class TestUglyBugs(unittest.TestCase):
@@ -113,30 +127,30 @@ class TestUglyBugs(unittest.TestCase):
     @parsedoc
     def test_empty_1(self, entries, errors, options):
         ""
-        self.assertEqual(entries, [])
-        self.assertEqual(errors, [])
+        checkList(self, entries, [])
+        checkList(self, errors, [])
 
     @parsedoc
     def test_empty_2(self, entries, errors, options):
         """
 
         """
-        self.assertEqual(entries, [])
-        self.assertEqual(errors, [])
+        checkList(self, entries, [])
+        checkList(self, errors, [])
 
     @parsedoc
     def test_comment(self, entries, errors, options):
         """
         ;; This is some comment.
         """
-        self.assertEqual(entries, [])
-        self.assertEqual(errors, [])
+        checkList(self, entries, [])
+        checkList(self, errors, [])
 
     def test_extra_whitespace_note(self):
         input_ = '\n2013-07-11 note Assets:Cash "test"\n\n  ;;\n'
         entries, errors, options = parser.parse_string(input_)
-        self.assertEqual(1, len(entries))
-        self.assertEqual(errors, [])
+        checkList(self, entries, [Note])
+        checkList(self, errors, [])
 
     def test_extra_whitespace_transaction(self):
         input_ = '\n'.join([
@@ -148,8 +162,8 @@ class TestUglyBugs(unittest.TestCase):
           ])
 
         entries, errors, options = parser.parse_string(input_, yydebug=0)
-        self.assertEqual(1, len(entries))
-        self.assertEqual(errors, [])
+        checkList(self, entries, [Transaction])
+        checkList(self, errors, [])
 
     def test_extra_whitespace_comment(self):
         input_ = '\n'.join([
@@ -159,8 +173,8 @@ class TestUglyBugs(unittest.TestCase):
           '  ;;',
           ])
         entries, errors, options = parser.parse_string(input_)
-        self.assertEqual(1, len(entries))
-        self.assertEqual(errors, [])
+        checkList(self, entries, [Transaction])
+        checkList(self, errors, [])
 
 
 class TestSyntaxErrors(unittest.TestCase):
@@ -190,11 +204,10 @@ class TestSyntaxErrors(unittest.TestCase):
 
         # Check that we indeed read the 'check' entry that comes after the one
         # with the error.
-        self.assertEqual(1, len(entries))
-        self.assertTrue(isinstance(entries[0], Check))
+        checkList(self, entries, [Check])
 
         # Make sure at least one error is reported.
-        self.assertEqual(1, len(errors))
+        checkList(self, errors, [parser.ParserSyntaxError])
 
 
 class TestLineNumbers(unittest.TestCase):
@@ -238,8 +251,7 @@ class TestParserOptions(unittest.TestCase):
           option "bladibla_invalid" "Some value"
 
         """
-        self.assertEqual(len(errors), 1)
-        self.assertTrue(isinstance(errors[0], parser.ParserError))
+        checkList(self, errors, [parser.ParserError])
 
 
 class TestParserLinks(unittest.TestCase):
@@ -252,8 +264,8 @@ class TestParserLinks(unittest.TestCase):
             Assets:US:Cash
 
         """
-        # FIXME: check it here.
-        ##print(entries[0])
+        checkList(self, entries, [Transaction])
+        self.assertEqual(entries[0].links, ['38784734873'])
 
 
 class TestSimple(unittest.TestCase):
@@ -265,8 +277,8 @@ class TestSimple(unittest.TestCase):
             Expenses:Restaurant         100 USD
             Assets:US:Cash
         """
-        self.assertEqual(len(entries), 1)
-        self.assertEqual(errors, [])
+        checkList(self, entries, [Transaction])
+        checkList(self, errors, [])
 
     @parsedoc
     def test_simple_2(self, entries, errors, options):
@@ -281,5 +293,5 @@ class TestSimple(unittest.TestCase):
             Assets:US:BestBank:Checking
 
         """
-        self.assertEqual(len(entries), 2)
-        self.assertEqual(errors, [])
+        checkList(self, entries, [Transaction, Transaction])
+        checkList(self, errors, [])

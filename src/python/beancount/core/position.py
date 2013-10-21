@@ -28,6 +28,9 @@ from beancount.core import CURRENCY_ORDER
 Lot = namedtuple('Lot', 'currency cost lot_date')
 
 
+NCURRENCIES = len(CURRENCY_ORDER)
+
+
 class Position:
     """A 'Position' is a specific number of units of a lot.
     This is used to track inventories."""
@@ -36,6 +39,7 @@ class Position:
 
     def __init__(self, lot, number):
         assert isinstance(lot, Lot)
+        assert number is not None
         self.lot = lot
         self.number = number
 
@@ -64,7 +68,9 @@ class Position:
                     self.lot == other.lot)
 
     def sortkey(self):
-        return (CURRENCY_ORDER.get(self.lot.currency, 10 + len(self.lot.currency)), self.number)
+        return (CURRENCY_ORDER.get(self.lot.currency,
+                                   NCURRENCIES + len(self.lot.currency)),
+                self.number)
 
     def __lt__(self, other):
         return self.sortkey() < other.sortkey()
