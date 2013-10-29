@@ -40,10 +40,11 @@ class TestConversions(unittest.TestCase):
         previous_accounts = parser.get_previous_accounts(options)
         entries, _ = summarize.clamp(entries,
                                      datetime.date(2013, 1, 1), datetime.date(2014, 1, 1),
+                                     options,
                                      *previous_accounts)
 
         current_accounts = parser.get_current_accounts(options)
-        entries = summarize.close(entries, *current_accounts)
+        entries = summarize.close(entries, options, *current_accounts)
 
         # entries = conversions(entries, ACCOUNT_CONVERSIONS1, datetime.date(2013, 1, 1))
         # entries = conversions(entries, ACCOUNT_CONVERSIONS2)

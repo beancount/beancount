@@ -96,34 +96,45 @@ class TestBalance(unittest.TestCase):
             create_simple_posting(None, "Assets:Bank:Checking", None, None),
             ])
         new_postings, has_inserted, errors = get_incomplete_postings(entry)
+        self.assertFalse(has_inserted)
+        self.assertEqual(0, len(new_postings))
+        self.assertEqual(1, len(errors))
+
+        # Test with an auto-posting where there is no residual.
+        entry = Transaction(fileloc, None, None, None, None, None, None, [
+            create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD"),
+            create_simple_posting(None, "Assets:Bank:Savings", "-105.50", "USD"),
+            create_simple_posting(None, "Assets:Bank:Balancing", None, None),
+            ])
+        new_postings, has_inserted, errors = get_incomplete_postings(entry)
         self.assertTrue(has_inserted)
-        print(new_postings)
-        self.assertEqual(1, len(new_postings))
-        # self.assertEqual(1, len(errors))
+        self.assertEqual(3, len(new_postings))
+        self.assertEqual(1, len(errors))
 
-## FIXME: Continue here.
+        # Test with too many empty postings.
+        entry = Transaction(fileloc, None, None, None, None, None, None, [
+            create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD"),
+            create_simple_posting(None, "Assets:Bank:Savings", "-106.50", "USD"),
+            create_simple_posting(None, "Assets:Bank:BalancingA", None, None),
+            create_simple_posting(None, "Assets:Bank:BalancingB", None, None),
+            ])
+        new_postings, has_inserted, errors = get_incomplete_postings(entry)
+        self.assertTrue(has_inserted)
+        self.assertEqual(3, len(new_postings))
+        self.assertEqual(1, len(errors))
 
+    def test_get_incomplete_postings_normal(self):
+        fileloc = FileLocation(__file__, 0)
 
-
-
-
-    def ___test_get_incomplete_postings_normal(self):
-
-        # Test with a single auto-posting.
+        # Test with a single auto-posting with a residual.
         entry = Transaction(fileloc, None, None, None, None, None, None, [
             create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD"),
             create_simple_posting(None, "Assets:Bank:Savings", "-115.50", "USD"),
+            create_simple_posting(None, "Assets:Bank:Balancing", None, None),
             ])
         new_postings, has_inserted, errors = get_incomplete_postings(entry)
-        self.assertFalse(has_inserted)
-        self.assertEqual(2, len(new_postings))
-        self.assertEqual(1, len(errors))
+        self.assertTrue(has_inserted)
+        self.assertEqual(3, len(new_postings))
+        self.assertEqual(0, len(errors))
 
-
-
-
-# Test with normal full case
-# Test with too many empty postings
-
-
-# Test through parser.
+# FIXME: run through parser and check amounts

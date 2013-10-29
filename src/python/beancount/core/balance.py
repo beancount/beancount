@@ -92,8 +92,8 @@ def get_incomplete_postings(entry):
             inventory.add(balance_amount)
 
     # If there are auto-postings, fill them in.
+    inserted_autopostings = False
     if auto_postings_indices:
-        inserted_autopostings = True
 
         # If there are too many such postings, we can't do anything, barf.
         if len(auto_postings_indices) > 1:
@@ -101,6 +101,9 @@ def get_incomplete_postings(entry):
                 BalanceError(entry.fileloc,
                              "Too many auto-postings; cannot fill in.",
                              entry))
+            # Delete the redundant auto-postings.
+            for index in auto_postings_indices[1:]:
+                del postings[index]
 
         index = auto_postings_indices[0]
         old_posting = postings[index]
@@ -109,15 +112,19 @@ def get_incomplete_postings(entry):
         residual_positions = inventory.get_positions()
 
         # If there are no residual positions, we want to still insert a posting
-        # but with a zero position, so that the posting shows up anyhow. We
-        # insert one such posting for each currency seen in the complete
-        # postings.
+        # but with a zero position for each currency, so that the posting shows
+        # up anyhow. We insert one such posting for each currency seen in the
+        # complete postings.
         new_postings = []
         if not residual_positions:
+            balance_errors.append(
+                BalanceError(entry.fileloc,
+                             "Useless auto-posting: {}.".format(inventory), entry))
             for currency in currencies:
                 position = Position(Lot(currency, None, None), ZERO)
                 new_postings.append(
                     Posting(entry, old_posting.account, position, None, old_posting.flag))
+                inserted_autopostings = True
         else:
             # Convert all the residual positions in inventory into a posting for
             # each position.
@@ -125,12 +132,11 @@ def get_incomplete_postings(entry):
                 position.number = -position.number
                 new_postings.append(
                     Posting(entry, old_posting.account, position, None, old_posting.flag))
+                inserted_autopostings = True
 
         postings[index:index+1] = new_postings
 
     else:
-        inserted_autopostings = False
-
         # Detect complete sets of postings that have residual balance;
         # this is where we detect that the user has made a mistake.
         if not inventory.is_small(SMALL_EPSILON):
