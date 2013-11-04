@@ -116,9 +116,12 @@ def process_cash(section, filename, config):
             create_simple_posting(entry, config['interest'], -amount, cash_currency)
 
         elif row.type == 'JRN':
-            assert re.match('TRANSFER (TO|FROM) FOREX ACCOUNT', row.description)
-            create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
-            create_simple_posting(entry, config['asset_forex'], -amount, cash_currency)
+            if re.match('TRANSFER (TO|FROM) FOREX ACCOUNT', row.description):
+                create_simple_posting(entry, config['asset_cash'], amount, cash_currency)
+                create_simple_posting(entry, config['asset_forex'], -amount, cash_currency)
+            else:
+                assert re.match('INTRA-ACCOUNT TRANSFER', row.description)
+                # Do nothing.
 
         elif row.type == 'DOI':
             if re.match('ORDINARY DIVIDEND', row.description):
@@ -137,7 +140,7 @@ def process_cash(section, filename, config):
             create_simple_posting(entry, config['third_party'], -amount, cash_currency)
 
         elif row.type == 'TRD':
-            matcher.match(r'WEB:WEB_UNIF(?:_SNAP)? (BOT|SOLD) ([+\-0-9]+) (.+) @([0-9\.]+)', row.description)
+            matcher.match(r'WEB:WEB_(?:UNIF|GRID)(?:_SNAP)? (BOT|SOLD) ([+\-0-9]+) (.+) @([0-9\.]+)', row.description)
 
             quantity = Decimal(matcher.mo.group(2))
             isbuy = matcher.mo.group(1) == 'BOT'
@@ -192,7 +195,7 @@ def process_cash(section, filename, config):
 
 
 def convert_number(string):
-    if string == '--':
+    if not string or string == '--':
         return Decimal()
     mo = re.match(r'\((.*)\)', string)
     if mo:
