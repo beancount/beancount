@@ -55,7 +55,44 @@ def import_file(filename, config):
 HsbcEntry = collections.namedtuple('HsbcEntry',
                                    'trans_date post_date description amount')
 
+
+def cleanup_html(html):
+    "Those incompetent programmers at HSBC produce the worst HTML."
+    html = re.sub('<!--.*?-->',          '', html, flags=re.DOTALL)
+    html = re.sub('onclick=".*?"',       '', html, flags=re.DOTALL)
+    html = re.sub('style=".*?"',         '', html, flags=re.DOTALL)
+    html = re.sub('<script.*?</script>', '', html, flags=re.DOTALL)
+    html = re.sub('<style.*?</style>',   '', html, flags=re.DOTALL)
+    return html
+
+
 def extract_transactions_xhtml(filename):
+    """Read the transactions off the "Printer Friendly" XHTML file you can obtain
+    from the website. Save the file.
+    """
+    contents = open(filename).read()
+    contents = cleanup_html(contents)
+
+    soup = bs4.BeautifulSoup(contents)
+    table = soup.find('table', id='accountActivity:data')
+    tbody = table.find('tbody', id='accountActivity:data:tbody_element')
+
+    for tr in tbody.find_all('tr'):
+        cells = []
+        for td in tr.find_all('td'):
+            cell = ''.join(node.contents[0].string
+                              for node in td.find_all(re.compile('(span|a)')))
+            cells.append(cell)
+
+        trans_date_str, post_date_str, description, amount = cells
+        yield HsbcEntry(datetime.datetime.strptime(trans_date_str, '%m/%d/%y').date(),
+                        datetime.datetime.strptime(post_date_str, '%m/%d/%y').date(),
+                        description,
+                        to_decimal(amount.lstrip('$')))
+
+
+# Retiring; this thing's a moving target, the idiots are changing it every week.
+def extract_transactions_xhtml__old(filename):
     """Read the transactions off the "Printer Friendly" XHTML file you can obtain
     from the website. Save the file.
     """

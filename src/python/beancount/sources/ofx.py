@@ -58,9 +58,8 @@ def import_file(filename, config):
                 continue
 
             # Process all regular or credit-card transaction lists.
-            for tranlist in stmtrs.find_all(re.compile('(|cc)tranlist')):
-                ## print(tranlist.prettify())
-
+            for tranlist in stmtrs.find_all(re.compile('(|bank|cc)tranlist')):
+                
                 # Process the transactions from that list.
                 for stmttrn in tranlist.find_all('stmttrn'):
 
@@ -129,5 +128,6 @@ def parse_ofx_time(ofx_date_str):
 def ofx_get_account(node):
     "Given a beautifulsoup node, get the corresponding account id."
     acctid = node.find('acctid')
-    # There's some garbage in here sometimes; clean it up.
-    return acctid.text.split('\n')[0]
+    return next(acctid.children).strip()
+    # # There's some garbage in here sometimes; clean it up.
+    # return acctid.text.split('\n')[0]
