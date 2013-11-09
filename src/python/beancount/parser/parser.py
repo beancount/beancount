@@ -2,6 +2,7 @@
 """
 Basic test to invoke the beancount parser.
 """
+import collections
 import datetime
 import functools
 import inspect
@@ -127,22 +128,8 @@ def get_current_accounts(options):
             account_current_conversions)
 
 
-class ParserError(RuntimeError):
-    """A parsing error. Formats the file location into the message string."""
-
-    # FIXME: remove this formatting, not needed.
-    def __init__(self, fileloc, message):
-        RuntimeError.__init__(self, '{:s}:{:d}: {}'.format(
-            fileloc.filename, fileloc.lineno, message))
-
-class ParserSyntaxError(RuntimeError):
-    """A syntax error."""
-
-    # FIXME: remove this formatting, not needed.
-    def __init__(self, fileloc, message):
-        RuntimeError.__init__(self, '{:s}:{:d}: {}'.format(
-            fileloc.filename, fileloc.lineno, message))
-
+ParserError = collections.namedtuple('ParserError', 'fileloc message entry')
+ParserSyntaxError = collections.namedtuple('ParserError', 'fileloc message entry')
 
 
 class Builder(object):
@@ -181,7 +168,7 @@ class Builder(object):
         if key not in self.options:
             fileloc = FileLocation(filename, lineno)
             self.errors.append(
-                ParserError(fileloc, "Invalid option: '{}'".format(key)))
+                ParserError(fileloc, "Invalid option: '{}'".format(key), None))
         else:
             option = self.options[key]
             if isinstance(option, list):
@@ -236,7 +223,7 @@ class Builder(object):
 
     def error(self, message, filename, lineno):
         fileloc = FileLocation(filename, lineno)
-        self.errors.append(ParserSyntaxError(fileloc, message))
+        self.errors.append(ParserSyntaxError(fileloc, message, None))
 
     def open(self, filename, lineno, date, account, currencies):
         fileloc = FileLocation(filename, lineno)
@@ -290,7 +277,7 @@ class Builder(object):
         # Detect when a transaction does not have at least two legs.
         if postings is None or len(postings) < 2:
             self.errors.append(
-                ParserError(fileloc, "Invalid number of postings: {}".format(postings)))
+                ParserError(fileloc, "Invalid number of postings: {}".format(postings), None))
             return None
 
         # Merge the tags from the stach with the explicit tags of this transaction

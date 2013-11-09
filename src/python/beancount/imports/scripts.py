@@ -55,6 +55,9 @@ def create_parser(beancount_file=None,
                         help=("Don't import from the files; "
                               "just file them under the given directory."))
 
+    parser.add_argument('--overwrite', action='store_true',
+                        help=("When filing, overwrite the destination."))
+
     return parser
 
 
@@ -82,7 +85,8 @@ def import_with_options(importer_config, opts):
                               opts.files_or_directories,
                               opts.file_only,
                               opts.dry_run, opts.debug,
-                              mkdirs=True)
+                              mkdirs=True,
+                              overwrite=opts.overwrite)
     else:
         # Create a suitable output file.
         output = open(opts.output, 'w') if opts.output else sys.stdout

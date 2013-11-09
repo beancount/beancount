@@ -17,7 +17,8 @@ def run_filer_loop(importer_config,
                    destination,
                    dry_run=False,
                    debug=False,
-                   mkdirs=False):
+                   mkdirs=False,
+                   overwrite=False):
     """File importable files under a destination directory.
 
     Given an importer configuration object, search for files that can be
@@ -105,7 +106,7 @@ def run_filer_loop(importer_config,
 
         # Check if the destination file already exists; we don't want to clobber
         # it by accident.
-        if path.exists(new_filename):
+        if not overwrite and path.exists(new_filename):
             logging.error("Destination file '{}' already exists.".format(new_filename))
             nerrors += 1
             continue
@@ -129,7 +130,6 @@ def run_filer_loop(importer_config,
             assert path.exists(new_dirname)
 
         # Copy the file to its new name.
-        assert not path.exists(new_filename)
         shutil.copyfile(filename, new_filename)
 
         # Remove the old file.
