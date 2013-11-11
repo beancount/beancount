@@ -51,7 +51,7 @@ def account_name_type(name):
     """Return the type of this account's name."""
     assert isinstance(name, str)
     atype = name.split(':')[0]
-    assert atype in TYPES_ORDER
+    assert atype in TYPES_ORDER, (name, atype)
     return atype
 
 def is_account_name(string):

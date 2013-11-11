@@ -2,6 +2,9 @@
 beancount: TODO
 * Current
 
+  - BUG!  Journal rendering fails on an assert, fix this ASAP.
+    e.g. repro steps: personal beancount -> 2013 -> Journal
+
   - Create a 3rd-party dependencies building script for Mac OSX users (fxt).
 
 
@@ -23,8 +26,6 @@ beancount: TODO
 
   - Complete parser tests
     * Modify the lexer to emit EOF and add that in the grammar rules for empty_line.
-    * BUG: Parser errors should not throw exceptions... we need to recover from
-      these gracefully, skipping to the next entry (delete partially parsed entries).
     * BUG: Don't crap out when you can't read the file; error should be reported
       like the other ones.
 
@@ -33,6 +34,7 @@ beancount: TODO
 
 
   - Implement all the missing global pages.
+
 
 
   - Rename "check" to "test/balance/verify/assert" (see what Ledger calls it these days)
