@@ -196,7 +196,7 @@ class EntryPrinter:
             oss.write('\n')
 
     def Check(_, entry, oss):
-        oss.write('{e.date} check {e.account.name} {e.amount}\n'.format(e=entry))
+        oss.write('{e.date} check {e.account.name:48} {e.amount}\n'.format(e=entry))
 
     def Note(_, entry, oss):
         oss.write('{e.date} note {e.account.name} {e.comment}\n'.format(e=entry))

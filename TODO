@@ -2,6 +2,11 @@
 beancount: TODO
 * Current
 
+  - BUG! import this:
+    documents/2013/Assets/CA/RBC/Checking/2013-11-13.ofx84423.qbo
+    * The balance check at the end is incorrect
+    * The statement are not organized by account; they are mixed together
+
   - BUG!  Journal rendering fails on an assert, fix this ASAP.
     e.g. repro steps: personal beancount -> 2013 -> Journal
 

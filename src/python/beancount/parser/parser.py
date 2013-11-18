@@ -295,7 +295,10 @@ class Builder(object):
         entry = Transaction(fileloc, date, chr(flag), payee, narration, ctags, links, postings)
 
         # Balance incomplete auto-postings.
-        balance_incomplete_postings(entry)
+        balance_errors = balance_incomplete_postings(entry)
+
+        if balance_errors:
+            self.errors.extend(balance_errors)
 
         # Check that the balance actually is empty.
         if __sanity_checks__:

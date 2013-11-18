@@ -43,6 +43,7 @@ def import_file(filename, config):
 
     # For each statement.
     txn_counter = itertools.count()
+    first_currency = None
     for stmtrs in soup.find_all(re.compile('.*stmtrs$')):
         # account_typee = st.find('accttype').text.strip()
         # bank_id = st.find('bankid').text.strip()
@@ -50,6 +51,8 @@ def import_file(filename, config):
         # For each currency.
         for currency_node in stmtrs.find_all('curdef'):
             currency = currency_node.contents[0].strip()
+            if first_currency is None:
+                first_currency = currency
 
             # Extract account information; skip if this is not the one we are
             # asked to import.
@@ -59,7 +62,7 @@ def import_file(filename, config):
 
             # Process all regular or credit-card transaction lists.
             for tranlist in stmtrs.find_all(re.compile('(|bank|cc)tranlist')):
-                
+
                 # Process the transactions from that list.
                 for stmttrn in tranlist.find_all('stmttrn'):
 
@@ -85,6 +88,16 @@ def import_file(filename, config):
                     entry.postings.append(Posting(entry, account_asset, position, None, None))
 
                     new_entries.append(entry)
+
+    # Extract balance.
+    ledgerbal = soup.find('ledgerbal')
+    if ledgerbal:
+        balamt = soup_get(ledgerbal, 'balamt', Decimal)
+        dtasof = soup_get(ledgerbal, 'dtasof', parse_ofx_time).date()
+        fileloc = data.FileLocation(filename, next(txn_counter))
+        balance_entry = data.Check(fileloc, dtasof, account_asset,
+                                   data.Amount(balamt, first_currency), None)
+        new_entries.append(balance_entry)
 
     new_entries.sort(key=lambda entry: entry.date)
     return new_entries

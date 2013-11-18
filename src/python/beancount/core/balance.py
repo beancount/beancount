@@ -152,7 +152,7 @@ def balance_incomplete_postings(entry):
     """Balance an entry with incomplete postings, modifying the
     empty postings on the entry itself.
     """
-    postings, inserted, _ = get_incomplete_postings(entry)
+    postings, inserted, errors = get_incomplete_postings(entry)
 
     # FIXME: Make this faster, there's unnecessary copying IMO.
 
@@ -160,3 +160,5 @@ def balance_incomplete_postings(entry):
     entry.postings.clear()
     for posting in postings:
         entry.postings.append(reparent_posting(posting, entry))
+
+    return errors or None

@@ -137,4 +137,19 @@ class TestBalance(unittest.TestCase):
         self.assertEqual(3, len(new_postings))
         self.assertEqual(0, len(errors))
 
+    def test_balance_with_large_amount(self):
+        fileloc = FileLocation(__file__, 0)
+
+        # Test with a single auto-posting with a residual.
+        entry = Transaction(fileloc, None, None, None, None, None, None, [
+            create_simple_posting(None, "Income:US:Anthem:InsurancePayments", "-275.81", "USD"),
+            create_simple_posting(None, "Income:US:Anthem:InsurancePayments", "-23738.54", "USD"),
+            create_simple_posting(None, "Assets:Bank:Checking", "24014.45", "USD"),
+            ])
+        new_postings, has_inserted, errors = get_incomplete_postings(entry)
+        self.assertFalse(has_inserted)
+        self.assertEqual(3, len(new_postings))
+        self.assertEqual(1, len(errors))
+
+
 # FIXME: run through parser and check amounts

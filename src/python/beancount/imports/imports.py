@@ -241,7 +241,7 @@ def run_importer_loop(importer_config,
     trace = lambda arg: sys.stdout.write(arg + '\n')
     for filename, match_text, matches in find_imports(importer_config, files_or_directories):
         # Print the filename and which modules matched.
-        trace('\n\n========== {}'.format(filename))
+        trace('\n\n**** {}'.format(filename))
         if matches:
             trace('')
         for module, module_config in matches:
