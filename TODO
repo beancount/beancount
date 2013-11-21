@@ -2,6 +2,11 @@
 beancount: TODO
 * Current
 
+  - beancount: GREAT IDEA: output a subset of transactions as a spreadsheet. You
+    need to design a textual way to refer to a subset of transactions. Output in
+    either directions, without currencies.
+
+
   - BUG! import this:
     documents/2013/Assets/CA/RBC/Checking/2013-11-13.ofx84423.qbo
     * The balance check at the end is incorrect
