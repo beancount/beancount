@@ -52,6 +52,9 @@ class Amount:
             return "{:f} {}".format(number, self.currency)
     __repr__ = __str__
 
+    def __bool__(self):
+        return self.number != ZERO
+        
     def __eq__(self, other):
         if other is None:
             return False

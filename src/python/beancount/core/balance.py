@@ -78,6 +78,8 @@ def get_incomplete_postings(entry):
     inventory = Inventory()
 
     # Process all the postings.
+    has_nonzero_amount = False
+    has_regular_postings = False
     for i, posting in enumerate(postings):
         position = posting.position
 
@@ -90,6 +92,10 @@ def get_incomplete_postings(entry):
             # Compute the amount to balance and update the inventory.
             balance_amount = get_balance_amount(posting)
             inventory.add(balance_amount)
+
+            has_regular_postings = True
+            if balance_amount:
+                has_nonzero_amount = True
 
     # If there are auto-postings, fill them in.
     inserted_autopostings = False
@@ -114,9 +120,12 @@ def get_incomplete_postings(entry):
         # If there are no residual positions, we want to still insert a posting
         # but with a zero position for each currency, so that the posting shows
         # up anyhow. We insert one such posting for each currency seen in the
-        # complete postings.
+        # complete postings. Note: if all the non-auto postings are zero, we
+        # want to avoid sending a warning; the input text clearly implies the
+        # author knows this would be useless.
         new_postings = []
-        if not residual_positions:
+        if not residual_positions and ((has_regular_postings and has_nonzero_amount) or
+                                       not has_regular_postings):
             balance_errors.append(
                 BalanceError(entry.fileloc,
                              "Useless auto-posting: {}.".format(inventory), entry))

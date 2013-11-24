@@ -152,4 +152,18 @@ class TestBalance(unittest.TestCase):
         self.assertEqual(1, len(errors))
 
 
+    def test_balance_with_zero_posting(self):
+        fileloc = FileLocation(__file__, 0)
+        entry = Transaction(fileloc, None, None, None, None, None, None, [
+            create_simple_posting(None, "Income:US:Anthem:InsurancePayments", "0", "USD"),
+            create_simple_posting(None, "Income:US:Anthem:InsurancePayments", None, None),
+            ])
+        new_postings, has_inserted, errors = get_incomplete_postings(entry)
+        self.assertFalse(has_inserted)
+        self.assertEqual(1, len(new_postings))
+        self.assertEqual(0, len(errors))
+
+
+
+
 # FIXME: run through parser and check amounts
