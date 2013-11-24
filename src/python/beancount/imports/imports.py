@@ -35,7 +35,16 @@ def read_file(filename):
                              shell=False,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
-        if not (p.returncode != 0 or stderr):
+
+        has_real_content = True
+        if p.returncode == 0:
+            # Sometimes the output is just filled with ^L; check that this isn't
+            # the case and that the output file has some real content.
+            has_real_content = re.search('[a-zA-Z0-9]+', stdout.decode()) is not None
+
+        if not (p.returncode != 0 or
+                stderr or
+                (p.returncode == 0 and has_real_content)):
             contents = stdout.decode()
         else:
             # Try first conversion using the LibreOffice tool.
@@ -78,7 +87,7 @@ def read_file(filename):
                 else:
                     raise IOError("Could not convert Excel file '{}': {}".format(filename, errors))
 
-    elif filetype.startswith('image/'):
+    elif filetype.startswith('image/') or filetype == 'application/zip':
         # Skip these file types.
         contents = ''
 
