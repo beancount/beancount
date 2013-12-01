@@ -201,7 +201,10 @@ class Builder(object):
         return link
 
     def NUMBER(self, s):
-        return Decimal(s)
+        try:
+            return Decimal(s)
+        except Exception as e:
+            raise e
 
     def amount(self, number, currency):
         return Amount(number, currency)

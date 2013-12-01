@@ -133,6 +133,10 @@ beancount: TODO
          Assets:CA:ITrade:FOO                20 FOO  {{ 3000 USD}}
 
 
+  - Add a check the beginning of imports whereby we check that every account
+    value specified actually matches an existing account from the list of
+    entries.
+
 
 * Core
 ** General

@@ -55,8 +55,11 @@ Close Position
 Close Trade
 Fund Deposit
 Fund Deposit (Transfer)
+Fund Deposit (Account Transfer)
 Fund Withdrawal
 Fund Withdrawal (Transfer)
+Fund Withdrawal (Account Transfer)
+Fund Fee
 Interest
 Sell Market Filled
 Stop Loss
@@ -136,7 +139,7 @@ def oanda_add_posting(entry, account, number, currency):
     entry.postings.append(posting)
 
 
-def import_csv_file(filename, config, _):
+def import_csv_file(filename, config):
     new_entries = []
 
     max_diff = Decimal()
