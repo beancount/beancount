@@ -4,10 +4,13 @@ Install script for beancount.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import sys
+if sys.version_info[:2] < (3,3):
+    raise SystemExit("ERROR: Insufficient Python version; you need v3.3 or higher.")
+
 import os
 from os.path import join, isfile
 from distutils.core import setup, Extension
-
 
 install_scripts = [join('bin', x) for x in """
 bean-check
