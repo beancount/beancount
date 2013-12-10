@@ -10,6 +10,7 @@ import sys
 import codecs
 import itertools
 import logging
+import os
 import re
 import subprocess
 import tempfile
@@ -21,6 +22,9 @@ from beancount.core.data import format_entry
 from beancount.ops.dups import find_duplicate_entries
 from beancount import utils
 from beancount.imports.filetype import guess_file_type
+
+
+FILE_TOO_LARGE_THRESHOLD = 8*1024*1024
 
 
 def read_file(filename):
@@ -125,6 +129,13 @@ def find_imports(importer_config, files_or_directories):
     # Iterate over all files found; accumulate the entries by identification.
     all_matches = []
     for filename in utils.walk_files_or_dirs(files_or_directories):
+
+        # Skip files that are simply too large.
+        size = os.path.getsize(filename)
+        if size > FILE_TOO_LARGE_THRESHOLD:
+            logging.warning("File too large: '{}' ({} bytes); skipping.".format(
+                filename, size))
+            continue
 
         # Read the file in a parseable form.
         contents, filetype = read_file(filename)
@@ -249,15 +260,6 @@ def run_importer_loop(importer_config,
 
     trace = lambda arg: sys.stdout.write(arg + '\n')
     for filename, match_text, matches in find_imports(importer_config, files_or_directories):
-        # Print the filename and which modules matched.
-        trace('\n\n**** {}'.format(filename))
-        if matches:
-            trace('')
-        for module, module_config in matches:
-            trace('  Importer: {}'.format(module.__name__ if module else '-'))
-            trace(textwrap.indent(pformat(module_config), '    '))
-            trace('')
-
         # If we're debugging, print out the match text.
         # This option is useful when we're building our importer configuration,
         # to figure out which patterns to create as unique signatures.
@@ -277,6 +279,15 @@ def run_importer_loop(importer_config,
         if new_entries is None:
             logging.error("Error importing '{}'; no entries produced.".format(filename))
             continue
+
+        # Print the filename and which modules matched.
+        trace('\n\n**** {}'.format(filename))
+        if matches:
+            trace('')
+        for module, module_config in matches:
+            trace('  Importer: {}'.format(module.__name__ if module else '-'))
+            trace(textwrap.indent(pformat(module_config), '    '))
+            trace('')
 
         # Print out the entries.
         pr = lambda arg: output.write(arg + '\n')
