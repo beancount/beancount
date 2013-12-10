@@ -25,13 +25,6 @@ bean-v1tov2
 # bean-sandbox, developer tool
 """.splitlines() if x and not x.startswith('#')]
 
-def read_version():
-    try:
-        return open('VERSION', 'r').readline().strip()
-    except IOError as e:
-        raise SystemExit(
-            "Error: you must run setup from the root directory (%s)" % str(e))
-
 
 # # Include all files without having to create MANIFEST.in
 # def add_all_files(fun):
@@ -51,7 +44,7 @@ def read_version():
 
 setup(
   name="beancount",
-  version=read_version(),
+  version='2.0beta',
   description="Command-line Double-Entry Accounting",
   long_description="""
     A double-entry accounting system that uses a simple text file format
