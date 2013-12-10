@@ -2,7 +2,7 @@
 """
 from collections import defaultdict
 
-from beancount.core.data import Transaction
+from beancount.core.data import Transaction, Open, Close
 from beancount import utils
 
 
