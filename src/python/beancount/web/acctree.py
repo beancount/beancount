@@ -102,7 +102,7 @@ def table_of_balances(tree, start_node_name, currencies, classes=None):
     header = ['Account'] + currencies + ['Other']
 
     # Pre-calculate which accounts should be rendered.
-    active_accounts = realization.filter_tree(tree, is_account_active)
+    active_accounts = realization.filter_tree(tree, is_account_active) or {}
     active_set = set(real_account.fullname for real_account in active_accounts)
 
     balance_totals = Inventory()
