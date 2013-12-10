@@ -47,11 +47,7 @@ option "operating_currency" "USD"
 ;;;   of accounts: debit accounts and credit accounts, and the
 ;;;   type is only used for reporting (maybe).
 
-1970-01-01 open Assets:Cash
-1970-01-01 pad Assets:Cash  Equity:Opening-Balances
 
-1970-01-01 open Assets:BestBank:Checking                                 USD
-1970-01-01 open Assets:BestBank:Savings                                  USD
 ;defaccount De Assets:Fixed:Home                           USD
 1970-01-01 open Assets:UTrade:Account                                USD
 1970-01-01 open Assets:UTrade:Account:AAPL                           AAPL
@@ -142,6 +138,8 @@ option "operating_currency" "USD"
 
 
 * Assets:BestBank:Checking
+
+1970-01-01 open Assets:BestBank:Checking                                 USD
 
 ;; This entry tells the software to automatically insert an
 ;; entry at this date, of the amount required to fulfill the
@@ -269,7 +267,8 @@ option "operating_currency" "USD"
 
 * Assets:BestBank:Savings
 
-2007-12-31 pad Assets:BestBank:Savings   Equity:Opening-Balances
+1970-01-01 open Assets:BestBank:Savings                                  USD
+2007-12-31 pad  Assets:BestBank:Savings   Equity:Opening-Balances
 
 2008-01-01 check Assets:BestBank:Savings    12000 USD
 
@@ -334,7 +333,7 @@ option "operating_currency" "USD"
 
 * Liabilities:Credit-Card:VISA
 
-2008-01-01 pad Liabilities:Credit-Card:VISA  Equity:Opening-Balances
+2007-12-31 pad Liabilities:Credit-Card:VISA  Equity:Opening-Balances
 2008-01-01 check Liabilities:Credit-Card:VISA  -791.34 USD
 
 ;; Paying back my credit card.
@@ -467,7 +466,7 @@ option "operating_currency" "USD"
 
 * Expenses:Home:Monthly:Condo-Fees
 
-2008-01-01 pad Liabilities:Condo-Management      Equity:Opening-Balances
+2007-12-31 pad Liabilities:Condo-Management      Equity:Opening-Balances
 
 2008-01-01 check Liabilities:Condo-Management      -41.11 USD
 
@@ -502,7 +501,10 @@ option "operating_currency" "USD"
 * Assets:Cash
 * Expenses:*
 
-2007-12-31 pad  Assets:Cash  Equity:Opening-Balances
+1970-01-01 open Assets:Cash
+
+2007-12-30 pad  Assets:Cash  Equity:Opening-Balances
+
 
 ;; Amount in wallet at a given time.
 2007-12-31 check  Assets:Cash                          200 CAD
