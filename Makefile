@@ -30,7 +30,7 @@ $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 # cd $(CROOT) && flex $(notdir $<)
 
 compile: $(CROOT)/grammar.c $(CROOT)/grammar.h $(CROOT)/lexer.c $(CROOT)/lexer.h
-	python3 setup2.py build_ext -i
+	python3 setup.py build_ext -i
 
 .PHONY: build
 build: compile
