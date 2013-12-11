@@ -2,6 +2,30 @@
 beancount: TODO
 * Current
 
+  - Example files (suggestion from Daniel Clemente):
+
+> >   I think 2 files can be helpful:
+> > 
+> >   1) A simple one, a „how to“ file with ~20 transactions, or better, from 1
+to 3 transactions for feature. To show the normal things like receiving a
+salary, getting money from ATM, wire transfer, pay the bills, … So that it does
+not scare people without experience in double accounting.
+> >   demo.beancount fits this place.
+> > 
+> >   2) The big one (1 year, you said), to show off that beancount is powerful
+and is really used for long-term accounting. This one is the „inspirational“
+one, to make people say „I would like to do that!“. 
+
+
+
+
+  - cdecimal.Decimal.abs() exists, but decimal.Decimal.abs() does NOT. Fix
+    that, test with std Decimal.
+
+  - Rename check -> assert (to avoid confusion on the term)
+  - Rename event -> register(?) (better meaning)
+
+
   - beancount: GREAT IDEA: output a subset of transactions as a spreadsheet. You
     need to design a textual way to refer to a subset of transactions. Output in
     either directions, without currencies.
