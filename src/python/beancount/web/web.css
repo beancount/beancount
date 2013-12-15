@@ -343,3 +343,10 @@ table#price-index {
 table#price-index td {
     vertical-align: top;
 }
+
+
+/* Source rendering */
+div#source pre {
+   margin-top: 0px;
+   margin-bottom: 0px;
+}

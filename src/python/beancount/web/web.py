@@ -131,9 +131,24 @@ def errors():
 @app.route('/source', name='source')
 def source():
     "Render the source file, allowing scrolling at a specific line."
+
+    contents = io.StringIO()
+    if app.args.incognito:
+        contents.write("Source hidden because of incognito mode.")
+    elif app.args.no_source:
+        contents.write("Source hidden because of no-source argument.")
+    else:
+        contents.write('<div id="source">')
+        for i, line in enumerate(app.source.splitlines()):
+            lineno = i+1
+            contents.write(
+                '<pre id="{}">{}  {}</pre>\n'.format(
+                    lineno, lineno, line.rstrip()))
+        contents.write('</div>')
+
     return render_global(
         pagetitle = "Source",
-        contents = ""
+        contents = contents.getvalue()
         )
 
 
@@ -849,6 +864,9 @@ def auto_reload_input_file(callback):
 
             logging.info('RELOADING')
 
+            # Save the source for later, to render.
+            app.source = open(filename, encoding='utf8').read()
+
             # Parse the beancount file.
             entries, errors, options = load(filename,
                                             add_unrealized_gains=True,
@@ -900,6 +918,9 @@ def main():
     argparser.add_argument('--incognito', action='store_true',
                            help=("Filter the output in order to hide all the numbers. "
                                  "This is great for demos using my real file."))
+
+    argparser.add_argument('--no-source', action='store_true',
+                           help=("Don't render the source."))
 
     args = argparser.parse_args()
     app.args = args
