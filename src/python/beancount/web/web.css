@@ -11,6 +11,10 @@ table {
     border-collapse: collapse;
 }
 
+table thead {
+    background-color: #EEE;
+}
+
 table td {
     padding-left: 4px;
     padding-right: 4px;

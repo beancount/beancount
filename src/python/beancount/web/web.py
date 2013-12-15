@@ -3,6 +3,7 @@ Web server for Beancount ledgers.
 This uses the Bottle single-file micro web framework (with no plugins).
 """
 import argparse
+import collections
 from os import path
 import io
 import logging
@@ -679,13 +680,68 @@ def documents():
         contents = oss.getvalue())
 
 
+def row_data_to_html_rows(items):
+    return "\n".join(('<tr><td>{}</td>'
+                      '<td style="text-align: right">{}</td></tr>').format(*item)
+                     for item in items)
+
+
 @viewapp.route('/stats', name='stats')
 def stats():
     "Compute and render statistics about the input file."
-    # Note: maybe the contents of this can fit on the home page, if this is simple.
+
+    # Count the number of entries by type.
+    entries_by_type = utils.groupby(lambda entry: type(entry).__name__,
+                                    request.view.entries)
+    nb_entries_by_type = {name: len(entries)
+                          for name, entries in entries_by_type.items()}
+    rows_entries = sorted(nb_entries_by_type.items(), key=lambda x: -x[1])
+    rows_entries.append(('Total', len(request.view.entries)))
+
+    # Count the number of postings by account.
+    all_postings = [posting
+                    for entry in request.view.entries
+                    if isinstance(entry, Transaction)
+                    for posting in entry.postings]
+    postings_by_account = utils.groupby(lambda posting: posting.account.name,
+                                        all_postings)
+    nb_postings_by_account = {key: len(postings)
+                              for key, postings in postings_by_account.items()}
+    rows_postings = sorted(nb_postings_by_account.items(), key=lambda x: -x[1])
+
+    if False:
+        # Keep only enough postings to cover the top {topn}% of all entries.
+        # This gets us rid of the long tail, which isn't interesting.
+        topn = 0.90
+        required = len(all_postings) * topn
+        seen = 0
+        for i, item in enumerate(rows_postings):
+            _, count = item
+            seen += count
+            if seen > required:
+                break
+        del rows_postings[i:]
+
+    rows_postings.append(('Total', len(all_postings)))
+
+    contents = """
+      <h2>Nb. Entries</h2>
+      <table>
+        <thead><tr><td>Description</td><td>Count</td></tr></thead>
+        {rows_entries}
+      </table>
+
+      <h2>Top Nb. Postings</h2>
+      <table>
+        <thead><tr><td>Account</td><td>Count</td></tr></thead>
+        {rows_postings}
+      </table>
+    """.format(rows_entries=row_data_to_html_rows(rows_entries),
+               rows_postings=row_data_to_html_rows(rows_postings))
+
     return render_view(
-        pagetitle = "Statistics",
-        contents = ""
+        pagetitle = "View Statistics",
+        contents = contents
         )
 
 
