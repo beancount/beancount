@@ -234,7 +234,7 @@ def prices_values(base=None, quote=None):
 def link(link=None):
     "Serve journals for links."
 
-    linked_entries = entries_for_link(link, app.entries)
+    linked_entries = data.entries_for_link(link, app.entries)
 
     oss = io.StringIO()
     journal.entries_table_with_balance(app, oss, linked_entries)
@@ -242,12 +242,6 @@ def link(link=None):
         pagetitle = "Link: {}".format(link),
         contents = oss.getvalue())
 
-# FIXME: Move this somewhere else.
-def entries_for_link(link, entries):
-    """Yield all the entries which have the given link."""
-    for entry in utils.filter_type(entries, Transaction):
-        if entry.links and link in entry.links:
-            yield entry
 
 
 

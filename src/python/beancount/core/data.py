@@ -226,3 +226,10 @@ def format_string(string):
 
 def format_entry(entry):
     return EntryPrinter()(entry)
+
+
+def entries_for_link(link, entries):
+    """Yield all the entries which have the given link."""
+    for entry in utils.filter_type(entries, Transaction):
+        if entry.links and link in entry.links:
+            yield entry
