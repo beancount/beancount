@@ -6,6 +6,7 @@ import argparse
 from os import path
 import io
 import logging
+import sys
 
 import bottle
 from bottle import response, request
@@ -122,16 +123,6 @@ def errors():
     "Report error encountered during parsing, checking and realization."
     return render_global(
         pagetitle = "Errors",
-        contents = ""
-        )
-
-
-@app.route('/stats', name='stats')
-def stats():
-    "Compute and render statistics about the input file."
-    # Note: maybe the contents of this can fit on the home page, if this is simple.
-    return render_global(
-        pagetitle = "Statistics",
         contents = ""
         )
 
@@ -256,7 +247,6 @@ GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{A.toc}}">Table of Contents</a></li>
   <li><a href="{{A.errors}}">Errors</a></li>
   <li><a href="{{A.source}}">Source</a></li>
-  <li><a href="{{A.stats}}">Statistics</a></li>
   <li><a href="{{A.update}}">Update Activity</a></li>
   <li><a href="{{A.events}}">Events</a></li>
   <li><a href="{{A.prices}}">Prices</a></li>
@@ -329,6 +319,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{V.positions}}">Positions</a></li>
   <li><a href="{{V.conversions}}">Conversions</a></li>
   <li><a href="{{V.documents}}">Documents</a></li>
+  <li><a href="{{V.stats}}">Statistics</a></li>
 </ul>
 """)
 
@@ -529,22 +520,27 @@ def account(slashed_account_name=None):
     # Get the appropriate realization: if we're looking at the balance sheet, we
     # want to include the net-income transferred from the exercise period.
     account_name = slashed_account_name.strip('/').replace('/', ':')
-    account = account_from_name(account_name)
-    options = app.options
-    if is_balance_sheet_account(account, options):
-        real_accounts = request.view.closing_real_accounts
+
+    if account_name:
+        account = account_from_name(account_name)
+        options = app.options
+        if account_name and is_balance_sheet_account(account, options):
+            real_accounts = request.view.closing_real_accounts
+        else:
+            real_accounts = request.view.real_accounts
+        if account.name not in real_accounts:
+            raise bottle.HTTPError(404, "Not found.")
+        real_account = real_accounts[account.name]
     else:
-        real_accounts = request.view.real_accounts
+        real_account = request.view.real_accounts['']
+        account = None
 
-    if account.name not in real_accounts:
-        raise bottle.HTTPError(404, "Not found.")
-
-    account_postings = realization.get_subpostings(real_accounts[account.name])
+    account_postings = realization.get_subpostings(real_account)
 
     oss = io.StringIO()
     journal.entries_table_with_balance(app, oss, account_postings)
     return render_view(
-        pagetitle = '{}'.format(account.name), # Account:
+        pagetitle = '{}'.format(account.name if account else 'ROOT'), # Account:
         contents = oss.getvalue())
 
 
@@ -681,6 +677,17 @@ def documents():
     return render_view(
         pagetitle = "Documents",
         contents = oss.getvalue())
+
+
+@viewapp.route('/stats', name='stats')
+def stats():
+    "Compute and render statistics about the input file."
+    # Note: maybe the contents of this can fit on the home page, if this is simple.
+    return render_view(
+        pagetitle = "Statistics",
+        contents = ""
+        )
+
 
 
 #--------------------------------------------------------------------------------
