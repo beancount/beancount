@@ -17,7 +17,7 @@ from beancount.web import views
 from beancount.web import journal
 from beancount.web import acctree
 from beancount.core import data
-from beancount.core.data import Open, Close, Transaction, Document
+from beancount.core.data import Open, Close, Transaction, Document, Event
 from beancount.core import getters
 from beancount.ops import summarize
 from beancount.core import realization
@@ -162,11 +162,21 @@ def update():
 
 
 @app.route('/events', name='events')
-def update():
+def events():
     "Render an index for the various kinds of events."
+
+    events = utils.filter_type(app.entries, Event)
+    events_by_type = utils.groupby(lambda event: event.type, events)
+
+
+    contents = io.StringIO()
+    for event_type, events in sorted(events_by_type.items()):
+        contents.write(event_type)
+        contents.write(str(len(events)))
+
     return render_global(
         pagetitle = "Events",
-        contents = ""
+        contents = contents.getvalue()
         )
 
 
