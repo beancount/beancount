@@ -13,13 +13,6 @@
     7  Copyright and License
     8  Author
 
-.. important::
-
-   This project, which has long been stable and in active use, is currently
-   being rewritten from scratch (2013-06-01). The new version (v2) will provide
-   most of the features that 'beancount' did, and much more, with simpler data
-   structures and a better implementation. Beancount development will remain
-   here for the foreseeable future, under branch 'v1'.
 
 Description
 ===========
@@ -34,8 +27,10 @@ variety of output reports from a web interface. This project
 
 - A web front-end which renders a variety of common reports.
 
-- Tools to help you import and manage files downloaded from various financial
-  institutions.
+- Tools to help you import and file CSV, OFX and other files downloaded from
+  various financial institutions.
+
+- This is 2.0 version, a complete clean-room rewrite of Beancount 1.0.
 
 .. _Ledger: http://www.newartisans.com/blog/projects/ledger.html
 
@@ -45,7 +40,8 @@ Project Status
 
 Beancount v2 is now the only beancount as of summer 2013. It's a full rewrite,
 stable and I'm using only this version now, it is maintained, and I have 7-8
-years worth of my personal data relying on it. This works.
+years worth of my personal data relying on it and use it every week or two. It
+works.
 
 
 Dependencies
@@ -139,7 +135,7 @@ There is also a cheatsheet under doc/cheatsheet.org.
 Copyright and License
 =====================
 
-Copyright (C) 2007-2013  Martin Blais.  All Rights Reserved.
+Copyright (C) 2007-2014  Martin Blais.  All Rights Reserved.
 
 This code is distributed under the `GNU General Public License <COPYING>`_;
 
