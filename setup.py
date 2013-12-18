@@ -10,7 +10,12 @@ if sys.version_info[:2] < (3,3):
 
 import os
 from os.path import join, isfile
-from distutils.core import setup, Extension
+try:
+    from setuptools import setup, Extension
+except ImportError:
+    from distutils.core import setup, Extension
+
+
 
 install_scripts = [join('bin', x) for x in """
 bean-check
@@ -60,6 +65,8 @@ setup(
   author="Martin Blais",
   author_email="blais@furius.ca",
   url="http://furius.ca/beancount",
+
+  install_requires = ['python-dateutil', 'BeautifulSoup4', 'lxml'],
 
   package_dir = {'': 'src/python'},
   packages = ['beancount',
