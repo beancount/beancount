@@ -48,7 +48,6 @@ stable and I'm using only this version now, it is maintained, and I have 7-8
 years worth of my personal data relying on it. This works.
 
 
-
 Dependencies
 ============
 
@@ -65,12 +64,52 @@ For developers:
 - GNU flex and GNU bison (to build the parser)
 
 
+Installation
+============
+
+Development Installation
+------------------------
+
+If you just want to try it out without installing, build the extension in-place
+like this::
+
+  python3 setup.py build_ext -i
+
+Then add the clone's path to the PYTHONPATH variable::
+
+  export PYTHONPATH=..../beancount/src/python
+
+You should be able to run the executables under `..../beancount/bin`
+
+
+Setup Installation
+------------------
+
+If you want to install this in your Python installation, try this::
+
+  sudo python3 setup.py install
+
+Or, equivalently::
+
+  sudo pip3 setup.py install
+
+These commands should build the extension module and install Beancount in your
+Python library path.
+
+
 Download
 ========
 
-A Mercurial repository can be found at:
+You can obtain the source code from a Mercurial repository, found at:
 
   http://hg.furius.ca/public/beancount/
+
+Download it like this:
+
+  hg clone --insecure http://hg.furius.ca/public/beancount/
+
+(Use the --insecure flag because I sometimes have a self-signed SSL certificate
+on my server.)
 
 This is the authoritative location for the latest version. I don't use github--I
 roll my own Mercurial server. github clones are probably out of date, clone from
@@ -84,6 +123,17 @@ Documentation
 
 - `CHANGES <CHANGES>`_
 - `TODO <TODO>`_
+
+I have yet to write full documentation, but basically, there are two main
+programs that you should care about:
+
+  bean-check: Checks for errors in a Beancount input file.
+  bean-web: Starts a local web server so you can browse a Beancount ledger.
+
+All the other are toy tools.
+
+Check out the examples for now in order to get a sense of how this works.
+There is also a cheatsheet under doc/cheatsheet.org.
 
 
 Copyright and License
