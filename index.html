@@ -3,8 +3,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<meta name="generator" content="Docutils 0.8.1: http://docutils.sourceforge.net/" />
-<title>BeanCount: Double-Entry Accounting with Text Input</title>
+<meta name="generator" content="Docutils 0.10: http://docutils.sourceforge.net/" />
+<title>beancount: Double-Entry Accounting from Text Input</title>
 <link rel="stylesheet" href="style.css" type="text/css" />
 </head>
 <body>
@@ -14,35 +14,34 @@
   
 </div>
 
-<div class="document" id="beancount-double-entry-accounting-with-text-input">
-<h1 class="title">BeanCount: Double-Entry Accounting with Text Input</h1>
+<div class="document" id="beancount-double-entry-accounting-from-text-input">
+<h1 class="title">beancount: Double-Entry Accounting from Text Input</h1>
 
 <div class="contents topic" id="contents">
 <p class="topic-title first">Contents</p>
 <ul class="simple">
 <li><a class="reference internal" href="#description" id="id1">Description</a></li>
 <li><a class="reference internal" href="#project-status" id="id2">Project Status</a></li>
-<li><a class="reference internal" href="#download" id="id3">Download</a></li>
-<li><a class="reference internal" href="#documentation" id="id4">Documentation</a></li>
-<li><a class="reference internal" href="#copyright-and-license" id="id5">Copyright and License</a></li>
-<li><a class="reference internal" href="#author" id="id6">Author</a></li>
+<li><a class="reference internal" href="#dependencies" id="id3">Dependencies</a></li>
+<li><a class="reference internal" href="#installation" id="id4">Installation</a><ul>
+<li><a class="reference internal" href="#development-installation" id="id5">Development Installation</a></li>
+<li><a class="reference internal" href="#setup-installation" id="id6">Setup Installation</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#download" id="id7">Download</a></li>
+<li><a class="reference internal" href="#documentation" id="id8">Documentation</a></li>
+<li><a class="reference internal" href="#copyright-and-license" id="id9">Copyright and License</a></li>
+<li><a class="reference internal" href="#author" id="id10">Author</a></li>
 </ul>
 </div>
 <!-- 1  Description
 2  Project Status
 3  Demo
-4  Download
-5  Documentation
-6  Copyright and License
-7  Author -->
-<div class="important">
-<p class="first admonition-title">Important</p>
-<p class="last">This project, which has long been stable and in active use, is currently
-being rewritten from scratch (2013-06-01). The new version (v2) will provide
-most of the features that 'beancount' did, and much more, with simpler data
-structures and a better implementation. Beancount development will remain
-here for the foreseeable future, under branch 'v1'.</p>
-</div>
+4  Runtime-Dependencies
+5  Download
+6  Documentation
+7  Copyright and License
+8  Author -->
 <div class="section" id="description">
 <h1><a class="toc-backref" href="#id1">Description</a></h1>
 <p>A double-entry bookkeeping computer language, that lets you define financial
@@ -53,41 +52,99 @@ variety of output reports from a web interface. This project</p>
 associated parser. You should be able to read the input file and easily
 process its contents.</li>
 <li>A web front-end which renders a variety of common reports.</li>
-<li>Tools to help you import and manage files downloaded from various financial
-institutions.</li>
+<li>Tools to help you import and file CSV, OFX and other files downloaded from
+various financial institutions.</li>
+<li>This is 2.0 version, a complete clean-room rewrite of Beancount 1.0.</li>
 </ul>
 </div>
 <div class="section" id="project-status">
 <h1><a class="toc-backref" href="#id2">Project Status</a></h1>
-<p>V1 is stable code, I've used it myself for many years on a weekly basis. This is
-an active project, I depend on it for my personal finances and my company's.</p>
-<p>V2 is a rewrite, and I <em>think</em> it is already better than V1 (2013-06-01).
-It is in active development.</p>
+<p>Beancount v2 is now the only beancount as of summer 2013. It's a full rewrite,
+stable and I'm using only this version now, it is maintained, and I have 7-8
+years worth of my personal data relying on it and use it every week or two. It
+works.</p>
+</div>
+<div class="section" id="dependencies">
+<h1><a class="toc-backref" href="#id3">Dependencies</a></h1>
+<p>For users:</p>
+<ul class="simple">
+<li>Python 3.3 or above. IMPORTANT: Python 3.2 will not work.</li>
+<li>cdecimal (optional but strongly suggested, a faster Decimal type for Python)</li>
+<li>Bottle (a tiny web server, pure Python)</li>
+<li>BeautifulSoup (v4) - for Import only</li>
+<li>sqlite3 and Pandas (OPTIONAL: only for calculating and rendering positions)</li>
+</ul>
+<p>For developers:</p>
+<ul class="simple">
+<li>GNU flex and GNU bison (to build the parser)</li>
+</ul>
+</div>
+<div class="section" id="installation">
+<h1><a class="toc-backref" href="#id4">Installation</a></h1>
+<div class="section" id="development-installation">
+<h2><a class="toc-backref" href="#id5">Development Installation</a></h2>
+<p>If you just want to try it out without installing, build the extension in-place
+like this:</p>
+<pre class="literal-block">
+python3 setup.py build_ext -i
+</pre>
+<p>Then add the clone's path to the PYTHONPATH variable:</p>
+<pre class="literal-block">
+export PYTHONPATH=..../beancount/src/python
+</pre>
+<p>You should be able to run the executables under <cite>..../beancount/bin</cite></p>
+</div>
+<div class="section" id="setup-installation">
+<h2><a class="toc-backref" href="#id6">Setup Installation</a></h2>
+<p>If you want to install this in your Python installation, try this:</p>
+<pre class="literal-block">
+sudo python3 setup.py install
+</pre>
+<p>Or, equivalently:</p>
+<pre class="literal-block">
+sudo pip3 setup.py install
+</pre>
+<p>These commands should build the extension module and install Beancount in your
+Python library path.</p>
+</div>
 </div>
 <div class="section" id="download">
-<h1><a class="toc-backref" href="#id3">Download</a></h1>
-<p>A Mercurial repository can be found at:</p>
+<h1><a class="toc-backref" href="#id7">Download</a></h1>
+<p>You can obtain the source code from a Mercurial repository, found at:</p>
 <blockquote>
 <a class="reference external" href="http://hg.furius.ca/public/beancount/">http://hg.furius.ca/public/beancount/</a></blockquote>
+<p>Download it like this:</p>
+<blockquote>
+hg clone --insecure <a class="reference external" href="http://hg.furius.ca/public/beancount/">http://hg.furius.ca/public/beancount/</a></blockquote>
+<p>(Use the --insecure flag because I sometimes have a self-signed SSL certificate
+on my server.)</p>
 <p>This is the authoritative location for the latest version. I don't use github--I
 roll my own Mercurial server. github clones are probably out of date, clone from
 the URL above.</p>
 <p><a class="reference external" href="/web-furius/downloading.html">Click here for download instructions.</a></p>
 </div>
 <div class="section" id="documentation">
-<h1><a class="toc-backref" href="#id4">Documentation</a></h1>
+<h1><a class="toc-backref" href="#id8">Documentation</a></h1>
 <ul class="simple">
 <li><a class="reference external" href="CHANGES">CHANGES</a></li>
 <li><a class="reference external" href="TODO">TODO</a></li>
 </ul>
+<p>I have yet to write full documentation, but basically, there are two main
+programs that you should care about:</p>
+<blockquote>
+bean-check: Checks for errors in a Beancount input file.
+bean-web: Starts a local web server so you can browse a Beancount ledger.</blockquote>
+<p>All the other are toy tools.</p>
+<p>Check out the examples for now in order to get a sense of how this works.
+There is also a cheatsheet under doc/cheatsheet.org.</p>
 </div>
 <div class="section" id="copyright-and-license">
-<h1><a class="toc-backref" href="#id5">Copyright and License</a></h1>
-<p>Copyright (C) 2007-2013  Martin Blais.  All Rights Reserved.</p>
+<h1><a class="toc-backref" href="#id9">Copyright and License</a></h1>
+<p>Copyright (C) 2007-2014  Martin Blais.  All Rights Reserved.</p>
 <p>This code is distributed under the <a class="reference external" href="COPYING">GNU General Public License</a>;</p>
 </div>
 <div class="section" id="author">
-<h1><a class="toc-backref" href="#id6">Author</a></h1>
+<h1><a class="toc-backref" href="#id10">Author</a></h1>
 <p>Martin Blais &lt;<a class="reference external" href="mailto:blais&#64;furius.ca">blais&#64;furius.ca</a>&gt;</p>
 </div>
 </div>
