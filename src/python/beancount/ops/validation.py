@@ -3,7 +3,7 @@ Sanity checks.
 (Note that these don't have anything to do with 'Check' directives.
 """
 from os import path
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 
 from beancount.core.account import Account
 from beancount.core.data import Open, Close, Check, Transaction, Document
@@ -139,6 +139,28 @@ def validate_unused_accounts(entries, accounts):
             for account in unused_accounts]
 
 
+def validate_currency_constraints(entries):
+    """Check that each account has currencies within its declared constraints."""
+
+    open_map = {entry.account: entry
+                for entry in utils.filter_type(entries, Open)}
+
+    errors = []
+    for entry in utils.filter_type(entries, Transaction):
+        for posting in entry.postings:
+            open_entry = open_map[posting.account]
+            if not open_entry.currencies:
+                continue
+            if posting.position.lot.currency not in open_entry.currencies:
+                errors.append(ValidationError(
+                    entry.fileloc,
+                    "Invalid currency {} for account '{}'.".format(
+                        posting.position.lot.currency, posting.account.name),
+                    entry))
+
+    return errors
+
+
 def validate_documents_paths(entries):
     """Check that all filenames in Document entries are absolute filenames."""
 
@@ -158,47 +180,10 @@ def validate(entries):
     # Validate open/close directives and accounts referred outside of those.
     check_errors, _, _ = validate_open_close(entries, accounts)
 
+    # Check the currency constraints.
+    constraint_errors = validate_currency_constraints(entries)
+
     # Sanity checks for documents.
     doc_errors = validate_documents_paths(entries)
 
-    errors = unused_errors + check_errors + doc_errors
-    return errors
-
-
-
-
-
-
-
-
-
-
-# FIXME: write a dedicated routine to check this invariant
-'''
-
-    # Handle sanity checks when the check is at the beginning of the day.
-    check_is_at_beginning_of_day = parser.SORT_ORDER[Check] < 0
-
-
-
-        if check_is_at_beginning_of_day:
-            # Note: Check entries are assumed to have been sorted to be before any
-            # other entries with the same date. This is supposed to be done by the
-            # parser. Verify this invariant here.
-            if isinstance(entry, (Check, Open)):
-                assert entry.date > prev_date, (
-                    "Invalid entry order: Check or Open directive before transaction.",
-                    (entry, prev_entry))
-            else:
-                prev_entry = entry
-                prev_date = entry.date
-'''
-
-
-
-# FIXME: Sanity check: Check that all postings of Transaction entries point to their actual parent.
-
-
-
-
-# FIXME: TODO -- see TODO file, many to implement.
+    return (unused_errors + check_errors + constraint_errors + doc_errors)

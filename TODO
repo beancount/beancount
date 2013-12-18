@@ -5,16 +5,16 @@ beancount: TODO
   - Example files (suggestion from Daniel Clemente):
 
 > >   I think 2 files can be helpful:
-> > 
+> >
 > >   1) A simple one, a „how to“ file with ~20 transactions, or better, from 1
 to 3 transactions for feature. To show the normal things like receiving a
 salary, getting money from ATM, wire transfer, pay the bills, … So that it does
 not scare people without experience in double accounting.
 > >   demo.beancount fits this place.
-> > 
+> >
 > >   2) The big one (1 year, you said), to show off that beancount is powerful
 and is really used for long-term accounting. This one is the „inspirational“
-one, to make people say „I would like to do that!“. 
+one, to make people say „I would like to do that!“.
 
 
 
@@ -334,6 +334,26 @@ one, to make people say „I would like to do that!“.
 * Operations
 ** Validation
 
+  - Write a dedicated routine to check the following invariant:
+
+        # Handle sanity checks when the check is at the beginning of the day.
+        check_is_at_beginning_of_day = parser.SORT_ORDER[Check] < 0
+        ...
+        if check_is_at_beginning_of_day:
+            # Note: Check entries are assumed to have been sorted to be before any
+            # other entries with the same date. This is supposed to be done by the
+            # parser. Verify this invariant here.
+            if isinstance(entry, (Check, Open)):
+                assert entry.date > prev_date, (
+                    "Invalid entry order: Check or Open directive before transaction.",
+                    (entry, prev_entry))
+            else:
+                prev_entry = entry
+                prev_date = entry.date
+
+  -  Sanity check: Check that all postings of Transaction entries point to their
+     actual parent.
+
   - Add a special option to set the EPSILON for the check.
 
       option "check_precision"  "0.01"
@@ -344,14 +364,8 @@ one, to make people say „I would like to do that!“.
   - (validation) In addition to the Check/Open before-constraint, check that
     the entries are always sorted. Add this sanity check.
 
-  - Implement check on the constraint on the kind of currency each account may
-    contain. -> validate.py
-
   - The default validation should check the invariant that Open and Check
     directives come before any Transaction.
-
-  - Check that the currency constraints on accounts are respected.
-    (Implement the currency constraints...)
 
   - Validation: Everywhere we have a filter of entries to entries, we should be
     able to apply a check that the total balances before and the total balances
