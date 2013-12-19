@@ -80,14 +80,16 @@ def toc():
                       [(view_url('tag', tag=tag), '#{}'.format(tag))
                        for tag in getters.get_all_tags(app.entries)]))
 
-    # By level.
-    viewboxes.append(('level1', 'Level 1',
-                      [(view_url('level1', level=level), '{}'.format(level))
-                       for level in getters.get_leveln_parent_accounts(app.entries, 1, nrepeats=0)]))
+    # FIXME: These are not implemented yet.
+    if 0:
+        # By level.
+        viewboxes.append(('level1', 'Level 1',
+                          [(view_url('level1', level=level), '{}'.format(level))
+                           for level in getters.get_leveln_parent_accounts(app.entries, 1, nrepeats=0)]))
 
-    viewboxes.append(('level2', 'Level 2',
-                      [(view_url('level2', level=level), '{}'.format(level))
-                       for level in getters.get_leveln_parent_accounts(app.entries, 2, nrepeats=0)]))
+        viewboxes.append(('level2', 'Level 2',
+                          [(view_url('level2', level=level), '{}'.format(level))
+                           for level in getters.get_leveln_parent_accounts(app.entries, 2, nrepeats=0)]))
 
     # FIXME: This deserves its own page, with options for cleanup (or a helper tool).
     if 0:
@@ -833,11 +835,13 @@ def payee(payee=None, path=None):
     return views.PayeeView(app.entries, app.options, 'Payee {}'.format(payee), payee)
 
 
+# FIXME: Not implemented yet.
 @app.route(r'/view/level1/<level:re:[^/]*>/<path:re:.*>', name='level1')
 @handle_view(3)
 def level1(level=None, path=None):
     return views.EmptyView(app.entries, app.options, 'Level 1: {}'.format(level), level)
 
+# FIXME: Not implemented yet.
 @app.route(r'/view/level2/<level:re:[^/]*>/<path:re:.*>', name='level2')
 @handle_view(3)
 def level2(level=None, path=None):

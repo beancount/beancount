@@ -2,6 +2,12 @@
 beancount: TODO
 * Current
 
+  - URGENT - Provide some tooltip or help link from the main page to allow
+    discoverability of what a "view" is.
+
+  - URGENT - the level1/2 views are EmptyView's, you need to implement those!
+
+
   - Example files (suggestion from Daniel Clemente):
 
 > >   I think 2 files can be helpful:
