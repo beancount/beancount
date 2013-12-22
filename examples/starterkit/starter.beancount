@@ -1,0 +1,186 @@
+#!/usr/bin/env bean-web
+;; -*- mode: org; mode: beancount; coding: utf-8; fill-column: 400; -*-
+;; Martin Blais Personal Ledger
+* Initialization
+;; This is a starter example file that you should copy to get started
+;; using Beancount. This is a possible starting point, with the same
+;; organization choices and style in which I (the author) write my own
+;; ledger files. You should delete all these explanatory comments
+;; and put your own instead.
+;;
+;; This example uses headers in the Emacs outline mode style. Note
+;; that you don't have to do that if you don't use Emacs, it's not
+;; required, just real convenient.
+;;
+;; The order of directives in the file does not matter. I choose to
+;; organize my transactions by-account, mostly. I create one section
+;; for each accounts, and above that, I organize sections by country
+;; and institution. It's entirely arbitrary, just a choice based on
+;; whatever feels most comfortable for you.
+;;
+;; In this example file the choice of account names follows my own
+;; favorite hierarchy:
+;;
+;; - The type (Assets/Liabilities/Equity/Expense/Income), which
+;;   is required by Beancount;
+;;
+;; - Country. This is useful if you have accounts in multiple places;
+;;
+;; - Institution. These contain multiple accounts. For example, a
+;;   bank has checking and savings accounts, typically. They don't
+;;   have to be physical real institution at this level, but I like
+;;   to have that level, it's the name of the company that holds the
+;;   account, even if the account is fictional.
+;;
+;; - Account name within the institution.
+;;
+;; Again, this is entirely arbitrary, but I've evolved into this
+;; choice over several years of usage, and I think it's pretty neat.
+;; Feel free to elide the country, or design your own account
+;; hierarchy, it should work just the same, Beancount does not
+;; depend on this choice at all, beyond the first component for the
+;; type. Several examples below.
+
+** Options
+;; We begin with the declaration of some global options.
+;; Type bean-web --help-options for the full list of available options.
+
+option "title" "Starter Kit Beancount Ledger"
+
+;; We will assume this user operates in US dollars.
+option "operating_currency" "USD"
+
+;; The root of a directory hierarchy that mirrors the account
+;; structure. Note that you may repeat this directive and have
+;; many of these.
+option "documents" "starterdocs"
+
+
+** General Accounts
+;; We need to declare a few general accounts that we will use below.
+
+;; Declare some sort of account to use as the source for padding
+;; entries (see below). Use your birth date... that's when you began
+;; accumulating equity!
+1982-04-01 open Equity:Opening-Balances
+
+** Events
+;; This is a section where I declare some general properties.
+
+;; Enter the date when this address last changed and its curent value.
+2008-07-01 event "address" "12345 Brick Lane, New York City, NY 10011, USD"
+
+;; Same thing with your employer.
+2011-02-15 event "employer" "Boogle Tech Inc."
+
+;; You can track trips here too by changing the value of a "location"
+;; event (variable). Insert one of these every time you travel. It can
+;; be used for various purposes (see documentation). You can also
+;; choose to put them along your cash expenses somewhere below, which
+;; is what I do (remember: the order of declarations in the file is
+;; not important).
+2013-12-22 event "location" "New York City, USA"
+
+
+* USA Accounts
+** BofA Bank
+
+;; This example individual has some regular accounts in Bank of America
+;; (we'll abbreviate as BofA) and a credit card with them.
+
+
+
+*** Checking
+;; A main checking account.
+
+;; Open the account at the approximate date where you think you
+;; actually created it if you don't remember; if you do, find the
+;; date and put it here.
+;; You don't really have to put a currency constraint, but for a
+;; bank account it makes sense to do so, because it really
+;; cannot contain any other kinds of beans. This is a US dollar
+;; account, so I choose to introduce the "USD" currency here (it's
+;; otherwise not pre-defined in any way, it just comes into being
+;; as you use it, I could have typed any other all-caps word
+;; instead of "USD" here, like "EUR", or "POINTS").
+2004-08-01 open Assets:US:BofABank:Checking     USD
+
+;; Then we don't want to have to go and enter all the history from the
+;; past here before we get working... so we'll declare a padding
+;; directive right at the opening date that will take care of
+;; inserting the correct amount to make the following assert balance.
+2004-08-01 pad  Assets:US:BofABank:Checking  Equity:Opening-Balances
+
+;; Now insert the balance as of the last date that you have a
+;; statement for (or if this is available, you can log into your
+;; online account and check that your current account balance is).
+2013-12-22 check  Assets:US:BofABank:Checking   973.03 USD
+
+;; That's it! That is the main template. The rest of this file
+;; just follows this example in order to setup all the available
+;; accounts. From this point on, you can add or import new
+;; transactions following the check date.
+
+
+*** Savings
+;; A high-interest savings account.
+
+2004-08-01 open   Assets:US:BofABank:Savings  USD
+2004-08-01 pad    Assets:US:BofABank:Savings  Equity:Opening-Balances
+2013-12-22 check  Assets:US:BofABank:Savings  2402.81 USD
+
+
+*** Mortgage
+;; A mortgage loan account associated with a Brick Lane property
+;; declared below.
+
+2010-03-20 open   Liabilities:US:BofABank:Mortgage  USD
+
+
+
+
+
+** American Express
+; He also has an American Express BlueCash Everyday card (we'll
+;; abbreviate as Amex).
+
+
+** Fidelity Investments
+;; His employer deposits 401k matching amounts in a Fidelity 401k
+;; account.
+
+
+
+** E*Trade
+;; In addition, he has an E*Trade taxable trading account with some
+;; stocks he buys into.
+
+
+** Brick Lane Home
+;; A while back, he bought a property on Brick Lane. Since there
+;; is no stock ticker or currency denomination for "his property,"
+;; we'll simply create one as a new symbol: "BRICKHOME" and we'll
+;; deposit 1 unit of this home in an account. If he bought another
+;; home we would create a different symbol.
+
+2010-03-20 open Assets:US:BrickHome:Home  BRICKHOME
+
+2010-03-20 * "Bought the beautiful Brick Lane house from Joe Oldowner"
+  Assets:US:BrickHome:Home           1 BRICKHOME @ 175000 USD
+  Assets:US:BofABank:Checking                      -50000 USD  ; Downpayment
+  Liabilities:US:BofABank:Mortgage                -125000 USD  ; Loan
+
+
+;; Now, for a large asset that has been held over a long period of
+;; time, it's unlikely that its current value is the same as that
+;; it was when it was purchased, so we'll put as a price the most
+;; current evaluation.
+2013-06-15 price BRICKHOME  210000 USD
+
+
+
+
+* Expenses
+;; You should declare a list of buckets for booking expenses into.
+;; This is useful in your income statement, to see where your
+;; money is being spent.
