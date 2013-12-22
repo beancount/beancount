@@ -204,9 +204,8 @@ class Builder(object):
         try:
             return Decimal(s)
         except Exception as e:
-#;FIXME you really do need better error reporting here.
-#Just uncomment some text and it will trigger.
-            raise e.__class__("{} error for {}".format(e, s))
+            raise e.__class__("Error: {} for token '{}' at line {}".format(
+                e, s, _parser.get_yylineno()))
 
     def amount(self, number, currency):
         return Amount(number, currency)

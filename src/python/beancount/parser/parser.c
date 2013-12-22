@@ -98,6 +98,12 @@ PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
  * unit-testing... */
 
 
+PyObject* get_yylineno(PyObject *self, PyObject *args)
+{
+  return PyLong_FromLong(yylineno);
+}
+
+
 
 /* Iniitalize the lexer to start running in debug mode. */
 PyObject* lexer_init(PyObject *self, PyObject *args)
@@ -140,9 +146,10 @@ PyObject* lexer_next(PyObject *self, PyObject *args)
 
 
 static PyMethodDef module_functions[] = {
-    {"parse",      (PyCFunction)parse, METH_VARARGS|METH_KEYWORDS, parse_doc},
-    {"lexer_init", lexer_init,         METH_VARARGS, NULL},
-    {"lexer_next", lexer_next,         METH_VARARGS, NULL},
+    {"parse", (PyCFunction)parse, METH_VARARGS|METH_KEYWORDS, parse_doc},
+    {"get_yylineno", (PyCFunction)get_yylineno, METH_VARARGS, NULL},
+    {"lexer_init", lexer_init, METH_VARARGS, NULL},
+    {"lexer_next", lexer_next, METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL} /* Sentinel */
 };
 

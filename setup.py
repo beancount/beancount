@@ -10,10 +10,14 @@ if sys.version_info[:2] < (3,3):
 
 import os
 from os.path import join, isfile
-try:
-    from setuptools import setup, Extension
-except ImportError:
-    from distutils.core import setup, Extension
+
+# Note: there is a bug with setuptools that makes local installation fail,
+# the _parser.so extension is copied under src/python instead of
+# src/python/beancount/parser. I don't know why at this point.
+# try:
+#     from setuptools import setup, Extension
+# except ImportError:
+from distutils.core import setup, Extension
 
 
 
@@ -34,22 +38,6 @@ bean-v1tov2
 """.splitlines() if x and not x.startswith('#')]
 
 
-# # Include all files without having to create MANIFEST.in
-# def add_all_files(fun):
-#     import os, os.path
-#     from os.path import abspath, dirname, join
-#     def f(self):
-#         for root, dirs, files in os.walk('.'):
-#             if '.hg' in dirs: dirs.remove('.hg')
-#             self.filelist.extend(join(root[2:], fn) for fn in files
-#                                  if not fn.endswith('.pyc'))
-#         return fun(self)
-#     return f
-# from distutils.command.sdist import sdist
-# sdist.add_defaults = add_all_files(sdist.add_defaults)
-
-
-
 setup(
   name="beancount",
   version='2.0beta',
@@ -66,7 +54,8 @@ setup(
   author_email="blais@furius.ca",
   url="http://furius.ca/beancount",
 
-  install_requires = ['python-dateutil', 'BeautifulSoup4', 'lxml'],
+  # See note about about setuptools; uncomment if fixed.
+  ##install_requires = ['python-dateutil', 'BeautifulSoup4', 'lxml'],
 
   package_dir = {'': 'src/python'},
   packages = ['beancount',

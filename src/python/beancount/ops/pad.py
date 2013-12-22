@@ -123,7 +123,7 @@ def pad(entries):
             # Generate errors on unused pad entries.
             if not entry_list:
                 pad_errors.append(
-                    PadError(entry.fileloc, "Unused Pad entry: {}".format(pad), entry))
+                    PadError(entry.fileloc, "Unused Pad entry: {}".format(entry), entry))
 
     return padded_entries, pad_errors
 
