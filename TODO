@@ -23,7 +23,7 @@ and is really used for long-term accounting. This one is the „inspirational“
 one, to make people say „I would like to do that!“.
 
 
-  - Rename check -> assert (to avoid confusion on the term)
+  - Rename check -> assert/balance (to avoid confusion on the term)
   - Rename event -> register(?) (better meaning)
 
 
@@ -36,9 +36,6 @@ one, to make people say „I would like to do that!“.
     documents/2013/Assets/CA/RBC/Checking/2013-11-13.ofx84423.qbo
     * The balance check at the end is incorrect
     * The statement are not organized by account; they are mixed together
-
-  - BUG!  Journal rendering fails on an assert, fix this ASAP.
-    e.g. repro steps: personal beancount -> 2013 -> Journal
 
   - Create a 3rd-party dependencies building script for Mac OSX users (fxt).
 
