@@ -1,0 +1,55 @@
+=========================================
+ Installation Instructions for Beancount
+=========================================
+
+Installing Dependencies
+-----------------------
+
+Beancount uses Python 3.3 or above, which is a pretty recent version of Python
+(as of this writing), and a few very common library dependencies (Bottle,
+BeautifulSoup, and optionally cdecimal and Pandas). Therefore, many
+distributions or operating systems may not have it already packaged.
+
+However, installation of a new Python version is pretty straightforward and I
+provide a script that workds for Linux and Mac OS X to install the required
+dependencies.
+
+
+Installing Beancount
+--------------------
+
+Then you need to install Beancount itself. There are two kinds of installations:
+an in-place installation where you run from the source directory; this is
+appropriate if you just want to try out Beancount or want to do development on
+it. Otherwise, you can install it in your Python installation using the regular
+setup process.
+
+
+In-place / Development Installation
++++++++++++++++++++++++++++++++++++
+
+Build the C extension module in-place like this::
+
+  python3 setup.py build_ext -i
+
+Then add the source path to the PYTHONPATH variable::
+
+  export PYTHONPATH=..../beancount/src/python
+
+where .... is the path to the source directory.
+You should be able to run the executables under `..../beancount/bin`
+
+
+Setup Installation
+++++++++++++++++++
+
+If you want to install this in your Python installation, try this::
+
+  sudo python3 setup.py install
+
+Or, equivalently::
+
+  sudo pip3 setup.py install
+
+These commands should build the extension module and install Beancount in your
+Python library path.

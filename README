@@ -50,10 +50,10 @@ Dependencies
 For users:
 
 - Python 3.3 or above. IMPORTANT: Python 3.2 will not work.
-- cdecimal (optional but strongly suggested, a faster Decimal type for Python)
+- cdecimal (optional but strongly suggested, for speed)
 - Bottle (a tiny web server, pure Python)
 - BeautifulSoup (v4) - for Import only
-- sqlite3 and Pandas (OPTIONAL: only for calculating and rendering positions)
+- Pandas (OPTIONAL: only for certain pages that involve calculations)
 
 For developers:
 
@@ -63,34 +63,7 @@ For developers:
 Installation
 ============
 
-Development Installation
-------------------------
-
-If you just want to try it out without installing, build the extension in-place
-like this::
-
-  python3 setup.py build_ext -i
-
-Then add the clone's path to the PYTHONPATH variable::
-
-  export PYTHONPATH=..../beancount/src/python
-
-You should be able to run the executables under `..../beancount/bin`
-
-
-Setup Installation
-------------------
-
-If you want to install this in your Python installation, try this::
-
-  sudo python3 setup.py install
-
-Or, equivalently::
-
-  sudo pip3 setup.py install
-
-These commands should build the extension module and install Beancount in your
-Python library path.
+Installation instructions are under beancount/install.
 
 
 Download
