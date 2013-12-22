@@ -23,11 +23,6 @@ and is really used for long-term accounting. This one is the „inspirational“
 one, to make people say „I would like to do that!“.
 
 
-
-
-  - cdecimal.Decimal.abs() exists, but decimal.Decimal.abs() does NOT. Fix
-    that, test with std Decimal.
-
   - Rename check -> assert (to avoid confusion on the term)
   - Rename event -> register(?) (better meaning)
 

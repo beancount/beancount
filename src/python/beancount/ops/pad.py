@@ -64,7 +64,7 @@ def pad(entries):
                 # distinct from the cost).
                 balance_amount = balance.get_amount(check_amount.currency)
                 diff_amount = amount_sub(balance_amount, check_amount)
-                if diff_amount.number.abs() > PAD_PRECISION:
+                if abs(diff_amount.number) > PAD_PRECISION:
                     # The check fails; we need to pad.
 
                     # Pad only if pad entry is active and we haven't already

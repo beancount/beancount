@@ -104,7 +104,7 @@ debug:
 
 
 # Run the unittests.
-unittest unittests:
+test tests unittest unittests:
 	nosetests-3.3 -s src/python/beancount
 
 

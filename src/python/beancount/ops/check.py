@@ -61,9 +61,9 @@ def check(entries):
                     if match(account.name):
                         balance += balance_account
             balance_amount = balance.get_amount(check_amount.currency)
-                        
+
             diff_amount = amount_sub(balance_amount, check_amount)
-            if diff_amount.number.abs() > CHECK_PRECISION:
+            if abs(diff_amount.number) > CHECK_PRECISION:
                 check_errors.append(
                     CheckError(entry.fileloc,
                                "Check failed for '{}': {} != {} (diff: {})".format(
