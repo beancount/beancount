@@ -1,6 +1,6 @@
 #!/usr/bin/env bean-web
 ;; -*- mode: org; mode: beancount; coding: utf-8; fill-column: 400; -*-
-;; Martin Blais Personal Ledger
+;; Starter Kit Example Ledger
 * Initialization
 ;; This is a starter example file that you should copy to get started
 ;; using Beancount. This is an example starting point, with the same

@@ -261,7 +261,7 @@ def create_entries_from_balances(balances, date, other_account, direction,
 
 
 def sum_to_date(entries, date=None):
-    """Sum up the balances per account for all entries striclty before 'date'.
+    """Sum up the balances per account for all entries strictly before 'date'.
     Return the index in the list of entries (or None, if all were before the
     date) and a dict of accounts to balance inventory.
     """
@@ -280,7 +280,6 @@ def sum_to_date(entries, date=None):
                     balance.add_position(posting.position, False)
                 except ValueError as e:
                     logging.error("Error during realization: {}".format(e))
-
     else:
         index = None
 

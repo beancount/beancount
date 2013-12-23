@@ -1,6 +1,76 @@
 -*- mode: org -*-
 beancount: TODO
+* Unittest Coverage
+
+  - Fix or comment all the unittests;
+
+       beancount/core/flags.py
+       beancount/core/balance.py			beancount/core/tests/balance_test.py
+       beancount/core/inventory.py 			beancount/core/tests/inventory_test.py
+       beancount/core/getters.py
+       beancount/core/realization.py			beancount/core/tests/realization_test.py
+       beancount/core/amount.py				beancount/core/tests/amount_test.py
+       beancount/core/position.py			beancount/core/tests/position_test.py
+       beancount/core/account.py			beancount/core/tests/account_test.py
+       beancount/core/data.py
+
+       beancount/parser/parser.py			beancount/parser/tests/parser_test.py
+       beancount/parser/documents.py
+
+       beancount/ops/summarize.py			beancount/ops/tests/summarize_test.py
+       beancount/ops/compress.py
+       beancount/ops/validation.py			beancount/ops/tests/validation_test.py
+       beancount/ops/check.py				beancount/ops/tests/check_test.py
+       beancount/ops/dups.py
+       beancount/ops/pad.py				beancount/ops/tests/pad_test.py
+       beancount/ops/prices.py
+							beancount/ops/tests/conversions_test.py
+
+       beancount/utils/tree_utils.py			beancount/utils/tests/tree_utils_test.py
+       beancount/utils/bisect_key.py
+       beancount/utils/csv_utils.py
+       beancount/utils/__init__.py			beancount/utils/tests/utils_test.py
+       beancount/utils/text_utils.py			beancount/utils/tests/text_utils_test.py
+
+       beancount/web/journal.py
+       beancount/web/acctree.py
+       beancount/web/gviz.py
+       beancount/web/views.py
+       beancount/web/web.py
+       beancount/web/bottle_utils.py
+
+       beancount/sources/rbcpdf.py
+       beancount/sources/adsense.py
+       beancount/sources/ofx.py
+       beancount/sources/ameritradepdf.py
+       beancount/sources/ameritrade.py
+       beancount/sources/timewarner.py
+       beancount/sources/rbcinvestingpdf.py
+       beancount/sources/thinkorswim.py
+       beancount/sources/paypal.py
+       beancount/sources/tdbank.py
+       beancount/sources/google.py
+       beancount/sources/ofxinvest.py
+       beancount/sources/rbcinvesting.py
+       beancount/sources/thinkorswimforex.py
+       beancount/sources/oanda.py
+       beancount/sources/hsbccchtml.py
+       beancount/sources/lendingclubpdf.py
+
+       beancount/imports/imports.py
+       beancount/imports/filing.py
+       beancount/imports/filetype.py
+       beancount/imports/scripts.py
+       beancount/loader.py
+
+  - Run pylint, add all args to docstrings.
+
 * Current
+
+  - Begin user documentation in earnest; we really need this soon.
+  - Complete example file with income statement transactions.
+  - Complete import example file.
+  - Add tests for import.
 
   - URGENT - Provide some tooltip or help link from the main page to allow
     discoverability of what a "view" is.

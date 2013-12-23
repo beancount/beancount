@@ -10,20 +10,43 @@ from beancount.parser import parsedoc
 from beancount.parser import parser
 from beancount.core.data import Transaction, Check, Open, Close, Pad, Event, Price, Note
 from beancount.core.data import format_entry
+from beancount.core.account import Account
 
 
-def checkList(self, objlist, explist):
-    """Check the the list of objects against the expected specification.
-    'explist' can be an integer, to check the length of the list; if it
-    is a list of types, the types are checked against the types of the objects
-    in the list. This is meant to be a convenient method.
+def check_list(test, objlist, explist):
+    """Assert the list of objects against the expected specification.
+
+    Args:
+      test: the instance of the test object, used for generating assertions.
+      objlist: the list of objects returned.
+
+      explist: the list of objects expected. 'explist' can be an integer, to
+               check the length of the list; if it is a list of types, the types
+               are checked against the types of the objects in the list. This is
+               meant to be a convenient method.
     """
     if isinstance(explist, int):
-        self.assertEqual(explist, len(objlist))
+        test.assertEqual(explist, len(objlist))
     elif isinstance(explist, (tuple, list)):
-        self.assertEqual(len(explist), len(objlist))
+        test.assertEqual(len(explist), len(objlist))
         for obj, exp in zip(objlist, explist):
-            self.assertTrue(isinstance(type(obj), type(exp)))
+            test.assertTrue(isinstance(type(obj), type(exp)))
+
+
+class TestParserMisc(unittest.TestCase):
+    """Test various functions."""
+
+    def test_get_previous_accounts(self):
+        options = parser.DEFAULT_OPTIONS.copy()
+        result = parser.get_previous_accounts(options)
+        self.assertEquals(3, len(result))
+        self.assertTrue(all(isinstance(x, Account) for x in result))
+
+    def test_get_current_accounts(self):
+        options = parser.DEFAULT_OPTIONS.copy()
+        result = parser.get_current_accounts(options)
+        self.assertEquals(2, len(result))
+        self.assertTrue(all(isinstance(x, Account) for x in result))
 
 
 class TestParserEntries(unittest.TestCase):
@@ -36,7 +59,7 @@ class TestParserEntries(unittest.TestCase):
             Expenses:Restaurant         100 USD
             Assets:US:Cash
         """
-        checkList(self, entries, [Transaction])
+        check_list(self, entries, [Transaction])
 
     @parsedoc
     def test_entry_transaction_2(self, entries, errors, options):
@@ -45,7 +68,7 @@ class TestParserEntries(unittest.TestCase):
             Expenses:Restaurant         100 USD
             Assets:US:Cash
         """
-        checkList(self, entries, [Transaction])
+        check_list(self, entries, [Transaction])
 
     @parsedoc
     def test_entry_transaction_invalid_npostings(self, entries, errors, options):
@@ -54,71 +77,71 @@ class TestParserEntries(unittest.TestCase):
             Expenses:Restaurant         100 USD
 
         """
-        checkList(self, entries, [])
-        checkList(self, errors, 1)
+        check_list(self, entries, [])
+        check_list(self, errors, 1)
 
     @parsedoc
     def test_entry_check(self, entries, errors, options):
         """
           2013-05-18 check Assets:US:BestBank:Checking  200 USD
         """
-        checkList(self, entries, [Check])
+        check_list(self, entries, [Check])
 
     @parsedoc
     def test_entry_open_1(self, entries, errors, options):
         """
           2013-05-18 open Assets:US:BestBank:Checking
         """
-        checkList(self, entries, [Open])
+        check_list(self, entries, [Open])
 
     @parsedoc
     def test_entry_open_2(self, entries, errors, options):
         """
           2013-05-18 open Assets:US:BestBank:Checking   USD
         """
-        checkList(self, entries, [Open])
+        check_list(self, entries, [Open])
 
     @parsedoc
     def test_entry_open_3(self, entries, errors, options):
         """
           2013-05-18 open Assets:Cash   USD,CAD,EUR
         """
-        checkList(self, entries, [Open])
+        check_list(self, entries, [Open])
 
     @parsedoc
     def test_entry_close(self, entries, errors, options):
         """
           2013-05-18 close Assets:US:BestBank:Checking
         """
-        checkList(self, entries, [Close])
+        check_list(self, entries, [Close])
 
     @parsedoc
     def test_entry_pad(self, entries, errors, options):
         """
           2013-05-18 pad Assets:US:BestBank:Checking  Equity:Opening-Balancess
         """
-        checkList(self, entries, [Pad])
+        check_list(self, entries, [Pad])
 
     @parsedoc
     def test_entry_event(self, entries, errors, options):
         """
           2013-05-18 event "location" "New York, USA"
         """
-        checkList(self, entries, [Event])
+        check_list(self, entries, [Event])
 
     @parsedoc
     def test_entry_note(self, entries, errors, options):
         """
           2013-05-18 note Assets:US:BestBank:Checking  "Blah, di blah."
         """
-        checkList(self, entries, [Note])
+        check_list(self, entries, [Note])
 
     @parsedoc
     def test_entry_price(self, entries, errors, options):
         """
           2013-05-18 price USD   1.0290 CAD
         """
-        checkList(self, entries, [Price])
+        check_list(self, entries, [Price])
 
 
 class TestUglyBugs(unittest.TestCase):
@@ -127,30 +150,30 @@ class TestUglyBugs(unittest.TestCase):
     @parsedoc
     def test_empty_1(self, entries, errors, options):
         ""
-        checkList(self, entries, [])
-        checkList(self, errors, [])
+        check_list(self, entries, [])
+        check_list(self, errors, [])
 
     @parsedoc
     def test_empty_2(self, entries, errors, options):
         """
 
         """
-        checkList(self, entries, [])
-        checkList(self, errors, [])
+        check_list(self, entries, [])
+        check_list(self, errors, [])
 
     @parsedoc
     def test_comment(self, entries, errors, options):
         """
         ;; This is some comment.
         """
-        checkList(self, entries, [])
-        checkList(self, errors, [])
+        check_list(self, entries, [])
+        check_list(self, errors, [])
 
     def test_extra_whitespace_note(self):
         input_ = '\n2013-07-11 note Assets:Cash "test"\n\n  ;;\n'
         entries, errors, options = parser.parse_string(input_)
-        checkList(self, entries, [Note])
-        checkList(self, errors, [])
+        check_list(self, entries, [Note])
+        check_list(self, errors, [])
 
     def test_extra_whitespace_transaction(self):
         input_ = '\n'.join([
@@ -162,8 +185,8 @@ class TestUglyBugs(unittest.TestCase):
           ])
 
         entries, errors, options = parser.parse_string(input_, yydebug=0)
-        checkList(self, entries, [Transaction])
-        checkList(self, errors, [])
+        check_list(self, entries, [Transaction])
+        check_list(self, errors, [])
 
     def test_extra_whitespace_comment(self):
         input_ = '\n'.join([
@@ -173,8 +196,8 @@ class TestUglyBugs(unittest.TestCase):
           '  ;;',
           ])
         entries, errors, options = parser.parse_string(input_)
-        checkList(self, entries, [Transaction])
-        checkList(self, errors, [])
+        check_list(self, entries, [Transaction])
+        check_list(self, errors, [])
 
 
 class TestSyntaxErrors(unittest.TestCase):
@@ -204,10 +227,10 @@ class TestSyntaxErrors(unittest.TestCase):
 
         # Check that we indeed read the 'check' entry that comes after the one
         # with the error.
-        checkList(self, entries, [Check])
+        check_list(self, entries, [Check])
 
         # Make sure at least one error is reported.
-        checkList(self, errors, [parser.ParserSyntaxError])
+        check_list(self, errors, [parser.ParserSyntaxError])
 
 
 class TestLineNumbers(unittest.TestCase):
@@ -251,7 +274,7 @@ class TestParserOptions(unittest.TestCase):
           option "bladibla_invalid" "Some value"
 
         """
-        checkList(self, errors, [parser.ParserError])
+        check_list(self, errors, [parser.ParserError])
 
 
 class TestParserLinks(unittest.TestCase):
@@ -264,7 +287,7 @@ class TestParserLinks(unittest.TestCase):
             Assets:US:Cash
 
         """
-        checkList(self, entries, [Transaction])
+        check_list(self, entries, [Transaction])
         self.assertEqual(entries[0].links, ['38784734873'])
 
 
@@ -277,8 +300,8 @@ class TestSimple(unittest.TestCase):
             Expenses:Restaurant         100 USD
             Assets:US:Cash
         """
-        checkList(self, entries, [Transaction])
-        checkList(self, errors, [])
+        check_list(self, entries, [Transaction])
+        check_list(self, errors, [])
 
     @parsedoc
     def test_simple_2(self, entries, errors, options):
@@ -293,5 +316,5 @@ class TestSimple(unittest.TestCase):
             Assets:US:BestBank:Checking
 
         """
-        checkList(self, entries, [Transaction, Transaction])
-        checkList(self, errors, [])
+        check_list(self, entries, [Transaction, Transaction])
+        check_list(self, errors, [])

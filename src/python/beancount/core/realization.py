@@ -17,7 +17,8 @@ from beancount.core.account import account_name_leaf, account_name_parent
 
 
 class RealAccount:
-    """A realized account, inserted in a tree, that contains the list of realized entries."""
+    """A realized account, inserted in a tree, that contains the list of realized entries.
+    """
 
     __slots__ = 'fullname leafname account balance children postings'.split()
 
@@ -42,6 +43,9 @@ class RealAccount:
         self.balance = Inventory()
         self.children = OrderedDict()
         self.postings = []
+
+    def __str__(self):
+        return "<RealAccount '{}' {}>".format(self.fullname, self.balance)
 
     def __getitem__(self, childname):
         if not childname:
@@ -263,8 +267,8 @@ def dump_tree_balances(real_accounts, foutput=None):
 def compare_realizations(real_accounts1, real_accounts2):
     """Compare two realizations; return True if the balances are equal
     for all accounts."""
-    real1 = real_accounts1.copy()
-    real2 = real_accounts2.copy()
+    real1 = copy.copy(real_accounts1)
+    real2 = copy.copy(real_accounts2)
     for account_name, real_account1 in real1.items():
         real_account2 = real2.pop(account_name)
         balance1 = real_account1.balance

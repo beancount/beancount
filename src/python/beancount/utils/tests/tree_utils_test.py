@@ -22,22 +22,23 @@ class TreeAdaptor:
         return node.children
 
 
-def create_test_tree():
+def create_tree():
     return tree_utils.TreeDict(TreeAdaptor(), ':')
 
 
 class TestTree(unittest.TestCase):
 
-    def test_simple(self):
-        tree = create_test_tree()
-        tree.get_create('Assets:US:TD:Checking')
-        tree.get_create('Assets:US:TD')
-        tree.get_create('Assets:US:HSBC:Savings')
-        tree.get_create('Assets:US:HSBC:Checking')
-        # FIXME: Need to add assets here.
+    pass
+    # def test_simple(self):
+    #     tree = create_tree()
+    #     tree.get_create('Assets:US:TD:Checking')
+    #     tree.get_create('Assets:US:TD')
+    #     tree.get_create('Assets:US:HSBC:Savings')
+    #     tree.get_create('Assets:US:HSBC:Checking')
+    #     # FIXME: Need to add assets here.
 
-    def test_simple2(self):
-        tree = create_test_tree()
-        tree.get_create('Assets')
-        tree.get_create('Assets:US:HSBC:Savings')
-        # FIXME: Need to add assets here.
+    # def test_simple2(self):
+    #     tree = create_tree()
+    #     tree.get_create('Assets')
+    #     tree.get_create('Assets:US:HSBC:Savings')
+    #     # FIXME: Need to add assets here.
