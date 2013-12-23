@@ -34,6 +34,12 @@ from beancount.web import gviz
 # Global application pages.
 
 
+NOT_IMPLEMENTED = '''
+<p style="color:red; font-weight: bold; font-style: italic;">
+  (Feature not implemented yet.)
+</p>
+'''
+
 app = bottle.Bottle()
 A = AttrMapper(app.router.build)
 
@@ -126,7 +132,7 @@ def errors():
     "Report error encountered during parsing, checking and realization."
     return render_global(
         pagetitle = "Errors",
-        contents = ""
+        contents = NOT_IMPLEMENTED
         )
 
 
@@ -159,7 +165,7 @@ def update():
     "Render the update activity."
     return render_global(
         pagetitle = "Update Activity",
-        contents = ""
+        contents = NOT_IMPLEMENTED
         )
 
 
@@ -170,7 +176,6 @@ def events():
     events = utils.filter_type(app.entries, Event)
     events_by_type = utils.groupby(lambda event: event.type, events)
 
-
     contents = io.StringIO()
     for event_type, events in sorted(events_by_type.items()):
         contents.write(event_type)
@@ -178,7 +183,8 @@ def events():
 
     return render_global(
         pagetitle = "Events",
-        contents = contents.getvalue()
+        ##contents = contents.getvalue() # FIXME: TODO
+        contents = NOT_IMPLEMENTED
         )
 
 
@@ -487,46 +493,52 @@ def income():
 def equity():
     "Render a table of the net worth at the beginning, end, and net income."
 
-    view = request.view
+    if 0:
+        view = request.view
 
-    balance = summarize.compute_balance_for_prefix(view.closing_entries,
-                                                   view.options['name_equity'] + ':')
-    header = io.StringIO()
-    header.write('<th>Currency</th>\n')
-    header.write('<th>Amount</th>\n')
-    operating_currencies = view.options['operating_currency']
-    header.write('\n'.join('<th>{}</th>\n'.format(currency)
-                           for currency in operating_currencies))
+        balance = summarize.compute_balance_for_prefix(view.closing_entries,
+                                                       view.options['name_equity'] + ':')
+        header = io.StringIO()
+        header.write('<th>Currency</th>\n')
+        header.write('<th>Amount</th>\n')
+        operating_currencies = view.options['operating_currency']
+        header.write('\n'.join('<th>{}</th>\n'.format(currency)
+                               for currency in operating_currencies))
 
-    body = io.StringIO()
-    for position in balance.get_positions():
-        body.write('<tr>')
-        body.write('<td>{}</td>'.format(position.lot.currency))
-        body.write('<td>{}</td>'.format(position.number))
+        body = io.StringIO()
+        for position in balance.get_positions():
+            body.write('<tr>')
+            body.write('<td>{}</td>'.format(position.lot.currency))
+            body.write('<td>{}</td>'.format(position.number))
+            for currency in operating_currencies:
+              date_, rate = app.price_db.get_latest_price(position.lot.currency,
+                                                          currency)
+              value = position.number * rate
 
-        ## FIXME: complete this.
-        body.write('\n'.join('<th>{}</th>\n'.format('FIXME')
-                             for currency in operating_currencies))
-        body.write('</tr>')
+              # FIXME: We may not have an appropriate conversion here, we may need
+              # to get the cost and then convert the cost to the target currency. Do
+              # this.
+              body.write('<td>{}</td>'.format(value))
+            body.write('</tr>')
 
-    contents = """
-       <div id="equity-table">
-         <table>
-           <thead>
-             {header}
-           </thead>
-           <tbody>
-             {body}
-           </tbody>
-         </table>
-       </div>
-    """.format(header=header.getvalue(), body=body.getvalue())
+        contents = """
+           <div id="equity-table">
+             <table>
+               <thead>
+                 {header}
+               </thead>
+               <tbody>
+                 {body}
+               </tbody>
+             </table>
+           </div>
+        """.format(header=header.getvalue(), body=body.getvalue())
 
-    ## FIXME: Render the equity at opening too.
-    ## FIXME: Insert a summary of the net income.
+        ## FIXME: Render the equity at opening too.
+        ## FIXME: Insert a summary of the net income.
 
     return render_view(pagetitle = "Shareholder's Equity",
-                      contents = contents)
+                       contents = NOT_IMPLEMENTED)
 
 
 @viewapp.route('/journal', name='journal')
@@ -631,7 +643,11 @@ def positions_detail():
 
     oss = io.StringIO()
     oss.write("<center>\n")
-    oss.write(dataframe.to_html(classes=['positions', 'detail-table']))
+    if not dataframe.empty:
+      oss.write(dataframe.to_html(classes=['positions', 'detail-table'],
+                                  index=False))
+    else:
+      oss.write("(No positions.)")
     oss.write("</center>\n")
 
     return render_view(
@@ -657,8 +673,11 @@ def positions_byinstrument():
     byinst_agg['price_number'] = byinst['price_number'].mean()
     byinst_agg = byinst_agg.sort('market_value', ascending=False)
     oss.write("<center>\n")
-    oss.write(byinst_agg.to_html(classes=['positions', 'byinst-account-table'],
-                                 formatters=FORMATTERS))
+    if not byinst_agg.empty:
+      oss.write(byinst_agg.to_html(classes=['positions', 'byinst-account-table'],
+                                   formatters=FORMATTERS))
+    else:
+      oss.write("(No positions.)")
     oss.write("</center>\n")
 
     oss.write('<h2>Aggregated by Instrument Only</h2>\n')
@@ -669,8 +688,11 @@ def positions_byinstrument():
     byinst_agg['price_number'] = byinst['price_number'].mean()
     byinst_agg = byinst_agg.sort('market_value', ascending=False)
     oss.write("<center>\n")
-    oss.write(byinst_agg.to_html(classes=['positions', 'byinst-table'],
-                                 formatters=FORMATTERS))
+    if not byinst_agg.empty:
+      oss.write(byinst_agg.to_html(classes=['positions', 'byinst-table'],
+                                   formatters=FORMATTERS))
+    else:
+      oss.write("(No positions.)")
     oss.write("</center>\n")
 
     return render_view(
@@ -686,7 +708,7 @@ def trades():
     "Render a list of the transactions booked against inventory-at-cost."
     return render_view(
         pagetitle = "Trades",
-        contents = ""
+        contents = NOT_IMPLEMENTED
         )
 
 

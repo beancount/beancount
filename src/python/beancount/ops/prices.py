@@ -24,7 +24,6 @@ except (ImportError, ValueError):
     pandas = None
 
 
-
 class PriceDatabase(object):
 
     def __init__(self, entries):
@@ -37,6 +36,9 @@ class PriceDatabase(object):
         return iter(self.price_map)
 
     def get_latest_price(self, base, quote):
+        if base == quote:
+            return (None, Decimal('1'))
+
         dates, rates = self.price_map[(base, quote)]
         return (dates[-1], rates[-1])
 
