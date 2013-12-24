@@ -1,4 +1,9 @@
 Rejected TODO Items & Ideas
+* What is this?
+
+This file just contains a list of ideas from the TODO file that were ultimately
+rejected, and the reasons why they were rejected.
+
 * Rejected Ideas
 
   - Support Ledger's aliases?

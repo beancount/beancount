@@ -1,0 +1,58 @@
+Beancount User's Manual
+* Introduction
+
+This is a user's manual to Beancount, a double-entry bookkeeping system.
+
+Beancount works by providing a computer language that allows you to enter all
+your transactions in a text file and provides a web interface that renders
+mainly a balance sheet and income statement for various subsets of your
+transactions (views).
+
+It works with an any currency and even allows you to track unusual things, like
+vacation hours, airmiles and rewards points, and anything else, really.
+Beancount does not know or care about any specific currencies out-of-the-box and
+using multiples currencies works elegantly.
+
+* Motivation
+
+problems with gnucash (UI difficult, buggy) or other commercial software (closed file formats,
+deprecating software)
+
+systems like Mint.com (cannot possibly encompass the totality of your accounts
+and transactions).
+
+
+** File Format or Input Language?
+
+
+** Credits & History
+
+Ledger
+
+
+
+* Getting Started
+** Establishing your Chart of Accounts and Balance Sheet
+
+** Checking the Validity of Your Ledger File
+
+  bean-check
+
+
+* Generating reports
+** Web Interface
+
+  bean-web
+
+** Views
+
+WHat are views
+
+
+
+* Updating your Ledger
+
+
+
+
+* Automating the Import Process

@@ -65,7 +65,7 @@ def verify_document_entries(document_entries):
     """
     document_errors = []
 
-    for entry in entries:
+    for entry in document_entries:
         assert isinstance(entry, Document)
         if not path.exists(entry.filename):
             error = DocumentError(entry.fileloc, "File does not exist.", entry)

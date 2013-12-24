@@ -7,7 +7,7 @@ import inspect
 import sys
 
 from beancount.parser import parsedoc
-from beancount.parser import parser
+from beancount.parser import parser, options
 from beancount.core.data import Transaction, Check, Open, Close, Pad, Event, Price, Note
 from beancount.core.data import format_entry
 from beancount.core.account import Account
@@ -37,8 +37,8 @@ class TestParserMisc(unittest.TestCase):
     """Test various functions."""
 
     def test_get_previous_accounts(self):
-        options = parser.DEFAULT_OPTIONS.copy()
-        result = parser.get_previous_accounts(options)
+        options = options.DEFAULT_OPTIONS.copy()
+        result = options.get_previous_accounts(options)
         self.assertEquals(3, len(result))
         self.assertTrue(all(isinstance(x, Account) for x in result))
 

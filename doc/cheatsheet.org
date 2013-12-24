@@ -1,67 +1,76 @@
-Beancount v2 Syntax Summary
-* Main Features
+== Beancount v2 Syntax Cheat Sheet ==
 
-  YYYY-MM-DD open ACCOUNT
+All account names must begin with one of:
+Assets, Liabilities, Equity, Income, Expense
+
+;; Open an account, optionally constrained to contain one type of unit.
+2013-01-01 open Assets:US:AcmeBank:Checking           USD
+2013-01-01 open Liabilities:US:AcmeBank:CreditCard
+
+;; A transaction, with no cost. Omit amount for at most one posting.
+2013-02-24 * "Coffee Shop La Colombe" | "Bought some coffee"
+  Liabilities:US:AcmeBank:CreditCard		 -20 USD
+  Expenses:Coffee
+
+;; A transaction, held at cost.
+2013-03-25 * "Bought some Google stock at 1111.11"
+  Assets:US:AcmeBroker:Investment:GOOG	        10 GOOG {1111.11 USD}
+  Expenses:Financial:Commission               9.95 USD
+  Assets:US:AcmeBroker:Investment:Cash    -1112105 USD
+
+;; At this date, check that this account had this many units of this currency.
+2013-04-02 check Assets:US:AcmeBank:Checking  1234.00 USD
+
+;; Close this account at this date.
+2013-12-31 close  Liabilities:US:AcmeBank:CreditCard
+
+;; Options, of the form:
+option "title"                        "Your ledger's title"
+option "name_assets"                  "Assets"
+option "name_liabilities"             "Liabilities"
+option "name_equity"                  "Equity"
+option "name_income"                  "Income"
+option "name_expenses"                "Expenses"
+option "account_previous_balances"    "Opening-Balances"
+option "account_previous_earnings"    "Earnings:Previous"
+option "account_previous_conversions" "Conversions:Previous"
+option "account_current_earnings"     "Earnings:Current"
+option "account_current_conversions"  "Conversions:Current"
+option "account_unrealized"           "Unrealized"
+option "documents"                    "Root directory where documents live"
+option "operating_currency"           "A currency to be singled out in reports"
 
 
-  YYYY-MM-DD txn "PAYEE" | "DESCRIPTION"
-    ACCOUNT  POSITION
-    ACCOUNT  POSITION
-    ...
+;; Insert an automatic amount that will automatically make the next
+;; (chronologically) assertion balance.
+2013-05-15 pad Assets:US:AcmeBank:Checking  Equity:Opening-Balances
 
-  (...repeat...)
+;; Insert a note attached to an account that renders in the journal.
+2013-05-15 pad Assets:US:AcmeBank:Checking  "Called the bank about fee, they said no."
 
-  YYYY-MM-DD check ACCOUNT POSITION
+;; Declare a document file to be rendered in the journal.
+;; Note: it's much easier to just place your files in a hierarchy and
+;; use the "documents" option.
+2013-05-15 document Assets:US:AcmeBank:Checking "document/2013/statement10.pdf"
 
-  (...more transactions and checks...)
+;; Attaching tags to transactions.
+2013-12-24 * "Legal fees for immigration." #greencard
 
+;; Pushing and popping from the set of current tags automatically applied
+;; to all transactions in-between.
 
-  YYYY-MM-DD close ACCOUNT
+pushtag #sometag
+...
+poptag #sometag
 
-
-* Optional Features
-** Options
-
-  option "NAME" "VALUE"
-
-
-** Padding (Automatic Balance Adjustment)
-
-  YYYY-MM-DD pad  ACCOUNT ACCOUNT_PAD
-
-
-** Notes
-
-  YYYY-MM-DD note ACCOUNT "TEXT"
-
-
-** Documents
-
-  YYYY-MM-DD document ACCOUNT "FILENAME"
-
-
-** Tags and Links
-
-  pushtag #TAG
+;; Linking multiple transactions together.
+2013-06-03 * "FEE" | "Invalid fee, bank said they would pay back later." ^invalid01
   ...
-  poptag #TAG
+2013-06-12 * "REIMB" | "Fee paid back for previous error." ^invalid01
+  ...
 
+;; Assigning the value of some currency in terms of another.
+2013-11-24 price GOOG  984.02 USD
 
-  YYYY-MM-DD * ...  #TAG
-    ...
-
-
-  YYYY-MM-DD * ...  @LINK
-    ...
-
-
-** Prices
-
-  YYYY-MM-DD price CURRENCY  AMOUNT
-
-
-** Events
-
-  YYYY-MM-DD event "NAME" "VALUE"
-
-
+;; Declaring a change in the value of an event variable, e.g., travels.
+2013-12-23 event "location" "Montreal, Canada"
