@@ -9,6 +9,7 @@ Download the file, import it.
 import re
 import datetime
 
+from beancount.imports import importer
 from beancount.core import data
 from beancount.core.amount import Decimal, Amount, ZERO
 from beancount.core.data import Transaction, Check
@@ -17,54 +18,56 @@ from beancount.core.account import accountify_dict
 from beancount.core import flags
 
 
-CONFIG = {
-    'FILE'    : 'Account for filing',
-    'cash'    : 'Cash account / Net change',
-    'gross'   : 'Gross amount of transaction',
-    'fees'    : 'Paypal Fees',
-}
+class Importer(importer.ImporterBase):
+
+    REQUIRED_CONFIG = {
+        'FILE'    : 'Account for filing',
+        'cash'    : 'Cash account / Net change',
+        'gross'   : 'Gross amount of transaction',
+        'fees'    : 'Paypal Fees',
+    }
 
 
-def import_file(filename, config):
-    """Import a PayPal CSV file."""
+    def import_file(self, filename):
+        """Import a PayPal CSV file."""
 
-    config = accountify_dict(config)
-    new_entries = []
+        config = self.get_accountified_config()
+        new_entries = []
 
-    # Read and reverse the entire file, it's ordered wrong.
-    rows = csv_utils.csv_tuple_reader(open(filename))
-    rows = reversed(list(rows))
-    
-    for index, row in enumerate(rows):
+        # Read and reverse the entire file, it's ordered wrong.
+        rows = csv_utils.csv_tuple_reader(open(filename))
+        rows = reversed(list(rows))
 
-        # Create a new transaction.
+        for index, row in enumerate(rows):
+
+            # Create a new transaction.
+            fileloc = data.FileLocation(filename, index)
+            date = datetime.datetime.strptime(row.date, '%m/%d/%Y').date()
+            payee = row.name
+            links = set(['paypal{}'.format(row.transaction_id)])
+
+            email_address = (row.to_email_address
+                             if re.search(r'\bSent\b', row.type) else
+                             row.from_email_address)
+            narration = ', '.join(filter(None, (row.type,
+                                                row.item_title,
+                                                row.shipping_address,
+                                                email_address)))
+
+            entry = Transaction(fileloc, date, flags.FLAG_IMPORT, payee, narration, None, links, [])
+
+            # Create postings on this transaction.
+            data.create_simple_posting(entry, config['gross'], -Decimal(row.gross), row.currency)
+            if row.fee != ZERO:
+                data.create_simple_posting(entry, config['fees'], -Decimal(row.fee), row.currency)
+
+            data.create_simple_posting(entry, config['cash'], Decimal(row.net), row.currency)
+
+            new_entries.append(entry)
+
+        # Insert a check directive.
+        date = date + datetime.timedelta(days=1)
         fileloc = data.FileLocation(filename, index)
-        date = datetime.datetime.strptime(row.date, '%m/%d/%Y').date()
-        payee = row.name
-        links = set(['paypal{}'.format(row.transaction_id)])
+        new_entries.append(Check(fileloc, date, config['cash'], Amount(Decimal(row.balance), row.currency), None))
 
-        email_address = (row.to_email_address
-                         if re.search(r'\bSent\b', row.type) else
-                         row.from_email_address)
-        narration = ', '.join(filter(None, (row.type,
-                                            row.item_title,
-                                            row.shipping_address,
-                                            email_address)))
-
-        entry = Transaction(fileloc, date, flags.FLAG_IMPORT, payee, narration, None, links, [])
-
-        # Create postings on this transaction.
-        data.create_simple_posting(entry, config['gross'], -Decimal(row.gross), row.currency)
-        if row.fee != ZERO:
-            data.create_simple_posting(entry, config['fees'], -Decimal(row.fee), row.currency)
-
-        data.create_simple_posting(entry, config['cash'], Decimal(row.net), row.currency)
-
-        new_entries.append(entry)
-
-    # Insert a check directive.
-    date = date + datetime.timedelta(days=1)
-    fileloc = data.FileLocation(filename, index)
-    new_entries.append(Check(fileloc, date, config['cash'], Amount(Decimal(row.balance), row.currency), None))
-
-    return new_entries
+        return new_entries

@@ -27,6 +27,7 @@ import datetime
 import subprocess
 import tempfile
 
+from beancount.imports import importer
 from beancount.core.amount import to_decimal
 from beancount.core.data import create_simple_posting
 from beancount.core.data import create_simple_posting_with_cost
@@ -39,133 +40,134 @@ from beancount.core.account import accountify_dict
 from beancount.utils import csv_utils
 
 
-CONFIG = {
-    'FILE'       : 'Account for filing',
-    'cash'       : 'Cash account',
-    'positions'  : 'Root account for all position sub-accounts',
-    'fees'       : 'Fees',
-    'commission' : 'Commissions',
-    'interest'   : 'Interest income',
-    'dividend'   : 'Dividend income',
-    'transfer'   : 'Other account for inter-bank transfers',
-}
+class Importer(importer.ImporterBase):
+
+    REQUIRED_CONFIG = {
+        'FILE'       : 'Account for filing',
+        'cash'       : 'Cash account',
+        'positions'  : 'Root account for all position sub-accounts',
+        'fees'       : 'Fees',
+        'commission' : 'Commissions',
+        'interest'   : 'Interest income',
+        'dividend'   : 'Dividend income',
+        'transfer'   : 'Other account for inter-bank transfers',
+    }
+
+    def import_file(self, filename):
+        """Import an Excel file from RBC Direct Investing's Activity Statement."""
+
+        config = self.get_accountified_config()
+        new_entries = []
+
+        # Tidy up the Excel filenames from RBC.
+        tidy_file = tempfile.NamedTemporaryFile(suffix='.xls', mode='w')
+        new_contents = re.sub('S&P 500', 'S&amp;P 500', open(filename).read())
+        tidy_file.write(new_contents)
+        tidy_file.flush()
+
+        with tempfile.NamedTemporaryFile(suffix='.csv') as f:
+            r = subprocess.call(('ssconvert', tidy_file.name, f.name),
+                                stdout=subprocess.PIPE)
+            assert r == 0, r
+
+            rdr = csv_utils.csv_tuple_reader(open(f.name))
+            for index, row in enumerate(rdr):
+                row = fixup_row(row)
+                # print(row)
+                # print()
+
+                # Gather transaction basics.
+                fileloc = FileLocation(filename, index)
+
+                # Ignore the settlement date if it is the same as the date.
+                if row.settlement == row.date:
+                    settlement = None
+                else:
+                    settlement = '{{{}}}'.format(row.settlement)
+
+                # Gather the amount from the description; there is sometimes an other
+                # amount in there, that doesn't show up in the downloaded file.
+                mo = re.search(r'\$([0-9,]+\.[0-9]+)', row.description)
+                description_amount = to_decimal(mo.group(1)) if mo else None
+
+                # Gather the number of shares from the description. Sometimes
+                # present as well.
+                mo = re.search(r'\b([0-9]+) SHS', row.description)
+                description_shares = to_decimal(mo.group(1)) if mo else None
+
+                # Create a new transaction.
+                narration = ' -- '.join(filter(None,
+                                               [row.action, row.symbol, row.description, settlement]))
+                entry = Transaction(fileloc, row.date, flags.FLAG_IMPORT, None, narration, None, None, [])
+
+                # Figure out an account for the position.
+                if row.symbol:
+                    account_position = account_from_name('{}:{}'.format(config['positions'].name,
+                                                                        row.symbol))
+
+                # Add relevant postings.
+                extra_narration = []
+                if row.action in ('ADJ RR', 'RTC RR'):
+                    # I don't know what to do with these entries; I don't know why they're there.
+                    # There are no amounts on the files imported.
+                    pass
+
+                elif row.action == 'EXH AB':
+                    assert not description_amount
+                    assert not row.amount
+                    assert not row.price
+
+                    create_simple_posting(entry, account_position,
+                                          row.quantity, row.symbol)
 
 
-def import_file(filename, config):
-    """Import an Excel file from RBC Direct Investing's Activity Statement."""
+                elif row.action == 'DIV F6':
+                    assert description_amount
 
-    config = accountify_dict(config)
-    new_entries = []
+                    create_simple_posting_with_cost(entry, account_position,
+                                                    row.quantity, row.symbol,
+                                                    description_amount, row.currency)
+                    create_simple_posting(entry, config['dividend'],
+                                          -(row.quantity * description_amount), row.currency)
 
-    # Tidy up the Excel filenames from RBC.
-    tidy_file = tempfile.NamedTemporaryFile(suffix='.xls', mode='w')
-    new_contents = re.sub('S&P 500', 'S&amp;P 500', open(filename).read())
-    tidy_file.write(new_contents)
-    tidy_file.flush()
+                elif row.action in ('Buy', 'Sell'):
 
-    with tempfile.NamedTemporaryFile(suffix='.csv') as f:
-        r = subprocess.call(('ssconvert', tidy_file.name, f.name),
-                            stdout=subprocess.PIPE)
-        assert r == 0, r
+                    create_simple_posting_with_cost(entry, account_position,
+                                                    row.quantity, row.symbol,
+                                                    row.price, row.currency)
 
-        rdr = csv_utils.csv_tuple_reader(open(f.name))
-        for index, row in enumerate(rdr):
-            row = fixup_row(row)
-            # print(row)
-            # print()
+                    create_simple_posting(entry, config['cash'],
+                                          row.amount, row.currency)
 
-            # Gather transaction basics.
-            fileloc = FileLocation(filename, index)
+                elif row.action in ('SEL FF', 'PUR FF'):
+                    assert not description_amount
+                    assert not row.price
 
-            # Ignore the settlement date if it is the same as the date.
-            if row.settlement == row.date:
-                settlement = None
-            else:
-                settlement = '{{{}}}'.format(row.settlement)
+                    create_simple_posting(entry, account_position,
+                                          row.quantity, row.symbol)
 
-            # Gather the amount from the description; there is sometimes an other
-            # amount in there, that doesn't show up in the downloaded file.
-            mo = re.search(r'\$([0-9,]+\.[0-9]+)', row.description)
-            description_amount = to_decimal(mo.group(1)) if mo else None
+                elif row.action == 'DIST':
+                    assert not description_amount
 
-            # Gather the number of shares from the description. Sometimes
-            # present as well.
-            mo = re.search(r'\b([0-9]+) SHS', row.description)
-            description_shares = to_decimal(mo.group(1)) if mo else None
+                    create_simple_posting(entry, config['dividend'],
+                                          -row.amount, row.currency)
+                    create_simple_posting(entry, config['cash'],
+                                          row.amount, row.currency)
 
-            # Create a new transaction.
-            narration = ' -- '.join(filter(None,
-                                           [row.action, row.symbol, row.description, settlement]))
-            entry = Transaction(fileloc, row.date, flags.FLAG_IMPORT, None, narration, None, None, [])
+                    # Insert the otherwise unused price per-share in the description.
+                    extra_narration.append('{} per share'.format(row.price))
 
-            # Figure out an account for the position.
-            if row.symbol:
-                account_position = account_from_name('{}:{}'.format(config['positions'].name,
-                                                                    row.symbol))
-
-            # Add relevant postings.
-            extra_narration = []
-            if row.action in ('ADJ RR', 'RTC RR'):
-                # I don't know what to do with these entries; I don't know why they're there.
-                # There are no amounts on the files imported.
-                pass
-
-            elif row.action == 'EXH AB':
-                assert not description_amount
-                assert not row.amount
-                assert not row.price
-
-                create_simple_posting(entry, account_position,
-                                      row.quantity, row.symbol)
+                else:
+                    raise ValueError("Unknown action: '{}'".format(row.action))
 
 
-            elif row.action == 'DIV F6':
-                assert description_amount
+                new_entries.append(entry)
 
-                create_simple_posting_with_cost(entry, account_position,
-                                                row.quantity, row.symbol,
-                                                description_amount, row.currency)
-                create_simple_posting(entry, config['dividend'],
-                                      -(row.quantity * description_amount), row.currency)
+        tidy_file.close()
 
-            elif row.action in ('Buy', 'Sell'):
-
-                create_simple_posting_with_cost(entry, account_position,
-                                                row.quantity, row.symbol,
-                                                row.price, row.currency)
-
-                create_simple_posting(entry, config['cash'],
-                                      row.amount, row.currency)
-
-            elif row.action in ('SEL FF', 'PUR FF'):
-                assert not description_amount
-                assert not row.price
-
-                create_simple_posting(entry, account_position,
-                                      row.quantity, row.symbol)
-
-            elif row.action == 'DIST':
-                assert not description_amount
-
-                create_simple_posting(entry, config['dividend'],
-                                      -row.amount, row.currency)
-                create_simple_posting(entry, config['cash'],
-                                      row.amount, row.currency)
-
-                # Insert the otherwise unused price per-share in the description.
-                extra_narration.append('{} per share'.format(row.price))
-
-            else:
-                raise ValueError("Unknown action: '{}'".format(row.action))
-
-
-            new_entries.append(entry)
-
-    tidy_file.close()
-
-    new_entries = join_fractional_transactions(new_entries)
-    new_entries = join_full_shares_for_fractions(new_entries)
-    return new_entries
+        new_entries = join_fractional_transactions(new_entries)
+        new_entries = join_full_shares_for_fractions(new_entries)
+        return new_entries
 
 
 def fixup_row(row):

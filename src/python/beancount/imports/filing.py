@@ -36,7 +36,7 @@ def run_filer_loop(importer_config,
     trace = lambda arg: sys.stdout.write(arg + '\n')
     jobs = []
     nerrors = 0
-    for filename, match_text, matches in imports.find_imports(importer_config, files_or_directories) :
+    for filename, match_text, importers in imports.find_imports(importer_config, files_or_directories):
         # If we're debugging, print out the match text.
         # This option is useful when we're building our importer configuration,
         # to figure out which patterns to create as unique signatures.
@@ -45,16 +45,18 @@ def run_filer_loop(importer_config,
             trace(match_text)
             trace('`--------------------------------------------------------------------------------')
 
-        if not matches:
+        if not importers:
             continue
 
-        module, module_config = matches[0]
-        # if len(matches) > 1:
+        importer = importers[0]
+
+        # FIXME: Not sure what we're going to do about this.
+        # if len(importers) > 1:
         #     logging.error("Ambiguous match. Using the first matching module ({}).".format(
         #         module.__name__))
 
         # Get the account corresponding to the file.
-        file_account = module_config['FILE']
+        file_account = importer.get_filing_account()
 
         # Compute the date from the last modified time.
         mtime = path.getmtime(filename)
@@ -65,9 +67,9 @@ def run_filer_loop(importer_config,
         # contents of the file itself (e.g. scraping some text from the PDF
         # contents, or grabbing the last line of a CSV file).
         file_date = None
-        if hasattr(module, 'import_date'):
-            file_date = module.import_date(filename, match_text)
-        if file_date is None:
+        try:
+            file_date = importer.import_date(filename, match_text)
+        except NotImplementedError:
             # Fallback on the last modified time of the file.
             file_date = mtime_date
 
@@ -76,9 +78,7 @@ def run_filer_loop(importer_config,
                                                  path.basename(idify(filename)))
 
         # Apply filename renaming, if implemented.
-        if hasattr(module, 'file_rename'):
-            # We provide the renamed basename.
-            new_basename = module.file_rename(new_basename)
+        new_basename = importer.file_rename(new_basename)
 
         # Prepend destination directory.
         new_filename = path.normpath(path.join(destination,
@@ -87,11 +87,11 @@ def run_filer_loop(importer_config,
 
         # Print the filename and which modules matched.
         trace('=== {}'.format(filename))
-        if matches:
+        if importers:
             trace('')
-        for _, _module_config in matches:
-            trace('  Account:     {}'.format(_module_config['FILE']))
-        trace('  Importer:    {}'.format(module.__name__ if module else '-'))
+        for importer in importers:
+            trace('  Account:     {}'.format(file_account))
+        trace('  Importer:    {}'.format(importer.__class__.__name__ if importer else '-'))
         trace('  Mtime Date:  {}'.format(mtime_date))
         trace('  Date:        {}'.format(file_date))
         trace('  Destination: {}'.format(new_filename))
