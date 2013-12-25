@@ -15,87 +15,16 @@ import re
 import subprocess
 import tempfile
 import textwrap
-import bs4
 
 from beancount.core import data
 from beancount.core.data import format_entry
 from beancount.ops.dups import find_duplicate_entries
 from beancount import utils
 from beancount.imports.filetype import guess_file_type
+from beancount.imports import pdfconvert
 
 
 FILE_TOO_LARGE_THRESHOLD = 8*1024*1024
-
-
-
-def pdfconverter_poppler_pdftotext(pdf_filename):
-    """Try to convert the given pdf file it text using pdftotext.
-
-    Args:
-      pdf_filename: the name of the PDF file to convert.
-    Returns:
-      A string of the converted text, if successful, or None, if not.
-    """
-    p = subprocess.Popen(('pdftotext', pdf_filename, '-'),
-                         shell=False,
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = p.communicate()
-    if p.returncode == 0 and not stderr:
-        # Sometimes the output is just filled with ^L; check that this isn't the
-        # case and that the output file has some real content.
-        text = stdout.decode()
-        if re.search('[a-zA-Z0-9]+', text):
-            return text
-
-
-def pdfconverter_unoconv_plus_pdftotext(pdf_filename):
-    """Try to convert the given pdf file it text using unoconv
-    and pdftotext.
-
-    Args:
-      pdf_filename: the name of the PDF file to convert.
-    Returns:
-      A string of the converted text, if successful, or None, if not.
-    """
-    # Try first text conversion using the LibreOffice tool.
-    p1 = subprocess.Popen(('unoconv', '--format', 'pdf', '--stdout', pdf_filename),
-                          shell=False,
-                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    p2 = subprocess.Popen(('pdftotext', '-', '-'),
-                          shell=False,
-                          stdin=p1.stdout,
-                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout2, stderr2 = p2.communicate()
-    if not (p2.returncode != 0 or stderr2):
-        return stdout2.decode()
-
-
-def pdfconverter_ghostscript(pdf_filename):
-    """Try to convert the given pdf file it text using ghostscript
-    tools pdf2ps + ps2ascii.
-
-    Args:
-      pdf_filename: the name of the PDF file to convert.
-    Returns:
-      A string of the converted text, if successful, or None, if not.
-    """
-    p1 = subprocess.Popen(('pdf2ps', pdf_filename, '-'),
-                          shell=False,
-                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    p2 = subprocess.Popen(('ps2ascii', '-'),
-                          shell=False,
-                          stdin=p1.stdout,
-                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout2, stderr2 = p2.communicate()
-    if not (p2.returncode != 0 or stderr2):
-        return stdout2.decode()
-
-
-PDF_CONVERTERS = [
-    pdfconverter_poppler_pdftotext,
-    pdfconverter_unoconv_plus_pdftotext,
-    pdfconverter_ghostscript,
-    ]
 
 
 def read_file(filename):
@@ -109,7 +38,7 @@ def read_file(filename):
         #
         # We need to try various methods, because many tools fail to produce
         # usable output.
-        for converter in PDF_CONVERTERS:
+        for converter in pdfconvert.PDF_CONVERTERS:
             contents = converter(filename)
             if contents is not None and re.search('[a-zA-Z0-9]+', contents):
                 break
