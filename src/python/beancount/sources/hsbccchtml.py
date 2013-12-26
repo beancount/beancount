@@ -14,6 +14,7 @@ import datetime
 import collections
 import bs4
 
+from beancount.imports import importer
 from beancount.core import data
 from beancount.core.amount import to_decimal, Decimal, Amount
 from beancount.core.data import create_simple_posting
@@ -25,31 +26,33 @@ from beancount.utils import csv_utils
 from beancount.core import flags
 
 
-CONFIG = {
-    'FILE'               : 'Account for filing',
-    'asset'              : 'Credit card account',
-    'cash_currency'      : 'Currency used for cash account',
-}
+class Importer(importer.ImporterBase):
+
+    REQUIRED_CONFIG = {
+        'FILE'               : 'Account for filing',
+        'asset'              : 'Credit card account',
+        'cash_currency'      : 'Currency used for cash account',
+    }
 
 
-def import_file(filename, config):
-    """Import an HTML dump of HSBC's transaction list."""
+    def import_file(self, filename):
+        """Import an HTML dump of HSBC's transaction list."""
 
-    config = accountify_dict(config)
+        config = self.get_accountified_config()
 
-    new_entries = []
-    for index, hsbc_entry in enumerate(extract_transactions_xhtml(filename)):
+        new_entries = []
+        for index, hsbc_entry in enumerate(extract_transactions_xhtml(filename)):
 
-        # Create a new entry from the Hsbc file entry.
-        fileloc = data.FileLocation(filename, index)
-        entry = Transaction(fileloc, hsbc_entry.trans_date, flags.FLAG_IMPORT,
-                            None, hsbc_entry.description, None, None, [])
-        create_simple_posting(entry, config['asset'],
-                              -hsbc_entry.amount, config['cash_currency'])
+            # Create a new entry from the Hsbc file entry.
+            fileloc = data.FileLocation(filename, index)
+            entry = Transaction(fileloc, hsbc_entry.trans_date, flags.FLAG_IMPORT,
+                                None, hsbc_entry.description, None, None, [])
+            create_simple_posting(entry, config['asset'],
+                                  -hsbc_entry.amount, config['cash_currency'])
 
-        new_entries.append(entry)
+            new_entries.append(entry)
 
-    return new_entries
+        return new_entries
 
 
 HsbcEntry = collections.namedtuple('HsbcEntry',

@@ -15,13 +15,13 @@ import re
 import subprocess
 import tempfile
 import textwrap
-import bs4
 
 from beancount.core import data
 from beancount.core.data import format_entry
 from beancount.ops.dups import find_duplicate_entries
 from beancount import utils
 from beancount.imports.filetype import guess_file_type
+from beancount.imports import pdfconvert
 
 
 FILE_TOO_LARGE_THRESHOLD = 8*1024*1024
@@ -35,37 +35,15 @@ def read_file(filename):
 
     if filetype == 'application/pdf':
         # If the file is a PDF file, convert to text so we can grep through it.
-        p = subprocess.Popen(('pdftotext', filename, '-'),
-                             shell=False,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
-
-        has_real_content = True
-        if p.returncode == 0:
-            # Sometimes the output is just filled with ^L; check that this isn't
-            # the case and that the output file has some real content.
-            has_real_content = re.search('[a-zA-Z0-9]+', stdout.decode()) is not None
-
-        if not (p.returncode != 0 or
-                stderr or
-                (p.returncode == 0 and has_real_content)):
-            contents = stdout.decode()
+        #
+        # We need to try various methods, because many tools fail to produce
+        # usable output.
+        for converter in pdfconvert.PDF_CONVERTERS:
+            contents = converter(filename)
+            if contents is not None and re.search('[a-zA-Z0-9]+', contents):
+                break
         else:
-            # Try first conversion using the LibreOffice tool.
-            p1 = subprocess.Popen(('unoconv', '--format', 'pdf', '--stdout', filename),
-                                  shell=False,
-                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            p2 = subprocess.Popen(('pdftotext', '-', '-'),
-                                  shell=False,
-                                  stdin=p1.stdout,
-                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdout2, stderr2 = p2.communicate()
-            if not (p2.returncode != 0 or stderr2):
-                contents = stdout2.decode()
-            else:
-                logging.error("Error running pdftotext: {}".format(stderr))
-                logging.error("Error running pdftotext via unoconv: {}".format(stderr2))
-                contents = ''
+            contents = None
 
     elif filetype == 'application/vnd.ms-excel':
         # If the file is an Excel spreadsheet, convert to a CSV file so we can
@@ -117,8 +95,17 @@ def read_file(filename):
 def find_imports(importer_config, files_or_directories):
     """Given an importer configuration, search for files that can be imported in the
     list of files or directories, run the signature checks on them and return a list
-    of (filename, matches), where 'matches' is a list of (module, module_config) for
-    each importer module that matched the file."""
+    of (filename, importers), where 'importers' is a list of importers that matched
+    the file.
+
+    Args:
+      importer_config: a list of (regexps, importer) tuples that define the config.
+      files_or_directories: a list of files of directories to walk recursively and
+                            hunt for files to import.
+    Yields:
+      Triples of filename found, textified contents of the file, and list of
+      importers matching this file.
+    """
 
     match_template = textwrap.dedent("""\
            Filename: {}
@@ -127,7 +114,6 @@ def find_imports(importer_config, files_or_directories):
         """)
 
     # Iterate over all files found; accumulate the entries by identification.
-    all_matches = []
     for filename in utils.walk_files_or_dirs(files_or_directories):
 
         # Skip files that are simply too large.
@@ -147,65 +133,38 @@ def find_imports(importer_config, files_or_directories):
 
         # For each of the sources the user has declared, find the matching
         # signature sets.
-        matches = []
-        for signatures, module, config in importer_config:
+        matching_importers = []
+        for signatures, importer in importer_config:
             # Attempt to match all of the signatures against the text.
             if all(re.search(signature, match_text, re.DOTALL)
                    for signature in signatures):
-                matches.append( (module, config) )
+                matching_importers.append(importer)
 
-        yield (filename, match_text, matches)
-
-    return all_matches
+        yield (filename, match_text, matching_importers)
 
 
-def verify_config(module, module_config):
-    """Check the configuration account provided by the user against the accounts
-    required by the source importer. Just to make sure."""
-
-    module_options = set(module.CONFIG)
-    user_options = set(module_config)
-
-    success = True
-    for option in (module_options - user_options):
-        logging.error("Missing value from user configuration for module {}: {}".format(
-            module.__name__, option))
-        success = False
-
-    for option in (user_options - module_options):
-        logging.error("Unknown value in user configuration for module {}: {}".format(
-            module.__name__, option))
-        success = False
-
-    return success
-
-
-def import_file(filename, matches):
+def import_file(filename, importers):
     """Import entries from a single file.
-    Matches is a list of (module, module_config) tuples to run on this file."""
 
-    # Import with the various modules.
+    Args:
+      filename: the name of the file to import
+      importers: a list of importer instances to run on this file.
+    Returns:
+      A list of new entries imported from the file.
+    """
+    # Import with each importer. This is important because different importers
+    # may process distinct parts of a single file.
     new_entries = []
-    for module, module_config in matches:
-        # Skip if there is no importer for this match (this occurs when we
-        # have a configuration used for filing only, e.g. with PDF files).
-        if module is None:
-            continue
-
-        # Verify that the user configuration has all the required module
-        # configuration options.
-        if not verify_config(module, module_config):
-            # Skip a failing config.
-            continue
-
-        # If the module does not implement entry extraction, skip.
-        if not hasattr(module, 'import_file'):
-            continue
-
+    for importer in importers:
         # Import the new entries.
-        imported_entries = module.import_file(filename, module_config)
-        if imported_entries:
-            new_entries.extend(imported_entries)
+        try:
+            imported_entries = importer.import_file(filename)
+            if imported_entries:
+                new_entries.extend(imported_entries)
+        except NotImplementedError:
+            # If the module does not implement entry extraction, skip.
+            pass
+
 
     # Make sure the newly imported entries are sorted; don't trust the importer.
     new_entries.sort(key=data.entry_sortkey)
@@ -217,16 +176,27 @@ def import_file(filename, matches):
     return new_entries
 
 
-def import_file_and_process(filename, matches, existing_entries, mindate):
+def import_file_and_process(filename, importers, existing_entries, mindate):
     """Import entries from file 'filename' with the given matches,
     and cross-check against a list of provided 'existing_entries' entries,
     de-duplicating and possibly auto-categorizing.
 
-    Returns a list of new imported entries and a subset of these which have been
-    identified as possible duplicates."""
+    Args:
+      filename: the name of the file to import
+      importers: a list of importer objects that matched the file
+      existing_entries: a list of existing entries parsed from a ledger,
+                        used to detect duplicates and automatically complete
+                        or categorize transactions.
+      mindate: a date before which entries should be ignored. This is useful
+               when an account has a valid check/assert; we could just ignore
+               whatever comes before, if desired.
+    Returns:
+      A list of new imported entries and a subset of these which have been
+      identified as possible duplicates.
+    """
 
     # Import the entries.
-    new_entries = import_file(filename, matches)
+    new_entries = import_file(filename, importers)
     if new_entries is None:
         return None, None
 
@@ -259,7 +229,7 @@ def run_importer_loop(importer_config,
         files_or_directories = [files_or_directories]
 
     trace = lambda arg: sys.stdout.write(arg + '\n')
-    for filename, match_text, matches in find_imports(importer_config, files_or_directories):
+    for filename, match_text, importers in find_imports(importer_config, files_or_directories):
         # If we're debugging, print out the match text.
         # This option is useful when we're building our importer configuration,
         # to figure out which patterns to create as unique signatures.
@@ -273,7 +243,7 @@ def run_importer_loop(importer_config,
 
         # Import and process the file.
         new_entries, duplicate_entries = import_file_and_process(filename,
-                                                                 matches,
+                                                                 importers,
                                                                  entries,
                                                                  mindate)
         if new_entries is None:
@@ -282,11 +252,11 @@ def run_importer_loop(importer_config,
 
         # Print the filename and which modules matched.
         trace('\n\n**** {}'.format(filename))
-        if matches:
+        if importers:
             trace('')
-        for module, module_config in matches:
-            trace('  Importer: {}'.format(module.__name__ if module else '-'))
-            trace(textwrap.indent(pformat(module_config), '    '))
+        for importer in importers:
+            trace('  Importer: {}'.format(importer.__class__.__name__ if importer else '-'))
+            trace(textwrap.indent(pformat(importer.config), '    '))
             trace('')
 
         # Print out the entries.

@@ -8,6 +8,7 @@ import re
 import datetime
 import collections
 
+from beancount.imports import importer
 from beancount.core import data
 from beancount.core.amount import Decimal, Amount
 from beancount.core.account import accountify_dict
@@ -19,20 +20,21 @@ from beancount.core import flags
 from beancount.utils import csv_utils
 
 
-CONFIG = {
-    'FILE'     : 'Account for filing',
-    'asset'    : 'Account holding the cash margin',
-    'interest' : 'Interest income',
-    'pnl'      : 'PnL income',
-    'transfer' : 'Other account for wire transfers',
-    'limbo'    : "Account used to book against transfer where we don't know",
-    'fees'     : 'Wire and API fees',
-}
+class Importer(importer.ImporterBase):
 
+    REQUIRED_CONFIG = {
+        'FILE'     : 'Account for filing',
+        'asset'    : 'Account holding the cash margin',
+        'interest' : 'Interest income',
+        'pnl'      : 'PnL income',
+        'transfer' : 'Other account for wire transfers',
+        'limbo'    : "Account used to book against transfer where we don't know",
+        'fees'     : 'Wire and API fees',
+    }
 
-def import_file(filename, config):
-    config = accountify_dict(config)
-    return import_csv_file(filename, config)
+    def import_file(self, filename):
+        config = self.get_accountified_config()
+        return import_csv_file(filename, config)
 
 
 IGNORE_TRANSACTIONS = """

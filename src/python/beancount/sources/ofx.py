@@ -11,6 +11,7 @@ import re
 import datetime
 import bs4
 
+from beancount.imports import importer
 from beancount.core import data
 from beancount.core.amount import Decimal
 from beancount.core.data import Posting, Transaction
@@ -19,88 +20,90 @@ from beancount.core.account import accountify_dict
 from beancount.core import flags
 
 
-CONFIG = {
-    'FILE'   : 'Account for filing',
-    'asset'  : 'Cash or credit card account',
-    'acctid' : 'The ACCTID in the OFX file that we need to import',
-}
+class Importer(importer.ImporterBase):
+
+    REQUIRED_CONFIG = {
+        'FILE'   : 'Account for filing',
+        'asset'  : 'Cash or credit card account',
+        'acctid' : 'The ACCTID in the OFX file that we need to import',
+    }
 
 
-def import_file(filename, config):
-    """Extract transaction info from the given OFX file into transactions for the
-    given account. This function returns a list of entries possibly partially
-    filled entries.
-    """
-    config = accountify_dict(config)
+    def import_file(self, filename):
+        """Extract transaction info from the given OFX file into transactions for the
+        given account. This function returns a list of entries possibly partially
+        filled entries.
+        """
+        config = self.get_accountified_config()
 
-    # Attempt to get an account from the ledger entries.
-    account_asset = config['asset']
+        # Attempt to get an account from the ledger entries.
+        account_asset = config['asset']
 
-    new_entries = []
+        new_entries = []
 
-    # Parse the XML file.
-    soup = bs4.BeautifulSoup(open(filename), 'lxml')
+        # Parse the XML file.
+        soup = bs4.BeautifulSoup(open(filename), 'lxml')
 
-    # For each statement.
-    txn_counter = itertools.count()
-    first_currency = None
-    for stmtrs in soup.find_all(re.compile('.*stmtrs$')):
-        # account_typee = st.find('accttype').text.strip()
-        # bank_id = st.find('bankid').text.strip()
+        # For each statement.
+        txn_counter = itertools.count()
+        first_currency = None
+        for stmtrs in soup.find_all(re.compile('.*stmtrs$')):
+            # account_typee = st.find('accttype').text.strip()
+            # bank_id = st.find('bankid').text.strip()
 
-        # For each currency.
-        for currency_node in stmtrs.find_all('curdef'):
-            currency = currency_node.contents[0].strip()
-            if first_currency is None:
-                first_currency = currency
+            # For each currency.
+            for currency_node in stmtrs.find_all('curdef'):
+                currency = currency_node.contents[0].strip()
+                if first_currency is None:
+                    first_currency = currency
 
-            # Extract account information; skip if this is not the one we are
-            # asked to import.
-            acctid = ofx_get_account(stmtrs)
-            if acctid != config['acctid']:
-                continue
+                # Extract account information; skip if this is not the one we are
+                # asked to import.
+                acctid = ofx_get_account(stmtrs)
+                if acctid != config['acctid']:
+                    continue
 
-            # Process all regular or credit-card transaction lists.
-            for tranlist in stmtrs.find_all(re.compile('(|bank|cc)tranlist')):
+                # Process all regular or credit-card transaction lists.
+                for tranlist in stmtrs.find_all(re.compile('(|bank|cc)tranlist')):
 
-                # Process the transactions from that list.
-                for stmttrn in tranlist.find_all('stmttrn'):
+                    # Process the transactions from that list.
+                    for stmttrn in tranlist.find_all('stmttrn'):
 
-                    # Build the transaction.
-                    date = parse_ofx_time(soup_get(stmttrn, 'dtposted')).date()
-                    fileloc = data.FileLocation(filename, next(txn_counter))
-                    payee = None
+                        # Build the transaction.
+                        date = parse_ofx_time(soup_get(stmttrn, 'dtposted')).date()
+                        fileloc = data.FileLocation(filename, next(txn_counter))
+                        payee = None
 
-                    narration_fields = ['name', 'memo']
-                    if stmtrs.name != 'ccstmtrs':
-                        narration_fields.insert(0, 'trntype')
+                        narration_fields = ['name', 'memo']
+                        if stmtrs.name != 'ccstmtrs':
+                            narration_fields.insert(0, 'trntype')
 
-                    # Get field values and remove fields that aren't useful.
-                    field_values = [soup_get(stmttrn, x) for x in narration_fields]
-                    if field_values[0] in ('DEBIT', 'CREDIT'):
-                        field_values.pop(0)
+                        # Get field values and remove fields that aren't useful.
+                        field_values = [soup_get(stmttrn, x) for x in narration_fields]
+                        if field_values[0] in ('DEBIT', 'CREDIT'):
+                            field_values.pop(0)
 
-                    narration = ' / '.join(filter(None, field_values))
-                    entry = Transaction(fileloc, date, flags.FLAG_IMPORT, payee, narration, None, None, [])
+                        narration = ' / '.join(filter(None, field_values))
+                        entry = Transaction(fileloc, date, flags.FLAG_IMPORT, payee, narration, None, None, [])
 
-                    # Create a posting for it.
-                    position = Position(Lot(currency, None, None), soup_get(stmttrn, 'trnamt', Decimal))
-                    entry.postings.append(Posting(entry, account_asset, position, None, None))
+                        # Create a posting for it.
+                        position = Position(Lot(currency, None, None), soup_get(stmttrn, 'trnamt', Decimal))
+                        entry.postings.append(Posting(entry, account_asset, position, None, None))
 
-                    new_entries.append(entry)
+                        new_entries.append(entry)
 
-    # Extract balance.
-    ledgerbal = soup.find('ledgerbal')
-    if ledgerbal:
-        balamt = soup_get(ledgerbal, 'balamt', Decimal)
-        dtasof = soup_get(ledgerbal, 'dtasof', parse_ofx_time).date()
-        fileloc = data.FileLocation(filename, next(txn_counter))
-        balance_entry = data.Check(fileloc, dtasof, account_asset,
-                                   data.Amount(balamt, first_currency), None)
-        new_entries.append(balance_entry)
+        # Extract balance.
+        ledgerbal = soup.find('ledgerbal')
+        if ledgerbal:
+            balamt = soup_get(ledgerbal, 'balamt', Decimal)
+            dtasof = soup_get(ledgerbal, 'dtasof', parse_ofx_time).date()
+            fileloc = data.FileLocation(filename, next(txn_counter))
+            balance_entry = data.Check(fileloc, dtasof, account_asset,
+                                       data.Amount(balamt, first_currency), None)
+            new_entries.append(balance_entry)
 
-    new_entries.sort(key=lambda entry: entry.date)
-    return new_entries
+        new_entries.sort(key=lambda entry: entry.date)
+        return new_entries
 
 
 def import_date(filename, match_text):

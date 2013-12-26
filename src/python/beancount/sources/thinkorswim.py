@@ -8,6 +8,7 @@ import re
 import itertools
 import datetime
 
+from beancount.imports import importer
 from beancount.core import data
 from beancount.core.amount import to_decimal, Decimal, Amount, ZERO
 from beancount.core.account import account_from_name
@@ -20,44 +21,45 @@ from beancount.core.account import accountify_dict
 from beancount.core import flags
 
 
-CONFIG = {
-    'FILE'               : 'Account for filing',
-    'cash_currency'      : 'Currency used for cash account',
-    'asset_cash'         : 'Cash account',
-    'asset_money_market' : 'Money market account associated with this account',
-    'asset_forex'        : 'Retail foreign exchange trading account',
-    'asset_position'     : 'Root account for all position sub-accounts',
-    'fees'               : 'Fees',
-    'commission'         : 'Commissions',
-    'interest'           : 'Interest income',
-    'dividend_nontax'    : 'Non-taxable dividend income',
-    'dividend'           : 'Taxable dividend income',
-    'pnl'                : 'Capital Gains/Losses',
-    'transfer'           : 'Other account for inter-bank transfers',
-    'third_party'        : 'Other account for third-party transfers (wires)',
-    'adjustment'         : 'Opening balances account, used to make transfer when you opt-in',
-}
+class Importer(importer.ImporterBase):
 
+    REQUIRED_CONFIG = {
+        'FILE'               : 'Account for filing',
+        'cash_currency'      : 'Currency used for cash account',
+        'asset_cash'         : 'Cash account',
+        'asset_money_market' : 'Money market account associated with this account',
+        'asset_forex'        : 'Retail foreign exchange trading account',
+        'asset_position'     : 'Root account for all position sub-accounts',
+        'fees'               : 'Fees',
+        'commission'         : 'Commissions',
+        'interest'           : 'Interest income',
+        'dividend_nontax'    : 'Non-taxable dividend income',
+        'dividend'           : 'Taxable dividend income',
+        'pnl'                : 'Capital Gains/Losses',
+        'transfer'           : 'Other account for inter-bank transfers',
+        'third_party'        : 'Other account for third-party transfers (wires)',
+        'adjustment'         : 'Opening balances account, used to make transfer when you opt-in',
+    }
 
-def import_file(filename, config):
-    """Import a CSV file from Think-or-Swim."""
+    def import_file(self, filename):
+        """Import a CSV file from Think-or-Swim."""
 
-    config = accountify_dict(config)
-    sections = csv_utils.csv_split_sections(csv.reader(open(filename)))
-    if 0:
-        for section_name, rows in sections.items():
-            if re.search(r'\bSummary\b', section_name):
-                continue
-            print('============================================================', section_name)
-            if not rows:
-                continue
-            irows = iter(rows)
-            Tuple = csv_utils.csv_parse_header(next(irows))
-            for row in irows:
-                obj = Tuple(*row)
-                print(obj)
+        config = self.get_accountified_config()
+        sections = csv_utils.csv_split_sections(csv.reader(open(filename)))
+        if 0:
+            for section_name, rows in sections.items():
+                if re.search(r'\bSummary\b', section_name):
+                    continue
+                print('============================================================', section_name)
+                if not rows:
+                    continue
+                irows = iter(rows)
+                Tuple = csv_utils.csv_parse_header(next(irows))
+                for row in irows:
+                    obj = Tuple(*row)
+                    print(obj)
 
-    return process_cash(sections['Cash Balance'], filename, config)
+        return process_cash(sections['Cash Balance'], filename, config)
 
 
 def process_cash(section, filename, config):

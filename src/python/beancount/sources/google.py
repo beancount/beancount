@@ -3,17 +3,16 @@
 import re
 import datetime
 
-
-CONFIG = {
-    'FILE'               : 'Account for filing',
-}
+from beancount.imports import importer
 
 
-def import_file(filename, module_config):
-    return None
+class Importer(importer.ImporterBase):
 
+    REQUIRED_CONFIG = {
+        'FILE'               : 'Account for filing',
+    }
 
-def import_date(filename, match_text):
-    mo = re.search('Contents:.*Pay Date.+?(\d\d)/(\d\d)/(\d\d\d\d)', match_text, re.DOTALL)
-    if mo:
-        return datetime.date(*map(int, mo.group(3,1,2)))
+    def import_date(self, filename, match_text):
+        mo = re.search('Contents:.*Pay Date.+?(\d\d)/(\d\d)/(\d\d\d\d)', match_text, re.DOTALL)
+        if mo:
+            return datetime.date(*map(int, mo.group(3,1,2)))

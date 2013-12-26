@@ -67,12 +67,14 @@ def import_with_options(importer_config, opts):
     This function allows you to create a new import script in a single line.
 
     Args:
-      importer_config: A configuration object that is used to match files and
-                       perform the import proces.
-
+      importer_config: A list of (regexps, importer) pairs, that are used to match
+                       files and perform the import process. In each element,
+                       regexps is a tuple of strings, all of which have to match
+                       a text version of the contents of the file. importer is
+                       one of the importer objects from beancount.sources, or
+                       your own.
       opts: An object with the parsed attributes defined on create_parser.
             (You get this by calling parser.parse_arg()).
-
     Returns:
       Nothing, but the output is sent to stdout (if not overridden by the user's
       command-line options).
@@ -112,22 +114,6 @@ def import_with_options(importer_config, opts):
                                   opts.mindate, opts.dry_run, opts.debug)
 
 
-def load_module_attribute(filename, attribute_name='CONFIG'):
-    """Load the user configuration file and extract a configuration object.
-
-    This can be used to execute a file as Python and get a particular attribute
-    from it. This can be used to load up a file with an importer configuration
-    object embedded in it.
-    """
-    code = compile(open(filename).read(), filename, 'exec')
-    config_env = {}
-    exec(code, globals(), config_env)
-    config = config_env[attribute_name]
-    assert isinstance(config, list)
-    assert all(isinstance(element, (tuple, list)) for element in config)
-    return config
-
-
 def import_main(importer_config,
                 beancount_file=None,
                 files_or_directories=None):
@@ -148,7 +134,6 @@ def import_main(importer_config,
       importer_config: See import_with_options().
       beancount_file: See create_parser().
       files_or_directories: See create_parser().
-
     Returns:
       Nothing, but it outputs the imported list of entries to the specified
       output file (stdout by default).
