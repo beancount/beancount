@@ -1,0 +1,8 @@
+This directory contains the documentation for Beancount.
+
+- users-manual.org: A manual for regular users.
+
+- design-doc.org: Documentation of the internal design choices, intended for
+  developers (not users).
+
+- cheatsheet.org: reference sheet for Beancount.
