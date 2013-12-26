@@ -715,9 +715,12 @@ def trades():
 @viewapp.route('/documents', name='documents')
 def documents():
     "Render a tree with all the documents found."
-    document_entries = utils.filter_type(request.view.entries, Document)
+    document_entries = list(utils.filter_type(request.view.entries, Document))
     oss = io.StringIO()
-    journal.entries_table(app, oss, document_entries)
+    if document_entries:
+        journal.entries_table(app, oss, document_entries)
+    else:
+      oss.write("(No documents.)")
     return render_view(
         pagetitle = "Documents",
         contents = oss.getvalue())
