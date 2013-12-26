@@ -15,24 +15,170 @@ using multiples currencies works elegantly.
 
 * Motivation
 
-problems with gnucash (UI difficult, buggy) or other commercial software (closed file formats,
-deprecating software)
+A bookkeeping system provides conditions for a solution that involves a simple
+computer language for many reasons.
 
-systems like Mint.com (cannot possibly encompass the totality of your accounts
-and transactions).
+Single-entry bookkeeping is largely insufficient if you're trying to track
+everything holistically. Existing systems either limit themselves to expense
+categories with little checking beyond "reconciling" which sometimes involves
+freezing the past. If you're not doign the bookkeeping for a company, sometimes
+just changing the past and fixing the mistakes where they occurred makes more
+sense. More importantly, the single-entry mthod leaves us wanting for the
+natural error-checking mechanism involved in the double-entry system.
+
+The problem is also not solvable elegantly by using spreadsheets; the simple
+data structure that forms the basis of the double-entry system infers either a
+very sparse spreadsheet with accounts on one dimension and transactions on the
+other. For real-world usage, this is impractical. Another iteration on this
+theme would involve inserting the postings with two columns, one with the
+account and one with the amount, but the varying number of columns and the
+lookup code makes this inelegant as well. Plus, it's not obvious how you would
+deal with a large number of currencies.
+
+Programs that provide fancy graphical or web-based user interfaces are
+inevitably awkward, due to the nature of the problem: each transaction is
+organized by viewing it through the lens of one account's journal, but any of
+the accounts present in its postings provide equally valid views. Ideally, what
+you want, is just to look at the transaction. Organizing them for most
+convenient input has little to do with the order in which they are to be
+presented. Using text has a lot of advantages:
+
+- You can easily used search-and-replace and/or sed to make global changes, for
+  example, rename or reorganize your accounts;
+
+- You can organize the transactions in the order that is most convenient for
+  data entry;
+
+- There are a number of existing tools to search the text;
+
+- You can easily write various little tools to spit out the data syntax, i.e.,
+  for importing from other file types, or converting from other systems.
+
+- Text is inherently *open*, that is the file format is one that you can read
+  your data from and store anywhere else, not a binary blob that becomes
+  obsolete when the company that makes the software stops supporting it.
+
+Finally, systems that attempt to autoamte the process of importing all your data
+from automated sources (e.g., mint.com) have one major shortfall: most often
+it's not very easy to add information for accounts that aren't automated. It is
+my experience that in practice you will have some entries and account to track
+that will not have a nice downloadable file format, or that simply don't have a
+real-world counterpart. In order to produce a complete view of one's balance
+sheet, it is important to be able to enter all of an individual's account within
+a single system. In other words, custom accounts and manually entered
+transactions do matter a lot.
+
+FIXME continue this
 
 
 ** File Format or Input Language?
 
+Now, one may wonder where this is a computer language or a data format. After
+all, the problem we're trying to solve is essentially that of creating a
+transactions to postings to accounts data structure.
+
+One should ask: what is the difference between a data file format and a
+simple declarative computer language? I think the distinction is made by who is
+the intended writer of this file; is it a human? or is it a computer?
+If the intended writer is a human, I file the format under the computer
+language rubric.
+
+The thing is, ledger files are meant to be manicured by a human, at least
+briefly eyeballed. While we are trying to automate as much of this process as
+possible--well, the unpleasant bits, anyway--we do want to insure that we
+review all the new transactions that we're adding to the ledger in order to
+ensure correctness.
+
 
 ** Credits & History
 
-Ledger
+John Wiegley's Ledger was the inspiration for the first version of Beancount.
+His system is where much of the original ideas came from. When I first learned
+about double-entry bookkeeping and realized that it could be the perfect method
+to solve many of the tracking problems I was having, and after a quick
+disappointment in the solutions that were available at the time (including
+Gnucash, which at the time I could break very easily), I was quickly led to the
+Ledger website. There, John laid out his vision for a text-based system, in
+particular, the idea of doing away with credits and debits and just the signs,
+and the basics of the convenient input syntax which allows you to omit the
+amount of one of the postings. I got really excited and had various enthusiastic
+discussions with him about his system and how I wanted to use it. There was some
+cross-pollination of ideas and John was very receptive to ideas for adding new
+features.
 
+I was so intensely curious about bookkeeping that I began writing a Python
+interface to Ledger. In the end I found myself rewriting the entire thing in
+Python--not for dislike of Ledger but rather because it was simple enough that I
+could do most of it in little time. One reason for doing so was that instead of
+parsing the input file every time and generate one report to the console, I
+would parse it once and then serve the various reports from the in-memory
+database of transactions, requested via a web page. Therefore, I did not need
+processing speed, so having to use C++ for performance reasons was not necessary
+anymore, and I chose to just stick with a dynamic language, which allowed me to
+add many features quickly. This became Beancount version 1, which stood on its
+own and evolved its own set of experimental features.
+
+My dream was to be able to quickly and easily manipulate these transaction
+objects to get various views and breakdowns of the data. I don't think the first
+implementation pushed the limits far enough, however; the code was substandard,
+to be honest--I wrote it quickly--and making modifications to the system was
+awkward. In particular, the way I originally implemented the tracking of capital
+gains was inelegant and involved some manual counting. I was somewhat unhappy
+with this, but it worked. It was also using ugly ad-hoc parser code in order to
+remain reasonably compatible with Ledger syntax--I thought it would be
+interesting to be able to share some common input syntax and use either system
+for validation and maybe even to convert between them--and that made me weary of
+making modifications to the syntax to evolve new features, so it stabilized for
+a few years and I lost interest in adding new features.
+
+But it was correct and it worked, mostly, so I used the system continuously from
+2008 to 2013 to manage my own personal finances, my company's finances, and
+joint property with my wife, in all the transaction detail; this was great. In
+the summer of 2013, I had an epiphany and realized a correct and generalizable
+way to implement capital gains, basically how to track positions held at a cost
+and a set of simple rules for carrying out operations on them sensibly. I also
+saw a better way to factor out the internal data structures, and decided to
+break from the constraint of compatibility with Ledger and redesign the input
+syntax in order to parse the input language using a lex/yacc generator, which
+would allow me to easily evolve the input syntax without having to deal with
+parsing issues, and to create ports to other languages more easily. In the
+process, a much simpler and more consistent syntax emerged, and in a fit of
+sweat and a few intense weekends I made re-implemented the entire thing from
+scratch, without even looking at the previous version, clean-room. Beancount
+version 2 was born, much better than th elast.
+
+The result is what I think is an elegant design involving a small set of
+objects, a design that could easily be replicated in other computer languages.
+This is described in the accompanying design doc, for those who would have an
+interest in making a rewrite in another language (this would be welcome). While
+Ledger is a fascinating project ebullient with complex ideas for expressing the
+problem of bookkeeping, Beancount proposes a minimally simple design that leaves
+out any feature that is not strictly necessary and aims at maximum usability
+through a simple web interface and barely any command-line options.
+
+Since I had more than 5 years worth of real-world usage experience with the
+first version, I set as a goal to remove all the features that I thought weren't
+actually useful and introduced unnecessary complexity (like virtual
+transactions, accounts not in the five groups, etc.), and to simplify the system
+as much as possible without compromising on its usability. The result was a much
+simpler to use and understand language and software, and the resulting data
+structures and very simpler to use, the processing more functional in nature,
+and the internals of Beancount are very modular.
+
+I separated out configuration directives used for importing and figured out a
+much more elegant way to automate imports and automatically detect the various
+input files and convert them into my input syntax. I also converted all my 6
+years' worth of input data--thanks to some very simple Python scripts to
+manipulate the file--and began using the new version exclusively. It is now in a
+fully functional state, but I may have to complete some documentation and
+examples. [2013-12-25]
 
 
 * Getting Started
 ** Establishing your Chart of Accounts and Balance Sheet
+
+FIXME continue here
+
 
 ** Checking the Validity of Your Ledger File
 

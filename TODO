@@ -67,10 +67,6 @@ beancount: TODO
 
 * Current
 
-  - Make importers as objects, and import file should have instances, rather
-    than this module + config file; they really ought to be classes, this would
-    be better documented for people who want to add importers.
-
   - Begin user documentation in earnest; we really need this soon.
   - Complete example file with income statement transactions.
   - Complete import example file.
@@ -97,8 +93,7 @@ and is really used for long-term accounting. This one is the „inspirational“
 one, to make people say „I would like to do that!“.
 
 
-  - Rename check -> assert/balance (to avoid confusion on the term)
-  - Rename event -> register(?) (better meaning)
+  - Rename check -> balance (to avoid confusion on the term)
 
 
   - beancount: GREAT IDEA: output a subset of transactions as a spreadsheet. You
