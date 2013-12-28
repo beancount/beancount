@@ -47,7 +47,7 @@ class ImporterBase:
         Returns:
           A dict of the accountified config.
         """
-        return accountify_dict(config)
+        return accountify_dict(self.config)
 
     def file_rename(self, filename):
         """A filter that optionally renames a file before filing.

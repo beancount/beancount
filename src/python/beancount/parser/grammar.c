@@ -145,7 +145,7 @@ extern int yydebug;
     SLASH = 270,
     FLAG = 271,
     TXN = 272,
-    CHECK = 273,
+    BALANCE = 273,
     OPEN = 274,
     CLOSE = 275,
     PAD = 276,
@@ -506,12 +506,12 @@ static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "ERROR", "INDENT", "EOL", "COMMENT",
   "SKIPPED", "PIPE", "ATAT", "AT", "LCURL", "RCURL", "EQUAL", "COMMA",
-  "SLASH", "FLAG", "TXN", "CHECK", "OPEN", "CLOSE", "PAD", "EVENT",
+  "SLASH", "FLAG", "TXN", "BALANCE", "OPEN", "CLOSE", "PAD", "EVENT",
   "PRICE", "NOTE", "DOCUMENT", "PUSHTAG", "POPTAG", "OPTION", "DATE",
   "ACCOUNT", "CURRENCY", "STRING", "NUMBER", "TAG", "LINK", "$accept",
   "empty", "txn", "eol", "empty_line", "tags_list", "links_list",
   "transaction", "optflag", "posting", "posting_list", "currency_list",
-  "pushtag", "poptag", "open", "close", "pad", "check", "amount",
+  "pushtag", "poptag", "open", "close", "pad", "balance", "amount",
   "position", "lot_cost_date", "price", "event", "note", "filename",
   "document", "entry", "option", "directive", "declarations", "file", YY_NULL
 };
@@ -1651,7 +1651,7 @@ yyreduce:
   case 34:
 #line 279 "src/python/beancount/parser/grammar.y" /* yacc.c:1646  */
     {
-          (yyval.pyobj) = BUILD("check", "siOOO", FILE_LINE_ARGS, (yyvsp[-4].pyobj), (yyvsp[-2].pyobj), (yyvsp[-1].pyobj));
+          (yyval.pyobj) = BUILD("balance", "siOOO", FILE_LINE_ARGS, (yyvsp[-4].pyobj), (yyvsp[-2].pyobj), (yyvsp[-1].pyobj));
           DECREF3((yyvsp[-4].pyobj), (yyvsp[-2].pyobj), (yyvsp[-1].pyobj));
       }
 #line 1658 "src/python/beancount/parser/grammar.c" /* yacc.c:1646  */
@@ -2056,7 +2056,7 @@ const char* getTokenName(int token)
         case SLASH    : return "SLASH";
         case FLAG     : return "FLAG";
         case TXN      : return "TXN";
-        case CHECK    : return "CHECK";
+        case BALANCE  : return "BALANCE";
         case OPEN     : return "OPEN";
         case CLOSE    : return "CLOSE";
         case PAD      : return "PAD";

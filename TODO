@@ -67,6 +67,8 @@ beancount: TODO
 
 * Current
 
+  - If import fails to output transactions for a file, don't write a marker.
+
   - Begin user documentation in earnest; we really need this soon.
   - Complete example file with income statement transactions.
   - Complete import example file.

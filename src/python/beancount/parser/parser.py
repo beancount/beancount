@@ -344,7 +344,7 @@ class Builder(object):
         fileloc = FileLocation(filename, lineno)
         return Pad(fileloc, date, account, account_pad)
 
-    def check(self, filename, lineno, date, account, amount):
+    def balance(self, filename, lineno, date, account, amount):
         """Process an assertion directive.
 
         We produce no errors here by default. We replace the failing ones in the

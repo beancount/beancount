@@ -81,7 +81,7 @@ const char* getTokenName(int token);
 %token <string> SLASH      /* / */
 %token <character> FLAG    /* Valid characters for flags */
 %token TXN                 /* 'txn' keyword */
-%token CHECK               /* 'check' keyword */
+%token BALANCE             /* 'balance' keyword */
 %token OPEN                /* 'open' keyword */
 %token CLOSE               /* 'close' keyword */
 %token PAD                 /* 'pad' keyword */
@@ -109,7 +109,7 @@ const char* getTokenName(int token);
 %type <pyobj> currency_list
 %type <pyobj> open
 %type <pyobj> close
-%type <pyobj> check
+%type <pyobj> balance
 %type <pyobj> pad
 %type <pyobj> amount
 %type <pyobj> position
@@ -275,9 +275,9 @@ pad : DATE PAD ACCOUNT ACCOUNT eol
         DECREF3($1, $3, $4);
     }
 
-check : DATE CHECK ACCOUNT amount eol
+balance : DATE BALANCE ACCOUNT amount eol
       {
-          $$ = BUILD("check", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
+          $$ = BUILD("balance", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
           DECREF3($1, $3, $4);
       }
 
@@ -338,7 +338,7 @@ document : DATE DOCUMENT ACCOUNT filename eol
       }
 
 entry : transaction
-      | check
+      | balance
       | open
       | close
       | pad
@@ -411,7 +411,7 @@ const char* getTokenName(int token)
         case SLASH    : return "SLASH";
         case FLAG     : return "FLAG";
         case TXN      : return "TXN";
-        case CHECK    : return "CHECK";
+        case BALANCE  : return "BALANCE";
         case OPEN     : return "OPEN";
         case CLOSE    : return "CLOSE";
         case PAD      : return "PAD";

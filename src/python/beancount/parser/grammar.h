@@ -60,7 +60,7 @@ extern int yydebug;
     SLASH = 270,
     FLAG = 271,
     TXN = 272,
-    CHECK = 273,
+    BALANCE = 273,
     OPEN = 274,
     CLOSE = 275,
     PAD = 276,
