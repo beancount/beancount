@@ -1,19 +1,21 @@
 Beancount User's Manual
 * Introduction
 
-This is a user's manual to Beancount, a double-entry bookkeeping system.
+This is a user's manual to Beancount, a double-entry bookkeeping system. In it,
+we introduce the basic princples of double-entry bookkeeping from first
+principles and go on to explain how to use Beancount to keep track of a ledger,
+as a professional accountant would..
 
-Beancount works by providing a computer language that allows you to enter all
-your transactions in a text file and provides a web interface that renders
-mainly a balance sheet and income statement for various subsets of your
-transactions (views).
+Beancount provides a computer language that allows you to enter all your
+transactions in a text file and a web interface that renders, a balance sheet,
+an income statement, and more, for various subsets of your transactions (views).
+It works with an any and multiple currencies and even allows you to track
+unusual things, like vacation hours, airmiles and rewards points, and anything
+else, really.
 
-It works with an any currency and even allows you to track unusual things, like
-vacation hours, airmiles and rewards points, and anything else, really.
-Beancount does not know or care about any specific currencies out-of-the-box and
-using multiples currencies works elegantly.
 
 * Motivation
+** Why build a computer language?
 
 A bookkeeping system provides conditions for a solution that involves a simple
 computer language for many reasons.
@@ -58,7 +60,7 @@ presented. Using text has a lot of advantages:
   your data from and store anywhere else, not a binary blob that becomes
   obsolete when the company that makes the software stops supporting it.
 
-Finally, systems that attempt to autoamte the process of importing all your data
+Finally, systems that attempt to automate the process of importing all your data
 from automated sources (e.g., mint.com) have one major shortfall: most often
 it's not very easy to add information for accounts that aren't automated. It is
 my experience that in practice you will have some entries and account to track
@@ -68,7 +70,16 @@ sheet, it is important to be able to enter all of an individual's account within
 a single system. In other words, custom accounts and manually entered
 transactions do matter a lot.
 
-FIXME continue this
+For all the reasons mentioned above, we feel that a computer language is more
+appropriate to express this data structure than a heavy piece of software with a
+customized interface. Being able to easily bring up a text file and quickly type
+in a few lines of text to add a transaction is great--it's fast and easy. The
+ledger file provides a naturally open way to express one's data, and can be
+source-controlled or shared between people as well. Multiple files can be merged
+together, and scripted manipulations on a source file can be used to reorganize
+one's data history. Furthermore, a read-only web interface that presents the
+various reports one expects and allows the user to explore different views on
+the dataset is sufficient for the purpose of viewing the data.
 
 
 ** File Format or Input Language?
@@ -150,29 +161,509 @@ version 2 was born, much better than th elast.
 The result is what I think is an elegant design involving a small set of
 objects, a design that could easily be replicated in other computer languages.
 This is described in the accompanying design doc, for those who would have an
-interest in making a rewrite in another language (this would be welcome). While
-Ledger is a fascinating project ebullient with complex ideas for expressing the
-problem of bookkeeping, Beancount proposes a minimally simple design that leaves
-out any feature that is not strictly necessary and aims at maximum usability
-through a simple web interface and barely any command-line options.
+interest in making a rewrite (this would be welcome). While Ledger is a
+fascinating project ebullient with complex ideas for expressing the problem of
+bookkeeping, the second version of Beancount proposes a minimally simple design
+that leaves out any feature that is not strictly necessary and aims at maximum
+usability through a simple web interface and barely any command-line options.
+Ledger's syntax implements many powerful features that trigger a lot of
+implicitly-defined behaviour; in contrast, Beancount's design provides a less
+expressive, lower-level syntax but one that closely matches the generated
+in-memory data structure, and thus is perhaps more explicit in that way. I think
+both projects have strengths and weaknesses.
 
 Since I had more than 5 years worth of real-world usage experience with the
-first version, I set as a goal to remove all the features that I thought weren't
-actually useful and introduced unnecessary complexity (like virtual
+first version, I set myself a goal to remove all the features that I thought
+weren't actually useful and introduced unnecessary complexity (like virtual
 transactions, accounts not in the five groups, etc.), and to simplify the system
 as much as possible without compromising on its usability. The result was a much
 simpler to use and understand language and software, and the resulting data
-structures and very simpler to use, the processing more functional in nature,
-and the internals of Beancount are very modular.
+structures and very simple to use, the processing more functional in nature, and
+the internals of Beancount are very modular.
 
-I separated out configuration directives used for importing and figured out a
-much more elegant way to automate imports and automatically detect the various
-input files and convert them into my input syntax. I also converted all my 6
-years' worth of input data--thanks to some very simple Python scripts to
-manipulate the file--and began using the new version exclusively. It is now in a
-fully functional state, but I may have to complete some documentation and
-examples. [2013-12-25]
+I separated out configuration directives used for importing and over many
+iterations eventually figured out an elegant way to mostly automate imports and
+automatically detect the various input files and convert them into my input
+syntax. I also converted all my 6 years' worth of input data--thanks to some
+very simple Python scripts to manipulate the file--and began using the new
+version exclusively. It is now in a fully functional state, but I may have to
+complete some documentation and examples. [2013-12-25]
 
+
+* Double-Entry Bookkeeping
+** Bookkeeping vs. Accounting
+
+The system described here is a language for "bookkeeping." It is important to
+highlight where it fits in the various functions encompassed by the term
+"accounting."  Accounting could imply:
+
+- Tracking various assets, liabilities, incomes and expenses
+- Generating various aggregated reports of these accounts, such as balance
+  sheet, an income statement, an equity statement, and others.
+- Managing payroll cycles, and invoicing of clients
+- Calculating taxes and managing tax liabilities
+- Dealing with complex equity structures and/or distributions (beyond tracking
+  capital gains of equity investments)
+
+Surely, there is more. This software limits itself to the first two: it provides
+a way to track and count changes in various account types, and renders balaance
+sheets, income statements, and other reports. It is essentially little more than
+a fancy calculator that aggregates amounts in various buckets. The mechanics
+involved in this are generic enough to apply to any situation.
+
+In order to address the more specific scenarios required by the other functions
+of accounting, it provides access to a very simple data structure so you can
+write scripts to perform specialized tasks as required.
+
+
+** What is Double-Entry Bookkeeping?
+
+The double-entry system is a METHOD OF COUNTING. It is wonderfully simple, yet
+provides an intrinsic means of error checking a user's data entry, and naturally
+lends itself to producing reports that are consistent and sensible; this is
+probably why firms use this system all over the world. The only principle
+involved is that each change in an account has to be counter-balanced by an
+equivalent amount of changes in other accounts. Everything else, and I mean all
+the other principles involved, derive from that rule. In the following sections,
+we will attempt to explain this system from first principles.
+
+** Accounts Are Buckets that Count Things
+
+Let's begin with a basic introduction to what we'll call an "Account." An
+account is like a bucket that can contains "things," (let's call these things
+"Currencies"), and has a history of the changes in its contents. Picture an
+account as a vertical timeline, where time increases as you move down the line.
+For instance, let's define an Account to track the contents of a real-world
+bank checking account:
+
+    "Checking"
+        |
+        |
+        |
+        |
+        v
+
+We will draw the current contents of an account as a square box, which we'll
+call a "balance":
+
+    "Checking"
+        |
+   +------------+
+   | 743.23 USD |
+   +------------+
+        |
+        v
+
+The notation I've chosen above implies that the "Checking" account contains
+743.23 units of a thing I called "USD" (I implicitly mean a US dollar here, but
+Beancount support counting any kind of thing, really; let's stick with dollars
+for now, because we're all familiar with money).
+
+Every time there is a *change* in an account, we will picture that as a rounded
+box on its timeline:
+
+    "Checking"
+        |
+   +------------+
+   | 743.23 USD |
+   +------------+
+        |
+    ,----------.
+   ( -36.84 USD )
+    `----------'
+        |
+   +-------------+
+   | 706.39  USD |
+   +-------------+
+        |
+        v
+
+We call such a change a "Posting" on an account. Notice how the newer balance is
+the sum of a previous balance and postings in between them. An account opens
+with an empty balance, so can now assert that an account's balance is the sum of
+all its associated postings since it was opened.
+
+** Fundamental Principle of the Double-Entry System
+
+The principle of the double-entry system can be summarized succinctly:
+
+  "Any change in an account must be counterbalanced by an equivalent change in
+  other accounts."
+
+The way we implement this, is by grouping postings (changes) within another
+object which we will call a "Transaction":
+
+    "Checking"
+        |
+   +------------+
+   | 743.23 USD |
+   +------------+      .===================.
+        |             _|"Dinner with Sasha"|
+    ,----------.     / `==================='
+   ( -36.84 USD )___/
+    `----------'
+        |
+   +-------------+
+   | 706.39  USD |
+   +-------------+
+        |
+        v
+
+Now, let's complete the transaction to include one more leg with the inverse
+amount. We will declare another account, which we label "Restaurants," to
+contain this other posting:
+
+    "Checking"                                    "Restaurants"
+        |                                               |
+   +------------+                                       |
+   | 743.23 USD |                                       |
+   +------------+      .===================.            |
+        |             _|"Dinner with Sasha"|_           |
+    ,----------.     / `===================' \     ,----------.
+   ( -36.84 USD )___/                         \___( +36.84 USD )
+    `----------'                                   `----------'
+        |                                               |
+   +-------------+                                      |
+   | 706.39  USD |                                      |
+   +-------------+                                      v
+        |
+        v
+
+Now we have a Transaction that contains two Postings, and the sum of all
+postings is zero. Each change is counterbalanced by the other. If all changes in
+all accounts are to be inserted as part of Transactions, another way to state
+the fundamental principle of double-entry bookkeeping is:
+
+  "The sum of all changes in the postings of a transaction has to be zero."
+
+Beancount provides a way to enter such Transactions, and spits out errors when
+this fundamental rule is violated. An almost valid syntax to enter the set of
+changes above is:
+
+  2013-12-28 * "Dinner with Sasha"
+    Checking        -36.84 USD
+    Restaurants      36.84 USD
+
+Note that all transactions occur on a date. In actuality, Accounts must be
+placed in one of 5 categories, but that is really *only* used for organizing
+reports; this will be introduced in a bit. I want to emphasize this here:
+
+  All Accounts in Beancount work the same way: they just count things.
+  There is no difference between any account, any which way we label them.
+
+
+** The Structure of Transactions
+
+Transactions do not have to contain only two postings, they can contain as many
+as necessary. The princple does not change: the sum of all postings must equal
+zero. Let's assume in the Transaction above that a tip of 5 dollars was added
+to the bill, and that the bookkeeper wants to take account of these separately.
+We can easily add a new account for tips:
+
+    "Checking"                                    "Restaurants"       "Tips"
+        |                                               |               |
+   +------------+                                       |               |
+   | 743.23 USD |                                       |               |
+   +------------+      .===================.___________ | _________     |
+        |             ,|"Dinner with Sasha"|.           |          \    |
+    ,----------.     / `===================' \     ,----------.    ,----------.
+   ( -36.84 USD )___/                         \___( +31.84 USD )  (  +5.00 USD )
+    `----------'                                   `----------'    `----------'
+        |                                               |               |
+   +-------------+                               +-------------+   +-------------+
+   | 706.39  USD |                               |  31.84 USD  |   |   5.00 USD  |
+   +-------------+                               +-------------+   +-------------+
+        |                                               |               |
+        v                                               v               v
+
+Now this transaction has 3 legs:
+
+  2013-12-28 * "Dinner with Sasha"
+    Checking        -36.84 USD
+    Restaurants      31.84 USD
+    Tips              5.00 USD
+
+The sum is still zero.
+
+The Transaction is the fundamental data structure involved in Beancount, and 99%
+of all the directives you will write are Transaction entries.
+
+
+** Corollary of Balance Equilibrium
+
+FIXME
+sum of all is zero, so sum of balances is zeo
+
+
+
+
+** Account Types
+
+Accounts can be created in order to track a wide variety of things. Accounts
+will naturally be created for each "real world" account in various institutions,
+e.g, bank accounts, credit card accounts, mortgage loan accounts, but also
+virtual accounts for various kinds of expenses that you may have, e.g.
+restaurants, sports, travel, transport, car, gas, etc. and various sources of
+income, such as gross salary, taxable dividends, and deposit interest.
+
+Note that this is an important difference between this and the single-entry
+method: in a single-entry bookkeeping system, the counterpart of a posting in a
+real world account is simply an "Expense Category," and the process of
+integrating expenses reported from banks and credit card accounts only involve
+attaching a category to each posting. In a double-entry system, that "category"
+takes the for of an equivalently sized and opposite change in another account
+that corresponds to this category. You can then make changes between any type of
+account, not just real world accounts and categories, e.g., an intra-bank
+transfer would have two postings, both of which would be associate with a
+different Account corresponding to a real world account.
+
+The granularity with which you choose to aggregate your amounts is a personal
+choice. You can create as many Accounts are you need in Beancount, and they are
+generally organized in a hierarchy, where parent accounts contain subaccounts,
+recursively.
+
+Now, imagine that we have a created a lot of these different accounts, and that
+correspondingly, we have created a large number of Transaction objects to
+reflect the changes within all of these accounts.
+
+                           ...many many more...
+ "Checking" "Savings" "CreditCard" ... "Restaurants" "Tips" "Flights" "Salary"
+     |          |          |    ||||||||    |          |         |       |
+     |          |          |    ||||||||    |          |         |       |
+     |          |          |    ||||||||    |          |         |       |
+
+We will label each of the accounts with one of five types. The first two types
+of account are what we will call "balance sheet accounts," and they generally
+correspond to accounts in the real world, which have some sort of total balance
+that we care about:
+
+1. Assets
+2. Liablities
+
+The balance of asset accounts is generally a positive number (something you
+have), and the balance of a liability account generally negative (something you
+owe). There is a third kind of balance sheet account, whose role we will explain
+in detail later, in which you normally don't post transactions yourself:
+
+3. Equity
+
+The last two types of accounts are what we call "income statement accounts,"
+and they often do not corresponds to accounts in the real world, but rather
+to categories of changes that you are tracking, and are for transient changes,
+that is, the sum total balance of these accounts will not be very relevant. We
+will instead be interested in the sum total of changes that occur between two
+dates. They are:
+
+4. Income
+5. Expenses
+
+In summary, we have these five types of accounts:
+
+1. Assets
+2. Liabilities
+3. Equity
+4. Income
+5. Expenses
+
+In Beancount, any Account that you create must be of one of these types. The
+way this constraint is applied, is by enforcing that each account is declared
+as a subaccount of one of these root types. For example, the 7 accounts in the
+previous example would be declared as:
+
+  Assets:Checking
+  Assets:Savings
+  Liabilities:CreditCard
+  Expenses:Restaurants
+  Expenses:Tips
+  Expenses:Flights
+  Income:Salary
+
+This introduces the syntax of how we refer to accounts: many capitalized words
+separated by colons (:), where the first word is one of "Assets",
+"Liabilities", "Equity", "Income", or "Expenses".
+
+This is not optional; each of your accounts *must* live in one of those
+categories. (A previous version of Beancount had support for custom account
+roots, but this turned out to always be due to a mistake in how I was filing
+transactions, there was always a better way that did not involve a custom
+category; if you find yourself wanting for this kind of account, you're almost
+certainly making a mistake in how you're thinking about your transaction. If
+after trying really hard and consulting the "examples" section near the end of
+this document you're still not convinced, you might consider using Ledger, as
+Beancount enforces this on purpose and this will not change. We know custom
+categories to be entirely unnecessary.)
+
+Now, without loss of generality, we can reorder all the accounts that we
+declared by how they're labeled, like this:
+
+ "Assets"... "Liabilities"... "Equity"... "Income"... "Expenses"...
+  ..........  ..........       ......      ..........  ..........
+  ||||||||||  ||||||||||       ||||||      ||||||||||  ||||||||||
+  ||||||||||  ||||||||||       ||||||      ||||||||||  ||||||||||
+  ||||||||||  ||||||||||       ||||||      ||||||||||  ||||||||||
+
+     "A"         "L"            "E"           "I"         "X"
+
+Let's call the *sum* of all the balances at a specific date of all the "Assets"
+accounts "A". We can do that same for all the other categories, the sum of all
+the balances of all the accounts labeled "Expenses" is "X".
+
+Now, we're ready to start looking at equivalences and statements.
+
+** About the Signs
+
+FIXME
+explanation of income as negative sign, expenses as positie, etc.
+
+
+
+** Equivalences
+
+Because all the transactions are enforced to have a sum of 0, it follows that
+the sum of all the balances of all the accounts at a particular point in time
+is also 0. Therefore, if we lump the sums by account type, as in the previous
+section, we know that the sum of all the account type sums is 0:
+
+   A + L + E + I + X = 0
+
+Note here that because our system is not using debits and credits, and all the
+values are signed, we can simply sum all the account type sums. In other
+textbooks, liabilities and equity would be counted as positive numbers (with
+corresponding debits and credits craziness), and income as a positive number as
+well, and you would have:
+
+   A - L - E + I - X = 0
+
+It would get complicated. Let's stick with signed values.
+
+
+** Income Statement
+
+An "income statement" is a type of report that aggregates changes to accounts
+labeled "Income" or "Expenses" due to Transactions occurring from a cetain date
+to another date. It always applies to a period, which we sometimes call the
+"exercise period" or "reporting period" for a firm, or for an individual this is
+typically a calendar year, though a monthly report could be useful. Beancount
+can generate these reports for any period desired. They are laid out like this:
+
+   From: 2012-01-01 To: 2012-12-31
+   +--------------+---------------+
+   | Income       | Expenses      |
+   |              |               |
+   |              |               |
+   |              |               |
+   |              |               |
+   |              |               |
+   +--------------+---------------+
+   | = I          | = X           |
+   +--------------+---------------+
+   | = I-X                        |
+   +------------------------------+
+
+Changes in accounts before the beginning of the period are ignored; thus, you
+can imagine that all these accounts begin with a balance of zero at the
+beginning of the reporting period.
+
+The final line contains the sum of all incomes minus the sum of all expenses and
+is generally non-zero, because we're only considering changes in a subset of all
+accounts. This is "how much money remains" after the exercise is complete, and
+the origin of the expression: "the bottom line." In other words, this is what
+really matters, how much you get to keep. In the next section, this amount will
+be moved to a special account in the balance sheet report, called
+Equity:RetainedEarnings, via an automatically inserted transaction that "closes
+the year" by zeroing out the income statement accounts at the end of the period.
+
+
+** Balance Sheet
+
+A "balance sheet" is a type of report that provides a *snapshot* of the balances
+of all your accounts at a particular point in time. The report is usually laid
+out in this way:
+
+    As Of: 2013-01-01
+   +--------------+---------------+
+   | Assets       | Liabilities   |
+   |              |               |
+   |              |               |
+   |              |               |
+   |              |---------------|
+   |              | Equity        |
+   |              |               |
+   |              |               |
+   |              |               |
+   +--------------+---------------+
+
+Note that the Income and Expenses accounts do not show up on this report.
+
+
+
+
+ these Transaction objects, say,
+hundreds, or thousands, and that we have correspondingly open
+
+Now, for the purpose of reporting, and only for this purpose,
+
+
+
+
+explanation of signs
+
+
+
+
+
+
+journal view (or "register," in Ledger)
+analogy with bank statement wedged on top of the line
+
+
+
+(with balance directive detail)
+There is generally no balance directive used in income statement account.
+Emember how we're generally only interested in transient changes in these types
+of accounts. It makes little sense to consider the "sum total of all restaurant
+expenses since you were born." However, it makes sense to find out how much
+restaurant expenses were incurred in the *period* of the first three months of
+the year.
+
+
+
+
+costs, how it works, Inventory objects
+
+
+
+
+
+** About Debits and Credits, and Other Unnecessary Poo-poo
+
+If you already have some knowledge of accounting, you have probably noticed that
+we did not talk about credits and debits, and the types of accounts that you
+might be used to. This is on purpose:  Beancount does away with these
+complications in a clever way (which was introduced by John Wiegley's Ledger
+system):
+
+- In Beancount, Accounts are not labeled as "credit accounts" nor "debit
+  accounts"; we only have "accounts";
+
+- Postings to these accounts are also not labeled as "a credit", or "a debit,"
+  thought you might want to use this confusing terminology if you're already
+  used to it. In Beancount, debits to an account are simply negative numbers.
+
+For those unfamiliar with debits and credits, the idea was introduced to deal
+with the fact that we tend to think of amounts and changes in positive numbers.
+
+By doing away with the confusing terminology, the only impact is that we will
+now see that normal balances for liabilities, equity and income accounts, which
+we will introduce in a moment, are negative amounts. The burden of remembering
+this is much less on the mind than having to invert signs all over the place
+depending on the types of account a change is posted to.
+
+
+
+** Currencies
+
+come into being simply by using them (all caps)
 
 * Getting Started
 ** Establishing your Chart of Accounts and Balance Sheet
@@ -196,9 +687,36 @@ WHat are views
 
 
 
+* Sample Files
+** Hello World - Minimal Beancount file
+
+The absolute beancount file will involve a single transaction blablabla
+
+Bring up bean-web on minimal.beancount and try browsing the different reports
+generated in order to get a sense of where the data is going.
+
+
+
+
+* Example Transactions
+** A Word of Caution
+
+There are many many ways to do this
+
+Also, please keep in mind that I'm not a professional accountant.
+
+** Types...
+...
+
+many many many of each type
+
+
+
 * Updating your Ledger
 
 
 
 
 * Automating the Import Process
+
+
