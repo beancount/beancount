@@ -95,9 +95,6 @@ and is really used for long-term accounting. This one is the „inspirational“
 one, to make people say „I would like to do that!“.
 
 
-  - Rename check -> balance (to avoid confusion on the term)
-
-
   - beancount: GREAT IDEA: output a subset of transactions as a spreadsheet. You
     need to design a textual way to refer to a subset of transactions. Output in
     either directions, without currencies.
@@ -230,6 +227,9 @@ one, to make people say „I would like to do that!“.
     value specified actually matches an existing account from the list of
     entries.
 
+
+  - Remove the parsing of "CHECK" at some point, that was just there for
+    compatibility.
 
 * Core
 ** General

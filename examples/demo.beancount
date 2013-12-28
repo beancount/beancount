@@ -395,6 +395,10 @@ option "operating_currency" "USD"
 ;;   for capital gains while accounting for commissions and
 ;;   trade fees the correct way (they should get removed from the
 ;;   capital gains at both ends of a trade).
+;;
+;; - Note that the "185.40 USD" cost amount below refers to the
+;;   price PER UNIT of AAPL. If you wanted to provided a cost for
+;;   the full amount, you could use two brackets, e.g. {{185.40 USD}}.
 
 2008-01-08 * "Buy some Apple Computer"
   Assets:UTrade:Account:AAPL                     30 AAPL {185.40 USD}
