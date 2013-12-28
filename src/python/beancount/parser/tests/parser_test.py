@@ -37,14 +37,14 @@ class TestParserMisc(unittest.TestCase):
     """Test various functions."""
 
     def test_get_previous_accounts(self):
-        options = options.DEFAULT_OPTIONS.copy()
-        result = options.get_previous_accounts(options)
+        options_ = options.DEFAULT_OPTIONS.copy()
+        result = parser.get_previous_accounts(options_)
         self.assertEquals(3, len(result))
         self.assertTrue(all(isinstance(x, Account) for x in result))
 
     def test_get_current_accounts(self):
-        options = parser.DEFAULT_OPTIONS.copy()
-        result = parser.get_current_accounts(options)
+        options_ = options.DEFAULT_OPTIONS.copy()
+        result = parser.get_current_accounts(options_)
         self.assertEquals(2, len(result))
         self.assertTrue(all(isinstance(x, Account) for x in result))
 
