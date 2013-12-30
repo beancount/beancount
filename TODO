@@ -67,6 +67,14 @@ beancount: TODO
 
 * Current
 
+  - Do something about executable being named "bison3", check for the version in
+    setup.py instead, just call it as "bison".
+
+  - In rendering balance directives, don't render the amount in the "change"
+    column; that is too confusing for some users, keep the change column for
+    changes.
+
+
   - If import fails to output transactions for a file, don't write a marker.
 
   - Begin user documentation in earnest; we really need this soon.

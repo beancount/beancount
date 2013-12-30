@@ -720,3 +720,19 @@ many many many of each type
 * Automating the Import Process
 
 
+* TODO
+
+** Padding Directives
+
+- bring up an example of starting an account from scratch
+- then not from scratch, inserting a manual transaction
+- introduce "pad" for this
+- finally, provide an example of multiple missing statements, 
+  to justify that pad does not only get used once at the beginning
+
+** About Debits and Credits
+
+- provide examples for income, with buckets with man outline,
+  textual explanation
+- same for examples
+
