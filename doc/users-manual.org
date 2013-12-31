@@ -104,37 +104,38 @@ ensure correctness.
 ** Credits & History
 
 John Wiegley's Ledger was the inspiration for the first version of Beancount.
-His system is where much of the original ideas came from. When I first learned
-about double-entry bookkeeping and realized that it could be the perfect method
-to solve many of the tracking problems I was having, and after a quick
-disappointment in the solutions that were available at the time (including
-Gnucash, which at the time I could break very easily), I was quickly led to the
-Ledger website. There, John laid out his vision for a text-based system, in
-particular, the idea of doing away with credits and debits and just the signs,
-and the basics of the convenient input syntax which allows you to omit the
-amount of one of the postings. I got really excited and had various enthusiastic
-discussions with him about his system and how I wanted to use it. There was some
-cross-pollination of ideas and John was very receptive to ideas for adding new
-features.
+His system is where much of the original ideas for this system came from. When I
+first learned about double-entry bookkeeping and realized that it could be the
+perfect method to solve many of the tracking problems I was having in counting
+various installments for my company, and after a quick disappointment in the
+solutions that were available at the time (including GnuCash, which I could
+break very easily), I was quickly led to the Ledger website. There, John laid
+out his vision for a text-based system, in particular, the idea of doing away
+with credits and debits and just the signs, and the basics of a convenient input
+syntax which allows you to omit the amount of one of the postings. I got really
+excited and had various enthusiastic discussions with him about Ledger and how I
+wanted to use it. There was some cross-pollination of ideas and John was very
+receptive to proposals for adding new features.
 
 I was so intensely curious about bookkeeping that I began writing a Python
-interface to Ledger. In the end I found myself rewriting the entire thing in
+interface to Ledger. But in the end I found myself rewriting the entire thing in
 Python--not for dislike of Ledger but rather because it was simple enough that I
-could do most of it in little time. One reason for doing so was that instead of
-parsing the input file every time and generate one report to the console, I
-would parse it once and then serve the various reports from the in-memory
-database of transactions, requested via a web page. Therefore, I did not need
-processing speed, so having to use C++ for performance reasons was not necessary
-anymore, and I chose to just stick with a dynamic language, which allowed me to
-add many features quickly. This became Beancount version 1, which stood on its
-own and evolved its own set of experimental features.
+could do most of it in little time, and immediately add some features I thought
+would be useful. One reason for doing so was that instead of parsing the input
+file every time and generate one report to the console, I would parse it once
+and then serve the various reports from the in-memory database of transactions,
+requested via a web page. Therefore, I did not need processing speed, so having
+to use C++ for performance reasons was not necessary anymore, and I chose to
+just stick with a dynamic language, which allowed me to add many features
+quickly. This became Beancount version 1, which stood on its own and evolved its
+own set of experimental features.
 
 My dream was to be able to quickly and easily manipulate these transaction
 objects to get various views and breakdowns of the data. I don't think the first
 implementation pushed the limits far enough, however; the code was substandard,
-to be honest--I wrote it quickly--and making modifications to the system was
-awkward. In particular, the way I originally implemented the tracking of capital
-gains was inelegant and involved some manual counting. I was somewhat unhappy
+to be honest--I wrote it really quickly--and making modifications to the system
+was awkward. In particular, the way I originally implemented the tracking of
+capital gains was inelegant and involved some manual counting. I was unhappy
 with this, but it worked. It was also using ugly ad-hoc parser code in order to
 remain reasonably compatible with Ledger syntax--I thought it would be
 interesting to be able to share some common input syntax and use either system
@@ -144,33 +145,37 @@ a few years and I lost interest in adding new features.
 
 But it was correct and it worked, mostly, so I used the system continuously from
 2008 to 2013 to manage my own personal finances, my company's finances, and
-joint property with my wife, in all the transaction detail; this was great. In
-the summer of 2013, I had an epiphany and realized a correct and generalizable
-way to implement capital gains, basically how to track positions held at a cost
-and a set of simple rules for carrying out operations on them sensibly. I also
-saw a better way to factor out the internal data structures, and decided to
-break from the constraint of compatibility with Ledger and redesign the input
-syntax in order to parse the input language using a lex/yacc generator, which
-would allow me to easily evolve the input syntax without having to deal with
-parsing issues, and to create ports to other languages more easily. In the
-process, a much simpler and more consistent syntax emerged, and in a fit of
-sweat and a few intense weekends I made re-implemented the entire thing from
-scratch, without even looking at the previous version, clean-room. Beancount
-version 2 was born, much better than th elast.
+joint property with my wife, with detailed transactions; this was great. I
+learned a lot about how to keep books during that time (the examples section of
+this document is meant to help you do the same). In the summer of 2013, I had an
+epiphany and realized a correct and generalizable way to implement capital
+gains, how to merged the tracking of positions held at a cost and regular
+positions, and a set of simple rules for carrying out operations on them
+sensibly (the design of how inventories work). I also saw a better way to factor
+out the internal data structures, and decided to break from the constraint of
+compatibility with Ledger and redesign the input syntax in order to parse the
+input language using a lex/yacc generator, which would allow me to easily evolve
+the input syntax without having to deal with parsing issues, and to create ports
+to other languages more easily. In the process, a much simpler and more
+consistent syntax emerged, and in a fit of sweat and a few intense weekends I
+made re-implemented the entire thing from scratch, without even looking at the
+previous version, clean-room. Beancount version 2 was born, much better than the
+last, modular, and easy to extend.
 
 The result is what I think is an elegant design involving a small set of
-objects, a design that could easily be replicated in other computer languages.
-This is described in the accompanying design doc, for those who would have an
-interest in making a rewrite (this would be welcome). While Ledger is a
-fascinating project ebullient with complex ideas for expressing the problem of
-bookkeeping, the second version of Beancount proposes a minimally simple design
-that leaves out any feature that is not strictly necessary and aims at maximum
-usability through a simple web interface and barely any command-line options.
-Ledger's syntax implements many powerful features that trigger a lot of
-implicitly-defined behaviour; in contrast, Beancount's design provides a less
-expressive, lower-level syntax but one that closely matches the generated
-in-memory data structure, and thus is perhaps more explicit in that way. I think
-both projects have strengths and weaknesses.
+objects, a design that could easily be a basis for reimplementation in other
+computer languages. This is described in the accompanying design doc, for those
+who would have an interest in having a go at it (this would be welcome and I'm
+expecting this will happen). While Ledger is a fascinating project ebullient
+with complex ideas for expressing the problem of bookkeeping, the second version
+of Beancount proposes a minimally simple design that leaves out any feature that
+is not strictly necessary and aims at maximum usability through a simple web
+interface and barely any command-line options. Ledger's syntax implements many
+powerful features that trigger a lot of implicitly-defined behaviour; in
+contrast, Beancount's design provides a less expressive, lower-level syntax but
+one that closely matches the generated in-memory data structure, and thus is
+perhaps more explicit in that way. I think both projects have strengths and
+weaknesses.
 
 Since I had more than 5 years worth of real-world usage experience with the
 first version, I set myself a goal to remove all the features that I thought
@@ -188,6 +193,22 @@ syntax. I also converted all my 6 years' worth of input data--thanks to some
 very simple Python scripts to manipulate the file--and began using the new
 version exclusively. It is now in a fully functional state, but I may have to
 complete some documentation and examples. [2013-12-25]
+
+
+** Design Goals
+
+As people get interested in using this system, I will surely receive various
+suggestions on improvements and proposed changes to the software. I have
+different projects, and their goals and attitudes vary greatly; in this
+particular project, I'm setting as an explicit goal to have the minimal set of
+configurable options, and to evolve it to provide the best set of defaults that
+will work for all users. I want to avoid adding configurable options at all
+cost, and instead let that pressure improve the default behaviour.
+
+Thus, by default I will resist making changes that aren't generic or that would
+not work for other users. On the other hands, large-scale changes that would
+generalize well are likely to be implemented. (One example of this is the
+upcoming addition of average cost calculations for inventories.)
 
 
 * Double-Entry Bookkeeping
@@ -334,11 +355,11 @@ postings is zero. Each change is counterbalanced by the other. If all changes in
 all accounts are to be inserted as part of Transactions, another way to state
 the fundamental principle of double-entry bookkeeping is:
 
-  "The sum of all changes in the postings of a transaction has to be zero."
+  "THE SUM OF ALL CHANGES IN THE POSTINGS OF A TRANSACTION HAS TO BE ZERO."
 
-Beancount provides a way to enter such Transactions, and spits out errors when
-this fundamental rule is violated. An almost valid syntax to enter the set of
-changes above is:
+Beancount mainly provides a way to enter such Transactions, and spits out errors
+when this fundamental rule is violated. An almost valid syntax to enter the set
+of changes above is:
 
   2013-12-28 * "Dinner with Sasha"
     Checking        -36.84 USD
@@ -355,7 +376,7 @@ reports; this will be introduced in a bit. I want to emphasize this here:
 ** The Structure of Transactions
 
 Transactions do not have to contain only two postings, they can contain as many
-as necessary. The princple does not change: the sum of all postings must equal
+as necessary. The principle does not change: the sum of all postings must equal
 zero. Let's assume in the Transaction above that a tip of 5 dollars was added
 to the bill, and that the bookkeeper wants to take account of these separately.
 We can easily add a new account for tips:
@@ -388,12 +409,8 @@ The sum is still zero.
 The Transaction is the fundamental data structure involved in Beancount, and 99%
 of all the directives you will write are Transaction entries.
 
-
-** Corollary of Balance Equilibrium
-
-FIXME
-sum of all is zero, so sum of balances is zeo
-
+For an example of a complex transaction with many legs, see the example on
+booking salary payments later in this document.
 
 
 ** Account Types
@@ -507,43 +524,168 @@ Let's call the *sum* of all the balances at a specific date of all the "Assets"
 accounts "A". We can do that same for all the other categories, the sum of all
 the balances of all the accounts labeled "Expenses" is "X".
 
-Now, we're ready to start looking at equivalences and statements.
-
-** About the Signs
-
-FIXME
-explanation of income as negative sign, expenses as positie, etc.
+Now, we're ready to start looking at equivalences and define the various
+statements that are in common use in accounting.
 
 
+** Equilibrium & Equivalances
 
-** Equivalences
+A corrollary of the fundamental principle of the double-entry system is that
+since each of the Transactions balances to a sum of zero, the sum of all changes
+from all Transactions across all accounts they affect also sums to a balance of
+zero. This meants that:
 
-Because all the transactions are enforced to have a sum of 0, it follows that
-the sum of all the balances of all the accounts at a particular point in time
-is also 0. Therefore, if we lump the sums by account type, as in the previous
-section, we know that the sum of all the account type sums is 0:
+- If we order the transactions chronologically, and draw a line at any point in
+  time across all the accounts and sum all of their resulting balances, because
+  all accounts had an initial balance of zero, after the changes in those
+  transactions, the sum of all balances will still be zero.
+
+- If we sum the changes of any subset of transactions across all of the accounts
+  they affect, the sum will be zero as well.
+
+By communutativity, we can then reorder and group the posting amounts by any
+label that we choose. In particular, we can group the posting amounts by the
+associated account types we just defined in the previous section. If we do this,
+we know that the sum of all the account type sums is zero:
 
    A + L + E + I + X = 0
 
-Note here that because our system is not using debits and credits, and all the
-values are signed, we can simply sum all the account type sums. In other
-textbooks, liabilities and equity would be counted as positive numbers (with
-corresponding debits and credits craziness), and income as a positive number as
-well, and you would have:
+We could also zero out the Income and Expenses components (I + X) by inserting a
+transaction that moves that sum into the Equity component (under an account we
+will called "Retained Earnings" or "Net Income"), and obtain the following
+equilibrium:
+
+   NI = I + X
+
+   A + L + E + (NI - NI) + I + X = 0
+   A + L + (E + NI) - (NI + I + X) = 0
+   A + L + (E + NI) = 0
+   A + L + E' = 0
+
+This states that the sum of all Assets, Liabilities and Equity balances must be
+zero, and will be a useful equation later on when we define the "balance sheet"
+report.
+
+
+** About Debits and Credits and the Signs of Amounts
+
+If you already have some knowledge of accounting, at this point you have
+probably noticed that we did not talk about credits and debits, nor have we
+mentioned the notion of debitting or credit an account, nor have we
+distinguished accounts in terms of being a "credit account" or a "debit
+account." This is on purpose:  Beancount does away with this unnecessary
+poo-pooin a clever way (which was introduced by John Wiegley's Ledger system):
+
+- In Beancount, Accounts are not labeled as "credit accounts" nor "debit
+  accounts"; we only have "accounts", and they all behave identically, which is
+  nice;
+
+- Postings to these accounts are also not labeled as "a credit", or "a debit,"
+  (though you might want to use this confusing terminology if you're already
+  used to it). In Beancount, debits to an account are simply negative numbers.
+  There are only numbers that get added together.
+
+This means that in Beancount, the usual balance of a Liabilities account will be
+a negative number. Income and Equity are also usually negative numbers. The
+burden of having to remember this is, in our opinion, a much lesser evil on the
+mind than having to invert signs all over our system depending on the types of
+account and how a change is posted to it. All you have to remember is the usual
+signs of accounts (and this is very important):
+
+  Assets      : +
+  Liabilities : -
+  Equity      : -
+  Income      : -
+  Expenses    : +
+
+For those unfamiliar with debits and credits, the idea is used in "normal"
+accounting to deal with the fact that we tend to think of amounts and changes in
+terms of positive numbers. In the usual account, all the numbers above are
+positive. For instance, you will think of "a 150,000$ mortgage", and not a
+-150,000$ liability. The problem with this is that a bookkeeper then has to be
+incredibly careful when posting changes to accounts, because the meaning of a
+change depends on the type of account... instead of imposing this burden on the
+user, we take a computer scientist's approach and declare that for the sake of
+simplicity, you should prefer simple sums.
+
+Because our system is not using debits and credits, and all the values are
+signed, we can simply sum all the account type sums. In accounting textbooks,
+you would find the signs inverted in hte equations; for instance:
 
    A - L - E + I - X = 0
 
-It would get complicated. Let's stick with signed values.
+One would say that Net Income = Income - Expenses. In Beancount, we simply think
+of Net Income as the sum of Income + Expenses, but the Income happens to be a
+negative number.
 
 
-** Income Statement
+** Tips to Remember the Signs
 
-An "income statement" is a type of report that aggregates changes to accounts
+Now, it helps to think about the signs a bit more, to really get a sense for
+why they're this way. Let's consider a simplified salary payment transaction:
+
+  2013-12-31 * "Payment from Boogle Inc"
+    Income:Boogle:Salary                       -5000 USD
+    Assets:Checking                             3000 USD
+    Expenses:Taxes:Federal                      1200 USD
+    Expenses:Taxes:State                         800 USD
+
+- The *income is a negative number* here, because it is an account that serves
+  to keep track of how much "work" was given away in order to obtain the
+  corresponding deposits in our asset account. You can imagine that from your
+  perspective, you have a bucket containing *work potential* that you have, and
+  by doing the work for Boogle Inc, you are giving away 5000 USD's worth of this
+  work potential, so it is debited from that imaginary account (if you want it
+  to get more real, try to conceive of the sum total of all the work you could
+  perform until your death as being valued somehow). You gave away that work, a
+  negative number, from your perspective.
+
+- The *expense is a positive number*, because you "received" a paid amount on
+  your gross salary. That might seem odd, since we often refer to expenses are
+  *things we pay*, so initially one would think of it as a negative number.
+
+  Actually, this taxe expense is actually received somewhere, filed by the
+  employer, just that it is sent to the government to an account with your name
+  on it, the amount of which will be used as already paid towards your tax
+  calculation at the end of the year, so technically, you *have* this tax money
+  on your name, it's a positive for you. (In fact, an alternative way to track
+  this amount in paid taxes could be in an asset account that you would later on
+  debit when you do file your taxes, but I think in practice it's more common to
+  count it as an expense right away on each paycheck so that a mid-year balance
+  sheet doesn't reflect it as something you have.)
+
+If this is easier to understand, think of a restaurant transaction:
+
+  2013-12-31 * "Dinner with Bob"
+    Assets:Cash                             -25 USD
+    Expenses:Restaurant                      25 USD
+
+You've exchanged 25$ in cash for a meal. After dinner, you *have* this meal
+sitting in your stomach. We don't count it as "1 MEAL", but as "25 USD's worth
+of restaurant stuff."  But it's something you have.  And it's an expense and
+not an asset, because it is transient: tomorrow, the meal is gone.
+
+
+Now, as you get used to these signs, you will grow comfortable with it and this
+will be a breeze. Another person reading your ledger might get confused,
+however. In order to communicate reports with accountants and other external
+users, we will provide an option to switch the signs in the reports produced by
+Beancount. But the input syntax should always be signed, for simplicity. Trust
+me, this is a lot simpler than having to think of credits and debits
+everywhere... your head would explode.
+
+Now, on to the reports.
+
+** Reports
+*** Income Statement Report
+
+An "income statement" is a type of report that *aggregates changes* to accounts
 labeled "Income" or "Expenses" due to Transactions occurring from a cetain date
-to another date. It always applies to a period, which we sometimes call the
-"exercise period" or "reporting period" for a firm, or for an individual this is
-typically a calendar year, though a monthly report could be useful. Beancount
-can generate these reports for any period desired. They are laid out like this:
+to another date. It's a delta, changes from a snapshot of your balances. It
+always applies to a period, which we sometimes call the "exercise period" or
+"reporting period" for a firm, or for an individual this is typically a calendar
+year, though a monthly report could be useful. Beancount can generate these
+reports for any period desired. They are laid out like this:
 
    From: 2012-01-01 To: 2012-12-31
    +--------------+---------------+
@@ -556,7 +698,7 @@ can generate these reports for any period desired. They are laid out like this:
    +--------------+---------------+
    | = I          | = X           |
    +--------------+---------------+
-   | = I-X                        |
+   | = I-X  = net income          |
    +------------------------------+
 
 Changes in accounts before the beginning of the period are ignored; thus, you
@@ -573,7 +715,7 @@ Equity:RetainedEarnings, via an automatically inserted transaction that "closes
 the year" by zeroing out the income statement accounts at the end of the period.
 
 
-** Balance Sheet
+*** Balance Sheet Report
 
 A "balance sheet" is a type of report that provides a *snapshot* of the balances
 of all your accounts at a particular point in time. The report is usually laid
@@ -593,40 +735,159 @@ out in this way:
    +--------------+---------------+
 
 Note that the Income and Expenses accounts do not show up on this report.
+Because the balance sheet isn't designed to show transient changes (i.e.,
+changes in Income and Expenses accounts), the net income from the income
+statement has been reflected to an equity account on the balance sheet.
+
+A common view of a set of transaction is the view of *a period*, typically of an
+annual period. (Beancount provide such views from its root page.) This means
+that there are two balance sheets to look at: the snapshot at the beginning of
+the period, and a snapshot at the end of the period.
+
+In Beancount, we call the period beginning snapshot the "Opening Balances"
+report. The sum total of all previous Income and Expenses transactions before
+the beginning of the period is moved to the balance sheet by a transaction that
+puts this amount under a Equity:Earnings:Previous account. In addition, for
+those period views, all the transactions in Assets and Liabilities accounts
+before the beginning of the period are lumped together and replaced by a single
+transaction that moves the amounts to an Equity:Opening-Balances account,
+because we don't want the journals to display the detail of transactions and
+postings before the beginning of the period.
+
+The end-of-period snapshot is simply called the "Balance Sheet" report. For the
+purposes of rendering the balance sheet, the sum total of postings to Income and
+Expenses accounts occurring between the begin and end date of the period are
+transferred to an Equity:Current account by an automatically inserted
+transaction. (Note that the names of these accounts are configurable; see
+options.)
+
+You will note the signs of the Equity account in your reports are generally
+negative. This is normal and expected. Think of the Equity account as something
+from the past that you had to give up in order to obtain the beginning snapshot
+of the Assets + Liabilities balance.
+
+
+*** Journal, or Statements
+
+A basic feature of the system is to render a view of all transactions from the
+point of view of a single account. We call this a "journal" in Beancount (in
+Ledger, this corresponds to the "register").
+
+This view orders all the postings in an account chronologically, finds the
+corresponding transactions, and renders a statement for that account. It is
+analogous with a bank statement: there are two columns, one for the amount
+posted (the change in the account), and one for the result balance.
+
+Other directives are also rendered in the journal, such as balance checks
+(succesful or failed), notes, and documents.
+
+
+* Beancount Language Syntax
+** Directives
+
+Beancount is a declarative language. The input consist in a text file
+containing a list of *directives*. The order of the directives is entirely
+irrelevant (in fact, the entries are re-sorted chronologically after parsing).
+
+Each directive begins with a date (all directives have an associated date), and
+the second word defines which kind of directive it is. Thus, all directives
+begin like this:
+
+   YYYY-MM-DD <directive-name> ...something...
+
+where YYYY is the year, MM is the numerical month, and DD the numerical date.
+All digits are required (we use ISO8601 format, and only this one).
+<directive-name> declares the kind of directive. For example, a directive to
+open an account parses like this:
+
+  2013-12-31 open <...account...> <...currencies...>
+
+There are 9 kinds of directives, described in the sections below.
+
+*** Currencies
+
+Accounts contain amounts in "currencies." Currencies do not need to be
+declared, they simply come into being as you use them.  The syntax for a
+currency is a word all *in capital letters*.
+
+You can create any currency--in fact, Beancount does not know anything special
+about the kinds of things you can count. It does not even know anything about US
+dollars, Euros, stocks, etc. They're just names of things. You can create a
+currency for your home (e.g. MYLOFT), vacation hours (VACHR), or potential
+contributions to your retirement accounts allowed annually (IRAUSD, RSPCAD).
+You can just come up with anything.
+
+I would advance that it would be good practice to use the standard ISO names for
+currencies, just for the sake of familiarity. For example, in this document, we
+use "USD" for US dollars, and the common ticker symbol of stocks to represent
+them.
+
+*** Account Names
+
+Accounts can be used anywhere, and do not need to be declared to be valid
+account names. A account name must begin with one of
+
+  Assets:
+  Liabilities:
+  Equity:
+  Income:
+  Expenses:
+
+and be following by capitalized words.
+
+Following their naming, accounts will be arranged in a tree in the reports
+generated by Beancount, so it's a good idea to think of them as being in a
+hierarchy and use multiple levels.
+
+For people with accounts in multiple countries, I would strongly suggest the
+following hierarchy, which I've come to put to good use over multiple years of
+usage living in 3 places:
+
+  <AccountType>:<Country>:<Institution>:<Account>
+
+For example:
+
+  Assets:US:TDBank:Savings
+
+This grouping tends to produce sensible reports. If you're not convinced,
+you're welcome to experiment with whatever suits you, but if you have no
+opinion, I think starting this way will save you time later o.a
+
+*** Entering Text
+
+All text in a Beancount file is considered a "string" and should be surrounded
+by double-quotes.
+
+
+** Opening and Closing an Account
+
+Account names do not have to be declared, but in order for transactions to be
+considered valid, we require that you open your accounts.
+
+  YYYY-MM-DD open ACCOUNT CURRENCIES
+
+for example:
+
+  2012-06-01 open Assets:US:TDBank:Savings    USD
+
+CURRENCIES is a list of comman-separated currencies, and it entirely optional.
+If you provide it, postings to this account will be checked for and only accept
+the currencies declared.
+
+Accounts can also be closed. This helps for reporting; accounts that have been
+closed prior to a reporting period will not be rendered in such views. You
+should close your accounts on the date that they actually close. Here is how to
+close the account above:
+
+  2013-11-30 close Assets:US:TDBank:Savings
+
+
+** Inserting Transactions
 
 
 
 
- these Transaction objects, say,
-hundreds, or thousands, and that we have correspondingly open
-
-Now, for the purpose of reporting, and only for this purpose,
-
-
-
-
-explanation of signs
-
-
-
-
-
-
-journal view (or "register," in Ledger)
-analogy with bank statement wedged on top of the line
-
-
-
-(with balance directive detail)
-There is generally no balance directive used in income statement account.
-Emember how we're generally only interested in transient changes in these types
-of accounts. It makes little sense to consider the "sum total of all restaurant
-expenses since you were born." However, it makes sense to find out how much
-restaurant expenses were incurred in the *period* of the first three months of
-the year.
-
-
-
+*** Costs & Inventories
 
 costs, how it works, Inventory objects
 
@@ -634,35 +895,24 @@ costs, how it works, Inventory objects
 
 
 
-** About Debits and Credits, and Other Unnecessary Poo-poo
+*** The Tag Set
 
-If you already have some knowledge of accounting, you have probably noticed that
-we did not talk about credits and debits, and the types of accounts that you
-might be used to. This is on purpose:  Beancount does away with these
-complications in a clever way (which was introduced by John Wiegley's Ledger
-system):
+** Inserting Balance Checks
 
-- In Beancount, Accounts are not labeled as "credit accounts" nor "debit
-  accounts"; we only have "accounts";
+** Automatically Inserting a Padding Transaction
 
-- Postings to these accounts are also not labeled as "a credit", or "a debit,"
-  thought you might want to use this confusing terminology if you're already
-  used to it. In Beancount, debits to an account are simply negative numbers.
+** Notes
 
-For those unfamiliar with debits and credits, the idea was introduced to deal
-with the fact that we tend to think of amounts and changes in positive numbers.
-
-By doing away with the confusing terminology, the only impact is that we will
-now see that normal balances for liabilities, equity and income accounts, which
-we will introduce in a moment, are negative amounts. The burden of remembering
-this is much less on the mind than having to invert signs all over the place
-depending on the types of account a change is posted to.
+** Documents
 
 
+** Price
 
-** Currencies
+** Events
 
-come into being simply by using them (all caps)
+
+** Options
+
 
 * Getting Started
 ** Establishing your Chart of Accounts and Balance Sheet
@@ -697,6 +947,10 @@ generated in order to get a sense of where the data is going.
 
 
 
+* Updating your Ledger
+** Automating the Import Process
+
+
 * Example Transactions
 ** A Word of Caution
 
@@ -710,15 +964,6 @@ Also, please keep in mind that I'm not a professional accountant.
 many many many of each type
 
 
-
-* Updating your Ledger
-
-
-
-
-* Automating the Import Process
-
-
 * TODO
 
 ** Padding Directives
@@ -726,12 +971,20 @@ many many many of each type
 - bring up an example of starting an account from scratch
 - then not from scratch, inserting a manual transaction
 - introduce "pad" for this
-- finally, provide an example of multiple missing statements, 
+- finally, provide an example of multiple missing statements,
   to justify that pad does not only get used once at the beginning
 
-** About Debits and Credits
+** Balance Directive
 
-- provide examples for income, with buckets with man outline,
-  textual explanation
-- same for examples
+(with balance directive detail)
+There is generally no balance directive used in income statement account.
+Emember how we're generally only interested in transient changes in these types
+of accounts. It makes little sense to consider the "sum total of all restaurant
+expenses since you were born." However, it makes sense to find out how much
+restaurant expenses were incurred in the *period* of the first three months of
+the year.
 
+** Emacs Support
+
+beancount.el
+trying to remain as simple as possible
