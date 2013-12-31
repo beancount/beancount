@@ -396,7 +396,6 @@ sum of all is zero, so sum of balances is zeo
 
 
 
-
 ** Account Types
 
 Accounts can be created in order to track a wide variety of things. Accounts
@@ -718,5 +717,3 @@ many many many of each type
 
 
 * Automating the Import Process
-
-
