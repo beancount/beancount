@@ -84,9 +84,12 @@ a.account:link, a.account:visited {
 /* Tree tables */
 
 table.tree-table {
-    width: 100%;
     font-size: smaller;
     table-layout: fixed;
+}
+
+.fullwidth {
+    width: 100%;
 }
 
 table.tree-table td {
