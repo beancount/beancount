@@ -133,6 +133,19 @@ def transaction_has_conversion(transaction):
     return False
 
 
+def get_posting_date(posting_or_entry):
+    """Return the date associated with the posting or entry.
+
+    Args:
+      entry: an entry object
+    Returns:
+      A datetime instance.
+    """
+    return (posting_or_entry.entry 
+            if isinstance(posting_or_entry, Posting)
+            else posting_or_entry).date
+
+
 # Sort with the checks at the BEGINNING of the day.
 SORT_ORDER = {Open: -2, Check: -1, Close: 1}
 

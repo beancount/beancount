@@ -75,6 +75,10 @@ beancount: TODO
     changes.
 
 
+  - update activity: remove parent accounts with no child accounts.
+  - update activity: this exhibits a bug in the table rendering, look for IVV,
+    see TODO(blais) in acctree.py
+
   - If import fails to output transactions for a file, don't write a marker.
 
   - Begin user documentation in earnest; we really need this soon.

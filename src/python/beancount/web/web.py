@@ -17,7 +17,8 @@ from beancount.web import views
 from beancount.web import journal
 from beancount.web import acctree
 from beancount.core import data
-from beancount.core.data import Open, Close, Transaction, Document, Event
+from beancount.core import flags
+from beancount.core.data import Open, Close, Pad, Check, Transaction, Note, Document, Event, Posting
 from beancount.core import getters
 from beancount.ops import summarize
 from beancount.core import realization
@@ -163,10 +164,52 @@ def source():
 @app.route('/update', name='update')
 def update():
     "Render the update activity."
+
+    oss = io.StringIO()
+    view = get_all_view(app)
+
+    for root in 'Assets', 'Liabilities':
+        table = acctree.tree_table(oss, view.real_accounts, root,
+                                   ['Account', 'Last Entry'])
+        for real_account, cells, row_classes in table:
+            if not isinstance(real_account, realization.RealAccount):
+                continue
+            last_posting = find_last_active_posting(real_account.postings)
+
+            # Don't render updates to accounts that have been closed.
+            # Note: this is O(N), maybe we can store this at realization.
+            if isinstance(last_posting, Close):
+                continue
+
+            cells.append(data.get_posting_date(last_posting)
+                         if real_account.postings
+                         else '-')
+
     return render_global(
         pagetitle = "Update Activity",
-        contents = NOT_IMPLEMENTED
+        contents = oss.getvalue()
         )
+
+def find_last_active_posting(postings):
+    """Look at the end of the list of postings, and find the last
+    posting or entry that is not an automatically added directive.
+    Note that if the account is closed, the last posting is assumed
+    to be a close directive (this is the case if the input is valid
+    and checks without errors.
+
+    Args:
+      postings: a list of postings or entries.
+    Returns:
+      An entry, or None, if the input list was empty.
+    """
+    for posting in utils.filter_type(reversed(postings),
+                                     (Open, Close, Pad, Check, Posting, Note)):
+        if (isinstance(posting, Posting) and
+            posting.entry.flag == flags.FLAG_UNREALIZED):
+            continue
+        return posting
+    else:
+        return None
 
 
 @app.route('/events', name='events')
@@ -835,10 +878,19 @@ def populate_view(callback):
 viewapp.install(populate_view)
 
 
+def get_all_view(app):
+    """Return a view of all transactions.
+
+    Returns:
+      An instance of AllView, that covers all transactions.
+    """
+    return views.AllView(app.entries, app.options, 'All Transactions')
+
+
 @app.route(r'/view/all/<path:re:.*>', name='all')
 @handle_view(2)
 def all(path=None):
-    return views.AllView(app.entries, app.options, 'All Transactions')
+    return get_all_view(app)
 
 
 @app.route(r'/view/year/<year:re:\d\d\d\d>/<path:re:.*>', name='year')
@@ -898,7 +950,8 @@ def auto_reload_input_file(callback):
             logging.info('RELOADING')
 
             # Save the source for later, to render.
-            app.source = open(filename, encoding='utf8').read()
+            with open(filename, encoding='utf8') as f:
+                app.source = f.read()
 
             # Parse the beancount file.
             entries, errors, options = load(filename,

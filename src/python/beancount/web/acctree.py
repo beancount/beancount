@@ -18,16 +18,30 @@ TOTALS_LINE = object()
 
 EMS_PER_SPACE = 2.5
 
-def tree_table(oss, tree, start_node_name, header=None, classes=None):
+def tree_table(oss, tree, start_node_name=None, header=None, classes=None):
     """Generator to a tree of accounts as an HTML table.
     Render only all the nodes under 'start_node_name'.
     This yields the real_account object for each line and a
     list object used to return the values for multiple cells.
+
+    Args:
+      oss: a io.StringIO instance, into which we will render the HTML.
+      tree: an instance of a RealAccount node
+      start_node_name: the name of the tree node to begin rendering at.
+      header: a list of header columns to render. The first column is special,
+              and is used for the account name.
+      classes: a list of CSS class strings to apply to the table element.
+    Returns:
+      A generator of (real_account, cells, row_classes). You need to append to
+      the given 'cells' object; if you don't, this will skip rendering the row.
+      On the very last line, the 'real_account' object will be a sentinel,
+      TOTALS_LINE.
     """
     write = lambda data: (oss.write(data), oss.write('\n'))
 
-    write('<table class="tree-table {}">'.format(
-        ' '.join(classes) if classes else ''))
+    classes = list(classes) if classes else []
+    classes.append('tree-table')
+    write('<table class="{}">'.format(' '.join(classes) if classes else ''))
 
     if header:
         write('<thead>')
@@ -39,11 +53,13 @@ def tree_table(oss, tree, start_node_name, header=None, classes=None):
         write('</tr>')
         write('</thead>')
 
-    if start_node_name not in tree:
-        write('</table>')
-        return
+    start_node = tree
+    if start_node_name is not None:
+        if start_node_name not in tree:
+            write('</table>')
+            return
+        start_node = start_node[start_node_name]
 
-    start_node = tree[start_node_name]
     lines = list(tree_utils.render(start_node, real_account_name, real_account_children))
 
     # Yield with a None for the final line.
@@ -71,7 +87,7 @@ def tree_table(oss, tree, start_node_name, header=None, classes=None):
             label = '<span class="totals-label">Totals</span>'
         else:
             indent = '{:.1f}'.format(len(line_first)/EMS_PER_SPACE)
-            label = account_link(real_account, leafonly=True)
+            label = account_link(real_account, leafonly=True) ## TODO(blais) - debug this, look for IVV, incorrectly rendered - "/" + real_account.fullname
 
         write('<td class="tree-node-name" style="padding-left: {}em">{}</td>'.format(
             indent, label))
@@ -97,8 +113,12 @@ def is_account_active(real_account):
 
 
 def table_of_balances(tree, start_node_name, currencies, classes=None):
-    """Render a table of balances."""
+    """Render a table of balances.
 
+    Args:
+      tree: a RealAccount node.
+
+    """
     header = ['Account'] + currencies + ['Other']
 
     # Pre-calculate which accounts should be rendered.
@@ -107,6 +127,8 @@ def table_of_balances(tree, start_node_name, currencies, classes=None):
 
     balance_totals = Inventory()
     oss = io.StringIO()
+    classes = list(classes) if classes else []
+    classes.append('fullwidth')
     for real_account, cells, row_classes in tree_table(oss, tree, start_node_name,
                                                        header, classes):
 
