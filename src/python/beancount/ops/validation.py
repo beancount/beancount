@@ -148,10 +148,15 @@ def validate_currency_constraints(entries):
     errors = []
     for entry in utils.filter_type(entries, Transaction):
         for posting in entry.postings:
-            open_entry = open_map[posting.account]
-            if not open_entry.currencies:
+            try:
+                open_entry = open_map[posting.account]
+                valid_currencies = open_entry.currencies
+            except KeyError:
+                valid_currencies = []
+            
+            if not valid_currencies:
                 continue
-            if posting.position.lot.currency not in open_entry.currencies:
+            if posting.position.lot.currency not in valid_currencies:
                 errors.append(ValidationError(
                     entry.fileloc,
                     "Invalid currency {} for account '{}'.".format(
