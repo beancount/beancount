@@ -8,11 +8,13 @@ Assets, Liabilities, Equity, Income, Expense
 2013-01-01 open Liabilities:US:AcmeBank:CreditCard
 
 ;; A transaction, with no cost. Omit amount for at most one posting.
+;; Note that the first line has an optional payee specified before "|".
 2013-02-24 * "Coffee Shop La Colombe" | "Bought some coffee"
   Liabilities:US:AcmeBank:CreditCard		 -20 USD
   Expenses:Coffee
 
 ;; A transaction, held at cost.
+;; This transaction example has no payee--only a narration string.
 2013-03-25 * "Bought some Google stock at 1111.11"
   Assets:US:AcmeBroker:Investment:GOOG	        10 GOOG {1111.11 USD}
   Expenses:Financial:Commission               9.95 USD

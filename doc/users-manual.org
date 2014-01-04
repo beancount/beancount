@@ -558,7 +558,7 @@ equilibrium:
    NI = I + X
 
    A + L + E + (NI - NI) + I + X = 0
-   A + L + (E + NI) - (NI + I + X) = 0
+   A + L + (E + NI) + (-NI + I + X) = 0
    A + L + (E + NI) = 0
    A + L + E' = 0
 
@@ -592,11 +592,11 @@ mind than having to invert signs all over our system depending on the types of
 account and how a change is posted to it. All you have to remember is the usual
 signs of accounts (and this is very important):
 
-  Assets      : +
-  Liabilities : -
-  Equity      : -
-  Income      : -
-  Expenses    : +
+  Assets      : positive
+  Liabilities : negative
+  Equity      : negative
+  Income      : negative
+  Expenses    : positive
 
 For those unfamiliar with debits and credits, the idea is used in "normal"
 accounting to deal with the fact that we tend to think of amounts and changes in
@@ -608,15 +608,26 @@ change depends on the type of account... instead of imposing this burden on the
 user, we take a computer scientist's approach and declare that for the sake of
 simplicity, you should prefer simple sums.
 
-Because our system is not using debits and credits, and all the values are
-signed, we can simply sum all the account type sums. In accounting textbooks,
-you would find the signs inverted in hte equations; for instance:
 
-   A - L - E + I - X = 0
 
-One would say that Net Income = Income - Expenses. In Beancount, we simply think
-of Net Income as the sum of Income + Expenses, but the Income happens to be a
-negative number.
+
+
+
+FIXME: rewrite this to deal with the tranfer sign, as follows:
+
+        A - L - E = 0
+       (A' - L' - E') - (A - L - E) = I - X
+
+
+    Because our system is not using debits and credits, and all the values are
+    signed, we can simply sum all the account type sums. In accounting textbooks,
+    you would find the signs inverted in hte equations; for instance:
+
+       A - L - E + I - X = 0
+
+    In traditional account, one would say that "Net Income" = Income - Expenses. In
+    Beancount, we simply think of "Net Income" as the sum of Income + Expenses, but
+    the Income happens to be a negative number.
 
 
 ** Tips to Remember the Signs
@@ -988,3 +999,11 @@ the year.
 
 beancount.el
 trying to remain as simple as possible
+
+
+** Misc
+
+  - (documentation) In the stock transaction example, make sure that the sell
+    side has both a cost and a price, so that a price entry is implicitly
+    created. Explain this.
+

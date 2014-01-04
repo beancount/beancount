@@ -1183,6 +1183,8 @@ one, to make people say „I would like to do that!“.
   - Start documentation so you have a place to put all these ideas.
     Set it up using Sphinx, or something else.
 
+  - Consider serving the user's manual directly from the web interface.
+
 ** Real Usage Examples
 *** Transfers Between Accounts
 *** mortgage, buying a home
