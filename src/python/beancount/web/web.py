@@ -178,7 +178,7 @@ def update():
 
             # Don't render updates to accounts that have been closed.
             # Note: this is O(N), maybe we can store this at realization.
-            if isinstance(last_posting, Close):
+            if last_posting is None or isinstance(last_posting, Close):
                 continue
 
             cells.append(data.get_posting_date(last_posting)
