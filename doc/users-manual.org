@@ -1007,3 +1007,8 @@ trying to remain as simple as possible
     side has both a cost and a price, so that a price entry is implicitly
     created. Explain this.
 
+
+** Balance checks
+
+  - Make sure to emphasize that the balance check takes effect at the beginning
+    of the day
