@@ -1,0 +1,285 @@
+> On Sat, Jan 4, 2014 at 7:31 PM, Martin Blais <blais@furius.ca> wrote:
+>
+>> Alright, a more detailed reply below.
+>>
+>> On Sat, Jan 4, 2014 at 3:54 PM, Jon Stahl <jonsstahl@gmail.com> wrote:
+>>
+>>>  Hi Martin,
+>>>
+>>> We don't know each other but I wanted to convey thanks for publishing
+>>> your Beancount code.
+>>> I was extremely frustrated with the personal financial software
+>>> available and had finally
+>>> resigned myself to writing my own.
+>>>
+>>
+>> I was in the same situation before I started.
+>>
+>>
+>>
+>>> However as I scoured the internet for any possible open-source I could
+>>> leverage I came across
+>>> first ledger, then hledger, and then Beancount. Since Python is by far
+>>> my favorite language
+>>> I am very excited by the work you have done and have been experimenting
+>>> with it for the
+>>> last few days.
+>>>
+>>
+>> Great; warning: Beancount v2, which is probably what you have downloaded,
+>> is a full rewrite of v1 that is now incompatible with Ledger. It's a
+>> separate thing now, with goals of simplicity and external extensibility
+>> instead of providing all the possible features. See the beginning of
+>> beancount/doc/user-manual.org (this is an incomplete document at this
+>> moment - v2 isn't released yet, it's still alpha code, but between us, I'm
+>> using it exclusively on my 7 years worth of data and it works very well
+>> already - I just want to write a complete set of unit tests and a manual
+>> and better examples before announcing an official release).
+>>
+>>
+>>
+>>> There is one question that has come up I was hoping I might bother you
+>>> for help with.
+>>> Something very important to me is the ability to not only
+>>> record/manage/report
+>>> on past income and expenses, but to forecast the future. In particular I
+>>> would like to
+>>> plan and estimate what my account balances will be based on future
+>>> income/expenses.
+>>>
+>>> Some software calls this budgeting, and that is very close to what I
+>>> want, but not exactly.
+>>> The problem I have with budgeting is that what everyone seems to have
+>>> done is create
+>>> separate entities for "budgets" which do not automatically track the
+>>> account transactions which
+>>> occur between the time of creation and the present. In effect this
+>>> forces you to continually
+>>> import all transactions into the budget to get to an accurate forecast
+>>> of the future.
+>>> Further, budgets seem to be more generic single-entries such as "car
+>>> payment" instead of the
+>>> exact "future transactions" with reminders that I would really like. The
+>>> closest thing I have
+>>> found to what I would like is gnucash with "scheduled transactions"
+>>> (which you can report
+>>> against but do not even effect the budget) and the pocketsmith web
+>>> service which at least gives
+>>> you a running daily projection of your balances on a calendar based on
+>>> your budget (but
+>>> to get a forecast from present day you have to update your balances
+>>> based on actual).
+>>>
+>>> So my question is - could you please point me out to what functionality
+>>> already exists
+>>> within Beancount that I might leverage and if I were to take on adding
+>>> this sort of functionality,
+>>> and how you might envision it fitting in with your future plans.
+>>>
+>>
+>> A few notes:
+>>
+>> There are no budgeting features available in Beancount at this moment.
+>> Here is what I had some ideas about (from TODO file):
+>>
+>>     We could easily add features for budgeting, e.g. somehow set goals
+>> and then
+>>     report on the difference between actual and the goal, and project in
+>> the
+>>     future according to rate, e.g.:
+>>
+>>        ;; Check that the total for this position between 2013-06-01 and
+>> 2013-12-31 < 800 USD
+>>        2013-12-31 goal  Expenses:US:Restaurant  2013-06-01  < 800 USD
+>>
+>>        ;; Check that the balance of this account on 2013-12-31 is >= 1000
+>> USD
+>>        2013-12-31 goal  Assets:Savings  >= 1000 USD
+>>
+>> Basically, creating a simple new directive that allows one to set a
+>> constraint on either the balance of an account at a specific date, or of
+>> the sum total of changes occurring in an account between one date and
+>> another, and then adding a web page that checks these goals and reports on
+>> their completion or failure, maybe with a % or whatever, with a progress
+>> bar, something like that. I can imagine this could be going in many
+>> different directions.
+>>
+>> What do you think about these?
+>> Could you describe more precisely what you'd like to have?
+>> In particular, do you think you could express the input in a concise and
+>> generic way?
+>> (Note that we don't have to think in any kind of traditional terms here,
+>> we can innovate, come up with something totally off-center that works
+>> better.)
+>>
+>> About adding new features: In this version of Beancount, I'm trying to
+>> keep things as simple as possible, and to minimize the set of options
+>> available to users as much as possible. I'm trying to design it "right"
+>> with little custom configurability rather than going down the path of
+>> feature creep and maximum customizability. So by default, if a new feature
+>> idea is not "generic" or does not make sense for every/most users, I tend
+>> to resist by default. Depends what it is, really. On the other hand, in
+>> this version I focused on making the internal data structures as simple as
+>> possible so you can easily read the list of transactions from the parser
+>> and write code using them. This is really, REALLY simple in this version. I
+>> mean... it's dead simple. I'm actually proud of how I managed to keep it as
+>> dumb and modular as it could be, yet add all the features I wanted. A
+>> script could be as simple as this:
+>>
+>> from beancount import loader
+>> ...
+>>             entries, errors, options = loader.load(filename)
+>>             # your code here that processes entries
+>>
+>> 'entries' is just a list of entry objects, which are all simple immutable
+>> (read-only) tuple instances whose definitions you can find under
+>> beancount.code.data. They're not complicated classes with mutable
+>> behaviour, I avoided that mistake. It's just data that matches closely the
+>> input syntax.  All in all, if you wanted to propose to add features that
+>> weren't generic, in the worse case, or you just wanted to experiment
+>> freely, you could very easily build on top of this, and code any kind of
+>> budgeting feature you like (the only restrictions you'd have, if we decide
+>> we don't put this in Beancount itself, is that you'd have to parse the file
+>> separately, either by having a separate input file, or by filtering the
+>> Beancount file and parsing your specialzed directives off of it. The
+>> Beancount parser ignores lines it does not understand by default, so I
+>> think it might be possible to mix in two parsers on the same input file, I
+>> have to try it out).
+>>
+>> Finally, I want you to be aware that budgeting features are not at the
+>> top of my personal priority list... I make enough money that I have little
+>> interest in planning ahead, at least planning accurately - I plan grossly,
+>> like in X years I should have enough to retire - but I have to admit that
+>> the idea of adding such feature piques my interest, and I would use them in
+>> my own Ledger if I had them available.  But... if the ideas we can come up
+>> with are generic enough, I would just implement them right away so you can
+>> test them out.
+>>
+>> Let me know your thoughts.
+>>
+>>
+
+------------------------------------------------------------------------------------------------------------------------
+
+On Sat, Jan 4, 2014 at 8:30 PM, Jon Stahl <jonsstahl@gmail.com> wrote:
+
+> Your detailed reply is much appreciated.
+>
+> Let me jump to the question you asked and heart of the discussion.
+> *Could you describe more precisely what you'd like to have?*
+>
+> Note that although what you described in the response seems very
+> reasonable to me for budgeting, that is not what I am looking for.
+>
+> I would really just like to add future planned transactions (with some
+> indication that they are not actual),
+> and based on both the current actual and planned transactions (I will call
+> them 'virtual') forecast what my account
+> balances will be at any future date. I would like to be able to look at a
+> web page calendar and for each day see a list of the actual+virtual
+> transactions and at the bottom the balances forecast for that day. That is
+> the high level summary.
+>
+
+Aaah now I understand. Let's called these "forecast" instead of "virtual"
+because it carries the more specific meaning well, and "virtual" has been
+used in the context of Ledger to mean something else (virtual postings are
+postings that don't count towards the balance in the sum of a transaction).
+
+
+
+> What would be additionally powerful is if the virtual transactions could
+> be declared as recurring with arbitrary periodicity,
+> and if a reminder could be indicated some specified prior duration
+> beforehand. And further a way to do a fuzzy match
+> when actual transactions are imported to replace the virtual (planned)
+> transactions.
+>
+
+I see. I get what you mean.
+
+
+
+> The above would allow me to enter all my recurring income/expenses as well
+> as known one-time income/expenses
+> and plan accordingly based on forecasted balances.
+>
+> If this functionality is not appealing to you perhaps you could just
+> provide some guidance to allow me to add it in a manner
+> which fits with your tastes and plans for the future of Beancount ?
+>
+
+A bunch of lightbulbs were going off in my head as you wrote this.
+
+First, an observation: as a way to avoid the "fuzzy match when actual
+ytansactions are imported to replace the forecast transactions", let's say
+this: the future is difficult to predict precisely, and its realization
+into the past is almost never as accurate as the prediction was. A
+recurring electricity bill will have an unpredictable amount, for instance.
+Or a salary entry, whose amounts will vary over time because you've
+exhausted the maximum on social security. Or an unexpected one-time
+exception on some payment. Therefore, let's give up on the idea of
+"matching" previously forecast transactions altogether and instead, rely on
+the notion of what is the future to only add transactions that happen in
+the future, that is, beyond a certain date, the forecast transactions are
+added (maybe this occurs by account, I'm not sure). Let's stay, as a
+reasonable default, that what is defined as "today" is the date of the last
+transaction in your ledger.  When you import past transactions, this date
+automatically moves. We could say that forecast transactions only get
+inserted after this date.  Is that a good enough way to do this?
+
+Second, one issue is that of defining periodicity; at the moment, Beancount
+does not have a notion of periodicity / repeating dates. That's the main
+problem I can see about adding this in at the moment, it's not obvious how
+to specify a syntax for it that will be general enough for every possible
+use of it.  Here's what I have in mind, in terms of a generic directive
+that could be added to Beancount itself, based on what you propose:
+
+    2014-MM-05 forecast "Monthly electricity bill"
+       Expenses:Electricity      85.23 USD
+       Assets:Checking  ;; Via bill pay
+
+Notice that such a repeating transaction has multiple accounts, so it
+cannot be associated with a particular one, or I'm not sure what that would
+mean. Secondly, I put a simple "MM" code instead of the month here,
+implying "repeat monthly".  You can imagine a slew of syntax codes to
+generate all possibilities. This is the part I'm not sure about.
+
+Third, and finally, I think this could easily be prototyped in parallel
+with current development. Here's how you could add this now if you wanted:
+enter some entries with a special valid flag, that you happen not to use
+otherwise; let's use '#' as the flag.
+
+    2014-01-05 # "Electricity bill [MONTHLY]"
+       Expenses:Electricity      85.23 USD
+       Assets:Checking  ;; Via bill pay
+
+Then you could write a little decorator filter that
+1. removes these transactions entries from the list of valid entries
+2. reads the narration string and extracts from it whatever periodicity
+syntax you want to define (in this case I did [...], with the word MONTHLY
+in caps, but define something nicer and more powerful, this is just a
+quick-and-dirty example).
+3. generates forecast entries beyond the last date in the ledger based on
+it.
+
+I just created an example script for you that does exactly this in
+beancount/bin/bean-example-custom-filter.
+(I added an entries filter hook for this purpose as well.)
+
+This is just an idea on how you could piggyback on the current input syntax
+without modifying anything, to do this. Of course, you could also write
+your own input syntax to define what needs to be automatically inserted and
+read that from another file. You could even define those rules in the
+Python script itself, that just works for you... whatever works.
+
+If this evolves into something we can generalize well, I'd include it in
+the mainstream Beancount by default. But this should allow you to play with
+ideas.
+
+Let me know what you think,
+
+
+
+
+
