@@ -1,3 +1,3 @@
 #!/usr/bin/env python3
-from beancount.web import main
-main()
+from beancount.web import web
+web.main()

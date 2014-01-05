@@ -24,8 +24,26 @@ def load(filename,
     This file provides convenience routines that do all that's necessary to obtain a
     list of entries ready for realization and working with them. This is the most
     common entry point.
-    """
 
+    Args:
+      filename: the name of the file to be parsed.
+      add_unrealized_gains: a boolean, true if the unrealized gains should be
+                            inserted automatically in the list of entries, based
+                            on the current price of things held at cost.
+      do_print_errors: a boolean, true if this function should format and print out
+                       errors. This is only available here because it's a common
+                       thing to do with this function.
+
+      quiet: a boolean, if true, the timing of each section of the parsing and
+             validation process will be printed out on logging.info.
+
+      parse_method: a string, 'filename' or 'string', that describes the contents
+                    of 'filename'.
+    Returns:
+      A triple of (sorted list of entries from the file, a list of errors
+      generated while parsing and validating the file, and a dict of the options
+      parsed from the file).
+    """
     # Parse the input file.
     if parse_method == 'filename':
         parse_fun = parser.parse

@@ -106,6 +106,26 @@ def sanity_check_types(entry):
             assert isinstance(posting.flag, (str, NoneType))
 
 
+def entry_replace(entry, **replacements):
+    """Replace components of an entry, reparenting postings automatically.
+    This is necessary because we use immutable namedtuple instances, with
+    circular references between entry and postings. It is a bit annoying,
+    but it does not occur in many places, so we live with it, enjoying the
+    extra convenience that circular refs provide, especially in lists of
+    postings.
+
+    Args:
+      entry: the entry whose components to replace
+      **replacements: replacements to apply to the entry
+    Returns:
+      A new entry, with postings correctly reparented.
+    """
+    new_entry = entry._replace(postings=[], **replacements)
+    new_entry.postings.extend(posting._replace(entry=new_entry)
+                              for posting in entry.postings)
+    return new_entry
+
+
 def reparent_posting(posting, entry):
     "Create a new posting entry that has the parent field set."
     if posting.entry is entry:
@@ -141,7 +161,7 @@ def get_posting_date(posting_or_entry):
     Returns:
       A datetime instance.
     """
-    return (posting_or_entry.entry 
+    return (posting_or_entry.entry
             if isinstance(posting_or_entry, Posting)
             else posting_or_entry).date
 

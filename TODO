@@ -67,6 +67,11 @@ beancount: TODO
 
 * Current
 
+  - Clean up the interface of loader.load(), it's ugly.
+
+  - Add preliminary support for renaming root accounts, even if that means the
+    option must come first in the file. Move the checks in the parser.
+
   - Do something about executable being named "bison3", check for the version in
     setup.py instead, just call it as "bison".
 
