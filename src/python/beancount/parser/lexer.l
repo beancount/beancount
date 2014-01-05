@@ -137,7 +137,7 @@ option		{ return OPTION; }
 }
 
  /* Account names. */
-(Assets|Liabilities|Equity|Income|Expenses)(:[A-Z][A-Za-z0-9\-]+)+		{
+([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)+		{
     yylval->pyobj = BUILD("ACCOUNT", "s", yytext);
     return ACCOUNT;
 }

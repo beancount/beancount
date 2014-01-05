@@ -11,6 +11,36 @@ from collections import namedtuple
 # A type used to represent an account read in.
 Account = namedtuple('Account', 'name type')
 
+# Default values for root accounts.
+DEFAULT_ASSETS      = "Assets"
+DEFAULT_LIABILITIES = "Liabilities"
+DEFAULT_EQUITY      = "Equity"
+DEFAULT_INCOME      = "Income"
+DEFAULT_EXPENSES    = "Expenses"
+
+# FIXME: This is the only place where we have globals for this.
+# However, we need to thread the account_types all over the myriad
+# functions which call functions in this package which use this,
+# and I (blais) haven't decided whether the extra validation is
+# really worth it yet. Maybe we can just do without and make an
+# assumption. To review later.
+TYPES_ORDER = dict((x,i) for (i,x) in enumerate((DEFAULT_ASSETS,
+                                                 DEFAULT_LIABILITIES,
+                                                 DEFAULT_EQUITY,
+                                                 DEFAULT_INCOME,
+                                                 DEFAULT_EXPENSES)))
+
+
+def update_valid_account_names(account_types):
+    """Update the globals used to validate root account names.
+
+    Args:
+      account_types: an instance of AccountTypes, the account names.
+    """
+    global TYPES_ORDER
+    TYPES_ORDER = dict((x,i) for (i,x) in enumerate(account_types))
+
+
 def account_from_name(account_name):
     "Create a new account solely from its name."
     assert isinstance(account_name, str)
@@ -44,9 +74,6 @@ def account_name_sortkey(account_name):
     type_ = account_name_type(account_name)
     return (TYPES_ORDER[type_], account_name)
 
-# FIXME: This may not be hard-coded, needs to be read from options.
-TYPES_ORDER = dict((x,i) for (i,x) in enumerate('Assets Liabilities Equity Income Expenses'.split()))
-
 def account_name_type(name):
     """Return the type of this account's name."""
     assert isinstance(name, str)
@@ -57,7 +84,7 @@ def account_name_type(name):
 def is_account_name(string):
     """Return true if the given string is an account name."""
     return bool(re.match(
-        '(Assets|Liabilities|Equity|Income|Expenses)(:[A-Z][A-Za-z0-9\-]+)*$', string))
+        '([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)*$', string))
 
 def is_account_name_root(account_name):
     """Return true if the account name is one of the root accounts."""

@@ -28,6 +28,7 @@ from beancount.utils.text_utils import replace_numbers
 from beancount.core.account import account_from_name
 from beancount.core.account import is_balance_sheet_account
 from beancount.loader import load
+from beancount.parser import parser
 from beancount.web import gviz
 
 
@@ -168,7 +169,7 @@ def update():
     oss = io.StringIO()
     view = get_all_view(app)
 
-    for root in 'Assets', 'Liabilities':
+    for root in (account_types.assets, account_types.liabilities):
         table = acctree.tree_table(oss, view.real_accounts, root,
                                    ['Account', 'Last Entry'])
         for real_account, cells, row_classes in table:
@@ -971,6 +972,7 @@ def auto_reload_input_file(callback):
             app.entries = entries
             app.errors = errors
             app.options = options
+            app.account_types = parser.get_account_types(options)
 
             # Pre-compute the price database.
             app.price_db = prices.PriceDatabase(app.entries)

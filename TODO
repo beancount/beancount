@@ -567,10 +567,9 @@ one, to make people say „I would like to do that!“.
 
   - FIXME: We need to parse the options using the same argparse parser....
 
-  - Remove all strings for types (e.g. Assets), this must go into an option
-    context. Make the parser use the options name_* fields in order to validate
-    and change the lexer to recognize all account names, not specificially the
-    hardcoded ones we have now. (Assets|Liabilities|...).
+  - Remove the globals kludge in beancount/core/account.py, and weave the
+    necessary AccountTypes instance all over the place.
+
 
 ** Syntax
 

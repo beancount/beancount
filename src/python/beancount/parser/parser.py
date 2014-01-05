@@ -9,12 +9,13 @@ import inspect
 import textwrap
 import copy
 import tempfile
+import re
 from collections import namedtuple
 from os import path
 
 from beancount.parser import _parser
 from beancount.parser import options
-from beancount.core.account import account_from_name
+from beancount.core.account import account_from_name, update_valid_account_names
 from beancount.core import data
 from beancount.core.amount import ZERO, Decimal, Amount
 from beancount.core.position import Lot, Position
@@ -80,6 +81,16 @@ ParserError = collections.namedtuple('ParserError', 'fileloc message entry')
 ParserSyntaxError = collections.namedtuple('ParserError', 'fileloc message entry')
 
 
+def valid_account_regexp(options):
+    """Build a regexp to validate account names from the options."""
+    names = map(options.__getitem__, ('name_assets',
+                                      'name_liabilities',
+                                      'name_equity',
+                                      'name_income',
+                                      'name_expenses'))
+    return re.compile('({})(:[A-Z][A-Za-z0-9\-]+)*$'.format('|'.join(names)))
+
+
 class Builder(object):
     """A builder used by the lexer and grammer parser as callbacks to create
     the data objects corresponding to rules parsed from the input file."""
@@ -99,6 +110,7 @@ class Builder(object):
 
         # Accumulated and unprocessed options.
         self.options = copy.deepcopy(options.DEFAULT_OPTIONS)
+        self.account_regexp = valid_account_regexp(self.options)
 
     def store_result(self, entries):
         """Start rule stores the final result here.
@@ -147,6 +159,15 @@ class Builder(object):
             else:
                 self.options[key] = value
 
+            # Refresh the list of valid account regexps as we go.
+            if key.startswith('name_'):
+                self.account_regexp = valid_account_regexp(self.options)
+
+                # Update the globals that check whether this account is valid.
+                # FIXME: This is a known globals kludge we know we have to remove,
+                # but has ties in many places. Will remove later.
+                update_valid_account_names(get_account_types(self.options))
+
     def DATE(self, year, month, day):
         """Process a DATE token.
 
@@ -170,6 +191,14 @@ class Builder(object):
         Returns:
           A new Account object.
         """
+        # Check account name validity.
+        if not self.account_regexp.match(account_name):
+            fileloc = FileLocation('<ACCOUNT>', 0)
+            self.errors.append(
+                ParserError(fileloc, "Invalid account name: {}".format(account_name), None))
+            return account_from_name('{}:InvalidAccoutName'.format(self.options['name_equity']))
+
+        # Create an account, reusing them as we go.
         try:
             account = self.accounts[account_name]
         except KeyError:

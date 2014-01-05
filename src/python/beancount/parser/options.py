@@ -1,6 +1,7 @@
 """
 Declaration of options and their default values.
 """
+from beancount.core import account
 
 DEFAULT_OPTIONS = {
     # The title of this ledger / input file. This shows up at the top of every
@@ -11,11 +12,11 @@ DEFAULT_OPTIONS = {
     # names, so that if you prefer "Revenue" over "Income" or "Capital" over
     # "Equity", you can set them here. The account names in your input files
     # must match, and the parser will validate these.
-    "name_assets"      : "Assets",
-    "name_liabilities" : "Liabilities",
-    "name_equity"      : "Equity",
-    "name_income"      : "Income",
-    "name_expenses"    : "Expenses",
+    "name_assets"      : account.DEFAULT_ASSETS,
+    "name_liabilities" : account.DEFAULT_LIABILITIES,
+    "name_equity"      : account.DEFAULT_EQUITY,
+    "name_income"      : account.DEFAULT_INCOME,
+    "name_expenses"    : account.DEFAULT_EXPENSES,
 
     # Leaf name of the equity account used for summarizing previous transactions
     # into opening balances.

@@ -54,6 +54,8 @@ def load(filename,
     with utils.print_time('parse', quiet):
         entries, parse_errors, options = parse_fun(filename)
 
+    account_types = parser.get_account_types(options)
+
     # Pad the resulting entries (create synthetic Pad entries to balance checks
     # where desired).
     with utils.print_time('pad', quiet):
@@ -74,7 +76,7 @@ def load(filename,
 
     # Add unrealized gains.
     with utils.print_time('unrealized', quiet):
-        entries = prices.unrealized_gains(entries, options['account_unrealized'])
+        entries = prices.unrealized_gains(entries, options['account_unrealized'], account_types)
 
     # Print out the list of errors.
     errors = parse_errors + pad_errors + check_errors + valid_errors + doc_errors
