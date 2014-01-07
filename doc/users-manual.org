@@ -1012,3 +1012,4 @@ trying to remain as simple as possible
 
   - Make sure to emphasize that the balance check takes effect at the beginning
     of the day
+

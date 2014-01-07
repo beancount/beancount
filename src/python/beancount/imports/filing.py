@@ -12,6 +12,12 @@ import shutil
 from beancount.imports import imports
 
 
+def trace(arg):
+    sys.stdout.write(arg)
+    sys.stdout.write('\n')
+    sys.stdout.flush()
+
+
 def run_filer_loop(importer_config,
                    files_or_directories,
                    destination,
@@ -33,7 +39,6 @@ def run_filer_loop(importer_config,
     if isinstance(files_or_directories, str):
         files_or_directories = [files_or_directories]
 
-    trace = lambda arg: sys.stdout.write(arg + '\n')
     jobs = []
     nerrors = 0
     for filename, match_text, importers in imports.find_imports(importer_config, files_or_directories):
@@ -69,6 +74,8 @@ def run_filer_loop(importer_config,
         file_date = None
         try:
             file_date = importer.import_date(filename, match_text)
+            if file_date is None:
+                raise ValueError("Invalid return date from importer {}".format(importer))
         except NotImplementedError:
             # Fallback on the last modified time of the file.
             file_date = mtime_date
@@ -89,8 +96,7 @@ def run_filer_loop(importer_config,
         trace('=== {}'.format(filename))
         if importers:
             trace('')
-        for importer in importers:
-            trace('  Account:     {}'.format(file_account))
+        trace('  Account:     {}'.format(file_account))
         trace('  Importer:    {}'.format(importer.__class__.__name__ if importer else '-'))
         trace('  Mtime Date:  {}'.format(mtime_date))
         trace('  Date:        {}'.format(file_date))

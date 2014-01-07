@@ -76,7 +76,7 @@ is great for sectioning large files with many transactions."
     ("\".*?\"" . font-lock-string-face)
 
     ;; Reserved keywords
-    (,(regexp-opt '("txn" "check" "open" "close" "pad" "event" "price" "note"
+    (,(regexp-opt '("txn" "check" "balance" "open" "close" "pad" "event" "price" "note"
                     "begintag" "endtag")) . font-lock-keyword-face)
 
     ;; Tags & Links
