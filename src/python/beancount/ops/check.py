@@ -5,11 +5,11 @@ from collections import namedtuple
 
 from beancount.core.inventory import Inventory
 from beancount.core.amount import Decimal, amount_sub
-from beancount.core.data import Transaction, Check
+from beancount.core.data import Transaction, Balance
 from beancount.core import flags
 
 
-CheckError = namedtuple('CheckError', 'fileloc message entry')
+BalanceError = namedtuple('BalanceError', 'fileloc message entry')
 
 # This is based on some real-world usage: FOREX brokerage, for instance,
 # accumulates error up to 1bp, and we need to tolerate that if our importers
@@ -17,7 +17,7 @@ CheckError = namedtuple('CheckError', 'fileloc message entry')
 CHECK_PRECISION = Decimal('.015')
 
 def check(entries):
-    """Check for all the Check directives and replace failing ones by new ones with
+    """Check for all the Balance directives and replace failing ones by new ones with
     a flag that indicates failure."""
 
     check_errors = []
@@ -41,11 +41,11 @@ def check(entries):
                     balance.add_position(posting.position, allow_negative)
                 except ValueError as e:
                     check_errors.append(
-                        CheckError(entry.fileloc,
+                        BalanceError(entry.fileloc,
                                    "Error balancing '{}' -- {}".format(posting.account.name, e),
                                    entry))
 
-        elif isinstance(entry, Check):
+        elif isinstance(entry, Balance):
             # Check the balance against the check entry.
             check_amount = entry.amount
             try:
@@ -65,14 +65,14 @@ def check(entries):
             diff_amount = amount_sub(balance_amount, check_amount)
             if abs(diff_amount.number) > CHECK_PRECISION:
                 check_errors.append(
-                    CheckError(entry.fileloc,
-                               "Check failed for '{}': {} != {} (diff: {})".format(
+                    BalanceError(entry.fileloc,
+                               "Balance failed for '{}': {} != {} (diff: {})".format(
                                    entry.account.name, balance_amount, check_amount,
                                    amount_sub(balance_amount, check_amount)),
                                entry))
 
                 # Substitute the entry by a failing entry.
-                entry = Check(entry.fileloc, entry.date, entry.account, entry.amount, diff_amount)
+                entry = Balance(entry.fileloc, entry.date, entry.account, entry.amount, diff_amount)
 
         new_entries.append(entry)
 

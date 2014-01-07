@@ -8,7 +8,7 @@ import sys
 
 from beancount.parser import parsedoc
 from beancount.parser import parser, options
-from beancount.core.data import Transaction, Check, Open, Close, Pad, Event, Price, Note
+from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price, Note
 from beancount.core.data import format_entry
 from beancount.core.account import Account
 
@@ -85,7 +85,7 @@ class TestParserEntries(unittest.TestCase):
         """
           2013-05-18 check Assets:US:BestBank:Checking  200 USD
         """
-        check_list(self, entries, [Check])
+        check_list(self, entries, [Balance])
 
     @parsedoc
     def test_entry_open_1(self, entries, errors, options):
@@ -227,7 +227,7 @@ class TestSyntaxErrors(unittest.TestCase):
 
         # Check that we indeed read the 'check' entry that comes after the one
         # with the error.
-        check_list(self, entries, [Check])
+        check_list(self, entries, [Balance])
 
         # Make sure at least one error is reported.
         check_list(self, errors, [parser.ParserSyntaxError])

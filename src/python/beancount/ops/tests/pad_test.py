@@ -6,7 +6,7 @@ import unittest
 
 from beancount.core.position import Lot, Position
 from beancount.core.inventory import Inventory
-from beancount.core.data import Open, Pad, Check, Posting
+from beancount.core.data import Open, Pad, Balance, Posting
 from beancount.core.amount import Decimal, Amount
 from beancount.core.tests.realization_test import realizedoc
 
@@ -32,7 +32,7 @@ class __TestPadding(unittest.TestCase):
           2013-05-03 check Assets:Checking   172.45 USD
         """
         self.assertEqual(len(errors), 0)
-        self.check_real_types(real_accounts['Assets:Checking'], [Open, Pad, Posting, Check])
+        self.check_real_types(real_accounts['Assets:Checking'], [Open, Pad, Posting, Balance])
         self.check_real_types(real_accounts['Equity:Opening-Balancess'], [Open, Pad, Posting])
 
         self.check_balance(real_accounts['Assets:Checking'],
@@ -83,7 +83,7 @@ class __TestPadding(unittest.TestCase):
         """
         self.assertEqual(len(errors), 0)
         self.check_real_types(real_accounts['Assets:Checking'],
-                            [Open, Pad, Posting, Check, Posting, Pad, Posting, Check])
+                            [Open, Pad, Posting, Balance, Posting, Pad, Posting, Balance])
 
     @realizedoc
     def test_pad_check_balances(self, entries, real_accounts, errors):
@@ -124,10 +124,10 @@ class __TestPadding(unittest.TestCase):
                                     (Pad, Amount('0.00', 'USD')),
                                     (Posting, Amount('95.00', 'USD')),
                                     (Posting, Amount('105.00', 'USD')),
-                                    (Check, Amount('105.00', 'USD')),
+                                    (Balance, Amount('105.00', 'USD')),
                                     (Posting, Amount('125.00', 'USD')),
                                     (Posting, Amount('145.00', 'USD')),
-                                    (Check, Amount('145.00', 'USD'))])
+                                    (Balance, Amount('145.00', 'USD'))])
 
 
 

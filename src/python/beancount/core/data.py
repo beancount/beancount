@@ -36,7 +36,7 @@ def format_errors(errors):
 Open        = namedtuple('Open'        , 'fileloc date account currencies')
 Close       = namedtuple('Close'       , 'fileloc date account')
 Pad         = namedtuple('Pad'         , 'fileloc date account account_pad')
-Check       = namedtuple('Check'       , 'fileloc date account amount errdiff')
+Balance       = namedtuple('Balance'       , 'fileloc date account amount errdiff')
 Transaction = namedtuple('Transaction' , 'fileloc date flag payee narration tags links postings')
 Note        = namedtuple('Note'        , 'fileloc date account comment')
 Event       = namedtuple('Event'       , 'fileloc date type description')
@@ -87,7 +87,7 @@ NoneType = type(None)
 
 def sanity_check_types(entry):
     """Check that the entry and its postings has all correct data types."""
-    assert isinstance(entry, (Transaction, Open, Close, Pad, Check, Note, Event, Price))
+    assert isinstance(entry, (Transaction, Open, Close, Pad, Balance, Note, Event, Price))
     assert isinstance(entry.fileloc, FileLocation)
     assert isinstance(entry.date, datetime.date)
     if isinstance(entry, Transaction):
@@ -167,10 +167,10 @@ def get_posting_date(posting_or_entry):
 
 
 # Sort with the checks at the BEGINNING of the day.
-SORT_ORDER = {Open: -2, Check: -1, Close: 1}
+SORT_ORDER = {Open: -2, Balance: -1, Close: 1}
 
 # Sort with the checks at the END of the day.
-#SORT_ORDER = {Open: -2, Check: 1, Close: 2}
+#SORT_ORDER = {Open: -2, Balance: 1, Close: 2}
 
 
 def entry_sortkey(entry):
@@ -228,8 +228,8 @@ class EntryPrinter:
             oss.write('  {}{:64} {:>16} {:>16}'.format(flag, posting.account.name, position, price_str).rstrip())
             oss.write('\n')
 
-    def Check(_, entry, oss):
-        oss.write('{e.date} check {e.account.name:48} {e.amount}\n'.format(e=entry))
+    def Balance(_, entry, oss):
+        oss.write('{e.date} balance {e.account.name:48} {e.amount}\n'.format(e=entry))
 
     def Note(_, entry, oss):
         oss.write('{e.date} note {e.account.name} {e.comment}\n'.format(e=entry))

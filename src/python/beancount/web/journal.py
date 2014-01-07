@@ -5,7 +5,7 @@ from os import path
 from bottle import request
 
 from beancount.core import data
-from beancount.core.data import Open, Close, Check, Transaction, Note, Document
+from beancount.core.data import Open, Close, Balance, Transaction, Note, Document
 from beancount.core.balance import get_balance_amount
 from beancount.core.inventory import Inventory
 from beancount.core.account import Account, account_name_leaf
@@ -82,12 +82,12 @@ def iterate_render_transactions(app, postings):
                 links = [app.router.build('link', link=link)
                          for link in entry.links]
 
-        elif isinstance(entry, Check):
+        elif isinstance(entry, Balance):
             # Check the balance here and possibly change the rowtype
             if entry.errdiff is None:
-                description = 'Check {} has {}'.format(account_link(entry.account), entry.amount)
+                description = 'Balance {} has {}'.format(account_link(entry.account), entry.amount)
             else:
-                description = 'Check in {} fails; expected = {}, balance = {}, difference = {}'.format(
+                description = 'Balance in {} fails; expected = {}, balance = {}, difference = {}'.format(
                     account_link(entry.account), entry.amount,
                     balance.get_amount(entry.amount.currency),
                     entry.errdiff)

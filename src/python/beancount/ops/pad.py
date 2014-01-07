@@ -5,7 +5,7 @@ from collections import namedtuple, defaultdict
 from beancount.core.position import Lot, Position
 from beancount.core.inventory import Inventory
 from beancount.core.amount import Decimal, amount_sub
-from beancount.core.data import Transaction, Check, Open, Close, Pad, Note, Document, Posting
+from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Document, Posting
 from beancount import utils
 from beancount.core import flags
 
@@ -54,7 +54,7 @@ def pad(entries):
                 active_pad = entry
                 padded_lots = set()
 
-            elif isinstance(entry, Check):
+            elif isinstance(entry, Balance):
                 check_amount = entry.amount
 
                 # Compare the current balance amount to the expected one from
@@ -92,7 +92,7 @@ def pad(entries):
                         diff_position = Position(lot, check_amount.number - balance_amount.number)
 
                         # Synthesize a new transaction entry for the difference.
-                        narration = '(Padding inserted for Check of {} for difference {})'.format(
+                        narration = '(Padding inserted for Balance of {} for difference {})'.format(
                             check_amount, diff_position)
                         new_entry = Transaction(
                             active_pad.fileloc, active_pad.date, flags.FLAG_PADDING, None, narration, None, None, [])
@@ -143,7 +143,7 @@ def group_postings_by_account(entries, only_accounts=None):
                     continue
                 by_accounts[posting.account].append(posting)
 
-        elif isinstance(entry, (Check, Open, Close, Pad, Note, Document)):
+        elif isinstance(entry, (Balance, Open, Close, Pad, Note, Document)):
             if (only_accounts is not None and
                 entry.account not in only_accounts):
                 continue

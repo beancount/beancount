@@ -12,7 +12,7 @@ from beancount.imports import importer
 from beancount.core import data
 from beancount.core.amount import Decimal, Amount
 from beancount.core.data import create_simple_posting
-from beancount.core.data import Posting, Transaction, Check
+from beancount.core.data import Posting, Transaction, Balance
 from beancount.core.account import account_from_name
 from beancount.core.position import Lot, Position
 from beancount.core.account import accountify_dict
@@ -68,13 +68,13 @@ class Importer(importer.ImporterBase):
             # Get the new entry's date.
             date = datetime.datetime.strptime(row.date, '%m/%d/%Y').date()
 
-            # Insert some Check entries every time the day changed.
+            # Insert some Balance entries every time the day changed.
             if ((debug and date != prev_date) or
                 (not debug and date.month != prev_date.month)):
 
                 prev_date = date
                 fileloc = data.FileLocation(filename, index)
-                new_entries.append(Check(fileloc, date, config['asset_cash'], prev_balance, None))
+                new_entries.append(Balance(fileloc, date, config['asset_cash'], prev_balance, None))
 
             # Create a new transaction.
             narration = row.description
@@ -176,7 +176,7 @@ class Importer(importer.ImporterBase):
             prev_balance = Amount(Decimal(row.net_cash_balance), cash_currency)
 
         fileloc = data.FileLocation(filename, index)
-        new_entries.append(Check(fileloc,
+        new_entries.append(Balance(fileloc,
                                  date + datetime.timedelta(days=1),
                                  config['asset_cash'], prev_balance, None))
 

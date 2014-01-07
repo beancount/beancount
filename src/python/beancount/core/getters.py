@@ -37,7 +37,7 @@ class GetAccounts:
     def _zero(_, entry):
         return ()
 
-    Open = Close = Check = Note = Document = _one
+    Open = Close = Balance = Note = Document = _one
     Event = Price = _zero
 
 def get_accounts(entries):

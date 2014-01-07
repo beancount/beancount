@@ -11,7 +11,7 @@ from beancount.core.amount import amount_sortkey
 from beancount.utils import index_key
 from beancount.core import data
 from beancount.core import getters
-from beancount.core.data import Transaction, Check, Open, Close, Pad, Note, Document
+from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Document
 from beancount.core.data import Posting
 from beancount.core.account import account_name_leaf, account_name_parent
 
@@ -111,9 +111,9 @@ def realize(entries, do_check=False, min_accounts=None):
                                 +-----+
                                    |
                                    v
-                               +-------+
-                               | Check |
-                               +-------+
+                              +---------+
+                              | Balance |
+                              +---------+
                                    |
                                    v
                                +-------+
@@ -122,7 +122,7 @@ def realize(entries, do_check=False, min_accounts=None):
                                    |
                                    .
 
-    If 'do_check' is true, verify that Check entry balances succeed and issue error
+    If 'do_check' is true, verify that Balance entry balances succeed and issue error
     messages if they fail.
 
     'min_accounts' provides a sequence of accounts to ensure that we create no matter
@@ -142,7 +142,7 @@ def realize(entries, do_check=False, min_accounts=None):
                 real_account = assoc_entry_with_real_account(real_dict, posting.account, posting)
                 real_account.balance.add_position(posting.position, allow_negative=True)
 
-        elif isinstance(entry, (Open, Close, Check, Note, Document)):
+        elif isinstance(entry, (Open, Close, Balance, Note, Document)):
             # Append some other entries in the realized list.
             assoc_entry_with_real_account(real_dict, entry.account, entry)
 

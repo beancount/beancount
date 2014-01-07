@@ -98,7 +98,7 @@ class Importer(importer.ImporterBase):
             balamt = soup_get(ledgerbal, 'balamt', Decimal)
             dtasof = soup_get(ledgerbal, 'dtasof', parse_ofx_time).date()
             fileloc = data.FileLocation(filename, next(txn_counter))
-            balance_entry = data.Check(fileloc, dtasof, account_asset,
+            balance_entry = data.Balance(fileloc, dtasof, account_asset,
                                        data.Amount(balamt, first_currency), None)
             new_entries.append(balance_entry)
 

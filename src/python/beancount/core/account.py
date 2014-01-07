@@ -18,18 +18,15 @@ DEFAULT_EQUITY      = "Equity"
 DEFAULT_INCOME      = "Income"
 DEFAULT_EXPENSES    = "Expenses"
 
-# FIXME: This is the only place where we have globals for this.
-# However, we need to thread the account_types all over the myriad
-# functions which call functions in this package which use this,
-# and I (blais) haven't decided whether the extra validation is
-# really worth it yet. Maybe we can just do without and make an
-# assumption. To review later.
-TYPES_ORDER = dict((x,i) for (i,x) in enumerate((DEFAULT_ASSETS,
-                                                 DEFAULT_LIABILITIES,
-                                                 DEFAULT_EQUITY,
-                                                 DEFAULT_INCOME,
-                                                 DEFAULT_EXPENSES)))
 
+def update_default_valid_account_names():
+    """Set the globals to the default account names."""
+    global TYPES_ORDER
+    TYPES_ORDER = dict((x,i) for (i,x) in enumerate((DEFAULT_ASSETS,
+                                                     DEFAULT_LIABILITIES,
+                                                     DEFAULT_EQUITY,
+                                                     DEFAULT_INCOME,
+                                                     DEFAULT_EXPENSES)))
 
 def update_valid_account_names(account_types):
     """Update the globals used to validate root account names.
@@ -39,6 +36,15 @@ def update_valid_account_names(account_types):
     """
     global TYPES_ORDER
     TYPES_ORDER = dict((x,i) for (i,x) in enumerate(account_types))
+
+# FIXME: This is the only place where we have globals for this.
+# However, we need to thread the account_types all over the myriad
+# functions which call functions in this package which use this,
+# and I (blais) haven't decided whether the extra validation is
+# really worth it yet. Maybe we can just do without and make an
+# assumption. To review later.
+TYPES_ORDER = None
+update_default_valid_account_names()
 
 
 def account_from_name(account_name):
@@ -78,13 +84,13 @@ def account_name_type(name):
     """Return the type of this account's name."""
     assert isinstance(name, str)
     atype = name.split(':')[0]
-    assert atype in TYPES_ORDER, (name, atype)
+    assert atype in TYPES_ORDER, (name, atype, TYPES_ORDER)
     return atype
 
 def is_account_name(string):
     """Return true if the given string is an account name."""
     return bool(re.match(
-        '([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)*$', string))
+        '([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)+$', string))
 
 def is_account_name_root(account_name):
     """Return true if the account name is one of the root accounts."""

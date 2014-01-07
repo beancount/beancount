@@ -18,7 +18,7 @@ from beancount.web import journal
 from beancount.web import acctree
 from beancount.core import data
 from beancount.core import flags
-from beancount.core.data import Open, Close, Pad, Check, Transaction, Note, Document, Event, Posting
+from beancount.core.data import Open, Close, Pad, Balance, Transaction, Note, Document, Event, Posting
 from beancount.core import getters
 from beancount.ops import summarize
 from beancount.core import realization
@@ -204,7 +204,7 @@ def find_last_active_posting(postings):
       An entry, or None, if the input list was empty.
     """
     for posting in utils.filter_type(reversed(postings),
-                                     (Open, Close, Pad, Check, Posting, Note)):
+                                     (Open, Close, Pad, Balance, Posting, Note)):
         if (isinstance(posting, Posting) and
             posting.entry.flag == flags.FLAG_UNREALIZED):
             continue

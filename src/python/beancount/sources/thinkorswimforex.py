@@ -13,7 +13,7 @@ from beancount.core import data
 from beancount.core.amount import to_decimal, Decimal, Amount, ZERO
 from beancount.core.account import account_from_name
 from beancount.core.data import create_simple_posting
-from beancount.core.data import Transaction, Posting, Pad, Check
+from beancount.core.data import Transaction, Posting, Pad, Balance
 from beancount.core.position import Lot, Position
 from beancount.utils import csv_utils
 from beancount.utils.text_utils import Matcher

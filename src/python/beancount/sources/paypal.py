@@ -12,7 +12,7 @@ import datetime
 from beancount.imports import importer
 from beancount.core import data
 from beancount.core.amount import Decimal, Amount, ZERO
-from beancount.core.data import Transaction, Check
+from beancount.core.data import Transaction, Balance
 from beancount.utils import csv_utils
 from beancount.core.account import accountify_dict
 from beancount.core import flags
@@ -68,6 +68,6 @@ class Importer(importer.ImporterBase):
         # Insert a check directive.
         date = date + datetime.timedelta(days=1)
         fileloc = data.FileLocation(filename, index)
-        new_entries.append(Check(fileloc, date, config['cash'], Amount(Decimal(row.balance), row.currency), None))
+        new_entries.append(Balance(fileloc, date, config['cash'], Amount(Decimal(row.balance), row.currency), None))
 
         return new_entries

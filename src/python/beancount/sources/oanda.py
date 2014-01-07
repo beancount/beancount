@@ -12,7 +12,7 @@ from beancount.imports import importer
 from beancount.core import data
 from beancount.core.amount import Decimal, Amount
 from beancount.core.account import accountify_dict
-from beancount.core.data import Posting, Transaction, Check, Note
+from beancount.core.data import Posting, Transaction, Balance, Note
 from beancount.core.data import format_entry
 from beancount.core.position import Lot, Position
 from beancount.ops import compress
@@ -156,12 +156,12 @@ def import_csv_file(filename, config):
         txntype = obj['transaction']
         date = datetime.datetime.strptime(obj['date'], '%B %d %H:%M:%S %Y %Z').date()
 
-        # Insert some Check entries every month or so.
+        # Insert some Balance entries every month or so.
         if date.month != prev_date.month:
             prev_date = date
             fileloc = data.FileLocation(filename, lineno)
             amount = Amount(prev_balance, currency)
-            new_entries.append(Check(fileloc, date, config['asset'], amount, None))
+            new_entries.append(Balance(fileloc, date, config['asset'], amount, None))
 
         # Ignore certain ones that have no effect on the balance, they just
         # change our positions.

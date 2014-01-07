@@ -141,7 +141,7 @@ def summarize(entries, date, opening_account):
     index, balances = sum_to_date(entries, date)
 
     # We need to insert the entries with a date previous to subsequent checks,
-    # to maintain the invariant that all Check and Open directive show up before
+    # to maintain the invariant that all Balance and Open directive show up before
     # any transaction.
     summarize_date = date - datetime.timedelta(days=1)
 

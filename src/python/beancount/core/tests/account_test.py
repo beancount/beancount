@@ -80,7 +80,7 @@ class TestAccount(unittest.TestCase):
         self.assertTrue(is_account_name("Income:US:ETrade:Dividends-USD"))
         self.assertTrue(is_account_name("Assets:US:RBS"))
         self.assertTrue(is_account_name("Assets:US"))
-        self.assertTrue(is_account_name("Assets"))
+        self.assertFalse(is_account_name("Assets"))
         self.assertFalse(is_account_name("Invalid"))
         self.assertFalse(is_account_name("Other"))
         self.assertFalse(is_account_name("Assets:US:RBS*Checking"))

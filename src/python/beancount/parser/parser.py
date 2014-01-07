@@ -15,12 +15,12 @@ from os import path
 
 from beancount.parser import _parser
 from beancount.parser import options
-from beancount.core.account import account_from_name, update_valid_account_names
+from beancount.core.account import account_from_name
+from beancount.core import account
 from beancount.core import data
 from beancount.core.amount import ZERO, Decimal, Amount
 from beancount.core.position import Lot, Position
-from beancount.core.data import Transaction, Check, Open, Close, Pad, Event, Price, Note, Document, FileLocation, Posting
-from beancount.core.account import account_from_name
+from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price, Note, Document, FileLocation, Posting
 from beancount.core.balance import balance_incomplete_postings
 from beancount.core.balance import compute_residual, SMALL_EPSILON
 
@@ -112,6 +112,11 @@ class Builder(object):
         self.options = copy.deepcopy(options.DEFAULT_OPTIONS)
         self.account_regexp = valid_account_regexp(self.options)
 
+        # Re-initialize the parsing options. FIXME: This is because of some
+        # globals in beancount.core.account, we don't want to leak options
+        # between invocations.
+        account.update_default_valid_account_names()
+
     def store_result(self, entries):
         """Start rule stores the final result here.
 
@@ -166,7 +171,7 @@ class Builder(object):
                 # Update the globals that check whether this account is valid.
                 # FIXME: This is a known globals kludge we know we have to remove,
                 # but has ties in many places. Will remove later.
-                update_valid_account_names(get_account_types(self.options))
+                account.update_valid_account_names(get_account_types(self.options))
 
     def DATE(self, year, month, day):
         """Process a DATE token.
@@ -387,11 +392,11 @@ class Builder(object):
           account: an Account instance.
           amount: the expected amount, to be checked.
         Returns:
-          A new Check object.
+          A new Balance object.
         """
         errdiff = None
         fileloc = FileLocation(filename, lineno)
-        return Check(fileloc, date, account, amount, errdiff)
+        return Balance(fileloc, date, account, amount, errdiff)
 
     def event(self, filename, lineno, date, event_type, description):
         """Process an event directive.

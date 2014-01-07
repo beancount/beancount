@@ -8,7 +8,7 @@ from beancount.imports import importer
 from beancount.core.account import account_from_name
 from beancount.core.amount import Decimal, Amount
 from beancount.core import data
-from beancount.core.data import Posting, Transaction, Check
+from beancount.core.data import Posting, Transaction, Balance
 from beancount.core.position import Lot, Position
 from beancount.sources.ofx import souptodict, soup_get, parse_ofx_time
 from beancount.core.account import accountify_dict
@@ -119,7 +119,7 @@ class Importer(importer.ImporterBase):
 
                         new_entries.append(entry)
 
-                    # Process all positions, convert them to Check directives.
+                    # Process all positions, convert them to Balance directives.
                     # Note: this was developed for Vanguard.
                     for invposlist in stmtrs.find_all('invposlist'):
                         for invpos in invposlist.find_all('invpos'):
@@ -140,7 +140,7 @@ class Importer(importer.ImporterBase):
                                 source_subaccounts[source].name, security))
 
                             amount = Amount(units, security)
-                            new_entries.append(Check(fileloc, date, account, amount, None))
+                            new_entries.append(Balance(fileloc, date, account, amount, None))
 
         new_entries.sort(key=lambda entry: entry.date)
         return new_entries

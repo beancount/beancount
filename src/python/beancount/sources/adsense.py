@@ -7,7 +7,7 @@ import datetime
 from beancount.imports import importer
 from beancount.core import data
 from beancount.core.amount import to_decimal, Amount
-from beancount.core.data import Transaction, Check
+from beancount.core.data import Transaction, Balance
 from beancount.utils import DateIntervalTicker
 from beancount.utils import csv_utils
 from beancount.core import flags
@@ -47,12 +47,12 @@ class Importer(importer.ImporterBase):
 
             fileloc = data.FileLocation(filename, index)
 
-            # Insert some Check entries every 3 months or so.
+            # Insert some Balance entries every 3 months or so.
             n3mths = (row.date.year * 12 + row.date.month) // 3
 
             if ticker(row.date):
                 if prev_row:
-                    check = Check(fileloc, row.date, config['cash'],
+                    check = Balance(fileloc, row.date, config['cash'],
                                   Amount(prev_row.account_balance, currency), None)
                     new_entries.append(check)
             prev_row = row
@@ -76,7 +76,7 @@ class Importer(importer.ImporterBase):
 
             new_entries.append(entry)
 
-        check = Check(fileloc, row.date + datetime.timedelta(days=1), config['cash'],
+        check = Balance(fileloc, row.date + datetime.timedelta(days=1), config['cash'],
                       Amount(row.account_balance, currency), None)
         new_entries.append(check)
 

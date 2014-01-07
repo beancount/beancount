@@ -13,7 +13,7 @@ from beancount.core import data
 from beancount.core.amount import to_decimal, Decimal, Amount, ZERO
 from beancount.core.account import account_from_name
 from beancount.core.data import create_simple_posting
-from beancount.core.data import Transaction, Posting, Pad, Check
+from beancount.core.data import Transaction, Posting, Pad, Balance
 from beancount.core.position import Lot, Position
 from beancount.utils import csv_utils
 from beancount.utils.text_utils import Matcher
@@ -87,13 +87,13 @@ def process_cash(section, filename, config):
         fileloc = data.FileLocation(filename, index)
         date = datetime.datetime.strptime(row.date, '%d/%m/%y').date()
 
-        # Insert some Check entries every time the day changed.
+        # Insert some Balance entries every time the day changed.
         if ((debug and date != prev_date) or
             (not debug and date.month != prev_date.month)):
 
             prev_date = date
             fileloc = data.FileLocation(filename, index)
-            new_entries.append(Check(fileloc, date, config['asset_cash'], prev_balance, None))
+            new_entries.append(Balance(fileloc, date, config['asset_cash'], prev_balance, None))
 
         # Create a new transaction.
         narration = "({0.type}) {0.description}".format(row)
@@ -179,7 +179,7 @@ def process_cash(section, filename, config):
                 new_entries.append(entry)
 
                 # And an associated check.
-                new_entries.append(Check(fileloc, date, config['asset_cash'], balance, None))
+                new_entries.append(Balance(fileloc, date, config['asset_cash'], balance, None))
 
                 continue # No entry.
 

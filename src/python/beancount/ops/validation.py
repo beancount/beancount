@@ -1,12 +1,12 @@
 """
 Sanity checks.
-(Note that these don't have anything to do with 'Check' directives.
+(Note that these don't have anything to do with 'Balance' directives.
 """
 from os import path
 from collections import namedtuple, defaultdict
 
 from beancount.core.account import Account
-from beancount.core.data import Open, Close, Check, Transaction, Document
+from beancount.core.data import Open, Close, Balance, Transaction, Document
 from beancount.core import data
 from beancount.core import getters
 from beancount import utils
@@ -18,7 +18,7 @@ ValidationError = namedtuple('ValidationError', 'fileloc message entry')
 
 def validate_open_close(entries, accounts):
     """Some entries may not be present more than once for each account or date.
-    Open and Close are unique per account, for instance. Check is unique
+    Open and Close are unique per account, for instance. Balance is unique
     for each date. There are more. Return a list of errors on non-unique
     entries.
     """
@@ -66,7 +66,7 @@ def validate_open_close(entries, accounts):
             else:
                 close_map[account] = entry
 
-        elif isinstance(entry, Check):
+        elif isinstance(entry, Balance):
             if entry.account in accounts:
                 # The account is an account with transactions; check the fast
                 # path.
