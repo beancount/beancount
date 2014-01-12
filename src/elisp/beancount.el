@@ -27,9 +27,82 @@ is great for sectioning large files with many transactions."
     )
   :group 'beancount
 
-  (set (make-local-variable 'comment-start) ";; ")
-  (set (make-local-variable 'comment-end) "")
 
+
+
+(when nil
+  (make-local-variable 'paragraph-ignore-fill-prefix)
+  (setq paragraph-ignore-fill-prefix t)
+  (make-local-variable 'fill-paragraph-function)
+  (setq fill-paragraph-function 'lisp-fill-paragraph)
+  ;; Adaptive fill mode gets the fill wrong for a one-line paragraph made of
+  ;; a single docstring.  Let's fix it here.
+  (set (make-local-variable 'adaptive-fill-function)
+       (lambda () (if (looking-at "\\s-+\"[^\n\"]+\"\\s-*$") "")))
+  ;; Adaptive fill mode gets in the way of auto-fill,
+  ;; and should make no difference for explicit fill
+  ;; because lisp-fill-paragraph should do the job.
+  ;;  I believe that newcomment's auto-fill code properly deals with it  -stef
+  ;;(set (make-local-variable 'adaptive-fill-mode) nil)
+  (make-local-variable 'indent-line-function)
+  (setq indent-line-function 'lisp-indent-line)
+  (make-local-variable 'outline-regexp)
+  (setq outline-regexp ";;;\\(;* [^ \t\n]\\|###autoload\\)\\|(")
+  (make-local-variable 'outline-level)
+  (setq outline-level 'lisp-outline-level)
+  (make-local-variable 'comment-start)
+  (setq comment-start ";")
+  (make-local-variable 'comment-start-skip)
+  ;; Look within the line for a ; following an even number of backslashes
+  ;; after either a non-backslash or the line beginning.
+  (setq comment-start-skip "\\(\\(^\\|[^\\\\\n]\\)\\(\\\\\\\\\\)*\\);+ *")
+  (make-local-variable 'font-lock-comment-start-skip)
+  ;; Font lock mode uses this only when it KNOWS a comment is starting.
+  (setq font-lock-comment-start-skip ";+ *")
+  (make-local-variable 'comment-add)
+  (setq comment-add 1)			;default to `;;' in comment-region
+  (make-local-variable 'comment-column)
+  (setq comment-column 40)
+  ;; Don't get confused by `;' in doc strings when paragraph-filling.
+  (set (make-local-variable 'comment-use-global-state) t)
+  (make-local-variable 'imenu-generic-expression)
+  (setq imenu-generic-expression lisp-imenu-generic-expression)
+  (make-local-variable 'multibyte-syntax-as-symbol)
+  (setq multibyte-syntax-as-symbol t)
+  (set (make-local-variable 'syntax-begin-function) 'beginning-of-defun)
+
+)
+
+(when t
+
+  ;; The following is mostly lifted from lisp-mode.
+  (make-local-variable 'paragraph-ignore-fill-prefix)
+  (setq paragraph-ignore-fill-prefix t)
+  (make-local-variable 'fill-paragraph-function)
+  (setq fill-paragraph-function 'lisp-fill-paragraph)
+
+  ;; (set (make-local-variable 'adaptive-fill-function)
+  ;;      (lambda () (if (looking-at "\\s-+\"[^\n\"]+\"\\s-*$") "")))
+;;  (set (make-local-variable 'comment-use-global-state) t)
+
+
+  (make-local-variable 'comment-start)
+  (setq comment-start ";; ")
+  (make-local-variable 'comment-start-skip)
+
+  ;; Look within the line for a ; following an even number of backslashes
+  ;; after either a non-backslash or the line beginning.
+  (setq comment-start-skip "\\(\\(^\\|[^\\\\\n]\\)\\(\\\\\\\\\\)*\\);+ *")
+  (make-local-variable 'font-lock-comment-start-skip)
+  ;; Font lock mode uses this only when it KNOWS a comment is starting.
+  (setq font-lock-comment-start-skip ";+ *")
+  (make-local-variable 'comment-add)
+  (setq comment-add 1) ;; Default to `;;' in comment-region
+
+)
+
+
+  ;; No tabs by default.
   (set (make-local-variable 'indent-tabs-mode) nil)
 
   ;; Customize font-lock for beancount.
@@ -47,7 +120,7 @@ is great for sectioning large files with many transactions."
 
   ;; Set the default compilation command to run a check on the current buffer's
   ;; file.
-  (setq compile-command 
+  (setq compile-command
         (format "%s %s" beancount-check-program (buffer-file-name)))
   )
 
