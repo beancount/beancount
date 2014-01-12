@@ -1,6 +1,7 @@
 #!/usr/bin/env bean-web
 ;; -*- mode: org; mode: beancount; coding: utf-8; fill-column: 400; -*-
 ;; Starter Kit Example Ledger
+
 * Initialization
 ;; This is a starter example file that you should copy to get started
 ;; using Beancount. This is an example starting point, with the same
@@ -93,6 +94,7 @@ option "documents" "starterdocs"
 ** BofA Bank
 ;; This example individual has some regular accounts in Bank of America
 ;; (we'll abbreviate as BofA) and a credit card with them.
+
 *** Checking
 ;; A main checking account.
 
@@ -125,12 +127,14 @@ option "documents" "starterdocs"
 ;; transactions following the check date.
 
 
+
 *** Savings
 ;; A high-interest savings account, presumably opened on the same date..
 
 2004-08-01 open   Assets:US:BofABank:Savings  USD
 2004-08-01 pad    Assets:US:BofABank:Savings  Equity:Opening-Balances
 2013-12-22 check  Assets:US:BofABank:Savings  2402.81 USD
+
 
 
 *** Mortgage
@@ -147,6 +151,7 @@ option "documents" "starterdocs"
 2013-12-22 check   Liabilities:US:BofABank:Mortgage  -101832.34 USD
 
 
+
 ** American Express
 ; He also has an American Express BlueCash Everyday card (we'll
 ;; abbreviate as Amex).
@@ -154,6 +159,7 @@ option "documents" "starterdocs"
 2009-08-01 open   Liabilities:US:Amex:BlueCash  USD
 2009-08-01 pad    Liabilities:US:Amex:BlueCash  Equity:Opening-Balances
 2013-12-22 check  Liabilities:US:Amex:BlueCash  -1121.26 USD
+
 
 
 ** Fidelity Investments
@@ -186,6 +192,8 @@ option "documents" "starterdocs"
 
 2013-12-22 price RGAGX  40.93 USD
 2013-12-22 price VBMPX  10.02 USD
+
+
 
 
 ** E*Trade
@@ -238,6 +246,7 @@ option "documents" "starterdocs"
 2013-12-22 price  AAPL   549.02 USD
 
 
+
 ** Brick Lane Home
 ;; A while back, he bought a property on Brick Lane. Since there
 ;; is no stock ticker or currency denomination for "his property,"
@@ -258,6 +267,8 @@ option "documents" "starterdocs"
 ;; it was when it was purchased, so we'll put as a price the most
 ;; current evaluation.
 2013-06-15 price BRICKHOME  210000 USD
+
+
 
 
 * Expenses
@@ -325,6 +336,7 @@ option "documents" "starterdocs"
 ;1982-04-01 open Expenses:Tips
 
 ;;; ... add more here, add your own categories ...
+
 
 
 * Cash Daybook
