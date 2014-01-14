@@ -14,7 +14,9 @@ class Importer(importer.ImporterBase):
 
     def import_date(self, filename, match_text):
         """Try to get the date of the report from the filename."""
-        mo = re.search("ACCOUNT #\d+\n([A-Z]+) 01-(\d+). (2\d\d\d)", match_text)
+
+        mo = re.search("^({}) 01-(\d+). (2\d\d\d)".format('|'.join(MONTHS)),
+                       match_text, re.M)
         if mo:
             month_name, day, year = mo.groups()
             return datetime.date(int(year), MONTHS[month_name], int(day))
