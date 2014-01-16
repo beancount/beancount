@@ -67,7 +67,14 @@ beancount: TODO
 
 * Current
 
+  - DO implement output to text NOW for posting on the mailing list.
+
+
   - Clean up the interface of loader.load(), it's ugly.
+
+  - Document the input to the importer, maybe this can be just a function call
+    that runs the loop. Maybe we just provide a matcher function instead. I
+    want to make this as simple as can be.
 
   - Add preliminary support for renaming root accounts, even if that means the
     option must come first in the file. Move the checks in the parser.
