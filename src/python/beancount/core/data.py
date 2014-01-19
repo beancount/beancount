@@ -16,12 +16,25 @@ FileLocation = namedtuple('FileLocation', 'filename lineno')
 
 def render_fileloc(fileloc):
     """Render the fileloc for errors in a way that it will be both detected by
-    Emacs and align and rendered nicely."""
+    Emacs and align and rendered nicely.
+
+    Args:
+      fileloc: an instance of FileLoc.
+    Returns:
+      A string, rendered to be interpretable as a message location for Emacs or
+      other editors.
+    """
     return '{}:{:8}'.format(fileloc.filename, '{}:'.format(fileloc.lineno))
 
 def format_errors(errors):
-    """Given the list of error objects, return a formatted string of all the
-    errors."""
+    """Given a list of error objects, return a formatted string of all the
+    errors.
+
+    Args:
+      errors: a list of namedtuple objects representing errors.
+    Returns:
+      A string, the errors rendered.
+    """
     file = io.StringIO()
     for error in errors:
         file.write('{} {}\n'.format(render_fileloc(error.fileloc), error.message))
@@ -36,7 +49,7 @@ def format_errors(errors):
 Open        = namedtuple('Open'        , 'fileloc date account currencies')
 Close       = namedtuple('Close'       , 'fileloc date account')
 Pad         = namedtuple('Pad'         , 'fileloc date account account_pad')
-Balance       = namedtuple('Balance'       , 'fileloc date account amount errdiff')
+Balance     = namedtuple('Balance'     , 'fileloc date account amount errdiff')
 Transaction = namedtuple('Transaction' , 'fileloc date flag payee narration tags links postings')
 Note        = namedtuple('Note'        , 'fileloc date account comment')
 Event       = namedtuple('Event'       , 'fileloc date type description')
@@ -51,8 +64,17 @@ Posting = namedtuple('Posting', 'entry account position price flag')
 
 
 def create_simple_posting(entry, account, number, currency):
-    """Create a simple posting on the entry, with just a number and currency (no
-    cost)."""
+    """Create a simple posting on the entry, with just a number and currency (no cost).
+
+    Args:
+      entry: the entry instance to add the posting to
+      account: an instance of Account to use on the posting
+      number: a Decimal number or string to use in the posting's Amount
+      currency: a string, the currency for the Amount
+    Returns:
+      An instance of Posting, and as a side-effect the entry has had its list of
+      postings modified with the new Posting instance.
+    """
     if isinstance(account, str):
         account = account_from_name(account)
     if number is None:
@@ -67,8 +89,19 @@ def create_simple_posting(entry, account, number, currency):
     return posting
 
 def create_simple_posting_with_cost(entry, account, number, currency, cost_number, cost_currency):
-    """Create a simple posting on the entry, with just a number and currency (no
-    cost)."""
+    """Create a simple posting on the entry, with just a number and currency (no cost).
+
+    Args:
+      entry: the entry instance to add the posting to
+      account: an instance of Account to use on the posting
+      number: a Decimal number or string to use in the posting's Amount
+      currency: a string, the currency for the Amount
+      cost_number: a Decimal number or string to use for the posting's cost Amount
+      cost_currency: a string, the currency for the cost Amount
+    Returns:
+      An instance of Posting, and as a side-effect the entry has had its list of
+      postings modified with the new Posting instance.
+    """
     if isinstance(account, str):
         account = account_from_name(account)
     if not isinstance(number, Decimal):
@@ -86,7 +119,11 @@ def create_simple_posting_with_cost(entry, account, number, currency, cost_numbe
 NoneType = type(None)
 
 def sanity_check_types(entry):
-    """Check that the entry and its postings has all correct data types."""
+    """Check that the entry and its postings has all correct data types.
+
+    Args:
+      entry: an instance of one of the entries to be checked.
+    """
     assert isinstance(entry, (Transaction, Open, Close, Pad, Balance, Note, Event, Price))
     assert isinstance(entry.fileloc, FileLocation)
     assert isinstance(entry.date, datetime.date)
@@ -127,7 +164,18 @@ def entry_replace(entry, **replacements):
 
 
 def reparent_posting(posting, entry):
-    "Create a new posting entry that has the parent field set."
+    """Create a new posting entry that has the parent field set.
+
+    Note that this does not modify the list of postings in 'entry', i.e. entry
+    is left unmodified.
+
+    Args:
+      posting: a posting whose parent to set to 'entry'.
+      entry: the entry to set on the posting.
+    Return:
+      The modified posting. Note that the unmodified posting itself it returned
+      if the given entry is already the one on the posting.
+    """
     if posting.entry is entry:
         return posting
     else:
@@ -135,9 +183,16 @@ def reparent_posting(posting, entry):
 
 
 def posting_has_conversion(posting):
-    """Return true if this position involves a conversion. A conversion is when
-    there is a price attached to the amount but no cost. This is used on
-    transactions to convert between units."""
+    """Return true if this position involves a conversion.
+
+    A conversion is when there is a price attached to the amount but no cost.
+    This is used on transactions to convert between units.
+
+    Args:
+      posting: an instance of Posting
+    Return:
+      A boolean, true if this posting has a price conversion.
+    """
     return (posting.position.lot.cost is None and
             posting.price is not None)
 
@@ -145,7 +200,14 @@ def posting_has_conversion(posting):
 def transaction_has_conversion(transaction):
     """Given a Transaction entry, return true if at least one of
     the postings has a price conversion (without an associated
-    cost). These are the source of non-zero conversion balances."""
+    cost). These are the source of non-zero conversion balances.
+
+    Args:
+      transaction: an instance of a Transaction entry.
+    Returns:
+      A boolean, true if this transacation contains at least one posting with a
+      price conversion.
+    """
     assert isinstance(transaction, Transaction)
     for posting in transaction.postings:
         if posting_has_conversion(posting):

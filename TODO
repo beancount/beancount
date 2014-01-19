@@ -4,7 +4,8 @@ beancount: TODO
 
   - Fix or comment all the unittests;
 
-       beancount/core/flags.py
+     X beancount/core/flags.py                          N/A
+       beancount/core/data.py
        beancount/core/balance.py			beancount/core/tests/balance_test.py
        beancount/core/inventory.py 			beancount/core/tests/inventory_test.py
        beancount/core/getters.py
@@ -12,7 +13,6 @@ beancount: TODO
        beancount/core/amount.py				beancount/core/tests/amount_test.py
        beancount/core/position.py			beancount/core/tests/position_test.py
        beancount/core/account.py			beancount/core/tests/account_test.py
-       beancount/core/data.py
 
        beancount/parser/parser.py			beancount/parser/tests/parser_test.py
        beancount/parser/documents.py
@@ -363,7 +363,7 @@ Improve this bit:
     >   But the detailed explanation cannot be found. There's only one phrase: „Think
     >   of the Equity account as something from the past that you had to give up in
     >   order to obtain the beginning snapshot of the Assets + Liabilities balance.“
-    > 
+    >
     > Great comment. I'll improve this.
 
  More user comments:
@@ -377,7 +377,7 @@ Improve this bit:
     >   about grouping the accounts. Maybe it's better to go top-down and start
     >   saying that there are two types of account (usually +, usually -) and then
     >   divide each group further.
-    > 
+    >
     > I will change that, thanks for the comment.
 
 
