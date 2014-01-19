@@ -4,6 +4,7 @@ This uses the Bottle single-file micro web framework (with no plugins).
 """
 import argparse
 import collections
+import datetime
 from os import path
 import io
 import logging
@@ -46,6 +47,13 @@ app = bottle.Bottle()
 A = AttrMapper(app.router.build)
 
 
+def render_errors(errors_list):
+    if errors_list:
+        errors_str = "<div id='errors'>{}</div>".format("\n".join(errors_list))
+    else:
+        errors_str = ""
+    return errors_str
+
 def render_global(*args, **kw):
     """Render the title and contents in our standard template."""
     response.content_type = 'text/html'
@@ -55,6 +63,7 @@ def render_global(*args, **kw):
     kw['view_title'] = ''
     kw['navigation'] = GLOBAL_NAVIGATION
     kw['scripts'] = kw.get('scripts', '')
+    kw['errors_str'] = render_errors(kw.pop('errors', None))
     return template.render(*args, **kw)
 
 
@@ -166,12 +175,22 @@ def source():
 def update():
     "Render the update activity."
 
+    errors = []
+    cutoff = None
+    try:
+        if 'cutoff' in request.params:
+            cutoff = datetime.datetime.strptime(request.params['cutoff'], '%Y-%m-%d').date()
+    except ValueError:
+        errors.append("Invalid cutoff date: {}".format(request.params['cutoff']))
+
     oss = io.StringIO()
     view = get_all_view(app)
 
-    for root in (account_types.assets, account_types.liabilities):
+    for root in (app.account_types.assets,
+                 app.account_types.liabilities):
         table = acctree.tree_table(oss, view.real_accounts, root,
-                                   ['Account', 'Last Entry'])
+                                   ['Account', 'Last Entry'],
+                                   leafonly=False)
         for real_account, cells, row_classes in table:
             if not isinstance(real_account, realization.RealAccount):
                 continue
@@ -182,13 +201,22 @@ def update():
             if last_posting is None or isinstance(last_posting, Close):
                 continue
 
+            last_date = data.get_posting_date(last_posting)
+
+            # Skip this posting if a cutoff date has been specified and the
+            # account has been updated to at least the cutoff date.s
+            if cutoff and cutoff <= last_date:
+                continue
+
+            # Okay, we need to render this. Append.
             cells.append(data.get_posting_date(last_posting)
                          if real_account.postings
                          else '-')
 
     return render_global(
         pagetitle = "Update Activity",
-        contents = oss.getvalue()
+        contents = oss.getvalue(),
+        errors = errors
         )
 
 def find_last_active_posting(postings):
@@ -376,6 +404,7 @@ def render_view(*args, **kw):
     kw['view_title'] = ' - ' + request.view.title
     kw['navigation'] = APP_NAVIGATION.render(A=A, V=V, view_title=request.view.title)
     kw['scripts'] = kw.get('scripts', '')
+    kw['errors_str'] = render_errors(kw.pop('errors', None))
     return template.render(*args, **kw)
 
 APP_NAVIGATION = bottle.SimpleTemplate("""

@@ -20,6 +20,10 @@ table td {
     padding-right: 4px;
 }
 
+div#errors {
+    background-color: #F66;
+    padding: 1em;
+}
 
 /* The document/file title at the top. */
 #title {

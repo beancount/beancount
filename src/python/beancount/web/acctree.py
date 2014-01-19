@@ -18,7 +18,7 @@ TOTALS_LINE = object()
 
 EMS_PER_SPACE = 2.5
 
-def tree_table(oss, tree, start_node_name=None, header=None, classes=None):
+def tree_table(oss, tree, start_node_name=None, header=None, classes=None, leafonly=True):
     """Generator to a tree of accounts as an HTML table.
     Render only all the nodes under 'start_node_name'.
     This yields the real_account object for each line and a
@@ -31,6 +31,7 @@ def tree_table(oss, tree, start_node_name=None, header=None, classes=None):
       header: a list of header columns to render. The first column is special,
               and is used for the account name.
       classes: a list of CSS class strings to apply to the table element.
+      leafonly: a boolean, if true, render only the name of the leaf nodes.
     Returns:
       A generator of (real_account, cells, row_classes). You need to append to
       the given 'cells' object; if you don't, this will skip rendering the row.
@@ -66,7 +67,6 @@ def tree_table(oss, tree, start_node_name=None, header=None, classes=None):
     lines.append((None, None, None, TOTALS_LINE))
 
     for line_first, _, account_name, real_account in lines:
-
         # Let the caller fill in the data to be rendered by adding it to a list
         # objects. The caller may return multiple cell values; this will create
         # multiple columns.
@@ -86,8 +86,12 @@ def tree_table(oss, tree, start_node_name=None, header=None, classes=None):
             indent = '0'
             label = '<span class="totals-label">Totals</span>'
         else:
-            indent = '{:.1f}'.format(len(line_first)/EMS_PER_SPACE)
-            label = account_link(real_account, leafonly=True) ## TODO(blais) - debug this, look for IVV, incorrectly rendered - "/" + real_account.fullname
+            if leafonly:
+                indent = '{:.1f}'.format(len(line_first)/EMS_PER_SPACE)
+                label = account_link(real_account, leafonly=True)
+            else:
+                indent = '0'
+                label = account_link(real_account, leafonly=False)
 
         write('<td class="tree-node-name" style="padding-left: {}em">{}</td>'.format(
             indent, label))
