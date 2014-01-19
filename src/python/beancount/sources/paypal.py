@@ -11,7 +11,7 @@ import datetime
 
 from beancount.imports import importer
 from beancount.core import data
-from beancount.core.amount import Decimal, Amount, ZERO
+from beancount.core.amount import to_decimal, Decimal, Amount, ZERO
 from beancount.core.data import Transaction, Balance
 from beancount.utils import csv_utils
 from beancount.core.account import accountify_dict
@@ -57,17 +57,17 @@ class Importer(importer.ImporterBase):
             entry = Transaction(fileloc, date, flags.FLAG_IMPORT, payee, narration, None, links, [])
 
             # Create postings on this transaction.
-            data.create_simple_posting(entry, config['gross'], -Decimal(row.gross), row.currency)
+            data.create_simple_posting(entry, config['gross'], -to_decimal(row.gross), row.currency)
             if row.fee != ZERO:
-                data.create_simple_posting(entry, config['fees'], -Decimal(row.fee), row.currency)
+                data.create_simple_posting(entry, config['fees'], -to_decimal(row.fee), row.currency)
 
-            data.create_simple_posting(entry, config['cash'], Decimal(row.net), row.currency)
+            data.create_simple_posting(entry, config['cash'], to_decimal(row.net), row.currency)
 
             new_entries.append(entry)
 
         # Insert a check directive.
         date = date + datetime.timedelta(days=1)
         fileloc = data.FileLocation(filename, index)
-        new_entries.append(Balance(fileloc, date, config['cash'], Amount(Decimal(row.balance), row.currency), None))
+        new_entries.append(Balance(fileloc, date, config['cash'], Amount(to_decimal(row.balance), row.currency), None))
 
         return new_entries
