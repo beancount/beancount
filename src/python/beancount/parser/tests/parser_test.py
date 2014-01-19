@@ -9,7 +9,7 @@ import sys
 from beancount.parser import parsedoc
 from beancount.parser import parser, options
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price, Note
-from beancount.core.data import format_entry
+from beancount.core import data
 from beancount.core.account import Account
 
 
@@ -318,3 +318,13 @@ class TestSimple(unittest.TestCase):
         """
         check_list(self, entries, [Transaction, Transaction])
         check_list(self, errors, [])
+
+    @parsedoc
+    def test_parse_currencies(self, entries, errors, options):
+        """
+          2014-01-19 open Assets:Underscore    DJ_EURO
+          2014-01-19 open Assets:Period        DJ.EURO
+          2014-01-19 open Assets:Apostrophe    DJ'EURO
+          2014-01-19 open Assets:Numbers       EURO123
+        """
+        self.assertFalse(errors)

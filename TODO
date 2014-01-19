@@ -69,6 +69,11 @@ beancount: TODO
 
   - DO implement output to text NOW for posting on the mailing list.
 
+  - Add views for the last 5 days, one day only each day (for D.Clemente)
+
+
+
+
 
   - Clean up the interface of loader.load(), it's ugly.
 
@@ -254,6 +259,131 @@ one, to make people say „I would like to do that!“.
 
   - Remove the parsing of "CHECK" at some point, that was just there for
     compatibility.
+
+** Padding documentation from email
+   CLOCK: [2014-01-19 Sun 14:49]
+
+  - Put this in the docs to explain "pad"
+
+     > > Ok, restarted example, let's say you begin
+     > > accounting in dec 2013, you'll have this:
+     > >
+     > >   2010-01-01 open
+     > >   2010-01-01 pad
+     > >   2013-12-04 balance
+     > >   2013-12-08 * ...
+     > >   2013-12-11 * ...
+     > >   2013-12-17 * ...
+     > >
+     > > eventually, moving forward, you'll get to 2014:
+     > >
+     > >   2010-01-01 open
+     > >   2010-01-01 pad
+     > >   2013-12-04 balance
+     > >   2013-12-08 * ...
+     > >   2013-12-11 * ...
+     > >   2013-12-17 * ...
+     > >   2013-12-22 * ...
+     > >   2013-12-29 * ...
+     > >   2014-01-02 * ...
+     > >   2014-12-04 balance
+     > >   2014-12-06 * ...
+     > >
+     > > Allright, now you decide you like this, and you
+     > > want to enter statements before you started.
+     > > You find your paper statement for november, and
+     > > fill in:
+     > >
+     > >   2010-01-01 open
+     > >   2010-01-01 pad
+     > >   ; here you insert
+     > >   2013-11-04 balance
+     > >   2013-11-08 * ...
+     > >   2013-11-18 * ...
+     > >   ...
+     > >   ; this is what was there previously
+     > >   2013-12-04 balance
+     > >   2013-12-08 * ...
+     > >   2013-12-11 * ...
+     > >   2013-12-17 * ...
+     > >   2013-12-22 * ...
+     > >   2013-12-29 * ...
+     > >   2014-01-02 * ...
+     > >   2014-12-04 balance
+     > >   2014-12-06 * ...
+     > >
+     > > Great. Now, notice how the balance for
+     > > 2013-11-04 is probably different than that of
+     > > 2013-12-04. If instead of a pad directive you
+     > > had added a manual adjustment, you'd have to
+     > > change it here. This is the beauty of the pad
+     > > directive: it automatically does it for you.
+     > >
+     > > Now, let's keep going backward in time. You dig
+     > > around your records, you find September's
+     > > statement, but you cannot find the statement
+     > > for October, maybe it's lost, or somewhere
+     > > else. Fine! You insert a pad directive to
+     > > account for those missing transactions:
+     > >
+     > >   2010-01-01 open
+     > >   2010-01-01 pad
+     > >
+     > >   2013-09-04 balance
+     > >   2013-09-05 * ...
+     > >   ... september transactions
+     > >   2013-09-30 * ...
+     > >   2013-10-04 balance
+     > >
+     > >   ; padding for missing October statement,
+     > > where is my statement?
+     > >   2013-10-04 pad
+     > >   2013-11-04 balance
+     > >
+     > >   ... november transactions
+     > >   2013-11-08 * ...
+     > >   2013-11-18 * ...
+     > >   ...
+     > >   2013-12-04 balance
+     > >
+     > >   2013-12-08 * ...
+     > >   2013-12-11 * ...
+     > >   2013-12-17 * ...
+     > >   2013-12-22 * ...
+     > >   2013-12-29 * ...
+     > >   2014-01-02 * ...
+     > >   2014-12-04 balance
+     > >
+     > >   2014-12-06 * ...
+     > >
+     > > This is the full example.
+
+Improve this bit:
+
+    >   But the detailed explanation cannot be found. There's only one phrase: „Think
+    >   of the Equity account as something from the past that you had to give up in
+    >   order to obtain the beginning snapshot of the Assets + Liabilities balance.“
+    > 
+    > Great comment. I'll improve this.
+
+ More user comments:
+
+    >   After doing my research, I found about debits and credits, which in Beancount
+    >   you represent with positive numbers and negative numbers respectively. I
+    >   found that having a name for each group of accounts helps me to think of them
+    >   at the same time, e.g. Liabilities+Equity+Income as part of a common thing,
+    >   instead of having to research each of it independently.
+    >   In the documentation you start speaking about numbers, then about signs, then
+    >   about grouping the accounts. Maybe it's better to go top-down and start
+    >   saying that there are two types of account (usually +, usually -) and then
+    >   divide each group further.
+    > 
+    > I will change that, thanks for the comment.
+
+
+
+
+
 
 * Core
 ** General

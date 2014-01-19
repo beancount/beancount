@@ -32,7 +32,7 @@ def realizedoc(fun):
 def trace_errors(real_accounts, errors):
     print()
     print("ERRORS")
-    data.print_errors(errors)
+    print(data.format_errors(errors))
     print()
     print("REAL_ACCOUNTS")
     for account_name, real_account in real_accounts.items():

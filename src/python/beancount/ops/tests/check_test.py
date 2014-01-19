@@ -1,4 +1,5 @@
 from beancount.core.tests.realization_test import realizedoc
+from beancount.core import data
 import unittest
 
 
@@ -44,7 +45,7 @@ class __TestRealization(unittest.TestCase):
           2013-05-02 check Assets:US:Checking     0 USD
           2013-05-03 check Assets:US:Checking   100 USD
         """
-        data.print_errors(errors)
+        print(data.format_errors(errors))
         assert len(errors) == 0
 
 
