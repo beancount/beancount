@@ -6,9 +6,9 @@ import csv
 import re
 
 
-def csv_dict_reader(fileobj):
+def csv_dict_reader(fileobj, **kw):
     "Read a CSV file yielding normalized dictionary fields."
-    reader = csv.DictReader(fileobj)
+    reader = csv.DictReader(fileobj, **kw)
     reader.fieldnames = [re.sub('[^a-z]', '_', x.lower()).strip(' _') for x in reader.fieldnames]
     return reader
 
