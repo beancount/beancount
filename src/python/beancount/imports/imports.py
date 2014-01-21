@@ -40,7 +40,10 @@ def read_file(filename):
         # usable output.
         for converter in pdfconvert.PDF_CONVERTERS:
             contents = converter(filename)
-            if contents is not None and re.search('[a-zA-Z0-9]+', contents):
+            if (contents is not None and
+                re.search('[a-zA-Z0-9]+', contents) and
+                any(not re.search(x, contents)
+                    for x in '\Gamma \Delta \Theta \Lambda'.split())):
                 break
         else:
             contents = None
@@ -135,6 +138,7 @@ def find_imports(importer_config, files_or_directories):
         # signature sets.
         matching_importers = []
         for signatures, importer in importer_config:
+
             # Attempt to match all of the signatures against the text.
             if all(re.search(signature, match_text, re.DOTALL)
                    for signature in signatures):

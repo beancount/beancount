@@ -67,6 +67,10 @@ beancount: TODO
 
 * Current
 
+  - (Debugging) Add very, very verbose debugging support to the import process,
+    so that pinpointing errors is not that difficult.
+
+
   - DO implement output to text NOW for posting on the mailing list.
 
   - Add views for the last 5 days, one day only each day (for D.Clemente)

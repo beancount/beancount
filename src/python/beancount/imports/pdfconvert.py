@@ -72,8 +72,31 @@ def pdfconverter_ghostscript(pdf_filename):
         return stdout2.decode()
 
 
+def pdfconverter_viahtml(pdf_filename):
+    """Try to convert the given pdf file it text using conversion to HTML
+    and then HTML to text. This is the only way to get anything worthy from 
+    Ameritrade confirmation statements.
+
+    Args:
+      pdf_filename: the name of the PDF file to convert.
+    Returns:
+      A string of the converted text, if successful, or None, if not.
+    """
+    p1 = subprocess.Popen(('pdftohtml', '-i', '-stdout', pdf_filename),
+                          shell=False,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p2 = subprocess.Popen(('html2text',),
+                          shell=False,
+                          stdin=p1.stdout,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout2, stderr2 = p2.communicate()
+    if not (p2.returncode != 0 or stderr2):
+        return stdout2.decode()
+
+
 PDF_CONVERTERS = [
     pdfconverter_poppler_pdftotext,
     pdfconverter_unoconv_plus_pdftotext,
     pdfconverter_ghostscript,
+    pdfconverter_viahtml,
     ]
