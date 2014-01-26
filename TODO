@@ -67,6 +67,12 @@ beancount: TODO
 
 * Current
 
+  - Serving CSV files from the Documents page should not be via download, but
+    rather rendered directly.
+
+  - The documents web page should render by-month + date, and by-account + date.
+
+
   - (Debugging) Add very, very verbose debugging support to the import process,
     so that pinpointing errors is not that difficult.
 
