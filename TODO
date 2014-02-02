@@ -5,7 +5,7 @@ beancount: TODO
   - Fix or comment all the unittests;
 
      X beancount/core/flags.py                          N/A
-       beancount/core/data.py
+     X beancount/core/data.py				beancount/core/tests/data_test.py
        beancount/core/balance.py			beancount/core/tests/balance_test.py
        beancount/core/inventory.py 			beancount/core/tests/inventory_test.py
        beancount/core/getters.py
@@ -15,6 +15,7 @@ beancount: TODO
        beancount/core/account.py			beancount/core/tests/account_test.py
 
        beancount/parser/parser.py			beancount/parser/tests/parser_test.py
+       beancount/parser/printer.py			beancount/parser/tests/printer_test.py
        beancount/parser/documents.py
 
        beancount/ops/summarize.py			beancount/ops/tests/summarize_test.py

@@ -201,7 +201,7 @@ def update():
             if last_posting is None or isinstance(last_posting, Close):
                 continue
 
-            last_date = data.get_posting_date(last_posting)
+            last_date = data.get_entry(last_posting).date
 
             # Skip this posting if a cutoff date has been specified and the
             # account has been updated to at least the cutoff date.s
@@ -209,7 +209,7 @@ def update():
                 continue
 
             # Okay, we need to render this. Append.
-            cells.append(data.get_posting_date(last_posting)
+            cells.append(data.get_entry(last_posting).date
                          if real_account.postings
                          else '-')
 
@@ -324,7 +324,7 @@ def prices_values(base=None, quote=None):
 def link(link=None):
     "Serve journals for links."
 
-    linked_entries = data.entries_for_link(link, app.entries)
+    linked_entries = data.filter_link(link, app.entries)
 
     oss = io.StringIO()
     journal.entries_table_with_balance(app, oss, linked_entries)

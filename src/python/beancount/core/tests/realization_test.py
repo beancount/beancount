@@ -9,6 +9,7 @@ import functools
 from beancount import parser
 
 from beancount.parser import parsedoc
+from beancount.parser import printer
 from beancount.core import realization
 from beancount.core import data
 
@@ -32,7 +33,7 @@ def realizedoc(fun):
 def trace_errors(real_accounts, errors):
     print()
     print("ERRORS")
-    print(data.format_errors(errors))
+    print(printer.format_errors(errors))
     print()
     print("REAL_ACCOUNTS")
     for account_name, real_account in real_accounts.items():

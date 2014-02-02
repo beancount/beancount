@@ -1,7 +1,6 @@
 """Basic data structures used to represent the Ledger entries.
 """
 import io
-import sys
 import datetime
 import textwrap
 from collections import namedtuple
@@ -10,40 +9,6 @@ from beancount.core.amount import Amount, Decimal, to_decimal
 from beancount.core.account import Account, account_from_name
 from beancount.core.position import Lot, Position
 
-
-# The location in a source file where the directive was read from.
-FileLocation = namedtuple('FileLocation', 'filename lineno')
-
-def render_fileloc(fileloc):
-    """Render the fileloc for errors in a way that it will be both detected by
-    Emacs and align and rendered nicely.
-
-    Args:
-      fileloc: an instance of FileLoc.
-    Returns:
-      A string, rendered to be interpretable as a message location for Emacs or
-      other editors.
-    """
-    return '{}:{:8}'.format(fileloc.filename, '{}:'.format(fileloc.lineno))
-
-def format_errors(errors):
-    """Given a list of error objects, return a formatted string of all the
-    errors.
-
-    Args:
-      errors: a list of namedtuple objects representing errors.
-    Returns:
-      A string, the errors rendered.
-    """
-    file = io.StringIO()
-    for error in errors:
-        file.write('{} {}\n'.format(render_fileloc(error.fileloc), error.message))
-        if error.entry is not None:
-            error_string = format_entry(error.entry)
-            file.write('\n')
-            file.write(textwrap.indent(error_string, '   '))
-            file.write('\n')
-    return file.getvalue()
 
 # All possible types of entries. See the documentation for these.
 Open        = namedtuple('Open'        , 'fileloc date account currencies')
@@ -55,6 +20,10 @@ Note        = namedtuple('Note'        , 'fileloc date account comment')
 Event       = namedtuple('Event'       , 'fileloc date type description')
 Price       = namedtuple('Price'       , 'fileloc date currency amount')
 Document    = namedtuple('Document'    , 'fileloc date account filename')
+
+
+# The location in a source file where the directive was read from.
+FileLocation = namedtuple('FileLocation', 'filename lineno')
 
 
 # Postings are contained in Transaction entries.
@@ -215,17 +184,17 @@ def transaction_has_conversion(transaction):
     return False
 
 
-def get_posting_date(posting_or_entry):
-    """Return the date associated with the posting or entry.
+def get_entry(posting_or_entry):
+    """Return the entry associated with the posting or entry.
 
     Args:
-      entry: an entry object
+      entry: A Posting or entry instance
     Returns:
       A datetime instance.
     """
     return (posting_or_entry.entry
             if isinstance(posting_or_entry, Posting)
-            else posting_or_entry).date
+            else posting_or_entry)
 
 
 # Sort with the checks at the BEGINNING of the day.
@@ -238,93 +207,42 @@ SORT_ORDER = {Open: -2, Balance: -1, Close: 1}
 def entry_sortkey(entry):
     """Sort-key for entries. We sort by date, except that checks
     should be placed in front of every list of entries of that same day,
-    in order to balance linearly."""
+    in order to balance linearly.
+
+    Args:
+      entry: An entry instance.
+    Returns:
+      A tuple of (date, integer, integer), that forms the sort key for the
+      entry.
+    """
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.fileloc.lineno)
 
 
 def posting_sortkey(entry):
     """Sort-key for entries or postings. We sort by date, except that checks
     should be placed in front of every list of entries of that same day,
-    in order to balance linearly."""
+    in order to balance linearly.
+
+    Args:
+      entry: A Posting or entry instance
+    Returns:
+      A tuple of (date, integer, integer), that forms the sort key for the
+      posting or entry.
+    """
     if isinstance(entry, Posting):
         entry = entry.entry
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.fileloc.lineno)
 
 
-#
-# Conversion to text.
-#
+def filter_link(link, entries):
+    """Yield all the entries which have the given link.
 
-class EntryPrinter:
-    "Multi-method for printing an entry."
-
-    @classmethod
-    def __call__(cls, obj):
-        oss = io.StringIO()
-        getattr(cls, obj.__class__.__name__)(cls, obj, oss)
-        return oss.getvalue()
-
-    def Transaction(_, entry, oss):
-        # Compute the string for the payee and narration line.
-        strings = []
-        if entry.payee:
-            strings.append('"{}" |'.format(entry.payee))
-            format_string(entry.payee)
-        if entry.narration:
-            strings.append('"{}"'.format(entry.narration))
-
-        if entry.tags:
-            for tag in entry.tags:
-                strings.append('#{}'.format(tag))
-        if entry.links:
-            for link in entry.links:
-                strings.append('^{}'.format(link))
-
-        oss.write('{e.date} {e.flag} {}\n'.format(' '.join(strings), e=entry))
-
-        for posting in entry.postings:
-            flag = '{} '.format(posting.flag) if posting.flag else ''
-            assert posting.account is not None
-            position = str(posting.position) if posting.position else ''
-            price_str = '@ {}'.format(posting.price) if posting.price else ''
-            oss.write('  {}{:64} {:>16} {:>16}'.format(flag, posting.account.name, position, price_str).rstrip())
-            oss.write('\n')
-
-    def Balance(_, entry, oss):
-        oss.write('{e.date} balance {e.account.name:48} {e.amount}\n'.format(e=entry))
-
-    def Note(_, entry, oss):
-        oss.write('{e.date} note {e.account.name} {e.comment}\n'.format(e=entry))
-
-    def Document(_, entry, oss):
-        oss.write('{e.date} document {e.account.name} "{e.filename}"\n'.format(e=entry))
-
-    def Pad(_, entry, oss):
-        oss.write('{e.date} pad {e.account.name} {e.account_pad.name}\n'.format(e=entry))
-
-    def Open(_, entry, oss):
-        oss.write('{e.date} open {e.account.name} {currencies}\n'.format(e=entry, currencies=','.join(entry.currencies or [])))
-
-    def Close(_, entry, oss):
-        oss.write('{e.date} close {e.account.name}\n'.format(e=entry))
-
-    def Price(_, entry, oss):
-        oss.write('{e.date} price {e.currency} {e.amount}\n'.format(e=entry))
-
-    def Event(_, entry, oss):
-        oss.write('{e.date} event "{e.type}" "{e.description}"\n'.format(e=entry))
-
-
-def format_string(string):
-    return '"%s"' % string if string is not None else ''
-
-
-def format_entry(entry):
-    return EntryPrinter()(entry)
-
-
-def entries_for_link(link, entries):
-    """Yield all the entries which have the given link."""
-    for entry in utils.filter_type(entries, Transaction):
-        if entry.links and link in entry.links:
+    Args:
+      link: A string, the link we are interested in.
+    Yields:
+      Every entry in 'entries' that links to 'link.
+    """
+    for entry in entries:
+        if (isinstance(entry, Transaction) and
+            entry.links and link in entry.links):
             yield entry

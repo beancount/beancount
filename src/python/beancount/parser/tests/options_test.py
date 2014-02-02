@@ -9,7 +9,6 @@ import sys
 from beancount.parser import parsedoc
 from beancount.parser import parser, options
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price, Note
-from beancount.core.data import format_entry
 from beancount.core.account import Account
 
 

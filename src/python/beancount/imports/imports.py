@@ -17,7 +17,7 @@ import tempfile
 import textwrap
 
 from beancount.core import data
-from beancount.core.data import format_entry
+from beancount.parser.printer import format_entry
 from beancount.ops.dups import find_duplicate_entries
 from beancount import utils
 from beancount.imports.filetype import guess_file_type

@@ -7,6 +7,7 @@ from beancount import utils
 from beancount.core import data
 from beancount.parser import parser
 from beancount.parser import documents
+from beancount.parser import printer
 from beancount.ops import pad
 from beancount.ops import validation
 from beancount.ops import prices
@@ -81,7 +82,7 @@ def load(filename,
     # Print out the list of errors.
     errors = parse_errors + pad_errors + check_errors + valid_errors + doc_errors
     if do_print_errors:
-        error_text = data.format_errors(errors)
+        error_text = printer.format_errors(errors)
         if error_text:
             print(',--------------------------------------------------------------------------------')
             print(error_text)
