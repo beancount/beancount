@@ -2,6 +2,9 @@
 beancount: TODO
 * Unittest Coverage
 
+  - ## FIXME: Remove TYPES_ORDER, change Account to be just a string as well, with functions.
+
+
   - Fix or comment all the unittests;
 
      X beancount/core/flags.py                          beancount/core/flags_test.py

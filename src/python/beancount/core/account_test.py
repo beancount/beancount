@@ -3,6 +3,7 @@ import re
 
 from beancount.core.account import *
 
+
 class TestAccount(unittest.TestCase):
 
     def test_ctor(self):

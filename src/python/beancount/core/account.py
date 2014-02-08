@@ -7,51 +7,17 @@ realization.py for details.
 import re
 from collections import namedtuple
 
+from beancount.core import account_types
+
 
 # A type used to represent an account read in.
 Account = namedtuple('Account', 'name type')
-
-# Default values for root accounts.
-DEFAULT_ASSETS      = "Assets"
-DEFAULT_LIABILITIES = "Liabilities"
-DEFAULT_EQUITY      = "Equity"
-DEFAULT_INCOME      = "Income"
-DEFAULT_EXPENSES    = "Expenses"
-
-
-def update_default_valid_account_names():
-    """Set the globals to the default account names."""
-    global TYPES_ORDER
-    TYPES_ORDER = dict((x,i) for (i,x) in enumerate((DEFAULT_ASSETS,
-                                                     DEFAULT_LIABILITIES,
-                                                     DEFAULT_EQUITY,
-                                                     DEFAULT_INCOME,
-                                                     DEFAULT_EXPENSES)))
-
-def update_valid_account_names(account_types):
-    """Update the globals used to validate root account names.
-
-    Args:
-      account_types: an instance of AccountTypes, the account names.
-    """
-    global TYPES_ORDER
-    TYPES_ORDER = dict((x,i) for (i,x) in enumerate(account_types))
-
-# FIXME: This is the only place where we have globals for this.
-# However, we need to thread the account_types all over the myriad
-# functions which call functions in this package which use this,
-# and I (blais) haven't decided whether the extra validation is
-# really worth it yet. Maybe we can just do without and make an
-# assumption. To review later.
-TYPES_ORDER = None
-update_default_valid_account_names()
-
 
 def account_from_name(account_name):
     "Create a new account solely from its name."
     assert isinstance(account_name, str)
     atype = account_name_type(account_name)
-    assert atype in TYPES_ORDER, "Invalid account type: {}".format(atype)
+    assert atype in account_types.ACCOUNT_TYPES, "Invalid account type: {}".format(atype)
     return Account(account_name, atype)
 
 def account_name_parent(name):
@@ -71,20 +37,20 @@ def account_sortkey(account):
     """Sort a list of accounts, taking into account the type of account.
     Assets, Liabilities, Equity, Income and Expenses, in this order, then
     in the order of the account's name."""
-    return (TYPES_ORDER[account.type], account.name)
+    return (account_types.TYPES_ORDER[account.type], account.name)
 
 def account_name_sortkey(account_name):
     """Sort a list of accounts, taking into account the type of account.
     Assets, Liabilities, Equity, Income and Expenses, in this order, then
     in the order of the account's name."""
     type_ = account_name_type(account_name)
-    return (TYPES_ORDER[type_], account_name)
+    return (account_types.TYPES_ORDER[type_], account_name)
 
 def account_name_type(name):
     """Return the type of this account's name."""
     assert isinstance(name, str)
     atype = name.split(':')[0]
-    assert atype in TYPES_ORDER, (name, atype, TYPES_ORDER)
+    assert atype in account_types.ACCOUNT_TYPES, (name, atype, account_types.ACCOUNT_TYPES)
     return atype
 
 def is_account_name(string):
@@ -94,7 +60,7 @@ def is_account_name(string):
 
 def is_account_name_root(account_name):
     """Return true if the account name is one of the root accounts."""
-    return account_name in TYPES_ORDER
+    return account_name in account_types.ACCOUNT_TYPES
 
 def is_balance_sheet_account(account, options):
     return account.type in (options[x] for x in ('name_assets',

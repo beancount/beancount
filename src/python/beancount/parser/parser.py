@@ -17,6 +17,7 @@ from beancount.parser import _parser
 from beancount.parser import options
 from beancount.core.account import account_from_name
 from beancount.core import account
+from beancount.core import account_types
 from beancount.core import data
 from beancount.core.amount import ZERO, Decimal, Amount
 from beancount.core.position import Lot, Position
@@ -115,7 +116,7 @@ class Builder(object):
         # Re-initialize the parsing options. FIXME: This is because of some
         # globals in beancount.core.account, we don't want to leak options
         # between invocations.
-        account.update_default_valid_account_names()
+        account_types.update_valid_account_names()
 
     def store_result(self, entries):
         """Start rule stores the final result here.
@@ -547,15 +548,6 @@ class Builder(object):
 #   key: a str, the option key
 #   value: the option's value
 Option = namedtuple('Option', 'fileloc key value')
-
-# A tuple that contains the names of the root accounts. This is a subset of options.
-# Attributes:
-#   assets: a str, the name of the prefix for the Asset subaccounts.
-#   liabilities: a str, the name of the prefix for the Liabilities subaccounts.
-#   equity: a str, the name of the prefix for the Equity subaccounts.
-#   income: a str, the name of the prefix for the Income subaccounts.
-#   expenses: a str, the name of the prefix for the Expenses subaccounts.
-AccountTypes = namedtuple('AccountTypes', "assets liabilities equity income expenses")
 
 def get_account_types(options):
     """Extract the account type names from the parser's options.
