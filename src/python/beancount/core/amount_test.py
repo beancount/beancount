@@ -30,6 +30,10 @@ class TestAmount(unittest.TestCase):
         amount = Amount('100,034.02', 'USD')
         self.assertEqual(amount.number, Decimal('100034.02'))
 
+    def test_tostring(self):
+        amount = Amount('100,034.02', 'USD')
+        self.assertTrue(re.search(r'\.\d\d\b', str(amount)))
+
     def test_comparisons(self):
         amount1 = Amount(Decimal('100'), 'USD')
         amount2 = Amount(Decimal('100'), 'USD')
@@ -37,10 +41,6 @@ class TestAmount(unittest.TestCase):
 
         amount3 = Amount(Decimal('101'), 'USD')
         self.assertNotEqual(amount1, amount3)
-
-    def test_tostring(self):
-        amount = Amount('100,034.02', 'USD')
-        self.assertTrue(re.search(r'\.\d\d\b', str(amount)))
 
     def test_tostring_quantize(self):
         amount = Amount('100,034.027456', 'USD')
@@ -53,6 +53,9 @@ class TestAmount(unittest.TestCase):
         amount = Amount('100,034.027456', 'USD')
         self.assertTrue({amount: True})
         self.assertTrue({amount})
+
+        amount2 = Amount('100,034.027456', 'CAD')
+        self.assertEqual(2, len({amount: True, amount2: False}))
 
     def test_sort(self):
         # Check that we can sort currency-first.
@@ -83,3 +86,6 @@ class TestAmount(unittest.TestCase):
         self.assertEqual(Amount('82.98', 'CAD'),
                          amount_sub(Amount('100', 'CAD'),
                                     Amount('17.02', 'CAD')))
+        with self.assertRaises(ValueError):
+            amount_sub(Amount('100', 'USD'),
+                       Amount('17.02', 'CAD'))

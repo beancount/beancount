@@ -72,7 +72,8 @@ class TestAccount(unittest.TestCase):
         self.assertEqual("Income", account_name_type("Income:US:ETrade:Dividends"))
         self.assertEqual("Income", account_name_type("Income:US:Intel"))
         self.assertEqual("Expenses", account_name_type("Expenses:Toys:Computer"))
-        self.assertRaises(AssertionError, account_name_type, "Invalid:Toys:Computer")
+        with self.assertRaises(AssertionError):
+            account_name_type("Invalid:Toys:Computer")
 
     def test_is_account_name(self):
         self.assertTrue(is_account_name("Assets:US:RBS:Checking"))

@@ -15,8 +15,10 @@ class TestPosition(unittest.TestCase):
         position = Position(Lot('USD', None, None), to_decimal('123.45'))
         position = Position(Lot('USD', Amount('74.00', 'CAD'), None), to_decimal('123.45'))
         position = Position(Lot('USD', Amount('74.00', 'CAD'), date(2013,2,3)), to_decimal('123.45'))
-        self.assertRaises(Exception, Position, None, to_decimal('123.45'))
-        self.assertRaises(Exception, Position, Lot('USD', None, None), None)
+        with self.assertRaises(Exception):
+            Position(None, to_decimal('123.45'))
+        with self.assertRaises(Exception):
+            Position(Lot('USD', None, None), None)
 
     def test_compare_zero_to_none(self):
         pos1 = Position(Lot("CAD", None, None), ZERO)
