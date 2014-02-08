@@ -8,7 +8,7 @@ from beancount.core.position import Lot, Position
 from beancount.core.inventory import Inventory
 from beancount.core.data import Open, Pad, Balance, Posting
 from beancount.core.amount import Decimal, Amount
-from beancount.core.tests.realization_test import realizedoc
+from beancount.core.realization_test import realizedoc
 
 
 class __TestPadding(unittest.TestCase):
