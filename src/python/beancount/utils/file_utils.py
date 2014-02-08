@@ -26,7 +26,7 @@ def iter_sections(fileobj, separating_predicate=None):
     lineiter = iter(fileobj)
     for line in lineiter:
         if separating_predicate(line):
-            yield itertools.chain([line],
+            yield itertools.chain((line,),
                                   iter_until_empty(lineiter,
                                                    separating_predicate))
 
@@ -42,16 +42,3 @@ def iter_until_empty(iterator, separating_predicate):
         if not separating_predicate(line):
             break
         yield line
-
-
-def get_sections(iterator, separating_predicate=None):
-    """Consume and accumulate the results of a 2-level nested iterator.
-
-    Args:
-      iterator: An iterator of iterators.
-      separating_predicate: A boolean predicate that is true on separating lines.
-    Returns:
-      A list of lists of objects.
-    """
-    return [''.join(subiter)
-            for subiter in iter_sections(iterator, separating_predicate)]

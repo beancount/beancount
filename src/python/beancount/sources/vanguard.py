@@ -8,6 +8,7 @@ import functools
 import io
 
 from beancount.imports import importer
+from beancount.parser import printer
 from beancount.core import data
 from beancount.core.amount import to_decimal, Amount
 from beancount.core.data import Transaction, Balance
@@ -36,7 +37,8 @@ class Importer(importer.ImporterBase):
         new_entries = []
 
         # The input file has two sections; split it.
-        positions, transaction_detail = file_utils.get_sections(open(filename))
+        positions, transaction_detail = list(map(''.join,
+                                                 file_utils.iter_sections(open(filename))))
 
         # Process the transaction detail.
         transformer = functools.partial(transform,
@@ -55,13 +57,11 @@ class Importer(importer.ImporterBase):
             entry = Transaction(fileloc, row.trade_date, flags.FLAG_IMPORT,
                                 None, row.transaction_description,
                                 None, None, [])
-            print(data.format_entry(entry))
+            print(printer.format_entry(entry))
 
             # TODO(blais): Stopped here. I don't need to complete this, because
             # Vanguard does not include the source of the contribution! I want
             # to track the contribution source, so
-
-
 
         # Process the final positions.
         for row in csv_utils.csv_tuple_reader(io.StringIO(positions)):
