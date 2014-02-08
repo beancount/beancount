@@ -4,6 +4,7 @@ Utilities for reading and writing CSV files.
 from collections import namedtuple
 import csv
 import re
+import itertools
 
 
 def csv_dict_reader(fileobj, **kw):
@@ -27,7 +28,7 @@ def csv_tuple_reader(fileobj, **kw):
             assert len(row) == 1
 
 
-def csv_split_sections(rows):
+def csv_split_sections_with_titles(rows):
     """Given a list of rows, split the list where rows have only a single entry.
     This is useful for CSV files with multiple sections, where the separator is
     a title. We use this to separate the multiple tables within the CSV files."""

@@ -114,5 +114,6 @@ def accountify_dict(string_dict):
         ...}
 
     """
-    return {key: account_from_name(value) if is_account_name(value) else value
+    return {key: account_from_name(value)
+            if isinstance(value, str) and is_account_name(value) else value
             for key, value in string_dict.items()}
