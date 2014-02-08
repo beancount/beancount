@@ -200,9 +200,6 @@ def get_entry(posting_or_entry):
 # Sort with the checks at the BEGINNING of the day.
 SORT_ORDER = {Open: -2, Balance: -1, Close: 1}
 
-# Sort with the checks at the END of the day.
-#SORT_ORDER = {Open: -2, Balance: 1, Close: 2}
-
 
 def entry_sortkey(entry):
     """Sort-key for entries. We sort by date, except that checks
