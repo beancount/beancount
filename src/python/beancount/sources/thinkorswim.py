@@ -45,7 +45,7 @@ class Importer(importer.ImporterBase):
         """Import a CSV file from Think-or-Swim."""
 
         config = self.get_accountified_config()
-        sections = csv_utils.csv_split_sections(csv.reader(open(filename)))
+        sections = csv_utils.csv_split_sections_with_titles(csv.reader(open(filename)))
         if 0:
             for section_name, rows in sections.items():
                 if re.search(r'\bSummary\b', section_name):
