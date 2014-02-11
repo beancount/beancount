@@ -16,6 +16,7 @@ from os import path
 from beancount.parser import _parser
 from beancount.parser import options
 from beancount.core.account import account_from_name
+from beancount.core.account_types import AccountTypes
 from beancount.core import account
 from beancount.core import account_types
 from beancount.core import data
