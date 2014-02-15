@@ -68,6 +68,11 @@ beancount: TODO
 
 * Current
 
+  - Build a pass-through memoizer and replace Mole from text_utils.
+    m = Memo()
+    if m(re.match(...)):
+    ... = m.value
+
   - Serving CSV files from the Documents page should not be via download, but
     rather rendered directly.
 
