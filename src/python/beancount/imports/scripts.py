@@ -7,7 +7,6 @@ import argparse
 
 from beancount.imports import imports
 from beancount.imports import filing
-from beancount import parser
 from beancount.loader import load
 
 
