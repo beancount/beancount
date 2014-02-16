@@ -71,6 +71,9 @@ beancount: TODO
 
 * Current
 
+  - Add a 'mime_type' attribute to each importer, so that we can simplify our
+    import configuration regexps.
+
   - Build a pass-through memoizer and replace Mole from text_utils.
     m = Memo()
     if m(re.match(...)):
