@@ -1250,11 +1250,6 @@ Improve this bit:
 
   - Add a check at the end of the OFX bank import. Missing right now.
 
-  - There should be a script that is able to go through a directory of files
-    and automaticalyl attempt to detect which types they are (if any), and
-    invoke converters automatically. Other people should be able to add and
-    improve this script.
-
   - Filing: The importers should detect the type of files and identify their
     accounts, and automatically stash the file under the correct documents
     directory, prepended with the date in the format we expect.
