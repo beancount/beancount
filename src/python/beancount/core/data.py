@@ -10,25 +10,180 @@ from beancount.core.account import Account, account_from_name
 from beancount.core.position import Lot, Position
 
 
-# All possible types of entries. See the documentation for these.
+# All possible types of entries. These are the main data structrues in use
+# within the program. They are all treated as immutable.
+#
+# Common Attributes:
+#   fileloc: A FileLocation instance, denotes where the directive was parsed from.
+#   date: A datetime.date instance; all directives have an associated date. Note:
+#     Beancount does not consider time, only dates. The line where the directive
+#     shows up in the file is used as a secondary sort key beyond the date.
+
+# An "open account" directive.
+#
+# Attributes:
+#   account: An Account, the account that is being opened.
+#   currencies: A list of strings, currencies that are allowed in this account.
+#     May be None, in which case it means that there are no restrictions on which
+#     currencies may be stored in this account.
 Open        = namedtuple('Open'        , 'fileloc date account currencies')
+
+# A "close account" directive.
+#
+# Attributes:
+#   account: An Account, the account that is being closed.
 Close       = namedtuple('Close'       , 'fileloc date account')
+
+# A "pad this account with this other account" directive. This directive
+# automatically inserts transactions that will make the next chronological
+# balance directive succeeds. It can be used to fill in missing date ranges of
+# transactions, as a convenience. You don't have to use this, it's sugar coating
+# in case you need it, while you're enterering past history into your Ledger.
+#
+# Attributes:
+#   account: The Account which needs to be filled.
+#   account_pad: The Account which is used to debit from in order to fill
+#     'account'.
 Pad         = namedtuple('Pad'         , 'fileloc date account account_pad')
-Balance     = namedtuple('Balance'     , 'fileloc date account amount errdiff')
+
+# A "check the balance of this account" directive. This directive asserts that
+# the declared account should have a known number of units of a particular
+# currency at the beginning of its date. This is essentially an assertion, and
+# corresponds to the final "Statement Balance" line of a real-world statement.
+# These assertions act as checkpoints to help ensure that you have entered your
+# transactions correctly.
+#
+# Attributes:
+#   account: The Account whose balance to check at the given date.
+#   amount: An Amount, the number of units of the given currency you're
+#     expecting 'account' to have at this date.
+#   diff_amount: None if the balance check succeeds. This value is set to
+#     an Amount instance if the balance fails, the amount of the difference.
+Balance     = namedtuple('Balance'     , 'fileloc date account amount diff_amount')
+
+# A transaction! This is the main type of object that we manipulate, and the
+# entire reason this whole project exists in the first place, because
+# representing these types of structures with a spreadsheet is difficult.
+#
+# Attributes:
+#   flag: A single-character string or None. This user-specified string
+#     represents some custom/user-defined state of the transaction. You can use
+#     this for various purposes. Otherwise common, pre-defined flags are defined
+#     under beancount.core.flags, to flags transactions that are automatically
+#     generated.
+#   payee: A free-form string that identifies the payee, or None, if absent.
+#   narration: A free-form string that provides a description for the transaction.
+#     All transactions have at least a narration string, this is never None.
+#   tags: A set of tag strings (without the '#'), or None, if an empty set.
+#   links: A set of link strings (without the '^'), or None, if an empty set.
+#   postings: A list of Posting instances, the legs of this transaction. See the
+#     doc under Posting below.
 Transaction = namedtuple('Transaction' , 'fileloc date flag payee narration tags links postings')
+
+# A note directive, a general note that is attached to an account. These are
+# used to attach text at a particular date in a specific account. The notes can
+# be anything; a typical use would be to jot down an answer from a phone call to
+# the institution represented by the account. It should show up in an account's
+# journal. If you don't want this rendered, use the comment syntax in the input
+# file, which does not get parsed and stored.
+#
+# Attributes:
+#   account: An Account which the note is to be attached to. This is never None,
+#     notes always have an account they correspond to.
+#   comment: A free-form string, the text of the note. This can be logn if you
+#     want it to.
 Note        = namedtuple('Note'        , 'fileloc date account comment')
+
+# An "event value change" directive. These directives are used as string
+# variables that have different values over time. You can use these to track an
+# address, your location, your current employer, anything you like. The kind of
+# reporting that is made of these generic events is based on days and a
+# timeline. For instance, if you need to track the number of days you spend in
+# each country or state, create a "location" event and whenever you travel, add
+# an event directive to indicate its new value. You should be able to write
+# simple scripts against those in order to compute if you were present somewhere
+# for a particular number of days. Here's an illustrative example usage, in
+# order to maintain your health insurance coverage in Canada, you need to be
+# present in the country for 183 days or more, excluding trips of less than 30
+# days. There is a similar test to be done in the US by aliens to figure out if
+# they need to be considered as residents for tax purposes (the so-called
+# "subtantial presence test"). By integrating these directives into your
+# bookkeeping, you can easily have a little program that computes the tests for
+# you. This is, of course, entirely optional and somewhat auxiliary to the main
+# purpose of double-entry bookkeeping, but correlates strongly with the
+# transactions you insert in it, and so it's a really convenient thing to have
+# in the same input file.
+#
+# Attributes:
+#   type: A short string, typically a single lowercase word, that defines a
+#     unique variable whose value changes over time. For example, 'location'.
+#   description: A free-form string, the value of the variable as of the date
+#     of the transaction.
 Event       = namedtuple('Event'       , 'fileloc date type description')
+
+# A price declaration directive. This establishes the price of a currency in
+# terms of another currency as of the directive's date. A history of the prices
+# for each currency pairs is built and can be queried within the bookkeeping
+# system. Note that because Beancount does not store any data at time-of-day
+# resolution, it makes no sense to have multiple price directives at the same
+# date. (Beancount will not attempt to solve this problem; this is beyond the
+# general scope of double-entry bookkeeping and if you need to build a day
+# trading system, you should probably use something else).
+#
+# Attributes:
+#  currency: A string, the currency that is being priced, e.g. GOOG.
+#  amount: An instance of Amount, the number of units and currency that
+#    'currency' is worth, for instance 1200.12 USD.
 Price       = namedtuple('Price'       , 'fileloc date currency amount')
+
+# A document file declaration directive. This directive is used to attach a
+# statement to an account, at a particular date. A typical usage would be to
+# render PDF files or scans of your bank statements into the account's journal.
+# While you can explicitly create those directives in the input syntax, it is
+# much more convenient to provide Beancount with a root directory to search for
+# filenames in a hirerarchy mirroring the chart of accounts, filenames which
+# should match the following dated format: "YYYY-MM-DD.*". See options for
+# detail. Beancount will automatically create these documents directives based
+# on the file hierarchy, and you can get them by parsing the list of entries.
+#
+# Attributes:
+#   account: An Account, which the statement or document is associated with.
+#   filename: The absolute filename of the document file.
 Document    = namedtuple('Document'    , 'fileloc date account filename')
 
 
-# The location in a source file where the directive was read from.
+# The location in a source file where the directive was read from. These are
+# attached to all the directives above.
+#
+# Attributes:
+#   filename: A string, the name of the input that the directive was read from.
+#   lineno: An integer, the line number where the directive was found. For
+#     automatically created directives, this may be None.
 FileLocation = namedtuple('FileLocation', 'filename lineno')
 
 
-# Postings are contained in Transaction entries.
-# Note: a posting may only list within a single entry, and that's what the entry
-# field should be set to.
+# Postings are contained in Transaction entries. These represent the individual
+# legs of a transaction. Note: a posting may only appear within a single entry
+# (multiple transactions may not share a Posting instance), and that's what the
+# entry field should be set to.
+#
+# Attributes:
+#   entry: A Transaction instance (see above), which the posting applies to.
+#     It is convenient to have Posting instances point to their parent entries,
+#     because account journals contain lists of Postings and non-Transaction
+#     entries and though it creates a circular dependency between Transaction
+#     and Posting, it allows us to easily resolve the lists of Postings to their
+#     transactions for rendering.
+#   account: An Account, the account that is modified by this posting.
+#   position: An instance of Position, the amount and lot that is to be posted
+#     to this leg's account.
+#   price: The price at which the position took place, or None, where not
+#     relevant. Providing a price member to a posting automatically adds a
+#     price in the prices database at the date of the transaction.
+#   flag: An optional flag, a one-character string or None, which is to be
+#     associated with the posting. Most postings don't have a flag, but it can
+#     be convenient to mark a particular posting as problematic or pending to
+#     be reconciled for a future import of its account.
 Posting = namedtuple('Posting', 'entry account position price flag')
 
 

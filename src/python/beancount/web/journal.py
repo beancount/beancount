@@ -84,13 +84,13 @@ def iterate_render_transactions(app, postings):
 
         elif isinstance(entry, Balance):
             # Check the balance here and possibly change the rowtype
-            if entry.errdiff is None:
+            if entry.diff_amount is None:
                 description = 'Balance {} has {}'.format(account_link(entry.account), entry.amount)
             else:
                 description = 'Balance in {} fails; expected = {}, balance = {}, difference = {}'.format(
                     account_link(entry.account), entry.amount,
                     balance.get_amount(entry.amount.currency),
-                    entry.errdiff)
+                    entry.diff_amount)
                 rowtype = 'CheckFail'
 
             change_str = str(entry.amount)

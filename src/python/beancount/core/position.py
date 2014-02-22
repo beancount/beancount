@@ -25,6 +25,10 @@ from beancount.core import CURRENCY_ORDER
 # Lots are a representations of a commodity with an optional associated cost and
 # optional acquisition date. (There are considered immutable and shared between
 # many objects; this makes everything much faster.)
+#
+#  currency: A string, the currency of this lot. May NOT be null.
+#  cost: An Amount, or None if this lot has no associated cost.
+#  lot_date: A datetime.date, or None if this lot has no associated date.
 Lot = namedtuple('Lot', 'currency cost lot_date')
 
 
@@ -33,7 +37,11 @@ NCURRENCIES = len(CURRENCY_ORDER)
 
 class Position:
     """A 'Position' is a specific number of units of a lot.
-    This is used to track inventories."""
+    This is used to track inventories.
+
+    Attributes:
+      lot: An instance of Lot
+    """
 
     __slots__ = ('lot', 'number')
 

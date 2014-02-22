@@ -396,9 +396,9 @@ class Builder(object):
         Returns:
           A new Balance object.
         """
-        errdiff = None
+        diff_amount = None
         fileloc = FileLocation(filename, lineno)
-        return Balance(fileloc, date, account, amount, errdiff)
+        return Balance(fileloc, date, account, amount, diff_amount)
 
     def event(self, filename, lineno, date, event_type, description):
         """Process an event directive.
