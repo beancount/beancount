@@ -173,7 +173,7 @@ class Builder(object):
                 # Update the globals that check whether this account is valid.
                 # FIXME: This is a known globals kludge we know we have to remove,
                 # but has ties in many places. Will remove later.
-                account.update_valid_account_names(get_account_types(self.options))
+                account_types.update_valid_account_names(get_account_types(self.options))
 
     def DATE(self, year, month, day):
         """Process a DATE token.

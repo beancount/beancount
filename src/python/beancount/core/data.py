@@ -175,8 +175,8 @@ FileLocation = namedtuple('FileLocation', 'filename lineno')
 #     and Posting, it allows us to easily resolve the lists of Postings to their
 #     transactions for rendering.
 #   account: An Account, the account that is modified by this posting.
-#   position: An instance of Position, the amount and lot that is to be posted
-#     to this leg's account.
+#   position: An instance of Position (see position.py), the amount and lot that
+#     is to be posted to this leg's account.
 #   price: The price at which the position took place, or None, where not
 #     relevant. Providing a price member to a posting automatically adds a
 #     price in the prices database at the date of the transaction.

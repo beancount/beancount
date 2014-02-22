@@ -76,6 +76,3 @@ class TestPosition(unittest.TestCase):
         negpos = pos.get_negative()
         self.assertEqual(Amount('-28372', 'USD'), negpos.get_amount())
         self.assertEqual(Amount('-283720', 'AUD'), negpos.get_cost())
-
-
-__incomplete__ = True

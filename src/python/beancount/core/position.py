@@ -26,6 +26,7 @@ from beancount.core import CURRENCY_ORDER
 # optional acquisition date. (There are considered immutable and shared between
 # many objects; this makes everything much faster.)
 #
+# Attributes:
 #  currency: A string, the currency of this lot. May NOT be null.
 #  cost: An Amount, or None if this lot has no associated cost.
 #  lot_date: A datetime.date, or None if this lot has no associated date.
@@ -40,18 +41,29 @@ class Position:
     This is used to track inventories.
 
     Attributes:
-      lot: An instance of Lot
+      lot: An instance of Lot (see above), the lot of this position.
+      number: A Decimal object, the number of units of 'lot'.
     """
-
     __slots__ = ('lot', 'number')
 
     def __init__(self, lot, number):
+        """Constructor from a lot and a number of units of the ot.
+
+        Args:
+          lot: The lot of this position.
+          number: An instance of Decimal, the number of units of lot.
+        """
         assert isinstance(lot, Lot)
-        assert number is not None
+        assert isinstance(number, Decimal)
         self.lot = lot
         self.number = number
 
     def __str__(self):
+        """Return a string representation of the position.
+
+        Returns:
+          A string, a printable representation of the position.
+        """
         lot = self.lot
         strings = [str(Amount(self.number, lot.currency))]
 
@@ -69,6 +81,15 @@ class Position:
     __repr__ = __str__
 
     def __eq__(self, other):
+        """Equality comparison with another Position. The objects are considered equal
+        if both number and lot are matching, and if the number of units is zero
+        and the other position is None, that is also okay.
+
+        Args:
+          other: An instance of Position, or None.
+        Returns:
+          A boolean, true if the positions are equal.
+        """
         if other is None:
             return self.number == ZERO
         else:
@@ -76,25 +97,56 @@ class Position:
                     self.lot == other.lot)
 
     def sortkey(self):
+        """Return a key to sort positions by. This key depends on the order of the
+        currency of the lot (we want to order common currencies first) and the
+        number of units.
+
+        Returns:
+          A tuple, used to sort lists of positions.
+        """
         return (CURRENCY_ORDER.get(self.lot.currency,
                                    NCURRENCIES + len(self.lot.currency)),
                 self.number)
 
     def __lt__(self, other):
+        """A least-than comparison operator for positions.
+
+        Args:
+          other: Another instance of Position.
+        Returns:
+          True if this positions is smaller than the other position.
+        """
         return self.sortkey() < other.sortkey()
 
     def __copy__(self):
-        # Shallow copy, except for the lot, which can be shared.
-        # This is important for performance reasons; a lot of time is spent here during balancing.
+        """Shallow copy, except for the lot, which can be shared. This is important for
+        performance reasons; a lot of time is spent here during balancing.
+
+        Returns:
+          A shallow copy of this position.
+        """
         return Position(self.lot, Decimal(self.number))
 
     def get_amount(self):
+        """Get the Amount that correponds to this lot. The amount is the number of units
+        of the currency, irrespective of its cost or lot date.
+
+        Returns:
+          An instance of Amount.
+        """
         return Amount(self.number, self.lot.currency)
 
     # FIXME: We really should have the default get_cost() return a position, and
     # then have the caller .get_amount(). This would be the perfect way to do
     # this; do this.
     def get_cost(self):
+        """Return the cost associated with this position. The cost is the number of
+        units of the lot times the cost of the lot. If the lot has no associated
+        cost, the amount of the position is returned as its cost.
+
+        Returns:
+          An instance of Amount.
+        """
         cost = self.lot.cost
         if cost is None:
             return Amount(self.number, self.lot.currency)
@@ -102,6 +154,14 @@ class Position:
             return amount_mult(cost, self.number)
 
     def get_cost_position(self):
+        """Return a Position representing the cost of this position. See get_cost().
+
+        Returns:
+          An instance of Position if there is a cost, or itself, if the position
+          has no associated cost. Since we consider the Position object to be
+          immutable and associated operations never modify an existing Position
+          instance, it is legit to return this object itself.
+        """
         cost = self.lot.cost
         if cost is None:
             return self
@@ -110,11 +170,22 @@ class Position:
                             self.number * cost.number)
 
     def add(self, number):
+        """Add a number of units to this position.
+
+        Args:
+          number: A Decimal instance, the number of units to add to this position.
+        """
         # Note: Checks for positions going negative do not belong here, but
         # rather belong in the inventory.
+        assert isinstance(number, Decimal)
         self.number += number
 
     def get_negative(self):
-        """Get a copy of this position but with a negative number."""
+        """Get a copy of this position but with a negative number.
+
+        Returns:
+          An instance of Position which represents the inserse of this Position.
+        """
         return Position(self.lot, Decimal(-self.number))
+
     __neg__ = get_negative
