@@ -75,7 +75,7 @@ class Inventory:
         Returns:
           A boolean.
         """
-        return bool(self.positions)
+        return not bool(self.positions)
 
     __bool__ = is_empty
 
@@ -252,40 +252,40 @@ class Inventory:
         assert isinstance(new_position, Position), new_position
         return self._add(new_position.number, new_position.lot, allow_negative)
 
-
-
-
-
-
-# FIXME: Clarify the following
-
-    def has_lots(self, currency):
-        """Return true if the given currency has some positions with lots.
+    def _add(self, number, lot, allow_negative=False):
+        """Return True if this position was booked against and reduced another.
 
         Args:
-          currency: A string, the currency to check lots for.
+          number: The number of units to add the given lot by.
+          lot: The lot that we want to add to.
+          allow_negative: A flag that decides whether we want to allow
+            negative positions with cost. If False, an addition to a position
+            with cost or lot-date that results in a negative number throws
+            a ValueError.
         Returns:
-          A boolean, true if the inventory has positions with this currency.
+          True if the addition reduces an existing position.
+        Raises:
+           ValueError: if the result is a position at cost with a negative
+             number.
         """
-        return any(position.lot.currency == currency and
-                   (position.lot.cost or position.lot.lot_date)
-                   for position in self.positions)
-
-    def _add(self, number, lot, allow_negative=False):
-        """Return True if this position was booked against and reduced another."""
-
+        # Find the position.
         position = self.get_create_position(lot)
         reducing = (position.number * number) < 0
         position.add(number)
+
+        # If the resulting position is a zero position, remove it. We want to
+        # avoid zero positions in the Inventory as an invariant.
         if position.number == ZERO:
             self.positions.remove(position)
 
-        if (not allow_negative and
-            position.number < ZERO and
-            (position.lot.cost or position.lot.lot_date or self.has_lots(lot.currency))):
+        # If we don't allow negative positions at cost, and this is a negative
+        # position at cost, raise an exception.
+        elif (not allow_negative and
+              position.number < ZERO and
+              (position.lot.cost or position.lot.lot_date)):
 
-            # Note: at this point we have already modified the values, so there
-            # is a side-effect even if we raise an exception. This is on
+            # Note that at this point we have already modified the values, so
+            # there is a side-effect even if we raise an exception. This is on
             # purpose, we can help the user, but we shouldn't fix this
             # automatically by ignoring certain numbers (that's worse).
             raise ValueError("Position with lots goes negative: {}".format(self))
@@ -293,40 +293,28 @@ class Inventory:
         return reducing
 
     def __add__(self, other):
+        """Add another inventory to this one. This inventory is not modified.
+
+        Args:
+          other: An instance of Inventory.
+        Returns:
+          A new instance of Inventory.
+        """
         new_inventory = self.__copy__()
         new_inventory += other
         return new_inventory
 
     def update(self, other):
+        """Add all the positions of another Inventory instance to this one.
+
+        Args:
+          other: An instance of Inventory to add to this one.
+        Returns:
+          This inventory, modified.
+        """
         for position in other.positions:
             self.add_position(position, True)
         return self
 
     __iadd__ = update
 
-
-    def average(self):
-        """Merge all lots of the same currency together at their average cost."""
-
-        logging.warn('FIXME: continue here, this will be needed to report positions')
-        # FIXME: This is ill-defined, the grouping must also take into account the cost currency.
-
-        units_map = defaultdict(Decimal)
-        costs_map = defaultdict(Decimal)
-        for position in self.positions:
-            lot = position.lot
-
-            cost_currency = lot.cost.currency if lot.cost else None
-            key = (lot.currency, cost_currency)
-            units_map[key] += position.number
-            costs_map[key] += position.get_cost().number
-
-        inventory = Inventory()
-        for lotcost_currencies, units in units_map.items():
-            lot_currency, cost_currency = lotcost_currencies
-            cost_number = costs_map[lotcost_currencies]
-            inventory.add(Amount(units, lot_currency),
-                          Amount(cost_number, cost_currency),
-                          allow_negative=True)
-
-        return inventory

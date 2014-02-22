@@ -49,7 +49,7 @@ def account_name_leaf(account_name):
     Returns:
       A string, the name of the leaf of the account.
     """
-    return account_name.split(':')[-1] if name else None
+    return account_name.split(':')[-1] if account_name else None
 
 def account_sortkey(account):
     """Sort a list of accounts, taking into account the type of account.

@@ -163,6 +163,41 @@ one, to make people say „I would like to do that!“.
 
   - IMPORTANT FEATURE: Implement Average Booking for Vanguard & RBC Adjustment,
     with associated tests and syntax in the parser.
+    Update for inventory.py:
+
+      def average(self):
+          """Merge all lots of the same currency together at their average cost.
+
+          Returns:
+            A new instance of Inventory, with all the positions of each currency
+            merged together at cost, bringing all these positions at average cost.
+          """
+          logging.warn('FIXME: continue here, this will be needed to report positions')
+          # FIXME: This is ill-defined, the grouping must also take into account the cost currency.
+
+          units_map = defaultdict(Decimal)
+          costs_map = defaultdict(Decimal)
+          for position in self.positions:
+              lot = position.lot
+
+              cost_currency = lot.cost.currency if lot.cost else None
+              key = (lot.currency, cost_currency)
+              units_map[key] += position.number
+              costs_map[key] += position.get_cost().number
+
+          inventory = Inventory()
+          for lotcost_currencies, units in units_map.items():
+              lot_currency, cost_currency = lotcost_currencies
+              cost_number = costs_map[lotcost_currencies]
+              inventory.add(Amount(units, lot_currency),
+                            Amount(cost_number, cost_currency),
+                            allow_negative=True)
+
+          return inventory
+
+
+
+
 
   - IMPORTANT FEATURE: We need to be able to invert the input on import (this is
     easy, conversion to text only, could be applied across any importer)
