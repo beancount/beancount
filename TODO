@@ -1,12 +1,17 @@
 -*- mode: org -*-
 beancount: TODO
-* Unittest Coverage
+* Requirements for Shipping 1.0
 
-  - ## FIXME: Remove TYPES_ORDER, change Account to be just a string as well, with functions.
-
-  - Fix or comment all the unittests: run bean-find-missing-tests
-
-  - Run pylint, add all args to docstrings.
+  - Change Account to be just a string as well, with functions, remove TYPES_ORDER.
+  - Create an account_join() function in account.py to remove ':' everywhere.
+  - Complete all unittests coverage (as per bean-find-missing-tests).
+  - Configure and run a clean pylint.
+  - Add all docstrings with args Google-style.
+  - Clean up the interface of loader.load(), it's ugly.
+  - Implement all the missing global pages.
+  - Move all imports code as ledgerhub.
+  - Clean up code: remove all significant codes from __init__.py files.
+  - Fix all FIXMEs everywhere.
 
 * Current
 
@@ -36,7 +41,6 @@ beancount: TODO
 
 
 
-  - Clean up the interface of loader.load(), it's ugly.
 
   - Document the input to the importer, maybe this can be just a function call
     that runs the loop. Maybe we just provide a matcher function instead. I
@@ -123,7 +127,6 @@ one, to make people say „I would like to do that!“.
 
 
 
-  - Implement all the missing global pages.
 
 
 
@@ -345,19 +348,8 @@ Improve this bit:
 * Core
 ** General
 
-  - Clean up: add unit tests for everything, and docstrings everywhere.
-    This new version will be really, really clean!
-
-  - Clean up code: remove all significant codes from __init__.py files.
-
-  - Fix all FIXMEs everywhere.
-
-  - Run pylint on the entire codebase.
-
   - Make all imports outside of packages import from the package root, and have
     the package export those symbols explicitly.
-
-  - (cleanup) Create an account_join() function in account.py to remove ':' everywhere.
 
 ** Inventory
 
