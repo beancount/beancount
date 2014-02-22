@@ -216,6 +216,9 @@ def unrealized_gains(entries, subaccount_name, account_types):
     of the available history. Returns a new list of entries, with the new gains
     inserted."""
 
+    if not entries:
+        return entries
+
     new_entries = []
     latest_date = entries[-1].date
 
