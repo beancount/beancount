@@ -16,3 +16,6 @@ class TestTree(unittest.TestCase):
         self.assertEqual(replace_numbers(" 10em"), " 10em")
         self.assertEqual(replace_numbers(" 10em"), " 10em")
         self.assertEqual(replace_numbers(" -10.40"), " -XX.XX")
+
+
+__incomplete__ = True

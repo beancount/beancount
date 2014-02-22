@@ -138,3 +138,6 @@ class TestInventory(unittest.TestCase):
         inv2.add(Amount('55', 'GOOG'))
 
         inv = inv1 + inv2
+
+
+__incomplete__ = True

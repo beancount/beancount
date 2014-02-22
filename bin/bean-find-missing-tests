@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+"""
+Find missing test coverage in our source code.
+"""
+import os
+from os import path
+import re
+
+
+def main():
+    import argparse, logging
+    parser = argparse.ArgumentParser(__doc__.strip())
+
+    parser.add_argument('-n', '--nb-lines-complete', action='store',
+                        type=int, default=12,
+                        help=("Nb. of lines required for a test file to be "
+                              "considered complete."))
+
+    global opts
+    opts = parser.parse_args()
+
+    root_dir = path.dirname(path.dirname(__file__))
+    source_dir = path.join(root_dir, 'src', 'python', 'beancount')
+    missing_tests = list(find_missing_tests(source_dir))
+    if missing_tests:
+        print("Missing tests:")
+        for filename, test_filename, missing in missing_tests:
+            missing_str = 'MISSING' if missing else 'INCOMPLETE'
+            print('{:80} {}'.format(filename, missing_str))
+
+def find_missing_tests(source_dir):
+    for root, dirs, files in os.walk(source_dir):
+        for relative_filename in files:
+            if ((not relative_filename.endswith('.py')) or
+                relative_filename.endswith('_test.py') or
+                relative_filename == '__init__.py'):
+                continue
+
+            filename = path.join(root, relative_filename)
+            test_filename = re.sub('.py$', '_test.py', filename)
+            if not path.exists(test_filename):
+                yield (filename, test_filename, True)
+            elif not is_complete(test_filename):
+                yield (filename, test_filename, False)
+
+def is_complete(filename):
+    return not re.search('^__incomplete__', open(filename).read(), re.M)
+    #return len(open(filename).readlines()) > opts.nb_lines_complete
+
+
+
+if __name__ == '__main__':
+    main()

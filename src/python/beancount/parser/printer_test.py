@@ -36,3 +36,6 @@ class TestPrinter(unittest.TestCase):
     def __test_format_entry(self):
         ## FIXME: TODO
         pass
+
+
+__incomplete__ = True

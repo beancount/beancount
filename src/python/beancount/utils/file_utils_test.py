@@ -47,3 +47,6 @@ class TestFileUtils(unittest.TestCase):
         expected = [['Title1\n', 'A,B,C\n', 'D,E,F\n'],
                     ['Title2\n', 'G,H\n', 'I,J\n', ',K,L\n']]
         self.assertEqual(expected, linearize(iter_sections(sio)))
+
+
+__incomplete__ = True
