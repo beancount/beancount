@@ -27,7 +27,6 @@ from beancount.core.balance import balance_incomplete_postings
 from beancount.core.balance import compute_residual, SMALL_EPSILON
 
 
-# Options.
 __sanity_checks__ = False
 
 

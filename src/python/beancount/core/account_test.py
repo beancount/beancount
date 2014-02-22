@@ -135,7 +135,3 @@ class TestAccount(unittest.TestCase):
         newdict = accountify_dict(accvalue_dict)
         self.assertTrue(isinstance(newdict, dict))
         self.assertEqual("Income:US:Intel", newdict["421833fa2cb9"].name)
-
-
-# We need to complete the documentation of Account's methods
-__incomplete__ = True

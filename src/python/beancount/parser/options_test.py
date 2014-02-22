@@ -28,6 +28,3 @@ class TestOptions(unittest.TestCase):
         """
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
-
-
-__incomplete__ = True

@@ -328,6 +328,3 @@ class TestSimple(unittest.TestCase):
           2014-01-19 open Assets:Numbers       EURO123
         """
         self.assertFalse(errors)
-
-
-__incomplete__ = True
