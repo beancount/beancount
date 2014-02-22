@@ -75,8 +75,12 @@ def root():
 
 @app.route('/toc', name='toc')
 def toc():
-    mindate, maxdate = getters.get_min_max_dates([entry for entry in app.entries
-                                                  if not isinstance(entry, (Open, Close))])
+    entries_no_open_close = [entry for entry in app.entries
+                             if not isinstance(entry, (Open, Close))]
+    if entries_no_open_close:
+        mindate, maxdate = None, None
+    else:
+        mindate, maxdate = getters.get_min_max_dates(entries_no_open_close)
 
     def view_url(name, **kw):
         return app.router.build(name, path='', **kw)
@@ -100,13 +104,14 @@ def toc():
     # FIXME: These are not implemented yet.
     if 0:
         # By level.
+        all_accounts_names = getters.get_accounts(app.entries).keys()
         viewboxes.append(('level1', 'Level 1',
                           [(view_url('level1', level=level), '{}'.format(level))
-                           for level in getters.get_leveln_parent_accounts(app.entries, 1, nrepeats=0)]))
+                           for level in getters.get_leveln_parent_accounts(all_accounts_names, 1, nrepeats=0)]))
 
         viewboxes.append(('level2', 'Level 2',
                           [(view_url('level2', level=level), '{}'.format(level))
-                           for level in getters.get_leveln_parent_accounts(app.entries, 2, nrepeats=0)]))
+                           for level in getters.get_leveln_parent_accounts(all_accounts_names, 2, nrepeats=0)]))
 
     # FIXME: This deserves its own page, with options for cleanup (or a helper tool).
     if 0:
