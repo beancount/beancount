@@ -95,6 +95,8 @@ class TestInventory(unittest.TestCase):
 
         self.assertRaises(ValueError, inv.add, Amount('-12', 'GOOG'), Amount('700', 'USD'), date(2000, 1, 1))
 
+# FIXME: Add a test for the pathological case for get_amount().
+
     def __test_get_costs(self):
         inv = Inventory()
         inv.add(Amount('10.00', 'USD'), Amount('1.05', 'CAD'))
@@ -110,7 +112,6 @@ class TestInventory(unittest.TestCase):
 
 
 
-
 # FIXME: Test a conversion of shares with lot-date, e.g.:
 #
 #   2000-01-18 * Buy CRA
@@ -120,7 +121,8 @@ class TestInventory(unittest.TestCase):
 #   2000-02-22 * CRA Stock Split 2:1
 #     Assets:CA:RBC-Investing:Taxable-CAD:CRA          -4 "CRA1" {232.00 USD / 2000-01-18}
 #     Assets:CA:RBC-Investing:Taxable-CAD:CRA           8 CRA {116.00 USD / 2000-01-18}
-#
+
+
 
 
     def test_negative(self):
