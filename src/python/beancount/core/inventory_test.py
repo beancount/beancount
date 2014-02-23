@@ -6,6 +6,7 @@ import copy
 from datetime import date
 
 from beancount.core.amount import Amount
+from beancount.core.position import create_position
 from beancount.core.inventory import Inventory
 
 
@@ -16,14 +17,22 @@ class TestInventory(unittest.TestCase):
         inv_amount = inventory.get_amount(amount.currency)
         self.assertEqual(inv_amount , amount)
 
-    def test_ctor(self):
+    def test_ctor_and_is_empty(self):
+        # Test regular constructor.
         inv = Inventory()
         self.assertTrue(inv.is_empty())
 
-## FIXME: ctor with positions
+        positions = [create_position('100.00', 'USD'),
+                     create_position('101.00', 'USD')]
+        inv = Inventory(positions)
+        self.assertFalse(inv.is_empty())
+        self.assertEqual(2, len(inv))
 
-
-
+    def test_str(self):
+        positions = [create_position('100.00', 'USD'),
+                     create_position('101.00', 'USD')]
+        inv = Inventory(positions)
+        self.assertEqual('Inventory(100.00 USD, 101.00 USD)', str(inv))
 
     def test_copy(self):
         inv = Inventory()
@@ -37,6 +46,64 @@ class TestInventory(unittest.TestCase):
 
         # Check that the original object is not modified.
         self.checkAmount(inv, '100', 'USD')
+
+    def test_add(self):
+        inv = Inventory()
+        self.assertEqual(0, len(inv))
+        inv.add(Amount('100', 'USD'))
+        self.assertEqual(1, len(inv))
+        inv.add(Amount('100', 'CAD'))
+        self.assertEqual(2, len(inv))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    def test_op_eq(self):
+        pass
+
+    def test_is_small(self):
+        pass
+
+    def test_op_neg(self):
+        inv = Inventory()
+        inv.add(Amount('10', 'USD'))
+        ninv = -inv
+        self.checkAmount(ninv, '-10', 'USD')
+
+    def test_get_amount(self):
+        pass
+
+    def test_get_amounts(self):
+        pass
+
+    def test_get_cost(self):
+        pass
+
+    def test_get_positions(self):
+        pass
+
+    def test_get_positions_with_currency(self):
+        pass
+
+    def test_get_position(self):
+        pass
+
+    def test_get_create_position(self):
+        pass
+
+
 
     def test_add(self):
         inv = Inventory()
@@ -95,6 +162,22 @@ class TestInventory(unittest.TestCase):
 
         self.assertRaises(ValueError, inv.add, Amount('-12', 'GOOG'), Amount('700', 'USD'), date(2000, 1, 1))
 
+
+    def test_add_position(self):
+        pass
+
+    def test_update(self):
+        pass
+
+    def test_op_add(self):
+        pass
+
+
+
+
+
+
+
 # FIXME: Add a test for the pathological case for get_amount().
 
     def __test_get_costs(self):
@@ -125,11 +208,6 @@ class TestInventory(unittest.TestCase):
 
 
 
-    def test_negative(self):
-        inv = Inventory()
-        inv.add(Amount('10', 'USD'))
-        ninv = -inv
-        self.checkAmount(ninv, '-10', 'USD')
 
     def test_sum_inventories(self):
         inv1 = Inventory()

@@ -6,7 +6,7 @@ import copy
 from datetime import date
 
 from beancount.core.amount import ZERO, to_decimal, Amount
-from beancount.core.position import Lot, Position
+from beancount.core.position import Lot, Position, create_position
 
 
 class TestPosition(unittest.TestCase):
@@ -76,3 +76,12 @@ class TestPosition(unittest.TestCase):
         negpos = pos.get_negative()
         self.assertEqual(Amount('-28372', 'USD'), negpos.get_amount())
         self.assertEqual(Amount('-283720', 'AUD'), negpos.get_cost())
+
+    def test_create_position(self):
+        pos1 = Position(Lot("USD", Amount('10', 'AUD'), None), to_decimal('28372'))
+        pos2 = create_position('28372', 'USD', Amount('10', 'AUD'))
+        self.assertEqual(pos1, pos2)
+
+        pos1 = Position(Lot("USD", None, None), to_decimal('28372'))
+        pos2 = create_position('28372', 'USD')
+        self.assertEqual(pos1, pos2)

@@ -7,7 +7,7 @@ from collections import namedtuple
 
 from beancount.core.amount import Amount, Decimal, to_decimal
 from beancount.core.account import Account, account_from_name
-from beancount.core.position import Lot, Position
+from beancount.core.position import Lot, Position, create_position
 
 
 # All possible types of entries. These are the main data structrues in use
@@ -212,7 +212,7 @@ def create_simple_posting(entry, account, number, currency):
     else:
         if not isinstance(number, Decimal):
             number = to_decimal(number)
-        position = Position(Lot(currency, None, None), Decimal(number))
+        position = create_position(number, currency)
     posting = Posting(entry, account, position, None, None)
     if entry is not None:
         entry.postings.append(posting)
@@ -239,7 +239,7 @@ def create_simple_posting_with_cost(entry, account, number, currency, cost_numbe
     if cost_number and not isinstance(cost_number, Decimal):
         cost_number = to_decimal(cost_number)
     cost = Amount(cost_number, cost_currency)
-    position = Position(Lot(currency, cost, None), Decimal(number))
+    position = create_position(number, currency, cost)
     posting = Posting(entry, account, position, None, None)
     if entry is not None:
         entry.postings.append(posting)

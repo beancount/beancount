@@ -141,7 +141,5 @@ sandbox:
 
 # Report on the sorry state of test coverage, for 1.0 release.
 # sources and imports are going to move to ledgerhub.
-# web will not be required to be tested, other than a wget test that 
-# there are no bad links and no pages with incomplete markers in them.
 status test-status:
-	bean-find-missing-tests | grep -vE '/(sources|imports|web)/'	
+	bean-find-missing-tests | grep -vE '/(sources|imports)/'

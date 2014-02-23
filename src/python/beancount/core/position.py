@@ -189,3 +189,17 @@ class Position:
         return Position(self.lot, Decimal(-self.number))
 
     __neg__ = get_negative
+
+
+def create_position(number, currency, cost=None, lot_date=None):
+    """Create a position from its component parts.
+
+    Args:
+      number: An instance of Decimal or an integer or string.
+      currency: The currency of the lot.
+      cost: An instance of Amount, or None if no cost.
+      lot_date: An instance of datetime.date, or None if no lot-date.
+    Returns:
+      A new instance of Position.
+    """
+    return Position(Lot(currency, cost, lot_date), Decimal(number))

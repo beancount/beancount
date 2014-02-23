@@ -317,4 +317,3 @@ class Inventory:
         return self
 
     __iadd__ = update
-

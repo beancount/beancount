@@ -2,6 +2,11 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
+  - Build a pass-through memoizer and replace Mole from text_utils.
+    m = Memo()
+    if m(re.match(...)):
+    ... = m.value
+
   - Change Account to be just a string as well, with functions, remove TYPES_ORDER.
   - Create an account_join() function in account.py to remove ':' everywhere.
   - Complete all unittests coverage (as per bean-find-missing-tests).
@@ -12,16 +17,14 @@ beancount: TODO
   - Move all imports code as ledgerhub.
   - Clean up code: remove all significant codes from __init__.py files.
   - Fix all FIXMEs everywhere.
+  - Bean-suck should work; maybe rename to bean-siphon and automate as a unit
+    test for web.py using some of the demo files.
 
 * Current
 
   - Add a 'mime_type' attribute to each importer, so that we can simplify our
     import configuration regexps.
 
-  - Build a pass-through memoizer and replace Mole from text_utils.
-    m = Memo()
-    if m(re.match(...)):
-    ... = m.value
 
   - Serving CSV files from the Documents page should not be via download, but
     rather rendered directly.
