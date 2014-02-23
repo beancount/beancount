@@ -1,4 +1,7 @@
+import random
 import unittest
+
+from beancount.utils.bisect_key import bisect_left_withkey
 
 
 class TestBisectWithKey(unittest.TestCase):
