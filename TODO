@@ -22,6 +22,10 @@ beancount: TODO
 
 * Current
 
+  - Bug: A transaction like this fails to parse; allow it:
+      2014-02-22 * "Payee" |
+        ..
+
   - Add a 'mime_type' attribute to each importer, so that we can simplify our
     import configuration regexps.
 
