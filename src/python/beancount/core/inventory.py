@@ -77,7 +77,10 @@ class Inventory:
         """
         return not bool(self.positions)
 
-    __bool__ = is_empty
+    def __bool__(self):
+        # Don't define this, be explicit. 
+        raise ValueError
+        return bool(self.positions)
 
     def __copy__(self):
         """A shallow copy of this inventory object. All the positions contained

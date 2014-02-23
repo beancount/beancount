@@ -49,7 +49,7 @@ FLAG_ROWTYPES = {
 def balance_html(balance):
     """Render a list of balance position for an HTML table cell."""
     return ('<br/>'.join(map(str, balance.get_positions()))
-            if balance
+            if not balance.is_empty()
             else '')
 
 

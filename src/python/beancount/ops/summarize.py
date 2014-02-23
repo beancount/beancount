@@ -236,7 +236,7 @@ def create_entries_from_balances(balances, date, other_account, direction,
     for account, balance in sorted(balances.items()):
 
         # Don't create new entries where there is no balance.
-        if not balance:
+        if balance.is_empty():
             continue
 
         fileloc = FileLocation(filename, 0)
