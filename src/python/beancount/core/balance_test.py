@@ -1,6 +1,7 @@
 import unittest
 import re
 from collections import namedtuple
+import copy
 
 from beancount.core.balance import get_balance_amount
 from beancount.core.balance import compute_residual
@@ -10,6 +11,7 @@ from beancount.core.data import FileLocation, Posting, Transaction
 from beancount.core.data import create_simple_posting, create_simple_posting_with_cost
 from beancount.core.account import account_from_name
 from beancount.core.amount import Amount
+from beancount.parser import parser
 
 
 class TestBalance(unittest.TestCase):
@@ -151,7 +153,6 @@ class TestBalance(unittest.TestCase):
         self.assertEqual(3, len(new_postings))
         self.assertEqual(1, len(errors))
 
-
     def test_balance_with_zero_posting(self):
         fileloc = FileLocation(__file__, 0)
         entry = Transaction(fileloc, None, None, None, None, None, None, [
@@ -163,10 +164,34 @@ class TestBalance(unittest.TestCase):
         self.assertEqual(1, len(new_postings))
         self.assertEqual(0, len(errors))
 
+    def balance_incomplete_postings(self):
+        entry = parser.parse_string("""
+          2013-02-23 * "Something"
+            Liabilities:CreditCard     -50 USD
+            Expenses:Restaurant         50 USD
+        """)[0][0]
+        orig_entry = copy.deepcopy(entry)
+        errors = balance_incomplete_postings(entry)
+        self.assertFalse(errors)
+        self.assertEqual(orig_entry, entry)
 
+        entry = parser.parse_string("""
+          2013-02-23 * "Something"
+            Liabilities:CreditCard     -50 USD
+            Expenses:Restaurant
+        """)[0][0]
+        orig_entry = copy.deepcopy(entry)
+        errors = balance_incomplete_postings(entry)
+        self.assertFalse(errors)
+        self.assertEqual(strip_recursive(orig_entry),
+                         strip_recursive(entry))
 
-
-# FIXME: run through parser and check amounts
-
-
-__incomplete__ = True
+        entry = parser.parse_string("""
+          2013-02-23 * "Something"
+            Liabilities:CreditCard     -50 USD
+            Liabilities:CreditCard     -50 CAD
+            Expenses:Restaurant
+        """)[0][0]
+        errors = balance_incomplete_postings(entry)
+        self.assertFalse(errors)
+        self.assertEqual(4, len(entry.postings))

@@ -528,7 +528,7 @@ class Builder(object):
         # Create the transaction. Note: we need to parent the postings.
         entry = Transaction(fileloc, date, chr(flag), payee, narration, ctags, links, postings)
 
-        # Balance incomplete auto-postings.
+        # Balance incomplete auto-postings and set the parent link to this entry as well.
         balance_errors = balance_incomplete_postings(entry)
 
         if balance_errors:

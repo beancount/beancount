@@ -19,10 +19,14 @@ SMALL_EPSILON = Decimal('0.005')
 
 
 def get_balance_amount(posting):
-    """Get the amount that will need to be balanced from a posting
-    of a transaction. (This is a *key* element of the semantics of transactions
-    in this software.)"""
+    """Get the amount that will need to be balanced from a posting of a transaction.
+    (This is a *key* element of the semantics of transactions in this software.)
 
+    Args:
+      posting: A Posting instance.
+    Returns:
+      An amount, required to balance this posting.
+    """
     position = posting.position
     lot = position.lot
 
@@ -43,7 +47,14 @@ def get_balance_amount(posting):
 
 def compute_residual(postings):
     """Compute the residual of a set of complete postings.
-    This is used to cross-check a balanced transaction."""
+    This is used to cross-check a balanced transaction.
+
+    Args:
+      postings: A list of Posting instances.
+    Returns:
+      An instance of Inventory, with the residual of the given list
+      of postings.
+    """
     inventory = Inventory()
     for posting in postings:
         inventory.add(get_balance_amount(posting))
@@ -61,8 +72,15 @@ def get_incomplete_postings(entry):
 
     Note: The 'postings' parameter may be modified or destroyed for performance
     reasons; don't reuse it.
-    """
 
+    Args:
+      entry: An instance of a valid directive.
+    Returns:
+      A tuple of: a list of new postings to replace the entry's unbalanced
+      postings, a boolean set to true if we've inserted new postings, and a list
+      of balance errors generated during the balancing process.
+    """
+    # Make a copy of the original list of postings.
     postings = list(entry.postings)
 
     # Errors during balancing.
@@ -98,7 +116,7 @@ def get_incomplete_postings(entry):
                 has_nonzero_amount = True
 
     # If there are auto-postings, fill them in.
-    inserted_autopostings = False
+    has_inserted = False
     if auto_postings_indices:
 
         # If there are too many such postings, we can't do anything, barf.
@@ -133,7 +151,7 @@ def get_incomplete_postings(entry):
                 position = Position(Lot(currency, None, None), ZERO)
                 new_postings.append(
                     Posting(entry, old_posting.account, position, None, old_posting.flag))
-                inserted_autopostings = True
+                has_inserted = True
         else:
             # Convert all the residual positions in inventory into a posting for
             # each position.
@@ -141,7 +159,7 @@ def get_incomplete_postings(entry):
                 position.number = -position.number
                 new_postings.append(
                     Posting(entry, old_posting.account, position, None, old_posting.flag))
-                inserted_autopostings = True
+                has_inserted = True
 
         postings[index:index+1] = new_postings
 
@@ -154,17 +172,24 @@ def get_incomplete_postings(entry):
                              "Transaction does not balance: {}.".format(inventory),
                              entry))
 
-    return postings, inserted_autopostings, balance_errors
+    return (postings, has_inserted, balance_errors)
 
 
 def balance_incomplete_postings(entry):
     """Balance an entry with incomplete postings, modifying the
-    empty postings on the entry itself.
+    empty postings on the entry itself. This also sets the parent of
+    all the postings to this entry.
+
+    Args:
+      entry: An instance of a valid directive. This entry is modified by
+        having new postings inserted to it.
+    Returns:
+      A
     """
     postings, inserted, errors = get_incomplete_postings(entry)
 
-    # FIXME: Make this faster, there's unnecessary copying IMO.
-
+    # If we could make this faster to avoid the unnecessary copying, it would
+    # make parsing substantially faster.
     # PERF(25ms): could be saved here by avoiding reparenting.
     entry.postings.clear()
     for posting in postings:

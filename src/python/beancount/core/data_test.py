@@ -8,6 +8,7 @@ from beancount.core.amount import Amount, to_decimal
 from beancount.core.account import account_from_name
 from beancount.core import balance
 from beancount.core import flags
+from beancount.parser import parser
 
 
 FILELOC = data.FileLocation('beancount/core/testing.beancount', 12345)
@@ -18,6 +19,19 @@ class TestData(unittest.TestCase):
     def create_empty_transaction(self):
         return data.Transaction(FILELOC, date(2014, 1, 15), flags.FLAG_OKAY, None,
                                 "Some example narration", None, None, [])
+
+    def test_strip_back_reference(self):
+        entry = parser.parse_string("""
+          2013-02-23 * "Something"
+            Liabilities:CreditCard     -50 USD
+            Expenses:Restaurant         50 USD
+        """)[0][0]
+        self.assertTrue(all(posting.entry is not None
+                            for posting in entry.postings))
+        stripped_entry = data.strip_back_reference(entry)
+        self.assertTrue(all(posting.entry is None
+                            for posting in stripped_entry.postings))
+        self.assertNotEqual(entry, stripped_entry)
 
     def test_create_simple_posting(self):
         entry = self.create_empty_transaction()
