@@ -50,14 +50,16 @@ class Inventory:
         Because the lists are always very short, we prefer to avoid using mappings
         for the sake of simplicity.
     """
-
     def __init__(self, positions=None):
         """Create a new inventory using a list of existing positions.
 
         Args:
           positions: A list of Position instances.
         """
-        self.positions = positions or []
+        self.positions = []
+        if positions:
+            for position in positions:
+                self.add_position(position)
 
     def __str__(self):
         """Render as a human-readable string.
@@ -78,7 +80,7 @@ class Inventory:
         return not bool(self.positions)
 
     def __bool__(self):
-        # Don't define this, be explicit. 
+        # Don't define this, be explicit.
         raise ValueError
         return bool(self.positions)
 
@@ -151,12 +153,11 @@ class Inventory:
         Returns:
           A list of all the amounts for the inventory's positions.
         """
-        # FIXME: This needs fixing, what if you have multiple lots for the same currency?
         return [position.get_amount() for position in self.positions]
 
     def get_cost(self):
         """Return an inventory of Amounts that represent book values for all positions
-        in this inventory..
+        in this inventory.
 
         Returns:
           An instance of Inventory.
@@ -199,7 +200,7 @@ class Inventory:
             if position.lot == lot:
                 return position
 
-    def get_create_position(self, lot):
+    def _get_create_position(self, lot):
         """Find or create a position associated with the given lot.
 
         Args:
@@ -272,7 +273,7 @@ class Inventory:
              number.
         """
         # Find the position.
-        position = self.get_create_position(lot)
+        position = self._get_create_position(lot)
         reducing = (position.number * number) < 0
         position.add(number)
 
@@ -320,3 +321,22 @@ class Inventory:
         return self
 
     __iadd__ = update
+
+
+def check_invariants(inventory):
+    """Check the invariants of the Inventory.
+
+    Args:
+      inventory: An instance of Inventory.
+    Returns:
+      True if the invariants are respected.
+    """
+    # Check that all the keys are unique.
+    lots = set(position.lot for position in inventory.positions)
+    nlots = len(lots)
+    npositions = len(inventory.positions)
+    assert nlots == npositions, (nlots, npositions)
+
+    # Check that none of the amounts is zero.
+    for position in inventory.positions:
+        assert position.number, position

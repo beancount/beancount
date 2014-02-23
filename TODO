@@ -266,6 +266,19 @@ one, to make people say „I would like to do that!“.
   - Remove the parsing of "CHECK" at some point, that was just there for
     compatibility.
 
+  - More testing:
+
+       # FIXME: Test a conversion of shares with lot-date, e.g.:
+       #
+       #   2000-01-18 * Buy CRA
+       #     Assets:CA:RBC-Investing:Taxable-CAD:CRA           4 "CRA1" {232.00 USD / 2000-01-18}
+       #     Assets:CA:RBC-Investing:Taxable-CAD               -1395.43 CAD @ 0.665027984206 USD  ; cost
+       #
+       #   2000-02-22 * CRA Stock Split 2:1
+       #     Assets:CA:RBC-Investing:Taxable-CAD:CRA          -4 "CRA1" {232.00 USD / 2000-01-18}
+       #     Assets:CA:RBC-Investing:Taxable-CAD:CRA           8 CRA {116.00 USD / 2000-01-18}
+
+
 ** Padding documentation from email
    CLOCK: [2014-01-19 Sun 14:49]
 
