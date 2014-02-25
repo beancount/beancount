@@ -2,7 +2,7 @@ import unittest
 import re
 
 from beancount.core.amount import ZERO, to_decimal, Decimal, Amount
-from beancount.core.amount import amount_sortkey, amount_mult, amount_sub
+from beancount.core.amount import amount_sortkey, amount_mult, amount_sub, amount_div
 
 
 class TestToDecimal(unittest.TestCase):
@@ -82,6 +82,11 @@ class TestAmount(unittest.TestCase):
         self.assertEqual(Amount('102.1', 'CAD'),
                          amount_mult(amount, Decimal('1.021')))
 
+    def test_div(self):
+        amount = Amount('100', 'CAD')
+        self.assertEqual(Amount('20', 'CAD'),
+                         amount_div(amount, Decimal('5')))
+
     def test_sub(self):
         self.assertEqual(Amount('82.98', 'CAD'),
                          amount_sub(Amount('100', 'CAD'),
@@ -89,7 +94,3 @@ class TestAmount(unittest.TestCase):
         with self.assertRaises(ValueError):
             amount_sub(Amount('100', 'USD'),
                        Amount('17.02', 'CAD'))
-
-
-# Just midding amount_div
-__incomplete__ = True
