@@ -89,3 +89,7 @@ class TestAmount(unittest.TestCase):
         with self.assertRaises(ValueError):
             amount_sub(Amount('100', 'USD'),
                        Amount('17.02', 'CAD'))
+
+
+# Just midding amount_div
+__incomplete__ = True

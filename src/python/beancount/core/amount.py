@@ -131,6 +131,19 @@ def amount_mult(amount, number):
     assert isinstance(number, Decimal)
     return Amount(amount.number * number, amount.currency)
 
+def amount_div(amount, number):
+    """Divide the given amount by a number.
+
+    Args:
+      amount: An instance of Amount.
+      number: A decimal number.
+    Returns:
+      An Amount, with the same currency, but with amount units divided by 'number'.
+    """
+    assert isinstance(amount, Amount)
+    assert isinstance(number, Decimal)
+    return Amount(amount.number / number, amount.currency)
+
 def amount_sub(amount1, amount2):
     """Subtract the given amounts with the same currency.
 

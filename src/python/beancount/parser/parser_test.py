@@ -11,6 +11,7 @@ from beancount.parser import parser, options
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price, Note
 from beancount.core import data
 from beancount.core.account import Account
+from beancount.core.amount import Amount
 
 
 def check_list(test, objlist, explist):
@@ -328,3 +329,33 @@ class TestSimple(unittest.TestCase):
           2014-01-19 open Assets:Numbers       EURO123
         """
         self.assertFalse(errors)
+
+
+class TestTotals(unittest.TestCase):
+
+    @parsedoc
+    def test_total_price(self, entries, errors, options):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      10 MSFT @@ 2000 USD
+            Assets:Investments:Cash
+        """
+        posting = entries[0].postings[0]
+        self.assertEqual(Amount('200', 'USD'), posting.price)
+        self.assertEqual(None, posting.position.lot.cost)
+
+    @parsedoc
+    def test_total_cost(self, entries, errors, options):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      10 MSFT {{2000 USD}}
+            Assets:Investments:Cash
+
+          2013-05-18 * ""
+            Assets:Investments:MSFT      10 MSFT {{2000 USD / 2014-02-25}}
+            Assets:Investments:Cash
+        """
+        for entry in entries:
+            posting = entry.postings[0]
+            self.assertEqual(Amount('200', 'USD'), posting.position.lot.cost)
+            self.assertEqual(None, posting.price)

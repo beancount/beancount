@@ -74,6 +74,8 @@ const char* getTokenName(int token);
 %token <string> PIPE       /* | */
 %token <string> ATAT       /* @@ */
 %token <string> AT         /* @ */
+%token <string> LCURLCURL  /* {{ */
+%token <string> RCURLCURL  /* }} */
 %token <string> LCURL      /* { */
 %token <string> RCURL      /* } */
 %token <string> EQUAL      /* = */
@@ -301,12 +303,22 @@ position : amount
 
 lot_cost_date : LCURL amount RCURL
          {
-             $$ = BUILD("lot_cost_date", "OO", $2, Py_None);
+             $$ = BUILD("lot_cost_date", "OOO", $2, Py_None, Py_False);
              DECREF1($2);
          }
          | LCURL amount SLASH DATE RCURL
          {
-             $$ = BUILD("lot_cost_date", "OO", $2, $4);
+             $$ = BUILD("lot_cost_date", "OOO", $2, $4, Py_False);
+             DECREF2($2, $4);
+         }
+         | LCURLCURL amount RCURLCURL
+         {
+             $$ = BUILD("lot_cost_date", "OOO", $2, Py_None, Py_True);
+             DECREF1($2);
+         }
+         | LCURLCURL amount SLASH DATE RCURLCURL
+         {
+             $$ = BUILD("lot_cost_date", "OOO", $2, $4, Py_True);
              DECREF2($2, $4);
          }
 

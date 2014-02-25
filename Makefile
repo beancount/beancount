@@ -18,9 +18,9 @@ clean:
 
 
 # Targets to generate and compile the C parser.
-CROOT=src/python/beancount/parser
-LEX=flex
-YACC=bison3
+CROOT = src/python/beancount/parser
+LEX = flex
+YACC = bison 
 
 $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
 	$(YACC) -o $(CROOT)/grammar.c $<

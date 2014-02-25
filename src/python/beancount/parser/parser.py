@@ -20,7 +20,7 @@ from beancount.core.account_types import AccountTypes
 from beancount.core import account
 from beancount.core import account_types
 from beancount.core import data
-from beancount.core.amount import ZERO, Decimal, Amount
+from beancount.core.amount import ZERO, Decimal, Amount, amount_div
 from beancount.core.position import Lot, Position
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price, Note, Document, FileLocation, Posting
 from beancount.core.balance import balance_incomplete_postings
@@ -283,7 +283,7 @@ class Builder(object):
         assert isinstance(currency, str)
         return Amount(number, currency)
 
-    def lot_cost_date(self, cost, lot_date):
+    def lot_cost_date(self, cost, lot_date, istotal):
         """Process a lot_cost_date grammar rule.
 
         Args:
@@ -293,7 +293,7 @@ class Builder(object):
           A pair of the input. We do very little here.
         """
         assert isinstance(cost, Amount)
-        return (cost, lot_date)
+        return (cost, lot_date, istotal)
 
     def position(self, amount, lot_cost_date):
         """Process a position grammar rule.
@@ -304,7 +304,9 @@ class Builder(object):
         Returns:
           A new instance of Position.
         """
-        cost, lot_date = lot_cost_date if lot_cost_date else (None, None)
+        cost, lot_date, istotal = lot_cost_date if lot_cost_date else (None, None, False)
+        if istotal:
+            cost = amount_div(cost, amount.number)
         lot = Lot(amount.currency, cost, lot_date)
         return Position(lot, amount.number)
 

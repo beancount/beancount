@@ -87,6 +87,8 @@ int strtonl(const char* buf, size_t nchars);
 \|		{ return PIPE; }
 @@		{ return ATAT; }
 @		{ return AT; }
+\{\{		{ return LCURLCURL; }
+\}\}		{ return RCURLCURL; }
 \{		{ return LCURL; }
 \}		{ return RCURL; }
 =		{ return EQUAL; }
