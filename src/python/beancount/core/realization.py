@@ -24,6 +24,7 @@ class RealAccount:
 
     def __init__(self, account_name, account):
         """Create a RealAccount instance.
+
         Args:
           account_name: a string, which may be empty (but never None).
           account: an Account instance, which may be None if there is no associated
