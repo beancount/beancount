@@ -184,7 +184,7 @@ def balance_incomplete_postings(entry):
       entry: An instance of a valid directive. This entry is modified by
         having new postings inserted to it.
     Returns:
-      A
+      A list of errors, or None, if none occurred.
     """
     postings, inserted, errors = get_incomplete_postings(entry)
 
