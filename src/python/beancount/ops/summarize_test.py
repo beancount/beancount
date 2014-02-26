@@ -36,10 +36,10 @@ def summarizedoc(date, other_account):
             entries, pad_errors = pad(entries)
             assert not pad_errors, pad_errors
 
-            real_accounts = realize(entries, do_check=True)
+            real_accounts = realize(entries)
 
             sum_entries, _ = summarize(entries, date, other_account)
-            sum_real_accounts = realize(sum_entries, do_check=True)
+            sum_real_accounts = realize(sum_entries)
 
             # print('---')
             # for entry in before: print(entry)
@@ -164,7 +164,7 @@ class TestSummarization(unittest.TestCase):
 #                                          is_income_statement_account, TRANSFER_BALANCES)
 #
 #         sum_entries, _ = summarize(tran_entries, report_date, OPENING_BALANCES)
-#         real_accounts = realize(sum_entries, do_check=True)
+#         real_accounts = realize(sum_entries)
 #
 #         self.assertEqual(real_cost_as_dict(real_accounts),
 #                          {'Assets:Checking': 'Inventory(1920.00 USD)',
@@ -190,7 +190,7 @@ class TestSummarization(unittest.TestCase):
 #             Income:Job            -1000 USD
 #             Assets:Checking        1000 USD
 #         """
-#         real_accounts = realize(entries, do_check=True)
+#         real_accounts = realize(entries)
 #         self.assertEqual(real_cost_as_dict(real_accounts),
 #                          {'Assets:Checking': 'Inventory(2000.00 USD)',
 #                           'Income:Job': 'Inventory(-2000.00 USD)'})
@@ -198,7 +198,7 @@ class TestSummarization(unittest.TestCase):
 #         tran_entries = transfer_balances(entries, date(2012, 6, 1),
 #                                          is_income_statement_account, TRANSFER_BALANCES)
 #
-#         real_accounts = realize(tran_entries, do_check=True)
+#         real_accounts = realize(tran_entries)
 #         self.assertEqual(real_cost_as_dict(real_accounts),
 #                          {'Assets:Checking': 'Inventory(2000.00 USD)',
 #                           'Income:Job': 'Inventory()',

@@ -67,18 +67,17 @@ class View:
             self.closing_entries = summarize.close(self.entries, self.options, *current_accounts)
 
         # Realize the three sets of entries.
-        do_check = False
         if self.opening_entries:
             with utils.print_time('realize_opening'):
-                self.opening_real_accounts = realization.realize(self.opening_entries, do_check, self.account_types)
+                self.opening_real_accounts = realization.realize(self.opening_entries, self.account_types)
         else:
             self.opening_real_accounts = None
 
         with utils.print_time('realize'):
-            self.real_accounts = realization.realize(self.entries, do_check, self.account_types)
+            self.real_accounts = realization.realize(self.entries, self.account_types)
 
         with utils.print_time('realize_closing'):
-            self.closing_real_accounts = realization.realize(self.closing_entries, do_check, self.account_types)
+            self.closing_real_accounts = realization.realize(self.closing_entries, self.account_types)
 
         assert self.real_accounts is not None
         assert self.closing_real_accounts is not None

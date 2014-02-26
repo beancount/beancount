@@ -29,7 +29,7 @@ def main():
 
         # Realize the entries.
         with utils.print_time('realize'):
-            real_accounts = realization.realize(entries, do_check=True)
+            real_accounts = realization.realize(entries)
 
 
 if __name__ == '__main__':

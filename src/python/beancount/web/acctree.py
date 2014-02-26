@@ -9,7 +9,6 @@ from beancount.core.position import Lot
 from beancount.core.data import Open
 from beancount.core.inventory import Inventory
 from beancount.core import realization
-from beancount.core.realization import real_account_name, real_account_children
 from beancount.utils import tree_utils
 
 
@@ -17,6 +16,15 @@ from beancount.utils import tree_utils
 TOTALS_LINE = object()
 
 EMS_PER_SPACE = 2.5
+
+
+def real_account_name(real_account):
+   return real_account.fullname.split(':')[-1]
+
+
+def real_account_children(real_account):
+    return real_account.get_children()
+
 
 def tree_table(oss, tree, start_node_name=None, header=None, classes=None, leafonly=True):
     """Generator to a tree of accounts as an HTML table.

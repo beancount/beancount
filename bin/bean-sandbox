@@ -130,7 +130,7 @@ def main():
         summarize.compute_total_balance(entries)
 
     with utils.print_time('realize'):
-        real_accounts = realization.realize(entries, do_check=True)
+        real_accounts = realization.realize(entries)
 
     print('LEN', len(entries))
 
@@ -154,7 +154,7 @@ def main():
         with utils.print_time('summarize'):
             account_opening = data.Account('Equity:OpeningBalances', 'Equity')
             sum_entries, _ = summarize.summarize(entries, datetime.date(2012, 1, 1), account_opening)
-            sumreal_accounts = realization.realize(sum_entries, do_check=True)
+            sumreal_accounts = realization.realize(sum_entries)
 
             sum_log = open('/tmp/sum.log', 'w')
             dump_tree_balances(sumreal_accounts, sum_log)

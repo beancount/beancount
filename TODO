@@ -10,7 +10,7 @@ beancount: TODO
   - Change Account to be just a string as well, with functions, remove TYPES_ORDER.
   - Create an account_join() function in account.py to remove ':' everywhere.
   - Complete all unittests coverage (as per bean-find-missing-tests).
-  - Configure and run a clean pylint.
+  - Configure and run a clean pylint on the entire codebase.
   - Add all docstrings with args Google-style.
   - Clean up the interface of loader.load(), it's ugly.
   - Implement all the missing global pages.
@@ -19,6 +19,7 @@ beancount: TODO
   - Fix all FIXMEs everywhere.
   - Bean-suck should work; maybe rename to bean-siphon and automate as a unit
     test for web.py using some of the demo files.
+  - Add tests for all the binaries as well.
 
 * Current
 
