@@ -153,7 +153,7 @@ def table_of_balances(tree, start_node_name, currencies, classes=None):
                 not is_account_name_root(real_account.fullname)):
                 continue
 
-            if real_account.account is None:
+            if real_account.fullname is None:
                 row_classes.append('parent-node')
 
             # For each account line, get the final balance of the account (at cost).

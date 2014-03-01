@@ -2,6 +2,10 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
+  - Write a unit test that basically websucks all the pages on the web server.
+    This should be an easy test: crawl and follow all links, ensure no 404.
+    Do this now--use it incrementally.
+
   - Build a pass-through memoizer and replace Mole from text_utils.
     m = Memo()
     if m(re.match(...)):

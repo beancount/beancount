@@ -21,18 +21,19 @@ class RealAccount:
 
     Attributes:
       fullname: A string, the full name of the corresponding account.
-      leafname: A string, the name of the leaf of the account.
-      account:  An Account instance
       balance: The final balance of the list of postings associated with this account.
       children: A dict of children names to children RealAccount instances.
       postings: A list of postings associated with this accounting (does not include
         the postings of children accounts).
     """
 
-    __slots__ = 'fullname leafname account balance children postings'.split()
+    # FIXME: Convert this class to be an instance of OrderedDict; the resulting
+    # interface will be much easier to understand.q
 
-    # FIXME: This is a stupid constructor, ditch the Account class and use just the string here.r
-    def __init__(self, account_name, account):
+    # FIXME: rename fullname to 'account_name'.
+    __slots__ = 'fullname balance children postings'.split()
+
+    def __init__(self, account_name=None):
         """Create a RealAccount instance.
 
         Args:
@@ -42,14 +43,7 @@ class RealAccount:
         Returns:
           A new RealAccount instance.
         """
-        if account:
-            # Make sure to use the same string instance.
-            assert account.name == account_name, (account_name, account)
-            account_name = account.name
-
         self.fullname = account_name
-        self.leafname = account_name_leaf(account_name)
-        self.account = account
 
         self.balance = Inventory()
         self.children = OrderedDict()
@@ -102,7 +96,7 @@ class RealAccount:
         return self.children.values()
 
     # FIXME: Do I really need to support more than direct children here? Remove if possible before 2.0 release.
-    def __contains__(self, account_leaf_name):
+    def __contains__(self, account_name_leaf):
         """True if the given string is in this RealAccount instance.
 
         Args:
@@ -111,8 +105,8 @@ class RealAccount:
         Returns:
           A boolean, true the name is a child of this node.
         """
-        directname = account_leaf_name.split(':', 1)[0]
-        restname = account_leaf_name[len(directname)+1:]
+        directname = account_name_leaf.split(':', 1)[0]
+        restname = account_name_leaf[len(directname)+1:]
         try:
             child = self.children[directname]
             if restname:
@@ -129,8 +123,8 @@ class RealAccount:
           real_account: An instance of RealAccount to add as a child to this node.
         """
         ## FIXME: When would this trigger and why?
-        ##assert real_account.leafname not in self.children
-        self.children[real_account.leafname] = real_account
+        leafname = account_name_leaf(real_account.fullname)
+        self.children[leafname] = real_account
 
     def asdict(self):
         """Return a dictionary hierachy of account names.
@@ -189,6 +183,10 @@ def realize(entries):
     Returns:
       The root RealAccount instance.
     """
+
+    # FIXME: Simplify this here by creating RealAccount from a defaultdict and
+    # set the names in a second stage.
+
     real_dict = {}
     for entry in entries:
 
@@ -222,8 +220,8 @@ def ensure_min_accounts(real_account, min_accounts):
     """
     # Ensure the minimal list of accounts has been created.
     for account_name in min_accounts:
-        if account_name not in real_dict:
-            real_dict[account_name] = RealAccount(account_name, None)
+        if account_name not in real_account:
+            real_account.add(RealAccount(account_name))
     return real_account
 
 
@@ -246,7 +244,7 @@ def append_entry_to_real_account(real_dict, account, entry):
     try:
         real_account = real_dict[account.name]
     except KeyError:
-        real_account = RealAccount(account.name, account)
+        real_account = RealAccount(account.name)
         real_dict[account.name] = real_account
 
     # If specified, add the new entry to the list of postings.
@@ -275,7 +273,7 @@ def create_real_accounts_tree(real_dict):
             try:
                 parent_account = full_dict[parent_name]
             except KeyError:
-                parent_account = RealAccount(parent_name, None)
+                parent_account = RealAccount(parent_name)
                 full_dict[parent_name] = parent_account
 
             parent_account.add(real_account)
@@ -296,7 +294,8 @@ def filter_tree(real_account, predicate):
     for child in real_account.get_children():
         child_copy = filter_tree(child, predicate)
         if child_copy is not None:
-            children_copy[child.leafname] = child_copy
+            leafname = account_name_leaf(child.fullname)
+            children_copy[leafname] = child_copy
 
     if children_copy or predicate(real_account):
         real_account_copy = copy.copy(real_account)
@@ -363,7 +362,7 @@ def real_cost_as_dict(real_accounts):
     comparisons for testing."""
     return {real_account.fullaname: str(real_account.balance.get_cost())
             for account_name, real_account in real_accounts.items()
-            if real_account.account}
+            if real_account.fullname}
 
 
 def iterate_with_balance(postings_or_entries):

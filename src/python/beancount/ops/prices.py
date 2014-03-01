@@ -151,7 +151,7 @@ def get_latest_positions(entries):
     for real_account in real_accounts:
         for position in real_account.balance.get_positions():
             if position.lot.cost or position.lot.lot_date:
-                posdict = {'account': real_account.account,
+                posdict = {'account': real_account.fullname,
                            'number': position.number,
                            'currency': position.lot.currency,
                            'cost_number': position.lot.cost.number,
@@ -159,7 +159,7 @@ def get_latest_positions(entries):
                 cost = position.get_cost()
                 assert cost.number == posdict['number'] * posdict['cost_number']
             else:
-                posdict = {'account': real_account.account,
+                posdict = {'account': real_account.fullname,
                            'number': position.number,
                            'currency': position.lot.currency,
                            'cost_number': None,
@@ -224,7 +224,7 @@ def unrealized_gains(entries, subaccount_name, account_types):
 
     # Work through the list of priced positions.
     priced_positions, _ = get_priced_positions(entries)
-    for (account, currency, cost_currency), position_list in priced_positions.items():
+    for (account_name, currency, cost_currency), position_list in priced_positions.items():
 
         # Compute the total number of units and book value of the position.
         total_units = Decimal()
@@ -251,9 +251,9 @@ def unrealized_gains(entries, subaccount_name, account_types):
 
         # Add the gain/loss as a subaccount to the asset account.
         if subaccount_name:
-            asset_account = account_from_name(':'.join([account.name, subaccount_name]))
+            asset_account = account_from_name(':'.join([account_name, subaccount_name]))
         else:
-            asset_account = account
+            asset_account = account_from_name(account_name)
 
         # Note: don't set a price because we don't want these to end up in Conversions.
         #price = Amount(price_number, cost_currency)
@@ -267,7 +267,7 @@ def unrealized_gains(entries, subaccount_name, account_types):
         # Note: this is a rather convenient but arbitraty choice--maybe it would be best to let
         # the user decide to what account to book it, but I don't a nice way to let the user
         # specify this.
-        income_account_name = account.name.replace(account_types.assets,
+        income_account_name = account_name.replace(account_types.assets,
                                                    account_types.income)
         if subaccount_name:
             income_account = account_from_name(':'.join([income_account_name, subaccount_name]))

@@ -21,31 +21,19 @@ from beancount.core import account
 class TestRealAccount(unittest.TestCase):
 
     def test_ctor(self):
-        account1 = account.account_from_name('Assets:US:Bank:Checking')
-        real_account1 = RealAccount(account1.name, account1)
-        with self.assertRaises(AssertionError):
-            real_account2 = RealAccount('Assets:US:Bank:Savings', account1)
-        account2 = RealAccount('', None)
+        real_account1 = RealAccount('Assets:US:Bank:Checking')
+        account2 = RealAccount('')
 
     def test_str(self):
-        account1 = account.account_from_name('Assets:US:Bank:Checking')
-        real_account1 = RealAccount(account1.name, account1)
+        real_account1 = RealAccount('Assets:US:Bank:Checking')
         account1_str = str(real_account1)
         self.assertTrue(re.search('RealAccount', account1_str))
-        self.assertTrue(re.search(account1.name, account1_str))
 
     def create_hierarchy(self):
-        account1 = account.account_from_name('Assets')
-        real_account1 = RealAccount(account1.name, account1)
-
-        account2 = account.account_from_name('Assets:US')
-        real_account2 = RealAccount(account2.name, account2)
-
-        account3 = account.account_from_name('Assets:US:Bank')
-        real_account3 = RealAccount(account3.name, account3)
-
-        account4 = account.account_from_name('Assets:US:Bank:Checking')
-        real_account4 = RealAccount(account4.name, account4)
+        real_account1 = RealAccount('Assets')
+        real_account2 = RealAccount('Assets:US')
+        real_account3 = RealAccount('Assets:US:Bank')
+        real_account4 = RealAccount('Assets:US:Bank:Checking')
 
         real_account1.add(real_account2)
         real_account2.add(real_account3)
@@ -150,11 +138,21 @@ class TestRealization(unittest.TestCase):
         self.assertEqual([Open, Pad, Posting],
                          list(map(type, real_account['Equity:OpeningBalances'].postings)))
 
+    def test_ensure_min_accounts(self):
+        root = RealAccount('')
+        us = RealAccount('Assets:US')
+        assets = RealAccount('Assets')
+        root.add(assets)
+        assets.add(us)
+        realization.ensure_min_accounts(root, ['Assets', 'Income', 'Expenses'])
+        self.assertEqual({'Assets': {'US': {}}, 'Expenses': {}, 'Income': {}},
+                         root.asdict())
+        self.assertEqual(['Assets', 'Income', 'Expenses'],
+                         [x.fullname for x in root.get_children()])
 
 
 
-# Loader tests:
-# Check that an account without an Open directive has one that gets automatically inserted for it.
+
 
 
     def test_assoc_entry_with_real_account(self):
@@ -209,7 +207,7 @@ def realizedoc(fun):
 #     print("REAL_ACCOUNTS")
 #     for account_name, real_account in real_accounts.items():
 #         if real_account.postings:
-#             print('  ', real_account.account.name)
+#             print('  ', real_account.fullname)
 #             for posting in real_account.postings:
 #                 print('      {}'.format(posting))
 #     print()
@@ -241,6 +239,10 @@ def realizedoc(fun):
 
 
 
+
+
+# Loader tests:
+# Check that an account without an Open directive has one that gets automatically inserted for it.
 
 
 
