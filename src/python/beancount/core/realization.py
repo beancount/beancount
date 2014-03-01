@@ -277,7 +277,7 @@ def filter_tree(real_account, predicate):
     assert isinstance(real_account, RealAccount)
 
     children_copy = OrderedDict()
-    for child in real_account.get_children_items():
+    for child in real_account.get_children():
         child_copy = filter_tree(child, predicate)
         if child_copy is not None:
             children_copy[child.leafname] = child_copy
