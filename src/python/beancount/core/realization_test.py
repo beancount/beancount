@@ -88,8 +88,42 @@ class TestRealAccount(unittest.TestCase):
 
 class TestRealization(unittest.TestCase):
 
-    def test_realize(self):
-        pass
+    @parsedoc
+    def test_realize(self, entries, errors, _):
+        """
+        2012-01-01 open Expenses:Restaurant
+        2012-01-01 open Assets:Cashs
+        2012-01-01 open Liabilities:CreditCard
+        2012-01-01 open Equity:OpeningBalances
+
+        2012-01-15 pad Liabilities:CreditCard Equity:OpeningBalances
+
+        2012-03-01 * "Food"
+          Expenses:Restaurant     100 CAD
+          Assets:Cash
+
+        2012-03-10 * "Food again"
+          Expenses:Restaurant     80 CAD
+          Liabilities:CreditCard
+
+        2012-03-15 * "Movie"
+          Expenses:Movie     10 CAD
+          Liabilities:CreditCard
+
+        2012-03-20 note Liabilities:CreditCard "Called Amex, asked about 100 CAD dinner"
+
+        2012-03-28 document Liabilities:CreditCard "march-statement.pdf"
+
+        2013-04-01 balance Liabilities:CreditCard   204 CAD
+
+        2013-01-01 open Liabilities:CreditCard
+        """
+        self.assertEqual(0, len(errors))
+        real_accounts = realization.realize(entries)
+
+        print(real_accounts.get_children())
+
+
 
     def test_assoc_entry_with_real_account(self):
         pass
@@ -123,18 +157,17 @@ class TestRealization(unittest.TestCase):
 
 # do_trace = False
 
-# def realizedoc(fun):
-#     """Decorator that parses, pads and realizes the function's docstring as an
-#     argument."""
-#     @functools.wraps(fun)
-#     def newfun(self):
-#         entries, errors, options = parser.parse_string(textwrap.dedent(fun.__doc__))
-
-#         real_accounts = realization.realize(entries)
-#         if do_trace and errors:
-#             trace_errors(real_accounts, errors)
-#         return fun(self, entries, real_accounts, errors)
-#     return newfun
+def realizedoc(fun):
+    """Decorator that parses, pads and realizes the function's docstring as an
+    argument."""
+    @functools.wraps(fun)
+    def newfun(self):
+        entries, errors, options = parser.parse_string(textwrap.dedent(fun.__doc__))
+        real_accounts = realization.realize(entries)
+        if do_trace and errors:
+            trace_errors(real_accounts, errors)
+        return fun(self, entries, real_accounts, errors)
+    return newfun
 
 # def trace_errors(real_accounts, errors):
 #     print()

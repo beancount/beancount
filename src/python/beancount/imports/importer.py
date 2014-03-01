@@ -23,7 +23,7 @@ class ImporterBase:
           config: A dict of configuration accounts, that must match the
                   REQUIRED_CONFIG values.
         """
-        # a dict of Configuration values. This can be access publicly.
+        # a dict of Configuration values. This can be accessed publicly.
         assert isinstance(config, dict)
         self.config = config
 
