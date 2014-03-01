@@ -16,6 +16,7 @@ from beancount.ops import prices
 from beancount.core import data
 from beancount.core.data import FileLocation, Price
 from beancount.core.amount import Decimal, Amount
+from beancount.parser import printer
 from beancount import load
 from urllib.request import urlopen
 
@@ -90,7 +91,11 @@ def fetch_google_historical(currency, cost_currency):
         return None
 
     soup = bs4.BeautifulSoup(response, 'lxml')
-    table = soup.find('table', {'class': 'historical_price'})
+    div_prices = soup.find('div', id='prices')
+    if div_prices is None:
+        return
+    table = div_prices.find('table', {'class': 'historical_price'})
+    assert table
 
     headers = [th.contents[0].strip()
                for th in table.find_all('th')]
@@ -135,36 +140,32 @@ def main():
     instruments = sorted(set((position['currency'],position['cost_currency'])
                              for position in positions))
 
-    if 1:
-        new_entries = []
-        price_map = {}
-        for currency, cost_currency in instruments:
-            # print('------------------------------------------------------------------------------------------------------------------------')
-            # print(currency, cost_currency)
+    new_entries = []
+    price_map = {}
+    for currency, cost_currency in instruments:
+        # print('------------------------------------------------------------------------------------------------------------------------')
+        # print(currency, cost_currency)
 
-                price_list = fetch_google_historical(currency, cost_currency)
-                if price_list is None:
-                    continue
+        price_list = fetch_google_historical(currency, cost_currency)
+        if price_list is None:
+            continue
 
-                for date, price in price_list:
-                    fileloc = FileLocation('<fetch_google_historical>', 0)
-                    new_entries.append(
-                        Price(fileloc, date, currency, Amount(price, cost_currency)))
+        for date, price in price_list:
+            fileloc = FileLocation('<fetch_google_historical>', 0)
+            new_entries.append(
+                Price(fileloc, date, currency, Amount(price, cost_currency)))
 
+    for entry in new_entries:
+        print(printer.format_entry(entry), end='')
 
-
-        for entry in new_entries:
-            print(data.format_entry(entry), end='')
-
-
-        for position in positions:
-            curkey = (position['currency'], position['cost_currency'])
-            try:
-                date, close = price_map[curkey]
-                position['price_date'] = date
-                position['price_number'] = close
-            except KeyError:
-                pass
+    for position in positions:
+        curkey = (position['currency'], position['cost_currency'])
+        try:
+            date, close = price_map[curkey]
+            position['price_date'] = date
+            position['price_number'] = close
+        except KeyError:
+            pass
 
     # If requested, dump the updated list of positions and prices.
     if opts.dump:

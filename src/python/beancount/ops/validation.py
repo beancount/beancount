@@ -100,7 +100,8 @@ def validate_open_close(entries, accounts):
                                                             "Entry after account {} closed.".format(error_entry.account.name),
                                                             error_entry))
 
-        elif hasattr(entry, 'account'):
+        # Documents are allowed to show up after closure, as they may be received after.
+        elif hasattr(entry, 'account') and not isinstance(entry, Document):
             check_one(entry, entry.account)
 
     # Check to make sure that all accounts parsed have a corresponding open directive.
@@ -153,7 +154,7 @@ def validate_currency_constraints(entries):
                 valid_currencies = open_entry.currencies
             except KeyError:
                 valid_currencies = []
-            
+
             if not valid_currencies:
                 continue
             if posting.position.lot.currency not in valid_currencies:
