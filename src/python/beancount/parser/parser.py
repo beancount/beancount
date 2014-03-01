@@ -601,10 +601,14 @@ def parse_string(input_string, **kw):
 def parsedoc(fun):
     """Decorator that parses the function's docstring as an argument.
 
+    Note that this only runs the parser on the tests, not the loader, so is no
+    validation nor fixup applied to the list of entries.
+
     Args:
       fun: the function object to be decorated.
     Returns:
       The decorated function.
+
     """
     import sys
     filename = inspect.getfile(fun)

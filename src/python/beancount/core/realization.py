@@ -132,10 +132,20 @@ class RealAccount:
         ##assert real_account.leafname not in self.children
         self.children[real_account.leafname] = real_account
 
+    def asdict(self):
+        """Return a dictionary hierachy of account names.
+        This is used mainly for testing.
+
+        Returns:
+          A dict of strings to dicts, recursively.
+        """
+        return {name: child.asdict()
+                for name, child in self.children.items()}
+
 
 # FIXME: Can you remove 'min_accounts' and move that to a second step.
 # (This is only called from views, and only for root accounts. Do it, simplify.)
-def realize(entries, min_accounts=None):
+def realize(entries):
     """Group entries by account, into a "tree" of realized accounts. RealAccount's
     are essentially containers for lists of postings and the final balance of
     each account, and may be non-leaf accounts (used strictly for organizing
@@ -174,13 +184,8 @@ def realize(entries, min_accounts=None):
                                    |
                                    .
 
-    'min_accounts' provides a sequence of accounts to ensure that we create no matter
-    what, even if empty. This is typically used for the root accounts.
-
     Args:
       entries: A list of directive instances.
-      min_accounts: An optional list of child account names to ensure exist as child
-        of this account.
     Returns:
       The root RealAccount instance.
     """
@@ -202,13 +207,24 @@ def realize(entries, min_accounts=None):
             append_entry_to_real_account(real_dict, entry.account, entry)
             append_entry_to_real_account(real_dict, entry.account_pad, entry)
 
-    # Ensure the minimal list of accounts has been created.
-    if min_accounts:
-        for account_name in min_accounts:
-            if account_name not in real_dict:
-                real_dict[account_name] = RealAccount(account_name, None)
-
     return create_real_accounts_tree(real_dict)
+
+
+def ensure_min_accounts(real_account, min_accounts):
+    """Ensure that the given accounts are added to the given realization.
+
+    Args:
+      real_account: An instance of RealAccount, the root account.
+      min_accounts: An list of child account names to ensure exist as child
+        of this account.
+    Returns:
+      The real_account instance is returned modified.
+    """
+    # Ensure the minimal list of accounts has been created.
+    for account_name in min_accounts:
+        if account_name not in real_dict:
+            real_dict[account_name] = RealAccount(account_name, None)
+    return real_account
 
 
 # FIXME: You can remove this method, use a defaultdict(account_name -> postings-list)

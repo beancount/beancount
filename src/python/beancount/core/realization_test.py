@@ -5,11 +5,13 @@ import unittest
 import textwrap
 import functools
 import re
+import pprint
 
 from beancount import parser
 
 from beancount.core.realization import RealAccount
-from beancount.parser import parsedoc
+from beancount.core.data import Open, Close, Posting, Balance, Note, Document, Pad
+from beancount.loader import loaddoc
 from beancount.parser import printer
 from beancount.core import realization
 from beancount.core import data
@@ -88,11 +90,11 @@ class TestRealAccount(unittest.TestCase):
 
 class TestRealization(unittest.TestCase):
 
-    @parsedoc
+    @loaddoc
     def test_realize(self, entries, errors, _):
         """
         2012-01-01 open Expenses:Restaurant
-        2012-01-01 open Assets:Cashs
+        2012-01-01 open Assets:Cash
         2012-01-01 open Liabilities:CreditCard
         2012-01-01 open Equity:OpeningBalances
 
@@ -116,13 +118,43 @@ class TestRealization(unittest.TestCase):
 
         2013-04-01 balance Liabilities:CreditCard   204 CAD
 
-        2013-01-01 open Liabilities:CreditCard
+        2014-01-01 close Liabilities:CreditCard
         """
-        self.assertEqual(0, len(errors))
-        real_accounts = realization.realize(entries)
+        self.assertEqual(3, len(errors))
+        real_account = realization.realize(entries)
 
-        print(real_accounts.get_children())
+        self.assertEqual({
+            'Assets': {
+                'Cash': {}},
+            'Equity': {
+                'OpeningBalances': {}},
+            'Expenses': {
+                'Movie': {},
+                'Restaurant': {}},
+            'Liabilities': {
+                'CreditCard': {}}},
+                         real_account.asdict())
 
+        self.assertEqual([Open, Posting],
+                         list(map(type, real_account['Assets:Cash'].postings)))
+
+        self.assertEqual([Open, Posting, Posting],
+                         list(map(type, real_account['Expenses:Restaurant'].postings)))
+
+        self.assertEqual([Posting],
+                         list(map(type, real_account['Expenses:Movie'].postings)))
+
+        self.assertEqual([Open, Pad, Posting, Posting, Posting, Note, Document, Balance, Close],
+                         list(map(type, real_account['Liabilities:CreditCard'].postings)))
+
+        self.assertEqual([Open, Pad, Posting],
+                         list(map(type, real_account['Equity:OpeningBalances'].postings)))
+
+
+
+
+# Loader tests:
+# Check that an account without an Open directive has one that gets automatically inserted for it.
 
 
     def test_assoc_entry_with_real_account(self):

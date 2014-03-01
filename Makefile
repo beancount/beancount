@@ -143,3 +143,7 @@ sandbox:
 # sources and imports are going to move to ledgerhub.
 status test-status:
 	bean-find-missing-tests | grep -vE '/(sources|imports)/'
+
+# Run the linter on all source code.
+lint:
+	pylint --rcfile=etc/pylintrc src/python/beancount
