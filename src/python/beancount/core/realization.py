@@ -412,15 +412,13 @@ def iterate_with_balance(postings_or_entries):
 
             # Flush the dated entries.
             for date_entry, date_postings in date_entries:
+                change = Inventory()
                 if date_postings:
                     # Compute the change due to this transaction and update the
                     # total balance at the same time.
-                    change = Inventory()
                     for date_posting in date_postings:
                         change.add_position(date_posting.position, True)
                         balance.add_position(date_posting.position, True)
-                else:
-                    change = None
                 yield date_entry, date_postings, change, balance
 
             date_entries.clear()
@@ -442,13 +440,11 @@ def iterate_with_balance(postings_or_entries):
 
     # Flush the final dated entries if any, same as above.
     for date_entry, date_postings in date_entries:
+        change = Inventory()
         if date_postings:
-            change = Inventory()
             for date_posting in date_postings:
                 change.add_position(date_posting.position, True)
                 balance.add_position(date_posting.position, True)
-        else:
-            change = None
         yield date_entry, date_postings, change, balance
     date_entries.clear()
 

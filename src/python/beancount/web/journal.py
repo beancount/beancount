@@ -1,5 +1,5 @@
 """HTML rendering routines for serving a lists of postings/entries.
-"""
+ck"""
 from os import path
 
 from bottle import request
@@ -60,7 +60,6 @@ def iterate_render_transactions(app, postings):
     """
     balance = Inventory()
     for entry, leg_postings, change, balance in realization.iterate_with_balance(postings):
-
         # Prepare the data to be rendered for this row.
         balance_str = balance_html(balance)
 

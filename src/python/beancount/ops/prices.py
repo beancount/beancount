@@ -295,7 +295,6 @@ def get_positions_as_dataframe(entries):
 
     dataframe = pandas.DataFrame.from_records(
         flat_positions, columns=['account', 'number', 'currency', 'cost_number', 'price_number', 'cost_currency', 'price_date'])
-    dataframe['account'] = dataframe['account'].map(lambda x: x.name)
 
     dataframe['number'] = dataframe['number'].astype(numpy.float)
     dataframe['cost_number'] = dataframe['cost_number'].astype(numpy.float)
