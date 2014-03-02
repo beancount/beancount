@@ -119,12 +119,10 @@ class TestAccount(unittest.TestCase):
                 ("Expenses:Toys:Computer", False),
                 ]:
             self.assertEqual(expected,
-                             is_balance_sheet_account(account_from_name(account_name),
-                                                      self.OPTIONS))
+                             is_balance_sheet_account(account_name, self.OPTIONS))
 
             self.assertEqual(not expected,
-                             is_income_statement_account(account_from_name(account_name),
-                                                         self.OPTIONS))
+                             is_income_statement_account(account_name, self.OPTIONS))
 
     def test_accountify_dict(self):
         accvalue_dict = {"b6edc1bf714a": "Assets:US:RBS:Savings",
@@ -135,3 +133,6 @@ class TestAccount(unittest.TestCase):
         newdict = accountify_dict(accvalue_dict)
         self.assertTrue(isinstance(newdict, dict))
         self.assertEqual("Income:US:Intel", newdict["421833fa2cb9"].name)
+
+
+__incomplete__ = True  ## You need to update the tests for new changes in account.py

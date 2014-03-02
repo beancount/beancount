@@ -633,15 +633,14 @@ def account(slashed_account_name=None):
     account_name = slashed_account_name.strip('/').replace('/', ':')
 
     if account_name:
-        account = account_from_name(account_name)
         options = app.options
-        if account_name and is_balance_sheet_account(account, options):
+        if account_name and is_balance_sheet_account(account_name, options):
             real_accounts = request.view.closing_real_accounts
         else:
             real_accounts = request.view.real_accounts
-        if account.name not in real_accounts:
+        if account_name not in real_accounts:
             raise bottle.HTTPError(404, "Not found.")
-        real_account = real_accounts[account.name]
+        real_account = real_accounts[account_name]
     else:
         real_account = request.view.real_accounts['']
         account = None
@@ -651,7 +650,7 @@ def account(slashed_account_name=None):
     oss = io.StringIO()
     journal.entries_table_with_balance(app, oss, account_postings)
     return render_view(
-        pagetitle = '{}'.format(account.name if account else 'ROOT'), # Account:
+        pagetitle = '{}'.format(account_name or 'ROOT'), 
         contents = oss.getvalue())
 
 

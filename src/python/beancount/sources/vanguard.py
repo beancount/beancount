@@ -1,7 +1,7 @@
 """
 Vanguard CSV file format, which is better than their OFX.
 
-PROBLEM:
+NOTE: This is incomplete.
 """
 import datetime
 import functools
@@ -18,6 +18,9 @@ from beancount.utils import csv_utils
 from beancount.core import flags
 
 
+debugging = False
+
+
 class Importer(importer.ImporterBase):
 
     REQUIRED_CONFIG = {
@@ -32,7 +35,6 @@ class Importer(importer.ImporterBase):
     }
 
     def import_file(self, filename):
-
         config = self.get_accountified_config()
         new_entries = []
 
@@ -57,15 +59,17 @@ class Importer(importer.ImporterBase):
             entry = Transaction(fileloc, row.trade_date, flags.FLAG_IMPORT,
                                 None, row.transaction_description,
                                 None, None, [])
-            print(printer.format_entry(entry))
+            if debugging:
+                print(printer.format_entry(entry))
 
             # TODO(blais): Stopped here. I don't need to complete this, because
             # Vanguard does not include the source of the contribution! I want
             # to track the contribution source, so
 
         # Process the final positions.
-        for row in csv_utils.csv_tuple_reader(io.StringIO(positions)):
-            print(row)
+        if debugging:
+            for row in csv_utils.csv_tuple_reader(io.StringIO(positions)):
+                print(row)
 
     def get_symbol(self, name):
         return self.config['tickers'][name]

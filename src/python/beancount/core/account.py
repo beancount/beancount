@@ -10,8 +10,13 @@ from collections import namedtuple
 from beancount.core import account_types
 
 
+# Component separator for account names.
+SEP = ':'
+
+
 # A type used to represent an account read in.
 Account = namedtuple('Account', 'name type')
+
 
 def account_from_name(account_name):
     """Create a new account solely from its name.
@@ -37,9 +42,9 @@ def account_name_parent(account_name):
     assert isinstance(account_name, str)
     if not account_name:
         return None
-    components = account_name.split(':')
+    components = account_name.split(SEP)
     components.pop(-1)
-    return ':'.join(components)
+    return SEP.join(components)
 
 def account_name_leaf(account_name):
     """Get the name of the leaf of this account.
@@ -49,7 +54,8 @@ def account_name_leaf(account_name):
     Returns:
       A string, the name of the leaf of the account.
     """
-    return account_name.split(':')[-1] if account_name else None
+    assert isinstance(account_name, str)
+    return account_name.split(SEP)[-1] if account_name else None
 
 def account_sortkey(account):
     """Sort a list of accounts, taking into account the type of account.
@@ -61,6 +67,7 @@ def account_sortkey(account):
     Returns:
       A tuple which is to be used as the sort key for lists of accounts.
     """
+    assert isinstance(account, Account)
     return (account_types.TYPES_ORDER[account.type], account.name)
 
 def account_name_sortkey(account_name):
@@ -85,7 +92,7 @@ def account_name_type(account_name):
       A string, the type of the account in 'account_name'.
     """
     assert isinstance(account_name, str)
-    atype = account_name.split(':')[0]
+    atype = account_name.split(SEP)[0]
     assert atype in account_types.ACCOUNT_TYPES, (
         account_name, atype, account_types.ACCOUNT_TYPES)
     return atype
@@ -110,35 +117,43 @@ def is_account_name_root(account_name):
       A boolean, true if the name is the name of a root account (same
       as an account type).
     """
+    assert isinstance(account_name, str)
     return account_name in account_types.ACCOUNT_TYPES
 
-def is_balance_sheet_account(account, options):
+def is_balance_sheet_account(account_name, options):
     """Return true if the given account is a balance sheet account.
     Assets, liabilities and equity accounts are balance sheet accounts.
 
     Args:
-      account: An instance of Account.
+      account_name: A string, an account name.
       options: The options dictionary of a file.
     Returns:
       A boolean, true if the account is a balance sheet account.
     """
-    return account.type in (options[x] for x in ('name_assets',
+    assert isinstance(account_name, str)
+    account_type = account_name_type(account_name)
+    # FIXME: Use account_types.ACCOUNT_TYPES instead of options?
+    return account_type in (options[x] for x in ('name_assets',
                                                  'name_liabilities',
                                                  'name_equity'))
 
-def is_income_statement_account(account, options):
+def is_income_statement_account(account_name, options):
     """Return true if the given account is an income statement account.
     Income and expense accounts are income statement accounts.
 
     Args:
-      account: An instance of Account.
+      account_name: A string, an account name.
       options: The options dictionary of a file.
     Returns:
       A boolean, true if the account is an income statement account.
     """
-    return account.type in (options[x] for x in ('name_income',
+    assert isinstance(account_name, str)
+    account_type = account_name_type(account_name)
+    # FIXME: Use account_types.ACCOUNT_TYPES instead of options?
+    return account_type in (options[x] for x in ('name_income',
                                                  'name_expenses'))
 
+# This will go away once we just convert to strings.
 def accountify_dict(string_dict):
     """Convert the dictionary items that have values which are account names into
     Account instances. This is a simple core convenience designed to be used by the

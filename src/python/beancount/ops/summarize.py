@@ -39,7 +39,7 @@ def clamp(entries, begin_date, end_date,
     """
 
     income_statement_account_pred = (
-        lambda account: is_income_statement_account(account, options))
+        lambda account: is_income_statement_account(account.name, options))
 
     # Transfer income and expenses before the period to equity.
     entries = transfer_balances(entries, begin_date,
@@ -64,7 +64,7 @@ def close(entries,
     """Transfer net income to equity and insert a final conversion entry."""
 
     income_statement_account_pred = (
-        lambda account: is_income_statement_account(account, options))
+        lambda account: is_income_statement_account(account.name, options))
 
     # Transfer the balances as net-income.
     entries = transfer_balances(entries, None,
