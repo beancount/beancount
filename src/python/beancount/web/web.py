@@ -9,6 +9,7 @@ from os import path
 import io
 import logging
 import sys
+import time
 
 import bottle
 from bottle import response, request
@@ -157,10 +158,8 @@ def source():
     "Render the source file, allowing scrolling at a specific line."
 
     contents = io.StringIO()
-    if app.args.incognito:
-        contents.write("Source hidden because of incognito mode.")
-    elif app.args.no_source:
-        contents.write("Source hidden because of no-source argument.")
+    if app.args.no_source:
+        contents.write("Source hidden.")
     else:
         contents.write('<div id="source">')
         for i, line in enumerate(app.source.splitlines()):
@@ -1052,35 +1051,22 @@ def install_load_filter(callback):
 LOAD_FILTERS = []
 
 
-def main():
-
-    """Main web service runner. This runs the event loop and blocks indefinitely."""
-
-    argparser = argparse.ArgumentParser(__doc__.strip())
-
-    argparser.add_argument('filename', help="Beancount input filename to serve.")
-
-    argparser.add_argument('--debug', action='store_true',
-                           help="Enable debugging features (auto-reloading of css).")
-
-    argparser.add_argument('--incognito', action='store_true',
-                           help=("Filter the output in order to hide all the numbers. "
-                                 "This is great for demos using my real file."))
-
-    argparser.add_argument('--no-source', action='store_true',
-                           help=("Don't render the source."))
-
-    args = argparser.parse_args()
+def run_app(filename, port, debug, do_incognito, no_source):
+    class args:
+        pass
+    args.filename = filename
+    args.debug = debug
+    args.no_source = no_source
     app.args = args
 
     logging.basicConfig(level=logging.INFO,
                         format='%(levelname)-8s: %(message)s')
 
     # Hide the numbers in incognito mode. We do this on response text via a plug-in.
-    if args.incognito:
+    if do_incognito:
+        app.args.no_source = True
         app.install(incognito)
         viewapp.install(incognito)
-
 
     # Initialize to a small value in order to insure a reload on the first page.
     app.last_mtime = 0
@@ -1094,4 +1080,62 @@ def main():
         global STYLE; STYLE = f.read()
 
     # Run the server.
-    app.run(host='localhost', port=8080, debug=args.debug, reloader=False)
+    app.run(host='localhost', port=port,
+            debug=args.debug, reloader=False)
+
+
+# The global server instance.
+server = None
+
+def setup_monkey_patch_for_server_shutdown():
+    """Setup globals to steal access to the server reference.
+    This is required to initiate shutdown, unfortunately.
+    (Bottle could easily remedy that.)"""
+
+    # Save the original function.
+    from wsgiref.simple_server import make_server
+
+    # Create a decorator that will save the server upon start.
+    def stealing_make_server(*args, **kw):
+        global server
+        server = make_server(*args, **kw)
+        return server
+
+    # Patch up wsgiref itself with the decorated function.
+    import wsgiref.simple_server
+    wsgiref.simple_server.make_server = stealing_make_server
+
+setup_monkey_patch_for_server_shutdown()
+
+def wait_ready():
+    while server is None:
+        time.sleep(0.05)
+    
+def shutdown():
+    """Request for the server to shutdown."""
+    server.shutdown()
+
+
+def main():
+    """Main web service runner. This runs the event loop and blocks indefinitely."""
+
+    argparser = argparse.ArgumentParser(__doc__.strip())
+
+    argparser.add_argument('filename', help="Beancount input filename to serve.")
+
+    argparser.add_argument('--port', action='store', type=int, default=8080,
+                           help="Which port to listen on.")
+
+    argparser.add_argument('--debug', action='store_true',
+                           help="Enable debugging features (auto-reloading of css).")
+
+    argparser.add_argument('--incognito', action='store_true',
+                           help=("Filter the output in order to hide all the numbers. "
+                                 "This is great for demos using my real file."))
+
+    argparser.add_argument('--no-source', action='store_true',
+                           help=("Don't render the source."))
+
+    args = argparser.parse_args()
+
+    run_app(args.filename, args.port, args.debug, args.incognito, args.no_source)
