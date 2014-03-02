@@ -139,7 +139,7 @@ def main():
         entries, index = summarize.clamp(entries,
                                          datetime.date(2013, 1, 1),
                                          datetime.date(2014, 1, 1),
-                                         options, 
+                                         options,
                                          *previous_accounts)
 
 
@@ -214,7 +214,7 @@ def print_open_close(entries):
             accmap[e.account].append(e)
 
     for account, openclose in accmap.items():
-        if is_balance_sheet_account(account):
+        if is_balance_sheet_account(account.name):
             print(account)
             for e in openclose:
                 print('  ', e)
