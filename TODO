@@ -25,6 +25,10 @@ beancount: TODO
     test for web.py using some of the demo files.
   - Add tests for all the binaries as well.
 
+  - Move all the contents of scripts to beancount.scripts subdirectory, so that
+    all the code is in a single place.
+    With tests as well.
+
 * Current
 
   - Bug: A transaction like this fails to parse; allow it:
