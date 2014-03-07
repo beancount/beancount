@@ -27,6 +27,9 @@ beancount: TODO
 
 * Current
 
+  - When we import, if a file was not detected, don't spit out an org text
+    line. Still doesn't work.
+
   - Bug: A transaction like this fails to parse; allow it:
       2014-02-22 * "Payee" |
         ..
