@@ -83,8 +83,5 @@ def main():
         print(data.format_entry(entry))
 
 
-
-
-
 if __name__ == '__main__':
     main()
