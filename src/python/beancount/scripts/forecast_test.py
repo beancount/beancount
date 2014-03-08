@@ -2,6 +2,12 @@ import unittest
 
 import beancount.scripts.forecast  # Register the plugin.
 from beancount.loader import loaddoc
+from beancount import loader
+
+
+def tearDown():
+    loader.uninstall_load_filter(
+        beancount.scripts.forecast.forecast_filter)
 
 
 class TestScriptForecast(unittest.TestCase):

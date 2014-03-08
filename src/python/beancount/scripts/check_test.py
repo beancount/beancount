@@ -1,7 +1,7 @@
 import sys
 import re
 
-from beancount.scripts.scripts_test_support import TestCase, docfile, capture, run_with_args
+from beancount.scripts import TestCase, docfile, capture, run_with_args
 from beancount.scripts import check
 
 

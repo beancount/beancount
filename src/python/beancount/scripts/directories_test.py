@@ -5,7 +5,7 @@ import os
 from os import path
 import shutil
 
-from beancount.scripts.scripts_test_support import docfile, capture, run_with_args
+from beancount.scripts import docfile, capture, run_with_args
 from beancount.scripts import directories
 
 

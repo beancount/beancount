@@ -125,3 +125,12 @@ def install_load_filter(callback):
                  values for these, that is, a triple of entries, errors, options.
     """
     LOAD_FILTERS.append(callback)
+
+
+def uninstall_load_filter(callback):
+    """Unregister a ledger load filter.
+
+    Args:
+      callback: See install_load_filter.
+    """
+    LOAD_FILTERS.remove(callback)
