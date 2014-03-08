@@ -6,6 +6,7 @@ from os import path
 import re
 import shelve
 from collections import namedtuple
+import tempfile
 
 import dateutil.parser
 import bs4
@@ -21,14 +22,33 @@ from urllib.request import urlopen
 
 
 def read_positions_from_csv(filename):
-    "Read the list of positions from an temporary CSV file."
+    """Read the list of positions from an temporary CSV file.
+
+    The temporary file can be created by using --dump.
+
+    Args:
+      filename: A string, the name of the CSV file.
+    Returns:
+      A list of position dicts, as per is created by --dump.
+    """
     csv_reader = csv.DictReader(open(filename))
     return list(csv_reader)
 
 
 def write_positions_to_csv(filename, positions):
-    "Write the list of positions to a CSV file."
-    fieldnames = 'account currency cost_currency number cost_number price_number price_date'.split()
+    """Write the list of positions to a CSV file.
+
+    Args:
+      filename: A string, the name of the CSV file to create.
+      positions: A list of dicts with field names for positions.
+    """
+    fieldnames = ['account',
+                  'currency',
+                  'cost_currency',
+                  'number',
+                  'cost_number',
+                  'price_number',
+                  'price_date']
     csv_writer = csv.DictWriter(open(filename, 'w'), fieldnames)
     csv_writer.writeheader()
     for position in positions:
@@ -36,7 +56,13 @@ def write_positions_to_csv(filename, positions):
 
 
 def read_positions_from_beancount(filename):
-    "Read the beancount ledger and get the list of positions from it."
+    """Read the beancount ledger and get the list of positions from it.
+
+    Args:
+      filename: A string, the Beancount ledger file to load and process.
+    Returns:
+      A list of position dicts.
+    """
     entries, errors, options = load(filename, quiet=True)
     _, positions = prices.get_priced_positions(entries)
     # Fixup for accounts, convert to account names.
@@ -45,11 +71,18 @@ def read_positions_from_beancount(filename):
     return positions
 
 
-urlcache = shelve.open('/tmp/urls.db')
+urlcache = shelve.open(path.join(tempfile.tempdir, 'urls.db'))
 
-def urlopen_retry(url, timeout=2):
-    """Open and download the given URL, retrying if it times out."""
-    ##print(url)
+def urlopen_retry(url, timeout=5):
+    """Open and download the given URL, retrying if it times out.
+
+    Args:
+      url: A string, the URL to fetch.
+      timeout: A timeout after which to stop waiting for a respone and return an
+        error.
+    Returns:
+      The contents of the fetched URL.
+    """
     try:
         contents = urlcache[url]
     except KeyError:
@@ -66,7 +99,16 @@ def urlopen_retry(url, timeout=2):
 
 
 def fetch_google_historical(currency, cost_currency):
+    """Fetch the given price from Google Finance.
 
+    Args:
+      currency: A string, the symbol of the currency/ticker to fetch
+        (e.g. GOOG).
+      cost_currency: A string, the symbol of the currency that 'currency'
+        is expressed in (e.g. USD).
+    Returns:
+      A list of (date, price) pairs.
+    """
     # Convert the symbol to one that Google may accept.
     if cost_currency == 'CAD':
         if re.match('RBF\d\d\d\d', currency):
@@ -172,16 +214,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-"""
-http://finance.google.com/finance/info?client=ig&q={}"
-mo = re.match(r"// \[\n(.*)\]", string, re.DOTALL)
-json_string = mo.group(1)
-data = json.loads(json_string)
-last_price = Decimal(data['l'])
-
-response = urlopen("http://finance.yahoo.com/d/quotes.csv?s={}&f=snc1l1d1".format(currency))
-print(response.read())
-
-"""

@@ -28,15 +28,16 @@ beancount: TODO
   - Deal with these:
 
       bean-bake                  | convert to Python + write test
-      bean-prices                | write a proper test
       bean-trial                 | write a proper test
 
+      bean-prices                | MOVE TO ledgerhub 
       bean-remove-crdb           | MOVE TO ledgerhub
       bean-import                | MOVE TO ledgerhub
 
   - Something's wrong with this page: currencies are wrong I think - http://localhost:8080/view/year/2014/conversions
 
   - Add __author__ to all files?
+  - Remove dependency on requests in the web_test.py, it's not really necessary.
 
 
 * Current
