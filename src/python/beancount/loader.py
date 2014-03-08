@@ -88,6 +88,14 @@ def load(filename,
             print(error_text)
             print('`--------------------------------------------------------------------------------')
 
+    # Run the load_filters on top of the results.
+    for load_filter_function in LOAD_FILTERS:
+        entries, errors, options = load_filter_function(
+            entries, errors, options)
+
+    # Ensure that the entries are sorted.
+    entries.sort(key=data.entry_sortkey)
+
     return entries, errors, options
 
 
@@ -100,3 +108,20 @@ def loaddoc(fun):
         entries, errors, options = load(contents, parse_method='string', quiet=True)
         return fun(self, entries, errors, options)
     return wrapper
+
+
+# A global list of filter functions to be applied on all subsequent loads.
+# Each function should accept a triplet of (entries, errors, options) and
+# return a similar triplet.
+LOAD_FILTERS = []
+
+def install_load_filter(callback):
+    """Register a ledger load filter, that gets invoked after every time we load or
+    reload the ledger file.
+
+    Args:
+      callback: a callable that gets invoked with the result of load(), that is,
+                 with entries, errors, options. The function should return new
+                 values for these, that is, a triple of entries, errors, options.
+    """
+    LOAD_FILTERS.append(callback)

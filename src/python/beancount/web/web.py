@@ -992,15 +992,6 @@ def auto_reload_input_file(callback):
                                             add_unrealized_gains=True,
                                             do_print_errors=True)
 
-            # Run the load_filters on top of the results.
-            if LOAD_FILTERS:
-                for load_filter_function in LOAD_FILTERS:
-                    entries, errors, options = load_filter_function(
-                        entries, errors, options)
-
-                # Ensure that the entries are sorted.
-                entries.sort(key=data.entry_sortkey)
-
             # Save globals in the global app.
             app.entries = entries
             app.errors = errors
@@ -1035,20 +1026,6 @@ def incognito(callback):
         return contents
 
     return wrapper
-
-
-def install_load_filter(callback):
-    """Register a ledger load filter, that gets invoked after every time we load or
-    reload the ledger file.
-
-    Args:
-      callback: a callable that gets invoked with the result of load(), that is,
-                 with entries, errors, options. The function should return new
-                 values for these, that is, a triple of entries, errors, options.
-    """
-    LOAD_FILTERS.append(callback)
-
-LOAD_FILTERS = []
 
 
 def run_app(filename, port, debug, do_incognito, no_source):
@@ -1123,6 +1100,9 @@ def main():
 
     argparser.add_argument('filename', help="Beancount input filename to serve.")
 
+    argparser.add_argument('--plugin', action='append', default=[],
+                           help="The name of a plugin to import before running.")
+
     argparser.add_argument('--port', action='store', type=int, default=8080,
                            help="Which port to listen on.")
 
@@ -1137,5 +1117,9 @@ def main():
                            help=("Don't render the source."))
 
     args = argparser.parse_args()
+
+    # FIXME: To be tested.
+    for plugin in opts.plugins:
+        __import__(plugin)
 
     run_app(args.filename, args.port, args.debug, args.incognito, args.no_source)

@@ -28,7 +28,6 @@ beancount: TODO
   - Deal with these:
 
       bean-bake                  | convert to Python + write test
-      bean-example-custom-filter | write a proper test, just runs, checks some of the transformations
       bean-prices                | write a proper test
       bean-trial                 | write a proper test
 
@@ -36,6 +35,9 @@ beancount: TODO
       bean-import                | MOVE TO ledgerhub
 
   - Something's wrong with this page: currencies are wrong I think - http://localhost:8080/view/year/2014/conversions
+
+  - Add __author__ to all files?
+
 
 * Current
 
