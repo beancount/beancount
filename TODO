@@ -27,19 +27,13 @@ beancount: TODO
 
   - Deal with these:
 
-      bean-accounts              | DONE
-      bean-check                 | DONE
-      bean-check-directories     | DONE
-
+      bean-dump-lexer            | convert to bean-debug and write a test
       bean-bake                  | convert to Python + write test
-      bean-dump-lexer            | write a proper test
       bean-example-custom-filter | write a proper test, just runs, checks some of the transformations
-      bean-grep                  | write a proper test
       bean-prices                | write a proper test
-      bean-remove-crdb           | write a proper test
       bean-trial                 | write a proper test
 
-      bean-sandbox               | DELETE, we're using tests now
+      bean-remove-crdb           | MOVE TO ledgerhub
       bean-import                | MOVE TO ledgerhub
 
   - Something's wrong with this page: currencies are wrong I think - http://localhost:8080/view/year/2014/conversions

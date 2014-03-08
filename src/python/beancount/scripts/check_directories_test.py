@@ -1,4 +1,5 @@
 import tempfile
+import re
 import unittest
 import os
 from os import path
@@ -65,4 +66,12 @@ class TestScriptCheckDirectories(unittest.TestCase):
         with capture() as stdout:
             run_with_args(check_directories.main, [filename, self.tmpdir])
         self.assertEqual(2, len(stdout.getvalue().splitlines()))
-
+        matches = set(mo.group(1) for mo in re.finditer("'(.*?)'", stdout.getvalue()))
+        clean_matches = set(match[len(self.tmpdir)+1:]
+                            if match.startswith(self.tmpdir)
+                            else match
+                            for match in matches)
+        self.assertEqual({'Expenses/Restaurant/Sub',
+                          'Expenses:Restaurant:Sub',
+                          'Assets:Extra',
+                          'Assets/Extra'}, clean_matches)
