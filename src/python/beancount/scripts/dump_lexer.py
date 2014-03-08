@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
 """Dump the lexer tags.
+
 This is used for testing.
 """
 import sys

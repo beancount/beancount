@@ -1,6 +1,5 @@
-#!/usr/bin/env python3
-"""
-Try to automatically convert a V1 .ledger beancount input file to the newer .beancount V2 syntax.
+"""Try to automatically convert a V1 ".ledger" beancount input file to the newer
+".beancount" V2 syntax.
 """
 import sys
 import re

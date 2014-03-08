@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-"""
-Load up a ledger and match against various parts of the entries in a way
+"""Load up a ledger and match against various parts of the entries in a way
 that one can iterate with Emacs.
 """
 import re

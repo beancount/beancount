@@ -20,7 +20,7 @@ clean:
 # Targets to generate and compile the C parser.
 CROOT = src/python/beancount/parser
 LEX = flex
-YACC = bison 
+YACC = bison
 
 $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
 	$(YACC) -o $(CROOT)/grammar.c $<
@@ -70,7 +70,8 @@ CLUSTERS =					\
 	beancount/imports			\
 	beancount/sources			\
 	beancount/utils				\
-	beancount/web
+	beancount/web				\
+	beancount/scripts
 
 GRAPHER = dot
 
@@ -105,7 +106,7 @@ debug:
 
 # Run the unittests.
 test tests unittest unittests:
-	nosetests-3.3 -s src/python/beancount
+	nosetests -s src/python/beancount
 
 
 # Run the parser and measure its performance.
@@ -142,7 +143,7 @@ sandbox:
 # Report on the sorry state of test coverage, for 1.0 release.
 # sources and imports are going to move to ledgerhub.
 status test-status:
-	bean-find-missing-tests | grep -vE '/(sources|imports)/'
+	./etc/find-missing-tests.py | grep -vE '/(sources|imports)/'
 
 # Run the linter on all source code.
 lint:

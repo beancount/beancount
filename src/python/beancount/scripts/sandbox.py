@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
 """Various tests for beancount.
+
 (This is the main test program I fiddle with during development.)
 """
 import datetime

@@ -23,6 +23,23 @@ beancount: TODO
     test for web.py using some of the demo files.
   - Add tests for all the binaries as well.
 
+  - Deal with these:
+
+      bean-accounts              | DONE
+      bean-bake                  | convert to Python + write test
+      bean-check                 | DONE
+      bean-check-directories     | write a proper test
+      bean-dump-lexer            | write a proper test
+      bean-example-custom-filter | write a proper test, just runs, checks some of the transformations
+      bean-grep                  | write a proper test
+      bean-prices                | write a proper test
+      bean-remove-crdb           | write a proper test
+      bean-sandbox               | move to bin
+      bean-trial                 | write a proper test
+      bean-v1tov2                | Move to old
+
+      bean-import                | MOVE TO ledgerhub
+
 * Current
 
   - Bug: A transaction like this fails to parse; allow it:

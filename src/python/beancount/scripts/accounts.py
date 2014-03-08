@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-"""
-Print a list of all the accounts and some associated information.
+"""Print a list of all the accounts and some associated information.
 """
 from beancount import load
 from beancount.core import getters

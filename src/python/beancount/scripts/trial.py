@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-"""
-Parse and realize a beancount input file and output a tree of balances.
+"""Parse and realize a beancount input file and output a tree of balances.
 """
 import argparse
 import datetime

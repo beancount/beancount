@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-"""
-Convert text files with '<number> CR' and '<number> DB' to signed numbers.
+"""Convert text files with '<number> CR' and '<number> DB' to signed numbers.
 
 This is useful for converting Think-or-Swim FOREX account reports into something that can actually be imported in a spreadsheet.
 """

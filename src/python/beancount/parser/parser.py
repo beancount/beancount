@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-"""
-Basic test to invoke the beancount parser.
+"""Beancount syntax parser.
 """
 import collections
 import datetime

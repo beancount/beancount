@@ -1,9 +1,14 @@
-#!/usr/bin/env python3
+"""An example of writing a starter script with a custom filter.
+
+This custom filter uses existing syntax to define and automatically
+insert transactions in the future.
+"""
 from datetime import date
 import re
 
 from beancount.web import web
 from beancount.core import data
+
 
 def forecast_filter(entries, errors, options):
     """An example filter that piggybacks on top of the Beancount input syntax to

@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-"""
-Read either a Beancount input file or a CSV of positions, and fetch
+"""Read either a Beancount input file or a CSV of positions, and fetch
 corresponding latest prices from the internet.
 """
 import csv

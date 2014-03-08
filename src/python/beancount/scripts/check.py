@@ -1,6 +1,5 @@
-#!/usr/bin/env python3
-"""
-Parse, check and realize a beancount input file.
+"""Parse, check and realize a beancount input file.
+
 This also measures the time it takes to run all these steps.
 """
 import argparse

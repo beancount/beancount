@@ -1,7 +1,5 @@
-#!/usr/bin/env python3
-"""
-Read a beancount input file and a directory name, and attempt to identify and
-convert the files in the directory. There is also an option to automatically
+"""Read a beancount input file and a directory name, and attempt to identify
+and convert the files in the directory. There is also an option to automatically
 file succesfully detected and converted input files.
 """
 from beancount.imports import scripts

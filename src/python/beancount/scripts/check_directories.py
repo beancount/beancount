@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-"""
-Check that the auto-doc directories matches a list of accounts.
+"""Check that the auto-doc directories matches a list of accounts.
 """
 from os import path
 import argparse
