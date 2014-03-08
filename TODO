@@ -27,7 +27,6 @@ beancount: TODO
 
   - Deal with these:
 
-      bean-dump-lexer            | convert to bean-debug and write a test
       bean-bake                  | convert to Python + write test
       bean-example-custom-filter | write a proper test, just runs, checks some of the transformations
       bean-prices                | write a proper test

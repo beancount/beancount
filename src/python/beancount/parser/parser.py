@@ -638,7 +638,7 @@ class LexOnlyBuilder(object):
     def NUMBER(self, s):              pass
 
 
-def dump_lexer(filename):
+def dump_lexer(filename, outfile):
     """Parse a beancount input file and print a list of transactions to stdout.
 
     Args:
@@ -650,7 +650,7 @@ def dump_lexer(filename):
         if x is None:
             break
         token, text, lineno = x
-        print('{:12} {:6d} {}'.format(token, lineno, repr(text)))
+        outfile.write('{:12} {:6d} {}\n'.format(token, lineno, repr(text)))
 
 
 def dump_lexer_string(input_string):
