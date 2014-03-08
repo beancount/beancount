@@ -1,14 +1,2 @@
-#!/bin/sh
-#
-# Run a websuck of the current server, to the given name.
-#
-
-if [ -z "$1" ]; then
-    echo "You need to provide the destination name." 1>&2
-    exit 1
-fi
-
-wget --recursive --no-host-directories			\
-     --page-requisites --convert-links --html-extension	\
-     http://localhost:8080/ --directory-prefix		\
-    "$1"
+#!/usr/bin/env python3
+from beancount.scripts.bake import main; main()

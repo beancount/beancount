@@ -10,6 +10,7 @@ import io
 import logging
 import sys
 import time
+import threading
 
 import bottle
 from bottle import response, request
@@ -1087,7 +1088,7 @@ setup_monkey_patch_for_server_shutdown()
 def wait_ready():
     while server is None:
         time.sleep(0.05)
-    
+
 def shutdown():
     """Request for the server to shutdown."""
     server.shutdown()
@@ -1123,3 +1124,40 @@ def main():
         __import__(plugin)
 
     run_app(args.filename, args.port, args.debug, args.incognito, args.no_source)
+
+
+def thread_server_start(filename, port):
+    """Start a server in a new thread.
+
+    Args:
+      filename: A string, the name of a Beancount input file.
+      port: An integer, the port to serve this HTTP server on.
+    Returns:
+      A new Thread instance.
+    """
+    thread = threading.Thread(
+        target=run_app,
+        args=(filename, port, False, False, False))
+    thread.daemon = True # Automatically exit if the process comes dwn.
+    thread.start()
+
+    # Ensure the server has at least started before running the scraper.
+    wait_ready()
+    time.sleep(0.1)
+
+    return thread
+
+
+def thread_server_shutdown(thread):
+    """Shutdown the server running in the given thread.
+
+    Unfortauntely, in the meantime this has a side-effect on all servers.
+    This returns after waiting that the thread has stopped.
+
+    Args:
+      thread: A threading.Thread instance.
+    """
+    # Clean shutdown: request to stop, then join the thread.
+    # Note that because we daemonize, we could forego this elegant detail.
+    shutdown()
+    thread.join()
