@@ -42,6 +42,8 @@ beancount: TODO
       bean-sandbox               | DELETE, we're using tests now
       bean-import                | MOVE TO ledgerhub
 
+  - Something's wrong with this page: currencies are wrong I think - http://localhost:8080/view/year/2014/conversions
+
 * Current
 
   - Bug: A transaction like this fails to parse; allow it:
