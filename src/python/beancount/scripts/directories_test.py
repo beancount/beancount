@@ -6,7 +6,7 @@ from os import path
 import shutil
 
 from beancount.scripts.scripts_test_support import docfile, capture, run_with_args
-from beancount.scripts import check_directories
+from beancount.scripts import directories
 
 
 class TestScriptCheckDirectories(unittest.TestCase):
@@ -37,7 +37,7 @@ class TestScriptCheckDirectories(unittest.TestCase):
             Expenses:Alcohol
             Assets:Cash
         """.strip().split())
-        errors = check_directories.validate_directories(accounts, self.tmpdir)
+        errors = directories.validate_directories(accounts, self.tmpdir)
         self.assertEqual(2, len(errors))
 
         expected_error_accounts = set("""
@@ -64,7 +64,7 @@ class TestScriptCheckDirectories(unittest.TestCase):
               Assets:Cash
         """
         with capture() as stdout:
-            run_with_args(check_directories.main, [filename, self.tmpdir])
+            run_with_args(directories.main, [filename, self.tmpdir])
         self.assertEqual(2, len(stdout.getvalue().splitlines()))
         matches = set(mo.group(1) for mo in re.finditer("'(.*?)'", stdout.getvalue()))
         clean_matches = set(match[len(self.tmpdir)+1:]

@@ -4,7 +4,7 @@ import beancount.scripts.forecast  # Register the plugin.
 from beancount.loader import loaddoc
 
 
-class TestScriptForecast(TestCase):
+class TestScriptForecast(unittest.TestCase):
 
     @loaddoc
     def test_success(self, entries, errors, options):
