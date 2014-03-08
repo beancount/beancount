@@ -66,7 +66,7 @@ def reorder_accounts_node_by_date(real_account):
 
 
 def main():
-    parser = argparse.ArgumentParser(__doc__.strip())
+    parser = argparse.ArgumentParser(__doc__)
     parser.add_argument('filename', help='Beancount input filename.')
     opts = parser.parse_args()
 

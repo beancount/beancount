@@ -7,7 +7,7 @@ from beancount.core.account import account_sortkey
 
 def main():
     import argparse
-    optparser = argparse.ArgumentParser(__doc__.strip())
+    optparser = argparse.ArgumentParser(__doc__)
     optparser.add_argument('filename', help='Filename.')
     opts = optparser.parse_args()
 

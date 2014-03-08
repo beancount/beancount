@@ -11,7 +11,7 @@ from beancount import utils
 
 
 def main():
-    parser = argparse.ArgumentParser(__doc__.strip())
+    parser = argparse.ArgumentParser(__doc__)
     parser.add_argument('filename', help='Beancount input filename.')
     parser.add_argument('-v', '--verbose', action='store_true', help='Print timings.')
 

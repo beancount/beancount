@@ -7,6 +7,7 @@ import tempfile
 import sys
 import contextlib
 import functools
+import shutil
 
 
 def run_with_args(function, args):
@@ -28,8 +29,22 @@ def run_with_args(function, args):
 
 
 @contextlib.contextmanager
-def capture():
+def tempdir():
+    """A context manager that creates a temporary directory and deletes its
+    contents unconditionally once done.
 
+    Yields:
+      A string, the name of the temporary directory created.
+    """
+    tempdir = tempfile.mkdtemp(prefix="beancount-test-tmpdir.")
+    try:
+        yield tempdir
+    finally:
+        shutil.rmtree(tempdir, ignore_errors=True)
+
+
+@contextlib.contextmanager
+def capture():
     """A context manager that captures what's printed to stdout.
 
     Yields:

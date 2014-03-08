@@ -7,7 +7,7 @@ import sys, re
 def main():
     import argparse, logging
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = argparse.ArgumentParser(__doc__.strip())
+    parser = argparse.ArgumentParser(__doc__)
     parser.add_argument('filenames', nargs='+', help='Filenames')
     opts = parser.parse_args()
 

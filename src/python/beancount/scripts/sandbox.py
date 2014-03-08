@@ -112,7 +112,7 @@ def check_equity_balances(real_accounts):
 
 
 def main():
-    argparser = argparse.ArgumentParser(__doc__.strip())
+    argparser = argparse.ArgumentParser(__doc__)
 
     argparser.add_argument('filename',
                         help='Beancount input filename.')

@@ -118,7 +118,7 @@ def fetch_google_historical(currency, cost_currency):
 def main():
     import argparse, logging
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = argparse.ArgumentParser(__doc__.strip())
+    parser = argparse.ArgumentParser(__doc__)
 
     parser.add_argument('filename', help='Beancount of CSV Filename')
 

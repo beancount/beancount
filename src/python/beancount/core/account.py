@@ -10,6 +10,9 @@ from collections import namedtuple
 from beancount.core import account_types
 
 
+# Account name separator.
+sep = ':'
+
 # A type used to represent an account read in.
 Account = namedtuple('Account', 'name type')
 
