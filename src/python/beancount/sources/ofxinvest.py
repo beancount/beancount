@@ -5,14 +5,13 @@ import re
 import bs4
 
 from beancount.imports import importer
-from beancount.core.account import account_from_name
 from beancount.core.amount import Decimal, Amount
 from beancount.core import data
 from beancount.core.data import Posting, Transaction, Balance
 from beancount.core.position import Lot, Position
 from beancount.sources.ofx import souptodict, soup_get, parse_ofx_time
-from beancount.core.account import accountify_dict
 from beancount.core import flags
+from beancount.core import account
 
 
 class Importer(importer.ImporterBase):
@@ -32,7 +31,7 @@ class Importer(importer.ImporterBase):
         given account. This function returns a list of entries possibly partially
         filled entries.
         """
-        config = self.get_accountified_config()
+        config = self.get_config()
 
         # Prepare mappings to accounts from the config provided.
         source_subaccounts = {
@@ -105,8 +104,7 @@ class Importer(importer.ImporterBase):
 
                         position = Position(Lot(security, Amount(unitprice, currency), None), units)
 
-                        account = account_from_name('{}:{}'.format(
-                            source_subaccounts[source].name, security))
+                        account = account.join(source_subaccounts[source], security)
                         entry.postings.append(Posting(entry, account, position, None, None))
 
                         if total is None:
@@ -136,8 +134,7 @@ class Importer(importer.ImporterBase):
                             if source is None:
                                 continue
 
-                            account = account_from_name('{}:{}'.format(
-                                source_subaccounts[source].name, security))
+                            account = account.join(source_subaccounts[source], security)
 
                             amount = Amount(units, security)
                             new_entries.append(Balance(fileloc, date, account, amount, None))

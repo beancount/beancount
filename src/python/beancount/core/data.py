@@ -1,13 +1,10 @@
 """Basic data structures used to represent the Ledger entries.
 """
-import io
 import datetime
-import textwrap
 from collections import namedtuple
 
 from beancount.core.amount import Amount, Decimal, to_decimal
-from beancount.core.account import Account, account_from_name
-from beancount.core.position import Lot, Position, create_position
+from beancount.core.position import Position, create_position
 
 
 # All possible types of entries. These are the main data structrues in use
@@ -223,7 +220,7 @@ def create_simple_posting(entry, account, number, currency):
       postings modified with the new Posting instance.
     """
     if isinstance(account, str):
-        account = account_from_name(account)
+        pass
     if number is None:
         position = None
     else:
@@ -250,7 +247,7 @@ def create_simple_posting_with_cost(entry, account, number, currency, cost_numbe
       postings modified with the new Posting instance.
     """
     if isinstance(account, str):
-        account = account_from_name(account)
+        pass
     if not isinstance(number, Decimal):
         number = to_decimal(number)
     if cost_number and not isinstance(cost_number, Decimal):

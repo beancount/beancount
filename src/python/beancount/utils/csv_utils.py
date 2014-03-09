@@ -4,7 +4,6 @@ Utilities for reading and writing CSV files.
 from collections import namedtuple
 import csv
 import re
-import itertools
 
 
 def csv_dict_reader(fileobj, **kw):

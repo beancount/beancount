@@ -3,9 +3,9 @@ Sanity checks.
 (Note that these don't have anything to do with 'Balance' directives.
 """
 from os import path
-from collections import namedtuple, defaultdict
+from collections import namedtuple
 
-from beancount.core.account import Account
+from beancount.core.account import is_account_name
 from beancount.core.data import Open, Close, Balance, Transaction, Document
 from beancount.core import data
 from beancount.core import getters
@@ -32,13 +32,13 @@ def validate_open_close(entries, accounts):
         open = open_map.get(account)
         if open is None or entry.date < open.date:
             check_errors.append(ValidationError(entry.fileloc,
-                                                "Unknown account {} (or perhaps wrong date?).".format(account.name),
+                                                "Unknown account {} (or perhaps wrong date?).".format(account),
                                                 entry))
 
         close = close_map.get(account)
         if close is not None and entry.date > close.date:
             check_errors.append(ValidationError(entry.fileloc,
-                                                "Entry after account {} closed.".format(account.name),
+                                                "Entry after account {} closed.".format(account),
                                                 entry))
 
     # Check all entries for missing open directives and references to accounts
@@ -52,7 +52,7 @@ def validate_open_close(entries, accounts):
             account = entry.account
             if account in open_map:
                 check_errors.append(ValidationError(entry.fileloc,
-                                                    "Duplicate open entry for {}.".format(account.name),
+                                                    "Duplicate open entry for {}.".format(account),
                                                     entry))
             else:
                 open_map[account] = entry
@@ -61,7 +61,7 @@ def validate_open_close(entries, accounts):
             account = entry.account
             if account in close_map:
                 check_errors.append(ValidationError(entry.fileloc,
-                                                    "Duplicate close entry for {}.".format(account.name),
+                                                    "Duplicate close entry for {}.".format(account),
                                                     entry))
             else:
                 close_map[account] = entry
@@ -77,7 +77,7 @@ def validate_open_close(entries, accounts):
                 # where the check is valid.
                 error_entry = None
                 for account, open in open_map.items():
-                    if not account.name.startswith(entry.account.name):
+                    if not account.startswith(entry.account):
                         continue
                     if entry.date >= open.date:
                         close = close_map.get(account)
@@ -92,12 +92,12 @@ def validate_open_close(entries, accounts):
                 if error_entry:
                     if isinstance(error_entry, Open):
                         check_errors.append(ValidationError(error_entry.fileloc,
-                                                            "Unknown account {} (or perhaps wrong date?).".format(error_entry.account.name),
+                                                            "Unknown account {} (or perhaps wrong date?).".format(error_entry.account),
                                                             error_entry))
                     else:
                         assert isinstance(error_entry, Close)
                         check_errors.append(ValidationError(error_entry.fileloc,
-                                                            "Entry after account {} closed.".format(error_entry.account.name),
+                                                            "Entry after account {} closed.".format(error_entry.account),
                                                             error_entry))
 
         # Documents are allowed to show up after closure, as they may be received after.
@@ -108,7 +108,7 @@ def validate_open_close(entries, accounts):
     for account in accounts:
         if account not in open_map:
             check_errors.append(ValidationError(data.FileLocation('<validate_open_close>', 0),
-                                                "No open directive for account {}.".format(account.name),
+                                                "No open directive for account {}.".format(account),
                                                 None))
 
     return check_errors, open_map, close_map
@@ -127,7 +127,7 @@ def validate_unused_accounts(entries, accounts):
         if isinstance(entry, Open):
             open_map[entry.account] = entry
             continue
-        referenced_accounts.update(utils.get_tuple_typed_values(entry, Account))
+        referenced_accounts.update(utils.get_tuple_values(entry, is_account_name))
 
     # Unreferenced accounts are unused accounts.
     unused_accounts = set(accounts) - referenced_accounts
@@ -135,7 +135,7 @@ def validate_unused_accounts(entries, accounts):
     # Create a list of suitable errors, with the location of the spurious Open
     # directives.
     return [ValidationError(open_map[account].fileloc,
-                            "Unused account {}.".format(account.name),
+                            "Unused account {}.".format(account),
                             open_map[account])
             for account in unused_accounts]
 
@@ -161,7 +161,7 @@ def validate_currency_constraints(entries):
                 errors.append(ValidationError(
                     entry.fileloc,
                     "Invalid currency {} for account '{}'.".format(
-                        posting.position.lot.currency, posting.account.name),
+                        posting.position.lot.currency, posting.account),
                     entry))
 
     return errors

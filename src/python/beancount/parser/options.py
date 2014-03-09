@@ -1,7 +1,6 @@
 """
 Declaration of options and their default values.
 """
-from beancount.core import account
 from beancount.core import account_types
 
 

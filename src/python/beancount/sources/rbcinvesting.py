@@ -33,10 +33,9 @@ from beancount.core.data import create_simple_posting
 from beancount.core.data import create_simple_posting_with_cost
 from beancount.core.data import Posting, Transaction
 from beancount.core.data import FileLocation
-from beancount.core.account import account_from_name
 from beancount.core.position import Position
 from beancount.core import flags
-from beancount.core.account import accountify_dict
+from beancount.core import account
 from beancount.utils import csv_utils
 
 
@@ -56,7 +55,7 @@ class Importer(importer.ImporterBase):
     def import_file(self, filename):
         """Import an Excel file from RBC Direct Investing's Activity Statement."""
 
-        config = self.get_accountified_config()
+        config = self.get_config()
         new_entries = []
 
         # Tidy up the Excel filenames from RBC.
@@ -102,8 +101,7 @@ class Importer(importer.ImporterBase):
 
                 # Figure out an account for the position.
                 if row.symbol:
-                    account_position = account_from_name('{}:{}'.format(config['positions'].name,
-                                                                        row.symbol))
+                    account_position = account.join(config['positions'], row.symbol)
 
                 # Add relevant postings.
                 extra_narration = []

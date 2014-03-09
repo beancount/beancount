@@ -14,6 +14,7 @@ from beancount.core import getters
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Document
 from beancount.core.data import Posting
 from beancount.core.account import account_name_leaf, account_name_parent
+from beancount.core import account
 from beancount.utils import tree_utils
 
 
@@ -44,6 +45,7 @@ class RealAccount:
         Returns:
           A new RealAccount instance.
         """
+        assert isinstance(account_name, str)
         self.fullname = account_name
 
         self.balance = Inventory()
@@ -68,8 +70,8 @@ class RealAccount:
         """
         if not childname:
             return self
-        if ':' in childname:
-            directname = childname.split(':', 1)[0]
+        if account.sep in childname:
+            directname = childname.split(account.sep, 1)[0]
             restname = childname[len(directname)+1:]
             child = self.children[directname]
             return child[restname]
@@ -106,7 +108,7 @@ class RealAccount:
         Returns:
           A boolean, true the name is a child of this node.
         """
-        directname = account_name_leaf.split(':', 1)[0]
+        directname = account_name_leaf.split(account.sep, 1)[0]
         restname = account_name_leaf[len(directname)+1:]
         try:
             child = self.children[directname]
@@ -229,24 +231,23 @@ def ensure_min_accounts(real_account, min_accounts):
 # FIXME: You can remove this method, use a defaultdict(account_name -> postings-list)
 # in the caller and get rid of this call.
 # Compute the balances in a second step.
-def append_entry_to_real_account(real_dict, account, entry):
+def append_entry_to_real_account(real_dict, account_name, entry):
     """Append an account's posting to its corresponding account in the real_dict
     dictionary. The relevance of this method is that it creates RealAccount
     instances on-demand.
 
     Args:
       real_dict: A dictionary of full account name to RealAccount instance.
-      account: An instance of Account to associate the entry to.
+      account_name: A string, the account name to associate the entry to.
     Returns:
       The RealAccount instance that this entry was associated with.
     """
-
     # Create the account, if not already there.
     try:
-        real_account = real_dict[account.name]
+        real_account = real_dict[account_name]
     except KeyError:
-        real_account = RealAccount(account.name)
-        real_dict[account.name] = real_account
+        real_account = RealAccount(account_name)
+        real_dict[account_name] = real_account
 
     # If specified, add the new entry to the list of postings.
     assert entry is not None
@@ -328,7 +329,7 @@ def dump_tree_balances(real_account, foutput=None):
 
     lines = list(tree_utils.render(
         real_account,
-        lambda ra: ra.fullname.split(':')[-1],
+        lambda ra: ra.fullname.split(account.sep)[-1],
         lambda ra: sorted(ra.get_children(), key=lambda x: x.fullname)))
     width = max(len(line[0] + line[2]) for line in lines)
 
@@ -515,6 +516,3 @@ def reorder_accounts_node_by_date(real_account):
 
 
 # FIXME: This file is being cleaned up. Don't worry about all the FIXMEs [2014-02-26]
-
-
-

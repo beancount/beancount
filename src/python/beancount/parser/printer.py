@@ -3,8 +3,6 @@
 import io
 import textwrap
 
-from beancount.core import data
-
 
 def render_fileloc(fileloc):
     """Render the fileloc for errors in a way that it will be both detected by
@@ -71,26 +69,26 @@ class EntryPrinter:
             assert posting.account is not None
             position = str(posting.position) if posting.position else ''
             price_str = '@ {}'.format(posting.price) if posting.price else ''
-            oss.write('  {}{:64} {:>16} {:>16}'.format(flag, posting.account.name, position, price_str).rstrip())
+            oss.write('  {}{:64} {:>16} {:>16}'.format(flag, posting.account, position, price_str).rstrip())
             oss.write('\n')
 
     def Balance(_, entry, oss):
-        oss.write('{e.date} balance {e.account.name:48} {e.amount}\n'.format(e=entry))
+        oss.write('{e.date} balance {e.account:48} {e.amount}\n'.format(e=entry))
 
     def Note(_, entry, oss):
-        oss.write('{e.date} note {e.account.name} {e.comment}\n'.format(e=entry))
+        oss.write('{e.date} note {e.account} {e.comment}\n'.format(e=entry))
 
     def Document(_, entry, oss):
-        oss.write('{e.date} document {e.account.name} "{e.filename}"\n'.format(e=entry))
+        oss.write('{e.date} document {e.account} "{e.filename}"\n'.format(e=entry))
 
     def Pad(_, entry, oss):
-        oss.write('{e.date} pad {e.account.name} {e.account_pad.name}\n'.format(e=entry))
+        oss.write('{e.date} pad {e.account} {e.account_pad}\n'.format(e=entry))
 
     def Open(_, entry, oss):
-        oss.write('{e.date} open {e.account.name} {currencies}\n'.format(e=entry, currencies=','.join(entry.currencies or [])))
+        oss.write('{e.date} open {e.account} {currencies}\n'.format(e=entry, currencies=','.join(entry.currencies or [])))
 
     def Close(_, entry, oss):
-        oss.write('{e.date} close {e.account.name}\n'.format(e=entry))
+        oss.write('{e.date} close {e.account}\n'.format(e=entry))
 
     def Price(_, entry, oss):
         oss.write('{e.date} price {e.currency} {e.amount}\n'.format(e=entry))

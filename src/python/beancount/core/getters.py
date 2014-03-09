@@ -4,6 +4,7 @@ things that they reference, accounts, tags, links, currencies, etc.
 from collections import defaultdict
 
 from beancount.core.data import Transaction, Open, Close
+from beancount.core import account
 from beancount import utils
 
 
@@ -21,10 +22,12 @@ class GetAccounts:
         Returns:
           A list of Account instances.
         """
+        # FIXME: Convert this to a set().
         accounts = {}
         for entry in entries:
-            for account in getattr(self, entry.__class__.__name__)(entry):
-                accounts[account.name] = account
+            method = getattr(self, entry.__class__.__name__)
+            for account in method(entry):
+                accounts[account] = account
         return accounts
 
     def Transaction(_, entry):
@@ -71,6 +74,7 @@ class GetAccounts:
     # Associate all the possible directives with their respective handlers.
     Open = Close = Balance = Note = Document = _one
     Event = Price = _zero
+
 
 def get_accounts(entries):
     """Gather all the accounts references by a list of directives.
@@ -126,7 +130,7 @@ def get_leveln_parent_accounts(account_names, n, nrepeats=0):
     """
     leveldict = defaultdict(int)
     for account_name in set(account_names):
-        components = account_name.split(':')
+        components = account_name.split(account.sep)
         if n < len(components):
             leveldict[components[n]] += 1
     levels = {level

@@ -111,7 +111,7 @@ def transfer_balances(entries, date, account_pred, transfer_account):
     transfer_entries = create_entries_from_balances(
         transfer_balances, transfer_date, transfer_account, False,
         '<summarize>', flags.FLAG_TRANSFER,
-        "Transfer balance for '{account.name}' as of {date} (Transfer Balance)")
+        "Transfer balance for '{account}' as of {date} (Transfer Balance)")
 
     # Split the new entries in a new list.
     return (entries[:index] + transfer_entries + entries[index:])
@@ -149,7 +149,7 @@ def summarize(entries, date, opening_account):
     summarizing_entries = create_entries_from_balances(
         balances, summarize_date, opening_account, True,
         '<summarize>', flags.FLAG_SUMMARIZE,
-        "Opening balance for '{account.name}' as of {date} (Summarization)")
+        "Opening balance for '{account}' as of {date} (Summarization)")
 
     # Gather the list of active open entries at date.
     open_entries = open_at_date(entries, date)
@@ -325,6 +325,6 @@ def compute_balance_for_prefix(entries, account_prefix):
     for entry in entries:
         if isinstance(entry, Transaction):
             for posting in entry.postings:
-                if posting.account.name.startswith(account_prefix):
+                if posting.account.startswith(account_prefix):
                     balance.add_position(posting.position, allow_negative=True)
     return balance

@@ -33,12 +33,10 @@ as None. This is the case for most of the transactions.
   or that we may instead provide the convenience for the user not having to match
 
 """
-from collections import defaultdict
 import copy
 from datetime import date
-import logging
 
-from beancount.core.amount import ZERO, Decimal, Amount
+from beancount.core.amount import ZERO, Amount
 from beancount.core.position import Lot, Position
 
 

@@ -1,11 +1,9 @@
 """Check that the auto-doc directories matches a list of accounts.
 """
-from os import path
 import argparse
 
 from beancount import load
 from beancount.parser import documents
-from beancount.core import data
 from beancount.core import getters
 
 

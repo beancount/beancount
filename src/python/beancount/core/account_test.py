@@ -1,20 +1,19 @@
 import unittest
-import re
 
 from beancount.core.account import *
 
 
 class TestAccount(unittest.TestCase):
 
-    def test_ctor(self):
-        account = Account("Expenses:Toys:Computer", 'Expenses')
-        self.assertEqual("Expenses:Toys:Computer", account.name)
-        self.assertEqual("Expenses", account.type)
+    def test_account_join(self):
+        account_name = join("Expenses", "Toys", "Computer")
+        self.assertEqual("Expenses:Toys:Computer", account_name)
 
-    def test_account_from_name(self):
-        account = account_from_name("Expenses:Toys:Computer")
-        self.assertEqual("Expenses:Toys:Computer", account.name)
-        self.assertEqual("Expenses", account.type)
+        account_name = join("Expenses")
+        self.assertEqual("Expenses", account_name)
+
+        account_name = join()
+        self.assertEqual("", account_name)
 
     def test_account_name_parent(self):
         self.assertEqual("Expenses:Toys", account_name_parent("Expenses:Toys:Computer"))
@@ -28,7 +27,7 @@ class TestAccount(unittest.TestCase):
         self.assertEqual("Expenses", account_name_leaf("Expenses"))
         self.assertEqual(None, account_name_leaf(""))
 
-    def test_account_sortkey(self):
+    def test_account_name_sortkey(self):
         account_names_input = [
             "Expenses:Toys:Computer",
             "Income:US:Intel",
@@ -54,15 +53,6 @@ class TestAccount(unittest.TestCase):
         account_names_actual = sorted(account_names_input,
                                       key=account_name_sortkey)
         self.assertEqual(account_names_expected, account_names_actual)
-
-        # Test account_sortkey.
-        accounts_input = map(account_from_name, account_names_input)
-        accounts_actual = sorted(accounts_input,
-                                 key=account_sortkey)
-        self.assertEqual(account_names_expected,
-                         [account.name for account in accounts_actual])
-        accounts_expected = list(map(account_from_name, account_names_expected))
-        self.assertEqual(accounts_expected, accounts_actual)
 
     def test_account_name_type(self):
         self.assertEqual("Assets", account_name_type("Assets:US:RBS:Checking"))
@@ -119,19 +109,8 @@ class TestAccount(unittest.TestCase):
                 ("Expenses:Toys:Computer", False),
                 ]:
             self.assertEqual(expected,
-                             is_balance_sheet_account(account_from_name(account_name),
-                                                      self.OPTIONS))
+                             is_balance_sheet_account(account_name, self.OPTIONS))
 
             self.assertEqual(not expected,
-                             is_income_statement_account(account_from_name(account_name),
-                                                         self.OPTIONS))
+                             is_income_statement_account(account_name, self.OPTIONS))
 
-    def test_accountify_dict(self):
-        accvalue_dict = {"b6edc1bf714a": "Assets:US:RBS:Savings",
-                         "21a4647fe535": "Liabilities:US:RBS:MortgageLoan",
-                         "6d17539d6c32": "Equity:OpeningBalances",
-                         "421833fa2cb9": "Income:US:Intel",
-                         "391bb475127e": "Expenses:Toys:Computer"}
-        newdict = accountify_dict(accvalue_dict)
-        self.assertTrue(isinstance(newdict, dict))
-        self.assertEqual("Income:US:Intel", newdict["421833fa2cb9"].name)

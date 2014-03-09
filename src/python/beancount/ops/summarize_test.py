@@ -9,17 +9,15 @@ import datetime
 import textwrap
 import functools
 
-from beancount.core.account import Account, is_income_statement_account
-from beancount.core.realization import realize, dump_tree_balances, compare_realizations, real_cost_as_dict
+from beancount.core.realization import realize, dump_tree_balances
 from beancount.ops.pad import pad
-from beancount.ops.summarize import summarize, transfer_balances, open_at_date
+from beancount.ops.summarize import summarize
 from beancount.core import realization
 from beancount.ops import summarize
 from beancount.loader import loaddoc
 from beancount.parser import parser
 
 from beancount import parser
-from beancount.parser import parsedoc
 
 
 DO_PRINT = object()
@@ -64,8 +62,8 @@ def summarizedoc(date, other_account):
     return summarizedoc_deco
 
 
-OPENING_BALANCES = Account('Equity:Opening-Balances', 'Equity')
-TRANSFER_BALANCES = Account('Equity:Retained-Earnings', 'Equity')
+OPENING_BALANCES = 'Equity:Opening-Balances'
+TRANSFER_BALANCES = 'Equity:Retained-Earnings'
 
 class TestSummarization(unittest.TestCase):
 
@@ -93,13 +91,13 @@ class TestSummarization(unittest.TestCase):
 #        for x in sum_real_accounts: print(x)
 #
 #        print('-' * 80)
-#        for e in sum_real_accounts[OPENING_BALANCES.name]:
+#        for e in sum_real_accounts[OPENING_BALANCES]:
 #            print(type(e))
 #            for posting in e.postings:
 #                print(posting)
 #
 #        # self.assertTrue(compare_realizations(real_accounts, sum_real_accounts))
-#        # self.assertTrue(sum_real_accounts[OPENING_BALANCES.name].postings)
+#        # self.assertTrue(sum_real_accounts[OPENING_BALANCES].postings)
 
 #     @summarizedoc(date(2012, 1, 1), OPENING_BALANCES)
 #     def test_with_conversions(self, entries, sum_entries, real_accounts, sum_real_accounts):
@@ -117,7 +115,7 @@ class TestSummarization(unittest.TestCase):
 #             Assets:Checking        1000 CAD @ 1 USD
 #         """
 #         self.assertTrue(compare_realizations(real_accounts, sum_real_accounts))
-#         self.assertTrue(sum_real_accounts[OPENING_BALANCES.name].postings)
+#         self.assertTrue(sum_real_accounts[OPENING_BALANCES].postings)
 #
 #
 #     @summarizedoc(date(2012, 1, 1), OPENING_BALANCES)
@@ -133,7 +131,7 @@ class TestSummarization(unittest.TestCase):
 #           2012-01-01 check Assets:Checking  1000 USD
 #         """
 #         self.assertTrue(compare_realizations(real_accounts, sum_real_accounts))
-#         self.assertTrue(sum_real_accounts[OPENING_BALANCES.name].postings)
+#         self.assertTrue(sum_real_accounts[OPENING_BALANCES].postings)
 #
 #     @parsedoc
 #     def test_transfer_and_summarization(self, entries, errors, options):

@@ -8,7 +8,7 @@ live prices online and create entries on-the-fly).
 """
 from collections import defaultdict
 
-from beancount.core.account import account_from_name
+from beancount.core import account
 from beancount.core.amount import Decimal, Amount
 from beancount.core.data import Transaction, Posting, Price, FileLocation
 from beancount.core.position import Lot, Position
@@ -251,9 +251,9 @@ def unrealized_gains(entries, subaccount_name, account_types):
 
         # Add the gain/loss as a subaccount to the asset account.
         if subaccount_name:
-            asset_account = account_from_name(':'.join([account_name, subaccount_name]))
+            asset_account = account.join(account_name, subaccount_name)
         else:
-            asset_account = account_from_name(account_name)
+            asset_account = account_name
 
         # Note: don't set a price because we don't want these to end up in Conversions.
         #price = Amount(price_number, cost_currency)
@@ -270,9 +270,9 @@ def unrealized_gains(entries, subaccount_name, account_types):
         income_account_name = account_name.replace(account_types.assets,
                                                    account_types.income)
         if subaccount_name:
-            income_account = account_from_name(':'.join([income_account_name, subaccount_name]))
+            income_account = account.join(income_account_name, subaccount_name)
         else:
-            income_account = account_from_name(income_account_name)
+            income_account = income_account_name
 
         entry.postings.append(
             Posting(entry, income_account,

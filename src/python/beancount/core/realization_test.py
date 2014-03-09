@@ -5,17 +5,13 @@ import unittest
 import textwrap
 import functools
 import re
-import pprint
 
 from beancount import parser
 
 from beancount.core.realization import RealAccount
 from beancount.core.data import Open, Close, Posting, Balance, Note, Document, Pad
 from beancount.loader import loaddoc
-from beancount.parser import printer
 from beancount.core import realization
-from beancount.core import data
-from beancount.core import account
 
 
 class TestRealAccount(unittest.TestCase):

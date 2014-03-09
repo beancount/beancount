@@ -11,7 +11,6 @@ import collections
 from beancount.imports import importer
 from beancount.core import data
 from beancount.core.amount import Decimal, Amount
-from beancount.core.account import accountify_dict
 from beancount.core.data import Posting, Transaction, Balance, Note
 from beancount.parser.printer import format_entry
 from beancount.core.position import Lot, Position
@@ -33,7 +32,7 @@ class Importer(importer.ImporterBase):
     }
 
     def import_file(self, filename):
-        config = self.get_accountified_config()
+        config = self.get_config()
         return import_csv_file(filename, config)
 
 

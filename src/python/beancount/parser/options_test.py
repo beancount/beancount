@@ -2,14 +2,8 @@
 Test various options.
 """
 import unittest
-import textwrap
-import inspect
-import sys
 
 from beancount.parser import parsedoc
-from beancount.parser import parser, options
-from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price, Note
-from beancount.core.account import Account
 
 
 class TestOptions(unittest.TestCase):

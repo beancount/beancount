@@ -1,5 +1,4 @@
 from beancount.core.realization_test import realizedoc
-from beancount.core import data
 from beancount.parser import printer
 import unittest
 

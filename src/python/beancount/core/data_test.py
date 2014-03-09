@@ -1,12 +1,9 @@
 from datetime import date
 import unittest
-import re
 import datetime
 
 from beancount.core import data
 from beancount.core.amount import Amount, to_decimal
-from beancount.core.account import account_from_name
-from beancount.core import balance
 from beancount.core import flags
 from beancount.parser import parser
 
@@ -36,7 +33,7 @@ class TestData(unittest.TestCase):
     def test_create_simple_posting(self):
         entry = self.create_empty_transaction()
         posting = data.create_simple_posting(
-            entry, account_from_name('Assets:Bank:Checking'), '123.45', 'USD')
+            entry, 'Assets:Bank:Checking', '123.45', 'USD')
         self.assertTrue(isinstance(posting, data.Posting))
         self.assertTrue(entry.postings)
         self.assertEqual(entry.postings[0], posting)
@@ -44,7 +41,7 @@ class TestData(unittest.TestCase):
     def test_create_simple_posting_with_cost(self):
         entry = self.create_empty_transaction()
         posting = data.create_simple_posting_with_cost(
-            entry, account_from_name('Assets:Bank:Checking'), '100', 'MSFT', '123.45', 'USD')
+            entry, 'Assets:Bank:Checking', '100', 'MSFT', '123.45', 'USD')
         self.assertTrue(isinstance(posting, data.Posting))
         self.assertTrue(entry.postings)
         self.assertEqual(entry.postings[0], posting)
@@ -81,7 +78,7 @@ class TestData(unittest.TestCase):
     def test_reparent_posting(self):
         entry1 = self.create_empty_transaction()
         posting = data.create_simple_posting(
-            entry1, account_from_name('Assets:Bank:Checking'), '123.45', 'USD')
+            entry1, 'Assets:Bank:Checking', '123.45', 'USD')
         entry2 = self.create_empty_transaction()
         new_posting = data.reparent_posting(posting, entry2)
         self.assertTrue(isinstance(new_posting, data.Posting))
@@ -90,7 +87,7 @@ class TestData(unittest.TestCase):
     def test_posting_has_conversion(self):
         entry = self.create_empty_transaction()
         posting = data.create_simple_posting(
-            entry, account_from_name('Assets:Bank:Checking'), '123.45', 'USD')
+            entry, 'Assets:Bank:Checking', '123.45', 'USD')
         self.assertFalse(data.posting_has_conversion(posting))
         posting = posting._replace(price=Amount('153.02', 'CAD'))
         self.assertTrue(data.posting_has_conversion(posting))
@@ -98,7 +95,7 @@ class TestData(unittest.TestCase):
     def test_transaction_has_conversion(self):
         entry = self.create_empty_transaction()
         posting = data.create_simple_posting(
-            entry, account_from_name('Assets:Bank:Checking'), '123.45', 'USD')
+            entry, 'Assets:Bank:Checking', '123.45', 'USD')
         posting = posting._replace(price=Amount('153.02', 'CAD'))
         data.reparent_posting(posting, entry)
         entry.postings[0] = posting
@@ -107,13 +104,13 @@ class TestData(unittest.TestCase):
     def test_get_entry(self):
         entry = self.create_empty_transaction()
         posting = data.create_simple_posting(
-            entry, account_from_name('Assets:Bank:Checking'), '123.45', 'USD')
+            entry, 'Assets:Bank:Checking', '123.45', 'USD')
         self.assertEqual(data.get_entry(entry), entry)
         self.assertEqual(data.get_entry(posting), entry)
 
-    def create_sort_test_data(self):
+    def create_sort_data(self):
         FL = data.FileLocation
-        account = account_from_name('Assets:Bank:Checking')
+        account = 'Assets:Bank:Checking'
         date1 = date(2014, 1, 15)
         date2 = date(2014, 1, 18)
         date3 = date(2014, 1, 20)
@@ -135,12 +132,12 @@ class TestData(unittest.TestCase):
         for entry in entries:
             if isinstance(entry, data.Transaction):
                 posting = data.create_simple_posting(
-                    entry, account_from_name('Assets:Bank:Checking'), '123.45', 'USD')
+                    entry, 'Assets:Bank:Checking', '123.45', 'USD')
 
         return entries
 
     def test_entry_sortkey(self):
-        entries = self.create_sort_test_data()
+        entries = self.create_sort_data()
         sorted_entries = sorted(entries, key=data.entry_sortkey)
         self.assertEqual([data.Transaction,
                           data.Open,
@@ -155,7 +152,7 @@ class TestData(unittest.TestCase):
                           for entry in sorted_entries])
 
     def test_posting_sortkey(self):
-        entries = self.create_sort_test_data()
+        entries = self.create_sort_data()
         postings = [(entry.postings[0]
                      if isinstance(entry, data.Transaction)
                      else entry)
@@ -177,7 +174,7 @@ class TestData(unittest.TestCase):
     def test_filter_link(self):
         entry = self.create_empty_transaction()
         posting = data.create_simple_posting(
-            entry, account_from_name('Assets:Bank:Checking'), '123.45', 'USD')
+            entry, 'Assets:Bank:Checking', '123.45', 'USD')
         entries = [
             entry._replace(links=set()),
             entry._replace(links=None),

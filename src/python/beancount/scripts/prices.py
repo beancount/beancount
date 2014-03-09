@@ -12,7 +12,6 @@ import dateutil.parser
 import bs4
 
 from beancount.ops import prices
-from beancount.core import data
 from beancount.core.data import FileLocation, Price
 from beancount.core.amount import Decimal, Amount
 from beancount.parser import printer
@@ -65,9 +64,6 @@ def read_positions_from_beancount(filename):
     """
     entries, errors, options = load(filename, quiet=True)
     _, positions = prices.get_priced_positions(entries)
-    # Fixup for accounts, convert to account names.
-    for position in positions:
-        position['account'] = position['account'].name
     return positions
 
 
@@ -196,7 +192,7 @@ def main():
                 Price(fileloc, date, currency, Amount(price, cost_currency)))
 
     for entry in new_entries:
-        print(printer.format_entry(entry), end='')
+        sys.stdout.write(printer.format_entry(entry))
 
     for position in positions:
         curkey = (position['currency'], position['cost_currency'])

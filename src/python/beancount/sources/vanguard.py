@@ -1,7 +1,7 @@
 """
 Vanguard CSV file format, which is better than their OFX.
 
-PROBLEM:
+NOTE: This is incomplete.
 """
 import datetime
 import functools
@@ -10,12 +10,14 @@ import io
 from beancount.imports import importer
 from beancount.parser import printer
 from beancount.core import data
-from beancount.core.amount import to_decimal, Amount
-from beancount.core.data import Transaction, Balance
-from beancount.utils import DateIntervalTicker
+from beancount.core.amount import to_decimal
+from beancount.core.data import Transaction
 from beancount.utils import file_utils
 from beancount.utils import csv_utils
 from beancount.core import flags
+
+
+debugging = False
 
 
 class Importer(importer.ImporterBase):
@@ -32,8 +34,7 @@ class Importer(importer.ImporterBase):
     }
 
     def import_file(self, filename):
-
-        config = self.get_accountified_config()
+        config = self.get_config()
         new_entries = []
 
         # The input file has two sections; split it.
@@ -57,15 +58,17 @@ class Importer(importer.ImporterBase):
             entry = Transaction(fileloc, row.trade_date, flags.FLAG_IMPORT,
                                 None, row.transaction_description,
                                 None, None, [])
-            print(printer.format_entry(entry))
+            if debugging:
+                print(printer.format_entry(entry))
 
             # TODO(blais): Stopped here. I don't need to complete this, because
             # Vanguard does not include the source of the contribution! I want
             # to track the contribution source, so
 
         # Process the final positions.
-        for row in csv_utils.csv_tuple_reader(io.StringIO(positions)):
-            print(row)
+        if debugging:
+            for row in csv_utils.csv_tuple_reader(io.StringIO(positions)):
+                print(row)
 
     def get_symbol(self, name):
         return self.config['tickers'][name]

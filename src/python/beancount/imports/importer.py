@@ -4,7 +4,7 @@ Each importer must cmoply with this interface.
 """
 import logging
 
-from beancount.core.account import accountify_dict
+from beancount.core.account import is_account_name
 
 
 class ImporterBase:
@@ -40,14 +40,14 @@ class ImporterBase:
         """
         return self.config['FILE']
 
-    def get_accountified_config(self):
+    def get_config(self):
         """Return the user config, after converting account names to
         Account objects.
 
         Returns:
           A dict of the accountified config.
         """
-        return accountify_dict(self.config)
+        return self.config
 
     def file_rename(self, filename):
         """A filter that optionally renames a file before filing.
@@ -108,5 +108,7 @@ def verify_config(importer, config, required_config):
         logging.error("Unknown value in user configuration for importer {}: {}".format(
             importer.__class__.__name__, option))
         success = False
+
+    # FIXME: TODO - validate account names based on which ledger this is for?
 
     return success

@@ -1,15 +1,12 @@
 import unittest
-import re
-from collections import namedtuple
 import copy
 
 from beancount.core.balance import get_balance_amount
 from beancount.core.balance import compute_residual
 from beancount.core.balance import get_incomplete_postings
 from beancount.core.balance import balance_incomplete_postings
-from beancount.core.data import FileLocation, Posting, Transaction
+from beancount.core.data import FileLocation, Transaction
 from beancount.core.data import create_simple_posting, create_simple_posting_with_cost
-from beancount.core.account import account_from_name
 from beancount.core.amount import Amount
 from beancount.parser import parser
 
@@ -17,7 +14,6 @@ from beancount.parser import parser
 class TestBalance(unittest.TestCase):
 
     def test_get_balance_amount(self):
-        "Test the balance requirements."
 
         # Entry without cost, without price.
         posting = create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD")

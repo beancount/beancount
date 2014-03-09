@@ -10,15 +10,14 @@ import datetime
 
 from beancount.imports import importer
 from beancount.core import data
-from beancount.core.amount import to_decimal, Decimal, Amount, ZERO
-from beancount.core.account import account_from_name
+from beancount.core.amount import to_decimal, Decimal, Amount
 from beancount.core.data import create_simple_posting
 from beancount.core.data import Transaction, Posting, Pad, Balance
 from beancount.core.position import Lot, Position
 from beancount.utils import csv_utils
 from beancount.utils.text_utils import Matcher
-from beancount.core.account import accountify_dict
 from beancount.core import flags
+from beancount.core import account
 
 
 class Importer(importer.ImporterBase):
@@ -44,7 +43,7 @@ class Importer(importer.ImporterBase):
     def import_file(self, filename):
         """Import a CSV file from Think-or-Swim."""
 
-        config = self.get_accountified_config()
+        config = self.get_config()
         sections = csv_utils.csv_split_sections_with_titles(csv.reader(open(filename)))
         if 0:
             for section_name, rows in sections.items():
@@ -149,7 +148,7 @@ def process_cash(section, filename, config):
             symbol = matcher.mo.group(3)
             price_number = Decimal(matcher.mo.group(4))
 
-            account = account_from_name('{}:{}'.format(config['asset_position'].name, symbol))
+            account = account.join(config['asset_position'], symbol)
             price = Amount(price_number, cash_currency)
             position = Position(Lot(symbol, price, None), Decimal(quantity))
             if isbuy:

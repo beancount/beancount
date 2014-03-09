@@ -3,14 +3,13 @@ Web server for Beancount ledgers.
 This uses the Bottle single-file micro web framework (with no plugins).
 """
 import argparse
-import collections
 import datetime
 from os import path
 import io
 import logging
-import sys
 import time
 import threading
+import importlib
 
 import bottle
 from bottle import response, request
@@ -28,8 +27,8 @@ from beancount.core import realization
 from beancount.ops import prices
 from beancount import utils
 from beancount.utils.text_utils import replace_numbers
-from beancount.core.account import account_from_name
 from beancount.core.account import is_balance_sheet_account
+from beancount.core import account
 from beancount.loader import load
 from beancount.parser import parser
 from beancount.web import gviz
@@ -374,7 +373,8 @@ def favicon():
     return bottle.static_file('favicon.ico', path.dirname(__file__))
 
 
-@app.route('/doc/<filename:re:.*>', name='doc')
+doc_name = 'doc'
+@app.route('/doc/<filename:re:.*>', name=doc_name)
 def doc(filename=None):
     "Serve static filenames for documents directives."
 
@@ -575,7 +575,7 @@ def equity():
         view = request.view
 
         balance = summarize.compute_balance_for_prefix(view.closing_entries,
-                                                       view.options['name_equity'] + ':')
+                                                       '{}:'.format(view.options['name_equity']))
         header = io.StringIO()
         header.write('<th>Currency</th>\n')
         header.write('<th>Amount</th>\n')
@@ -626,33 +626,31 @@ def journal_():
 
 
 @viewapp.route('/account/<slashed_account_name:re:[^:]*>', name='account')
-def account(slashed_account_name=None):
+def account_(slashed_account_name=None):
     "A list of all the entries for this account realization."
 
     # Get the appropriate realization: if we're looking at the balance sheet, we
     # want to include the net-income transferred from the exercise period.
-    account_name = slashed_account_name.strip('/').replace('/', ':')
+    account_name = slashed_account_name.strip('/').replace('/', account.sep)
 
     if account_name:
-        account = account_from_name(account_name)
         options = app.options
-        if account_name and is_balance_sheet_account(account, options):
+        if account_name and is_balance_sheet_account(account_name, options):
             real_accounts = request.view.closing_real_accounts
         else:
             real_accounts = request.view.real_accounts
-        if account.name not in real_accounts:
+        if account_name not in real_accounts:
             raise bottle.HTTPError(404, "Not found.")
-        real_account = real_accounts[account.name]
+        real_account = real_accounts[account_name]
     else:
         real_account = request.view.real_accounts['']
-        account = None
 
     account_postings = realization.get_subpostings(real_account)
 
     oss = io.StringIO()
     journal.entries_table_with_balance(app, oss, account_postings)
     return render_view(
-        pagetitle = '{}'.format(account.name if account else 'ROOT'), # Account:
+        pagetitle = '{}'.format(account_name or 'ROOT'),
         contents = oss.getvalue())
 
 
@@ -827,7 +825,7 @@ def stats():
                     for entry in request.view.entries
                     if isinstance(entry, Transaction)
                     for posting in entry.postings]
-    postings_by_account = utils.groupby(lambda posting: posting.account.name,
+    postings_by_account = utils.groupby(lambda posting: posting.account,
                                         all_postings)
     nb_postings_by_account = {key: len(postings)
                               for key, postings in postings_by_account.items()}
@@ -1029,7 +1027,7 @@ def incognito(callback):
     return wrapper
 
 
-def run_app(filename, port, debug, do_incognito, no_source):
+def run_app(filename, port, debug, do_incognito, no_source, **kwargs):
     class args:
         pass
     args.filename = filename
@@ -1059,7 +1057,7 @@ def run_app(filename, port, debug, do_incognito, no_source):
 
     # Run the server.
     app.run(host='localhost', port=port,
-            debug=args.debug, reloader=False)
+            debug=args.debug, reloader=False, **kwargs)
 
 
 # The global server instance.
@@ -1119,14 +1117,13 @@ def main():
 
     args = argparser.parse_args()
 
-    # FIXME: To be tested.
-    for plugin in opts.plugins:
-        __import__(plugin)
+    for plugin_name in args.plugin:
+        importlib.import_module(plugin_name)
 
     run_app(args.filename, args.port, args.debug, args.incognito, args.no_source)
 
 
-def thread_server_start(filename, port):
+def thread_server_start(filename, port, **kwargs):
     """Start a server in a new thread.
 
     Args:
@@ -1137,7 +1134,8 @@ def thread_server_start(filename, port):
     """
     thread = threading.Thread(
         target=run_app,
-        args=(filename, port, False, False, False))
+        args=(filename, port, False, False, False),
+        kwargs=kwargs)
     thread.daemon = True # Automatically exit if the process comes dwn.
     thread.start()
 

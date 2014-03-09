@@ -1,14 +1,10 @@
 from datetime import date
 import unittest
 import re
-import datetime
 
 from beancount.parser import printer
 from beancount.core import data
-from beancount.core.amount import Amount, to_decimal
-from beancount.core.account import account_from_name
 from beancount.core import balance
-from beancount.core import flags
 
 
 FILELOC = data.FileLocation('beancount/core/testing.beancount', 12345)
@@ -23,7 +19,7 @@ class TestPrinter(unittest.TestCase):
         self.assertTrue(re.search(FILELOC.filename, fileloc_str))
 
     def test_format_errors(self):
-        entry = data.Open(FILELOC, date(2014, 1, 15), account_from_name('Assets:Bank:Checking'), [])
+        entry = data.Open(FILELOC, date(2014, 1, 15), 'Assets:Bank:Checking', [])
         errors = [balance.BalanceError(FILELOC, "Example balance error", entry)]
         errors_str = printer.format_errors(errors)
         self.assertTrue(isinstance(errors_str, str))
