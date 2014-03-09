@@ -281,7 +281,7 @@ def sanity_check_types(entry):
         for posting in entry.postings:
             assert isinstance(posting, Posting)
             assert posting.entry is entry
-            assert isinstance(posting.account, Account)
+            assert isinstance(posting.account, str)
             assert isinstance(posting.position, (Position, NoneType))
             assert isinstance(posting.price, (Amount, NoneType))
             assert isinstance(posting.flag, (str, NoneType))
