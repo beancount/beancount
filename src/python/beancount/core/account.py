@@ -25,20 +25,6 @@ def join(*components):
     return sep.join(components)
 
 
-def account_from_name(account_name):
-    """Create a new account solely from its name.
-
-    Args:
-      account_name: A string, the name of the account to create.
-    Returns:
-      An instance of Account, the account to be created.
-    """
-    assert isinstance(account_name, str)
-    atype = account_name_type(account_name)
-    assert atype in account_types.ACCOUNT_TYPES, "Invalid account type: {}".format(atype)
-    return account_name
-
-
 def account_name_parent(account_name):
     """Return the name of the parent account of the given account.
 
@@ -105,7 +91,7 @@ def is_account_name(string):
     Returns:
       A boolean, true if the string has the form of an account's name.
     """
-    return (isinstance(string, str) and 
+    return (isinstance(string, str) and
             bool(re.match(
                 '([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)+$', string)))
 

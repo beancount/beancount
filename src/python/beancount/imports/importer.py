@@ -4,7 +4,7 @@ Each importer must cmoply with this interface.
 """
 import logging
 
-from beancount.core.account import account_from_name, is_account_name
+from beancount.core.account import is_account_name
 
 
 class ImporterBase:
@@ -127,6 +127,7 @@ def accountify_dict(string_dict):
       A similar dictionary, whose value strings have been converted to instances of
       Account.
     """
-    return {key: account_from_name(value)
-            if isinstance(value, str) and is_account_name(value) else value
-            for key, value in string_dict.items()}
+    return string_dict
+
+# FIXME: We will need validation of account name validity as well.
+

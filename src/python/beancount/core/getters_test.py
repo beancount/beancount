@@ -87,7 +87,7 @@ class TestGetters(unittest.TestCase):
         self.assertEqual(5, len(ocmap))
 
         def mapfound(account_name):
-            open, close = ocmap[account.account_from_name(account_name)]
+            open, close = ocmap[account_name]
             return (open is not None, close is not None)
 
         self.assertEqual(mapfound('Assets:US:Cash'), (True, True))

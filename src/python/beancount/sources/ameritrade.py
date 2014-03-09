@@ -13,7 +13,6 @@ from beancount.core import data
 from beancount.core.amount import Decimal, Amount
 from beancount.core.data import create_simple_posting
 from beancount.core.data import Posting, Transaction, Balance
-from beancount.core.account import account_from_name
 from beancount.core.position import Lot, Position
 from beancount.utils import csv_utils
 from beancount.core import flags
@@ -147,7 +146,7 @@ class Importer(importer.ImporterBase):
 
             elif re.match('Bought ([^ ]+) ([^ ]+) @ ([^ ]+)', row.description):
 
-                account = account_from_name(account.join(config['asset_position'], row.symbol))
+                account = account.join(config['asset_position'], row.symbol)
                 cost = Amount(row.price, cash_currency)
                 position = Position(Lot(row.symbol, cost, None), Decimal(row.quantity))
                 posting = Posting(entry, account, position, None, None)

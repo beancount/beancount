@@ -33,7 +33,6 @@ from beancount.core.data import create_simple_posting
 from beancount.core.data import create_simple_posting_with_cost
 from beancount.core.data import Posting, Transaction
 from beancount.core.data import FileLocation
-from beancount.core.account import account_from_name
 from beancount.core.position import Position
 from beancount.core import flags
 from beancount.core import account
@@ -102,8 +101,7 @@ class Importer(importer.ImporterBase):
 
                 # Figure out an account for the position.
                 if row.symbol:
-                    account_position = account_from_name(
-                        account.join(config['positions'], row.symbol))
+                    account_position = account.join(config['positions'], row.symbol)
 
                 # Add relevant postings.
                 extra_narration = []

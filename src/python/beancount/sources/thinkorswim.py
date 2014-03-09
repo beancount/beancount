@@ -11,7 +11,6 @@ import datetime
 from beancount.imports import importer
 from beancount.core import data
 from beancount.core.amount import to_decimal, Decimal, Amount
-from beancount.core.account import account_from_name
 from beancount.core.data import create_simple_posting
 from beancount.core.data import Transaction, Posting, Pad, Balance
 from beancount.core.position import Lot, Position
@@ -149,7 +148,7 @@ def process_cash(section, filename, config):
             symbol = matcher.mo.group(3)
             price_number = Decimal(matcher.mo.group(4))
 
-            account = account_from_name(account.join(config['asset_position'], symbol))
+            account = account.join(config['asset_position'], symbol)
             price = Amount(price_number, cash_currency)
             position = Position(Lot(symbol, price, None), Decimal(quantity))
             if isbuy:

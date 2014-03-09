@@ -4,7 +4,6 @@ import re
 
 from beancount.parser import printer
 from beancount.core import data
-from beancount.core.account import account_from_name
 from beancount.core import balance
 
 
@@ -20,7 +19,7 @@ class TestPrinter(unittest.TestCase):
         self.assertTrue(re.search(FILELOC.filename, fileloc_str))
 
     def test_format_errors(self):
-        entry = data.Open(FILELOC, date(2014, 1, 15), account_from_name('Assets:Bank:Checking'), [])
+        entry = data.Open(FILELOC, date(2014, 1, 15), 'Assets:Bank:Checking', [])
         errors = [balance.BalanceError(FILELOC, "Example balance error", entry)]
         errors_str = printer.format_errors(errors)
         self.assertTrue(isinstance(errors_str, str))

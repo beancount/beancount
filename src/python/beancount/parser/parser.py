@@ -13,9 +13,9 @@ from os import path
 
 from beancount.parser import _parser
 from beancount.parser import options
-from beancount.core.account import account_from_name
 from beancount.core.account_types import AccountTypes
 from beancount.core import account
+from beancount.core.account import account_name_type
 from beancount.core import account_types
 from beancount.core import data
 from beancount.core.amount import ZERO, Decimal, Amount, amount_div
@@ -40,14 +40,9 @@ def get_previous_accounts(options):
 
     equity = options['name_equity']
 
-    account_previous_earnings = account_from_name(
-        account.join(equity, options['account_previous_earnings']))
-
-    account_previous_balances = account_from_name(
-        account.join(equity, options['account_previous_balances']))
-
-    account_previous_conversions = account_from_name(
-        account.join(equity, options['account_previous_conversions']))
+    account_previous_earnings = account.join(equity, options['account_previous_earnings'])
+    account_previous_balances = account.join(equity, options['account_previous_balances'])
+    account_previous_conversions = account.join(equity, options['account_previous_conversions'])
 
     return (account_previous_earnings,
             account_previous_balances,
@@ -66,11 +61,8 @@ def get_current_accounts(options):
 
     equity = options['name_equity']
 
-    account_current_earnings = account_from_name(
-        account.join(equity, options['account_current_earnings']))
-
-    account_current_conversions = account_from_name(
-        account.join(equity, options['account_current_conversions']))
+    account_current_earnings = account.join(equity, options['account_current_earnings'])
+    account_current_conversions = account.join(equity, options['account_current_conversions'])
 
     return (account_current_earnings,
             account_current_conversions)
@@ -200,15 +192,22 @@ class Builder(object):
             fileloc = FileLocation('<ACCOUNT>', 0)
             self.errors.append(
                 ParserError(fileloc, "Invalid account name: {}".format(account_name), None))
-            return account_from_name('{}:InvalidAccoutName'.format(self.options['name_equity']))
+            return account.join(self.options['name_equity'], 'InvalidAccountName')
 
-        # Create an account, reusing them as we go.
+        # Check account type validity.
+        account_type = account_name_type(account_name)
+        if account_type not in account_types.ACCOUNT_TYPES:
+            self.errors.append(
+                ParserError(fileloc, "Invalid account type for: {}".format(account_name), None))
+            return account.join(self.options['name_equity'], 'InvalidAccountType')
+
+        # Create an account, reusing their strings as we go.
         try:
-            account = self.accounts[account_name]
+            account_name = self.accounts[account_name]
         except KeyError:
-            account = account_from_name(account_name)
-            self.accounts[account_name] = account
-        return account
+            self.accounts[account_name] = account_name
+
+        return account_name
 
     def CURRENCY(self, currency_name):
         """Process a CURRENCY token.
