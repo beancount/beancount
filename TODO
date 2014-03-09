@@ -19,12 +19,6 @@ beancount: TODO
   - Clean up code: remove all significant codes from __init__.py files.
   - Fix all FIXMEs everywhere.
 
-  - Deal with these:
-
-      bean-prices                | MOVE TO ledgerhub
-      bean-remove-crdb           | MOVE TO ledgerhub
-      bean-import                | MOVE TO ledgerhub
-
   - Something's wrong with this page: currencies are wrong I think - http://localhost:8080/view/year/2014/conversions
 
   - Add __author__ to all files?
