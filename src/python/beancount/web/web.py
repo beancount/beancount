@@ -9,6 +9,7 @@ import io
 import logging
 import time
 import threading
+import importlib
 
 import bottle
 from bottle import response, request
@@ -372,7 +373,8 @@ def favicon():
     return bottle.static_file('favicon.ico', path.dirname(__file__))
 
 
-@app.route('/doc/<filename:re:.*>', name='doc')
+doc_name = 'doc'
+@app.route('/doc/<filename:re:.*>', name=doc_name)
 def doc(filename=None):
     "Serve static filenames for documents directives."
 
@@ -624,7 +626,7 @@ def journal_():
 
 
 @viewapp.route('/account/<slashed_account_name:re:[^:]*>', name='account')
-def account(slashed_account_name=None):
+def account_(slashed_account_name=None):
     "A list of all the entries for this account realization."
 
     # Get the appropriate realization: if we're looking at the balance sheet, we
@@ -642,7 +644,6 @@ def account(slashed_account_name=None):
         real_account = real_accounts[account_name]
     else:
         real_account = request.view.real_accounts['']
-        account = None
 
     account_postings = realization.get_subpostings(real_account)
 
@@ -824,7 +825,7 @@ def stats():
                     for entry in request.view.entries
                     if isinstance(entry, Transaction)
                     for posting in entry.postings]
-    postings_by_account = utils.groupby(lambda posting: posting.account.name,
+    postings_by_account = utils.groupby(lambda posting: posting.account,
                                         all_postings)
     nb_postings_by_account = {key: len(postings)
                               for key, postings in postings_by_account.items()}
@@ -1116,9 +1117,8 @@ def main():
 
     args = argparser.parse_args()
 
-    # FIXME: To be tested.
-    for plugin in opts.plugins:
-        __import__(plugin)
+    for plugin_name in args.plugin:
+        importlib.import_module(plugin_name)
 
     run_app(args.filename, args.port, args.debug, args.incognito, args.no_source)
 

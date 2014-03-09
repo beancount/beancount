@@ -12,19 +12,21 @@ from os import path
 from beancount.web import web
 
 
-def bake_to_directory(filename, output, port, quiet=False):
+def bake_to_directory(filename, output, port,
+                      quiet_subproc=False, quiet_server=False):
     """Serve and bake a Beancount's web to a directory.
 
     Args:
       filename: A string, the beancount input filename.
       output: A directory name. We don't check here whether it exists or not.
       port: The port to use for the server while it's running.
-      quiet: A boolean, True to suppress output.
+      quiet_subproc: A boolean, True to suppress output from the subprocesses.
+      quiet_server: A boolean, True to suppress output from the web server.
     Returns:
       True on success, False otherwise.
     """
     # Start a server thread locally.
-    thread = web.thread_server_start(filename, port, quiet=quiet)
+    thread = web.thread_server_start(filename, port, quiet=quiet_server)
 
     # Define a command that will run and convert all the links to work in a
     # local mirror of the server (your accountant!) so a user can browse the
@@ -37,13 +39,14 @@ def bake_to_directory(filename, output, port, quiet=False):
                '--convert-links',
                '--html-extension',
                '--waitretry=0.05',
+               '--exclude-directories=/{}/'.format(web.doc_name),
                url,
                '--directory-prefix', output]
 
     p = subprocess.Popen(command,
                          shell=False,
-                         stdout=subprocess.PIPE if quiet else None,
-                         stderr=subprocess.PIPE if quiet else None)
+                         stdout=subprocess.PIPE if quiet_subproc else None,
+                         stderr=subprocess.PIPE if quiet_subproc else None)
     _, _ = p.communicate()
 
     # Shutdown the server thread.
@@ -70,7 +73,10 @@ def archive_targz(directory, archive_name, quiet=False):
         raise IOError("Output archive name '{}' already exists".format(
             archive_name))
 
-    p = subprocess.Popen(['tar', 'zcvf', archive_name, directory],
+    p = subprocess.Popen(['tar',
+                          '-C', path.dirname(directory),
+                          '-zcvf', archive_name,
+                          path.basename(directory)],
                          shell=False,
                          stdout=subprocess.PIPE if quiet else None,
                          stderr=subprocess.PIPE if quiet else None)
@@ -122,8 +128,13 @@ def main():
 
     parser.add_argument('--verbose', action='store_true',
                         help="Let subcommand output through.")
+    parser.add_argument('--quiet', action='store_true',
+                        help="Don't even print out web server log")
 
     opts = parser.parse_args()
+
+    if opts.verbose and opts.quiet:
+        parser.error("Invalid options, cannot specify both --verbose and --quiet")
 
     # Figure out the directory to actually bake to, regardless of whether we
     # archive later on.
@@ -141,8 +152,10 @@ def main():
         raise SystemExit("ERROR: Missing input file '{}'".format(opts.filename))
     if path.exists(opts.output):
         raise SystemExit("ERROR: Output path already exists '{}'".format(opts.output))
+    if path.exists(output_directory):
+        raise SystemExit("ERROR: Output directory already exists '{}'".format(output_directory))
 
-    baked = bake_to_directory(opts.filename, output_directory, opts.port, not opts.verbose)
+    baked = bake_to_directory(opts.filename, output_directory, opts.port, not opts.verbose, opts.quiet)
     if not baked:
         raise SystemExit("ERROR: Error baking into directory '{}'".format(
             output_directory))

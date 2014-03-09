@@ -147,7 +147,7 @@ class Importer(importer.ImporterBase):
 
             elif re.match('Bought ([^ ]+) ([^ ]+) @ ([^ ]+)', row.description):
 
-                account = account_from_name(account.join(config['asset_position'].name, row.symbol))
+                account = account_from_name(account.join(config['asset_position'], row.symbol))
                 cost = Amount(row.price, cash_currency)
                 position = Position(Lot(row.symbol, cost, None), Decimal(row.quantity))
                 posting = Posting(entry, account, position, None, None)

@@ -196,17 +196,17 @@ def realize(entries):
         if isinstance(entry, Transaction):
             # Update the balance inventory for each of the postings' accounts.
             for posting in entry.postings:
-                real_account = append_entry_to_real_account(real_dict, posting.account.name, posting)
+                real_account = append_entry_to_real_account(real_dict, posting.account, posting)
                 real_account.balance.add_position(posting.position, allow_negative=True)
 
         elif isinstance(entry, (Open, Close, Balance, Note, Document)):
             # Append some other entries in the realized list.
-            append_entry_to_real_account(real_dict, entry.account.name, entry)
+            append_entry_to_real_account(real_dict, entry.account, entry)
 
         elif isinstance(entry, Pad):
             # Insert the pad entry in both realized accounts.
-            append_entry_to_real_account(real_dict, entry.account.name, entry)
-            append_entry_to_real_account(real_dict, entry.account_pad.name, entry)
+            append_entry_to_real_account(real_dict, entry.account, entry)
+            append_entry_to_real_account(real_dict, entry.account_pad, entry)
 
     return create_real_accounts_tree(real_dict)
 

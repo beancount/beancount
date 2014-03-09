@@ -106,7 +106,7 @@ class Importer(importer.ImporterBase):
                         position = Position(Lot(security, Amount(unitprice, currency), None), units)
 
                         account = account_from_name(account.join(
-                            source_subaccounts[source].name, security))
+                            source_subaccounts[source], security))
                         entry.postings.append(Posting(entry, account, position, None, None))
 
                         if total is None:
@@ -137,7 +137,7 @@ class Importer(importer.ImporterBase):
                                 continue
 
                             account = account_from_name(account.join(
-                                source_subaccounts[source].name, security))
+                                source_subaccounts[source], security))
 
                             amount = Amount(units, security)
                             new_entries.append(Balance(fileloc, date, account, amount, None))

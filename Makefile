@@ -99,16 +99,22 @@ showdeps-core: build/beancount-core.pdf
 
 
 # Figure out dependencies of the code that needs to move out to form ledgerhub.
-build/ledgerhub.pdf: 
+build/ledgerhub.pdf:
 	(cd src/python/beancount && sfood -i sources imports ops/dups.py scripts/import_driver.py scripts/prices.py scripts/remove_crdb.py) | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
 
-build/account.deps: 
+build/account.deps:
 	(cd src/python/beancount && sfood -i sources imports ops/dups.py scripts/import_driver.py scripts/prices.py scripts/remove_crdb.py) | grep account.py
 
-P=src/python/beancount
-build/account.grep: 
-	grep --include="*.py" -srnE '(\bimport\b.*account|account.*\bimport\b)' $(P)/sources $(P)/imports $(P)/ops/dups.py $(P)/scripts/import_driver.py $(P)/scripts/prices.py $(P)/scripts/remove_crdb.py
 
+GREP="grep --include="*.py" -srnE"
+SRC=src/python/beancount
+build/account.grep:
+	$(GREP) '(\bimport\b.*account|account.*\bimport\b)' $(SRC)/sources $(SRC)/imports $(SRC)/ops/dups.py $(SRC)/scripts/import_driver.py $(SRC)/scripts/prices.py $(SRC)/scripts/remove_crdb.py
+
+grep-account:
+	$(GREP) 'account.*\.(name|type)'  $(SRC)
+	$(GREP) 'account_from_name'  $(SRC)
+	$(GREP) '\bAccount\b'  $(SRC)
 
 
 # Run in the debugger.

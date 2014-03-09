@@ -149,7 +149,7 @@ def process_cash(section, filename, config):
             symbol = matcher.mo.group(3)
             price_number = Decimal(matcher.mo.group(4))
 
-            account = account_from_name(account.join(config['asset_position'].name, symbol))
+            account = account_from_name(account.join(config['asset_position'], symbol))
             price = Amount(price_number, cash_currency)
             position = Position(Lot(symbol, price, None), Decimal(quantity))
             if isbuy:

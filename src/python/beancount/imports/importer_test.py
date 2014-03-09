@@ -13,7 +13,7 @@ class TestAccount(unittest.TestCase):
                          "391bb475127e": "Expenses:Toys:Computer"}
         newdict = importer.accountify_dict(accvalue_dict)
         self.assertTrue(isinstance(newdict, dict))
-        self.assertEqual("Income:US:Intel", newdict["421833fa2cb9"].name)
+        self.assertEqual("Income:US:Intel", newdict["421833fa2cb9"])
 
 
 __incomplete__ = True  ## You need to update the tests for new changes in account.py

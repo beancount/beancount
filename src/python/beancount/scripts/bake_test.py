@@ -14,8 +14,7 @@ newport = itertools.count(9470)
 class TestScriptBake(TestCase):
 
     def setUp(self):
-        self.args = ['--port', str(next(newport))]
-        #self.args += ['--verbose']
+        self.args = ['--quiet', '--port', str(next(newport))]
 
     def test_path_greedy_split(self):
         self.assertEqual(('/tmp/tmp.ju3h4h/blabla', None),
@@ -45,6 +44,12 @@ class TestScriptBake(TestCase):
         with tempdir() as tmpdir:
             with self.assertRaises(SystemExit):
                 output = path.join(tmpdir, 'output')
+                os.mkdir(output)
+                run_with_args(bake.main, self.args + [filename, output])
+
+        with tempdir() as tmpdir:
+            with self.assertRaises(SystemExit):
+                output = path.join(tmpdir, 'output.tar.gz')
                 os.mkdir(output)
                 run_with_args(bake.main, self.args + [filename, output])
 

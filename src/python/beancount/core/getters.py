@@ -22,11 +22,12 @@ class GetAccounts:
         Returns:
           A list of Account instances.
         """
+        # FIXME: Convert this to a set().
         accounts = {}
         for entry in entries:
             method = getattr(self, entry.__class__.__name__)
             for account in method(entry):
-                accounts[account.name] = account
+                accounts[account] = account
         return accounts
 
     def Transaction(_, entry):

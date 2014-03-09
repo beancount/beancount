@@ -64,9 +64,6 @@ def read_positions_from_beancount(filename):
     """
     entries, errors, options = load(filename, quiet=True)
     _, positions = prices.get_priced_positions(entries)
-    # Fixup for accounts, convert to account names.
-    for position in positions:
-        position['account'] = position['account'].name
     return positions
 
 

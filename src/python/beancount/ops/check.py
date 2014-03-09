@@ -41,7 +41,7 @@ def check(entries):
                 except ValueError as e:
                     check_errors.append(
                         BalanceError(entry.fileloc,
-                                   "Error balancing '{}' -- {}".format(posting.account.name, e),
+                                   "Error balancing '{}' -- {}".format(posting.account, e),
                                    entry))
 
         elif isinstance(entry, Balance):
@@ -55,9 +55,9 @@ def check(entries):
                 # balances for all the sub-accounts. We want to support checks
                 # for parent accounts for the total sum of their subaccounts.
                 balance = Inventory()
-                match = lambda account_name: account_name.startswith(entry.account.name)
+                match = lambda account_name: account_name.startswith(entry.account)
                 for account, balance_account in balances.items():
-                    if match(account.name):
+                    if match(account):
                         balance += balance_account
             balance_amount = balance.get_amount(check_amount.currency)
 
@@ -66,7 +66,7 @@ def check(entries):
                 check_errors.append(
                     BalanceError(entry.fileloc,
                                "Balance failed for '{}': {} != {} (diff: {})".format(
-                                   entry.account.name, balance_amount, check_amount,
+                                   entry.account, balance_amount, check_amount,
                                    amount_sub(balance_amount, check_amount)),
                                entry))
 

@@ -31,7 +31,7 @@ def find_duplicate_entries(new_entries, entries):
         new_amounts = collections.defaultdict(Decimal)
         for posting in new_entry.postings:
             number = posting.position.number if posting.position else 0
-            new_amounts[posting.account.name] += number
+            new_amounts[posting.account] += number
 
         # Iterate over the window dates.
         for date in utils.iter_dates(new_entry.date - window_size,
@@ -47,7 +47,7 @@ def find_duplicate_entries(new_entries, entries):
                 # Compute a mapping of accounts -> total amounts.
                 amounts = collections.defaultdict(Decimal)
                 for posting in entry.postings:
-                    amounts[posting.account.name] += posting.position.number
+                    amounts[posting.account] += posting.position.number
 
                 # Look for amounts on common accounts.
                 for new_account, new_amount in new_amounts.items():

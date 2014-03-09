@@ -103,7 +103,7 @@ class Importer(importer.ImporterBase):
                 # Figure out an account for the position.
                 if row.symbol:
                     account_position = account_from_name(
-                        account.join(config['positions'].name, row.symbol))
+                        account.join(config['positions'], row.symbol))
 
                 # Add relevant postings.
                 extra_narration = []

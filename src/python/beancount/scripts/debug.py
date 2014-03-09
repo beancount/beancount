@@ -33,12 +33,12 @@ def do_list_accounts(filename):
     open_close = getters.get_account_open_close(entries)
 
     # Render to stdout.
-    maxlen = max(len(account.name) for account in open_close)
+    maxlen = max(len(account) for account in open_close)
     for account, (open, close) in sorted(open_close.items(),
-                                         key=lambda x: account_name_sortkey(x[0].name)):
+                                         key=lambda x: account_name_sortkey(x[0])):
         open_date = open.date if open else ''
         close_date = close.date if close else ''
-        print('{:{len}}  {}  {}'.format(account.name, open_date, close_date, len=maxlen))
+        print('{:{len}}  {}  {}'.format(account, open_date, close_date, len=maxlen))
 
 
 def do_print_trial(filename):

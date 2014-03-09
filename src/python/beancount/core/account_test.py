@@ -5,11 +5,6 @@ from beancount.core.account import *
 
 class TestAccount(unittest.TestCase):
 
-    def test_ctor(self):
-        account = Account("Expenses:Toys:Computer", 'Expenses')
-        self.assertEqual("Expenses:Toys:Computer", account.name)
-        self.assertEqual("Expenses", account.type)
-
     def test_account_join(self):
         account_name = join("Expenses", "Toys", "Computer")
         self.assertEqual("Expenses:Toys:Computer", account_name)
@@ -19,11 +14,6 @@ class TestAccount(unittest.TestCase):
 
         account_name = join()
         self.assertEqual("", account_name)
-
-    def test_account_from_name(self):
-        account = account_from_name("Expenses:Toys:Computer")
-        self.assertEqual("Expenses:Toys:Computer", account.name)
-        self.assertEqual("Expenses", account.type)
 
     def test_account_name_parent(self):
         self.assertEqual("Expenses:Toys", account_name_parent("Expenses:Toys:Computer"))

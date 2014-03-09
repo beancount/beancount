@@ -14,10 +14,6 @@ from beancount.core import account_types
 sep = ':'
 
 
-# A type used to represent an account read in.
-Account = namedtuple('Account', 'name type')
-
-
 def join(*components):
     """Join the names with the account separator.
 
@@ -40,7 +36,7 @@ def account_from_name(account_name):
     assert isinstance(account_name, str)
     atype = account_name_type(account_name)
     assert atype in account_types.ACCOUNT_TYPES, "Invalid account type: {}".format(atype)
-    return Account(account_name, atype)
+    return account_name
 
 
 def account_name_parent(account_name):
@@ -109,8 +105,9 @@ def is_account_name(string):
     Returns:
       A boolean, true if the string has the form of an account's name.
     """
-    return bool(re.match(
-        '([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)+$', string))
+    return (isinstance(string, str) and 
+            bool(re.match(
+                '([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)+$', string)))
 
 
 def is_account_name_root(account_name):

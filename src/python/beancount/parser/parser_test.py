@@ -7,7 +7,6 @@ import inspect
 from beancount.parser import parsedoc
 from beancount.parser import parser, options
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price, Note
-from beancount.core.account import Account
 from beancount.core.amount import Amount
 
 
@@ -38,13 +37,13 @@ class TestParserMisc(unittest.TestCase):
         options_ = options.DEFAULT_OPTIONS.copy()
         result = parser.get_previous_accounts(options_)
         self.assertEquals(3, len(result))
-        self.assertTrue(all(isinstance(x, Account) for x in result))
+        self.assertTrue(all(isinstance(x, str) for x in result))
 
     def test_get_current_accounts(self):
         options_ = options.DEFAULT_OPTIONS.copy()
         result = parser.get_current_accounts(options_)
         self.assertEquals(2, len(result))
-        self.assertTrue(all(isinstance(x, Account) for x in result))
+        self.assertTrue(all(isinstance(x, str) for x in result))
 
 
 class TestParserEntries(unittest.TestCase):

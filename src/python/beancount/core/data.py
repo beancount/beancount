@@ -4,7 +4,7 @@ import datetime
 from collections import namedtuple
 
 from beancount.core.amount import Amount, Decimal, to_decimal
-from beancount.core.account import Account, account_from_name
+from beancount.core.account import account_from_name
 from beancount.core.position import Position, create_position
 
 
