@@ -26,7 +26,7 @@ class Importer(importer.ImporterBase):
     def import_file(self, filename):
         """Import a Google AdSense file."""
 
-        config = self.get_accountified_config()
+        config = self.get_config()
         new_entries = []
 
         currency = config['cash_currency']

@@ -34,7 +34,7 @@ class Importer(importer.ImporterBase):
     }
 
     def import_file(self, filename):
-        config = self.get_accountified_config()
+        config = self.get_config()
         new_entries = []
 
         # The input file has two sections; split it.

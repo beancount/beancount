@@ -50,7 +50,7 @@ class Importer(importer.ImporterBase):
     def import_file(self, filename):
         """Import a CSV file from Ameritrade."""
 
-        config = self.get_accountified_config()
+        config = self.get_config()
         new_entries = []
 
         cash_currency = config['cash_currency']

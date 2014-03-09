@@ -31,7 +31,7 @@ class Importer(importer.ImporterBase):
         given account. This function returns a list of entries possibly partially
         filled entries.
         """
-        config = self.get_accountified_config()
+        config = self.get_config()
 
         # Prepare mappings to accounts from the config provided.
         source_subaccounts = {

@@ -30,7 +30,7 @@ class Importer(importer.ImporterBase):
     def import_file(self, filename):
         """Import a PayPal CSV file."""
 
-        config = self.get_accountified_config()
+        config = self.get_config()
         new_entries = []
 
         # Read and reverse the entire file, it's ordered wrong.

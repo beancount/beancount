@@ -55,7 +55,7 @@ class Importer(importer.ImporterBase):
     def import_file(self, filename):
         """Import an Excel file from RBC Direct Investing's Activity Statement."""
 
-        config = self.get_accountified_config()
+        config = self.get_config()
         new_entries = []
 
         # Tidy up the Excel filenames from RBC.

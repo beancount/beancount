@@ -33,7 +33,7 @@ class Importer(importer.ImporterBase):
         given account. This function returns a list of entries possibly partially
         filled entries.
         """
-        config = self.get_accountified_config()
+        config = self.get_config()
 
         # Attempt to get an account from the ledger entries.
         account_asset = config['asset']

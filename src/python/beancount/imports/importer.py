@@ -40,14 +40,14 @@ class ImporterBase:
         """
         return self.config['FILE']
 
-    def get_accountified_config(self):
+    def get_config(self):
         """Return the user config, after converting account names to
         Account objects.
 
         Returns:
           A dict of the accountified config.
         """
-        return accountify_dict(self.config)
+        return self.config
 
     def file_rename(self, filename):
         """A filter that optionally renames a file before filing.
@@ -109,25 +109,6 @@ def verify_config(importer, config, required_config):
             importer.__class__.__name__, option))
         success = False
 
+    # FIXME: TODO - validate account names based on which ledger this is for?
+
     return success
-
-
-# This will go away once we just convert to strings.
-def accountify_dict(string_dict):
-    """Convert the dictionary items that have values which are account names into
-    Account instances. This is a simple core convenience designed to be used by the
-    importers, so that configurations can be specified in terms of strings, like this:
-
-       {'asset': 'Assets:US:Checking', <---- See how this is just a string.
-        ...}
-
-    Args:
-      string_dict: A dictionary of keys (whichever type) to strings.
-    Returns:
-      A similar dictionary, whose value strings have been converted to instances of
-      Account.
-    """
-    return string_dict
-
-# FIXME: We will need validation of account name validity as well.
-

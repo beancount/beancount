@@ -36,7 +36,7 @@ class Importer(importer.ImporterBase):
     def import_file(self, filename):
         """Import a CSV file from Think-or-Swim."""
 
-        config = self.get_accountified_config()
+        config = self.get_config()
         sections = csv_utils.csv_split_sections_with_titles(csv.reader(open(filename)))
         if 0:
             for section_name, rows in sections.items():

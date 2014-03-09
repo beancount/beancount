@@ -34,7 +34,7 @@ class Importer(importer.ImporterBase):
     def import_file(self, filename):
         """Import an HTML dump of HSBC's transaction list."""
 
-        config = self.get_accountified_config()
+        config = self.get_config()
 
         new_entries = []
         for index, hsbc_entry in enumerate(extract_transactions_xhtml(filename)):

@@ -32,7 +32,7 @@ class Importer(importer.ImporterBase):
     }
 
     def import_file(self, filename):
-        config = self.get_accountified_config()
+        config = self.get_config()
         return import_csv_file(filename, config)
 
 
