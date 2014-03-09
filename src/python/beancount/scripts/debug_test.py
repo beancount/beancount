@@ -42,3 +42,41 @@ class TestScriptDebug(TestCase):
             EOL               8 '\\n'
         """
         self.assertLines(expected_output, stdout.getvalue())
+
+    @docfile
+    def test_list_accounts(self, filename):
+        """
+        2013-01-01 open Expenses:Restaurant
+        2013-01-01 open Assets:Cash
+
+        2014-03-02 * "Something"
+          Expenses:Restaurant   50.02 USD
+          Assets:Cash
+        """
+        with capture() as stdout:
+            run_with_args(debug.main, ['--list-accounts', filename])
+
+        r = self.assertLines("""
+            Assets:Cash          2013-01-01
+            Expenses:Restaurant  2013-01-01
+        """, stdout.getvalue())
+
+    @docfile
+    def test_print_trial(self, filename):
+        """
+        2013-01-01 open Expenses:Restaurant
+        2013-01-01 open Assets:Cash
+
+        2014-03-02 * "Something"
+          Expenses:Restaurant   50.02 USD
+          Assets:Cash
+        """
+        with capture() as stdout:
+            run_with_args(debug.main, ['--print-trial', filename])
+        output = stdout.getvalue()
+        self.assertLines("""
+            |-- Assets
+            |   `-- Cash               -50.02 USD
+            `-- Expenses
+                `-- Restaurant          50.02 USD
+            """, output)

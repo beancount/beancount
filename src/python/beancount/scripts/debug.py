@@ -4,8 +4,69 @@ This tool is able to dump lexer/parser state, and will provide other services in
 the name of debugging.
 """
 import sys
+import io
 import argparse
+
 from beancount.parser.parser import dump_lexer
+from beancount.core.account import account_sortkey
+from beancount.core import getters
+from beancount.core import realization
+from beancount import loader
+
+
+def do_dump_lexer(filename):
+    """Dump the lexer output for a Beancount syntax file.
+
+    Args:
+      filename: A string, the Beancount input filename.
+    """
+    dump_lexer(filename, sys.stdout)
+
+
+def do_list_accounts(filename):
+    """Dump the lexer output for a Beancount syntax file.
+
+    Args:
+      filename: A string, the Beancount input filename.
+    """
+    # Load the input file and gather the open/close directives.
+    entries, errors, options = loader.load(filename, quiet=True)
+    open_close = getters.get_account_open_close(entries)
+
+    # Render to stdout.
+    maxlen = max(len(account.name) for account in open_close)
+    for account, (open, close) in sorted(open_close.items(), key=lambda x: account_sortkey(x[0])):
+        open_date = open.date if open else ''
+        close_date = close.date if close else ''
+        print('{:{len}}  {}  {}'.format(account.name, open_date, close_date, len=maxlen))
+
+
+def do_print_trial(filename):
+    """Render and print the trial balance for a ledger.
+
+    Args:
+      filename: A string, the Beancount input filename.
+    """
+    # Load the file, realize it, and dump the accounts tree.
+    entries, errors, options = loader.load(filename, do_print_errors=True)
+    real_accounts = realization.realize(entries)
+    realization.dump_tree_balances(real_accounts)
+
+
+def first_doc_sentence(object_):
+    """Return the first sentence of a docstring.
+
+    Args:
+      object_: An object, that has a docstring attached to it.
+    Returns: 
+      A string with just the first sentence on a single line.
+    """
+    lines = []
+    for line in object_.__doc__.strip().splitlines():
+        if not line:
+            break
+        lines.append(line.rstrip())
+    return ' '.join(lines)
 
 
 def main():
@@ -13,12 +74,23 @@ def main():
     parser.add_argument('filename', help='Beancount input filename.')
 
     parser.add_argument('--dump-lexer', action='store_true',
-                        help="Dump the lexers for a beancount input.")
+                        help=first_doc_sentence(do_dump_lexer))
+
+    parser.add_argument('--list-accounts', action='store_true',
+                        help=first_doc_sentence(do_list_accounts))
+
+    parser.add_argument('--print-trial', action='store_true',
+                        help=first_doc_sentence(do_print_trial))
 
     opts = parser.parse_args()
 
+    # Dispatch the debugging commands.
     if opts.dump_lexer:
-        dump_lexer(opts.filename, sys.stdout)
+        do_dump_lexer(opts.filename)
+    if opts.list_accounts:
+        do_list_accounts(opts.filename)
+    if opts.print_trial:
+        do_print_trial(opts.filename)
 
 
 if __name__ == '__main__':
