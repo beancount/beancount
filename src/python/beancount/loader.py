@@ -107,6 +107,7 @@ def loaddoc(fun):
         contents = textwrap.dedent(fun.__doc__)
         entries, errors, options = load(contents, parse_method='string', quiet=True)
         return fun(self, entries, errors, options)
+    wrapper.__doc__ = None
     return wrapper
 
 

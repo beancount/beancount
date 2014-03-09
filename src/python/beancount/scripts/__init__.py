@@ -72,6 +72,7 @@ def docfile(function):
             f.write(textwrap.dedent(function.__doc__))
             f.flush()
             return function(self, f.name)
+    new_function.__doc__ = None
     return new_function
 
 

@@ -63,9 +63,9 @@ def find_links(html_text):
         yield a.attrib['href']
 
 
-def scrape(filename, predicate, port=9468):
+def scrape(filename, predicate, port=9468, quiet=True):
     url_format = 'http://localhost:{}{{}}'.format(port)
-    thread = web.thread_server_start(filename, port)
+    thread = web.thread_server_start(filename, port, quiet=quiet)
     scrape_urls(url_format, predicate, '^/doc/')
     web.thread_server_shutdown(thread)
 
@@ -85,7 +85,7 @@ class TestWeb(unittest.TestCase):
                              'examples', 'starterkit', 'starter.beancount')
         scrape(filename, self.check_page_okay, 9469)
 
-    def test_scrape_thisisreal(self):
+    def __test_scrape_thisisreal(self):
         filename = path.join(os.environ['HOME'],
                              'r/q/office/accounting/blais.beancount')
         if path.exists(filename):

@@ -17,6 +17,7 @@ class TestScriptBake(TestCase):
 
     def setUp(self):
         self.args = ['--port', str(next(newport))]
+        #self.args += ['--verbose']
 
     def test_path_greedy_split(self):
         self.assertEqual(('/tmp/tmp.ju3h4h/blabla', None),

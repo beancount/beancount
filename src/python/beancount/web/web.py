@@ -651,7 +651,7 @@ def account(slashed_account_name=None):
     oss = io.StringIO()
     journal.entries_table_with_balance(app, oss, account_postings)
     return render_view(
-        pagetitle = '{}'.format(account_name or 'ROOT'), 
+        pagetitle = '{}'.format(account_name or 'ROOT'),
         contents = oss.getvalue())
 
 
@@ -1028,7 +1028,7 @@ def incognito(callback):
     return wrapper
 
 
-def run_app(filename, port, debug, do_incognito, no_source):
+def run_app(filename, port, debug, do_incognito, no_source, **kwargs):
     class args:
         pass
     args.filename = filename
@@ -1058,7 +1058,7 @@ def run_app(filename, port, debug, do_incognito, no_source):
 
     # Run the server.
     app.run(host='localhost', port=port,
-            debug=args.debug, reloader=False)
+            debug=args.debug, reloader=False, **kwargs)
 
 
 # The global server instance.
@@ -1125,7 +1125,7 @@ def main():
     run_app(args.filename, args.port, args.debug, args.incognito, args.no_source)
 
 
-def thread_server_start(filename, port):
+def thread_server_start(filename, port, **kwargs):
     """Start a server in a new thread.
 
     Args:
@@ -1136,7 +1136,8 @@ def thread_server_start(filename, port):
     """
     thread = threading.Thread(
         target=run_app,
-        args=(filename, port, False, False, False))
+        args=(filename, port, False, False, False),
+        kwargs=kwargs)
     thread.daemon = True # Automatically exit if the process comes dwn.
     thread.start()
 

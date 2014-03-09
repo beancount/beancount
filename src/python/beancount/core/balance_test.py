@@ -17,7 +17,6 @@ from beancount.parser import parser
 class TestBalance(unittest.TestCase):
 
     def test_get_balance_amount(self):
-        "Test the balance requirements."
 
         # Entry without cost, without price.
         posting = create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD")

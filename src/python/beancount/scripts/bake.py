@@ -30,7 +30,7 @@ def bake_to_directory(filename, output, port, quiet=False):
       True on success, False otherwise.
     """
     # Start a server thread locally.
-    thread = web.thread_server_start(filename, port)
+    thread = web.thread_server_start(filename, port, quiet=quiet)
 
     # Define a command that will run and convert all the links to work in a
     # local mirror of the server (your accountant!) so a user can browse the
@@ -42,6 +42,7 @@ def bake_to_directory(filename, output, port, quiet=False):
                '--page-requisites',
                '--convert-links',
                '--html-extension',
+               '--waitretry=0.05',
                url,
                '--directory-prefix', output]
 

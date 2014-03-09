@@ -38,6 +38,8 @@ beancount: TODO
 
 * Current
 
+  - Write a script that checks the dependencies dynamically?
+
   - In ledgerhub, use /usr/bin/strings as a last resort if all other PDF
     converters fail.
 

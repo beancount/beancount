@@ -111,7 +111,7 @@ class TestData(unittest.TestCase):
         self.assertEqual(data.get_entry(entry), entry)
         self.assertEqual(data.get_entry(posting), entry)
 
-    def create_sort_test_data(self):
+    def create_sort_data(self):
         FL = data.FileLocation
         account = account_from_name('Assets:Bank:Checking')
         date1 = date(2014, 1, 15)
@@ -140,7 +140,7 @@ class TestData(unittest.TestCase):
         return entries
 
     def test_entry_sortkey(self):
-        entries = self.create_sort_test_data()
+        entries = self.create_sort_data()
         sorted_entries = sorted(entries, key=data.entry_sortkey)
         self.assertEqual([data.Transaction,
                           data.Open,
@@ -155,7 +155,7 @@ class TestData(unittest.TestCase):
                           for entry in sorted_entries])
 
     def test_posting_sortkey(self):
-        entries = self.create_sort_test_data()
+        entries = self.create_sort_data()
         postings = [(entry.postings[0]
                      if isinstance(entry, data.Transaction)
                      else entry)

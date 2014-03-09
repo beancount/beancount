@@ -623,6 +623,7 @@ def parsedoc(fun):
                                                 report_filename=filename,
                                                 report_firstline=lineno)
         return fun(self, entries, errors, options)
+    newfun.__doc__ = None
     return newfun
 
 

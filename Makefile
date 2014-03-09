@@ -105,8 +105,9 @@ build/ledgerhub.pdf:
 build/account.deps: 
 	(cd src/python/beancount && sfood -i sources imports ops/dups.py scripts/import_driver.py scripts/prices.py scripts/remove_crdb.py) | grep account.py
 
+P=src/python/beancount
 build/account.grep: 
-	(cd src/python/beancount && grep --include="*.py" -srnE '(import.*account|account.*import)' sources imports ops/dups.py scripts/import_driver.py scripts/prices.py scripts/remove_crdb.py) | grep -vE "(account_from_name)"
+	grep --include="*.py" -srnE '(\bimport\b.*account|account.*\bimport\b)' $(P)/sources $(P)/imports $(P)/ops/dups.py $(P)/scripts/import_driver.py $(P)/scripts/prices.py $(P)/scripts/remove_crdb.py
 
 
 
@@ -117,7 +118,7 @@ debug:
 
 # Run the unittests.
 test tests unittest unittests:
-	nosetests -s src/python/beancount
+	nosetests -v src/python/beancount
 
 
 # Run the parser and measure its performance.
