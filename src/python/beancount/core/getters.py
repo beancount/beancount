@@ -23,7 +23,8 @@ class GetAccounts:
         """
         accounts = {}
         for entry in entries:
-            for account in getattr(self, entry.__class__.__name__)(entry):
+            method = getattr(self, entry.__class__.__name__)
+            for account in method(entry):
                 accounts[account.name] = account
         return accounts
 
@@ -71,6 +72,7 @@ class GetAccounts:
     # Associate all the possible directives with their respective handlers.
     Open = Close = Balance = Note = Document = _one
     Event = Price = _zero
+
 
 def get_accounts(entries):
     """Gather all the accounts references by a list of directives.
