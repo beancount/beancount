@@ -1,5 +1,4 @@
 import unittest
-import re
 
 from beancount.imports import importer
 

@@ -2,14 +2,11 @@
 Tests for parser.
 """
 import unittest
-import textwrap
 import inspect
-import sys
 
 from beancount.parser import parsedoc
 from beancount.parser import parser, options
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price, Note
-from beancount.core import data
 from beancount.core.account import Account
 from beancount.core.amount import Amount
 

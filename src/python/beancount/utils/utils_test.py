@@ -1,9 +1,6 @@
 """
 Tests for general utils.
 """
-from beancount import utils
-
-import datetime
 import unittest
 
 

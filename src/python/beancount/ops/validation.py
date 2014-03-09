@@ -3,7 +3,7 @@ Sanity checks.
 (Note that these don't have anything to do with 'Balance' directives.
 """
 from os import path
-from collections import namedtuple, defaultdict
+from collections import namedtuple
 
 from beancount.core.account import Account
 from beancount.core.data import Open, Close, Balance, Transaction, Document

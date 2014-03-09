@@ -1,6 +1,5 @@
 """Automatic padding of gaps between entries.
 """
-import re
 from collections import namedtuple
 
 from beancount.core.inventory import Inventory

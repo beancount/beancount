@@ -3,8 +3,6 @@
 import io
 import textwrap
 
-from beancount.core import data
-
 
 def render_fileloc(fileloc):
     """Render the fileloc for errors in a way that it will be both detected by

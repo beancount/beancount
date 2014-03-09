@@ -7,7 +7,6 @@ this is the best solution in the short-term, the account types are used
 in too many places to pass around that state everywhere. Maybe we change
 this later on.
 """
-import re
 from collections import namedtuple
 
 

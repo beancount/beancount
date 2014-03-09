@@ -6,16 +6,10 @@ and if your output name has an archive suffix, we automatically the
 fetched directory contents to the archive and delete them.
 """
 import argparse
-import re
-import logging
 import subprocess
 import shutil
 from os import path
 from beancount.web import web
-
-from beancount import load
-from beancount.core import realization
-from beancount import utils
 
 
 def bake_to_directory(filename, output, port, quiet=False):

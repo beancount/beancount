@@ -1,7 +1,6 @@
 """
 A version of bisect that accepts a custom key function, like the sorting ones do.
 """
-import random
 
 
 def bisect_left_withkey(sequence, value, key=None):

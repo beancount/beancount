@@ -4,7 +4,6 @@ This tool is able to dump lexer/parser state, and will provide other services in
 the name of debugging.
 """
 import sys
-import io
 import argparse
 
 from beancount.parser.parser import dump_lexer

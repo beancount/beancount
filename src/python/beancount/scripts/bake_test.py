@@ -1,10 +1,8 @@
 import itertools
 import os
 from os import path
-import sys
-import re
 
-from beancount.scripts import TestCase, docfile, capture, run_with_args
+from beancount.scripts import TestCase, docfile, run_with_args
 from beancount.scripts import bake
 from beancount.scripts import tempdir
 

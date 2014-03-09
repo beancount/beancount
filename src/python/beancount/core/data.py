@@ -1,13 +1,11 @@
 """Basic data structures used to represent the Ledger entries.
 """
-import io
 import datetime
-import textwrap
 from collections import namedtuple
 
 from beancount.core.amount import Amount, Decimal, to_decimal
 from beancount.core.account import Account, account_from_name
-from beancount.core.position import Lot, Position, create_position
+from beancount.core.position import Position, create_position
 
 
 # All possible types of entries. These are the main data structrues in use

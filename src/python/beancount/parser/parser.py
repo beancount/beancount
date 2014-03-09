@@ -608,7 +608,6 @@ def parsedoc(fun):
       The decorated function.
 
     """
-    import sys
     filename = inspect.getfile(fun)
     lines, lineno = inspect.getsourcelines(fun)
 

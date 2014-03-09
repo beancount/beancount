@@ -1,5 +1,4 @@
 import unittest
-import re
 
 from beancount.core.account import *
 

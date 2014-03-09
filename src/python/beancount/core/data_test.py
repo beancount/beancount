@@ -1,12 +1,10 @@
 from datetime import date
 import unittest
-import re
 import datetime
 
 from beancount.core import data
 from beancount.core.amount import Amount, to_decimal
 from beancount.core.account import account_from_name
-from beancount.core import balance
 from beancount.core import flags
 from beancount.parser import parser
 

@@ -16,7 +16,6 @@ and new transactions will be created monthly for the following year.
 Note the use of the '#' flag and the word 'MONTHLY' which defines the
 periodicity. This needs more expansion, but as an example, it works.
 """
-from datetime import date
 import re
 
 from beancount.core import data

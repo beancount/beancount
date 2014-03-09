@@ -1,12 +1,9 @@
-import time
 import unittest
 from os import path
 import os
 import re
-import threading
 
 import requests
-import bs4
 import lxml.html
 
 from beancount.web import web

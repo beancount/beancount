@@ -2,9 +2,6 @@
 Support for creating Google gviz timeline charts.
 """
 import io
-import datetime
-import random
-
 
 
 def gviz_timeline(time_array, data_array_map, css_id='chart'):

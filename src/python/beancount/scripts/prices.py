@@ -12,7 +12,6 @@ import dateutil.parser
 import bs4
 
 from beancount.ops import prices
-from beancount.core import data
 from beancount.core.data import FileLocation, Price
 from beancount.core.amount import Decimal, Amount
 from beancount.parser import printer

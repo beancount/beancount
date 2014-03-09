@@ -63,8 +63,6 @@ def get_tuple_typed_values(ntuple, clstype):
                     yield account
 
 
-from pprint import pprint, pformat
-
 def index_key(sequence, value, key, cmp):
     """Find the index of the first element in 'sequence' which is equal to 'value'.
     If 'key' is specified, the value compared to the value returned by this
