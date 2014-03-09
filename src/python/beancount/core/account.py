@@ -31,6 +31,7 @@ def account_from_name(account_name):
     assert atype in account_types.ACCOUNT_TYPES, "Invalid account type: {}".format(atype)
     return Account(account_name, atype)
 
+
 def account_name_parent(account_name):
     """Return the name of the parent account of the given account.
 
@@ -46,6 +47,7 @@ def account_name_parent(account_name):
     components.pop(-1)
     return sep.join(components)
 
+
 def account_name_leaf(account_name):
     """Get the name of the leaf of this account.
 
@@ -57,18 +59,6 @@ def account_name_leaf(account_name):
     assert isinstance(account_name, str)
     return account_name.split(sep)[-1] if account_name else None
 
-def account_sortkey(account):
-    """Sort a list of accounts, taking into account the type of account.
-    Assets, Liabilities, Equity, Income and Expenses, in this order, then
-    in the order of the account's name.
-
-    Args:
-      account: An instance of Account, which we are to sort.
-    Returns:
-      A tuple which is to be used as the sort key for lists of accounts.
-    """
-    assert isinstance(account, Account)
-    return (account_types.TYPES_ORDER[account.type], account.name)
 
 def account_name_sortkey(account_name):
     """Sort a list of accounts, taking into account the type of account.
@@ -80,8 +70,10 @@ def account_name_sortkey(account_name):
     Returns:
       A tuple which is to be used as the sort key for lists of accounts.
     """
+    assert isinstance(account_name, str)
     type_ = account_name_type(account_name)
     return (account_types.TYPES_ORDER[type_], account_name)
+
 
 def account_name_type(account_name):
     """Return the type of this account's name.
@@ -97,6 +89,7 @@ def account_name_type(account_name):
         account_name, atype, account_types.ACCOUNT_TYPES)
     return atype
 
+
 def is_account_name(string):
     """Return true if the given string is an account name.
 
@@ -107,6 +100,7 @@ def is_account_name(string):
     """
     return bool(re.match(
         '([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)+$', string))
+
 
 def is_account_name_root(account_name):
     """Return true if the account name is one of the root accounts.
@@ -119,6 +113,7 @@ def is_account_name_root(account_name):
     """
     assert isinstance(account_name, str)
     return account_name in account_types.ACCOUNT_TYPES
+
 
 def is_balance_sheet_account(account_name, options):
     """Return true if the given account is a balance sheet account.
@@ -137,6 +132,7 @@ def is_balance_sheet_account(account_name, options):
                                                  'name_liabilities',
                                                  'name_equity'))
 
+
 def is_income_statement_account(account_name, options):
     """Return true if the given account is an income statement account.
     Income and expense accounts are income statement accounts.
@@ -152,6 +148,7 @@ def is_income_statement_account(account_name, options):
     # FIXME: Use account_types.ACCOUNT_TYPES instead of options?
     return account_type in (options[x] for x in ('name_income',
                                                  'name_expenses'))
+
 
 # This will go away once we just convert to strings.
 def accountify_dict(string_dict):

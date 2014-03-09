@@ -8,7 +8,7 @@ import io
 import argparse
 
 from beancount.parser.parser import dump_lexer
-from beancount.core.account import account_sortkey
+from beancount.core.account import account_name_sortkey
 from beancount.core import getters
 from beancount.core import realization
 from beancount import loader
@@ -35,7 +35,8 @@ def do_list_accounts(filename):
 
     # Render to stdout.
     maxlen = max(len(account.name) for account in open_close)
-    for account, (open, close) in sorted(open_close.items(), key=lambda x: account_sortkey(x[0])):
+    for account, (open, close) in sorted(open_close.items(),
+                                         key=lambda x: account_name_sortkey(x[0].name)):
         open_date = open.date if open else ''
         close_date = close.date if close else ''
         print('{:{len}}  {}  {}'.format(account.name, open_date, close_date, len=maxlen))

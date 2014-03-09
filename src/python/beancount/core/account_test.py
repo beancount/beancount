@@ -28,7 +28,7 @@ class TestAccount(unittest.TestCase):
         self.assertEqual("Expenses", account_name_leaf("Expenses"))
         self.assertEqual(None, account_name_leaf(""))
 
-    def test_account_sortkey(self):
+    def test_account_name_sortkey(self):
         account_names_input = [
             "Expenses:Toys:Computer",
             "Income:US:Intel",
@@ -54,15 +54,6 @@ class TestAccount(unittest.TestCase):
         account_names_actual = sorted(account_names_input,
                                       key=account_name_sortkey)
         self.assertEqual(account_names_expected, account_names_actual)
-
-        # Test account_sortkey.
-        accounts_input = map(account_from_name, account_names_input)
-        accounts_actual = sorted(accounts_input,
-                                 key=account_sortkey)
-        self.assertEqual(account_names_expected,
-                         [account.name for account in accounts_actual])
-        accounts_expected = list(map(account_from_name, account_names_expected))
-        self.assertEqual(accounts_expected, accounts_actual)
 
     def test_account_name_type(self):
         self.assertEqual("Assets", account_name_type("Assets:US:RBS:Checking"))
