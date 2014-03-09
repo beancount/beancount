@@ -2,7 +2,8 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-  - Change Account to be just a string as well, with functions, remove TYPES_ORDER.
+  - Remove TYPES_ORDER.
+  - Merge account_types and account once again
   - Complete writing tests for all scripts.
 
   - Build a pass-through memoizer and replace Mole from text_utils.
@@ -28,8 +29,8 @@ beancount: TODO
   - Something's wrong with this page: currencies are wrong I think - http://localhost:8080/view/year/2014/conversions
 
   - Add __author__ to all files?
-  - Remove dependency on requests in the web_test.py, it's not really necessary.
-  - Write a script that checks the dependencies dynamically,
+  - Write a script that checks the dependencies dynamically and reports on them,
+    with versions if possible, for reporting bugs:
     etc/check-depends.py, do this for 1.0
 
 * Current

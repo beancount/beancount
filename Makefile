@@ -4,6 +4,9 @@
 INPUT = $(HOME)/q/office/accounting/blais.beancount
 DOWNLOADS = $(HOME)/u/Downloads $(HOME)/q/office/accounting/new/oanda/oanda.912333.csv
 
+GREP="grep --include="*.py" -srnE"
+SRC=src/python/beancount
+
 all: compile
 
 
@@ -18,7 +21,7 @@ clean:
 
 
 # Targets to generate and compile the C parser.
-CROOT = src/python/beancount/parser
+CROOT = $(SRC)/parser
 LEX = flex
 YACC = bison
 
@@ -92,29 +95,24 @@ showdeps-notests: build/beancount-notests.pdf
 # We are considering a separation of the basic data structure and the basic operations.
 # This provides the detail of the relationships between these sets of fils.
 build/beancount-core.pdf: build/beancount-core.deps
-	sfood -ii src/python/beancount/core/*.py | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
+	sfood -ii $(SRC)/core/*.py | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
 
 showdeps-core: build/beancount-core.pdf
 	evince $<
 
 
 # Figure out dependencies of the code that needs to move out to form ledgerhub.
+LEDGERHUB_FILES = 				\
+	sources					\
+	imports					\
+	ops/dups.py				\
+	ops/compress.py				\
+	scripts/import_driver.py		\
+	scripts/prices.py			\
+	scripts/remove_crdb.py
+
 build/ledgerhub.pdf:
-	(cd src/python/beancount && sfood -i sources imports ops/dups.py scripts/import_driver.py scripts/prices.py scripts/remove_crdb.py) | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
-
-build/account.deps:
-	(cd src/python/beancount && sfood -i sources imports ops/dups.py scripts/import_driver.py scripts/prices.py scripts/remove_crdb.py) | grep account.py
-
-
-GREP="grep --include="*.py" -srnE"
-SRC=src/python/beancount
-build/account.grep:
-	$(GREP) '(\bimport\b.*account|account.*\bimport\b)' $(SRC)/sources $(SRC)/imports $(SRC)/ops/dups.py $(SRC)/scripts/import_driver.py $(SRC)/scripts/prices.py $(SRC)/scripts/remove_crdb.py
-
-grep-account:
-	$(GREP) 'account.*\.(name|type)'  $(SRC)
-	$(GREP) 'account_from_name'  $(SRC)
-	$(GREP) '\bAccount\b'  $(SRC)
+	(cd $(SRC) && sfood -i $(LEDGERHUB_FILES)) | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
 
 
 # Run in the debugger.
@@ -124,7 +122,7 @@ debug:
 
 # Run the unittests.
 test tests unittest unittests:
-	nosetests -v src/python/beancount
+	nosetests -v $(SRC)
 
 
 # Run the parser and measure its performance.
@@ -165,4 +163,4 @@ status test-status:
 
 # Run the linter on all source code.
 lint:
-	pylint --rcfile=etc/pylintrc src/python/beancount
+	pylint --rcfile=etc/pylintrc $(SRC)

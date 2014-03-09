@@ -3,7 +3,7 @@ from os import path
 import os
 import re
 
-import requests
+import urllib.request
 import lxml.html
 
 from beancount.web import web
@@ -38,7 +38,7 @@ def scrape_urls(url_format, predicate, ignore_regexp=None):
         done.add(url)
 
         # Fetch the URL and check its return status.
-        response = requests.get(url_format.format(url))
+        response = urllib.request.urlopen(url_format.format(url))
         predicate(response, url)
 
         # Skip served documents.
@@ -47,7 +47,7 @@ def scrape_urls(url_format, predicate, ignore_regexp=None):
 
         # Get all the links in the page and add all the ones we haven't yet
         # seen.
-        for url in find_links(response.text):
+        for url in find_links(response.read()):
             if url in done or url in process:
                 continue
             process.append(url)
@@ -70,7 +70,7 @@ def scrape(filename, predicate, port=9468, quiet=True):
 class TestWeb(unittest.TestCase):
 
     def check_page_okay(self, response, url):
-        self.assertEqual(200, response.status_code, url)
+        self.assertEqual(200, response.status, url)
 
     def test_scrape_basic(self):
         filename = path.join(find_repository_root(),
