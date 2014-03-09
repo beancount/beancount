@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-"""
-Load up a ledger and match against various parts of the entries in a way
+"""Load up a ledger and match against various parts of the entries in a way
 that one can iterate with Emacs.
 """
 import re
@@ -12,7 +10,7 @@ from beancount.core import data
 
 def main():
     import argparse
-    optparser = argparse.ArgumentParser(__doc__.strip())
+    optparser = argparse.ArgumentParser(__doc__)
     optparser.add_argument('filename', help='Filename.')
 
     optparser.add_argument('-q', '--quiet', action='store_true',
@@ -81,9 +79,6 @@ def main():
             print('{}'.format(data.render_fileloc(entry.fileloc)))
             print()
         print(data.format_entry(entry))
-
-
-
 
 
 if __name__ == '__main__':

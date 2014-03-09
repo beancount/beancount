@@ -24,27 +24,6 @@ def find_repository_root():
     return filename
 
 
-def start_server(filename, port):
-    thread = threading.Thread(
-        target=web.run_app,
-        args=(filename, port, False, False, False))
-    thread.daemon = True # Automatically exit if the process comes dwn.
-    thread.start()
-
-    # Ensure the server has at least started before running the scraper.
-    web.wait_ready()
-    time.sleep(0.1)
-
-    return thread
-
-
-def shutdown_server(thread):
-    # Clean shutdown: request to stop, then join the thread.
-    # Note that because we daemonize, we could forego this elegant detail.
-    web.shutdown()
-    thread.join()
-
-
 def scrape_urls(url_format, predicate, ignore_regexp=None):
     # The set of all URLs processed
     done = set()
@@ -86,9 +65,9 @@ def find_links(html_text):
 
 def scrape(filename, predicate, port=9468):
     url_format = 'http://localhost:{}{{}}'.format(port)
-    thread = start_server(filename, port)
+    thread = web.thread_server_start(filename, port)
     scrape_urls(url_format, predicate, '^/doc/')
-    shutdown_server(thread)
+    web.thread_server_shutdown(thread)
 
 
 class TestWeb(unittest.TestCase):

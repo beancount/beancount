@@ -14,6 +14,7 @@ from beancount.core import getters
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Document
 from beancount.core.data import Posting
 from beancount.core.account import account_name_leaf, account_name_parent
+from beancount.utils import tree_utils
 
 
 class RealAccount:
@@ -319,19 +320,22 @@ def _get_subpostings(real_account, accumulator):
         _get_subpostings(child_account, accumulator)
 
 
-def dump_tree_balances(real_accounts, foutput=None):
+def dump_tree_balances(real_account, foutput=None):
     """Dump a simple tree of the account balances at cost, for debugging."""
 
     if foutput is None:
         foutput = sys.stdout
 
-    lines = list(real_accounts.render_lines())
+    lines = list(tree_utils.render(
+        real_account,
+        lambda ra: ra.fullname.split(':')[-1],
+        lambda ra: sorted(ra.get_children(), key=lambda x: x.fullname)))
     width = max(len(line[0] + line[2]) for line in lines)
 
     for line_first, line_next, account_name, real_account in lines:
         last_entry = real_account.postings[-1] if real_account.postings else None
         balance = getattr(real_account, 'balance', None)
-        if balance:
+        if not balance.is_empty():
             amounts = balance.get_cost().get_amounts()
             positions = ['{0.number:12,.2f} {0.currency}'.format(amount)
                          for amount in sorted(amounts, key=amount_sortkey)]
@@ -449,5 +453,68 @@ def iterate_with_balance(postings_or_entries):
     date_entries.clear()
 
 
+# FIXME: TODO, implement these properly.
+
+def reorder_accounts_tree(real_accounts):
+    """Reorder the children in a way that is sensible for display.
+    We want the most active accounts near the top, and the least
+    important ones at the bottom."""
+
+    reorder_accounts_node_by_declaration(real_accounts.get_root())
+
+
+def reorder_accounts_node_by_declaration(real_account):
+
+    children = []
+    for child_account in real_account.children:
+        fileloc = reorder_accounts_node_by_declaration(child_account)
+        children.append( (fileloc, child_account) )
+
+    children.sort()
+    real_account.children[:] = [x[1] for x in children]
+
+    print(real_account.fullname)
+    for fileloc, child in children:
+        print('  {:64}  {}'.format(child.name, fileloc))
+    print()
+
+    if real_account.postings:
+        fileloc = real_account.postings[0].fileloc
+    else:
+        fileloc = children[0][0]
+    return fileloc
+
+
+
+def reorder_accounts_node_by_date(real_account):
+
+    children = []
+    for child_account in real_account.children:
+        reorder_accounts_node_by_date(child_account)
+        children.append( (child_date, child_account) )
+    children.sort(reverse=True)
+
+    real_account.children[:] = [x[1] for x in children]
+
+    last_date = children[0][0] if children else datetime.date(1970, 1, 1)
+
+    if real_account.postings:
+        last_posting = real_account.postings[-1]
+        if hasattr(last_posting, 'date'):
+            date = last_posting.date
+        else:
+            date = last_posting.entry.date
+
+        if date > last_date:
+            last_date = date
+
+    return last_date
+
+
+
+
 
 # FIXME: This file is being cleaned up. Don't worry about all the FIXMEs [2014-02-26]
+
+
+

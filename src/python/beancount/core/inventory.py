@@ -81,7 +81,7 @@ class Inventory:
 
     def __bool__(self):
         # Don't define this, be explicit.
-        raise ValueError
+        raise NotImplementedError
         return bool(self.positions)
 
     def __copy__(self):

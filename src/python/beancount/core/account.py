@@ -11,7 +11,7 @@ from beancount.core import account_types
 
 
 # Component separator for account names.
-SEP = ':'
+sep = ':'
 
 
 # A type used to represent an account read in.
@@ -42,9 +42,9 @@ def account_name_parent(account_name):
     assert isinstance(account_name, str)
     if not account_name:
         return None
-    components = account_name.split(SEP)
+    components = account_name.split(sep)
     components.pop(-1)
-    return SEP.join(components)
+    return sep.join(components)
 
 def account_name_leaf(account_name):
     """Get the name of the leaf of this account.
@@ -55,7 +55,7 @@ def account_name_leaf(account_name):
       A string, the name of the leaf of the account.
     """
     assert isinstance(account_name, str)
-    return account_name.split(SEP)[-1] if account_name else None
+    return account_name.split(sep)[-1] if account_name else None
 
 def account_sortkey(account):
     """Sort a list of accounts, taking into account the type of account.
@@ -92,7 +92,7 @@ def account_name_type(account_name):
       A string, the type of the account in 'account_name'.
     """
     assert isinstance(account_name, str)
-    atype = account_name.split(SEP)[0]
+    atype = account_name.split(sep)[0]
     assert atype in account_types.ACCOUNT_TYPES, (
         account_name, atype, account_types.ACCOUNT_TYPES)
     return atype
