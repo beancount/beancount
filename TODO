@@ -27,10 +27,7 @@ beancount: TODO
 
   - Deal with these:
 
-      bean-bake                  | convert to Python + write test
-      bean-trial                 | write a proper test
-
-      bean-prices                | MOVE TO ledgerhub 
+      bean-prices                | MOVE TO ledgerhub
       bean-remove-crdb           | MOVE TO ledgerhub
       bean-import                | MOVE TO ledgerhub
 
@@ -39,8 +36,13 @@ beancount: TODO
   - Add __author__ to all files?
   - Remove dependency on requests in the web_test.py, it's not really necessary.
 
-
 * Current
+
+  - In order to implement .txt output, you will need to decouple the web
+    rendering and the generation of its included data. This will be
+    great--ability to cut-and-paste any page into txt. format=txt, and we could
+    still have the links clickable. Everything else would just be txt. A bit of
+    a crazy idea, but it might work well and be simple. Maybe.
 
   - Bug: A transaction like this fails to parse; allow it:
       2014-02-22 * "Payee" |
