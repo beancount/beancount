@@ -27,6 +27,7 @@ from beancount.ops import prices
 from beancount import utils
 from beancount.utils.text_utils import replace_numbers
 from beancount.core.account import is_balance_sheet_account
+from beancount.core import account
 from beancount.loader import load
 from beancount.parser import parser
 from beancount.web import gviz
@@ -572,7 +573,7 @@ def equity():
         view = request.view
 
         balance = summarize.compute_balance_for_prefix(view.closing_entries,
-                                                       view.options['name_equity'] + ':')
+                                                       '{}:'.format(view.options['name_equity']))
         header = io.StringIO()
         header.write('<th>Currency</th>\n')
         header.write('<th>Amount</th>\n')
@@ -628,7 +629,7 @@ def account(slashed_account_name=None):
 
     # Get the appropriate realization: if we're looking at the balance sheet, we
     # want to include the net-income transferred from the exercise period.
-    account_name = slashed_account_name.strip('/').replace('/', ':')
+    account_name = slashed_account_name.strip('/').replace('/', account.sep)
 
     if account_name:
         options = app.options

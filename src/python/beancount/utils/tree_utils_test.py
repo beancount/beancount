@@ -2,6 +2,7 @@
 Tests for tree_utils.
 """
 from beancount.utils import tree_utils
+from beancount.core import account
 
 import unittest
 import collections
@@ -16,14 +17,14 @@ class TreeAdaptor:
         return Node(name, [])
 
     def get_name(self, node):
-        return node.name.split(':')[-1]
+        return node.name.split(account.sep)[-1]
 
     def get_children(self, node):
         return node.children
 
 
 def create_tree():
-    return tree_utils.TreeDict(TreeAdaptor(), ':')
+    return tree_utils.TreeDict(TreeAdaptor(), account.sep)
 
 
 class TestTree(unittest.TestCase):

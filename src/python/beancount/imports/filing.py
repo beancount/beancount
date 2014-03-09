@@ -10,6 +10,7 @@ import sys
 import shutil
 
 from beancount.imports import imports
+from beancount.core import account
 
 
 def trace(arg):
@@ -89,7 +90,7 @@ def run_filer_loop(importer_config,
 
         # Prepend destination directory.
         new_filename = path.normpath(path.join(destination,
-                                               file_account.replace(':', os.sep),
+                                               file_account.replace(account.sep, os.sep),
                                                new_basename))
 
         # Print the filename and which modules matched.

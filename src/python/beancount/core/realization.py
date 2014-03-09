@@ -14,6 +14,7 @@ from beancount.core import getters
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Document
 from beancount.core.data import Posting
 from beancount.core.account import account_name_leaf, account_name_parent
+from beancount.core import account
 from beancount.utils import tree_utils
 
 
@@ -69,8 +70,8 @@ class RealAccount:
         """
         if not childname:
             return self
-        if ':' in childname:
-            directname = childname.split(':', 1)[0]
+        if account.sep in childname:
+            directname = childname.split(account.sep, 1)[0]
             restname = childname[len(directname)+1:]
             child = self.children[directname]
             return child[restname]
@@ -107,7 +108,7 @@ class RealAccount:
         Returns:
           A boolean, true the name is a child of this node.
         """
-        directname = account_name_leaf.split(':', 1)[0]
+        directname = account_name_leaf.split(account.sep, 1)[0]
         restname = account_name_leaf[len(directname)+1:]
         try:
             child = self.children[directname]
@@ -328,7 +329,7 @@ def dump_tree_balances(real_account, foutput=None):
 
     lines = list(tree_utils.render(
         real_account,
-        lambda ra: ra.fullname.split(':')[-1],
+        lambda ra: ra.fullname.split(account.sep)[-1],
         lambda ra: sorted(ra.get_children(), key=lambda x: x.fullname)))
     width = max(len(line[0] + line[2]) for line in lines)
 

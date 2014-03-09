@@ -12,6 +12,7 @@ from beancount.core.data import Posting, Transaction, Balance
 from beancount.core.position import Lot, Position
 from beancount.sources.ofx import souptodict, soup_get, parse_ofx_time
 from beancount.core import flags
+from beancount.core import account
 
 
 class Importer(importer.ImporterBase):
@@ -104,7 +105,7 @@ class Importer(importer.ImporterBase):
 
                         position = Position(Lot(security, Amount(unitprice, currency), None), units)
 
-                        account = account_from_name('{}:{}'.format(
+                        account = account_from_name(account.join(
                             source_subaccounts[source].name, security))
                         entry.postings.append(Posting(entry, account, position, None, None))
 
@@ -135,7 +136,7 @@ class Importer(importer.ImporterBase):
                             if source is None:
                                 continue
 
-                            account = account_from_name('{}:{}'.format(
+                            account = account_from_name(account.join(
                                 source_subaccounts[source].name, security))
 
                             amount = Amount(units, security)

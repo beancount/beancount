@@ -5,6 +5,7 @@ from os import path
 from bottle import request
 
 from beancount.core import data
+from beancount.core import account
 from beancount.core.data import Open, Close, Balance, Transaction, Note, Document
 from beancount.core.balance import get_balance_amount
 from beancount.core.inventory import Inventory
@@ -25,7 +26,7 @@ def account_link(account_name, leafonly=False):
     try:
         return _account_link_cache[(request.app, account_name)]
     except KeyError:
-        slashed_name = account_name.replace(':', '/')
+        slashed_name = account_name.replace(account.sep, '/')
 
         if leafonly:
             account_name = account_name_leaf(account_name)

@@ -18,6 +18,17 @@ sep = ':'
 Account = namedtuple('Account', 'name type')
 
 
+def join(*components):
+    """Join the names with the account separator.
+
+    Args:
+      *components: Strings, the components of an account name.
+    Returns:
+      A string, joined in a single account name.
+    """
+    return sep.join(components)
+
+
 def account_from_name(account_name):
     """Create a new account solely from its name.
 

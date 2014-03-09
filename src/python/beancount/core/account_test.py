@@ -10,6 +10,16 @@ class TestAccount(unittest.TestCase):
         self.assertEqual("Expenses:Toys:Computer", account.name)
         self.assertEqual("Expenses", account.type)
 
+    def test_account_join(self):
+        account_name = join("Expenses", "Toys", "Computer")
+        self.assertEqual("Expenses:Toys:Computer", account_name)
+
+        account_name = join("Expenses")
+        self.assertEqual("Expenses", account_name)
+
+        account_name = join()
+        self.assertEqual("", account_name)
+
     def test_account_from_name(self):
         account = account_from_name("Expenses:Toys:Computer")
         self.assertEqual("Expenses:Toys:Computer", account.name)

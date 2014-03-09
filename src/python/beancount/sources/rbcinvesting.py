@@ -36,6 +36,7 @@ from beancount.core.data import FileLocation
 from beancount.core.account import account_from_name
 from beancount.core.position import Position
 from beancount.core import flags
+from beancount.core import account
 from beancount.utils import csv_utils
 
 
@@ -101,8 +102,8 @@ class Importer(importer.ImporterBase):
 
                 # Figure out an account for the position.
                 if row.symbol:
-                    account_position = account_from_name('{}:{}'.format(config['positions'].name,
-                                                                        row.symbol))
+                    account_position = account_from_name(
+                        account.join(config['positions'].name, row.symbol))
 
                 # Add relevant postings.
                 extra_narration = []
