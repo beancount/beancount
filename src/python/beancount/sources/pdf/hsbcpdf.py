@@ -1,7 +1,6 @@
 """HSBC PDF statement importer.
 """
 import re
-import datetime
 import dateutil
 
 from beancount.imports import importer

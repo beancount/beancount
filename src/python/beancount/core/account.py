@@ -150,27 +150,6 @@ def is_income_statement_account(account_name, options):
                                                  'name_expenses'))
 
 
-# This will go away once we just convert to strings.
-def accountify_dict(string_dict):
-    """Convert the dictionary items that have values which are account names into
-    Account instances. This is a simple core convenience designed to be used by the
-    importers, so that configurations can be specified in terms of strings, like this:
-
-       {'asset': 'Assets:US:Checking', <---- See how this is just a string.
-        ...}
-
-    Args:
-      string_dict: A dictionary of keys (whichever type) to strings.
-    Returns:
-      A similar dictionary, whose value strings have been converted to instances of
-      Account.
-    """
-    return {key: account_from_name(value)
-            if isinstance(value, str) and is_account_name(value) else value
-            for key, value in string_dict.items()}
-
-
-
 # FIXME: This needs a bit of review, we can very likely do everything more
 # consistently and simpler by just using strings with methods instead of Account
 # types. In other words, we can get rid of the Account type and just deal with

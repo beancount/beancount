@@ -4,7 +4,7 @@ Each importer must cmoply with this interface.
 """
 import logging
 
-from beancount.core.account import accountify_dict
+from beancount.core.account import account_from_name, is_account_name
 
 
 class ImporterBase:
@@ -110,3 +110,23 @@ def verify_config(importer, config, required_config):
         success = False
 
     return success
+
+
+# This will go away once we just convert to strings.
+def accountify_dict(string_dict):
+    """Convert the dictionary items that have values which are account names into
+    Account instances. This is a simple core convenience designed to be used by the
+    importers, so that configurations can be specified in terms of strings, like this:
+
+       {'asset': 'Assets:US:Checking', <---- See how this is just a string.
+        ...}
+
+    Args:
+      string_dict: A dictionary of keys (whichever type) to strings.
+    Returns:
+      A similar dictionary, whose value strings have been converted to instances of
+      Account.
+    """
+    return {key: account_from_name(value)
+            if isinstance(value, str) and is_account_name(value) else value
+            for key, value in string_dict.items()}

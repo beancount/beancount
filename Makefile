@@ -98,6 +98,17 @@ showdeps-core: build/beancount-core.pdf
 	evince $<
 
 
+# Figure out dependencies of the code that needs to move out to form ledgerhub.
+build/ledgerhub.pdf: 
+	(cd src/python/beancount && sfood -i sources imports ops/dups.py scripts/import_driver.py scripts/prices.py scripts/remove_crdb.py) | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
+
+build/account.deps: 
+	(cd src/python/beancount && sfood -i sources imports ops/dups.py scripts/import_driver.py scripts/prices.py scripts/remove_crdb.py) | grep account.py
+
+build/account.grep: 
+	(cd src/python/beancount && grep --include="*.py" -srnE '(import.*account|account.*import)' sources imports ops/dups.py scripts/import_driver.py scripts/prices.py scripts/remove_crdb.py) | grep -vE "(account_from_name)"
+
+
 
 # Run in the debugger.
 debug:

@@ -11,7 +11,6 @@ from beancount.core import data
 from beancount.core.data import Posting, Transaction, Balance
 from beancount.core.position import Lot, Position
 from beancount.sources.ofx import souptodict, soup_get, parse_ofx_time
-from beancount.core.account import accountify_dict
 from beancount.core import flags
 
 

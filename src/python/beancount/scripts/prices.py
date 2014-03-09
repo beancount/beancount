@@ -196,7 +196,7 @@ def main():
                 Price(fileloc, date, currency, Amount(price, cost_currency)))
 
     for entry in new_entries:
-        print(printer.format_entry(entry), end='')
+        sys.stdout.write(printer.format_entry(entry))
 
     for position in positions:
         curkey = (position['currency'], position['cost_currency'])

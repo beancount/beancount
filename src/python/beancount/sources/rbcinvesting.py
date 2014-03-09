@@ -36,7 +36,6 @@ from beancount.core.data import FileLocation
 from beancount.core.account import account_from_name
 from beancount.core.position import Position
 from beancount.core import flags
-from beancount.core.account import accountify_dict
 from beancount.utils import csv_utils
 
 

@@ -38,6 +38,9 @@ beancount: TODO
 
 * Current
 
+  - In ledgerhub, use /usr/bin/strings as a last resort if all other PDF
+    converters fail.
+
   - When we import, if a file was not detected, don't spit out an org text
     line. Still doesn't work.
 

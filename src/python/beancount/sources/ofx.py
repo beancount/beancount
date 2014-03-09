@@ -16,7 +16,6 @@ from beancount.core import data
 from beancount.core.amount import Decimal
 from beancount.core.data import Posting, Transaction
 from beancount.core.position import Lot, Position
-from beancount.core.account import accountify_dict
 from beancount.core import flags
 
 

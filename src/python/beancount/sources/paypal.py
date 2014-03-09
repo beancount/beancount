@@ -11,10 +11,9 @@ import datetime
 
 from beancount.imports import importer
 from beancount.core import data
-from beancount.core.amount import to_decimal, Decimal, Amount, ZERO
+from beancount.core.amount import to_decimal, Amount, ZERO
 from beancount.core.data import Transaction, Balance
 from beancount.utils import csv_utils
-from beancount.core.account import accountify_dict
 from beancount.core import flags
 
 

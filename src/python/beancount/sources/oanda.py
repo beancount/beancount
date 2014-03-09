@@ -11,7 +11,6 @@ import collections
 from beancount.imports import importer
 from beancount.core import data
 from beancount.core.amount import Decimal, Amount
-from beancount.core.account import accountify_dict
 from beancount.core.data import Posting, Transaction, Balance, Note
 from beancount.parser.printer import format_entry
 from beancount.core.position import Lot, Position

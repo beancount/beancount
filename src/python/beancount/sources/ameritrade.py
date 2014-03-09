@@ -15,7 +15,6 @@ from beancount.core.data import create_simple_posting
 from beancount.core.data import Posting, Transaction, Balance
 from beancount.core.account import account_from_name
 from beancount.core.position import Lot, Position
-from beancount.core.account import accountify_dict
 from beancount.utils import csv_utils
 from beancount.core import flags
 
