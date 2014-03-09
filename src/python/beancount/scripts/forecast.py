@@ -1,9 +1,27 @@
-#!/usr/bin/env python3
+"""An example of writing a starter script with a custom filter.
+
+This custom filter uses existing syntax to define and automatically inserted
+transactions in the future based on a convention. It serves mostly as an example
+of how you can experiment by creating and installing a local filter, and not so
+much as a serious forecasting feature (though the experiment is a good way to
+get something more general kickstarted).
+
+A user can create a create a transaction like this:
+
+  2014-03-08 # "Electricity bill [MONTHLY]""
+    Expenses:Electricity 			50.10 USD
+    Assets:Checking			       -50.10 USD
+
+and new transactions will be created monthly for the following year.
+Note the use of the '#' flag and the word 'MONTHLY' which defines the
+periodicity. This needs more expansion, but as an example, it works.
+"""
 from datetime import date
 import re
 
-from beancount.web import web
 from beancount.core import data
+from beancount import loader
+
 
 def forecast_filter(entries, errors, options):
     """An example filter that piggybacks on top of the Beancount input syntax to
@@ -38,14 +56,12 @@ def forecast_filter(entries, errors, options):
         if mo:
             forecast_narration = mo.group(1).strip()
             for month in range(date_today.month + 1, 13):
+                # Create a new entry at the given datė
                 forecast_date = date_today.replace(month=month)
                 forecast_entry = data.entry_replace(entry,
                                                     date=forecast_date,
                                                     narration=forecast_narration)
                 new_entries.append(forecast_entry)
-
-                print('Created forecast entry at {}: "{}"'.format(
-                    forecast_date, forecast_entry.narration))
 
     # Make sure the new entries inserted are sorted.
     new_entries.sort(key=data.entry_sortkey)
@@ -53,5 +69,5 @@ def forecast_filter(entries, errors, options):
     return (filtered_entries + new_entries, errors, options)
 
 
-web.install_load_filter(forecast_filter)
-web.main()
+# Register the load filter.
+loader.install_load_filter(forecast_filter)

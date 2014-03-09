@@ -2,16 +2,16 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-  - Write a unit test that basically websucks all the pages on the web server.
-    This should be an easy test: crawl and follow all links, ensure no 404.
-    Do this now--use it incrementally.
+  - Change Account to be just a string as well, with functions, remove TYPES_ORDER.
+  - Complete writing tests for all scripts.
 
   - Build a pass-through memoizer and replace Mole from text_utils.
     m = Memo()
     if m(re.match(...)):
     ... = m.value
 
-  - Change Account to be just a string as well, with functions, remove TYPES_ORDER.
+  - Replace ':' and ":" everywhere to account.sep
+
   - Create an account_join() function in account.py to remove ':' everywhere.
   - Complete all unittests coverage (as per bean-find-missing-tests).
   - Configure and run a clean pylint on the entire codebase.
@@ -25,10 +25,27 @@ beancount: TODO
     test for web.py using some of the demo files.
   - Add tests for all the binaries as well.
 
+  - Deal with these:
+
+      bean-prices                | MOVE TO ledgerhub
+      bean-remove-crdb           | MOVE TO ledgerhub
+      bean-import                | MOVE TO ledgerhub
+
+  - Something's wrong with this page: currencies are wrong I think - http://localhost:8080/view/year/2014/conversions
+
+  - Add __author__ to all files?
+  - Remove dependency on requests in the web_test.py, it's not really necessary.
+
 * Current
 
   - When we import, if a file was not detected, don't spit out an org text
     line. Still doesn't work.
+
+  - In order to implement .txt output, you will need to decouple the web
+    rendering and the generation of its included data. This will be
+    great--ability to cut-and-paste any page into txt. format=txt, and we could
+    still have the links clickable. Everything else would just be txt. A bit of
+    a crazy idea, but it might work well and be simple. Maybe.
 
   - Bug: A transaction like this fails to parse; allow it:
       2014-02-22 * "Payee" |

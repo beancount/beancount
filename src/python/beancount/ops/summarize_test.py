@@ -75,29 +75,29 @@ class TestSummarization(unittest.TestCase):
 #    def test_sum_basic(self, entries, sum_entries, real_accounts, sum_real_accounts):
 #        """
 #          2011-01-01 open Assets:Checking
-# 
+#
 #          2011-01-01 open Income:Job
-# 
+#
 #          2011-02-01 * "Salary"
 #            Income:Job            -1000 USD
 #            Assets:Checking        1000 USD
-# 
+#
 #          2012-02-01 * "Salary Next year"
 #            Income:Job            -1000 USD
 #            Assets:Checking        1000 USD
 #        """
 #        print('-' * 80)
 #        for x in real_accounts: print(x)
-# 
+#
 #        print('-' * 80)
 #        for x in sum_real_accounts: print(x)
-# 
+#
 #        print('-' * 80)
 #        for e in sum_real_accounts[OPENING_BALANCES.name]:
 #            print(type(e))
 #            for posting in e.postings:
 #                print(posting)
-# 
+#
 #        # self.assertTrue(compare_realizations(real_accounts, sum_real_accounts))
 #        # self.assertTrue(sum_real_accounts[OPENING_BALANCES.name].postings)
 
