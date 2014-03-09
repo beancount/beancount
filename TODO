@@ -16,7 +16,6 @@ beancount: TODO
   - Add all docstrings with args Google-style.
   - Clean up the interface of loader.load(), it's ugly.
   - Implement all the missing global pages.
-  - Move all imports code as ledgerhub.
   - Clean up code: remove all significant codes from __init__.py files.
   - Fix all FIXMEs everywhere.
 
@@ -35,12 +34,6 @@ beancount: TODO
 
 * Current
 
-  - In ledgerhub, use /usr/bin/strings as a last resort if all other PDF
-    converters fail.
-
-  - When we import, if a file was not detected, don't spit out an org text
-    line. Still doesn't work.
-
   - In order to implement .txt output, you will need to decouple the web
     rendering and the generation of its included data. This will be
     great--ability to cut-and-paste any page into txt. format=txt, and we could
@@ -51,104 +44,60 @@ beancount: TODO
       2014-02-22 * "Payee" |
         ..
 
-  - Add a 'mime_type' attribute to each importer, so that we can simplify our
-    import configuration regexps.
-
-
   - Serving CSV files from the Documents page should not be via download, but
     rather rendered directly.
 
   - The documents web page should render by-month + date, and by-account + date.
 
-
-  - (Debugging) Add very, very verbose debugging support to the import process,
-    so that pinpointing errors is not that difficult.
-
-
-  - DO implement output to text NOW for posting on the mailing list.
+  - Do implement output to text NOW for posting on the mailing list.
 
   - Add views for the last 5 days, one day only each day (for D.Clemente)
 
-
-
-
-
-
-  - Document the input to the importer, maybe this can be just a function call
-    that runs the loop. Maybe we just provide a matcher function instead. I
-    want to make this as simple as can be.
-
   - Add preliminary support for renaming root accounts, even if that means the
     option must come first in the file. Move the checks in the parser.
-
-  - Do something about executable being named "bison3", check for the version in
-    setup.py instead, just call it as "bison".
 
   - In rendering balance directives, don't render the amount in the "change"
     column; that is too confusing for some users, keep the change column for
     changes.
 
-
-  - update activity: remove parent accounts with no child accounts.
-  - update activity: this exhibits a bug in the table rendering, look for IVV,
+  - update activity: Remove parent accounts with no child accounts.
+  - update activity: This exhibits a bug in the table rendering, look for IVV,
     see TODO(blais) in acctree.py
-
-  - If import fails to output transactions for a file, don't write a marker.
 
   - Begin user documentation in earnest; we really need this soon.
   - Complete example file with income statement transactions.
-  - Complete import example file.
-  - Add tests for import.
 
   - URGENT - Provide some tooltip or help link from the main page to allow
     discoverability of what a "view" is.
 
   - URGENT - the level1/2 views are EmptyView's, you need to implement those!
 
-
   - Example files (suggestion from Daniel Clemente):
 
-> >   I think 2 files can be helpful:
-> >
-> >   1) A simple one, a „how to“ file with ~20 transactions, or better, from 1
-to 3 transactions for feature. To show the normal things like receiving a
-salary, getting money from ATM, wire transfer, pay the bills, … So that it does
-not scare people without experience in double accounting.
-> >   demo.beancount fits this place.
-> >
-> >   2) The big one (1 year, you said), to show off that beancount is powerful
-and is really used for long-term accounting. This one is the „inspirational“
-one, to make people say „I would like to do that!“.
-
+      > >   I think 2 files can be helpful:
+      > >
+      > >   1) A simple one, a „how to“ file with ~20 transactions, or better, from 1
+      to 3 transactions for feature. To show the normal things like receiving a
+      salary, getting money from ATM, wire transfer, pay the bills, … So that it does
+      not scare people without experience in double accounting.
+      > >   demo.beancount fits this place.
+      > >
+      > >   2) The big one (1 year, you said), to show off that beancount is powerful
+      and is really used for long-term accounting. This one is the „inspirational“
+      one, to make people say „I would like to do that!“.
 
   - beancount: GREAT IDEA: output a subset of transactions as a spreadsheet. You
     need to design a textual way to refer to a subset of transactions. Output in
     either directions, without currencies.
 
-
-  - BUG! import this:
-    documents/2013/Assets/CA/RBC/Checking/2013-11-13.ofx84423.qbo
-    * The balance check at the end is incorrect
-    * The statement are not organized by account; they are mixed together
-
   - Create a 3rd-party dependencies building script for Mac OSX users (fxt).
-
-
 
   (Cost Basis)
   - Cost basis issue: How do I take into account the commissions and fees
     adjustment on the cost basis for a position?
   - How do I take into account Wash Sale Adjustments to the cost basis?
 
-
-
   - entries_table() really should be called postings_table().
-
-  - Remove all "unittest.main()" I used on the train; install nosetests on mac box
-
-  - Complete the design doc
-  - Complete core tests
-
 
   - Complete parser tests
     * Modify the lexer to emit EOF and add that in the grammar rules for empty_line.
@@ -157,41 +106,21 @@ one, to make people say „I would like to do that!“.
 
   - You need to validate the account name options (empty, or no :, use regex to constrain).
 
-
-
-
-
-
-  - Rename "check" to "test/balance/verify/assert" (see what Ledger calls it these days)
-
-  - Move bean-trial reorder() function to realization.py
   - Move utility functions from bean-prices to a reusable place.
 
   - Teasing out groups:
     - Can we move documents.py to ops? Look at that.
     - Can core.getters move to ops.getters?
 
-  - Before we start importing, validate that the importer modules all have a
-    CONFIG, import_file and import_date functions.  This will help thirdparty
-    implementors.
-
-
-
   - Have another script that takes that as input and spits out current positions
     in the market on a web page; CGI script, should be served on Furius. Update
     via a Mercurial repo push.
 
-    * Move the price fetching utilities somewhere it can be reused by others;
-      move code from bean-prices.
-
   - Render tags
-
 
   - IMPORTANT FEATURE: Text/XLS exports
 
   - IMPORTANT FEATURE: Flip balances for rendering
-
-  - IMPORTANT FEATURE: Auto-categorization
 
   - IMPORTANT FEATURE: Implement Average Booking for Vanguard & RBC Adjustment,
     with associated tests and syntax in the parser.
@@ -227,13 +156,6 @@ one, to make people say „I would like to do that!“.
 
           return inventory
 
-
-
-
-
-  - IMPORTANT FEATURE: We need to be able to invert the input on import (this is
-    easy, conversion to text only, could be applied across any importer)
-
   - Do we need to insert Open entries for the equity accounts described in
     options? I think we could safely plop that at the very beginning of the
     entries list in the parser.
@@ -241,9 +163,6 @@ one, to make people say „I would like to do that!“.
   - Render the OFX / QBO files in a <pre> tag, or figure out why the mimetype
     is incorrect and they don't render properly. Right now the default
     rendering of the browser is insufficient.
-
-
-
 
   - (IDEA) Why aren't we using the price on the first leg of this transaction?
     This is an interesting variation on the meaning of the price: it could mean
@@ -269,7 +188,6 @@ one, to make people say „I would like to do that!“.
     This would allow the user to do some processing specific to stock splits by
     processing the explicit stock split entries.
 
-
   - Include this in the user examples, + stock splits:
 
        2013-04-01 * "name change"
@@ -281,12 +199,6 @@ one, to make people say „I would like to do that!“.
          Assets:CA:ITrade:KRFT             -100 KRFT {{20000 USD}}
          Assets:CA:ITrade:KRFT              100 KRFT {{17000 USD}}
          Assets:CA:ITrade:FOO                20 FOO  {{ 3000 USD}}
-
-
-  - Add a check the beginning of imports whereby we check that every account
-    value specified actually matches an existing account from the list of
-    entries.
-
 
   - Remove the parsing of "CHECK" at some point, that was just there for
     compatibility.
@@ -561,11 +473,6 @@ Improve this bit:
     Create a routine to figure out if an account was open during a specific
     time period?
 
-*** Testing
-
-  - Finish the inventory_test.py, with the guard against negative balances when
-    a position has an associated cost or lot-date, a test is important.
-
 *** Average Price Booking
 
   - You now HAVE to implement average price tracking... not an option. Thanks
@@ -662,16 +569,6 @@ Improve this bit:
     some sort of meaning to them. Ok, this contradicts the previous idea.
 
 
-
-** Auto-Categorization
-
-  - Write a generic import routine that will try to heuristically match
-    partially completed transactions from an existing Ledger. Use some NLP or
-    somesuch matching algorithm.
-
-    Given some incomplete transactions, complete them heuristically based on
-    previous contents of the ledger. This should make import a lot easier. This
-    should be generic and work across all importers, a single function call.
 
 ** Payee Elision / Auto-Account Leaf Name
 
@@ -1250,58 +1147,6 @@ Improve this bit:
 
   - Render the Conversions amount at the bottom of the Conversions page...
 
-* Import
-
-  - Ameritrade dividends should have an associated stock name;
-    right now we don't know which positions the dividends are associated with.
-    (The input file doesn't appear to have it... call Ameritrade to let them know.)
-
-  - Add an option to the importer so merge all the entries before printing them
-    out. This would be useful if we have multiple files for the same account.
-
-  - Add a check at the end of the OFX bank import. Missing right now.
-
-  - Filing: The importers should detect the type of files and identify their
-    accounts, and automatically stash the file under the correct documents
-    directory, prepended with the date in the format we expect.
-
-  - The OFX importer needs to unescape &amp; and other odd chars, I think
-    there's a bug currently, I've seen a few here and there.
-
-  - Add an option --file=delete, that offers to delete (with confirmation) all
-    the files that it was able to identify.
-
-  - (cleanup) Convert all the importers to use the DateIntervalTicker.
-
-** Filing
-
-  - When grepping in PDF files, we should also grep to transaction-id's /
-    beancount "links", in order to automatically associate trade ticket PDFs to
-    transactions. Add a LINK to the document directive, in order to link them
-    together. (^64647f10b2fd)
-
-  - The code that auto-files statements needs to detect and de-dup files which
-    have the same contents, because it is likely some files will be downloaded
-    twice, it happens a lot.
-
-** Payee Normalization
-
-  - We will want to somehow "normalize" and merge payee names, because some of
-    that differ very little are obvious for the same business... this would be
-    useful. What kinds of tools will we need for that?
-
-    Clean Import: The new importers should be able to strip the non-payee parts
-    of the payee name, e.g. NEW YO, SAN FR, etc. Maybe we could let the user
-    provide a filter function to sanitize the names of the payees, or maybe more
-    generally just a filter on the entries before printing them out. This way
-    you could provide your very own custom filter function that cleans up
-    anything you don't like.
-
-** GnuCash Import
-
-  - Write an importer from GnuCash's format, for people wanting to make the
-    transition or even just to try it out.
-
 * Export
 ** HTML Export as File
 
@@ -1569,23 +1414,8 @@ result of paying taxes:
 - Client-side javascript has been added for a neater, more compact rendering of
   journals.
 
-- There is a new library for code common to all importers; it should be easier
-  to write importers now.
-
-- There is a new module that allows you to automatically book new transactions
-  on import, based on the previous contents of your ledger file.
-
 - New scripts to extract a list of current positions at any time, and global
   summaries over many years or months.
-
-- There is no more Emacs major mode, but only a minor mode; you may now use any
-  text mode you like, most especially org-mode, which allows you to hide and
-  show large sections of your file. This is really convenient or organize your
-  input file in sections.  Less Emacs customization is better.
-
-  * The account completer function is still there.
-  * For org-mode, highlighting is still present.
-  * There is a new function to align the prices of a transaction automatically.
 
 
 ** Examples
