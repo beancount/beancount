@@ -10,10 +10,7 @@ beancount: TODO
     if m(re.match(...)):
     ... = m.value
 
-  - Replace ':' and ":" everywhere to account.sep
-
-  - Create an account_join() function in account.py to remove ':' everywhere.
-  - Complete all unittests coverage (as per bean-find-missing-tests).
+  - Complete all unittests coverage (as per find-missing-tests.py).
   - Configure and run a clean pylint on the entire codebase.
   - Add all docstrings with args Google-style.
   - Clean up the interface of loader.load(), it's ugly.
@@ -21,9 +18,6 @@ beancount: TODO
   - Move all imports code as ledgerhub.
   - Clean up code: remove all significant codes from __init__.py files.
   - Fix all FIXMEs everywhere.
-  - Bean-suck should work; maybe rename to bean-siphon and automate as a unit
-    test for web.py using some of the demo files.
-  - Add tests for all the binaries as well.
 
   - Deal with these:
 
@@ -35,10 +29,10 @@ beancount: TODO
 
   - Add __author__ to all files?
   - Remove dependency on requests in the web_test.py, it's not really necessary.
+  - Write a script that checks the dependencies dynamically,
+    etc/check-depends.py, do this for 1.0
 
 * Current
-
-  - Write a script that checks the dependencies dynamically?
 
   - In ledgerhub, use /usr/bin/strings as a last resort if all other PDF
     converters fail.
