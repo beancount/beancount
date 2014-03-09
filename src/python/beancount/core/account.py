@@ -40,7 +40,7 @@ def account_name_parent(account_name):
     Returns:
       A string, the name of the parent account of this account.
     """
-    assert isinstance(account_name, str)
+    assert isinstance(account_name, str), account_name
     if not account_name:
         return None
     components = account_name.split(sep)

@@ -44,6 +44,7 @@ class RealAccount:
         Returns:
           A new RealAccount instance.
         """
+        assert isinstance(account_name, str)
         self.fullname = account_name
 
         self.balance = Inventory()
@@ -194,17 +195,17 @@ def realize(entries):
         if isinstance(entry, Transaction):
             # Update the balance inventory for each of the postings' accounts.
             for posting in entry.postings:
-                real_account = append_entry_to_real_account(real_dict, posting.account, posting)
+                real_account = append_entry_to_real_account(real_dict, posting.account.name, posting)
                 real_account.balance.add_position(posting.position, allow_negative=True)
 
         elif isinstance(entry, (Open, Close, Balance, Note, Document)):
             # Append some other entries in the realized list.
-            append_entry_to_real_account(real_dict, entry.account, entry)
+            append_entry_to_real_account(real_dict, entry.account.name, entry)
 
         elif isinstance(entry, Pad):
             # Insert the pad entry in both realized accounts.
-            append_entry_to_real_account(real_dict, entry.account, entry)
-            append_entry_to_real_account(real_dict, entry.account_pad, entry)
+            append_entry_to_real_account(real_dict, entry.account.name, entry)
+            append_entry_to_real_account(real_dict, entry.account_pad.name, entry)
 
     return create_real_accounts_tree(real_dict)
 
@@ -229,24 +230,23 @@ def ensure_min_accounts(real_account, min_accounts):
 # FIXME: You can remove this method, use a defaultdict(account_name -> postings-list)
 # in the caller and get rid of this call.
 # Compute the balances in a second step.
-def append_entry_to_real_account(real_dict, account, entry):
+def append_entry_to_real_account(real_dict, account_name, entry):
     """Append an account's posting to its corresponding account in the real_dict
     dictionary. The relevance of this method is that it creates RealAccount
     instances on-demand.
 
     Args:
       real_dict: A dictionary of full account name to RealAccount instance.
-      account: An instance of Account to associate the entry to.
+      account_name: A string, the account name to associate the entry to.
     Returns:
       The RealAccount instance that this entry was associated with.
     """
-
     # Create the account, if not already there.
     try:
-        real_account = real_dict[account.name]
+        real_account = real_dict[account_name]
     except KeyError:
-        real_account = RealAccount(account.name)
-        real_dict[account.name] = real_account
+        real_account = RealAccount(account_name)
+        real_dict[account_name] = real_account
 
     # If specified, add the new entry to the list of postings.
     assert entry is not None
@@ -515,6 +515,3 @@ def reorder_accounts_node_by_date(real_account):
 
 
 # FIXME: This file is being cleaned up. Don't worry about all the FIXMEs [2014-02-26]
-
-
-
