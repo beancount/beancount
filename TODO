@@ -33,6 +33,8 @@ beancount: TODO
     with versions if possible, for reporting bugs:
     etc/check-depends.py, do this for 1.0
 
+  - Fix all docstrings re. Account instance
+
 * Current
 
   - In ledgerhub, use /usr/bin/strings as a last resort if all other PDF
