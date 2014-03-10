@@ -6,7 +6,7 @@ from beancount.utils.text_utils import replace_numbers
 import unittest
 
 
-class TestTree(unittest.TestCase):
+class TestTextUtils(unittest.TestCase):
 
     def test_replace_numbers(self):
         self.assertEqual(replace_numbers(" 100.40 USD "), " XXX.XX USD ")
@@ -16,6 +16,3 @@ class TestTree(unittest.TestCase):
         self.assertEqual(replace_numbers(" 10em"), " 10em")
         self.assertEqual(replace_numbers(" 10em"), " 10em")
         self.assertEqual(replace_numbers(" -10.40"), " -XX.XX")
-
-
-__incomplete__ = True

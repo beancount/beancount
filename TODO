@@ -26,6 +26,8 @@ beancount: TODO
     with versions if possible, for reporting bugs:
     etc/check-depends.py, do this for 1.0
 
+  - Code from beancount/utils/__init__.py is not test code; do write a test for it.
+
 * Current
 
   - In order to implement .txt output, you will need to decouple the web
