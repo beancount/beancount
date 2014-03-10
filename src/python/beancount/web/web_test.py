@@ -9,6 +9,7 @@ import lxml.html
 from beancount.web import web
 
 
+# FIXME: Move this to test_utils.py
 def find_repository_root():
     """Return the path to the repository root.
 
