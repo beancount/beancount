@@ -2,6 +2,8 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
+  - MSSB documents aren't found... fix FIXMEs in documents.py
+
   - Remove TYPES_ORDER.
   - Merge account_types and account once again
   - Complete writing tests for all scripts.

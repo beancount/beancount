@@ -128,6 +128,7 @@ def walk_accounts(root_directory):
             yield (root, account_name, dirs, files)
 
 
+# FIXME: I think you can remove 'accounts' as a mapping here, should just be a set.
 def find_documents(root_directory, location_filename, accounts):
     """Find dated document files under the given directory 'root_directory', located
     only in directories that correspond to one of the given accounts.
