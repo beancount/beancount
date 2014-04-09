@@ -150,7 +150,7 @@ is great for sectioning large files with many transactions."
 
     ;; Reserved keywords
     (,(regexp-opt '("txn" "check" "balance" "open" "close" "pad" "event" "price" "note"
-                    "begintag" "endtag")) . font-lock-keyword-face)
+                    "pushtag" "poptag")) . font-lock-keyword-face)
 
     ;; Tags & Links
     ("[#\\^][A-Za-z0-9\-_/.]+" . font-lock-type-face)
