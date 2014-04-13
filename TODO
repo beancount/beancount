@@ -216,6 +216,10 @@ beancount: TODO
 
   - Add a validation check, that when closing and account, its balance is empty/zero.
 
+  - Render a journal as a detailed expense report, for a set of accounts
+    (e.g., Expenses:*) pulling out amounts in various columns based on other
+    expressions (e.g. Assets:Cash:Caroline).
+
 
 ** Padding documentation from email
    CLOCK: [2014-01-19 Sun 14:49]
