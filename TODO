@@ -214,6 +214,9 @@ beancount: TODO
        #     Assets:CA:RBC-Investing:Taxable-CAD:CRA           8 CRA {116.00 USD / 2000-01-18}
 
 
+  - Add a validation check, that when closing and account, its balance is empty/zero.
+
+
 ** Padding documentation from email
    CLOCK: [2014-01-19 Sun 14:49]
 

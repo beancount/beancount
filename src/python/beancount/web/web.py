@@ -911,6 +911,34 @@ def populate_view(callback):
 viewapp.install(populate_view)
 
 
+def url_restrict_generator(url_prefix):
+    """Restrict to only a single prefix.
+
+    Args:
+      url_prefix: A string, a URL prefix to restrict to.
+      callback: The function to wrap.
+    Returns:
+      A handler decorator.
+    """
+    # A list of URLs that should always be accepted, even when restricted.
+    allowed = ['/web.css',
+               '/favicon.ico']
+
+    def url_restrict_handler(callback):
+        def wrapper(*args, **kwargs):
+            if request.path in allowed or request.path.startswith(url_prefix):
+                return callback(*args, **kwargs)
+            if request.path == '/':
+                bottle.redirect(url_prefix)
+
+            # Note: we issue a "202 Accepted" status in order to satisfy bean-bake,
+            # we want to distinguish between an actual 404 error and this case.
+            raise bottle.HTTPError(202, "URLs restricted to '{}'".format(url_prefix))
+
+        return wrapper
+    return url_restrict_handler
+
+
 def get_all_view(app):
     """Return a view of all transactions.
 
@@ -1027,22 +1055,21 @@ def incognito(callback):
     return wrapper
 
 
-def run_app(filename, port, debug, do_incognito, no_source, **kwargs):
-    class args:
-        pass
-    args.filename = filename
-    args.debug = debug
-    args.no_source = no_source
-    app.args = args
-
+def run_app(args):
     logging.basicConfig(level=logging.INFO,
                         format='%(levelname)-8s: %(message)s')
 
     # Hide the numbers in incognito mode. We do this on response text via a plug-in.
-    if do_incognito:
-        app.args.no_source = True
+    if args.incognito:
+        args.no_source = True
         app.install(incognito)
         viewapp.install(incognito)
+
+    # Install code that will restrict all resources to a particular view.
+    if args.view:
+        view_url_prefix = '/view/{}/'.format(args.view)
+        url_restrictor = url_restrict_generator(view_url_prefix)
+        app.install(url_restrictor)
 
     # Initialize to a small value in order to insure a reload on the first page.
     app.last_mtime = 0
@@ -1056,8 +1083,9 @@ def run_app(filename, port, debug, do_incognito, no_source, **kwargs):
         global STYLE; STYLE = f.read()
 
     # Run the server.
-    app.run(host='localhost', port=port,
-            debug=args.debug, reloader=False, **kwargs)
+    app.args = args
+    app.run(host='localhost', port=args.port,
+            debug=args.debug, reloader=False, quiet=args.quiet)
 
 
 # The global server instance.
@@ -1092,49 +1120,59 @@ def shutdown():
     server.shutdown()
 
 
+def add_web_arguments(argparser):
+    group = argparser.add_argument_group("Web server arguments")
+
+    group.add_argument('filename',
+                       help="Beancount input filename to serve.")
+
+    group.add_argument('--plugin', action='append', default=[],
+                       help="The name of a plugin to import before running.")
+
+    group.add_argument('--port', action='store', type=int, default=8080,
+                       help="Which port to listen on.")
+
+    group.add_argument('--debug', action='store_true',
+                       help="Enable debugging features (auto-reloading of css).")
+
+    group.add_argument('--incognito', action='store_true',
+                       help=("Filter the output in order to hide all the numbers. "
+                             "This is great for demos using my real file."))
+
+    group.add_argument('--no-source', action='store_true',
+                       help=("Don't render the source."))
+
+    group.add_argument('--view', action='store',
+                       help="Render only the specified view (identify by URL)")
+    return group
+
+
 def main():
     """Main web service runner. This runs the event loop and blocks indefinitely."""
 
     argparser = argparse.ArgumentParser(__doc__.strip())
-
-    argparser.add_argument('filename', help="Beancount input filename to serve.")
-
-    argparser.add_argument('--plugin', action='append', default=[],
-                           help="The name of a plugin to import before running.")
-
-    argparser.add_argument('--port', action='store', type=int, default=8080,
-                           help="Which port to listen on.")
-
-    argparser.add_argument('--debug', action='store_true',
-                           help="Enable debugging features (auto-reloading of css).")
-
-    argparser.add_argument('--incognito', action='store_true',
-                           help=("Filter the output in order to hide all the numbers. "
-                                 "This is great for demos using my real file."))
-
-    argparser.add_argument('--no-source', action='store_true',
-                           help=("Don't render the source."))
-
+    add_web_arguments(argparser)
     args = argparser.parse_args()
 
     for plugin_name in args.plugin:
         importlib.import_module(plugin_name)
 
-    run_app(args.filename, args.port, args.debug, args.incognito, args.no_source)
+    run_app(args)
 
 
-def thread_server_start(filename, port, **kwargs):
+def thread_server_start(web_args, **kwargs):
     """Start a server in a new thread.
 
     Args:
-      filename: A string, the name of a Beancount input file.
-      port: An integer, the port to serve this HTTP server on.
+      argparse_args: An argparse parsed options object, with all the options
+        from add_web_arguments().
     Returns:
       A new Thread instance.
+
     """
     thread = threading.Thread(
         target=run_app,
-        args=(filename, port, False, False, False),
+        args=(web_args,),
         kwargs=kwargs)
     thread.daemon = True # Automatically exit if the process comes dwn.
     thread.start()
