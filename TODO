@@ -2,6 +2,8 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
+  - Add a test for --view option.
+
   - MSSB documents aren't found... fix FIXMEs in documents.py
 
   - Remove TYPES_ORDER.
@@ -1527,12 +1529,9 @@ Three major books of account are at the direct basis of this system: the memoria
 
 We need to allow users to easily plug-in custom scripts.
 e.g. see Pascal Fleury email (w/ swiss_rounding) and other use
-cases on the mailing list. These cases can be easily solved 
-using some custom scripting logic in Python. I need to provide 
+cases on the mailing list. These cases can be easily solved
+using some custom scripting logic in Python. I need to provide
 ample examples on how to do this.
 
-We need to be able to run these hooks before the verification 
+We need to be able to run these hooks before the verification
 that occurs after parsing.
-
-
-
