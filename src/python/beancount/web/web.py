@@ -1055,7 +1055,7 @@ def incognito(callback):
     return wrapper
 
 
-def run_app(args):
+def run_app(args, quiet=None):
     logging.basicConfig(level=logging.INFO,
                         format='%(levelname)-8s: %(message)s')
 
@@ -1085,7 +1085,8 @@ def run_app(args):
     # Run the server.
     app.args = args
     app.run(host='localhost', port=args.port,
-            debug=args.debug, reloader=False, quiet=args.quiet)
+            debug=args.debug, reloader=False,
+            quiet=args.quiet if hasattr(args, 'quiet') else quiet)
 
 
 # The global server instance.
