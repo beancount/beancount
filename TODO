@@ -703,6 +703,60 @@ Improve this bit:
     modules provide a import_link() function on the associated PDF files?
     (This is related to ^64647f10b2fd)
 
+  - Adding the ability for links on document directives was also requested on
+    the ledger-cli mailing list.
+
+        On Sat, Apr 26, 2014 at 6:18 AM, Esben Stien <b0ef@esben-stien.name> wrote:
+
+        "Craig Earls" <enderw88@gmail.com> writes:
+         The first use in ledger-cli is to link each transaction to a document,
+        which is pretty important in accounting;)
+
+        Well no, not exactly. The thing you do in importing financial data is basically
+        to funnel transactions from all of your statements from all your institutions
+        in a single place in a single format with a single set of accounts, so that you
+        can do reporting with a view of everything you have. Having support for a
+        per-transaction link to a particular document is generally unnecessary--you can
+        easily find the corresponding document by date if you need to.
+
+        In order to associate a unique ID with a particular transaction, in Beancount
+        you can use a "link" which is like a special kind of tag. I think Ledger has a
+        similar feature, per-post ("tag"?). It looks like this in Beancount:
+
+          2013-04-06 * "Invoice to Metropolis for job well done, waiting for payment."
+          ^metropolis-invoice-103
+             ...
+             ...
+
+        The "^...." bit is a link. You can have multiple links per transactions. The
+        web interface can show you all transactions with the same link in a separate
+        list (under the /link/.... URL).
+
+        Separately, there is a "document" directive that allows you to associate a
+        document with an account, e.g.
+
+          2014-01-01 document  Expenses:Electricity
+          "/path/to/filename/ConEdison-2013-12.pdf"
+
+        Documents don't have to be declared that way explicitly: you can also tell
+        Beancount about a root directory where it will find documents automatically and
+        create the document entries for you. The files just have to be organized in a
+        directory hierarchy mirrorring the account names exactly, and files must begin
+        with "YYYY-MM-DD" to provide a date for the document. That's a simple
+        convention. LedgerHub is able to move files that it recognizes to such a file
+        hierarchy, so after you import the data, you file the files into e.g. a local
+        git repo with all your statemetns, and your document entries show up in the
+        registers. It's also a nice way to organize all your statements, so if you need
+        to bring something up for e.g. a tax audit, you quickly know where to find it.
+
+        Those two features are not related at the moment... but I think I'll add the
+        ability to have links on document directives. That seems like an effective way
+        one could associate a particular pdf document (given a declaration) with a list
+        of transactions. You click on the link, see all the transactions + the
+        document, and you can click on the document itself to see the detail. Seems
+        like a legit idea.
+
+
   - Auto-doc from directories of files should ignore files already associated
     via an explicit documents directive; just ignore files with the same
     absolute name.
