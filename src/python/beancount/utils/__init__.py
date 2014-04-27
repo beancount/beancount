@@ -12,16 +12,6 @@ import logging
 from os import path
 
 
-def index_key(sequence, value, key, cmp):
-    """Find the index of the first element in 'sequence' which is equal to 'value'.
-    If 'key' is specified, the value compared to the value returned by this
-    function. If the value is not found, return None."""
-    for index, element in enumerate(sequence):
-        if cmp(key(element), value):
-            return index
-    return None
-
-
 def walk_files_or_dirs(fords, ignore_dirs=['.hg', '.svn', '.git']):
     """Enumerate the files under the given directories."""
     for ford in fords:

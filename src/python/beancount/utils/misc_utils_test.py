@@ -4,6 +4,7 @@ Tests for general utils.
 import unittest
 import time
 from collections import namedtuple
+import operator
 
 from beancount.utils import misc_utils
 
@@ -42,8 +43,10 @@ class TestMiscUtils(unittest.TestCase):
         x = misc_utils.get_tuple_values(ntuple, lambda x: isinstance(x, A))
         self.assertEqual([A('a'), A('b')], list(x))
         
-                  
-
+    def test_index_key(self):
+        objects = [object() for _ in range(10)]
+        index = misc_utils.index_key(objects, objects[4], lambda x: x, operator.is_)
+        self.assertEqual(4, index)
 
 
     # def test_date_ticker_one_month(self):
