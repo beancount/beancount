@@ -12,20 +12,6 @@ import logging
 from os import path
 
 
-def get_tuple_values(ntuple, predicate):
-    """Return all members referred to by this namedtuple instance that satisfy the
-    given predicate. This function also works recursively on its members, and so
-    it can be used for Transaction instances.
-    """
-    for attribute in ntuple:
-        if predicate(attribute):
-            yield attribute
-        elif isinstance(attribute, list):
-            for sub_attribute in attribute:
-                for account in get_tuple_values(sub_attribute, predicate):
-                    yield account
-
-
 def index_key(sequence, value, key, cmp):
     """Find the index of the first element in 'sequence' which is equal to 'value'.
     If 'key' is specified, the value compared to the value returned by this
@@ -34,8 +20,6 @@ def index_key(sequence, value, key, cmp):
         if cmp(key(element), value):
             return index
     return None
-
-
 
 
 def walk_files_or_dirs(fords, ignore_dirs=['.hg', '.svn', '.git']):

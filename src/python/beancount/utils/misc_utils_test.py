@@ -3,6 +3,7 @@ Tests for general utils.
 """
 import unittest
 import time
+from collections import namedtuple
 
 from beancount.utils import misc_utils
 
@@ -33,6 +34,15 @@ class TestMiscUtils(unittest.TestCase):
         data = [(1,), (2,3,4,5), (2,3)]
         self.assertEqual((2,3,4,5), misc_utils.longest(data))
 
+    def test_get_tuple_values(self):
+        Something = namedtuple('Something', 'a b c d e')
+        SomethingElse = namedtuple('SomethingElse', 'f g h')
+        class A(str): pass
+        ntuple = Something(1, 2, SomethingElse(A('a'), None, 2), [A('b'), 'c'], 5)
+        x = misc_utils.get_tuple_values(ntuple, lambda x: isinstance(x, A))
+        self.assertEqual([A('a'), A('b')], list(x))
+        
+                  
 
 
 

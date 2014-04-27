@@ -128,7 +128,7 @@ def validate_unused_accounts(entries, accounts):
         if isinstance(entry, Open):
             open_map[entry.account] = entry
             continue
-        referenced_accounts.update(utils.get_tuple_values(entry, is_account_name))
+        referenced_accounts.update(misc_utils.get_tuple_values(entry, is_account_name))
 
     # Unreferenced accounts are unused accounts.
     unused_accounts = set(accounts) - referenced_accounts

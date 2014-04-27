@@ -27,7 +27,7 @@ def main():
         entries, errors, options = load(opts.filename, do_print_errors=True)
 
         # Realize the entries.
-        with utils.print_time('realize'):
+        with misc_utils.print_time('realize'):
             real_accounts = realization.realize(entries)
 
 
