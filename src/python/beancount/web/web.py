@@ -26,6 +26,7 @@ from beancount.ops import summarize
 from beancount.core import realization
 from beancount.ops import prices
 from beancount import utils
+from beancount.utils import misc_utils
 from beancount.utils.text_utils import replace_numbers
 from beancount.core.account import is_balance_sheet_account
 from beancount.core import account
@@ -250,7 +251,7 @@ def events():
     "Render an index for the various kinds of events."
 
     events = utils.filter_type(app.entries, Event)
-    events_by_type = utils.groupby(lambda event: event.type, events)
+    events_by_type = misc_utils.groupby(lambda event: event.type, events)
 
     contents = io.StringIO()
     for event_type, events in sorted(events_by_type.items()):
@@ -269,7 +270,7 @@ def prices_():
     "Render a list of links to instruments, to list their prices."
 
     oss = io.StringIO()
-    for quote, baselist in sorted(utils.groupby(lambda x: x[1], list(app.price_db)).items(),
+    for quote, baselist in sorted(misc_utils.groupby(lambda x: x[1], list(app.price_db)).items(),
                                   key=lambda x: -len(x[1])):
         links = ['<a href="{link}">{0} ({1})</a>'.format(
             base_, quote_,
@@ -813,7 +814,7 @@ def stats():
     "Compute and render statistics about the input file."
 
     # Count the number of entries by type.
-    entries_by_type = utils.groupby(lambda entry: type(entry).__name__,
+    entries_by_type = misc_utils.groupby(lambda entry: type(entry).__name__,
                                     request.view.entries)
     nb_entries_by_type = {name: len(entries)
                           for name, entries in entries_by_type.items()}
@@ -825,7 +826,7 @@ def stats():
                     for entry in request.view.entries
                     if isinstance(entry, Transaction)
                     for posting in entry.postings]
-    postings_by_account = utils.groupby(lambda posting: posting.account,
+    postings_by_account = misc_utils.groupby(lambda posting: posting.account,
                                         all_postings)
     nb_postings_by_account = {key: len(postings)
                               for key, postings in postings_by_account.items()}

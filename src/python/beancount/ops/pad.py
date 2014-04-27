@@ -6,7 +6,7 @@ from beancount.core.position import Lot, Position
 from beancount.core.inventory import Inventory
 from beancount.core.amount import Decimal, amount_sub
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Document, Posting
-from beancount import utils
+from beancount.utils import misc_utils
 from beancount.core import flags
 
 
@@ -23,7 +23,7 @@ def pad(entries):
 
     # Find all the pad entries and group them by account.
     pads = list(utils.filter_type(entries, Pad))
-    pad_dict = utils.groupby(lambda x: x.account, pads)
+    pad_dict = misc_utils.groupby(lambda x: x.account, pads)
 
     # Partially realize the postings, so we can iterate them by account.
     by_account = group_postings_by_account(entries, set(pad_dict.keys()))

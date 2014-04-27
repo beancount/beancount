@@ -12,17 +12,6 @@ import logging
 from os import path
 
 
-
-
-def groupby(keyfun, elements):
-    """Group the elements as a dict of lists, where the key is computed using the
-    function 'keyfun'."""
-    grouped = defaultdict(list)
-    for element in elements:
-        grouped[keyfun(element)].append(element)
-    return grouped
-
-
 def filter_type(elist, types):
     """Filter the given list to yield only instances of the given types."""
     for element in elist:
