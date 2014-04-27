@@ -127,8 +127,47 @@ def index_key(sequence, value, key, cmp):
 ONEDAY = datetime.timedelta(days=1)
 
 def iter_dates(start_date, end_date):
-    "Yield all the dates between 'start_date' and 'end_date'."
+    """Yield all the dates between 'start_date' and 'end_date'.
+
+    Args:
+      start_date: An instance of datetime.date.
+      end_date: An instance of datetime.date.
+    Yields:
+      Instances of datetime.date.
+    """
     date = start_date
     while date < end_date:
         yield date
         date += ONEDAY
+
+
+def compute_unique_clean_ids(strings):
+    """Given a sequence of strings, reduce them to corresponding ids without any
+    funny characters and insure that the list of ids is unique. Yields pairs
+    of (id, string) for the result.
+
+    Args:
+      strings: A list of strings.
+    Returns:
+      A list of (id, string) pairs.
+    """
+    string_set = set(strings)
+
+    # Try multiple methods until we get one that has no collisions.
+    for regexp, replacement in [(r'[^A-Za-z0-9.-]', '_'),
+                                (r'[^A-Za-z0-9_]', ''),]:
+        seen = set()
+        idmap = {}
+        mre = re.compile(regexp)
+        for string in string_set:
+            id = mre.sub(replacement, string)
+            if id in seen:
+                break  # Collision.
+            seen.add(id)
+            idmap[id] = string
+        else:
+            break
+    else:
+        return # Could not find a unique mapping.
+
+    return idmap

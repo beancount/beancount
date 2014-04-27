@@ -48,27 +48,3 @@ class DateIntervalTicker:
             return False
 
 
-def compute_ids(strings):
-    """Given a sequence of strings, reduce them to corresponding ids without any
-    funny characters and insure that the list of ids is unique. Yields pairs
-    of (id, string) for the result."""
-
-    string_set = set(strings)
-
-    # Try multiple methods until we get one that has no collisions.
-    for regexp, replacement in [('[^A-Za-z0-9-.]', '_'),
-                                ('[^A-Za-z0-9]', ''),]:
-
-        # Map ids to strings.
-        idmap = defaultdict(list)
-        for string in string_set:
-            id = re.sub(regexp, replacement, string)
-            idmap[id].append(string)
-
-        # Check for collisions.
-        if all(len(stringlist) == 1 for stringlist in idmap.values()):
-            break
-    else:
-        raise RuntimeError("Could not find a unique mapping for {}".format(string_set))
-
-    return sorted((id, stringlist[0]) for id, stringlist in idmap.items())

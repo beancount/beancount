@@ -57,6 +57,22 @@ class TestMiscUtils(unittest.TestCase):
                          list(misc_utils.iter_dates(date1, date2)))
         self.assertEqual([], list(misc_utils.iter_dates(date2, date1)))
 
+    def test_compute_unique_clean_ids(self):
+        self.assertEqual({'a': 'a', 'b': 'b', 'c': 'c'},
+                         misc_utils.compute_ids(['a', 'b', 'c']))
+
+        self.assertEqual({'a-b': 'a-b', 'a_b': 'a b'},
+                         misc_utils.compute_ids(['a b', 'a-b']))
+
+        self.assertEqual({'a_b': 'a_b', 'ab': 'a b'},
+                         misc_utils.compute_ids(['a b', 'a_b']))
+
+
+
+        
+
+
+
 
     # def test_date_ticker_one_month(self):
     #     ticker = utils.DateIntervalTicker(lambda date: date.month)

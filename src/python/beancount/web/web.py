@@ -991,7 +991,7 @@ def level2(level=None, path=None):
 # We need some sort of mapping from idified tag to "real" tag. Either of don't idify at all.
 # Is the syntax compatible?
 #     # Create views for all tags.
-#     for tagid, tag in utils.compute_ids(get_all_tags(entries)):
+#     for tagid, tag in utils.compute_unique_clean_ids(get_all_tags(entries)):
 
 
 
