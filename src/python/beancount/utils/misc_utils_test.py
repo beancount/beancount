@@ -67,21 +67,19 @@ class TestMiscUtils(unittest.TestCase):
         self.assertEqual({'a_b': 'a_b', 'ab': 'a b'},
                          misc_utils.compute_ids(['a b', 'a_b']))
 
+    def test_walk_files_or_dirs(self):
+        pass ## FIXME: todo
 
-
-        
-
-
-
-
-    # def test_date_ticker_one_month(self):
+    def test_date_ticker_one_month(self):
+        pass ## FIXME: todo
     #     ticker = utils.DateIntervalTicker(lambda date: date.month)
     #     for date in utils.iter_dates(datetime.date(2012, 1, 1),
     #                                  datetime.date(2013, 6, 1)):
     #         if ticker.check(date):
     #             self.assertEqual(date.day, 1)
 
-    # def test_date_ticker_three_months(self):
+    def test_date_ticker_three_months(self):
+        pass ## FIXME: todo
     #     ticker = utils.DateIntervalTicker(
     #         lambda date: ((date.year * 12 + (date.month - 1)) // 3))
     #
