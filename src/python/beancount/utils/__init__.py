@@ -12,15 +12,6 @@ import logging
 from os import path
 
 
-@contextlib.contextmanager
-def print_time(operation_name, quiet=False):
-    if quiet:
-        yield; return
-    t1 = time()
-    yield
-    t2 = time()
-    logging.info(">>>>> Operation: '{}'  Time: {:.0f}ms".format(operation_name,
-                                                                (t2 - t1)*1000))
 
 
 def groupby(keyfun, elements):

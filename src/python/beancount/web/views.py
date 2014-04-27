@@ -6,7 +6,7 @@ from beancount.core import data
 from beancount.ops import summarize
 from beancount.core import realization
 from beancount import parser
-from beancount import utils
+from beancount.utils import misc_utils
 
 
 
@@ -68,17 +68,17 @@ class View:
 
         # Realize the three sets of entries.
         if self.opening_entries:
-            with utils.print_time('realize_opening'):
+            with misc_utils.print_time('realize_opening'):
                 self.opening_real_accounts = realization.realize(self.opening_entries)
                 realization.ensure_min_accounts(self.opening_real_accounts, self.account_types)
         else:
             self.opening_real_accounts = None
 
-        with utils.print_time('realize'):
+        with misc_utils.print_time('realize'):
             self.real_accounts = realization.realize(self.entries)
             realization.ensure_min_accounts(self.real_accounts, self.account_types)
 
-        with utils.print_time('realize_closing'):
+        with misc_utils.print_time('realize_closing'):
             self.closing_real_accounts = realization.realize(self.closing_entries)
             realization.ensure_min_accounts(self.closing_real_accounts, self.account_types)
 
@@ -123,7 +123,7 @@ class YearView(View):
         # Clamp to the desired period.
         begin_date = datetime.date(self.year, 1, 1)
         end_date = datetime.date(self.year+1, 1, 1)
-        with utils.print_time('clamp'):
+        with misc_utils.print_time('clamp'):
             entries, index = summarize.clamp(entries, begin_date, end_date, options, *previous_accounts)
 
         return entries, index

@@ -7,7 +7,7 @@ import logging
 
 from beancount import load
 from beancount.core import realization
-from beancount import utils
+from beancount.utils import misc_utils
 
 
 def main():
@@ -21,7 +21,7 @@ def main():
         logging.basicConfig(level=logging.INFO,
                             format='%(levelname)-8s: %(message)s')
 
-    with utils.print_time('total'):
+    with misc_utils.print_time('total'):
 
         # Load up the file, print errors.
         entries, errors, options = load(opts.filename, do_print_errors=True)
