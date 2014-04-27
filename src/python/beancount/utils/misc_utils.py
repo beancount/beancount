@@ -122,3 +122,13 @@ def index_key(sequence, value, key, cmp):
         if cmp(key(element), value):
             return index
     return
+
+
+ONEDAY = datetime.timedelta(days=1)
+
+def iter_dates(start_date, end_date):
+    "Yield all the dates between 'start_date' and 'end_date'."
+    date = start_date
+    while date < end_date:
+        yield date
+        date += ONEDAY

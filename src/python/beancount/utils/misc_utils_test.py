@@ -5,6 +5,7 @@ import unittest
 import time
 from collections import namedtuple
 import operator
+import datetime
 
 from beancount.utils import misc_utils
 
@@ -47,6 +48,14 @@ class TestMiscUtils(unittest.TestCase):
         objects = [object() for _ in range(10)]
         index = misc_utils.index_key(objects, objects[4], lambda x: x, operator.is_)
         self.assertEqual(4, index)
+
+    def test_iter_dates(self):
+        date1 = datetime.date(2013, 5, 6)
+        date2 = datetime.date(2013, 5, 11)
+        self.assertEqual([], list(misc_utils.iter_dates(date1, date1)))
+        self.assertEqual([datetime.date(2013, 5, x) for x in range(6, 11)],
+                         list(misc_utils.iter_dates(date1, date2)))
+        self.assertEqual([], list(misc_utils.iter_dates(date2, date1)))
 
 
     # def test_date_ticker_one_month(self):

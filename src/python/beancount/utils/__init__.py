@@ -26,17 +26,6 @@ def walk_files_or_dirs(fords, ignore_dirs=['.hg', '.svn', '.git']):
             logging.error("File or directory '{}' does not exist.".format(ford))
 
 
-
-ONEDAY = datetime.timedelta(days=1)
-
-def iter_dates(start_date, end_date):
-    "Yield all the dates between 'start_date' and 'end_date'."
-    date = start_date
-    while date < end_date:
-        yield date
-        date += ONEDAY
-
-
 class DateIntervalTicker:
     """An object that will tick when the dates cross specific intervals."""
 
