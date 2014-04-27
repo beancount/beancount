@@ -29,6 +29,12 @@ class TestMiscUtils(unittest.TestCase):
         self.assertEqual([A, A, A, A],
                          list(map(type, misc_utils.filter_type(data, A))))
 
+    def test_longest(self):
+        data = [(1,), (2,3,4,5), (2,3)]
+        self.assertEqual((2,3,4,5), misc_utils.longest(data))
+
+
+
 
     # def test_date_ticker_one_month(self):
     #     ticker = utils.DateIntervalTicker(lambda date: date.month)

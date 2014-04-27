@@ -12,16 +12,6 @@ import logging
 from os import path
 
 
-def longest(seq):
-    """Return the longest of the given subsequences."""
-    longest, length = None, -1
-    for x in seq:
-        lenx = len(x)
-        if lenx > length:
-            longest, length = x, lenx
-    return longest
-
-
 def get_tuple_values(ntuple, predicate):
     """Return all members referred to by this namedtuple instance that satisfy the
     given predicate. This function also works recursively on its members, and so

@@ -2,6 +2,11 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
+  __init__.py:
+  - Code from beancount/utils/__init__.py is not test code; do write a test for it.
+  - Move __init__.py to misc_utils.py, and then for moving relevant things into ledgerhub.
+
+
   - Add a test for --view option.
 
   - MSSB documents aren't found... fix FIXMEs in documents.py
@@ -9,11 +14,6 @@ beancount: TODO
   - Remove TYPES_ORDER.
   - Merge account_types and account once again
   - Complete writing tests for all scripts.
-
-  - Build a pass-through memoizer and replace Mole from text_utils.
-    m = Memo()
-    if m(re.match(...)):
-    ... = m.value
 
   - Complete all unittests coverage (as per find-missing-tests.py).
   - Configure and run a clean pylint on the entire codebase.
@@ -29,8 +29,6 @@ beancount: TODO
   - Write a script that checks the dependencies dynamically and reports on them,
     with versions if possible, for reporting bugs:
     etc/check-depends.py, do this for 1.0
-
-  - Code from beancount/utils/__init__.py is not test code; do write a test for it.
 
 * Current
 
