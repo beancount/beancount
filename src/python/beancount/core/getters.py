@@ -5,7 +5,6 @@ from collections import defaultdict
 
 from beancount.core.data import Transaction, Open, Close
 from beancount.core import account
-from beancount import utils
 from beancount.utils import misc_utils
 
 

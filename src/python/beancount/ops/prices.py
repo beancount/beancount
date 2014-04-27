@@ -13,7 +13,6 @@ from beancount.core.amount import Decimal, Amount
 from beancount.core.data import Transaction, Posting, Price, FileLocation
 from beancount.core.position import Lot, Position
 from beancount.core.inventory import Inventory
-from beancount import utils
 from beancount.utils import misc_utils
 from beancount.core import realization
 from beancount.core import flags

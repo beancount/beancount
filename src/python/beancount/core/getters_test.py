@@ -2,7 +2,6 @@ import unittest
 import datetime
 
 from beancount.core import getters
-from beancount.core import account
 from beancount.parser import parser
 
 

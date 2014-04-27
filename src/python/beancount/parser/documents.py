@@ -9,7 +9,6 @@ import datetime
 from os import path
 from collections import namedtuple
 
-from beancount import utils
 from beancount.utils import misc_utils
 from beancount.core import account
 from beancount.core.data import FileLocation, Document

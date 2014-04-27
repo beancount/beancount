@@ -6,7 +6,6 @@ from beancount.core.position import Lot, Position
 from beancount.core.inventory import Inventory
 from beancount.core.amount import Decimal, amount_sub
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Document, Posting
-from beancount import utils
 from beancount.utils import misc_utils
 from beancount.core import flags
 

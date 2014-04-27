@@ -5,7 +5,6 @@ of their associated postings. This is achieved by building a realization; see
 realization.py for details.
 """
 import re
-from collections import namedtuple
 
 from beancount.core import account_types
 

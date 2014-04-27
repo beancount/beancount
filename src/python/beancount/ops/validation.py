@@ -9,7 +9,6 @@ from beancount.core.account import is_account_name
 from beancount.core.data import Open, Close, Balance, Transaction, Document
 from beancount.core import data
 from beancount.core import getters
-from beancount import utils
 from beancount.utils import misc_utils
 
 
