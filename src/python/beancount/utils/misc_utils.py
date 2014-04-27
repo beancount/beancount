@@ -30,3 +30,11 @@ def groupby(keyfun, elements):
     for element in elements:
         grouped[keyfun(element)].append(element)
     return grouped
+
+
+def filter_type(elist, types):
+    """Filter the given list to yield only instances of the given types."""
+    for element in elist:
+        if not isinstance(element, types):
+            continue
+        yield element

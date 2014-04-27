@@ -12,14 +12,6 @@ import logging
 from os import path
 
 
-def filter_type(elist, types):
-    """Filter the given list to yield only instances of the given types."""
-    for element in elist:
-        if not isinstance(element, types):
-            continue
-        yield element
-
-
 def longest(seq):
     """Return the longest of the given subsequences."""
     longest, length = None, -1

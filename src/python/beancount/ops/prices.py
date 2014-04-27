@@ -14,6 +14,7 @@ from beancount.core.data import Transaction, Posting, Price, FileLocation
 from beancount.core.position import Lot, Position
 from beancount.core.inventory import Inventory
 from beancount import utils
+from beancount.utils import misc_utils
 from beancount.core import realization
 from beancount.core import flags
 
@@ -134,7 +135,7 @@ def get_latest_prices(entries):
     """Return a dictionary of the latest prices from the list of entries."""
 
     prices = {}
-    for entry in utils.filter_type(entries, Price):
+    for entry in misc_utils.filter_type(entries, Price):
         key = (entry.currency, entry.amount.currency)
         prices[key] = entry
     return prices

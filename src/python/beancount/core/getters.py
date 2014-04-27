@@ -6,6 +6,7 @@ from collections import defaultdict
 from beancount.core.data import Transaction, Open, Close
 from beancount.core import account
 from beancount import utils
+from beancount.utils import misc_utils
 
 
 # FIXME: Ideally this would live under ops, pending dependencies.
@@ -96,7 +97,7 @@ def get_all_tags(entries):
       A set of tag strings.
     """
     all_tags = set()
-    for entry in utils.filter_type(entries, Transaction):
+    for entry in misc_utils.filter_type(entries, Transaction):
         if entry.tags:
             all_tags.update(entry.tags)
     return all_tags
@@ -111,7 +112,7 @@ def get_all_payees(entries):
       A set of payee strings.
     """
     all_payees = set()
-    for entry in utils.filter_type(entries, Transaction):
+    for entry in misc_utils.filter_type(entries, Transaction):
         all_payees.add(entry.payee)
     all_payees.discard(None)
     return all_payees
@@ -180,7 +181,7 @@ def get_account_open_close(entries):
       close-directive) tuples.
     """
     open_closes_map = defaultdict(lambda: [None, None])
-    for entry in utils.filter_type(entries, (Open, Close)):
+    for entry in misc_utils.filter_type(entries, (Open, Close)):
         index = 0 if isinstance(entry, Open) else 1
         open_closes_map[entry.account][index] = entry
     return open_closes_map

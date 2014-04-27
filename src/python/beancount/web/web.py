@@ -236,8 +236,8 @@ def find_last_active_posting(postings):
     Returns:
       An entry, or None, if the input list was empty.
     """
-    for posting in utils.filter_type(reversed(postings),
-                                     (Open, Close, Pad, Balance, Posting, Note)):
+    for posting in misc_utils.filter_type(reversed(postings),
+                                          (Open, Close, Pad, Balance, Posting, Note)):
         if (isinstance(posting, Posting) and
             posting.entry.flag == flags.FLAG_UNREALIZED):
             continue
@@ -250,7 +250,7 @@ def find_last_active_posting(postings):
 def events():
     "Render an index for the various kinds of events."
 
-    events = utils.filter_type(app.entries, Event)
+    events = misc_utils.filter_type(app.entries, Event)
     events_by_type = misc_utils.groupby(lambda event: event.type, events)
 
     contents = io.StringIO()
@@ -383,7 +383,7 @@ def doc(filename=None):
 
     # Check that there is a document directive that has this filename.
     # This is for security; we don't want to be able to serve just any file.
-    for entry in utils.filter_type(app.entries, Document):
+    for entry in misc_utils.filter_type(app.entries, Document):
         if entry.filename == filename:
             break
     else:
@@ -658,7 +658,7 @@ def account_(slashed_account_name=None):
 def get_conversion_entries(entries):
     """Return the subset of transaction entries which have a conversion."""
     return [entry
-            for entry in utils.filter_type(entries, Transaction)
+            for entry in misc_utils.filter_type(entries, Transaction)
             if data.transaction_has_conversion(entry)]
 
 
@@ -792,7 +792,7 @@ def trades():
 @viewapp.route('/documents', name='documents')
 def documents():
     "Render a tree with all the documents found."
-    document_entries = list(utils.filter_type(request.view.entries, Document))
+    document_entries = list(misc_utils.filter_type(request.view.entries, Document))
     oss = io.StringIO()
     if document_entries:
         journal.entries_table(app, oss, document_entries)
