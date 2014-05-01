@@ -173,29 +173,6 @@ def compute_unique_clean_ids(strings):
     return idmap
 
 
-def walk_files_or_dirs(fords, ignore_dirs=['.hg', '.svn', '.git']):
-    """Enumerate the files under the given directories.
-
-    Invalid file or directory names will be logged to the error log.
-
-    Args:
-      fords: A list of strings, file or directory names.
-      ignore_dirs: A list of strings, filenames or directories to be ignored.
-    Yields:
-      Strings, full filenames from the given roots.
-    """
-    for ford in fords:
-        if path.isdir(ford):
-            for root, dirs, filenames in os.walk(ford):
-                dirs[:] = [dirname for dirname in dirs if dirname not in ignore_dirs]
-                for filename in filenames:
-                    yield path.join(root, filename)
-        elif path.isfile(ford) or path.islink(ford):
-            yield ford
-        elif not path.exists(ford):
-            logging.error("File or directory '{}' does not exist.".format(ford))
-
-
 class DateIntervalTicker:
     """An object that will tick when the dates cross specific intervals."""
 

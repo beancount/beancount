@@ -6,6 +6,7 @@ import time
 from collections import namedtuple
 import operator
 import datetime
+from os import path
 
 from beancount.utils import misc_utils
 
@@ -43,7 +44,7 @@ class TestMiscUtils(unittest.TestCase):
         ntuple = Something(1, 2, SomethingElse(A('a'), None, 2), [A('b'), 'c'], 5)
         x = misc_utils.get_tuple_values(ntuple, lambda x: isinstance(x, A))
         self.assertEqual([A('a'), A('b')], list(x))
-        
+
     def test_index_key(self):
         objects = [object() for _ in range(10)]
         index = misc_utils.index_key(objects, objects[4], lambda x: x, operator.is_)
@@ -66,9 +67,6 @@ class TestMiscUtils(unittest.TestCase):
 
         self.assertEqual({'a_b': 'a_b', 'ab': 'a b'},
                          misc_utils.compute_ids(['a b', 'a_b']))
-
-    def test_walk_files_or_dirs(self):
-        pass ## FIXME: todo
 
     def test_date_ticker_one_month(self):
         pass ## FIXME: todo
