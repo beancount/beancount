@@ -11,6 +11,7 @@ from collections import namedtuple
 
 from beancount.utils import misc_utils
 from beancount.core import account
+from beancount.core import account_types
 from beancount.core.data import FileLocation, Document
 from beancount.core import data
 from beancount.core import getters
@@ -124,7 +125,7 @@ def walk_accounts(root_directory):
     for root, dirs, files in os.walk(root_directory):
         relroot = root[len(root_directory)+1:]
         account_name = relroot.replace(os.sep, account.sep)
-        if account.is_account_name(account_name):
+        if account_types.is_account_name(account_name):
             yield (root, account_name, dirs, files)
 
 

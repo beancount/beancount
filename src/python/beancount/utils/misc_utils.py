@@ -2,14 +2,11 @@
 Generic utility packages and functions.
 """
 import re
-import datetime
 import logging
 from time import time
 import contextlib
 from collections import defaultdict
-import os
 import logging
-from os import path
 
 
 @contextlib.contextmanager
@@ -102,7 +99,8 @@ def get_tuple_values(ntuple, predicate, memo=None):
         if predicate(attribute):
             yield attribute
         if isinstance(attribute, (list, tuple)):
-            yield from get_tuple_values(attribute, predicate, memo)
+            for value in get_tuple_values(attribute, predicate, memo):
+                yield value
 
 
 def index_key(sequence, value, key, cmp):

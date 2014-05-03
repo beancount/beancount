@@ -27,7 +27,7 @@ from beancount.core import realization
 from beancount.ops import prices
 from beancount.utils import misc_utils
 from beancount.utils.text_utils import replace_numbers
-from beancount.core.account import is_balance_sheet_account
+from beancount.core.account_types import is_balance_sheet_account
 from beancount.core import account
 from beancount.loader import load
 from beancount.parser import parser

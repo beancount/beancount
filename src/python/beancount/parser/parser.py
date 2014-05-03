@@ -13,9 +13,8 @@ from os import path
 
 from beancount.parser import _parser
 from beancount.parser import options
-from beancount.core.account_types import AccountTypes
+from beancount.core.account_types import AccountTypes, account_name_type
 from beancount.core import account
-from beancount.core.account import account_name_type
 from beancount.core import account_types
 from beancount.core import data
 from beancount.core.amount import ZERO, Decimal, Amount, amount_div

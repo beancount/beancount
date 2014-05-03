@@ -1,6 +1,7 @@
 import unittest
 
 from beancount.core.account import *
+from beancount.core.account_types import *
 
 
 class TestAccount(unittest.TestCase):

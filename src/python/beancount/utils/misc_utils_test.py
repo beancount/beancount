@@ -5,8 +5,6 @@ import unittest
 import time
 from collections import namedtuple
 import operator
-import datetime
-from os import path
 
 from beancount.utils import misc_utils
 

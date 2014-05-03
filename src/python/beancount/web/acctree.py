@@ -4,7 +4,7 @@ import io
 
 from beancount.web.journal import account_link
 from beancount.core import data
-from beancount.core.account import is_account_name_root
+from beancount.core.account_types import is_account_name_root
 from beancount.core import account
 from beancount.core.position import Lot
 from beancount.core.data import Open
