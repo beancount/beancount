@@ -6,6 +6,15 @@ currency:
   (number, currency).
 
 The module also contains the basic Decimal type import.
+
+About Decimal usage:
+
+- Do not import Decimal from 'decimal' or 'cdecimal' modules; always import your
+  Decimal class from beancount.core.amount.
+
+- Prefer to use to_decimal() to create new instances of Decimal objects, which
+  handles more syntax, e.g., handles None, and numbers with commas.
+
 """
 
 # Attempt to import a fast Decimal implementation; if we can't, fall back on the
