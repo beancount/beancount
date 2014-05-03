@@ -2,10 +2,8 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-  __init__.py:
-  - Code from beancount/utils/__init__.py is not test code; do write a test for it.
-  - Move __init__.py to misc_utils.py, and then for moving relevant things into ledgerhub.
-
+  - Build a more complete and representative of reality example file, bake, and share
+  - Complete the dependency removal and merge all branches - this is annoying
 
   - Add a test for --view option.
 
