@@ -52,10 +52,10 @@ class TestMiscUtils(unittest.TestCase):
 
     def test_compute_unique_clean_ids(self):
         self.assertEqual({'a': 'a', 'b': 'b', 'c': 'c'},
-                         misc_utils.compute_ids(['a', 'b', 'c']))
+                         misc_utils.compute_unique_clean_ids(['a', 'b', 'c']))
 
         self.assertEqual({'a-b': 'a-b', 'a_b': 'a b'},
-                         misc_utils.compute_ids(['a b', 'a-b']))
+                         misc_utils.compute_unique_clean_ids(['a b', 'a-b']))
 
         self.assertEqual({'a_b': 'a_b', 'ab': 'a b'},
-                         misc_utils.compute_ids(['a b', 'a_b']))
+                         misc_utils.compute_unique_clean_ids(['a b', 'a_b']))
