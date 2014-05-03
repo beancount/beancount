@@ -3,8 +3,9 @@
 import datetime
 from collections import namedtuple
 
-from beancount.core.amount import Amount, Decimal, to_decimal
-from beancount.core.position import Position, create_position
+# Note: this file is mirrorred into ledgerhub. Relative imports only.
+from .amount import Amount, Decimal, to_decimal
+from .position import Position, create_position
 
 
 # All possible types of entries. These are the main data structrues in use

@@ -16,6 +16,7 @@ About Decimal usage:
   handles more syntax, e.g., handles None, and numbers with commas.
 
 """
+# Note: this file is mirrorred into ledgerhub. Relative imports only.
 
 # Attempt to import a fast Decimal implementation; if we can't, fall back on the
 # slower pure-Python Decimal object. Note that because of the small and
