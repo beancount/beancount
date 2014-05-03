@@ -124,23 +124,6 @@ def index_key(sequence, value, key, cmp):
     return
 
 
-ONEDAY = datetime.timedelta(days=1)
-
-def iter_dates(start_date, end_date):
-    """Yield all the dates between 'start_date' and 'end_date'.
-
-    Args:
-      start_date: An instance of datetime.date.
-      end_date: An instance of datetime.date.
-    Yields:
-      Instances of datetime.date.
-    """
-    date = start_date
-    while date < end_date:
-        yield date
-        date += ONEDAY
-
-
 def compute_unique_clean_ids(strings):
     """Given a sequence of strings, reduce them to corresponding ids without any
     funny characters and insure that the list of ids is unique. Yields pairs
@@ -171,25 +154,3 @@ def compute_unique_clean_ids(strings):
         return # Could not find a unique mapping.
 
     return idmap
-
-
-class DateIntervalTicker:
-    """An object that will tick when the dates cross specific intervals."""
-
-    def __init__(self, compute_value):
-        self.last_value = None
-
-        # Compute the new tick value from the date; default implementation
-        # returns the date itself, thus ticking every time the date changes.
-        if compute_value is None:
-            compute_value = lambda new_date: new_date
-        self.compute_value = compute_value
-
-    def __call__(self, new_date):
-        """Return True if the interval has been crossed; False otherwise."""
-        new_value = self.compute_value(new_date)
-        if new_value != self.last_value:
-            self.last_value = new_value
-            return True
-        else:
-            return False

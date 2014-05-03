@@ -50,14 +50,6 @@ class TestMiscUtils(unittest.TestCase):
         index = misc_utils.index_key(objects, objects[4], lambda x: x, operator.is_)
         self.assertEqual(4, index)
 
-    def test_iter_dates(self):
-        date1 = datetime.date(2013, 5, 6)
-        date2 = datetime.date(2013, 5, 11)
-        self.assertEqual([], list(misc_utils.iter_dates(date1, date1)))
-        self.assertEqual([datetime.date(2013, 5, x) for x in range(6, 11)],
-                         list(misc_utils.iter_dates(date1, date2)))
-        self.assertEqual([], list(misc_utils.iter_dates(date2, date1)))
-
     def test_compute_unique_clean_ids(self):
         self.assertEqual({'a': 'a', 'b': 'b', 'c': 'c'},
                          misc_utils.compute_ids(['a', 'b', 'c']))
@@ -67,25 +59,3 @@ class TestMiscUtils(unittest.TestCase):
 
         self.assertEqual({'a_b': 'a_b', 'ab': 'a b'},
                          misc_utils.compute_ids(['a b', 'a_b']))
-
-    def test_date_ticker_one_month(self):
-        pass ## FIXME: todo
-    #     ticker = utils.DateIntervalTicker(lambda date: date.month)
-    #     for date in utils.iter_dates(datetime.date(2012, 1, 1),
-    #                                  datetime.date(2013, 6, 1)):
-    #         if ticker.check(date):
-    #             self.assertEqual(date.day, 1)
-
-    def test_date_ticker_three_months(self):
-        pass ## FIXME: todo
-    #     ticker = utils.DateIntervalTicker(
-    #         lambda date: ((date.year * 12 + (date.month - 1)) // 3))
-    #
-    #     for date in utils.iter_dates(datetime.date(2012, 1, 1),
-    #                                  datetime.date(2013, 6, 1)):
-    #         if ticker.check(date):
-    #             self.assertEqual(date.day, 1)
-    #             self.assertTrue(((date.month-1) % 3) == 0)
-
-
-__incomplete__ = True
