@@ -25,15 +25,34 @@ except (ImportError, ValueError):
 
 
 class PriceDatabase(object):
+    """An in-memory price database.
 
-    def __init__(self, entries):
-        self.price_map = build_price_database(entries)
+    This object defines a container of historical of prices for various
+    currencies, denominated in a specific cost currency.
+    """
+    def __init__(self, price_list):
+        """Constructor from tuples.
 
-    def __getitem__(self, key):
+        Args:
+          price_list: A list of (date, number, currency, cost-currency)
+            tuples.
+        Returns:
+          A new instance of PriceDatabase. The returned object is meant to be
+          read-only, not modified further.
+        """
+        ##self.price_map = build_price_database(entries)
+
+
+
+
+
+    def __getitem__(self, base_quote):
         return self.price_map.__getitem__(key)
 
+    # FIXME: Not sure if I need this in the end.
     def __iter__(self):
         return iter(self.price_map)
+
 
     def get_latest_price(self, base, quote):
         if base == quote:
@@ -300,6 +319,9 @@ def get_positions_as_dataframe(entries):
         return None
 
     _, flat_positions = get_priced_positions(entries)
+
+
+    # TODO(blais): Convert this to avoid the Pandas dependency.
 
     dataframe = pandas.DataFrame.from_records(
         flat_positions, columns=['account', 'number', 'currency', 'cost_number', 'price_number', 'cost_currency', 'price_date'])
