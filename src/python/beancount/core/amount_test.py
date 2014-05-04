@@ -1,8 +1,9 @@
 import unittest
 import re
 
-from beancount.core.amount import ZERO, to_decimal, Decimal, Amount
-from beancount.core.amount import amount_sortkey, amount_mult, amount_sub, amount_div
+from .amount import to_decimal, Decimal, ZERO
+from .amount import Amount
+from . import amount
 
 
 class TestToDecimal(unittest.TestCase):
@@ -67,7 +68,7 @@ class TestAmount(unittest.TestCase):
             Amount('2', 'USD'),
             Amount('200', 'EUR'),
         ]
-        amounts = sorted(amounts, key=amount_sortkey)
+        amounts = sorted(amounts, key=amount.amount_sortkey)
         self.assertEqual([
             Amount('100', 'CAD'),
             Amount('200', 'EUR'),
@@ -78,19 +79,19 @@ class TestAmount(unittest.TestCase):
         ], amounts)
 
     def test_mult(self):
-        amount = Amount('100', 'CAD')
+        amount_ = Amount('100', 'CAD')
         self.assertEqual(Amount('102.1', 'CAD'),
-                         amount_mult(amount, Decimal('1.021')))
+                         amount.amount_mult(amount_, Decimal('1.021')))
 
     def test_div(self):
-        amount = Amount('100', 'CAD')
+        amount_ = Amount('100', 'CAD')
         self.assertEqual(Amount('20', 'CAD'),
-                         amount_div(amount, Decimal('5')))
+                         amount.amount_div(amount_, Decimal('5')))
 
     def test_sub(self):
         self.assertEqual(Amount('82.98', 'CAD'),
-                         amount_sub(Amount('100', 'CAD'),
+                         amount.amount_sub(Amount('100', 'CAD'),
                                     Amount('17.02', 'CAD')))
         with self.assertRaises(ValueError):
-            amount_sub(Amount('100', 'USD'),
+            amount.amount_sub(Amount('100', 'USD'),
                        Amount('17.02', 'CAD'))
