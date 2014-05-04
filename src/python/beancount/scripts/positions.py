@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Print out a list of current positions, relative or absolute.
 
 This is to share my portfolio with others, or to compute its daily changes.

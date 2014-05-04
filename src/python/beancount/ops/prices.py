@@ -192,8 +192,8 @@ def get_priced_positions(entries):
                    position['cost_currency'])
         else:
             key = (position['account'],
-                   None,
-                   position['cost_currency'])
+                   position['currency'],
+                   None)
         grouped_positions[key].append(position)
 
     # For each group, add the price to the dataframe.
