@@ -558,6 +558,21 @@ Improve this bit:
 
 ** Padding
 
+  - Idea: Padding entries could be extended a tiny bit in order to
+    automatically calculate the cash distribution entries, e.g., like this:
+
+      2014-03-04 pad Asset:Cash  Expenses:Restaurant    60%
+      2014-03-04 pad Asset:Cash  Expenses:Alcohol       40%
+
+      2014-04-04 pad Asset:Cash  Expenses:Restaurant    70%
+      2014-04-04 pad Asset:Cash  Expenses:Alcohol       30%
+
+      2014-05-04 pad Asset:Cash  Expenses:Restaurant    70%
+      2014-05-04 pad Asset:Cash  Expenses:Alcohol       30%
+
+    This is a great idea, is in line with the general meaning of pad entries
+    (implicit 100%) and would add a much desired feature.
+
   - Add tests for all the cases of realization padding.
 
 ** Locations
