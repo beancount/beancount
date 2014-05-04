@@ -25,9 +25,9 @@ from beancount.core import getters
 from beancount.ops import summarize
 from beancount.core import realization
 from beancount.ops import prices
-from beancount import utils
+from beancount.utils import misc_utils
 from beancount.utils.text_utils import replace_numbers
-from beancount.core.account import is_balance_sheet_account
+from beancount.core.account_types import is_balance_sheet_account
 from beancount.core import account
 from beancount.loader import load
 from beancount.parser import parser
@@ -235,8 +235,8 @@ def find_last_active_posting(postings):
     Returns:
       An entry, or None, if the input list was empty.
     """
-    for posting in utils.filter_type(reversed(postings),
-                                     (Open, Close, Pad, Balance, Posting, Note)):
+    for posting in misc_utils.filter_type(reversed(postings),
+                                          (Open, Close, Pad, Balance, Posting, Note)):
         if (isinstance(posting, Posting) and
             posting.entry.flag == flags.FLAG_UNREALIZED):
             continue
@@ -249,8 +249,8 @@ def find_last_active_posting(postings):
 def events():
     "Render an index for the various kinds of events."
 
-    events = utils.filter_type(app.entries, Event)
-    events_by_type = utils.groupby(lambda event: event.type, events)
+    events = misc_utils.filter_type(app.entries, Event)
+    events_by_type = misc_utils.groupby(lambda event: event.type, events)
 
     contents = io.StringIO()
     for event_type, events in sorted(events_by_type.items()):
@@ -269,7 +269,7 @@ def prices_():
     "Render a list of links to instruments, to list their prices."
 
     oss = io.StringIO()
-    for quote, baselist in sorted(utils.groupby(lambda x: x[1], list(app.price_db)).items(),
+    for quote, baselist in sorted(misc_utils.groupby(lambda x: x[1], list(app.price_db)).items(),
                                   key=lambda x: -len(x[1])):
         links = ['<a href="{link}">{0} ({1})</a>'.format(
             base_, quote_,
@@ -382,7 +382,7 @@ def doc(filename=None):
 
     # Check that there is a document directive that has this filename.
     # This is for security; we don't want to be able to serve just any file.
-    for entry in utils.filter_type(app.entries, Document):
+    for entry in misc_utils.filter_type(app.entries, Document):
         if entry.filename == filename:
             break
     else:
@@ -657,7 +657,7 @@ def account_(slashed_account_name=None):
 def get_conversion_entries(entries):
     """Return the subset of transaction entries which have a conversion."""
     return [entry
-            for entry in utils.filter_type(entries, Transaction)
+            for entry in misc_utils.filter_type(entries, Transaction)
             if data.transaction_has_conversion(entry)]
 
 
@@ -791,7 +791,7 @@ def trades():
 @viewapp.route('/documents', name='documents')
 def documents():
     "Render a tree with all the documents found."
-    document_entries = list(utils.filter_type(request.view.entries, Document))
+    document_entries = list(misc_utils.filter_type(request.view.entries, Document))
     oss = io.StringIO()
     if document_entries:
         journal.entries_table(app, oss, document_entries)
@@ -813,7 +813,7 @@ def stats():
     "Compute and render statistics about the input file."
 
     # Count the number of entries by type.
-    entries_by_type = utils.groupby(lambda entry: type(entry).__name__,
+    entries_by_type = misc_utils.groupby(lambda entry: type(entry).__name__,
                                     request.view.entries)
     nb_entries_by_type = {name: len(entries)
                           for name, entries in entries_by_type.items()}
@@ -825,7 +825,7 @@ def stats():
                     for entry in request.view.entries
                     if isinstance(entry, Transaction)
                     for posting in entry.postings]
-    postings_by_account = utils.groupby(lambda posting: posting.account,
+    postings_by_account = misc_utils.groupby(lambda posting: posting.account,
                                         all_postings)
     nb_postings_by_account = {key: len(postings)
                               for key, postings in postings_by_account.items()}
@@ -911,6 +911,34 @@ def populate_view(callback):
 viewapp.install(populate_view)
 
 
+def url_restrict_generator(url_prefix):
+    """Restrict to only a single prefix.
+
+    Args:
+      url_prefix: A string, a URL prefix to restrict to.
+      callback: The function to wrap.
+    Returns:
+      A handler decorator.
+    """
+    # A list of URLs that should always be accepted, even when restricted.
+    allowed = ['/web.css',
+               '/favicon.ico']
+
+    def url_restrict_handler(callback):
+        def wrapper(*args, **kwargs):
+            if request.path in allowed or request.path.startswith(url_prefix):
+                return callback(*args, **kwargs)
+            if request.path == '/':
+                bottle.redirect(url_prefix)
+
+            # Note: we issue a "202 Accepted" status in order to satisfy bean-bake,
+            # we want to distinguish between an actual 404 error and this case.
+            raise bottle.HTTPError(202, "URLs restricted to '{}'".format(url_prefix))
+
+        return wrapper
+    return url_restrict_handler
+
+
 def get_all_view(app):
     """Return a view of all transactions.
 
@@ -962,7 +990,7 @@ def level2(level=None, path=None):
 # We need some sort of mapping from idified tag to "real" tag. Either of don't idify at all.
 # Is the syntax compatible?
 #     # Create views for all tags.
-#     for tagid, tag in utils.compute_ids(get_all_tags(entries)):
+#     for tagid, tag in utils.compute_unique_clean_ids(get_all_tags(entries)):
 
 
 
@@ -1027,22 +1055,21 @@ def incognito(callback):
     return wrapper
 
 
-def run_app(filename, port, debug, do_incognito, no_source, **kwargs):
-    class args:
-        pass
-    args.filename = filename
-    args.debug = debug
-    args.no_source = no_source
-    app.args = args
-
+def run_app(args, quiet=None):
     logging.basicConfig(level=logging.INFO,
                         format='%(levelname)-8s: %(message)s')
 
     # Hide the numbers in incognito mode. We do this on response text via a plug-in.
-    if do_incognito:
-        app.args.no_source = True
+    if args.incognito:
+        args.no_source = True
         app.install(incognito)
         viewapp.install(incognito)
+
+    # Install code that will restrict all resources to a particular view.
+    if args.view:
+        view_url_prefix = '/view/{}/'.format(args.view)
+        url_restrictor = url_restrict_generator(view_url_prefix)
+        app.install(url_restrictor)
 
     # Initialize to a small value in order to insure a reload on the first page.
     app.last_mtime = 0
@@ -1056,8 +1083,10 @@ def run_app(filename, port, debug, do_incognito, no_source, **kwargs):
         global STYLE; STYLE = f.read()
 
     # Run the server.
-    app.run(host='localhost', port=port,
-            debug=args.debug, reloader=False, **kwargs)
+    app.args = args
+    app.run(host='localhost', port=args.port,
+            debug=args.debug, reloader=False,
+            quiet=args.quiet if hasattr(args, 'quiet') else quiet)
 
 
 # The global server instance.
@@ -1092,49 +1121,59 @@ def shutdown():
     server.shutdown()
 
 
+def add_web_arguments(argparser):
+    group = argparser.add_argument_group("Web server arguments")
+
+    group.add_argument('filename',
+                       help="Beancount input filename to serve.")
+
+    group.add_argument('--plugin', action='append', default=[],
+                       help="The name of a plugin to import before running.")
+
+    group.add_argument('--port', action='store', type=int, default=8080,
+                       help="Which port to listen on.")
+
+    group.add_argument('--debug', action='store_true',
+                       help="Enable debugging features (auto-reloading of css).")
+
+    group.add_argument('--incognito', action='store_true',
+                       help=("Filter the output in order to hide all the numbers. "
+                             "This is great for demos using my real file."))
+
+    group.add_argument('--no-source', action='store_true',
+                       help=("Don't render the source."))
+
+    group.add_argument('--view', action='store',
+                       help="Render only the specified view (identify by URL)")
+    return group
+
+
 def main():
     """Main web service runner. This runs the event loop and blocks indefinitely."""
 
     argparser = argparse.ArgumentParser(__doc__.strip())
-
-    argparser.add_argument('filename', help="Beancount input filename to serve.")
-
-    argparser.add_argument('--plugin', action='append', default=[],
-                           help="The name of a plugin to import before running.")
-
-    argparser.add_argument('--port', action='store', type=int, default=8080,
-                           help="Which port to listen on.")
-
-    argparser.add_argument('--debug', action='store_true',
-                           help="Enable debugging features (auto-reloading of css).")
-
-    argparser.add_argument('--incognito', action='store_true',
-                           help=("Filter the output in order to hide all the numbers. "
-                                 "This is great for demos using my real file."))
-
-    argparser.add_argument('--no-source', action='store_true',
-                           help=("Don't render the source."))
-
+    add_web_arguments(argparser)
     args = argparser.parse_args()
 
     for plugin_name in args.plugin:
         importlib.import_module(plugin_name)
 
-    run_app(args.filename, args.port, args.debug, args.incognito, args.no_source)
+    run_app(args)
 
 
-def thread_server_start(filename, port, **kwargs):
+def thread_server_start(web_args, **kwargs):
     """Start a server in a new thread.
 
     Args:
-      filename: A string, the name of a Beancount input file.
-      port: An integer, the port to serve this HTTP server on.
+      argparse_args: An argparse parsed options object, with all the options
+        from add_web_arguments().
     Returns:
       A new Thread instance.
+
     """
     thread = threading.Thread(
         target=run_app,
-        args=(filename, port, False, False, False),
+        args=(web_args,),
         kwargs=kwargs)
     thread.daemon = True # Automatically exit if the process comes dwn.
     thread.start()

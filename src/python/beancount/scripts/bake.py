@@ -12,26 +12,23 @@ from os import path
 from beancount.web import web
 
 
-def bake_to_directory(filename, output, port,
-                      quiet_subproc=False, quiet_server=False):
+def bake_to_directory(webargs, output, quiet_subproc=False, quiet_server=False):
     """Serve and bake a Beancount's web to a directory.
 
     Args:
-      filename: A string, the beancount input filename.
+      webargs: An argparse parsed options object with the web app arguments.
       output: A directory name. We don't check here whether it exists or not.
-      port: The port to use for the server while it's running.
       quiet_subproc: A boolean, True to suppress output from the subprocesses.
-      quiet_server: A boolean, True to suppress output from the web server.
     Returns:
       True on success, False otherwise.
     """
     # Start a server thread locally.
-    thread = web.thread_server_start(filename, port, quiet=quiet_server)
+    thread = web.thread_server_start(webargs)
 
     # Define a command that will run and convert all the links to work in a
     # local mirror of the server (your accountant!) so a user can browse the
     # static files extracted.
-    url = 'http://localhost:{}/'.format(port)
+    url = 'http://localhost:{}/'.format(webargs.port)
     command = ['wget',
                '--recursive',
                '--no-host-directories',
@@ -113,23 +110,22 @@ def path_greedy_split(filename):
 def main():
     parser = argparse.ArgumentParser(__doc__)
 
-    parser.add_argument('filename',
-                        help='Beancount input filename.')
+    web_group = web.add_web_arguments(parser)
+    web_group.set_defaults(port=9475)
+    
+    group = parser.add_argument_group("Bake process arguments")
 
-    parser.add_argument('output',
-                        help=('The output directory or archive name. If you '
-                              'specify a filename with a well-known extension,'
+    group.add_argument('output',
+                       help=('The output directory or archive name. If you '
+                             'specify a filename with a well-known extension,'
                               'we automatically archive the fetched directory '
-                              'contents to this archive name and delete them.'))
+                             'contents to this archive name and delete them.'))
 
-    parser.add_argument('--port', action='store', type=int, default=9475,
-                        help=('The port to serve on, in case the default one '
-                              'conflicts with an existing port.'))
+    group.add_argument('--verbose', action='store_true',
+                       help="Let subcommand output through.")
 
-    parser.add_argument('--verbose', action='store_true',
-                        help="Let subcommand output through.")
-    parser.add_argument('--quiet', action='store_true',
-                        help="Don't even print out web server log")
+    group.add_argument('--quiet', action='store_true',
+                       help="Don't even print out web server log")
 
     opts = parser.parse_args()
 
@@ -155,7 +151,7 @@ def main():
     if path.exists(output_directory):
         raise SystemExit("ERROR: Output directory already exists '{}'".format(output_directory))
 
-    baked = bake_to_directory(opts.filename, output_directory, opts.port, not opts.verbose, opts.quiet)
+    baked = bake_to_directory(opts, output_directory, not opts.verbose, opts.quiet)
     if not baked:
         raise SystemExit("ERROR: Error baking into directory '{}'".format(
             output_directory))

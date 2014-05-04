@@ -50,15 +50,15 @@ def is_complete(filename):
 def main():
     import argparse
     parser = argparse.ArgumentParser(__doc__.strip())
+    parser.add_argument('source_root', action='store')
     opts = parser.parse_args()
 
     root_dir = path.realpath(path.dirname(path.dirname(__file__)))
-    source_dir = path.join(root_dir, 'src', 'python', 'beancount')
-    missing_tests = list(find_missing_tests(source_dir))
+    missing_tests = list(find_missing_tests(opts.source_root))
     if missing_tests:
         for filename, test_filename, missing in missing_tests:
             missing_str = 'MISSING' if missing else 'INCOMPLETE'
-            print('{:80} {}'.format(filename, missing_str))
+            print('{:92} {}'.format(filename, missing_str))
 
 
 if __name__ == '__main__':

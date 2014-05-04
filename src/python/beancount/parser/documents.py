@@ -9,8 +9,9 @@ import datetime
 from os import path
 from collections import namedtuple
 
-from beancount import utils
+from beancount.utils import misc_utils
 from beancount.core import account
+from beancount.core import account_types
 from beancount.core.data import FileLocation, Document
 from beancount.core import data
 from beancount.core import getters
@@ -34,7 +35,7 @@ def process_documents(entries, filename, documents_dirs):
     """
 
     # Check that the entries from the input file are okay.
-    document_entries = utils.filter_type(entries, Document)
+    document_entries = misc_utils.filter_type(entries, Document)
     errors = verify_document_entries(document_entries)
 
     # Detect filenames that should convert into entries.
@@ -124,10 +125,11 @@ def walk_accounts(root_directory):
     for root, dirs, files in os.walk(root_directory):
         relroot = root[len(root_directory)+1:]
         account_name = relroot.replace(os.sep, account.sep)
-        if account.is_account_name(account_name):
+        if account_types.is_account_name(account_name):
             yield (root, account_name, dirs, files)
 
 
+# FIXME: I think you can remove 'accounts' as a mapping here, should just be a set.
 def find_documents(root_directory, location_filename, accounts):
     """Find dated document files under the given directory 'root_directory', located
     only in directories that correspond to one of the given accounts.

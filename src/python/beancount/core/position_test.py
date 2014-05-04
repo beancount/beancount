@@ -5,8 +5,8 @@ import unittest
 import copy
 from datetime import date
 
-from beancount.core.amount import ZERO, to_decimal, Amount
-from beancount.core.position import Lot, Position, create_position
+from .amount import ZERO, to_decimal, Amount
+from .position import Lot, Position, create_position
 
 
 class TestPosition(unittest.TestCase):

@@ -8,9 +8,8 @@ import copy
 
 from beancount.core.inventory import Inventory
 from beancount.core.amount import amount_sortkey
-from beancount.utils import index_key
+from beancount.utils import misc_utils
 from beancount.core import data
-from beancount.core import getters
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Document
 from beancount.core.data import Posting
 from beancount.core.account import account_name_leaf, account_name_parent
@@ -88,7 +87,8 @@ class RealAccount:
         """
         yield self
         for child in self.children.values():
-            yield from child
+            for subchild in child:
+                yield subchild
 
     def get_children(self):
         """Get the children of this node.
@@ -432,7 +432,7 @@ def iterate_with_balance(postings_or_entries):
         if posting is not None:
             # De-dup multiple postings on the same transaction entry by
             # grouping their positions together.
-            index = index_key(date_entries, entry, first, operator.is_)
+            index = misc_utils.index_key(date_entries, entry, first, operator.is_)
             if index is None:
                 date_entries.append( (entry, [posting]) )
             else:

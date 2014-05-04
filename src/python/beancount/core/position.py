@@ -18,8 +18,8 @@ A "Position" represents a specific number of units of an associated lot:
 """
 from collections import namedtuple
 
-from beancount.core.amount import ZERO, Decimal, Amount, amount_mult
-from beancount.core import CURRENCY_ORDER
+# Note: this file is mirrorred into ledgerhub. Relative imports only.
+from .amount import ZERO, Decimal, Amount, amount_mult
 
 
 # Lots are a representations of a commodity with an optional associated cost and
@@ -32,6 +32,21 @@ from beancount.core import CURRENCY_ORDER
 #  lot_date: A datetime.date, or None if this lot has no associated date.
 Lot = namedtuple('Lot', 'currency cost lot_date')
 
+
+# Lookup for ordering a list of currencies: we want the majors first, then the
+# cross-currencies, and then all the rest of the stuff a user might define
+# (shorter strings first).
+CURRENCY_ORDER = {
+    'USD': 0,
+    'EUR': 1,
+    'JPY': 2,
+    'CAD': 3,
+    'GBP': 4,
+    'AUD': 5,
+    'NZD': 6,
+    'CHF': 7,
+    # All the rest in alphabetical order...
+}
 
 NCURRENCIES = len(CURRENCY_ORDER)
 

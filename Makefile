@@ -159,7 +159,7 @@ sandbox:
 # Report on the sorry state of test coverage, for 1.0 release.
 # sources and imports are going to move to ledgerhub.
 status test-status:
-	./etc/find-missing-tests.py | grep -vE '/(sources|imports)/'
+	./etc/find-missing-tests.py $(SRC) | grep -vE '/(sources|imports)/'
 
 # Run the linter on all source code.
 lint:

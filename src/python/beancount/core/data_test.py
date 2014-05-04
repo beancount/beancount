@@ -2,27 +2,27 @@ from datetime import date
 import unittest
 import datetime
 
-from beancount.core import data
-from beancount.core.amount import Amount, to_decimal
-from beancount.core import flags
-from beancount.parser import parser
+from .amount import to_decimal
+from . import data
+from . import amount
 
 
 FILELOC = data.FileLocation('beancount/core/testing.beancount', 12345)
+
+FLAG = '*'
 
 
 class TestData(unittest.TestCase):
 
     def create_empty_transaction(self):
-        return data.Transaction(FILELOC, date(2014, 1, 15), flags.FLAG_OKAY, None,
+        return data.Transaction(FILELOC, date(2014, 1, 15), FLAG, None,
                                 "Some example narration", None, None, [])
 
     def test_strip_back_reference(self):
-        entry = parser.parse_string("""
-          2013-02-23 * "Something"
-            Liabilities:CreditCard     -50 USD
-            Expenses:Restaurant         50 USD
-        """)[0][0]
+        entry = data.Transaction(data.FileLocation(".", 0), datetime.date.today(), FLAG,
+                                 None, "Something", None, None, [])
+        data.create_simple_posting(entry, 'Liabilities:CreditCard', '-50', 'USD')
+        data.create_simple_posting(entry, 'Expenses:Restaurant', '50', 'USD')
         self.assertTrue(all(posting.entry is not None
                             for posting in entry.postings))
         stripped_entry = data.strip_back_reference(entry)
@@ -89,14 +89,14 @@ class TestData(unittest.TestCase):
         posting = data.create_simple_posting(
             entry, 'Assets:Bank:Checking', '123.45', 'USD')
         self.assertFalse(data.posting_has_conversion(posting))
-        posting = posting._replace(price=Amount('153.02', 'CAD'))
+        posting = posting._replace(price=amount.Amount('153.02', 'CAD'))
         self.assertTrue(data.posting_has_conversion(posting))
 
     def test_transaction_has_conversion(self):
         entry = self.create_empty_transaction()
         posting = data.create_simple_posting(
             entry, 'Assets:Bank:Checking', '123.45', 'USD')
-        posting = posting._replace(price=Amount('153.02', 'CAD'))
+        posting = posting._replace(price=amount.Amount('153.02', 'CAD'))
         data.reparent_posting(posting, entry)
         entry.postings[0] = posting
         self.assertTrue(data.transaction_has_conversion(entry))
@@ -115,17 +115,17 @@ class TestData(unittest.TestCase):
         date2 = date(2014, 1, 18)
         date3 = date(2014, 1, 20)
         entries = [
-            data.Transaction(FL(".", 1100), date3, flags.FLAG_OKAY,
+            data.Transaction(FL(".", 1100), date3, FLAG,
                              None, "Next day", None, None, []),
             data.Close(FL(".", 1000), date2, account),
             data.Balance(FL(".", 1001), date2, account,
-                         Amount(to_decimal('200.00'), 'USD"'), None),
+                         amount.Amount(to_decimal('200.00'), 'USD"'), None),
             data.Open(FL(".", 1002), date2, account, 'USD'),
-            data.Transaction(FL(".", 1009), date2, flags.FLAG_OKAY,
+            data.Transaction(FL(".", 1009), date2, FLAG,
                              None, "Transaction 2", None, None, []),
-            data.Transaction(FL(".", 1008), date2, flags.FLAG_OKAY,
+            data.Transaction(FL(".", 1008), date2, FLAG,
                              None, "Transaction 1", None, None, []),
-            data.Transaction(FL(".", 900), date1, flags.FLAG_OKAY,
+            data.Transaction(FL(".", 900), date1, FLAG,
                              None, "Previous day", None, None, []),
             ]
 

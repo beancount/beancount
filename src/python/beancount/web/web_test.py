@@ -2,6 +2,7 @@ import unittest
 from os import path
 import os
 import re
+import argparse
 
 import urllib.request
 import lxml.html
@@ -9,6 +10,7 @@ import lxml.html
 from beancount.web import web
 
 
+# FIXME: Move this to test_utils.py
 def find_repository_root():
     """Return the path to the repository root.
 
@@ -62,7 +64,16 @@ def find_links(html_text):
 
 def scrape(filename, predicate, port=9468, quiet=True):
     url_format = 'http://localhost:{}{{}}'.format(port)
-    thread = web.thread_server_start(filename, port, quiet=quiet)
+
+    # Create a set of valid arguments to run the app.
+    argparser = argparse.ArgumentParser()
+    group = web.add_web_arguments(argparser)
+    group.set_defaults(filename=filename,
+                       port=port,
+                       quiet=quiet)
+    args = argparser.parse_args(args=[filename])
+
+    thread = web.thread_server_start(args)
     scrape_urls(url_format, predicate, '^/doc/')
     web.thread_server_shutdown(thread)
 

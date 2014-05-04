@@ -5,11 +5,11 @@ Sanity checks.
 from os import path
 from collections import namedtuple
 
-from beancount.core.account import is_account_name
+from beancount.core.account_types import is_account_name
 from beancount.core.data import Open, Close, Balance, Transaction, Document
 from beancount.core import data
 from beancount.core import getters
-from beancount import utils
+from beancount.utils import misc_utils
 
 
 # An error from one of the checks.
@@ -127,7 +127,7 @@ def validate_unused_accounts(entries, accounts):
         if isinstance(entry, Open):
             open_map[entry.account] = entry
             continue
-        referenced_accounts.update(utils.get_tuple_values(entry, is_account_name))
+        referenced_accounts.update(misc_utils.get_tuple_values(entry, is_account_name))
 
     # Unreferenced accounts are unused accounts.
     unused_accounts = set(accounts) - referenced_accounts
@@ -144,10 +144,10 @@ def validate_currency_constraints(entries):
     """Check that each account has currencies within its declared constraints."""
 
     open_map = {entry.account: entry
-                for entry in utils.filter_type(entries, Open)}
+                for entry in misc_utils.filter_type(entries, Open)}
 
     errors = []
-    for entry in utils.filter_type(entries, Transaction):
+    for entry in misc_utils.filter_type(entries, Transaction):
         for posting in entry.postings:
             try:
                 open_entry = open_map[posting.account]
@@ -171,7 +171,7 @@ def validate_documents_paths(entries):
     """Check that all filenames in Document entries are absolute filenames."""
 
     return [ValidationError(entry.fileloc, "Invalid relative path for entry.", entry)
-            for entry in utils.filter_type(entries, Document)
+            for entry in misc_utils.filter_type(entries, Document)
             if not path.isabs(entry.filename)]
 
 

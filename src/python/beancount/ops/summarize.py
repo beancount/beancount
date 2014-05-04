@@ -14,7 +14,7 @@ from beancount.core import inventory
 from beancount.core.data import Transaction, Open, Close
 from beancount.core.data import FileLocation, Posting
 from beancount.core import flags
-from beancount.core.account import is_income_statement_account
+from beancount.core.account_types import is_income_statement_account
 
 
 def clamp(entries, begin_date, end_date,

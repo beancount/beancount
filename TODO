@@ -2,29 +2,24 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
+  - Build a more complete and representative of reality example file, bake, and share
+  - Complete the dependency removal and merge all branches - this is annoying
+
+  - Add a test for --view option.
+
+  - MSSB documents aren't found... fix FIXMEs in documents.py
+
   - Remove TYPES_ORDER.
   - Merge account_types and account once again
   - Complete writing tests for all scripts.
-
-  - Build a pass-through memoizer and replace Mole from text_utils.
-    m = Memo()
-    if m(re.match(...)):
-    ... = m.value
 
   - Complete all unittests coverage (as per find-missing-tests.py).
   - Configure and run a clean pylint on the entire codebase.
   - Add all docstrings with args Google-style.
   - Clean up the interface of loader.load(), it's ugly.
   - Implement all the missing global pages.
-  - Move all imports code as ledgerhub.
   - Clean up code: remove all significant codes from __init__.py files.
   - Fix all FIXMEs everywhere.
-
-  - Deal with these:
-
-      bean-prices                | MOVE TO ledgerhub
-      bean-remove-crdb           | MOVE TO ledgerhub
-      bean-import                | MOVE TO ledgerhub
 
   - Something's wrong with this page: currencies are wrong I think - http://localhost:8080/view/year/2014/conversions
 
@@ -40,6 +35,12 @@ beancount: TODO
   - Implement a little plug-ins system that allows a user to insert a TAB in
     bean-web.
 
+  - In ledgerhub, use /usr/bin/strings as a last resort if all other PDF
+    converters fail.
+
+  - When we import, if a file was not detected, don't spit out an org text
+    line. Still doesn't work.
+
   - In order to implement .txt output, you will need to decouple the web
     rendering and the generation of its included data. This will be
     great--ability to cut-and-paste any page into txt. format=txt, and we could
@@ -49,10 +50,6 @@ beancount: TODO
   - Bug: A transaction like this fails to parse; allow it:
       2014-02-22 * "Payee" |
         ..
-
-  - Add a 'mime_type' attribute to each importer, so that we can simplify our
-    import configuration regexps.
-
 
   - Serving CSV files from the Documents page should not be via download, but
     rather rendered directly.
@@ -67,12 +64,10 @@ beancount: TODO
   - Add preliminary support for renaming root accounts, even if that means the
     option must come first in the file. Move the checks in the parser.
 
-  - Do something about executable being named "bison3", check for the version in
-    setup.py instead, just call it as "bison".
-
   - In rendering balance directives, don't render the amount in the "change"
     column; that is too confusing for some users, keep the change column for
     changes.
+
 
   - update activity: remove parent accounts with no child accounts.
   - update activity: this exhibits a bug in the table rendering, look for IVV,
@@ -86,46 +81,38 @@ beancount: TODO
 
   - URGENT - the level1/2 views are EmptyView's, you need to implement those!
 
-
   - Example files (suggestion from Daniel Clemente):
 
-> >   I think 2 files can be helpful:
-> >
-> >   1) A simple one, a „how to“ file with ~20 transactions, or better, from 1
-to 3 transactions for feature. To show the normal things like receiving a
-salary, getting money from ATM, wire transfer, pay the bills, … So that it does
-not scare people without experience in double accounting.
-> >   demo.beancount fits this place.
-> >
-> >   2) The big one (1 year, you said), to show off that beancount is powerful
-and is really used for long-term accounting. This one is the „inspirational“
-one, to make people say „I would like to do that!“.
-
+      > >   I think 2 files can be helpful:
+      > >
+      > >   1) A simple one, a „how to“ file with ~20 transactions, or better, from 1
+      to 3 transactions for feature. To show the normal things like receiving a
+      salary, getting money from ATM, wire transfer, pay the bills, … So that it does
+      not scare people without experience in double accounting.
+      > >   demo.beancount fits this place.
+      > >
+      > >   2) The big one (1 year, you said), to show off that beancount is powerful
+      and is really used for long-term accounting. This one is the „inspirational“
+      one, to make people say „I would like to do that!“.
 
   - beancount: GREAT IDEA: output a subset of transactions as a spreadsheet. You
     need to design a textual way to refer to a subset of transactions. Output in
     either directions, without currencies.
 
 
+  - BUG! import this:
+    documents/2013/Assets/CA/RBC/Checking/2013-11-13.ofx84423.qbo
+    * The balance check at the end is incorrect
+    * The statement are not organized by account; they are mixed together
 
   - Create a 3rd-party dependencies building script for Mac OSX users (fxt).
-
-
 
   (Cost Basis)
   - Cost basis issue: How do I take into account the commissions and fees
     adjustment on the cost basis for a position?
   - How do I take into account Wash Sale Adjustments to the cost basis?
 
-
-
   - entries_table() really should be called postings_table().
-
-  - Remove all "unittest.main()" I used on the train; install nosetests on mac box
-
-  - Complete the design doc
-  - Complete core tests
-
 
   - Complete parser tests
     * Modify the lexer to emit EOF and add that in the grammar rules for empty_line.
@@ -134,41 +121,21 @@ one, to make people say „I would like to do that!“.
 
   - You need to validate the account name options (empty, or no :, use regex to constrain).
 
-
-
-
-
-
-  - Rename "check" to "test/balance/verify/assert" (see what Ledger calls it these days)
-
-  - Move bean-trial reorder() function to realization.py
   - Move utility functions from bean-prices to a reusable place.
 
   - Teasing out groups:
     - Can we move documents.py to ops? Look at that.
     - Can core.getters move to ops.getters?
 
-  - Before we start importing, validate that the importer modules all have a
-    CONFIG, import_file and import_date functions.  This will help thirdparty
-    implementors.
-
-
-
   - Have another script that takes that as input and spits out current positions
     in the market on a web page; CGI script, should be served on Furius. Update
     via a Mercurial repo push.
 
-    * Move the price fetching utilities somewhere it can be reused by others;
-      move code from bean-prices.
-
   - Render tags
-
 
   - IMPORTANT FEATURE: Text/XLS exports
 
   - IMPORTANT FEATURE: Flip balances for rendering
-
-  - IMPORTANT FEATURE: Auto-categorization
 
   - IMPORTANT FEATURE: Implement Average Booking for Vanguard & RBC Adjustment,
     with associated tests and syntax in the parser.
@@ -204,13 +171,6 @@ one, to make people say „I would like to do that!“.
 
           return inventory
 
-
-
-
-
-  - IMPORTANT FEATURE: We need to be able to invert the input on import (this is
-    easy, conversion to text only, could be applied across any importer)
-
   - Do we need to insert Open entries for the equity accounts described in
     options? I think we could safely plop that at the very beginning of the
     entries list in the parser.
@@ -218,9 +178,6 @@ one, to make people say „I would like to do that!“.
   - Render the OFX / QBO files in a <pre> tag, or figure out why the mimetype
     is incorrect and they don't render properly. Right now the default
     rendering of the browser is insufficient.
-
-
-
 
   - (IDEA) Why aren't we using the price on the first leg of this transaction?
     This is an interesting variation on the meaning of the price: it could mean
@@ -246,7 +203,6 @@ one, to make people say „I would like to do that!“.
     This would allow the user to do some processing specific to stock splits by
     processing the explicit stock split entries.
 
-
   - Include this in the user examples, + stock splits:
 
        2013-04-01 * "name change"
@@ -258,12 +214,6 @@ one, to make people say „I would like to do that!“.
          Assets:CA:ITrade:KRFT             -100 KRFT {{20000 USD}}
          Assets:CA:ITrade:KRFT              100 KRFT {{17000 USD}}
          Assets:CA:ITrade:FOO                20 FOO  {{ 3000 USD}}
-
-
-  - Add a check the beginning of imports whereby we check that every account
-    value specified actually matches an existing account from the list of
-    entries.
-
 
   - Remove the parsing of "CHECK" at some point, that was just there for
     compatibility.
@@ -279,6 +229,13 @@ one, to make people say „I would like to do that!“.
        #   2000-02-22 * CRA Stock Split 2:1
        #     Assets:CA:RBC-Investing:Taxable-CAD:CRA          -4 "CRA1" {232.00 USD / 2000-01-18}
        #     Assets:CA:RBC-Investing:Taxable-CAD:CRA           8 CRA {116.00 USD / 2000-01-18}
+
+
+  - Add a validation check, that when closing and account, its balance is empty/zero.
+
+  - Render a journal as a detailed expense report, for a set of accounts
+    (e.g., Expenses:*) pulling out amounts in various columns based on other
+    expressions (e.g. Assets:Cash:Caroline).
 
 
 ** Padding documentation from email
@@ -538,11 +495,6 @@ Improve this bit:
     Create a routine to figure out if an account was open during a specific
     time period?
 
-*** Testing
-
-  - Finish the inventory_test.py, with the guard against negative balances when
-    a position has an associated cost or lot-date, a test is important.
-
 *** Average Price Booking
 
   - You now HAVE to implement average price tracking... not an option. Thanks
@@ -625,6 +577,21 @@ Improve this bit:
 
 ** Padding
 
+  - Idea: Padding entries could be extended a tiny bit in order to
+    automatically calculate the cash distribution entries, e.g., like this:
+
+      2014-03-04 pad Asset:Cash  Expenses:Restaurant    60%
+      2014-03-04 pad Asset:Cash  Expenses:Alcohol       40%
+
+      2014-04-04 pad Asset:Cash  Expenses:Restaurant    70%
+      2014-04-04 pad Asset:Cash  Expenses:Alcohol       30%
+
+      2014-05-04 pad Asset:Cash  Expenses:Restaurant    70%
+      2014-05-04 pad Asset:Cash  Expenses:Alcohol       30%
+
+    This is a great idea, is in line with the general meaning of pad entries
+    (implicit 100%) and would add a much desired feature.
+
   - Add tests for all the cases of realization padding.
 
 ** Locations
@@ -639,16 +606,6 @@ Improve this bit:
     some sort of meaning to them. Ok, this contradicts the previous idea.
 
 
-
-** Auto-Categorization
-
-  - Write a generic import routine that will try to heuristically match
-    partially completed transactions from an existing Ledger. Use some NLP or
-    somesuch matching algorithm.
-
-    Given some incomplete transactions, complete them heuristically based on
-    previous contents of the ledger. This should make import a lot easier. This
-    should be generic and work across all importers, a single function call.
 
 ** Payee Elision / Auto-Account Leaf Name
 
@@ -775,6 +732,60 @@ Improve this bit:
     associate a PDF with a document?!? -> For trade tickets. Maybe let the
     modules provide a import_link() function on the associated PDF files?
     (This is related to ^64647f10b2fd)
+
+  - Adding the ability for links on document directives was also requested on
+    the ledger-cli mailing list.
+
+        On Sat, Apr 26, 2014 at 6:18 AM, Esben Stien <b0ef@esben-stien.name> wrote:
+
+        "Craig Earls" <enderw88@gmail.com> writes:
+         The first use in ledger-cli is to link each transaction to a document,
+        which is pretty important in accounting;)
+
+        Well no, not exactly. The thing you do in importing financial data is basically
+        to funnel transactions from all of your statements from all your institutions
+        in a single place in a single format with a single set of accounts, so that you
+        can do reporting with a view of everything you have. Having support for a
+        per-transaction link to a particular document is generally unnecessary--you can
+        easily find the corresponding document by date if you need to.
+
+        In order to associate a unique ID with a particular transaction, in Beancount
+        you can use a "link" which is like a special kind of tag. I think Ledger has a
+        similar feature, per-post ("tag"?). It looks like this in Beancount:
+
+          2013-04-06 * "Invoice to Metropolis for job well done, waiting for payment."
+          ^metropolis-invoice-103
+             ...
+             ...
+
+        The "^...." bit is a link. You can have multiple links per transactions. The
+        web interface can show you all transactions with the same link in a separate
+        list (under the /link/.... URL).
+
+        Separately, there is a "document" directive that allows you to associate a
+        document with an account, e.g.
+
+          2014-01-01 document  Expenses:Electricity
+          "/path/to/filename/ConEdison-2013-12.pdf"
+
+        Documents don't have to be declared that way explicitly: you can also tell
+        Beancount about a root directory where it will find documents automatically and
+        create the document entries for you. The files just have to be organized in a
+        directory hierarchy mirrorring the account names exactly, and files must begin
+        with "YYYY-MM-DD" to provide a date for the document. That's a simple
+        convention. LedgerHub is able to move files that it recognizes to such a file
+        hierarchy, so after you import the data, you file the files into e.g. a local
+        git repo with all your statemetns, and your document entries show up in the
+        registers. It's also a nice way to organize all your statements, so if you need
+        to bring something up for e.g. a tax audit, you quickly know where to find it.
+
+        Those two features are not related at the moment... but I think I'll add the
+        ability to have links on document directives. That seems like an effective way
+        one could associate a particular pdf document (given a declaration) with a list
+        of transactions. You click on the link, see all the transactions + the
+        document, and you can click on the document itself to see the detail. Seems
+        like a legit idea.
+
 
   - Auto-doc from directories of files should ignore files already associated
     via an explicit documents directive; just ignore files with the same
@@ -1227,58 +1238,6 @@ Improve this bit:
 
   - Render the Conversions amount at the bottom of the Conversions page...
 
-* Import
-
-  - Ameritrade dividends should have an associated stock name;
-    right now we don't know which positions the dividends are associated with.
-    (The input file doesn't appear to have it... call Ameritrade to let them know.)
-
-  - Add an option to the importer so merge all the entries before printing them
-    out. This would be useful if we have multiple files for the same account.
-
-  - Add a check at the end of the OFX bank import. Missing right now.
-
-  - Filing: The importers should detect the type of files and identify their
-    accounts, and automatically stash the file under the correct documents
-    directory, prepended with the date in the format we expect.
-
-  - The OFX importer needs to unescape &amp; and other odd chars, I think
-    there's a bug currently, I've seen a few here and there.
-
-  - Add an option --file=delete, that offers to delete (with confirmation) all
-    the files that it was able to identify.
-
-  - (cleanup) Convert all the importers to use the DateIntervalTicker.
-
-** Filing
-
-  - When grepping in PDF files, we should also grep to transaction-id's /
-    beancount "links", in order to automatically associate trade ticket PDFs to
-    transactions. Add a LINK to the document directive, in order to link them
-    together. (^64647f10b2fd)
-
-  - The code that auto-files statements needs to detect and de-dup files which
-    have the same contents, because it is likely some files will be downloaded
-    twice, it happens a lot.
-
-** Payee Normalization
-
-  - We will want to somehow "normalize" and merge payee names, because some of
-    that differ very little are obvious for the same business... this would be
-    useful. What kinds of tools will we need for that?
-
-    Clean Import: The new importers should be able to strip the non-payee parts
-    of the payee name, e.g. NEW YO, SAN FR, etc. Maybe we could let the user
-    provide a filter function to sanitize the names of the payees, or maybe more
-    generally just a filter on the entries before printing them out. This way
-    you could provide your very own custom filter function that cleans up
-    anything you don't like.
-
-** GnuCash Import
-
-  - Write an importer from GnuCash's format, for people wanting to make the
-    transition or even just to try it out.
-
 * Export
 ** HTML Export as File
 
@@ -1546,23 +1505,8 @@ result of paying taxes:
 - Client-side javascript has been added for a neater, more compact rendering of
   journals.
 
-- There is a new library for code common to all importers; it should be easier
-  to write importers now.
-
-- There is a new module that allows you to automatically book new transactions
-  on import, based on the previous contents of your ledger file.
-
 - New scripts to extract a list of current positions at any time, and global
   summaries over many years or months.
-
-- There is no more Emacs major mode, but only a minor mode; you may now use any
-  text mode you like, most especially org-mode, which allows you to hide and
-  show large sections of your file. This is really convenient or organize your
-  input file in sections.  Less Emacs customization is better.
-
-  * The account completer function is still there.
-  * For org-mode, highlighting is still present.
-  * There is a new function to align the prices of a transaction automatically.
 
 
 ** Examples
@@ -1665,3 +1609,13 @@ Three major books of account are at the direct basis of this system: the memoria
     should be able to produce a list of the accounts open at the end of the
     period, with the account ids and balances. This should be printable and
     storable, for someone else to take care of your things in case you die.
+** Expansibility
+
+We need to allow users to easily plug-in custom scripts.
+e.g. see Pascal Fleury email (w/ swiss_rounding) and other use
+cases on the mailing list. These cases can be easily solved
+using some custom scripting logic in Python. I need to provide
+ample examples on how to do this.
+
+We need to be able to run these hooks before the verification
+that occurs after parsing.

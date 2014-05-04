@@ -3,7 +3,7 @@
 import functools
 import textwrap
 
-from beancount import utils
+from beancount.utils import misc_utils
 from beancount.core import data
 from beancount.parser import parser
 from beancount.parser import documents
@@ -52,31 +52,31 @@ def load(filename,
         parse_fun = parser.parse_string
     else:
         raise NotImplementedError
-    with utils.print_time('parse', quiet):
+    with misc_utils.print_time('parse', quiet):
         entries, parse_errors, options = parse_fun(filename)
 
     account_types = parser.get_account_types(options)
 
     # Pad the resulting entries (create synthetic Pad entries to balance checks
     # where desired).
-    with utils.print_time('pad', quiet):
+    with misc_utils.print_time('pad', quiet):
         entries, pad_errors = pad.pad(entries)
 
-    with utils.print_time('check', quiet):
+    with misc_utils.print_time('check', quiet):
         entries, check_errors = check.check(entries)
 
     # Process the document entries and find documents automatically.
-    with utils.print_time('documents', quiet):
+    with misc_utils.print_time('documents', quiet):
         entries, doc_errors = documents.process_documents(entries,
                                                           filename,
                                                           options['documents'])
 
     # Validate the list of entries.
-    with utils.print_time('validate', quiet):
+    with misc_utils.print_time('validate', quiet):
         valid_errors = validation.validate(entries)
 
     # Add unrealized gains.
-    with utils.print_time('unrealized', quiet):
+    with misc_utils.print_time('unrealized', quiet):
         entries = prices.unrealized_gains(entries, options['account_unrealized'], account_types)
 
     # Print out the list of errors.

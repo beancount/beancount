@@ -7,7 +7,7 @@ import logging
 
 from beancount import load
 from beancount.core import realization
-from beancount import utils
+from beancount.utils import misc_utils
 
 
 def main():
@@ -21,13 +21,13 @@ def main():
         logging.basicConfig(level=logging.INFO,
                             format='%(levelname)-8s: %(message)s')
 
-    with utils.print_time('total'):
+    with misc_utils.print_time('total'):
 
         # Load up the file, print errors.
         entries, errors, options = load(opts.filename, do_print_errors=True)
 
         # Realize the entries.
-        with utils.print_time('realize'):
+        with misc_utils.print_time('realize'):
             real_accounts = realization.realize(entries)
 
 

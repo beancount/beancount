@@ -7,7 +7,7 @@ import sys
 import argparse
 
 from beancount.parser.parser import dump_lexer
-from beancount.core.account import account_name_sortkey
+from beancount.core.account_types import account_name_sortkey
 from beancount.core import getters
 from beancount.core import realization
 from beancount import loader
