@@ -30,6 +30,7 @@ except ImportError:
 
 # Constants.
 ZERO = Decimal()
+ONE = Decimal('1')
 
 def to_decimal(strord):
     """Convert a string, possibly with commas, into a Decimal object.

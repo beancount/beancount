@@ -10,8 +10,8 @@ from beancount.parser import documents
 from beancount.parser import printer
 from beancount.ops import pad
 from beancount.ops import validation
-from beancount.ops import prices
 from beancount.ops import check
+from beancount.ops import unrealized
 
 
 def load(filename,
@@ -77,7 +77,7 @@ def load(filename,
 
     # Add unrealized gains.
     with misc_utils.print_time('unrealized', quiet):
-        entries = prices.unrealized_gains(entries, options['account_unrealized'], account_types)
+        entries = unrealized.unrealized_gains(entries, options['account_unrealized'], account_types)
 
     # Print out the list of errors.
     errors = parse_errors + pad_errors + check_errors + valid_errors + doc_errors

@@ -38,6 +38,11 @@ beancount: TODO
 
   - Fix all docstrings re. Account instance
 
+  - Remove dependency on Pandas and Numpy, we really can do much without making
+    our users' life this complicated as to have to install. If I were using it
+    a lot, that would be a different story, but for just the little bits that
+    we use, aggregate by hand, really.
+
 * Current
 
   - Implement a little plug-ins system that allows a user to insert a TAB in

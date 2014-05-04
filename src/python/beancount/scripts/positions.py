@@ -8,6 +8,7 @@ from beancount import load
 from beancount import utils
 from beancount.core import data
 from beancount.ops import prices
+from beancount.ops import positions
 
 
 def main():
@@ -29,7 +30,8 @@ def main():
     entries, errors, options = load(opts.filename, quiet=True)
 
     # Get the aggregate sum of positions.
-    dataframe = prices.get_positions_as_dataframe(entries)
+    price_map = prices.build_price_map(entries)
+    dataframe = positions.get_positions_as_dataframe(entries, price_map)
 
     # Aggregate then..
     byinst = dataframe.groupby(['account', 'currency', 'cost_currency'])
