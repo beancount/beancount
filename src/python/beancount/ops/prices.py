@@ -30,7 +30,7 @@ class PriceDatabase(object):
     This object defines a container of historical of prices for various
     currencies, denominated in a specific cost currency.
     """
-    def __init__(self, price_list):
+    def __init__(self, entries):
         """Constructor from tuples.
 
         Args:
@@ -40,11 +40,7 @@ class PriceDatabase(object):
           A new instance of PriceDatabase. The returned object is meant to be
           read-only, not modified further.
         """
-        ##self.price_map = build_price_database(entries)
-
-
-
-
+        self.price_map = build_price_database(entries)
 
     def __getitem__(self, base_quote):
         return self.price_map.__getitem__(key)
