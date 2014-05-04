@@ -25,15 +25,30 @@ except (ImportError, ValueError):
 
 
 class PriceDatabase(object):
+    """An in-memory price database.
 
+    This object defines a container of historical of prices for various
+    currencies, denominated in a specific cost currency.
+    """
     def __init__(self, entries):
+        """Constructor from tuples.
+
+        Args:
+          price_list: A list of (date, number, currency, cost-currency)
+            tuples.
+        Returns:
+          A new instance of PriceDatabase. The returned object is meant to be
+          read-only, not modified further.
+        """
         self.price_map = build_price_database(entries)
 
-    def __getitem__(self, key):
+    def __getitem__(self, base_quote):
         return self.price_map.__getitem__(key)
 
+    # FIXME: Not sure if I need this in the end.
     def __iter__(self):
         return iter(self.price_map)
+
 
     def get_latest_price(self, base, quote):
         if base == quote:
@@ -169,7 +184,6 @@ def get_latest_positions(entries):
     return positions
 
 
-
 def get_priced_positions(entries):
     """Get a list of positions, groups by (account, currency, cost_currency),
     with the latest prices fetched and dated.
@@ -191,10 +205,16 @@ def get_priced_positions(entries):
             key = (position['account'],
                    position['currency'],
                    position['cost_currency'])
-            grouped_positions[key].append(position)
+        else:
+            key = (position['account'],
+                   position['currency'],
+                   None)
+        grouped_positions[key].append(position)
 
-    # For each group, synthesize entries for unrealized gains.
+    # For each group, add the price to the dataframe.
     for (account, currency, cost_currency), position_list in grouped_positions.items():
+        if not cost_currency:
+            continue
 
         # Get the latest price.
         price_date, price_number = prices_db.get_latest_price(currency, cost_currency)
@@ -225,6 +245,9 @@ def unrealized_gains(entries, subaccount_name, account_types):
     # Work through the list of priced positions.
     priced_positions, _ = get_priced_positions(entries)
     for (account_name, currency, cost_currency), position_list in priced_positions.items():
+
+        if not cost_currency:
+            continue
 
         # Compute the total number of units and book value of the position.
         total_units = Decimal()
@@ -292,6 +315,9 @@ def get_positions_as_dataframe(entries):
         return None
 
     _, flat_positions = get_priced_positions(entries)
+
+
+    # TODO(blais): Convert this to avoid the Pandas dependency.
 
     dataframe = pandas.DataFrame.from_records(
         flat_positions, columns=['account', 'number', 'currency', 'cost_number', 'price_number', 'cost_currency', 'price_date'])

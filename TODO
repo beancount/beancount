@@ -5,6 +5,14 @@ beancount: TODO
   - Build a more complete and representative of reality example file, bake, and share
   - Complete the dependency removal and merge all branches - this is annoying
 
+  - Fix this bug!
+
+      This parses wrong and silently--fix it:
+      2014-04-20 * "Money from CC" ^610fa7f17e7a #trip-montreal-april-2014
+
+      This works okay:
+      2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
+
   - Add a test for --view option.
 
   - MSSB documents aren't found... fix FIXMEs in documents.py
