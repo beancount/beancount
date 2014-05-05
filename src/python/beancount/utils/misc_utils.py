@@ -44,6 +44,33 @@ def groupby(keyfun, elements):
     return grouped
 
 
+def uniquify_last(iterable, keyfunc=None):
+    """Given a sequence of elements, remove duplicates of the given key. Keep the
+    last element of a sequence of key-identical elements.
+
+    Args:
+      iterable: An iterable sequence.
+      keyfunc: A function that extracts from the elements the sort key
+        to use and uniquify on. If left unspecified, the identify function
+        is used and the uniquification occurs on the elements themselves.
+    Yields:
+      (date, number) tuples.
+    """
+    if keyfunc is None:
+        keyfunc = lambda x: x
+    UNSET = object()
+    prev_obj = UNSET
+    prev_key = UNSET
+    for obj in sorted(iterable, key=keyfunc):
+        key = keyfunc(obj)
+        if key != prev_key and prev_obj is not UNSET:
+            yield prev_obj
+        prev_obj = obj
+        prev_key = key
+    if prev_obj is not UNSET:
+        yield prev_obj
+
+
 def filter_type(elist, types):
     """Filter the given list to yield only instances of the given types.
 

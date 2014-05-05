@@ -2,6 +2,7 @@
 Tests for general utils.
 """
 import unittest
+import random
 import time
 from collections import namedtuple
 import operator
@@ -22,6 +23,20 @@ class TestMiscUtils(unittest.TestCase):
         self.assertEqual(
             [[('a', 1)], [('b', 2)], [('c', 3)], [('d', 4)]],
             sorted(grouped.values()))
+
+    def test_uniquify_last(self):
+        data = [('d', 9),
+                ('b', 4),
+                ('c', 8),
+                ('c', 6),
+                ('c', 7),
+                ('a', 3),
+                ('a', 1),
+                ('a', 2),
+                ('b', 5)]
+        unique_data = misc_utils.uniquify_last(data, lambda x: x[0])
+        self.assertEqual([('a', 2), ('b', 5), ('c', 7), ('d', 9)],
+                         list(unique_data))
 
     def test_filter_type(self):
         class A: pass

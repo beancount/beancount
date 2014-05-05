@@ -8,19 +8,10 @@ live prices online and create entries on-the-fly).
 """
 from collections import defaultdict
 
-from beancount.core import account
-from beancount.core.amount import Decimal, ONE, Amount
-from beancount.core.data import Transaction, Posting, Price, FileLocation
-from beancount.core.position import Lot, Position
+from beancount.core.amount import ONE
+from beancount.core.data import Transaction, Price
 from beancount.core import inventory
-from beancount.core import flags
-from beancount.ops import positions
-
-try:
-    import pandas
-    import numpy
-except (ImportError, ValueError):
-    pandas = None
+from beancount.utils import misc_utils
 
 
 def get_price_entries(entries):
@@ -46,7 +37,6 @@ def get_price_entries(entries):
         elif isinstance(entry, Transaction):
             # Inspect all the postings in the transaction.
             for posting in entry.postings:
-
                 # Check if the position is matching against an existing
                 # position.
                 reducing = total_balance.add_position(posting.position, True)
@@ -136,44 +126,31 @@ def build_price_map(entries):
         insert_list.extend(inverted_list)
 
     # Unzip and sort each of the entries and eliminate duplicates on the date.
-    sorted_price_map = {}
-    for base_quote, values in price_map.items():
-
-FIXME: factor this out into its own function, return a correct list, not two lists
-map_values
-
-        # Remove duplicates, use the latest amount seen.
-        dates, rates = [], []
-        prev_date = None
-        for date, rate in values:
-            if date == prev_date:
-                dates.pop()
-                rates.pop()
-            dates.append(date)
-            rates.append(rate)
-            prev_date = date
-
-        sorted_price_map[base_quote] = (dates, rates)
+    sorted_price_map = {
+        base_quote: list(misc_utils.uniquify_last(date_rates, lambda x: x[0]))
+        for (base_quote, date_rates) in price_map.items()}
 
     return sorted_price_map
 
 
-def get_all_prices(price_map, (base, quote)):
+def get_all_prices(price_map, base_quote):
     """Return a sorted list of all (date, number) price pairs.
 
     Args:
       price_map: A price map, which is a dict of (base, quote) -> list of (date,
         number) tuples, as created by build_price_map.
-      base: A string, the base currency to lookup.
-      quote: A string, the quote currency to lookup, which expresses which units
-        the base currency is denominated in.
+      base_quote: A pair of strings, the base currency to lookup, and the quote
+        currency to lookup, which expresses which units the base currency is
+        denominated in.
     Returns:
       A list of (date, Decimal) pairs, sorted by date.
+
     """
-    return price_map[(base, quote)]
+    assert isinstance(base_quote, tuple), base_quote
+    return price_map[base_quote]
 
 
-def get_latest_price(price_map, (base, quote)):
+def get_latest_price(price_map, base_quote):
     """Return the latest price/rate from a prica map for the given base/quote pair.
     This is often used to just get the 'current' price if you're looking at the
     entire set of entries.
@@ -186,8 +163,11 @@ def get_latest_price(price_map, (base, quote)):
       'number' is a Decimal of the price, or rate, at that date. The date is the
       latest date which we have an available price for in the price map.
     """
+    assert isinstance(base_quote, tuple), base_quote
+    (base, quote) = base_quote
+
     # Handle the degenerate case of a currency priced into its own.
-    if quote is None base == quote:
+    if quote is None or base == quote:
         return (None, ONE)
 
     # Look up the list and return the latest element. The lists are assumed to

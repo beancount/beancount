@@ -2,11 +2,7 @@
 
 This is to share my portfolio with others, or to compute its daily changes.
 """
-import re
-
 from beancount import load
-from beancount import utils
-from beancount.core import data
 from beancount.ops import prices
 from beancount.ops import positions
 
@@ -50,7 +46,7 @@ def main():
         output = percent_only.to_string(formatters={'percent': '{:.1%}'.format})
     elif opts.output == 'txt':
         output = percent_only.to_csv()
-    print(output))
+    print(output)
 
     ## FIXME: todo - implement --brief
 

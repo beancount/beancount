@@ -1,12 +1,10 @@
 """Compute unrealized gains.
 """
-from collections import defaultdict
-
+from beancount.core.amount import Decimal
 from beancount.core import account
-from beancount.core.amount import Decimal, ONE, Amount
-from beancount.core.data import Transaction, Posting, Price, FileLocation
+from beancount.core import amount
+from beancount.core.data import Transaction, Posting, FileLocation
 from beancount.core.position import Lot, Position
-from beancount.core import inventory
 from beancount.core import flags
 from beancount.ops import positions
 from beancount.ops import prices
@@ -63,7 +61,7 @@ def unrealized_gains(entries, subaccount_name, account_types):
             asset_account = account_name
 
         # Note: don't set a price because we don't want these to end up in Conversions.
-        #price = Amount(price_number, cost_currency)
+        #price = amount.Amount(price_number, cost_currency)
         entry.postings.append(
             Posting(entry, asset_account,
                     Position(Lot(cost_currency, None, None), pnl),
@@ -84,7 +82,7 @@ def unrealized_gains(entries, subaccount_name, account_types):
         entry.postings.append(
             Posting(entry, income_account,
                     Position(Lot(cost_currency, None, None), -pnl),
-                    Amount(price_number, cost_currency),
+                    amount.Amount(price_number, cost_currency),
                     None))
 
         new_entries.append(entry)

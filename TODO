@@ -43,6 +43,9 @@ beancount: TODO
     a lot, that would be a different story, but for just the little bits that
     we use, aggregate by hand, really.
 
+  - Review all the code and make all creation of Decimal objects use to_decimal
+    instead of Decimal, for consistency.
+
 * Current
 
   - Implement a little plug-ins system that allows a user to insert a TAB in
