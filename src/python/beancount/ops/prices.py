@@ -175,10 +175,3 @@ def get_latest_price(price_map, base_quote):
     dates, rates = self.price_map[(base, quote)]
     return (dates[-1], rates[-1])
 
-
-## FIXME:
-## Add get_price(price_map, (base, quote), date)
-## Complete the equity value page with it, render the rates used to that page
-## Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
-## Make all lookup functions work with inverses
-## Finish testing prices.py, postiions.py, unrealized.py

@@ -1,5 +1,6 @@
 import unittest
 import pprint
+import datetime
 
 from beancount.core.amount import to_decimal
 from beancount.ops import prices
@@ -63,16 +64,34 @@ class TestPriceMap(unittest.TestCase):
     def test_build_price_map(self, entries, _, __):
         """
         2013-06-01 price  USD  1.10 CAD
+
+        ;; Try some prices at the same date.
         2013-06-02 price  USD  1.11 CAD
         2013-06-02 price  USD  1.12 CAD
-        2013-06-03 price  USD  1.13 CAD
+        2013-06-02 price  USD  1.13 CAD
+
+        ;; One after too.
         2013-06-03 price  USD  1.14 CAD
-        2013-06-03 price  USD  1.15 CAD
-        2013-06-04 price  USD  1.16 CAD
+
+        ;; Try a few inverse prices.
+        2013-06-05 price  CAD  0.86956 USD
+        2013-06-06 price  CAD  0.86207 USD
         """
         price_map = prices.build_price_map(entries)
-        print()
-        pprint.pprint(price_map)
+
+        items = list(price_map.items())
+        self.assertEqual(1, len(items))
+        key, values = items[0]
+        self.assertEqual(('USD', 'CAD'), key)
+
+        expected = [(datetime.date(2013, 6, 1), to_decimal('1.10')),
+                    (datetime.date(2013, 6, 2), to_decimal('1.13')),
+                    (datetime.date(2013, 6, 3), to_decimal('1.14')),
+                    (datetime.date(2013, 6, 5), to_decimal('1.15')),
+                    (datetime.date(2013, 6, 6), to_decimal('1.16'))]
+        for (exp_date, exp_value), (act_date, act_value) in zip(expected, values):
+            self.assertEqual(exp_date, act_date)
+            self.assertEqual(exp_value, act_value.quantize(to_decimal('0.01')))
 
     def test_get_all_prices(self):
         pass
@@ -80,4 +99,14 @@ class TestPriceMap(unittest.TestCase):
     def test_get_latest_price(self):
         pass
 
+
+
 __incomplete__ = True
+
+
+## FIXME:
+## Add get_price(price_map, (base, quote), date)
+## Complete the equity value page with it, render the rates used to that page
+## Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
+## Make all lookup functions work with inverses
+## Finish testing prices.py, postiions.py, unrealized.py
