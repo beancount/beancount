@@ -141,11 +141,14 @@ def get_all_prices(price_map, base_quote):
         number) tuples, as created by build_price_map.
       base_quote: A pair of strings, the base currency to lookup, and the quote
         currency to lookup, which expresses which units the base currency is
-        denominated in.
+        denominated in. This may also just be a string, with a '/' separator.
     Returns:
       A list of (date, Decimal) pairs, sorted by date.
 
     """
+    if isinstance(base_quote, str):
+        base_quote = tuple(base_quote.split('/'))
+        assert len(base_quote) == 2
     assert isinstance(base_quote, tuple), base_quote
     return price_map[base_quote]
 
@@ -172,6 +175,8 @@ def get_latest_price(price_map, base_quote):
 
     # Look up the list and return the latest element. The lists are assumed to
     # be sorted.
-    dates, rates = self.price_map[(base, quote)]
-    return (dates[-1], rates[-1])
-
+    price_list = price_map[(base, quote)]
+    if price_list:
+        return price_list[-1]
+    else:
+        return None

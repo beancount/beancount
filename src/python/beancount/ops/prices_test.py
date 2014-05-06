@@ -93,15 +93,37 @@ class TestPriceMap(unittest.TestCase):
             self.assertEqual(exp_date, act_date)
             self.assertEqual(exp_value, act_value.quantize(to_decimal('0.01')))
 
-    def test_get_all_prices(self):
-        pass
+    @parsedoc
+    def test_get_all_prices(self, entries, _, __):
+        """
+        2013-06-01 price  USD  1.01 CAD
+        2013-06-03 price  USD  1.03 CAD
+        2013-06-05 price  USD  1.05 CAD
+        2013-06-07 price  USD  1.07 CAD
+        2013-06-09 price  USD  1.09 CAD
+        2013-06-11 price  USD  1.11 CAD
+        """
+        price_map = prices.build_price_map(entries)
+        price_list = prices.get_all_prices(price_map, ('USD', 'CAD'))
+        expected = [(datetime.date(2013, 6, 1), to_decimal('1.01')),
+                    (datetime.date(2013, 6, 3), to_decimal('1.03')),
+                    (datetime.date(2013, 6, 5), to_decimal('1.05')),
+                    (datetime.date(2013, 6, 7), to_decimal('1.07')),
+                    (datetime.date(2013, 6, 9), to_decimal('1.09')),
+                    (datetime.date(2013, 6, 11), to_decimal('1.11'))]
+        self.assertEqual(expected, price_list)
 
-    def test_get_latest_price(self):
-        pass
-
-
-
-__incomplete__ = True
+    @parsedoc
+    def test_get_latest_price(self, entries, _, __):
+        """
+        2013-06-01 price  USD  1.01 CAD
+        2013-06-09 price  USD  1.09 CAD
+        2013-06-11 price  USD  1.11 CAD
+        """
+        price_map = prices.build_price_map(entries)
+        price_list = prices.get_latest_price(price_map, ('USD', 'CAD'))
+        expected = (datetime.date(2013, 6, 11), to_decimal('1.11'))
+        self.assertEqual(expected, price_list)
 
 
 ## FIXME:
