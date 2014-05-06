@@ -87,9 +87,9 @@ def build_price_map(entries):
       pairs, where 'date' is the date the price occurs at and 'number' a Decimal
       that represents the price, or rate, between these two
       currencies/commodities. Each date occurs only once in the sorted list of
-      prices of a particular key.
+      prices of a particular key. All of the inverses are automatically
+      generated in the price map.
     """
-
     # Fetch a list of all the price entries seen in the ledger.
     price_entries = get_price_entries(entries)
 
@@ -130,7 +130,30 @@ def build_price_map(entries):
         base_quote: list(misc_utils.uniquify_last(date_rates, lambda x: x[0]))
         for (base_quote, date_rates) in price_map.items()}
 
+    # Compute and insert all the inverted rates.
+    for (base, quote), price_list in list(sorted_price_map.items()):
+        sorted_price_map[(quote, base)] = [(date, ONE/price)
+                                           for date, price in price_list]
+
     return sorted_price_map
+
+
+def normalize_base_quote(base_quote):
+    """Convert a slash-separated string to a pair of strings.
+
+    Args:
+      base_quote: A pair of strings, the base currency to lookup, and the quote
+        currency to lookup, which expresses which units the base currency is
+        denominated in. This may also just be a string, with a '/' separator.
+    Returns:
+      A pair of strings.
+    """
+    if isinstance(base_quote, str):
+        base_quote_norm = tuple(base_quote.split('/'))
+        assert len(base_quote_norm) == 2, base_quote
+        base_quote = base_quote_norm
+    assert isinstance(base_quote, tuple), base_quote
+    return base_quote
 
 
 def get_all_prices(price_map, base_quote):
@@ -146,10 +169,7 @@ def get_all_prices(price_map, base_quote):
       A list of (date, Decimal) pairs, sorted by date.
 
     """
-    if isinstance(base_quote, str):
-        base_quote = tuple(base_quote.split('/'))
-        assert len(base_quote) == 2
-    assert isinstance(base_quote, tuple), base_quote
+    base_quote = normalize_base_quote(base_quote)
     return price_map[base_quote]
 
 
@@ -166,8 +186,7 @@ def get_latest_price(price_map, base_quote):
       'number' is a Decimal of the price, or rate, at that date. The date is the
       latest date which we have an available price for in the price map.
     """
-    assert isinstance(base_quote, tuple), base_quote
-    (base, quote) = base_quote
+    base, quote = normalize_base_quote(base_quote)
 
     # Handle the degenerate case of a currency priced into its own.
     if quote is None or base == quote:
@@ -180,3 +199,33 @@ def get_latest_price(price_map, base_quote):
         return price_list[-1]
     else:
         return None
+
+
+# Interpolation methods.
+PREVIOUS, LINEAR = object(), object()
+
+def get_price(price_map, base_quote, date, interpolation=PREVIOUS):
+    """Return the price as of the given date.
+
+    Args:
+      price_map: A price map, which is a dict of (base, quote) -> list of (date,
+        number) tuples, as created by build_price_map.
+      base_quote: A pair of strings, the base currency to lookup, and the quote
+        currency to lookup, which expresses which units the base currency is
+        denominated in. This may also just be a string, with a '/' separator.
+      date: A datetime.date instance, the date at which we want the conversion
+        rate.
+      interpolation: A method for interpolation of the rate, if the date sits
+        between two price points. PREVIOUS returns the last available price point
+        before the given date, and LINEAR performs linear interpolation between
+        the two surroudning price points.
+    Returns:
+      A pair of (datetime.date, Decimal) instance.
+    """
+    base_quote = normalize_base_quote(base_quote)
+    price_list = price_map[base_quote]
+    index = bisect_right_with_key(price_list, date, key=lambda x: x[0])
+    if index == 0:
+        return None, None
+    else:
+        return price_list[index-1]

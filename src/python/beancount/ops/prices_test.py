@@ -60,6 +60,15 @@ class TestPriceEntries(unittest.TestCase):
 
 class TestPriceMap(unittest.TestCase):
 
+    def test_normalize_base_quote(self):
+        self.assertEqual(('USD', 'CAD'),
+                         prices.normalize_base_quote(('USD', 'CAD')))
+        self.assertEqual(('USD', 'CAD'),
+                         prices.normalize_base_quote(('USD/CAD')))
+        with self.assertRaises(AssertionError):
+            self.assertEqual(('USD', 'CAD'),
+                             prices.normalize_base_quote(('GOOG/USD/CAD')))
+
     @parsedoc
     def test_build_price_map(self, entries, _, __):
         """
@@ -79,11 +88,11 @@ class TestPriceMap(unittest.TestCase):
         """
         price_map = prices.build_price_map(entries)
 
-        items = list(price_map.items())
-        self.assertEqual(1, len(items))
-        key, values = items[0]
-        self.assertEqual(('USD', 'CAD'), key)
+        self.assertEqual(2, len(price_map))
+        self.assertEqual(set([('USD', 'CAD'), ('CAD', 'USD')]),
+                         set(price_map.keys()))
 
+        values = price_map[('USD', 'CAD')]
         expected = [(datetime.date(2013, 6, 1), to_decimal('1.10')),
                     (datetime.date(2013, 6, 2), to_decimal('1.13')),
                     (datetime.date(2013, 6, 3), to_decimal('1.14')),
@@ -92,6 +101,8 @@ class TestPriceMap(unittest.TestCase):
         for (exp_date, exp_value), (act_date, act_value) in zip(expected, values):
             self.assertEqual(exp_date, act_date)
             self.assertEqual(exp_value, act_value.quantize(to_decimal('0.01')))
+
+        self.assertEqual(5, len(price_map[('CAD', 'USD')]))
 
     @parsedoc
     def test_get_all_prices(self, entries, _, __):
@@ -113,6 +124,9 @@ class TestPriceMap(unittest.TestCase):
                     (datetime.date(2013, 6, 11), to_decimal('1.11'))]
         self.assertEqual(expected, price_list)
 
+        inv_price_list = prices.get_all_prices(price_map, ('CAD', 'USD'))
+        print(inv_price_list)
+
     @parsedoc
     def test_get_latest_price(self, entries, _, __):
         """
@@ -125,10 +139,34 @@ class TestPriceMap(unittest.TestCase):
         expected = (datetime.date(2013, 6, 11), to_decimal('1.11'))
         self.assertEqual(expected, price_list)
 
+    @parsedoc
+    def test_get_price(self, entries, _, __):
+        """
+        2013-06-01 price  USD  1.00 CAD
+        2013-06-10 price  USD  1.50 CAD
+        2013-07-01 price  USD  2.00 CAD
+        """
+        price_map = prices.build_price_map(entries)
 
-## FIXME:
-## Add get_price(price_map, (base, quote), date)
-## Complete the equity value page with it, render the rates used to that page
-## Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
-## Make all lookup functions work with inverses
-## Finish testing prices.py, postiions.py, unrealized.py
+        date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 5, 15))
+        self.assertEqual(None, price)
+
+        date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 6, 1))
+        self.assertEqual(to_decimal('1.00'), price)
+
+        date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 6, 5))
+        self.assertEqual(to_decimal('1.00'), price)
+
+        date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 6, 10))
+        self.assertEqual(to_decimal('1.50'), price)
+
+        date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 6, 20))
+        self.assertEqual(to_decimal('1.50'), price)
+
+        date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 7, 1))
+        self.assertEqual(to_decimal('2.00'), price)
+
+        date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 7, 15))
+        self.assertEqual(to_decimal('2.00'), price)
+
+
