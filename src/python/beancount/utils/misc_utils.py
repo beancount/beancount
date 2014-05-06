@@ -44,6 +44,33 @@ def groupby(keyfun, elements):
     return grouped
 
 
+def uniquify_last(iterable, keyfunc=None):
+    """Given a sequence of elements, remove duplicates of the given key. Keep the
+    last element of a sequence of key-identical elements.
+
+    Args:
+      iterable: An iterable sequence.
+      keyfunc: A function that extracts from the elements the sort key
+        to use and uniquify on. If left unspecified, the identify function
+        is used and the uniquification occurs on the elements themselves.
+    Yields:
+      (date, number) tuples.
+    """
+    if keyfunc is None:
+        keyfunc = lambda x: x
+    UNSET = object()
+    prev_obj = UNSET
+    prev_key = UNSET
+    for obj in sorted(iterable, key=keyfunc):
+        key = keyfunc(obj)
+        if key != prev_key and prev_obj is not UNSET:
+            yield prev_obj
+        prev_obj = obj
+        prev_key = key
+    if prev_obj is not UNSET:
+        yield prev_obj
+
+
 def filter_type(elist, types):
     """Filter the given list to yield only instances of the given types.
 
@@ -152,3 +179,28 @@ def compute_unique_clean_ids(strings):
         return # Could not find a unique mapping.
 
     return idmap
+
+
+def bisect_right_with_key(a, x, key, lo=0, hi=None):
+    """Like bisect.bisect_right, but with a key lookup parameter.
+
+    Args:
+      a: The list to search in.
+      x: The element to search for.
+      key: A function, to extract the value from the list.
+      lo: The smallest index to search.
+      hi: The largest index to search.
+    Returns:
+      As in bisect.bisect_right, an element from list 'a'.
+    """
+    if lo < 0:
+        raise ValueError('lo must be non-negative')
+    if hi is None:
+        hi = len(a)
+    while lo < hi:
+        mid = (lo+hi)//2
+        if x < key(a[mid]):
+            hi = mid
+        else:
+            lo = mid+1
+    return lo

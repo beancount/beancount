@@ -1,5 +1,3 @@
-import re
-
 from beancount.scripts import TestCase, docfile, capture, run_with_args
 from beancount.scripts import positions
 

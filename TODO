@@ -2,6 +2,14 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
+  - prices.py and positions.py:
+
+     ## FIXME:
+     ## Complete the equity value page with prices.py, render the rates used to that page
+     ## Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
+     ## Finish testing positions.py, unrealized.py
+     ## Remove dependency on Pandas and Numpy, we can surely do without
+
   - Build a more complete and representative of reality example file, bake, and share
   - Complete the dependency removal and merge all branches - this is annoying
 
@@ -18,10 +26,9 @@ beancount: TODO
   - MSSB documents aren't found... fix FIXMEs in documents.py
 
   - Remove TYPES_ORDER.
-  - Merge account_types and account once again
-  - Complete writing tests for all scripts.
 
   - Complete all unittests coverage (as per find-missing-tests.py).
+
   - Configure and run a clean pylint on the entire codebase.
   - Add all docstrings with args Google-style.
   - Clean up the interface of loader.load(), it's ugly.
@@ -37,6 +44,16 @@ beancount: TODO
     etc/check-depends.py, do this for 1.0
 
   - Fix all docstrings re. Account instance
+
+  - Remove dependency on Pandas and Numpy, we really can do much without making
+    our users' life this complicated as to have to install. If I were using it
+    a lot, that would be a different story, but for just the little bits that
+    we use, aggregate by hand, really.
+
+  - Review all the code and make all creation of Decimal objects use to_decimal
+    instead of Decimal, for consistency.
+
+  - Convert documentation to a GDoc
 
 * Current
 

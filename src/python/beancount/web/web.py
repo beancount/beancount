@@ -14,23 +14,24 @@ import importlib
 import bottle
 from bottle import response, request
 
+from beancount.core.data import Open, Close, Pad, Balance, Transaction, Note, Document, Event, Posting
+from beancount.core import data
+from beancount.core import flags
+from beancount.core import getters
+from beancount.core import realization
+from beancount.core import account
+from beancount.core import account_types
+from beancount.ops import summarize
+from beancount.ops import prices
+from beancount.ops import positions
+from beancount.utils import misc_utils
+from beancount.utils.text_utils import replace_numbers
 from beancount.web.bottle_utils import AttrMapper, internal_redirect
+from beancount.parser import parser
+from beancount.loader import load
 from beancount.web import views
 from beancount.web import journal
 from beancount.web import acctree
-from beancount.core import data
-from beancount.core import flags
-from beancount.core.data import Open, Close, Pad, Balance, Transaction, Note, Document, Event, Posting
-from beancount.core import getters
-from beancount.ops import summarize
-from beancount.core import realization
-from beancount.ops import prices
-from beancount.utils import misc_utils
-from beancount.utils.text_utils import replace_numbers
-from beancount.core.account_types import is_balance_sheet_account
-from beancount.core import account
-from beancount.loader import load
-from beancount.parser import parser
 from beancount.web import gviz
 
 
@@ -269,7 +270,7 @@ def prices_():
     "Render a list of links to instruments, to list their prices."
 
     oss = io.StringIO()
-    for quote, baselist in sorted(misc_utils.groupby(lambda x: x[1], list(app.price_db)).items(),
+    for quote, baselist in sorted(misc_utils.groupby(lambda x: x[1], app.price_map.keys()).items(),
                                   key=lambda x: -len(x[1])):
         links = ['<a href="{link}">{0} ({1})</a>'.format(
             base_, quote_,
@@ -297,7 +298,8 @@ def prices_():
 
 @app.route('/prices/<base:re:[A-Z0-9._\']+>_<quote:re:[A-Z0-9._\']+>', name='prices_values')
 def prices_values(base=None, quote=None):
-    dates, rates = app.price_db.get_prices(base, quote)
+    date_rates = prices.get_all_prices(app.price_map, (base, quote))
+    dates, rates = zip(*date_rates)
 
     scripts = gviz.gviz_timeline(dates, {'rates': rates, 'rates2': rates})
 
@@ -589,8 +591,8 @@ def equity():
             body.write('<td>{}</td>'.format(position.lot.currency))
             body.write('<td>{}</td>'.format(position.number))
             for currency in operating_currencies:
-              date_, rate = app.price_db.get_latest_price(position.lot.currency,
-                                                          currency)
+              date_, rate = prices.get_latest_price(app.price_map,
+                                                    (position.lot.currency, currency))
               value = position.number * rate
 
               # FIXME: We may not have an appropriate conversion here, we may need
@@ -635,7 +637,7 @@ def account_(slashed_account_name=None):
 
     if account_name:
         options = app.options
-        if account_name and is_balance_sheet_account(account_name, options):
+        if account_name and account_types.is_balance_sheet_account(account_name, options):
             real_accounts = request.view.closing_real_accounts
         else:
             real_accounts = request.view.real_accounts
@@ -697,7 +699,7 @@ FORMATTERS = {
 
 
 @viewapp.route('/positions', name='positions')
-def positions():
+def positions_overview():
     "Render an index of the pages detailing positions."
     return render_view(
         pagetitle = "Positions",
@@ -713,7 +715,9 @@ def positions():
 def positions_detail():
     "Render a detailed table of all positions."
 
-    dataframe = prices.get_positions_as_dataframe(request.view.entries)
+    # FIXME: factor out the price map computation
+    price_map = prices.build_price_map(request.view.entries)
+    dataframe = positions.get_positions_as_dataframe(request.view.entries, price_map)
     if dataframe is None:
         return "You must install Pandas in order to render this page."
 
@@ -735,7 +739,9 @@ def positions_detail():
 def positions_byinstrument():
     "Render a table of positions by instrument."
 
-    dataframe = prices.get_positions_as_dataframe(request.view.entries)
+    # FIXME: factor out the price map computation
+    price_map = prices.build_price_map(request.view.entries)
+    dataframe = positions.get_positions_as_dataframe(request.view.entries, price_map)
     if dataframe is None:
         return "You must install Pandas in order to render this page."
 
@@ -1026,7 +1032,7 @@ def auto_reload_input_file(callback):
             app.account_types = parser.get_account_types(options)
 
             # Pre-compute the price database.
-            app.price_db = prices.PriceDatabase(app.entries)
+            app.price_map = prices.build_price_map(app.entries)
 
             # Reset the view cache.
             app.views.clear()

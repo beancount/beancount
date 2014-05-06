@@ -1,6 +1,7 @@
+import unittest
+
 from beancount.core.realization_test import realizedoc
 from beancount.parser import printer
-import unittest
 
 
 ## FIXME: this needs become TestCheck().

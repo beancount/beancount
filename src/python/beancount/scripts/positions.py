@@ -2,12 +2,9 @@
 
 This is to share my portfolio with others, or to compute its daily changes.
 """
-import re
-
 from beancount import load
-from beancount import utils
-from beancount.core import data
 from beancount.ops import prices
+from beancount.ops import positions
 
 
 def main():
@@ -19,7 +16,7 @@ def main():
                            action='store_true',
                            help="Only display the relative value of the account.")
 
-    optparser.add_argument('-f', '--format', action='choice',
+    optparser.add_argument('-f', '--format', default='txt',
                            choices=['txt', 'csv'],
                            help="Output format.")
 
@@ -29,7 +26,8 @@ def main():
     entries, errors, options = load(opts.filename, quiet=True)
 
     # Get the aggregate sum of positions.
-    dataframe = prices.get_positions_as_dataframe(entries)
+    price_map = prices.build_price_map(entries)
+    dataframe = positions.get_positions_as_dataframe(entries, price_map)
 
     # Aggregate then..
     byinst = dataframe.groupby(['account', 'currency', 'cost_currency'])
@@ -44,11 +42,11 @@ def main():
 
     percent_only = byinst_agg[['percent']].sum(level=[1,2]).sort('percent', ascending=False)
 
-    if opts.output == 'txt':
+    if opts.format == 'txt':
         output = percent_only.to_string(formatters={'percent': '{:.1%}'.format})
-    elif opts.output == 'txt':
+    elif opts.format == 'csv':
         output = percent_only.to_csv()
-    print(output))
+    print(output)
 
     ## FIXME: todo - implement --brief
 
