@@ -16,7 +16,7 @@ def main():
                            action='store_true',
                            help="Only display the relative value of the account.")
 
-    optparser.add_argument('-f', '--format', action='choice',
+    optparser.add_argument('-f', '--format', default='txt',
                            choices=['txt', 'csv'],
                            help="Output format.")
 
@@ -42,9 +42,9 @@ def main():
 
     percent_only = byinst_agg[['percent']].sum(level=[1,2]).sort('percent', ascending=False)
 
-    if opts.output == 'txt':
+    if opts.format == 'txt':
         output = percent_only.to_string(formatters={'percent': '{:.1%}'.format})
-    elif opts.output == 'txt':
+    elif opts.format == 'csv':
         output = percent_only.to_csv()
     print(output)
 

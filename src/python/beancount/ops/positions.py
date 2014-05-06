@@ -1,6 +1,16 @@
 """Compute positions for a list of entries.
 """
+from collections import defaultdict
+
 from beancount.core import realization
+from beancount.ops import prices
+
+try:
+    import pandas
+    import numpy
+except ImportError:
+    pandas = None
+    numpy = None
 
 
 def get_latest_positions(entries):
@@ -46,7 +56,7 @@ def get_priced_positions(entries, price_map):
     """
 
     # Get the full list of positions.
-    positions_ = positions.get_latest_positions(entries)
+    positions_ = get_latest_positions(entries)
 
     # Group by account and currencies, and filter those which have an associated
     # cost.
@@ -68,7 +78,7 @@ def get_priced_positions(entries, price_map):
             continue
 
         # Get the latest price.
-        price_date, price_number = get_latest_price(price_map, (currency, cost_currency))
+        price_date, price_number = prices.get_latest_price(price_map, (currency, cost_currency))
 
         for position in position_list:
             position['price_number'] = price_number

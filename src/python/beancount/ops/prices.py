@@ -224,7 +224,7 @@ def get_price(price_map, base_quote, date, interpolation=PREVIOUS):
     """
     base_quote = normalize_base_quote(base_quote)
     price_list = price_map[base_quote]
-    index = bisect_right_with_key(price_list, date, key=lambda x: x[0])
+    index = misc_utils.bisect_right_with_key(price_list, date, key=lambda x: x[0])
     if index == 0:
         return None, None
     else:

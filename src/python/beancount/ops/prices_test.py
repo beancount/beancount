@@ -125,7 +125,7 @@ class TestPriceMap(unittest.TestCase):
         self.assertEqual(expected, price_list)
 
         inv_price_list = prices.get_all_prices(price_map, ('CAD', 'USD'))
-        print(inv_price_list)
+        self.assertEqual(len(price_list), len(inv_price_list))
 
     @parsedoc
     def test_get_latest_price(self, entries, _, __):

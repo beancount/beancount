@@ -14,23 +14,24 @@ import importlib
 import bottle
 from bottle import response, request
 
+from beancount.core.data import Open, Close, Pad, Balance, Transaction, Note, Document, Event, Posting
+from beancount.core import data
+from beancount.core import flags
+from beancount.core import getters
+from beancount.core import realization
+from beancount.core import account
+from beancount.core import account_types
+from beancount.ops import summarize
+from beancount.ops import prices
+from beancount.ops import positions
+from beancount.utils import misc_utils
+from beancount.utils.text_utils import replace_numbers
 from beancount.web.bottle_utils import AttrMapper, internal_redirect
+from beancount.parser import parser
+from beancount.loader import load
 from beancount.web import views
 from beancount.web import journal
 from beancount.web import acctree
-from beancount.core import data
-from beancount.core import flags
-from beancount.core.data import Open, Close, Pad, Balance, Transaction, Note, Document, Event, Posting
-from beancount.core import getters
-from beancount.ops import summarize
-from beancount.core import realization
-from beancount.ops import prices
-from beancount.utils import misc_utils
-from beancount.utils.text_utils import replace_numbers
-from beancount.core.account_types import is_balance_sheet_account
-from beancount.core import account
-from beancount.loader import load
-from beancount.parser import parser
 from beancount.web import gviz
 
 
@@ -636,7 +637,7 @@ def account_(slashed_account_name=None):
 
     if account_name:
         options = app.options
-        if account_name and is_balance_sheet_account(account_name, options):
+        if account_name and account_types.is_balance_sheet_account(account_name, options):
             real_accounts = request.view.closing_real_accounts
         else:
             real_accounts = request.view.real_accounts
@@ -698,7 +699,7 @@ FORMATTERS = {
 
 
 @viewapp.route('/positions', name='positions')
-def positions():
+def positions_overview():
     "Render an index of the pages detailing positions."
     return render_view(
         pagetitle = "Positions",
