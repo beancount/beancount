@@ -2,6 +2,8 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
+  - ledgerhub-fetch-prices is borked, outputs Nones
+
   - prices.py and positions.py:
 
      ## FIXME:
