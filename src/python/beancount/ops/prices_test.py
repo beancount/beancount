@@ -168,5 +168,3 @@ class TestPriceMap(unittest.TestCase):
 
         date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 7, 15))
         self.assertEqual(to_decimal('2.00'), price)
-
-

@@ -12,6 +12,14 @@ beancount: TODO
      ## Finish testing positions.py, unrealized.py
      ## Remove dependency on Pandas and Numpy, we can surely do without
 
+  - Fix this parsing bug! An entry without a narration string is entirely
+    ignored. Should raise an error, or better: be accepted.
+
+        2013-04-01 *
+          Assets:Account1             15 GOOG {518.73 USD}
+          Assets:Other
+
+
   - Build a more complete and representative of reality example file, bake, and share
   - Complete the dependency removal and merge all branches - this is annoying
 
