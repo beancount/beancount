@@ -1,0 +1,17 @@
+# -*- mode: beancount -*-
+
+2013-01-01 open Expenses:Electricity			  
+2013-01-01 open Assets:Checking			  
+2013-01-01 open Liabilities:AccountsPayable
+
+2013-03-28 * "Bill for datacenter electricity"  ^invoice-27a30ab61191
+  Expenses:Electricity			  450.82 USD
+  Liabilities:AccountsPayable
+
+2013-03-30 * "Bill for gas" ^invoice-562b4da33bd9
+  Expenses:Electricity			  204.20 USD
+  Liabilities:AccountsPayable
+
+2013-04-15 * "Paying datacenter company" ^invoice-27a30ab61191
+  Assets:Checking			  	-450.82 USD
+  Liabilities:AccountsPayable

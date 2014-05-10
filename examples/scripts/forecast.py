@@ -1,10 +1,12 @@
-"""An example of writing a starter script with a custom filter.
+"""An example of adding a forecasting feature to Beancount via a plugin.
 
-This custom filter uses existing syntax to define and automatically inserted
-transactions in the future based on a convention. It serves mostly as an example
-of how you can experiment by creating and installing a local filter, and not so
-much as a serious forecasting feature (though the experiment is a good way to
-get something more general kickstarted).
+This entry filter plugin uses existing syntax to define and automatically
+inserted transactions in the future based on a convention. It serves mostly as
+an example of how you can experiment by creating and installing a local filter,
+and not so much as a serious forecasting feature (though the experiment is a
+good way to get something more general kickstarted eventually, I think the
+concept would generalize nicely and should eventually be added as a comon
+feature of Beancount).
 
 A user can create a create a transaction like this:
 
@@ -16,6 +18,9 @@ and new transactions will be created monthly for the following year.
 Note the use of the '#' flag and the word 'MONTHLY' which defines the
 periodicity. This needs more expansion, but as an example, it works.
 """
+
+__author__ = 'Martin Blais <blais@furius.ca>'
+
 import re
 
 from beancount.core import data
