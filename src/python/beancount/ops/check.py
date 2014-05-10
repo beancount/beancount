@@ -63,12 +63,14 @@ def check(entries):
 
             diff_amount = amount_sub(balance_amount, check_amount)
             if abs(diff_amount.number) > CHECK_PRECISION:
+                diff_amount = amount_sub(balance_amount, check_amount)
                 check_errors.append(
                     BalanceError(entry.fileloc,
-                               "Balance failed for '{}': {} != {} (diff: {})".format(
-                                   entry.account, balance_amount, check_amount,
-                                   amount_sub(balance_amount, check_amount)),
-                               entry))
+                                 "Balance failed for '{}': expected {} != accumulated {} ({} {})".format(
+                                     entry.account, balance_amount, check_amount,
+                                     diff_amount, 
+                                     'too much' if diff_amount else 'too little'),
+                                 entry))
 
                 # Substitute the entry by a failing entry.
                 entry = Balance(entry.fileloc, entry.date, entry.account, entry.amount, diff_amount)
