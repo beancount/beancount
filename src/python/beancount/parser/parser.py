@@ -81,6 +81,18 @@ def valid_account_regexp(options):
     return re.compile('({})(:[A-Z][A-Za-z0-9\-]+)*$'.format('|'.join(names)))
 
 
+# A temporary data structure used during parsing to hold and accumulate the
+# fields being parsed on a transaction line. Because we want to be able to parse
+# these in arbitrary order, we have to accumulate the fields and then unpack
+# them intelligently in the transaction callback.
+#
+# Attributes:
+#  strings: a list of strings, for the payee and the narration.
+#  tags: a set object  of the tags to be applied to this transaction.
+#  links: a set of link strings to be applied to this transaction.
+TxnFields = collections.namedtuple('TxnFields', 'strings tags links')
+
+
 class Builder(object):
     """A builder used by the lexer and grammer parser as callbacks to create
     the data objects corresponding to rules parsed from the input file."""
@@ -480,7 +492,76 @@ class Builder(object):
             price = Amount(ZERO if position.number == ZERO else price.number / position.number, price.currency)
         return Posting(None, account, position, price, chr(flag) if flag else None)
 
-    def transaction(self, filename, lineno, date, flag, payee, narration, tags, links, postings):
+
+    def txn_field_new(self):
+        """Create a new TxnFields instance.
+
+        Returns:
+          An instance of TxnFields, initialized with expected attributes.
+        """
+        return TxnFields([], set(), set())
+
+    def txn_field_TAG(self, txn_fields, tag):
+        """Add a tag to the TxnFields accumulator.
+
+        Args:
+          txn_fields: The current TxnFields accumulator.
+          tag: A string, the new tag to insert.
+        Returns:
+          An updated TxnFields instance.
+        """
+        txn_fields.tags.add(tag)
+        return txn_fields
+
+    def txn_field_LINK(self, txn_fields, link):
+        """Add a link to the TxnFields accumulator.
+
+        Args:
+          txn_fields: The current TxnFields accumulator.
+          link: A string, the new link to insert.
+        Returns:
+          An updated TxnFields instance.
+        """
+        txn_fields.links.add(link)
+        return txn_fields
+
+    def txn_field_STRING(self, txn_fields, string):
+        """Add a tag to the TxnFields accumulator.
+
+        Args:
+          txn_fields: The current TxnFields accumulator.
+          stirng: A string, the new string to insert in the list.
+        Returns:
+          An updated TxnFields instance.
+        """
+        txn_fields.strings.append(string)
+        return txn_fields
+
+    def unpack_txn_strings(self, txn_fields, fileloc):
+        """Unpack a txn_fields accumulator to its payee and narration fields.
+
+        Args:
+          txn_fields: The current TxnFields accumulator.
+          stirng: A string, the new string to insert in the list.
+        Returns:
+          A pair of (payee, narration) strings or None objects, or None, if
+          there was an error.
+        """
+        num_strings = len(txn_fields.strings)
+        if num_strings == 1:
+            payee, narration = None, txn_fields.strings[0]
+        elif num_strings == 2:
+            payee, narration = txn_fields.strings
+        elif num_strings == 0:
+            payee, narration = None, ""
+        else:
+            self.errors.append(
+                ParserError(fileloc, "Too many strings on transaction description: {}".format(
+                    txn_fields.strings), None))
+            return None
+        return payee, narration
+
+    def transaction(self, filename, lineno, date, flag, txn_fields, postings):
         """Process a transaction directive.
 
         All the postings of the transaction are available at this point, and so the
@@ -496,15 +577,19 @@ class Builder(object):
           lineno: the current line number.
           date: a datetime object.
           flag: a str, one-character, the flag associated with this transaction.
-          payee: a str, the name of the payee, if present, or None, if not.
-          narration: a str, the main description string of the transaction.
-          tags: a set object or None, of the tags to be applied to this transaction.
-          links: a set of link string, to be applied to this transaction.
+          txn_fields: A tuple of transaction fields, which includes descriptions
+            (payee and narration), tags, and links.
           postings: a list of Posting instances, to be inserted in this transaction.
         Returns:
           A new Transaction object.
         """
         fileloc = FileLocation(filename, lineno)
+
+        # Unpack the transaction fields.
+        payee_narration = self.unpack_txn_strings(txn_fields, fileloc)
+        if payee_narration is None:
+            return None
+        payee, narration = payee_narration
 
         # Detect when a transaction does not have at least two legs.
         if postings is None or len(postings) < 2:
@@ -512,19 +597,21 @@ class Builder(object):
                 ParserError(fileloc, "Invalid number of postings: {}".format(postings), None))
             return None
 
-        # Merge the tags from the stach with the explicit tags of this transaction
-        ctags = set()
-        if tags is not None:
-            ctags.update(tags)
+        # Merge the tags from the stack with the explicit tags of this
+        # transaction, or make None.
+        tags = txn_fields.tags
+        assert isinstance(tags, set)
         if self.tags:
-            ctags.update(self.tags)
-        if not ctags:
-            ctags = None
-        else:
-            ctags = frozenset(ctags)
+            tags.update(self.tags)
+        tags = frozenset(tags) if tags else None
+
+        # Make links to None if empty.
+        links = txn_fields.links
+        links = frozenset(links) if links else None
 
         # Create the transaction. Note: we need to parent the postings.
-        entry = Transaction(fileloc, date, chr(flag), payee, narration, ctags, links, postings)
+        entry = Transaction(fileloc, date, chr(flag),
+                            payee, narration, tags, links, postings)
 
         # Balance incomplete auto-postings and set the parent link to this entry as well.
         balance_errors = balance_incomplete_postings(entry)

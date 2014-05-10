@@ -8,8 +8,11 @@ extern PyObject* builder;
 
 PyObject* checkNull(PyObject* o);
 
-#define BUILD(method_name, format, ...)                                                 \
+#define BUILD(method_name, format, ...)                                 \
     checkNull( PyObject_CallMethod(builder, method_name, format, __VA_ARGS__) );
+
+#define BUILD_NOARGS(method_name)                                       \
+    checkNull( PyObject_CallMethod(builder, method_name, NULL) );
 
 
 #endif

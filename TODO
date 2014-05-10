@@ -15,14 +15,6 @@ beancount: TODO
   - Build a more complete and representative of reality example file, bake, and share
   - Complete the dependency removal and merge all branches - this is annoying
 
-  - Fix this bug!
-
-      This parses wrong and silently--fix it:
-      2014-04-20 * "Money from CC" ^610fa7f17e7a #trip-montreal-april-2014
-
-      This works okay:
-      2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
-
   - Add a test for --view option.
 
   - MSSB documents aren't found... fix FIXMEs in documents.py
@@ -55,7 +47,27 @@ beancount: TODO
   - Review all the code and make all creation of Decimal objects use to_decimal
     instead of Decimal, for consistency.
 
-  - Convert documentation to a GDoc
+  - Convert all documentation to a GDoc
+
+
+
+  - There have been some rare, but occurring few instances of really odd syntax
+    making the parser ignore some transactions silently; this is not
+    acceptable. Attempt to reproduce this again (not obvious, problems have all
+    been fixed I think) and implement better error checking if possible.
+
+    Reproduction hints: before eeea4b4d5605, a transaciton line with no strings
+    at all, e.g. a line starting with "YYYY-MM-DD * ", would entirely ignore
+    a transaction. Find a way to trigger an error on this.
+
+    Other examples that bring up this problem (pre eeea4b4d5605):
+
+      This parses wrong and silently--fix it:
+      2014-04-20 * "Money from CC" ^610fa7f17e7a #trip-montreal-april-2014
+
+      This works okay:
+      2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
+
 
 * Current
 
@@ -657,7 +669,7 @@ Improve this bit:
 
 * Parser
 ** Errors
-
+      
   - We need to gather errors in a single place and report them like the others;
     right now I'm catching them in sum_to_date() and writing using the logging
     module; but they really should be trickled up with the rest.
@@ -744,6 +756,10 @@ Improve this bit:
     It's actually a lot more accurate to what's going on...
 
 ** Performance
+
+  - Test using the empty case of list parsing to create the initial empty lists
+    instead of the conditional in Parser.handle_list() and measure, to see if
+    there is a significant difference in parsing performance.
 
   - Parser performance: try not calling back to builder for simple types that
     just return their value; measure the difference, it may be worth it, and we

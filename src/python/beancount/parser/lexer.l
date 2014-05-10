@@ -91,7 +91,6 @@ int strtonl(const char* buf, size_t nchars);
 \}\}		{ return RCURLCURL; }
 \{		{ return LCURL; }
 \}		{ return RCURL; }
-=		{ return EQUAL; }
 ,		{ return COMMA; }
 \/		{ return SLASH; }
 

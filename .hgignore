@@ -4,7 +4,8 @@ syntax: glob
 *~
 TAGS
 build
-lib/python/beancount/parser/parsetab.py
+src/python/beancount/parser/parsetab.py
+src/python/beancount/parser/grammar.output
 *.a
 *.so
 
