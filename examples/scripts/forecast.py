@@ -66,7 +66,3 @@ def forecast_filter(entries, errors, options):
     new_entries.sort(key=data.entry_sortkey)
 
     return (filtered_entries + new_entries, errors, options)
-
-
-# Register the load filter.
-loader.install_load_filter(forecast_filter)
