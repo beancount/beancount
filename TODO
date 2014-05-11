@@ -2,18 +2,19 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-  - ledgerhub-fetch-prices is borked, outputs Nones
-
-
   - prices.py and positions.py:
 
      prices_test.py --> complete it
-     positions_test.py --> finish and holdings_test.py, remove Pandas
-     Finish testing unrealized.py, should be easy
-     Complete the equity value page with prices.py, render the rates used to that page
-     Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
-     Remove dependency on Pandas and Numpy, we can surely do without
 
+     positions_test.py --> finish and holdings_test.py, remove Pandas
+     Remove dependency on Pandas and Numpy, we can surely do without
+     Finish testing unrealized.py, should be easy
+
+     Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
+     ledgerhub-fetch-prices is borked, outputs Nones
+     The prices page has inverses now... fix this.
+
+     Complete the equity value page with prices.py, render the rates used to that page
 
   - realization_test.py --> complete this now!
 
@@ -82,6 +83,9 @@ beancount: TODO
   - Alias to_decimal to 'D' and replace everywhere.
 
   - Convert all assertEquals() to assertEqual().
+
+  - Can you move realization out of core? It really belongs more in ops I think.
+
 
 * Current
 

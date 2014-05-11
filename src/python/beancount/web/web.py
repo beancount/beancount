@@ -1022,14 +1022,14 @@ def auto_reload_input_file(callback):
                 app.source = f.read()
 
             # Parse the beancount file.
-            entries, errors, options = loader.load(
+            entries, errors, options_map = loader.load(
                 filename, add_unrealized_gains=True, do_print_errors=True)
 
             # Save globals in the global app.
             app.entries = entries
             app.errors = errors
-            app.options = options
-            app.account_types = options.get_account_types(options)
+            app.options = options_map
+            app.account_types = options.get_account_types(options_map)
 
             # Pre-compute the price database.
             app.price_map = prices.build_price_map(app.entries)
