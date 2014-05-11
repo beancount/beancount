@@ -65,7 +65,7 @@ def tag_pending_transactions(entries, tag_name='PENDING'):
             # If a single entry is present, it is assumed incomplete.
             pending_entry_ids.add(id(link_entries[0]))
         else:
-            # Compute the sum total balance of the common accoujnts.
+            # Compute the sum total balance of the common accounts.
             common_accounts = basicops.get_common_accounts(link_entries)
             balance = inventory.Inventory()
             for entry in link_entries:
