@@ -38,6 +38,8 @@ from beancount.ops import basicops
 from beancount import loader
 from beancount.parser import printer
 
+__plugins__ = ('tag_pending_filter',)
+
 
 def tag_pending_transactions(entries, tag_name='PENDING', matching_link_regexp=None):
     """Filter out incomplete linked transactions to a transfer account.
@@ -89,6 +91,19 @@ def tag_pending_transactions(entries, tag_name='PENDING', matching_link_regexp=N
             for entry in entries]
 
 
+def tag_pending_filter(entries, errors, options):
+    """A plugin that finds and tags pending transactions.
+
+    Args:
+      entries: a list of entry instances
+      errors: a list of errors generated during parsing
+      options: a dict of options parsed from the file
+    Returns:
+      A triple of the same, possibly modifeid.
+    """
+    return (tag_pending_transactions(entries, 'PENDING'), errors, options)
+
+
 def main():
     """Print out a list of the unpaid transactions."""
     parser = argparse.ArgumentParser(__doc__)
@@ -103,7 +118,6 @@ def main():
     opts = parser.parse_args()
 
     entries, errors, options = loader.load(opts.filename, do_print_errors=True)
-    entries = tag_pending_transactions(entries, 'PENDING')
 
     pending_entries = [entry for entry in basicops.filter_tag('PENDING', entries)]
 

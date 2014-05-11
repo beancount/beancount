@@ -27,6 +27,9 @@ from beancount.core import data
 from beancount import loader
 
 
+__plugins__ = ('forecast_filter',)
+
+
 def forecast_filter(entries, errors, options):
     """An example filter that piggybacks on top of the Beancount input syntax to
     insert forecast entries automatically. This functions accepts the return

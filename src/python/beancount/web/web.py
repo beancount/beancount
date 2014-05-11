@@ -28,7 +28,7 @@ from beancount.utils import misc_utils
 from beancount.utils.text_utils import replace_numbers
 from beancount.web.bottle_utils import AttrMapper, internal_redirect
 from beancount.parser import parser
-from beancount.loader import load
+from beancount import loader
 from beancount.web import views
 from beancount.web import journal
 from beancount.web import acctree
@@ -1021,9 +1021,8 @@ def auto_reload_input_file(callback):
                 app.source = f.read()
 
             # Parse the beancount file.
-            entries, errors, options = load(filename,
-                                            add_unrealized_gains=True,
-                                            do_print_errors=True)
+            entries, errors, options = loader.load(
+                filename, add_unrealized_gains=True, do_print_errors=True)
 
             # Save globals in the global app.
             app.entries = entries
@@ -1162,7 +1161,12 @@ def main():
     args = argparser.parse_args()
 
     for plugin_name in args.plugin:
-        importlib.import_module(plugin_name)
+        module = importlib.import_module(plugin_name)
+        if hasattr(module, '__plugins__'):
+            print(module)
+            for function_name in module.__plugins__:
+                callback = getattr(module, function_name)
+                loader.install_load_filter(callback)
 
     run_app(args)
 
