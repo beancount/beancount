@@ -14,6 +14,7 @@ import track_pending
 EXAMPLE_INPUT = """
 
 2013-01-01 open Expenses:Electricity
+2013-01-01 open Expenses:Gas
 2013-01-01 open Assets:Checking
 2013-01-01 open Liabilities:AccountsPayable
 
@@ -31,22 +32,22 @@ EXAMPLE_INPUT = """
 
 """
 
-TRANSFER_ACCOUNT = 'Liabilities:AccountsPayable'
-
 class TestExampleTrackPending(unittest.TestCase):
 
     def test_check(self):
         original_entries, _, _ = loader.load(EXAMPLE_INPUT, parse_method='string')
         entries = track_pending.tag_pending_transactions(original_entries, 'PENDING')
         self.assertEqual(len(original_entries), len(entries))
-        self.assertEqual(set(['invoice-562b4da33bd9']), entries[0].links)
+        self.assertEqual(None, entries[4].tags)
+        self.assertEqual(set(['PENDING']), entries[5].tags)
+        self.assertEqual(None, entries[6].tags)
 
     def test_print_example(self):
         "Print output as per the example above."
         with tempfile.NamedTemporaryFile('w') as f:
             f.write(EXAMPLE_INPUT)
             f.flush()
-            sys.argv = [__file__, '--account={}'.format(TRANSFER_ACCOUNT), f.name]
+            sys.argv = [__file__, f.name]
             track_pending.main()
 
 

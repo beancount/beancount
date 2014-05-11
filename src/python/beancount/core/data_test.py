@@ -171,16 +171,5 @@ class TestData(unittest.TestCase):
                          [entry.fileloc.lineno
                           for entry in map(data.get_entry, sorted_postings)])
 
-    def test_filter_link(self):
-        entry = self.create_empty_transaction()
-        posting = data.create_simple_posting(
-            entry, 'Assets:Bank:Checking', '123.45', 'USD')
-        entries = [
-            entry._replace(links=set()),
-            entry._replace(links=None),
-            entry._replace(links=set(["LINK_A"])),
-            entry._replace(links=set(["LINK_B"])),
-            ]
-        link_entries = list(data.filter_link("LINK_A", entries))
-        self.assertEqual(1, len(link_entries))
-        self.assertEqual(set(["LINK_A"]), link_entries[0].links)
+
+

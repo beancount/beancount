@@ -34,49 +34,12 @@ import pprint
 
 from beancount.core import data
 from beancount.core import inventory
+from beancount.ops import basicops
 from beancount import loader
 from beancount.parser import printer
 
 
-def group_entries_by_link(entries):
-    """Group the list of entries by link.
-
-    Args:
-      entries: A list of directives/transactions to process.
-    Returns:
-      A dict of link-name to list of entries.
-    """
-    link_groups = defaultdict(list)
-    for entry in entries:
-        if not (isinstance(entry, data.Transaction) and entry.links):
-            continue
-        for link in entry.links:
-            link_groups[link].append(entry)
-    return link_groups
-
-
-def get_common_accounts(entries):
-    """Compute the intersection of the accounts on the given entries.
-
-    Args:
-      entries: A list of directives/transactions to process.
-    Returns:
-      A set of strings, the names of the common accounts from these
-      entries.
-    """
-    if not entries:
-        return set()
-    entries_iter = iter(entries)
-    intersection = set(posting.account for posting in next(entries_iter).postings)
-    for entry in entries_iter:
-        accounts = set(posting.account for posting in entry.postings)
-        intersection &= accounts
-        if not intersection:
-            break
-    return intersection
-
-
-def tag_pending_transactions(entries, tag_name, matching_link_regexp=None):
+def tag_pending_transactions(entries, tag_name='PENDING', matching_link_regexp=None):
     """Filter out incomplete linked transactions to a transfer account.
 
     Given a list of entries, group the entries by their link (only for entries
@@ -93,7 +56,7 @@ def tag_pending_transactions(entries, tag_name, matching_link_regexp=None):
     Returns:
       A modified set of entries, possibly tagged as pending.
     """
-    link_groups = group_entries_by_link(entries)
+    link_groups = basicops.group_entries_by_link(entries)
 
     pending_entry_ids = set()
     for link, link_entries in link_groups.items():
@@ -101,22 +64,26 @@ def tag_pending_transactions(entries, tag_name, matching_link_regexp=None):
         if matching_link_regexp and not re.match(matching_link_regexp, link):
             continue
 
-        if len(link_entries) < 2:
-            pending = True
+        assert link_entries
+        if len(link_entries) == 1:
+            # If a single entry is present, it is assumed incomplete.
+            pending_entry_ids.add(id(link_entries[0]))
         else:
-            common_accounts = get_common_accounts(link_entries)
+            # Compute the sum total balance of the common accoujnts.
+            common_accounts = basicops.get_common_accounts(link_entries)
             balance = inventory.Inventory()
             for entry in link_entries:
                 for posting in entry.postings:
                     if posting.account in common_accounts:
                         balance.add_position(posting.position)
-            pending = not balance.is_empty()
 
-        if pending:
-            for entry in link_entries:
-                pending_entry_ids.add(id(entry))
+            # Mark entries as pending if a residual balance is found.
+            if not balance.is_empty():
+                for entry in link_entries:
+                    pending_entry_ids.add(id(entry))
 
-    return [(entry._replace(tags=(entry.tags or set()) | set((tag_name,)))
+    # Insert tags if marked.
+    return [(data.entry_replace(entry, tags=(entry.tags or set()) | set((tag_name,)))
              if id(entry) in pending_entry_ids
              else entry)
             for entry in entries]
@@ -136,8 +103,11 @@ def main():
     opts = parser.parse_args()
 
     entries, errors, options = loader.load(opts.filename, do_print_errors=True)
-    pending_entries = get_pending_transactions(entries, opts.account)
+    entries = tag_pending_transactions(entries, 'PENDING')
 
+    pending_entries = [entry for entry in basicops.filter_tag('PENDING', entries)]
+
+    print(len(pending_entries))
     if pending_entries:
         print('Pending/incomplete transactions:')
         print()

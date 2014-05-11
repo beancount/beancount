@@ -1,7 +1,7 @@
 """Basic data structures used to represent the Ledger entries.
 """
 import datetime
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
 from .amount import Amount, Decimal, to_decimal
@@ -405,17 +405,3 @@ def posting_sortkey(entry):
     if isinstance(entry, Posting):
         entry = entry.entry
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.fileloc.lineno)
-
-
-def filter_link(link, entries):
-    """Yield all the entries which have the given link.
-
-    Args:
-      link: A string, the link we are interested in.
-    Yields:
-      Every entry in 'entries' that links to 'link.
-    """
-    for entry in entries:
-        if (isinstance(entry, Transaction) and
-            entry.links and link in entry.links):
-            yield entry
