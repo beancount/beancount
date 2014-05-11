@@ -2,7 +2,7 @@ import datetime
 import unittest
 import textwrap
 
-from beancount.parser import parse_string
+from beancount.parser import parsedoc, parse_string
 from beancount.ops import basicops
 from beancount.core import data
 
@@ -99,5 +99,41 @@ class TestBasicOpsTags(unittest.TestCase):
         self.assertEqual(0, len(tag_entries))
 
 
-# getcommon accounts
-__incomplete__ = True
+class TestBasicOpsOther(unittest.TestCase):
+
+    @parsedoc
+    def test_get_common_accounts(self, entries, _, __):
+        """
+        2014-01-01 open Assets:Account1
+        2014-01-01 open Assets:Account2
+        2014-01-01 open Assets:Account3
+        2014-01-01 open Assets:Account4
+
+        2014-05-10 * "A"
+          Assets:Account1    1 USD
+          Assets:Account2
+
+        2014-05-10 * "B"
+          Assets:Account1    1 USD
+          Assets:Account3
+
+        2014-05-10 * "C"
+          Assets:Account2    1 USD
+          Assets:Account3
+
+        2014-05-10 * "D"
+          Assets:Account3    1 USD
+          Assets:Account4
+
+        """
+        entries = [entry for entry in entries if isinstance(entry, data.Transaction)]
+        self.assertEqual(set(),
+                         basicops.get_common_accounts([]))
+        self.assertEqual({'Assets:Account2', 'Assets:Account1'},
+                         basicops.get_common_accounts([entries[0]]))
+        self.assertEqual({'Assets:Account1'},
+                         basicops.get_common_accounts([entries[0], entries[1]]))
+        self.assertEqual({'Assets:Account2'},
+                         basicops.get_common_accounts([entries[0], entries[2]]))
+        self.assertEqual(set(),
+                         basicops.get_common_accounts([entries[0], entries[3]]))

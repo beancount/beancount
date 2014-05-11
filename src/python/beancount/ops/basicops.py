@@ -67,7 +67,10 @@ def get_common_accounts(entries):
     # If there is a single entry, the common accounts to it is all its accounts.
     # Note that this also works with no entries (yields an empty set).
     if len(entries) < 2:
-        intersection = {posting.account for posting in entries[0].postings}
+        if entries:
+            intersection = {posting.account for posting in entries[0].postings}
+        else:
+            intersection = set()
     else:
         entries_iter = iter(entries)
         intersection = set(posting.account for posting in next(entries_iter).postings)
