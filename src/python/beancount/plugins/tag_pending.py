@@ -41,31 +41,25 @@ from beancount.parser import printer
 __plugins__ = ('tag_pending_filter',)
 
 
-def tag_pending_transactions(entries, tag_name='PENDING', matching_link_regexp=None):
+def tag_pending_transactions(entries, tag_name='PENDING'):
     """Filter out incomplete linked transactions to a transfer account.
 
-    Given a list of entries, group the entries by their link (only for entries
-    matching the given regexp if specified) and compute the balance of the
-    intersection of their common accounts. If the balance does not sum to zero,
-    insert a 'tag_name' tag in the entries.
+    Given a list of entries, group the entries by their link and compute the
+    balance of the intersection of their common accounts. If the balance does
+    not sum to zero, insert a 'tag_name' tag in the entries.
 
     Args:
       entries: A list of directives/transactions to process.
       tag_name: A string, the name of the tag to be inserted if a linked group
         of entries is found not to match
-      matching_link_regexp: A string, a regular expression used to restrict the
-        link names which are subjected to this matching pending checks.
     Returns:
       A modified set of entries, possibly tagged as pending.
+
     """
     link_groups = basicops.group_entries_by_link(entries)
 
     pending_entry_ids = set()
     for link, link_entries in link_groups.items():
-        # Skip links which do not match the restricting regexp.
-        if matching_link_regexp and not re.match(matching_link_regexp, link):
-            continue
-
         assert link_entries
         if len(link_entries) == 1:
             # If a single entry is present, it is assumed incomplete.
@@ -107,21 +101,15 @@ def tag_pending_filter(entries, errors, options):
 def main():
     """Print out a list of the unpaid transactions."""
     parser = argparse.ArgumentParser(__doc__)
-
-    parser.add_argument('filename',
-                        help='Beancount input filename.')
-
-    parser.add_argument('--matching-links-format', action='store',
-                        help="A regular expression used to filter links to be "
-                        "subjected to matching pending check.")
-
+    parser.add_argument('filename', help='Beancount input filename.')
     opts = parser.parse_args()
 
+    # Parse the entries with a filter.
+    loader.install_load_filter(tag_pending_filter)
     entries, errors, options = loader.load(opts.filename, do_print_errors=True)
 
+    # Print the entries that have been tagged.
     pending_entries = [entry for entry in basicops.filter_tag('PENDING', entries)]
-
-    print(len(pending_entries))
     if pending_entries:
         print('Pending/incomplete transactions:')
         print()

@@ -1,12 +1,8 @@
-#!/usr/bin/env python3
-"""Runner for forecast plugin example."""
-
 import unittest
 
 from beancount import loader
 from beancount.parser import printer
-
-import forecast
+from beancount.plugins import forecast
 
 
 EXAMPLE_INPUT = """
@@ -31,9 +27,8 @@ class TestExampleForecast(unittest.TestCase):
     def test_forecast(self):
         entries, errors, options = loader.load(EXAMPLE_INPUT,
                                                parse_method='string')
-        self.assertLessEqual(3, len(entries))
-        for entry in entries:
-            print(printer.format_entry(entry))
+        self.assertLess(3, len(entries))
 
-if __name__ == '__main__':
-    unittest.main()
+
+__incomplete__ = True
+

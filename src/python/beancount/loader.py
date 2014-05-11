@@ -2,6 +2,7 @@
 """
 import functools
 import textwrap
+import importlib
 
 from beancount.utils import misc_utils
 from beancount.core import data
@@ -135,3 +136,17 @@ def uninstall_load_filter(callback):
       callback: See install_load_filter.
     """
     LOAD_FILTERS.remove(callback)
+
+
+def install_plugins(plugin_names):
+    """Install a list of plugin names.
+
+    Args:
+      plugin_name: A list of string, the names of modules to import.
+    """
+    for plugin_name in plugin_names:
+        module = importlib.import_module(plugin_name)
+        if hasattr(module, '__plugins__'):
+            for function_name in module.__plugins__:
+                callback = getattr(module, function_name)
+                install_load_filter(callback)

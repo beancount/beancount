@@ -9,7 +9,6 @@ import io
 import logging
 import time
 import threading
-import importlib
 
 import bottle
 from bottle import response, request
@@ -21,6 +20,7 @@ from beancount.core import getters
 from beancount.core import realization
 from beancount.core import account
 from beancount.core import account_types
+from beancount.ops import basicops
 from beancount.ops import summarize
 from beancount.ops import prices
 from beancount.ops import positions
@@ -330,7 +330,7 @@ def prices_values(base=None, quote=None):
 def link(link=None):
     "Serve journals for links."
 
-    linked_entries = data.filter_link(link, app.entries)
+    linked_entries = basicops.filter_link(link, app.entries)
 
     oss = io.StringIO()
     journal.entries_table_with_balance(app, oss, linked_entries)
@@ -1064,6 +1064,8 @@ def run_app(args, quiet=None):
     logging.basicConfig(level=logging.INFO,
                         format='%(levelname)-8s: %(message)s')
 
+    loader.install_plugins(args.plugin)
+
     # Hide the numbers in incognito mode. We do this on response text via a plug-in.
     if args.incognito:
         args.no_source = True
@@ -1159,14 +1161,6 @@ def main():
     argparser = argparse.ArgumentParser(__doc__.strip())
     add_web_arguments(argparser)
     args = argparser.parse_args()
-
-    for plugin_name in args.plugin:
-        module = importlib.import_module(plugin_name)
-        if hasattr(module, '__plugins__'):
-            print(module)
-            for function_name in module.__plugins__:
-                callback = getattr(module, function_name)
-                loader.install_load_filter(callback)
 
     run_app(args)
 
