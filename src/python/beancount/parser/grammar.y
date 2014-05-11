@@ -122,8 +122,7 @@ const char* getTokenName(int token);
 %type <pyobj> document
 %type <pyobj> entry
 %type <pyobj> declarations
-%type <pyobj> tags_list
-%type <pyobj> links_list
+%type <pyobj> txn_fields
 %type <pyobj> filename
 
 
@@ -131,7 +130,7 @@ const char* getTokenName(int token);
 %start file
 
 /* We have four expected shift/reduce conflicts at 'eol'. */
-%expect 4
+%expect 3
 
 
 /*--------------------------------------------------------------------------------*/
@@ -160,37 +159,35 @@ empty_line : EOL
            | INDENT
            | COMMENT
 
-tags_list : empty
-          {
-              Py_INCREF(Py_None);
-              $$ = Py_None;
-          }
-          | tags_list TAG
-          {
-              $$ = BUILD("handle_list", "OO", $1, $2);
-              DECREF2($1, $2);
-          }
+txn_fields : empty
+           {
+               $$ = BUILD_NOARGS("txn_field_new");
+           }
+           | txn_fields STRING
+           {
+               $$ = BUILD("txn_field_STRING", "OO", $1, $2);
+               DECREF2($1, $2);
+           }
+           | txn_fields LINK
+           {
+               $$ = BUILD("txn_field_LINK", "OO", $1, $2);
+               DECREF2($1, $2);
+           }
+           | txn_fields TAG
+           {
+               $$ = BUILD("txn_field_TAG", "OO", $1, $2);
+               DECREF2($1, $2);
+           }
+           | txn_fields PIPE
+           {
+               /* Simply ignore PIPE chars in htis list for backwards compatibility */
+               $$ = $1;
+           }
 
-links_list : empty
-          {
-              Py_INCREF(Py_None);
-              $$ = Py_None;
-          }
-          | links_list LINK
-          {
-              $$ = BUILD("handle_list", "OO", $1, $2);
-              DECREF2($1, $2);
-          }
-
-transaction : DATE txn STRING tags_list links_list eol posting_list
+transaction : DATE txn txn_fields eol posting_list
             {
-                $$ = BUILD("transaction", "siObOOOOO", FILE_LINE_ARGS, $1, $2, Py_None, $3, $4, $5, $7);
-                DECREF5($1, $3, $4, $5, $7);
-            }
-            | DATE txn STRING PIPE STRING tags_list links_list eol posting_list
-            {
-                $$ = BUILD("transaction", "siObOOOOO", FILE_LINE_ARGS, $1, $2, $3, $5, $6, $7, $9);
-                DECREF6($1, $3, $5, $6, $7, $9);
+                $$ = BUILD("transaction", "siObOO", FILE_LINE_ARGS, $1, $2, $3, $5);
+                DECREF4($1, $2, $3, $5);
             }
 
 optflag : empty
@@ -345,8 +342,8 @@ filename : STRING
 
 document : DATE DOCUMENT ACCOUNT filename eol
       {
-          $$ = BUILD("document", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
-          DECREF3($1, $3, $4);
+        $$ = BUILD("document", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
+        DECREF3($1, $3, $4);
       }
 
 entry : transaction

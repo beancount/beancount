@@ -2,6 +2,7 @@
 """
 import functools
 import textwrap
+import importlib
 
 from beancount.utils import misc_utils
 from beancount.core import data
@@ -89,7 +90,7 @@ def load(filename,
             print('`--------------------------------------------------------------------------------')
 
     # Run the load_filters on top of the results.
-    for load_filter_function in LOAD_FILTERS:
+    for load_filter_function in LOAD_PLUGINS:
         entries, errors, options = load_filter_function(
             entries, errors, options)
 
@@ -114,9 +115,9 @@ def loaddoc(fun):
 # A global list of filter functions to be applied on all subsequent loads.
 # Each function should accept a triplet of (entries, errors, options) and
 # return a similar triplet.
-LOAD_FILTERS = []
+LOAD_PLUGINS = []
 
-def install_load_filter(callback):
+def install_load_plugin(callback):
     """Register a ledger load filter, that gets invoked after every time we load or
     reload the ledger file.
 
@@ -125,13 +126,27 @@ def install_load_filter(callback):
                  with entries, errors, options. The function should return new
                  values for these, that is, a triple of entries, errors, options.
     """
-    LOAD_FILTERS.append(callback)
+    LOAD_PLUGINS.append(callback)
 
 
-def uninstall_load_filter(callback):
+def uninstall_load_plugin(callback):
     """Unregister a ledger load filter.
 
     Args:
-      callback: See install_load_filter.
+      callback: See install_load_plugin.
     """
-    LOAD_FILTERS.remove(callback)
+    LOAD_PLUGINS.remove(callback)
+
+
+def install_plugins(plugin_names):
+    """Install a list of plugin names.
+
+    Args:
+      plugin_name: A list of string, the names of modules to import.
+    """
+    for plugin_name in plugin_names:
+        module = importlib.import_module(plugin_name)
+        if hasattr(module, '__plugins__'):
+            for function_name in module.__plugins__:
+                callback = getattr(module, function_name)
+                install_load_plugin(callback)

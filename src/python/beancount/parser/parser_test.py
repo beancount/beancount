@@ -5,7 +5,7 @@ import unittest
 import inspect
 
 from beancount.parser import parsedoc
-from beancount.parser import parser, options
+from beancount.parser import parser, options, ParserError
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price, Note
 from beancount.core.amount import Amount
 
@@ -46,7 +46,7 @@ class TestParserMisc(unittest.TestCase):
         self.assertTrue(all(isinstance(x, str) for x in result))
 
 
-class TestParserEntries(unittest.TestCase):
+class TestParserEntryTypes(unittest.TestCase):
     """Basic smoke test one entry of each kind."""
 
     @parsedoc
@@ -285,10 +285,10 @@ class TestParserLinks(unittest.TestCase):
 
         """
         check_list(self, entries, [Transaction])
-        self.assertEqual(entries[0].links, ['38784734873'])
+        self.assertEqual(entries[0].links, set(['38784734873']))
 
 
-class TestSimple(unittest.TestCase):
+class TestTransactions(unittest.TestCase):
 
     @parsedoc
     def test_simple_1(self, entries, errors, options):
@@ -317,6 +317,71 @@ class TestSimple(unittest.TestCase):
         check_list(self, errors, [])
 
     @parsedoc
+    def test_empty_narration(self, entries, errors, options):
+        """
+          2013-05-18 * ""
+            Expenses:Restaurant         100 USD
+            Assets:US:Cash
+        """
+        check_list(self, entries, [Transaction])
+        check_list(self, errors, [])
+        self.assertEqual("", entries[0].narration)
+        self.assertEqual(None, entries[0].payee)
+
+    @parsedoc
+    def test_no_narration(self, entries, errors, _):
+        """
+          2013-05-18 *
+            Expenses:Restaurant         100 USD
+            Assets:US:Cash
+        """
+        check_list(self, entries, [Transaction])
+        check_list(self, errors, [])
+        self.assertEqual("", entries[0].narration)
+        self.assertEqual(None, entries[0].payee)
+
+    @parsedoc
+    def test_too_many_strings(self, entries, errors, options):
+        """
+          2013-05-18 * "A" "B" "C"
+            Expenses:Restaurant         100 USD
+            Assets:US:Cash
+        """
+        check_list(self, entries, [])
+        check_list(self, errors, [ParserError])
+
+    @parsedoc
+    def test_link_and_then_tag(self, entries, errors, _):
+        """
+          2014-04-20 * "Money from CC" ^610fa7f17e7a #trip
+            Expenses:Restaurant         100 USD
+            Assets:US:Cash
+        """
+        check_list(self, entries, [Transaction])
+        check_list(self, errors, [])
+        self.assertEqual("Money from CC", entries[0].narration)
+        self.assertEqual(None, entries[0].payee)
+        self.assertEqual(set(["610fa7f17e7a"]), entries[0].links)
+        self.assertEqual(set(["trip"]), entries[0].tags)
+
+    @parsedoc
+    def test_tag_then_link(self, entries, errors, _):
+        """
+          2014-04-20 * #trip "Money from CC" ^610fa7f17e7a
+            Expenses:Restaurant         100 USD
+            Assets:US:Cash
+        """
+        check_list(self, entries, [Transaction])
+        check_list(self, errors, [])
+        self.assertEqual("Money from CC", entries[0].narration)
+        self.assertEqual(None, entries[0].payee)
+        self.assertEqual(set(["610fa7f17e7a"]), entries[0].links)
+        self.assertEqual(set(["trip"]), entries[0].tags)
+
+
+class TestCurrencies(unittest.TestCase):
+
+    @parsedoc
     def test_parse_currencies(self, entries, errors, options):
         """
           2014-01-19 open Assets:Underscore    DJ_EURO
@@ -327,7 +392,7 @@ class TestSimple(unittest.TestCase):
         self.assertFalse(errors)
 
 
-class TestTotals(unittest.TestCase):
+class TestBalance(unittest.TestCase):
 
     @parsedoc
     def test_total_price(self, entries, errors, options):

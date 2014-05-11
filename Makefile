@@ -23,7 +23,7 @@ clean:
 # Targets to generate and compile the C parser.
 CROOT = $(SRC)/parser
 LEX = flex
-YACC = bison
+YACC = bison --report=itemset --verbose
 
 $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
 	$(YACC) -o $(CROOT)/grammar.c $<
