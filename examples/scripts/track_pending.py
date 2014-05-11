@@ -112,12 +112,13 @@ def tag_pending_transactions(entries, tag_name, matching_link_regexp=None):
                         balance.add_position(posting.position)
             pending = not balance.is_empty()
 
-        for entry in link_entries:
-            pending_entry_ids.add(id(entry))
+        if pending:
+            for entry in link_entries:
+                pending_entry_ids.add(id(entry))
 
-    return [entry._replace('tag', entry.tags | tag_name)
-            if id(entry) in pending_entry_ids
-            else entry
+    return [(entry._replace(tags=(entry.tags or set()) | set((tag_name,)))
+             if id(entry) in pending_entry_ids
+             else entry)
             for entry in entries]
 
 

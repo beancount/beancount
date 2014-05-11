@@ -39,17 +39,15 @@ class TestExampleTrackPending(unittest.TestCase):
         original_entries, _, _ = loader.load(EXAMPLE_INPUT, parse_method='string')
         entries = track_pending.tag_pending_transactions(original_entries, 'PENDING')
         self.assertEqual(len(original_entries), len(entries))
-        for entry in entries:
-            print(entry)
-        # self.assertEqual(set(['invoice-562b4da33bd9']), pending_entries[0].links)
+        self.assertEqual(set(['invoice-562b4da33bd9']), entries[0].links)
 
-    # def test_print_example(self):
-    #     "Print output as per the example above."
-    #     with tempfile.NamedTemporaryFile('w') as f:
-    #         f.write(EXAMPLE_INPUT)
-    #         f.flush()
-    #         sys.argv = [__file__, '--account={}'.format(TRANSFER_ACCOUNT), f.name]
-    #         track_pending.main()
+    def test_print_example(self):
+        "Print output as per the example above."
+        with tempfile.NamedTemporaryFile('w') as f:
+            f.write(EXAMPLE_INPUT)
+            f.flush()
+            sys.argv = [__file__, '--account={}'.format(TRANSFER_ACCOUNT), f.name]
+            track_pending.main()
 
 
 if __name__ == '__main__':
