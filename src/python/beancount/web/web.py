@@ -9,7 +9,6 @@ import io
 import logging
 import time
 import threading
-import importlib
 
 import bottle
 from bottle import response, request
@@ -21,6 +20,7 @@ from beancount.core import getters
 from beancount.core import realization
 from beancount.core import account
 from beancount.core import account_types
+from beancount.ops import basicops
 from beancount.ops import summarize
 from beancount.ops import prices
 from beancount.ops import positions
@@ -28,7 +28,7 @@ from beancount.utils import misc_utils
 from beancount.utils.text_utils import replace_numbers
 from beancount.web.bottle_utils import AttrMapper, internal_redirect
 from beancount.parser import parser
-from beancount.loader import load
+from beancount import loader
 from beancount.web import views
 from beancount.web import journal
 from beancount.web import acctree
@@ -330,7 +330,7 @@ def prices_values(base=None, quote=None):
 def link(link=None):
     "Serve journals for links."
 
-    linked_entries = data.filter_link(link, app.entries)
+    linked_entries = basicops.filter_link(link, app.entries)
 
     oss = io.StringIO()
     journal.entries_table_with_balance(app, oss, linked_entries)
@@ -1021,9 +1021,8 @@ def auto_reload_input_file(callback):
                 app.source = f.read()
 
             # Parse the beancount file.
-            entries, errors, options = load(filename,
-                                            add_unrealized_gains=True,
-                                            do_print_errors=True)
+            entries, errors, options = loader.load(
+                filename, add_unrealized_gains=True, do_print_errors=True)
 
             # Save globals in the global app.
             app.entries = entries
@@ -1064,6 +1063,8 @@ def incognito(callback):
 def run_app(args, quiet=None):
     logging.basicConfig(level=logging.INFO,
                         format='%(levelname)-8s: %(message)s')
+
+    loader.install_plugins(args.plugin)
 
     # Hide the numbers in incognito mode. We do this on response text via a plug-in.
     if args.incognito:
@@ -1160,9 +1161,6 @@ def main():
     argparser = argparse.ArgumentParser(__doc__.strip())
     add_web_arguments(argparser)
     args = argparser.parse_args()
-
-    for plugin_name in args.plugin:
-        importlib.import_module(plugin_name)
 
     run_app(args)
 
