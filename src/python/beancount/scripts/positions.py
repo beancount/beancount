@@ -3,8 +3,10 @@
 This is to share my portfolio with others, or to compute its daily changes.
 """
 from beancount import load
+from beancount.parser import options
 from beancount.ops import prices
 from beancount.ops import holdings
+from beancount.ops import summarize
 
 
 def main():
@@ -23,17 +25,19 @@ def main():
     opts = optparser.parse_args()
 
     # Parse the input file.
-    entries, errors, options = load(opts.filename, quiet=True)
+    entries, errors, options_map = load(opts.filename, quiet=True)
+
+    # Close the books.
+    entries = summarize.close(entries, options_map,
+                              *options.get_current_accounts(options_map))
 
     # Get the aggregate sum of positions.
-    # price_map = prices.build_price_map(entries)
-    position_list = holdings.get_final_holdings(entries)
-    for pos in position_list:
-        print(pos)
-    
+    holdings_list = holdings.get_final_holdings(entries)
+    price_map = prices.build_price_map(entries)
+    holdings_list = holdings.add_prices_to_holdings(holdings_list, price_map)
 
-    # price_map = prices.build_price_map(entries)
-    # dataframe = holdings.get_holdings_as_dataframe(entries, price_map)
+    for h in holdings_list:
+        print(h)
 
     # # Aggregate then..
     # byinst = dataframe.groupby(['account', 'currency', 'cost_currency'])

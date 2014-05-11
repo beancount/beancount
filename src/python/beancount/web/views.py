@@ -6,6 +6,7 @@ from beancount.core import data
 from beancount.ops import summarize
 from beancount.core import realization
 from beancount import parser
+from beancount.parser import options
 from beancount.utils import misc_utils
 
 
@@ -31,7 +32,7 @@ class View:
 
         # A reference to the global list of options and the account type names.
         self.options = options
-        self.account_types = parser.get_account_types(options)
+        self.account_types = options.get_account_types(options)
 
         # Realization of the filtered entries to display. These are computed in
         # _realize().
@@ -63,7 +64,7 @@ class View:
             # income/expenses amounts to the balance sheet's equity (as "net
             # income"). This is used to render the end-period balance sheet, with
             # the current period's net income, closing the period.
-            current_accounts = parser.get_current_accounts(self.options)
+            current_accounts = options.get_current_accounts(self.options)
             self.closing_entries = summarize.close(self.entries, self.options, *current_accounts)
 
         # Realize the three sets of entries.
@@ -118,7 +119,7 @@ class YearView(View):
         "Return entries for only that year."
 
         # Get the transfer account objects.
-        previous_accounts = parser.get_previous_accounts(options)
+        previous_accounts = options.get_previous_accounts(options)
 
         # Clamp to the desired period.
         begin_date = datetime.date(self.year, 1, 1)

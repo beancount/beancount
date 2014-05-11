@@ -92,6 +92,11 @@ class TestPositionEntries(unittest.TestCase):
 
 
 
+# Maybe convert this to a single function, that accepts optionally a price_map
+# and immediately inserts the prices if specified. This would be faster and simpler I think.
+
+# Maybe rename bean-positions to bean-holdings
+
 
 
 # def get_holdings_as_dataframe(entries, price_map):

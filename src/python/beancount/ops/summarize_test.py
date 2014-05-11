@@ -16,6 +16,7 @@ from beancount.core import realization
 from beancount.ops import summarize
 from beancount.loader import loaddoc
 from beancount.parser import parser
+from beancount.parser import options
 
 from beancount import parser
 
@@ -258,13 +259,13 @@ class TestConversions(unittest.TestCase):
             Assets:US:Checking        100 USD
 
         """
-        previous_accounts = parser.get_previous_accounts(options)
+        previous_accounts = options.get_previous_accounts(options)
         entries, _ = summarize.clamp(entries,
                                      datetime.date(2013, 1, 1), datetime.date(2014, 1, 1),
                                      options,
                                      *previous_accounts)
 
-        current_accounts = parser.get_current_accounts(options)
+        current_accounts = options.get_current_accounts(options)
         entries = summarize.close(entries, options, *current_accounts)
 
         # entries = conversions(entries, ACCOUNT_CONVERSIONS1, datetime.date(2013, 1, 1))

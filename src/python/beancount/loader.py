@@ -7,6 +7,7 @@ import importlib
 from beancount.utils import misc_utils
 from beancount.core import data
 from beancount.parser import parser
+from beancount.parser import options
 from beancount.parser import documents
 from beancount.parser import printer
 from beancount.ops import pad
@@ -54,9 +55,9 @@ def load(filename,
     else:
         raise NotImplementedError
     with misc_utils.print_time('parse', quiet):
-        entries, parse_errors, options = parse_fun(filename)
+        entries, parse_errors, options_map = parse_fun(filename)
 
-    account_types = parser.get_account_types(options)
+    account_types = options.get_account_types(options_map)
 
     # Pad the resulting entries (create synthetic Pad entries to balance checks
     # where desired).
@@ -70,7 +71,7 @@ def load(filename,
     with misc_utils.print_time('documents', quiet):
         entries, doc_errors = documents.process_documents(entries,
                                                           filename,
-                                                          options['documents'])
+                                                          options_map['documents'])
 
     # Validate the list of entries.
     with misc_utils.print_time('validate', quiet):
@@ -78,7 +79,7 @@ def load(filename,
 
     # Add unrealized gains.
     with misc_utils.print_time('unrealized', quiet):
-        entries = unrealized.unrealized_gains(entries, options['account_unrealized'], account_types)
+        entries = unrealized.unrealized_gains(entries, options_map['account_unrealized'], account_types)
 
     # Print out the list of errors.
     errors = parse_errors + pad_errors + check_errors + valid_errors + doc_errors
@@ -91,13 +92,13 @@ def load(filename,
 
     # Run the load_filters on top of the results.
     for load_filter_function in LOAD_PLUGINS:
-        entries, errors, options = load_filter_function(
-            entries, errors, options)
+        entries, errors, options_map = load_filter_function(
+            entries, errors, options_map)
 
     # Ensure that the entries are sorted.
     entries.sort(key=data.entry_sortkey)
 
-    return entries, errors, options
+    return entries, errors, options_map
 
 
 def loaddoc(fun):
@@ -106,8 +107,8 @@ def loaddoc(fun):
     @functools.wraps(fun)
     def wrapper(self):
         contents = textwrap.dedent(fun.__doc__)
-        entries, errors, options = load(contents, parse_method='string', quiet=True)
-        return fun(self, entries, errors, options)
+        entries, errors, options_map = load(contents, parse_method='string', quiet=True)
+        return fun(self, entries, errors, options_map)
     wrapper.__doc__ = None
     return wrapper
 

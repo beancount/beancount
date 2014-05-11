@@ -28,6 +28,7 @@ from beancount.utils import misc_utils
 from beancount.utils.text_utils import replace_numbers
 from beancount.web.bottle_utils import AttrMapper, internal_redirect
 from beancount.parser import parser
+from beancount.parser import options
 from beancount import loader
 from beancount.web import views
 from beancount.web import journal
@@ -1028,7 +1029,7 @@ def auto_reload_input_file(callback):
             app.entries = entries
             app.errors = errors
             app.options = options
-            app.account_types = parser.get_account_types(options)
+            app.account_types = options.get_account_types(options)
 
             # Pre-compute the price database.
             app.price_map = prices.build_price_map(app.entries)

@@ -80,8 +80,8 @@ beancount: TODO
 
 
   - Alias to_decimal to 'D' and replace everywhere.
-    
 
+  - Convert all assertEquals() to assertEqual().
 
 * Current
 

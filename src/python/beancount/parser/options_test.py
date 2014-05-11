@@ -4,6 +4,8 @@ Test various options.
 import unittest
 
 from beancount.parser import parsedoc
+from beancount.parser import options
+from beancount.core import account_types
 
 
 class TestOptions(unittest.TestCase):
@@ -22,3 +24,25 @@ class TestOptions(unittest.TestCase):
         """
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
+
+    def test_get_account_types(self):
+        options_ = options.DEFAULT_OPTIONS.copy()
+        result = options.get_account_types(options_)
+        expected = account_types.AccountTypes(assets='Assets',
+                                              liabilities='Liabilities',
+                                              equity='Equity',
+                                              income='Income',
+                                              expenses='Expenses')
+        self.assertEqual(expected, result)
+
+    def test_get_previous_accounts(self):
+        options_ = options.DEFAULT_OPTIONS.copy()
+        result = options.get_previous_accounts(options_)
+        self.assertEquals(3, len(result))
+        self.assertTrue(all(isinstance(x, str) for x in result))
+
+    def test_get_current_accounts(self):
+        options_ = options.DEFAULT_OPTIONS.copy()
+        result = options.get_current_accounts(options_)
+        self.assertEquals(2, len(result))
+        self.assertTrue(all(isinstance(x, str) for x in result))

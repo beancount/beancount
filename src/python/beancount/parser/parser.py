@@ -27,46 +27,6 @@ from beancount.core.balance import compute_residual, SMALL_EPSILON
 __sanity_checks__ = False
 
 
-def get_previous_accounts(options):
-    """Return Account objects for the opening, earnings, and conversion accounts.
-
-    Args:
-      options: a dict of ledger options.
-    Returns:
-      A tuple of 3 account objects, for booking previous earnings,
-      previous balances, and previous conversions.
-    """
-
-    equity = options['name_equity']
-
-    account_previous_earnings = account.join(equity, options['account_previous_earnings'])
-    account_previous_balances = account.join(equity, options['account_previous_balances'])
-    account_previous_conversions = account.join(equity, options['account_previous_conversions'])
-
-    return (account_previous_earnings,
-            account_previous_balances,
-            account_previous_conversions)
-
-
-def get_current_accounts(options):
-    """Return Account objects for the opening, earnings, and conversion accounts.
-
-    Args:
-      options: a dict of ledger options.
-    Returns:
-      A tuple of 2 account objects, one for booking current earnings, and one
-      for current conversions.
-    """
-
-    equity = options['name_equity']
-
-    account_current_earnings = account.join(equity, options['account_current_earnings'])
-    account_current_conversions = account.join(equity, options['account_current_conversions'])
-
-    return (account_current_earnings,
-            account_current_conversions)
-
-
 ParserError = collections.namedtuple('ParserError', 'fileloc message entry')
 ParserSyntaxError = collections.namedtuple('ParserError', 'fileloc message entry')
 
@@ -173,7 +133,8 @@ class Builder(object):
                 # Update the globals that check whether this account is valid.
                 # FIXME: This is a known globals kludge we know we have to remove,
                 # but has ties in many places. Will remove later.
-                account_types.update_valid_account_names(get_account_types(self.options))
+                account_types.update_valid_account_names(
+                    options.get_account_types(self.options))
 
     def DATE(self, year, month, day):
         """Process a DATE token.
@@ -625,26 +586,6 @@ class Builder(object):
             assert residual.is_small(SMALL_EPSILON), residual
 
         return entry
-
-
-# A parsed option directive.
-# Attributes:
-#   fileloc: a FileLocation instance, where the option was parsed from
-#   key: a str, the option key
-#   value: the option's value
-Option = namedtuple('Option', 'fileloc key value')
-
-def get_account_types(options):
-    """Extract the account type names from the parser's options.
-
-    Args:
-      options: a dict of ledger options.
-    Returns:
-      An instance of AccountTypes, that contains all the prefixes.
-    """
-    return AccountTypes(
-        *(options["name_{}".format(x)]
-          for x in "assets liabilities equity income expenses".split()))
 
 
 def parse(filename, **kw):
