@@ -1,5 +1,6 @@
 """Compute final holdings for a list of entries.
 """
+import copy
 import collections
 
 from beancount.core import realization
@@ -13,6 +14,25 @@ except ImportError:
     numpy = None
 
 
+# A holding, a flattened position with an account, and optionally, price and
+# book/market values.
+#
+# account: A string, the name of the account.
+# number: A Decimal, the number of units for that position.
+# currency: A string, the currency for that position.
+# cost_number: A Decimal, the price of that currency.
+# cost_currency: A string, the currency of the price of that currency.
+# book_value: A Decimal, the book value of the holding.
+# price_number: A Decimal, the price/rate of the currency/cost_currency.
+# price_date: A datetime.date, the date of the price.
+# market_value: A Decimal, the market value of the holding, with the
+#   price of this holding.
+#
+Holding = collections.namedtuple('Holding',
+                                 'account number currency cost_number cost_currency '
+                                 'book_value market_value price_number price_date')
+
+
 def get_final_holdings(entries):
     """Get a dictionary of the latest holdings by account.
 
@@ -22,36 +42,32 @@ def get_final_holdings(entries):
       entries: A list of directives.
     Returns:
       A list of dicts, with the following fields:
-        account: A string, the name of the account.
-        number: A Decimal, the number of units for that position.
-        currency: A string, the currency for that position.
-        cost_number: A Decimal, the price of that currency.
-        cost_currency: A string, the currency of the price of that currency.
-        book_value: A Decimal, the book value of the holding.
     """
-    # Realize the accounts into a tree (because we want the positions by-qaccount).
+    # Realize the accounts into a tree (because we want the positions by-account).
     real_accounts = realization.realize(entries)
 
     # For each account, look at the list of positions and build a list.
     holdings = []
-    for real_account in real_accounts:
+    for real_account in sorted(list(real_accounts), key=lambda x: x.fullname):
         for position in real_account.balance.get_positions():
             if position.lot.cost:
-                holding = {'account': real_account.fullname,
-                           'number': position.number,
-                           'currency': position.lot.currency,
-                           'cost_number': position.lot.cost.number,
-                           'cost_currency': position.lot.cost.currency,
-                           'book_value': position.number * position.lot.cost.number}
+                holding = Holding(real_account.fullname,
+                                  position.number,
+                                  position.lot.currency,
+                                  position.lot.cost.number,
+                                  position.lot.cost.currency,
+                                  position.number * position.lot.cost.number,
+                                  None, None, None)
                 cost = position.get_cost()
-                assert cost.number == holding['number'] * holding['cost_number']
+                assert cost.number == holding.number * holding.cost_number
             else:
-                holding = {'account': real_account.fullname,
-                           'number': position.number,
-                           'currency': position.lot.currency,
-                           'cost_number': None,
-                           'cost_currency': None,
-                           'book_value': None}
+                holding = Holding(real_account.fullname,
+                                  position.number,
+                                  position.lot.currency,
+                                  None,
+                                  None,
+                                  None,
+                                  None, None, None)
             holdings.append(holding)
 
     return holdings
@@ -69,32 +85,23 @@ def add_prices_to_holdings(holdings, price_map, date=None):
         holdings.
     Returns:
       A list of enriched holding dicts, with added attributes:
-        price_number: A Decimal, the price/rate of the currency/cost_currency.
-        price_date: A datetime.date, the date of the price.
-        market_value: A Decimal, the market value of the holding, with the
-          price of this holding.
     """
     new_holdings = []
     for holding in holdings:
-        holding = holding.copy()
-        new_holdings.append(holding)
+        holding = copy.copy(holding)
 
         # Get the price of this currency/cost pair.
-        base_quote = holding['currency'], holding['cost_currency']
-        price_date, price_number = prices.get_price(
-            price_map, (currency, cost_currency), date)
+        base_quote = (holding.currency, holding.cost_currency)
+        price_date, price_number = prices.get_price(price_map, base_quote, date)
 
-        holding['price_date'] = price_date
-        holding['price_number'] = price_number
-        holding['market_value'] = holding['number'] * price_number
+        holding = holding._replace(price_date=price_date,
+                                   price_number=price_number,
+                                   market_value=holding.number * price_number)
+        new_holdings.append(holding)
 
     return new_holdings
 
 
-## FIXME: Use this, add a holding class.
-Holding = collections.namedtuple('Holding',
-                                 'account number currency cost_number cost_currency '
-                                 'book_value market_value price_number price_date')
 
 
 
@@ -115,19 +122,19 @@ def get_priced_positions(entries, price_map):
     """
 
     # Get the full list of positions.
-    positions_ = get_final_holdings(entries)
+    holdings = get_final_holdings(entries)
 
     # Group by account and currencies, and filter those which have an associated
     # cost.
     grouped_positions = collections.defaultdict(list)
-    for position in positions_:
-        if position['cost_number'] is not None:
-            key = (position['account'],
-                   position['currency'],
-                   position['cost_currency'])
+    for position in holdings:
+        if position.cost_number is not None:
+            key = (position.account,
+                   position.currency,
+                   position.cost_currency)
         else:
-            key = (position['account'],
-                   position['currency'],
+            key = (position.account,
+                   position.currency,
                    None)
         grouped_positions[key].append(position)
 
@@ -140,8 +147,8 @@ def get_priced_positions(entries, price_map):
         price_date, price_number = prices.get_latest_price(price_map, (currency, cost_currency))
 
         for position in position_list:
-            position['price_number'] = price_number
-            position['price_date'] = price_date
+            position.price_number = price_number
+            position.price_date = price_date
 
     # Flatten the grouped positions.
     flat_positions = [position
@@ -151,7 +158,7 @@ def get_priced_positions(entries, price_map):
     return grouped_positions, flat_positions
 
 
-def get_positions_as_dataframe(entries, price_map):
+def get_holdings_as_dataframe(entries, price_map):
     """Return a dataframe with a detailed list of positions."""
 
     if pandas is None:

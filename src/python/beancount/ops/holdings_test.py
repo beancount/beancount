@@ -2,9 +2,13 @@ import unittest
 import pprint
 import datetime
 
-from beancount.core.amount import to_decimal, Decimal
+from beancount.core.amount import to_decimal
 from beancount.ops import holdings
+from beancount.ops import prices
 from beancount.parser import parsedoc
+
+
+D = to_decimal
 
 
 class TestPositionEntries(unittest.TestCase):
@@ -42,27 +46,53 @@ class TestPositionEntries(unittest.TestCase):
           Assets:Account3             50 GOOG {540.00 USD} @ 560.00 USD
           Assets:Cash
         """
-        holdings_ = holdings.get_final_holdings(entries)
+        holdings_list = holdings.get_final_holdings(entries)
 
-        fields = 'account currency cost_currency number cost_number'.split()
-        holdings_list = sorted(list(holding[field] for field in fields)
-                                for holding in holdings_)
+        fields = 'account number currency cost_number cost_currency book_value'.split()
+        holdings_list = sorted(list(getattr(holding, field) for field in fields)
+                                for holding in holdings_list)
         expected_values = [
-            ['Assets:Account1', 'GOOG', 'USD', Decimal('10'), Decimal('523.46')],
-            ['Assets:Account1', 'GOOG', 'USD', Decimal('11'), Decimal('518.73')],
-            ['Assets:Account3', 'GOOG', 'USD', Decimal('50'), Decimal('540.00')],
-            ['Assets:Cash', 'USD', None, Decimal('12059.37'), None],
-            ['Equity:Unknown', 'USD', None, Decimal('-50000'), None]
+            ['Assets:Account1', D('10'), 'GOOG', D('523.46'), 'USD', D('5234.60')],
+            ['Assets:Account1', D('11'), 'GOOG', D('518.73'), 'USD', D('5706.03')],
+            ['Assets:Account3', D('50'), 'GOOG', D('540.00'), 'USD', D('27000.00')],
+            ['Assets:Cash', D('12059.37'), 'USD', None, None, None],
+            ['Equity:Unknown', D('-50000'), 'USD', None, None, None]
         ]
         self.assertEqual(expected_values, holdings_list)
 
 
-    def test_add_prices_to_holdings(self):
-        ## FIXME: TODO
-        pass # positions.get_priced_positions(entries, price_map)
+    @parsedoc
+    def test_add_prices_to_holdings(self, entries, _, __):
+        """
+        2013-01-01 open Assets:Account1
+        2013-01-01 open Assets:Cash
 
-# def get_positions_as_dataframe(entries, price_map):
+        2013-03-01 price GOOG 521.02 USD
+        2013-05-01 price GOOG 578.92 USD
+
+        2013-04-01 *
+          Assets:Account1             15 GOOG {518.73 USD}
+          Assets:Cash
+        """
+        holdings_list = holdings.get_final_holdings(entries)
+        price_map = prices.build_price_map(entries)
+        holdings_list = holdings.add_prices_to_holdings(holdings_list, price_map)
+
+        expected_values = [
+            holdings.Holding('Assets:Account1',
+                             D('15'), 'GOOG', D('518.73'), 'USD', D('7780.95'), D('8683.80'),
+                             D('578.92'), datetime.date(2013, 5, 1)),
+            holdings.Holding('Assets:Cash',
+                             D('-7780.95'), 'USD', None, None, None, D('-7780.95'),
+                             D('1'), None),
+        ]
+        self.assertEqual(expected_values, holdings_list)
 
 
 
+
+
+
+
+# def get_holdings_as_dataframe(entries, price_map):
 __incomplete__ = True

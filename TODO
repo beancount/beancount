@@ -79,6 +79,10 @@ beancount: TODO
       2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
 
 
+  - Alias to_decimal to 'D' and replace everywhere.
+    
+
+
 * Current
 
   - Implement a little plug-ins system that allows a user to insert a new tab in

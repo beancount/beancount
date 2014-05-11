@@ -204,8 +204,10 @@ def get_latest_price(price_map, base_quote):
 # Interpolation methods.
 PREVIOUS, LINEAR = object(), object()
 
-def get_price(price_map, base_quote, date, interpolation=PREVIOUS):
+def get_price(price_map, base_quote, date=None, interpolation=PREVIOUS):
     """Return the price as of the given date.
+
+    If the date is unspecified, return the latest price.
 
     Args:
       price_map: A price map, which is a dict of (base, quote) -> list of (date,
@@ -222,6 +224,9 @@ def get_price(price_map, base_quote, date, interpolation=PREVIOUS):
     Returns:
       A pair of (datetime.date, Decimal) instance.
     """
+    if date is None:
+        return get_latest_price(price_map, base_quote)
+
     base_quote = normalize_base_quote(base_quote)
     price_list = price_map[base_quote]
     index = misc_utils.bisect_right_with_key(price_list, date, key=lambda x: x[0])

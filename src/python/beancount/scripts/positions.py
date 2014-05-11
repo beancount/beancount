@@ -33,7 +33,7 @@ def main():
     
 
     # price_map = prices.build_price_map(entries)
-    # dataframe = holdings.get_positions_as_dataframe(entries, price_map)
+    # dataframe = holdings.get_holdings_as_dataframe(entries, price_map)
 
     # # Aggregate then..
     # byinst = dataframe.groupby(['account', 'currency', 'cost_currency'])

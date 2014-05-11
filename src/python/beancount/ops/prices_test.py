@@ -169,6 +169,10 @@ class TestPriceMap(unittest.TestCase):
         date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 7, 15))
         self.assertEqual(to_decimal('2.00'), price)
 
+        # With no date, should devolved to get_latest_price().
+        date, price = prices.get_price(price_map, 'USD/CAD', None)
+        self.assertEqual(to_decimal('2.00'), price)
+
 
 # Implement interplcation tests, not just PREVIOUS, implement and test LINEAR
 # Mkae sure that the interpolated date 

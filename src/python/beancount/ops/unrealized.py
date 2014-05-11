@@ -23,11 +23,11 @@ def unrealized_gains(entries, subaccount_name, account_types):
     # Group positions by (account, cost, cost_currency).
     account_holdings = collections.defaultdict(list)
     for holding in holdings.get_final_holdings(entries):
-        if not holding['cost_currency']:
+        if not holding.cost_currency:
             continue
-        key = (holding['account'],
-               holding['currency'],
-               holding['cost_currency'])
+        key = (holding.account,
+               holding.currency,
+               holding.cost_currency)
         account_holdings[key].append(holding)
 
     # Get the latest prices from the entries.
@@ -49,10 +49,10 @@ def unrealized_gains(entries, subaccount_name, account_types):
         market_value = Decimal()
         book_value = Decimal()
         for holding in holdings_list:
-            number = holding['number']
+            number = holding.number
             total_units  += number
             market_value += number * price_number
-            book_value   += number * holding['cost_number']
+            book_value   += number * holding.cost_number
 
         pnl = market_value - book_value
 
