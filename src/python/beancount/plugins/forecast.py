@@ -27,10 +27,10 @@ from beancount.core import data
 from beancount import loader
 
 
-__plugins__ = ('forecast_filter',)
+__plugins__ = ('forecast_plugin',)
 
 
-def forecast_filter(entries, errors, options):
+def forecast_plugin(entries, errors, options):
     """An example filter that piggybacks on top of the Beancount input syntax to
     insert forecast entries automatically. This functions accepts the return
     value of beancount.loader.load() and must return the same type of output.

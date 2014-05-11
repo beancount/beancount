@@ -38,7 +38,7 @@ from beancount.ops import basicops
 from beancount import loader
 from beancount.parser import printer
 
-__plugins__ = ('tag_pending_filter',)
+__plugins__ = ('tag_pending_plugin',)
 
 
 def tag_pending_transactions(entries, tag_name='PENDING'):
@@ -85,7 +85,7 @@ def tag_pending_transactions(entries, tag_name='PENDING'):
             for entry in entries]
 
 
-def tag_pending_filter(entries, errors, options):
+def tag_pending_plugin(entries, errors, options):
     """A plugin that finds and tags pending transactions.
 
     Args:
@@ -104,8 +104,8 @@ def main():
     parser.add_argument('filename', help='Beancount input filename.')
     opts = parser.parse_args()
 
-    # Parse the entries with a filter.
-    loader.install_load_filter(tag_pending_filter)
+    # Parse the entries with a filter plugin.
+    loader.install_load_plugin(tag_pending_plugin)
     entries, errors, options = loader.load(opts.filename, do_print_errors=True)
 
     # Print the entries that have been tagged.

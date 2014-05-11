@@ -19,10 +19,10 @@ EXAMPLE_INPUT = """
 class TestExampleForecast(unittest.TestCase):
 
     def setUp(self):
-        loader.install_load_filter(forecast.forecast_filter)
+        loader.install_load_plugin(forecast.forecast_plugin)
 
     def tearDown(self):
-        loader.uninstall_load_filter(forecast.forecast_filter)
+        loader.uninstall_load_plugin(forecast.forecast_plugin)
 
     def test_forecast(self):
         entries, errors, options = loader.load(EXAMPLE_INPUT,
