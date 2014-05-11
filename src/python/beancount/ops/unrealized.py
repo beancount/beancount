@@ -8,7 +8,7 @@ from beancount.core import amount
 from beancount.core.data import Transaction, Posting, FileLocation
 from beancount.core.position import Lot, Position
 from beancount.core import flags
-from beancount.ops import positions
+from beancount.ops import holdings
 from beancount.ops import prices
 
 
@@ -21,14 +21,14 @@ def unrealized_gains(entries, subaccount_name, account_types):
         return entries
 
     # Group positions by (account, cost, cost_currency).
-    account_positions = collections.defaultdict(list)
-    for position in positions.get_final_holdings(entries):
-        if not position['cost_currency']:
+    account_holdings = collections.defaultdict(list)
+    for holding in holdings.get_final_holdings(entries):
+        if not holding['cost_currency']:
             continue
-        key = (position['account'],
-               position['currency'],
-               position['cost_currency'])
-        account_positions[key].append(position)
+        key = (holding['account'],
+               holding['currency'],
+               holding['cost_currency'])
+        account_holdings[key].append(holding)
 
     # Get the latest prices from the entries.
     price_map = prices.build_price_map(entries)
@@ -37,7 +37,7 @@ def unrealized_gains(entries, subaccount_name, account_types):
     new_entries = []
     latest_date = entries[-1].date
     for (account_name,
-         currency, cost_currency), position_list in account_positions.items():
+         currency, cost_currency), holdings_list in account_holdings.items():
 
         # Get the price of this currency/cost pair.
         price_date, price_number = prices.get_price(price_map,
@@ -48,11 +48,11 @@ def unrealized_gains(entries, subaccount_name, account_types):
         total_units = Decimal()
         market_value = Decimal()
         book_value = Decimal()
-        for position in position_list:
-            number = position['number']
+        for holding in holdings_list:
+            number = holding['number']
             total_units  += number
             market_value += number * price_number
-            book_value   += number * position['cost_number']
+            book_value   += number * holding['cost_number']
 
         pnl = market_value - book_value
 

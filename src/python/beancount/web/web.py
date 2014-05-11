@@ -23,7 +23,7 @@ from beancount.core import account_types
 from beancount.ops import basicops
 from beancount.ops import summarize
 from beancount.ops import prices
-from beancount.ops import positions
+from beancount.ops import holdings
 from beancount.utils import misc_utils
 from beancount.utils.text_utils import replace_numbers
 from beancount.web.bottle_utils import AttrMapper, internal_redirect
@@ -717,7 +717,7 @@ def positions_detail():
 
     # FIXME: factor out the price map computation
     price_map = prices.build_price_map(request.view.entries)
-    dataframe = positions.get_positions_as_dataframe(request.view.entries, price_map)
+    dataframe = holdings.get_positions_as_dataframe(request.view.entries, price_map)
     if dataframe is None:
         return "You must install Pandas in order to render this page."
 
@@ -741,7 +741,7 @@ def positions_byinstrument():
 
     # FIXME: factor out the price map computation
     price_map = prices.build_price_map(request.view.entries)
-    dataframe = positions.get_positions_as_dataframe(request.view.entries, price_map)
+    dataframe = holdings.get_positions_as_dataframe(request.view.entries, price_map)
     if dataframe is None:
         return "You must install Pandas in order to render this page."
 

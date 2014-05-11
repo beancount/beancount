@@ -1,6 +1,6 @@
 """Compute final holdings for a list of entries.
 """
-from collections import defaultdict
+import collections
 
 from beancount.core import realization
 from beancount.ops import prices
@@ -52,7 +52,7 @@ def get_final_holdings(entries):
                            'cost_number': None,
                            'cost_currency': None,
                            'book_value': None}
-            positions.append(holding)
+            holdings.append(holding)
 
     return holdings
 
@@ -119,7 +119,7 @@ def get_priced_positions(entries, price_map):
 
     # Group by account and currencies, and filter those which have an associated
     # cost.
-    grouped_positions = defaultdict(list)
+    grouped_positions = collections.defaultdict(list)
     for position in positions_:
         if position['cost_number'] is not None:
             key = (position['account'],

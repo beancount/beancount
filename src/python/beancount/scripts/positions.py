@@ -4,7 +4,7 @@ This is to share my portfolio with others, or to compute its daily changes.
 """
 from beancount import load
 from beancount.ops import prices
-from beancount.ops import positions
+from beancount.ops import holdings
 
 
 def main():
@@ -27,13 +27,13 @@ def main():
 
     # Get the aggregate sum of positions.
     # price_map = prices.build_price_map(entries)
-    position_list = positions.get_final_holdings(entries)
+    position_list = holdings.get_final_holdings(entries)
     for pos in position_list:
         print(pos)
     
 
     # price_map = prices.build_price_map(entries)
-    # dataframe = positions.get_positions_as_dataframe(entries, price_map)
+    # dataframe = holdings.get_positions_as_dataframe(entries, price_map)
 
     # # Aggregate then..
     # byinst = dataframe.groupby(['account', 'currency', 'cost_currency'])

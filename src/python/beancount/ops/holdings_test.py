@@ -3,7 +3,7 @@ import pprint
 import datetime
 
 from beancount.core.amount import to_decimal, Decimal
-from beancount.ops import positions
+from beancount.ops import holdings
 from beancount.parser import parsedoc
 
 
@@ -42,11 +42,11 @@ class TestPositionEntries(unittest.TestCase):
           Assets:Account3             50 GOOG {540.00 USD} @ 560.00 USD
           Assets:Cash
         """
-        positions_maps = positions.get_final_holdings(entries)
+        holdings_ = holdings.get_final_holdings(entries)
 
         fields = 'account currency cost_currency number cost_number'.split()
-        positions_list = sorted(list(position_map[field] for field in fields)
-                                for position_map in positions_maps)
+        holdings_list = sorted(list(holding[field] for field in fields)
+                                for holding in holdings_)
         expected_values = [
             ['Assets:Account1', 'GOOG', 'USD', Decimal('10'), Decimal('523.46')],
             ['Assets:Account1', 'GOOG', 'USD', Decimal('11'), Decimal('518.73')],
@@ -54,7 +54,7 @@ class TestPositionEntries(unittest.TestCase):
             ['Assets:Cash', 'USD', None, Decimal('12059.37'), None],
             ['Equity:Unknown', 'USD', None, Decimal('-50000'), None]
         ]
-        self.assertEqual(expected_values, positions_list)
+        self.assertEqual(expected_values, holdings_list)
 
 
     def test_add_prices_to_holdings(self):
