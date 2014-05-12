@@ -48,7 +48,7 @@ option "operating_currency"           "A currency to be singled out in reports"
 2013-05-15 pad Assets:US:AcmeBank:Checking  Equity:Opening-Balances
 
 ;; Insert a note attached to an account that renders in the journal.
-2013-05-15 pad Assets:US:AcmeBank:Checking  "Called the bank about fee, they said no."
+2013-05-15 note Assets:US:AcmeBank:Checking  "Called the bank about fee, they said no."
 
 ;; Declare a document file to be rendered in the journal.
 ;; Note: it's much easier to just place your files in a hierarchy and
