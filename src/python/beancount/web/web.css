@@ -271,12 +271,22 @@ div.spacer {
 
 /* Position tables. */
 
+table.positions {
+    border-collapse: collapse;
+}
+
+table.positions th, table.positions td {
+    border: thin solid black;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+}
+
 table.positions tbody td {
     font-family: 'Droid Sans Mono', sans-serif;
     text-align: right;
 }
 
-table.positions.detail-table td:nth-child(2) {
+table.positions.detail-table td:nth-child(1) {
     font-family: 'Roboto Condensed', sans-serif;
     text-align: left;
 }

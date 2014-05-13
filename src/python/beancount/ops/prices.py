@@ -215,7 +215,8 @@ def get_price(price_map, base_quote, date=None):
       date: A datetime.date instance, the date at which we want the conversion
         rate.
     Returns:
-      A pair of (datetime.date, Decimal) instance.
+      A pair of (datetime.date, Decimal) instance. If no price information could
+      be found, return (None, None).
     """
     if date is None:
         return get_latest_price(price_map, base_quote)

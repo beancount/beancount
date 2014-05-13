@@ -32,9 +32,8 @@ def main():
                               *options.get_current_accounts(options_map))
 
     # Get the aggregate sum of positions.
-    holdings_list = holdings.get_final_holdings(entries)
     price_map = prices.build_price_map(entries)
-    holdings_list = holdings.add_prices_to_holdings(holdings_list, price_map)
+    holdings_list = holdings.get_final_holdings(entries, price_map)
 
     for h in holdings_list:
         print(h)

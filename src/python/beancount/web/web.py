@@ -3,6 +3,7 @@ Web server for Beancount ledgers.
 This uses the Bottle single-file micro web framework (with no plugins).
 """
 import argparse
+import collections
 import datetime
 from os import path
 import io
@@ -34,6 +35,7 @@ from beancount.web import views
 from beancount.web import journal
 from beancount.web import acctree
 from beancount.web import gviz
+from beancount.web import web_utils
 
 
 #--------------------------------------------------------------------------------
@@ -716,19 +718,19 @@ def positions_overview():
 def positions_detail():
     "Render a detailed table of all positions."
 
-    # FIXME: factor out the price map computation
     price_map = prices.build_price_map(request.view.entries)
-    dataframe = holdings.get_holdings_as_dataframe(request.view.entries, price_map)
-    if dataframe is None:
-        return "You must install Pandas in order to render this page."
+    holdings_list = holdings.get_final_holdings(request.view.closing_entries, price_map)
 
     oss = io.StringIO()
     oss.write("<center>\n")
-    if not dataframe.empty:
-      oss.write(dataframe.to_html(classes=['positions', 'detail-table'],
-                                  index=False))
+    if holdings_list:
+        web_utils.render_tuples_to_html_table(
+            holdings_list,
+            web_utils.clean_attributes(holdings.Holding._fields),
+            classes=['positions', 'detail-table'],
+            file=oss)
     else:
-      oss.write("(No positions.)")
+        oss.write("(No positions.)")
     oss.write("</center>\n")
 
     return render_view(
@@ -740,27 +742,52 @@ def positions_detail():
 def positions_byinstrument():
     "Render a table of positions by instrument."
 
-    # FIXME: factor out the price map computation
     price_map = prices.build_price_map(request.view.entries)
-    dataframe = holdings.get_holdings_as_dataframe(request.view.entries, price_map)
-    if dataframe is None:
-        return "You must install Pandas in order to render this page."
+    holdings_list = holdings.get_final_holdings(request.view.closing_entries, price_map)
 
     oss = io.StringIO()
-
     oss.write('<h2>With Account</h2>\n')
 
-    byinst = dataframe.groupby(['account', 'currency', 'cost_currency'])
-    byinst_agg = byinst['number', 'book_value', 'market_value', 'pnl'].sum()
-    byinst_agg['avg_cost'] = byinst['cost_number'].mean()
-    byinst_agg['price_number'] = byinst['price_number'].mean()
-    byinst_agg = byinst_agg.sort('market_value', ascending=False)
+
+
+
+    ## FIXME: Perform the aggregations manually here.
+    logging.error("Perform the aggregations manually here.")
+    aggregated_holdings = holdings_list
+    # byinst = dataframe.groupby(['account', 'currency', 'cost_currency'])
+    # byinst_agg = byinst['number', 'book_value', 'market_value', 'pnl'].sum()
+    # byinst_agg['avg_cost'] = byinst['cost_number'].mean()
+    # byinst_agg['price_number'] = byinst['price_number'].mean()  # <- this was incorrect
+    # byinst_agg = byinst_agg.sort('market_value', ascending=False)
+
+    # FIXME: Move this to a function in holdings
+    groupby_inst = collections.defaultdict(list)
+    for holding in holdings_list:
+        key = (holding.account, holding.currency, holding.cost_currency)
+        groupby_inst[key].append(holding)
+
+    aggregated_holdings = []
+    for key_holdings in holdings_list.values():
+        pass ## first_holding =
+    # FIXME: continue here
+
+
+
     oss.write("<center>\n")
-    if not byinst_agg.empty:
-      oss.write(byinst_agg.to_html(classes=['positions', 'byinst-account-table'],
-                                   formatters=FORMATTERS))
+    if holdings_list:
+        web_utils.render_tuples_to_html_table(
+            aggregated_holdings,
+            web_utils.clean_attributes(holdings.Holding._fields),
+            classes=['positions', 'byinst-account-table'],
+            file=oss)
+
+        # FIXME: Implement formatters=FORMATTERS
+
+
+
+
     else:
-      oss.write("(No positions.)")
+        oss.write("(No positions.)")
     oss.write("</center>\n")
 
     oss.write('<h2>Aggregated by Instrument Only</h2>\n')

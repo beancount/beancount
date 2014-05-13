@@ -6,13 +6,6 @@ import collections
 from beancount.core import realization
 from beancount.ops import prices
 
-try:
-    import pandas
-    import numpy
-except ImportError:
-    pandas = None
-    numpy = None
-
 
 # A holding, a flattened position with an account, and optionally, price and
 # book/market values.
@@ -33,15 +26,21 @@ Holding = collections.namedtuple('Holding',
                                  'book_value market_value price_number price_date')
 
 
-def get_final_holdings(entries):
+def get_final_holdings(entries, price_map=None, date=None):
     """Get a dictionary of the latest holdings by account.
 
-    This basically just flattens the balance sheet's final positions.
+    This basically just flattens the balance sheet's final positions. If a
+    'price_map' is provided, insert price information in the flattened holdings
+    at the latest date, or at the given date, if one is provided.
 
     Args:
       entries: A list of directives.
+      price_map: A dict of prices, as built by prices.build_price_map().
+      date: A datetime.date instance, the date at which to price the
+        holdings. If left unspecified, we use the latest price information.
     Returns:
       A list of dicts, with the following fields:
+
     """
     # Realize the accounts into a tree (because we want the positions by-account).
     real_accounts = realization.realize(entries)
@@ -51,133 +50,31 @@ def get_final_holdings(entries):
     for real_account in sorted(list(real_accounts), key=lambda x: x.fullname):
         for position in real_account.balance.get_positions():
             if position.lot.cost:
+                # Get price information if we have a price_map.
+                market_value = None
+                if price_map is not None:
+                    base_quote = (position.lot.currency, position.lot.cost.currency)
+                    price_date, price_number = prices.get_price(price_map,
+                                                                base_quote, date)
+                    if price_number is not None:
+                        market_value = position.number * price_number
+                else:
+                    price_date, price_number = None, None
+
                 holding = Holding(real_account.fullname,
                                   position.number,
                                   position.lot.currency,
                                   position.lot.cost.number,
                                   position.lot.cost.currency,
                                   position.number * position.lot.cost.number,
-                                  None, None, None)
-                cost = position.get_cost()
-                assert cost.number == holding.number * holding.cost_number
+                                  market_value,
+                                  price_number,
+                                  price_date)
             else:
                 holding = Holding(real_account.fullname,
                                   position.number,
                                   position.lot.currency,
-                                  None,
-                                  None,
-                                  None,
-                                  None, None, None)
+                                  None, None, None, None, None, None)
             holdings.append(holding)
 
     return holdings
-
-
-def add_prices_to_holdings(holdings, price_map, date=None):
-    """Given a list of holding dicts, enrich the dicts with prices.
-
-    This is mainly a convenience as many functions will require this enrichment.
-
-    Args:
-      holdings: A list of dicts, as returned by get_final_holdings().
-      price_map: A dict of prices, as built by prices.build_price_map().
-      date: A datetime.date instance, the date at which to price the
-        holdings.
-    Returns:
-      A list of enriched holding dicts, with added attributes:
-    """
-    new_holdings = []
-    for holding in holdings:
-        holding = copy.copy(holding)
-
-        # Get the price of this currency/cost pair.
-        base_quote = (holding.currency, holding.cost_currency)
-        price_date, price_number = prices.get_price(price_map, base_quote, date)
-
-        holding = holding._replace(price_date=price_date,
-                                   price_number=price_number,
-                                   market_value=holding.number * price_number)
-        new_holdings.append(holding)
-
-    return new_holdings
-
-
-
-
-
-
-
-
-
-
-def get_priced_positions(entries, price_map):
-    """Get a list of positions, grouped by (account, currency, cost_currency),
-    with the latest prices fetched and dated.
-
-    Args:
-      entries: A list of directives.
-      price_map: A dict of prices, as built by prices.build_price_map().
-    Returns:
-      A dict of (account, currency, cost_currency) -> Position dict.
-    """
-
-    # Get the full list of positions.
-    holdings = get_final_holdings(entries)
-
-    # Group by account and currencies, and filter those which have an associated
-    # cost.
-    grouped_positions = collections.defaultdict(list)
-    for position in holdings:
-        if position.cost_number is not None:
-            key = (position.account,
-                   position.currency,
-                   position.cost_currency)
-        else:
-            key = (position.account,
-                   position.currency,
-                   None)
-        grouped_positions[key].append(position)
-
-    # For each group, add the price to the dataframe.
-    for (account, currency, cost_currency), position_list in grouped_positions.items():
-        if not cost_currency:
-            continue
-
-        # Get the latest price.
-        price_date, price_number = prices.get_latest_price(price_map, (currency, cost_currency))
-
-        for position in position_list:
-            position.price_number = price_number
-            position.price_date = price_date
-
-    # Flatten the grouped positions.
-    flat_positions = [position
-                      for position_list in grouped_positions.values()
-                      for position in position_list]
-
-    return grouped_positions, flat_positions
-
-
-def get_holdings_as_dataframe(entries, price_map):
-    """Return a dataframe with a detailed list of positions."""
-
-    if pandas is None:
-        return None
-
-    _, flat_positions = get_priced_positions(entries, price_map)
-
-
-    # TODO(blais): Convert this to avoid the Pandas dependency.
-
-    dataframe = pandas.DataFrame.from_records(
-        flat_positions, columns=['account', 'number', 'currency', 'cost_number', 'price_number', 'cost_currency', 'price_date'])
-
-    dataframe['number'] = dataframe['number'].astype(numpy.float)
-    dataframe['cost_number'] = dataframe['cost_number'].astype(numpy.float)
-    dataframe['price_number'] = dataframe['price_number'].astype(numpy.float)
-
-    dataframe['book_value'] = dataframe['number'] * dataframe['cost_number']
-    dataframe['market_value'] = dataframe['number'] * dataframe['price_number']
-    dataframe['pnl'] = dataframe['market_value'] - dataframe['book_value']
-
-    return dataframe
