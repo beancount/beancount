@@ -71,6 +71,9 @@ beancount: TODO
 
 * Current
 
+  - Idea: Generalize lot-date to just a "lot" string. Doesn't have to be a date
+    at all! It would also make the concept and usage intentions clearer I think.
+
   - Implement a little plug-ins system that allows a user to insert a TAB in
     bean-web.
 
