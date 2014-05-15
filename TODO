@@ -2,9 +2,6 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-  - At least one transaction is required! (From live demo to ab.) An empty file
-    renders exceptions from bean-web. Add a test!
-
   - prices.py and positions.py:
 
      Finish testing unrealized.py, should be easy
@@ -84,8 +81,23 @@ beancount: TODO
 
   - Can you move realization out of core? It really belongs more in ops I think.
 
+  - bake: Spit out a nice error if wget is not installed/available.
+
 
 * Current
+
+  - bake: Make bake support curl if wget is not available. It should work with either,
+    to relax dependencies.
+
+  - Price entries should have an extra attribute to disambiguate between
+    implicitly created prices, linking to the original transaction that created
+    them, and explicitly created ones.
+
+  - A table of price entries should be rendered under the price graph in the
+    web interface.
+
+  - Web interface: Instead of rendering inventories with the full contents in
+    the journal, render the cost, and place the full inventory in a tooltip!
 
   - Here's how to improve booking against lots!
 

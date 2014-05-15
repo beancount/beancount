@@ -148,6 +148,8 @@ def get_min_max_dates(entries):
       A pair of datetime.date dates, the minimum and maximum dates seen in the
       directives.
     """
+    if not entries:
+        return (None, None)
     return (entries[0].date, entries[-1].date)
 
 

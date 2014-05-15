@@ -245,6 +245,8 @@ def realizedoc(fun):
 # FIXME: please DO test the realization of a transaction that has multiple legs on the same account!
 
 
+# Add a test for realizing with no entries.
+
 
 
 __incomplete__ = True

@@ -6,8 +6,8 @@
 ..
     1  Description
     2  Project Status
-    3  Demo
-    4  Runtime-Dependencies
+    3  Dependencies
+    4  Installation
     5  Download
     6  Documentation
     7  Copyright and License
@@ -30,7 +30,7 @@ variety of output reports from a web interface. This project
 - Tools to help you import and file CSV, OFX and other files downloaded from
   various financial institutions.
 
-- This is 2.0 version, a complete clean-room rewrite of Beancount 1.0.
+- This is a 2.0 version, a complete clean-room rewrite of Beancount 1.0.
 
 .. _Ledger: http://www.newartisans.com/blog/projects/ledger.html
 
@@ -49,15 +49,14 @@ Dependencies
 
 For users:
 
-- Python 3.3 or above. IMPORTANT: Python 3.2 will not work.
-- cdecimal (optional but strongly suggested, for speed)
+- Python 3.3 or above.
+- cdecimal (optional but strongly suggested, for performance)
 - Bottle (a tiny web server, pure Python)
-- BeautifulSoup (v4) - for Import only
-- Pandas (OPTIONAL: only for certain pages that involve calculations)
+- wget (to bake reports to a zip file)
 
 For developers:
 
-- GNU flex and GNU bison (to build the parser)
+- GNU flex and bison (to build the parser)
 
 
 Installation

@@ -1,3 +1,4 @@
+import itertools
 import unittest
 from os import path
 import os
@@ -8,6 +9,7 @@ import urllib.request
 import lxml.html
 
 from beancount.web import web
+from beancount.scripts import docfile
 
 
 # FIXME: Move this to test_utils.py
@@ -78,23 +80,34 @@ def scrape(filename, predicate, port=9468, quiet=True):
     web.thread_server_shutdown(thread)
 
 
+# A new port allocation
+newport = itertools.count(9470).__next__
+
+
 class TestWeb(unittest.TestCase):
 
     def check_page_okay(self, response, url):
         self.assertEqual(200, response.status, url)
 
+    @docfile
+    def test_scrape_empty_file(self, filename):
+        """
+        ;; A file with no entries in it.
+        """
+        scrape(filename, self.check_page_okay, newport())
+
     def test_scrape_basic(self):
         filename = path.join(find_repository_root(),
                              'examples', 'basic', 'basic.beancount')
-        scrape(filename, self.check_page_okay, 9468)
+        scrape(filename, self.check_page_okay, newport())
 
     def test_scrape_starterkit(self):
         filename = path.join(find_repository_root(),
                              'examples', 'starterkit', 'starter.beancount')
-        scrape(filename, self.check_page_okay, 9469)
+        scrape(filename, self.check_page_okay, newport())
 
     def __test_scrape_thisisreal(self):
         filename = path.join(os.environ['HOME'],
                              'r/q/office/accounting/blais.beancount')
         if path.exists(filename):
-            scrape(filename, self.check_page_okay, 9470)
+            scrape(filename, self.check_page_okay, newport())

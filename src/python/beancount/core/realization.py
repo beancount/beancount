@@ -267,6 +267,11 @@ def create_real_accounts_tree(real_dict):
     """
     assert isinstance(real_dict, dict)
     full_dict = real_dict.copy()
+
+    # Create root account (in case the real_dict is empty).
+    root_account = RealAccount('')
+    full_dict[''] = root_account
+
     for real_account in real_dict.values():
         while True:
             parent_name = account_name_parent(real_account.fullname)
@@ -281,8 +286,8 @@ def create_real_accounts_tree(real_dict):
             parent_account.add(real_account)
             real_account = parent_account
 
-    # Return the root node.
-    return full_dict['']
+    # Return the root account node.
+    return root_account
 
 
 def filter_tree(real_account, predicate):
