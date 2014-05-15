@@ -336,6 +336,8 @@ def dump_tree_balances(real_account, foutput=None):
         real_account,
         lambda ra: ra.fullname.split(account.sep)[-1],
         lambda ra: sorted(ra.get_children(), key=lambda x: x.fullname)))
+    if not lines:
+        return
     width = max(len(line[0] + line[2]) for line in lines)
 
     for line_first, line_next, account_name, real_account in lines:

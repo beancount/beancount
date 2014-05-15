@@ -32,6 +32,9 @@ def do_list_accounts(filename):
     entries, errors, options = loader.load(filename, quiet=True)
     open_close = getters.get_account_open_close(entries)
 
+    if not entries:
+        return
+
     # Render to stdout.
     maxlen = max(len(account) for account in open_close)
     for account, (open, close) in sorted(open_close.items(),
@@ -58,7 +61,7 @@ def first_doc_sentence(object_):
 
     Args:
       object_: An object, that has a docstring attached to it.
-    Returns: 
+    Returns:
       A string with just the first sentence on a single line.
     """
     lines = []

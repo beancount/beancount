@@ -44,6 +44,12 @@ class TestScriptDebug(TestCase):
         self.assertLines(expected_output, stdout.getvalue())
 
     @docfile
+    def test_dump_lexer_empty(self, filename):
+        ""
+        with capture() as stdout:
+            run_with_args(debug.main, ['--dump-lexer', filename])
+
+    @docfile
     def test_list_accounts(self, filename):
         """
         2013-01-01 open Expenses:Restaurant
@@ -60,6 +66,12 @@ class TestScriptDebug(TestCase):
             Assets:Cash          2013-01-01
             Expenses:Restaurant  2013-01-01
         """, stdout.getvalue())
+
+    @docfile
+    def test_list_accounts_empty(self, filename):
+        ""
+        with capture() as stdout:
+            run_with_args(debug.main, ['--list-accounts', filename])
 
     @docfile
     def test_print_trial(self, filename):
@@ -80,3 +92,9 @@ class TestScriptDebug(TestCase):
             `-- Expenses
                 `-- Restaurant          50.02 USD
             """, output)
+
+    @docfile
+    def test_print_trial_empty(self, filename):
+        ""
+        with capture() as stdout:
+            run_with_args(debug.main, ['--print-trial', filename])
