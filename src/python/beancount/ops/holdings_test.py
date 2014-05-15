@@ -1,3 +1,4 @@
+import itertools
 import unittest
 import pprint
 import datetime
@@ -91,7 +92,45 @@ class TestPositionEntries(unittest.TestCase):
         ]
         self.assertEqual(expected_values, holdings_list)
 
+    def test_aggregate_by_base_quote(self):
+        # Note: Two different prices on GOOG on purpose.
+        test_holdings = list(itertools.starmap(holdings.Holding, [
+            ('Assets:Cash', D('101.11'), 'USD', None, None,
+             None, None, None, None),
 
-# Maybe rename bean-positions to bean-holdings
-# Add function from web.py, see in positions_byinstrument()
+            ('Assets:Account1', D('10'), 'GOOG', D('518.73'), 'USD',
+             D('5187.30'), D('5780.20'), D('578.02'), datetime.date(2014, 2, 1)),
+            ('Assets:Account2', D('20'), 'GOOG', D('519.24'), 'USD',
+             D('10384.80'), D('11622.00'), D('581.10'), datetime.date(2014, 2, 15)),
+
+            ('Assets:Account1', D('10'), 'AAPL', D('593.27'), 'USD',
+             D('5932.70'), D('6000.10'), D('600.01'), datetime.date(2014, 3, 1)),
+        ]))
+        expected_holdings = list(itertools.starmap(holdings.Holding, [
+            (None, D('10'), 'AAPL', D('593.27'), 'USD',
+             D('5932.70'), D('6000.10'), D('600.01'), None),
+
+            (None, D('30'), 'GOOG', D('519.07'), 'USD',
+             D('15572.10'), D('17402.20'), D('580.0733333333333333333333333'), None),
+
+            (None, D('101.11'), 'USD', None, None,
+             None, None, None, None),
+        ]))
+        self.assertEqual(expected_holdings, holdings.aggregate_by_base_quote(test_holdings))
+
+    def test_aggregate_holdings_list(self):
+        test_holdings = list(itertools.starmap(holdings.Holding, [
+            ('Assets:Account1', D('10'), 'GOOG', D('518.73'), 'USD',
+             D('5187.30'), D('5780.20'), D('578.02'), datetime.date(2014, 2, 1)),
+            ('Assets:Account2', D('20'), 'GOOG', D('519.24'), 'USD',
+             D('10384.80'), D('11622.00'), D('581.10'), datetime.date(2014, 2, 15)),
+        ]))
+
+        expected_holding = holdings.Holding(
+            None, D('30'), 'GOOG', D('519.07'), 'USD',
+            D('15572.10'), D('17402.20'), D('580.0733333333333333333333333'), None)
+        self.assertEqual(expected_holding, holdings.aggregate_holdings_list(test_holdings))
+
+
+# Maybe rename bean-positions to bean-holdings, same with web pages, rename to holdings
 __incomplete__ = True

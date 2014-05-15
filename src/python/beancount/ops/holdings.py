@@ -3,6 +3,7 @@
 import copy
 import collections
 
+from beancount.core.amount import ZERO
 from beancount.core import realization
 from beancount.ops import prices
 
@@ -78,3 +79,63 @@ def get_final_holdings(entries, price_map=None, date=None):
             holdings.append(holding)
 
     return holdings
+
+
+def aggregate_by_base_quote(holdings):
+    """Group and aggregate a list of holdings by (base, quote) pair.
+
+    This groups the holdings and applies aggregation to each set of matching
+    rows. The 'account' fields should all be None.
+
+    Args:
+      holdings: A list of Holding instances.
+    Returns:
+      An aggregated list of Holding instances.
+    """
+    grouped = collections.defaultdict(list)
+    for holding in holdings:
+        key = (holding.currency, holding.cost_currency)
+        grouped[key].append(holding)
+    return sorted(aggregate_holdings_list(key_holdings)
+                  for key_holdings in grouped.values())
+
+
+def aggregate_holdings_list(holdings):
+    """Aggregate a list of holdings.
+
+    Args:
+      holdings: A list of Holding instances.
+    Returns:
+      A single Holding instance, or None, if there are no holdings in the input
+      list.
+    """
+    if not holdings:
+        return None
+
+    # Note: Holding is a bit overspecified with book and market values. We
+    # recompute them from cost and price numbers here anyhow.
+    units, total_book_value, total_market_value = ZERO, ZERO, ZERO
+    for holding in holdings:
+        units += holding.number
+
+        if holding.cost_number:
+            total_book_value += holding.number * holding.cost_number
+
+        if holding.price_number:
+            total_market_value += holding.number * holding.price_number
+
+    if not total_book_value:
+        total_book_value = None
+    average_cost = (total_book_value / units
+                    if total_book_value
+                    else None)
+
+    if not total_market_value:
+        total_market_value = None
+    average_price = (total_market_value / units
+                     if total_market_value
+                     else None)
+
+    first = holdings[0]
+    return Holding(None, units, first.currency, average_cost, first.cost_currency,
+                   total_book_value, total_market_value, average_price, None)

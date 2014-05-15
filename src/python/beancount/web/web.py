@@ -378,6 +378,11 @@ def favicon():
     return bottle.static_file('favicon.ico', path.dirname(__file__))
 
 
+@app.get('/third_party/<filename:re:.*>')
+def third_party(filename=None):
+    return bottle.static_file(request.path[1:], path.dirname(__file__))
+
+
 doc_name = 'doc'
 @app.route('/doc/<filename:re:.*>', name=doc_name)
 def doc(filename=None):
@@ -719,22 +724,33 @@ def positions_detail():
     "Render a detailed table of all positions."
 
     price_map = prices.build_price_map(request.view.entries)
-    holdings_list = holdings.get_final_holdings(request.view.closing_entries, price_map)
+    holdings_ = holdings.get_final_holdings(request.view.closing_entries, price_map)
 
     oss = io.StringIO()
-    oss.write("<center>\n")
-    if holdings_list:
+    oss.write('<center>\n')
+    if holdings_:
         web_utils.render_tuples_to_html_table(
-            holdings_list,
-            web_utils.clean_attributes(holdings.Holding._fields),
-            classes=['positions', 'detail-table'],
+            holdings_,
+            field_spec=[
+                'account',
+                ('number', None, '{:,.2f}'.format),
+                'currency',
+                'cost_currency',
+                ('cost_number', 'Cost Price', '{:,.2f}'.format),
+                ('price_number', 'Market Price', '{:,.2f}'.format),
+                ('book_value', None, '{:,.2f}'.format),
+                ('market_value', None, '{:,.2f}'.format),
+                'price_date',
+            ],
+            classes=['positions', 'detail-table', 'sortable'],
             file=oss)
     else:
         oss.write("(No positions.)")
-    oss.write("</center>\n")
+    oss.write('</center>\n')
 
     return render_view(
         pagetitle = "Positions - Detailed List",
+        scripts = '<script src="/third_party/sorttable.js"></script>',
         contents = oss.getvalue())
 
 
@@ -743,70 +759,32 @@ def positions_byinstrument():
     "Render a table of positions by instrument."
 
     price_map = prices.build_price_map(request.view.entries)
-    holdings_list = holdings.get_final_holdings(request.view.closing_entries, price_map)
+    holdings_ = holdings.get_final_holdings(request.view.closing_entries, price_map)
+    aggregated_holdings = holdings.aggregate_by_base_quote(holdings_)
 
     oss = io.StringIO()
-    oss.write('<h2>With Account</h2>\n')
-
-
-
-
-    ## FIXME: Perform the aggregations manually here.
-    logging.error("Perform the aggregations manually here.")
-    aggregated_holdings = holdings_list
-    # byinst = dataframe.groupby(['account', 'currency', 'cost_currency'])
-    # byinst_agg = byinst['number', 'book_value', 'market_value', 'pnl'].sum()
-    # byinst_agg['avg_cost'] = byinst['cost_number'].mean()
-    # byinst_agg['price_number'] = byinst['price_number'].mean()  # <- this was incorrect
-    # byinst_agg = byinst_agg.sort('market_value', ascending=False)
-
-    # FIXME: Move this to a function in holdings
-    groupby_inst = collections.defaultdict(list)
-    for holding in holdings_list:
-        key = (holding.account, holding.currency, holding.cost_currency)
-        groupby_inst[key].append(holding)
-
-    aggregated_holdings = []
-    for key_holdings in holdings_list.values():
-        pass ## first_holding =
-    # FIXME: continue here
-
-
-
-    oss.write("<center>\n")
-    if holdings_list:
+    oss.write('<center>\n')
+    if holdings_:
         web_utils.render_tuples_to_html_table(
             aggregated_holdings,
-            web_utils.clean_attributes(holdings.Holding._fields),
-            classes=['positions', 'byinst-account-table'],
+            field_spec=[
+                ('number', None, '{:,.2f}'.format),
+                'currency',
+                'cost_currency',
+                ('cost_number', 'Average Cost', '{:,.2f}'.format),
+                ('price_number', 'Average Price', '{:,.2f}'.format),
+                ('book_value', None, '{:,.2f}'.format),
+                ('market_value', None, '{:,.2f}'.format)
+            ],
+            classes=['positions', 'byinst-account-table', 'sortable'],
             file=oss)
-
-        # FIXME: Implement formatters=FORMATTERS
-
-
-
-
     else:
         oss.write("(No positions.)")
-    oss.write("</center>\n")
-
-    oss.write('<h2>Aggregated by Instrument Only</h2>\n')
-
-    byinst = dataframe.groupby(['currency', 'cost_currency'])
-    byinst_agg = byinst['number', 'book_value', 'market_value', 'pnl'].sum()
-    byinst_agg['avg_cost'] = byinst['cost_number'].mean()
-    byinst_agg['price_number'] = byinst['price_number'].mean()
-    byinst_agg = byinst_agg.sort('market_value', ascending=False)
-    oss.write("<center>\n")
-    if not byinst_agg.empty:
-      oss.write(byinst_agg.to_html(classes=['positions', 'byinst-table'],
-                                   formatters=FORMATTERS))
-    else:
-      oss.write("(No positions.)")
-    oss.write("</center>\n")
+    oss.write('</center>\n')
 
     return render_view(
         pagetitle = "Positions - By Instrument",
+        scripts = '<script src="/third_party/sorttable.js"></script>',
         contents = oss.getvalue())
 
 
