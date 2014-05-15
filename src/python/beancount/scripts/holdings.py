@@ -38,18 +38,9 @@ def main():
     for h in holdings_list:
         print(h)
 
-    # # Aggregate then..
-    # byinst = dataframe.groupby(['account', 'currency', 'cost_currency'])
-    # byinst_agg = byinst['number', 'market_value'].sum()
-    # byinst_agg['avg_cost'] = byinst['cost_number'].mean()
-    # byinst_agg['price_number'] = byinst['price_number'].mean()
-    # byinst_agg = byinst_agg.sort('market_value', ascending=False)
-
-    # # Compute the percentage.
-    # total_value = byinst_agg['market_value'].sum()
-    # byinst_agg['percent'] = byinst_agg['market_value'] / total_value
-
-    # percent_only = byinst_agg[['percent']].sum(level=[1,2]).sort('percent', ascending=False)
+    # Call aggregation function, same as web.py
+    # Split web_utils.render_tuples_to_html_table() into cell data generation and HTML table text.
+    # Reuse the data to render ASCII table, or CSV
 
     # if opts.format == 'txt':
     #     output = percent_only.to_string(formatters={'percent': '{:.1%}'.format})

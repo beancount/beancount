@@ -4,15 +4,16 @@ beancount: TODO
 
   - prices.py and positions.py:
 
+     Finish bean-holdings rendering to text table
+
      Finish testing unrealized.py, should be easy
 
      Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
      ledgerhub-fetch-prices is borked, outputs Nones
      The prices page has inverses now... fix this.
 
-     Complete the equity value page with prices.py, render the rates used to that page
-
-     Merge Holdings tab into Shareholder's Equity, less tabs, similar report
+     Complete the equity value page with prices.py, render the rates used to that page.
+     Merge Holdings tab into Shareholder's Equity, less tabs, similar report.
 
      Deal with amounts without cost in reporting of equity, I'm getting expense
      accounts there, we want to elide those.
@@ -36,16 +37,19 @@ beancount: TODO
   - Clean up the interface of loader.load(), it's ugly.
   - Implement all the missing global pages.
   - Fix all FIXMEs everywhere.
+  - Add __author__ to all files?
 
   - Clean up code: remove all significant codes from __init__.py files, in
     particular beancount.scripts.__init__, move to an util with tests.
 
-  - Something's wrong with this page: currencies are wrong I think - http://localhost:8080/view/year/2014/conversions
+  - Something's wrong with this page: currencies are wrong I think -
+    http://localhost:8080/view/year/2014/conversions
 
-  - Add __author__ to all files?
+  (depends)
   - Write a script that checks the dependencies dynamically and reports on them,
     with versions if possible, for reporting bugs:
-    etc/check-depends.py, do this for 1.0
+    etc/check-depends.py, do this for 1.0, or better: bean-doctor --depends
+  - bake: Spit out a nice error if wget is not installed/available.
 
   - Fix all docstrings re. Account instance
 
@@ -81,10 +85,13 @@ beancount: TODO
 
   - Can you move realization out of core? It really belongs more in ops I think.
 
-  - bake: Spit out a nice error if wget is not installed/available.
-
 
 * Current
+
+  - journal rendering: When multiple transactions occur in the same day, it
+    may make sense not to render the balance amount until the last one. Test it
+    out.
+
 
   - validation: We should check that entries created by plugins at some
     initialization point are pointing to the right parents (or maybe we should
