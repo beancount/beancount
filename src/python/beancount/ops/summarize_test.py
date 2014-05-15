@@ -235,7 +235,7 @@ class TestConversions(unittest.TestCase):
     """
 
     @loaddoc
-    def test_basic_conversions(self, entries, errors, options):
+    def test_basic_conversions(self, entries, errors, options_map):
         """
           2013-02-01 open Income:US:Job           USD
           2013-02-01 open Assets:US:Checking      USD
@@ -259,14 +259,14 @@ class TestConversions(unittest.TestCase):
             Assets:US:Checking        100 USD
 
         """
-        previous_accounts = options.get_previous_accounts(options)
+        previous_accounts = options.get_previous_accounts(options_map)
         entries, _ = summarize.clamp(entries,
                                      datetime.date(2013, 1, 1), datetime.date(2014, 1, 1),
-                                     options,
+                                     options_map,
                                      *previous_accounts)
 
-        current_accounts = options.get_current_accounts(options)
-        entries = summarize.close(entries, options, *current_accounts)
+        current_accounts = options.get_current_accounts(options_map)
+        entries = summarize.close(entries, options_map, *current_accounts)
 
         # entries = conversions(entries, ACCOUNT_CONVERSIONS1, datetime.date(2013, 1, 1))
         # entries = conversions(entries, ACCOUNT_CONVERSIONS2)

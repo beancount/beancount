@@ -86,6 +86,9 @@ beancount: TODO
 
   - Can you move realization out of core? It really belongs more in ops I think.
 
+  - Merge Holdings tab into Shareholder's Equity, less tabs, similar report
+
+
 * Current
 
   - The Trial Balance page could be a good place to put all the accounts on the

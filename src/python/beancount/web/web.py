@@ -432,7 +432,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{V.equity}}">Shareholder's Equity</a></li>
   <li><a href="{{V.trial}}">Trial Balance</a></li>
   <li><a href="{{V.journal}}">Journal</a></li>
-  <li><a href="{{V.positions}}">Positions</a></li>
+  <li><a href="{{V.holdings}}">Holdings</a></li>
   <li><a href="{{V.conversions}}">Conversions</a></li>
   <li><a href="{{V.documents}}">Documents</a></li>
   <li><a href="{{V.stats}}">Statistics</a></li>
@@ -706,22 +706,22 @@ FORMATTERS = {
     }
 
 
-@viewapp.route('/positions', name='positions')
-def positions_overview():
-    "Render an index of the pages detailing positions."
+@viewapp.route('/holdings', name='holdings')
+def holdings_overview():
+    "Render an index of the pages detailing holdings."
     return render_view(
-        pagetitle = "Positions",
+        pagetitle = "Holdings",
         contents = """
           <ul>
-            <li><a href="{V.positions_detail}">Detailed Positions List</a></li>
-            <li><a href="{V.positions_byinstrument}">By Instrument</a></li>
+            <li><a href="{V.holdings_detail}">Detailed Holdings List</a></li>
+            <li><a href="{V.holdings_byinstrument}">By Instrument</a></li>
           </ul>
         """.format(V=V))
 
 
-@viewapp.route('/positions/detail', name='positions_detail')
-def positions_detail():
-    "Render a detailed table of all positions."
+@viewapp.route('/holdings/detail', name='holdings_detail')
+def holdings_detail():
+    "Render a detailed table of all holdings."
 
     price_map = prices.build_price_map(request.view.entries)
     holdings_ = holdings.get_final_holdings(request.view.closing_entries, price_map)
@@ -742,21 +742,21 @@ def positions_detail():
                 ('market_value', None, '{:,.2f}'.format),
                 'price_date',
             ],
-            classes=['positions', 'detail-table', 'sortable'],
+            classes=['holdings', 'detail-table', 'sortable'],
             file=oss)
     else:
-        oss.write("(No positions.)")
+        oss.write("(No holdings.)")
     oss.write('</center>\n')
 
     return render_view(
-        pagetitle = "Positions - Detailed List",
+        pagetitle = "Holdings - Detailed List",
         scripts = '<script src="/third_party/sorttable.js"></script>',
         contents = oss.getvalue())
 
 
-@viewapp.route('/positions/byinstrument', name='positions_byinstrument')
-def positions_byinstrument():
-    "Render a table of positions by instrument."
+@viewapp.route('/holdings/byinstrument', name='holdings_byinstrument')
+def holdings_byinstrument():
+    "Render a table of holdings by instrument."
 
     price_map = prices.build_price_map(request.view.entries)
     holdings_ = holdings.get_final_holdings(request.view.closing_entries, price_map)
@@ -776,14 +776,14 @@ def positions_byinstrument():
                 ('book_value', None, '{:,.2f}'.format),
                 ('market_value', None, '{:,.2f}'.format)
             ],
-            classes=['positions', 'byinst-account-table', 'sortable'],
+            classes=['holdings', 'byinst-account-table', 'sortable'],
             file=oss)
     else:
-        oss.write("(No positions.)")
+        oss.write("(No holdings.)")
     oss.write('</center>\n')
 
     return render_view(
-        pagetitle = "Positions - By Instrument",
+        pagetitle = "Holdings - By Instrument",
         scripts = '<script src="/third_party/sorttable.js"></script>',
         contents = oss.getvalue())
 

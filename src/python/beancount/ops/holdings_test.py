@@ -130,7 +130,3 @@ class TestPositionEntries(unittest.TestCase):
             None, D('30'), 'GOOG', D('519.07'), 'USD',
             D('15572.10'), D('17402.20'), D('580.0733333333333333333333333'), None)
         self.assertEqual(expected_holding, holdings.aggregate_holdings_list(test_holdings))
-
-
-# Maybe rename bean-positions to bean-holdings, same with web pages, rename to holdings
-__incomplete__ = True

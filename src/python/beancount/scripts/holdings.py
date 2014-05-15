@@ -1,4 +1,4 @@
-"""Print out a list of current positions, relative or absolute.
+"""Print out a list of current holdings, relative or absolute.
 
 This is to share my portfolio with others, or to compute its daily changes.
 """
@@ -31,7 +31,7 @@ def main():
     entries = summarize.close(entries, options_map,
                               *options.get_current_accounts(options_map))
 
-    # Get the aggregate sum of positions.
+    # Get the aggregate sum of holdings.
     price_map = prices.build_price_map(entries)
     holdings_list = holdings.get_final_holdings(entries, price_map)
 
