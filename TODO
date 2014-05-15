@@ -2,6 +2,10 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
+  - At least one transaction is required! (From live demo to ab.) An empty file
+    renders exceptions from bean-web. Add a test!
+    
+
   - ledgerhub-fetch-prices is borked, outputs Nones
 
   - prices.py and positions.py:
@@ -71,7 +75,31 @@ beancount: TODO
 
 * Current
 
-  - Idea: Generalize lot-date to just a "lot" string. Doesn't have to be a date
+  - Here's how to improve booking against lots!
+
+      "Dealing with average cost trading or cost basis readjustments (not implemented
+      yet) involves joining together multiple lots and recreating new ones in a way
+      that preserves the total cost in the inventory; with this data structure /
+      model it's quite obvious how to implement them as basic operations on an
+      inventory.
+
+      I really like the simplicity of this and am wondering if we could make it even
+      simpler.
+
+      Automatic booking against an inventory, e.g. adding automatic FIFO or LIFO,
+      would require having the date of each lot always inserted in the key of the
+      inventory items (from the transaction, not from the lot-date field), along with
+      special rules for selecting which lots a posting is allowed to modify,
+      essentially ignoring the lot-date from the inventory if the posting does not
+      specify it. This is partly why I'm considering making the "lot-date" compulsory
+      and adding a "lot identifier" used to disambiguate booking against an inventory
+      with multiple matching lots of the same cost with just differing dates, which
+      would only be required if the posting constrains it to. One can imagine
+      relaxing the matching rules between a posting and inventory further to allow
+      one to just specify "-40 GOOG" above, without a cost, and if unambiguous, to
+      allow it to just select the only lot that is available."
+
+    Idea: Generalize lot-date to just a "lot" string. Doesn't have to be a date
     at all! It would also make the concept and usage intentions clearer I think.
 
   - Implement a little plug-ins system that allows a user to insert a TAB in
@@ -672,7 +700,7 @@ Improve this bit:
 
 * Parser
 ** Errors
-      
+
   - We need to gather errors in a single place and report them like the others;
     right now I'm catching them in sum_to_date() and writing using the logging
     module; but they really should be trickled up with the rest.
