@@ -86,6 +86,12 @@ beancount: TODO
 
 * Current
 
+  - validation: We should check that entries created by plugins at some
+    initialization point are pointing to the right parents (or maybe we should
+    relax the need to set the parent and make that routine set it all at once:
+    time this, it it's very small, do this on initialization and that makes it
+    easier to write plugins for users and you can do away with entry_replace().)
+
   - bake: Make bake support curl if wget is not available. It should work with either,
     to relax dependencies.
 
