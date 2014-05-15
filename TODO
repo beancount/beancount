@@ -89,6 +89,9 @@ beancount: TODO
 
 * Current
 
+  - The Trial Balance page could be a good place to put all the accounts on the
+    left and have two sets of columns: beginning of period -> end of period.
+
   - Implement a little plug-ins system that allows a user to insert a new tab in
     bean-web, with custom display.
 
