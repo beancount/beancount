@@ -7,10 +7,6 @@ beancount: TODO
 
   - prices.py and positions.py:
 
-     prices_test.py --> complete it
-
-     positions_test.py --> finish and holdings_test.py, remove Pandas
-     Remove dependency on Pandas and Numpy, we can surely do without
      Finish testing unrealized.py, should be easy
 
      Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
@@ -19,9 +15,13 @@ beancount: TODO
 
      Complete the equity value page with prices.py, render the rates used to that page
 
+     Merge Holdings tab into Shareholder's Equity, less tabs, similar report
+
+     Deal with amounts without cost in reporting of equity, I'm getting expense
+     accounts there, we want to elide those.
+
   - realization_test.py --> complete this now!
 
-  - New bug re. positions: look at detailed positions page, I'm getting expense accounts there, not normal.
 
   - Build a more complete and representative of reality example file, bake, and
     share on ledger-cli
@@ -38,11 +38,10 @@ beancount: TODO
   - Add all docstrings with args Google-style.
   - Clean up the interface of loader.load(), it's ugly.
   - Implement all the missing global pages.
+  - Fix all FIXMEs everywhere.
 
   - Clean up code: remove all significant codes from __init__.py files, in
     particular beancount.scripts.__init__, move to an util with tests.
-
-  - Fix all FIXMEs everywhere.
 
   - Something's wrong with this page: currencies are wrong I think - http://localhost:8080/view/year/2014/conversions
 
@@ -84,8 +83,6 @@ beancount: TODO
   - Convert all assertEquals() to assertEqual().
 
   - Can you move realization out of core? It really belongs more in ops I think.
-
-  - Merge Holdings tab into Shareholder's Equity, less tabs, similar report
 
 
 * Current
