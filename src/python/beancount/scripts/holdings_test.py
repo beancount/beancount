@@ -1,5 +1,5 @@
 from beancount.scripts import TestCase, docfile, capture, run_with_args
-from beancount.scripts import positions
+from beancount.scripts import holdings
 
 
 class TestScriptPositions(TestCase):
@@ -13,7 +13,7 @@ class TestScriptPositions(TestCase):
         2014-01-01 open Assets:Vanguard
         2014-01-01 open Equity:Unknown
 
-        2014-02-01 * "Enter some hypothetical positions"
+        2014-02-01 * "Enter some hypothetical holdings"
           Assets:Bank                   29765.92 USD
           Assets:Ameritrade             1100 GOOG {567.01 USD}
           Assets:ETrade                  760 AAPL {110.22 USD}
@@ -21,6 +21,10 @@ class TestScriptPositions(TestCase):
           Equity:Unknown
         """
         with capture() as stdout:
-            run_with_args(positions.main, [filename])
+            run_with_args(holdings.main, [filename])
         print(stdout.getvalue())
         #r = self.assertLines("", stdout.getvalue())
+
+
+# Just check the string.
+__incomplete__ = True

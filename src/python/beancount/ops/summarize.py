@@ -17,6 +17,7 @@ from beancount.core import flags
 from beancount.core.account_types import is_income_statement_account
 
 
+# FIXME: Consider passing in account_types instaed of options here.
 def clamp(entries, begin_date, end_date,
           options,
           account_previous_earnings,
@@ -57,6 +58,7 @@ def clamp(entries, begin_date, end_date,
     return entries, index
 
 
+# FIXME: Consider passing in account_types instaed of options here, same.
 def close(entries,
           options,
           account_current_earnings,

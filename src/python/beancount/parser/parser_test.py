@@ -30,22 +30,6 @@ def check_list(test, objlist, explist):
             test.assertTrue(isinstance(type(obj), type(exp)))
 
 
-class TestParserMisc(unittest.TestCase):
-    """Test various functions."""
-
-    def test_get_previous_accounts(self):
-        options_ = options.DEFAULT_OPTIONS.copy()
-        result = parser.get_previous_accounts(options_)
-        self.assertEquals(3, len(result))
-        self.assertTrue(all(isinstance(x, str) for x in result))
-
-    def test_get_current_accounts(self):
-        options_ = options.DEFAULT_OPTIONS.copy()
-        result = parser.get_current_accounts(options_)
-        self.assertEquals(2, len(result))
-        self.assertTrue(all(isinstance(x, str) for x in result))
-
-
 class TestParserEntryTypes(unittest.TestCase):
     """Basic smoke test one entry of each kind."""
 

@@ -269,22 +269,28 @@ div.spacer {
 
 
 
-/* Position tables. */
+/* Holdings tables. */
 
-table.positions tbody td {
+table.holdings {
+    border-collapse: collapse;
+}
+
+table.holdings th, table.holdings td {
+    border: thin solid black;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+}
+
+table.holdings tbody td {
     font-family: 'Droid Sans Mono', sans-serif;
     text-align: right;
 }
 
-table.positions.detail-table td:nth-child(2) {
+table.holdings.detail-table td:nth-child(1) {
     font-family: 'Roboto Condensed', sans-serif;
     text-align: left;
 }
 
-table.positions.byinst-account-table td:nth-child(1) {
-    font-family: 'Roboto Condensed', sans-serif;
-    text-align: left;
-}
 
 
 

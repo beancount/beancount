@@ -1,2 +1,0 @@
-#!/usr/bin/env python3
-from beancount.scripts.positions import main; main()

@@ -1,12 +1,14 @@
 """Compute unrealized gains.
 """
+import collections
+
 from beancount.core.amount import Decimal
 from beancount.core import account
 from beancount.core import amount
 from beancount.core.data import Transaction, Posting, FileLocation
 from beancount.core.position import Lot, Position
 from beancount.core import flags
-from beancount.ops import positions
+from beancount.ops import holdings
 from beancount.ops import prices
 
 
@@ -18,41 +20,48 @@ def unrealized_gains(entries, subaccount_name, account_types):
     if not entries:
         return entries
 
-    new_entries = []
-    latest_date = entries[-1].date
+    # Group positions by (account, cost, cost_currency).
+    account_holdings = collections.defaultdict(list)
+    for holding in holdings.get_final_holdings(entries):
+        if not holding.cost_currency:
+            continue
+        key = (holding.account,
+               holding.currency,
+               holding.cost_currency)
+        account_holdings[key].append(holding)
 
     # Get the latest prices from the entries.
     price_map = prices.build_price_map(entries)
 
-    # Work through the list of priced positions.
-    priced_positions, _ = positions.get_priced_positions(entries, price_map)
-    for (account_name, currency, cost_currency), position_list in priced_positions.items():
+    # Create transactions to account for each position.
+    new_entries = []
+    latest_date = entries[-1].date
+    for (account_name,
+         currency, cost_currency), holdings_list in account_holdings.items():
 
-        if not cost_currency:
-            continue
+        # Get the price of this currency/cost pair.
+        price_date, price_number = prices.get_price(price_map,
+                                                    (currency, cost_currency),
+                                                    latest_date)
 
-        # Compute the total number of units and book value of the position.
+        # Compute the total number of units and book value for set of positions.
         total_units = Decimal()
         market_value = Decimal()
         book_value = Decimal()
-        for position in position_list:
-            number = position['number']
+        for holding in holdings_list:
+            number = holding.number
             total_units  += number
-            market_value += number * position['price_number']
-            book_value   += number * position['cost_number']
+            market_value += number * price_number
+            book_value   += number * holding.cost_number
 
         pnl = market_value - book_value
-
-        # Note: the price_number and price_date should be the same for all these
-        # positions; use the latest one in the list.
-        price_number = position['price_number']
-        price_date = position['price_date']
 
         # Create a new transaction to account for this difference in gain.
         fileloc = FileLocation('<unrealized_gains>', 0)
         narration = "Unrealized gains for {} in {} (price: {}, as of {})".format(
             currency, cost_currency, price_number, price_date)
-        entry = Transaction(fileloc, latest_date, flags.FLAG_UNREALIZED, None, narration, None, None, [])
+        entry = Transaction(fileloc, latest_date, flags.FLAG_UNREALIZED,
+                            None, narration, None, None, [])
 
         # Add the gain/loss as a subaccount to the asset account.
         if subaccount_name:

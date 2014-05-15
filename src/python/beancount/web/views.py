@@ -6,6 +6,7 @@ from beancount.core import data
 from beancount.ops import summarize
 from beancount.core import realization
 from beancount import parser
+from beancount.parser import options
 from beancount.utils import misc_utils
 
 
@@ -14,7 +15,7 @@ class View:
     """A container for filtering a subset of entries and realizing that for
     display."""
 
-    def __init__(self, all_entries, options, title):
+    def __init__(self, all_entries, options_map, title):
 
         # A reference to the full list of padded entries.
         self.all_entries = all_entries
@@ -30,8 +31,8 @@ class View:
         self.title = title
 
         # A reference to the global list of options and the account type names.
-        self.options = options
-        self.account_types = parser.get_account_types(options)
+        self.options = options_map
+        self.account_types = options.get_account_types(options_map)
 
         # Realization of the filtered entries to display. These are computed in
         # _realize().
@@ -63,7 +64,7 @@ class View:
             # income/expenses amounts to the balance sheet's equity (as "net
             # income"). This is used to render the end-period balance sheet, with
             # the current period's net income, closing the period.
-            current_accounts = parser.get_current_accounts(self.options)
+            current_accounts = options.get_current_accounts(self.options)
             self.closing_entries = summarize.close(self.entries, self.options, *current_accounts)
 
         # Realize the three sets of entries.
@@ -93,8 +94,8 @@ class View:
 class EmptyView(View):
     """An empty view, as a placeholder until we implement one."""
 
-    def __init__(self, entries, options, title, *args, **kw):
-        View.__init__(self, entries, options, title)
+    def __init__(self, entries, options_map, title, *args, **kw):
+        View.__init__(self, entries, options_map, title)
 
     def apply_filter(self, _, __):
         "Return the list of entries unmodified."
@@ -103,42 +104,42 @@ class EmptyView(View):
 
 class AllView(View):
 
-    def apply_filter(self, entries, options):
+    def apply_filter(self, entries, options_map):
         "Return the list of entries unmodified."
         return (entries, None)
 
 
 class YearView(View):
 
-    def __init__(self, entries, options, title, year):
+    def __init__(self, entries, options_map, title, year):
         self.year = year
-        View.__init__(self, entries, options, title)
+        View.__init__(self, entries, options_map, title)
 
-    def apply_filter(self, entries, options):
+    def apply_filter(self, entries, options_map):
         "Return entries for only that year."
 
         # Get the transfer account objects.
-        previous_accounts = parser.get_previous_accounts(options)
+        previous_accounts = options.get_previous_accounts(options_map)
 
         # Clamp to the desired period.
         begin_date = datetime.date(self.year, 1, 1)
         end_date = datetime.date(self.year+1, 1, 1)
         with misc_utils.print_time('clamp'):
-            entries, index = summarize.clamp(entries, begin_date, end_date, options, *previous_accounts)
+            entries, index = summarize.clamp(entries, begin_date, end_date, options_map, *previous_accounts)
 
         return entries, index
 
 
 class TagView(View):
 
-    def __init__(self, entries, options, title, tags):
+    def __init__(self, entries, options_map, title, tags):
         # The tags we want to include.
         assert isinstance(tags, (set, list, tuple))
         self.tags = tags
 
-        View.__init__(self, entries, options, title)
+        View.__init__(self, entries, options_map, title)
 
-    def apply_filter(self, entries, options):
+    def apply_filter(self, entries, options_map):
         "Return only entries with the given tag."
 
         tags = self.tags
@@ -151,14 +152,14 @@ class TagView(View):
 
 class PayeeView(View):
 
-    def __init__(self, entries, options, title, payee):
+    def __init__(self, entries, options_map, title, payee):
         # The payee to filter.
         assert isinstance(payee, str)
         self.payee = payee
 
-        View.__init__(self, entries, options, title)
+        View.__init__(self, entries, options_map, title)
 
-    def apply_filter(self, entries, options):
+    def apply_filter(self, entries, options_map):
         "Return only transactions for the given payee."
 
         payee = self.payee

@@ -2,6 +2,7 @@
 Declaration of options and their default values.
 """
 from beancount.core import account_types
+from beancount.core import account
 
 
 DEFAULT_OPTIONS = {
@@ -64,3 +65,50 @@ DEFAULT_OPTIONS = {
     # import, but "101.00" does).
     "operating_currency" : [],
 }
+
+
+def get_account_types(options):
+    """Extract the account type names from the parser's options.
+
+    Args:
+      options: a dict of ledger options.
+    Returns:
+      An instance of AccountTypes, that contains all the prefixes.
+    """
+    return account_types.AccountTypes(
+        *(options["name_{}".format(x)]
+          for x in "assets liabilities equity income expenses".split()))
+
+
+def get_previous_accounts(options):
+    """Return Account objects for the opening, earnings, and conversion accounts.
+
+    Args:
+      options: a dict of ledger options.
+    Returns:
+      A tuple of 3 account objects, for booking previous earnings,
+      previous balances, and previous conversions.
+    """
+    equity = options['name_equity']
+    account_previous_earnings = account.join(equity, options['account_previous_earnings'])
+    account_previous_balances = account.join(equity, options['account_previous_balances'])
+    account_previous_conversions = account.join(equity, options['account_previous_conversions'])
+    return (account_previous_earnings,
+            account_previous_balances,
+            account_previous_conversions)
+
+
+def get_current_accounts(options):
+    """Return Account objects for the opening, earnings, and conversion accounts.
+
+    Args:
+      options: a dict of ledger options.
+    Returns:
+      A tuple of 2 account objects, one for booking current earnings, and one
+      for current conversions.
+    """
+    equity = options['name_equity']
+    account_current_earnings = account.join(equity, options['account_current_earnings'])
+    account_current_conversions = account.join(equity, options['account_current_conversions'])
+    return (account_current_earnings,
+            account_current_conversions)

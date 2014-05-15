@@ -3,6 +3,7 @@ Web server for Beancount ledgers.
 This uses the Bottle single-file micro web framework (with no plugins).
 """
 import argparse
+import collections
 import datetime
 from os import path
 import io
@@ -23,16 +24,18 @@ from beancount.core import account_types
 from beancount.ops import basicops
 from beancount.ops import summarize
 from beancount.ops import prices
-from beancount.ops import positions
+from beancount.ops import holdings
 from beancount.utils import misc_utils
 from beancount.utils.text_utils import replace_numbers
 from beancount.web.bottle_utils import AttrMapper, internal_redirect
 from beancount.parser import parser
+from beancount.parser import options
 from beancount import loader
 from beancount.web import views
 from beancount.web import journal
 from beancount.web import acctree
 from beancount.web import gviz
+from beancount.web import web_utils
 
 
 #--------------------------------------------------------------------------------
@@ -375,6 +378,11 @@ def favicon():
     return bottle.static_file('favicon.ico', path.dirname(__file__))
 
 
+@app.get('/third_party/<filename:re:.*>')
+def third_party(filename=None):
+    return bottle.static_file(request.path[1:], path.dirname(__file__))
+
+
 doc_name = 'doc'
 @app.route('/doc/<filename:re:.*>', name=doc_name)
 def doc(filename=None):
@@ -424,7 +432,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{V.equity}}">Shareholder's Equity</a></li>
   <li><a href="{{V.trial}}">Trial Balance</a></li>
   <li><a href="{{V.journal}}">Journal</a></li>
-  <li><a href="{{V.positions}}">Positions</a></li>
+  <li><a href="{{V.holdings}}">Holdings</a></li>
   <li><a href="{{V.conversions}}">Conversions</a></li>
   <li><a href="{{V.documents}}">Documents</a></li>
   <li><a href="{{V.stats}}">Statistics</a></li>
@@ -698,87 +706,85 @@ FORMATTERS = {
     }
 
 
-@viewapp.route('/positions', name='positions')
-def positions_overview():
-    "Render an index of the pages detailing positions."
+@viewapp.route('/holdings', name='holdings')
+def holdings_overview():
+    "Render an index of the pages detailing holdings."
     return render_view(
-        pagetitle = "Positions",
+        pagetitle = "Holdings",
         contents = """
           <ul>
-            <li><a href="{V.positions_detail}">Detailed Positions List</a></li>
-            <li><a href="{V.positions_byinstrument}">By Instrument</a></li>
+            <li><a href="{V.holdings_detail}">Detailed Holdings List</a></li>
+            <li><a href="{V.holdings_byinstrument}">By Instrument</a></li>
           </ul>
         """.format(V=V))
 
 
-@viewapp.route('/positions/detail', name='positions_detail')
-def positions_detail():
-    "Render a detailed table of all positions."
+@viewapp.route('/holdings/detail', name='holdings_detail')
+def holdings_detail():
+    "Render a detailed table of all holdings."
 
-    # FIXME: factor out the price map computation
     price_map = prices.build_price_map(request.view.entries)
-    dataframe = positions.get_positions_as_dataframe(request.view.entries, price_map)
-    if dataframe is None:
-        return "You must install Pandas in order to render this page."
+    holdings_ = holdings.get_final_holdings(request.view.closing_entries, price_map)
 
     oss = io.StringIO()
-    oss.write("<center>\n")
-    if not dataframe.empty:
-      oss.write(dataframe.to_html(classes=['positions', 'detail-table'],
-                                  index=False))
+    oss.write('<center>\n')
+    if holdings_:
+        web_utils.render_tuples_to_html_table(
+            holdings_,
+            field_spec=[
+                'account',
+                ('number', None, '{:,.2f}'.format),
+                'currency',
+                'cost_currency',
+                ('cost_number', 'Cost Price', '{:,.2f}'.format),
+                ('price_number', 'Market Price', '{:,.2f}'.format),
+                ('book_value', None, '{:,.2f}'.format),
+                ('market_value', None, '{:,.2f}'.format),
+                'price_date',
+            ],
+            classes=['holdings', 'detail-table', 'sortable'],
+            file=oss)
     else:
-      oss.write("(No positions.)")
-    oss.write("</center>\n")
+        oss.write("(No holdings.)")
+    oss.write('</center>\n')
 
     return render_view(
-        pagetitle = "Positions - Detailed List",
+        pagetitle = "Holdings - Detailed List",
+        scripts = '<script src="/third_party/sorttable.js"></script>',
         contents = oss.getvalue())
 
 
-@viewapp.route('/positions/byinstrument', name='positions_byinstrument')
-def positions_byinstrument():
-    "Render a table of positions by instrument."
+@viewapp.route('/holdings/byinstrument', name='holdings_byinstrument')
+def holdings_byinstrument():
+    "Render a table of holdings by instrument."
 
-    # FIXME: factor out the price map computation
     price_map = prices.build_price_map(request.view.entries)
-    dataframe = positions.get_positions_as_dataframe(request.view.entries, price_map)
-    if dataframe is None:
-        return "You must install Pandas in order to render this page."
+    holdings_ = holdings.get_final_holdings(request.view.closing_entries, price_map)
+    aggregated_holdings = holdings.aggregate_by_base_quote(holdings_)
 
     oss = io.StringIO()
-
-    oss.write('<h2>With Account</h2>\n')
-
-    byinst = dataframe.groupby(['account', 'currency', 'cost_currency'])
-    byinst_agg = byinst['number', 'book_value', 'market_value', 'pnl'].sum()
-    byinst_agg['avg_cost'] = byinst['cost_number'].mean()
-    byinst_agg['price_number'] = byinst['price_number'].mean()
-    byinst_agg = byinst_agg.sort('market_value', ascending=False)
-    oss.write("<center>\n")
-    if not byinst_agg.empty:
-      oss.write(byinst_agg.to_html(classes=['positions', 'byinst-account-table'],
-                                   formatters=FORMATTERS))
+    oss.write('<center>\n')
+    if holdings_:
+        web_utils.render_tuples_to_html_table(
+            aggregated_holdings,
+            field_spec=[
+                ('number', None, '{:,.2f}'.format),
+                'currency',
+                'cost_currency',
+                ('cost_number', 'Average Cost', '{:,.2f}'.format),
+                ('price_number', 'Average Price', '{:,.2f}'.format),
+                ('book_value', None, '{:,.2f}'.format),
+                ('market_value', None, '{:,.2f}'.format)
+            ],
+            classes=['holdings', 'byinst-account-table', 'sortable'],
+            file=oss)
     else:
-      oss.write("(No positions.)")
-    oss.write("</center>\n")
-
-    oss.write('<h2>Aggregated by Instrument Only</h2>\n')
-
-    byinst = dataframe.groupby(['currency', 'cost_currency'])
-    byinst_agg = byinst['number', 'book_value', 'market_value', 'pnl'].sum()
-    byinst_agg['avg_cost'] = byinst['cost_number'].mean()
-    byinst_agg['price_number'] = byinst['price_number'].mean()
-    byinst_agg = byinst_agg.sort('market_value', ascending=False)
-    oss.write("<center>\n")
-    if not byinst_agg.empty:
-      oss.write(byinst_agg.to_html(classes=['positions', 'byinst-table'],
-                                   formatters=FORMATTERS))
-    else:
-      oss.write("(No positions.)")
-    oss.write("</center>\n")
+        oss.write("(No holdings.)")
+    oss.write('</center>\n')
 
     return render_view(
-        pagetitle = "Positions - By Instrument",
+        pagetitle = "Holdings - By Instrument",
+        scripts = '<script src="/third_party/sorttable.js"></script>',
         contents = oss.getvalue())
 
 
@@ -1021,14 +1027,14 @@ def auto_reload_input_file(callback):
                 app.source = f.read()
 
             # Parse the beancount file.
-            entries, errors, options = loader.load(
+            entries, errors, options_map = loader.load(
                 filename, add_unrealized_gains=True, do_print_errors=True)
 
             # Save globals in the global app.
             app.entries = entries
             app.errors = errors
-            app.options = options
-            app.account_types = parser.get_account_types(options)
+            app.options = options_map
+            app.account_types = options.get_account_types(options_map)
 
             # Pre-compute the price database.
             app.price_map = prices.build_price_map(app.entries)

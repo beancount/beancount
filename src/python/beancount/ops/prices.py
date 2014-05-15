@@ -201,11 +201,10 @@ def get_latest_price(price_map, base_quote):
         return None
 
 
-# Interpolation methods.
-PREVIOUS, LINEAR = object(), object()
-
-def get_price(price_map, base_quote, date, interpolation=PREVIOUS):
+def get_price(price_map, base_quote, date=None):
     """Return the price as of the given date.
+
+    If the date is unspecified, return the latest price.
 
     Args:
       price_map: A price map, which is a dict of (base, quote) -> list of (date,
@@ -215,13 +214,13 @@ def get_price(price_map, base_quote, date, interpolation=PREVIOUS):
         denominated in. This may also just be a string, with a '/' separator.
       date: A datetime.date instance, the date at which we want the conversion
         rate.
-      interpolation: A method for interpolation of the rate, if the date sits
-        between two price points. PREVIOUS returns the last available price point
-        before the given date, and LINEAR performs linear interpolation between
-        the two surroudning price points.
     Returns:
-      A pair of (datetime.date, Decimal) instance.
+      A pair of (datetime.date, Decimal) instance. If no price information could
+      be found, return (None, None).
     """
+    if date is None:
+        return get_latest_price(price_map, base_quote)
+
     base_quote = normalize_base_quote(base_quote)
     price_list = price_map[base_quote]
     index = misc_utils.bisect_right_with_key(price_list, date, key=lambda x: x[0])

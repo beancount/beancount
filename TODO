@@ -4,20 +4,27 @@ beancount: TODO
 
   - At least one transaction is required! (From live demo to ab.) An empty file
     renders exceptions from bean-web. Add a test!
-    
-
-  - ledgerhub-fetch-prices is borked, outputs Nones
 
   - prices.py and positions.py:
 
-     ## FIXME:
-     ## Complete the equity value page with prices.py, render the rates used to that page
-     ## Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
-     ## Finish testing positions.py, unrealized.py
-     ## Remove dependency on Pandas and Numpy, we can surely do without
+     prices_test.py --> complete it
 
-  - Build a more complete and representative of reality example file, bake, and share
-  - Complete the dependency removal and merge all branches - this is annoying
+     positions_test.py --> finish and holdings_test.py, remove Pandas
+     Remove dependency on Pandas and Numpy, we can surely do without
+     Finish testing unrealized.py, should be easy
+
+     Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
+     ledgerhub-fetch-prices is borked, outputs Nones
+     The prices page has inverses now... fix this.
+
+     Complete the equity value page with prices.py, render the rates used to that page
+
+  - realization_test.py --> complete this now!
+
+  - New bug re. positions: look at detailed positions page, I'm getting expense accounts there, not normal.
+
+  - Build a more complete and representative of reality example file, bake, and
+    share on ledger-cli
 
   - Add a test for --view option.
 
@@ -31,7 +38,10 @@ beancount: TODO
   - Add all docstrings with args Google-style.
   - Clean up the interface of loader.load(), it's ugly.
   - Implement all the missing global pages.
-  - Clean up code: remove all significant codes from __init__.py files.
+
+  - Clean up code: remove all significant codes from __init__.py files, in
+    particular beancount.scripts.__init__, move to an util with tests.
+
   - Fix all FIXMEs everywhere.
 
   - Something's wrong with this page: currencies are wrong I think - http://localhost:8080/view/year/2014/conversions
@@ -50,10 +60,9 @@ beancount: TODO
 
   - Review all the code and make all creation of Decimal objects use to_decimal
     instead of Decimal, for consistency.
+  - Alias to_decimal to 'D' and replace everywhere.
 
   - Convert all documentation to a GDoc
-
-
 
   - There have been some rare, but occurring few instances of really odd syntax
     making the parser ignore some transactions silently; this is not
@@ -71,6 +80,12 @@ beancount: TODO
 
       This works okay:
       2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
+
+  - Convert all assertEquals() to assertEqual().
+
+  - Can you move realization out of core? It really belongs more in ops I think.
+
+  - Merge Holdings tab into Shareholder's Equity, less tabs, similar report
 
 
 * Current
@@ -104,6 +119,12 @@ beancount: TODO
 
   - Implement a little plug-ins system that allows a user to insert a TAB in
     bean-web.
+
+  - The Trial Balance page could be a good place to put all the accounts on the
+    left and have two sets of columns: beginning of period -> end of period.
+
+  - Implement a little plug-ins system that allows a user to insert a new tab in
+    bean-web, with custom display.
 
   - In ledgerhub, use /usr/bin/strings as a last resort if all other PDF
     converters fail.
@@ -903,6 +924,65 @@ Improve this bit:
   - Another idea would be to make @pad able to pad for a percentage of the
     total, so that we're able to use @pad instead of "distribution of expenses"
     entries.
+
+
+** Key-Values / Metadata
+
+  - One idea Ledger uses well is the ability to associate key-values meta-data
+    to transaction objects, a-la-Common Lisp. See the --pivot feature. It seems
+    a bit superfluous at the moment, but may be useful in order to provide the
+    ability to implement custom aggregations eventually, instead of using the
+    strings. Maybe the payee could be a special case of this, e.g payee="value"
+
+    (From mailing-list):
+
+      Take this example:
+
+      2011-01-01 * Opening balance
+          Assets:Cash                               25.00 GBP
+          Equity:Opening balance                   -25.00 GBP
+
+      2011-02-01 * Sell to customer AAA
+          ; Customer: AAA
+          ; Invoice: 101
+          Assets:Receivables                        10.00 GBP
+          Income:Sale                              -10.00 GBP
+
+      2011-02-02 * Sell to customer BBB
+          ; Customer: BBB
+          ; Invoice: 102
+          Assets:Receivables                        11.00 GBP
+          Income:Sale                              -11.00 GBP
+
+      2011-02-03 * Sell to customer AAA
+          ; Customer: AAA
+          ; Invoice: 103
+          Assets:Receivables                        12.00 GBP
+          Income:Sale                              -12.00 GBP
+
+      2011-02-03 * Money received from customer AAA for invoice 101
+          ; Customer: AAA
+          ; Invoice: 101
+          Assets:Cash                               10.00 GBP
+          Assets:Receivables                       -10.00 GBP
+
+      Now you can see how much each customer owes you:
+
+      ledger -f d bal assets:receivables --pivot Customer
+                 23.00 GBP  Customer
+                 12.00 GBP    AAA:Assets:Receivables
+                 11.00 GBP    BBB:Assets:Receivables
+      --------------------
+                 23.00 GBP
+
+      And you can see which invoices haven't been paid yet:
+
+      ledger -f d bal assets:receivables --pivot Invoice
+                 23.00 GBP  Invoice
+                 11.00 GBP    102:Assets:Receivables
+                 12.00 GBP    103:Assets:Receivables
+      --------------------
+                 23.00 GBP
 
 
 * Tools
