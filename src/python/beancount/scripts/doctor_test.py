@@ -1,8 +1,8 @@
 from beancount.scripts import TestCase, docfile, capture, run_with_args
-from beancount.scripts import debug
+from beancount.scripts import doctor
 
 
-class TestScriptDebug(TestCase):
+class TestScriptDoctor(TestCase):
 
     @docfile
     def test_dump_lexer(self, filename):
@@ -15,7 +15,7 @@ class TestScriptDebug(TestCase):
           Assets:Cash
         """
         with capture() as stdout:
-            run_with_args(debug.main, ['--dump-lexer', filename])
+            run_with_args(doctor.main, ['--dump-lexer', filename])
 
         expected_output = """
             EOL               2 '\\n'
@@ -47,7 +47,7 @@ class TestScriptDebug(TestCase):
     def test_dump_lexer_empty(self, filename):
         ""
         with capture() as stdout:
-            run_with_args(debug.main, ['--dump-lexer', filename])
+            run_with_args(doctor.main, ['--dump-lexer', filename])
 
     @docfile
     def test_list_accounts(self, filename):
@@ -60,7 +60,7 @@ class TestScriptDebug(TestCase):
           Assets:Cash
         """
         with capture() as stdout:
-            run_with_args(debug.main, ['--list-accounts', filename])
+            run_with_args(doctor.main, ['--list-accounts', filename])
 
         r = self.assertLines("""
             Assets:Cash          2013-01-01
@@ -71,7 +71,7 @@ class TestScriptDebug(TestCase):
     def test_list_accounts_empty(self, filename):
         ""
         with capture() as stdout:
-            run_with_args(debug.main, ['--list-accounts', filename])
+            run_with_args(doctor.main, ['--list-accounts', filename])
 
     @docfile
     def test_print_trial(self, filename):
@@ -84,7 +84,7 @@ class TestScriptDebug(TestCase):
           Assets:Cash
         """
         with capture() as stdout:
-            run_with_args(debug.main, ['--print-trial', filename])
+            run_with_args(doctor.main, ['--print-trial', filename])
         output = stdout.getvalue()
         self.assertLines("""
             |-- Assets
@@ -97,4 +97,4 @@ class TestScriptDebug(TestCase):
     def test_print_trial_empty(self, filename):
         ""
         with capture() as stdout:
-            run_with_args(debug.main, ['--print-trial', filename])
+            run_with_args(doctor.main, ['--print-trial', filename])
