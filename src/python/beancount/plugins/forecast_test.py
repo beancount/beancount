@@ -1,7 +1,6 @@
 import unittest
 
 from beancount import loader
-from beancount.parser import printer
 from beancount.plugins import forecast
 
 
@@ -31,4 +30,3 @@ class TestExampleForecast(unittest.TestCase):
 
 
 __incomplete__ = True
-

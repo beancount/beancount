@@ -9,4 +9,7 @@ import sys
 if (sys.version_info.major, sys.version_info.minor) < (3, 3):
     raise ImportError("Python 3.3 or above is required.")
 
-from beancount.loader import load; 'public'
+from beancount.loader import load
+
+# To satisfy unused checker.
+__unused__ = (load,)

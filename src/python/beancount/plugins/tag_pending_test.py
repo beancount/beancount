@@ -1,9 +1,6 @@
 import unittest
-import sys
-import tempfile
 
 from beancount import loader
-from beancount.parser import printer
 from beancount.plugins import tag_pending
 from beancount.scripts import docfile, capture, run_with_args
 

@@ -3,7 +3,6 @@ Web server for Beancount ledgers.
 This uses the Bottle single-file micro web framework (with no plugins).
 """
 import argparse
-import collections
 import datetime
 from os import path
 import io
@@ -28,7 +27,6 @@ from beancount.ops import holdings
 from beancount.utils import misc_utils
 from beancount.utils.text_utils import replace_numbers
 from beancount.web.bottle_utils import AttrMapper, internal_redirect
-from beancount.parser import parser
 from beancount.parser import options
 from beancount import loader
 from beancount.web import views

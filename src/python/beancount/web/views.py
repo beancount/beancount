@@ -5,7 +5,6 @@ import datetime
 from beancount.core import data
 from beancount.ops import summarize
 from beancount.core import realization
-from beancount import parser
 from beancount.parser import options
 from beancount.utils import misc_utils
 

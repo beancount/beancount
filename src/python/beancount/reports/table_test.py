@@ -1,5 +1,4 @@
 import collections
-import re
 import textwrap
 import unittest
 

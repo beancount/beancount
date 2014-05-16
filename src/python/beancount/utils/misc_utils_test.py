@@ -2,7 +2,6 @@
 Tests for general utils.
 """
 import unittest
-import random
 import time
 from collections import namedtuple
 import operator

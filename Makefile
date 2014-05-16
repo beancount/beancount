@@ -163,4 +163,4 @@ status test-status:
 
 # Run the linter on all source code.
 lint:
-	pylint --rcfile=etc/pylintrc $(SRC)
+	pylint --rcfile=$(PWD)/etc/pylintrc $(SRC)

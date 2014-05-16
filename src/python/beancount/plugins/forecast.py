@@ -24,7 +24,6 @@ __author__ = 'Martin Blais <blais@furius.ca>'
 import re
 
 from beancount.core import data
-from beancount import loader
 
 
 __plugins__ = ('forecast_plugin',)

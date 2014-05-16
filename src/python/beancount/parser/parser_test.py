@@ -158,12 +158,12 @@ class TestUglyBugs(unittest.TestCase):
 
     def test_extra_whitespace_transaction(self):
         input_ = '\n'.join([
-          '2013-05-18 * "Nice dinner at Mermaid Inn"',
-          '  Expenses:Restaurant         100 USD',
-          '  Assets:US:Cash',
-          '  ',
-          ';; End of file',
-          ])
+            '2013-05-18 * "Nice dinner at Mermaid Inn"',
+            '  Expenses:Restaurant         100 USD',
+            '  Assets:US:Cash',
+            '  ',
+            ';; End of file',
+        ])
 
         entries, errors, options = parser.parse_string(input_, yydebug=0)
         check_list(self, entries, [Transaction])
@@ -171,11 +171,11 @@ class TestUglyBugs(unittest.TestCase):
 
     def test_extra_whitespace_comment(self):
         input_ = '\n'.join([
-          '2013-05-18 * "Nice dinner at Mermaid Inn"',
-          '  Expenses:Restaurant         100 USD',
-          '  Assets:US:Cash',
-          '  ;;',
-          ])
+            '2013-05-18 * "Nice dinner at Mermaid Inn"',
+            '  Expenses:Restaurant         100 USD',
+            '  Assets:US:Cash',
+            '  ;;',
+        ])
         entries, errors, options = parser.parse_string(input_)
         check_list(self, entries, [Transaction])
         check_list(self, errors, [])

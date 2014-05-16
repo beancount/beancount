@@ -1,7 +1,7 @@
 """Basic data structures used to represent the Ledger entries.
 """
 import datetime
-from collections import namedtuple, defaultdict
+from collections import namedtuple
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
 from .amount import Amount, Decimal, to_decimal
@@ -152,7 +152,7 @@ Document = namedtuple('Document', 'fileloc date account filename')
 
 # A list of all the valid directive types.
 ALL_DIRECTIVES = (
-  Open, Close, Pad, Balance, Transaction, Note, Event, Price, Document,
+    Open, Close, Pad, Balance, Transaction, Note, Event, Price, Document
 )
 
 

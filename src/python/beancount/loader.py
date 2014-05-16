@@ -79,16 +79,18 @@ def load(filename,
 
     # Add unrealized gains.
     with misc_utils.print_time('unrealized', quiet):
-        entries = unrealized.unrealized_gains(entries, options_map['account_unrealized'], account_types)
+        entries = unrealized.unrealized_gains(entries,
+                                              options_map['account_unrealized'],
+                                              account_types)
 
     # Print out the list of errors.
     errors = parse_errors + pad_errors + check_errors + valid_errors + doc_errors
     if do_print_errors:
         error_text = printer.format_errors(errors)
         if error_text:
-            print(',--------------------------------------------------------------------------------')
+            print(',------------------------------------------------------------------------')
             print(error_text)
-            print('`--------------------------------------------------------------------------------')
+            print('`------------------------------------------------------------------------')
 
     # Run the load_filters on top of the results.
     for load_filter_function in LOAD_PLUGINS:

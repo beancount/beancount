@@ -28,9 +28,7 @@ produce a listing of them.
 
 __author__ = 'Martin Blais <blais@furius.ca>'
 
-from collections import defaultdict
 import argparse
-import pprint
 
 from beancount.core import data
 from beancount.core import inventory

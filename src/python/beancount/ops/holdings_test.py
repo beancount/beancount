@@ -1,6 +1,5 @@
 import itertools
 import unittest
-import pprint
 import datetime
 
 from beancount.core.amount import to_decimal

@@ -1,6 +1,5 @@
 """Compute final holdings for a list of entries.
 """
-import copy
 import collections
 
 from beancount.core.amount import ZERO
