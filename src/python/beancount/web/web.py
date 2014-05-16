@@ -35,7 +35,7 @@ from beancount.web import views
 from beancount.web import journal
 from beancount.web import acctree
 from beancount.web import gviz
-from beancount.web import web_utils
+from beancount.reports import table
 
 
 #--------------------------------------------------------------------------------
@@ -729,7 +729,7 @@ def holdings_detail():
     oss = io.StringIO()
     oss.write('<center>\n')
     if holdings_:
-        web_utils.render_tuples_to_html_table(
+        table.render_tuples_to_html_table(
             holdings_,
             field_spec=[
                 'account',
@@ -765,7 +765,7 @@ def holdings_byinstrument():
     oss = io.StringIO()
     oss.write('<center>\n')
     if holdings_:
-        web_utils.render_tuples_to_html_table(
+        table.render_tuples_to_html_table(
             aggregated_holdings,
             field_spec=[
                 ('number', None, '{:,.2f}'.format),

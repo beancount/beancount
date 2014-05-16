@@ -1,5 +1,5 @@
 """HTML rendering routines for serving a lists of postings/entries.
-ck"""
+"""
 from os import path
 
 from bottle import request

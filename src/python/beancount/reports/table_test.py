@@ -4,13 +4,13 @@ import textwrap
 import unittest
 
 from beancount.core.amount import Decimal
-from beancount.web import web_utils
+from beancount.reports import table
 
 
 class TestWebUtils(unittest.TestCase):
 
     def test_attribute_to_title(self):
-        attributes = list(map(web_utils.attribute_to_title, ['a', 'a_b', 'aa_bb_cc']))
+        attributes = list(map(table.attribute_to_title, ['a', 'a_b', 'aa_bb_cc']))
         self.assertEqual(['A', 'A B', 'Aa Bb Cc'], attributes)
 
     def test_render_tuples_to_html_table(self):
@@ -21,7 +21,7 @@ class TestWebUtils(unittest.TestCase):
             Tup("Mali", "Bamako", "CFA franc", Decimal("0.22")),
             Tup("Mauritania", "Nouakchott", "Ouguiya", Decimal("0.33")),
             ]
-        table = web_utils.render_tuples_to_html_table(
+        html = table.render_tuples_to_html_table(
             tuples, ["country",
                      ("capital",),
                      ("currency", "Currency"),
@@ -60,4 +60,4 @@ class TestWebUtils(unittest.TestCase):
               </tbody>
             </table>
         """)
-        self.assertEqual(expected, table)
+        self.assertEqual(expected, html)

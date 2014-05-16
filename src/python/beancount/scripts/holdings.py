@@ -39,7 +39,7 @@ def main():
         print(h)
 
     # Call aggregation function, same as web.py
-    # Split web_utils.render_tuples_to_html_table() into cell data generation and HTML table text.
+    # Split table.render_tuples_to_html_table() into cell data generation and HTML table text.
     # Reuse the data to render ASCII table, or CSV
 
     # if opts.format == 'txt':
