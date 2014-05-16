@@ -4,7 +4,8 @@ beancount: TODO
 
   - prices.py and positions.py:
 
-     Finish bean-holdings rendering to text table
+     Finish bean-holdings rendering to text table -> continue in reports.table,
+     render table to temp representation, then to HTML and ascii table.
 
      Finish testing unrealized.py, should be easy
 
@@ -84,6 +85,9 @@ beancount: TODO
   - Convert all assertEquals() to assertEqual().
 
   - Can you move realization out of core? It really belongs more in ops I think.
+
+  - Make sure all exceptions do NOT end with a period, nor do any of the
+    logging.*() calls.
 
 
 * Current

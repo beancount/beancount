@@ -66,9 +66,10 @@ def check(entries):
                 diff_amount = amount_sub(balance_amount, check_amount)
                 check_errors.append(
                     BalanceError(entry.fileloc,
-                                 "Balance failed for '{}': expected {} != accumulated {} ({} {})".format(
-                                     entry.account, balance_amount, check_amount,
-                                     diff_amount, 
+                                 ("Balance failed for '{}': "
+                                  "expected {} != accumulated {} ({} {})").format(
+                                      entry.account, balance_amount, check_amount,
+                                      diff_amount,
                                      'too much' if diff_amount else 'too little'),
                                  entry))
 

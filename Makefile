@@ -164,3 +164,8 @@ status test-status:
 # Run the linter on all source code.
 lint:
 	pylint --rcfile=$(PWD)/etc/pylintrc $(SRC)
+
+# Run only a single linter test at a time.
+LINT_TEST=line-too-long
+lint1:
+	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_TEST) $(SRC)

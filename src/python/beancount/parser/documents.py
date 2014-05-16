@@ -159,8 +159,8 @@ def find_documents(root_directory, location_filename, accounts):
                 # Only look for files in subdirectories that correspond to an account
                 # name.
                 if account_name not in accounts:
-                    # logging.warn("Skipping document '{}' because no corresponding account.".format(
-                    #     path.join(root, filename)))
+                    # logging.warn(("Skipping document '{}' because no corresponding "
+                    #               "account.").format(path.join(root, filename)))
                     continue
                 account = accounts[account_name]
             else:

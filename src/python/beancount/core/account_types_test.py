@@ -43,7 +43,8 @@ class TestAccountGlobals(unittest.TestCase):
     def test_account_name_type(self):
         self.assertEqual("Assets", account_types.account_name_type("Assets:US:RBS:Checking"))
         self.assertEqual("Assets", account_types.account_name_type("Assets:US:RBS:Savings"))
-        self.assertEqual("Liabilities", account_types.account_name_type("Liabilities:US:RBS:MortgageLoan"))
+        self.assertEqual("Liabilities",
+                         account_types.account_name_type("Liabilities:US:RBS:MortgageLoan"))
         self.assertEqual("Equity", account_types.account_name_type("Equity:NetIncome"))
         self.assertEqual("Equity", account_types.account_name_type("Equity:OpeningBalances"))
         self.assertEqual("Income", account_types.account_name_type("Income:US:ETrade:Dividends"))
@@ -78,7 +79,8 @@ class TestAccountGlobals(unittest.TestCase):
                 ("Expenses", True),
                 ("Invalid", False),
                 ]:
-            self.assertEqual(expected, account_types.is_account_name_root(account_name), account_name)
+            self.assertEqual(expected,
+                             account_types.is_account_name_root(account_name))
 
     OPTIONS = {'name_assets'      : 'Assets',
                'name_liabilities' : 'Liabilities',
@@ -99,4 +101,3 @@ class TestAccountGlobals(unittest.TestCase):
 
             self.assertEqual(not expected,
                              account_types.is_income_statement_account(account_name, self.OPTIONS))
-

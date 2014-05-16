@@ -197,7 +197,8 @@ def conversions(entries, account, date=None):
 
     fileloc = FileLocation('<conversions>', -1)
     narration = 'Conversion for {}'.format(balance)
-    conversion_entry = Transaction(fileloc, last_date, flags.FLAG_CONVERSIONS, None, narration, None, None, [])
+    conversion_entry = Transaction(fileloc, last_date, flags.FLAG_CONVERSIONS,
+                                   None, narration, None, None, [])
     for position in balance.get_cost().get_positions():
         # FIXME: Set the cost to zero here to maintain the balance invariant.
         # (This is the only single place we cheap on the balance rule in the

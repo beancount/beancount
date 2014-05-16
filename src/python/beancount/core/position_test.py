@@ -12,9 +12,12 @@ from .position import Lot, Position, create_position
 class TestPosition(unittest.TestCase):
 
     def test_constructors(self):
-        position = Position(Lot('USD', None, None), to_decimal('123.45'))
-        position = Position(Lot('USD', Amount('74.00', 'CAD'), None), to_decimal('123.45'))
-        position = Position(Lot('USD', Amount('74.00', 'CAD'), date(2013,2,3)), to_decimal('123.45'))
+        position = Position(Lot('USD', None, None),
+                            to_decimal('123.45'))
+        position = Position(Lot('USD', Amount('74.00', 'CAD'), None),
+                            to_decimal('123.45'))
+        position = Position(Lot('USD', Amount('74.00', 'CAD'), date(2013,2,3)),
+                            to_decimal('123.45'))
         with self.assertRaises(Exception):
             Position(None, to_decimal('123.45'))
         with self.assertRaises(Exception):

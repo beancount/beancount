@@ -18,7 +18,8 @@ from beancount.core import account_types
 from beancount.core import data
 from beancount.core.amount import ZERO, Decimal, Amount, amount_div
 from beancount.core.position import Lot, Position
-from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price, Note, Document, FileLocation, Posting
+from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price, Note, Document
+from beancount.core.data import FileLocation, Posting
 from beancount.core.balance import balance_incomplete_postings
 from beancount.core.balance import compute_residual, SMALL_EPSILON
 
@@ -449,7 +450,9 @@ class Builder(object):
         # If the price is specified for the entire amount, compute the effective
         # price here and forget about that detail of the input syntax.
         if istotal:
-            price = Amount(ZERO if position.number == ZERO else price.number / position.number, price.currency)
+            price = Amount(ZERO
+                           if position.number == ZERO
+                           else price.number / position.number, price.currency)
         return Posting(None, account, position, price, chr(flag) if flag else None)
 
 

@@ -124,7 +124,8 @@ class YearView(View):
         begin_date = datetime.date(self.year, 1, 1)
         end_date = datetime.date(self.year+1, 1, 1)
         with misc_utils.print_time('clamp'):
-            entries, index = summarize.clamp(entries, begin_date, end_date, options_map, *previous_accounts)
+            entries, index = summarize.clamp(entries, begin_date, end_date, options_map,
+                                             *previous_accounts)
 
         return entries, index
 
@@ -142,9 +143,10 @@ class TagView(View):
         "Return only entries with the given tag."
 
         tags = self.tags
-        tagged_entries = [entry
-                          for entry in entries
-                          if isinstance(entry, data.Transaction) and entry.tags and (entry.tags & tags)]
+        tagged_entries = [
+            entry
+            for entry in entries
+            if isinstance(entry, data.Transaction) and entry.tags and (entry.tags & tags)]
 
         return tagged_entries, None
 

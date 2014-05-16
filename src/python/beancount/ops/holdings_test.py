@@ -50,11 +50,16 @@ class TestPositionEntries(unittest.TestCase):
 
         holdings_list = sorted(map(tuple, holdings_list))
         expected_values = [
-            ('Assets:Account1', D('10'), 'GOOG', D('523.46'), 'USD', D('5234.60'), None, None, None),
-            ('Assets:Account1', D('11'), 'GOOG', D('518.73'), 'USD', D('5706.03'), None, None, None),
-            ('Assets:Account3', D('50'), 'GOOG', D('540.00'), 'USD', D('27000.00'), None, None, None),
-            ('Assets:Cash', D('12059.37'), 'USD', None, None, None, None, None, None),
-            ('Equity:Unknown', D('-50000'), 'USD', None, None, None, None, None, None),
+            ('Assets:Account1', D('10'), 'GOOG', D('523.46'), 'USD',
+             D('5234.60'), None, None, None),
+            ('Assets:Account1', D('11'), 'GOOG', D('518.73'), 'USD',
+             D('5706.03'), None, None, None),
+            ('Assets:Account3', D('50'), 'GOOG', D('540.00'), 'USD',
+             D('27000.00'), None, None, None),
+            ('Assets:Cash', D('12059.37'), 'USD', None, None,
+             None, None, None, None),
+            ('Equity:Unknown', D('-50000'), 'USD', None, None,
+             None, None, None, None),
         ]
         self.assertEqual(expected_values, holdings_list)
 

@@ -13,7 +13,8 @@ import threading
 import bottle
 from bottle import response, request
 
-from beancount.core.data import Open, Close, Pad, Balance, Transaction, Note, Document, Event, Posting
+from beancount.core.data import Open, Close, Pad, Balance, Transaction, Note, Document, Event
+from beancount.core.data import Posting
 from beancount.core import data
 from beancount.core import flags
 from beancount.core import getters
@@ -108,13 +109,15 @@ def toc():
     if 0:
         # By level.
         all_accounts_names = getters.get_accounts(app.entries).keys()
-        viewboxes.append(('level1', 'Level 1',
-                          [(view_url('level1', level=level), '{}'.format(level))
-                           for level in getters.get_leveln_parent_accounts(all_accounts_names, 1, nrepeats=0)]))
+        viewboxes.append(
+            ('level1', 'Level 1',
+             [(view_url('level1', level=level), '{}'.format(level))
+              for level in getters.get_leveln_parent_accounts(all_accounts_names, 1, nrepeats=0)]))
 
-        viewboxes.append(('level2', 'Level 2',
-                          [(view_url('level2', level=level), '{}'.format(level))
-                           for level in getters.get_leveln_parent_accounts(all_accounts_names, 2, nrepeats=0)]))
+        viewboxes.append(
+            ('level2', 'Level 2',
+             [(view_url('level2', level=level), '{}'.format(level))
+              for level in getters.get_leveln_parent_accounts(all_accounts_names, 2, nrepeats=0)]))
 
     # FIXME: This deserves its own page, with options for cleanup (or a helper tool).
     if 0:
@@ -443,20 +446,6 @@ def approot():
     bottle.redirect(request.app.get_url('balsheet'))
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @viewapp.route('/trial', name='trial')
 def trial():
     "Trial balance / Chart of Accounts."
@@ -483,9 +472,12 @@ def balance_sheet_table(real_accounts, options):
     """Render an HTML balance sheet of the real_accounts tree."""
 
     operating_currencies = options['operating_currency']
-    assets      = acctree.table_of_balances(real_accounts, options['name_assets'], operating_currencies)
-    liabilities = acctree.table_of_balances(real_accounts, options['name_liabilities'], operating_currencies)
-    equity      = acctree.table_of_balances(real_accounts, options['name_equity'], operating_currencies)
+    assets      = acctree.table_of_balances(real_accounts, options['name_assets'],
+                                            operating_currencies)
+    liabilities = acctree.table_of_balances(real_accounts, options['name_liabilities'],
+                                            operating_currencies)
+    equity      = acctree.table_of_balances(real_accounts, options['name_equity'],
+                                            operating_currencies)
 
     return """
            <div class="halfleft">
@@ -549,8 +541,10 @@ def income():
 
     # Render the income statement tables.
     operating_currencies = view.options['operating_currency']
-    income   = acctree.table_of_balances(real_accounts, view.options['name_income'], operating_currencies)
-    expenses = acctree.table_of_balances(real_accounts, view.options['name_expenses'], operating_currencies)
+    income   = acctree.table_of_balances(real_accounts, view.options['name_income'],
+                                         operating_currencies)
+    expenses = acctree.table_of_balances(real_accounts, view.options['name_expenses'],
+                                         operating_currencies)
 
     contents = """
        <div id="income" class="halfleft">

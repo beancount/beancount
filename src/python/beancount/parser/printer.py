@@ -69,7 +69,8 @@ class EntryPrinter:
             assert posting.account is not None
             position = str(posting.position) if posting.position else ''
             price_str = '@ {}'.format(posting.price) if posting.price else ''
-            oss.write('  {}{:64} {:>16} {:>16}'.format(flag, posting.account, position, price_str).rstrip())
+            oss.write('  {}{:64} {:>16} {:>16}'.format(flag, posting.account,
+                                                       position, price_str).rstrip())
             oss.write('\n')
 
     def Balance(_, entry, oss):
@@ -85,7 +86,8 @@ class EntryPrinter:
         oss.write('{e.date} pad {e.account} {e.account_pad}\n'.format(e=entry))
 
     def Open(_, entry, oss):
-        oss.write('{e.date} open {e.account} {currencies}\n'.format(e=entry, currencies=','.join(entry.currencies or [])))
+        oss.write('{e.date} open {e.account} {currencies}\n'.format(
+            e=entry, currencies=','.join(entry.currencies or [])))
 
     def Close(_, entry, oss):
         oss.write('{e.date} close {e.account}\n'.format(e=entry))

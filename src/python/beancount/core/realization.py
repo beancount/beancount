@@ -98,7 +98,8 @@ class RealAccount:
         """
         return self.children.values()
 
-    # FIXME: Do I really need to support more than direct children here? Remove if possible before 2.0 release.
+    # FIXME: Do I really need to support more than direct children here? Remove
+    # if possible before 2.0 release.
     def __contains__(self, account_name_leaf):
         """True if the given string is in this RealAccount instance.
 
