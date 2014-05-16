@@ -162,7 +162,7 @@ sfood:
 	sfood-checker bin src/python
 
 # Run the linter on all source code.
-LINT_PASS=line-too-long,bad-whitespace,bad-continuation
+LINT_PASS=line-too-long,bad-whitespace,bad-continuation,bad-indentation
 LINT_FAIL=
 
 pylint-pass:

@@ -429,8 +429,8 @@ class Builder(object):
         """
         fileloc = FileLocation(filename, lineno)
         if not path.isabs(document_filename):
-          document_filename = path.abspath(path.join(path.dirname(filename),
-                                                     document_filename))
+            document_filename = path.abspath(path.join(path.dirname(filename),
+                                                       document_filename))
 
         return Document(fileloc, date, account, document_filename)
 

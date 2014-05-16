@@ -20,7 +20,7 @@ EMS_PER_SPACE = 2.5
 
 
 def real_account_name(real_account):
-   return real_account.fullname.split(account.sep)[-1]
+    return real_account.fullname.split(account.sep)[-1]
 
 
 def real_account_children(real_account):

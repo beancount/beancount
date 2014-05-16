@@ -31,7 +31,7 @@ def gviz_timeline(time_array, data_array_map, css_id='chart'):
     # Declare columns.
     oss.write("data.addColumn('{}', '{}');\n".format('datetime', 'Time'))
     for name, _ in data_array_map:
-      oss.write("data.addColumn('{}', '{}');\n".format('number', name))
+        oss.write("data.addColumn('{}', '{}');\n".format('number', name))
 
     # Render the rows.
     oss.write('data.addRows([\n')

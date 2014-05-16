@@ -59,4 +59,4 @@ def _render_node(node, context, is_last, prefix):
     for i, child in enumerate(children):
         # Render the child's lines (recurse).
         for line_node in _render_node(child, context, i == last_i, child_prefix):
-          yield line_node
+            yield line_node

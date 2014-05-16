@@ -592,14 +592,14 @@ def equity():
             body.write('<td>{}</td>'.format(position.lot.currency))
             body.write('<td>{}</td>'.format(position.number))
             for currency in operating_currencies:
-              date_, rate = prices.get_latest_price(app.price_map,
-                                                    (position.lot.currency, currency))
-              value = position.number * rate
+                date_, rate = prices.get_latest_price(app.price_map,
+                                                      (position.lot.currency, currency))
+                value = position.number * rate
 
-              # FIXME: We may not have an appropriate conversion here, we may need
-              # to get the cost and then convert the cost to the target currency. Do
-              # this.
-              body.write('<td>{}</td>'.format(value))
+                # FIXME: We may not have an appropriate conversion here, we may need
+                # to get the cost and then convert the cost to the target currency. Do
+                # this.
+                body.write('<td>{}</td>'.format(value))
             body.write('</tr>')
 
         contents = """
@@ -801,7 +801,7 @@ def documents():
     if document_entries:
         journal.entries_table(app, oss, document_entries)
     else:
-      oss.write("(No documents.)")
+        oss.write("(No documents.)")
     return render_view(
         pagetitle="Documents",
         contents=oss.getvalue())
