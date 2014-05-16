@@ -175,4 +175,4 @@ pylint-all:
 	pylint --rcfile=$(PWD)/etc/pylintrc $(SRC)
 
 # Run all currently configured linter checks.
-lint: sfood pylint-current
+lint: sfood pylint-pass

@@ -137,7 +137,7 @@ notes=FIXME,XXX,TODO
 required-attributes=
 
 # List of builtins function names that should not be used, separated by a comma
-bad-functions=map,filter,apply
+bad-functions=
 
 # Good variable names which should always be accepted, separated by a comma
 good-names=i,j,k,ex,Run,_
