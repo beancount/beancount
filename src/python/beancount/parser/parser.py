@@ -658,6 +658,7 @@ class LexOnlyBuilder(object):
     """A builder used only for getting the lexer to pass.
     The methods do nothing."""
 
+    # pylint: disable=bad-whitespace
     def DATE(self, year, month, day): pass
     def ACCOUNT(self, s):             pass
     def CURRENCY(self, s):            pass

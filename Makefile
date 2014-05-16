@@ -49,11 +49,6 @@ grind:
 	valgrind --leak-check=full /usr/local/bin/python3 bean-sandbox $(INPUT)
 
 
-# Check for unused imports.
-check-deps checkdeps:
-	sfood-checker bin src/python 2>&1 | grep -v bean-sandbox
-
-
 # Compute and plot inter-module dependencies.
 # We want to insure a really strict set of relationships between the modules,
 # and this is the high-level picture.
@@ -161,11 +156,21 @@ sandbox:
 status test-status:
 	./etc/find-missing-tests.py $(SRC)
 
-# Run the linter on all source code.
-lint:
-	pylint --rcfile=$(PWD)/etc/pylintrc $(SRC)
 
-# Run only a single linter test at a time.
-LINT_TEST=line-too-long
-lint1:
-	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_TEST) $(SRC)
+# Check for unused imports.
+sfood:
+	sfood-checker bin src/python
+
+# Run the linter on all source code.
+LINT_PASS=line-too-long,bad-whitespace
+LINT_FAIL=line-too-long
+
+pylint-all:
+	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_PASS) $(SRC)
+
+pylint-one:
+	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all  --enable=$(LINT_FAIL) $(SRC)
+
+
+# Run all currently configured linter checks.
+lint: sfood pylint-all

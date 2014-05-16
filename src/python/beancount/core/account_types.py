@@ -47,7 +47,7 @@ def update_valid_account_names(account_types=DEFAULT_ACCOUNT_TYPES):
     assert isinstance(account_types, (AccountTypes, type(None)))
     global ACCOUNT_TYPES, TYPES_ORDER
     ACCOUNT_TYPES = account_types
-    TYPES_ORDER = dict((x,i) for (i,x) in enumerate(account_types))
+    TYPES_ORDER = dict((x, i) for (i, x) in enumerate(account_types))
 
 
 update_valid_account_names(DEFAULT_ACCOUNT_TYPES)
@@ -142,5 +142,3 @@ def is_income_statement_account(account_name, options):
     # FIXME: Use account_types.ACCOUNT_TYPES instead of options?
     return account_type in (options[x] for x in ('name_income',
                                                  'name_expenses'))
-
-

@@ -54,7 +54,7 @@ class TestInventory(unittest.TestCase):
     def checkAmount(self, inventory, number, currency):
         amount = Amount(number, currency)
         inv_amount = inventory.get_amount(amount.currency)
-        self.assertEqual(inv_amount , amount)
+        self.assertEqual(inv_amount, amount)
 
     def test_ctor_empty_len(self):
         # Test regular constructor.
@@ -247,7 +247,7 @@ class TestInventory(unittest.TestCase):
         inv.add(Amount('50', 'GOOG'), Amount('700', 'USD'))
         self.checkAmount(inv, '50', 'GOOG')
 
-        inv.add(Amount('-40', 'GOOG') , Amount('700', 'USD'))
+        inv.add(Amount('-40', 'GOOG'), Amount('700', 'USD'))
         self.checkAmount(inv, '10', 'GOOG')
 
         with self.assertRaises(ValueError):
@@ -258,7 +258,7 @@ class TestInventory(unittest.TestCase):
         inv.add(Amount('50', 'GOOG'), Amount('700', 'USD'), date(2000, 1, 1))
         self.checkAmount(inv, '50', 'GOOG')
 
-        inv.add(Amount('-40', 'GOOG') , Amount('700', 'USD'), date(2000, 1, 1))
+        inv.add(Amount('-40', 'GOOG'), Amount('700', 'USD'), date(2000, 1, 1))
         self.checkAmount(inv, '10', 'GOOG')
 
         with self.assertRaises(ValueError):

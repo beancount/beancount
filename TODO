@@ -89,6 +89,7 @@ beancount: TODO
   - Make sure all exceptions do NOT end with a period, nor do any of the
     logging.*() calls.
 
+  - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
 
 * Current
 

@@ -145,16 +145,16 @@ def toc():
     oss.write('</div> <!-- viewboxes -->\n')
 
     return render_global(
-        pagetitle = "Table of Contents",
-        contents = oss.getvalue())
+        pagetitle="Table of Contents",
+        contents=oss.getvalue())
 
 
 @app.route('/errors', name='errors')
 def errors():
     "Report error encountered during parsing, checking and realization."
     return render_global(
-        pagetitle = "Errors",
-        contents = NOT_IMPLEMENTED
+        pagetitle="Errors",
+        contents=NOT_IMPLEMENTED
         )
 
 
@@ -175,8 +175,8 @@ def source():
         contents.write('</div>')
 
     return render_global(
-        pagetitle = "Source",
-        contents = contents.getvalue()
+        pagetitle="Source",
+        contents=contents.getvalue()
         )
 
 
@@ -223,9 +223,9 @@ def update():
                          else '-')
 
     return render_global(
-        pagetitle = "Update Activity",
-        contents = oss.getvalue(),
-        errors = errors
+        pagetitle="Update Activity",
+        contents=oss.getvalue(),
+        errors=errors
         )
 
 def find_last_active_posting(postings):
@@ -263,9 +263,9 @@ def events():
         contents.write(str(len(events)))
 
     return render_global(
-        pagetitle = "Events",
-        ##contents = contents.getvalue() # FIXME: TODO
-        contents = NOT_IMPLEMENTED
+        pagetitle="Events",
+        ##contents=contents.getvalue() # FIXME: TODO
+        contents=NOT_IMPLEMENTED
         )
 
 
@@ -290,8 +290,8 @@ def prices_():
         """.format('\n'.join(map('<li>{}</li>'.format, links))))
 
     return render_global(
-        pagetitle = "Prices",
-        contents = """
+        pagetitle="Prices",
+        contents="""
           <table id="price-index">
             <tr>
             {}
@@ -308,14 +308,14 @@ def prices_values(base=None, quote=None):
     scripts = gviz.gviz_timeline(dates, {'rates': rates, 'rates2': rates})
 
     return render_global(
-        pagetitle = "Price: {} / {}".format(base, quote),
-        scripts = """
+        pagetitle="Price: {} / {}".format(base, quote),
+        scripts="""
           <script src="//www.google.com/jsapi" type="text/javascript"></script>
           <script type="text/javascript">
             {}
           </script>
         """.format(scripts),
-        contents = """
+        contents="""
            <div id="chart" style="height: 800px"></div>
            <div id="price-table">
              <table id="prices">
@@ -339,8 +339,8 @@ def link(link=None):
     oss = io.StringIO()
     journal.entries_table_with_balance(app, oss, linked_entries)
     return render_global(
-        pagetitle = "Link: {}".format(link),
-        contents = oss.getvalue())
+        pagetitle="Link: {}".format(link),
+        contents=oss.getvalue())
 
 
 
@@ -463,8 +463,8 @@ def trial():
     """.format(total_balance.get_cost())
 
     return render_view(
-        pagetitle = "Trial Balance",
-        contents = table
+        pagetitle="Trial Balance",
+        contents=table
         )
 
 
@@ -472,12 +472,12 @@ def balance_sheet_table(real_accounts, options):
     """Render an HTML balance sheet of the real_accounts tree."""
 
     operating_currencies = options['operating_currency']
-    assets      = acctree.table_of_balances(real_accounts, options['name_assets'],
-                                            operating_currencies)
+    assets = acctree.table_of_balances(real_accounts, options['name_assets'],
+                                       operating_currencies)
     liabilities = acctree.table_of_balances(real_accounts, options['name_liabilities'],
                                             operating_currencies)
-    equity      = acctree.table_of_balances(real_accounts, options['name_equity'],
-                                            operating_currencies)
+    equity = acctree.table_of_balances(real_accounts, options['name_equity'],
+                                       operating_currencies)
 
     return """
            <div class="halfleft">
@@ -513,8 +513,8 @@ def balsheet():
     real_accounts = request.view.closing_real_accounts
     contents = balance_sheet_table(real_accounts, view.options)
 
-    return render_view(pagetitle = "Balance Sheet",
-                      contents = contents)
+    return render_view(pagetitle="Balance Sheet",
+                      contents=contents)
 
 
 @viewapp.route('/openbal', name='openbal')
@@ -528,8 +528,8 @@ def openbal():
     else:
         contents = balance_sheet_table(real_accounts, view.options)
 
-    return render_view(pagetitle = "Opening Balances",
-                      contents = contents)
+    return render_view(pagetitle="Opening Balances",
+                       contents=contents)
 
 
 @viewapp.route('/income', name='income')
@@ -541,8 +541,8 @@ def income():
 
     # Render the income statement tables.
     operating_currencies = view.options['operating_currency']
-    income   = acctree.table_of_balances(real_accounts, view.options['name_income'],
-                                         operating_currencies)
+    income = acctree.table_of_balances(real_accounts, view.options['name_income'],
+                                       operating_currencies)
     expenses = acctree.table_of_balances(real_accounts, view.options['name_expenses'],
                                          operating_currencies)
 
@@ -565,8 +565,8 @@ def income():
        </div>
     """.format(**vars())
 
-    return render_view(pagetitle = "Income Statement",
-                      contents = contents)
+    return render_view(pagetitle="Income Statement",
+                       contents=contents)
 
 
 @viewapp.route('/equity', name='equity')
@@ -617,8 +617,8 @@ def equity():
         ## FIXME: Render the equity at opening too.
         ## FIXME: Insert a summary of the net income.
 
-    return render_view(pagetitle = "Shareholder's Equity",
-                       contents = NOT_IMPLEMENTED)
+    return render_view(pagetitle="Shareholder's Equity",
+                       contents=NOT_IMPLEMENTED)
 
 
 @viewapp.route('/journal', name='journal')
@@ -652,8 +652,8 @@ def account_(slashed_account_name=None):
     oss = io.StringIO()
     journal.entries_table_with_balance(app, oss, account_postings)
     return render_view(
-        pagetitle = '{}'.format(account_name or 'ROOT'),
-        contents = oss.getvalue())
+        pagetitle='{}'.format(account_name or 'ROOT'),
+        contents=oss.getvalue())
 
 
 def get_conversion_entries(entries):
@@ -676,8 +676,8 @@ def conversions():
     balance = summarize.compute_total_balance(conversion_entries)
 
     return render_view(
-        pagetitle = "Conversions",
-        contents = """
+        pagetitle="Conversions",
+        contents="""
           <div id="table">
             {}
           </div>
@@ -702,8 +702,8 @@ FORMATTERS = {
 def holdings_overview():
     "Render an index of the pages detailing holdings."
     return render_view(
-        pagetitle = "Holdings",
-        contents = """
+        pagetitle="Holdings",
+        contents="""
           <ul>
             <li><a href="{V.holdings_detail}">Detailed Holdings List</a></li>
             <li><a href="{V.holdings_byinstrument}">By Instrument</a></li>
@@ -741,9 +741,9 @@ def holdings_detail():
     oss.write('</center>\n')
 
     return render_view(
-        pagetitle = "Holdings - Detailed List",
-        scripts = '<script src="/third_party/sorttable.js"></script>',
-        contents = oss.getvalue())
+        pagetitle="Holdings - Detailed List",
+        scripts='<script src="/third_party/sorttable.js"></script>',
+        contents=oss.getvalue())
 
 
 @viewapp.route('/holdings/byinstrument', name='holdings_byinstrument')
@@ -775,9 +775,9 @@ def holdings_byinstrument():
     oss.write('</center>\n')
 
     return render_view(
-        pagetitle = "Holdings - By Instrument",
-        scripts = '<script src="/third_party/sorttable.js"></script>',
-        contents = oss.getvalue())
+        pagetitle="Holdings - By Instrument",
+        scripts='<script src="/third_party/sorttable.js"></script>',
+        contents=oss.getvalue())
 
 
 #--------------------------------------------------------------------------------
@@ -787,8 +787,8 @@ def holdings_byinstrument():
 def trades():
     "Render a list of the transactions booked against inventory-at-cost."
     return render_view(
-        pagetitle = "Trades",
-        contents = NOT_IMPLEMENTED
+        pagetitle="Trades",
+        contents=NOT_IMPLEMENTED
         )
 
 
@@ -802,8 +802,8 @@ def documents():
     else:
       oss.write("(No documents.)")
     return render_view(
-        pagetitle = "Documents",
-        contents = oss.getvalue())
+        pagetitle="Documents",
+        contents=oss.getvalue())
 
 
 def row_data_to_html_rows(items):
@@ -866,8 +866,8 @@ def stats():
                rows_postings=row_data_to_html_rows(rows_postings))
 
     return render_view(
-        pagetitle = "View Statistics",
-        contents = contents
+        pagetitle="View Statistics",
+        contents=contents
         )
 
 

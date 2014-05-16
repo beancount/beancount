@@ -12,15 +12,15 @@ class TestBisectWithKey(unittest.TestCase):
         data = [(random.random(), i) for i in range(100)]
         index = bisect_left_withkey(data, 40, key=second)
         self.assertEqual(index, 40)
-        self.assertEqual(data[index][1] , 40)
+        self.assertEqual(data[index][1], 40)
 
         index = bisect_left_withkey(data, 0, key=second)
         self.assertEqual(index, 0)
-        self.assertEqual(data[index][1] , 0)
+        self.assertEqual(data[index][1], 0)
 
         index = bisect_left_withkey(data, -1, key=second)
         self.assertEqual(index, 0)
-        self.assertEqual(data[index][1] , 0)
+        self.assertEqual(data[index][1], 0)
 
         index = bisect_left_withkey(data, 99, key=second)
         self.assertEqual(index, 99)

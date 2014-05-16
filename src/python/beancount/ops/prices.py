@@ -98,7 +98,7 @@ def build_price_map(entries):
     price_map = defaultdict(list)
     for price in price_entries:
         base_quote = (price.currency, price.amount.currency)
-        price_map[base_quote].append( (price.date, price.amount.number) )
+        price_map[base_quote].append((price.date, price.amount.number))
 
     # Find pairs of inversed units.
     inversed_units = []

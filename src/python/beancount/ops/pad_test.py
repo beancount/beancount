@@ -15,7 +15,7 @@ class __TestPadding(unittest.TestCase):
 
     def check_real_types(self, real_account, entry_types):
         """Check the types of entries rendered."""
-        self.assertEqual(list(map(type,  real_account.postings)),
+        self.assertEqual(list(map(type, real_account.postings)),
                          entry_types)
 
     def check_balance(self, real_account, position):
@@ -57,7 +57,7 @@ class __TestPadding(unittest.TestCase):
           2013-06-01 check Assets:Checking   200 USD
 
         """
-        ## FIXME - if we run check() , this should be true: 
+        ## FIXME - if we run check() , this should be true:
         ## self.assertEqual(len(errors), 1)
 
 

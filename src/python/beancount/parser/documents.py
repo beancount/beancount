@@ -173,7 +173,7 @@ def find_documents(root_directory, location_filename, accounts):
 
             # Found one! Create a new directive.
             fileloc = FileLocation(location_filename, -1)
-            date = datetime.date(*map(int, mo.group(1,2,3)))
+            date = datetime.date(*map(int, mo.group(1, 2, 3)))
             entry = Document(fileloc, date, account, path.join(root, filename))
             new_entries.append(entry)
 

@@ -442,14 +442,14 @@ def iterate_with_balance(postings_or_entries):
             # grouping their positions together.
             index = misc_utils.index_key(date_entries, entry, first, operator.is_)
             if index is None:
-                date_entries.append( (entry, [posting]) )
+                date_entries.append((entry, [posting]))
             else:
                 # We are indeed de-duping!
                 postings = date_entries[index][1]
                 postings.append(posting)
         else:
             # This is a regular entry; nothing to add/remove.
-            date_entries.append( (entry, []) )
+            date_entries.append((entry, []))
 
     # Flush the final dated entries if any, same as above.
     for date_entry, date_postings in date_entries:
@@ -477,7 +477,7 @@ def reorder_accounts_node_by_declaration(real_account):
     children = []
     for child_account in real_account.children:
         fileloc = reorder_accounts_node_by_declaration(child_account)
-        children.append( (fileloc, child_account) )
+        children.append((fileloc, child_account))
 
     children.sort()
     real_account.children[:] = [x[1] for x in children]
@@ -500,7 +500,7 @@ def reorder_accounts_node_by_date(real_account):
     children = []
     for child_account in real_account.children:
         reorder_accounts_node_by_date(child_account)
-        children.append( (child_date, child_account) )
+        children.append((child_date, child_account))
     children.sort(reverse=True)
 
     real_account.children[:] = [x[1] for x in children]

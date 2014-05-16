@@ -1,7 +1,7 @@
 """Flag constants.
 """
 
-# Special flags
+# Special flags;  pylint: disable=bad-whitespace
 FLAG_OKAY        = '*' # Transactions that have been checked.
 FLAG_WARNING     = '!' # Mark by the user as something to be looked at later on.
 FLAG_PADDING     = 'P' # Transactions created from padding directives.

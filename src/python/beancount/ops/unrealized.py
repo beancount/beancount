@@ -50,9 +50,9 @@ def unrealized_gains(entries, subaccount_name, account_types):
         book_value = Decimal()
         for holding in holdings_list:
             number = holding.number
-            total_units  += number
+            total_units += number
             market_value += number * price_number
-            book_value   += number * holding.cost_number
+            book_value += number * holding.cost_number
 
         pnl = market_value - book_value
 
