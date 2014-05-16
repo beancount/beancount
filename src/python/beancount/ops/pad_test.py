@@ -83,7 +83,7 @@ class __TestPadding(unittest.TestCase):
         """
         self.assertEqual(len(errors), 0)
         self.check_real_types(real_accounts['Assets:Checking'],
-                            [Open, Pad, Posting, Balance, Posting, Pad, Posting, Balance])
+                              [Open, Pad, Posting, Balance, Posting, Pad, Posting, Balance])
 
     @realizedoc
     def test_pad_check_balances(self, entries, real_accounts, errors):

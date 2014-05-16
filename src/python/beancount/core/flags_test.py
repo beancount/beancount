@@ -11,6 +11,7 @@ class TestFlags(unittest.TestCase):
         names = set()
         values = set()
         for name, value in flags.__dict__.items():
+            # pylint: disable=bad-continuation
             if (not name.startswith("FLAG_") or
                 name in self.ALLOW_NOT_UNIQUE):
                 continue

@@ -242,6 +242,7 @@ def find_last_active_posting(postings):
     """
     for posting in misc_utils.filter_type(reversed(postings),
                                           (Open, Close, Pad, Balance, Posting, Note)):
+        # pylint: disable=bad-continuation
         if (isinstance(posting, Posting) and
             posting.entry.flag == flags.FLAG_UNREALIZED):
             continue
@@ -514,7 +515,7 @@ def balsheet():
     contents = balance_sheet_table(real_accounts, view.options)
 
     return render_view(pagetitle="Balance Sheet",
-                      contents=contents)
+                       contents=contents)
 
 
 @viewapp.route('/openbal', name='openbal')
@@ -818,7 +819,7 @@ def stats():
 
     # Count the number of entries by type.
     entries_by_type = misc_utils.groupby(lambda entry: type(entry).__name__,
-                                    request.view.entries)
+                                         request.view.entries)
     nb_entries_by_type = {name: len(entries)
                           for name, entries in entries_by_type.items()}
     rows_entries = sorted(nb_entries_by_type.items(), key=lambda x: -x[1])
@@ -830,7 +831,7 @@ def stats():
                     if isinstance(entry, Transaction)
                     for posting in entry.postings]
     postings_by_account = misc_utils.groupby(lambda posting: posting.account,
-                                        all_postings)
+                                             all_postings)
     nb_postings_by_account = {key: len(postings)
                               for key, postings in postings_by_account.items()}
     rows_postings = sorted(nb_postings_by_account.items(), key=lambda x: -x[1])
@@ -1050,6 +1051,7 @@ def incognito(callback):
 
     def wrapper(*posargs, **kwargs):
         contents = callback(*posargs, **kwargs)
+        # pylint: disable=bad-continuation
         if (response.content_type in ('text/html', '') and
             isinstance(contents, str)):
             contents = replace_numbers(contents)

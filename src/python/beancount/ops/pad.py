@@ -140,12 +140,14 @@ def group_postings_by_account(entries, only_accounts=None):
 
         if isinstance(entry, Transaction):
             for posting in entry.postings:
+                # pylint: disable=bad-continuation
                 if (only_accounts is not None and
                     posting.account not in only_accounts):
                     continue
                 by_accounts[posting.account].append(posting)
 
         elif isinstance(entry, (Balance, Open, Close, Pad, Note, Document)):
+            # pylint: disable=bad-continuation
             if (only_accounts is not None and
                 entry.account not in only_accounts):
                 continue

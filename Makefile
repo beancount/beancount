@@ -162,15 +162,17 @@ sfood:
 	sfood-checker bin src/python
 
 # Run the linter on all source code.
-LINT_PASS=line-too-long,bad-whitespace
-LINT_FAIL=line-too-long
+LINT_PASS=line-too-long,bad-whitespace,bad-continuation
+LINT_FAIL=
 
-pylint-all:
+pylint-pass:
 	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_PASS) $(SRC)
 
-pylint-one:
+pylint-fail:
 	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all  --enable=$(LINT_FAIL) $(SRC)
 
+pylint-all:
+	pylint --rcfile=$(PWD)/etc/pylintrc $(SRC)
 
 # Run all currently configured linter checks.
-lint: sfood pylint-all
+lint: sfood pylint-current

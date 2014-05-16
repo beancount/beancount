@@ -91,7 +91,7 @@ class TestAmount(unittest.TestCase):
     def test_sub(self):
         self.assertEqual(Amount('82.98', 'CAD'),
                          amount.amount_sub(Amount('100', 'CAD'),
-                                    Amount('17.02', 'CAD')))
+                                           Amount('17.02', 'CAD')))
         with self.assertRaises(ValueError):
             amount.amount_sub(Amount('100', 'USD'),
-                       Amount('17.02', 'CAD'))
+                              Amount('17.02', 'CAD'))

@@ -112,13 +112,13 @@ def main():
 
     web_group = web.add_web_arguments(parser)
     web_group.set_defaults(port=9475)
-    
+
     group = parser.add_argument_group("Bake process arguments")
 
     group.add_argument('output',
                        help=('The output directory or archive name. If you '
                              'specify a filename with a well-known extension,'
-                              'we automatically archive the fetched directory '
+                             'we automatically archive the fetched directory '
                              'contents to this archive name and delete them.'))
 
     group.add_argument('--verbose', action='store_true',

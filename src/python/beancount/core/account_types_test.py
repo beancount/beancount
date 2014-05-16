@@ -78,7 +78,7 @@ class TestAccountGlobals(unittest.TestCase):
                 ("Income", True),
                 ("Expenses", True),
                 ("Invalid", False),
-                ]:
+        ]:
             self.assertEqual(expected,
                              account_types.is_account_name_root(account_name))
 
@@ -95,7 +95,7 @@ class TestAccountGlobals(unittest.TestCase):
                 ("Equity:OpeningBalances", True),
                 ("Income:US:ETrade:Dividends", False),
                 ("Expenses:Toys:Computer", False),
-                ]:
+        ]:
             self.assertEqual(expected,
                              account_types.is_balance_sheet_account(account_name, self.OPTIONS))
 

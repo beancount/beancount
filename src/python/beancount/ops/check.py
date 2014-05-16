@@ -41,8 +41,8 @@ def check(entries):
                 except ValueError as e:
                     check_errors.append(
                         BalanceError(entry.fileloc,
-                                   "Error balancing '{}' -- {}".format(posting.account, e),
-                                   entry))
+                                     "Error balancing '{}' -- {}".format(posting.account, e),
+                                     entry))
 
         elif isinstance(entry, Balance):
             # Check the balance against the check entry.
@@ -70,7 +70,7 @@ def check(entries):
                                   "expected {} != accumulated {} ({} {})").format(
                                       entry.account, balance_amount, check_amount,
                                       diff_amount,
-                                     'too much' if diff_amount else 'too little'),
+                                      'too much' if diff_amount else 'too little'),
                                  entry))
 
                 # Substitute the entry by a failing entry.
