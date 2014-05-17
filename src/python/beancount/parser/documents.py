@@ -125,7 +125,7 @@ def walk_accounts(root_directory):
     for root, dirs, files in os.walk(root_directory):
         relroot = root[len(root_directory)+1:]
         account_name = relroot.replace(os.sep, account.sep)
-        if account_types.is_account_name(account_name):
+        if account_types.is_valid_account_name(account_name):
             yield (root, account_name, dirs, files)
 
 

@@ -278,8 +278,10 @@ def prices_():
     "Render a list of links to instruments, to list their prices."
 
     oss = io.StringIO()
-    for quote, baselist in sorted(misc_utils.groupby(lambda x: x[1], app.price_map.keys()).items(),
-                                  key=lambda x: -len(x[1])):
+    for quote, baselist in sorted(
+        misc_utils.groupby(lambda x: x[1], app.price_map.keys()).items(),
+        key=lambda x: -len(x[1])):
+
         links = ['<a href="{link}">{0} ({1})</a>'.format(
             base_, quote_,
             link=request.app.get_url('prices_values', base=base_, quote=quote_)
@@ -457,7 +459,8 @@ def trial():
     view = request.view
     real_accounts = view.real_accounts
     operating_currencies = view.options['operating_currency']
-    table = acctree.table_of_balances(real_accounts, '', operating_currencies, classes=['trial'])
+    table = acctree.table_of_balances(real_accounts, '', operating_currencies,
+                                      classes=['trial'])
 
 
     ## FIXME: After conversions is fixed, this should always be zero.
@@ -580,8 +583,8 @@ def equity():
     if 0:
         view = request.view
 
-        balance = summarize.compute_balance_for_prefix(view.closing_entries,
-                                                       '{}:'.format(view.options['name_equity']))
+        balance = summarize.compute_balance_for_prefix(
+            view.closing_entries, '{}:'.format(view.options['name_equity']))
         header = io.StringIO()
         header.write('<th>Currency</th>\n')
         header.write('<th>Amount</th>\n')

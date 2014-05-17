@@ -5,7 +5,7 @@ Sanity checks.
 from os import path
 from collections import namedtuple
 
-from beancount.core.account_types import is_account_name
+from beancount.core.account_types import is_valid_account_name
 from beancount.core.data import Open, Close, Balance, Transaction, Document
 from beancount.core import data
 from beancount.core import getters
@@ -137,7 +137,8 @@ def validate_unused_accounts(entries, accounts):
         if isinstance(entry, Open):
             open_map[entry.account] = entry
             continue
-        referenced_accounts.update(misc_utils.get_tuple_values(entry, is_account_name))
+        referenced_accounts.update(
+            misc_utils.get_tuple_values(entry, is_valid_account_name))
 
     # Unreferenced accounts are unused accounts.
     unused_accounts = set(accounts) - referenced_accounts

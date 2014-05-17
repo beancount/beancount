@@ -83,7 +83,7 @@ def account_name_type(account_name):
     return atype
 
 
-def is_account_name(string):
+def is_valid_account_name(string):
     """Return true if the given string is an account name.
 
     Args:

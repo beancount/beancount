@@ -8,7 +8,7 @@ beancount: TODO
 
   - Rename options -> options_map everywhere for consistency.
 
-  - Add emacs configuration to highlight beyond 100.
+  - Add emacs configuration to highlight beyond 92 in this specific project.
 
   - prices.py and positions.py:
 

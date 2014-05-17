@@ -60,19 +60,20 @@ class TestAccountGlobals(unittest.TestCase):
         with self.assertRaises(AssertionError):
             account_types.account_name_type("Invalid:Toys:Computer")
 
-    def test_is_account_name(self):
-        self.assertTrue(account_types.is_account_name("Assets:US:RBS:Checking"))
-        self.assertTrue(account_types.is_account_name("Equity:OpeningBalances"))
-        self.assertTrue(account_types.is_account_name("Income:US:ETrade:Dividends-USD"))
-        self.assertTrue(account_types.is_account_name("Assets:US:RBS"))
-        self.assertTrue(account_types.is_account_name("Assets:US"))
-        self.assertFalse(account_types.is_account_name("Assets"))
-        self.assertFalse(account_types.is_account_name("Invalid"))
-        self.assertFalse(account_types.is_account_name("Other"))
-        self.assertFalse(account_types.is_account_name("Assets:US:RBS*Checking"))
-        self.assertFalse(account_types.is_account_name("Assets:US:RBS:Checking&"))
-        self.assertFalse(account_types.is_account_name("Assets:US:RBS:checking"))
-        self.assertFalse(account_types.is_account_name("Assets:us:RBS:checking"))
+    def test_is_valid_account_name(self):
+        is_valid = account_types.is_valid_account_name
+        self.assertTrue(is_valid("Assets:US:RBS:Checking"))
+        self.assertTrue(is_valid("Equity:OpeningBalances"))
+        self.assertTrue(is_valid("Income:US:ETrade:Dividends-USD"))
+        self.assertTrue(is_valid("Assets:US:RBS"))
+        self.assertTrue(is_valid("Assets:US"))
+        self.assertFalse(is_valid("Assets"))
+        self.assertFalse(is_valid("Invalid"))
+        self.assertFalse(is_valid("Other"))
+        self.assertFalse(is_valid("Assets:US:RBS*Checking"))
+        self.assertFalse(is_valid("Assets:US:RBS:Checking&"))
+        self.assertFalse(is_valid("Assets:US:RBS:checking"))
+        self.assertFalse(is_valid("Assets:us:RBS:checking"))
 
     def test_is_account_name_root(self):
         for account_name, expected in [
