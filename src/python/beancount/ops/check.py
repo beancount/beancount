@@ -35,14 +35,17 @@ def check(entries):
                 except KeyError:
                     balance = balances[posting.account] = Inventory()
                 try:
-                    # Note: if this is from a padding transaction, we allow negative lots at cost.
-                    allow_negative = entry.flag in (flags.FLAG_PADDING, flags.FLAG_SUMMARIZE)
+                    # Note: if this is from a padding transaction, we allow negative lots at
+                    # cost.
+                    allow_negative = entry.flag in (flags.FLAG_PADDING,
+                                                    flags.FLAG_SUMMARIZE)
                     balance.add_position(posting.position, allow_negative)
                 except ValueError as e:
                     check_errors.append(
-                        BalanceError(entry.fileloc,
-                                     "Error balancing '{}' -- {}".format(posting.account, e),
-                                     entry))
+                        BalanceError(
+                            entry.fileloc,
+                            "Error balancing '{}' -- {}".format(posting.account, e),
+                            entry))
 
         elif isinstance(entry, Balance):
             # Check the balance against the check entry.
@@ -74,7 +77,8 @@ def check(entries):
                                  entry))
 
                 # Substitute the entry by a failing entry.
-                entry = Balance(entry.fileloc, entry.date, entry.account, entry.amount, diff_amount)
+                entry = Balance(entry.fileloc, entry.date, entry.account,
+                                entry.amount, diff_amount)
 
         new_entries.append(entry)
 

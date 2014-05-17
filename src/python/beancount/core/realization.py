@@ -197,7 +197,8 @@ def realize(entries):
         if isinstance(entry, Transaction):
             # Update the balance inventory for each of the postings' accounts.
             for posting in entry.postings:
-                real_account = append_entry_to_real_account(real_dict, posting.account, posting)
+                real_account = append_entry_to_real_account(real_dict,
+                                                            posting.account, posting)
                 real_account.balance.add_position(posting.position, allow_negative=True)
 
         elif isinstance(entry, (Open, Close, Balance, Note, Document)):

@@ -18,7 +18,8 @@ from beancount.core import account_types
 from beancount.core import data
 from beancount.core.amount import ZERO, Decimal, Amount, amount_div
 from beancount.core.position import Lot, Position
-from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price, Note, Document
+from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price
+from beancount.core.data import Note, Document
 from beancount.core.data import FileLocation, Posting
 from beancount.core.balance import balance_incomplete_postings
 from beancount.core.balance import compute_residual, SMALL_EPSILON
@@ -163,14 +164,16 @@ class Builder(object):
         if not self.account_regexp.match(account_name):
             fileloc = FileLocation('<ACCOUNT>', 0)
             self.errors.append(
-                ParserError(fileloc, "Invalid account name: {}".format(account_name), None))
+                ParserError(fileloc,
+                            "Invalid account name: {}".format(account_name), None))
             return account.join(self.options['name_equity'], 'InvalidAccountName')
 
         # Check account type validity.
         account_type = account_name_type(account_name)
         if account_type not in account_types.ACCOUNT_TYPES:
             self.errors.append(
-                ParserError(fileloc, "Invalid account type for: {}".format(account_name), None))
+                ParserError(fileloc,
+                            "Invalid account type for: {}".format(account_name), None))
             return account.join(self.options['name_equity'], 'InvalidAccountType')
 
         # Create an account, reusing their strings as we go.
@@ -519,8 +522,9 @@ class Builder(object):
             payee, narration = None, ""
         else:
             self.errors.append(
-                ParserError(fileloc, "Too many strings on transaction description: {}".format(
-                    txn_fields.strings), None))
+                ParserError(fileloc,
+                            "Too many strings on transaction description: {}".format(
+                                txn_fields.strings), None))
             return None
         return payee, narration
 
@@ -557,7 +561,8 @@ class Builder(object):
         # Detect when a transaction does not have at least two legs.
         if postings is None or len(postings) < 2:
             self.errors.append(
-                ParserError(fileloc, "Invalid number of postings: {}".format(postings), None))
+                ParserError(fileloc,
+                            "Invalid number of postings: {}".format(postings), None))
             return None
 
         # Merge the tags from the stack with the explicit tags of this

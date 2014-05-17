@@ -75,8 +75,9 @@ def iterate_render_transactions(app, postings):
             flag = entry.flag
             description = '<span class="narration">{}</span>'.format(entry.narration)
             if entry.payee:
-                description = '<span class="payee">{}</span><span class="pnsep">|</span>{}'.format(
-                    entry.payee, description)
+                description = ('<span class="payee">{}</span>'
+                               '<span class="pnsep">|</span>'
+                               '{}').format(entry.payee, description)
             change_str = balance_html(change)
 
             if entry.links:
@@ -86,7 +87,8 @@ def iterate_render_transactions(app, postings):
         elif isinstance(entry, Balance):
             # Check the balance here and possibly change the rowtype
             if entry.diff_amount is None:
-                description = 'Balance {} has {}'.format(account_link(entry.account), entry.amount)
+                description = 'Balance {} has {}'.format(account_link(entry.account),
+                                                         entry.amount)
             else:
                 description = ('Balance in {} fails; '
                                'expected = {}, balance = {}, difference = {}').format(
@@ -98,7 +100,8 @@ def iterate_render_transactions(app, postings):
             change_str = str(entry.amount)
 
         elif isinstance(entry, (Open, Close)):
-            description = '{} {}'.format(entry.__class__.__name__, account_link(entry.account))
+            description = '{} {}'.format(entry.__class__.__name__,
+                                         account_link(entry.account))
             change_str = ''
 
         elif isinstance(entry, Note):

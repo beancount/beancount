@@ -76,7 +76,8 @@ Balance = namedtuple('Balance', 'fileloc date account amount diff_amount')
 #   links: A set of link strings (without the '^'), or None, if an empty set.
 #   postings: A list of Posting instances, the legs of this transaction. See the
 #     doc under Posting below.
-Transaction = namedtuple('Transaction', 'fileloc date flag payee narration tags links postings')
+Transaction = namedtuple('Transaction',
+                         'fileloc date flag payee narration tags links postings')
 
 # A note directive, a general note that is attached to an account. These are
 # used to attach text at a particular date in a specific account. The notes can
@@ -233,7 +234,9 @@ def create_simple_posting(entry, account, number, currency):
         entry.postings.append(posting)
     return posting
 
-def create_simple_posting_with_cost(entry, account, number, currency, cost_number, cost_currency):
+def create_simple_posting_with_cost(entry, account,
+                                    number, currency,
+                                    cost_number, cost_currency):
     """Create a simple posting on the entry, with just a number and currency (no cost).
 
     Args:

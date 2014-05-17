@@ -5,7 +5,8 @@ from collections import namedtuple, defaultdict
 from beancount.core.position import Lot, Position
 from beancount.core.inventory import Inventory
 from beancount.core.amount import Decimal, amount_sub
-from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Document, Posting
+from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Document
+from beancount.core.data import Posting
 from beancount.utils import misc_utils
 from beancount.core import flags
 
@@ -79,7 +80,8 @@ def pad(entries):
                         # Note: we decide that it's an error to try to pad
                         # position at cost; we check here that all the existing
                         # positions with that currency have no cost.
-                        positions = balance.get_positions_with_currency(check_amount.currency)
+                        positions = balance.get_positions_with_currency(
+                            check_amount.currency)
                         for position in positions:
                             if position.lot.cost is not None:
                                 pad_errors.append(
@@ -90,19 +92,22 @@ def pad(entries):
 
                         # Thus our padding lot is without cost by default.
                         lot = Lot(check_amount.currency, None, None)
-                        diff_position = Position(lot, check_amount.number - balance_amount.number)
+                        diff_position = Position(
+                            lot, check_amount.number - balance_amount.number)
 
                         # Synthesize a new transaction entry for the difference.
-                        narration = '(Padding inserted for Balance of {} for difference {})'.format(
-                            check_amount, diff_position)
+                        narration = ('(Padding inserted for Balance of {} for '
+                                     'difference {})').format(check_amount, diff_position)
                         new_entry = Transaction(
                             active_pad.fileloc, active_pad.date, flags.FLAG_PADDING,
                             None, narration, None, None, [])
 
                         new_entry.postings.append(
-                            Posting(new_entry, active_pad.account, diff_position, None, None))
+                            Posting(new_entry, active_pad.account, diff_position,
+                                    None, None))
                         new_entry.postings.append(
-                            Posting(new_entry, active_pad.account_pad, -diff_position, None, None))
+                            Posting(new_entry, active_pad.account_pad, -diff_position,
+                                    None, None))
 
                         # Save it for later insertion after the active pad.
                         new_entries[active_pad].append(new_entry)

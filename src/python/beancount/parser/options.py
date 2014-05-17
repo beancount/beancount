@@ -90,9 +90,12 @@ def get_previous_accounts(options):
       previous balances, and previous conversions.
     """
     equity = options['name_equity']
-    account_previous_earnings = account.join(equity, options['account_previous_earnings'])
-    account_previous_balances = account.join(equity, options['account_previous_balances'])
-    account_previous_conversions = account.join(equity, options['account_previous_conversions'])
+    account_previous_earnings = account.join(equity,
+                                             options['account_previous_earnings'])
+    account_previous_balances = account.join(equity,
+                                             options['account_previous_balances'])
+    account_previous_conversions = account.join(equity,
+                                                options['account_previous_conversions'])
     return (account_previous_earnings,
             account_previous_balances,
             account_previous_conversions)
@@ -108,7 +111,9 @@ def get_current_accounts(options):
       for current conversions.
     """
     equity = options['name_equity']
-    account_current_earnings = account.join(equity, options['account_current_earnings'])
-    account_current_conversions = account.join(equity, options['account_current_conversions'])
+    account_current_earnings = account.join(equity,
+                                            options['account_current_earnings'])
+    account_current_conversions = account.join(equity,
+                                               options['account_current_conversions'])
     return (account_current_earnings,
             account_current_conversions)

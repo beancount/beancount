@@ -32,7 +32,8 @@ class TestBisectWithKey(unittest.TestCase):
         self.assertEqual(index, 100)
 
     def test_bisect_repeats(self):
-        data = [('a', 0), ('b', 0), ('c', 1), ('d', 3), ('e', 4), ('f', 4), ('g', 5), ('h', 6)]
+        data = [('a', 0), ('b', 0), ('c', 1), ('d', 3),
+                ('e', 4), ('f', 4), ('g', 5), ('h', 6)]
         index = bisect_left_withkey(data, 4, key=lambda x: x[1])
         self.assertEqual(index, 4)
         self.assertEqual(data[index][0], 'e')

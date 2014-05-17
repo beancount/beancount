@@ -70,7 +70,6 @@ class TestTable(unittest.TestCase):
         text = table.table_to_text(table_object,
                                    formats={'amount': '>'})
         expected = textwrap.dedent("""\
-            ---------- ---------- --------- ------
             Country    Capital    Currency  Amount
             ---------- ---------- --------- ------
             Malawi     Lilongwe   Kwacha     0.111

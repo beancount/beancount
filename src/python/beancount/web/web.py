@@ -13,7 +13,8 @@ import threading
 import bottle
 from bottle import response, request
 
-from beancount.core.data import Open, Close, Pad, Balance, Transaction, Note, Document, Event
+from beancount.core.data import Open, Close, Pad, Balance, Transaction, Note
+from beancount.core.data import Document, Event
 from beancount.core.data import Posting
 from beancount.core import data
 from beancount.core import flags
@@ -112,12 +113,14 @@ def toc():
         viewboxes.append(
             ('level1', 'Level 1',
              [(view_url('level1', level=level), '{}'.format(level))
-              for level in getters.get_leveln_parent_accounts(all_accounts_names, 1, nrepeats=0)]))
+              for level in getters.get_leveln_parent_accounts(all_accounts_names, 1,
+                                                              nrepeats=0)]))
 
         viewboxes.append(
             ('level2', 'Level 2',
              [(view_url('level2', level=level), '{}'.format(level))
-              for level in getters.get_leveln_parent_accounts(all_accounts_names, 2, nrepeats=0)]))
+              for level in getters.get_leveln_parent_accounts(all_accounts_names, 2,
+                                                              nrepeats=0)]))
 
     # FIXME: This deserves its own page, with options for cleanup (or a helper tool).
     if 0:

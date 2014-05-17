@@ -30,7 +30,8 @@ def summarizedoc(date, other_account):
         docstring as an argument."""
         @functools.wraps(fun)
         def newfun(self):
-            entries, parse_errors, options = parser.parse_string(textwrap.dedent(fun.__doc__))
+            entries, parse_errors, options = parser.parse_string(
+                textwrap.dedent(fun.__doc__))
             assert not parse_errors, parse_errors
             entries, pad_errors = pad(entries)
             assert not pad_errors, pad_errors
@@ -101,7 +102,8 @@ class TestSummarization(unittest.TestCase):
 #        # self.assertTrue(sum_real_accounts[OPENING_BALANCES].postings)
 
 #     @summarizedoc(date(2012, 1, 1), OPENING_BALANCES)
-#     def test_with_conversions(self, entries, sum_entries, real_accounts, sum_real_accounts):
+#     def test_with_conversions(self, entries, sum_entries, real_accounts,
+#                               sum_real_accounts):
 #         """
 #           2011-01-01 open Assets:Checking
 #

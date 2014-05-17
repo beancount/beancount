@@ -89,7 +89,8 @@ class TestHoldings(unittest.TestCase):
 
         holdings_list = sorted(map(tuple, holdings_list))
         expected_values = [
-            ('Assets:Account1', D('15'), 'GOOG', D('518.73'), 'USD', D('7780.95'), D('8670.30'),
+            ('Assets:Account1', D('15'), 'GOOG', D('518.73'), 'USD',
+             D('7780.95'), D('8670.30'),
              D('578.02'), datetime.date(2013, 6, 1)),
             ('Assets:Cash', D('42219.05'), 'USD', None, None, None, None, None, None),
             ('Equity:Unknown', D('-50000'), 'USD', None, None, None, None, None, None),

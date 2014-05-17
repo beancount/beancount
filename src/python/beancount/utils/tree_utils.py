@@ -7,7 +7,8 @@ from collections import namedtuple
 
 
 # A class to hold the recursion rendering context.
-Context = namedtuple('Context', 'get_name get_children pfx_last pfx_nonleaf pfx_cont pfx_skip')
+Context = namedtuple('Context',
+                     'get_name get_children pfx_last pfx_nonleaf pfx_cont pfx_skip')
 
 
 def render(root, get_name, get_children):

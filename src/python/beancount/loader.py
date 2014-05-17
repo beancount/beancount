@@ -88,9 +88,9 @@ def load(filename,
     if do_print_errors:
         error_text = printer.format_errors(errors)
         if error_text:
-            print(',------------------------------------------------------------------------')
+            print(',----------------------------------------------------------------------')
             print(error_text)
-            print('`------------------------------------------------------------------------')
+            print('`----------------------------------------------------------------------')
 
     # Run the load_filters on top of the results.
     for load_filter_function in LOAD_PLUGINS:

@@ -32,9 +32,10 @@ def validate_open_close(entries, accounts):
         open = open_map.get(account)
         if open is None or entry.date < open.date:
             check_errors.append(
-                ValidationError(entry.fileloc,
-                                "Unknown account {} (or perhaps wrong date?).".format(account),
-                                entry))
+                ValidationError(
+                    entry.fileloc,
+                    "Unknown account {} (or perhaps wrong date?).".format(account),
+                    entry))
 
         close = close_map.get(account)
         if close is not None and entry.date > close.date:

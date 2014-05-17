@@ -2,9 +2,9 @@ import datetime
 import unittest
 import textwrap
 
+from beancount.core.data import Transaction
 from beancount.parser import parsedoc, parse_string
 from beancount.ops import basicops
-from beancount.core import data
 
 
 class TestBasicOpsLinks(unittest.TestCase):
@@ -49,16 +49,16 @@ class TestBasicOpsLinks(unittest.TestCase):
         entries, _, __ = parse_string(self.test_doc)
         entries = [entry._replace(fileloc=None, postings=None)
                    for entry in entries
-                   if isinstance(entry, data.Transaction)]
+                   if isinstance(entry, Transaction)]
         link_groups = basicops.group_entries_by_link(entries)
         date = datetime.date(2014, 5, 10)
         self.assertEqual(
             {'apple': [
-                data.Transaction(None, date, '*', None, 'B', None, {'apple'}, None),
-                data.Transaction(None, date, '*', None, 'D', None, {'apple', 'banana'}, None)],
+                Transaction(None, date, '*', None, 'B', None, {'apple'}, None),
+                Transaction(None, date, '*', None, 'D', None, {'apple', 'banana'}, None)],
              'banana': [
-                 data.Transaction(None, date, '*', None, 'C', None, {'banana'}, None),
-                 data.Transaction(None, date, '*', None, 'D', None, {'apple', 'banana'}, None)]},
+                 Transaction(None, date, '*', None, 'C', None, {'banana'}, None),
+                 Transaction(None, date, '*', None, 'D', None, {'apple', 'banana'}, None)]},
             link_groups)
 
 
@@ -128,7 +128,7 @@ class TestBasicOpsOther(unittest.TestCase):
           Assets:Account4
 
         """
-        entries = [entry for entry in entries if isinstance(entry, data.Transaction)]
+        entries = [entry for entry in entries if isinstance(entry, Transaction)]
         self.assertEqual(set(),
                          basicops.get_common_accounts([]))
         self.assertEqual({'Assets:Account2', 'Assets:Account1'},

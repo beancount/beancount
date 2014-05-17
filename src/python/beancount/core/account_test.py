@@ -16,7 +16,8 @@ class TestAccount(unittest.TestCase):
         self.assertEqual("", account_name)
 
     def test_account_name_parent(self):
-        self.assertEqual("Expenses:Toys", account.account_name_parent("Expenses:Toys:Computer"))
+        self.assertEqual("Expenses:Toys",
+                         account.account_name_parent("Expenses:Toys:Computer"))
         self.assertEqual("Expenses", account.account_name_parent("Expenses:Toys"))
         self.assertEqual("", account.account_name_parent("Expenses"))
         self.assertEqual(None, account.account_name_parent(""))

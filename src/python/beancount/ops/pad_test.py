@@ -32,8 +32,10 @@ class __TestPadding(unittest.TestCase):
           2013-05-03 check Assets:Checking   172.45 USD
         """
         self.assertEqual(len(errors), 0)
-        self.check_real_types(real_accounts['Assets:Checking'], [Open, Pad, Posting, Balance])
-        self.check_real_types(real_accounts['Equity:Opening-Balancess'], [Open, Pad, Posting])
+        self.check_real_types(real_accounts['Assets:Checking'],
+                              [Open, Pad, Posting, Balance])
+        self.check_real_types(real_accounts['Equity:Opening-Balancess'],
+                              [Open, Pad, Posting])
 
         self.check_balance(real_accounts['Assets:Checking'],
                            Position(Lot('USD', None, None), Decimal('172.45')))

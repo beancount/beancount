@@ -64,13 +64,15 @@ class View:
             # income"). This is used to render the end-period balance sheet, with
             # the current period's net income, closing the period.
             current_accounts = options.get_current_accounts(self.options)
-            self.closing_entries = summarize.close(self.entries, self.options, *current_accounts)
+            self.closing_entries = summarize.close(self.entries, self.options,
+                                                   *current_accounts)
 
         # Realize the three sets of entries.
         if self.opening_entries:
             with misc_utils.print_time('realize_opening'):
                 self.opening_real_accounts = realization.realize(self.opening_entries)
-                realization.ensure_min_accounts(self.opening_real_accounts, self.account_types)
+                realization.ensure_min_accounts(self.opening_real_accounts,
+                                                self.account_types)
         else:
             self.opening_real_accounts = None
 

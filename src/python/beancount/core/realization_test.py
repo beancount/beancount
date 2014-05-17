@@ -128,7 +128,8 @@ class TestRealization(unittest.TestCase):
         self.assertEqual([Posting],
                          list(map(type, real_account['Expenses:Movie'].postings)))
 
-        self.assertEqual([Open, Pad, Posting, Posting, Posting, Note, Document, Balance, Close],
+        self.assertEqual([Open, Pad, Posting, Posting, Posting, Note, Document,
+                          Balance, Close],
                          list(map(type, real_account['Liabilities:CreditCard'].postings)))
 
         self.assertEqual([Open, Pad, Posting],
@@ -238,12 +239,12 @@ def realizedoc(fun):
 
 
 # Loader tests:
-# Check that an account without an Open directive has one that gets automatically inserted for it.
 
+# Check that an account without an Open directive has one that gets
+# automatically inserted for it.
 
-
-# FIXME: please DO test the realization of a transaction that has multiple legs on the same account!
-
+# FIXME: please DO test the realization of a transaction that has multiple legs
+# on the same account!
 
 # Add a test for realizing with no entries.
 

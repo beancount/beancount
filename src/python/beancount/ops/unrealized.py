@@ -78,9 +78,9 @@ def unrealized_gains(entries, subaccount_name, account_types):
                     None))
 
         # Book this as income, converting the account name to be the same, but as income.
-        # Note: this is a rather convenient but arbitraty choice--maybe it would be best to let
-        # the user decide to what account to book it, but I don't a nice way to let the user
-        # specify this.
+        # Note: this is a rather convenient but arbitraty choice--maybe it would be best to
+        # let the user decide to what account to book it, but I don't a nice way to let the
+        # user specify this.
         income_account_name = account_name.replace(account_types.assets,
                                                    account_types.income)
         if subaccount_name:

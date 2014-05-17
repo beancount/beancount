@@ -149,7 +149,8 @@ def main():
     if path.exists(opts.output):
         raise SystemExit("ERROR: Output path already exists '{}'".format(opts.output))
     if path.exists(output_directory):
-        raise SystemExit("ERROR: Output directory already exists '{}'".format(output_directory))
+        raise SystemExit(
+            "ERROR: Output directory already exists '{}'".format(output_directory))
 
     baked = bake_to_directory(opts, output_directory, not opts.verbose, opts.quiet)
     if not baked:

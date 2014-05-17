@@ -41,15 +41,22 @@ class TestAccountGlobals(unittest.TestCase):
         self.assertEqual(account_names_expected, account_names_actual)
 
     def test_account_name_type(self):
-        self.assertEqual("Assets", account_types.account_name_type("Assets:US:RBS:Checking"))
-        self.assertEqual("Assets", account_types.account_name_type("Assets:US:RBS:Savings"))
+        self.assertEqual("Assets",
+                         account_types.account_name_type("Assets:US:RBS:Checking"))
+        self.assertEqual("Assets",
+                         account_types.account_name_type("Assets:US:RBS:Savings"))
         self.assertEqual("Liabilities",
                          account_types.account_name_type("Liabilities:US:RBS:MortgageLoan"))
-        self.assertEqual("Equity", account_types.account_name_type("Equity:NetIncome"))
-        self.assertEqual("Equity", account_types.account_name_type("Equity:OpeningBalances"))
-        self.assertEqual("Income", account_types.account_name_type("Income:US:ETrade:Dividends"))
-        self.assertEqual("Income", account_types.account_name_type("Income:US:Intel"))
-        self.assertEqual("Expenses", account_types.account_name_type("Expenses:Toys:Computer"))
+        self.assertEqual("Equity",
+                         account_types.account_name_type("Equity:NetIncome"))
+        self.assertEqual("Equity",
+                         account_types.account_name_type("Equity:OpeningBalances"))
+        self.assertEqual("Income",
+                         account_types.account_name_type("Income:US:ETrade:Dividends"))
+        self.assertEqual("Income",
+                         account_types.account_name_type("Income:US:Intel"))
+        self.assertEqual("Expenses",
+                         account_types.account_name_type("Expenses:Toys:Computer"))
         with self.assertRaises(AssertionError):
             account_types.account_name_type("Invalid:Toys:Computer")
 
@@ -96,11 +103,13 @@ class TestAccountGlobals(unittest.TestCase):
                 ("Income:US:ETrade:Dividends", False),
                 ("Expenses:Toys:Computer", False),
         ]:
-            self.assertEqual(expected,
-                             account_types.is_balance_sheet_account(account_name, self.OPTIONS))
+            self.assertEqual(
+                expected,
+                account_types.is_balance_sheet_account(account_name, self.OPTIONS))
 
-            self.assertEqual(not expected,
-                             account_types.is_income_statement_account(account_name, self.OPTIONS))
+            self.assertEqual(
+                not expected,
+                account_types.is_income_statement_account(account_name, self.OPTIONS))
 
 
 # The main file needs a fair bit of cleanup, simplification, mark this as incomplete again.
