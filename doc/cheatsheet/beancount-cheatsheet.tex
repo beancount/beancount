@@ -29,7 +29,7 @@
 \begin{document}
 
 \begin{center}
-  \Large{\textbf{Beancount Cheat Sheet}}
+  \Large{\textbf{Beancount Syntax Cheat Sheet}}
 \end{center}
 \vspace{1em}
 
@@ -47,13 +47,13 @@
 
 \section{Account Types}
 \begin{verbatim}
-Account prefixes:            Commodities: all in CAPS, e.g.
+Account Types & Signs:      Commodities: all in CAPS, e.g.
 
-  Assets:*                     USD, EUR, CAD, AUD
-  Liabilities:*                GOOG, AAPL, RBF1005
-  Equity:*                     HOME123MAYST, AIRMILES
-  Income:*                     HOURS
-  Expenses:*
+  Assets:       (+)           USD, EUR, CAD, AUD
+  Liabilities:  (-)           GOOG, AAPL, RBF1005
+  Equity:       (-)           HOME123MAYST, AIRMILES
+  Income:       (-)           HOURS
+  Expenses:     (+)
 
 Example:
 
@@ -65,13 +65,13 @@ Example:
 \section{Account Directives}
 \begin{verbatim}
 YYYY-MM-DD open      Account
-YYYY-MM-DD open      Account  USD,EUR  ; Optional constraints
-                     
+YYYY-MM-DD open      Account  USD,EUR  ; With constraints
+
 YYYY-MM-DD close     Account
-                     
-YYYY-MM-DD note      Account  "Some long note about something"
-                     
-YYYY-MM-DD document  Account  "relative/path/to/statement.pdf"
+
+YYYY-MM-DD note      Account  "A note about something for an account"
+
+YYYY-MM-DD document  Account  "path/to/statement.pdf"
 \end{verbatim}
 
 
@@ -82,13 +82,14 @@ YYYY-MM-DD * "Narration"
   Account1             101.23 USD
   Account2            -101.23 USD
 
-YYYY-MM-DD * "Payee" | "Narration" #tag ^link
+YYYY-MM-DD ! "Payee" | "Narration" #tag ^link
   Account1             101.23 USD
   Account2             ; You can leave one out
 \end{verbatim}
 
 \subsection{Postings}
 \begin{verbatim}
+YYYY-MM-DD * ...
   Account    123.45 USD                        ; No cost
   Account    10 GOOG {502.12 USD}              ; With cost
   Account    1000.00 USD @ 1.10 CAD            ; With price
@@ -161,9 +162,10 @@ poptag #tag
 
 %% \rule{0.3\linewidth}{0.25pt}
 \scriptsize
-
-%% Copyright \copyright\ 2014 Martin Blais
-\href{http://furius.ca/beancount/}{http://furius.ca/beancount/}
-
+\begin{center}
+  Copyright \copyright\ 2014 Martin Blais \\
+  \texttt{http://furius.ca/beancount/} \\
+  Generated on: \today
+\end{center}
 \end{multicols}
 \end{document}
