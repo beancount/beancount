@@ -101,3 +101,7 @@ class TestAccountGlobals(unittest.TestCase):
 
             self.assertEqual(not expected,
                              account_types.is_income_statement_account(account_name, self.OPTIONS))
+
+
+# The main file needs a fair bit of cleanup, simplification, mark this as incomplete again.
+__incomplete__ = True

@@ -92,6 +92,8 @@ def transfer_balances(entries, date, account_pred, transfer_account):
     accounts. This is basically to be used only on accounts without checks, such
     as Income or Expense.)
     """
+    if not entries:
+        return entries
 
     # Compute balances at date.
     index, balances = sum_to_date(entries, date)

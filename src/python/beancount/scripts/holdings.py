@@ -5,6 +5,7 @@ This is to share my portfolio with others, or to compute its daily changes.
 import sys
 
 from beancount import load
+from beancount.core import account_types
 from beancount.parser import options
 from beancount.ops import prices
 from beancount.ops import holdings
@@ -37,8 +38,17 @@ def main():
     # Get the aggregate sum of holdings.
     price_map = prices.build_price_map(entries)
     holdings_list = holdings.get_final_holdings(entries, price_map)
+
+    # Remove the equity accounts, we only want to list Assets and Liabilities.
+    holdings_list = filter(
+        lambda holding: not account_types.is_equity_account(holding.account, options_map),
+        holdings_list)
+
     if opts.aggregated:
         holdings_list = holdings.aggregate_by_base_quote(holdings_list)
+
+    if not holdings_list:
+        return
 
     # Create the table report.
     field_spec = [('number', None, '{:,.2f}'.format),

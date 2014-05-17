@@ -29,9 +29,10 @@ Holding = collections.namedtuple('Holding',
 def get_final_holdings(entries, price_map=None, date=None):
     """Get a dictionary of the latest holdings by account.
 
-    This basically just flattens the balance sheet's final positions. If a
-    'price_map' is provided, insert price information in the flattened holdings
-    at the latest date, or at the given date, if one is provided.
+    This basically just flattens the balance sheet's final positions, including
+    that of equity accounts. If a 'price_map' is provided, insert price
+    information in the flattened holdings at the latest date, or at the given
+    date, if one is provided.
 
     Args:
       entries: A list of directives.

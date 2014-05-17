@@ -142,3 +142,18 @@ def is_income_statement_account(account_name, options):
     # FIXME: Use account_types.ACCOUNT_TYPES instead of options?
     return account_type in (options[x] for x in ('name_income',
                                                  'name_expenses'))
+
+
+def is_equity_account(account_name, options):
+    """Return true if the given account is an equity account.
+
+    Args:
+      account_name: A string, an account name.
+      options: The options dictionary of a file.
+    Returns:
+      A boolean, true if the account is an equityaccount.
+    """
+    assert isinstance(account_name, str)
+    account_type = account_name_type(account_name)
+    # FIXME: Use account_types.ACCOUNT_TYPES instead of options?
+    return account_type == options['name_equity']

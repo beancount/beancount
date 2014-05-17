@@ -2,7 +2,16 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-  - bean-holdings --aggregated reports 0 for EUR, figured out bug, add test
+  - lint with 92 char lines, that fit 3-wide Emacs windows on a 13" screen with
+    M+ font. So I can work from my tiny laptop.
+
+  - Remove TYPES_ORDER, rename some of the functions in account_types to simpler
+    names, e.g. account_name_type should be just account_type, this is a
+    throwback from when we had Account objects. Make the code nicer in this way!
+
+  - Rename options -> options_map everywhere for consistency.
+
+  - Add emacs configuration to highlight beyond 100.
 
   - prices.py and positions.py:
 
@@ -26,8 +35,6 @@ beancount: TODO
   - Add a test for --view option.
 
   - MSSB documents aren't found... fix FIXMEs in documents.py
-
-  - Remove TYPES_ORDER.
 
   - Complete all unittests coverage (as per find-missing-tests.py).
 

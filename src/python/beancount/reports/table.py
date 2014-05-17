@@ -177,7 +177,6 @@ def table_to_text(table,
     # Render the header.
     oss = io.StringIO()
     if table.header:
-        oss.write(separator)
         oss.write(line_format.format(*table.header))
 
     # Render the body.
