@@ -89,7 +89,29 @@ beancount: TODO
 
   - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
 
+  - Printer tests (not done) should work by doing a round-trip. In fact, run a
+    round-trip test on my personal ledger file.
+
+
 * Current
+
+  - Plan for integrating rendering and filtering between web/HTML and text
+    versions:
+
+    * Filtering: Should be done in a library used in common with the web server
+      and a new tool, bean-query, which provides a command-line interface
+      to trigger filter, e.g. filter by year, filter by tag, etc. The point is
+      that the same code that does the filtering for views should be run from
+      this command-line. The code that creates views perhaps should be moved to
+      begin that library.
+
+    * Rendering: The web reports, such as beacnount.web.journal,
+      beancount.web.acctree, etc. should move to beancount.reports and have
+      HTML and text versions of all these.
+
+    * A new bool, bean-query, should be created that allows one to select
+      transactions (via filters) and a type of report, and spit out the output
+      in text or standalone HTML format.
 
   - Implement --brief option on scripts.holdings, to be able to share, which
     renders only % holdings.
