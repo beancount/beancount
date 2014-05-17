@@ -2,10 +2,9 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-  - prices.py and positions.py:
+  - bean-holdings --aggregated reports 0 for EUR, figured out bug, add test
 
-     Finish bean-holdings rendering to text table -> continue in reports.table,
-     render table to temp representation, then to HTML and ascii table.
+  - prices.py and positions.py:
 
      Finish testing unrealized.py, should be easy
 
@@ -13,14 +12,13 @@ beancount: TODO
      ledgerhub-fetch-prices is borked, outputs Nones
      The prices page has inverses now... fix this.
 
-     Complete the equity value page with prices.py, render the rates used to that page.
-     Merge Holdings tab into Shareholder's Equity, less tabs, similar report.
-
      Deal with amounts without cost in reporting of equity, I'm getting expense
      accounts there, we want to elide those.
 
   - realization_test.py --> complete this now!
 
+  - Complete the equity value page with prices.py, render the rates used to that page.
+    Merge Holdings tab into Shareholder's Equity, less tabs, similar report.
 
   - Build a more complete and representative of reality example file, bake, and
     share on ledger-cli
@@ -92,6 +90,9 @@ beancount: TODO
   - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
 
 * Current
+
+  - Implement --brief option on scripts.holdings, to be able to share, which
+    renders only % holdings.
 
   - journal rendering: When multiple transactions occur in the same day, it
     may make sense not to render the balance amount until the last one. Test it
@@ -354,6 +355,14 @@ beancount: TODO
   - Render a journal as a detailed expense report, for a set of accounts
     (e.g., Expenses:*) pulling out amounts in various columns based on other
     expressions (e.g. Assets:Cash:Caroline).
+
+
+  - Idea around documents: A link between a transaction to a document can be
+    created by associating a document's checksum as the link of the
+    transaction. If Beancount could associate them - and it could, it has
+    access to the document files and the corpus of transactions - the web
+    interface could insert a special link between the two. Maybe we could do
+    the same thing with the filename as well.
 
 
 ** Padding documentation from email

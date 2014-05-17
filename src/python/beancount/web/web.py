@@ -719,24 +719,25 @@ def holdings_detail():
     price_map = prices.build_price_map(request.view.entries)
     holdings_ = holdings.get_final_holdings(request.view.closing_entries, price_map)
 
+    table_ = table.create_table(holdings_,
+                                field_spec=[
+                                    'account',
+                                    ('number', None, '{:,.2f}'.format),
+                                    'currency',
+                                    'cost_currency',
+                                    ('cost_number', 'Cost Price', '{:,.2f}'.format),
+                                    ('price_number', 'Market Price', '{:,.2f}'.format),
+                                    ('book_value', None, '{:,.2f}'.format),
+                                    ('market_value', None, '{:,.2f}'.format),
+                                    'price_date',
+                                ])
+
     oss = io.StringIO()
     oss.write('<center>\n')
     if holdings_:
-        table.render_tuples_to_html_table(
-            holdings_,
-            field_spec=[
-                'account',
-                ('number', None, '{:,.2f}'.format),
-                'currency',
-                'cost_currency',
-                ('cost_number', 'Cost Price', '{:,.2f}'.format),
-                ('price_number', 'Market Price', '{:,.2f}'.format),
-                ('book_value', None, '{:,.2f}'.format),
-                ('market_value', None, '{:,.2f}'.format),
-                'price_date',
-            ],
-            classes=['holdings', 'detail-table', 'sortable'],
-            file=oss)
+        table.table_to_html(table_,
+                            classes=['holdings', 'detail-table', 'sortable'],
+                            file=oss)
     else:
         oss.write("(No holdings.)")
     oss.write('</center>\n')
@@ -755,22 +756,23 @@ def holdings_byinstrument():
     holdings_ = holdings.get_final_holdings(request.view.closing_entries, price_map)
     aggregated_holdings = holdings.aggregate_by_base_quote(holdings_)
 
+    table_ = table.create_table(aggregated_holdings,
+                                field_spec=[
+                                    ('number', None, '{:,.2f}'.format),
+                                    'currency',
+                                    'cost_currency',
+                                    ('cost_number', 'Average Cost', '{:,.2f}'.format),
+                                    ('price_number', 'Average Price', '{:,.2f}'.format),
+                                    ('book_value', None, '{:,.2f}'.format),
+                                    ('market_value', None, '{:,.2f}'.format)
+                                ])
+
     oss = io.StringIO()
     oss.write('<center>\n')
     if holdings_:
-        table.render_tuples_to_html_table(
-            aggregated_holdings,
-            field_spec=[
-                ('number', None, '{:,.2f}'.format),
-                'currency',
-                'cost_currency',
-                ('cost_number', 'Average Cost', '{:,.2f}'.format),
-                ('price_number', 'Average Price', '{:,.2f}'.format),
-                ('book_value', None, '{:,.2f}'.format),
-                ('market_value', None, '{:,.2f}'.format)
-            ],
-            classes=['holdings', 'byinst-account-table', 'sortable'],
-            file=oss)
+        table.table_to_html(table_,
+                            classes=['holdings', 'byinst-account-table', 'sortable'],
+                            file=oss)
     else:
         oss.write("(No holdings.)")
     oss.write('</center>\n')
