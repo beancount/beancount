@@ -11,7 +11,7 @@ from beancount.parser import parsedoc
 D = to_decimal
 
 
-class TestPositionEntries(unittest.TestCase):
+class TestHoldings(unittest.TestCase):
 
     @parsedoc
     def test_get_final_holdings(self, entries, _, __):
@@ -96,6 +96,19 @@ class TestPositionEntries(unittest.TestCase):
         ]
         self.assertEqual(expected_values, holdings_list)
 
+    def test_aggregate_holdings_list(self):
+        test_holdings = list(itertools.starmap(holdings.Holding, [
+            ('Assets:Account1', D('10'), 'GOOG', D('518.73'), 'USD',
+             D('5187.30'), D('5780.20'), D('578.02'), datetime.date(2014, 2, 1)),
+            ('Assets:Account2', D('20'), 'GOOG', D('519.24'), 'USD',
+             D('10384.80'), D('11622.00'), D('581.10'), datetime.date(2014, 2, 15)),
+        ]))
+
+        expected_holding = holdings.Holding(
+            None, D('30'), 'GOOG', D('519.07'), 'USD',
+            D('15572.10'), D('17402.20'), D('580.0733333333333333333333333'), None)
+        self.assertEqual(expected_holding, holdings.aggregate_holdings_list(test_holdings))
+
     def test_aggregate_by_base_quote(self):
         # Note: Two different prices on GOOG on purpose.
         test_holdings = list(itertools.starmap(holdings.Holding, [
@@ -122,15 +135,40 @@ class TestPositionEntries(unittest.TestCase):
         ]))
         self.assertEqual(expected_holdings, holdings.aggregate_by_base_quote(test_holdings))
 
-    def test_aggregate_holdings_list(self):
-        test_holdings = list(itertools.starmap(holdings.Holding, [
-            ('Assets:Account1', D('10'), 'GOOG', D('518.73'), 'USD',
-             D('5187.30'), D('5780.20'), D('578.02'), datetime.date(2014, 2, 1)),
-            ('Assets:Account2', D('20'), 'GOOG', D('519.24'), 'USD',
-             D('10384.80'), D('11622.00'), D('581.10'), datetime.date(2014, 2, 15)),
-        ]))
 
-        expected_holding = holdings.Holding(
-            None, D('30'), 'GOOG', D('519.07'), 'USD',
-            D('15572.10'), D('17402.20'), D('580.0733333333333333333333333'), None)
-        self.assertEqual(expected_holding, holdings.aggregate_holdings_list(test_holdings))
+
+
+
+    @parsedoc
+    def test_aggregate_holdings_list_with_no_cost(self, entries, _, __):
+        """
+        2013-01-01 open Assets:Account1
+        2013-01-01 open Assets:Account2
+        2013-01-01 open Assets:Account3
+        2013-01-01 open Assets:Cash
+        2013-01-01 open Equity:Unknown
+
+        2013-04-05 *
+          Equity:Unknown
+          Assets:Account1     5000 USD
+
+        2013-04-05 *
+          Assets:Account1     -3000 USD
+          Assets:Account2     -30 BOOG {100 USD}
+
+        2013-04-05 *
+          Assets:Account1     -1000 USD
+          Assets:Account3     -800 EUR @ 1.25 USD
+
+        """
+        price_map = prices.build_price_map(entries)
+        holdings_list = holdings.get_final_holdings(entries, price_map)
+        print()
+        print('-' * 120)
+        for h in holdings_list:
+            print(h)
+
+        holdings_list = holdings.aggregate_by_base_quote(holdings_list)
+        print('-' * 120)
+        for h in holdings_list:
+            print(h)
