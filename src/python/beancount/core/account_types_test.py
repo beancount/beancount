@@ -3,7 +3,7 @@ import unittest
 from beancount.core import account_types
 
 
-class TestAccountGlobals(unittest.TestCase):
+class TestAccountTypes(unittest.TestCase):
 
     def test_reset_globals(self):
         account_types.update_valid_account_names()
@@ -55,8 +55,8 @@ class TestAccountGlobals(unittest.TestCase):
                          account_types.account_name_type("Income:US:Intel"))
         self.assertEqual("Expenses",
                          account_types.account_name_type("Expenses:Toys:Computer"))
-        with self.assertRaises(AssertionError):
-            account_types.account_name_type("Invalid:Toys:Computer")
+        self.assertEqual("Invalid",
+                         account_types.account_name_type("Invalid:Toys:Computer"))
 
     def test_is_valid_account_name(self):
         is_valid = account_types.is_valid_account_name
@@ -73,20 +73,26 @@ class TestAccountGlobals(unittest.TestCase):
         self.assertFalse(is_valid("Assets:US:RBS:checking"))
         self.assertFalse(is_valid("Assets:us:RBS:checking"))
 
-    def test_is_account_name_root(self):
-        for account_name, expected in [
-                ("Assets:US:RBS:Checking", False),
-                ("Equity:OpeningBalances", False),
-                ("Income:US:ETrade:Dividends-USD", False),
-                ("Assets", True),
-                ("Liabilities", True),
-                ("Equity", True),
-                ("Income", True),
-                ("Expenses", True),
-                ("Invalid", False),
-        ]:
-            self.assertEqual(expected,
-                             account_types.is_account_name_root(account_name))
+    def test_is_root_account(self):
+        for types in (None, account_types.DEFAULT_ACCOUNT_TYPES):
+            for account_name, expected in [
+                    ("Assets:US:RBS:Checking", False),
+                    ("Equity:OpeningBalances", False),
+                    ("Income:US:ETrade:Dividends-USD", False),
+                    ("Assets", True),
+                    ("Liabilities", True),
+                    ("Equity", True),
+                    ("Income", True),
+                    ("Expenses", True),
+                    ("_invalid_", False),
+            ]:
+                self.assertEqual(
+                    expected,
+                    account_types.is_root_account(account_name, types))
+
+        self.assertTrue(account_types.is_root_account('Invalid'))
+        self.assertFalse(account_types.is_root_account(
+            'Invalid', account_types.DEFAULT_ACCOUNT_TYPES))
 
     OPTIONS = {'name_assets'      : 'Assets',
                'name_liabilities' : 'Liabilities',

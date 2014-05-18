@@ -69,16 +69,17 @@ def account_sortkey_fun(account_types):
 def account_name_type(account_name):
     """Return the type of this account's name.
 
+    Warning: No check is made on the validity of the account type. This merely
+    returns the root account of the corresponding account name.
+
     Args:
       account_name: A string, the name of the account whose type is to return.
     Returns:
       A string, the type of the account in 'account_name'.
+
     """
     assert isinstance(account_name, str), account_name
-    atype = account_name.split(account.sep)[0]
-    assert atype in ACCOUNT_TYPES, (
-        account_name, atype, ACCOUNT_TYPES)
-    return atype
+    return account_name.split(account.sep)[0]
 
 
 def is_valid_account_name(string):
@@ -94,17 +95,27 @@ def is_valid_account_name(string):
                 '([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)+$', string)))
 
 
-def is_account_name_root(account_name):
-    """Return true if the account name is one of the root accounts.
+def is_root_account(account_name, account_types=None):
+    """Return true if the account name is a root account.
+    This function does not verify whether the account root is a valid
+    one, just that it is a root account or not.
 
     Args:
       account_name: A string, the name of the account to check for.
+      account_types: An optional instance of the current account_types;
+        if provided, we check against these values. If not provided, we
+        merely check that name pattern is that of an account component with
+        no separator.
     Returns:
-      A boolean, true if the name is the name of a root account (same
-      as an account type).
+      A boolean, true if the account is root account.
     """
     assert isinstance(account_name, str)
-    return account_name in ACCOUNT_TYPES
+    if account_types is not None:
+        assert isinstance(account_types, AccountTypes)
+        return account_name in account_types
+    else:
+        return (account_name and
+                bool(re.match('([A-Z][A-Za-z0-9\-]+)$', account_name)))
 
 
 def is_balance_sheet_account(account_name, options):
