@@ -14,11 +14,11 @@ DEFAULT_OPTIONS = {
     # names, so that if you prefer "Revenue" over "Income" or "Capital" over
     # "Equity", you can set them here. The account names in your input files
     # must match, and the parser will validate these.
-    "name_assets"      : account_types.ACCOUNT_TYPES.assets,
-    "name_liabilities" : account_types.ACCOUNT_TYPES.liabilities,
-    "name_equity"      : account_types.ACCOUNT_TYPES.equity,
-    "name_income"      : account_types.ACCOUNT_TYPES.income,
-    "name_expenses"    : account_types.ACCOUNT_TYPES.expenses,
+    "name_assets"      : account_types.DEFAULT_ACCOUNT_TYPES.assets,
+    "name_liabilities" : account_types.DEFAULT_ACCOUNT_TYPES.liabilities,
+    "name_equity"      : account_types.DEFAULT_ACCOUNT_TYPES.equity,
+    "name_income"      : account_types.DEFAULT_ACCOUNT_TYPES.income,
+    "name_expenses"    : account_types.DEFAULT_ACCOUNT_TYPES.expenses,
 
     # Leaf name of the equity account used for summarizing previous transactions
     # into opening balances.

@@ -12,7 +12,6 @@ from os import path
 
 from beancount.parser import _parser
 from beancount.parser import options
-from beancount.core.account_types import account_name_type
 from beancount.core import account
 from beancount.core import account_types
 from beancount.core import data
@@ -75,10 +74,8 @@ class Builder(object):
         self.options = copy.deepcopy(options.DEFAULT_OPTIONS)
         self.account_regexp = valid_account_regexp(self.options)
 
-        # Re-initialize the parsing options. FIXME: This is because of some
-        # globals in beancount.core.account, we don't want to leak options
-        # between invocations.
-        account_types.update_valid_account_names()
+        # Initialize the parsing options.
+        self.account_types = account_types.DEFAULT_ACCOUNT_TYPES
 
     def store_result(self, entries):
         """Start rule stores the final result here.
@@ -129,13 +126,9 @@ class Builder(object):
 
             # Refresh the list of valid account regexps as we go.
             if key.startswith('name_'):
+                # Update the set of valid account types.
                 self.account_regexp = valid_account_regexp(self.options)
-
-                # Update the globals that check whether this account is valid.
-                # FIXME: This is a known globals kludge we know we have to remove,
-                # but has ties in many places. Will remove later.
-                account_types.update_valid_account_names(
-                    options.get_account_types(self.options))
+                self.account_types = options.get_account_types(self.options)
 
     def DATE(self, year, month, day):
         """Process a DATE token.
@@ -169,8 +162,8 @@ class Builder(object):
             return account.join(self.options['name_equity'], 'InvalidAccountName')
 
         # Check account type validity.
-        account_type = account_name_type(account_name)
-        if account_type not in account_types.ACCOUNT_TYPES:
+        account_type = account_types.account_name_type(account_name)
+        if account_type not in self.account_types:
             self.errors.append(
                 ParserError(fileloc,
                             "Invalid account type for: {}".format(account_name), None))

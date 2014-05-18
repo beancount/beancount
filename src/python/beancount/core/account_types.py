@@ -22,9 +22,6 @@ from beancount.core import account
 #   expenses: a str, the name of the prefix for the Expenses subaccounts.
 AccountTypes = namedtuple('AccountTypes', "assets liabilities equity income expenses")
 
-# The global value of account types.
-ACCOUNT_TYPES = None
-
 # Default values for root accounts.
 DEFAULT_ACCOUNT_TYPES = AccountTypes("Assets",
                                      "Liabilities",
@@ -33,24 +30,7 @@ DEFAULT_ACCOUNT_TYPES = AccountTypes("Assets",
                                      "Expenses")
 
 
-def update_valid_account_names(account_types=DEFAULT_ACCOUNT_TYPES):
-    """Set the globals for the root account names. Calling this function without a
-    parameter initializes the default names for the five root accounts for
-    assets, liabilities, equity, income and expenses. This is used betwee
-    parsing runs.
-
-    Args:
-      account_types: None to reset to default, or an instance of AccountTypes to
-        set to specific values.
-    """
-    assert isinstance(account_types, (AccountTypes, type(None)))
-    global ACCOUNT_TYPES
-    ACCOUNT_TYPES = account_types
-
-
-update_valid_account_names(DEFAULT_ACCOUNT_TYPES)
-
-
+# FIXME: replace by get_account_sort_fun()
 def account_sortkey_fun(account_types):
     """Return a function that can be used to extract a key to sort account names.
 
@@ -66,6 +46,7 @@ def account_sortkey_fun(account_types):
                                  account_name)
 
 
+# FIXME: replace by get_account_type()
 def account_name_type(account_name):
     """Return the type of this account's name.
 
