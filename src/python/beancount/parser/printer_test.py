@@ -34,4 +34,5 @@ class TestPrinter(unittest.TestCase):
         pass
 
 
+# You should have a full round-trip test for all entry types here.
 __incomplete__ = True

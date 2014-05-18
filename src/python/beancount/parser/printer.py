@@ -1,6 +1,7 @@
 """Conversion from internal data structures to text.
 """
 import io
+import sys
 import textwrap
 
 
@@ -119,3 +120,16 @@ def format_entry(entry):
       A string, the formatted entry.
     """
     return EntryPrinter()(entry)
+
+
+def print_entries(entries, file=None):
+    """A convenience function that prints a list of entries to a file.
+
+    Args:
+      entries: A list of directives.
+      file: An optional file object to write the entries to.
+    """
+    output = file or sys.stdout
+    for entry in entries:
+        output.write(format_entry(entry))
+        output.write('\n')
