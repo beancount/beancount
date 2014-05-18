@@ -31,7 +31,7 @@ DEFAULT_ACCOUNT_TYPES = AccountTypes("Assets",
 
 
 # FIXME: replace by get_account_sort_fun()
-def account_sortkey_fun(account_types):
+def get_account_sort_function(account_types):
     """Return a function that can be used to extract a key to sort account names.
 
     Args:
