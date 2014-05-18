@@ -30,9 +30,10 @@ def main():
 
     # Parse the input file.
     entries, errors, options_map = load(opts.filename, quiet=True)
+    account_types_ = options.get_account_types(options_map)
 
     # Close the books.
-    entries = summarize.close(entries, options_map,
+    entries = summarize.close(entries, account_types_,
                               *options.get_current_accounts(options_map))
 
     # Get the aggregate sum of holdings.
@@ -41,7 +42,8 @@ def main():
 
     # Remove the equity accounts, we only want to list Assets and Liabilities.
     holdings_list = filter(
-        lambda holding: not account_types.is_equity_account(holding.account, options_map),
+        lambda holding: not account_types.is_equity_account(holding.account,
+                                                            account_types_),
         holdings_list)
 
     if opts.aggregated:

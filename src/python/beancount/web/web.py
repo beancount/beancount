@@ -643,8 +643,8 @@ def account_(slashed_account_name=None):
     account_name = slashed_account_name.strip('/').replace('/', account.sep)
 
     if account_name:
-        options = app.options
-        if account_name and account_types.is_balance_sheet_account(account_name, options):
+        if account_name and account_types.is_balance_sheet_account(account_name,
+                                                                   app.account_types):
             real_accounts = request.view.closing_real_accounts
         else:
             real_accounts = request.view.real_accounts

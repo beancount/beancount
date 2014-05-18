@@ -13,7 +13,7 @@ from collections import namedtuple
 from beancount.core import account
 
 
-# A tuple that contains the names of the root accounts. This is a subset of options.
+# A tuple that contains the names of the root accounts.
 # Attributes:
 #   assets: a str, the name of the prefix for the Asset subaccounts.
 #   liabilities: a str, the name of the prefix for the Liabilities subaccounts.
@@ -118,51 +118,52 @@ def is_root_account(account_name, account_types=None):
                 bool(re.match('([A-Z][A-Za-z0-9\-]+)$', account_name)))
 
 
-def is_balance_sheet_account(account_name, options):
+
+def is_balance_sheet_account(account_name, account_types):
     """Return true if the given account is a balance sheet account.
     Assets, liabilities and equity accounts are balance sheet accounts.
 
     Args:
       account_name: A string, an account name.
-      options: The options dictionary of a file.
+      account_types: An instance of AccountTypes.
     Returns:
       A boolean, true if the account is a balance sheet account.
     """
     assert isinstance(account_name, str)
+    assert isinstance(account_types, AccountTypes)
     account_type = account_name_type(account_name)
-    # FIXME: Use account_types.ACCOUNT_TYPES instead of options?
-    return account_type in (options[x] for x in ('name_assets',
-                                                 'name_liabilities',
-                                                 'name_equity'))
+    return account_type in (account_types.assets,
+                            account_types.liabilities,
+                            account_types.equity)
 
 
-def is_income_statement_account(account_name, options):
+def is_income_statement_account(account_name, account_types):
     """Return true if the given account is an income statement account.
     Income and expense accounts are income statement accounts.
 
     Args:
       account_name: A string, an account name.
-      options: The options dictionary of a file.
+      account_types: An instance of AccountTypes.
     Returns:
       A boolean, true if the account is an income statement account.
     """
     assert isinstance(account_name, str)
+    assert isinstance(account_types, AccountTypes), account_types
     account_type = account_name_type(account_name)
-    # FIXME: Use account_types.ACCOUNT_TYPES instead of options?
-    return account_type in (options[x] for x in ('name_income',
-                                                 'name_expenses'))
+    return account_type in (account_types.income,
+                            account_types.expenses)
 
 
-def is_equity_account(account_name, options):
+def is_equity_account(account_name, account_types):
     """Return true if the given account is an equity account.
 
     Args:
       account_name: A string, an account name.
-      options: The options dictionary of a file.
+      account_types: An instance of AccountTypes.
     Returns:
       A boolean, true if the account is an equityaccount.
     """
     assert isinstance(account_name, str)
+    assert isinstance(account_types, AccountTypes)
     account_type = account_name_type(account_name)
-    # FIXME: Use account_types.ACCOUNT_TYPES instead of options?
-    return account_type == options['name_equity']
+    return account_type == account_types.equity

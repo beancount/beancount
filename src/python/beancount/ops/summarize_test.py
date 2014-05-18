@@ -261,14 +261,15 @@ class TestConversions(unittest.TestCase):
             Assets:US:Checking        100 USD
 
         """
+        account_types = options.get_account_types(options_map)
         previous_accounts = options.get_previous_accounts(options_map)
         entries, _ = summarize.clamp(entries,
                                      datetime.date(2013, 1, 1), datetime.date(2014, 1, 1),
-                                     options_map,
+                                     account_types,
                                      *previous_accounts)
 
         current_accounts = options.get_current_accounts(options_map)
-        entries = summarize.close(entries, options_map, *current_accounts)
+        entries = summarize.close(entries, account_types, *current_accounts)
 
         # entries = conversions(entries, ACCOUNT_CONVERSIONS1, datetime.date(2013, 1, 1))
         # entries = conversions(entries, ACCOUNT_CONVERSIONS2)

@@ -17,13 +17,27 @@ from beancount.core import flags
 from beancount.core.account_types import is_income_statement_account
 
 
-# FIXME: Consider passing in account_types instaed of options here.
 def clamp(entries, begin_date, end_date,
-          options,
+          account_types,
           account_previous_earnings,
           account_previous_balances,
           account_previous_conversions):
     """Filter entries to include only those between begin and end dates.
+
+    Args:
+      entries: A list of directive tuples.
+      begin_date: A datetime.date instance, the beginning of the period.
+      end_date: A datetime.date instance, one day beyond the end of the period.
+      account_types: An instance of AccountTypes.
+      account_previous_earnings: A string, the name of the account to transfer
+        previous earnings from the income statement accounts to the balance
+        sheet.
+      account_previous_balances: A string, the name of the account in equity
+        to transfer previous balances from, in order to initialize account
+        balances at the beginning of the period. This is typically called an
+        opening balances account.
+      account_previous_conversions: A string, tne name of the equity account to
+        book currency conversions against.
 
     This routine performs the standard procedure required to produce reports
     only for entries between two dates. That is, it
@@ -40,7 +54,7 @@ def clamp(entries, begin_date, end_date,
     """
 
     income_statement_account_pred = (
-        lambda account: is_income_statement_account(account, options))
+        lambda account: is_income_statement_account(account, account_types))
 
     # Transfer income and expenses before the period to equity.
     entries = transfer_balances(entries, begin_date,
@@ -58,15 +72,14 @@ def clamp(entries, begin_date, end_date,
     return entries, index
 
 
-# FIXME: Consider passing in account_types instaed of options here, same.
 def close(entries,
-          options,
+          account_types,
           account_current_earnings,
           account_current_conversions):
     """Transfer net income to equity and insert a final conversion entry."""
 
     income_statement_account_pred = (
-        lambda account: is_income_statement_account(account, options))
+        lambda account: is_income_statement_account(account, account_types))
 
     # Transfer the balances as net-income.
     entries = transfer_balances(entries, None,

@@ -30,6 +30,7 @@ class View:
         self.title = title
 
         # A reference to the global list of options and the account type names.
+        # FIXME: These may be redundant, review whether we actually need these.
         self.options = options_map
         self.account_types = options.get_account_types(options_map)
 
@@ -64,7 +65,8 @@ class View:
             # income"). This is used to render the end-period balance sheet, with
             # the current period's net income, closing the period.
             current_accounts = options.get_current_accounts(self.options)
-            self.closing_entries = summarize.close(self.entries, self.options,
+            self.closing_entries = summarize.close(self.entries,
+                                                   self.account_types,
                                                    *current_accounts)
 
         # Realize the three sets of entries.
@@ -125,8 +127,10 @@ class YearView(View):
         # Clamp to the desired period.
         begin_date = datetime.date(self.year, 1, 1)
         end_date = datetime.date(self.year+1, 1, 1)
+        account_types = options.get_account_types(options_map)
         with misc_utils.print_time('clamp'):
-            entries, index = summarize.clamp(entries, begin_date, end_date, options_map,
+            entries, index = summarize.clamp(entries, begin_date, end_date,
+                                             account_types,
                                              *previous_accounts)
 
         return entries, index
