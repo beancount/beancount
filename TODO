@@ -8,9 +8,10 @@ beancount: TODO
 
      Finish testing unrealized.py, should be easy
 
+     web: Render a table of prices, in case there are only a few price points.
+
      Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
      ledgerhub-fetch-prices is borked, outputs Nones
-     The prices page has inverses now... fix this.
 
      Deal with amounts without cost in reporting of equity, I'm getting expense
      accounts there, we want to elide those.

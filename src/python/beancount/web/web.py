@@ -279,7 +279,7 @@ def prices_():
 
     oss = io.StringIO()
     for quote, baselist in sorted(
-        misc_utils.groupby(lambda x: x[1], app.price_map.keys()).items(),
+        misc_utils.groupby(lambda x: x[1], app.price_map.forward_pairs).items(),
         key=lambda x: -len(x[1])):
 
         links = ['<a href="{link}">{0} ({1})</a>'.format(

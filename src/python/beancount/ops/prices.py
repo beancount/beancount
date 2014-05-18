@@ -67,7 +67,21 @@ def get_price_entries(entries):
     return price_entries
 
 
+class PriceMap(dict):
+    """A price map dictionary.
+
+    The keys include both the set of forward (base, quote) pairs and their
+    inverse. In order to determine which are the forward pairs, access the
+    'forward_pairs' attribute
+
+    Atttributes:
+      forward_pairs: A list of (base, quote) keys for the forward pairs.
+    """
+    __slots__ = ('forward_pairs')
+
+
 def build_price_map(entries):
+
     """Build a price map from a list of arbitrary entries.
 
     If multiple prices are found for the same (currency, cost-currency) pair at
@@ -126,15 +140,17 @@ def build_price_map(entries):
         insert_list.extend(inverted_list)
 
     # Unzip and sort each of the entries and eliminate duplicates on the date.
-    sorted_price_map = {
+    sorted_price_map = PriceMap({
         base_quote: list(misc_utils.uniquify_last(date_rates, lambda x: x[0]))
-        for (base_quote, date_rates) in price_map.items()}
+        for (base_quote, date_rates) in price_map.items()})
 
     # Compute and insert all the inverted rates.
+    forward_pairs = list(sorted_price_map.keys())
     for (base, quote), price_list in list(sorted_price_map.items()):
-        sorted_price_map[(quote, base)] = [(date, ONE/price)
-                                           for date, price in price_list]
+        sorted_price_map[(quote, base)] = [
+            (date, ONE/price) for date, price in price_list]
 
+    sorted_price_map.forward_pairs = forward_pairs
     return sorted_price_map
 
 
