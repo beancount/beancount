@@ -3,6 +3,7 @@
 This tool is able to dump lexer/parser state, and will provide other services in
 the name of debugging.
 """
+import csv
 import sys
 import argparse
 
@@ -11,6 +12,7 @@ from beancount.parser.parser import options
 from beancount.core.account_types import get_account_sort_function
 from beancount.core import getters
 from beancount.core import realization
+from beancount.ops import prices
 from beancount import loader
 
 
@@ -58,6 +60,24 @@ def do_print_trial(filename):
     realization.dump_tree_balances(real_accounts)
 
 
+def do_prices(filename):
+    """Render and print the trial balance for a ledger.
+
+    Args:
+      filename: A string, the Beancount input filename.
+    """
+    # Load the file, realize it, and dump the accounts tree.
+    entries, errors, options_map = loader.load(filename, do_print_errors=True)
+    price_map = prices.build_price_map(entries)
+    for base_quote in price_map.forward_pairs:
+        price_list = price_map[base_quote]
+        base, quote = base_quote
+        writer = csv.writer(sys.stdout)
+        for date, price in price_list:
+            writer.writerow((base, quote, date, price))
+        writer.writerow(())
+
+
 def first_doc_sentence(object_):
     """Return the first sentence of a docstring.
 
@@ -75,27 +95,22 @@ def first_doc_sentence(object_):
 
 
 def main():
+    # FIXME: Add help for each command
+                        # help=first_doc_sentence(do_print_trial))
+
     parser = argparse.ArgumentParser(__doc__)
+    parser.add_argument('command', action='store',
+                        help="The command to run.")
     parser.add_argument('filename', help='Beancount input filename.')
-
-    parser.add_argument('--dump-lexer', action='store_true',
-                        help=first_doc_sentence(do_dump_lexer))
-
-    parser.add_argument('--list-accounts', action='store_true',
-                        help=first_doc_sentence(do_list_accounts))
-
-    parser.add_argument('--print-trial', action='store_true',
-                        help=first_doc_sentence(do_print_trial))
-
     opts = parser.parse_args()
 
-    # Dispatch the debugging commands.
-    if opts.dump_lexer:
-        do_dump_lexer(opts.filename)
-    if opts.list_accounts:
-        do_list_accounts(opts.filename)
-    if opts.print_trial:
-        do_print_trial(opts.filename)
+    # Run the command.
+    try:
+        command_name = "do_{}".format(opts.command.replace('-', '_'))
+        function = globals()[command_name]
+        function(opts.filename)
+    except KeyError:
+        parser.error("Invalid command name: '{}'".format(opts.command))
 
 
 if __name__ == '__main__':
