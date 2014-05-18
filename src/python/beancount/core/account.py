@@ -49,3 +49,19 @@ def account_name_leaf(account_name):
     """
     assert isinstance(account_name, str)
     return account_name.split(sep)[-1] if account_name else None
+
+
+# FIXME: convert to just sans_root().
+def account_name_sans_root(account_name):
+    """Get the name of the account without the root.
+
+    For example, an in put of 'Assets:BofA:Checking' will produce 'BofA:Checking'.
+
+    Args:
+      account_name: A string, the name of the account whose leaf name to return.
+    Returns:
+      A string, the name of the non-root portion of this account name.
+    """
+    assert isinstance(account_name, str)
+    components = account_name.split(sep)[1:]
+    return join(*components) if account_name else None

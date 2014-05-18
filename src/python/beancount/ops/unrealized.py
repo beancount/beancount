@@ -89,52 +89,43 @@ def add_unrealized_gains(entries, account_types, subaccount_name=None):
         pnl = market_value - book_value
         average_cost = book_value / total_units
 
+        # Compute the name of the accounts and add the requested subaccount name
+        # if requested.
+        asset_account = account_name
+        income_account = account.join(account_types.income,
+                                      account.account_name_sans_root(account_name))
+        if subaccount_name:
+            asset_account = account.join(asset_account, subaccount_name)
+            income_account = account.join(income_account, subaccount_name)
+
         # Create a new transaction to account for this difference in gain.
         fileloc = FileLocation('<unrealized_gains>', 0)
+        gain_loss_str = "gain" if pnl > ZERO else "loss"
         narration = ("Unrealized {} for {} units of {} "
-                     "(price: {:.4f} {} as of {}, average cost: {:.4f} {})").format(
-                         "gain" if pnl > ZERO else "loss",
-                         total_units, currency,
+                     "(price: {:.4f} {} as of {}, "
+                     "average cost: {:.4f} {})").format(
+                         gain_loss_str, total_units, currency,
                          price_number, cost_currency, price_date,
                          average_cost, cost_currency)
         entry = Transaction(fileloc, latest_date, flags.FLAG_UNREALIZED,
                             None, narration, None, None, [])
-
-        # Add the gain/loss as a subaccount to the asset account.
-        if subaccount_name:
-            asset_account = account.join(account_name, subaccount_name)
-        else:
-            asset_account = account_name
-
-        # Note: don't set a price because we don't want these to end up in Conversions.
-        entry.postings.append(
-            Posting(entry, asset_account,
-                    Position(Lot(cost_currency, None, None), pnl),
-                    None,
-                    None))
 
         # Book this as income, converting the account name to be the same, but as income.
         # Note: this is a rather convenient but arbitraty choice--maybe it would be best to
         # let the user decide to what account to book it, but I don't a nice way to let the
         # user specify this.
         #
-
-        # FIXME: don't replace the assets account, replace any root account,
-        # issue warning if not assets or liabilities
-
-        # FIXME: merge this with the above
-        income_account_name = account_name.replace(account_types.assets,
-                                                   account_types.income)
-        if subaccount_name:
-            income_account = account.join(income_account_name, subaccount_name)
-        else:
-            income_account = income_account_name
-
-        entry.postings.append(
+        # Note: we never set a price because we don't want these to end up in Conversions.
+        entry.postings.extend([
+            Posting(entry, asset_account,
+                    Position(Lot(cost_currency, None, None), pnl),
+                    None,
+                    None),
             Posting(entry, income_account,
                     Position(Lot(cost_currency, None, None), -pnl),
                     None,
-                    None))
+                    None)
+        ])
 
         new_entries.append(entry)
 

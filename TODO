@@ -93,6 +93,28 @@ beancount: TODO
   - Printer tests (not done) should work by doing a round-trip. In fact, run a
     round-trip test on my personal ledger file.
 
+  - Add a test for this (somewhere else): If something like this occurs, which
+    price should appear in the prices database? This should trigger a warning that
+    no price directive is inserted (this is what it should do: don't insert a
+    price in this case, because we don't know which):
+
+      2014-01-15 *
+        Income:Misc
+        Assets:Account1      1 HOUSE {100 USD}
+        Liabilities:Account1 1 HOUSE {101 USD}
+        Equity:Account1      1 HOUSE {102 USD}
+        Expenses:Account1    1 HOUSE {103 USD}
+        Income:Account1      1 HOUSE {104 USD}
+
+    Also, deal with multiple implied price points added from different
+    transactions on the same day... instead of just taking the later one, drop
+    the price points? But this breaks an assumptin in add_unrealized_gains()
+    which assumes that a price point will always be available if the unit is
+    held at cost. Make a decision.
+
+  - Consider creating a switch that would auto-create accounts not seen yet,
+    for the purpose of making demos (not sure if that's a great idea though).
+
 
 * Current
 

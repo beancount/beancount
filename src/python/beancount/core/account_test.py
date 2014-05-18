@@ -27,3 +27,8 @@ class TestAccount(unittest.TestCase):
         self.assertEqual("Toys", account.account_name_leaf("Expenses:Toys"))
         self.assertEqual("Expenses", account.account_name_leaf("Expenses"))
         self.assertEqual(None, account.account_name_leaf(""))
+
+    def test_account_sans_root(self):
+        self.assertEqual("Toys:Computer", account.account_name_sans_root("Expenses:Toys:Computer"))
+        self.assertEqual("US:BofA:Checking", account.account_name_sans_root("Assets:US:BofA:Checking"))
+        self.assertEqual("", account.account_name_sans_root("Assets"))

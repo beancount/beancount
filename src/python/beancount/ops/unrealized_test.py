@@ -161,29 +161,103 @@ class TestUnrealized(unittest.TestCase):
         2014-01-01 open Income:Misc
 
         2014-01-15 *
-          Income:Misc           -780
-          Assets:Account1       600 EUR @ 1.3 USD
+          Income:Misc
+          Assets:Account1       10 HOUSE {100 USD}
         """
         with self.assertRaises(ValueError):
             unrealized.add_unrealized_gains(
                 entries, options.get_account_types(options_map), '_invalid_')
 
-        # new_entries = unrealized.add_unrealized_gains(
-        #     entries, options.get_account_types(options_map), 'Gains')
-        # self.assertEqual([], unrealized.get_unrealized_entries(new_entries))
+        new_entries = unrealized.add_unrealized_gains(
+            entries, options.get_account_types(options_map), 'Gains')
+        entry = unrealized.get_unrealized_entries(new_entries)[0]
+        self.assertEqual('Assets:Account1:Gains', entry.postings[0].account)
+        self.assertEqual('Income:Account1:Gains', entry.postings[1].account)
+
+    @parsedoc
+    def test_not_assets(self, entries, _, options_map):
+        """
+        2014-01-01 open Liabilities:Account1
+        2014-01-01 open Equity:Account1
+        2014-01-01 open Expenses:Account1
+        2014-01-01 open Income:Account1
+        2014-01-01 open Income:Misc
+
+        2014-01-15 *
+          Income:Misc
+          Assets:Account1      1 HOUSE {100 USD}
+          Liabilities:Account1 2 HOUSE {101 USD}
+          Equity:Account1      3 HOUSE {102 USD}
+          Expenses:Account1    4 HOUSE {103 USD}
+          Income:Account1      5 HOUSE {104 USD}
+
+        2014-01-16 price HOUSE 110 USD
+        """
+        new_entries = unrealized.add_unrealized_gains( entries,
+                                                       options.get_account_types(options_map), 'Gains')
+        unreal_entries = unrealized.get_unrealized_entries(new_entries)
+
+        entry = get_entries_with_narration(unreal_entries, '1 units')[0]
+        self.assertEqual("Assets:Account1:Gains", entry.postings[0].account)
+        self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
+        self.assertEqual(to_decimal("10.00"), entry.postings[0].position.number)
+        self.assertEqual(to_decimal("-10.00"), entry.postings[1].position.number)
+
+        entry = get_entries_with_narration(unreal_entries, '2 units')[0]
+        self.assertEqual("Liabilities:Account1:Gains", entry.postings[0].account)
+        self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
+        self.assertEqual(to_decimal("18.00"), entry.postings[0].position.number)
+        self.assertEqual(to_decimal("-18.00"), entry.postings[1].position.number)
+
+        entry = get_entries_with_narration(unreal_entries, '3 units')[0]
+        self.assertEqual("Equity:Account1:Gains", entry.postings[0].account)
+        self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
+        self.assertEqual(to_decimal("24.00"), entry.postings[0].position.number)
+        self.assertEqual(to_decimal("-24.00"), entry.postings[1].position.number)
+
+        entry = get_entries_with_narration(unreal_entries, '4 units')[0]
+        self.assertEqual("Expenses:Account1:Gains", entry.postings[0].account)
+        self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
+        self.assertEqual(to_decimal("28.00"), entry.postings[0].position.number)
+        self.assertEqual(to_decimal("-28.00"), entry.postings[1].position.number)
+
+        entry = get_entries_with_narration(unreal_entries, '5 units')[0]
+        self.assertEqual("Income:Account1:Gains", entry.postings[0].account)
+        self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
+        self.assertEqual(to_decimal("30.00"), entry.postings[0].position.number)
+        self.assertEqual(to_decimal("-30.00"), entry.postings[1].position.number)
+
+    @parsedoc
+    def test_create_open_directive(self, entries, _, options_map):
+        """
+        2014-01-01 open Liabilities:Account1
+        2014-01-01 open Equity:Account1
+        2014-01-01 open Expenses:Account1
+        2014-01-01 open Income:Account1
+        2014-01-01 open Income:Misc
+
+        2014-01-15 *
+          Income:Misc
+          Assets:Account1      1 HOUSE {100 USD}
+          Liabilities:Account1 2 HOUSE {101 USD}
+          Equity:Account1      3 HOUSE {102 USD}
+          Expenses:Account1    4 HOUSE {103 USD}
+          Income:Account1      5 HOUSE {104 USD}
+
+        2014-01-16 price HOUSE 110 USD
+        """
+        # Test the creation of a new, undeclared income account, check that open
+        # directives are present for accounts that have been created
+        # automatically, because the resulting set of entries should validation
+        # no matter what modifications.
+
+
+        # new_entries = unrealized.add_unrealized_gains( entries,
+        #                                                options.get_account_types(options_map), 'Gains')
+        # unreal_entries = unrealized.get_unrealized_entries(new_entries)
+        pass
 
 
 
-
-
-# test with and without a subaccount
-
-# test with values held not in an assets account
-# (make the code replace the root account with an income account)
-
-
-# test the creation of a new income account
-
-
-
-# create a decorator for each of these methods that automatmically calls the function
+# Create a decorator for each of these methods that automatmically calls the function
+__incomplete__ = True
