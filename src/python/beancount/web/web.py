@@ -1029,7 +1029,7 @@ def auto_reload_input_file(callback):
 
             # Parse the beancount file.
             entries, errors, options_map = loader.load(
-                filename, add_unrealized_gains=True, do_print_errors=True)
+                filename, do_print_errors=True)
 
             # Save globals in the global app.
             app.entries = entries

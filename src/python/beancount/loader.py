@@ -17,7 +17,7 @@ from beancount.ops import unrealized
 
 
 def load(filename,
-         add_unrealized_gains=False,
+         add_unrealized_gains=True,
          do_print_errors=False,
          quiet=False,
          parse_method='filename'):
@@ -57,8 +57,6 @@ def load(filename,
     with misc_utils.print_time('parse', quiet):
         entries, parse_errors, options_map = parse_fun(filename)
 
-    account_types = options.get_account_types(options_map)
-
     # Pad the resulting entries (create synthetic Pad entries to balance checks
     # where desired).
     with misc_utils.print_time('pad', quiet):
@@ -78,10 +76,13 @@ def load(filename,
         valid_errors = validation.validate(entries)
 
     # Add unrealized gains.
-    with misc_utils.print_time('unrealized', quiet):
-        entries = unrealized.unrealized_gains(entries,
-                                              options_map['account_unrealized'],
-                                              account_types)
+    if add_unrealized_gains:
+        with misc_utils.print_time('unrealized', quiet):
+            account_types = options.get_account_types(options_map)
+            entries = unrealized.add_unrealized_gains(
+                entries,
+                account_types,
+                options_map['account_unrealized'])
 
     # Print out the list of errors.
     errors = parse_errors + pad_errors + check_errors + valid_errors + doc_errors
