@@ -156,6 +156,35 @@ def normalize_base_quote(base_quote):
     return base_quote
 
 
+def _lookup_price_and_inverse(price_map, base_quote):
+    """Lookup the (base, quote) tuple in the price map and its inverse.
+    If not found, raise an appropriate exception.
+
+    Note: this is meant to be an INTERNAL helper function, use the get_*
+    functions to obtain values from a price_map object.
+
+    Args:
+      price_map: A price map, which is a dict of (base, quote) -> list of (date,
+        number) tuples, as created by build_price_map.
+      base_quote: A pair of strings, (base, quote) currencies.
+        No normalizatin is done.
+    Returns:
+      A list of price-dates, if succesful.
+    Raises:
+      KeyError: If the base_quote and its inverse both weren't able to be looked
+      up.
+    """
+    try:
+        return price_map[base_quote]
+    except KeyError as exc:
+        base, quote = base_quote
+        prices = price_map.get((quote, base), None)
+        if prices:
+            return prices
+        else:
+            raise exc
+
+
 def get_all_prices(price_map, base_quote):
     """Return a sorted list of all (date, number) price pairs.
 
@@ -170,7 +199,7 @@ def get_all_prices(price_map, base_quote):
 
     """
     base_quote = normalize_base_quote(base_quote)
-    return price_map[base_quote]
+    return _lookup_price_and_inverse(price_map, base_quote)
 
 
 def get_latest_price(price_map, base_quote):
@@ -186,15 +215,16 @@ def get_latest_price(price_map, base_quote):
       'number' is a Decimal of the price, or rate, at that date. The date is the
       latest date which we have an available price for in the price map.
     """
-    base, quote = normalize_base_quote(base_quote)
+    base_quote = normalize_base_quote(base_quote)
 
     # Handle the degenerate case of a currency priced into its own.
+    base, quote = base_quote
     if quote is None or base == quote:
         return (None, ONE)
 
     # Look up the list and return the latest element. The lists are assumed to
     # be sorted.
-    price_list = price_map[(base, quote)]
+    price_list = _lookup_price_and_inverse(price_map, base_quote)
     if price_list:
         return price_list[-1]
     else:
@@ -222,7 +252,13 @@ def get_price(price_map, base_quote, date=None):
         return get_latest_price(price_map, base_quote)
 
     base_quote = normalize_base_quote(base_quote)
-    price_list = price_map[base_quote]
+
+    # Handle the degenerate case of a currency priced into its own.
+    base, quote = base_quote
+    if quote is None or base == quote:
+        return (None, ONE)
+
+    price_list = _lookup_price_and_inverse(price_map, base_quote)
     index = misc_utils.bisect_right_with_key(price_list, date, key=lambda x: x[0])
     if index == 0:
         return None, None

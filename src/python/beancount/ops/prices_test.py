@@ -1,5 +1,6 @@
 import unittest
 import datetime
+import re
 
 from beancount.core.amount import to_decimal
 from beancount.ops import prices
@@ -102,6 +103,20 @@ class TestPriceMap(unittest.TestCase):
             self.assertEqual(exp_value, act_value.quantize(to_decimal('0.01')))
 
         self.assertEqual(5, len(price_map[('CAD', 'USD')]))
+
+    @parsedoc
+    def test_lookup_price_and_inverse(self, entries, _, __):
+        """
+        2013-06-01 price  USD  1.01 CAD
+        """
+        price_map = prices.build_price_map(entries)
+
+        # Ensure that the forward exception includes the forward detail.
+        try:
+            prices._lookup_price_and_inverse(price_map, ('EUR', 'USD'))
+            self.fail("Exception not raised.")
+        except KeyError as exc:
+            self.assertTrue(re.search("('EUR', 'USD')", str(exc)))
 
     @parsedoc
     def test_get_all_prices(self, entries, _, __):
