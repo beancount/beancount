@@ -35,25 +35,25 @@ class TestAccountTypes(unittest.TestCase):
             key=account_types.get_account_sort_function(account_types.DEFAULT_ACCOUNT_TYPES))
         self.assertEqual(account_names_expected, account_names_actual)
 
-    def test_account_name_type(self):
+    def test_get_account_type(self):
         self.assertEqual("Assets",
-                         account_types.account_name_type("Assets:US:RBS:Checking"))
+                         account_types.get_account_type("Assets:US:RBS:Checking"))
         self.assertEqual("Assets",
-                         account_types.account_name_type("Assets:US:RBS:Savings"))
+                         account_types.get_account_type("Assets:US:RBS:Savings"))
         self.assertEqual("Liabilities",
-                         account_types.account_name_type("Liabilities:US:RBS:MortgageLoan"))
+                         account_types.get_account_type("Liabilities:US:RBS:MortgageLoan"))
         self.assertEqual("Equity",
-                         account_types.account_name_type("Equity:NetIncome"))
+                         account_types.get_account_type("Equity:NetIncome"))
         self.assertEqual("Equity",
-                         account_types.account_name_type("Equity:OpeningBalances"))
+                         account_types.get_account_type("Equity:OpeningBalances"))
         self.assertEqual("Income",
-                         account_types.account_name_type("Income:US:ETrade:Dividends"))
+                         account_types.get_account_type("Income:US:ETrade:Dividends"))
         self.assertEqual("Income",
-                         account_types.account_name_type("Income:US:Intel"))
+                         account_types.get_account_type("Income:US:Intel"))
         self.assertEqual("Expenses",
-                         account_types.account_name_type("Expenses:Toys:Computer"))
+                         account_types.get_account_type("Expenses:Toys:Computer"))
         self.assertEqual("Invalid",
-                         account_types.account_name_type("Invalid:Toys:Computer"))
+                         account_types.get_account_type("Invalid:Toys:Computer"))
 
     def test_is_valid_account_name(self):
         is_valid = account_types.is_valid_account_name

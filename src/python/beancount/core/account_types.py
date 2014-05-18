@@ -30,7 +30,6 @@ DEFAULT_ACCOUNT_TYPES = AccountTypes("Assets",
                                      "Expenses")
 
 
-# FIXME: replace by get_account_sort_fun()
 def get_account_sort_function(account_types):
     """Return a function that can be used to extract a key to sort account names.
 
@@ -42,12 +41,11 @@ def get_account_sort_function(account_types):
       produces a sortable key.
     """
     assert isinstance(account_types, AccountTypes)
-    return lambda account_name: (account_types.index(account_name_type(account_name)),
+    return lambda account_name: (account_types.index(get_account_type(account_name)),
                                  account_name)
 
 
-# FIXME: replace by get_account_type()
-def account_name_type(account_name):
+def get_account_type(account_name):
     """Return the type of this account's name.
 
     Warning: No check is made on the validity of the account type. This merely
@@ -73,7 +71,8 @@ def is_valid_account_name(string):
     """
     return (isinstance(string, str) and
             bool(re.match(
-                '([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)+$', string)))
+                '([A-Z][A-Za-z0-9\-]+)({}[A-Z][A-Za-z0-9\-]+)+$'.format(account.sep),
+                string)))
 
 
 def is_root_account(account_name, account_types=None):
@@ -112,7 +111,7 @@ def is_balance_sheet_account(account_name, account_types):
     """
     assert isinstance(account_name, str)
     assert isinstance(account_types, AccountTypes)
-    account_type = account_name_type(account_name)
+    account_type = get_account_type(account_name)
     return account_type in (account_types.assets,
                             account_types.liabilities,
                             account_types.equity)
@@ -130,7 +129,7 @@ def is_income_statement_account(account_name, account_types):
     """
     assert isinstance(account_name, str)
     assert isinstance(account_types, AccountTypes), account_types
-    account_type = account_name_type(account_name)
+    account_type = get_account_type(account_name)
     return account_type in (account_types.income,
                             account_types.expenses)
 
@@ -146,5 +145,5 @@ def is_equity_account(account_name, account_types):
     """
     assert isinstance(account_name, str)
     assert isinstance(account_types, AccountTypes)
-    account_type = account_name_type(account_name)
+    account_type = get_account_type(account_name)
     return account_type == account_types.equity

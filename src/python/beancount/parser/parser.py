@@ -162,7 +162,7 @@ class Builder(object):
             return account.join(self.options['name_equity'], 'InvalidAccountName')
 
         # Check account type validity.
-        account_type = account_types.account_name_type(account_name)
+        account_type = account_types.get_account_type(account_name)
         if account_type not in self.account_types:
             self.errors.append(
                 ParserError(fileloc,
