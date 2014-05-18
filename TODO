@@ -2,9 +2,9 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-  - Remove TYPES_ORDER, rename some of the functions in account_types to simpler
-    names, e.g. account_name_type should be just account_type, this is a
-    throwback from when we had Account objects. Make the code nicer in this way!
+  - Make all the account_types functions accept an AccountTypes object instead
+    of options. Remove side-effects, make truly functional, probably not hard
+    and worth it.
 
   - Rename options -> options_map everywhere for consistency.
 

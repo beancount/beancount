@@ -24,7 +24,6 @@ AccountTypes = namedtuple('AccountTypes', "assets liabilities equity income expe
 
 # The global value of account types.
 ACCOUNT_TYPES = None
-TYPES_ORDER = None
 
 # Default values for root accounts.
 DEFAULT_ACCOUNT_TYPES = AccountTypes("Assets",
@@ -45,27 +44,26 @@ def update_valid_account_names(account_types=DEFAULT_ACCOUNT_TYPES):
         set to specific values.
     """
     assert isinstance(account_types, (AccountTypes, type(None)))
-    global ACCOUNT_TYPES, TYPES_ORDER
+    global ACCOUNT_TYPES
     ACCOUNT_TYPES = account_types
-    TYPES_ORDER = dict((x, i) for (i, x) in enumerate(account_types))
 
 
 update_valid_account_names(DEFAULT_ACCOUNT_TYPES)
 
 
-def account_name_sortkey(account_name):
-    """Sort a list of accounts, taking into account the type of account.
-    Assets, Liabilities, Equity, Income and Expenses, in this order, then
-    in the order of the account's name.
+def account_sortkey_fun(account_types):
+    """Return a function that can be used to extract a key to sort account names.
 
     Args:
-      account_name: A string, the name of the account to sort.
+      account_types: An instance of AccountTypes, a tuple of account type names.
     Returns:
-      A tuple which is to be used as the sort key for lists of accounts.
+      A function object to use as the optional 'key' argument to the sort
+      function. It accepts a single argument, the account name to sort and
+      produces a sortable key.
     """
-    assert isinstance(account_name, str)
-    type_ = account_name_type(account_name)
-    return (TYPES_ORDER[type_], account_name)
+    assert isinstance(account_types, AccountTypes)
+    return lambda account_name: (account_types.index(account_name_type(account_name)),
+                                 account_name)
 
 
 def account_name_type(account_name):
@@ -76,7 +74,7 @@ def account_name_type(account_name):
     Returns:
       A string, the type of the account in 'account_name'.
     """
-    assert isinstance(account_name, str)
+    assert isinstance(account_name, str), account_name
     atype = account_name.split(account.sep)[0]
     assert atype in ACCOUNT_TYPES, (
         account_name, atype, ACCOUNT_TYPES)

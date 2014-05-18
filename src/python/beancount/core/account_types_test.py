@@ -11,9 +11,8 @@ class TestAccountGlobals(unittest.TestCase):
     def test_basics(self):
         self.assertEqual(5, len(account_types.DEFAULT_ACCOUNT_TYPES))
         self.assertTrue(account_types.ACCOUNT_TYPES is not None)
-        self.assertTrue(account_types.TYPES_ORDER is not None)
 
-    def test_account_name_sortkey(self):
+    def test_account_sortkey_fun(self):
         account_names_input = [
             "Expenses:Toys:Computer",
             "Income:US:Intel",
@@ -34,10 +33,9 @@ class TestAccountGlobals(unittest.TestCase):
             "Income:US:Intel",
             "Expenses:Toys:Computer",
         ]
-
-        # Test account_name_sortkey.
-        account_names_actual = sorted(account_names_input,
-                                      key=account_types.account_name_sortkey)
+        account_names_actual = sorted(
+            account_names_input,
+            key=account_types.account_sortkey_fun(account_types.ACCOUNT_TYPES))
         self.assertEqual(account_names_expected, account_names_actual)
 
     def test_account_name_type(self):
