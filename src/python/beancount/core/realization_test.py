@@ -189,7 +189,7 @@ def realizedoc(fun):
     argument."""
     @functools.wraps(fun)
     def newfun(self):
-        entries, errors, options = parser.parse_string(textwrap.dedent(fun.__doc__))
+        entries, errors, options_map = parser.parse_string(textwrap.dedent(fun.__doc__))
         real_accounts = realization.realize(entries)
         if do_trace and errors:
             trace_errors(real_accounts, errors)
@@ -214,7 +214,7 @@ def realizedoc(fun):
 # class TestRealization(unittest.TestCase):
 
 #     @parsedoc
-#     def test_simple_realize(self, entries, errors, options):
+#     def test_simple_realize(self, entries, errors, options_map):
 #         """
 #           2013-05-01 open Assets:US:Checking:Sub   USD
 #           2013-05-01 open Expenses:Stuff

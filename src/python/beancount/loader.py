@@ -116,7 +116,7 @@ def loaddoc(fun):
 
 
 # A global list of filter functions to be applied on all subsequent loads.
-# Each function should accept a triplet of (entries, errors, options) and
+# Each function should accept a triplet of (entries, errors, options_map) and
 # return a similar triplet.
 LOAD_PLUGINS = []
 
@@ -126,8 +126,8 @@ def install_load_plugin(callback):
 
     Args:
       callback: a callable that gets invoked with the result of load(), that is,
-                 with entries, errors, options. The function should return new
-                 values for these, that is, a triple of entries, errors, options.
+                 with entries, errors, options_map. The function should return new
+                 values for these, that is, a triple of entries, errors, options_map.
     """
     LOAD_PLUGINS.append(callback)
 

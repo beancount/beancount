@@ -83,17 +83,17 @@ def tag_pending_transactions(entries, tag_name='PENDING'):
             for entry in entries]
 
 
-def tag_pending_plugin(entries, errors, options):
+def tag_pending_plugin(entries, errors, options_map):
     """A plugin that finds and tags pending transactions.
 
     Args:
-      entries: a list of entry instances
-      errors: a list of errors generated during parsing
-      options: a dict of options parsed from the file
+      entries: A list of entry instances.
+      errors: A list of errors generated during parsing.
+      options_map: A dict of options parsed from the file.
     Returns:
       A triple of the same, possibly modifeid.
     """
-    return (tag_pending_transactions(entries, 'PENDING'), errors, options)
+    return (tag_pending_transactions(entries, 'PENDING'), errors, options_map)
 
 
 def main():
@@ -104,7 +104,7 @@ def main():
 
     # Parse the entries with a filter plugin.
     loader.install_load_plugin(tag_pending_plugin)
-    entries, errors, options = loader.load(opts.filename, do_print_errors=True)
+    entries, errors, _ = loader.load(opts.filename, do_print_errors=True)
 
     # Print the entries that have been tagged.
     pending_entries = [entry for entry in basicops.filter_tag('PENDING', entries)]

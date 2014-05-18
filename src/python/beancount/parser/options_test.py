@@ -11,7 +11,7 @@ from beancount.core import account_types
 class TestOptions(unittest.TestCase):
 
     @parsedoc
-    def test_custom_account_names(self, entries, errors, options):
+    def test_custom_account_names(self, entries, errors, options_map):
         """
           option "name_assets" "Actif"
           option "name_liabilities" "Passif"

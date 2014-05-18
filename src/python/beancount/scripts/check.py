@@ -23,7 +23,7 @@ def main():
     with misc_utils.print_time('total'):
 
         # Load up the file, print errors.
-        entries, errors, options = load(opts.filename, do_print_errors=True)
+        entries, errors, _ = load(opts.filename, do_print_errors=True)
 
         # Realize the entries.
         with misc_utils.print_time('realize'):

@@ -34,7 +34,7 @@ class TestParserEntryTypes(unittest.TestCase):
     """Basic smoke test one entry of each kind."""
 
     @parsedoc
-    def test_entry_transaction_1(self, entries, errors, options):
+    def test_entry_transaction_1(self, entries, _, __):
         """
           2013-05-18 * "Nice dinner at Mermaid Inn"
             Expenses:Restaurant         100 USD
@@ -43,7 +43,7 @@ class TestParserEntryTypes(unittest.TestCase):
         check_list(self, entries, [Transaction])
 
     @parsedoc
-    def test_entry_transaction_2(self, entries, errors, options):
+    def test_entry_transaction_2(self, entries, _, __):
         """
           2013-05-18 txn "Nice dinner at Mermaid Inn"
             Expenses:Restaurant         100 USD
@@ -52,7 +52,7 @@ class TestParserEntryTypes(unittest.TestCase):
         check_list(self, entries, [Transaction])
 
     @parsedoc
-    def test_entry_transaction_invalid_npostings(self, entries, errors, options):
+    def test_entry_transaction_invalid_npostings(self, entries, errors, _):
         """
           2013-05-18 * "Nice dinner at Mermaid Inn"
             Expenses:Restaurant         100 USD
@@ -62,63 +62,63 @@ class TestParserEntryTypes(unittest.TestCase):
         check_list(self, errors, 1)
 
     @parsedoc
-    def test_entry_check(self, entries, errors, options):
+    def test_entry_check(self, entries, _, __):
         """
           2013-05-18 check Assets:US:BestBank:Checking  200 USD
         """
         check_list(self, entries, [Balance])
 
     @parsedoc
-    def test_entry_open_1(self, entries, errors, options):
+    def test_entry_open_1(self, entries, _, __):
         """
           2013-05-18 open Assets:US:BestBank:Checking
         """
         check_list(self, entries, [Open])
 
     @parsedoc
-    def test_entry_open_2(self, entries, errors, options):
+    def test_entry_open_2(self, entries, _, __):
         """
           2013-05-18 open Assets:US:BestBank:Checking   USD
         """
         check_list(self, entries, [Open])
 
     @parsedoc
-    def test_entry_open_3(self, entries, errors, options):
+    def test_entry_open_3(self, entries, _, __):
         """
           2013-05-18 open Assets:Cash   USD,CAD,EUR
         """
         check_list(self, entries, [Open])
 
     @parsedoc
-    def test_entry_close(self, entries, errors, options):
+    def test_entry_close(self, entries, _, __):
         """
           2013-05-18 close Assets:US:BestBank:Checking
         """
         check_list(self, entries, [Close])
 
     @parsedoc
-    def test_entry_pad(self, entries, errors, options):
+    def test_entry_pad(self, entries, _, __):
         """
           2013-05-18 pad Assets:US:BestBank:Checking  Equity:Opening-Balancess
         """
         check_list(self, entries, [Pad])
 
     @parsedoc
-    def test_entry_event(self, entries, errors, options):
+    def test_entry_event(self, entries, _, __):
         """
           2013-05-18 event "location" "New York, USA"
         """
         check_list(self, entries, [Event])
 
     @parsedoc
-    def test_entry_note(self, entries, errors, options):
+    def test_entry_note(self, entries, _, __):
         """
           2013-05-18 note Assets:US:BestBank:Checking  "Blah, di blah."
         """
         check_list(self, entries, [Note])
 
     @parsedoc
-    def test_entry_price(self, entries, errors, options):
+    def test_entry_price(self, entries, _, __):
         """
           2013-05-18 price USD   1.0290 CAD
         """
@@ -129,13 +129,13 @@ class TestUglyBugs(unittest.TestCase):
     """Test all kinds of stupid sh*t that will inevitably occur in practice."""
 
     @parsedoc
-    def test_empty_1(self, entries, errors, options):
+    def test_empty_1(self, entries, errors, _):
         ""
         check_list(self, entries, [])
         check_list(self, errors, [])
 
     @parsedoc
-    def test_empty_2(self, entries, errors, options):
+    def test_empty_2(self, entries, errors, _):
         """
 
         """
@@ -143,7 +143,7 @@ class TestUglyBugs(unittest.TestCase):
         check_list(self, errors, [])
 
     @parsedoc
-    def test_comment(self, entries, errors, options):
+    def test_comment(self, entries, errors, _):
         """
         ;; This is some comment.
         """
@@ -152,7 +152,7 @@ class TestUglyBugs(unittest.TestCase):
 
     def test_extra_whitespace_note(self):
         input_ = '\n2013-07-11 note Assets:Cash "test"\n\n  ;;\n'
-        entries, errors, options = parser.parse_string(input_)
+        entries, errors, _ = parser.parse_string(input_)
         check_list(self, entries, [Note])
         check_list(self, errors, [])
 
@@ -165,7 +165,7 @@ class TestUglyBugs(unittest.TestCase):
             ';; End of file',
         ])
 
-        entries, errors, options = parser.parse_string(input_, yydebug=0)
+        entries, errors, _ = parser.parse_string(input_, yydebug=0)
         check_list(self, entries, [Transaction])
         check_list(self, errors, [])
 
@@ -176,7 +176,7 @@ class TestUglyBugs(unittest.TestCase):
             '  Assets:US:Cash',
             '  ;;',
         ])
-        entries, errors, options = parser.parse_string(input_)
+        entries, errors, _ = parser.parse_string(input_)
         check_list(self, entries, [Transaction])
         check_list(self, errors, [])
 
@@ -187,7 +187,7 @@ class TestSyntaxErrors(unittest.TestCase):
     bailing out with an exception."""
 
     @parsedoc
-    def test_lexer_default_rule_1(self, entries, errors, options):
+    def test_lexer_default_rule_1(self, entries, errors, _):
         """
           Account:*:Bla
         """
@@ -195,7 +195,7 @@ class TestSyntaxErrors(unittest.TestCase):
         self.assertEqual(1, len(errors))
 
     @parsedoc
-    def test_lexer_default_rule_2(self, entries, errors, options):
+    def test_lexer_default_rule_2(self, entries, errors, _):
         """
           2013-05-18 * "Nice dinner at Mermaid Inn"
             Expenses:Resta(urant        100 USD
@@ -218,7 +218,7 @@ class TestLineNumbers(unittest.TestCase):
     """Check that the line numbers line up correctly."""
 
     @parsedoc
-    def test_line_numbers(self, entries, errors, options):
+    def test_line_numbers(self, entries, errors, _):
         """
           2013-05-18 * "Nice dinner at Mermaid Inn"
             Expenses:Restaurant         100 USD
@@ -241,27 +241,28 @@ class TestLineNumbers(unittest.TestCase):
 class TestParserOptions(unittest.TestCase):
 
     @parsedoc
-    def test_empty_1(self, entries, errors, options):
+    def test_empty_1(self, entries, errors, options_map):
         """
           option "title" "Super Rich"
 
         """
-        option = options['title']
+        option = options_map['title']
         self.assertEqual(option, 'Super Rich')
 
     @parsedoc
-    def test_invalid_option(self, entries, errors, options):
+    def test_invalid_option(self, entries, errors, options_map):
         """
           option "bladibla_invalid" "Some value"
 
         """
         check_list(self, errors, [parser.ParserError])
+        self.assertFalse("bladibla_invalid" in options_map)
 
 
 class TestParserLinks(unittest.TestCase):
 
     @parsedoc
-    def test_links(self, entries, errors, options):
+    def test_links(self, entries, errors, _):
         """
           2013-05-18 * "Something something" ^38784734873
             Expenses:Restaurant         100 USD
@@ -275,7 +276,7 @@ class TestParserLinks(unittest.TestCase):
 class TestTransactions(unittest.TestCase):
 
     @parsedoc
-    def test_simple_1(self, entries, errors, options):
+    def test_simple_1(self, entries, errors, _):
         """
           2013-05-18 * "Nice dinner at Mermaid Inn"
             Expenses:Restaurant         100 USD
@@ -285,7 +286,7 @@ class TestTransactions(unittest.TestCase):
         check_list(self, errors, [])
 
     @parsedoc
-    def test_simple_2(self, entries, errors, options):
+    def test_simple_2(self, entries, errors, _):
         """
 
           2013-05-18 * "Nice dinner at Mermaid Inn"
@@ -301,7 +302,7 @@ class TestTransactions(unittest.TestCase):
         check_list(self, errors, [])
 
     @parsedoc
-    def test_empty_narration(self, entries, errors, options):
+    def test_empty_narration(self, entries, errors, _):
         """
           2013-05-18 * ""
             Expenses:Restaurant         100 USD
@@ -325,7 +326,7 @@ class TestTransactions(unittest.TestCase):
         self.assertEqual(None, entries[0].payee)
 
     @parsedoc
-    def test_too_many_strings(self, entries, errors, options):
+    def test_too_many_strings(self, entries, errors, _):
         """
           2013-05-18 * "A" "B" "C"
             Expenses:Restaurant         100 USD
@@ -366,7 +367,7 @@ class TestTransactions(unittest.TestCase):
 class TestCurrencies(unittest.TestCase):
 
     @parsedoc
-    def test_parse_currencies(self, entries, errors, options):
+    def test_parse_currencies(self, entries, errors, _):
         """
           2014-01-19 open Assets:Underscore    DJ_EURO
           2014-01-19 open Assets:Period        DJ.EURO
@@ -379,7 +380,7 @@ class TestCurrencies(unittest.TestCase):
 class TestBalance(unittest.TestCase):
 
     @parsedoc
-    def test_total_price(self, entries, errors, options):
+    def test_total_price(self, entries, errors, _):
         """
           2013-05-18 * ""
             Assets:Investments:MSFT      10 MSFT @@ 2000 USD
@@ -390,7 +391,7 @@ class TestBalance(unittest.TestCase):
         self.assertEqual(None, posting.position.lot.cost)
 
     @parsedoc
-    def test_total_cost(self, entries, errors, options):
+    def test_total_cost(self, entries, errors, _):
         """
           2013-05-18 * ""
             Assets:Investments:MSFT      10 MSFT {{2000 USD}}

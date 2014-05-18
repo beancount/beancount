@@ -2,12 +2,6 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-  - Make all the account_types functions accept an AccountTypes object instead
-    of options. Remove side-effects, make truly functional, probably not hard
-    and worth it.
-
-  - Rename options -> options_map everywhere for consistency.
-
   - Add emacs configuration to highlight beyond 92 in this specific project.
 
   - prices.py and positions.py:

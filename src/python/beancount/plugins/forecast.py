@@ -29,7 +29,7 @@ from beancount.core import data
 __plugins__ = ('forecast_plugin',)
 
 
-def forecast_plugin(entries, errors, options):
+def forecast_plugin(entries, errors, options_map):
     """An example filter that piggybacks on top of the Beancount input syntax to
     insert forecast entries automatically. This functions accepts the return
     value of beancount.loader.load() and must return the same type of output.
@@ -37,7 +37,7 @@ def forecast_plugin(entries, errors, options):
     Args:
       entries: a list of entry instances
       errors: a list of errors generated during parsing
-      options: a dict of options parsed from the file
+      options_map: a dict of options parsed from the file
     Returns:
       A triple of the same, possibly modifeid.
     """
@@ -72,4 +72,4 @@ def forecast_plugin(entries, errors, options):
     # Make sure the new entries inserted are sorted.
     new_entries.sort(key=data.entry_sortkey)
 
-    return (filtered_entries + new_entries, errors, options)
+    return (filtered_entries + new_entries, errors, options_map)

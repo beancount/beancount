@@ -24,8 +24,7 @@ class TestExampleForecast(unittest.TestCase):
         loader.uninstall_load_plugin(forecast.forecast_plugin)
 
     def test_forecast(self):
-        entries, errors, options = loader.load(EXAMPLE_INPUT,
-                                               parse_method='string')
+        entries, _, __ = loader.load(EXAMPLE_INPUT, parse_method='string')
         self.assertLess(3, len(entries))
 
 

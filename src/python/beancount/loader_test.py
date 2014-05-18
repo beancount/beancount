@@ -25,25 +25,25 @@ class TestLoader(unittest.TestCase):
         with tempfile.NamedTemporaryFile('w') as f:
             f.write(TEST_FILE)
             f.flush()
-            entries, errors, options = loader.load(f.name)
+            entries, errors, options_map = loader.load(f.name)
             self.assertTrue(isinstance(entries, list))
             self.assertTrue(isinstance(errors, list))
-            self.assertTrue(isinstance(options, dict))
+            self.assertTrue(isinstance(options_map, dict))
 
     def test_loaddoc(self):
-        def test_function(self_, entries, errors, options):
+        def test_function(self_, entries, errors, options_map):
             self.assertTrue(isinstance(entries, list))
             self.assertTrue(isinstance(errors, list))
-            self.assertTrue(isinstance(options, dict))
+            self.assertTrue(isinstance(options_map, dict))
 
         test_function.__doc__ = TEST_FILE
         test_function = loader.loaddoc(test_function)
         test_function(self)
 
     @loader.loaddoc
-    def test_loaddoc_inline(self, entries, errors, options):
+    def test_loaddoc_inline(self, entries, errors, options_map):
         """
         """
         self.assertTrue(isinstance(entries, list))
         self.assertTrue(isinstance(errors, list))
-        self.assertTrue(isinstance(options, dict))
+        self.assertTrue(isinstance(options_map, dict))
