@@ -99,6 +99,19 @@ beancount: TODO
 
 * Current
 
+  - tree rendering: If a parent account has only a single subaccount and the
+    parent account otherwise has no postings in its realization, render the
+    account on a single line instead of two, e.g.
+
+      Expenses                     Expenses
+        Taxes                        Taxes
+          US                           US
+            TY2014                       TY2014
+              State                        State:Google
+                Google                     ...
+              ...
+
+
   - Plan for integrating rendering and filtering between web/HTML and text
     versions:
 
