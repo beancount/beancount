@@ -16,6 +16,8 @@ beancount: TODO
      Deal with amounts without cost in reporting of equity, I'm getting expense
      accounts there, we want to elide those.
 
+  - Rename/simplify function names in beacnount.core.account (see FIXMEs)
+
   - realization_test.py --> complete this now!
 
   - Complete the equity value page with prices.py, render the rates used to that page.
