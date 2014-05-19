@@ -2,35 +2,71 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-  - Add emacs configuration to highlight beyond 92 in this specific project.
+  - Add emacs configuration to highlight beyond 90 in this specific project,
+    that does not use the fringe.
 
-  - prices.py and positions.py:
+  - Rename/simplify function names in beacnount.core.account (see FIXMEs)
 
-     Finish testing unrealized.py, should be easy
+  - Complete full unittests coverage (as per find-missing-tests.py).
+    Remaining (to be processed in this order):
 
-     web: Render a table of prices, in case there are only a few price points.
+       src/python/beancount/ops/unrealized.py                 INCOMPLETE
+
+            Finish testing unrealized.py, should be easy
+
+       src/python/beancount/plugins/forecast.py               INCOMPLETE
+
+            Add a routine to complete by parsed file.
+            Use it to complete this test and maybe simplify other test code.
+
+       src/python/beancount/core/realization.py               INCOMPLETE
+
+            realization_test.py --> COMPLETE THIS NOW!
+
+       src/python/beancount/parser/printer.py                 INCOMPLETE
+       src/python/beancount/parser/documents.py               INCOMPLETE
+
+       src/python/beancount/ops/summarize.py                  INCOMPLETE
+       src/python/beancount/ops/pad.py                        INCOMPLETE
+       src/python/beancount/ops/validation.py                 INCOMPLETE
+       src/python/beancount/ops/check.py                      INCOMPLETE
+
+       src/python/beancount/web/acctree.py                    MISSING
+       src/python/beancount/web/journal.py                    MISSING
+       src/python/beancount/utils/tree_utils.py               INCOMPLETE
+
+       src/python/beancount/web/bottle_utils.py               MISSING
+
+       src/python/beancount/web/views.py                      MISSING
+       src/python/beancount/web/gviz.py                       MISSING
+
+
+
+  - Clean up code: remove all significant codes from __init__.py files, in
+    particular beancount.scripts.__init__, move to an util with tests.
+
+
+  - Prices:
 
      Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
      ledgerhub-fetch-prices is borked, outputs Nones
 
-     Deal with amounts without cost in reporting of equity, I'm getting expense
-     accounts there, we want to elide those.
+  - web: Render a table of prices, in case there are only a few price points.
 
-  - Rename/simplify function names in beacnount.core.account (see FIXMEs)
-
-  - realization_test.py --> complete this now!
-
-  - Complete the equity value page with prices.py, render the rates used to that page.
-    Merge Holdings tab into Shareholder's Equity, less tabs, similar report.
+  - Merge Holdings tab into Shareholder's Equity, less tabs, similar report.
+    Complete the equity value page with prices.py, render the rates used to that page.
 
   - Build a more complete and representative of reality example file, bake, and
     share on ledger-cli
+
+  - Begin an examples files, create links to all docs from README, even if incomplete
+  - Convert all documentation to a GDoc
 
   - Add a test for --view option.
 
   - MSSB documents aren't found... fix FIXMEs in documents.py
 
-  - Complete all unittests coverage (as per find-missing-tests.py).
+  - Fix all docstrings re. Account instance, artifacts of having had an Account object.
 
   - Configure and run a clean pylint on the entire codebase.
   - Add all docstrings with args Google-style.
@@ -39,30 +75,16 @@ beancount: TODO
   - Fix all FIXMEs everywhere.
   - Add __author__ to all files?
 
-  - Clean up code: remove all significant codes from __init__.py files, in
-    particular beancount.scripts.__init__, move to an util with tests.
-
-  - Something's wrong with this page: currencies are wrong I think -
-    http://localhost:8080/view/year/2014/conversions
-
   (depends)
-  - Write a script that checks the dependencies dynamically and reports on them,
-    with versions if possible, for reporting bugs:
-    etc/check-depends.py, do this for 1.0, or better: bean-doctor --depends
+  - Write a new command to bean-doctor that checks the dependencies dynamically
+    and reports on them, with versions if possible, for reporting bugs:
+    etc/check-depends.py, do this for 1.0, or better: bean-doctor 'depends'
+
   - bake: Spit out a nice error if wget is not installed/available.
-
-  - Fix all docstrings re. Account instance
-
-  - Remove dependency on Pandas and Numpy, we really can do much without making
-    our users' life this complicated as to have to install. If I were using it
-    a lot, that would be a different story, but for just the little bits that
-    we use, aggregate by hand, really.
 
   - Review all the code and make all creation of Decimal objects use to_decimal
     instead of Decimal, for consistency.
   - Alias to_decimal to 'D' and replace everywhere.
-
-  - Convert all documentation to a GDoc
 
   - There have been some rare, but occurring few instances of really odd syntax
     making the parser ignore some transactions silently; this is not
