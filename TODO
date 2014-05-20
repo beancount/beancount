@@ -140,7 +140,15 @@ beancount: TODO
     for the purpose of making demos (not sure if that's a great idea though).
 
 
-* Current
+* Current / Misc / To Be Classified
+
+  - Write a script that will highlight some "payee vs tags vs subaccount"
+    invariants:
+    * Highlight payees that are always used with the same accounts
+    * Same with tags
+
+  - Write a script to align numbers... it has been too long and it's quite
+    annoying indeed.
 
   - tree rendering: If a parent account has only a single subaccount and the
     parent account otherwise has no postings in its realization, render the
@@ -1557,6 +1565,9 @@ Improve this bit:
     Set it up using Sphinx, or something else.
 
   - Consider serving the user's manual directly from the web interface.
+
+  - Do some serious thinking about payees vs. subaccounts vs. tags w.r.t. to
+    named tags.
 
 ** Real Usage Examples
 *** Transfers Between Accounts
