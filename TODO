@@ -4,6 +4,8 @@ beancount: TODO
 
   - Add emacs configuration to highlight beyond 90 in this specific project,
     that does not use the fringe.
+  - We really do need a little function that will align a paragraph's
+    currencies automatically.
 
   - Rename/simplify function names in beacnount.core.account (see FIXMEs)
 

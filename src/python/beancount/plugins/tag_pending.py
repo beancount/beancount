@@ -91,7 +91,7 @@ def tag_pending_plugin(entries, errors, options_map):
       errors: A list of errors generated during parsing.
       options_map: A dict of options parsed from the file.
     Returns:
-      A triple of the same, possibly modifeid.
+      A triple of the same, possibly modified.
     """
     return (tag_pending_transactions(entries, 'PENDING'), errors, options_map)
 

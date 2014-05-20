@@ -1,0 +1,64 @@
+;; -*- mode: beancount -*-
+;;
+;; An example of doing the equivalent of "virtual" transactions
+;; using only tags.
+;;
+;; See discussion here for details:
+;; https://groups.google.com/d/msg/ledger-cli/N8Slh2t45K0/aAz0i3Be4LYJ
+
+2010-01-01 open Equity:OpeningBalances
+2010-01-01 open Income:Employer:Salary
+2010-01-01 open Assets:BofA:Checking
+2010-01-01 open Assets:WellsFargo:Checking
+2010-01-01 open Liabilities:Payables:Tithe
+2010-01-01 open Liabilities:CreditCard
+2010-01-01 open Expenses:Tithe
+2010-01-01 open Expenses:Taxes
+
+
+2010-01-02 * "Depositing some real money"
+  Equity:OpeningBalances		-2000.00 USD
+  Assets:BofA:Checking			 1000.00 USD
+  Assets:WellsFargo:Checking		 1000.00 USD
+
+
+
+2014-04-15 * "Receiving salary deposit"
+  Income:Employer:Salary	        -5000.00 USD
+  Expenses:Taxes			 2000.00 USD
+  Assets:BofA:Checking			 3000.00 USD
+
+2014-04-15 * "Booking Tithe, see holy book for calculation details" #virtual
+  Assets:BofA:Checking			-450.00 USD
+  Liabilities:Payables:Tithe
+
+
+
+2014-05-02 * "Receiving allowance from Gran-ma"
+  Income:Employer:Salary	        -2000.00 USD
+  Assets:WellsFargo:Checking		2000.00 USD
+
+2014-05-02 * "Booking Tithe" #virtual
+  Assets:WellsFargo:Checking		-380.00 USD
+  Liabilities:Payables:Tithe
+
+
+
+2014-05-10 * "Paying off some Huqullah using debit card" ^1cf30432b7f6
+  Assets:BofA:Checking			-400.00 USD
+  Expenses:Tithe
+
+2014-05-10 * "Booking off for Huququllah" ^1cf30432b7f6 #virtual
+  Assets:BofA:Checking			400.00 USD
+  Liabilities:Payables:Tithe
+
+
+
+2014-05-15 * "Paying off some Huqullah using my credit card" ^0af2fffdc5f3
+  Liabilities:CreditCard		-400.00 USD
+  Expenses:Tithe
+
+2014-05-15 * "Booking off for Huququllah" ^0af2fffdc5f3 #virtual
+  Assets:WellsFargo:Checking		380.00 USD
+  Assets:BofA:Checking			 20.00 USD
+  Liabilities:Payables:Tithe
