@@ -1827,6 +1827,33 @@ Three major books of account are at the direct basis of this system: the memoria
 
 
 * Challenges, Problems Beancount should be able to Solve
+** Cash vs. Accrual Accounting
+
+Of course a real accountant would just do this: (accrual based accounting)
+
+2014-05-19 * "Booking tithe”
+ Expenses:Tithe     300 USD
+ Liabilities:Tithe     -300 USD
+
+2014-05-20 * “Paying tithe”
+  Liabilities:Tithe      300 USD
+  Assets:Checking  -300 USD
+
+But this records the expense on a different day than when you actually paid it.
+That would be a problem if, for example, you live in the US and wanted to claim
+a tax deduction for the tithe, in which case you must claim the deduction for
+the year the tithe was actually paid (cash based accounting).
+
+This is indeed the right solution to this! Accumulate a liability as you go,
+and resolve it with real transactions later on.
+
+This case keeps coming back again and again, of wanting to do accrual
+accounting but wanting to do cash declarations. I think we need to have a long
+and separate discussion about cash vs accrual accounting and for sure we can
+come up with a creative solution that solves this problem.
+
+
+
 ** Can I generate a nice year-on-year summary of income and expenses?
 
   - Including RSP contribs, like my bu spreadsheet that I crafted manually? Can
@@ -1891,3 +1918,8 @@ ample examples on how to do this.
 
 We need to be able to run these hooks before the verification
 that occurs after parsing.
+** Tags as dimensions with values
+
+  - Is it worthwhile to allow tags to become types and have values, like in
+    Ledger? I'm not sure that's so useful, but it would provide a more powerful
+    mechanism for selecting subsets of transactions.
