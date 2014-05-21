@@ -474,6 +474,9 @@ beancount: TODO
     interface could insert a special link between the two. Maybe we could do
     the same thing with the filename as well.
 
+  - Implement beancount.plugins.tag_pending as a general feature of links...
+    this ought to be built-in by default, this is a great idea.
+
 
 ** Padding documentation from email
    CLOCK: [2014-01-19 Sun 14:49]
@@ -750,6 +753,82 @@ Improve this bit:
     language too, this should all be a single file format.
 
 * Filtering
+** Views
+
+  - Replace all views by filtering queries... the root page should still have
+    convenient links to various preset views, like the last five years, but
+    these links should be implemented using the filtering query feature!
+    Maybe it's worth allowing the user to specify common queries in the options
+    map, and provide links to them. Do this, and try removing some of my
+    subaccounts to simplify the accounts-trees somewhat.
+
+  - The root page should feature a prominent input form that allows the user to
+    specify a query! This input needs live at the very root
+
+  - (views) You should be able to filter to all transactions related to some
+    account, e.g. Immigration
+
+  - IMPORTANT! Try to let through some of the non-transaction entries in the
+    view filtering. We obviously cannot let through balance entries, but
+    documents yes, depending on the type of filtering. We should do our best to
+    let all the entries carry through.
+
+** Filtering dimensions (Old Notes)
+
+  - By Country
+
+    - You should be able to look at only accounts with a particular pattern (and
+      their other legs), e.g. *:CA:*
+
+    - You perhaps should flag all the transactions that have a particular unit
+      (e.g. CAD)
+
+  - By Account Prefix
+
+    - Specify a single account, and automatically select all the other accounts
+      which are linked by any transaction in this account; generate a balance
+      sheet from this list of accounts. e.g. Expenses:Trading, Income:PnL,
+      Assets:Trading.
+
+  - By Amount Size
+
+    - I'd love a way to filter down a journal by omitting all the small
+      items and keeping just the larger ones, to get an automatic
+      overview of the large amounts in a long series of transactions.
+      All the small amounts could be lumped together under a special
+      entry.
+
+  - By Institution
+
+  - By Country
+
+  - By Tag
+
+  - By Payee
+
+    * You should be able to click on a payee to view its transactions.
+
+  - By Date
+
+    - You should be able to click on dates and see all postings around that date
+      too, e.g. +/- 10 days. Another simple and useful filter.
+
+  - By Event (defines a period)
+
+    - "How much did I make during the period of this event", e.g. while I was
+      working at CompanyX, while I was in school at UniversityY. This provides
+      two dates, generate a view for them:
+
+        /view/event
+
+      This could sum up all the entries for all the internals where the event's
+      value was the same.
+
+  - By Currency/Cost-Currency
+
+      You could then possibly compute the IRR around that commodity...
+
+
 ** Language
 
   - Example: a-la-Google
@@ -1088,7 +1167,7 @@ Improve this bit:
     entries.
 
 
-** Key-Values / Metadata
+** Tags as Key-Values / Metadata
 
   - One idea Ledger uses well is the ability to associate key-values meta-data
     to transaction objects, a-la-Common Lisp. See the --pivot feature. It seems
@@ -1145,6 +1224,26 @@ Improve this bit:
                  12.00 GBP    103:Assets:Receivables
       --------------------
                  23.00 GBP
+
+
+  - Is it worthwhile to allow tags to become types and have values, like in
+    Ledger? I'm not sure that's so useful, but it would provide a more powerful
+    mechanism for selecting subsets of transactions.
+
+  - If you add tags with values, you could define some special tags, like
+    'document', which could automatically try to find the corresponding
+    document in the repository and insert a link to it in the web page. I
+    already have a managed stash of document filenames... something like this:
+
+      2014-05-20 * "Invoice from Autodesk"
+        #document: 2014-05-20.autodesk.invoice200.pdf
+        Income:US:Autodesk  -3475.20 USD
+        Assets:US:Checking
+
+    A document filename that does not get resolved could spit out a warning in
+    order to keep the file tidy. This is a nice idea... perhaps nicer than just
+    insert entries for documents, an actual link. Not sure if it would make that
+    much of a difference though. Something to ponder.
 
 
 * Tools
@@ -1466,77 +1565,6 @@ Improve this bit:
 
   - In Journal view, pressing 'C' should toggle displaying the checks on and off.
 
-** Views
-
-  - IMPORTANT! Try to let through some of the non-transaction entries in the
-    view filtering. We obviously cannot let through balance entries, but
-    documents yes, depending on the type of filtering. We should do our best to
-    let all the entries carry through.
-
-  - Complete listing all the views really nicely in the TOC.
-
-  - (views) You should be able to filter to all transactions related to some
-    account, e.g. Immigration
-
-  - In the TOC, list and create views for level 2 (country) and level3
-    (institution).
-
-*** View Types
-
-  - By Country
-
-    - You should be able to look at only accounts with a particular pattern (and
-      their other legs), e.g. *:CA:*
-
-    - You perhaps should flag all the transactions that have a particular unit
-      (e.g. CAD)
-
-  - By Account Prefix
-
-    - Specify a single account, and automatically select all the other accounts
-      which are linked by any transaction in this account; generate a balance
-      sheet from this list of accounts. e.g. Expenses:Trading, Income:PnL,
-      Assets:Trading.
-
-  - By Amount Size
-
-    - I'd love a way to filter down a journal by omitting all the small
-      items and keeping just the larger ones, to get an automatic
-      overview of the large amounts in a long series of transactions.
-      All the small amounts could be lumped together under a special
-      entry.
-
-  - By Institution
-
-  - By Country
-
-  - By Tag
-
-  - By Payee
-
-    * You should be able to click on a payee to view its transactions.
-
-  - By Date
-
-    - You should be able to click on dates and see all postings around that date
-      too, e.g. +/- 10 days. Another simple and useful filter.
-
-  - By Event (defines a period)
-
-    - "How much did I make during the period of this event", e.g. while I was
-      working at CompanyX, while I was in school at UniversityY. This provides
-      two dates, generate a view for them:
-
-        /view/event
-
-      This could sum up all the entries for all the internals where the event's
-      value was the same.
-
-  - By Currency/Cost-Currency
-
-      You could then possibly compute the IRR around that commodity...
-
-
 ** Search
 
   - IDEA: Render the transactions into an in-memory SQL database, and provide
@@ -1585,7 +1613,72 @@ Improve this bit:
 
 
 * Documentation
-** Design Doc & Developer Info
+** Users's Manual
+
+  - Include the nice diagram made for DGreenberg, we need a 3D version of it.
+
+  - Defining your accounts
+    - Basic structures: *:Country:Institution:SubAccounts
+    - "When and why to put accounts together under a single subaccount?"
+      - When it makes sense to sum the total together.
+        e.g. IRA employer contribution and your own contribution.
+
+  - Checks
+    - Checks work for subaccount balances too (add joint account example)
+
+  - Document the fact that the conversions problem occurs
+
+    * Because we don't reduce to a single "home" currency, and
+    * That if you do all your work in a single currency with accounts with
+      costs, the value will always be zero, and
+    * Explain that currency trading accounts have little to do with this,
+      because they are contained, and all in and out flows are in a single
+      currency (the base currency of the account). The differences can be
+      accounted like positions in financial assets, with corresponding PnLs.
+
+
+  - Under "About Credits & Debits" - this is where you should write about how
+    flows are relative to a boundary around the holder of the accounts.
+
+
+*** Unrealized Gain
+
+  - Unrealized capital gains could be inserted automatically into special
+    sub-accounts, based on the current price and the cost-basis of particular
+    accounts. This could be inserted automatically! e.g.
+
+        DATE check Assets:US:Ameritrade:AAPL       10 AAPL {200 USD}
+
+        DATE price AAPL  210 USD
+
+      Assets:US:Ameritrade:AAPL                    2000 USD
+      Assets:US:Ameritrade:AAPL:Gains               100 USD
+
+    The "Gains" subaccount could be inserted automatically if the price differs
+    from the cost basis... this would be a clever way to represent this! We
+    could even do this by inserting a transaction automatically with an
+    offsetting account... actually this would be the RIGHT way to do this!
+
+      This could be done as a simple filter function:
+
+        entries = add_unrealized(entries)
+
+      We would need an option to designate which subaccount leaf to create all
+      the new transactions for:
+
+        %option account_unrealized  "Unrealized"
+
+        2013-05-23 A "Booking unrealized gains for AAPL"
+          Assets:US:Ameritrade:AAPL:Unrealized              230.45 USD
+          Income:Unrealized                                -230.45 USD
+
+      By doing this, the reporting does not have anything to do... it can choose
+      to report positions at cost or in held units, and whether the gains are
+      included or not entirely depends on whether these transactions have been
+      inserted in or not.
+
+
+** Design Doc
 
   - INVARIANT: All the entries lists are assumed to be sorted by date
     everywhere.
@@ -1593,17 +1686,12 @@ Improve this bit:
   - INVARIANT: All Check and Open entries are always at the beginning of a new
     date in a list of entries.
 
-** Documentation
-
-  - Make the cheat sheet into LaTeX format, nicely colored, like Clojure's.
-
   - Describe and document the data structures in a language-independent way,
     this is really important.  I have a really nice subset by now.
 
-  - Include the nice diagram made for DGreenberg, we need a 3D version of it.
+** Developer Documentation
 
-  - Write a series of real-life problems solved. This should be really much
-    more helpful than boring docs.
+  - Add nosetests, pylint to tools required for development
 
   - Document the realization process, need that large zoom-out graphic that
     shows closing, and opening balances.
@@ -1621,7 +1709,15 @@ Improve this bit:
   - Do some serious thinking about payees vs. subaccounts vs. tags w.r.t. to
     named tags.
 
-** Real Usage Examples
+** Cookbook
+
+  - Write a series of real-life problems solved. This should be really much
+    more helpful than boring docs.
+
+  - The examples should be drawn from the demo file; the demo file should be
+    rewritten, with multiple years, and with good templates for most of the
+    important operations that can take place.
+
 *** Transfers Between Accounts
 *** mortgage, buying a home
 *** capital gains (note about how to do commissions)
@@ -1734,70 +1830,96 @@ result of paying taxes:
 
 
 
-** User Documentation
+** Challenges
 
-  - Defining your accounts
-    - Basic structures: *:Country:Institution:SubAccounts
-    - "When and why to put accounts together under a single subaccount?"
-      - When it makes sense to sum the total together.
-        e.g. IRA employer contribution and your own contribution.
+  - Document those below which I'm already able to do, and those which require
+    new features to be able to be done, move them into a separate appendix,
+    with explanations on how to do it.
 
-  - Checks
-    - Checks work for subaccount balances too (add joint account example)
+**** Cash vs. Accrual Accounting
 
-  - Document the fact that the conversions problem occurs
+Of course a real accountant would just do this: (accrual based accounting)
 
-    * Because we don't reduce to a single "home" currency, and
-    * That if you do all your work in a single currency with accounts with
-      costs, the value will always be zero, and
-    * Explain that currency trading accounts have little to do with this,
-      because they are contained, and all in and out flows are in a single
-      currency (the base currency of the account). The differences can be
-      accounted like positions in financial assets, with corresponding PnLs.
+2014-05-19 * "Booking tithe”
+ Expenses:Tithe     300 USD
+ Liabilities:Tithe     -300 USD
 
+2014-05-20 * “Paying tithe”
+  Liabilities:Tithe      300 USD
+  Assets:Checking  -300 USD
 
-  - Under "About Credits & Debits" - this is where you should write about how
-    flows are relative to a boundary around the holder of the accounts.
+But this records the expense on a different day than when you actually paid it.
+That would be a problem if, for example, you live in the US and wanted to claim
+a tax deduction for the tithe, in which case you must claim the deduction for
+the year the tithe was actually paid (cash based accounting).
 
+This is indeed the right solution to this! Accumulate a liability as you go,
+and resolve it with real transactions later on.
 
-*** Unrealized Gain
-
-  - Unrealized capital gains could be inserted automatically into special
-    sub-accounts, based on the current price and the cost-basis of particular
-    accounts. This could be inserted automatically! e.g.
-
-        DATE check Assets:US:Ameritrade:AAPL       10 AAPL {200 USD}
-
-        DATE price AAPL  210 USD
-
-      Assets:US:Ameritrade:AAPL                    2000 USD
-      Assets:US:Ameritrade:AAPL:Gains               100 USD
-
-    The "Gains" subaccount could be inserted automatically if the price differs
-    from the cost basis... this would be a clever way to represent this! We
-    could even do this by inserting a transaction automatically with an
-    offsetting account... actually this would be the RIGHT way to do this!
-
-      This could be done as a simple filter function:
-
-        entries = add_unrealized(entries)
-
-      We would need an option to designate which subaccount leaf to create all
-      the new transactions for:
-
-        %option account_unrealized  "Unrealized"
-
-        2013-05-23 A "Booking unrealized gains for AAPL"
-          Assets:US:Ameritrade:AAPL:Unrealized              230.45 USD
-          Income:Unrealized                                -230.45 USD
-
-      By doing this, the reporting does not have anything to do... it can choose
-      to report positions at cost or in held units, and whether the gains are
-      included or not entirely depends on whether these transactions have been
-      inserted in or not.
+This case keeps coming back again and again, of wanting to do accrual
+accounting but wanting to do cash declarations. I think we need to have a long
+and separate discussion about cash vs accrual accounting and for sure we can
+come up with a creative solution that solves this problem.
 
 
-** List of New features in Beancount v2 (Complete Rewrite) - Idealized
+
+**** Can I generate a nice year-on-year summary of income and expenses?
+
+  - Including RSP contribs, like my bu spreadsheet that I crafted manually? Can
+    I do that? That would be awesome!
+
+**** Maximum Balance
+
+  - Can I compute the maximum value of each account at the end of every year
+    (for foreign assets decl.) This would be useful for FBAR / FATCA
+    declarations.
+
+**** Complete Return (IRR) on Condo
+
+  - Challenge: Can I compute IRR return on my condo accurately?
+    TODO: Add benefits received as an Income, as transactions.
+    You should be able to compute the IRR of any Ledger!
+
+**** Taxation Rate
+
+  - Challenge: Can I automatically compute my taxation rate for every year?
+
+**** List of Assets
+
+  - Challenge: Can I obtain a list of my assets at any time?
+
+**** Make a report of currency exposure
+
+  - For a particular balance sheet, report the total currency exposure of the
+    ledger. This should be a very simple report, probably in the form of a pie
+    chart.  Maybe this pie chart should be located in the capital report
+    (possibly makes sense).
+
+**** Capital Gains
+
+  - Capital gains should not count commissions nor on the buy nor on the
+    sell side. How do we book them like this?  Can we count this somehow
+    automatically? Misc accounts? Not sure.
+
+**** Inflation Adjusted Balance Sheets and Charts
+
+  - It would be AWESOME to look at a balance sheets from the past but
+    inflation-adjusted for any date... Answer this question easily:
+
+      "What was I making in 2010 in today's dollar terms?"
+
+  - How would I produce an inflation adjusted version of some charts. Maybe all
+    charts should have that option?
+
+**** Statement of Assets (for Will)
+
+  - In order to have someone else be able to take care of your business, you
+    should be able to produce a list of the accounts open at the end of the
+    period, with the account ids and balances. This should be printable and
+    storable, for someone else to take care of your things in case you die.
+
+
+** Change List
 
 - Implemented in Python 3, from scratch.
 
@@ -1844,13 +1966,11 @@ result of paying taxes:
   summaries over many years or months.
 
 
-** Examples
+** Presentation Material
 
-  - The examples should be drawn from the demo file; the demo file should be
-    rewritten, with multiple years, and with good templates for most of the
-    important operations that can take place.
+  - Use impress.js to built a visualization of the DE method
 
-* Presentation & Education
+  - Record a video, that's an easy way to explain how this works.
 
   - IDEA!!!  Use drawings a-la-ThinkBig or whatever it is. This will be the
     perfect medium for this. Mix it with video. Start writing a detailed script.
@@ -1858,146 +1978,3 @@ result of paying taxes:
   - Begin with a USB key in hand. "On this 8 GB USB key, I have all of 8 years
     history of financial transactions in my life. Every single price paid that
     went recorded into an account it these.
-
-
-* New Name
-
-"Comptroller"
-"Bottom Line"
-"Messari"
-
-"Summa" - already taken, printer tools
-"Quaderno" - already taken, invoicing software
-"Daycount" - already taken, many other accounting software
-
-"Imprest system"
-"Latency"
-"Real, Personal and Nominal accounts"
-
-  "Accounting is thousands of years old; the earliest accounting records, which
-  date back more than 7,000 years, were found in Mesopotamia (Assyrians). The
-  people of that time relied on primitive accounting methods to record the
-  growth of crops and herds. Accounting evolved, improving over the years and
-  advancing as business advanced.[5]"
-
-  "The word "Accountant" is derived from the French word Compter, which took its origin from the Latin word Computare. "
-
-The oldest discovered record of a complete double-entry system is the Messari (Italian: Treasurer's) accounts of the city of Genoa in 1340.
-
-"In Summa Arithmetica, Pacioli introduced symbols for plus and minus for the first time in a printed book, symbols that became standard notation in Italian Renaissance mathematics. Summa Arithmetica was also the first known book printed in Italy to contain algebra.[26]"
-
-Three major books of account are at the direct basis of this system: the memoriale (Italian: memorandum), the giornale (Journal), and the quaderno (ledger). The ledger is considered as the central one and is accompanied by an alphabetical index.[30]
-
-
-* Challenges, Problems Beancount should be able to Solve
-** Cash vs. Accrual Accounting
-
-Of course a real accountant would just do this: (accrual based accounting)
-
-2014-05-19 * "Booking tithe”
- Expenses:Tithe     300 USD
- Liabilities:Tithe     -300 USD
-
-2014-05-20 * “Paying tithe”
-  Liabilities:Tithe      300 USD
-  Assets:Checking  -300 USD
-
-But this records the expense on a different day than when you actually paid it.
-That would be a problem if, for example, you live in the US and wanted to claim
-a tax deduction for the tithe, in which case you must claim the deduction for
-the year the tithe was actually paid (cash based accounting).
-
-This is indeed the right solution to this! Accumulate a liability as you go,
-and resolve it with real transactions later on.
-
-This case keeps coming back again and again, of wanting to do accrual
-accounting but wanting to do cash declarations. I think we need to have a long
-and separate discussion about cash vs accrual accounting and for sure we can
-come up with a creative solution that solves this problem.
-
-
-
-** Can I generate a nice year-on-year summary of income and expenses?
-
-  - Including RSP contribs, like my bu spreadsheet that I crafted manually? Can
-    I do that? That would be awesome!
-
-** Maximum Balance
-
-  - Can I compute the maximum value of each account at the end of every year
-    (for foreign assets decl.) This would be useful for FBAR / FATCA
-    declarations.
-
-** Complete Return (IRR) on Condo
-
-  - Challenge: Can I compute IRR return on my condo accurately?
-    TODO: Add benefits received as an Income, as transactions.
-    You should be able to compute the IRR of any Ledger!
-
-** Taxation Rate
-
-  - Challenge: Can I automatically compute my taxation rate for every year?
-
-** List of Assets
-
-  - Challenge: Can I obtain a list of my assets at any time?
-
-** Make a report of currency exposure
-
-  - For a particular balance sheet, report the total currency exposure of the
-    ledger. This should be a very simple report, probably in the form of a pie
-    chart.  Maybe this pie chart should be located in the capital report
-    (possibly makes sense).
-
-** Capital Gains
-
-  - Capital gains should not count commissions nor on the buy nor on the
-    sell side. How do we book them like this?  Can we count this somehow
-    automatically? Misc accounts? Not sure.
-
-** Inflation Adjusted Balance Sheets and Charts
-
-  - It would be AWESOME to look at a balance sheets from the past but
-    inflation-adjusted for any date... Answer this question easily:
-
-      "What was I making in 2010 in today's dollar terms?"
-
-  - How would I produce an inflation adjusted version of some charts. Maybe all
-    charts should have that option?
-
-** Statement of Assets (for Will)
-
-  - In order to have someone else be able to take care of your business, you
-    should be able to produce a list of the accounts open at the end of the
-    period, with the account ids and balances. This should be printable and
-    storable, for someone else to take care of your things in case you die.
-** Expansibility
-
-We need to allow users to easily plug-in custom scripts.
-e.g. see Pascal Fleury email (w/ swiss_rounding) and other use
-cases on the mailing list. These cases can be easily solved
-using some custom scripting logic in Python. I need to provide
-ample examples on how to do this.
-
-We need to be able to run these hooks before the verification
-that occurs after parsing.
-** Tags as dimensions with values
-
-  - Is it worthwhile to allow tags to become types and have values, like in
-    Ledger? I'm not sure that's so useful, but it would provide a more powerful
-    mechanism for selecting subsets of transactions.
-
-  - If you add tags with values, you could define some special tags, like
-    'document', which could automatically try to find the corresponding
-    document in the repository and insert a link to it in the web page. I
-    already have a managed stash of document filenames... something like this:
-
-      2014-05-20 * "Invoice from Autodesk"
-        #document: 2014-05-20.autodesk.invoice200.pdf
-        Income:US:Autodesk  -3475.20 USD
-        Assets:US:Checking
-
-    A document filename that does not get resolved could spit out a warning in
-    order to keep the file tidy. This is a nice idea... perhaps nicer than just
-    insert entries for documents, an actual link. Not sure if it would make that
-    much of a difference though. Something to ponder.
