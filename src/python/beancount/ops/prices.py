@@ -30,10 +30,14 @@ def get_price_entries(entries):
     total_balance = inventory.Inventory()
     for entry in entries:
 
-        # Include price entries.
+        # Include price entries, obviously.
         if isinstance(entry, Price):
             price_entries.append(entry)
 
+        # FIXME: Move this in the parser... this should automatically generate a
+        # Price entry so that this function becomes trivial and perhaps we don't
+        # need it anymore. It will also help to print out the parsed contents of
+        # the input file, for debugging purposes.
         elif isinstance(entry, Transaction):
             # Inspect all the postings in the transaction.
             for posting in entry.postings:
