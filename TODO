@@ -139,8 +139,28 @@ beancount: TODO
   - Consider creating a switch that would auto-create accounts not seen yet,
     for the purpose of making demos (not sure if that's a great idea though).
 
+  - Make automatic price directives actually create a price entry in the list
+    of output entries. This should simplify some of the code and allow this
+    debugging output to be much clearer to the user.
+
+
+
 
 * Current / Misc / To Be Classified
+
+  - (high priority) Implement a debugging command in bean-doctor, that spits out
+    the entries that were created from the input file, as it is being parsed.
+    This should include auto-posting values, inserted price directives, and
+    attached tags. This would be a powerful tool to help people debug problems
+    with parsing, or not understanding its effects!
+
+
+
+
+  - web: Don't render the full Inventory'es; instead, already render at cost and
+    provide their full detail either by clicking on the transaction, which
+    should render the full detail of an inventory (for debugging), or in a
+    tooltip.
 
   - Write a script that will highlight some "payee vs tags vs subaccount"
     invariants:
