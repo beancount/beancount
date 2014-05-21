@@ -1340,6 +1340,17 @@ Improve this bit:
 
 
 * Web Interface
+** Programmable View
+
+  - GREAT IDEA! Have a web form that you can input a view filtering expression,
+    e.g.  year:2014 component:Google
+    to have that year's transactions made with this component. Encode the
+    results in a unique string that you can decode and create a corresponding
+    view of the subset selected by the expression. You can then view any of the
+    reports for that subset! This means we can then get rid of many of the root
+    page's links automatically, yet still provide all the opportunities... this
+    is the way to go, and would best mirror the command-line capabilities.
+
 ** Error reporting
 
   - We really need to list all the '!' entries somewhere; they should be
@@ -1934,3 +1945,18 @@ that occurs after parsing.
   - Is it worthwhile to allow tags to become types and have values, like in
     Ledger? I'm not sure that's so useful, but it would provide a more powerful
     mechanism for selecting subsets of transactions.
+
+  - If you add tags with values, you could define some special tags, like
+    'document', which could automatically try to find the corresponding
+    document in the repository and insert a link to it in the web page. I
+    already have a managed stash of document filenames... something like this:
+
+      2014-05-20 * "Invoice from Autodesk"
+        #document: 2014-05-20.autodesk.invoice200.pdf
+        Income:US:Autodesk  -3475.20 USD
+        Assets:US:Checking
+
+    A document filename that does not get resolved could spit out a warning in
+    order to keep the file tidy. This is a nice idea... perhaps nicer than just
+    insert entries for documents, an actual link. Not sure if it would make that
+    much of a difference though. Something to ponder.

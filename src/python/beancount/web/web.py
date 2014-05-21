@@ -986,6 +986,11 @@ def payee(payee=None, path=None):
     return views.PayeeView(app.entries, app.options, 'Payee {}'.format(payee), payee)
 
 
+# FIXME: Replace these by views "by component" whereby a transactions gets
+# selected if at least one of the components is included in one of the account
+# names. e.g. /view/component/Google would produce all views which has
+# *:Google:* in the account's name.
+
 # FIXME: Not implemented yet.
 @app.route(r'/view/level1/<level:re:[^/]*>/<path:re:.*>', name='level1')
 @handle_view(3)
