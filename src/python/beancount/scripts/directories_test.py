@@ -11,6 +11,13 @@ from beancount.scripts import directories
 
 class TestScriptCheckDirectories(unittest.TestCase):
 
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir)
+
     TEST_DIRECTORIES = [
         "Expenses/Restaurant",
         "Income",
@@ -22,15 +29,10 @@ class TestScriptCheckDirectories(unittest.TestCase):
         "Expenses/notes/Fun" # Legal extra in the middle.
     ]
 
-    def setUp(self):
-        self.tmpdir = tempfile.mkdtemp()
-        for direc in self.TEST_DIRECTORIES:
-            os.makedirs(path.join(self.tmpdir, direc))
-
-    def tearDown(self):
-        shutil.rmtree(self.tmpdir)
-
     def test_validation(self):
+        for directory in self.TEST_DIRECTORIES:
+            os.makedirs(path.join(self.tmpdir, directory))
+
         accounts = set("""
             Expenses:Restaurant
             Expenses:Movie
@@ -63,6 +65,9 @@ class TestScriptCheckDirectories(unittest.TestCase):
               Expenses:Movie        25.00 USD
               Assets:Cash
         """
+        for directory in self.TEST_DIRECTORIES:
+            os.makedirs(path.join(self.tmpdir, directory))
+
         with capture() as stdout:
             run_with_args(directories.main, [filename, self.tmpdir])
         self.assertEqual(2, len(stdout.getvalue().splitlines()))
@@ -75,3 +80,15 @@ class TestScriptCheckDirectories(unittest.TestCase):
                           'Expenses:Restaurant:Sub',
                           'Assets:Extra',
                           'Assets/Extra'}, clean_matches)
+
+    def test_validation_no_parent(self):
+        for directory in ['Liabilities/US/CreditCard']:
+            os.makedirs(path.join(self.tmpdir, directory))
+
+        accounts = set("""
+            Liabilities:US:CreditCard
+        """.strip().split())
+        errors = directories.validate_directories(accounts, self.tmpdir)
+
+        # The parent directory Liabilities:US should not trigger an error here.
+        self.assertEqual([], errors)
