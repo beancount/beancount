@@ -5,6 +5,7 @@ import argparse
 from beancount import load
 from beancount.parser import documents
 from beancount.core import getters
+from beancount.core import account
 
 
 class ValidateDirectoryError(Exception):
@@ -24,9 +25,22 @@ def validate_directories(accounts_set, document_dir):
     Returns:
       An errors for each invalid directory name found.
     """
+    # Generate all parent accounts in the account_set we're checking against, so
+    # that parent directories with no corresponding account don't warn.
+    accounts_set_with_parents = accounts_set.copy()
+    for account_ in accounts_set:
+        while True:
+            parent = account.account_name_parent(account_)
+            if not parent:
+                break
+            if parent in accounts_set_with_parents:
+                break
+            accounts_set_with_parents.add(parent)
+            account_ = parent
+
     errors = []
     for directory, account_name, _, _ in documents.walk_accounts(document_dir):
-        if account_name not in accounts_set:
+        if account_name not in accounts_set_with_parents:
             errors.append(ValidateDirectoryError(
                 "Invalid directory '{}': no corresponding account '{}'".format(
                     directory, account_name)))
@@ -37,9 +51,9 @@ def main():
     parser = argparse.ArgumentParser(__doc__)
 
     parser.add_argument('filename',
-                        help='Beancount input filename.')
+                        help='Beancount input filename')
 
-    parser.add_argument('document_dirs', action='append', default=[],
+    parser.add_argument('document_dirs', nargs='+',
                         help="Root directories of documents")
 
     opts = parser.parse_args()
