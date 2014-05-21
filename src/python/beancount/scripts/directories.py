@@ -51,9 +51,9 @@ def main():
     parser = argparse.ArgumentParser(__doc__)
 
     parser.add_argument('filename',
-                        help='Beancount input filename.')
+                        help='Beancount input filename')
 
-    parser.add_argument('document_dirs', action='append', default=[],
+    parser.add_argument('document_dirs', nargs='+',
                         help="Root directories of documents")
 
     opts = parser.parse_args()
