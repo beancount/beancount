@@ -829,6 +829,168 @@ Improve this bit:
       You could then possibly compute the IRR around that commodity...
 
 
+** Custom dimensions
+
+  - From discussion:
+
+       | (digression not about virtual postings but answers auxiliary questions about
+       | them)
+       |
+       | Now this points to a more general idea that I've been pondering for a while:
+       | these "accounts" can often be seen as a set of flat dimensions, the fact that
+       | they have a hierarchy can get in the way. I tend to have accounts that look
+       | like this:
+       |
+       |   TYPE:COUNTRY:INSTITUTION:ACCOUNT:SUBACCOUNT
+       |
+       | like this, for example:
+       |
+       |   Assets:US:HSBC:Checking
+       |   Assets:CA:RBC:Savings
+       |
+       | For these four dimensions, I actually like having most accounts (Assets,
+       | Liabilities and Income) specify them in this order. This does not always make
+       | sense though, especially for expense accounts; for those you wouldn't really
+       | want to have a COUNTRY dimension at the root. You want the general category
+       | only, so I'll have, for example:
+       |
+       |   Expenses:Food:Restaurant
+       |   Expenses:Food:Grocery
+       |
+       | but sometimes the dimensions get inverted too, like in my recent change about
+       | how to track taxation:
+       |
+       |   Expenses:Taxes:US:TY2014:Google:Federal
+       |   Expenses:Taxes:US:TY2014:Google:StateNY
+       |   Expenses:Taxes:US:TY2014:Google:CityNYC
+       |   ...
+       | Here the "institution" is Google, and shows deeper in the hierarchy.
+       | Finally, you often do want to have multiple types for the same or similar
+       | accounts, for instance, to track gains and dividends income from a particular
+       | investment account, you want a mirror of most of the dimensions except for the
+       | assets bit:
+       |
+       |   Assets:US:ETrade:IRA -> Income:US:ETrade:IRA
+       |
+       | For instance:
+       |
+       |   Assets:US:ETrade:IRA:Cash
+       |   Income:US:ETrade:IRA:Dividends
+       |
+       | You see what I'm getting at... these components really operate more like a
+       | database table with values possibly NULL, e.g.,
+       |
+       |   type     country  institution  account   category
+       |   -------- -------- ------------ --------- -----------
+       |   Assets   US       HSBC         Checking  NULL
+       |   Assets   CA       RBC          Savings   NULL
+       |   Assets   US       ETrade       IRA       Cash
+       |   Income   US       ETrade       IRA       Dividends
+       |   Expenses NULL     NULL         Food      Restaurant
+       |   Expenses NULL     NULL         Food      Grocery
+       |
+       | Having to order your account components in a hierarchy forces you to
+       | decide how you want to report on them, a strict order of grouping from
+       | top to bottom.
+       | So I've been thinking about an experiment to rename all accounts according to
+       | dimensions, where the ordering of the components would not matter. These two
+       | would point to the same bucket, for example (changing the syntax slightly),
+       |
+       |   Expenses|Taxes|US|TY2014|Google|Federal
+       |   Expenses|US|Google|Taxes|TY2014|StateNY
+       |
+       | You could then display reports (again, the usual reports, balance sheet,
+       | income statement, journals) for "the subset of all transactions which has one
+       | posting in an account in <set>" where <set> is defined by values on a list of
+       | dimensions, a bit like a WHERE clause would do.
+       |
+       | Now, now, now... this would be a bit radical, now wouldn't it? Many of these
+       | accounts do point to real accounts whose postings have to be booked exactly,
+       | and I'm a bit worried about the looseness that this could introduce. One and
+       | only one account name for a particular account is a nice property to have.
+       |
+       | So what can we do to select across many dimensions while still keeping
+       | hierarchical account names?
+       |
+       | The first thing I did in Beancount is to create views for all unique account
+       | component names. For example, if the following account exists:
+       |
+       |   Assets:US:ETrade:IRA
+       |
+       | You will see four "view" links at the root of the Beancount web page:
+       |
+       |   Assets
+       |   US
+       |   ETrade
+       |   IRA
+       |
+       | Clicking on the link selects all the transactions with a posting with an
+       | account where that component appears. (Views provide access to all the reports
+       | filtered by a subset of transactions.) You can click your way to any journal
+       | or report for that subset of transactions. This exists in HEAD today. You can
+       | draw all the reports where a particular component appears, e.g., "Google", as
+       | in "Income:US:Google:Salary" and "Expenses:Taxes:US:TY2014:Google:Federal".
+       |
+       | But this does not define "dimensions." It would be nice to group values for
+       | these components by what kind of thing they are, e.g., a bank, an instution, a
+       | country, a tax year, etc, without regard for their location in the account
+       | name. A further experiment will consist in the following:  again assuming
+       | unique "account component names" (which is not much of a constraint to
+       | require, BTW, at least not in my account names), allow the user to define
+       | dimensions by declaring a list of component names that form this dimension.
+       | Here's how this would look, with the previous examples (new syntax):
+       |
+       |   dimension employer  Google,Autodesk,Apple
+       |   dimension bank      HSBC,RBC,ETrade
+       |   dimension country   US,CA,AU
+       |   dimension taxyear   TY2014,TY2013,TY2012,TY2011,TY2010
+       |   dimension type      Assets,Liabilities,Equity,Income,Expenses (implicit?)
+       |
+       | You could then say something like "show me trial balance for all transactions
+       | with posting accounts where bank is not NULL group by bank" and you would
+       | obtain mini-hierarchies for each group of accounts (by bank, across all other
+       | dimensions).
+       |
+       | (With the state of my current system, I could probably code this as a
+       | prototype in a single day.)
+       |
+       | Addtionally, accounts have currency constraints and a history of postings
+       | which define a set o currencies used in them. More selection can be done with
+       | this (e.g., show me all transactions with postings that credit/debit CAD
+       | units).
+       |
+       | IMHO, all you're trying to do with these virtual accounts is aggregate with
+       | one less dimension, you want to remove the real account and group by community
+       | project. My claim is that there are ways to do that without giving up o the
+       | elegant balancing rules of the DE system.
+
+    In ealtion to this... these "dimensions", could they just become other
+    dimensions in the filtering language?
+
+      component:Google
+
+      employer:Google
+      bank:RBC
+      country:US
+
+    You can then break down by those, like a GROUP BY clause, and generate
+    reports that have those as root accounts, or separate breakdowns.
+
+
+** Tags used as dimensions
+
+  - If you had tags as key-value pairs, those could be used as well:
+
+      2014-05-21 * ...
+        #employer:Google
+
+    Searching for:
+
+      tag:employer=Google
+
+    This is another dimension in the same filtering language.
+
+
 ** Language
 
   - Example: a-la-Google
@@ -843,6 +1005,7 @@ Improve this bit:
       currency:USD
       link:7e4116fadbb4
       narration:Deposit
+
 
 * Operations
 ** Validation
