@@ -729,6 +729,22 @@ Improve this bit:
     including the file of prices only. The prices should be in beancount
     language too, this should all be a single file format.
 
+* Filtering
+** Language
+
+  - Example: a-la-Google
+
+      year:2014
+      date:2014-05-20
+      component:US
+      -component:US
+      payee:MetroCard
+      tag:trip-israel
+      amount:>400.00
+      currency:USD
+      link:7e4116fadbb4
+      narration:Deposit
+
 * Operations
 ** Validation
 
@@ -1431,6 +1447,11 @@ Improve this bit:
   - In Journal view, pressing 'C' should toggle displaying the checks on and off.
 
 ** Views
+
+  - IMPORTANT! Try to let through some of the non-transaction entries in the
+    view filtering. We obviously cannot let through balance entries, but
+    documents yes, depending on the type of filtering. We should do our best to
+    let all the entries carry through.
 
   - Complete listing all the views really nicely in the TOC.
 

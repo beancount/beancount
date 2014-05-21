@@ -4,6 +4,7 @@ These account objects are rather simple and dumb; they do not contain the list
 of their associated postings. This is achieved by building a realization; see
 realization.py for details.
 """
+import re
 
 
 # Component separator for account names.
@@ -65,3 +66,17 @@ def account_name_sans_root(account_name):
     assert isinstance(account_name, str)
     components = account_name.split(sep)[1:]
     return join(*components) if account_name else None
+
+
+def has_component(account, component):
+    """Return true if one of the account contains a given component.
+
+    Args:
+      account: A string, an account name.
+      component: A string, a component of an account name. For instance,
+        'Food' in 'Expenses:Food:Restaurant'. All components are considered.
+    Returns:
+      A boolean, true if the component is in the account. Note that a component
+      name must be whole, that is 'NY' is not in Expenses:Taxes:StateNY'.
+    """
+    return re.search('(^|:){}(:|$)'.format(component), account)

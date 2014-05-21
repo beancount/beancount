@@ -6,6 +6,7 @@ from collections import namedtuple
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
 from .amount import Amount, Decimal, to_decimal
 from .position import Position, create_position
+from .account import has_component
 
 
 # All possible types of entries. These are the main data structrues in use
@@ -408,3 +409,19 @@ def posting_sortkey(entry):
     if isinstance(entry, Posting):
         entry = entry.entry
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.fileloc.lineno)
+
+
+def has_entry_account_component(entry, component):
+    """Return true if one of the entry's postings has an account component.
+
+    Args:
+      entry: A Transaction entry.
+      component: A string, a component of an account name. For instance,
+        'Food' in 'Expenses:Food:Restaurant'. All components are considered.
+    Returns:
+      A boolean, true if the component is in the account. Note that a component
+      name must be whole, that is 'NY' is not in Expenses:Taxes:StateNY'.
+    """
+    return (isinstance(entry, Transaction) and
+            any(has_component(posting.account, component)
+                for posting in entry.postings))

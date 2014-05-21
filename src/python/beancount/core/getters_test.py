@@ -94,3 +94,10 @@ class TestGetters(unittest.TestCase):
         self.assertEqual(mapfound('Expenses:Grocery'), (True, False))
         self.assertEqual(mapfound('Expenses:Coffee'), (True, False))
         self.assertEqual(mapfound('Expenses:Restaurant'), (True, False))
+
+    def test_get_account_components(self):
+        entries = parser.parse_string(TEST_INPUT)[0]
+        components = getters.get_account_components(entries)
+        expected_components = {'US', 'Assets', 'Restaurant', 'Grocery',
+                               'Cash', 'Coffee', 'Expenses', 'Credit-Card'}
+        self.assertEqual(expected_components, components)

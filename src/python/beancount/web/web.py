@@ -106,21 +106,12 @@ def toc():
                       [(view_url('tag', tag=tag), '#{}'.format(tag))
                        for tag in getters.get_all_tags(app.entries)]))
 
-    # FIXME: These are not implemented yet.
-    if 0:
-        # By level.
-        all_accounts_names = getters.get_accounts(app.entries).keys()
-        viewboxes.append(
-            ('level1', 'Level 1',
-             [(view_url('level1', level=level), '{}'.format(level))
-              for level in getters.get_leveln_parent_accounts(all_accounts_names, 1,
-                                                              nrepeats=0)]))
-
-        viewboxes.append(
-            ('level2', 'Level 2',
-             [(view_url('level2', level=level), '{}'.format(level))
-              for level in getters.get_leveln_parent_accounts(all_accounts_names, 2,
-                                                              nrepeats=0)]))
+    # By component.
+    components = getters.get_account_components(app.entries)
+    viewboxes.append(
+        ('component', 'Component',
+         [(view_url('component', component=component), '{}'.format(component))
+          for component in components]))
 
     # FIXME: This deserves its own page, with options for cleanup (or a helper tool).
     if 0:
@@ -985,26 +976,13 @@ def tag(tag=None, path=None):
 def payee(payee=None, path=None):
     return views.PayeeView(app.entries, app.options, 'Payee {}'.format(payee), payee)
 
-
-# FIXME: Replace these by views "by component" whereby a transactions gets
-# selected if at least one of the components is included in one of the account
-# names. e.g. /view/component/Google would produce all views which has
-# *:Google:* in the account's name.
-
-# FIXME: Not implemented yet.
-@app.route(r'/view/level1/<level:re:[^/]*>/<path:re:.*>', name='level1')
+@app.route(r'/view/component/<component:re:[^/]*>/<path:re:.*>', name='component')
 @handle_view(3)
-def level1(level=None, path=None):
-    return views.EmptyView(app.entries, app.options, 'Level 1: {}'.format(level), level)
-
-# FIXME: Not implemented yet.
-@app.route(r'/view/level2/<level:re:[^/]*>/<path:re:.*>', name='level2')
-@handle_view(3)
-def level2(level=None, path=None):
-    return views.EmptyView(app.entries, app.options, 'Level 2: {}'.format(level), level)
+def component(component=None, path=None):
+    return views.ComponentView(app.entries, app.options, 'Component: {}'.format(component), component)
 
 
-# ## FIXME: We need to figure out how to deal with id-ification for paths.
+# ## FIXME: We need to figure out how to better deal with id-ification for paths.
 # We need some sort of mapping from idified tag to "real" tag. Either of don't idify at all.
 # Is the syntax compatible?
 #     # Create views for all tags.

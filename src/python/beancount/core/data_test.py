@@ -171,5 +171,21 @@ class TestData(unittest.TestCase):
                          [entry.fileloc.lineno
                           for entry in map(data.get_entry, sorted_postings)])
 
+    def test_has_entry_account_component(self):
+        entry = data.Transaction(data.FileLocation(".", 0), datetime.date.today(), FLAG,
+                                 None, "Something", None, None, [])
+        data.create_simple_posting(entry, 'Liabilities:US:CreditCard', '-50', 'USD')
+        data.create_simple_posting(entry, 'Expenses:Food:Restaurant', '50', 'USD')
 
+        has_component = data.has_entry_account_component
+        self.assertTrue(has_component(entry, 'US'))
+        self.assertFalse(has_component(entry, 'CA'))
 
+        self.assertTrue(has_component(entry, 'CreditCard'))
+        self.assertTrue(has_component(entry, 'Liabilities'))
+        self.assertFalse(has_component(entry, 'Assets'))
+
+        self.assertTrue(has_component(entry, 'Restaurant'))
+        self.assertTrue(has_component(entry, 'Food'))
+        self.assertTrue(has_component(entry, 'Expenses'))
+        self.assertFalse(has_component(entry, 'Equity'))

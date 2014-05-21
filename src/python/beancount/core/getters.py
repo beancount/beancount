@@ -87,6 +87,22 @@ def get_accounts(entries):
     return GetAccounts()(entries)
 
 
+def get_account_components(entries):
+    """Gather all the account components available in the given directives.
+
+    Args:
+      entries: A list of directive instances.
+    Returns:
+      A set of strings, the unique account components, including the root
+      account names.
+    """
+    accounts = get_accounts(entries)
+    components = set()
+    for account_name in accounts:
+        components.update(account_name.split(account.sep))
+    return components
+
+
 def get_all_tags(entries):
     """Return a list of all the tags seen in the given entries.
 

@@ -175,3 +175,23 @@ class PayeeView(View):
                          if isinstance(entry, data.Transaction) and (entry.payee == payee)]
 
         return payee_entries, None
+
+
+class ComponentView(View):
+
+    def __init__(self, entries, options_map, title, component):
+        # The payee to filter.
+        assert isinstance(component, str)
+        self.component = component
+
+        View.__init__(self, entries, options_map, title)
+
+    def apply_filter(self, entries, options_map):
+        "Return only transactions for the given payee."
+
+        component = self.component
+        component_entries = [entry
+                             for entry in entries
+                             if data.has_entry_account_component(entry, component)]
+
+        return component_entries, None
