@@ -144,9 +144,31 @@ beancount: TODO
     debugging output to be much clearer to the user.
 
 
+  - "Position with lots goes negative" should output an error message and be caught, because if it is run by the web
+    server, it serves no page. Needs to be integrated like all the other error messages:
+
+      127.0.0.1 - - [22/May/2014 21:51:14] "GET /view/year/2014/income HTTP/1.1" 500 762
+      Traceback (most recent call last):
+        File "/usr/local/lib/python3.3/dist-packages/bottle.py", line 783, in _handle
+          return route.call(**args)
+      ...
+        File "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 65, in __init__
+          self.add_position(position)
+        File "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 260, in add_position
+          return self._add(new_position.number, new_position.lot, allow_negative)
+        File "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 298, in _add
+          raise ValueError("Position with lots goes negative: {}".format(self))
+      ValueError: Position with lots goes negative: Inventory(-2.00 PUMP {20.00 USD})
+
+  - Make sure you can parse Amounts with space between the - sign and the number:
+    "- 20 USD" kicks an error.
 
 
 * Current / Misc / To Be Classified
+
+  - (filter) Replace bean-holdings by "bean-query holdings", where "holdings"
+    is just another type of report. All the reports from the view pages should
+    be mirrored exactly in the command-line interface.
 
   - (high priority) Implement a debugging command in bean-doctor, that spits out
     the entries that were created from the input file, as it is being parsed.
