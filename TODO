@@ -2,6 +2,9 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
+  - Do add a unit test with unrealized capital gains that would appears in
+    holdings. Make sure that they don't.
+
   - Add emacs configuration to highlight beyond 90 in this specific project,
     that does not use the fringe.
   - We really do need a little function that will align a paragraph's

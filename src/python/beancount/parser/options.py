@@ -76,8 +76,12 @@ def get_account_types(options):
       An instance of AccountTypes, that contains all the prefixes.
     """
     return account_types.AccountTypes(
-        *(options["name_{}".format(x)]
-          for x in "assets liabilities equity income expenses".split()))
+        *[options[key]
+          for key in ("name_assets",
+                      "name_liabilities",
+                      "name_equity",
+                      "name_income",
+                      "name_expenses")])
 
 
 def get_previous_accounts(options):

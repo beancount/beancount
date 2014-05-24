@@ -222,6 +222,8 @@ def update():
         errors=errors
         )
 
+
+# FIXME: Move this to realization.py.
 def find_last_active_posting(postings):
     """Look at the end of the list of postings, and find the last
     posting or entry that is not an automatically added directive.
