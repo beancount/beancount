@@ -20,6 +20,7 @@ class TestHoldings(unittest.TestCase):
         2013-01-01 open Assets:Account2
         2013-01-01 open Assets:Account3
         2013-01-01 open Assets:Cash
+        2013-01-01 open Liabilities:Loan
         2013-01-01 open Equity:Unknown
 
         2013-04-05 *
@@ -45,8 +46,12 @@ class TestHoldings(unittest.TestCase):
         2013-04-03 *
           Assets:Account3             50 GOOG {540.00 USD} @ 560.00 USD
           Assets:Cash
+
+        2013-04-10 *
+          Assets:Cash			5111 USD
+          Liabilities:Loan
         """
-        holdings_list = holdings.get_final_holdings(entries, ('Assets', 'Liabilities'))
+        holdings_list = holdings.get_final_holdings(entries)
 
         holdings_list = sorted(map(tuple, holdings_list))
         expected_values = [
@@ -56,12 +61,31 @@ class TestHoldings(unittest.TestCase):
              D('5706.03'), None, None, None),
             ('Assets:Account3', D('50'), 'GOOG', D('540.00'), 'USD',
              D('27000.00'), None, None, None),
-            ('Assets:Cash', D('12059.37'), 'USD', None, None,
+            ('Assets:Cash', D('17170.37'), 'USD', None, None,
              None, None, None, None),
-            # Notice no Equity account.
+            ('Equity:Unknown', D('-50000'), 'USD', None, None,
+             None, None, None, None),
+            ('Liabilities:Loan', D('-5111'), 'USD', None, None,
+             None, None, None, None),
         ]
         self.assertEqual(expected_values, holdings_list)
 
+        # Try with some account type restrictions.
+        holdings_list = holdings.get_final_holdings(entries, ('Assets', 'Liabilities'))
+        holdings_list = sorted(map(tuple, holdings_list))
+        expected_values = [holding
+                           for holding in expected_values
+                           if (holding[0].startswith('Assets') or
+                               holding[0].startswith('Liabilities'))]
+        self.assertEqual(expected_values, holdings_list)
+
+        # Try with some account type restrictions.
+        holdings_list = holdings.get_final_holdings(entries, ('Assets',))
+        holdings_list = sorted(map(tuple, holdings_list))
+        expected_values = [holding
+                           for holding in expected_values
+                           if holding[0].startswith('Assets')]
+        self.assertEqual(expected_values, holdings_list)
 
     @parsedoc
     def test_get_final_holdings_with_prices(self, entries, _, __):

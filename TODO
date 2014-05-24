@@ -2,8 +2,10 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-  - Do add a unit test with unrealized capital gains that would appears in
-    holdings. Make sure that they don't.
+  - Write a script to autoamtically align a region's transactions, or an entire
+    file.
+
+  - Write a script to cnovert to Ledger syntax.
 
   - Add emacs configuration to highlight beyond 90 in this specific project,
     that does not use the fringe.
