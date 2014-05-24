@@ -110,8 +110,6 @@ beancount: TODO
       This works okay:
       2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
 
-  - Convert all assertEquals() to assertEqual().
-
   - Can you move realization out of core? It really belongs more in ops I think.
 
   - Make sure all exceptions do NOT end with a period, nor do any of the

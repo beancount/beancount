@@ -38,11 +38,11 @@ class TestOptions(unittest.TestCase):
     def test_get_previous_accounts(self):
         options_ = options.DEFAULT_OPTIONS.copy()
         result = options.get_previous_accounts(options_)
-        self.assertEquals(3, len(result))
+        self.assertEqual(3, len(result))
         self.assertTrue(all(isinstance(x, str) for x in result))
 
     def test_get_current_accounts(self):
         options_ = options.DEFAULT_OPTIONS.copy()
         result = options.get_current_accounts(options_)
-        self.assertEquals(2, len(result))
+        self.assertEqual(2, len(result))
         self.assertTrue(all(isinstance(x, str) for x in result))
