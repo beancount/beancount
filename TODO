@@ -163,12 +163,34 @@ beancount: TODO
   - Make sure you can parse Amounts with space between the - sign and the number:
     "- 20 USD" kicks an error.
 
+  - BUG?
+    This page returns an invalid amount for Assets:US:MSSB:GOOG:
+    http://localhost:8080/view/year/2014/holdings/detail
+    Sort by number, see negative USD... what's that?
+
+    Aaaah yes, it's the Assets part of the gain/loss from "unrealized entries"
+    automatically added. Filter those out when calculating the holdings. Also,
+    bring the code for computed holdings without equity accounts together in one
+    function.
+
 
 * Current / Misc / To Be Classified
 
   - (precision) FIXME: The better way to render numbers at the end would be to
     let the user specify a desired rendering precision for each currency. Deal
     with this throughout better.
+
+       "Hmm, that's right, I should probably set a maximum precision for rendering
+       numbers which require more digits than the default of 2. This is an
+       interesting one: I need to do something a bit more thorough about precision; 2
+       is not appropriate for everything either. I need to figure out a way to let a
+       user specify a desired rendering precision for each currency...
+       (probably via some options, unfortunately). In the meantime, I've made it so
+       that the max number of digits rendered is 5.
+
+       There's also the issue of setting the max digits during arithmetic operations,
+       which should also not be 28. I'll deal with that later."
+
 
   - (filter) Replace bean-holdings by "bean-query holdings", where "holdings"
     is just another type of report. All the reports from the view pages should

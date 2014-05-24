@@ -3,10 +3,12 @@
 ;; Emacs setup for Ledger.
 ;;
 
+;; Add local emacs-lisp extension to load-path and load it.
+(add-to-list 'load-path (concat project-current "/src/elisp"))
 (require 'beancount)
 
+;; Automatically open .beancount files in beancount-mode.
 (add-to-list 'auto-mode-alist '("\\.beancount$" . beancount-mode))
-
 
 
 ;; Support parsing Python logging errors, with a suitable logging.basicConfig()
