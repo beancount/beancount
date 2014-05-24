@@ -58,7 +58,7 @@ class TestRealAccount(unittest.TestCase):
     def test_iter(self):
         real_account = self.create_hierarchy()
 
-        real_accounts = list(real_account)
+        real_accounts = list(real_account.values_recursively())
         self.assertTrue(all(isinstance(real_account, RealAccount)
                             for real_account in real_accounts))
         self.assertEqual(4, len(real_accounts))
@@ -223,7 +223,7 @@ def realizedoc(fun):
 #             Expenses:Stuff           -100 USD
 #         """
 #         real_accounts = realization.realize(entries)
-#         for real_account in real_accounts:
+#         for real_account in real_accounts.values_recursively():
 #             assert isinstance(real_account, realization.RealAccount)
 
 #         real_accounts2 = realization.realize(entries)

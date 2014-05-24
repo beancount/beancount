@@ -135,8 +135,12 @@ def table_of_balances(tree, start_node_name, currencies, classes=None):
     header = ['Account'] + currencies + ['Other']
 
     # Pre-calculate which accounts should be rendered.
-    active_accounts = realization.filter_tree(tree, is_account_active) or {}
-    active_set = set(real_account.fullname for real_account in active_accounts)
+    active_accounts = realization.filter_tree(tree, is_account_active)
+    if active_accounts:
+        active_set = {real_account.fullname
+                      for real_account in active_accounts.values_recursively()}
+    else:
+        active_set = set()
 
     balance_totals = Inventory()
     oss = io.StringIO()

@@ -17,6 +17,7 @@ from beancount.core import account
 from beancount.utils import tree_utils
 
 
+# FIXME: Make this an instance of dict.
 class RealAccount:
     """A realized account, inserted in a tree, that contains the list of realized entries.
 
@@ -31,7 +32,7 @@ class RealAccount:
     # FIXME: Convert this class to be an instance of OrderedDict; the resulting
     # interface will be much easier to understand.q
 
-    # FIXME: rename fullname to 'account_name'.
+    # FIXME: rename fullname to 'account_name', or just 'account'.
     __slots__ = 'fullname balance children postings'.split()
 
     def __init__(self, account_name=None):
@@ -67,6 +68,7 @@ class RealAccount:
         Returns:
           A RealAccount instance for the child.
         """
+        assert isinstance(childname, str), childname
         if not childname:
             return self
         if account.sep in childname:
@@ -77,8 +79,16 @@ class RealAccount:
         else:
             return self.children[childname]
 
-    # FIXME: During cleanup, swap these two method names with appropriate renames.
     def __iter__(self):
+        # Disable implicit iteration for now.
+        raise NotImplementedError
+
+    # FIXME: docs
+    def values(self):
+        return self.children.values()
+
+    # FIXME: rename test
+    def values_recursively(self):
         """Iterate this account node and all its children, depth-first.
 
         Yields:
@@ -87,7 +97,7 @@ class RealAccount:
         """
         yield self
         for child in self.children.values():
-            for subchild in child:
+            for subchild in child.values_recursively():
                 yield subchild
 
     def get_children(self):

@@ -66,7 +66,8 @@ def get_final_holdings(entries, included_account_types=None, price_map=None, dat
 
     # For each account, look at the list of positions and build a list.
     holdings = []
-    for real_account in sorted(list(real_accounts), key=lambda x: x.fullname):
+    for real_account in sorted(list(real_accounts.values_recursively()),
+                               key=lambda x: x.fullname):
 
         if included_account_types:
             # Skip accounts of invalid types, we only want to reflect the requested
