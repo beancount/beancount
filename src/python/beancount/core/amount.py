@@ -24,9 +24,10 @@ About Decimal usage:
 # the common denominator between these two. This is only a very minor compromise
 # though, they have 99% compatible.
 try:
-    from cdecimal import Decimal
+    import cdecimal as decimal
 except ImportError:
-    from decimal import Decimal
+    import decimal
+Decimal = decimal.Decimal
 
 # Constants.
 ZERO = Decimal()
@@ -55,7 +56,12 @@ def to_decimal(strord):
             return Decimal(strord.replace(',', ''))
 
 
+# Number of digits to display all amounts if we can do so precisely.
 DISPLAY_QUANTIZE = Decimal('.01')
+
+# Maximum number of digits to display numbers with more precision than this.
+MAXDIGITS_QUANTIZE = 5
+
 
 class Amount:
     """An 'Amount' represents a number of a particular unit of something.
@@ -83,10 +89,14 @@ class Amount:
           A formatted string of the quantized amount and symbol.
         """
         number = self.number
+
+        # FIXME: The better way to do this would be to let the user specify a
+        # desired rendering precision for each currency.
         if number == number.quantize(DISPLAY_QUANTIZE):
             return "{:.2f} {}".format(number, self.currency)
         else:
-            return "{:f} {}".format(number, self.currency)
+            return "{:.{width}f} {}".format(number, self.currency,
+                                            width=MAXDIGITS_QUANTIZE)
 
     # We use the same as a printable representation.
     __repr__ = __str__

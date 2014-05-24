@@ -166,6 +166,10 @@ beancount: TODO
 
 * Current / Misc / To Be Classified
 
+  - (precision) FIXME: The better way to render numbers at the end would be to
+    let the user specify a desired rendering precision for each currency. Deal
+    with this throughout better.
+
   - (filter) Replace bean-holdings by "bean-query holdings", where "holdings"
     is just another type of report. All the reports from the view pages should
     be mirrored exactly in the command-line interface.

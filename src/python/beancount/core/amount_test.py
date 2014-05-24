@@ -6,6 +6,20 @@ from .amount import Amount
 from . import amount
 
 
+class TestDecimalPrecision(unittest.TestCase):
+
+    def test_formatting(self):
+        # Verifying if we can auto-format everything using precision. No.
+        #
+        # "The significance of a new Decimal is determined solely by the number
+        # of digits input. Context precision and rounding only come into play
+        # during arithmetic operations."
+        with amount.decimal.localcontext() as context:
+            context.prec = 2
+            number = to_decimal('0.1122334455')
+            self.assertEqual('0.1122334455', str(number))
+
+
 class TestToDecimal(unittest.TestCase):
 
     def test_ZERO(self):
@@ -45,7 +59,7 @@ class TestAmount(unittest.TestCase):
 
     def test_tostring_quantize(self):
         amount = Amount('100,034.027456', 'USD')
-        self.assertTrue(re.search(r'\.027456\b', str(amount)))
+        self.assertTrue(re.search(r'\.02746\b', str(amount)))
 
         amount = Amount('100,034.05000', 'USD')
         self.assertTrue(re.search(r'\.05\b', str(amount)))
