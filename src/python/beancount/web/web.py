@@ -714,13 +714,10 @@ def holdings_detail():
     "Render a detailed table of all holdings."
 
     price_map = prices.build_price_map(request.view.entries)
-    holdings_ = holdings.get_final_holdings(request.view.closing_entries, price_map)
-
-    # Remove the equity accounts, we only want to list Assets and Liabilities.
-    holdings_ = filter(
-        lambda holding: not account_types.is_equity_account(holding.account,
-                                                            app.account_types),
-        holdings_)
+    holdings_ = holdings.get_final_holdings(request.view.entries,
+                                            (app.account_types.assets,
+                                             app.account_types.liabilities),
+                                            price_map)
 
     table_ = table.create_table(holdings_,
                                 field_spec=[
@@ -756,13 +753,10 @@ def holdings_byinstrument():
     "Render a table of holdings by instrument."
 
     price_map = prices.build_price_map(request.view.entries)
-    holdings_ = holdings.get_final_holdings(request.view.closing_entries, price_map)
-
-    holdings_ = filter(
-        lambda holding: not account_types.is_equity_account(holding.account,
-                                                            app.account_types),
-        holdings_)
-
+    holdings_ = holdings.get_final_holdings(request.view.entries,
+                                            (app.account_types.assets,
+                                             app.account_types.liabilities),
+                                            price_map)
     aggregated_holdings = holdings.aggregate_by_base_quote(holdings_)
 
     table_ = table.create_table(aggregated_holdings,

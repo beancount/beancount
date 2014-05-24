@@ -193,8 +193,8 @@ class TestUnrealized(unittest.TestCase):
 
         2014-01-16 price HOUSE 110 USD
         """
-        new_entries = unrealized.add_unrealized_gains( entries,
-                                                       options.get_account_types(options_map), 'Gains')
+        new_entries = unrealized.add_unrealized_gains(entries,
+                                                      options.get_account_types(options_map), 'Gains')
         unreal_entries = unrealized.get_unrealized_entries(new_entries)
 
         entry = get_entries_with_narration(unreal_entries, '1 units')[0]

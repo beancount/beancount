@@ -163,16 +163,6 @@ beancount: TODO
   - Make sure you can parse Amounts with space between the - sign and the number:
     "- 20 USD" kicks an error.
 
-  - BUG?
-    This page returns an invalid amount for Assets:US:MSSB:GOOG:
-    http://localhost:8080/view/year/2014/holdings/detail
-    Sort by number, see negative USD... what's that?
-
-    Aaaah yes, it's the Assets part of the gain/loss from "unrealized entries"
-    automatically added. Filter those out when calculating the holdings. Also,
-    bring the code for computed holdings without equity accounts together in one
-    function.
-
 
 * Current / Misc / To Be Classified
 

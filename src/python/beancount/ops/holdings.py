@@ -4,6 +4,9 @@ import collections
 
 from beancount.core.amount import ZERO
 from beancount.core import realization
+from beancount.core import account_types
+from beancount.core import data
+from beancount.core import flags
 from beancount.ops import prices
 
 
@@ -26,7 +29,7 @@ Holding = collections.namedtuple('Holding',
                                  'book_value market_value price_number price_date')
 
 
-def get_final_holdings(entries, price_map=None, date=None):
+def get_final_holdings(entries, included_account_types=None, price_map=None, date=None):
     """Get a dictionary of the latest holdings by account.
 
     This basically just flattens the balance sheet's final positions, including
@@ -34,8 +37,16 @@ def get_final_holdings(entries, price_map=None, date=None):
     information in the flattened holdings at the latest date, or at the given
     date, if one is provided.
 
+    Only the accounts in 'included_account_types' will be included, and this is
+    always called for Assets and Liabilities only. If left unspecified, holdings
+    from all account types will be included, including Equity, Income and
+    Expenses.
+
     Args:
       entries: A list of directives.
+      included_account_types: A sequence of strings, the account types to
+        include in the output. A reasonable example would be
+        ('Assets', 'Liabilities').
       price_map: A dict of prices, as built by prices.build_price_map().
       date: A datetime.date instance, the date at which to price the
         holdings. If left unspecified, we use the latest price information.
@@ -43,12 +54,27 @@ def get_final_holdings(entries, price_map=None, date=None):
       A list of dicts, with the following fields:
 
     """
+    # Remove the entries inserted by unrealized gains/losses. Those entries do
+    # affect asset accounts, and we don't want them to appear in holdings.
+    simple_entries = [entry
+                      for entry in entries
+                      if (not isinstance(entry, data.Transaction) or
+                          entry.flag != flags.FLAG_UNREALIZED)]
+
     # Realize the accounts into a tree (because we want the positions by-account).
-    real_accounts = realization.realize(entries)
+    real_accounts = realization.realize(simple_entries)
 
     # For each account, look at the list of positions and build a list.
     holdings = []
     for real_account in sorted(list(real_accounts), key=lambda x: x.fullname):
+
+        if included_account_types:
+            # Skip accounts of invalid types, we only want to reflect the requested
+            # account types, typically assets and liabilities.
+            account_type = account_types.get_account_type(real_account.fullname)
+            if account_type not in included_account_types:
+                continue
+
         for position in real_account.balance.get_positions():
             if position.lot.cost:
                 # Get price information if we have a price_map.

@@ -46,7 +46,7 @@ class TestHoldings(unittest.TestCase):
           Assets:Account3             50 GOOG {540.00 USD} @ 560.00 USD
           Assets:Cash
         """
-        holdings_list = holdings.get_final_holdings(entries)
+        holdings_list = holdings.get_final_holdings(entries, ('Assets', 'Liabilities'))
 
         holdings_list = sorted(map(tuple, holdings_list))
         expected_values = [
@@ -58,8 +58,8 @@ class TestHoldings(unittest.TestCase):
              D('27000.00'), None, None, None),
             ('Assets:Cash', D('12059.37'), 'USD', None, None,
              None, None, None, None),
-            ('Equity:Unknown', D('-50000'), 'USD', None, None,
-             None, None, None, None),
+            # ('Equity:Unknown', D('-50000'), 'USD', None, None,
+            #  None, None, None, None),
         ]
         self.assertEqual(expected_values, holdings_list)
 
@@ -85,7 +85,9 @@ class TestHoldings(unittest.TestCase):
 
         """
         price_map = prices.build_price_map(entries)
-        holdings_list = holdings.get_final_holdings(entries, price_map)
+        holdings_list = holdings.get_final_holdings(entries,
+                                                    ('Assets', 'Liabilities'),
+                                                    price_map)
 
         holdings_list = sorted(map(tuple, holdings_list))
         expected_values = [
@@ -93,7 +95,7 @@ class TestHoldings(unittest.TestCase):
              D('7780.95'), D('8670.30'),
              D('578.02'), datetime.date(2013, 6, 1)),
             ('Assets:Cash', D('42219.05'), 'USD', None, None, None, None, None, None),
-            ('Equity:Unknown', D('-50000'), 'USD', None, None, None, None, None, None),
+            # ('Equity:Unknown', D('-50000'), 'USD', None, None, None, None, None, None),
         ]
         self.assertEqual(expected_values, holdings_list)
 
