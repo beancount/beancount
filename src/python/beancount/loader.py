@@ -71,10 +71,6 @@ def load(filename,
                                                           filename,
                                                           options_map['documents'])
 
-    # Validate the list of entries.
-    with misc_utils.print_time('validate', quiet):
-        valid_errors = validation.validate(entries)
-
     # Add unrealized gains.
     if add_unrealized_gains:
         with misc_utils.print_time('unrealized', quiet):
@@ -83,6 +79,10 @@ def load(filename,
                 entries,
                 account_types,
                 options_map['account_unrealized'])
+
+    # Validate the list of entries.
+    with misc_utils.print_time('validate', quiet):
+        valid_errors = validation.validate(entries)
 
     # Print out the list of errors.
     errors = parse_errors + pad_errors + check_errors + valid_errors + doc_errors

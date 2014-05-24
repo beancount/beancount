@@ -17,10 +17,6 @@ beancount: TODO
   - Complete full unittests coverage (as per find-missing-tests.py).
     Remaining (to be processed in this order):
 
-       src/python/beancount/ops/unrealized.py                 INCOMPLETE
-
-            Finish testing unrealized.py, should be easy
-
        src/python/beancount/plugins/forecast.py               INCOMPLETE
 
             Add a routine to complete by parsed file.
@@ -165,6 +161,9 @@ beancount: TODO
 
   - Make sure you can parse Amounts with space between the - sign and the number:
     "- 20 USD" kicks an error.
+
+  - Review usage of @parsedoc vs. @loaddoc, maybe we should be more thorough
+    about that and use @loaddoc in more places, as it performs data validation.
 
 
 * Current / Misc / To Be Classified

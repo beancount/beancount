@@ -10,6 +10,7 @@ from beancount.parser import parsedoc, parse_string
 from beancount.parser import printer
 from beancount.parser import options
 from beancount.ops import unrealized
+from beancount.ops import validation
 
 
 def get_entries_with_narration(entries, regexp):
@@ -137,7 +138,6 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual(to_decimal('200'),
                          unreal_entries[0].postings[0].position.number)
 
-
     @parsedoc
     def test_conversions_only(self, entries, _, options_map):
         """
@@ -152,7 +152,6 @@ class TestUnrealized(unittest.TestCase):
         new_entries = unrealized.add_unrealized_gains(
             entries, options.get_account_types(options_map))
         self.assertEqual([], unrealized.get_unrealized_entries(new_entries))
-
 
     @parsedoc
     def test_with_subaccount(self, entries, _, options_map):
@@ -193,8 +192,9 @@ class TestUnrealized(unittest.TestCase):
 
         2014-01-16 price HOUSE 110 USD
         """
-        new_entries = unrealized.add_unrealized_gains(entries,
-                                                      options.get_account_types(options_map), 'Gains')
+        new_entries = unrealized.add_unrealized_gains(
+            entries,
+            options.get_account_types(options_map), 'Gains')
         unreal_entries = unrealized.get_unrealized_entries(new_entries)
 
         entry = get_entries_with_narration(unreal_entries, '1 units')[0]
@@ -228,36 +228,46 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual(to_decimal("-30.00"), entry.postings[1].position.number)
 
     @parsedoc
-    def test_create_open_directive(self, entries, _, options_map):
+    def test_create_open_directive(self, entries, errors, options_map):
         """
-        2014-01-01 open Liabilities:Account1
-        2014-01-01 open Equity:Account1
-        2014-01-01 open Expenses:Account1
-        2014-01-01 open Income:Account1
+        2014-01-01 open Assets:Account1
         2014-01-01 open Income:Misc
 
         2014-01-15 *
           Income:Misc
           Assets:Account1      1 HOUSE {100 USD}
-          Liabilities:Account1 2 HOUSE {101 USD}
-          Equity:Account1      3 HOUSE {102 USD}
-          Expenses:Account1    4 HOUSE {103 USD}
-          Income:Account1      5 HOUSE {104 USD}
 
-        2014-01-16 price HOUSE 110 USD
+        ;;2014-01-16 price HOUSE 110 USD
         """
         # Test the creation of a new, undeclared income account, check that open
         # directives are present for accounts that have been created
         # automatically, because the resulting set of entries should validation
         # no matter what modifications.
 
+        # Test it out without a subaccount, only an open directive should be
+        # added for the income account.
+        new_entries = unrealized.add_unrealized_gains(
+            entries,
+            options.get_account_types(options_map))
+        self.assertEqual({'Income:Misc',
+                          'Assets:Account1',
+                          'Income:Account1'},
+                         {entry.account for entry in new_entries
+                          if isinstance(entry, data.Open)})
 
-        # new_entries = unrealized.add_unrealized_gains( entries,
-        #                                                options.get_account_types(options_map), 'Gains')
-        # unreal_entries = unrealized.get_unrealized_entries(new_entries)
-        pass
+        # Test it with a subaccount; we should observe new open directives for
+        # th esubaccounts as well.
+        new_entries = unrealized.add_unrealized_gains(
+            entries,
+            options.get_account_types(options_map), 'Gains')
 
+        self.assertEqual({'Income:Misc',
+                          'Assets:Account1',
+                          'Assets:Account1:Gains',
+                          'Income:Account1:Gains'},
+                         {entry.account for entry in new_entries
+                          if isinstance(entry, data.Open)})
 
-
-# Create a decorator for each of these methods that automatmically calls the function
-__incomplete__ = True
+        # Validate the new entries; validation should pass.
+        valid_errors = validation.validate(new_entries)
+        self.assertFalse(valid_errors)

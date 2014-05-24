@@ -5,6 +5,7 @@ import collections
 from beancount.core.amount import Decimal, ZERO
 from beancount.core import data
 from beancount.core import account
+from beancount.core import getters
 from beancount.core.account_types import is_valid_account_name
 from beancount.core import amount
 from beancount.core.data import Transaction, Posting, FileLocation
@@ -19,7 +20,9 @@ def add_unrealized_gains(entries, account_types, subaccount_name=None):
 
     This function inserts entries that represent unrealized gains, at the end of
     the available history. It returns a new list of entries, with the new gains
-    inserted.
+    inserted. It replaces the account type with an entry in an income account.
+    Optionally, it can book the gain in a subaccount of the original and income
+    accounts.
 
     Args:
       entries: A list of data directives.
@@ -34,7 +37,8 @@ def add_unrealized_gains(entries, account_types, subaccount_name=None):
     Raises:
       ValueError: If the subaccount name is not a valid account name component.
     """
-    # Assert tha subaccount name is in valid format.
+
+    # Assert the subaccount name is in valid format.
     if subaccount_name:
         validation_account = account.join(account_types.assets, subaccount_name)
         if not is_valid_account_name(validation_account):
@@ -129,7 +133,22 @@ def add_unrealized_gains(entries, account_types, subaccount_name=None):
 
         new_entries.append(entry)
 
-    return entries + new_entries
+    # Ensure that the accounts we're going to use to book the postings exist, by
+    # creating open entries for those that we generated that weren't already
+    # existing accounts.
+    new_accounts = {posting.account
+                    for entry in new_entries
+                    for posting in entry.postings}
+    open_entries = getters.get_account_open_close(entries)
+    new_open_entries = []
+    fileloc = FileLocation('<unrealized_gains>', 0)
+    for account_ in new_accounts:
+        if account_ not in open_entries:
+            open_entry = data.Open(fileloc, latest_date, account_, None)
+            new_open_entries.append(open_entry)
+
+
+    return entries + new_open_entries + new_entries
 
 
 def get_unrealized_entries(entries):
