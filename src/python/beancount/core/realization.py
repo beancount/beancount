@@ -6,7 +6,7 @@ from collections import OrderedDict
 import operator
 import copy
 
-from beancount.core.inventory import Inventory
+from beancount.core import inventory
 from beancount.core.amount import amount_sortkey
 from beancount.utils import misc_utils
 from beancount.core import data
@@ -18,23 +18,27 @@ from beancount.utils import tree_utils
 
 
 __plan__ = """
-add(account) -> inserts leaf name automatically, not needed anymore, only used here.
+X  fullname       -> renames to .account, which is the full name of the account, we never need the leaf name
+X  balance        -> (stays the same.)
+X  postings       -> (stays the same.)
+X  children       -> becomes .values() from dict interface
+X  asdict()       -> becomes the object itself, not really needed anymore.
+X  __getitem__    -> should work as keys(), not deep. Deep uses go to get_deep_item()
+X  add(account)   -> inserts leaf name automatically, not needed anymore, only used here.
+X  __iter__       -> delete, just becomes keys() like dict
+__contains__   -> remove support for recursive, onyl work on direct children, use
 
-fullname -> renames to .account, which is the full name of the account, we never need the leaf name
-balance -> (same.)
-postings -> (same.)
-children -> becomes .values() from dict interface
-asdict() -> becomes the object itself, not really needed anymore.
+X  get_children() -> values()
 
-get_children() -> values()
-values_recursively
 
-__iter__ -> delete, just becomes keys() like dict
+Note: maybe these are all module functions with simple names...
+  realization.get(key, None) instead.
+  realization.set(real_account): automatically creates the intervening nodes
+  realization.contains(account_name)
+  realization.iter(real_account)
 
-__getitem__ -> should work as keys(), not deep. Deep uses go to get_deep_item()
+values_recursively -> provide a function to do this instead
 
-__contains__ -> remove support for recursive, onyl work on direct children, use
-get_deep(key, None) instead.
 
 get_deep(key, default): Work down the tree at multiple levels, convert get_in().
 If key does not contain sep, should still work as usual with just children.
@@ -45,138 +49,116 @@ below.
 tree_utils should be converted to work on dicts of dicts just like this one, or maybe removed.
 """
 
-# FIXME: Make this an instance of dict.
-class RealAccount:
+class RealAccount(dict):
     """A realized account, inserted in a tree, that contains the list of realized entries.
 
     Attributes:
-      fullname: A string, the full name of the corresponding account.
+      account: A string, the full name of the corresponding account.
+      postings: A list of postings associated with this accounting (does not
+        include the postings of children accounts).
       balance: The final balance of the list of postings associated with this account.
-      children: A dict of children names to children RealAccount instances.
-      postings: A list of postings associated with this accounting (does not include
-        the postings of children accounts).
     """
+    __slots__ = ('account', 'postings', 'balance')
 
-    # FIXME: Convert this class to be an instance of OrderedDict; the resulting
-    # interface will be much easier to understand.q
-
-    # FIXME: rename fullname to 'account_name', or just 'account'.
-    __slots__ = 'fullname balance children postings'.split()
-
-    def __init__(self, account_name=None):
+    def __init__(self, account_name, *args, **kwargs):
         """Create a RealAccount instance.
 
         Args:
-          account_name: a string, which may be empty (but never None).
-          account: an Account instance, which may be None if there is no associated
-                   account to this node.
-        Returns:
-          A new RealAccount instance.
+          account_name: a string, the name of the account. Maybe not be None.
         """
+        dict.__init__(self, *args, **kwargs)
         assert isinstance(account_name, str)
-        self.fullname = account_name
-
-        self.balance = Inventory()
-        self.children = OrderedDict()
+        self.account = account_name
         self.postings = []
+        self.balance = inventory.Inventory()
 
-    def __str__(self):
-        """Return a human-readable string representation of this RealAccount.
+    # def __str__(self):
+    #     """Return a human-readable string representation of this RealAccount.
+    #
+    #     Returns:
+    #       A readable string, with the name and the balance.
+    #     """
+    #     return "RealAccount({}){}".format(self.account,
+    #                                       dict.__str__(self))
 
-        Returns:
-          A readable string, with the name and the balance.
-        """
-        return "<RealAccount '{}' {}>".format(self.fullname, self.balance)
+    # def __iter__(self):
+    #     # Disable implicit iteration for now.
+    #     raise NotImplementedError
 
-    def __getitem__(self, childname):
-        """Return a child account from this account.
 
-        Args:
-          childname: A string, the name of the child of this account.
-        Returns:
-          A RealAccount instance for the child.
-        """
-        assert isinstance(childname, str), childname
-        if not childname:
-            return self
-        if account.sep in childname:
-            directname = childname.split(account.sep, 1)[0]
-            restname = childname[len(directname)+1:]
-            child = self.children[directname]
-            return child[restname]
-        else:
-            return self.children[childname]
 
-    def __iter__(self):
-        # Disable implicit iteration for now.
-        raise NotImplementedError
 
-    # FIXME: docs
-    def values(self):
-        return self.children.values()
 
-    # FIXME: rename test
-    def values_recursively(self):
-        """Iterate this account node and all its children, depth-first.
 
-        Yields:
-          Instances of RealAccount, beginning with this account. The order is
-          undetermined.
-        """
-        yield self
-        for child in self.children.values():
-            for subchild in child.values_recursively():
-                yield subchild
+UNSET = object()
 
-    def get_children(self):
-        """Get the children of this node.
+def get(real_account, subaccount_name, default=UNSET):
+    """Fetch the account name from the real_account node.
 
-        Returns:
-          An iterator of RealAccount instances.
-        """
-        return self.children.values()
+    Args:
+      subaccount_name: A string, the name of a possibly indirect child leaf
+      found down within this dict..
+    Returns:
+      A RealAccount instance for the child, or the default value, if one
+      is specified.
+    Raises:
+      KeyError: If the child is not found.
+    """
+    assert isinstance(childname, str), childname
+    if not childname:
+        return self
+    if account.sep in childname:
+        directname = childname.split(account.sep, 1)[0]
+        restname = childname[len(directname)+1:]
+        child = self.children[directname]
+        return child[restname]
+    else:
+        return self.children[childname]
 
-    # FIXME: Do I really need to support more than direct children here? Remove
-    # if possible before 2.0 release.
-    def __contains__(self, account_name_leaf):
-        """True if the given string is in this RealAccount instance.
 
-        Args:
-          account_name: A string, the leaf name of a child account of this node, or
-            of a more distant child of this node.
-        Returns:
-          A boolean, true the name is a child of this node.
-        """
-        directname = account_name_leaf.split(account.sep, 1)[0]
-        restname = account_name_leaf[len(directname)+1:]
-        try:
-            child = self.children[directname]
-            if restname:
-                return child.__contains__(restname)
-            else:
-                return True
-        except KeyError:
-            return False
 
-    def add(self, real_account):
-        """Add a new child to this real account.
 
-        Args:
-          real_account: An instance of RealAccount to add as a child to this node.
-        """
-        ## FIXME: When would this trigger and why?
-        leafname = account_name_leaf(real_account.fullname)
-        self.children[leafname] = real_account
 
-    def asdict(self):
-        """Return a dictionary hierachy of account names.
-        This is used mainly for testing.
 
-        Returns:
-          A dict of strings to dicts, recursively.
-        """
-        return {name: child.asdict()
-                for name, child in self.children.items()}
+    # # FIXME: Do I really need to support more than direct children here? Remove
+    # # if possible before 2.0 release.
+    # def __contains__(self, account_name_leaf):
+    #     """True if the given string is in this RealAccount instance.
+    #
+    #     Args:
+    #       account_name: A string, the leaf name of a child account of this node, or
+    #         of a more distant child of this node.
+    #     Returns:
+    #       A boolean, true the name is a child of this node.
+    #     """
+    #     directname = account_name_leaf.split(account.sep, 1)[0]
+    #     restname = account_name_leaf[len(directname)+1:]
+    #     try:
+    #         child = self.children[directname]
+    #         if restname:
+    #             return child.__contains__(restname)
+    #         else:
+    #             return True
+    #     except KeyError:
+    #         return False
+
+
+
+
+# FIXME: make this work
+def values_recursively(self):
+    """Iterate this account node and all its children, depth-first.
+
+    Yields:
+      Instances of RealAccount, beginning with this account. The order is
+      undetermined.
+    """
+    yield self
+    for child in self.children.values():
+        for subchild in child.values_recursively():
+            yield subchild
+
+
 
 
 # FIXME: Can you remove 'min_accounts' and move that to a second step.
@@ -441,7 +423,7 @@ def iterate_with_balance(postings_or_entries):
     """
 
     # The running balance.
-    balance = Inventory()
+    balance = inventory.Inventory()
 
     # Previous date.
     prev_date = None
@@ -464,7 +446,7 @@ def iterate_with_balance(postings_or_entries):
 
             # Flush the dated entries.
             for date_entry, date_postings in date_entries:
-                change = Inventory()
+                change = inventory.Inventory()
                 if date_postings:
                     # Compute the change due to this transaction and update the
                     # total balance at the same time.
@@ -492,7 +474,7 @@ def iterate_with_balance(postings_or_entries):
 
     # Flush the final dated entries if any, same as above.
     for date_entry, date_postings in date_entries:
-        change = Inventory()
+        change = inventory.Inventory()
         if date_postings:
             for date_posting in date_postings:
                 change.add_position(date_posting.position, True)

@@ -107,6 +107,7 @@ beancount: TODO
       2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
 
   - Can you move realization out of core? It really belongs more in ops I think.
+    Or maybe... maybe... it belongs best with views and filtering?
 
   - Make sure all exceptions do NOT end with a period, nor do any of the
     logging.*() calls.
