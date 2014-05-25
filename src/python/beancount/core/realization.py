@@ -17,6 +17,34 @@ from beancount.core import account
 from beancount.utils import tree_utils
 
 
+__plan__ = """
+add(account) -> inserts leaf name automatically, not needed anymore, only used here.
+
+fullname -> renames to .account, which is the full name of the account, we never need the leaf name
+balance -> (same.)
+postings -> (same.)
+children -> becomes .values() from dict interface
+asdict() -> becomes the object itself, not really needed anymore.
+
+get_children() -> values()
+values_recursively
+
+__iter__ -> delete, just becomes keys() like dict
+
+__getitem__ -> should work as keys(), not deep. Deep uses go to get_deep_item()
+
+__contains__ -> remove support for recursive, onyl work on direct children, use
+get_deep(key, None) instead.
+
+get_deep(key, default): Work down the tree at multiple levels, convert get_in().
+If key does not contain sep, should still work as usual with just children.
+Needs to have a default value in order to stand in for __contains__ iwth depth
+below.
+
+
+tree_utils should be converted to work on dicts of dicts just like this one, or maybe removed.
+"""
+
 # FIXME: Make this an instance of dict.
 class RealAccount:
     """A realized account, inserted in a tree, that contains the list of realized entries.

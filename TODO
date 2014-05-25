@@ -2,10 +2,10 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-  - Write a script to autoamtically align a region's transactions, or an entire
+  - Write a script to automatically align a region's transactions, or an entire
     file.
 
-  - Write a script to cnovert to Ledger syntax.
+  - Write a script to convert to Ledger syntax.
 
   - Add emacs configuration to highlight beyond 90 in this specific project,
     that does not use the fringe.
@@ -167,6 +167,9 @@ beancount: TODO
 
 
 * Current / Misc / To Be Classified
+
+  - Check out bitbucket CGI interface w.r.t. linking to source code, is the
+    newer hg better?  We should be able to link to specific lines in versions.
 
   - (precision) FIXME: The better way to render numbers at the end would be to
     let the user specify a desired rendering precision for each currency. Deal
