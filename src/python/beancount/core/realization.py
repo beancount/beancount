@@ -39,9 +39,13 @@ X  realization.iter(real_account)
 X  values_recursively -> provide a function instead, iter_children()
 
 
-
-
 tree_utils should be converted to work on dicts of dicts just like this one, or maybe removed.
+
+Maybe redefine equality to include the balance and account name? Not sure.
+
+
+FIXME: document how this type works and the symmetries with dict.
+
 """
 
 class RealAccount(dict):
@@ -61,7 +65,7 @@ class RealAccount(dict):
         Args:
           account_name: a string, the name of the account. Maybe not be None.
         """
-        dict.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         assert isinstance(account_name, str)
         self.account = account_name
         self.postings = []
@@ -234,7 +238,7 @@ def realize(entries, min_accounts=None):
         for account_name in min_accounts:
             get_or_create(real_root, account_name)
 
-    return real_account
+    return real_root
 
 
 def group_by_account(entries):

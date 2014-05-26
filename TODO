@@ -13,6 +13,8 @@ beancount: TODO
     currencies automatically.
 
   - Rename/simplify function names in beacnount.core.account (see FIXMEs)
+  - Implement account.split() and perhaps remove references to
+    split(account.sep) everywhere.
 
   - Complete full unittests coverage (as per find-missing-tests.py).
     Remaining (to be processed in this order):
@@ -32,7 +34,11 @@ beancount: TODO
        src/python/beancount/ops/summarize.py                  INCOMPLETE
        src/python/beancount/ops/pad.py                        INCOMPLETE
        src/python/beancount/ops/validation.py                 INCOMPLETE
+
        src/python/beancount/ops/check.py                      INCOMPLETE
+
+         Rename this file to balance to match the directive?
+         Not sure. Another is named that way.
 
        src/python/beancount/web/acctree.py                    MISSING
        src/python/beancount/web/journal.py                    MISSING
@@ -44,6 +50,8 @@ beancount: TODO
        src/python/beancount/web/gviz.py                       MISSING
 
 
+  - Check that an account without an Open directive has one that gets
+    automatically inserted for it.
 
   - Clean up code: remove all significant codes from __init__.py files, in
     particular beancount.scripts.__init__, move to an util with tests.
@@ -166,9 +174,6 @@ beancount: TODO
   - Review usage of @parsedoc vs. @loaddoc, maybe we should be more thorough
     about that and use @loaddoc in more places, as it performs data validation.
 
-  - Implement account.split() and perhaps remove references to
-    split(account.sep) everywhere.
-
   - COOL! I can subclass the namedtuples!  Do this to make printing the
     postings and entries much easier.
 
@@ -176,6 +181,8 @@ beancount: TODO
           def __str__(self):
               return _Posting.__str__(self._replace(entry=None))
 
+  - Maybe all the decorators for docstring parsers should be moved to a
+    dedicated module. That would make sense.
 
 * Current / Misc / To Be Classified
 
