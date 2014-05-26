@@ -647,7 +647,7 @@ def account_(slashed_account_name=None):
     else:
         real_account = request.view.real_accounts['']
 
-    account_postings = realization.get_subpostings(real_account)
+    account_postings = realization.get_postings(real_account)
 
     oss = io.StringIO()
     journal.entries_table_with_balance(app, oss, account_postings)

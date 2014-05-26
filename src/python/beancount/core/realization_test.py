@@ -408,16 +408,75 @@ class TestRealFilter(unittest.TestCase):
         self.assertTrue(all(map(even, realization.iter_children(real_even, True))))
 
 
+class TestRealOther(unittest.TestCase):
+
+    @loaddoc
+    def test_get_postings(self, entries, errors, _):
+        """
+        2012-01-01 open Assets:Bank:Checking
+        2012-01-01 open Expenses:Restaurant
+        2012-01-01 open Expenses:Movie
+        2012-01-01 open Liabilities:CreditCard
+        2012-01-01 open Equity:OpeningBalances
+
+        2012-01-15 pad Assets:Bank:Checking Equity:OpeningBalances
+
+        2012-03-01 * "Food"
+          Expenses:Restaurant     11.11 CAD
+          Assets:Bank:Checking
+
+        2012-03-05 * "Food"
+          Expenses:Movie         22.22 CAD
+          Assets:Bank:Checking
+
+        2012-03-10 * "Paying off credit card"
+          Assets:Bank:Checking     -33.33 CAD
+          Liabilities:CreditCard
+
+        2012-03-20 note Assets:Bank:Checking "Bla bla 444.44"
+
+        2013-04-01 balance Assets:Bank:Checking   555.00 CAD
+
+        2013-04-20 price CAD 0.91 USD
+
+        2013-04-21 event "location" "Somewhere, USA"
+
+        2013-05-01 close Assets:Bank:Checking
+        """
+        real_account = realization.realize(entries)
+        postings = list(realization.get_postings(real_account))
+
+        for (exp_type, exp_account, exp_number), entpost in zip([
+            (data.Open, 'Assets:Bank:Checking', None),
+            (data.Open, 'Expenses:Restaurant', None),
+            (data.Open, 'Expenses:Movie', None),
+            (data.Open, 'Liabilities:CreditCard', None),
+            (data.Open, 'Equity:OpeningBalances', None),
+            (data.Pad, 'Assets:Bank:Checking', None),
+            (data.Posting, 'Assets:Bank:Checking', '621.66'),
+            (data.Pad, 'Assets:Bank:Checking', None),
+            (data.Posting, 'Equity:OpeningBalances', '-621.66'),
+            (data.Posting, 'Assets:Bank:Checking', '-11.11'),
+            (data.Posting, 'Expenses:Restaurant', '11.11'),
+            (data.Posting, 'Assets:Bank:Checking', '-22.22'),
+            (data.Posting, 'Expenses:Movie', '22.22'),
+            (data.Posting, 'Assets:Bank:Checking', '-33.33'),
+            (data.Posting, 'Liabilities:CreditCard', '33.33'),
+            (data.Note, 'Assets:Bank:Checking', None),
+            (data.Balance, 'Assets:Bank:Checking', None),
+            (data.Close, 'Assets:Bank:Checking', None),
+            ], postings):
+
+            self.assertEqual(exp_type, type(entpost))
+            if exp_account:
+                self.assertEqual(exp_account, entpost.account)
+            if exp_number:
+                self.assertEqual(D(exp_number), entpost.position.number)
 
 
 
 
 
-#     def test_get_subpostings(self):
-#         pass
-
-#     def test__get_subpostings(self):
-#         pass
 
 #     def test_dump_tree_balances(self):
 #         pass

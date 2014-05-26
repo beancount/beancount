@@ -184,6 +184,10 @@ beancount: TODO
   - Maybe all the decorators for docstring parsers should be moved to a
     dedicated module. That would make sense.
 
+  - Parsing this does not fail; it should:
+      "2013-04-01 balance Assets:Bank:Checking   555.00 CAD.11"
+
+
 * Current / Misc / To Be Classified
 
   - Check out bitbucket CGI interface w.r.t. linking to source code, is the

@@ -6,6 +6,7 @@ from collections import OrderedDict
 import collections
 import operator
 import copy
+import itertools
 
 from beancount.core import inventory
 from beancount.core.amount import amount_sortkey
@@ -325,35 +326,27 @@ def filter(real_account, predicate):
         return real_copy
 
 
+def get_postings(real_account):
+    """Return a sorted list a RealAccount's postings and children.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def get_subpostings(real_account):
-    """Given a RealAccount instance, return a sorted list of all its postings and
-    the postings of its child accounts."""
-
+    Args:
+      real_account: An instance of RealAccount.
+    Returns:
+      A list of Posting or directories.
+    """
     accumulator = []
-    _get_subpostings(real_account, accumulator)
+    for real_child in iter_children(real_account):
+        accumulator.extend(real_child.postings)
     accumulator.sort(key=data.posting_sortkey)
     return accumulator
 
-def _get_subpostings(real_account, accumulator):
-    "Internal recursive routine to get all the child postings."
-    accumulator.extend(real_account.postings)
-    for child_account in real_account.get_children():
-        _get_subpostings(child_account, accumulator)
+
+
+
+
+
+
+
 
 
 # FIXME: Integrate this code with acctree and the rest of the render code.
