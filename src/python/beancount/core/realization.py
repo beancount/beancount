@@ -26,9 +26,8 @@ X  asdict()       -> becomes the object itself, not really needed anymore.
 X  __getitem__    -> should work as keys(), not deep. Deep uses go to get_deep_item()
 X  add(account)   -> inserts leaf name automatically, not needed anymore, only used here.
 X  __iter__       -> delete, just becomes keys() like dict
-__contains__   -> remove support for recursive, onyl work on direct children, use
-
-X  get_children() -> values()
+X  __contains__   -> remove support for recursive, onyl work on direct children, use
+X  get_children() -> Remove and replace by values() usage.
 
 
 Note: maybe these are all module functions with simple names...
@@ -72,6 +71,30 @@ class RealAccount(dict):
         self.postings = []
         self.balance = inventory.Inventory()
 
+    def __setitem__(self, key, value):
+        """Prevent the setting of non-string or non-empty keys on this dict.
+
+        Args:
+          key: The dictionary key. Must be a string.
+          value: The value, must be a RealAccount instance.
+        Raises:
+          KeyError: If the key is not a string, or is invalid.
+          ValueError: If the value is not a RealAccount instance.
+        """
+        if not isinstance(key, str) or not key:
+            raise KeyError("Invalid RealAccount key: '{}'".format(key))
+        if not isinstance(value, RealAccount):
+            raise ValueError("Invalid RealAccount value: '{}'".format(value))
+        if not value.account.endswith(key):
+            raise ValueError("RealAccount name {} inconsistent with key {}".format(
+                value.account, key))
+        return super().__setitem__(key, value)
+
+
+
+
+
+
     # def __str__(self):
     #     """Return a human-readable string representation of this RealAccount.
     #
@@ -90,57 +113,111 @@ class RealAccount(dict):
 
 
 
-UNSET = object()
-
-def get(real_account, subaccount_name, default=UNSET):
-    """Fetch the account name from the real_account node.
+def get(real_account, account_name, default=None):
+    """Fetch the subaccount name from the real_account node.
 
     Args:
-      subaccount_name: A string, the name of a possibly indirect child leaf
-      found down within this dict..
+      real_account: An instance of RealAccount, the parent node to look for
+        children of.
+      account_name: A string, the name of a possibly indirect child leaf
+        found down the tree of 'real_account' nodes.
+      default: The default value that should be returned if the child
+        subaccount is not found.
     Returns:
-      A RealAccount instance for the child, or the default value, if one
-      is specified.
-    Raises:
-      KeyError: If the child is not found.
+      A RealAccount instance for the child, or the default value, if the child
+      is not found.
     """
-    assert isinstance(childname, str), childname
-    if not childname:
-        return self
-    if account.sep in childname:
-        directname = childname.split(account.sep, 1)[0]
-        restname = childname[len(directname)+1:]
-        child = self.children[directname]
-        return child[restname]
-    else:
-        return self.children[childname]
+    if not isinstance(account_name, str):
+        raise ValueError
+    components = account_name.split(account.sep)
+    for component in components:
+        real_child = real_account.get(component, default)
+        if real_child is default:
+            return default
+        real_account = real_child
+    return real_account
+
+# FIXME: Do I really need this? I don't think we do, maybe remove.
+def contains(real_account, account_name):
+    """True if the given account node contains the subaccount name.
+
+    Args:
+      account_name: A string, the name of a direct or indirect subaccount of
+        this node.
+    Returns:
+      A boolean, true the name is a child of this node.
+    """
+    return get(real_account, account_name) is not None
+
+
+# def get(real_account, account, default=None):
+#     """Fetch the subaccount name from the real_account node.
+#
+#     Args:
+#       real_account: An instance of RealAccount, the parent node to look for
+#         children of.
+#       account: A string, the name of a possibly indirect child leaf
+#         found down the tree of 'real_account' nodes.
+#       default: The default value that should be returned if the child
+#         subaccount is not found.
+#     Returns:
+#       A RealAccount instance for the child, or the default value, if the child
+#       is not found.
+#     """
+#     if not isinstance(account, str):
+#         raise ValueError
+#     components = account.split(account.sep, 1)
+#     if len(components) == 2:
+#         child_name, rest_name = components
+#     else:
+#         child_name, rest_name = components[0], None
+#     if not child_name:
+#         return default
+#
+#     real_child = real_account.get(child_name, default)
+#     if real_child is default:
+#         return default
+#
+#     if rest_name:
+#         return get(real_child, rest_name, default)
+#     else:
+#         return real_child
 
 
 
 
 
 
-    # # FIXME: Do I really need to support more than direct children here? Remove
-    # # if possible before 2.0 release.
-    # def __contains__(self, account_name_leaf):
-    #     """True if the given string is in this RealAccount instance.
-    #
-    #     Args:
-    #       account_name: A string, the leaf name of a child account of this node, or
-    #         of a more distant child of this node.
-    #     Returns:
-    #       A boolean, true the name is a child of this node.
-    #     """
-    #     directname = account_name_leaf.split(account.sep, 1)[0]
-    #     restname = account_name_leaf[len(directname)+1:]
-    #     try:
-    #         child = self.children[directname]
-    #         if restname:
-    #             return child.__contains__(restname)
-    #         else:
-    #             return True
-    #     except KeyError:
-    #         return False
+def get_or_create(real_account, account_name):
+    """Fetch the subaccount name from the real_account node.
+
+    Args:
+      real_account: An instance of RealAccount, the parent node to look for
+        children of, or create under.
+      account_name: A string, the name of the direct or indirect child leaf
+        to get or create.
+    Returns:
+      A RealAccount instance for the child, or the default value, if the child
+      is not found.
+    """
+    if not isinstance(account_name, str):
+        raise ValueError
+    components = account_name.split(account.sep)
+    path = []
+    for component in components:
+        path.append(component)
+        real_child = real_account.get(component, None)
+        if real_child is None:
+            real_child = RealAccount(account.join(*path))
+            real_account[component] = real_child
+        real_account = real_child
+    return real_account
+
+
+
+
+
+
 
 
 

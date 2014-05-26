@@ -14,10 +14,20 @@ from beancount.loader import loaddoc
 from beancount.core import realization
 
 
+def create_simple_account():
+    ra = RealAccount('')
+    ra['Assets'] = RealAccount('Assets')
+    ra['Assets']['US'] = RealAccount('Assets:US')
+    ra['Assets']['US']['Bank'] = RealAccount('Assets:US:Bank')
+    ra['Assets']['US']['Bank']['Checking'] = RealAccount('Assets:US:Bank:Checking')
+    return ra
+
+
 class TestRealAccount(unittest.TestCase):
 
     def test_ctor(self):
         ra = RealAccount('Assets:US:Bank:Checking')
+        self.assertEqual(0, len(ra))
         ra = RealAccount('Equity')
         ra = RealAccount('')
         with self.assertRaises(Exception):
@@ -27,30 +37,66 @@ class TestRealAccount(unittest.TestCase):
         ra = RealAccount('Assets:US:Bank:Checking')
         ra_str = str(ra)
 
-        ra = RealAccount('')
-        ra['Assets'] = RealAccount('Assets')
-        ra['Assets']['US'] = RealAccount('US')
-        ra['Assets']['US']['Bank'] = RealAccount('Bank')
-        ra['Assets']['US']['Bank']['Checking'] = RealAccount('Checking')
-
+        ra = create_simple_account()
         ra_str = str(ra)
         self.assertTrue(re.search('Assets', ra_str))
         self.assertTrue(re.search('Bank', ra_str))
         self.assertTrue(re.search('Checking', ra_str))
 
     def test_getitem_setitem(self):
-        ra = RealAccount('')
-        ra['Assets'] = RealAccount('Assets')
-        ra['Assets']['US'] = RealAccount('US')
-        ra['Assets']['US']['Bank'] = RealAccount('Bank')
-        ra['Assets']['US']['Bank']['Checking'] = RealAccount('Checking')
-
+        ra = create_simple_account()
         self.assertTrue(isinstance(ra['Assets'], RealAccount))
         self.assertTrue(isinstance(ra['Assets']['US'], RealAccount))
         with self.assertRaises(KeyError):
             ra['Liabilities']
 
+    def test_setitem_constraints(self):
+        ra = RealAccount('')
+        ra['Assets'] = RealAccount('Assets')
+        with self.assertRaises(KeyError):
+            ra['Assets'][42] = RealAccount('Assets:US')
+        with self.assertRaises(ValueError):
+            ra['Assets']['US'] = 42
+        with self.assertRaises(ValueError):
+            ra['Assets']['US'] = RealAccount('Assets:US:Checking')
 
+
+
+class TestRealGetters(unittest.TestCase):
+
+    def test_get(self):
+        ra = create_simple_account()
+        self.assertEqual('Assets',
+                         realization.get(ra, 'Assets').account)
+        self.assertEqual('Assets:US:Bank',
+                         realization.get(ra, 'Assets:US:Bank').account)
+        self.assertEqual('Assets:US:Bank:Checking',
+                         realization.get(ra, 'Assets:US:Bank:Checking').account)
+        self.assertEqual(None, realization.get(ra, 'Assets:US:Bank:Savings'))
+        self.assertEqual(42, realization.get(ra, 'Assets:US:Bank:Savings', 42))
+        with self.assertRaises(ValueError):
+            self.assertEqual(42, realization.get(ra, None))
+        self.assertEqual(None, realization.get(ra, ''))
+
+    def test_get_or_create(self):
+        ra = RealAccount('')
+        ra_checking = realization.get_or_create(ra, 'Assets:US:Bank:Checking')
+        ra_savings = realization.get_or_create(ra, 'Assets:US:Bank:Savings')
+        self.assertEqual('Assets:US:Bank:Checking', ra_checking.account)
+        self.assertEqual({'Assets'}, ra.keys())
+        self.assertEqual({'Checking', 'Savings'}, ra['Assets']['US']['Bank'].keys())
+
+        ra_assets = ra['Assets']
+        ra_assets2 = realization.get_or_create(ra, 'Assets')
+        self.assertTrue(ra_assets2 is ra_assets)
+
+    def test_contains(self):
+        ra = RealAccount('')
+        ra_checking = realization.get_or_create(ra, 'Assets:US:Bank:Checking')
+        ra_savings = realization.get_or_create(ra, 'Assets:US:Bank:Savings')
+        self.assertTrue(realization.contains(ra, 'Assets:US:Bank:Checking'))
+        self.assertTrue(realization.contains(ra, 'Assets:US:Bank:Savings'))
+        self.assertFalse(realization.contains(ra, 'Assets:US:Cash'))
 
 
     # def test_deep(self):

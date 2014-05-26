@@ -166,6 +166,9 @@ beancount: TODO
   - Review usage of @parsedoc vs. @loaddoc, maybe we should be more thorough
     about that and use @loaddoc in more places, as it performs data validation.
 
+  - Implement account.split() and perhaps remove references to
+    split(account.sep) everywhere.
+
 
 * Current / Misc / To Be Classified
 
