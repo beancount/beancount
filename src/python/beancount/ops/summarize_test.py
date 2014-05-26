@@ -286,5 +286,15 @@ class TestConversions(unittest.TestCase):
 ## FIXME: Build more good examples to understand, with positions held at cost, as tests
 
 
+# FIXME: You can redo this in a manual loop now, here, probably.
+# def real_cost_as_dict(real_accounts):
+#     """Convert a tree of real accounts as a dict for easily doing
+#     comparisons for testing."""
+#     return {real_account.fullname: str(real_account.balance.get_cost())
+#             for account_name, real_account in real_accounts.items()
+#             if real_account.fullname}
+
+
+
 
 __incomplete__ = True

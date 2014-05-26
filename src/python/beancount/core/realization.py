@@ -30,6 +30,8 @@ X  __iter__       -> delete, just becomes keys() like dict
 X  __contains__   -> remove support for recursive, onyl work on direct children, use
 X  get_children() -> Remove and replace by values() usage.
 
+FIXME: Finish supporting ra.copy(), there's a test for it.
+
 
 Note: maybe these are all module functions with simple names...
 X  realization.get(key, None) instead.
@@ -292,43 +294,50 @@ def compute_postings_balance(postings):
     return balance
 
 
+def filter(real_account, predicate):
+    """Filter a RealAccount tree of nodes by the predicate.
 
+    This function visits the tree and applies the predicate on each node. It
+    returns a partial clone of RealAccount whereby on each node
+    - either the predicate is true, or
+    - for at least one child of the node the predicate is true.
+    All the leaves have the predicate be true.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def filter_tree(real_account, predicate):
-    """Visit the tree and apply the predicate on each node;
-    return a mapping of nodes where the predicate was true,
-    and of nodes which has children with the predicate true as well.
+    Args:
+      real_account: An instance of RealAccount.
+      predicate: A callable/function which accepts a real_account and returns
+        a boolean. If the function returns True, the node is kept.
+    Returns:
+      A shallow clone of RealAccount is always returned.
     """
     assert isinstance(real_account, RealAccount)
 
-    children_copy = OrderedDict()
-    for child in real_account.get_children():
-        child_copy = filter_tree(child, predicate)
-        if child_copy is not None:
-            leafname = account_name_leaf(child.fullname)
-            children_copy[leafname] = child_copy
+    real_copy = RealAccount(real_account.account)
+    real_copy.balance = real_account.balance
+    real_copy.postings = real_account.postings
 
-    if children_copy or predicate(real_account):
-        real_account_copy = copy.copy(real_account)
-        real_account_copy.children = children_copy
-        return real_account_copy
+    for child_name, real_child in real_account.items():
+        real_child_copy = filter(real_child, predicate)
+        if real_child_copy is not None:
+            real_copy[child_name] = real_child_copy
+
+    if len(real_copy) > 0 or predicate(real_account):
+        return real_copy
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def get_subpostings(real_account):
@@ -347,6 +356,7 @@ def _get_subpostings(real_account, accumulator):
         _get_subpostings(child_account, accumulator)
 
 
+# FIXME: Integrate this code with acctree and the rest of the render code.
 def dump_tree_balances(real_account, foutput=None):
     """Dump a simple tree of the account balances at cost, for debugging."""
 
@@ -388,14 +398,6 @@ def compare_realizations(real_accounts1, real_accounts2):
         if balance1 != balance2:
             return False
     return True
-
-
-def real_cost_as_dict(real_accounts):
-    """Convert a tree of real accounts as a dict for easily doing
-    comparisons for testing."""
-    return {real_account.fullaname: str(real_account.balance.get_cost())
-            for account_name, real_account in real_accounts.items()
-            if real_account.fullname}
 
 
 def iterate_with_balance(postings_or_entries):

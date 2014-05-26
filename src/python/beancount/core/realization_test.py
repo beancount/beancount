@@ -1,6 +1,6 @@
+"""Unit tests for realizations.
 """
-Unit tests for realizations.
-"""
+import copy
 import unittest
 import textwrap
 import functools
@@ -43,6 +43,7 @@ class TestRealAccount(unittest.TestCase):
     def test_str(self):
         ra = RealAccount('Assets:US:Bank:Checking')
         self.assertEqual('{}', str(ra))
+        #self.assertEqual('RealAccount()', str(ra))
 
         ra = create_simple_account()
         ra_str = str(ra)
@@ -66,6 +67,24 @@ class TestRealAccount(unittest.TestCase):
             ra['Assets']['US'] = 42
         with self.assertRaises(ValueError):
             ra['Assets']['US'] = RealAccount('Assets:US:Checking')
+
+    def test_clone(self):
+        ra = RealAccount('')
+        ra_assets = ra['Assets'] = RealAccount('Assets')
+        ra.balance = 42
+        ra.postings.append('posting1')
+        ra.postings.append('posting2')
+
+        ra_clone = copy.copy(ra)
+        self.assertEqual(42, ra_clone.balance)
+        self.assertEqual(['posting1', 'posting2'], ra_clone.postings)
+        self.assertEqual({'Assets'}, ra_clone.keys())
+
+        # # FIXME: Make this one work too, there's a way.
+        # ra_clone = ra.copy()
+        # self.assertEqual(42, ra_clone.balance)
+        # self.assertEqual(['posting1', 'posting2'], ra_clone.postings)
+        # self.assertEqual({'Assets'}, ra_clone.keys())
 
 
 class TestRealGetters(unittest.TestCase):
@@ -309,10 +328,90 @@ class TestRealization(unittest.TestCase):
         self.assertEqual(expected_balance, ra_movie.balance)
 
 
-class TestRealOther(unittest.TestCase):
+class TestRealFilter(unittest.TestCase):
 
-    def test_filter_tree(self):
-        pass
+    def create_real(self, account_value_pairs):
+        real_root = RealAccount('')
+        for account_name, value in account_value_pairs:
+            real_account = realization.get_or_create(real_root, account_name)
+            real_account.balance.add(amount.Amount(value, 'USD'))
+        return real_root
+
+    def test_filter_to_empty(self):
+        # Test filtering down to empty.
+        real_root = self.create_real([('Assets:US:Bank:Checking', '1'),
+                                      ('Assets:US:Bank:Savings', '2'),
+                                      ('Liabilities:Bank:CreditCard', '3')])
+        real_copy = realization.filter(real_root, lambda ra: False)
+        self.assertTrue(real_copy is None)
+
+    def test_filter_almost_all(self):
+        # Test filtering that culls leaves, to make sure that works.
+        real_root = self.create_real([('Assets:US:Bank:Checking', '1'),
+                                      ('Assets:US:Bank:Savings', '2'),
+                                      ('Liabilities:USBank:CreditCard', '3'),
+                                      ('Assets', '100'),
+                                      ('Liabilities:US:Bank', '101')])
+        def ge100(ra):
+            return ra.balance.get_amount('USD').number >= 100
+        real_copy = realization.filter(real_root, ge100)
+        self.assertTrue(real_copy is not None)
+        self.assertEqual({'Assets', 'Liabilities:US:Bank'},
+                         set(ra.account
+                             for ra in realization.iter_children(real_copy, True)))
+
+    def test_filter_with_leaves(self):
+        # Test filtering that keeps some leaf nodes with some intermediate nodes
+        # that would otherwise be eliminated.
+        real_root = self.create_real([('Assets:US:Bank:Checking', '1'),
+                                      ('Assets:US:Bank:Savings', '2'),
+                                      ('Liabilities:USBank:CreditCard', '3')])
+        def not_empty(ra):
+            return not ra.balance.is_empty()
+        real_copy = realization.filter(real_root, not_empty)
+        self.assertTrue(real_copy is not None)
+        self.assertEqual({'Assets:US:Bank:Checking',
+                          'Assets:US:Bank:Savings',
+                          'Liabilities:USBank:CreditCard'},
+                         set(ra.account
+                             for ra in realization.iter_children(real_copy, True)))
+
+    def test_filter_no_leaves(self):
+        # Test filtering that drops leaf nodes but that keeps intermediate
+        # nodes.
+        real_root = self.create_real([('Assets:US:Bank:Checking', '1'),
+                                      ('Assets:US:Bank:Savings', '2'),
+                                      ('Assets:US', '100'),
+                                      ('Assets', '100')])
+        def ge100(ra):
+            return ra.balance.get_amount('USD').number >= 100
+        real_copy = realization.filter(real_root, ge100)
+        self.assertTrue(real_copy is not None)
+        self.assertEqual({'Assets:US'},
+                         set(ra.account
+                             for ra in realization.iter_children(real_copy, True)))
+
+    def test_filter_misc(self):
+        real_root = self.create_real([('Assets:US:Bank:Checking', '1'),
+                                      ('Assets:US:Bank:Savings', '2'),
+                                      ('Assets:US:Cash', '3'),
+                                      ('Assets:CA:Cash', '4'),
+                                      ('Liabilities:Bank:CreditCard', '5'),
+                                      ('Expenses:Food:Grocery', '6'),
+                                      ('Expenses:Food:Restaurant', '7'),
+                                      ('Expenses:Food:Alcohol', '8'),
+                                      ('Expenses:Food', '10')])
+        def even(real_account):
+            return (not real_account.balance.is_empty() and
+                    real_account.balance.get_amount('NOK').number % 2 == 0)
+        real_even = realization.filter(real_root, even)
+        self.assertTrue(all(map(even, realization.iter_children(real_even, True))))
+
+
+
+
+
+
 
 #     def test_get_subpostings(self):
 #         pass
@@ -324,9 +423,6 @@ class TestRealOther(unittest.TestCase):
 #         pass
 
 #     def test_compare_realizations(self):
-#         pass
-
-#     def test_real_cost_as_dict(self):
 #         pass
 
 #     def test_iterate_with_balance(self):
