@@ -8,10 +8,15 @@ import re
 
 from beancount import parser
 
+from beancount.core.amount import to_decimal as D
 from beancount.core.realization import RealAccount
 from beancount.core import realization
 from beancount.core import data
+from beancount.core import inventory
+from beancount.core import amount
 from beancount.parser import documents
+from beancount.parser import parsedoc
+from beancount.parser import printer
 from beancount.loader import loaddoc
 
 
@@ -189,11 +194,34 @@ class TestRealization(unittest.TestCase):
         self.assertEqual([data.Open, data.Pad, data.Posting],
                          list(map(type, postings_map['Equity:OpeningBalances'])))
 
+    @parsedoc
+    def test_compute_postings_balance(self, entries, _, __):
+        """
+        2014-01-01 open Assets:Bank:Checking
+        2014-01-01 open Assets:Bank:Savings
+        2014-01-01 open Assets:Investing
 
-    def test_compute_postings_balance(self):
-        pass
-        #balance = realization.compute_postings_balance(entries)
+        2014-05-26 note Assets:Investing "Buying some Googlies"
 
+        2014-05-30 *
+          Assets:Bank:Checking  111.23 USD
+          Assets:Bank:Savings   222.74 USD
+          Assets:Bank:Savings   17.23 CAD
+          Assets:Investing      10000 EUR
+          Assets:Investing      32 GOOG {45.203 USD}
+          Assets:Other          1000 EUR @ 1.78 GBP
+          Assets:Other          1000 EUR @@ 1780 GBP
+        """
+        postings = entries[:-1] + entries[-1].postings
+        balance = realization.compute_postings_balance(postings)
+
+        expected_balance = inventory.Inventory()
+        expected_balance.add(amount.Amount('333.97', 'USD'))
+        expected_balance.add(amount.Amount('17.23', 'CAD'))
+        expected_balance.add(amount.Amount('32', 'GOOG'),
+                             amount.Amount('45.203', 'USD'))
+        expected_balance.add(amount.Amount('12000', 'EUR'))
+        self.assertEqual(expected_balance, balance)
 
     def test_realize(self):
         pass

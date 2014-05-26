@@ -235,6 +235,7 @@ def create_simple_posting(entry, account, number, currency):
         entry.postings.append(posting)
     return posting
 
+
 def create_simple_posting_with_cost(entry, account,
                                     number, currency,
                                     cost_number, cost_currency):

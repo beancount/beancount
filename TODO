@@ -169,6 +169,13 @@ beancount: TODO
   - Implement account.split() and perhaps remove references to
     split(account.sep) everywhere.
 
+  - COOL! I can subclass the namedtuples!  Do this to make printing the
+    postings and entries much easier.
+
+      class Posting(_Posting):
+          def __str__(self):
+              return _Posting.__str__(self._replace(entry=None))
+
 
 * Current / Misc / To Be Classified
 
