@@ -47,3 +47,7 @@ class TestLoader(unittest.TestCase):
         self.assertTrue(isinstance(entries, list))
         self.assertTrue(isinstance(errors, list))
         self.assertTrue(isinstance(options_map, dict))
+
+
+# You need to document all of the functions, and add test for the plugins functions.
+__incomplete__ = True

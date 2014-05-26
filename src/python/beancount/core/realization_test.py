@@ -9,9 +9,10 @@ import re
 from beancount import parser
 
 from beancount.core.realization import RealAccount
-from beancount.core.data import Open, Close, Posting, Balance, Note, Document, Pad
-from beancount.loader import loaddoc
 from beancount.core import realization
+from beancount.core import data
+from beancount.parser import documents
+from beancount.loader import loaddoc
 
 
 def create_simple_account():
@@ -35,7 +36,7 @@ class TestRealAccount(unittest.TestCase):
 
     def test_str(self):
         ra = RealAccount('Assets:US:Bank:Checking')
-        ra_str = str(ra)
+        self.assertEqual('{}', str(ra))
 
         ra = create_simple_account()
         ra_str = str(ra)
@@ -59,7 +60,6 @@ class TestRealAccount(unittest.TestCase):
             ra['Assets']['US'] = 42
         with self.assertRaises(ValueError):
             ra['Assets']['US'] = RealAccount('Assets:US:Checking')
-
 
 
 class TestRealGetters(unittest.TestCase):
@@ -98,103 +98,111 @@ class TestRealGetters(unittest.TestCase):
         self.assertTrue(realization.contains(ra, 'Assets:US:Bank:Savings'))
         self.assertFalse(realization.contains(ra, 'Assets:US:Cash'))
 
+    def test_iter_children(self):
+        ra = RealAccount('')
+        for account_name in ['Assets:US:Bank:Checking',
+                             'Assets:US:Bank:Savings',
+                             'Assets:US:Cash',
+                             'Assets:CA:Cash']:
+            realization.get_or_create(ra, account_name)
 
-    # def test_deep(self):
-    #     # Test deep_set().
-    #     ra = RealAccount('')
-    #     ra_leaf = RealAccount('Assets:US:Bank:Checking')
-    #     realization.set(ra_leaf)
+        # Test enumerating all accounts.
+        self.assertEqual(['',
+                          'Assets',
+                          'Assets:CA',
+                          'Assets:CA:Cash',
+                          'Assets:US',
+                          'Assets:US:Bank',
+                          'Assets:US:Bank:Checking',
+                          'Assets:US:Bank:Savings',
+                          'Assets:US:Cash'],
+                         [ra.account for ra in realization.iter_children(ra)])
 
-    #     # Test deep_get().
-
-    #     print(ra)
-
-
-        # Test deep_contains().
-
-
-
-    # def create_hierarchy(self):
-    #     real_account1 = RealAccount('Assets')
-    #     real_account2 = RealAccount('Assets:US')
-    #     real_account3 = RealAccount('Assets:US:Bank')
-    #     real_account4 = RealAccount('Assets:US:Bank:Checking')
-
-    #     real_account1.add(real_account2)
-    #     real_account2.add(real_account3)
-    #     real_account3.add(real_account4)
-
-    #     return real_account1
-
-    # def test_add(self):
-    #     self.create_hierarchy()
-
-    # def test_getitem(self):
-    #     real_account = self.create_hierarchy()
-
-    #     with self.assertRaises(KeyError):
-    #         real_account['Unknown']
-
-    #     real_child1 = real_account['US']
-    #     self.assertEqual(real_child1.fullname, 'Assets:US')
-
-    #     real_child2 = real_child1['Bank']
-    #     self.assertEqual(real_child2.fullname, 'Assets:US:Bank')
-
-    #     real_child3 = real_child2['Checking']
-    #     self.assertEqual(real_child3.fullname, 'Assets:US:Bank:Checking')
-
-    # def test_iter(self):
-    #     real_account = self.create_hierarchy()
-
-    #     real_accounts = list(real_account.values_recursively())
-    #     self.assertTrue(all(isinstance(real_account, RealAccount)
-    #                         for real_account in real_accounts))
-    #     self.assertEqual(4, len(real_accounts))
-
-    # def test_contains(self):
-    #     real_account = self.create_hierarchy()
-    #     real_child1 = real_account['US']
-    #     self.assertTrue('US' in real_account)
-    #     self.assertFalse('Assets:US' in real_account)
-    #     self.assertTrue('US:Bank' in real_account)
-    #     self.assertTrue('US:Bank:Checking' in real_account)
+        # Test enumerating leaves only.
+        self.assertEqual(['Assets:CA:Cash',
+                          'Assets:US:Bank:Checking',
+                          'Assets:US:Bank:Savings',
+                          'Assets:US:Cash'],
+                         [ra.account for ra in realization.iter_children(ra, True)])
 
 
+class TestRealization(unittest.TestCase):
 
-# class TestRealization(unittest.TestCase):
+    @loaddoc
+    def test_group_by_account(self, entries, errors, _):
+        """
+        2012-01-01 open Expenses:Restaurant
+        2012-01-01 open Expenses:Movie
+        2012-01-01 open Assets:Cash
+        2012-01-01 open Liabilities:CreditCard
+        2012-01-01 open Equity:OpeningBalances
 
-#     @loaddoc
-#     def test_realize(self, entries, errors, _):
-#         """
-#         2012-01-01 open Expenses:Restaurant
-#         2012-01-01 open Assets:Cash
-#         2012-01-01 open Liabilities:CreditCard
-#         2012-01-01 open Equity:OpeningBalances
+        2012-01-15 pad Liabilities:CreditCard Equity:OpeningBalances
 
-#         2012-01-15 pad Liabilities:CreditCard Equity:OpeningBalances
+        2012-03-01 * "Food"
+          Expenses:Restaurant     100 CAD
+          Assets:Cash
 
-#         2012-03-01 * "Food"
-#           Expenses:Restaurant     100 CAD
-#           Assets:Cash
+        2012-03-10 * "Food again"
+          Expenses:Restaurant     80 CAD
+          Liabilities:CreditCard
 
-#         2012-03-10 * "Food again"
-#           Expenses:Restaurant     80 CAD
-#           Liabilities:CreditCard
+        ;; Two postings on the same account.
+        2012-03-15 * "Two Movies"
+          Expenses:Movie     10 CAD
+          Expenses:Movie     10 CAD
+          Liabilities:CreditCard
 
-#         2012-03-15 * "Movie"
-#           Expenses:Movie     10 CAD
-#           Liabilities:CreditCard
+        2012-03-20 note Liabilities:CreditCard "Called Amex, asked about 100 CAD dinner"
 
-#         2012-03-20 note Liabilities:CreditCard "Called Amex, asked about 100 CAD dinner"
+        2012-03-28 document Liabilities:CreditCard "march-statement.pdf"
 
-#         2012-03-28 document Liabilities:CreditCard "march-statement.pdf"
+        2013-04-01 balance Liabilities:CreditCard   204 CAD
 
-#         2013-04-01 balance Liabilities:CreditCard   204 CAD
+        2014-01-01 close Liabilities:CreditCard
+        """
+        self.assertEqual([documents.DocumentError], list(map(type, errors)))
 
-#         2014-01-01 close Liabilities:CreditCard
-#         """
-#         self.assertEqual(3, len(errors))
+        postings_map = realization.group_by_account(entries)
+        self.assertTrue(isinstance(postings_map, dict))
+
+        self.assertEqual([data.Open, data.Posting],
+                         list(map(type, postings_map['Assets:Cash'])))
+
+        self.assertEqual([data.Open, data.Posting, data.Posting],
+                         list(map(type, postings_map['Expenses:Restaurant'])))
+
+        self.assertEqual([data.Open,
+                          data.Posting,
+                          data.Posting],
+                         list(map(type, postings_map['Expenses:Movie'])))
+
+        self.assertEqual([data.Open,
+                          data.Pad,
+                          data.Posting, data.Posting, data.Posting,
+                          data.Note,
+                          data.Document,
+                          data.Balance,
+                          data.Close],
+                         list(map(type, postings_map['Liabilities:CreditCard'])))
+
+        self.assertEqual([data.Open, data.Pad, data.Posting],
+                         list(map(type, postings_map['Equity:OpeningBalances'])))
+
+
+    def test_compute_postings_balance(self):
+        pass
+        #balance = realization.compute_postings_balance(entries)
+
+
+    def test_realize(self):
+        pass
+
+
+
+
+
+
 #         real_account = realization.realize(entries)
 
 #         self.assertEqual({
@@ -209,21 +217,9 @@ class TestRealGetters(unittest.TestCase):
 #                 'CreditCard': {}}},
 #                          real_account.asdict())
 
-#         self.assertEqual([Open, Posting],
-#                          list(map(type, real_account['Assets:Cash'].postings)))
 
-#         self.assertEqual([Open, Posting, Posting],
-#                          list(map(type, real_account['Expenses:Restaurant'].postings)))
 
-#         self.assertEqual([Posting],
-#                          list(map(type, real_account['Expenses:Movie'].postings)))
 
-#         self.assertEqual([Open, Pad, Posting, Posting, Posting, Note, Document,
-#                           Balance, Close],
-#                          list(map(type, real_account['Liabilities:CreditCard'].postings)))
-
-#         self.assertEqual([Open, Pad, Posting],
-#                          list(map(type, real_account['Equity:OpeningBalances'].postings)))
 
 #     def test_ensure_min_accounts(self):
 #         root = RealAccount('')
@@ -236,9 +232,6 @@ class TestRealGetters(unittest.TestCase):
 #                          root.asdict())
 #         self.assertEqual(['Assets', 'Income', 'Expenses'],
 #                          [x.fullname for x in root.get_children()])
-
-
-
 
 
 

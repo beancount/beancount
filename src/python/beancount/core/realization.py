@@ -3,6 +3,7 @@
 import sys
 from itertools import chain, repeat
 from collections import OrderedDict
+import collections
 import operator
 import copy
 
@@ -31,18 +32,13 @@ X  get_children() -> Remove and replace by values() usage.
 
 
 Note: maybe these are all module functions with simple names...
-  realization.get(key, None) instead.
-  realization.set(real_account): automatically creates the intervening nodes
-  realization.contains(account_name)
-  realization.iter(real_account)
+X  realization.get(key, None) instead.
+X  realization.set(real_account): automatically creates the intervening nodes
+X  realization.contains(account_name)
+X  realization.iter(real_account)
+X  values_recursively -> provide a function instead, iter_children()
 
-values_recursively -> provide a function to do this instead
 
-
-get_deep(key, default): Work down the tree at multiple levels, convert get_in().
-If key does not contain sep, should still work as usual with just children.
-Needs to have a default value in order to stand in for __contains__ iwth depth
-below.
 
 
 tree_utils should be converted to work on dicts of dicts just like this one, or maybe removed.
@@ -86,31 +82,33 @@ class RealAccount(dict):
         if not isinstance(value, RealAccount):
             raise ValueError("Invalid RealAccount value: '{}'".format(value))
         if not value.account.endswith(key):
-            raise ValueError("RealAccount name {} inconsistent with key {}".format(
+            raise ValueError("RealAccount name '{}' inconsistent with key: '{}'".format(
                 value.account, key))
         return super().__setitem__(key, value)
 
 
+def iter_children(real_account, leaf_only=False):
+    """Iterate this account node and all its children, depth-first.
 
-
-
-
-    # def __str__(self):
-    #     """Return a human-readable string representation of this RealAccount.
-    #
-    #     Returns:
-    #       A readable string, with the name and the balance.
-    #     """
-    #     return "RealAccount({}){}".format(self.account,
-    #                                       dict.__str__(self))
-
-    # def __iter__(self):
-    #     # Disable implicit iteration for now.
-    #     raise NotImplementedError
-
-
-
-
+    Args:
+      real_account: An instance of RealAccount.
+      leaf_only: A boolean flag, true if we should yield only leaves.
+    Yields:
+      Instances of RealAccount, beginning with this account. The order is
+      undetermined.
+    """
+    if leaf_only:
+        if len(real_account) == 0:
+            yield real_account
+        else:
+            for key, real_child in sorted(real_account.items()):
+                for real_subchild in iter_children(real_child, leaf_only):
+                    yield real_subchild
+    else:
+        yield real_account
+        for key, real_child in sorted(real_account.items()):
+            for real_subchild in iter_children(real_child):
+                yield real_subchild
 
 
 def get(real_account, account_name, default=None):
@@ -136,56 +134,6 @@ def get(real_account, account_name, default=None):
             return default
         real_account = real_child
     return real_account
-
-# FIXME: Do I really need this? I don't think we do, maybe remove.
-def contains(real_account, account_name):
-    """True if the given account node contains the subaccount name.
-
-    Args:
-      account_name: A string, the name of a direct or indirect subaccount of
-        this node.
-    Returns:
-      A boolean, true the name is a child of this node.
-    """
-    return get(real_account, account_name) is not None
-
-
-# def get(real_account, account, default=None):
-#     """Fetch the subaccount name from the real_account node.
-#
-#     Args:
-#       real_account: An instance of RealAccount, the parent node to look for
-#         children of.
-#       account: A string, the name of a possibly indirect child leaf
-#         found down the tree of 'real_account' nodes.
-#       default: The default value that should be returned if the child
-#         subaccount is not found.
-#     Returns:
-#       A RealAccount instance for the child, or the default value, if the child
-#       is not found.
-#     """
-#     if not isinstance(account, str):
-#         raise ValueError
-#     components = account.split(account.sep, 1)
-#     if len(components) == 2:
-#         child_name, rest_name = components
-#     else:
-#         child_name, rest_name = components[0], None
-#     if not child_name:
-#         return default
-#
-#     real_child = real_account.get(child_name, default)
-#     if real_child is default:
-#         return default
-#
-#     if rest_name:
-#         return get(real_child, rest_name, default)
-#     else:
-#         return real_child
-
-
-
-
 
 
 def get_or_create(real_account, account_name):
@@ -214,33 +162,19 @@ def get_or_create(real_account, account_name):
     return real_account
 
 
+def contains(real_account, account_name):
+    """True if the given account node contains the subaccount name.
 
-
-
-
-
-
-
-
-# FIXME: make this work
-def values_recursively(self):
-    """Iterate this account node and all its children, depth-first.
-
-    Yields:
-      Instances of RealAccount, beginning with this account. The order is
-      undetermined.
+    Args:
+      account_name: A string, the name of a direct or indirect subaccount of
+        this node.
+    Returns:
+      A boolean, true the name is a child of this node.
     """
-    yield self
-    for child in self.children.values():
-        for subchild in child.values_recursively():
-            yield subchild
+    return get(real_account, account_name) is not None
 
 
-
-
-# FIXME: Can you remove 'min_accounts' and move that to a second step.
-# (This is only called from views, and only for root accounts. Do it, simplify.)
-def realize(entries):
+def realize(entries, min_accounts=None):
     """Group entries by account, into a "tree" of realized accounts. RealAccount's
     are essentially containers for lists of postings and the final balance of
     each account, and may be non-leaf accounts (used strictly for organizing
@@ -251,142 +185,126 @@ def realize(entries):
     Posting legs that belong to the account. Here's a simple diagram that
     summarizes this seemingly complex, but rather simple data structure:
 
-       +-------------+         +------+
-       | RealAccount |---------| Open |
-       +-------------+         +------+
-                                   |
-                                   v
-                              +---------+     +-------------+
-                              | Posting |---->| Transaction |
-                              +---------+     +-------------+
-                                   |                         \
-                                   |                       +---------+
-                                   |                       | Posting |
-                                   v                       +---------+
-                                +-----+
-                                | Pad |
-                                +-----+
-                                   |
-                                   v
-                              +---------+
-                              | Balance |
-                              +---------+
-                                   |
-                                   v
-                               +-------+
-                               | Close |
-                               +-------+
-                                   |
-                                   .
+       +-------------+ postings  +------+
+       | RealAccount |---------->| Open |
+       +-------------+           +------+
+                                     |
+                                     v
+                                +---------+     +-------------+
+                                | Posting |---->| Transaction |
+                                +---------+     +-------------+
+                                     |                         \
+                                     |                       +---------+
+                                     |                       | Posting |
+                                     v                       +---------+
+                                  +-----+
+                                  | Pad |
+                                  +-----+
+                                     |
+                                     v
+                                +---------+
+                                | Balance |
+                                +---------+
+                                     |
+                                     v
+                                 +-------+
+                                 | Close |
+                                 +-------+
+                                     |
+                                     .
 
     Args:
-      entries: A list of directive instances.
+      entries: A list of directives.
     Returns:
       The root RealAccount instance.
     """
+    # Create lists of the entries by account.
+    postings_map = group_by_account(entries)
 
-    # FIXME: Simplify this here by creating RealAccount from a defaultdict and
-    # set the names in a second stage.
+    # Create a RealAccount tree and compute the balance for each.
+    real_root = RealAccount('')
+    for account_name, postings in postings_map.items():
+        real_account = get_or_create(real_root, account_name)
+        real_account.postings = postings
+        real_account.balance = compute_postings_balance(postings)
 
-    real_dict = {}
+    # Ensure a minimum set of accounts that should exist. This is typically
+    # called with an instance of AccountTypes to make sure that those exist.
+    if min_accounts:
+        for account_name in min_accounts:
+            get_or_create(real_root, account_name)
+
+    return real_account
+
+
+def group_by_account(entries):
+    """Create lists of postings and balances by account.
+
+    This routine aggregates postings and entries grouping them by account name.
+    The resulting lists contain postings in-lieu of Transaction directives, but
+    the other directives are stored as entries. This yields a list of postings
+    or other entries by account. All references to accounts are taken into
+    account.
+
+    Args:
+      entries: A list of directives.
+    Returns:
+       A mapping of account name to list of postings, sorted in the same order
+       as the entries.
+    """
+    postings_map = collections.defaultdict(list)
     for entry in entries:
 
         if isinstance(entry, Transaction):
-            # Update the balance inventory for each of the postings' accounts.
+            # Insert an entry for each of the postings.
             for posting in entry.postings:
-                real_account = append_entry_to_real_account(real_dict,
-                                                            posting.account, posting)
-                real_account.balance.add_position(posting.position, allow_negative=True)
+                postings_map[posting.account].append(posting)
 
         elif isinstance(entry, (Open, Close, Balance, Note, Document)):
             # Append some other entries in the realized list.
-            append_entry_to_real_account(real_dict, entry.account, entry)
+            postings_map[entry.account].append(entry)
 
         elif isinstance(entry, Pad):
             # Insert the pad entry in both realized accounts.
-            append_entry_to_real_account(real_dict, entry.account, entry)
-            append_entry_to_real_account(real_dict, entry.account_pad, entry)
+            postings_map[entry.account].append(entry)
+            postings_map[entry.account_pad].append(entry)
 
-    return create_real_accounts_tree(real_dict)
-
-
-def ensure_min_accounts(real_account, min_accounts):
-    """Ensure that the given accounts are added to the given realization.
-
-    Args:
-      real_account: An instance of RealAccount, the root account.
-      min_accounts: An list of child account names to ensure exist as child
-        of this account.
-    Returns:
-      The real_account instance is returned modified.
-    """
-    # Ensure the minimal list of accounts has been created.
-    for account_name in min_accounts:
-        if account_name not in real_account:
-            real_account.add(RealAccount(account_name))
-    return real_account
+    return postings_map
 
 
-# FIXME: You can remove this method, use a defaultdict(account_name -> postings-list)
-# in the caller and get rid of this call.
-# Compute the balances in a second step.
-def append_entry_to_real_account(real_dict, account_name, entry):
-    """Append an account's posting to its corresponding account in the real_dict
-    dictionary. The relevance of this method is that it creates RealAccount
-    instances on-demand.
+def compute_postings_balance(postings):
+    """Compute the balance of a list of Postings's positions.
 
     Args:
-      real_dict: A dictionary of full account name to RealAccount instance.
-      account_name: A string, the account name to associate the entry to.
+      postings: A list of Posting instances and other directives (which are
+        skipped).
     Returns:
-      The RealAccount instance that this entry was associated with.
+      An Inventory.
     """
-    # Create the account, if not already there.
-    try:
-        real_account = real_dict[account_name]
-    except KeyError:
-        real_account = RealAccount(account_name)
-        real_dict[account_name] = real_account
-
-    # If specified, add the new entry to the list of postings.
-    assert entry is not None
-    real_account.postings.append(entry)
-
-    return real_account
+    balance = inventory.Inventory()
+    for posting in postings:
+        if isinstance(posting, data.Posting):
+            balance.add_position(posting.position, allow_negative=True)
+    return balance
 
 
-def create_real_accounts_tree(real_dict):
-    """Create a full tree of realized accounts from leaf nodes.
 
-    Args:
-      real_dict: a dict of of name to RealAccount instances.
-    Returns:
-      A RealAccount instance, the root node that contains the full tree
-      of RealAccount instances implied by the nodes given as input.
-    """
-    assert isinstance(real_dict, dict)
-    full_dict = real_dict.copy()
 
-    # Create root account (in case the real_dict is empty).
-    root_account = RealAccount('')
-    full_dict[''] = root_account
 
-    for real_account in real_dict.values():
-        while True:
-            parent_name = account_name_parent(real_account.fullname)
-            if parent_name is None:
-                break
-            try:
-                parent_account = full_dict[parent_name]
-            except KeyError:
-                parent_account = RealAccount(parent_name)
-                full_dict[parent_name] = parent_account
 
-            parent_account.add(real_account)
-            real_account = parent_account
 
-    # Return the root account node.
-    return root_account
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def filter_tree(real_account, predicate):
