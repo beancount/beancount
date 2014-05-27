@@ -93,6 +93,41 @@ class RealAccount(dict):
                 value.account, key))
         return super().__setitem__(key, value)
 
+    def copy(self):
+        """Override dict.copy() to clone a RealAccount.
+
+        This is only necessary to correctly implement the copy method.
+        Otherwise, calling .copy() on a RealAccount instance invokes the base
+        class' method, which return just a dict.
+
+        Returns:
+          A cloned instance of RealAccount, with all members shallow-copied.
+        """
+        return copy.copy(self)
+
+    def __eq__(self, other):
+        """Equality predicate. All attributes are compared.
+
+        Args:
+          other: Another instance of RealAccount.
+        Returns:
+          A boolean, True if the two real accounts are equal.
+        """
+        return (dict.__eq__(self, other) and
+                self.account == other.account and
+                self.balance == other.balance and
+                self.postings == other.postings)
+
+    def __ne__(self, other):
+        """Not-equality predicate. See __eq__.
+
+        Args:
+          other: Another instance of RealAccount.
+        Returns:
+          A boolean, True if the two real accounts are not equal.
+        """
+        return not self.__eq__(other)
+
 
 def iter_children(real_account, leaf_only=False):
     """Iterate this account node and all its children, depth-first.
@@ -349,34 +384,8 @@ def get_postings(real_account):
 
 
 
-# FIXME: Integrate this code with acctree and the rest of the render code.
-def dump_tree_balances(real_account, foutput=None):
-    """Dump a simple tree of the account balances at cost, for debugging."""
 
-    if foutput is None:
-        foutput = sys.stdout
 
-    lines = list(tree_utils.render(
-        real_account,
-        lambda ra: ra.fullname.split(account.sep)[-1],
-        lambda ra: sorted(ra.get_children(), key=lambda x: x.fullname)))
-    if not lines:
-        return
-    width = max(len(line[0] + line[2]) for line in lines)
-
-    for line_first, line_next, account_name, real_account in lines:
-        last_entry = real_account.postings[-1] if real_account.postings else None
-        balance = getattr(real_account, 'balance', None)
-        if not balance.is_empty():
-            amounts = balance.get_cost().get_amounts()
-            positions = ['{0.number:12,.2f} {0.currency}'.format(amount)
-                         for amount in sorted(amounts, key=amount_sortkey)]
-        else:
-            positions = ['']
-
-        for position, line in zip(positions, chain((line_first + account_name,),
-                                                   repeat(line_next))):
-            foutput.write('{:{width}}   {:16}\n'.format(line, position, width=width))
 
 
 def compare_realizations(real_accounts1, real_accounts2):
@@ -475,6 +484,51 @@ def iterate_with_balance(postings_or_entries):
                 balance.add_position(date_posting.position, True)
         yield date_entry, date_postings, change, balance
     date_entries.clear()
+
+
+
+
+
+# FIXME: Integrate this code with acctree and the rest of the render code.
+def dump_tree_balances(real_account, foutput=None):
+    """Dump a simple tree of the account balances at cost, for debugging."""
+
+    if foutput is None:
+        foutput = sys.stdout
+
+    lines = list(tree_utils.render(
+        real_account,
+        lambda ra: ra.fullname.split(account.sep)[-1],
+        lambda ra: sorted(ra.get_children(), key=lambda x: x.fullname)))
+    if not lines:
+        return
+    width = max(len(line[0] + line[2]) for line in lines)
+
+    for line_first, line_next, account_name, real_account in lines:
+        last_entry = real_account.postings[-1] if real_account.postings else None
+        balance = getattr(real_account, 'balance', None)
+        if not balance.is_empty():
+            amounts = balance.get_cost().get_amounts()
+            positions = ['{0.number:12,.2f} {0.currency}'.format(amount)
+                         for amount in sorted(amounts, key=amount_sortkey)]
+        else:
+            positions = ['']
+
+        for position, line in zip(positions, chain((line_first + account_name,),
+                                                   repeat(line_next))):
+            foutput.write('{:{width}}   {:16}\n'.format(line, position, width=width))
+
+
+# Test:
+    # def test_dump_tree_balances(self):
+    #     real_root = RealAccount('')
+    #     realization.get_or_create(real_root, 'Assets:US:Bank:Checking')
+    #     realization.get_or_create(real_root, 'Liabilities:US:CreditCard')
+
+    #     realization.dump_tree_balances(real_root)
+
+
+
 
 
 # FIXME: TODO, implement these properly.

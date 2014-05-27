@@ -51,6 +51,34 @@ class TestRealAccount(unittest.TestCase):
         self.assertTrue(re.search('Bank', ra_str))
         self.assertTrue(re.search('Checking', ra_str))
 
+    def test_equality(self):
+        ra1 = RealAccount('Assets:US:Bank:Checking')
+        ra1.balance.add(amount.Amount('100', 'USD'))
+        ra1.postings.extend(['a', 'b'])
+
+        ra2 = RealAccount('Assets:US:Bank:Checking')
+        ra2.balance.add(amount.Amount('100', 'USD'))
+        ra2.postings.extend(['a', 'b'])
+
+        self.assertEqual(ra1, ra2)
+
+        saved_balance = ra2.balance
+        ra2.balance.add(amount.Amount('0.01', 'USD'))
+        self.assertNotEqual(ra1, ra2)
+        ra2.balance = saved_balance
+
+        ra2.postings.append('c')
+        self.assertNotEqual(ra1, ra2)
+        ra2.postings.pop(-1)
+
+        saved_account = ra2.account
+        ra2.account += ':First'
+        self.assertNotEqual(ra1, ra2)
+        ra2.account = saved_account
+
+        # FIXME: Test postings equality; should not take into account parent
+        # links!
+
     def test_getitem_setitem(self):
         ra = create_simple_account()
         self.assertTrue(isinstance(ra['Assets'], RealAccount))
@@ -309,18 +337,6 @@ class TestRealization(unittest.TestCase):
         2014-01-01 close Liabilities:CreditCard
         """
         real_account = realization.realize(entries)
-        self.assertEqual(
-            {'Assets': {
-                'Cash': {}},
-             'Equity': {
-                 'OpeningBalances': {}},
-             'Expenses': {
-                 'Movie': {},
-                 'Restaurant': {}},
-             'Liabilities': {
-                 'CreditCard': {}}},
-            real_account)
-
         ra_movie = realization.get(real_account, 'Expenses:Movie')
         self.assertEqual('Expenses:Movie', ra_movie.account)
         expected_balance = inventory.Inventory()
@@ -474,12 +490,15 @@ class TestRealOther(unittest.TestCase):
                 self.assertEqual(D(exp_number), entpost.position.number)
 
 
+    def test_compare_realizations(self):
+        # ra1 = RealAccount('Assets:US:Bank:Checking')
+        # ra2 = RealAccount('Liabilities:US:CreditCard')
 
+        map1 = {'Assets:US:Bank:Checking': inventory.Inventory()}
+        map2 = {'Assets:US:Bank:Checking': inventory.Inventory()}
+        map2['Assets:US:Bank:Checking'].add(amount.Amount('0.01', 'USD'))
+        self.assertNotEqual(map1, map2)
 
-
-
-#     def test_dump_tree_balances(self):
-#         pass
 
 #     def test_compare_realizations(self):
 #         pass

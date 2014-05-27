@@ -16,6 +16,14 @@ beancount: TODO
   - Implement account.split() and perhaps remove references to
     split(account.sep) everywhere.
 
+  - Tree rendering: move
+      beancount.core.realization.dump_tree_balances
+      beancount.utils.tree_utils
+      beancount.web.acctree
+    To beancount.reports.tree_table and write tests for them.
+
+
+
   - Complete full unittests coverage (as per find-missing-tests.py).
     Remaining (to be processed in this order):
 
@@ -190,23 +198,12 @@ beancount: TODO
 
 * Current / Misc / To Be Classified
 
+  - (reports) Implement account rendering ordering properly.
+
   - Check out bitbucket CGI interface w.r.t. linking to source code, is the
     newer hg better?  We should be able to link to specific lines in versions.
 
-  - (precision) FIXME: The better way to render numbers at the end would be to
-    let the user specify a desired rendering precision for each currency. Deal
-    with this throughout better.
 
-       "Hmm, that's right, I should probably set a maximum precision for rendering
-       numbers which require more digits than the default of 2. This is an
-       interesting one: I need to do something a bit more thorough about precision; 2
-       is not appropriate for everything either. I need to figure out a way to let a
-       user specify a desired rendering precision for each currency...
-       (probably via some options, unfortunately). In the meantime, I've made it so
-       that the max number of digits rendered is 5.
-
-       There's also the issue of setting the max digits during arithmetic operations,
-       which should also not be 28. I'll deal with that later."
 
 
   - (filter) Replace bean-holdings by "bean-query holdings", where "holdings"
@@ -541,6 +538,32 @@ beancount: TODO
 
   - Implement beancount.plugins.tag_pending as a general feature of links...
     this ought to be built-in by default, this is a great idea.
+
+
+** Precision
+
+  - (precision) FIXME: The better way to render numbers at the end would be to
+    let the user specify a desired rendering precision for each currency. Deal
+    with this throughout better.
+
+       "Hmm, that's right, I should probably set a maximum precision for rendering
+       numbers which require more digits than the default of 2. This is an
+       interesting one: I need to do something a bit more thorough about precision; 2
+       is not appropriate for everything either. I need to figure out a way to let a
+       user specify a desired rendering precision for each currency...
+       (probably via some options, unfortunately). In the meantime, I've made it so
+       that the max number of digits rendered is 5.
+
+       There's also the issue of setting the max digits during arithmetic operations,
+       which should also not be 28. I'll deal with that later."
+
+  - Automatically detect precision of each currency based on usage in file:
+
+      (Idea from Daniel Clemente): "You could use auto-detection: for each
+      currency, use the maximum number of decimals that the input file used. E.g.
+      if user writes 351.64 PLN, 151.1 PLN, 155 PLN, then use 2 decimals.
+      Alternatively, use "the most common" number of decimals. If 90% transactions
+      have 3 decimals, 5% have 4, 5% have 0, use 3."
 
 
 ** Padding documentation from email
