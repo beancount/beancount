@@ -489,22 +489,44 @@ class TestRealOther(unittest.TestCase):
             if exp_number:
                 self.assertEqual(D(exp_number), entpost.position.number)
 
-
     def test_compare_realizations(self):
-        # ra1 = RealAccount('Assets:US:Bank:Checking')
-        # ra2 = RealAccount('Liabilities:US:CreditCard')
-
+        # Check that value comparison uses our balance comparison properly.
         map1 = {'Assets:US:Bank:Checking': inventory.Inventory()}
         map2 = {'Assets:US:Bank:Checking': inventory.Inventory()}
         map2['Assets:US:Bank:Checking'].add(amount.Amount('0.01', 'USD'))
         self.assertNotEqual(map1, map2)
 
+        # Now check this with accounts.
+        root1 = RealAccount('')
+        ra1 = realization.get_or_create(root1, 'Assets:US:Bank:Checking')
+        ra1.balance.add(amount.Amount('0.01', 'USD'))
+        root2 = RealAccount('')
+        ra2 = realization.get_or_create(root2, 'Assets:US:Bank:Checking')
+        ra2.balance.add(amount.Amount('0.01', 'USD'))
+        self.assertEqual(ra1, ra2)
 
-#     def test_compare_realizations(self):
-#         pass
+        root3 = copy.deepcopy(root2)
+        ra3 = realization.get(root3, 'Assets:US:Bank:Checking')
+        ra3.account = 'Liabilities:US:CreditCard'
+        self.assertNotEqual(root1, root3)
 
-#     def test_iterate_with_balance(self):
-#         pass
+        root3 = copy.deepcopy(root2)
+        ra3 = realization.get(root3, 'Assets:US:Bank:Checking')
+        ra3.balance.add(amount.Amount('0.01', 'CAD'))
+        self.assertNotEqual(root1, root3)
+
+        root3 = copy.deepcopy(root2)
+        ra3 = realization.get(root3, 'Assets:US:Bank:Checking')
+        ra3.postings.append('posting')
+        self.assertNotEqual(root1, root3)
+
+        root3 = copy.deepcopy(root2)
+        ra3 = realization.get(root3, 'Assets:US:Bank:Checking')
+        ra3['Sub'] = RealAccount('Assets:US:Bank:Checking:Sub')
+        self.assertNotEqual(root1, root3)
+
+    def test_iterate_with_balance(self):
+        pass
 
 
 

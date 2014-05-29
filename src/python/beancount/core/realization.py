@@ -236,11 +236,9 @@ def realize(entries, min_accounts=None):
                                 | Posting |---->| Transaction |
                                 +---------+     +-------------+
                                      |                         \
-                                     |                       +---------+
-                                     |                       | Posting |
                                      v                       +---------+
-                                  +-----+
-                                  | Pad |
+                                  +-----+                    | Posting |
+                                  | Pad |                    +---------+
                                   +-----+
                                      |
                                      v
@@ -388,18 +386,9 @@ def get_postings(real_account):
 
 
 
-def compare_realizations(real_accounts1, real_accounts2):
-    """Compare two realizations; return True if the balances are equal
-    for all accounts."""
-    real1 = copy.copy(real_accounts1)
-    real2 = copy.copy(real_accounts2)
-    for account_name, real_account1 in real1.items():
-        real_account2 = real2.pop(account_name)
-        balance1 = real_account1.balance
-        balance2 = real_account2.balance
-        if balance1 != balance2:
-            return False
-    return True
+
+
+
 
 
 def iterate_with_balance(postings_or_entries):
