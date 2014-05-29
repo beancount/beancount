@@ -198,6 +198,10 @@ beancount: TODO
 
 * Current / Misc / To Be Classified
 
+  - Write a script that will automatically fetch the dates I held various
+    positions at cost for throughout the history and a list of weekly dates to
+    fetch rates for.
+
   - (reports) Implement account rendering ordering properly.
 
   - Check out bitbucket CGI interface w.r.t. linking to source code, is the
