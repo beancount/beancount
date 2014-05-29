@@ -12,7 +12,7 @@ from beancount.core.amount import to_decimal as D
 from beancount.core.realization import RealAccount
 from beancount.core import realization
 from beancount.core import data
-from beancount.core import inventory
+from beancount.core.inventory import Inventory
 from beancount.core import amount
 from beancount.core import account_types
 from beancount.parser import documents
@@ -263,7 +263,7 @@ class TestRealization(unittest.TestCase):
         postings = entries[:-1] + entries[-1].postings
         balance = realization.compute_postings_balance(postings)
 
-        expected_balance = inventory.Inventory()
+        expected_balance = Inventory()
         expected_balance.add(amount.Amount('333.97', 'USD'))
         expected_balance.add(amount.Amount('17.23', 'CAD'))
         expected_balance.add(amount.Amount('32', 'GOOG'),
@@ -339,7 +339,7 @@ class TestRealization(unittest.TestCase):
         real_account = realization.realize(entries)
         ra_movie = realization.get(real_account, 'Expenses:Movie')
         self.assertEqual('Expenses:Movie', ra_movie.account)
-        expected_balance = inventory.Inventory()
+        expected_balance = Inventory()
         expected_balance.add(amount.Amount('20', 'CAD'))
         self.assertEqual(expected_balance, ra_movie.balance)
 
@@ -491,8 +491,8 @@ class TestRealOther(unittest.TestCase):
 
     def test_compare_realizations(self):
         # Check that value comparison uses our balance comparison properly.
-        map1 = {'Assets:US:Bank:Checking': inventory.Inventory()}
-        map2 = {'Assets:US:Bank:Checking': inventory.Inventory()}
+        map1 = {'Assets:US:Bank:Checking': Inventory()}
+        map2 = {'Assets:US:Bank:Checking': Inventory()}
         map2['Assets:US:Bank:Checking'].add(amount.Amount('0.01', 'USD'))
         self.assertNotEqual(map1, map2)
 
@@ -525,40 +525,69 @@ class TestRealOther(unittest.TestCase):
         ra3['Sub'] = RealAccount('Assets:US:Bank:Checking:Sub')
         self.assertNotEqual(root1, root3)
 
-    def test_iterate_with_balance(self):
-        pass
+    @loaddoc
+    def test_iterate_with_balance(self, entries, _, __):
+        """
+        2012-01-01 open Assets:Bank:Checking
+        2012-01-01 open Expenses:Restaurant
 
+        2012-01-15 pad Assets:Bank:Checking Equity:OpeningBalances
 
+        2012-03-01 * "With a single entry"
+          Expenses:Restaurant     11.11 CAD
+          Assets:Bank:Checking
 
+        2012-03-02 * "With two entries"
+          Expenses:Restaurant     20.01 CAD
+          Expenses:Restaurant     20.02 CAD
+          Assets:Bank:Checking
 
-# do_trace = False
+        2012-03-02 note Expenses:Restaurant  "This was good"
 
-# def realizedoc(fun):
-#     """Decorator that parses, pads and realizes the function's docstring as an
-#     argument."""
-#     @functools.wraps(fun)
-#     def newfun(self):
-#         entries, errors, options_map = parser.parse_string(textwrap.dedent(fun.__doc__))
-#         real_accounts = realization.realize(entries)
-#         if do_trace and errors:
-#             trace_errors(real_accounts, errors)
-#         return fun(self, entries, real_accounts, errors)
-#     return newfun
+        2012-04-01 balance Expenses:Restaurant  51.14 CAD
+        """
+        root_account = realization.realize(entries)
+        real_account = realization.get(root_account, 'Expenses:Restaurant')
 
+        def simplify_rtuple(rtuple):
+            return [(type(entry), len(postings), str(change), str(balance))
+                    for entry, postings, change, balance in rtuple]
 
+        # Surprinsingly enough, this covers all the legal cases that occur in
+        # practice (checked for full coverage manually if you like).
+        rtuple = realization.iterate_with_balance(real_account.postings[:-2])
+        self.assertEqual([
+            (data.Open        , 0 , 'Inventory()'          , 'Inventory()')          ,
+            (data.Transaction , 1 , 'Inventory(11.11 CAD)' , 'Inventory(11.11 CAD)') ,
+            (data.Transaction , 2 , 'Inventory(40.03 CAD)' , 'Inventory(51.14 CAD)') ,
+            ], simplify_rtuple(rtuple))
 
+        # Test it again with the final balance entry.
+        rtuple = realization.iterate_with_balance(real_account.postings)
+        self.assertEqual([
+            (data.Open        , 0 , 'Inventory()'          , 'Inventory()')          ,
+            (data.Transaction , 1 , 'Inventory(11.11 CAD)' , 'Inventory(11.11 CAD)') ,
+            (data.Transaction , 2 , 'Inventory(40.03 CAD)' , 'Inventory(51.14 CAD)') ,
+            (data.Note        , 0 , 'Inventory()'          , 'Inventory(51.14 CAD)') ,
+            (data.Balance     , 0 , 'Inventory()'          , 'Inventory(51.14 CAD)') ,
+            ], simplify_rtuple(rtuple))
 
+        # Test it out with valid input but with entries for the same transaction
+        # separated by another entry. Swap the balance entry with the last
+        # posting entry to test this.
+        postings = list(real_account.postings)
+        postings[-3], postings[-2] = postings[-2], postings[-3]
+        rtuple = realization.iterate_with_balance(postings)
+        self.assertEqual([
+            (data.Open        , 0 , 'Inventory()'          , 'Inventory()')          ,
+            (data.Transaction , 1 , 'Inventory(11.11 CAD)' , 'Inventory(11.11 CAD)') ,
+            (data.Transaction , 2 , 'Inventory(40.03 CAD)' , 'Inventory(51.14 CAD)') ,
+            (data.Note        , 0 , 'Inventory()'          , 'Inventory(51.14 CAD)') ,
+            (data.Balance     , 0 , 'Inventory()'          , 'Inventory(51.14 CAD)') ,
+            ], simplify_rtuple(rtuple))
 
-
-
-
-
-
-
-# Loader tests:
-
-# FIXME: please DO test the realization of a transaction that has multiple legs
-# on the same account!
-
-
-__incomplete__ = True
+        # Go one step further and test it out with invalid date ordering.
+        postings = list(real_account.postings)
+        postings[-1], postings[-2] = postings[-2], postings[-1]
+        with self.assertRaises(AssertionError):
+            list(realization.iterate_with_balance(postings))

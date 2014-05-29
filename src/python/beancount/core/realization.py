@@ -374,44 +374,45 @@ def get_postings(real_account):
     return accumulator
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def iterate_with_balance(postings_or_entries):
-    """Iterate over the entries accumulating the balance.
-    For each entry, it yields
+    """Iterate over the entries, accumulating the running balance.
 
-      (entry, change, balance)
+    For each entry, this yields tuples of the form:
 
-    'entry' is the entry for this line. If the list contained Posting instance,
-    this yields the corresponding Transaction object.
+      (entry, postings, change, balance)
 
-    'change' is an Inventory object that reflects the change due to this entry
-    (this may be multiple positions in the case that a single transaction has
-    multiple legs).
+    entry: This is the directive for this line. If the list contained Posting
+      instance, this yields the corresponding Transaction object.
+    postings: A list of postings on this entry that affect the balance. Only the
+      postings encountered in the input list are included; only those affect the
+      balance. If 'entry' is not a Transaction directive, this should always be
+      an empty list. We preserve the original ordering of the postings as they
+      appear in the input list.
+    change: An Inventory object that reflects the total change due to the
+      postings from this entry that appear in the list. For example, if a
+      Transaction has three postings and two are in the input list, the sum of
+      the two postings will be in the 'change' Inventory object. However, the
+      position for the transactions' third posting--the one not included in the
+      input list--will not be in this inventory.
+    balance: An Inventory object that reflects the balance *after* adding the
+      'change' inventory due to this entry's transaction. The 'balance' yielded
+      is never None, even for entries that do not affect the balance, that is,
+      with an empty 'change' inventory. It's up to the caller, the one rendering
+      the entry, to decide whether to render this entry's change for a
+      particular entry type.
 
-    The 'balance' yielded is never None; it's up to the one displaying the entry
-    to decide whether to render for a particular type.
+    Note that if the input list of postings_or_entries is not in sorted date
+    order, two postings for the same entry appearing twice with a different date
+    in between will cause the entry appear twice. This is correct behavior, and
+    it is expected that in practice this should never happen anyway, because the
+    list of postings or entries should always be sorted. This method attempts to
+    detect this and raises an assertion if this is seen.
 
-    Also, multiple postings for the same transaction are de-duped
-    and when a Posting is encountered, the parent Transaction entry is yielded,
-    with the balance updated for just the postings that were in the list.
-    (We attempt to preserve the original ordering of the postings as much as
-    possible.)
+    Args:
+      postings_or_entries: A list of postings or directive instances.
+        Postings affect the balance; other entries do not.
+    Yields:
+      Tuples of (entry, postings, change, balance) as described above.
     """
 
     # The running balance.
@@ -424,16 +425,19 @@ def iterate_with_balance(postings_or_entries):
     date_entries = []
 
     first = lambda pair: pair[0]
-    for entry in postings_or_entries:
+    for posting_or_entry in postings_or_entries:
 
         # Get the posting if we are dealing with one.
-        if isinstance(entry, Posting):
-            posting = entry
+        if isinstance(posting_or_entry, Posting):
+            posting = posting_or_entry
             entry = posting.entry
         else:
             posting = None
+            entry = posting_or_entry
 
         if entry.date != prev_date:
+            assert prev_date is None or entry.date > prev_date, (
+                "Invalid date order for postings: {} > {}".format(prev_date, entry.date))
             prev_date = entry.date
 
             # Flush the dated entries.
@@ -473,6 +477,28 @@ def iterate_with_balance(postings_or_entries):
                 balance.add_position(date_posting.position, True)
         yield date_entry, date_postings, change, balance
     date_entries.clear()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -576,9 +602,6 @@ def reorder_accounts_node_by_date(real_account):
             last_date = date
 
     return last_date
-
-
-
 
 
 # FIXME: This file is being cleaned up. Don't worry about all the FIXMEs [2014-02-26]
