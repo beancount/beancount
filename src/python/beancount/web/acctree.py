@@ -75,7 +75,7 @@ def tree_table(oss, tree, start_node_name=None, header=None, classes=None, leafo
     # Yield with a None for the final line.
     lines.append((None, None, None, TOTALS_LINE))
 
-    for line_first, _, account_name, real_account in lines:
+    for line_first, _, __, real_account in lines:
         # Let the caller fill in the data to be rendered by adding it to a list
         # objects. The caller may return multiple cell values; this will create
         # multiple columns.
