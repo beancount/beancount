@@ -7,6 +7,7 @@ from beancount.core import realization
 from beancount.core import account_types
 from beancount.core import data
 from beancount.core import flags
+from beancount.core import position
 from beancount.ops import prices
 
 
@@ -165,3 +166,51 @@ def aggregate_holdings_list(holdings):
     first = holdings[0]
     return Holding(None, units, first.currency, average_cost, first.cost_currency,
                    total_book_value, total_market_value, average_price, None)
+
+
+def reduce_relative(holdings):
+    """Reduce the absolute data of the given list of holdings to relative data.
+
+    Args:
+      holdings: A list of Holding instances.
+    Returns:
+      A list of holdings instances with the absolute value fields replaced by
+      fractions of total portfolio. The new list of holdings is sorted by
+      currency, and the relative fractions are also relative to that currency.
+    """
+    # Group holdings by value currency.
+    by_currency = collections.defaultdict(list)
+    for holding in holdings:
+        by_currency[holding.cost_currency or holding.currency].append(holding)
+
+    fractional_holdings = []
+    sort_order = lambda x: position.CURRENCY_ORDER.get(x[0],
+                                                       position.NCURRENCIES + len(x[0]))
+    for currency, currency_holdings in sorted(by_currency.items(), key=sort_order):
+        # Compute total market value for that currency.
+        total_book_value = ZERO
+        total_market_value = ZERO
+        for holding in currency_holdings:
+            if holding.cost_currency:
+                assert holding.book_value
+                assert holding.market_value
+            else:
+                assert holding.number
+            total_book_value += holding.book_value or holding.number
+            total_market_value += holding.market_value or holding.number
+
+        # Sort the currency's holdings with decreasing values.
+        currency_holdings.sort(
+            key=lambda holding: holding.market_value or holding.number,
+            reverse=True)
+
+        # Output new holdings with the relevant values replaced.
+        for holding in currency_holdings:
+            fractional_book_value = (holding.book_value or holding.number) / total_market_value
+            fractional_market_value = (holding.market_value or holding.number) / total_market_value
+            fractional_holdings.append(
+                holding._replace(cost_currency=holding.cost_currency or holding.currency,
+                                 book_value=fractional_book_value,
+                                 market_value=fractional_market_value))
+
+    return fractional_holdings

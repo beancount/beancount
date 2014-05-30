@@ -160,3 +160,7 @@ class TestHoldings(unittest.TestCase):
              None, None, None, None),
         ]))
         self.assertEqual(expected_holdings, holdings.aggregate_by_base_quote(test_holdings))
+
+
+# Just missing a test for reduce_relative().
+__incomplete__ = True
