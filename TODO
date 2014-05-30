@@ -2,6 +2,9 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
+  - In bean-holdings, if an output file is selected and no format, automatically
+    guess the output format. You should be able to just say -o output.csv.
+
   - Write tests for holdings.reduce_relative. Move the code for pricing holdings
     at a value currency to holdings.py, maybe these should become a utility
     function in prices actually, that performs this logic.
