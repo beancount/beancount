@@ -169,6 +169,9 @@ beancount: TODO
 
 * Current / Misc / To Be Classified
 
+  - (idea) An interesting constraint would be to add an option not to allow any
+    postings to any account that is not a leaf account.
+
   - (precision) FIXME: The better way to render numbers at the end would be to
     let the user specify a desired rendering precision for each currency. Deal
     with this throughout better.
@@ -184,6 +187,12 @@ beancount: TODO
        There's also the issue of setting the max digits during arithmetic operations,
        which should also not be 28. I'll deal with that later."
 
+
+  - (filter) Idea: For "virtual postings", you could mark certain tags to be
+    excluded by default, to be included only explicitly. e.g. #virtual tag would
+    have to be brought in by selecting it via "tag:virtual". Maybe a different
+    prefix would be used to distinguish them, e.g. #virtual and %virtual,
+    or #virtual and -#virtual; something like that.
 
   - (filter) Replace bean-holdings by "bean-query holdings", where "holdings"
     is just another type of report. All the reports from the view pages should
@@ -794,6 +803,12 @@ Improve this bit:
     language too, this should all be a single file format.
 
 * Filtering
+** Beancount reorg
+
+  - Remove subaccounts for TMobile and employer once we have filtering working
+    out nicely.
+
+
 ** Views
 
   - Replace all views by filtering queries... the root page should still have
