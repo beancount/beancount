@@ -61,7 +61,7 @@ def main():
         'price_number'  : ('price_number', 'Price', '{:,.2f}'.format),
         'book_value'    : ('book_value', 'Book Value', '{:,.2f}'.format),
         'market_value'  : ('market_value', 'Market Value', '{:,.2f}'.format),
-        'market_value%' : ('market_value', 'Market Value', '{:,.1%}'.format),
+        'market_value%' : ('market_value', '% of Portfolio', '{:,.1%}'.format),
     }
 
     if opts.relative:
@@ -81,6 +81,76 @@ def main():
 
     if not opts.aggregated:
         field_spec.insert(0, 'account')
+
+
+    # FIXME: Insert a new row for each operating currency, valuing each of the
+    # commodities in them.
+    opts.value_currency = 'USD'
+
+    # FIXME: Move this to holdings.
+    if opts.value_currency:
+        new_holdings = []
+        for holding in holdings_list:
+            # FIXME: the following logic should be implemented in b.opts.prices.
+            try:
+                # Convert commodities held at a cost that differ from the value
+                # currency.
+                if holding.cost_currency:
+                    if holding.cost_currency != opts.value_currency:
+                        base_quote = (holding.cost_currency, opts.value_currency)
+                        _, price = prices.get_latest_price(price_map, base_quote)
+                        holding = holding._replace(
+                            market_value=holding.market_value * price)
+
+                # Convert commodities not held at cost (usually currencies).
+                elif holding.currency != opts.value_currency:
+                    base_quote = (holding.currency, opts.value_currency)
+                    _, price = prices.get_latest_price(price_map, base_quote)
+                    holding = holding._replace(market_value=holding.number * price)
+
+            except KeyError:
+                # If a rate is not found, simply remove the market value.
+                holding = holding._replace(market_value=None)
+
+            new_holdings.append(holding)
+        holdings_list = new_holdings
+
+    #        def convert_to(price_map, target_currency, units, base_quote):
+    #            """Convert the number of units in base_quote to currency, if possible.
+    #
+    #
+    #            Args:
+    #              FIXME: TODO
+    #
+    #                The 'quote' currency in 'base_quote' may be None, in which case the 'base'
+    #                is attempted to be converted. This is the case for cash, for instance.
+    #
+    #            Returns:
+    #              The converted amount in 'currency' units, or None if it was not possible
+    #              to compute it.
+    #            """
+    #
+    #            base_currency, quote_currency = base_quote
+    #            try:
+    #                # Convert commodities held at a cost whose that differ from the value
+    #                # currency.
+    #                if quote_currency:
+    #                    if quote_currency != target_currency:
+    #                        base_quote = (quote_currency, target_currency)
+    #                        _, price = prices.get_latest_price(price_map, base_quote)
+    #                        return units * price
+    #
+    #                # Convert commodities not held at cost (usually currencies).
+    #                elif base_currency != target_currency:
+    #                    base_quote = (base_currency, target_currency)
+    #                    _, price = prices.get_latest_price(price_map, base_quote)
+    #                    return units * price
+    #
+    #            except KeyError:
+    #                # If a rate is not found, simply remove the market value.
+    #                return None
+
+
 
     # Create the table report.
     table_ = table.create_table(holdings_list, field_spec)

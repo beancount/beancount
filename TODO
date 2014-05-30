@@ -2,17 +2,24 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-  - Write a script to autoamtically align a region's transactions, or an entire
-    file.
+  - Write tests for holdings.reduce_relative. Move the code for pricing holdings
+    at a value currency to holdings.py, maybe these should become a utility
+    function in prices actually, that performs this logic.
+    def beancount.prices.convert_to(currency, number, (base, quote)):
+    -> finish this from holdings.py
 
-  - Write a script to cnovert to Ledger syntax.
+    (You also have to complete ledgerhub's code to correctly extract various
+    prices... many broken extractors there, but that's a different story.)
+
+
+  - Write a script to convert to Ledger syntax.
 
   - Add emacs configuration to highlight beyond 90 in this specific project,
     that does not use the fringe.
   - We really do need a little function that will align a paragraph's
     currencies automatically.
 
-  - Rename/simplify function names in beacnount.core.account (see FIXMEs)
+  - Rename/simplify function names in beancount.core.account (see FIXMEs)
 
   - Complete full unittests coverage (as per find-missing-tests.py).
     Remaining (to be processed in this order):
@@ -165,8 +172,11 @@ beancount: TODO
   - Review usage of @parsedoc vs. @loaddoc, maybe we should be more thorough
     about that and use @loaddoc in more places, as it performs data validation.
 
-
 * Current / Misc / To Be Classified
+
+  - Write a script to autoamtically align a region's transactions, or an entire
+    file.
+
 
   - (idea) An interesting constraint would be to add an option not to allow any
     postings to any account that is not a leaf account.
