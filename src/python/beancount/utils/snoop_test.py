@@ -1,8 +1,8 @@
 import unittest
 import re
 
-from ledgerhub.utils import snoop
-from ledgerhub.utils.snoop import snooper
+from beancount.utils import snoop
+from beancount.utils.snoop import snooper
 
 
 class TestSnoop(unittest.TestCase):
