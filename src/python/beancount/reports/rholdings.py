@@ -58,7 +58,7 @@ def report_holdings_aggregated(currency, entries, options_map):
 
     # Convert holdings to a unified currency.
     if currency:
-        holdings_list = convert_to_unified_currency(price_map, currency, holdings_list)
+        holdings_list = holdings.convert_to_currency(price_map, currency, holdings_list)
 
     field_spec = [
         ('number', "Units", '{:,.2f}'.format),
@@ -95,7 +95,7 @@ def report_holdings_relative(currency, entries, options_map):
 
     # Convert holdings to a unified currency.
     if currency:
-        holdings_list = convert_to_unified_currency(price_map, currency, holdings_list)
+        holdings_list = holdings.convert_to_currency(price_map, currency, holdings_list)
 
     # Reduce the holdings to relative (fractional) values.
     holdings_list = holdings.reduce_relative(holdings_list)

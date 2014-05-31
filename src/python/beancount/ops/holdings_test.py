@@ -193,6 +193,8 @@ class TestHoldings(unittest.TestCase):
             # ------------ cost currency == None
             # currency available in price map
             (None, D('100.00'), 'CAD', D('1.2'), None, D('10'), D('11'), D('12'), None),
+            # currency available in price map, with no values (should be filled in)
+            (None, D('100.00'), 'CAD', D('1.2'), None, None, None, None, None),
             # currency not available in price map
             (None, D('100.00'), 'EUR', D('1.2'), None, D('10'), D('11'), D('12'), None),
             # currency = target currency
@@ -215,6 +217,8 @@ class TestHoldings(unittest.TestCase):
             (None, D('100.00'), None, D('220.0'), 'USD', D('11.0'), D('12.1'), D('13.2'),
              None),
             (None, D('100.00'), 'CAD', D('1.32'), 'USD', D('11.0'), D('12.1'), D('13.2'),
+             None),
+            (None, D('100.00'), 'CAD', D('1.32'), 'USD', D('110.0'), D('110.0'), None,
              None),
             (None, D('100.00'), 'EUR', None, None, None, None, None, None),
             (None, D('100.00'), 'USD', D('1.2'), 'USD', D('10'), D('11'), D('12'), None),

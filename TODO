@@ -553,6 +553,11 @@ beancount: TODO
     this ought to be built-in by default, this is a great idea.
 
 
+  - (prices) When attempting a conversion in holdings, if the rate isn't
+    available directly, you should always attempt to value it indirectly via
+    USD or EUR.
+
+
 ** Padding documentation from email
    CLOCK: [2014-01-19 Sun 14:49]
 

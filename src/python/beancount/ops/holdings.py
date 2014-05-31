@@ -208,6 +208,12 @@ def convert_to_currency(price_map, target_currency, holdings_list):
                 if holding.currency is None:
                     raise ValueError("Invalid currency '{}'".format(holding.currency))
                 base_quote = (holding.currency, target_currency)
+
+                # Fill in with the units if the cost currency is not set.
+                if holding.book_value is None:
+                    holding = holding._replace(book_value=holding.number)
+                if holding.market_value is None:
+                    holding = holding._replace(market_value=holding.number)
             try:
                 # Get the conversion rate and replace the required numerical
                 # fields..
