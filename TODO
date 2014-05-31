@@ -5,19 +5,12 @@ beancount: TODO
   - Port all the code that uses realization to the new interface:
 
       beancount/ops/check_test.py:3:from beancount.core.realization_test import realizedoc
-      beancount/ops/holdings.py:7:from beancount.core import realization
       beancount/ops/pad_test.py:11:from beancount.core.realization_test import realizedoc
       beancount/ops/summarize_test.py:12:from beancount.core.realization import realize, dump_tree_balances
       beancount/ops/summarize_test.py:15:from beancount.core import realization
-      beancount/scripts/check.py:9:from beancount.core import realization
-      beancount/scripts/doctor.py:14:from beancount.core import realization
-      beancount/web/acctree.py:12:from beancount.core import realization
-      beancount/web/journal.py:13:from beancount.core.realization import RealAccount
-      beancount/web/journal.py:14:from beancount.core import realization
-      beancount/web/views.py:7:from beancount.core import realization
       beancount/web/web.py:22:from beancount.core import realization
 
-  - Port beancount.web.acctree to remove the depdendency on tree_utils. Maybe
+  - Port beancount.web.acctree to remove the dependency on tree_utils. Maybe
     it's that time to move this to beancount.reports.tree_table and write tests
     for them.
 
@@ -32,8 +25,9 @@ beancount: TODO
 
   - (Add items from keep)
 
-  - Implement bean-doctor print; also implement a comparison routine for
-    testing summarize and other.
+  - Implement bean-doctor print.
+  - Also implement a comparison routine for testing summarize and other
+    functions more easily!
 
   - bean-ledger: Write a script to convert to Ledger syntax. This should be easy!
 
@@ -49,10 +43,6 @@ beancount: TODO
 
   - Complete full unittests coverage (as per find-missing-tests.py).
     Remaining (to be processed in this order):
-
-       src/python/beancount/core/realization.py               INCOMPLETE
-
-            realization_test.py --> COMPLETE THIS NOW!
 
        src/python/beancount/plugins/forecast.py               INCOMPLETE
 
@@ -82,13 +72,14 @@ beancount: TODO
 
 
   - Check that an account without an Open directive has one that gets
-    automatically inserted for it.
+    automatically inserted for it in addition to the error that gets generated.
 
   - Clean up code: remove all significant codes from __init__.py files, in
     particular beancount.scripts.__init__, move to an util with tests.
 
 
   - web: Render a table of prices, in case there are only a few price points.
+    We should also have a comment for prices.
 
   - Merge Holdings tab into Shareholder's Equity, less tabs, similar report.
     Complete the equity value page with prices.py, render the rates used to that page.
@@ -139,9 +130,6 @@ beancount: TODO
 
       This works okay:
       2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
-
-  - Can you move realization out of core? It really belongs more in ops I think.
-    Or maybe... maybe... it belongs best with views and filtering?
 
   - Make sure all exceptions do NOT end with a period, nor do any of the
     logging.*() calls.

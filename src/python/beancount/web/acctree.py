@@ -116,8 +116,13 @@ def tree_table(oss, tree, start_node_name=None, header=None, classes=None, leafo
 
 def is_account_active(real_account):
     """Return true if the account should be rendered. An inactive account only has
-    an Open directive and nothing else."""
+    an Open directive and nothing else.
 
+    Args:
+      real_account: An instance of RealAccount.
+    Returns:
+      A boolean, true if the account is active, according to the definition above.
+    """
     for entry in real_account.postings:
         if isinstance(entry, Open):
             continue
@@ -125,17 +130,17 @@ def is_account_active(real_account):
     return False
 
 
-def table_of_balances(tree, start_node_name, currencies, classes=None):
+def table_of_balances(real_root, start_node_name, currencies, classes=None):
     """Render a table of balances.
 
     Args:
-      tree: a RealAccount node.
-
+      real_root: a RealAccount node.
+    FIXME: TODO
     """
     header = ['Account'] + currencies + ['Other']
 
     # Pre-calculate which accounts should be rendered.
-    active_accounts = realization.filter(tree, is_account_active)
+    active_accounts = realization.filter(real_root, is_account_active)
     if active_accounts:
         active_set = {real_account.fullname
                       for real_account in active_accounts.values_recursively()}

@@ -6,7 +6,6 @@ import argparse
 import logging
 
 from beancount import load
-from beancount.core import realization
 from beancount.utils import misc_utils
 
 
@@ -20,14 +19,10 @@ def main():
         logging.basicConfig(level=logging.INFO,
                             format='%(levelname)-8s: %(message)s')
 
-    with misc_utils.print_time('total'):
-
-        # Load up the file, print errors.
+    with misc_utils.print_time('load'):
+        # Load up the file, print errors, checking and validation are invoked
+        # automatically.
         entries, errors, _ = load(opts.filename, do_print_errors=True)
-
-        # Realize the entries.
-        with misc_utils.print_time('realize'):
-            real_accounts = realization.realize(entries)
 
 
 if __name__ == '__main__':

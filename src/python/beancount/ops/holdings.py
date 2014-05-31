@@ -68,11 +68,11 @@ def get_final_holdings(entries, included_account_types=None, price_map=None, dat
                           entry.flag != flags.FLAG_UNREALIZED)]
 
     # Realize the accounts into a tree (because we want the positions by-account).
-    real_accounts = realization.realize(simple_entries)
+    root_account = realization.realize(simple_entries)
 
     # For each account, look at the list of positions and build a list.
     holdings = []
-    for real_account in sorted(list(realization.iter_children(real_accounts)),
+    for real_account in sorted(list(realization.iter_children(root_account)),
                                key=lambda ra: ra.account):
 
         if included_account_types:

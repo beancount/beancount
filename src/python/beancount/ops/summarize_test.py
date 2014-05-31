@@ -9,7 +9,7 @@ import datetime
 import textwrap
 import functools
 
-from beancount.core.realization import realize, dump_tree_balances
+from beancount.core import realization
 from beancount.ops.pad import pad
 from beancount.ops.summarize import summarize
 from beancount.core import realization
@@ -36,10 +36,10 @@ def summarizedoc(date, other_account):
             entries, pad_errors = pad(entries)
             assert not pad_errors, pad_errors
 
-            real_accounts = realize(entries)
+            real_accounts = realization.realize(entries)
 
             sum_entries, _ = summarize(entries, date, other_account)
-            sum_real_accounts = realize(sum_entries)
+            sum_real_accounts = realization.realize(sum_entries)
 
             # print('---')
             # for entry in before: print(entry)
@@ -56,9 +56,9 @@ def summarizedoc(date, other_account):
             finally:
                 if result is DO_PRINT:
                     print("REAL")
-                    dump_tree_balances(real_accounts, sys.stdout)
+                    print(realization.dump_balances(real_accounts))
                     print("SUM_REAL")
-                    dump_tree_balances(sum_real_accounts, sys.stdout)
+                    print(realization.dump_balances(sum_real_accounts))
 
         return newfun
     return summarizedoc_deco
@@ -165,7 +165,7 @@ class TestSummarization(unittest.TestCase):
 #                                          is_income_statement_account, TRANSFER_BALANCES)
 #
 #         sum_entries, _ = summarize(tran_entries, report_date, OPENING_BALANCES)
-#         real_accounts = realize(sum_entries)
+#         real_accounts = realization.realize(sum_entries)
 #
 #         self.assertEqual(real_cost_as_dict(real_accounts),
 #                          {'Assets:Checking': 'Inventory(1920.00 USD)',
@@ -191,7 +191,7 @@ class TestSummarization(unittest.TestCase):
 #             Income:Job            -1000 USD
 #             Assets:Checking        1000 USD
 #         """
-#         real_accounts = realize(entries)
+#         real_accounts = realization.realize(entries)
 #         self.assertEqual(real_cost_as_dict(real_accounts),
 #                          {'Assets:Checking': 'Inventory(2000.00 USD)',
 #                           'Income:Job': 'Inventory(-2000.00 USD)'})
@@ -199,7 +199,7 @@ class TestSummarization(unittest.TestCase):
 #         tran_entries = transfer_balances(entries, date(2012, 6, 1),
 #                                          is_income_statement_account, TRANSFER_BALANCES)
 #
-#         real_accounts = realize(tran_entries)
+#         real_accounts = realization.realize(tran_entries)
 #         self.assertEqual(real_cost_as_dict(real_accounts),
 #                          {'Assets:Checking': 'Inventory(2000.00 USD)',
 #                           'Income:Job': 'Inventory()',

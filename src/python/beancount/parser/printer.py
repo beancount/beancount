@@ -47,7 +47,7 @@ class EntryPrinter:
         getattr(cls, obj.__class__.__name__)(cls, obj, oss)
         return oss.getvalue()
 
-    def Transaction(_, entry, oss):
+    def Transaction(cls, entry, oss):
         # Compute the string for the payee and narration line.
         strings = []
         if entry.payee:
@@ -66,7 +66,7 @@ class EntryPrinter:
         oss.write('{e.date} {e.flag} {}\n'.format(' '.join(strings), e=entry))
 
         for posting in entry.postings:
-            self.Posting(posting, oss)
+            cls.Posting(cls, posting, oss)
 
     def Posting(_, posting, oss):
         flag = '{} '.format(posting.flag) if posting.flag else ''

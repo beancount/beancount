@@ -610,8 +610,6 @@ class TestRealOther(TestCase):
         oss = io.StringIO()
         lines = realization.dump(real_account)
         self.assertEqual([
-            ('                       ',
-             '|                      '),
             ('|-- Assets             ',
              '|   |                  '),
             ('|   |-- Bank1          ',

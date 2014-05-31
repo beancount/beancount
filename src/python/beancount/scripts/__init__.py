@@ -3,6 +3,7 @@
 import textwrap
 import unittest
 import io
+import re
 import tempfile
 import sys
 import contextlib
@@ -92,6 +93,11 @@ class TestCase(unittest.TestCase):
         clean_text2 = textwrap.dedent(text2.strip())
         lines1 = [line.strip() for line in clean_text1.splitlines()]
         lines2 = [line.strip() for line in clean_text2.splitlines()]
+
+        # Compress all space longer than 4 spaces to exactly 4.
+        # This affords us to be even looser.
+        lines1 = [re.sub('    [ \t]*', '    ', line) for line in lines1]
+        lines2 = [re.sub('    [ \t]*', '    ', line) for line in lines2]
         self.assertEqual(lines1, lines2, message)
 
     @contextlib.contextmanager

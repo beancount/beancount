@@ -379,6 +379,8 @@ def get_postings(real_account):
     Returns:
       A list of Posting or directories.
     """
+    # We accumulate all the postings at once here instead of incrementally
+    # because we need to return them sorted.
     accumulator = []
     for real_child in iter_children(real_account):
         accumulator.extend(real_child.postings)
@@ -509,9 +511,7 @@ def dump(root_account):
         continuation_line: A string, further line to render if necessary.
         real_account: The rRealAccount instance which corresponds to this
           line.
-
     """
-
     # Compute all the lines ahead of time in order to calculate the width.
     lines = []
 
@@ -550,9 +550,10 @@ def dump(root_account):
             cont_name = PREFIX_LEAF_C
 
         # Add a line for this account.
-        lines.append((first + name,
-                      cont + cont_name,
-                      real_account))
+        if not (real_account is root_account and not name):
+            lines.append((first + name,
+                          cont + cont_name,
+                          real_account))
 
         # Push the children onto the stack, being careful with ordering and
         # marking the last node as such.
@@ -564,15 +565,17 @@ def dump(root_account):
             for child_name, child_account in child_iter:
                 stack.append((cont, child_name, child_account, False))
 
+    if not lines:
+        return lines
+
     # Compute the maximum width of the lines and convert all of them to the same
     # maximal width. This makes it easy on the client.
-    max_width = max(len(first_line)
-                    for first_line, _, __ in lines)
+    max_width = max(len(first_line) for first_line, _, __ in lines)
     line_format = '{{:{width}}}'.format(width=max_width)
     return [(line_format.format(first_line),
              line_format.format(cont_line),
              real_account)
-            for first_line, cont_line, real_account in lines]
+            for (first_line, cont_line, real_account) in lines]
 
 
 PREFIX_CHILD_1 = '|-- '
