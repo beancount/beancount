@@ -162,13 +162,14 @@ def report_holdings_relative(currency, entries, options_map):
         holdings_list = convert_to_unified_currency(price_map, currency, holdings_list)
 
     # Reduce the holdings to relative (fractional) values.
-    holdings_list = holdings.reduce_relative(holdings_list)  ## FIXME: add currency constraint here
+    holdings_list = holdings.reduce_relative(holdings_list)
 
     field_spec = [
         ('currency', ),
         ('cost_currency', ),
         ('cost_number', 'Average Cost', '{:,.2f}'.format),
         ('price_number', 'Price', '{:,.2f}'.format),
+        # Skipping the book value here.
         ('market_value', '% of Portfolio', '{:,.1%}'.format),
     ]
     return table.create_table(holdings_list, field_spec)

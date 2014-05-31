@@ -2,7 +2,7 @@ import itertools
 import unittest
 import datetime
 
-from beancount.core.amount import to_decimal
+from beancount.core.amount import to_decimal, ZERO
 from beancount.ops import holdings
 from beancount.ops import prices
 from beancount.parser import parsedoc
@@ -161,16 +161,97 @@ class TestHoldings(unittest.TestCase):
         ]))
         self.assertEqual(expected_holdings, holdings.aggregate_by_base_quote(test_holdings))
 
+    @parsedoc
+    def test_convert_to_currency(self, entries, _, __):
+        """
+        2013-01-01 price CAD 1.1 USD
+        ; We don't include a price point for NOK. It's unknown.
+        ; 2013-01-01 open Assets:Account2
+        """
+        test_holdings = list(itertools.starmap(holdings.Holding, [
 
-    def test_reduce_relative(src):
-        pass
+            # ------------ cost currency == target currency
+            # currency != target currency
+            (None, D('100.00'), 'IVV', D('200'), 'USD', D('10'), D('11'), D('12'), None),
+            # currency == target currency
+            (None, D('100.00'), 'USD', D('200'), 'USD', D('10'), D('11'), D('12'), None),
+            # currency == None
+            (None, D('100.00'), None, D('200'), 'USD', D('10'), D('11'), D('12'), None),
 
-    def test_convert_to_currency(src):
-        pass # convert_to_currency(price_map, currency, holdings_list)
+            # ------------ cost currency == other currency
+            # cost currency available in price map
+            (None, D('100.00'), 'XSP', D('200'), 'CAD', D('10'), D('11'), D('12'), None),
+            # cost currency not available in price map
+            (None, D('100.00'), 'AGF', D('200'), 'NOK', D('10'), D('11'), D('12'), None),
+            # currency == target currency, available in price map
+            (None, D('100.00'), 'USD', D('200'), 'CAD', D('10'), D('11'), D('12'), None),
+            # currency == target currency, not available in price map
+            (None, D('100.00'), 'USD', D('200'), 'NOK', D('10'), D('11'), D('12'), None),
+            # cost currency available in price map, and currency == None
+            (None, D('100.00'), None, D('200'), 'CAD', D('10'), D('11'), D('12'), None),
+
+            # ------------ cost currency == None
+            # currency available in price map
+            (None, D('100.00'), 'CAD', D('1.2'), None,  D('10'), D('11'), D('12'), None),
+            # currency not available in price map
+            (None, D('100.00'), 'EUR', D('1.2'), None,  D('10'), D('11'), D('12'), None),
+            # currency = target currency
+            (None, D('100.00'), 'USD', D('1.2'), None,  D('10'), D('11'), D('12'), None),
+
+            ]))
+
+        price_map = prices.build_price_map(entries)
+        converted_holdings = holdings.convert_to_currency(price_map, 'USD', test_holdings)
+        expected_holdings = list(itertools.starmap(holdings.Holding, [
+            (None, D('100.00'), 'IVV', D('200'), 'USD', D('10'), D('11'), D('12'), None),
+            (None, D('100.00'), 'USD', D('200'), 'USD', D('10'), D('11'), D('12'), None),
+            (None, D('100.00'), None,  D('200'), 'USD', D('10'), D('11'), D('12'), None),
+            (None, D('100.00'), 'XSP', D('220.0'), 'USD', D('11.0'), D('12.1'), D('13.2'), None),
+            (None, D('100.00'), 'AGF', None, None, None, None, None, None),
+            (None, D('100.00'), 'USD', D('220.0'), 'USD', D('11.0'), D('12.1'), D('13.2'), None),
+            (None, D('100.00'), 'USD', None, None, None, None, None, None),
+            (None, D('100.00'), None, D('220.0'), 'USD', D('11.0'), D('12.1'), D('13.2'), None),
+            (None, D('100.00'), 'CAD', D('1.32'), 'USD', D('11.0'), D('12.1'), D('13.2'), None),
+            (None, D('100.00'), 'EUR', None, None, None, None, None, None),
+            (None, D('100.00'), 'USD', D('1.2'), 'USD', D('10'), D('11'), D('12'), None),
+            ]))
+        self.assertEqual(expected_holdings, converted_holdings)
+
+        # Fail elegantly if the currency itself is None.
+        none_holding = holdings.Holding(None, D('100.00'), None, D('200'), None,
+                                        None, None, None, None)
+        with self.assertRaises(ValueError):
+            converted_holdings = holdings.convert_to_currency(price_map, 'USD',
+                                                              [none_holding])
+
+    def test_reduce_relative(self):
+        # Test with a few different cost currencies.
+        test_holdings = list(itertools.starmap(holdings.Holding, [
+            (None, D('1'), 'BLA', D('200'), 'USD', D('10'), D('1000'), D('1100'), None),
+            (None, D('1'), 'BLA', D('200'), 'USD', D('10'), D('3000'), D('300'), None),
+            (None, D('1'), 'BLA', D('200'), 'CAD', D('10'), D('500'), D('600'), None),
+            ]))
+        converted_holdings = holdings.reduce_relative(test_holdings)
+        expected_holdings = list(itertools.starmap(holdings.Holding, [
+            (None, D('1'), 'BLA', D('200'), 'USD', D('0.5'), D('0.75'), D('300'), None),
+            (None, D('1'), 'BLA', D('200'), 'USD', D('0.5'), D('0.25'), D('1100'), None),
+            (None, D('1'), 'BLA', D('200'), 'CAD', D('1'), D('1'), D('600'), None),
+            ]))
+        self.assertEqual(expected_holdings, converted_holdings)
 
 
-# Just missing a test for reduce_relative().
-__incomplete__ = True
-
-## FIXME: Write an automated test for this, with all the possible combinations of options.
-## FIXME: If you value to a currency + relative, it should result in a single total % amount of 100%. Test this.
+        # Test with a single cost currency (and some Nones), ensure the total is 100%.
+        test_holdings = list(itertools.starmap(holdings.Holding, [
+            (None, D('1'), 'BLA', D('200'), 'USD', D('10'), D('1000'), D('1100'), None),
+            (None, D('1'), 'BLA', D('200'), 'USD', D('10'), D('3000'), D('300'), None),
+            (None, D('1'), 'BLA', D('200'), None, None, None, D('600'), None),
+            ]))
+        converted_holdings = holdings.reduce_relative(test_holdings)
+        expected_holdings = list(itertools.starmap(holdings.Holding, [
+            (None, D('1'), 'BLA', D('200'), 'USD', D('0.5'), D('0.75'), D('300'), None),
+            (None, D('1'), 'BLA', D('200'), 'USD', D('0.5'), D('0.25'), D('1100'), None),
+            (None, D('1'), 'BLA', D('200'), None, None, None, D('600'), None),
+            ]))
+        self.assertEqual(expected_holdings, converted_holdings)
+        self.assertEqual(D('1'), sum(holding.market_value or ZERO
+                                     for holding in converted_holdings))

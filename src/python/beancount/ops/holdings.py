@@ -1,6 +1,7 @@
 """Compute final holdings for a list of entries.
 """
 import collections
+import functools
 
 from beancount.core.amount import ZERO
 from beancount.core import realization
@@ -9,6 +10,7 @@ from beancount.core import data
 from beancount.core import flags
 from beancount.core import position
 from beancount.ops import prices
+from beancount.utils import misc_utils
 
 
 # A holding, a flattened position with an account, and optionally, price and
@@ -171,8 +173,66 @@ def aggregate_holdings_list(holdings):
                    total_book_value, total_market_value, average_price, None)
 
 
+def convert_to_currency(price_map, target_currency, holdings_list):
+    """Convert the given list of holdings's fields to a common currency.
+
+    If the rate is not available to convert, leave the fields empty.
+
+    Args:
+      price_map: A price-map, as built by prices.build_price_map().
+      target_currency: The target common currency to convert amounts to.
+      holdings_list: A list of holdings.Holding instances.
+    Returns:
+      A modified list of holdings, with the 'extra' field set to the value in
+      'currency', or None, if it was not possible to convert.
+    """
+    # A list of the fields we should convert.
+    convert_fields = ('cost_number', 'book_value', 'market_value', 'price_number')
+
+    price_converter = functools.partial(prices.convert_amount, price_map, target_currency)
+    new_holdings = []
+    for holding in holdings_list:
+        if holding.cost_currency == target_currency:
+            # The holding is already priced in the target currency; do nothing.
+            new_holding = holding
+        else:
+            if holding.cost_currency is not None:
+                # There is a valid cost currency; attempt to convert all the fields.
+                base_quote = (holding.cost_currency, target_currency)
+            else:
+                # There is no cost currency; attempt to convert. Note that this may
+                # be a degenerate case of the currency itself being the target
+                # currency, in which case the price-map should yield a rate of 1.0
+                # and everything else works out.
+                assert holding.cost_currency is None
+                if holding.currency is None:
+                    raise ValueError("Invalid currency '{}'".format(holding.currency))
+                base_quote = (holding.currency, target_currency)
+            try:
+                # Get the conversion rate and replace the required numerical
+                # fields..
+                _, rate = prices.get_latest_price(price_map, base_quote)
+                new_holding = misc_utils.map_namedtuple_attributes(
+                    convert_fields,
+                    lambda number: number if number is None else number * rate,
+                    holding)
+                # Ensure we set the new cost currency after conversion.
+                new_holding = new_holding._replace(cost_currency=target_currency)
+            except KeyError:
+                # Could not get the rate... clear every field and set the cost
+                # currency to None. This enough marks the holding conversion as
+                # a failure.
+                new_holding = misc_utils.map_namedtuple_attributes(
+                    convert_fields, lambda number: None, holding)
+                new_holding = new_holding._replace(cost_currency=None)
+
+        new_holdings.append(new_holding)
+
+    return new_holdings
+
+
 def reduce_relative(holdings):
-    """Reduce the absolute data of the given list of holdings to relative data.
+    """Convert the market and book values of the given list of holdings to relative data.
 
     Args:
       holdings: A list of Holding instances.
@@ -183,89 +243,36 @@ def reduce_relative(holdings):
     """
     # Group holdings by value currency.
     by_currency = collections.defaultdict(list)
-    for holding in holdings:
-        by_currency[holding.cost_currency or holding.currency].append(holding)
+    ordering = {}
+    for index, holding in enumerate(holdings):
+        ordering.setdefault(holding.cost_currency, index)
+        by_currency[holding.cost_currency].append(holding)
 
     fractional_holdings = []
-    sort_order = lambda x: position.CURRENCY_ORDER.get(x[0],
-                                                       position.NCURRENCIES + len(x[0]))
-    for currency, currency_holdings in sorted(by_currency.items(), key=sort_order):
+    for currency in sorted(by_currency, key=ordering.get):
+        currency_holdings = by_currency[currency]
+
         # Compute total market value for that currency.
         total_book_value = ZERO
         total_market_value = ZERO
         for holding in currency_holdings:
-            if holding.cost_currency:
-                assert holding.book_value
-                assert holding.market_value
-            else:
-                assert holding.number
-            total_book_value += holding.book_value or holding.number
-            total_market_value += holding.market_value or holding.number
+            if holding.book_value:
+                total_book_value += holding.book_value
+            if holding.market_value:
+                total_market_value += holding.market_value
 
-        # Sort the currency's holdings with decreasing values.
+        # Sort the currency's holdings with decreasing values of market value.
         currency_holdings.sort(
-            key=lambda holding: holding.market_value or holding.number,
+            key=lambda holding: holding.market_value,
             reverse=True)
 
         # Output new holdings with the relevant values replaced.
         for holding in currency_holdings:
-            fractional_book_value = (holding.book_value or holding.number) / total_market_value
-            fractional_market_value = (holding.market_value or holding.number) / total_market_value
-
             fractional_holdings.append(
-                holding._replace(cost_currency=holding.cost_currency or holding.currency,
-                                 book_value=fractional_book_value,
-                                 market_value=fractional_market_value))
-
+                holding._replace(book_value=(holding.book_value / total_book_value
+                                             if holding.book_value is not None
+                                             else None),
+                                 market_value=(holding.market_value / total_market_value
+                                               if holding.market_value is not None
+                                               else None)))
     return fractional_holdings
-
-
-def convert_to_currency(price_map, currency, holdings_list):
-    """Convert the given list of holdings's fields to a common currency.
-
-    If the rate is not available to convert, leave the fields empty.
-
-    Args:
-      price_map: A price-map, as built by prices.build_price_map().
-      currency: The target common currency to convert amounts to.
-      holdings_list: A list of holdings.Holding instances.
-    Returns:
-      A modified list of holdings, with the 'extra' field set to the value in
-      'currency', or None, if it was not possible to convert.
-    """
-    price_converter = functools.partial(prices.convert_amount, price_map, currency)
-    new_holdings = []
-    for holding in holdings_list:
-        source_currency = holding.cost_currency or holding.currency
-
-        market_value = None
-        cost_number = None
-        price_number = None
-
-        converted = price_converter(amount.Amount(holding.market_value or holding.number,
-                                                  source_currency))
-        if converted:
-            market_value = converted.number
-
-        converted = price_converter(amount.Amount(holding.cost_number,
-                                                  source_currency))
-        if converted:
-            cost_number = converted.number
-
-        converted = price_converter(amount.Amount(holding.price_number,
-                                                  source_currency))
-        if converted:
-            price_number = converted.number
-
-        if (market_value is not None or
-            cost_number is not None or
-            price_number is not None):
-            cost_currency = currency
-
-        new_holdings.append(
-            holding._replace(market_value=market_value,
-                             cost_number=cost_number,
-                             price_number=price_number,
-                             cost_currency=cost_currency))
-
-    return new_holdings
