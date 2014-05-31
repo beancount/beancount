@@ -2,7 +2,6 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-  - (Add items from keep)
 
   - In bean-holdings, if an output file is selected and no format, automatically
     guess the output format. You should be able to just say -o output.csv.
@@ -16,8 +15,21 @@ beancount: TODO
     (You also have to complete ledgerhub's code to correctly extract various
     prices... many broken extractors there, but that's a different story.)
 
+  - Finish realization: dump_tree_balances() should have a non-recursive
+    simplistic version you should be able to convert to, separately from the
+    acctree reporting and such.
 
-  - Write a script to convert to Ledger syntax.
+  - Prices:
+     Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
+     ledgerhub-fetch-prices is borked, outputs Nones
+
+  - (Add items from keep)
+
+
+  - Implement bean-doctor print; also implement a comparison routine for
+    testing summarize and other.
+
+  - bean-ledger: Write a script to convert to Ledger syntax. This should be easy!
 
   - Add emacs configuration to highlight beyond 90 in this specific project,
     that does not use the fringe.
@@ -29,14 +41,14 @@ beancount: TODO
   - Complete full unittests coverage (as per find-missing-tests.py).
     Remaining (to be processed in this order):
 
+       src/python/beancount/core/realization.py               INCOMPLETE
+
+            realization_test.py --> COMPLETE THIS NOW!
+
        src/python/beancount/plugins/forecast.py               INCOMPLETE
 
             Add a routine to complete by parsed file.
             Use it to complete this test and maybe simplify other test code.
-
-       src/python/beancount/core/realization.py               INCOMPLETE
-
-            realization_test.py --> COMPLETE THIS NOW!
 
        src/python/beancount/parser/printer.py                 INCOMPLETE
        src/python/beancount/parser/documents.py               INCOMPLETE
@@ -60,11 +72,6 @@ beancount: TODO
   - Clean up code: remove all significant codes from __init__.py files, in
     particular beancount.scripts.__init__, move to an util with tests.
 
-
-  - Prices:
-
-     Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
-     ledgerhub-fetch-prices is borked, outputs Nones
 
   - web: Render a table of prices, in case there are only a few price points.
 
@@ -177,11 +184,12 @@ beancount: TODO
   - Review usage of @parsedoc vs. @loaddoc, maybe we should be more thorough
     about that and use @loaddoc in more places, as it performs data validation.
 
+  - Convert to_decimal to 'D' everywhere... this is an important and nice convenience.
+
 * Current / Misc / To Be Classified
 
   - Write a script to autoamtically align a region's transactions, or an entire
     file.
-
 
   - (idea) An interesting constraint would be to add an option not to allow any
     postings to any account that is not a leaf account.

@@ -2,7 +2,8 @@ import unittest
 import datetime
 import re
 
-from beancount.core.amount import to_decimal
+from beancount.core.amount import to_decimal as D
+from beancount.core import amount
 from beancount.ops import prices
 from beancount.parser import parsedoc
 
@@ -46,7 +47,7 @@ class TestPriceEntries(unittest.TestCase):
         self.assertEqual(9, len(entries))
         price_entries = prices.get_price_entries(entries)
         self.assertEqual(5, len(price_entries))
-        expected_values = [(x[0], x[1], to_decimal(x[2])) for x in [
+        expected_values = [(x[0], x[1], D(x[2])) for x in [
             ('USD', 'CAD', '1.10'),
             ('USD', 'CAD', '1.12'),
             ('GOOG', 'USD', '520.00'),
@@ -93,14 +94,14 @@ class TestPriceMap(unittest.TestCase):
                          set(price_map.keys()))
 
         values = price_map[('USD', 'CAD')]
-        expected = [(datetime.date(2013, 6, 1), to_decimal('1.10')),
-                    (datetime.date(2013, 6, 2), to_decimal('1.13')),
-                    (datetime.date(2013, 6, 3), to_decimal('1.14')),
-                    (datetime.date(2013, 6, 5), to_decimal('1.15')),
-                    (datetime.date(2013, 6, 6), to_decimal('1.16'))]
+        expected = [(datetime.date(2013, 6, 1), D('1.10')),
+                    (datetime.date(2013, 6, 2), D('1.13')),
+                    (datetime.date(2013, 6, 3), D('1.14')),
+                    (datetime.date(2013, 6, 5), D('1.15')),
+                    (datetime.date(2013, 6, 6), D('1.16'))]
         for (exp_date, exp_value), (act_date, act_value) in zip(expected, values):
             self.assertEqual(exp_date, act_date)
-            self.assertEqual(exp_value, act_value.quantize(to_decimal('0.01')))
+            self.assertEqual(exp_value, act_value.quantize(D('0.01')))
 
         self.assertEqual(5, len(price_map[('CAD', 'USD')]))
 
@@ -130,12 +131,12 @@ class TestPriceMap(unittest.TestCase):
         """
         price_map = prices.build_price_map(entries)
         price_list = prices.get_all_prices(price_map, ('USD', 'CAD'))
-        expected = [(datetime.date(2013, 6, 1), to_decimal('1.01')),
-                    (datetime.date(2013, 6, 3), to_decimal('1.03')),
-                    (datetime.date(2013, 6, 5), to_decimal('1.05')),
-                    (datetime.date(2013, 6, 7), to_decimal('1.07')),
-                    (datetime.date(2013, 6, 9), to_decimal('1.09')),
-                    (datetime.date(2013, 6, 11), to_decimal('1.11'))]
+        expected = [(datetime.date(2013, 6, 1), D('1.01')),
+                    (datetime.date(2013, 6, 3), D('1.03')),
+                    (datetime.date(2013, 6, 5), D('1.05')),
+                    (datetime.date(2013, 6, 7), D('1.07')),
+                    (datetime.date(2013, 6, 9), D('1.09')),
+                    (datetime.date(2013, 6, 11), D('1.11'))]
         self.assertEqual(expected, price_list)
 
         inv_price_list = prices.get_all_prices(price_map, ('CAD', 'USD'))
@@ -150,7 +151,7 @@ class TestPriceMap(unittest.TestCase):
         """
         price_map = prices.build_price_map(entries)
         price_list = prices.get_latest_price(price_map, ('USD', 'CAD'))
-        expected = (datetime.date(2013, 6, 11), to_decimal('1.11'))
+        expected = (datetime.date(2013, 6, 11), D('1.11'))
         self.assertEqual(expected, price_list)
 
     @parsedoc
@@ -166,23 +167,36 @@ class TestPriceMap(unittest.TestCase):
         self.assertEqual(None, price)
 
         date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 6, 1))
-        self.assertEqual(to_decimal('1.00'), price)
+        self.assertEqual(D('1.00'), price)
 
         date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 6, 5))
-        self.assertEqual(to_decimal('1.00'), price)
+        self.assertEqual(D('1.00'), price)
 
         date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 6, 10))
-        self.assertEqual(to_decimal('1.50'), price)
+        self.assertEqual(D('1.50'), price)
 
         date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 6, 20))
-        self.assertEqual(to_decimal('1.50'), price)
+        self.assertEqual(D('1.50'), price)
 
         date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 7, 1))
-        self.assertEqual(to_decimal('2.00'), price)
+        self.assertEqual(D('2.00'), price)
 
         date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 7, 15))
-        self.assertEqual(to_decimal('2.00'), price)
+        self.assertEqual(D('2.00'), price)
 
         # With no date, should devolved to get_latest_price().
         date, price = prices.get_price(price_map, 'USD/CAD', None)
-        self.assertEqual(to_decimal('2.00'), price)
+        self.assertEqual(D('2.00'), price)
+
+    @parsedoc
+    def test_convert_amount(self, entries, _, __):
+        """
+        2013-07-01 price  USD  1.20 CAD
+        """
+        price_map = prices.build_price_map(entries)
+        self.assertEqual(amount.Amount('120', 'CAD'),
+                         prices.convert_amount(price_map, 'CAD', amount.Amount('100', 'USD')))
+        self.assertEqual(amount.Amount('100', 'CAD'),
+                         prices.convert_amount(price_map, 'CAD', amount.Amount('100', 'CAD')))
+        self.assertEqual(None,
+                         prices.convert_amount(price_map, 'EUR', amount.Amount('100', 'USD')))

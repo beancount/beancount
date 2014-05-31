@@ -10,7 +10,6 @@ from beancount.parser import options
 from beancount.core import amount
 from beancount.ops import prices
 from beancount.ops import holdings
-from beancount.ops import summarize
 from beancount.reports import table
 from beancount.utils import file_utils
 
@@ -22,7 +21,7 @@ def main():
 
     optparser.add_argument('-a', '--aggregated', '--by-currency',
                            action='store_true',
-                           help="Aggregate by currency.")
+                           help="Aggregate holdings by currency.")
 
     # This is useful to share with other people the composition of your
     # portfolio without sharing the absolute amounts.
@@ -30,12 +29,15 @@ def main():
                            action='store_true',
                            help="Only render relative amounts, not absolute.")
 
+    optparser.add_argument('-c', '--currency', action='store',
+                           help="Target common currency to convert to.")
+
     optparser.add_argument('-f', '--format', default=None,
                            choices=['txt', 'csv', 'html'],
                            help="Output format.")
 
     optparser.add_argument('-o', '--output', action='store',
-                           help="Outpuf filename. Default goes to stdout.")
+                           help="Output filename. If not specified, output goes to stdout.")
 
     opts = optparser.parse_args()
 
@@ -94,76 +96,57 @@ def main():
 
     # FIXME: Insert a new row for each operating currency, valuing each of the
     # commodities in them. Figure this out, not always the case we want this.
-    for currency in options_map['operating_currency']:
+    if opts.currency:
+        holdings_list = convert_to_unified_currency(price_map, opts.currency, holdings_list)
 
-        # Convert the amounts to a common currency.
-        price_converter = functools.partial(convert_amount, price_map, currency)
-        new_holdings = []
-        for holding in holdings_list:
-            converted_amount = price_converter(
-                amount.Amount(holding.market_value or holding.number,
-                              holding.cost_currency or holding.currency))
-
-
-            ## FIXME: put the result in an 'extra' member instead and render that.
-            ## FIXME: fix the header as well.
-
-            new_holdings.append(holding._replace(market_value=converted_amount.number
-                                                 if converted_amount
-                                                 else None))
-        # Create the table report.
-        table_ = table.create_table(new_holdings, field_spec)
-        render_table(table_, outfile, opts.format)
-    else:
-        # Create the table report.
-        table_ = table.create_table(holdings_list, field_spec)
-        render_table(table_, outfile, opts.format)
+    # Create the table report.
+    table_ = table.create_table(holdings_list, field_spec)
+    table.render_table(table_, outfile, opts.format)
 
 
 
-def render_table(table_, output, format):
-    # Render the table.
-    if format == 'txt':
-        text = table.table_to_text(table_, "  ", formats={'*': '>', 'account': '<'})
-        output.write(text)
+## FIXME: Write an automated test for this, with all the possible combinations of options.
 
-    elif format == 'csv':
-        table.table_to_csv(table_, file=output)
+## FIXME: Does render_table support offsets for rendering regular tuples? It really should.
 
-    elif format == 'html':
-        output.write('<html>\n')
-        output.write('<body>\n')
-        table.table_to_html(table_, file=output)
-        output.write('</body>\n')
-        output.write('</html>\n')
+## FIXME: If you value to a currency + relative, it should result in a single total % amount of 100%.
 
 
-def convert_amount(price_map, target_currency, amount_):
-    """Convert commodities held at a cost that differ from the value currency.
+## FIXME: Accept the name of a report from here directly, conver this to
+## bean-query right away, move the reporting code to beancount.reports.holdings.
+
+#    holdings
+#    holdings_aggregated
+#    holdings_aggregated:USD
+#    holdings_aggregated:CAD
+#    holdings_relative
+
+
+def convert_to_unified_currency(price_map, currency, holdings_list):
+    """Convert the given list of holdings's market value  to a common currency.
 
     Args:
-      price_map: A price map dict, as created by build_price_map.
-      target_currency: A string, the currency to convert to.
-      amount_: An Amount instance, the amount to convert from.
+      price_map: A price-map, as built by prices.build_price_map().
+      currency: The target common currency to convert amounts to.
+      holdings_list: A list of holdings.Holding instances.
     Returns:
-      An instance of Amount, or None, if we could not convert it to the target
-      currency.
+      A modified list of holdings, with the 'extra' field set to the value in
+      'currency', or None, if it was not possible to convert.
     """
-    if amount_.currency != target_currency:
-        base_quote = (amount_.currency, target_currency)
-        try:
-            _, rate = prices.get_latest_price(price_map, base_quote)
-            converted_amount = amount.Amount(amount_.number * rate, target_currency)
+    # Convert the amounts to a common currency.
+    price_converter = functools.partial(prices.convert_amount, price_map, currency)
+    new_holdings = []
+    for holding in holdings_list:
+        converted_amount = price_converter(
+            amount.Amount(holding.market_value or holding.number,
+                          holding.cost_currency or holding.currency))
 
-        except KeyError:
-            # If a rate is not found, simply remove the market value.
-            converted_amount = None
-    else:
-        converted_amount = amount_
-    return converted_amount
-
-
-## FIXME: Write an autoamted test for this.
+        ## FIXME: put the result in an 'extra' member instead and render that.
+        ## FIXME: fix the header as well.
+        new_holdings.append(holding._replace(market_value=converted_amount.number
+                                             if converted_amount
+                                             else None))
+    return new_holdings
 
 
 if __name__ == '__main__':
