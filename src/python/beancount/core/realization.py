@@ -1,5 +1,21 @@
 """Realization of specific lists of account postings into reports.
+
+This code converts a list of entries into a tree of RealAccount nodes (which
+stands for "realized accounts"). The RealAccount objects contain lists of
+Posting instances instead of Transactions, or other entry types that are
+attached to an account, such as a Balance or Note entry.
+
+The interface of RealAccount corresponds to that of a regular Python dict, where
+the keys are the names of the individual components of an account's name, and
+the values are always other RealAccount instances. If you want to get an account
+by long account name, there are helper functions in this module for this purpose
+(see realization.get(), for instance). RealAccount instances also contain the
+final balance of that account, resulting from its list of postings.
+
+You should not build RealAccount trees yourself; instead, you should filter the
+list of desired directives to display and call the realize() function with them.
 """
+
 import sys
 from itertools import chain, repeat
 from collections import OrderedDict
