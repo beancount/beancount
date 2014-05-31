@@ -71,3 +71,10 @@ class TestMiscUtils(unittest.TestCase):
 
         self.assertEqual({'a_b': 'a_b', 'ab': 'a b'},
                          misc_utils.compute_unique_clean_ids(['a b', 'a_b']))
+
+    def test_map_namedtuple_attributes(self):
+        Test = namedtuple('Test', 'a b c d')
+        test = Test(None, None, 1, 2)
+        new_test = misc_utils.map_namedtuple_attributes(
+            ('b', 'd'), lambda num: num if num is None else num * 10, test)
+        self.assertEqual(Test(None, None, 1, 20), new_test)
