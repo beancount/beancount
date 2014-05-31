@@ -1,7 +1,5 @@
 """File utilities.
 """
-from os import path
-
 
 def guess_file_format(filename, default='txt'):
     """Guess the file format from the filename.

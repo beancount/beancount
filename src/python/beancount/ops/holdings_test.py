@@ -192,11 +192,11 @@ class TestHoldings(unittest.TestCase):
 
             # ------------ cost currency == None
             # currency available in price map
-            (None, D('100.00'), 'CAD', D('1.2'), None,  D('10'), D('11'), D('12'), None),
+            (None, D('100.00'), 'CAD', D('1.2'), None, D('10'), D('11'), D('12'), None),
             # currency not available in price map
-            (None, D('100.00'), 'EUR', D('1.2'), None,  D('10'), D('11'), D('12'), None),
+            (None, D('100.00'), 'EUR', D('1.2'), None, D('10'), D('11'), D('12'), None),
             # currency = target currency
-            (None, D('100.00'), 'USD', D('1.2'), None,  D('10'), D('11'), D('12'), None),
+            (None, D('100.00'), 'USD', D('1.2'), None, D('10'), D('11'), D('12'), None),
 
             ]))
 
@@ -205,13 +205,17 @@ class TestHoldings(unittest.TestCase):
         expected_holdings = list(itertools.starmap(holdings.Holding, [
             (None, D('100.00'), 'IVV', D('200'), 'USD', D('10'), D('11'), D('12'), None),
             (None, D('100.00'), 'USD', D('200'), 'USD', D('10'), D('11'), D('12'), None),
-            (None, D('100.00'), None,  D('200'), 'USD', D('10'), D('11'), D('12'), None),
-            (None, D('100.00'), 'XSP', D('220.0'), 'USD', D('11.0'), D('12.1'), D('13.2'), None),
+            (None, D('100.00'), None, D('200'), 'USD', D('10'), D('11'), D('12'), None),
+            (None, D('100.00'), 'XSP', D('220.0'), 'USD', D('11.0'), D('12.1'), D('13.2'),
+             None),
             (None, D('100.00'), 'AGF', None, None, None, None, None, None),
-            (None, D('100.00'), 'USD', D('220.0'), 'USD', D('11.0'), D('12.1'), D('13.2'), None),
+            (None, D('100.00'), 'USD', D('220.0'), 'USD', D('11.0'), D('12.1'), D('13.2'),
+             None),
             (None, D('100.00'), 'USD', None, None, None, None, None, None),
-            (None, D('100.00'), None, D('220.0'), 'USD', D('11.0'), D('12.1'), D('13.2'), None),
-            (None, D('100.00'), 'CAD', D('1.32'), 'USD', D('11.0'), D('12.1'), D('13.2'), None),
+            (None, D('100.00'), None, D('220.0'), 'USD', D('11.0'), D('12.1'), D('13.2'),
+             None),
+            (None, D('100.00'), 'CAD', D('1.32'), 'USD', D('11.0'), D('12.1'), D('13.2'),
+             None),
             (None, D('100.00'), 'EUR', None, None, None, None, None, None),
             (None, D('100.00'), 'USD', D('1.2'), 'USD', D('10'), D('11'), D('12'), None),
             ]))

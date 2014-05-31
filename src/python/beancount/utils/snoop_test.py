@@ -16,7 +16,7 @@ class TestSnoop(unittest.TestCase):
         self.assertEqual(7, sn.value)
         sn(8)
         self.assertEqual(8, sn.value)
-        self.assertEqual([6,7,8], list(sn.history))
+        self.assertEqual([6, 7, 8], list(sn.history))
         sn(9)
         sn(10)
         self.assertEqual(history_len, len(sn.history))

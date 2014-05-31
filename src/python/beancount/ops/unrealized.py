@@ -7,7 +7,6 @@ from beancount.core import data
 from beancount.core import account
 from beancount.core import getters
 from beancount.core.account_types import is_valid_account_name
-from beancount.core import amount
 from beancount.core.data import Transaction, Posting, FileLocation
 from beancount.core.position import Lot, Position
 from beancount.core import flags

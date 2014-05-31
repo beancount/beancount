@@ -195,8 +195,11 @@ class TestPriceMap(unittest.TestCase):
         """
         price_map = prices.build_price_map(entries)
         self.assertEqual(amount.Amount('120', 'CAD'),
-                         prices.convert_amount(price_map, 'CAD', amount.Amount('100', 'USD')))
+                         prices.convert_amount(price_map, 'CAD',
+                                               amount.Amount('100', 'USD')))
         self.assertEqual(amount.Amount('100', 'CAD'),
-                         prices.convert_amount(price_map, 'CAD', amount.Amount('100', 'CAD')))
+                         prices.convert_amount(price_map, 'CAD',
+                                               amount.Amount('100', 'CAD')))
         self.assertEqual(None,
-                         prices.convert_amount(price_map, 'EUR', amount.Amount('100', 'USD')))
+                         prices.convert_amount(price_map, 'EUR',
+                                               amount.Amount('100', 'USD')))

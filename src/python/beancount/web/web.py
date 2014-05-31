@@ -987,7 +987,8 @@ def payee(payee=None, path=None):
 @app.route(r'/view/component/<component:re:[^/]*>/<path:re:.*>', name='component')
 @handle_view(3)
 def component(component=None, path=None):
-    return views.ComponentView(app.entries, app.options, 'Component: {}'.format(component), component)
+    return views.ComponentView(app.entries, app.options,
+                               'Component: {}'.format(component), component)
 
 
 # ## FIXME: We need to figure out how to better deal with id-ification for paths.
