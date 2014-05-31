@@ -3,6 +3,7 @@
 This is to share my portfolio with others, or to compute its daily changes.
 """
 import functools
+import re
 import sys
 
 from beancount import load
@@ -12,114 +13,163 @@ from beancount.ops import prices
 from beancount.ops import holdings
 from beancount.reports import table
 from beancount.utils import file_utils
+from beancount.utils.snoop import snooper
 
 
 def main():
     import argparse
-    optparser = argparse.ArgumentParser(__doc__)
-    optparser.add_argument('filename', help='Filename.')
+    parser = argparse.ArgumentParser(__doc__)
 
-    optparser.add_argument('-a', '--aggregated', '--by-currency',
-                           action='store_true',
-                           help="Aggregate holdings by currency.")
+    parser.add_argument('filename', help='Filename.')
+    parser.add_argument('report', help='Name of the desired report.')
 
-    # This is useful to share with other people the composition of your
-    # portfolio without sharing the absolute amounts.
-    optparser.add_argument('-r', '--relative', '--public',
-                           action='store_true',
-                           help="Only render relative amounts, not absolute.")
-
-    optparser.add_argument('-c', '--currency', action='store',
-                           help="Target common currency to convert to.")
-
-    optparser.add_argument('-f', '--format', default=None,
+    parser.add_argument('-f', '--format', default=None,
                            choices=['txt', 'csv', 'html'],
                            help="Output format.")
 
-    optparser.add_argument('-o', '--output', action='store',
+    parser.add_argument('-o', '--output', action='store',
                            help="Output filename. If not specified, output goes to stdout.")
 
-    opts = optparser.parse_args()
+    opts = parser.parse_args()
 
     outfile = open(opts.output, 'w') if opts.output else sys.stdout
     opts.format = opts.format or file_utils.guess_file_format(opts.output)
 
     # Parse the input file.
     entries, errors, options_map = load(opts.filename, quiet=True)
-    account_types = options.get_account_types(options_map)
 
-    # Get the aggregate sum of holdings.
+    # Dispatch on which report to generate.
+    report_function = get_report_generator(opts.report)
+    if report_function is None:
+        parser.error("Unknown report.")
+
+    # Create holdings list.
+    table_ = report_function(entries, options_map)
+
+    # Create the table report.
+    table.render_table(table_, outfile, opts.format)
+
+
+
+def get_report_generator(report_str):
+    """Given a report name/spec, return a function to generate that report.
+
+    Args:
+      report_str: A string, the name of the report to produce. This name may
+        include embedded parameters, such as in 'holdings_aggregated:USD'.
+    Returns:
+      A callable, that can generate the report.
+    """
+    if report_str == 'holdings':
+        return report_holdings
+    elif snooper(re.match('holdings_aggregated(?::([A-Z]+))?$', report_str)):
+        return functools.partial(report_holdings_aggregated, snooper.value.group(1))
+    elif snooper(re.match('holdings_relative(?::([A-Z]+))?$', report_str)):
+        return functools.partial(report_holdings_relative, snooper.value.group(1))
+
+
+def report_holdings(entries, options_map):
+    """Generate a detailed list of all holdings by account.
+
+    Args:
+      entries: A list of directives.
+      options_map: A dict of parsed options.
+    Returns:
+      A list of Holding instances.
+    """
     price_map = prices.build_price_map(entries)
+    account_types = options.get_account_types(options_map)
+    holdings_list = holdings.get_final_holdings(entries,
+                                                (account_types.assets,
+                                                 account_types.liabilities),
+                                                price_map)
+    field_spec = [
+        ('account', ),
+        ('number', "Units", '{:,.2f}'.format),
+        ('currency', ),
+        ('cost_currency', ),
+        ('cost_number', 'Average Cost', '{:,.2f}'.format),
+        ('price_number', 'Price', '{:,.2f}'.format),
+        ('book_value', 'Book Value', '{:,.2f}'.format),
+        ('market_value', 'Market Value', '{:,.2f}'.format),
+    ]
+    return table.create_table(holdings_list, field_spec)
+
+
+def report_holdings_aggregated(currency, entries, options_map):
+    """Generate a detailed list of all holdings by account.
+
+    Args:
+      currency: A string, a currency to convert to. If left to None, no
+        conversion is carried out.
+      entries: A list of directives.
+      options_map: A dict of parsed options.
+    Returns:
+      A list of Holding instances.
+    """
+    price_map = prices.build_price_map(entries)
+    account_types = options.get_account_types(options_map)
     holdings_list = holdings.get_final_holdings(entries,
                                                 (account_types.assets,
                                                  account_types.liabilities),
                                                 price_map)
 
-    # Aggregate the holdings by (base, quote) pairs if requested.
-    if opts.aggregated:
-        holdings_list = holdings.aggregate_by_base_quote(holdings_list)
+    # Aggregate the holdings.
+    holdings_list = holdings.aggregate_by_base_quote(holdings_list)
 
-    if not holdings_list:
-        return
+    # Convert holdings to a unified currency.
+    if currency:
+        holdings_list = convert_to_unified_currency(price_map, currency, holdings_list)
 
-    # Decide what fields we will print out.
-    specs = {
-        'account'       : ('account', ),
-        'number'        : ('number', "Units", '{:,.2f}'.format),
-        'currency'      : ('currency', ),
-        'cost_currency' : ('cost_currency', ),
-        'cost_number'   : ('cost_number', 'Average Cost', '{:,.2f}'.format),
-        'price_number'  : ('price_number', 'Price', '{:,.2f}'.format),
-        'book_value'    : ('book_value', 'Book Value', '{:,.2f}'.format),
-        'market_value'  : ('market_value', 'Market Value', '{:,.2f}'.format),
-        'market_value%' : ('market_value', '% of Portfolio', '{:,.1%}'.format),
-    }
-
-    if opts.relative:
-        # Reduce the holdings to relative (fractional) values.
-        holdings_list = holdings.reduce_relative(holdings_list)
-
-        # Note: we do not include the book value in the output because an astute
-        # person could combine it with the market value percentage and use that
-        # to back out the total value of your portfolio.
-        field_spec = [specs[field]
-                      for field in ('currency cost_currency cost_number price_number '
-                                    'market_value%').split()]
-    else:
-        field_spec = [specs[field]
-                      for field in ('number currency cost_currency cost_number price_number '
-                                    'book_value market_value').split()]
-
-    if not opts.aggregated:
-        field_spec.insert(0, 'account')
+    field_spec = [
+        ('number', "Units", '{:,.2f}'.format),
+        ('currency', ),
+        ('cost_currency', ),
+        ('cost_number', 'Average Cost', '{:,.2f}'.format),
+        ('price_number', 'Price', '{:,.2f}'.format),
+        ('book_value', 'Book Value', '{:,.2f}'.format),
+        ('market_value', 'Market Value', '{:,.2f}'.format),
+    ]
+    return table.create_table(holdings_list, field_spec)
 
 
-    # FIXME: Insert a new row for each operating currency, valuing each of the
-    # commodities in them. Figure this out, not always the case we want this.
-    if opts.currency:
-        holdings_list = convert_to_unified_currency(price_map, opts.currency, holdings_list)
+def report_holdings_relative(currency, entries, options_map):
+    """Generate a list of all holdings aggregated by instrument.
 
-    # Create the table report.
-    table_ = table.create_table(holdings_list, field_spec)
-    table.render_table(table_, outfile, opts.format)
+    Args:
+      currency: A string, a currency to convert to. If left to None, no
+        conversion is carried out.
+      entries: A list of directives.
+      options_map: A dict of parsed options.
+    Returns:
+      A list of Holding instances.
+    """
+    price_map = prices.build_price_map(entries)
+    account_types = options.get_account_types(options_map)
+    holdings_list = holdings.get_final_holdings(entries,
+                                                (account_types.assets,
+                                                 account_types.liabilities),
+                                                price_map)
+
+    # Aggregate the holdings.
+    holdings_list = holdings.aggregate_by_base_quote(holdings_list)
+
+    # Convert holdings to a unified currency.
+    if currency:
+        holdings_list = convert_to_unified_currency(price_map, currency, holdings_list)
 
 
+    # Reduce the holdings to relative (fractional) values.
+    holdings_list = holdings.reduce_relative(holdings_list)
 
-## FIXME: Write an automated test for this, with all the possible combinations of options.
-
-## FIXME: Does render_table support offsets for rendering regular tuples? It really should.
-
-## FIXME: If you value to a currency + relative, it should result in a single total % amount of 100%.
-
-
-## FIXME: Accept the name of a report from here directly, conver this to
-## bean-query right away, move the reporting code to beancount.reports.holdings.
-
-#    holdings
-#    holdings_aggregated
-#    holdings_aggregated:USD
-#    holdings_aggregated:CAD
-#    holdings_relative
+    field_spec = [
+        ('currency', ),
+        ('cost_currency', ),
+        ('cost_number', 'Average Cost', '{:,.2f}'.format),
+        ('price_number', 'Price', '{:,.2f}'.format),
+        ('market_value', '% of Portfolio', '{:,.1%}'.format),
+    ]
+    return table.create_table(holdings_list, field_spec)
 
 
 def convert_to_unified_currency(price_map, currency, holdings_list):
@@ -142,11 +192,18 @@ def convert_to_unified_currency(price_map, currency, holdings_list):
                           holding.cost_currency or holding.currency))
 
         ## FIXME: put the result in an 'extra' member instead and render that.
-        ## FIXME: fix the header as well.
+
+        ## FIXME: convert the prices too, and when conversion succeeded, convert cost_currency as well!
+
         new_holdings.append(holding._replace(market_value=converted_amount.number
                                              if converted_amount
                                              else None))
     return new_holdings
+
+
+## FIXME: Write an automated test for this, with all the possible combinations of options.
+## FIXME: If you value to a currency + relative, it should result in a single total % amount of 100%. Test this.
+## FIXME: Move these to beancount.reports.holdings.
 
 
 if __name__ == '__main__':

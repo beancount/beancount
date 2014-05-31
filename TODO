@@ -188,6 +188,9 @@ beancount: TODO
 
 * Current / Misc / To Be Classified
 
+  - Does table.render_table support offsets for rendering regular tuples? It
+    really should.
+
   - Write a script to autoamtically align a region's transactions, or an entire
     file.
 
