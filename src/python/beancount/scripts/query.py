@@ -51,6 +51,9 @@ def main():
 
 
 
+## FIXME: Eventually move these to beancount.reports.holdings. The above should
+## begin to include other types of reports, prices, accounts, balsheet, etc.
+
 def get_report_generator(report_str):
     """Given a report name/spec, return a function to generate that report.
 
@@ -158,9 +161,8 @@ def report_holdings_relative(currency, entries, options_map):
     if currency:
         holdings_list = convert_to_unified_currency(price_map, currency, holdings_list)
 
-
     # Reduce the holdings to relative (fractional) values.
-    holdings_list = holdings.reduce_relative(holdings_list)
+    holdings_list = holdings.reduce_relative(holdings_list)  ## FIXME: add currency constraint here
 
     field_spec = [
         ('currency', ),
@@ -170,40 +172,6 @@ def report_holdings_relative(currency, entries, options_map):
         ('market_value', '% of Portfolio', '{:,.1%}'.format),
     ]
     return table.create_table(holdings_list, field_spec)
-
-
-def convert_to_unified_currency(price_map, currency, holdings_list):
-    """Convert the given list of holdings's market value  to a common currency.
-
-    Args:
-      price_map: A price-map, as built by prices.build_price_map().
-      currency: The target common currency to convert amounts to.
-      holdings_list: A list of holdings.Holding instances.
-    Returns:
-      A modified list of holdings, with the 'extra' field set to the value in
-      'currency', or None, if it was not possible to convert.
-    """
-    # Convert the amounts to a common currency.
-    price_converter = functools.partial(prices.convert_amount, price_map, currency)
-    new_holdings = []
-    for holding in holdings_list:
-        converted_amount = price_converter(
-            amount.Amount(holding.market_value or holding.number,
-                          holding.cost_currency or holding.currency))
-
-        ## FIXME: put the result in an 'extra' member instead and render that.
-
-        ## FIXME: convert the prices too, and when conversion succeeded, convert cost_currency as well!
-
-        new_holdings.append(holding._replace(market_value=converted_amount.number
-                                             if converted_amount
-                                             else None))
-    return new_holdings
-
-
-## FIXME: Write an automated test for this, with all the possible combinations of options.
-## FIXME: If you value to a currency + relative, it should result in a single total % amount of 100%. Test this.
-## FIXME: Move these to beancount.reports.holdings.
 
 
 if __name__ == '__main__':

@@ -34,7 +34,7 @@ class TestScriptPositions(TestCase):
           Assets:Account3     800 EUR @ 1.25 USD
         """
         with capture() as stdout:
-            run_with_args(query.main, [filename])
+            run_with_args(query.main, [filename, 'holdings'])
         output = stdout.getvalue()
         self.assertTrue(search_words('Assets:Account1 1,000.00 USD', output))
         self.assertTrue(search_words('Assets:Account2    30.00 BOOG', output))

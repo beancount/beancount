@@ -25,6 +25,9 @@ from beancount.ops import prices
 # market_value: A Decimal, the market value of the holding, with the
 #   price of this holding.
 #
+# Note: we could reserve an 'extra' member to hold values from derived fields,
+# such as fractional value of portfolio, instead of occasionally overloading the
+# value of market_value or others.
 Holding = collections.namedtuple('Holding',
                                  'account number currency cost_number cost_currency '
                                  'book_value market_value price_number price_date')
@@ -208,9 +211,61 @@ def reduce_relative(holdings):
         for holding in currency_holdings:
             fractional_book_value = (holding.book_value or holding.number) / total_market_value
             fractional_market_value = (holding.market_value or holding.number) / total_market_value
+
             fractional_holdings.append(
                 holding._replace(cost_currency=holding.cost_currency or holding.currency,
                                  book_value=fractional_book_value,
                                  market_value=fractional_market_value))
 
     return fractional_holdings
+
+
+def convert_to_currency(price_map, currency, holdings_list):
+    """Convert the given list of holdings's fields to a common currency.
+
+    If the rate is not available to convert, leave the fields empty.
+
+    Args:
+      price_map: A price-map, as built by prices.build_price_map().
+      currency: The target common currency to convert amounts to.
+      holdings_list: A list of holdings.Holding instances.
+    Returns:
+      A modified list of holdings, with the 'extra' field set to the value in
+      'currency', or None, if it was not possible to convert.
+    """
+    price_converter = functools.partial(prices.convert_amount, price_map, currency)
+    new_holdings = []
+    for holding in holdings_list:
+        source_currency = holding.cost_currency or holding.currency
+
+        market_value = None
+        cost_number = None
+        price_number = None
+
+        converted = price_converter(amount.Amount(holding.market_value or holding.number,
+                                                  source_currency))
+        if converted:
+            market_value = converted.number
+
+        converted = price_converter(amount.Amount(holding.cost_number,
+                                                  source_currency))
+        if converted:
+            cost_number = converted.number
+
+        converted = price_converter(amount.Amount(holding.price_number,
+                                                  source_currency))
+        if converted:
+            price_number = converted.number
+
+        if (market_value is not None or
+            cost_number is not None or
+            price_number is not None):
+            cost_currency = currency
+
+        new_holdings.append(
+            holding._replace(market_value=market_value,
+                             cost_number=cost_number,
+                             price_number=price_number,
+                             cost_currency=cost_currency))
+
+    return new_holdings

@@ -162,5 +162,15 @@ class TestHoldings(unittest.TestCase):
         self.assertEqual(expected_holdings, holdings.aggregate_by_base_quote(test_holdings))
 
 
+    def test_reduce_relative(src):
+        pass
+
+    def test_convert_to_currency(src):
+        pass # convert_to_currency(price_map, currency, holdings_list)
+
+
 # Just missing a test for reduce_relative().
 __incomplete__ = True
+
+## FIXME: Write an automated test for this, with all the possible combinations of options.
+## FIXME: If you value to a currency + relative, it should result in a single total % amount of 100%. Test this.
