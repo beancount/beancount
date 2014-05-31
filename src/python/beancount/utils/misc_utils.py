@@ -204,3 +204,19 @@ def bisect_right_with_key(a, x, key, lo=0, hi=None):
         else:
             lo = mid+1
     return lo
+
+
+def map_namedtuple_attributes(attributes, mapper, object_):
+    """Map the value of the named attributes of object by mapper.
+
+    Args:
+      attributes: A sequence of string, the attribute names to map.
+      mapper: A callable that accepts the value of a field and returns
+        the new value.
+      object_: Some namedtuple object with attributes on it.
+    Returns:
+      A new instance of the same namedtuple with the named fields mapped by
+      mapper.
+    """
+    return object_._replace(**{attribute: mapper(getattr(object_, attribute))
+                               for attribute in attributes})

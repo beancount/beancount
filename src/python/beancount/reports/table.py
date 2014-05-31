@@ -234,3 +234,29 @@ def compute_table_widths(rows):
         if i+1 != num_columns:
             raise IndexError("Invalid number of rows.")
     return column_widths
+
+
+def render_table(table_, output, format):
+    """Render the given table to the output file object in the requested format.
+
+    The table gets written out to the 'output' file.
+
+    Args:
+      table_: An instance of Table.
+      output: A file object you can write to.
+      format: A string, the format to write the table to, either 'csv', 'txt' or 'html'.
+    """
+    # Render the table.
+    if format == 'txt':
+        text = table_to_text(table_, "  ", formats={'*': '>', 'account': '<'})
+        output.write(text)
+
+    elif format == 'csv':
+        table_to_csv(table_, file=output)
+
+    elif format == 'html':
+        output.write('<html>\n')
+        output.write('<body>\n')
+        table_to_html(table_, file=output)
+        output.write('</body>\n')
+        output.write('</html>\n')

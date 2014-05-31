@@ -9,6 +9,7 @@ live prices online and create entries on-the-fly).
 from collections import defaultdict
 
 from beancount.core.amount import ONE
+from beancount.core import amount
 from beancount.core.data import Transaction, Price
 from beancount.core import inventory
 from beancount.utils import misc_utils
@@ -284,3 +285,27 @@ def get_price(price_map, base_quote, date=None):
         return None, None
     else:
         return price_list[index-1]
+
+
+def convert_amount(price_map, target_currency, amount_):
+    """Convert commodities held at a cost that differ from the value currency.
+
+    Args:
+      price_map: A price map dict, as created by build_price_map.
+      target_currency: A string, the currency to convert to.
+      amount_: An Amount instance, the amount to convert from.
+    Returns:
+      An instance of Amount, or None, if we could not convert it to the target
+      currency.
+    """
+    if amount_.currency != target_currency:
+        base_quote = (amount_.currency, target_currency)
+        try:
+            _, rate = get_latest_price(price_map, base_quote)
+            converted_amount = amount.Amount(amount_.number * rate, target_currency)
+        except KeyError:
+            # If a rate is not found, simply remove the market value.
+            converted_amount = None
+    else:
+        converted_amount = amount_
+    return converted_amount

@@ -1,3 +1,4 @@
+import io
 import collections
 import textwrap
 import unittest
@@ -111,3 +112,15 @@ class TestTable(unittest.TestCase):
                 ['a', 'bb', 'ccc'],
                 ['aaaa', 'bb', 'c', 'd'],
             ])
+
+    def test_render_table(self):
+        table_object = self.test_create_table()
+        oss = io.StringIO()
+        table.render_table(table_object, oss, 'csv')
+        self.assertTrue(oss.getvalue())
+        oss = io.StringIO()
+        table.render_table(table_object, oss, 'txt')
+        self.assertTrue(oss.getvalue())
+        oss = io.StringIO()
+        table.render_table(table_object, oss, 'html')
+        self.assertTrue(oss.getvalue())

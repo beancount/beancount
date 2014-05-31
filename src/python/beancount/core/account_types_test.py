@@ -32,7 +32,8 @@ class TestAccountTypes(unittest.TestCase):
         ]
         account_names_actual = sorted(
             account_names_input,
-            key=account_types.get_account_sort_function(account_types.DEFAULT_ACCOUNT_TYPES))
+            key=account_types.get_account_sort_function(
+                account_types.DEFAULT_ACCOUNT_TYPES))
         self.assertEqual(account_names_expected, account_names_actual)
 
     def test_get_account_type(self):
