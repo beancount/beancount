@@ -10,7 +10,6 @@ from beancount.core.position import Lot
 from beancount.core.data import Open
 from beancount.core.inventory import Inventory
 from beancount.core import realization
-from beancount.utils import tree_utils
 
 
 # A special enum for the "Totals" line at the bottom of the table.
@@ -70,12 +69,15 @@ def tree_table(oss, tree, start_node_name=None, header=None, classes=None, leafo
             return
         start_node = start_node[start_node_name]
 
-    lines = list(tree_utils.render(start_node, real_account_name, real_account_children))
+    # FIXME: This needs to get replaced by a dedicated function. This'll work
+    # for now, but ideally this code renders to a temporary report object and
+    # then rendering occurs separately.
+    lines = realization.dump(start_node)
 
     # Yield with a None for the final line.
     lines.append((None, None, None, TOTALS_LINE))
 
-    for line_first, _, __, real_account in lines:
+    for first_line, unused_cont_line, real_account in lines:
         # Let the caller fill in the data to be rendered by adding it to a list
         # objects. The caller may return multiple cell values; this will create
         # multiple columns.
@@ -96,7 +98,11 @@ def tree_table(oss, tree, start_node_name=None, header=None, classes=None, leafo
             label = '<span class="totals-label">Totals</span>'
         else:
             if leafonly:
-                indent = '{:.1f}'.format(len(line_first)/EMS_PER_SPACE)
+                # Look for the first account character to figure out how much
+                # indent to create.
+                mo = re.search('[A-Za-z]', first_line)
+                length = mo.start() if mo else 0
+                indent = '{:.1f}'.format(length/EMS_PER_SPACE)
                 label = account_link(real_account, leafonly=True)
             else:
                 indent = '0'
