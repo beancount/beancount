@@ -31,7 +31,6 @@ from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Do
 from beancount.core.data import Posting
 from beancount.core.account import account_name_leaf, account_name_parent
 from beancount.core import account
-from beancount.utils import tree_utils
 
 
 __plan__ = """
@@ -56,8 +55,6 @@ X  realization.contains(account_name)
 X  realization.iter(real_account)
 X  values_recursively -> provide a function instead, iter_children()
 
-
-tree_utils should be converted to work on dicts of dicts just like this one, or maybe removed.
 
 Maybe redefine equality to include the balance and account name? Not sure.
 

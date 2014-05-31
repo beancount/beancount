@@ -2,9 +2,27 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-  - Finish realization: dump_tree_balances() should have a non-recursive
-    simplistic version you should be able to convert to, separately from the
-    acctree reporting and such.
+  - Port all the code that uses realization to the new interface:
+
+      beancount/ops/check_test.py:3:from beancount.core.realization_test import realizedoc
+      beancount/ops/holdings.py:7:from beancount.core import realization
+      beancount/ops/pad_test.py:11:from beancount.core.realization_test import realizedoc
+      beancount/ops/summarize_test.py:12:from beancount.core.realization import realize, dump_tree_balances
+      beancount/ops/summarize_test.py:15:from beancount.core import realization
+      beancount/scripts/check.py:9:from beancount.core import realization
+      beancount/scripts/doctor.py:14:from beancount.core import realization
+      beancount/web/acctree.py:12:from beancount.core import realization
+      beancount/web/journal.py:13:from beancount.core.realization import RealAccount
+      beancount/web/journal.py:14:from beancount.core import realization
+      beancount/web/views.py:7:from beancount.core import realization
+      beancount/web/web.py:22:from beancount.core import realization
+
+  - Port beancount.web.acctree to remove the depdendency on tree_utils. Maybe
+    it's that time to move this to beancount.reports.tree_table and write tests
+    for them.
+
+
+
 
   - Prices:
      Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
@@ -28,11 +46,6 @@ beancount: TODO
   - Implement account.split() and perhaps remove references to
     split(account.sep) everywhere.
 
-  - Tree rendering: move
-      beancount.core.realization.dump_tree_balances
-      beancount.utils.tree_utils
-      beancount.web.acctree
-    To beancount.reports.tree_table and write tests for them.
 
   - Complete full unittests coverage (as per find-missing-tests.py).
     Remaining (to be processed in this order):
