@@ -468,15 +468,15 @@ def trial():
         )
 
 
-def balance_sheet_table(real_accounts, options):
+def balance_sheet_table(real_accounts, options_map):
     """Render an HTML balance sheet of the real_accounts tree."""
 
-    operating_currencies = options['operating_currency']
-    assets = acctree.table_of_balances(real_accounts, options['name_assets'],
+    operating_currencies = options_map['operating_currency']
+    assets = acctree.table_of_balances(real_accounts, options_map['name_assets'],
                                        operating_currencies)
-    liabilities = acctree.table_of_balances(real_accounts, options['name_liabilities'],
+    liabilities = acctree.table_of_balances(real_accounts, options_map['name_liabilities'],
                                             operating_currencies)
-    equity = acctree.table_of_balances(real_accounts, options['name_equity'],
+    equity = acctree.table_of_balances(real_accounts, options_map['name_equity'],
                                        operating_currencies)
 
     return """

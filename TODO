@@ -2,6 +2,8 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
+  - (Add items from keep)
+
   - In bean-holdings, if an output file is selected and no format, automatically
     guess the output format. You should be able to just say -o output.csv.
 

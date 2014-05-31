@@ -2,14 +2,17 @@
 
 This is to share my portfolio with others, or to compute its daily changes.
 """
+import functools
 import sys
 
 from beancount import load
 from beancount.parser import options
+from beancount.core import amount
 from beancount.ops import prices
 from beancount.ops import holdings
 from beancount.ops import summarize
 from beancount.reports import table
+from beancount.utils import file_utils
 
 
 def main():
@@ -27,11 +30,17 @@ def main():
                            action='store_true',
                            help="Only render relative amounts, not absolute.")
 
-    optparser.add_argument('-f', '--format', default='txt',
+    optparser.add_argument('-f', '--format', default=None,
                            choices=['txt', 'csv', 'html'],
                            help="Output format.")
 
+    optparser.add_argument('-o', '--output', action='store',
+                           help="Outpuf filename. Default goes to stdout.")
+
     opts = optparser.parse_args()
+
+    outfile = open(opts.output, 'w') if opts.output else sys.stdout
+    opts.format = opts.format or file_utils.guess_file_format(opts.output)
 
     # Parse the input file.
     entries, errors, options_map = load(opts.filename, quiet=True)
@@ -84,91 +93,77 @@ def main():
 
 
     # FIXME: Insert a new row for each operating currency, valuing each of the
-    # commodities in them.
-    opts.value_currency = 'USD'
+    # commodities in them. Figure this out, not always the case we want this.
+    for currency in options_map['operating_currency']:
 
-    # FIXME: Move this to holdings.
-    if opts.value_currency:
+        # Convert the amounts to a common currency.
+        price_converter = functools.partial(convert_amount, price_map, currency)
         new_holdings = []
         for holding in holdings_list:
-            # FIXME: the following logic should be implemented in b.opts.prices.
-            try:
-                # Convert commodities held at a cost that differ from the value
-                # currency.
-                if holding.cost_currency:
-                    if holding.cost_currency != opts.value_currency:
-                        base_quote = (holding.cost_currency, opts.value_currency)
-                        _, price = prices.get_latest_price(price_map, base_quote)
-                        holding = holding._replace(
-                            market_value=holding.market_value * price)
+            converted_amount = price_converter(
+                amount.Amount(holding.market_value or holding.number,
+                              holding.cost_currency or holding.currency))
 
-                # Convert commodities not held at cost (usually currencies).
-                elif holding.currency != opts.value_currency:
-                    base_quote = (holding.currency, opts.value_currency)
-                    _, price = prices.get_latest_price(price_map, base_quote)
-                    holding = holding._replace(market_value=holding.number * price)
 
-            except KeyError:
-                # If a rate is not found, simply remove the market value.
-                holding = holding._replace(market_value=None)
+            ## FIXME: put the result in an 'extra' member instead and render that.
+            ## FIXME: fix the header as well.
 
-            new_holdings.append(holding)
-        holdings_list = new_holdings
-
-    #        def convert_to(price_map, target_currency, units, base_quote):
-    #            """Convert the number of units in base_quote to currency, if possible.
-    #
-    #
-    #            Args:
-    #              FIXME: TODO
-    #
-    #                The 'quote' currency in 'base_quote' may be None, in which case the 'base'
-    #                is attempted to be converted. This is the case for cash, for instance.
-    #
-    #            Returns:
-    #              The converted amount in 'currency' units, or None if it was not possible
-    #              to compute it.
-    #            """
-    #
-    #            base_currency, quote_currency = base_quote
-    #            try:
-    #                # Convert commodities held at a cost whose that differ from the value
-    #                # currency.
-    #                if quote_currency:
-    #                    if quote_currency != target_currency:
-    #                        base_quote = (quote_currency, target_currency)
-    #                        _, price = prices.get_latest_price(price_map, base_quote)
-    #                        return units * price
-    #
-    #                # Convert commodities not held at cost (usually currencies).
-    #                elif base_currency != target_currency:
-    #                    base_quote = (base_currency, target_currency)
-    #                    _, price = prices.get_latest_price(price_map, base_quote)
-    #                    return units * price
-    #
-    #            except KeyError:
-    #                # If a rate is not found, simply remove the market value.
-    #                return None
+            new_holdings.append(holding._replace(market_value=converted_amount.number
+                                                 if converted_amount
+                                                 else None))
+        # Create the table report.
+        table_ = table.create_table(new_holdings, field_spec)
+        render_table(table_, outfile, opts.format)
+    else:
+        # Create the table report.
+        table_ = table.create_table(holdings_list, field_spec)
+        render_table(table_, outfile, opts.format)
 
 
 
-    # Create the table report.
-    table_ = table.create_table(holdings_list, field_spec)
-
+def render_table(table_, output, format):
     # Render the table.
-    if opts.format == 'txt':
+    if format == 'txt':
         text = table.table_to_text(table_, "  ", formats={'*': '>', 'account': '<'})
-        sys.stdout.write(text)
+        output.write(text)
 
-    elif opts.format == 'csv':
-        table.table_to_csv(table_, file=sys.stdout)
+    elif format == 'csv':
+        table.table_to_csv(table_, file=output)
 
-    elif opts.format == 'html':
-        sys.stdout.write('<html>\n')
-        sys.stdout.write('<body>\n')
-        table.table_to_html(table_, file=sys.stdout)
-        sys.stdout.write('</body>\n')
-        sys.stdout.write('</html>\n')
+    elif format == 'html':
+        output.write('<html>\n')
+        output.write('<body>\n')
+        table.table_to_html(table_, file=output)
+        output.write('</body>\n')
+        output.write('</html>\n')
+
+
+def convert_amount(price_map, target_currency, amount_):
+    """Convert commodities held at a cost that differ from the value currency.
+
+    Args:
+      price_map: A price map dict, as created by build_price_map.
+      target_currency: A string, the currency to convert to.
+      amount_: An Amount instance, the amount to convert from.
+    Returns:
+      An instance of Amount, or None, if we could not convert it to the target
+      currency.
+    """
+    if amount_.currency != target_currency:
+        base_quote = (amount_.currency, target_currency)
+        try:
+            _, rate = prices.get_latest_price(price_map, base_quote)
+            converted_amount = amount.Amount(amount_.number * rate, target_currency)
+
+        except KeyError:
+            # If a rate is not found, simply remove the market value.
+            converted_amount = None
+    else:
+        converted_amount = amount_
+    return converted_amount
+
+
+## FIXME: Write an autoamted test for this.
 
 
 if __name__ == '__main__':
