@@ -1,7 +1,7 @@
 import re
 
 from beancount.scripts import TestCase, docfile, capture, run_with_args
-from beancount.scripts import holdings
+from beancount.scripts import query
 
 
 def search_words(words, line):
@@ -34,7 +34,7 @@ class TestScriptPositions(TestCase):
           Assets:Account3     800 EUR @ 1.25 USD
         """
         with capture() as stdout:
-            run_with_args(holdings.main, [filename])
+            run_with_args(query.main, [filename])
         output = stdout.getvalue()
         self.assertTrue(search_words('Assets:Account1 1,000.00 USD', output))
         self.assertTrue(search_words('Assets:Account2    30.00 BOOG', output))
