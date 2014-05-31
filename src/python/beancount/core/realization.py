@@ -15,10 +15,9 @@ final balance of that account, resulting from its list of postings.
 You should not build RealAccount trees yourself; instead, you should filter the
 list of desired directives to display and call the realize() function with them.
 """
-
+import io
 import sys
-from itertools import chain, repeat
-from collections import OrderedDict
+import itertools
 import collections
 import operator
 import copy
@@ -495,68 +494,123 @@ def iterate_with_balance(postings_or_entries):
     date_entries.clear()
 
 
+def dump(root_account):
+    """Convert a RealAccount node to a line of lines.
+
+    Note: this is not meant to be used to produce text reports; the reporting
+    code should produce an intermediate object that contains the structure of
+    it, which can then be rendered to ASCII, HTML or CSV formats. This is
+    intended as a convenient little function for dumping trees of data for
+    debugging purposes.
+
+    Args:
+      root_account: A RealAccount instance.
+    Returns:
+      A list of tuples of (first_line, continuation_line, real_account) where
+        first_line: A string, the first line to render, which includes the
+          account name.
+        continuation_line: A string, further line to render if necessary.
+        real_account: The rRealAccount instance which corresponds to this
+          line.
+
+    """
+
+    # Compute all the lines ahead of time in order to calculate the width.
+    lines = []
+
+    # Start with the root node. We push the constant prefix before this node,
+    # the account name, and the RealAccount instance. We will maintain a stack
+    # of children nodes to render.
+    stack = [('', root_account.account, root_account, True)]
+    while stack:
+        prefix, name, real_account, is_last = stack.pop(-1)
+
+        if real_account is root_account:
+            # For the root node, we don't want to render any prefix.
+            first = cont = ''
+        else:
+            # Compute the string that precedes the name directly and the one belwo
+            # that for the continuation lines.
+            #  |
+            #  @@@ Bank1    <----------------
+            #  @@@ |
+            #  |   |-- Checking
+            if is_last:
+                first = prefix + PREFIX_LEAF_1
+                cont = prefix + PREFIX_LEAF_C
+            else:
+                first = prefix + PREFIX_CHILD_1
+                cont = prefix + PREFIX_CHILD_C
+
+        # Compute the name to render for continuation lines.
+        #  |
+        #  |-- Bank1
+        #  |   @@@       <----------------
+        #  |   |-- Checking
+        if len(real_account) > 0:
+            cont_name = PREFIX_CHILD_C
+        else:
+            cont_name = PREFIX_LEAF_C
+
+        # Add a line for this account.
+        lines.append((first + name,
+                      cont + cont_name,
+                      real_account))
+
+        # Push the children onto the stack, being careful with ordering and
+        # marking the last node as such.
+        child_items = sorted(real_account.items(), reverse=True)
+        if child_items:
+            child_iter = iter(child_items)
+            child_name, child_account = next(child_iter)
+            stack.append((cont, child_name, child_account, True))
+            for child_name, child_account in child_iter:
+                stack.append((cont, child_name, child_account, False))
+
+    # Compute the maximum width of the lines and convert all of them to the same
+    # maximal width. This makes it easy on the client.
+    max_width = max(len(first_line)
+                    for first_line, _, __ in lines)
+    line_format = '{{:{width}}}'.format(width=max_width)
+    return [(line_format.format(first_line),
+             line_format.format(cont_line),
+             real_account)
+            for first_line, cont_line, real_account in lines]
 
 
+PREFIX_CHILD_1 = '|-- '
+PREFIX_CHILD_C = '|   '
+PREFIX_LEAF_1  = '`-- '
+PREFIX_LEAF_C  = '    '
 
 
+def dump_balances(real_account):
+    """Dump a realization tree with balances.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# FIXME: Integrate this code with acctree and the rest of the render code.
-def dump_tree_balances(real_account, foutput=None):
-    """Dump a simple tree of the account balances at cost, for debugging."""
-
-    if foutput is None:
-        foutput = sys.stdout
-
-    lines = list(tree_utils.render(
-        real_account,
-        lambda ra: ra.fullname.split(account.sep)[-1],
-        lambda ra: sorted(ra.get_children(), key=lambda x: x.fullname)))
-    if not lines:
-        return
-    width = max(len(line[0] + line[2]) for line in lines)
-
-    for line_first, line_next, account_name, real_account in lines:
-        last_entry = real_account.postings[-1] if real_account.postings else None
-        balance = getattr(real_account, 'balance', None)
-        if not balance.is_empty():
-            amounts = balance.get_cost().get_amounts()
+    Args:
+      real_account: An instance of RealAccount.
+    Returns:
+      A string, the rendered tree.
+    """
+    oss = io.StringIO()
+    for first_line, cont_line, real_account in dump(real_account):
+        if not real_account.balance.is_empty():
+            amounts = real_account.balance.get_cost().get_amounts()
             positions = ['{0.number:12,.2f} {0.currency}'.format(amount)
                          for amount in sorted(amounts, key=amount_sortkey)]
         else:
             positions = ['']
 
-        for position, line in zip(positions, chain((line_first + account_name,),
-                                                   repeat(line_next))):
-            foutput.write('{:{width}}   {:16}\n'.format(line, position, width=width))
+        line = first_line
+        for position in positions:
+            oss.write('{} {:16}\n'.format(line, position))
+            line = cont_line
+    return oss.getvalue()
 
 
-# Test:
-    # def test_dump_tree_balances(self):
-    #     real_root = RealAccount('')
-    #     realization.get_or_create(real_root, 'Assets:US:Bank:Checking')
-    #     realization.get_or_create(real_root, 'Liabilities:US:CreditCard')
 
-    #     realization.dump_tree_balances(real_root)
+
+
 
 
 

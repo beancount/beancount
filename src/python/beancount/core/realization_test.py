@@ -1,10 +1,12 @@
 """Unit tests for realizations.
 """
 import copy
+import io
 import unittest
 import textwrap
 import functools
 import re
+import sys
 
 from beancount import parser
 
@@ -19,6 +21,7 @@ from beancount.parser import documents
 from beancount.parser import parsedoc
 from beancount.parser import printer
 from beancount.loader import loaddoc
+from beancount.scripts import TestCase
 
 
 def create_simple_account():
@@ -424,7 +427,7 @@ class TestRealFilter(unittest.TestCase):
         self.assertTrue(all(map(even, realization.iter_children(real_even, True))))
 
 
-class TestRealOther(unittest.TestCase):
+class TestRealOther(TestCase):
 
     @loaddoc
     def test_get_postings(self, entries, errors, _):
@@ -591,3 +594,77 @@ class TestRealOther(unittest.TestCase):
         postings[-1], postings[-2] = postings[-2], postings[-1]
         with self.assertRaises(AssertionError):
             list(realization.iterate_with_balance(postings))
+
+    @loaddoc
+    def test_dump(self, entries, _, __):
+        """
+        2012-01-01 open Assets:Bank1:Checking
+        2012-01-01 open Assets:Bank1:Savings
+        2012-01-01 open Assets:Bank2:Checking
+        2012-01-01 open Expenses:Restaurant
+        2012-01-01 open Expenses:Movie
+        2012-01-01 open Liabilities:CreditCard
+        2012-01-01 open Equity:OpeningBalances
+        """
+        real_account = realization.realize(entries)
+        oss = io.StringIO()
+        lines = realization.dump(real_account)
+        self.assertEqual([
+            ('                       ',
+             '|                      '),
+            ('|-- Assets             ',
+             '|   |                  '),
+            ('|   |-- Bank1          ',
+             '|   |   |              '),
+            ('|   |   |-- Checking   ',
+             '|   |   |              '),
+            ('|   |   `-- Savings    ',
+             '|   |                  '),
+            ('|   `-- Bank2          ',
+             '|       |              '),
+            ('|       `-- Checking   ',
+             '|                      '),
+            ('|-- Equity             ',
+             '|   |                  '),
+            ('|   `-- OpeningBalances',
+             '|                      '),
+            ('|-- Expenses           ',
+             '|   |                  '),
+            ('|   |-- Movie          ',
+             '|   |                  '),
+            ('|   `-- Restaurant     ',
+             '|                      '),
+            ('`-- Liabilities        ',
+             '    |                  '),
+            ('    `-- CreditCard     ',
+             '                       '),
+            ], [(first_line, cont_line)
+                for first_line, cont_line, _ in lines])
+
+    @loaddoc
+    def test_dump_balances(self, entries, _, __):
+        """
+        2012-01-01 open Expenses:Restaurant
+        2012-01-01 open Liabilities:US:CreditCard
+        2012-01-01 open Liabilities:CA:CreditCard
+
+        2014-05-30 *
+          Liabilities:CA:CreditCard   123.45 CAD
+          Expenses:Restaurant
+
+        2014-05-31 *
+          Liabilities:US:CreditCard   123.45 USD
+          Expenses:Restaurant
+
+        """
+        real_account = realization.realize(entries)
+        self.assertLines("""
+            |-- Expenses
+            |   `-- Restaurant          -123.45 CAD
+            |                           -123.45 USD
+            `-- Liabilities
+                |-- CA
+                |   `-- CreditCard       123.45 CAD
+                `-- US
+                    `-- CreditCard       123.45 USD
+        """, realization.dump_balances(real_account))

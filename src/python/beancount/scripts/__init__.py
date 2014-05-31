@@ -88,8 +88,10 @@ class TestCase(unittest.TestCase):
         Raises:
           AssertionError: If the exception fails.
         """
-        lines1 = [line.strip() for line in text1.strip().splitlines()]
-        lines2 = [line.strip() for line in text2.strip().splitlines()]
+        clean_text1 = textwrap.dedent(text1.strip())
+        clean_text2 = textwrap.dedent(text2.strip())
+        lines1 = [line.strip() for line in clean_text1.splitlines()]
+        lines2 = [line.strip() for line in clean_text2.splitlines()]
         self.assertEqual(lines1, lines2, message)
 
     @contextlib.contextmanager
