@@ -160,13 +160,13 @@ def aggregate_holdings_list(holdings):
     if not total_book_value:
         total_book_value = None
     average_cost = (total_book_value / units
-                    if total_book_value
+                    if total_book_value and units
                     else None)
 
     if not total_market_value:
         total_market_value = None
     average_price = (total_market_value / units
-                     if total_market_value
+                     if total_market_value and units
                      else None)
 
     first = holdings[0]

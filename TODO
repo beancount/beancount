@@ -2,45 +2,6 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-  - Fix this newly introduced bug on bake on my gigantic personal file:
-
-      127.0.0.1 - - [31/May/2014 19:59:44] "GET /view/component/CPOP/balsheet HTTP/1.1" 200 5773
-      ERROR   : Error during realization: Position with lots goes negative: Inventory(-50.00 QQQ {61.25 USD})
-      ...
-
-
-  - This also appears in the extensive test; fix this too:
-
-      127.0.0.1 - - [31/May/2014 20:09:59] "GET /view/component/GOOGL/holdings/detail HTTP/1.1" 200 4169
-      Traceback (most recent call last):
-        File "/usr/local/lib/python3.3/dist-packages/bottle.py", line 783, in _handle
-          return route.call(**args)
-        File "/usr/local/lib/python3.3/dist-packages/bottle.py", line 1635, in wrapper
-          rv = callback(*a, **ka)
-        File "/home/blais/p/beancount/src/python/beancount/web/web.py", line 925, in wrapper
-          return callback(*args, **kwargs)
-        File "/home/blais/p/beancount/src/python/beancount/web/web.py", line 767, in holdings_byinstrument
-          aggregated_holdings = holdings.aggregate_by_base_quote(holdings_)
-        File "/home/blais/p/beancount/src/python/beancount/ops/holdings.py", line 133, in aggregate_by_base_quote
-          for key_holdings in grouped.values())
-        File "/home/blais/p/beancount/src/python/beancount/ops/holdings.py", line 133, in <genexpr>
-          for key_holdings in grouped.values())
-        File "/home/blais/p/beancount/src/python/beancount/ops/holdings.py", line 163, in aggregate_holdings_list
-          if total_book_value
-      cdecimal.DivisionByZero: [<class 'cdecimal.DivisionByZero'>]
-
-
-
-
-  - Port all the code that uses realization to the new interface:
-
-      beancount/ops/check_test.py:3:from beancount.core.realization_test import realizedoc
-      beancount/ops/pad_test.py:11:from beancount.core.realization_test import realizedoc
-      beancount/ops/summarize_test.py:12:from beancount.core.realization import realize, dump_tree_balances
-      beancount/ops/summarize_test.py:15:from beancount.core import realization
-      beancount/web/web.py:22:from beancount.core import realization
-
-
 
   - Prices:
      Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
@@ -48,11 +9,13 @@ beancount: TODO
   - You also have to complete ledgerhub's code to correctly extract various
     prices... many broken extractors there, but that's a different story.
 
+
   - (Add items from keep)
 
-  - Implement bean-doctor print.
-  - Also implement a comparison routine for testing summarize and other
-    functions more easily!
+
+
+
+
 
   - bean-ledger: Write a script to convert to Ledger syntax. This should be easy!
 
@@ -98,28 +61,51 @@ beancount: TODO
   - Check that an account without an Open directive has one that gets
     automatically inserted for it in addition to the error that gets generated.
 
+
+
+
+
   - web: Render a table of prices, in case there are only a few price points.
     We should also have a comment for prices.
 
   - Merge Holdings tab into Shareholder's Equity, less tabs, similar report.
     Complete the equity value page with prices.py, render the rates used to that page.
 
+
+
+
+
   - Build a more complete and representative of reality example file, bake, and
     share on ledger-cli
 
   - Begin an examples files, create links to all docs from README, even if incomplete
   - Convert all documentation to a GDoc
+  - Create cookbook
+
+
+
+
 
   - Add a test for --view option.
 
-  - MSSB documents aren't found... fix FIXMEs in documents.py
+
+
+  - BUG: MSSB documents aren't found... fix FIXMEs in documents.py
+
+
+
+  - Clean up the interface of loader.load(), it's ugly.
+  - Implement all the missing global pages.
+  - All errors should be displayed in an overlay
+
+
+
+
 
   - Fix all docstrings re. Account instance, artifacts of having had an Account object.
 
   - Configure and run a clean pylint on the entire codebase.
   - Add all docstrings with args Google-style.
-  - Clean up the interface of loader.load(), it's ugly.
-  - Implement all the missing global pages.
   - Fix all FIXMEs everywhere.
   - Add __author__ to all files?
 
@@ -159,6 +145,9 @@ beancount: TODO
   - Printer tests (not done) should work by doing a round-trip. In fact, run a
     round-trip test on my personal ledger file.
 
+
+
+
   - Add a test for this (somewhere else): If something like this occurs, which
     price should appear in the prices database? This should trigger a warning that
     no price directive is inserted (this is what it should do: don't insert a
@@ -178,12 +167,20 @@ beancount: TODO
     which assumes that a price point will always be available if the unit is
     held at cost. Make a decision.
 
-  - Consider creating a switch that would auto-create accounts not seen yet,
-    for the purpose of making demos (not sure if that's a great idea though).
+
+
+
+
+  - Implement bean-doctor print.
 
   - Make automatic price directives actually create a price entry in the list
     of output entries. This should simplify some of the code and allow this
     debugging output to be much clearer to the user.
+
+  - Consider creating a switch that would auto-create accounts not seen yet,
+    for the purpose of making demos (not sure if that's a great idea though).
+
+
 
 
   - "Position with lots goes negative" should output an error message and be caught, because if it is run by the web
@@ -202,11 +199,17 @@ beancount: TODO
           raise ValueError("Position with lots goes negative: {}".format(self))
       ValueError: Position with lots goes negative: Inventory(-2.00 PUMP {20.00 USD})
 
-  - Make sure you can parse Amounts with space between the - sign and the number:
-    "- 20 USD" kicks an error.
+
+
 
   - Review usage of @parsedoc vs. @loaddoc, maybe we should be more thorough
     about that and use @loaddoc in more places, as it performs data validation.
+
+  - Maybe all the decorators for docstring parsers should be moved to a
+    dedicated module. That would make sense.
+
+
+
 
   - COOL! I can subclass the namedtuples!  Do this to make printing the
     postings and entries much easier.
@@ -215,15 +218,38 @@ beancount: TODO
           def __str__(self):
               return _Posting.__str__(self._replace(entry=None))
 
-  - Maybe all the decorators for docstring parsers should be moved to a
-    dedicated module. That would make sense.
+  - Also derive from namedtuple to provide a stable hash function instead of
+    code in beancount.core.compare.
 
-  - Parsing this does not fail; it should:
+  - Can we make Inventory a subclass of 'list'?  That would be real nice, would
+    make a lot of sense.
+
+
+
+
+  - Parsing this does not fail; it really should, this is a bug:
       "2013-04-01 balance Assets:Bank:Checking   555.00 CAD.11"
 
   - Convert to_decimal to 'D' everywhere... this is an important and nice convenience.
 
+  - Make sure you can parse Amounts with space between the - sign and the number:
+    "- 20 USD" kicks an error.
+
+
+
+  - Docuemntation:
+
+    * Beancount: document "choices": subaccounts vs tags vs payees, postings at
+      leaves only or not,... Have a section to discuss these choices in the
+      documentation.
+
+
+
 * Current / Misc / To Be Classified
+
+  - Beancount: make a script that prints out just the chart of accounts using the
+    list of parser entries, just the open entries
+
 
   - Write a script that will automatically fetch the dates I held various
     positions at cost for throughout the history and a list of weekly dates to

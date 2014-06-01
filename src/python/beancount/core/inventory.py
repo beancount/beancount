@@ -53,6 +53,8 @@ class Inventory:
         Because the lists are always very short, we prefer to avoid using mappings
         for the sake of simplicity.
     """
+    __slots__ = ('positions',)
+
     def __init__(self, positions=None):
         """Create a new inventory using a list of existing positions.
 

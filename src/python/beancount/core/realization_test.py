@@ -21,7 +21,7 @@ from beancount.parser import documents
 from beancount.parser import parsedoc
 from beancount.parser import printer
 from beancount.loader import loaddoc
-from beancount.scripts import TestCase
+from beancount.utils import test_utils
 
 
 def create_simple_account():
@@ -427,7 +427,7 @@ class TestRealFilter(unittest.TestCase):
         self.assertTrue(all(map(even, realization.iter_children(real_even, True))))
 
 
-class TestRealOther(TestCase):
+class TestRealOther(test_utils.TestCase):
 
     @loaddoc
     def test_get_postings(self, entries, errors, _):
