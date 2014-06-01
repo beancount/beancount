@@ -1,10 +1,10 @@
-from beancount.scripts import TestCase, docfile, capture, run_with_args
+from beancount.utils import test_utils
 from beancount.scripts import doctor
 
 
-class TestScriptDoctor(TestCase):
+class TestScriptDoctor(test_utils.TestCase):
 
-    @docfile
+    @test_utils.docfile
     def test_dump_lexer(self, filename):
         """
         2013-01-01 open Expenses:Restaurant
@@ -14,8 +14,8 @@ class TestScriptDoctor(TestCase):
           Expenses:Restaurant   50.02 USD
           Assets:Cash
         """
-        with capture() as stdout:
-            run_with_args(doctor.main, ['dump-lexer', filename])
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(doctor.main, ['dump-lexer', filename])
 
         expected_output = """
             EOL               2 '\\n'
@@ -43,13 +43,13 @@ class TestScriptDoctor(TestCase):
         """
         self.assertLines(expected_output, stdout.getvalue())
 
-    @docfile
+    @test_utils.docfile
     def test_dump_lexer_empty(self, filename):
         ""
-        with capture() as stdout:
-            run_with_args(doctor.main, ['dump-lexer', filename])
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(doctor.main, ['dump-lexer', filename])
 
-    @docfile
+    @test_utils.docfile
     def test_list_accounts(self, filename):
         """
         2013-01-01 open Expenses:Restaurant
@@ -59,21 +59,21 @@ class TestScriptDoctor(TestCase):
           Expenses:Restaurant   50.02 USD
           Assets:Cash
         """
-        with capture() as stdout:
-            run_with_args(doctor.main, ['list-accounts', filename])
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(doctor.main, ['list-accounts', filename])
 
         r = self.assertLines("""
             Assets:Cash          2013-01-01
             Expenses:Restaurant  2013-01-01
         """, stdout.getvalue())
 
-    @docfile
+    @test_utils.docfile
     def test_list_accounts_empty(self, filename):
         ""
-        with capture() as stdout:
-            run_with_args(doctor.main, ['list-accounts', filename])
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(doctor.main, ['list-accounts', filename])
 
-    @docfile
+    @test_utils.docfile
     def test_print_trial(self, filename):
         """
         2013-01-01 open Expenses:Restaurant
@@ -83,8 +83,8 @@ class TestScriptDoctor(TestCase):
           Expenses:Restaurant   50.02 USD
           Assets:Cash
         """
-        with capture() as stdout:
-            run_with_args(doctor.main, ['print-trial', filename])
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(doctor.main, ['print-trial', filename])
         output = stdout.getvalue()
         self.assertLines("""
             |-- Assets
@@ -93,13 +93,13 @@ class TestScriptDoctor(TestCase):
                 `-- Restaurant          50.02 USD
         """, output)
 
-    @docfile
+    @test_utils.docfile
     def test_print_trial_empty(self, filename):
         ""
-        with capture() as stdout:
-            run_with_args(doctor.main, ['print-trial', filename])
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(doctor.main, ['print-trial', filename])
 
-    @docfile
+    @test_utils.docfile
     def test_prices(self, filename):
         """
         2014-01-01 open Assets:Account1
@@ -112,8 +112,8 @@ class TestScriptDoctor(TestCase):
         2014-02-01 price GOOG 524.02 USD
         2014-02-10 price GOOG 536.03 USD
         """
-        with capture() as stdout:
-            run_with_args(doctor.main, ['prices', filename])
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(doctor.main, ['prices', filename])
         output = stdout.getvalue()
         self.assertLines("""
             GOOG,USD,2014-01-15,512.01

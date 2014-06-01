@@ -73,6 +73,14 @@ class Position:
         self.lot = lot
         self.number = number
 
+    def __hash__(self):
+        """Compute a hash for this position.
+
+        Returns:
+          A hash of this position object.
+        """
+        return hash((self.lot, self.number))
+
     def __str__(self):
         """Return a string representation of the position.
 

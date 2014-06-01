@@ -98,10 +98,6 @@ beancount: TODO
   - Check that an account without an Open directive has one that gets
     automatically inserted for it in addition to the error that gets generated.
 
-  - Clean up code: remove all significant codes from __init__.py files, in
-    particular beancount.scripts.__init__, move to an util with tests.
-
-
   - web: Render a table of prices, in case there are only a few price points.
     We should also have a comment for prices.
 
@@ -232,6 +228,14 @@ beancount: TODO
   - Write a script that will automatically fetch the dates I held various
     positions at cost for throughout the history and a list of weekly dates to
     fetch rates for.
+
+  - (code) Make Position into a namedtuple with hashing instead of just an
+    object. See if we can remove its __hash__ method.
+
+  - Also, look at all the objects in b.core.data, and see if you can override
+    the hash function on them automatically in order to ignore the entry in
+    postings, and the listness in entry.postings. It would be nice to be able
+    to hash every directive type.
 
   - Does table.render_table support offsets for rendering regular tuples? It
     really should.
@@ -585,6 +589,11 @@ beancount: TODO
 
   - Implement beancount.plugins.tag_pending as a general feature of links...
     this ought to be built-in by default, this is a great idea.
+
+
+  - (prices) When attempting a conversion in holdings, if the rate isn't
+    available directly, you should always attempt to value it indirectly via
+    USD or EUR.
 
 
 ** Precision

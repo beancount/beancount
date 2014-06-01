@@ -1,5 +1,6 @@
 """Basic data structures used to represent the Ledger entries.
 """
+import hashlib
 import datetime
 from collections import namedtuple
 
