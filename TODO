@@ -2,13 +2,6 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-  - Prices:
-     Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
-     ledgerhub-fetch-prices is borked, outputs Nones
-  - You also have to complete ledgerhub's code to correctly extract various
-    prices... many broken extractors there, but that's a different story.
-
-
 
   - Complete full unittests coverage (as per find-missing-tests.py).
     Remaining (to be processed in this order):
@@ -16,6 +9,10 @@ beancount: TODO
        src/python/beancount/utils/test_utils.py                     INCOMPLETE
 
        src/python/beancount/parser/printer.py                 INCOMPLETE
+
+         Printer tests (not done) should work by doing a round-trip. In fact, run a
+         round-trip test on my personal ledger file. Test all fields.
+
        src/python/beancount/parser/documents.py               INCOMPLETE
 
        src/python/beancount/ops/summarize.py                  INCOMPLETE
@@ -43,11 +40,24 @@ beancount: TODO
 
 
 
-  - Implement bean-doctor print, this debugging tool is a necessity.
+  - Implement bean-query print, this debugging report is a necessity. This
+    should be just another report, does not need to be part of bean-doctor.
+    Makes more sense this way. It will also allow printing filtered entries as
+    well, and we already have all the code.
 
 
 
-  - Rename/simplify function names in beacnount.core.account (see FIXMEs)
+
+  - Prices:
+     Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
+     ledgerhub-fetch-prices is borked, outputs Nones
+  - You also have to complete ledgerhub's code to correctly extract various
+    prices... many broken extractors there, but that's a different story.
+
+
+
+
+  - Rename/simplify function names in beancount.core.account (see FIXMEs)
   - Implement account.split() and perhaps remove references to
     split(account.sep) everywhere.
 
@@ -147,8 +157,6 @@ beancount: TODO
 
   - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
 
-  - Printer tests (not done) should work by doing a round-trip. In fact, run a
-    round-trip test on my personal ledger file.
 
 
 
@@ -249,8 +257,39 @@ beancount: TODO
 
 
 
+  - Remove adding the unrealized gains for v2 from the loader in order to
+    simplify the interface. Remove the option even. This will be reintroduced
+    via a plugin in a further release. This is the right thing to do! Plugins
+    will be aplenty.
+
+
 * Current / Misc / To Be Classified
 
+  - The balance sheet "close" problem - how do we specify closing at a
+    particular point in time - can be solved by providing parameters to the
+    report, e.g.
+
+       balsheet:2014-01-01:2015-01-01
+       income:2014-01-01:2015-01-01
+
+    Of course, this needs conveniences. The period, if there is only a SINGLE
+    ONE, should be interpreted as "from the beginning of this period to the
+    ending of it (one over)". Otherwise, the meaning is the beginning of both.
+    Here are other illustrative examples:
+
+       balsheet  -> from BEGINNING OF TIME to NOW
+       balsheet:2014  -> from 2014-01-01 to 2015-01-01  (most common)
+       balsheet:2014-05  -> from 2014-05-01 to 2015-06-01
+       balsheet:2014:2015-08  -> from 2014-01-01 to 2015-08-01
+
+    The same goes for income.
+    The nice thing is that I think we can now move the closing of entries
+    within the report generation itself, instead of being at the top-level of
+    the web app. This will be simpler and cleaner!
+
+
+
+  (plugins)
   - Should we extend the syntax to allow the specification of loader plugins?
     That might be an interesting idea... e.g.
 
@@ -260,6 +299,14 @@ beancount: TODO
     custom mod function. We could provide a set of standard and useful ones.
     And we would have to validate the produced entries to death, just to make
     sure all the invariants are respected.
+
+  - Adding the unrealized gains should be a loader plugin! This is an obvious
+    one. Make this before the release, in order to simplify the loader()
+    interface as much as possible.
+
+
+
+
 
   (scripts)
   - bean-ledger: Write a script to convert to Ledger syntax. This should be easy!
