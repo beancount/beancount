@@ -2,31 +2,12 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-
   - Prices:
      Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
      ledgerhub-fetch-prices is borked, outputs Nones
   - You also have to complete ledgerhub's code to correctly extract various
     prices... many broken extractors there, but that's a different story.
 
-
-  - (Add items from keep)
-
-
-
-
-
-
-  - bean-ledger: Write a script to convert to Ledger syntax. This should be easy!
-
-  - Add emacs configuration to highlight beyond 90 in this specific project,
-    that does not use the fringe.
-  - We really do need a little function that will align a paragraph's
-    currencies automatically.
-
-  - Rename/simplify function names in beacnount.core.account (see FIXMEs)
-  - Implement account.split() and perhaps remove references to
-    split(account.sep) everywhere.
 
 
   - Complete full unittests coverage (as per find-missing-tests.py).
@@ -47,7 +28,7 @@ beancount: TODO
        src/python/beancount/ops/check.py                      INCOMPLETE
 
          Rename this file to balance to match the directive?
-         Not sure. Another is named that way.
+         Not sure. Another file is named that way.
 
        src/python/beancount/web/acctree.py                    MISSING
        src/python/beancount/web/journal.py                    MISSING
@@ -58,6 +39,27 @@ beancount: TODO
        src/python/beancount/web/gviz.py                       MISSING
 
 
+
+  - Implement bean-doctor print, this debugging tool is a necessity.
+
+
+
+  - Rename/simplify function names in beacnount.core.account (see FIXMEs)
+  - Implement account.split() and perhaps remove references to
+    split(account.sep) everywhere.
+
+
+
+
+  - Add emacs configuration to highlight beyond 90 in this specific project,
+    that does not use the fringe.
+  - We really do need a little function that will align a paragraph's
+    currencies automatically.
+
+
+
+
+
   - Check that an account without an Open directive has one that gets
     automatically inserted for it in addition to the error that gets generated.
 
@@ -66,7 +68,7 @@ beancount: TODO
 
 
   - web: Render a table of prices, in case there are only a few price points.
-    We should also have a comment for prices.
+    We should also have a report type for prices.
 
   - Merge Holdings tab into Shareholder's Equity, less tabs, similar report.
     Complete the equity value page with prices.py, render the rates used to that page.
@@ -171,7 +173,6 @@ beancount: TODO
 
 
 
-  - Implement bean-doctor print.
 
   - Make automatic price directives actually create a price entry in the list
     of output entries. This should simplify some of the code and allow this
@@ -247,13 +248,17 @@ beancount: TODO
 
 * Current / Misc / To Be Classified
 
+  (scripts)
+  - bean-ledger: Write a script to convert to Ledger syntax. This should be easy!
+
   - Beancount: make a script that prints out just the chart of accounts using the
     list of parser entries, just the open entries
-
 
   - Write a script that will automatically fetch the dates I held various
     positions at cost for throughout the history and a list of weekly dates to
     fetch rates for.
+
+
 
   - (code) Make Position into a namedtuple with hashing instead of just an
     object. See if we can remove its __hash__ method.

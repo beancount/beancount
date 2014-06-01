@@ -33,36 +33,6 @@ from beancount.core.account import account_name_leaf, account_name_parent
 from beancount.core import account
 
 
-__plan__ = """
-X  fullname       -> renames to .account, which is the full name of the account, we never need the leaf name
-X  balance        -> (stays the same.)
-X  postings       -> (stays the same.)
-X  children       -> becomes .values() from dict interface
-X  asdict()       -> becomes the object itself, not really needed anymore.
-X  __getitem__    -> should work as keys(), not deep. Deep uses go to get_deep_item()
-X  add(account)   -> inserts leaf name automatically, not needed anymore, only used here.
-X  __iter__       -> delete, just becomes keys() like dict
-X  __contains__   -> remove support for recursive, onyl work on direct children, use
-X  get_children() -> Remove and replace by values() usage.
-
-FIXME: Finish supporting ra.copy(), there's a test for it.
-
-
-Note: maybe these are all module functions with simple names...
-X  realization.get(key, None) instead.
-X  realization.set(real_account): automatically creates the intervening nodes
-X  realization.contains(account_name)
-X  realization.iter(real_account)
-X  values_recursively -> provide a function instead, iter_children()
-
-
-Maybe redefine equality to include the balance and account name? Not sure.
-
-
-FIXME: document how this type works and the symmetries with dict.
-
-"""
-
 class RealAccount(dict):
     """A realized account, inserted in a tree, that contains the list of realized entries.
 
