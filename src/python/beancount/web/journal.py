@@ -21,7 +21,7 @@ def account_link(account_name, leafonly=False):
     if isinstance(account_name, str):
         account_name = account_name
     elif isinstance(account_name, realization.RealAccount):
-        account_name = account_name.fullname
+        account_name = account_name.account
     try:
         return _account_link_cache[(request.app, account_name)]
     except KeyError:

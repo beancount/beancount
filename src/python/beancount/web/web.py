@@ -191,7 +191,7 @@ def update():
 
     for root in (app.account_types.assets,
                  app.account_types.liabilities):
-        table = acctree.tree_table(oss, view.real_accounts, root,
+        table = acctree.tree_table(oss, realization.get(view.real_accounts, root),
                                    ['Account', 'Last Entry'],
                                    leafonly=False)
         for real_account, cells, row_classes in table:
@@ -452,7 +452,7 @@ def trial():
     view = request.view
     real_accounts = view.real_accounts
     operating_currencies = view.options['operating_currency']
-    table = acctree.table_of_balances(real_accounts, '', operating_currencies,
+    table = acctree.table_of_balances(real_accounts, operating_currencies,
                                       classes=['trial'])
 
 
@@ -472,11 +472,14 @@ def balance_sheet_table(real_accounts, options_map):
     """Render an HTML balance sheet of the real_accounts tree."""
 
     operating_currencies = options_map['operating_currency']
-    assets = acctree.table_of_balances(real_accounts, options_map['name_assets'],
+    assets = acctree.table_of_balances(realization.get(real_accounts,
+                                                       options_map['name_assets']),
                                        operating_currencies)
-    liabilities = acctree.table_of_balances(real_accounts, options_map['name_liabilities'],
+    liabilities = acctree.table_of_balances(realization.get(real_accounts,
+                                                            options_map['name_liabilities']),
                                             operating_currencies)
-    equity = acctree.table_of_balances(real_accounts, options_map['name_equity'],
+    equity = acctree.table_of_balances(realization.get(real_accounts,
+                                                       options_map['name_equity']),
                                        operating_currencies)
 
     return """
@@ -541,9 +544,11 @@ def income():
 
     # Render the income statement tables.
     operating_currencies = view.options['operating_currency']
-    income = acctree.table_of_balances(real_accounts, view.options['name_income'],
+    income = acctree.table_of_balances(realization.get(real_accounts,
+                                                       view.options['name_income']),
                                        operating_currencies)
-    expenses = acctree.table_of_balances(real_accounts, view.options['name_expenses'],
+    expenses = acctree.table_of_balances(realization.get(real_accounts,
+                                                         view.options['name_expenses']),
                                          operating_currencies)
 
     contents = """
@@ -641,11 +646,11 @@ def account_(slashed_account_name=None):
             real_accounts = request.view.closing_real_accounts
         else:
             real_accounts = request.view.real_accounts
-        if account_name not in real_accounts:
+        real_account = realization.get(real_accounts, account_name)
+        if real_account is None:
             raise bottle.HTTPError(404, "Not found.")
-        real_account = real_accounts[account_name]
     else:
-        real_account = request.view.real_accounts['']
+        real_account = request.view.real_accounts
 
     account_postings = realization.get_postings(real_account)
 

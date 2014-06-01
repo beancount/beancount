@@ -1,6 +1,7 @@
 """Routines to render an HTML table with a tree of accounts.
 """
 import io
+import re
 
 from beancount.web.journal import account_link
 from beancount.core import data
@@ -18,24 +19,14 @@ TOTALS_LINE = object()
 EMS_PER_SPACE = 2.5
 
 
-def real_account_name(real_account):
-    return real_account.fullname.split(account.sep)[-1]
-
-
-def real_account_children(real_account):
-    return real_account.get_children()
-
-
-def tree_table(oss, tree, start_node_name=None, header=None, classes=None, leafonly=True):
+def tree_table(oss, real_account, header=None, classes=None, leafonly=True):
     """Generator to a tree of accounts as an HTML table.
-    Render only all the nodes under 'start_node_name'.
     This yields the real_account object for each line and a
     list object used to return the values for multiple cells.
 
     Args:
       oss: a io.StringIO instance, into which we will render the HTML.
-      tree: an instance of a RealAccount node
-      start_node_name: the name of the tree node to begin rendering at.
+      tree: an instance of a RealAccount node.
       header: a list of header columns to render. The first column is special,
               and is used for the account name.
       classes: a list of CSS class strings to apply to the table element.
@@ -62,20 +53,13 @@ def tree_table(oss, tree, start_node_name=None, header=None, classes=None, leafo
         write('</tr>')
         write('</thead>')
 
-    start_node = tree
-    if start_node_name is not None:
-        if start_node_name not in tree:
-            write('</table>')
-            return
-        start_node = start_node[start_node_name]
-
     # FIXME: This needs to get replaced by a dedicated function. This'll work
     # for now, but ideally this code renders to a temporary report object and
     # then rendering occurs separately.
-    lines = realization.dump(start_node)
+    lines = realization.dump(real_account)
 
     # Yield with a None for the final line.
-    lines.append((None, None, None, TOTALS_LINE))
+    lines.append((None, None, TOTALS_LINE))
 
     for first_line, unused_cont_line, real_account in lines:
         # Let the caller fill in the data to be rendered by adding it to a list
@@ -136,7 +120,7 @@ def is_account_active(real_account):
     return False
 
 
-def table_of_balances(real_root, start_node_name, currencies, classes=None):
+def table_of_balances(real_root, currencies, classes=None):
     """Render a table of balances.
 
     Args:
@@ -146,10 +130,10 @@ def table_of_balances(real_root, start_node_name, currencies, classes=None):
     header = ['Account'] + currencies + ['Other']
 
     # Pre-calculate which accounts should be rendered.
-    active_accounts = realization.filter(real_root, is_account_active)
-    if active_accounts:
-        active_set = {real_account.fullname
-                      for real_account in active_accounts.values_recursively()}
+    real_active = realization.filter(real_root, is_account_active)
+    if real_active:
+        active_set = {real_account.account
+                      for real_account in realization.iter_children(real_active)}
     else:
         active_set = set()
 
@@ -157,8 +141,7 @@ def table_of_balances(real_root, start_node_name, currencies, classes=None):
     oss = io.StringIO()
     classes = list(classes) if classes else []
     classes.append('fullwidth')
-    for real_account, cells, row_classes in tree_table(oss, tree, start_node_name,
-                                                       header, classes):
+    for real_account, cells, row_classes in tree_table(oss, real_root, header, classes):
 
         if real_account is TOTALS_LINE:
             balance = balance_totals
@@ -166,11 +149,11 @@ def table_of_balances(real_root, start_node_name, currencies, classes=None):
         else:
             # Check if this account has had activity; if not, skip rendering it.
             # pylint: disable=bad-continuation
-            if (real_account.fullname not in active_set and
-                not is_root_account(real_account.fullname)):
+            if (real_account.account not in active_set and
+                not is_root_account(real_account.account)):
                 continue
 
-            if real_account.fullname is None:
+            if real_account.account is None:
                 row_classes.append('parent-node')
 
             # For each account line, get the final balance of the account (at cost).

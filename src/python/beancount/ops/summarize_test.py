@@ -290,9 +290,9 @@ class TestConversions(unittest.TestCase):
 # def real_cost_as_dict(real_accounts):
 #     """Convert a tree of real accounts as a dict for easily doing
 #     comparisons for testing."""
-#     return {real_account.fullname: str(real_account.balance.get_cost())
+#     return {real_account.account: str(real_account.balance.get_cost())
 #             for account_name, real_account in real_accounts.items()
-#             if real_account.fullname}
+#             if real_account.account}
 
 
 

@@ -2,6 +2,36 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
+  - Fix this newly introduced bug on bake on my gigantic personal file:
+
+      127.0.0.1 - - [31/May/2014 19:59:44] "GET /view/component/CPOP/balsheet HTTP/1.1" 200 5773
+      ERROR   : Error during realization: Position with lots goes negative: Inventory(-50.00 QQQ {61.25 USD})
+      ...
+
+
+  - This also appears in the extensive test; fix this too:
+
+      127.0.0.1 - - [31/May/2014 20:09:59] "GET /view/component/GOOGL/holdings/detail HTTP/1.1" 200 4169
+      Traceback (most recent call last):
+        File "/usr/local/lib/python3.3/dist-packages/bottle.py", line 783, in _handle
+          return route.call(**args)
+        File "/usr/local/lib/python3.3/dist-packages/bottle.py", line 1635, in wrapper
+          rv = callback(*a, **ka)
+        File "/home/blais/p/beancount/src/python/beancount/web/web.py", line 925, in wrapper
+          return callback(*args, **kwargs)
+        File "/home/blais/p/beancount/src/python/beancount/web/web.py", line 767, in holdings_byinstrument
+          aggregated_holdings = holdings.aggregate_by_base_quote(holdings_)
+        File "/home/blais/p/beancount/src/python/beancount/ops/holdings.py", line 133, in aggregate_by_base_quote
+          for key_holdings in grouped.values())
+        File "/home/blais/p/beancount/src/python/beancount/ops/holdings.py", line 133, in <genexpr>
+          for key_holdings in grouped.values())
+        File "/home/blais/p/beancount/src/python/beancount/ops/holdings.py", line 163, in aggregate_holdings_list
+          if total_book_value
+      cdecimal.DivisionByZero: [<class 'cdecimal.DivisionByZero'>]
+
+
+
+
   - Port all the code that uses realization to the new interface:
 
       beancount/ops/check_test.py:3:from beancount.core.realization_test import realizedoc
@@ -9,11 +39,6 @@ beancount: TODO
       beancount/ops/summarize_test.py:12:from beancount.core.realization import realize, dump_tree_balances
       beancount/ops/summarize_test.py:15:from beancount.core import realization
       beancount/web/web.py:22:from beancount.core import realization
-
-  - Port beancount.web.acctree to remove the dependency on tree_utils. Maybe
-    it's that time to move this to beancount.reports.tree_table and write tests
-    for them.
-
 
 
 
@@ -63,7 +88,6 @@ beancount: TODO
 
        src/python/beancount/web/acctree.py                    MISSING
        src/python/beancount/web/journal.py                    MISSING
-       src/python/beancount/utils/tree_utils.py               INCOMPLETE
 
        src/python/beancount/web/bottle_utils.py               MISSING
 
