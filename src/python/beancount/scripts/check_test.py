@@ -1,12 +1,12 @@
 import re
 
-from beancount.scripts import TestCase, docfile, capture, run_with_args
+from beancount.utils import test_utils
 from beancount.scripts import check
 
 
-class TestScriptCheck(TestCase):
+class TestScriptCheck(test_utils.TestCase):
 
-    @docfile
+    @test_utils.docfile
     def test_success(self, filename):
         """
         2013-01-01 open Expenses:Restaurant
@@ -16,11 +16,11 @@ class TestScriptCheck(TestCase):
           Expenses:Restaurant   50.02 USD
           Assets:Cash
         """
-        with capture() as stdout:
-            run_with_args(check.main, [filename])
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(check.main, [filename])
         r = self.assertLines("", stdout.getvalue())
 
-    @docfile
+    @test_utils.docfile
     def test_fail(self, filename):
         """
         2013-01-01 open Expenses:Restaurant
@@ -32,7 +32,7 @@ class TestScriptCheck(TestCase):
 
         2014-03-07 balance Assets:Cash  100 USD
         """
-        with capture() as stdout:
-            run_with_args(check.main, [filename])
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(check.main, [filename])
         self.assertTrue(re.search("Balance failed", stdout.getvalue()))
         self.assertTrue(re.search("Assets:Cash", stdout.getvalue()))

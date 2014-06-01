@@ -67,12 +67,6 @@ beancount: TODO
        src/python/beancount/web/views.py                      MISSING
        src/python/beancount/web/gviz.py                       MISSING
 
-
-
-  - Clean up code: remove all significant codes from __init__.py files, in
-    particular beancount.scripts.__init__, move to an util with tests.
-
-
   - web: Render a table of prices, in case there are only a few price points.
 
   - Merge Holdings tab into Shareholder's Equity, less tabs, similar report.
@@ -187,6 +181,14 @@ beancount: TODO
   - Convert to_decimal to 'D' everywhere... this is an important and nice convenience.
 
 * Current / Misc / To Be Classified
+
+  - (code) Make Position into a namedtuple with hashing instead of just an
+    object. See if we can remove its __hash__ method.
+
+  - Also, look at all the objects in b.core.data, and see if you can override
+    the hash function on them automatically in order to ignore the entry in
+    postings, and the listness in entry.postings. It would be nice to be able
+    to hash every directive type.
 
   - Does table.render_table support offsets for rendering regular tuples? It
     really should.

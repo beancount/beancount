@@ -2,12 +2,12 @@ import unittest
 
 from beancount import loader
 from beancount.plugins import tag_pending
-from beancount.scripts import docfile, capture, run_with_args
+from beancount.utils import test_utils
 
 
-class TestExampleTrackPending(unittest.TestCase):
+class TestExampleTrackPending(test_utils.TestCase):
 
-    @docfile
+    @test_utils.docfile
     def test_tag_pending(self, filename):
         """
         2013-01-01 open Expenses:Electricity
@@ -35,5 +35,5 @@ class TestExampleTrackPending(unittest.TestCase):
         self.assertEqual(set(['PENDING']), entries[5].tags)
         self.assertEqual(None, entries[6].tags)
 
-        with capture() as stdout:
-            run_with_args(tag_pending.main, [filename])
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(tag_pending.main, [filename])
