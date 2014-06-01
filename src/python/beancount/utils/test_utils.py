@@ -27,7 +27,8 @@ def run_with_args(function, args):
     """
     saved_argv = sys.argv
     try:
-        sys.argv = [function.__module__] + args
+        module = sys.modules[function.__module__]
+        sys.argv = [module.__file__] + args
         function()
     finally:
         sys.argv = saved_argv

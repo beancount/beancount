@@ -6,8 +6,6 @@ beancount: TODO
   - Complete full unittests coverage (as per find-missing-tests.py).
     Remaining (to be processed in this order):
 
-       src/python/beancount/utils/test_utils.py                     INCOMPLETE
-
        src/python/beancount/parser/printer.py                 INCOMPLETE
 
          Printer tests (not done) should work by doing a round-trip. In fact, run a
