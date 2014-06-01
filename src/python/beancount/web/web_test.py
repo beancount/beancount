@@ -76,7 +76,12 @@ def scrape(filename, predicate, port=9468, quiet=True):
     args = argparser.parse_args(args=[filename])
 
     thread = web.thread_server_start(args)
-    scrape_urls(url_format, predicate, '^/doc/')
+
+    # Skips:
+    # Docs cannot be read for external files.
+    # Components views... well there are just too many, makes the tests impossibly slow.
+    scrape_urls(url_format, predicate, '^/(doc|view/component)/')
+
     web.thread_server_shutdown(thread)
 
 
