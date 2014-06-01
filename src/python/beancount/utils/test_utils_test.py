@@ -86,10 +86,21 @@ class TestTestUtils(test_utils.TestCase):
 
         with self.assertRaises(AssertionError):
             self.assertIncludesEntries("""
+
               2014-02-01 * "GOOGLE PLAY"
                 Liabilities:US:Amex:BlueCash     -9.99 USD
                 Expenses:Fun:Music
+
             """, entries)
+
+        self.assertIncludesEntries("""
+
+          2014-01-30 * "AMAZON SERVICES-KIND866-216-107 / PRYETZFD58N DIGITAL" |
+            Liabilities:US:Amex:BlueCash                                           -12.74 USD
+            Expenses:Books
+
+        """, entries)
+
 
 
 
