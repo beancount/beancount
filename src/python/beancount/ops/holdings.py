@@ -269,7 +269,7 @@ def reduce_relative(holdings):
 
         # Sort the currency's holdings with decreasing values of market value.
         currency_holdings.sort(
-            key=lambda holding: holding.market_value,
+            key=lambda holding: holding.market_value or ZERO,
             reverse=True)
 
         # Output new holdings with the relevant values replaced.

@@ -100,12 +100,14 @@ def report_holdings_relative(currency, entries, options_map):
     # Reduce the holdings to relative (fractional) values.
     holdings_list = holdings.reduce_relative(holdings_list)
 
+    # Skipping the book value here because by combining it with market value %
+    # and price one could theoretically determined the total value of the
+    # portfolio.
     field_spec = [
         ('currency', ),
         ('cost_currency', ),
         ('cost_number', 'Average Cost', '{:,.2f}'.format),
         ('price_number', 'Price', '{:,.2f}'.format),
-        # Skipping the book value here.
-        ('market_value', '% of Portfolio', '{:,.1%}'.format),
+        ('market_value', 'Fraction', '{:,.5f}'.format),
     ]
     return table.create_table(holdings_list, field_spec)
