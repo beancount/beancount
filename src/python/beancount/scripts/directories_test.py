@@ -5,7 +5,7 @@ import os
 from os import path
 import shutil
 
-from beancount.scripts import docfile, capture, run_with_args
+from beancount.utils import test_utils
 from beancount.scripts import directories
 
 
@@ -51,7 +51,7 @@ class TestScriptCheckDirectories(unittest.TestCase):
             self.assertTrue(any(expected_account in message
                                 for expected_account in expected_error_accounts))
 
-    @docfile
+    @test_utils.docfile
     def test_invocation(self, filename):
         """
             2013-01-01 open Expenses:Restaurant
@@ -68,8 +68,8 @@ class TestScriptCheckDirectories(unittest.TestCase):
         for directory in self.TEST_DIRECTORIES:
             os.makedirs(path.join(self.tmpdir, directory))
 
-        with capture() as stdout:
-            run_with_args(directories.main, [filename, self.tmpdir])
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(directories.main, [filename, self.tmpdir])
         self.assertEqual(2, len(stdout.getvalue().splitlines()))
         matches = set(mo.group(1) for mo in re.finditer("'(.*?)'", stdout.getvalue()))
         clean_matches = set(match[len(self.tmpdir)+1:]
