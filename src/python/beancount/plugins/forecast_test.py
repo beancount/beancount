@@ -7,16 +7,6 @@ from beancount.parser import printer
 from beancount.utils import test_utils
 
 
-EXAMPLE_INPUT = """
-
-2011-01-01 open Expenses:Restaurant
-2011-01-01 open Assets:Cash
-
-2011-05-17 # "Something [MONTHLY]"
-  Expenses:Restaurant   50.02 USD
-  Assets:Cash
-
-"""
 
 class TestExampleForecast(test_utils.TestCase):
 
@@ -27,7 +17,17 @@ class TestExampleForecast(test_utils.TestCase):
         loader.uninstall_load_plugin(forecast.forecast_plugin)
 
     def test_forecast(self):
-        entries, _, __ = loader.load(EXAMPLE_INPUT, parse_method='string')
+        INPUT = textwrap.dedent("""
+
+            2011-01-01 open Expenses:Restaurant
+            2011-01-01 open Assets:Cash
+
+            2011-05-17 # "Something [MONTHLY]"
+              Expenses:Restaurant   50.02 USD
+              Assets:Cash
+
+        """)
+        entries, _, __ = loader.load(INPUT, parse_method='string')
         self.assertEqualEntries("""
 
             2011-01-01 open Expenses:Restaurant

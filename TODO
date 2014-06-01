@@ -15,8 +15,6 @@ beancount: TODO
 
        src/python/beancount/utils/test_utils.py                     INCOMPLETE
 
-       src/python/beancount/plugins/exclude_tag.py                  MISSING
-
        src/python/beancount/parser/printer.py                 INCOMPLETE
        src/python/beancount/parser/documents.py               INCOMPLETE
 
@@ -252,6 +250,16 @@ beancount: TODO
 
 
 * Current / Misc / To Be Classified
+
+  - Should we extend the syntax to allow the specification of loader plugins?
+    That might be an interesting idea... e.g.
+
+      plugin "beancount.plugins.forecast"
+
+    This is a powerful idea... means everyone could have their own little
+    custom mod function. We could provide a set of standard and useful ones.
+    And we would have to validate the produced entries to death, just to make
+    sure all the invariants are respected.
 
   (scripts)
   - bean-ledger: Write a script to convert to Ledger syntax. This should be easy!
