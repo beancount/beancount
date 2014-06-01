@@ -13,10 +13,9 @@ beancount: TODO
   - Complete full unittests coverage (as per find-missing-tests.py).
     Remaining (to be processed in this order):
 
-       src/python/beancount/plugins/forecast.py               INCOMPLETE
+       src/python/beancount/utils/test_utils.py                     INCOMPLETE
 
-            Add a routine to complete by parsed file.
-            Use it to complete this test and maybe simplify other test code.
+       src/python/beancount/plugins/exclude_tag.py                  MISSING
 
        src/python/beancount/parser/printer.py                 INCOMPLETE
        src/python/beancount/parser/documents.py               INCOMPLETE
@@ -37,6 +36,12 @@ beancount: TODO
 
        src/python/beancount/web/views.py                      MISSING
        src/python/beancount/web/gviz.py                       MISSING
+
+
+       src/python/beancount/loader.py                               INCOMPLETE
+
+
+
 
 
 

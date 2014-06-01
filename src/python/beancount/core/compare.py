@@ -59,7 +59,8 @@ def hash_entries(entries):
         entry_type = type(entry)
 
         hash_ = stable_hash_namedtuple(entry, {'fileloc', 'entry'})
-        assert hash_ not in entry_hash_dict
+        if hash_ in entry_hash_dict:
+            raise ValueError("Duplicate entry: {}".format(entry))
         entry_hash_dict[hash_] = entry
 
     assert len(entry_hash_dict) == len(entries)
