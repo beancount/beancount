@@ -2,48 +2,16 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-
-  - In bean-holdings, if an output file is selected and no format, automatically
-    guess the output format. You should be able to just say -o output.csv.
-
-  - Write tests for holdings.reduce_relative. Move the code for pricing holdings
-    at a value currency to holdings.py, maybe these should become a utility
-    function in prices actually, that performs this logic.
-    def beancount.prices.convert_to(currency, number, (base, quote)):
-    -> finish this from holdings.py
-
-    (You also have to complete ledgerhub's code to correctly extract various
-    prices... many broken extractors there, but that's a different story.)
-
-  - Finish realization: dump_tree_balances() should have a non-recursive
-    simplistic version you should be able to convert to, separately from the
-    acctree reporting and such.
-
   - Prices:
      Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
      ledgerhub-fetch-prices is borked, outputs Nones
+  - You also have to complete ledgerhub's code to correctly extract various
+    prices... many broken extractors there, but that's a different story.
 
-  - (Add items from keep)
 
-
-  - Implement bean-doctor print; also implement a comparison routine for
-    testing summarize and other.
-
-  - bean-ledger: Write a script to convert to Ledger syntax. This should be easy!
-
-  - Add emacs configuration to highlight beyond 90 in this specific project,
-    that does not use the fringe.
-  - We really do need a little function that will align a paragraph's
-    currencies automatically.
-
-  - Rename/simplify function names in beancount.core.account (see FIXMEs)
 
   - Complete full unittests coverage (as per find-missing-tests.py).
     Remaining (to be processed in this order):
-
-       src/python/beancount/core/realization.py               INCOMPLETE
-
-            realization_test.py --> COMPLETE THIS NOW!
 
        src/python/beancount/plugins/forecast.py               INCOMPLETE
 
@@ -56,38 +24,90 @@ beancount: TODO
        src/python/beancount/ops/summarize.py                  INCOMPLETE
        src/python/beancount/ops/pad.py                        INCOMPLETE
        src/python/beancount/ops/validation.py                 INCOMPLETE
+
        src/python/beancount/ops/check.py                      INCOMPLETE
+
+         Rename this file to balance to match the directive?
+         Not sure. Another file is named that way.
 
        src/python/beancount/web/acctree.py                    MISSING
        src/python/beancount/web/journal.py                    MISSING
-       src/python/beancount/utils/tree_utils.py               INCOMPLETE
 
        src/python/beancount/web/bottle_utils.py               MISSING
 
        src/python/beancount/web/views.py                      MISSING
        src/python/beancount/web/gviz.py                       MISSING
 
+
+
+  - Implement bean-doctor print, this debugging tool is a necessity.
+
+
+
+  - Rename/simplify function names in beacnount.core.account (see FIXMEs)
+  - Implement account.split() and perhaps remove references to
+    split(account.sep) everywhere.
+
+
+
+
+  - Add emacs configuration to highlight beyond 90 in this specific project,
+    that does not use the fringe.
+  - We really do need a little function that will align a paragraph's
+    currencies automatically.
+
+
+
+
+
+  - Check that an account without an Open directive has one that gets
+    automatically inserted for it in addition to the error that gets generated.
+
+
+
+
+
   - web: Render a table of prices, in case there are only a few price points.
+    We should also have a report type for prices.
 
   - Merge Holdings tab into Shareholder's Equity, less tabs, similar report.
     Complete the equity value page with prices.py, render the rates used to that page.
+
+
+
+
 
   - Build a more complete and representative of reality example file, bake, and
     share on ledger-cli
 
   - Begin an examples files, create links to all docs from README, even if incomplete
   - Convert all documentation to a GDoc
+  - Create cookbook
+
+
+
+
 
   - Add a test for --view option.
 
-  - MSSB documents aren't found... fix FIXMEs in documents.py
+
+
+  - BUG: MSSB documents aren't found... fix FIXMEs in documents.py
+
+
+
+  - Clean up the interface of loader.load(), it's ugly.
+  - Implement all the missing global pages.
+  - All errors should be displayed in an overlay
+
+
+
+
 
   - Fix all docstrings re. Account instance, artifacts of having had an Account object.
 
   - Configure and run a clean pylint on the entire codebase.
   - Add all docstrings with args Google-style.
-  - Clean up the interface of loader.load(), it's ugly.
-  - Implement all the missing global pages.
   - Fix all FIXMEs everywhere.
   - Add __author__ to all files?
 
@@ -119,8 +139,6 @@ beancount: TODO
       This works okay:
       2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
 
-  - Can you move realization out of core? It really belongs more in ops I think.
-
   - Make sure all exceptions do NOT end with a period, nor do any of the
     logging.*() calls.
 
@@ -128,6 +146,9 @@ beancount: TODO
 
   - Printer tests (not done) should work by doing a round-trip. In fact, run a
     round-trip test on my personal ledger file.
+
+
+
 
   - Add a test for this (somewhere else): If something like this occurs, which
     price should appear in the prices database? This should trigger a warning that
@@ -148,12 +169,19 @@ beancount: TODO
     which assumes that a price point will always be available if the unit is
     held at cost. Make a decision.
 
-  - Consider creating a switch that would auto-create accounts not seen yet,
-    for the purpose of making demos (not sure if that's a great idea though).
+
+
+
+
 
   - Make automatic price directives actually create a price entry in the list
     of output entries. This should simplify some of the code and allow this
     debugging output to be much clearer to the user.
+
+  - Consider creating a switch that would auto-create accounts not seen yet,
+    for the purpose of making demos (not sure if that's a great idea though).
+
+
 
 
   - "Position with lots goes negative" should output an error message and be caught, because if it is run by the web
@@ -172,15 +200,65 @@ beancount: TODO
           raise ValueError("Position with lots goes negative: {}".format(self))
       ValueError: Position with lots goes negative: Inventory(-2.00 PUMP {20.00 USD})
 
-  - Make sure you can parse Amounts with space between the - sign and the number:
-    "- 20 USD" kicks an error.
+
+
 
   - Review usage of @parsedoc vs. @loaddoc, maybe we should be more thorough
     about that and use @loaddoc in more places, as it performs data validation.
 
+  - Maybe all the decorators for docstring parsers should be moved to a
+    dedicated module. That would make sense.
+
+
+
+
+  - COOL! I can subclass the namedtuples!  Do this to make printing the
+    postings and entries much easier.
+
+      class Posting(_Posting):
+          def __str__(self):
+              return _Posting.__str__(self._replace(entry=None))
+
+  - Also derive from namedtuple to provide a stable hash function instead of
+    code in beancount.core.compare.
+
+  - Can we make Inventory a subclass of 'list'?  That would be real nice, would
+    make a lot of sense.
+
+
+
+
+  - Parsing this does not fail; it really should, this is a bug:
+      "2013-04-01 balance Assets:Bank:Checking   555.00 CAD.11"
+
   - Convert to_decimal to 'D' everywhere... this is an important and nice convenience.
 
+  - Make sure you can parse Amounts with space between the - sign and the number:
+    "- 20 USD" kicks an error.
+
+
+
+  - Docuemntation:
+
+    * Beancount: document "choices": subaccounts vs tags vs payees, postings at
+      leaves only or not,... Have a section to discuss these choices in the
+      documentation.
+
+
+
 * Current / Misc / To Be Classified
+
+  (scripts)
+  - bean-ledger: Write a script to convert to Ledger syntax. This should be easy!
+
+  - Beancount: make a script that prints out just the chart of accounts using the
+    list of parser entries, just the open entries
+
+  - Write a script that will automatically fetch the dates I held various
+    positions at cost for throughout the history and a list of weekly dates to
+    fetch rates for.
+
+
 
   - (code) Make Position into a namedtuple with hashing instead of just an
     object. See if we can remove its __hash__ method.
@@ -193,27 +271,16 @@ beancount: TODO
   - Does table.render_table support offsets for rendering regular tuples? It
     really should.
 
+  - (reports) Implement account rendering ordering properly.
+
   - Write a script to autoamtically align a region's transactions, or an entire
     file.
 
+  - Check out bitbucket CGI interface w.r.t. linking to source code, is the
+    newer hg better?  We should be able to link to specific lines in versions.
+
   - (idea) An interesting constraint would be to add an option not to allow any
     postings to any account that is not a leaf account.
-
-  - (precision) FIXME: The better way to render numbers at the end would be to
-    let the user specify a desired rendering precision for each currency. Deal
-    with this throughout better.
-
-       "Hmm, that's right, I should probably set a maximum precision for rendering
-       numbers which require more digits than the default of 2. This is an
-       interesting one: I need to do something a bit more thorough about precision; 2
-       is not appropriate for everything either. I need to figure out a way to let a
-       user specify a desired rendering precision for each currency...
-       (probably via some options, unfortunately). In the meantime, I've made it so
-       that the max number of digits rendered is 5.
-
-       There's also the issue of setting the max digits during arithmetic operations,
-       which should also not be 28. I'll deal with that later."
-
 
   - (filter) Idea: For "virtual postings", you could mark certain tags to be
     excluded by default, to be included only explicitly. e.g. #virtual tag would
@@ -558,6 +625,32 @@ beancount: TODO
   - (prices) When attempting a conversion in holdings, if the rate isn't
     available directly, you should always attempt to value it indirectly via
     USD or EUR.
+
+
+** Precision
+
+  - (precision) FIXME: The better way to render numbers at the end would be to
+    let the user specify a desired rendering precision for each currency. Deal
+    with this throughout better.
+
+       "Hmm, that's right, I should probably set a maximum precision for rendering
+       numbers which require more digits than the default of 2. This is an
+       interesting one: I need to do something a bit more thorough about precision; 2
+       is not appropriate for everything either. I need to figure out a way to let a
+       user specify a desired rendering precision for each currency...
+       (probably via some options, unfortunately). In the meantime, I've made it so
+       that the max number of digits rendered is 5.
+
+       There's also the issue of setting the max digits during arithmetic operations,
+       which should also not be 28. I'll deal with that later."
+
+  - Automatically detect precision of each currency based on usage in file:
+
+      (Idea from Daniel Clemente): "You could use auto-detection: for each
+      currency, use the maximum number of decimals that the input file used. E.g.
+      if user writes 351.64 PLN, 151.1 PLN, 155 PLN, then use 2 decimals.
+      Alternatively, use "the most common" number of decimals. If 90% transactions
+      have 3 decimals, 5% have 4, 5% have 0, use 3."
 
 
 ** Padding documentation from email

@@ -1,23 +1,23 @@
 import unittest
 
-from beancount.core.realization_test import realizedoc
+from beancount.loader import loaddoc
 from beancount.parser import printer
 
 
 ## FIXME: this needs become TestCheck().
 
-class __TestRealization(unittest.TestCase):
+class __TestCheck(unittest.TestCase):
 
-    @realizedoc
-    def test_check_error(self, entries, real_accounts, errors):
+    @loaddoc
+    def test_check_error(self, entries, _, __):
         """
           2013-05-01 open Assets:US:Checking   USD
           2013-05-03 check Assets:US:Checking   100 USD
         """
         self.assertEqual(len(errors), 1)
 
-    @realizedoc
-    def test_check_okay(self, entries, real_accounts, errors):
+    @loaddoc
+    def test_check_okay(self, entries, _, __):
         """
           2013-05-01 open Assets:US:Checking   USD
           2013-05-01 open Expenses:Something
@@ -33,8 +33,8 @@ class __TestRealization(unittest.TestCase):
 
     # This test ensures that the 'check' directives apply at the beginning of
     # the day.
-    @realizedoc
-    def test_check_samedate(self, entries, real_accounts, errors):
+    @loaddoc
+    def test_check_samedate(self, entries, _, __):
         """
           2013-05-01 open Assets:US:Checking   USD
           2013-05-01 open Expenses:Something

@@ -1,12 +1,29 @@
 """Realization of specific lists of account postings into reports.
+
+This code converts a list of entries into a tree of RealAccount nodes (which
+stands for "realized accounts"). The RealAccount objects contain lists of
+Posting instances instead of Transactions, or other entry types that are
+attached to an account, such as a Balance or Note entry.
+
+The interface of RealAccount corresponds to that of a regular Python dict, where
+the keys are the names of the individual components of an account's name, and
+the values are always other RealAccount instances. If you want to get an account
+by long account name, there are helper functions in this module for this purpose
+(see realization.get(), for instance). RealAccount instances also contain the
+final balance of that account, resulting from its list of postings.
+
+You should not build RealAccount trees yourself; instead, you should filter the
+list of desired directives to display and call the realize() function with them.
 """
+import io
 import sys
-from itertools import chain, repeat
-from collections import OrderedDict
+import itertools
+import collections
 import operator
 import copy
+import itertools
 
-from beancount.core.inventory import Inventory
+from beancount.core import inventory
 from beancount.core.amount import amount_sortkey
 from beancount.utils import misc_utils
 from beancount.core import data
@@ -14,136 +31,174 @@ from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Do
 from beancount.core.data import Posting
 from beancount.core.account import account_name_leaf, account_name_parent
 from beancount.core import account
-from beancount.utils import tree_utils
 
 
-class RealAccount:
+class RealAccount(dict):
     """A realized account, inserted in a tree, that contains the list of realized entries.
 
     Attributes:
-      fullname: A string, the full name of the corresponding account.
+      account: A string, the full name of the corresponding account.
+      postings: A list of postings associated with this accounting (does not
+        include the postings of children accounts).
       balance: The final balance of the list of postings associated with this account.
-      children: A dict of children names to children RealAccount instances.
-      postings: A list of postings associated with this accounting (does not include
-        the postings of children accounts).
     """
+    __slots__ = ('account', 'postings', 'balance')
 
-    # FIXME: Convert this class to be an instance of OrderedDict; the resulting
-    # interface will be much easier to understand.q
-
-    # FIXME: rename fullname to 'account_name'.
-    __slots__ = 'fullname balance children postings'.split()
-
-    def __init__(self, account_name=None):
+    def __init__(self, account_name, *args, **kwargs):
         """Create a RealAccount instance.
 
         Args:
-          account_name: a string, which may be empty (but never None).
-          account: an Account instance, which may be None if there is no associated
-                   account to this node.
-        Returns:
-          A new RealAccount instance.
+          account_name: a string, the name of the account. Maybe not be None.
         """
+        super().__init__(*args, **kwargs)
         assert isinstance(account_name, str)
-        self.fullname = account_name
-
-        self.balance = Inventory()
-        self.children = OrderedDict()
+        self.account = account_name
         self.postings = []
+        self.balance = inventory.Inventory()
 
-    def __str__(self):
-        """Return a human-readable string representation of this RealAccount.
-
-        Returns:
-          A readable string, with the name and the balance.
-        """
-        return "<RealAccount '{}' {}>".format(self.fullname, self.balance)
-
-    def __getitem__(self, childname):
-        """Return a child account from this account.
+    def __setitem__(self, key, value):
+        """Prevent the setting of non-string or non-empty keys on this dict.
 
         Args:
-          childname: A string, the name of the child of this account.
-        Returns:
-          A RealAccount instance for the child.
+          key: The dictionary key. Must be a string.
+          value: The value, must be a RealAccount instance.
+        Raises:
+          KeyError: If the key is not a string, or is invalid.
+          ValueError: If the value is not a RealAccount instance.
         """
-        if not childname:
-            return self
-        if account.sep in childname:
-            directname = childname.split(account.sep, 1)[0]
-            restname = childname[len(directname)+1:]
-            child = self.children[directname]
-            return child[restname]
+        if not isinstance(key, str) or not key:
+            raise KeyError("Invalid RealAccount key: '{}'".format(key))
+        if not isinstance(value, RealAccount):
+            raise ValueError("Invalid RealAccount value: '{}'".format(value))
+        if not value.account.endswith(key):
+            raise ValueError("RealAccount name '{}' inconsistent with key: '{}'".format(
+                value.account, key))
+        return super().__setitem__(key, value)
+
+    def copy(self):
+        """Override dict.copy() to clone a RealAccount.
+
+        This is only necessary to correctly implement the copy method.
+        Otherwise, calling .copy() on a RealAccount instance invokes the base
+        class' method, which return just a dict.
+
+        Returns:
+          A cloned instance of RealAccount, with all members shallow-copied.
+        """
+        return copy.copy(self)
+
+    def __eq__(self, other):
+        """Equality predicate. All attributes are compared.
+
+        Args:
+          other: Another instance of RealAccount.
+        Returns:
+          A boolean, True if the two real accounts are equal.
+        """
+        return (dict.__eq__(self, other) and
+                self.account == other.account and
+                self.balance == other.balance and
+                self.postings == other.postings)
+
+    def __ne__(self, other):
+        """Not-equality predicate. See __eq__.
+
+        Args:
+          other: Another instance of RealAccount.
+        Returns:
+          A boolean, True if the two real accounts are not equal.
+        """
+        return not self.__eq__(other)
+
+
+def iter_children(real_account, leaf_only=False):
+    """Iterate this account node and all its children, depth-first.
+
+    Args:
+      real_account: An instance of RealAccount.
+      leaf_only: A boolean flag, true if we should yield only leaves.
+    Yields:
+      Instances of RealAccount, beginning with this account. The order is
+      undetermined.
+    """
+    if leaf_only:
+        if len(real_account) == 0:
+            yield real_account
         else:
-            return self.children[childname]
-
-    # FIXME: During cleanup, swap these two method names with appropriate renames.
-    def __iter__(self):
-        """Iterate this account node and all its children, depth-first.
-
-        Yields:
-          Instances of RealAccount, beginning with this account. The order is
-          undetermined.
-        """
-        yield self
-        for child in self.children.values():
-            for subchild in child:
-                yield subchild
-
-    def get_children(self):
-        """Get the children of this node.
-
-        Returns:
-          An iterator of RealAccount instances.
-        """
-        return self.children.values()
-
-    # FIXME: Do I really need to support more than direct children here? Remove
-    # if possible before 2.0 release.
-    def __contains__(self, account_name_leaf):
-        """True if the given string is in this RealAccount instance.
-
-        Args:
-          account_name: A string, the leaf name of a child account of this node, or
-            of a more distant child of this node.
-        Returns:
-          A boolean, true the name is a child of this node.
-        """
-        directname = account_name_leaf.split(account.sep, 1)[0]
-        restname = account_name_leaf[len(directname)+1:]
-        try:
-            child = self.children[directname]
-            if restname:
-                return child.__contains__(restname)
-            else:
-                return True
-        except KeyError:
-            return False
-
-    def add(self, real_account):
-        """Add a new child to this real account.
-
-        Args:
-          real_account: An instance of RealAccount to add as a child to this node.
-        """
-        ## FIXME: When would this trigger and why?
-        leafname = account_name_leaf(real_account.fullname)
-        self.children[leafname] = real_account
-
-    def asdict(self):
-        """Return a dictionary hierachy of account names.
-        This is used mainly for testing.
-
-        Returns:
-          A dict of strings to dicts, recursively.
-        """
-        return {name: child.asdict()
-                for name, child in self.children.items()}
+            for key, real_child in sorted(real_account.items()):
+                for real_subchild in iter_children(real_child, leaf_only):
+                    yield real_subchild
+    else:
+        yield real_account
+        for key, real_child in sorted(real_account.items()):
+            for real_subchild in iter_children(real_child):
+                yield real_subchild
 
 
-# FIXME: Can you remove 'min_accounts' and move that to a second step.
-# (This is only called from views, and only for root accounts. Do it, simplify.)
-def realize(entries):
+def get(real_account, account_name, default=None):
+    """Fetch the subaccount name from the real_account node.
+
+    Args:
+      real_account: An instance of RealAccount, the parent node to look for
+        children of.
+      account_name: A string, the name of a possibly indirect child leaf
+        found down the tree of 'real_account' nodes.
+      default: The default value that should be returned if the child
+        subaccount is not found.
+    Returns:
+      A RealAccount instance for the child, or the default value, if the child
+      is not found.
+    """
+    if not isinstance(account_name, str):
+        raise ValueError
+    components = account_name.split(account.sep)
+    for component in components:
+        real_child = real_account.get(component, default)
+        if real_child is default:
+            return default
+        real_account = real_child
+    return real_account
+
+
+def get_or_create(real_account, account_name):
+    """Fetch the subaccount name from the real_account node.
+
+    Args:
+      real_account: An instance of RealAccount, the parent node to look for
+        children of, or create under.
+      account_name: A string, the name of the direct or indirect child leaf
+        to get or create.
+    Returns:
+      A RealAccount instance for the child, or the default value, if the child
+      is not found.
+    """
+    if not isinstance(account_name, str):
+        raise ValueError
+    components = account_name.split(account.sep)
+    path = []
+    for component in components:
+        path.append(component)
+        real_child = real_account.get(component, None)
+        if real_child is None:
+            real_child = RealAccount(account.join(*path))
+            real_account[component] = real_child
+        real_account = real_child
+    return real_account
+
+
+def contains(real_account, account_name):
+    """True if the given account node contains the subaccount name.
+
+    Args:
+      account_name: A string, the name of a direct or indirect subaccount of
+        this node.
+    Returns:
+      A boolean, true the name is a child of this node.
+    """
+    return get(real_account, account_name) is not None
+
+
+def realize(entries, min_accounts=None):
     """Group entries by account, into a "tree" of realized accounts. RealAccount's
     are essentially containers for lists of postings and the final balance of
     each account, and may be non-leaf accounts (used strictly for organizing
@@ -154,256 +209,198 @@ def realize(entries):
     Posting legs that belong to the account. Here's a simple diagram that
     summarizes this seemingly complex, but rather simple data structure:
 
-       +-------------+         +------+
-       | RealAccount |---------| Open |
-       +-------------+         +------+
-                                   |
-                                   v
-                              +---------+     +-------------+
-                              | Posting |---->| Transaction |
-                              +---------+     +-------------+
-                                   |                         \
-                                   |                       +---------+
-                                   |                       | Posting |
-                                   v                       +---------+
-                                +-----+
-                                | Pad |
-                                +-----+
-                                   |
-                                   v
-                              +---------+
-                              | Balance |
-                              +---------+
-                                   |
-                                   v
-                               +-------+
-                               | Close |
-                               +-------+
-                                   |
-                                   .
+       +-------------+ postings  +------+
+       | RealAccount |---------->| Open |
+       +-------------+           +------+
+                                     |
+                                     v
+                                +---------+     +-------------+
+                                | Posting |---->| Transaction |
+                                +---------+     +-------------+
+                                     |                         \
+                                     v                       +---------+
+                                  +-----+                    | Posting |
+                                  | Pad |                    +---------+
+                                  +-----+
+                                     |
+                                     v
+                                +---------+
+                                | Balance |
+                                +---------+
+                                     |
+                                     v
+                                 +-------+
+                                 | Close |
+                                 +-------+
+                                     |
+                                     .
 
     Args:
-      entries: A list of directive instances.
+      entries: A list of directives.
     Returns:
       The root RealAccount instance.
     """
+    # Create lists of the entries by account.
+    postings_map = group_by_account(entries)
 
-    # FIXME: Simplify this here by creating RealAccount from a defaultdict and
-    # set the names in a second stage.
+    # Create a RealAccount tree and compute the balance for each.
+    real_root = RealAccount('')
+    for account_name, postings in postings_map.items():
+        real_account = get_or_create(real_root, account_name)
+        real_account.postings = postings
+        real_account.balance = compute_postings_balance(postings)
 
-    real_dict = {}
+    # Ensure a minimum set of accounts that should exist. This is typically
+    # called with an instance of AccountTypes to make sure that those exist.
+    if min_accounts:
+        for account_name in min_accounts:
+            get_or_create(real_root, account_name)
+
+    return real_root
+
+
+def group_by_account(entries):
+    """Create lists of postings and balances by account.
+
+    This routine aggregates postings and entries grouping them by account name.
+    The resulting lists contain postings in-lieu of Transaction directives, but
+    the other directives are stored as entries. This yields a list of postings
+    or other entries by account. All references to accounts are taken into
+    account.
+
+    Args:
+      entries: A list of directives.
+    Returns:
+       A mapping of account name to list of postings, sorted in the same order
+       as the entries.
+    """
+    postings_map = collections.defaultdict(list)
     for entry in entries:
 
         if isinstance(entry, Transaction):
-            # Update the balance inventory for each of the postings' accounts.
+            # Insert an entry for each of the postings.
             for posting in entry.postings:
-                real_account = append_entry_to_real_account(real_dict,
-                                                            posting.account, posting)
-                real_account.balance.add_position(posting.position, allow_negative=True)
+                postings_map[posting.account].append(posting)
 
         elif isinstance(entry, (Open, Close, Balance, Note, Document)):
             # Append some other entries in the realized list.
-            append_entry_to_real_account(real_dict, entry.account, entry)
+            postings_map[entry.account].append(entry)
 
         elif isinstance(entry, Pad):
             # Insert the pad entry in both realized accounts.
-            append_entry_to_real_account(real_dict, entry.account, entry)
-            append_entry_to_real_account(real_dict, entry.account_pad, entry)
+            postings_map[entry.account].append(entry)
+            postings_map[entry.account_pad].append(entry)
 
-    return create_real_accounts_tree(real_dict)
-
-
-def ensure_min_accounts(real_account, min_accounts):
-    """Ensure that the given accounts are added to the given realization.
-
-    Args:
-      real_account: An instance of RealAccount, the root account.
-      min_accounts: An list of child account names to ensure exist as child
-        of this account.
-    Returns:
-      The real_account instance is returned modified.
-    """
-    # Ensure the minimal list of accounts has been created.
-    for account_name in min_accounts:
-        if account_name not in real_account:
-            real_account.add(RealAccount(account_name))
-    return real_account
+    return postings_map
 
 
-# FIXME: You can remove this method, use a defaultdict(account_name -> postings-list)
-# in the caller and get rid of this call.
-# Compute the balances in a second step.
-def append_entry_to_real_account(real_dict, account_name, entry):
-    """Append an account's posting to its corresponding account in the real_dict
-    dictionary. The relevance of this method is that it creates RealAccount
-    instances on-demand.
+def compute_postings_balance(postings):
+    """Compute the balance of a list of Postings's positions.
 
     Args:
-      real_dict: A dictionary of full account name to RealAccount instance.
-      account_name: A string, the account name to associate the entry to.
+      postings: A list of Posting instances and other directives (which are
+        skipped).
     Returns:
-      The RealAccount instance that this entry was associated with.
+      An Inventory.
     """
-    # Create the account, if not already there.
-    try:
-        real_account = real_dict[account_name]
-    except KeyError:
-        real_account = RealAccount(account_name)
-        real_dict[account_name] = real_account
-
-    # If specified, add the new entry to the list of postings.
-    assert entry is not None
-    real_account.postings.append(entry)
-
-    return real_account
+    balance = inventory.Inventory()
+    for posting in postings:
+        if isinstance(posting, data.Posting):
+            balance.add_position(posting.position, allow_negative=True)
+    return balance
 
 
-def create_real_accounts_tree(real_dict):
-    """Create a full tree of realized accounts from leaf nodes.
+def filter(real_account, predicate):
+    """Filter a RealAccount tree of nodes by the predicate.
+
+    This function visits the tree and applies the predicate on each node. It
+    returns a partial clone of RealAccount whereby on each node
+    - either the predicate is true, or
+    - for at least one child of the node the predicate is true.
+    All the leaves have the predicate be true.
 
     Args:
-      real_dict: a dict of of name to RealAccount instances.
+      real_account: An instance of RealAccount.
+      predicate: A callable/function which accepts a real_account and returns
+        a boolean. If the function returns True, the node is kept.
     Returns:
-      A RealAccount instance, the root node that contains the full tree
-      of RealAccount instances implied by the nodes given as input.
-    """
-    assert isinstance(real_dict, dict)
-    full_dict = real_dict.copy()
-
-    # Create root account (in case the real_dict is empty).
-    root_account = RealAccount('')
-    full_dict[''] = root_account
-
-    for real_account in real_dict.values():
-        while True:
-            parent_name = account_name_parent(real_account.fullname)
-            if parent_name is None:
-                break
-            try:
-                parent_account = full_dict[parent_name]
-            except KeyError:
-                parent_account = RealAccount(parent_name)
-                full_dict[parent_name] = parent_account
-
-            parent_account.add(real_account)
-            real_account = parent_account
-
-    # Return the root account node.
-    return root_account
-
-
-def filter_tree(real_account, predicate):
-    """Visit the tree and apply the predicate on each node;
-    return a mapping of nodes where the predicate was true,
-    and of nodes which has children with the predicate true as well.
+      A shallow clone of RealAccount is always returned.
     """
     assert isinstance(real_account, RealAccount)
 
-    children_copy = OrderedDict()
-    for child in real_account.get_children():
-        child_copy = filter_tree(child, predicate)
-        if child_copy is not None:
-            leafname = account_name_leaf(child.fullname)
-            children_copy[leafname] = child_copy
+    real_copy = RealAccount(real_account.account)
+    real_copy.balance = real_account.balance
+    real_copy.postings = real_account.postings
 
-    if children_copy or predicate(real_account):
-        real_account_copy = copy.copy(real_account)
-        real_account_copy.children = children_copy
-        return real_account_copy
+    for child_name, real_child in real_account.items():
+        real_child_copy = filter(real_child, predicate)
+        if real_child_copy is not None:
+            real_copy[child_name] = real_child_copy
+
+    if len(real_copy) > 0 or predicate(real_account):
+        return real_copy
 
 
-def get_subpostings(real_account):
-    """Given a RealAccount instance, return a sorted list of all its postings and
-    the postings of its child accounts."""
+def get_postings(real_account):
+    """Return a sorted list a RealAccount's postings and children.
 
+    Args:
+      real_account: An instance of RealAccount.
+    Returns:
+      A list of Posting or directories.
+    """
+    # We accumulate all the postings at once here instead of incrementally
+    # because we need to return them sorted.
     accumulator = []
-    _get_subpostings(real_account, accumulator)
+    for real_child in iter_children(real_account):
+        accumulator.extend(real_child.postings)
     accumulator.sort(key=data.posting_sortkey)
     return accumulator
 
-def _get_subpostings(real_account, accumulator):
-    "Internal recursive routine to get all the child postings."
-    accumulator.extend(real_account.postings)
-    for child_account in real_account.get_children():
-        _get_subpostings(child_account, accumulator)
-
-
-def dump_tree_balances(real_account, foutput=None):
-    """Dump a simple tree of the account balances at cost, for debugging."""
-
-    if foutput is None:
-        foutput = sys.stdout
-
-    lines = list(tree_utils.render(
-        real_account,
-        lambda ra: ra.fullname.split(account.sep)[-1],
-        lambda ra: sorted(ra.get_children(), key=lambda x: x.fullname)))
-    if not lines:
-        return
-    width = max(len(line[0] + line[2]) for line in lines)
-
-    for line_first, line_next, account_name, real_account in lines:
-        last_entry = real_account.postings[-1] if real_account.postings else None
-        balance = getattr(real_account, 'balance', None)
-        if not balance.is_empty():
-            amounts = balance.get_cost().get_amounts()
-            positions = ['{0.number:12,.2f} {0.currency}'.format(amount)
-                         for amount in sorted(amounts, key=amount_sortkey)]
-        else:
-            positions = ['']
-
-        for position, line in zip(positions, chain((line_first + account_name,),
-                                                   repeat(line_next))):
-            foutput.write('{:{width}}   {:16}\n'.format(line, position, width=width))
-
-
-def compare_realizations(real_accounts1, real_accounts2):
-    """Compare two realizations; return True if the balances are equal
-    for all accounts."""
-    real1 = copy.copy(real_accounts1)
-    real2 = copy.copy(real_accounts2)
-    for account_name, real_account1 in real1.items():
-        real_account2 = real2.pop(account_name)
-        balance1 = real_account1.balance
-        balance2 = real_account2.balance
-        if balance1 != balance2:
-            return False
-    return True
-
-
-def real_cost_as_dict(real_accounts):
-    """Convert a tree of real accounts as a dict for easily doing
-    comparisons for testing."""
-    return {real_account.fullaname: str(real_account.balance.get_cost())
-            for account_name, real_account in real_accounts.items()
-            if real_account.fullname}
-
 
 def iterate_with_balance(postings_or_entries):
-    """Iterate over the entries accumulating the balance.
-    For each entry, it yields
+    """Iterate over the entries, accumulating the running balance.
 
-      (entry, change, balance)
+    For each entry, this yields tuples of the form:
 
-    'entry' is the entry for this line. If the list contained Posting instance,
-    this yields the corresponding Transaction object.
+      (entry, postings, change, balance)
 
-    'change' is an Inventory object that reflects the change due to this entry
-    (this may be multiple positions in the case that a single transaction has
-    multiple legs).
+    entry: This is the directive for this line. If the list contained Posting
+      instance, this yields the corresponding Transaction object.
+    postings: A list of postings on this entry that affect the balance. Only the
+      postings encountered in the input list are included; only those affect the
+      balance. If 'entry' is not a Transaction directive, this should always be
+      an empty list. We preserve the original ordering of the postings as they
+      appear in the input list.
+    change: An Inventory object that reflects the total change due to the
+      postings from this entry that appear in the list. For example, if a
+      Transaction has three postings and two are in the input list, the sum of
+      the two postings will be in the 'change' Inventory object. However, the
+      position for the transactions' third posting--the one not included in the
+      input list--will not be in this inventory.
+    balance: An Inventory object that reflects the balance *after* adding the
+      'change' inventory due to this entry's transaction. The 'balance' yielded
+      is never None, even for entries that do not affect the balance, that is,
+      with an empty 'change' inventory. It's up to the caller, the one rendering
+      the entry, to decide whether to render this entry's change for a
+      particular entry type.
 
-    The 'balance' yielded is never None; it's up to the one displaying the entry
-    to decide whether to render for a particular type.
+    Note that if the input list of postings_or_entries is not in sorted date
+    order, two postings for the same entry appearing twice with a different date
+    in between will cause the entry appear twice. This is correct behavior, and
+    it is expected that in practice this should never happen anyway, because the
+    list of postings or entries should always be sorted. This method attempts to
+    detect this and raises an assertion if this is seen.
 
-    Also, multiple postings for the same transaction are de-duped
-    and when a Posting is encountered, the parent Transaction entry is yielded,
-    with the balance updated for just the postings that were in the list.
-    (We attempt to preserve the original ordering of the postings as much as
-    possible.)
+    Args:
+      postings_or_entries: A list of postings or directive instances.
+        Postings affect the balance; other entries do not.
+    Yields:
+      Tuples of (entry, postings, change, balance) as described above.
     """
 
     # The running balance.
-    balance = Inventory()
+    balance = inventory.Inventory()
 
     # Previous date.
     prev_date = None
@@ -412,21 +409,24 @@ def iterate_with_balance(postings_or_entries):
     date_entries = []
 
     first = lambda pair: pair[0]
-    for entry in postings_or_entries:
+    for posting_or_entry in postings_or_entries:
 
         # Get the posting if we are dealing with one.
-        if isinstance(entry, Posting):
-            posting = entry
+        if isinstance(posting_or_entry, Posting):
+            posting = posting_or_entry
             entry = posting.entry
         else:
             posting = None
+            entry = posting_or_entry
 
         if entry.date != prev_date:
+            assert prev_date is None or entry.date > prev_date, (
+                "Invalid date order for postings: {} > {}".format(prev_date, entry.date))
             prev_date = entry.date
 
             # Flush the dated entries.
             for date_entry, date_postings in date_entries:
-                change = Inventory()
+                change = inventory.Inventory()
                 if date_postings:
                     # Compute the change due to this transaction and update the
                     # total balance at the same time.
@@ -454,7 +454,7 @@ def iterate_with_balance(postings_or_entries):
 
     # Flush the final dated entries if any, same as above.
     for date_entry, date_postings in date_entries:
-        change = Inventory()
+        change = inventory.Inventory()
         if date_postings:
             for date_posting in date_postings:
                 change.add_position(date_posting.position, True)
@@ -463,65 +463,116 @@ def iterate_with_balance(postings_or_entries):
     date_entries.clear()
 
 
-# FIXME: TODO, implement these properly.
+def dump(root_account):
+    """Convert a RealAccount node to a line of lines.
 
-def reorder_accounts_tree(real_accounts):
-    """Reorder the children in a way that is sensible for display.
-    We want the most active accounts near the top, and the least
-    important ones at the bottom."""
+    Note: this is not meant to be used to produce text reports; the reporting
+    code should produce an intermediate object that contains the structure of
+    it, which can then be rendered to ASCII, HTML or CSV formats. This is
+    intended as a convenient little function for dumping trees of data for
+    debugging purposes.
 
-    reorder_accounts_node_by_declaration(real_accounts.get_root())
+    Args:
+      root_account: A RealAccount instance.
+    Returns:
+      A list of tuples of (first_line, continuation_line, real_account) where
+        first_line: A string, the first line to render, which includes the
+          account name.
+        continuation_line: A string, further line to render if necessary.
+        real_account: The rRealAccount instance which corresponds to this
+          line.
+    """
+    # Compute all the lines ahead of time in order to calculate the width.
+    lines = []
 
+    # Start with the root node. We push the constant prefix before this node,
+    # the account name, and the RealAccount instance. We will maintain a stack
+    # of children nodes to render.
+    stack = [('', root_account.account, root_account, True)]
+    while stack:
+        prefix, name, real_account, is_last = stack.pop(-1)
 
-def reorder_accounts_node_by_declaration(real_account):
-
-    children = []
-    for child_account in real_account.children:
-        fileloc = reorder_accounts_node_by_declaration(child_account)
-        children.append((fileloc, child_account))
-
-    children.sort()
-    real_account.children[:] = [x[1] for x in children]
-
-    print(real_account.fullname)
-    for fileloc, child in children:
-        print('  {:64}  {}'.format(child.name, fileloc))
-    print()
-
-    if real_account.postings:
-        fileloc = real_account.postings[0].fileloc
-    else:
-        fileloc = children[0][0]
-    return fileloc
-
-
-
-def reorder_accounts_node_by_date(real_account):
-
-    children = []
-    for child_account in real_account.children:
-        reorder_accounts_node_by_date(child_account)
-        children.append((child_date, child_account))
-    children.sort(reverse=True)
-
-    real_account.children[:] = [x[1] for x in children]
-
-    last_date = children[0][0] if children else datetime.date(1970, 1, 1)
-
-    if real_account.postings:
-        last_posting = real_account.postings[-1]
-        if hasattr(last_posting, 'date'):
-            date = last_posting.date
+        if real_account is root_account:
+            # For the root node, we don't want to render any prefix.
+            first = cont = ''
         else:
-            date = last_posting.entry.date
+            # Compute the string that precedes the name directly and the one belwo
+            # that for the continuation lines.
+            #  |
+            #  @@@ Bank1    <----------------
+            #  @@@ |
+            #  |   |-- Checking
+            if is_last:
+                first = prefix + PREFIX_LEAF_1
+                cont = prefix + PREFIX_LEAF_C
+            else:
+                first = prefix + PREFIX_CHILD_1
+                cont = prefix + PREFIX_CHILD_C
 
-        if date > last_date:
-            last_date = date
+        # Compute the name to render for continuation lines.
+        #  |
+        #  |-- Bank1
+        #  |   @@@       <----------------
+        #  |   |-- Checking
+        if len(real_account) > 0:
+            cont_name = PREFIX_CHILD_C
+        else:
+            cont_name = PREFIX_LEAF_C
 
-    return last_date
+        # Add a line for this account.
+        if not (real_account is root_account and not name):
+            lines.append((first + name,
+                          cont + cont_name,
+                          real_account))
+
+        # Push the children onto the stack, being careful with ordering and
+        # marking the last node as such.
+        child_items = sorted(real_account.items(), reverse=True)
+        if child_items:
+            child_iter = iter(child_items)
+            child_name, child_account = next(child_iter)
+            stack.append((cont, child_name, child_account, True))
+            for child_name, child_account in child_iter:
+                stack.append((cont, child_name, child_account, False))
+
+    if not lines:
+        return lines
+
+    # Compute the maximum width of the lines and convert all of them to the same
+    # maximal width. This makes it easy on the client.
+    max_width = max(len(first_line) for first_line, _, __ in lines)
+    line_format = '{{:{width}}}'.format(width=max_width)
+    return [(line_format.format(first_line),
+             line_format.format(cont_line),
+             real_account)
+            for (first_line, cont_line, real_account) in lines]
 
 
+PREFIX_CHILD_1 = '|-- '
+PREFIX_CHILD_C = '|   '
+PREFIX_LEAF_1  = '`-- '
+PREFIX_LEAF_C  = '    '
 
 
+def dump_balances(real_account):
+    """Dump a realization tree with balances.
 
-# FIXME: This file is being cleaned up. Don't worry about all the FIXMEs [2014-02-26]
+    Args:
+      real_account: An instance of RealAccount.
+    Returns:
+      A string, the rendered tree.
+    """
+    oss = io.StringIO()
+    for first_line, cont_line, real_account in dump(real_account):
+        if not real_account.balance.is_empty():
+            amounts = real_account.balance.get_cost().get_amounts()
+            positions = ['{0.number:12,.2f} {0.currency}'.format(amount)
+                         for amount in sorted(amounts, key=amount_sortkey)]
+        else:
+            positions = ['']
+
+        line = first_line
+        for position in positions:
+            oss.write('{} {:16}\n'.format(line, position))
+            line = cont_line
+    return oss.getvalue()

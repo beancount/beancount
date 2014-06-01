@@ -10,7 +10,6 @@ from beancount.core.data import Open, Close, Balance, Transaction, Note, Documen
 from beancount.core.balance import get_balance_amount
 from beancount.core.inventory import Inventory
 from beancount.core.account import account_name_leaf
-from beancount.core.realization import RealAccount
 from beancount.core import realization
 from beancount.core import flags
 
@@ -21,8 +20,8 @@ def account_link(account_name, leafonly=False):
     "Render an anchor for the given account name."
     if isinstance(account_name, str):
         account_name = account_name
-    elif isinstance(account_name, RealAccount):
-        account_name = account_name.fullname
+    elif isinstance(account_name, realization.RealAccount):
+        account_name = account_name.account
     try:
         return _account_link_cache[(request.app, account_name)]
     except KeyError:

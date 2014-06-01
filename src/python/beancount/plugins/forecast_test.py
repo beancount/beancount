@@ -68,7 +68,7 @@ class TestExampleForecast(unittest.TestCase):
         # This will be very useful somewhere else!
         print(entries[0] == expected_entries[0])
 
-        printer.print_entries(entries)
-        printer.print_entries(expected_entries)
+        # printer.print_entries(entries)
+        # printer.print_entries(expected_entries)
 
 __incomplete__ = True

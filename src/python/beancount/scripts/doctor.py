@@ -57,7 +57,8 @@ def do_print_trial(filename):
     # Load the file, realize it, and dump the accounts tree.
     entries, errors, options_map = loader.load(filename, do_print_errors=True)
     real_accounts = realization.realize(entries)
-    realization.dump_tree_balances(real_accounts)
+    dump_str = realization.dump_balances(real_accounts)
+    print(dump_str)
 
 
 def do_prices(filename):

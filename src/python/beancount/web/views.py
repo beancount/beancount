@@ -72,19 +72,18 @@ class View:
         # Realize the three sets of entries.
         if self.opening_entries:
             with misc_utils.print_time('realize_opening'):
-                self.opening_real_accounts = realization.realize(self.opening_entries)
-                realization.ensure_min_accounts(self.opening_real_accounts,
-                                                self.account_types)
+                self.opening_real_accounts = realization.realize(self.opening_entries,
+                                                                 self.account_types)
         else:
             self.opening_real_accounts = None
 
         with misc_utils.print_time('realize'):
-            self.real_accounts = realization.realize(self.entries)
-            realization.ensure_min_accounts(self.real_accounts, self.account_types)
+            self.real_accounts = realization.realize(self.entries,
+                                                     self.account_types)
 
         with misc_utils.print_time('realize_closing'):
-            self.closing_real_accounts = realization.realize(self.closing_entries)
-            realization.ensure_min_accounts(self.closing_real_accounts, self.account_types)
+            self.closing_real_accounts = realization.realize(self.closing_entries,
+                                                             self.account_types)
 
         assert self.real_accounts is not None
         assert self.closing_real_accounts is not None

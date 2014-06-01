@@ -8,7 +8,7 @@ from beancount.core.position import Lot, Position
 from beancount.core.inventory import Inventory
 from beancount.core.data import Open, Pad, Balance, Posting
 from beancount.core.amount import Decimal, Amount
-from beancount.core.realization_test import realizedoc
+from beancount.loader import loaddoc
 
 
 class __TestPadding(unittest.TestCase):
@@ -21,7 +21,7 @@ class __TestPadding(unittest.TestCase):
     def check_balance(self, real_account, position):
         self.assertEqual(real_account.balance.get_position(position.lot), position)
 
-    @realizedoc
+    @loaddoc
     def test_pad(self, entries, real_accounts, errors):
         """
           2013-05-01 open Assets:Checking
@@ -40,7 +40,7 @@ class __TestPadding(unittest.TestCase):
         self.check_balance(real_accounts['Assets:Checking'],
                            Position(Lot('USD', None, None), Decimal('172.45')))
 
-    @realizedoc
+    @loaddoc
     def test_pad_fail(self, entries, real_accounts, errors):
         """
           2013-05-01 open Assets:Checking
@@ -63,7 +63,7 @@ class __TestPadding(unittest.TestCase):
         ## self.assertEqual(len(errors), 1)
 
 
-    @realizedoc
+    @loaddoc
     def test_pad_used_twice(self, entries, real_accounts, errors):
         """
           2013-05-01 open Assets:Checking
@@ -87,7 +87,7 @@ class __TestPadding(unittest.TestCase):
         self.check_real_types(real_accounts['Assets:Checking'],
                               [Open, Pad, Posting, Balance, Posting, Pad, Posting, Balance])
 
-    @realizedoc
+    @loaddoc
     def test_pad_check_balances(self, entries, real_accounts, errors):
         """
           2013-05-01 open Assets:Checking

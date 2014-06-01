@@ -294,10 +294,15 @@ def sum_to_date(entries, date=None):
         if isinstance(entry, Transaction):
             for posting in entry.postings:
                 balance = balances[posting.account]
-                try:
-                    balance.add_position(posting.position, False)
-                except ValueError as e:
-                    logging.error("Error during realization: {}".format(e))
+
+                # Note: We must allow negative lots at cost, because this may be
+                # used to reduce a filtered list of entries which may not
+                # include the entries necessary to keep units at cost always
+                # above zero. The only summation that is guaranteed to be above
+                # zero is if all the entries are being summed together, no
+                # entries are filtered, at least for a particular account's
+                # postings.
+                balance.add_position(posting.position, True)
     else:
         index = None
 

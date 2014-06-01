@@ -36,6 +36,7 @@ def scrape_urls(url_format, predicate, ignore_regexp=None):
     # Loop over all URLs remaining to process.
     while process:
         url = process.pop()
+        print(url)
 
         # Mark as fetched.
         assert url not in done

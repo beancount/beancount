@@ -47,7 +47,7 @@ class EntryPrinter:
         getattr(cls, obj.__class__.__name__)(cls, obj, oss)
         return oss.getvalue()
 
-    def Transaction(_, entry, oss):
+    def Transaction(cls, entry, oss):
         # Compute the string for the payee and narration line.
         strings = []
         if entry.payee:
@@ -66,13 +66,16 @@ class EntryPrinter:
         oss.write('{e.date} {e.flag} {}\n'.format(' '.join(strings), e=entry))
 
         for posting in entry.postings:
-            flag = '{} '.format(posting.flag) if posting.flag else ''
-            assert posting.account is not None
-            position = str(posting.position) if posting.position else ''
-            price_str = '@ {}'.format(posting.price) if posting.price else ''
-            oss.write('  {}{:64} {:>16} {:>16}'.format(flag, posting.account,
-                                                       position, price_str).rstrip())
-            oss.write('\n')
+            cls.Posting(cls, posting, oss)
+
+    def Posting(_, posting, oss):
+        flag = '{} '.format(posting.flag) if posting.flag else ''
+        assert posting.account is not None
+        position = str(posting.position) if posting.position else ''
+        price_str = '@ {}'.format(posting.price) if posting.price else ''
+        oss.write('  {}{:64} {:>16} {:>16}'.format(flag, posting.account,
+                                                   position, price_str).rstrip())
+        oss.write('\n')
 
     def Balance(_, entry, oss):
         oss.write('{e.date} balance {e.account:48} {e.amount}\n'.format(e=entry))

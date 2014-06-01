@@ -2,7 +2,7 @@
 
 This is where we keep the global account types value and definition.
 
-Note that it's unfortunate that we're using glboals and side-effect here, but
+Note that it's unfortunate that we're using globals and side-effect here, but
 this is the best solution in the short-term, the account types are used
 in too many places to pass around that state everywhere. Maybe we change
 this later on.

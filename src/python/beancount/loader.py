@@ -110,7 +110,10 @@ def loaddoc(fun):
     @functools.wraps(fun)
     def wrapper(self):
         contents = textwrap.dedent(fun.__doc__)
-        entries, errors, options_map = load(contents, parse_method='string', quiet=True)
+        entries, errors, options_map = load(contents,
+                                            add_unrealized_gains=False,
+                                            parse_method='string',
+                                            quiet=True)
         return fun(self, entries, errors, options_map)
     wrapper.__doc__ = None
     return wrapper
