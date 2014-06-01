@@ -9,7 +9,7 @@ import urllib.request
 import lxml.html
 
 from beancount.web import web
-from beancount.scripts import docfile
+from beancount.utils import test_utils
 
 
 # FIXME: Move this to test_utils.py
@@ -94,7 +94,7 @@ class TestWeb(unittest.TestCase):
     def check_page_okay(self, response, url):
         self.assertEqual(200, response.status, url)
 
-    @docfile
+    @test_utils.docfile
     def test_scrape_empty_file(self, filename):
         """
         ;; A file with no entries in it.
