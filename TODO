@@ -214,7 +214,7 @@ beancount: TODO
 
   - Review usage of @parsedoc vs. @loaddoc, maybe we should be more thorough
     about that and use @loaddoc in more places, as it performs data validation.
-
+lugins
   - Maybe all the decorators for docstring parsers should be moved to a
     dedicated module. That would make sense.
 
@@ -247,7 +247,7 @@ beancount: TODO
 
 
 
-  - Docuemntation:
+  - Documentation:
 
     * Beancount: document "choices": subaccounts vs tags vs payees, postings at
       leaves only or not,... Have a section to discuss these choices in the
@@ -298,10 +298,18 @@ beancount: TODO
     And we would have to validate the produced entries to death, just to make
     sure all the invariants are respected.
 
-  - Adding the unrealized gains should be a loader plugin! This is an obvious
-    one. Make this before the release, in order to simplify the loader()
-    interface as much as possible.
+    - Adding the unrealized gains should be a loader plugin! This is an obvious
+      one. Make this before the release, in order to simplify the loader()
+      interface as much as possible.
 
+    - Pad could be a plugin, definitely.
+
+    - Check could also be a plugin.
+
+    - It should be possible to make the parser accept unknown directives that
+      accept an arbitrary list of accounts and string parameters, like this:
+
+        2014-06-01 unknown Assets:US:CreditCard "Something"
 
 
 
@@ -309,12 +317,19 @@ beancount: TODO
   (scripts)
   - bean-ledger: Write a script to convert to Ledger syntax. This should be easy!
 
-  - Beancount: make a script that prints out just the chart of accounts using the
-    list of parser entries, just the open entries
+  - bean-format or bean-align: Write a script to autoamtically align a region's
+    transactions, or an entire file.
 
-  - Write a script that will automatically fetch the dates I held various
-    positions at cost for throughout the history and a list of weekly dates to
-    fetch rates for.
+  - bean-query accounts: make a report that prints out just the chart of
+    accounts using the list of parser entries, just the open entries,
+    'bean-query accounts'
+
+  - bean-query currency_dates: Write a script that will automatically fetch the
+    dates I held various positions at cost for throughout the history and a list
+    of weekly dates to fetch rates for. LedgerHub could use that to fetch all
+    the prices it needs at reasonable intervals.
+
+
 
 
 
@@ -330,9 +345,6 @@ beancount: TODO
     really should.
 
   - (reports) Implement account rendering ordering properly.
-
-  - Write a script to autoamtically align a region's transactions, or an entire
-    file.
 
   - Check out bitbucket CGI interface w.r.t. linking to source code, is the
     newer hg better?  We should be able to link to specific lines in versions.
@@ -398,10 +410,6 @@ beancount: TODO
     * Rendering: The web reports, such as beacnount.web.journal,
       beancount.web.acctree, etc. should move to beancount.reports and have
       HTML and text versions of all these.
-
-    * A new bool, bean-query, should be created that allows one to select
-      transactions (via filters) and a type of report, and spit out the output
-      in text or standalone HTML format.
 
   - Implement --brief option on scripts.holdings, to be able to share, which
     renders only % holdings.

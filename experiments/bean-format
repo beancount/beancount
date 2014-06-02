@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+"""Align a beancount/ledger input file's numbers.
+
+This reformats at beancount or ledger input file so that the amounts in the
+postings are all aligned to the same column. The currency should match.
+
+Note: this does not parse the Beancount ledger. It simply uses regular
+expressions and text manipulations to do its work.
+"""
+__author__ = 'Martin Blais <blais@furius.ca>'
+
+import io
+import re
+import sys
+
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(__doc__.strip())
+
+    parser.add_argument('filename', help='Beancount filename')
+
+    parser.add_argument('-o', '--output', action='store_true',
+                        help="Output file (stdout if not specified)")
+
+    opts = parser.parse_args()
+
+    contents = open(opts.filename).read()
+
+    # Figure out the maximum length of an account's name, so we can align
+    # amounts tightly but all equally.
+    account_re = '((?:[A-Z][A-Za-z0-9\-]+)(?::[A-Z][A-Za-z0-9\-]+)+)'
+    accounts = set(mo.group(0)
+                   for mo in re.finditer(account_re, contents))
+    if not accounts:
+        outfile.write(contents)
+    width = max(map(len, accounts))
+    width += 2  # Leave some room before number in output.
+    posting_format = '  {flag}{account:<{width}}{number:>{num_width}} {rest}'
+
+    # Process each line.
+    number_re = r'[-+]?\s*\d+(?:\.\d*)?\b'
+    output = io.StringIO()
+    for line in contents.splitlines():
+        mo = re.match(r'[ \t]+(.\s+)?{}(:?[ \t]+{})?(.*)$'.format(account_re, number_re), line)
+        if mo:
+            flag, account, number, rest = mo.groups()
+            output.write(posting_format.format(flag=flag or '',
+                                               account=account,
+                                               number=number.strip() if number else '',
+                                               rest=rest.lstrip() or '',
+                                               num_width=12,
+                                               width=width).rstrip())
+            output.write('\n')
+        else:
+            output.write(line)
+            output.write('\n')
+    formatted_contents = output.getvalue()
+
+    # Ensure that the file before and after have only whitespace differences.
+    # This is a sanity check, to make really sure we never change anything but whitespace,
+    # so it's safe.
+    # open('/tmp/before', 'w').write(re.sub(r'[ \t]+', ' ', contents))
+    # open('/tmp/after', 'w').write(re.sub(r'[ \t]+', ' ', formatted_contents))
+    assert re.sub(r'[ \t]+', ' ', contents) == re.sub(r'[ \t]+', ' ', formatted_contents)
+
+    outfile = open(opts.output) if opts.output else sys.stdout
+    outfile.write(formatted_contents)
+
+
+if __name__ == '__main__':
+    main()
