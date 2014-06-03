@@ -15,7 +15,7 @@ from beancount.parser import options
 from beancount.core import account
 from beancount.core import account_types
 from beancount.core import data
-from beancount.core.amount import ZERO, Decimal, Amount, amount_div
+from beancount.core.amount import decimal, ZERO, Decimal, Amount, amount_div
 from beancount.core.position import Lot, Position
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price
 from beancount.core.data import Note, Document
@@ -232,8 +232,11 @@ class Builder(object):
         try:
             return Decimal(number)
         except Exception as e:
-            raise e.__class__("Error: {} for token '{}' at line {}".format(
-                e, number, _parser.get_yylineno()))
+            fileloc = FileLocation(_parser.get_yyfilename(),
+                                   _parser.get_yylineno())
+            message = "Error parsing NUMBER for token '{}': {}".format(number, e)
+            self.errors.append(
+                ParserError(fileloc, message, None))
 
     def amount(self, number, currency):
         """Process an amount grammar rule.

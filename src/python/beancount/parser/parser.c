@@ -98,6 +98,11 @@ PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
  * unit-testing... */
 
 
+PyObject* get_yyfilename(PyObject *self, PyObject *args)
+{
+  return PyUnicode_FromString(yy_filename);
+}
+
 PyObject* get_yylineno(PyObject *self, PyObject *args)
 {
   return PyLong_FromLong(yylineno);
@@ -147,6 +152,7 @@ PyObject* lexer_next(PyObject *self, PyObject *args)
 
 static PyMethodDef module_functions[] = {
     {"parse", (PyCFunction)parse, METH_VARARGS|METH_KEYWORDS, parse_doc},
+    {"get_yyfilename", (PyCFunction)get_yyfilename, METH_VARARGS, NULL},
     {"get_yylineno", (PyCFunction)get_yylineno, METH_VARARGS, NULL},
     {"lexer_init", lexer_init, METH_VARARGS, NULL},
     {"lexer_next", lexer_next, METH_VARARGS, NULL},

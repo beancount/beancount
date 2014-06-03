@@ -263,6 +263,11 @@ lugins
 
 * Current / Misc / To Be Classified
 
+  - Summarize Ledger's --limit --real --virtual --equity, etc. options.
+
+  - Write a plugin to compute total tax/income
+
+
   - The balance sheet "close" problem - how do we specify closing at a
     particular point in time - can be solved by providing parameters to the
     report, e.g.
@@ -691,6 +696,12 @@ lugins
   - (prices) When attempting a conversion in holdings, if the rate isn't
     available directly, you should always attempt to value it indirectly via
     USD or EUR.
+
+  - Maybe the builder should have a 'filename' state that only gets changed here
+    and there instead of getting that fileloc argument passed in every time on
+    every rule. Maybe we just always get the fileloc from the parser.c as in
+    NUMBER. I think it might make the parser more efficient too... try it out,
+    do timings, see how much it improves parsing performance.
 
 
 ** Precision
