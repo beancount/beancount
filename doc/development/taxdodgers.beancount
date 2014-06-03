@@ -1,0 +1,121 @@
+;; -*- mode: org; mode: beancount; coding: utf-8; fill-column: 120; -*-
+;; I have a fairly simple use-case, the system for which I'm putting
+;; together right now. I have a consulting contract with a company here in
+;; China, and like many local companies they are creative about tax
+;; evasion. My fee is paid in part as "salary", which is taxed, and in part
+;; as spurious "reimbursements" for expenditures, which aren't taxed. I
+;; have to collect official receipts for various things I spend money on,
+;; and then present them to the company each month, and they reimburse me.
+;;
+;; I spent a while thinking about how to represent this. I knew I wanted
+;; the reimbursed portion to be a "real" account, under Assets:Receivable,
+;; because that's real value. I also needed to keep track of how much I'd
+;; accumulated in receipts, but decided to use a virtual account for that,
+;; because it isn't "real" value moving from one account to another, it's
+;; simply a catalyst for movement between two other accounts. So now I've
+;; got:
+;;
+;; ~ Monthly
+;;     ; Payee: Tax Dodgers, Inc
+;;     Assets:Merchants:5231                       7000 RMB ; regular salary part
+;;     Assets:Receivable                           3000 RMB ; receipts
+;;     Income:Salary
+;;
+;; Then I go to dinner and get a receipt:
+;;
+;; 04/13 * 华堂
+;;     Expenses:Food:Restaurant                  143.10 RMB
+;;     (Assets:Receipts)                         143.10 RMB
+;;     Assets:Cash
+;;
+;; After a few weeks I have 1920.90 RMB in my virtual receipt account, and
+;; I hand them in (but they haven't paid me the reimbursement yet):
+;;
+;; 05/04 ! Tax Dodgers, Inc
+;;     * (Assets:Receipts)  = 0 RMB
+;;     Assets:Merchants:5231                    1920.90 RMB
+;;     Assets:Receivable
+;;
+;; When the reimbursement comes through I clear the whole transaction, and
+;; add an aux date.
+;;
+;; There are several handy ways to report on this, but in practice all I
+;; need is:
+;;
+;; ledger reg --limit 'payee=~/dodgers/' assets:receivable
+;;
+;; This is nice because the last line comes out bold on the terminal if the
+;; reimbursement is still pending. At a glance I can see how much I gave
+;; them in receipts, how much they still owe me, and how much in receipts I
+;; still need to gather to get my full salary.
+;;
+;; The ugly bits are the duplicate numbers when I collect a receipt for an
+;; expenditure (though I'm working on solving that with automated
+;; transactions), and the fact that I end up manually balancing a virtual
+;; account against a real account. That feels weird, but does no real harm.
+;;
+;; Anyway, that's my story!
+
+
+;; That's an easy one. You just need an intermediate bucket to accumulate
+;; the liability. No virtual accounts required.
+
+
+
+option "operating_currency" "RMB"
+
+2014-01-01 open Assets:Merchants:C5231
+2014-01-01 open Income:Salary
+2014-01-01 open Expenses:Food:Restaurant
+2014-01-01 open Assets:Cash
+
+;; Amount of receipts I was promised I could gather for payment.
+2014-01-01 open Assets:Receipts:Allowable		RECEIPTS
+
+;; Amount of receipts I accumulated in envelope, pending to be
+;; submitted to Tax Dodgers Inc.
+2014-01-01 open Assets:Receipts:Pending 		RECEIPTS
+
+;; Amount of cash receipts already submitted to Tax Dodgers, waiting
+;; to be received in cash.
+2014-01-01 open Assets:Receipts:Receivable		RMB
+
+
+2014-04-12 * "Payment of salary"
+    Assets:Merchants:C5231          7000 RMB ; regular salary part
+    Assets:Receipts:Allowable       3000 RECEIPTS
+    Income:Salary
+
+
+;; Then I go to dinner and get a receipt.
+
+2014-04-13 * "华堂"
+    Expenses:Food:Restaurant        143.10 RMB
+    Assets:Cash
+    Assets:Receipts:Allowable       -143.10 RECEIPTS
+    Assets:Receipts:Pending         143.10 RECEIPTS
+
+
+;; Some more expensive dinner.
+
+2014-04-14 * "华堂"
+    Expenses:Food:Restaurant        1777.80 RMB
+    Assets:Cash
+    Assets:Receipts:Allowable       -1777.80 RECEIPTS
+    Assets:Receipts:Pending         1777.80 RECEIPTS
+
+
+;; After a few weeks I have 1920.90 RMB in my virtual receipt account, and
+;; I hand them in (but they haven't paid me the reimbursement yet):
+
+2014-05-04 * "Submit my receipts to Tax Dodgers, Inc"
+    Assets:Receipts:Pending	-1920.90 RECEIPTS @ 1 RMB
+    Assets:Receipts:Receivable
+
+
+;; Later on they pay you some of that receivable:
+
+2014-05-10 * "Incomplete payment for submitted receipts"
+    Assets:Receipts:Receivable    -1500 RMB
+    Assets:Merchants:C5231
+
