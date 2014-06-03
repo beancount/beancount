@@ -81,7 +81,7 @@ class EntryPrinter:
         oss.write('{e.date} balance {e.account:48} {e.amount}\n'.format(e=entry))
 
     def Note(_, entry, oss):
-        oss.write('{e.date} note {e.account} {e.comment}\n'.format(e=entry))
+        oss.write('{e.date} note {e.account} "{e.comment}"\n'.format(e=entry))
 
     def Document(_, entry, oss):
         oss.write('{e.date} document {e.account} "{e.filename}"\n'.format(e=entry))

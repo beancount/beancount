@@ -558,7 +558,7 @@ class Builder(object):
         if postings is None or len(postings) < 2:
             self.errors.append(
                 ParserError(fileloc,
-                            "Invalid number of postings: {}".format(postings), None))
+                            "Transaction with only one posting: {}".format(postings), None))
             return None
 
         # Merge the tags from the stack with the explicit tags of this
