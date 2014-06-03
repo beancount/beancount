@@ -8,8 +8,17 @@ beancount: TODO
 
        src/python/beancount/parser/printer.py                 INCOMPLETE
 
-         Printer tests (not done) should work by doing a round-trip. In fact, run a
-         round-trip test on my personal ledger file. Test all fields.
+         Finish round-trip test on my personal ledger file.
+         Integrate round-trip test code into bean-doctor.
+         Add printer tests with round-trip.
+         Test all fields.
+
+         * Allow transaction with only one posting if the position is zero? Or
+           maybe create the other posting anyhow, also setting a position of
+           zero. Add a specific test for this.
+
+         * You need to allow for more precision rendering prices from the
+           printer.
 
        src/python/beancount/parser/documents.py               INCOMPLETE
 
@@ -262,6 +271,20 @@ lugins
 
 
 * Current / Misc / To Be Classified
+
+  - Create special make target to run tests on my own large Ledger.
+    This should bean-check, bean-roundtrip, bean-bake / scrape.
+
+  - Hmmm... compare does not actually allow two identical entries in a file.
+    Solve that, using a differentiator, such as the fileloc or file no, or
+    something. Maybe while reading we should insert a version number in
+    duplicate entries automatially? Not sure.
+
+    Another solution would be to warn on duplicate entries!  Maybe we just
+    don't allow these. It really wouldn't be much of a big deal. And this would
+    be easy to implement as part of our load checks. They're more often than
+    not errors.
+
 
   - Summarize Ledger's --limit --real --virtual --equity, etc. options.
 
