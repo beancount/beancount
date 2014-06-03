@@ -89,8 +89,10 @@ def compare_entries(entries1, entries2):
     keys2 = set(hashes2.keys())
 
     same = keys1 == keys2
-    missing1 = [hashes1[key] for key in keys1 - keys2]
-    missing2 = [hashes2[key] for key in keys2 - keys1]
+    missing1 = sorted([hashes1[key] for key in keys1 - keys2],
+                      key=data.entry_sortkey)
+    missing2 = sorted([hashes2[key] for key in keys2 - keys1],
+                      key=data.entry_sortkey)
     return (same, missing1, missing2)
 
 
@@ -109,5 +111,6 @@ def includes_entries(subset_entries, entries):
     keys = set(hashes.keys())
 
     includes = subset_keys.issubset(keys)
-    missing = [subset_hashes[key] for key in subset_keys - keys]
+    missing = sorted([subset_hashes[key] for key in subset_keys - keys],
+                     key=data.entry_sortkey)
     return (includes, missing)
