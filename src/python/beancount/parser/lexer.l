@@ -1,7 +1,7 @@
 /* -*- mode: c -*- */
 /* A flex lexer for Beancount. */
 
-/*------------------------------------------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------*/
 /* Definitions */
 
 /* Options */
@@ -57,7 +57,7 @@ int strtonl(const char* buf, size_t nchars);
 }
 
 
-/*------------------------------------------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------*/
 /* Rules */
 %%
 
@@ -69,12 +69,16 @@ int strtonl(const char* buf, size_t nchars);
     return EOL;
 }
 
- /* Ignore whitespace, except when found at the beginning of a line and followed by a non-comment regular character.
-    This is how we group indented postings. */
+ /* Ignore whitespace, except when found at the beginning of a line and followed
+    by a non-comment regular character. This is how we group indented
+    postings. */
 [ \t\r]+	{
     if ( yy_line_tokens == 1 ) {
         /* If the next character completes the line, skip it. */
-        if ( yy_hold_char == '\n' || yy_hold_char == '\r' || yy_hold_char == '\0' || yy_hold_char == ';' ) {
+        if ( yy_hold_char == '\n' ||
+             yy_hold_char == '\r' ||
+             yy_hold_char == '\0' ||
+             yy_hold_char == ';' ) {
             return SKIPPED;
         }
         else {
@@ -100,9 +104,15 @@ int strtonl(const char* buf, size_t nchars);
     return COMMENT;
 }
 
- /* Special characters which may be used in-lieu of a 'txn' keyword in a transaction declaration output as a token.
-    Other lines are just skipped. This allows us to use org-mode or other separators in the input syntax. */
-[*!&#?%]	{
+ /* Special characters which may be used in-lieu of a 'txn' keyword in a
+    transaction declaration output as a token. Other lines are just skipped.
+    This allows us to use org-mode or other separators in the input syntax.
+
+    Note: You need to make sure to include all the values from
+    beancount.core.flags, in order for round-trips between text and entries to
+    be possible. {5307d8fa1e7b}
+    */
+[*!&#?%PSTCU]	{
     if ( yy_line_tokens != 1 ) {
         yylval->character = yytext[0];
         return FLAG;
@@ -143,7 +153,8 @@ option		{ return OPTION; }
     return ACCOUNT;
 }
 
- /* Currencies. These are defined as uppercase only in order to disambiguate the syntax. */
+ /* Currencies. These are defined as uppercase only in order to disambiguate the
+  * syntax. */
 [A-Z][A-Z0-9\'\.\_]{1,10}	{
     yylval->pyobj = BUILD("CURRENCY", "s", yytext);
     return CURRENCY;
@@ -182,7 +193,7 @@ option		{ return OPTION; }
 
 
 %%
-/*------------------------------------------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------*/
 /* User Code */
 
 const char* yy_filename = 0;
