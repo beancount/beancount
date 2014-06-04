@@ -272,6 +272,12 @@ lugins
 
 * Current / Misc / To Be Classified
 
+  - For table rendering, move the actually formatting at rendering time. CSV
+    files should have fractional values for percentages, txt and html should
+    have % values.  I need to figure out a good solution for this.
+    Maybe the thing to do is to move the field selection at rendering stage, or
+    at least to have it at both.
+
   - Create special make target to run tests on my own large Ledger.
     This should bean-check, bean-roundtrip, bean-bake / scrape.
 

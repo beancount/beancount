@@ -108,6 +108,6 @@ def report_holdings_relative(currency, entries, options_map):
         ('cost_currency', ),
         ('cost_number', 'Average Cost', '{:,.2f}'.format),
         ('price_number', 'Price', '{:,.2f}'.format),
-        ('market_value', 'Fraction', '{:,.5f}'.format),
+        ('market_value', 'Fraction', '{:,.3%}'.format),
     ]
     return table.create_table(holdings_list, field_spec)
