@@ -52,16 +52,6 @@ class TestParserEntryTypes(unittest.TestCase):
         check_list(self, entries, [Transaction])
 
     @parsedoc
-    def test_entry_transaction_invalid_npostings(self, entries, errors, _):
-        """
-          2013-05-18 * "Nice dinner at Mermaid Inn"
-            Expenses:Restaurant         100 USD
-
-        """
-        check_list(self, entries, [])
-        check_list(self, errors, 1)
-
-    @parsedoc
     def test_entry_check(self, entries, _, __):
         """
           2013-05-18 check Assets:US:BestBank:Checking  200 USD
@@ -123,6 +113,30 @@ class TestParserEntryTypes(unittest.TestCase):
           2013-05-18 price USD   1.0290 CAD
         """
         check_list(self, entries, [Price])
+
+
+class TestParserBalance(unittest.TestCase):
+    """Tests of auto-posting balance."""
+
+    @parsedoc
+    def test_entry_transaction_single_posting_at_zero(self, entries, errors, _):
+        """
+          2013-05-18 * "Nice dinner at Mermaid Inn"
+            Expenses:Restaurant         0 USD
+        """
+        check_list(self, entries, [Transaction])
+        check_list(self, errors, 0)
+
+    @parsedoc
+    def test_entry_transaction_imbalance_from_single_posting(self, entries, errors, _):
+        """
+          2013-05-18 * "Nice dinner at Mermaid Inn"
+            Expenses:Restaurant         100 USD
+        """
+        check_list(self, entries, [Transaction])
+        check_list(self, errors, 1)
+        entry = entries[0]
+        self.assertEqual(1, len(entry.postings))
 
 
 class TestUglyBugs(unittest.TestCase):

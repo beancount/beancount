@@ -554,12 +554,17 @@ class Builder(object):
             return None
         payee, narration = payee_narration
 
-        # Detect when a transaction does not have at least two legs.
-        if postings is None or len(postings) < 2:
-            self.errors.append(
-                ParserError(fileloc,
-                            "Transaction with only one posting: {}".format(postings), None))
-            return None
+        # We now allow a single posting when its balance is zero, so we
+        # commented out the check below. If a transaction has a single posting
+        # with a non-zero balance, it'll get caught below int he
+        # balance_incomplete_postings code.
+        #
+        # # Detect when a transaction does not have at least two legs.
+        # if postings is None or len(postings) < 2:
+        #     self.errors.append(
+        #         ParserError(fileloc,
+        #                     "Transaction with only one posting: {}".format(postings), None))
+        #     return None
 
         # Merge the tags from the stack with the explicit tags of this
         # transaction, or make None.
