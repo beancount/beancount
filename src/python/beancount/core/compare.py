@@ -4,7 +4,7 @@ import hashlib
 import datetime
 from collections import namedtuple
 
-from .data import Transaction
+from .data import Transaction, entry_sortkey
 from .amount import Amount, Decimal, to_decimal
 from .position import Position, create_position
 from .account import has_component
@@ -60,7 +60,9 @@ def hash_entries(entries):
 
         hash_ = stable_hash_namedtuple(entry, {'fileloc', 'entry'})
         if hash_ in entry_hash_dict:
-            raise ValueError("Duplicate entry: {}".format(entry))
+            other_entry = entry_hash_dict[hash_]
+            raise ValueError("Duplicate entry: {} == {}".format(entry,
+                                                                other_entry))
         entry_hash_dict[hash_] = entry
 
     assert len(entry_hash_dict) == len(entries)
@@ -90,9 +92,9 @@ def compare_entries(entries1, entries2):
 
     same = keys1 == keys2
     missing1 = sorted([hashes1[key] for key in keys1 - keys2],
-                      key=data.entry_sortkey)
+                      key=entry_sortkey)
     missing2 = sorted([hashes2[key] for key in keys2 - keys1],
-                      key=data.entry_sortkey)
+                      key=entry_sortkey)
     return (same, missing1, missing2)
 
 
@@ -112,5 +114,5 @@ def includes_entries(subset_entries, entries):
 
     includes = subset_keys.issubset(keys)
     missing = sorted([subset_hashes[key] for key in subset_keys - keys],
-                     key=data.entry_sortkey)
+                     key=entry_sortkey)
     return (includes, missing)
