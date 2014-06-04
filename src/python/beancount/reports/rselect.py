@@ -2,9 +2,11 @@
 """
 import functools
 import re
+import sys
 
 from beancount.utils.snoop import snooper
 from beancount.reports import rholdings
+from beancount.parser import printer
 
 
 def get_report_generator(report_str):
@@ -14,8 +16,12 @@ def get_report_generator(report_str):
       report_str: A string, the name of the report to produce. This name may
         include embedded parameters, such as in 'holdings_aggregated:USD'.
     Returns:
-      A callable, that can generate the report.
+      A callable, that can generate the report. It should accept a list of
+      entries and an options map.
     """
+    if report_str == 'print':
+        return report_print
+
     if report_str == 'holdings':
         return rholdings.report_holdings
     elif snooper(re.match('holdings_aggregated(?::([A-Z]+))?$', report_str)):
@@ -27,3 +33,13 @@ def get_report_generator(report_str):
 
     # Note: This will grow in the future to accommodate journals, balsheet, and
     # all the other possible reports that the web interface currently serves.
+
+
+def report_print(entries, unused_options_map):
+    """A simple report type that prints out the entries as parsed.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options dict, as read by the parser.
+    """
+    printer.print_entries(entries, sys.stdout)

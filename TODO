@@ -2,16 +2,16 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-
   - Complete full unittests coverage (as per find-missing-tests.py).
     Remaining (to be processed in this order):
 
        src/python/beancount/parser/printer.py                 INCOMPLETE
 
          Finish round-trip test on my personal ledger file.
-         Integrate round-trip test code into bean-doctor.
+         Integrate bean-roundtrip test code into bean-doctor.
          Add printer tests with round-trip.
          Test all fields.
+         Also add a 'compare' command to bean-doctor, to compare two files.
 
        src/python/beancount/parser/documents.py               INCOMPLETE
 

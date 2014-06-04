@@ -14,7 +14,7 @@ def report_holdings(entries, options_map):
       entries: A list of directives.
       options_map: A dict of parsed options.
     Returns:
-      A list of Holding instances.
+      A Table instance.
     """
     price_map = prices.build_price_map(entries)
     account_types = options.get_account_types(options_map)
@@ -44,7 +44,7 @@ def report_holdings_aggregated(currency, entries, options_map):
       entries: A list of directives.
       options_map: A dict of parsed options.
     Returns:
-      A list of Holding instances.
+      A Table instance.
     """
     price_map = prices.build_price_map(entries)
     account_types = options.get_account_types(options_map)
@@ -81,7 +81,7 @@ def report_holdings_relative(currency, entries, options_map):
       entries: A list of directives.
       options_map: A dict of parsed options.
     Returns:
-      A list of Holding instances.
+      A Table instance.
     """
     price_map = prices.build_price_map(entries)
     account_types = options.get_account_types(options_map)

@@ -24,11 +24,6 @@ class TestPrinter(unittest.TestCase):
         errors_str = printer.format_errors(errors)
         self.assertTrue(isinstance(errors_str, str))
 
-    def test_string_quote(self):
-        self.assertEqual('"something"', printer.string_quote("something"))
-        self.assertEqual('"5"', printer.string_quote(5))
-        self.assertEqual('', printer.string_quote(None))
-
     def __test_format_entry(self):
         ## FIXME: TODO
         pass

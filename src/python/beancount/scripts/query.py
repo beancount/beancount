@@ -40,8 +40,9 @@ def main():
     # Create holdings list.
     table_ = report_function(entries, options_map)
 
-    # Create the table report.
-    table.render_table(table_, outfile, opts.format)
+    if isinstance(table_, table.TableReport):
+        # Create the table report.
+        table.render_table(table_, outfile, opts.format)
 
 
 if __name__ == '__main__':
