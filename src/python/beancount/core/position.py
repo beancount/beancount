@@ -19,7 +19,7 @@ A "Position" represents a specific number of units of an associated lot:
 from collections import namedtuple
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
-from .amount import ZERO, Decimal, Amount, amount_mult
+from .amount import ZERO, Decimal, Amount, amount_mult, MAXDIGITS_PRINTER
 
 
 # Lots are a representations of a commodity with an optional associated cost and
@@ -95,7 +95,7 @@ class Position:
             strings.append(' {')
             if lot.cost:
                 strings.append(
-                    str(Amount(lot.cost.number, lot.cost.currency)))
+                    Amount(lot.cost.number, lot.cost.currency).str(MAXDIGITS_PRINTER))
             if lot.lot_date:
                 strings.append(' / {}'.format(lot.lot_date))
             strings.append('}')

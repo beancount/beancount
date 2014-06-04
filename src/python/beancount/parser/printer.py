@@ -4,6 +4,8 @@ import io
 import sys
 import textwrap
 
+from beancount.core import amount
+
 
 def render_fileloc(fileloc):
     """Render the fileloc for errors in a way that it will be both detected by
@@ -72,7 +74,9 @@ class EntryPrinter:
         flag = '{} '.format(posting.flag) if posting.flag else ''
         assert posting.account is not None
         position = str(posting.position) if posting.position else ''
-        price_str = '@ {}'.format(posting.price) if posting.price else ''
+        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
+                     if posting.price
+                     else '')
         oss.write('  {}{:64} {:>16} {:>16}'.format(flag, posting.account,
                                                    position, price_str).rstrip())
         oss.write('\n')

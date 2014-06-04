@@ -59,8 +59,11 @@ def to_decimal(strord):
 # Number of digits to display all amounts if we can do so precisely.
 DISPLAY_QUANTIZE = Decimal('.01')
 
-# Maximum number of digits to display numbers with more precision than this.
+# Maximum number of digits to display numbers for user.
 MAXDIGITS_QUANTIZE = 5
+
+# Maximum number of digits to display for printing for debugging.
+MAXDIGITS_PRINTER = 12
 
 
 class Amount:
@@ -83,8 +86,18 @@ class Amount:
         self.currency = currency
 
     def __str__(self):
+        """Convert an Amount instance to a printable string with the defaults.
+
+        Returns:
+          A formatted string of the quantized amount and symbol.
+        """
+        return self.str(MAXDIGITS_QUANTIZE)
+
+    def str(self, max_digits):
         """Convert an Amount instance to a printable string.
 
+        Args:
+          max_digits: The maximum number of digits to print.
         Returns:
           A formatted string of the quantized amount and symbol.
         """
@@ -96,7 +109,7 @@ class Amount:
             return "{:.2f} {}".format(number, self.currency)
         else:
             return "{:.{width}f} {}".format(number, self.currency,
-                                            width=MAXDIGITS_QUANTIZE)
+                                            width=max_digits)
 
     # We use the same as a printable representation.
     __repr__ = __str__
