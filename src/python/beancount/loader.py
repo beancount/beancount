@@ -47,18 +47,60 @@ def load(filename,
       generated while parsing and validating the file, and a dict of the options
       parsed from the file).
     """
+
     # Parse the input file.
     if parse_method == 'filename':
         parse_fun = parser.parse
     elif parse_method == 'string':
         parse_fun = parser.parse_string
     else:
-        raise NotImplementedError
+        raise NotImplementedError("Method: {}".format(parse_method))
     with misc_utils.print_time('parse', quiet):
         entries, parse_errors, options_map = parse_fun(filename)
 
+    # Transform the entries.
+    entries, errors = run_transformations(entries, parse_errors, options_map,
+                                          filename,
+                                          add_unrealized_gains, quiet)
+
+    # Validate the list of entries.
+    with misc_utils.print_time('validate', quiet):
+        valid_errors = validation.validate(entries)
+        errors += valid_errors
+
+    # Print out the list of errors.
+    if do_print_errors:
+        error_text = printer.format_errors(errors)
+        if error_text:
+            print(',----------------------------------------------------------------------')
+            print(error_text)
+            print('`----------------------------------------------------------------------')
+
+    return entries, errors, options_map
+
+
+def run_transformations(entries, parse_errors, options_map,
+                        filename,
+                        add_unrealized_gains, quiet):
+    """Run the various transformations on the entries.
+
+    This is where entries are being synthesized, checked, plugins are run, etc.
+
+    Args:
+      entries: A list of directives as read from the parser.
+      parse_errors: A list of errors so far.
+      options_map: An options dict as read from the parser.
+      filename: A string, the name of the file that's just been parsed.
+      add_unrealized_gains: A boolean, true if we should add the unrealized gains.
+      quiet: A boolean, true if we should be quiet.
+    Returns:
+      A list of modified entries, and a list of errors, also possibly modified.
+    """
+
     # Pad the resulting entries (create synthetic Pad entries to balance checks
     # where desired).
+    #
+    # Note: I think a lot of these should be moved to plugins!
     with misc_utils.print_time('pad', quiet):
         entries, pad_errors = pad.pad(entries)
 
@@ -80,28 +122,19 @@ def load(filename,
                 account_types,
                 options_map['account_unrealized'])
 
-    # Validate the list of entries.
-    with misc_utils.print_time('validate', quiet):
-        valid_errors = validation.validate(entries)
 
-    # Print out the list of errors.
-    errors = parse_errors + pad_errors + check_errors + valid_errors + doc_errors
-    if do_print_errors:
-        error_text = printer.format_errors(errors)
-        if error_text:
-            print(',----------------------------------------------------------------------')
-            print(error_text)
-            print('`----------------------------------------------------------------------')
+    # Ensure that the entries are sorted.
+    entries.sort(key=data.entry_sortkey)
+
+    # Collate all the errors encountered so far.
+    errors = parse_errors + pad_errors + check_errors + doc_errors
 
     # Run the load_filters on top of the results.
     for load_filter_function in LOAD_PLUGINS:
         entries, errors, options_map = load_filter_function(
             entries, errors, options_map)
 
-    # Ensure that the entries are sorted.
-    entries.sort(key=data.entry_sortkey)
-
-    return entries, errors, options_map
+    return entries, errors
 
 
 def loaddoc(fun):
