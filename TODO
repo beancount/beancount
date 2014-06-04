@@ -18,6 +18,10 @@ beancount: TODO
          Could this move to a plugins directory? I think so.
          This is a transformation. Either ops or plugins.
 
+       src/python/beancount/parser/lexer_test.py              MISSING
+
+         Create an automated test for the lexer as well.
+
        src/python/beancount/ops/summarize.py                  INCOMPLETE
        src/python/beancount/ops/pad.py                        INCOMPLETE
        src/python/beancount/ops/validation.py                 INCOMPLETE
@@ -38,6 +42,9 @@ beancount: TODO
 
        src/python/beancount/loader.py                               INCOMPLETE
 
+
+  - Look at deps for beancount.core.realization and move it upstream where it
+    makes sense, maybe ops.
 
   - This needs to emit an error / a warning, it's misleading, generates a narration only:
 
