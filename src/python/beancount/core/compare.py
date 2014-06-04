@@ -44,6 +44,17 @@ def stable_hash_namedtuple(objtuple, ignore=frozenset()):
     return hashobj.hexdigest()
 
 
+def hash_entry(entry):
+    """Compute the stable hash of a single entry.
+
+    Args:
+      entry: A directive instance.
+    Returns:
+      A stable hexadecimal hash of this entry.
+    """
+    return stable_hash_namedtuple(entry, {'fileloc', 'entry'})
+
+
 def hash_entries(entries):
     """Compute unique hashes of each of the entries and return a map of them.
 
@@ -58,7 +69,7 @@ def hash_entries(entries):
     for entry in entries:
         entry_type = type(entry)
 
-        hash_ = stable_hash_namedtuple(entry, {'fileloc', 'entry'})
+        hash_ = hash_entry(entry)
         if hash_ in entry_hash_dict:
             other_entry = entry_hash_dict[hash_]
             raise ValueError("Duplicate entry: {} == {}".format(entry,

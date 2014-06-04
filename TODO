@@ -13,14 +13,10 @@ beancount: TODO
          Add printer tests with round-trip.
          Test all fields.
 
-         * Allow transaction with only one posting if the position is zero? Or
-           maybe create the other posting anyhow, also setting a position of
-           zero. Add a specific test for this.
-
-         * You need to allow for more precision rendering prices from the
-           printer.
-
        src/python/beancount/parser/documents.py               INCOMPLETE
+
+         Could this move to a plugins directory? I think so.
+         This is a transformation. Either ops or plugins.
 
        src/python/beancount/ops/summarize.py                  INCOMPLETE
        src/python/beancount/ops/pad.py                        INCOMPLETE
@@ -43,6 +39,11 @@ beancount: TODO
        src/python/beancount/loader.py                               INCOMPLETE
 
 
+  - This needs to emit an error / a warning, it's misleading, generates a narration only:
+
+       2012-11-06 * "VISA DDA PUR 313149     WHOLE FO -- VISA DDA PUR 313149     WHOLE FOODS MARK 95 EAST    NEW YORK      * NY" |
+
+    Maybe bite the bullet finally and remove that PIPE token...
 
 
 
@@ -271,6 +272,8 @@ lugins
 
 
 * Current / Misc / To Be Classified
+
+  - Remove legacy support for PIPE character in syntax, update cheatsheet.
 
   - For table rendering, move the actually formatting at rendering time. CSV
     files should have fractional values for percentages, txt and html should
@@ -731,6 +734,11 @@ lugins
     every rule. Maybe we just always get the fileloc from the parser.c as in
     NUMBER. I think it might make the parser more efficient too... try it out,
     do timings, see how much it improves parsing performance.
+
+  - See if you replace BUILD()'s PyObject_CallMethod to this how much faster it
+    gets: "Note that if you only pass PyObject * args, PyObject_CallMethodObjArgs() is a
+    faster alternative."
+    https://docs.python.org/3/c-api/object.html
 
 
 ** Precision

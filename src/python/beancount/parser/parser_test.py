@@ -298,6 +298,8 @@ class TestTransactions(unittest.TestCase):
         """
         check_list(self, entries, [Transaction])
         check_list(self, errors, [])
+        self.assertEqual(None, entries[0].payee)
+        self.assertEqual("Nice dinner at Mermaid Inn", entries[0].narration)
 
     @parsedoc
     def test_simple_2(self, entries, errors, _):
@@ -314,6 +316,10 @@ class TestTransactions(unittest.TestCase):
         """
         check_list(self, entries, [Transaction, Transaction])
         check_list(self, errors, [])
+        self.assertEqual(None, entries[0].payee)
+        self.assertEqual("Nice dinner at Mermaid Inn", entries[0].narration)
+        self.assertEqual("Duane Reade", entries[1].payee)
+        self.assertEqual("Toothbrush", entries[1].narration)
 
     @parsedoc
     def test_empty_narration(self, entries, errors, _):
@@ -338,6 +344,20 @@ class TestTransactions(unittest.TestCase):
         check_list(self, errors, [])
         self.assertEqual("", entries[0].narration)
         self.assertEqual(None, entries[0].payee)
+
+    @parsedoc
+    def test_payee_no_narration(self, entries, errors, _):
+        """
+          2013-05-18 * "Mermaid Inn" |
+            Expenses:Restaurant         100 USD
+            Assets:US:Cash
+        """
+        # Make sure a single string and a pipe raises an error, because '|' does
+        # not carry any special meaning anymore.
+        check_list(self, entries, [Transaction])
+        check_list(self, errors, [ParserError])
+        self.assertEqual(None, entries[0].payee)
+        self.assertEqual("Mermaid Inn", entries[0].narration)
 
     @parsedoc
     def test_too_many_strings(self, entries, errors, _):

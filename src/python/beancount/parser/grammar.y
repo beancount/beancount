@@ -180,8 +180,9 @@ txn_fields : empty
            }
            | txn_fields PIPE
            {
-               /* Simply ignore PIPE chars in htis list for backwards compatibility */
-               $$ = $1;
+               /* Mark PIPE as present for backwards compatibility and raise an error */
+               $$ = BUILD("txn_field_PIPE", "OO", $1, Py_None);
+               DECREF1($1);
            }
 
 transaction : DATE txn txn_fields eol posting_list

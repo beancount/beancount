@@ -54,9 +54,11 @@ class EntryPrinter:
         strings = []
         if entry.payee:
             strings.append('"{}" |'.format(entry.payee))
-            string_quote(entry.payee)
         if entry.narration:
             strings.append('"{}"'.format(entry.narration))
+        elif entry.payee:
+            # Ensure we append an empty string for narration if we have a payee.
+            strings.append('""')
 
         if entry.tags:
             for tag in entry.tags:
@@ -105,17 +107,6 @@ class EntryPrinter:
 
     def Event(_, entry, oss):
         oss.write('{e.date} event "{e.type}" "{e.description}"\n'.format(e=entry))
-
-
-def string_quote(obj):
-    """Wrap the value into a string with double-quotes; if null, return an empty string.
-
-    Args:
-      obj: Any type of object, but mostly strings or None.
-    Returns:
-      A string instance.
-    """
-    return '"%s"' % obj if obj is not None else ''
 
 
 def format_entry(entry):

@@ -88,7 +88,7 @@ class Position:
           A string, a printable representation of the position.
         """
         lot = self.lot
-        strings = [str(Amount(self.number, lot.currency))]
+        strings = [Amount(self.number, lot.currency).str(MAXDIGITS_PRINTER)]
 
         # Optionally render the cost and lot-date.
         if lot.cost or lot.lot_date:

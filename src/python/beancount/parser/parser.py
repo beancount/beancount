@@ -50,7 +50,10 @@ def valid_account_regexp(options):
 #  strings: a list of strings, for the payee and the narration.
 #  tags: a set object  of the tags to be applied to this transaction.
 #  links: a set of link strings to be applied to this transaction.
-TxnFields = collections.namedtuple('TxnFields', 'strings tags links')
+#  has_pipe: True if a pipe has been seen somewhere in the list. This is used
+#    to issue an error if only a single string is present, because the PIPE
+#    character does not carry any special meaning anymore.
+TxnFields = collections.namedtuple('TxnFields', 'strings tags links has_pipe')
 
 
 class Builder(object):
@@ -461,7 +464,7 @@ class Builder(object):
         Returns:
           An instance of TxnFields, initialized with expected attributes.
         """
-        return TxnFields([], set(), set())
+        return TxnFields([], set(), set(), [])
 
     def txn_field_TAG(self, txn_fields, tag):
         """Add a tag to the TxnFields accumulator.
@@ -492,11 +495,28 @@ class Builder(object):
 
         Args:
           txn_fields: The current TxnFields accumulator.
-          stirng: A string, the new string to insert in the list.
+          string: A string, the new string to insert in the list.
         Returns:
           An updated TxnFields instance.
         """
         txn_fields.strings.append(string)
+        return txn_fields
+
+    def txn_field_PIPE(self, txn_fields, _):
+        """Mark the PIPE as present, in order to raise a backwards compatibility error.
+
+        Args:
+          txn_fields: The current TxnFields accumulator.
+          _: This second argument is only there to prevent the caller method to
+             unbundle the arguments; if you call with only a tuple, it gets applied.
+             (I think this may be a bug in the Python C-API. When you upgrade to
+             Python 3.4, check if this is still the case.)
+        Returns:
+          An updated TxnFields instance.
+        """
+        # Note: we're using a list because it runs faster than creating a new
+        # tuple and there are possibly many of these.
+        txn_fields.has_pipe.append(1)
         return txn_fields
 
     def unpack_txn_strings(self, txn_fields, fileloc):
@@ -512,6 +532,11 @@ class Builder(object):
         num_strings = len(txn_fields.strings)
         if num_strings == 1:
             payee, narration = None, txn_fields.strings[0]
+            if txn_fields.has_pipe:
+                self.errors.append(
+                    ParserError(fileloc,
+                                "One string with a | symbol yields only a narration: "
+                                "{}".format(txn_fields.strings), None))
         elif num_strings == 2:
             payee, narration = txn_fields.strings
         elif num_strings == 0:
