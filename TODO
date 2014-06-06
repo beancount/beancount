@@ -2,6 +2,18 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
+  - In ledgerhub: descriptions have this format ...~NYF
+    Take advantage of the instrument being available to book it!
+
+  - Make new report: networth, holdings rolled by currency
+
+
+
+
+
+
+  - Complete "bean-query 'print' report", add balances in comments.
+
   - Complete full unittests coverage (as per find-missing-tests.py).
     Remaining (to be processed in this order):
 
@@ -18,48 +30,34 @@ beancount: TODO
          Could this move to a plugins directory? I think so.
          This is a transformation. Either ops or plugins.
 
-       src/python/beancount/parser/lexer_test.py              MISSING
+     src/python/beancount/parser/lexer_test.py              MISSING
 
-         Create an automated test for the lexer as well.
+       Create an automated test for the lexer as well.
 
-       src/python/beancount/ops/summarize.py                  INCOMPLETE
-       src/python/beancount/ops/pad.py                        INCOMPLETE
-       src/python/beancount/ops/validation.py                 INCOMPLETE
+     src/python/beancount/ops/summarize.py                  INCOMPLETE
+     src/python/beancount/ops/pad.py                        INCOMPLETE
+     src/python/beancount/ops/validation.py                 INCOMPLETE
 
-       src/python/beancount/ops/check.py                      INCOMPLETE
+     src/python/beancount/ops/check.py                      INCOMPLETE
 
-         Rename this file to balance to match the directive?
-         Not sure. Another file is named that way.
+       Rename this file to balance to match the directive?
+       Not sure. Another file is named that way.
 
-       src/python/beancount/web/acctree.py                    MISSING
-       src/python/beancount/web/journal.py                    MISSING
+     src/python/beancount/web/acctree.py                    MISSING
+     src/python/beancount/web/journal.py                    MISSING
 
-       src/python/beancount/web/bottle_utils.py               MISSING
+     src/python/beancount/web/bottle_utils.py               MISSING
 
-       src/python/beancount/web/views.py                      MISSING
-       src/python/beancount/web/gviz.py                       MISSING
+     src/python/beancount/web/views.py                      MISSING
+     src/python/beancount/web/gviz.py                       MISSING
 
 
-       src/python/beancount/loader.py                               INCOMPLETE
+     src/python/beancount/loader.py                               INCOMPLETE
+
 
 
   - Look at deps for beancount.core.realization and move it upstream where it
     makes sense, maybe ops.
-
-  - This needs to emit an error / a warning, it's misleading, generates a narration only:
-
-       2012-11-06 * "VISA DDA PUR 313149     WHOLE FO -- VISA DDA PUR 313149     WHOLE FOODS MARK 95 EAST    NEW YORK      * NY" |
-
-    Maybe bite the bullet finally and remove that PIPE token...
-
-
-
-
-  - Implement bean-query print, this debugging report is a necessity. This
-    should be just another report, does not need to be part of bean-doctor.
-    Makes more sense this way. It will also allow printing filtered entries as
-    well, and we already have all the code.
-
 
 
 
@@ -292,6 +290,9 @@ lugins
     for the postings with average cost. But in any case, all the balancing
     should move to a stage right after parsing and should not be an optional
     stage.
+
+  - Produce a currency exposure view by aggregating holdings to cost-currency,
+    and then include OANDA hedging position.
 
   - Remove legacy support for PIPE character in syntax, update cheatsheet.
 
