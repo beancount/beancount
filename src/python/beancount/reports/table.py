@@ -62,8 +62,14 @@ def create_table(rows, field_spec=None):
                 elif len(field) == 3:
                     new_field_spec.append(field)
             else:
-                assert isinstance(field, str), field
-                new_field_spec.append((field, attribute_to_title(field), None))
+                if isinstance(field, str):
+                    title = attribute_to_title(field)
+                elif isinstance(field, int):
+                    title = "Field {}".format(field)
+                else:
+                    raise ValueError("Invalid type for column name")
+                new_field_spec.append((field, title, None))
+
         field_spec = new_field_spec
 
     # Ensure a nicely formatted header.
@@ -86,7 +92,12 @@ def create_table(rows, field_spec=None):
     for row in rows:
         body_row = []
         for name, _, formatter in field_spec:
-            value = getattr(row, name)
+            if isinstance(name, str):
+                value = getattr(row, name)
+            elif isinstance(name, int):
+                value = row[name]
+            else:
+                raise ValueError("Invalid type for column name")
             if value is not None:
                 if formatter is not None:
                     value = formatter(value)

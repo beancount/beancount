@@ -30,6 +30,10 @@ def get_report_generator(report_str):
     elif snooper(re.match('holdings_relative(?::([A-Z]+))?$', report_str)):
         return functools.partial(rholdings.report_holdings_relative,
                                  snooper.value.group(1))
+    elif snooper(re.match('currency_exposure$', report_str)):
+        return rholdings.report_currency_exposure
+    elif snooper(re.match('networth$', report_str)):
+        return rholdings.report_networth
 
     # Note: This will grow in the future to accommodate journals, balsheet, and
     # all the other possible reports that the web interface currently serves.

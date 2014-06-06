@@ -29,6 +29,19 @@ class TestTable(unittest.TestCase):
             )
         return table_object
 
+    def test_create_table_with_index(self):
+        tuples = [
+            ('USD', '1111.00'),
+            ('CAD', '1333.33'),
+        ]
+        table_object = table.create_table(tuples, [(0, 'Currency'), 1])
+
+        self.assertEqual(table.TableReport(columns=[0, 1],
+                                           header=['Currency', 'Field 1'],
+                                           body=[['USD', '1111.00'],
+                                                 ['CAD', '1333.33']]),
+                         table_object)
+
     def test_table_to_html(self):
         table_object = self.test_create_table()
         html = table.table_to_html(table_object, classes=['high-class'])
