@@ -278,6 +278,10 @@ lugins
 
 * Current / Misc / To Be Classified
 
+  - Make the web application accept colons in URLs, and make the reports use
+    them too, so that their names are the very same as those on the
+    command-line.
+
   - In the 'print' report, add a comment at the end of each posting line with
     the balancing amount! This is an important debugging tool! Make this happen.
 
@@ -2196,6 +2200,8 @@ Improve this bit:
   - The examples should be drawn from the demo file; the demo file should be
     rewritten, with multiple years, and with good templates for most of the
     important operations that can take place.
+
+  - Add loft4530 IRR calculation as an example of a custom application script
 
 *** Transfers Between Accounts
 *** mortgage, buying a home
