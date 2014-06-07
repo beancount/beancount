@@ -6,13 +6,17 @@ the name of debugging.
 import csv
 import sys
 import argparse
+import logging
+from os import path
 
-from beancount.parser.parser import dump_lexer
-from beancount.parser.parser import options
-from beancount.core.account_types import get_account_sort_function
+from beancount.parser import parser
+from beancount.parser import options
+from beancount.parser import printer
+from beancount.core import account_types
 from beancount.core import getters
 from beancount.core import realization
 from beancount.ops import prices
+from beancount.core import compare
 from beancount import loader
 
 
@@ -22,7 +26,7 @@ def do_dump_lexer(filename):
     Args:
       filename: A string, the Beancount input filename.
     """
-    dump_lexer(filename, sys.stdout)
+    parser.dump_lexer(filename, sys.stdout)
 
 
 def do_list_accounts(filename):
@@ -40,7 +44,8 @@ def do_list_accounts(filename):
 
     # Render to stdout.
     maxlen = max(len(account) for account in open_close)
-    sortkey_fun = get_account_sort_function(options.get_account_types(options_map))
+    sortkey_fun = account_types.get_account_sort_function(
+        options.get_account_types(options_map))
     for account, (open, close) in sorted(open_close.items(),
                                          key=lambda entry: sortkey_fun(entry[0])):
         open_date = open.date if open else ''
@@ -95,9 +100,71 @@ def first_doc_sentence(object_):
     return ' '.join(lines)
 
 
+def do_roundtrip(filename):
+    """Round-trip test on arbitrary Ledger.
+
+    Read a Ledger's transactions, print them out, re-read them again and compare
+    them. Both sets of parsed entries should be equal. Both printed files are
+    output to disk, so you can also run diff on them yourself afterwards.
+
+    Args:
+      filename: A string, the Beancount input filename.
+    """
+    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    logging.info("Read the entries")
+    entries, errors, options = loader.load(filename, do_print_errors=True, quiet=True)
+
+    logging.info("Print them out to a file")
+    basename, extension = path.splitext(filename)
+    round1_filename = ''.join([basename, '.roundtrip1', extension])
+    with open(round1_filename, 'w') as outfile:
+        printer.print_entries(entries, outfile)
+
+    logging.info("Read the entries from that file")
+    # Note that we don't want to run any of the auto-generation here...
+    # parse-only, not load.
+    entries_roundtrip, errors, options = parser.parse(round1_filename)
+
+    # Print out the list of errors from parsing the results.
+    if errors:
+        error_text = printer.format_errors(errors)
+        if error_text:
+            print(',----------------------------------------------------------------------')
+            print(error_text)
+            print('`----------------------------------------------------------------------')
+
+    logging.info("Print what you read to yet another file")
+    round2_filename = ''.join([basename, '.roundtrip2', extension])
+    with open(round2_filename, 'w') as outfile:
+        printer.print_entries(entries_roundtrip, outfile)
+
+    logging.info("Compare the original entries with the re-read ones")
+    same, missing1, missing2 = compare.compare_entries(entries, entries_roundtrip)
+    if same:
+        logging.info('Entries are the same. Congratulations.')
+    else:
+        logging.error('Entries differ!')
+        print()
+        print('\n\nMissing from original:')
+        #printer.print_entries(missing1)
+        for entry in entries:
+            print(entry)
+            print(compare.hash_entry(entry))
+            print(printer.format_entry(entry))
+            print()
+
+        print('\n\nMissing from round-trip:')
+        #printer.print_entries(missing2)
+        for entry in missing2:
+            print(entry)
+            print(compare.hash_entry(entry))
+            print(printer.format_entry(entry))
+            print()
+
+
 def main():
     # FIXME: Add help for each command
-                        # help=first_doc_sentence(do_print_trial))
+    # help=first_doc_sentence(do_print_trial))
 
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument('command', action='store',
