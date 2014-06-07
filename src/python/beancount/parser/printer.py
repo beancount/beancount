@@ -5,6 +5,7 @@ import sys
 import textwrap
 
 from beancount.core import amount
+from beancount.core import balance
 
 
 def render_fileloc(fileloc):
@@ -69,22 +70,38 @@ class EntryPrinter:
 
         oss.write('{e.date} {e.flag} {}\n'.format(' '.join(strings), e=entry))
 
+        non_trivial_balance = any(map(balance.has_nontrivial_balance, entry.postings))
         for posting in entry.postings:
-            cls.Posting(cls, posting, oss)
+            cls.Posting(cls, posting, oss, non_trivial_balance)
 
-    def Posting(_, posting, oss):
+    def Posting(_, posting, oss, print_balance=False):
         flag = '{} '.format(posting.flag) if posting.flag else ''
         assert posting.account is not None
-        position = str(posting.position) if posting.position else ''
+
+        flag_posting = '{:}{:62}'.format(flag, posting.account)
+
+        if posting.position:
+            amount_str, cost_str = posting.position.strs()
+        else:
+            amount_str, cost_str = '', ''
+
         price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
                      if posting.price
                      else '')
-        oss.write('  {}{:64} {:>16} {:>16}'.format(flag, posting.account,
-                                                   position, price_str).rstrip())
+
+        if print_balance:
+            balance_amount = balance.get_balance_amount(posting)
+            balance_str = '; {:>14}'.format(balance_amount.str(amount.MAXDIGITS_PRINTER))
+        else:
+            balance_str = ''
+
+        oss.write('  {:64} {:>16} {:>16} {:>16} {:>16}'.format(
+            flag_posting, amount_str, cost_str, price_str, balance_str).rstrip())
+
         oss.write('\n')
 
     def Balance(_, entry, oss):
-        oss.write('{e.date} balance {e.account:48} {e.amount}\n'.format(e=entry))
+        oss.write('{e.date} balance {e.account:47} {e.amount:>16}\n'.format(e=entry))
 
     def Note(_, entry, oss):
         oss.write('{e.date} note {e.account} "{e.comment}"\n'.format(e=entry))
@@ -96,7 +113,7 @@ class EntryPrinter:
         oss.write('{e.date} pad {e.account} {e.account_pad}\n'.format(e=entry))
 
     def Open(_, entry, oss):
-        oss.write('{e.date} open {e.account} {currencies}\n'.format(
+        oss.write('{e.date} open {e.account:47} {currencies}\n'.format(
             e=entry, currencies=','.join(entry.currencies or [])))
 
     def Close(_, entry, oss):

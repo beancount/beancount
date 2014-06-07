@@ -5,14 +5,6 @@ beancount: TODO
   - In ledgerhub: descriptions have this format ...~NYF
     Take advantage of the instrument being available to book it!
 
-  - Make new report: networth, holdings rolled by currency
-
-
-
-
-
-
-  - Complete "bean-query 'print' report", add balances in comments.
 
   - Complete full unittests coverage (as per find-missing-tests.py).
     Remaining (to be processed in this order):
@@ -53,6 +45,10 @@ beancount: TODO
 
 
      src/python/beancount/loader.py                               INCOMPLETE
+
+
+  - Move report to UI: networth, holdings rolled by currency
+    Reconcile web UI with the list of reports.
 
 
 
@@ -300,16 +296,6 @@ lugins
          Expenses:Financial:Fees                                                  0.10 USD
 
 
-
-
-* Current / Misc / To Be Classified
-
-  - Make the web application accept colons in URLs, and make the reports use
-    them too, so that their names are the very same as those on the
-    command-line.
-
-  - Unrealized gains should not be added if the gain is zero.
-
   - Put all the Pad into a single file as a plugin, same with Open Close, and
     Balance. Maybe we can organize those codes to be all localized in single
     files, and for many of these features, they can be implemented in
@@ -317,6 +303,17 @@ lugins
     pad.py, balance.py, etc.  And maybe a good way to disambiguate between ops
     adn plugins is just this... maybe ops is non-plugins, e.g. prices,
     summarize, etc.
+
+
+* Current / Misc / To Be Classified
+
+  - Write doc about stages of life, "climbing the mountain."
+
+  - Make the web application accept colons in URLs, and make the reports use
+    them too, so that their names are the very same as those on the
+    command-line.
+
+  - Unrealized gains should not be added if the gain is zero.
 
   - In the 'print' report, add a comment at the end of each posting line with
     the balancing amount! This is an important debugging tool! Make this happen.
@@ -1354,11 +1351,12 @@ Improve this bit:
 
   - Example: a-la-Google
 
+      type:Open, type:Price, etc.
       year:2014
       date:2014-05-20
       component:US
       -component:US
-      payee:MetroCard
+      payee:MetroCard  # should be a regexp, not exact
       tag:trip-israel
       amount:>400.00
       currency:USD

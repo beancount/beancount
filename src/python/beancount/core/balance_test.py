@@ -7,6 +7,7 @@ from beancount.core.balance import get_incomplete_postings
 from beancount.core.balance import balance_incomplete_postings
 from beancount.core.data import FileLocation, Transaction
 from beancount.core.data import create_simple_posting, create_simple_posting_with_cost
+from beancount.core import balance
 from beancount.core.amount import Amount
 from beancount.parser import parser
 
@@ -31,6 +32,25 @@ class TestBalance(unittest.TestCase):
         # Entry with cost, and with price (the price should be ignored).
         posting = posting._replace(price=Amount("2.00", "CAD"))
         self.assertEqual(Amount("84.40", "EUR"), get_balance_amount(posting))
+
+    def test_has_nontrivial_balance(self):
+
+        # Entry without cost, without price.
+        posting = create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD")
+        self.assertFalse(balance.has_nontrivial_balance(posting))
+
+        # Entry without cost, with price.
+        posting = posting._replace(price=Amount("0.90", "CAD"))
+        self.assertTrue(balance.has_nontrivial_balance(posting))
+
+        # Entry with cost, without price.
+        posting = create_simple_posting_with_cost(None, "Assets:Bank:Checking",
+                                                  "105.50", "USD", "0.80", "EUR")
+        self.assertTrue(balance.has_nontrivial_balance(posting))
+
+        # Entry with cost, and with price (the price should be ignored).
+        posting = posting._replace(price=Amount("2.00", "CAD"))
+        self.assertTrue(balance.has_nontrivial_balance(posting))
 
     def test_compute_residual(self):
 

@@ -81,25 +81,37 @@ class Position:
         """
         return hash((self.lot, self.number))
 
+    def strs(self):
+        """Return a pair of string representations for the position.
+
+        Returns:
+          A pair of (amount, cost) strings.
+        """
+        lot = self.lot
+        amount_str = Amount(self.number, lot.currency).str(MAXDIGITS_PRINTER)
+
+        # Optionally render the cost and lot-date.
+        if lot.cost or lot.lot_date:
+            cost_str_list = []
+            cost_str_list.append(' {')
+            if lot.cost:
+                cost_str_list.append(
+                    Amount(lot.cost.number, lot.cost.currency).str(MAXDIGITS_PRINTER))
+            if lot.lot_date:
+                cost_str_list.append(' / {}'.format(lot.lot_date))
+            cost_str_list.append('}')
+            cost_str = ''.join(cost_str_list)
+        else:
+            cost_str = ''
+        return (amount_str, cost_str)
+
     def __str__(self):
         """Return a string representation of the position.
 
         Returns:
           A string, a printable representation of the position.
         """
-        lot = self.lot
-        strings = [Amount(self.number, lot.currency).str(MAXDIGITS_PRINTER)]
-
-        # Optionally render the cost and lot-date.
-        if lot.cost or lot.lot_date:
-            strings.append(' {')
-            if lot.cost:
-                strings.append(
-                    Amount(lot.cost.number, lot.cost.currency).str(MAXDIGITS_PRINTER))
-            if lot.lot_date:
-                strings.append(' / {}'.format(lot.lot_date))
-            strings.append('}')
-        return ''.join(strings)
+        return ''.join(self.strs())
 
     __repr__ = __str__
 

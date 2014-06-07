@@ -45,6 +45,18 @@ def get_balance_amount(posting):
     return amount
 
 
+def has_nontrivial_balance(posting):
+    """Return True if a Posting has a balance amount that would have to be calculated.
+
+    Args:
+      posting: A Posting instance.
+    Returns:
+      A boolean.
+    """
+    lot = posting.position.lot
+    return lot.cost or posting.price
+
+
 def compute_residual(postings):
     """Compute the residual of a set of complete postings.
     This is used to cross-check a balanced transaction.
