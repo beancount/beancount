@@ -276,11 +276,47 @@ lugins
     will be aplenty.
 
 
+  - Bug with unrealized - add a unit test, ensure this does not break it:
+
+       2012-03-01 open Assets:US:Ameritrade:IRA:Cash                                   USD
+       2012-03-01 open Income:US:Ameritrade:IRA:Interest                               USD
+       2012-03-01 open Income:US:Ameritrade:IRA:Dividend                               USD
+       2012-03-01 open Assets:US:Ameritrade:IRA:MMDA1                                  USD
+
+       2012-03-01 open Assets:US:Ameritrade:IRA:HDV                                    HDV
+
+       2012-11-17 balance  Assets:US:Ameritrade:IRA:Cash    0 USD
+
+
+       2013-04-11 * "Bought 56 HDV @ 67.119" ^9849248919
+          Assets:US:Ameritrade:IRA:HDV                                    56.00 HDV {67.119 USD}
+          Expenses:Financial:Commissions                                           9.99 USD
+          Assets:US:Ameritrade:IRA:Cash                                       -3768.65 USD
+
+       2014-06-05 * "Sold 56 HDV @ 74.3003" ^11687887452
+         Assets:US:Ameritrade:IRA:HDV                                     -56.00 HDV {74.3003 USD}
+         Expenses:Financial:Commissions                                           9.99 USD
+         Assets:US:Ameritrade:IRA:Cash                                         4150.73 USD
+         Expenses:Financial:Fees                                                  0.10 USD
+
+
+
+
 * Current / Misc / To Be Classified
 
   - Make the web application accept colons in URLs, and make the reports use
     them too, so that their names are the very same as those on the
     command-line.
+
+  - Unrealized gains should not be added if the gain is zero.
+
+  - Put all the Pad into a single file as a plugin, same with Open Close, and
+    Balance. Maybe we can organize those codes to be all localized in single
+    files, and for many of these features, they can be implemented in
+    self-contained plugins with all their codes together!  openclose.py,
+    pad.py, balance.py, etc.  And maybe a good way to disambiguate between ops
+    adn plugins is just this... maybe ops is non-plugins, e.g. prices,
+    summarize, etc.
 
   - In the 'print' report, add a comment at the end of each posting line with
     the balancing amount! This is an important debugging tool! Make this happen.
@@ -1070,7 +1106,10 @@ Improve this bit:
 ** Beancount reorg
 
   - Remove subaccounts for TMobile and employer once we have filtering working
-    out nicely.
+    out nicely. Same with RedSquare electricity. Same with Employer subaccounts
+    for taxes.
+
+      Payees are just like tags!
 
 
 ** Views
