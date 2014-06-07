@@ -1,20 +1,20 @@
-1972-05-01 open Equity:OpeningBalances 
+1972-05-01 open Equity:OpeningBalances                          
 
-2012-01-01 open Assets:Bank:Checking 
+2012-01-01 open Assets:Bank:Checking                            
 
-2012-01-01 open Assets:Bank:Investing:Cash 
+2012-01-01 open Assets:Bank:Investing:Cash                      
 
-2012-01-01 open Assets:Bank:Investing:AAPL 
+2012-01-01 open Assets:Bank:Investing:AAPL                      
 
-2013-01-01 open Income:Employer:Salary 
+2013-01-01 open Income:Employer:Salary                          
 
-2013-01-01 open Income:Bank:CapitalGains 
+2013-01-01 open Income:Bank:CapitalGains                        
 
-2013-01-01 open Expenses:Taxes:TY2014:Federal 
+2013-01-01 open Expenses:Taxes:TY2014:Federal                   
 
-2013-01-01 open Expenses:Taxes:TY2014:StateNY 
+2013-01-01 open Expenses:Taxes:TY2014:StateNY                   
 
-2013-01-01 open Expenses:Commissions 
+2013-01-01 open Expenses:Commissions                            
 
 2014-06-01 pad Assets:Bank:Checking Equity:OpeningBalances
 
@@ -32,26 +32,26 @@
   Assets:Bank:Checking                                                 -5000.00 USD
   Assets:Bank:Investing:Cash                                            5000.00 USD
 
-2014-06-04 balance Assets:Bank:Checking                             10244.23 USD
+2014-06-04 balance Assets:Bank:Checking                                10244.23 USD
 
-2014-06-04 balance Assets:Bank:Investing:Cash                       5000.00 USD
+2014-06-04 balance Assets:Bank:Investing:Cash                           5000.00 USD
 
-2014-06-10 open Income:Bank:Investing:AAPL:Unrealized 
+2014-06-10 open Assets:Bank:Investing:AAPL:Unrealized           
 
-2014-06-10 open Assets:Bank:Investing:AAPL:Unrealized 
+2014-06-10 open Income:Bank:Investing:AAPL:Unrealized           
 
 2014-06-10 U "Unrealized gain for 5 units of AAPL (price: 487.0200 USD as of 2014-06-10, average cost: 468.3000 USD)"
   Assets:Bank:Investing:AAPL:Unrealized                                   93.60 USD
   Income:Bank:Investing:AAPL:Unrealized                                  -93.60 USD
 
 2014-06-10 * "Buying some stocks."
-  Assets:Bank:Investing:AAPL                                       10.00 AAPL {468.30 USD}
-  Expenses:Commissions                                                     9.95 USD
-  Assets:Bank:Investing:Cash                                           -4692.95 USD
+  Assets:Bank:Investing:AAPL                                             10.00 AAPL     {468.30 USD}                  ;    4683.00 USD
+  Expenses:Commissions                                                     9.95 USD                                   ;       9.95 USD
+  Assets:Bank:Investing:Cash                                           -4692.95 USD                                   ;   -4692.95 USD
 
 2014-06-10 * "Buying some stocks."
-  Assets:Bank:Investing:AAPL                                       -5.00 AAPL {468.30 USD}     @ 487.02 USD
-  Expenses:Commissions                                                     9.95 USD
-  Assets:Bank:Investing:Cash                                            2435.10 USD
-  Income:Bank:CapitalGains                                              -103.55 USD
+  Assets:Bank:Investing:AAPL                                             -5.00 AAPL     {468.30 USD}     @ 487.02 USD ;   -2341.50 USD
+  Expenses:Commissions                                                     9.95 USD                                   ;       9.95 USD
+  Assets:Bank:Investing:Cash                                            2435.10 USD                                   ;    2435.10 USD
+  Income:Bank:CapitalGains                                              -103.55 USD                                   ;    -103.55 USD
 
