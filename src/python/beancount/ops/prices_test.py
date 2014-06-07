@@ -4,14 +4,17 @@ import re
 
 from beancount.core.amount import to_decimal as D
 from beancount.core import amount
+from beancount.core import data
 from beancount.ops import prices
 from beancount.parser import parsedoc
+from beancount.parser import printer
+from beancount.utils import test_utils
 
 
-class TestPriceEntries(unittest.TestCase):
+class TestPriceEntries(test_utils.TestCase):
 
     @parsedoc
-    def test_get_price_entries(self, entries, _, __):
+    def test_add_implicit_prices(self, entries, _, __):
         """
         2013-01-01 open Assets:Account1
         2013-01-01 open Assets:Account2
@@ -30,8 +33,13 @@ class TestPriceEntries(unittest.TestCase):
           Assets:Other
 
         ;; This one should be IGNORED because it books against the above.
-        2013-04-01 * "A transaction with a cost"
+        2013-04-01 * "A transaction with a cost that reduces an existing position"
           Assets:Account1            -500 GOOG {520 USD}
+          Assets:Other
+
+        ;; This one should generate the price, even if it is reducing.
+        2013-04-01 * "A transaction with a cost that reduces an existing position, with a price"
+          Assets:Account1            -100 GOOG {520 USD} @ 530 USD
           Assets:Other
 
         ;; This is not reducing and should also book a price at cost.
@@ -44,19 +52,140 @@ class TestPriceEntries(unittest.TestCase):
           Assets:Account1             500 GOOG {540 USD} @ 560 USD
           Assets:Other
         """
-        self.assertEqual(9, len(entries))
-        price_entries = prices.get_price_entries(entries)
-        self.assertEqual(5, len(price_entries))
+        self.assertEqual(10, len(entries))
+        new_entries = prices.add_implicit_prices(entries)
+        price_entries = list(filter(lambda entry: isinstance(entry, data.Price), new_entries))
+
+        self.assertEqualEntries("""
+
+        2013-01-01 open Assets:Account1
+        2013-01-01 open Assets:Account2
+        2013-01-01 open Assets:Other
+
+        2013-02-01 price USD 1.10 CAD
+
+        2013-04-01 * "A transaction with a price conversion."
+          Assets:Account1                        150.00 USD                        @ 1.12 CAD
+          Assets:Other                          -168.00 CAD
+
+        2013-04-01 price USD 1.12 CAD
+
+        2013-04-01 * "A transaction with a cost."
+          Assets:Account1                      1500.00 GOOG     {520.00 USD}
+          Assets:Other                       -780000.00 USD
+
+        2013-04-01 price GOOG 520.00 USD
+
+        2013-04-01 * "A transaction with a cost that reduces an existing position"
+          Assets:Account1                      -500.00 GOOG     {520.00 USD}
+          Assets:Other                        260000.00 USD
+
+        2013-04-01 * "A transaction with a cost that reduces an existing position, with a price"
+          Assets:Account1                      -100.00 GOOG     {520.00 USD}     @ 530.00 USD
+          Assets:Other                         52000.00 USD
+
+        2013-04-01 price GOOG 530.00 USD
+
+        2013-04-02 * "A transaction with another cost that is not reducing."
+          Assets:Account1                       500.00 GOOG     {540.00 USD}
+          Assets:Other                       -270000.00 USD
+
+        2013-04-02 price GOOG 540.00 USD
+
+        2013-04-03 * "A transaction with a cost and a price."
+          Assets:Account1                       500.00 GOOG     {540.00 USD}     @ 560.00 USD
+          Assets:Other                       -270000.00 USD
+
+        2013-04-03 price GOOG 560.00 USD
+        """, new_entries)
+
+        self.assertEqual(6, len(price_entries))
         expected_values = [(x[0], x[1], D(x[2])) for x in [
             ('USD', 'CAD', '1.10'),
             ('USD', 'CAD', '1.12'),
             ('GOOG', 'USD', '520.00'),
+            ('GOOG', 'USD', '530.00'),
             ('GOOG', 'USD', '540.00'),
             ('GOOG', 'USD', '560.00')
             ]]
         for expected, price in zip(expected_values, price_entries):
             actual = (price.currency, price.amount.currency, price.amount.number)
             self.assertEqual(expected, actual)
+
+    @parsedoc
+    def test_add_implicit_prices_other_account(self, entries, _, __):
+        """
+        2013-01-01 open Assets:Account1
+        2013-01-01 open Assets:Account2
+        2013-01-01 open Assets:Other
+
+        2013-04-01 *
+          Assets:Account1             1500 GOOG {520 USD}
+          Assets:Account2             1500 GOOG {530 USD}
+          Assets:Other
+
+        2013-04-10 * "Reduces existing position in account 1"
+          Assets:Account1            -100 GOOG {520 USD}
+          Assets:Other
+
+        2013-04-10 * "Does not existing position in account 2"
+          Assets:Account2            -200 GOOG {520 USD}
+          Assets:Other
+
+        """
+        new_entries = prices.add_implicit_prices(entries)
+        self.assertEqualEntries ("""
+
+        2013-01-01 open Assets:Account1
+        2013-01-01 open Assets:Account2
+        2013-01-01 open Assets:Other
+
+        2013-04-01 *
+          Assets:Account1                       1500.00 GOOG     {520.00 USD}
+          Assets:Account2                       1500.00 GOOG     {530.00 USD}
+          Assets:Other                       -1575000.00 USD
+
+        2013-04-01 price GOOG 520.00 USD
+
+        2013-04-01 price GOOG 530.00 USD
+
+        2013-04-10 * "Reduces existing position in account 1"
+          Assets:Account1                       -100.00 GOOG     {520.00 USD}
+          Assets:Other                          52000.00 USD
+
+        2013-04-10 * "Does not existing position in account 2"
+          Assets:Account2                       -200.00 GOOG     {520.00 USD}
+          Assets:Other                         104000.00 USD
+
+        2013-04-10 price GOOG 520.00 USD
+
+        """, new_entries)
+
+    @parsedoc
+    def test_get_last_price_entries(self, entries, _, __):
+        """
+        2013-01-01 price  USD  1.01 CAD
+        2013-02-01 price  USD  1.02 CAD
+        2013-03-01 price  USD  1.03 CAD
+        2013-04-01 price  USD  1.04 CAD
+        2013-05-01 price  USD  1.05 CAD
+        2013-06-01 price  USD  1.06 CAD
+        2013-07-01 price  USD  1.07 CAD
+        """
+        self.assertEqualEntries("""
+        2013-04-01 price  USD  1.04 CAD
+        """, prices.get_last_price_entries(entries, datetime.date(2013, 5, 1)))
+
+        self.assertEqualEntries("""
+        2013-05-01 price  USD  1.05 CAD
+        """, prices.get_last_price_entries(entries, datetime.date(2013, 5, 2)))
+
+        self.assertEqualEntries("""
+        2013-07-01 price  USD  1.07 CAD
+        """, prices.get_last_price_entries(entries, datetime.date(2014, 1, 1)))
+
+        self.assertEqualEntries("""
+        """, prices.get_last_price_entries(entries, datetime.date(2012, 1, 1)))
 
 
 class TestPriceMap(unittest.TestCase):

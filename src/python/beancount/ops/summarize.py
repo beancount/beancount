@@ -11,10 +11,12 @@ import logging
 from collections import defaultdict
 
 from beancount.core import inventory
-from beancount.core.data import Transaction, Open, Close
+from beancount.core.data import Transaction, Open, Close, Price
 from beancount.core.data import FileLocation, Posting
+from beancount.core import data
 from beancount.core import flags
 from beancount.core.account_types import is_income_statement_account
+from beancount.ops import prices
 
 
 def clamp(entries, begin_date, end_date,
@@ -168,6 +170,9 @@ def summarize(entries, date, opening_account):
         '<summarize>', flags.FLAG_SUMMARIZE,
         "Opening balance for '{account}' as of {date} (Summarization)")
 
+    # Insert the last price entry for each commodity from before the date.
+    price_entries = prices.get_last_price_entries(entries, date)
+
     # Gather the list of active open entries at date.
     open_entries = open_at_date(entries, date)
 
@@ -176,7 +181,7 @@ def summarize(entries, date, opening_account):
 
     # Return a new list of entries and the index that points after the entries
     # were inserted.
-    return ((open_entries + summarizing_entries + after_entries),
+    return ((open_entries + price_entries + summarizing_entries + after_entries),
             len(open_entries) + len(summarizing_entries))
 
 

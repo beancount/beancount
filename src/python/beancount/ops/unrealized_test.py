@@ -4,10 +4,10 @@ import re
 from beancount.core.amount import to_decimal, ZERO
 from beancount.core import account_types
 from beancount.core import data
-from beancount.parser import parsedoc
 from beancount.parser import options
 from beancount.ops import unrealized
 from beancount.ops import validation
+from beancount.loader import loaddoc
 
 
 def get_entries_with_narration(entries, regexp):
@@ -33,7 +33,7 @@ class TestUnrealized(unittest.TestCase):
             [], account_types.DEFAULT_ACCOUNT_TYPES)
         self.assertEqual([], entries)
 
-    @parsedoc
+    @loaddoc
     def test_nothing_held_at_cost(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Account1
@@ -56,7 +56,7 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual([],
                          unrealized.get_unrealized_entries(new_entries))
 
-    @parsedoc
+    @loaddoc
     def test_normal_case(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Account1
@@ -98,7 +98,7 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual(2, len(mansion.postings))
         self.assertEqual(to_decimal('-100'), mansion.postings[0].position.number)
 
-    @parsedoc
+    @loaddoc
     def test_no_price(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Account1
@@ -116,7 +116,7 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual(1, len(unreal_entries))
         self.assertEqual(ZERO, unreal_entries[0].postings[0].position.number)
 
-    @parsedoc
+    @loaddoc
     def test_immediate_profit(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Account1
@@ -135,7 +135,7 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual(to_decimal('200'),
                          unreal_entries[0].postings[0].position.number)
 
-    @parsedoc
+    @loaddoc
     def test_conversions_only(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Account1
@@ -150,7 +150,7 @@ class TestUnrealized(unittest.TestCase):
             entries, options.get_account_types(options_map))
         self.assertEqual([], unrealized.get_unrealized_entries(new_entries))
 
-    @parsedoc
+    @loaddoc
     def test_with_subaccount(self, entries, _, options_map):
         """
         2014-01-01 open Assets:Account1
@@ -170,7 +170,7 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual('Assets:Account1:Gains', entry.postings[0].account)
         self.assertEqual('Income:Account1:Gains', entry.postings[1].account)
 
-    @parsedoc
+    @loaddoc
     def test_not_assets(self, entries, _, options_map):
         """
         2014-01-01 open Liabilities:Account1
@@ -224,7 +224,7 @@ class TestUnrealized(unittest.TestCase):
         self.assertEqual(to_decimal("30.00"), entry.postings[0].position.number)
         self.assertEqual(to_decimal("-30.00"), entry.postings[1].position.number)
 
-    @parsedoc
+    @loaddoc
     def test_create_open_directive(self, entries, errors, options_map):
         """
         2014-01-01 open Assets:Account1

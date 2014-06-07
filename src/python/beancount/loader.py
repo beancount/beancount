@@ -14,6 +14,7 @@ from beancount.ops import pad
 from beancount.ops import validation
 from beancount.ops import check
 from beancount.ops import unrealized
+from beancount.ops import prices
 
 
 def load(filename,
@@ -103,6 +104,10 @@ def run_transformations(entries, parse_errors, options_map,
     # Note: I think a lot of these should be moved to plugins!
     with misc_utils.print_time('pad', quiet):
         entries, pad_errors = pad.pad(entries)
+
+    # Add implicitly defined prices.
+    with misc_utils.print_time('prices', quiet):
+        entries = prices.add_implicit_prices(entries)
 
     with misc_utils.print_time('check', quiet):
         entries, check_errors = check.check(entries)

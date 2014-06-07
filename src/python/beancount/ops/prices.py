@@ -6,45 +6,41 @@ Prices are deduced from Price entries found in the file, or perhaps
 created by scripts (for example you could build a script that will fetch
 live prices online and create entries on-the-fly).
 """
-from collections import defaultdict
+import collections
 
 from beancount.core.amount import ONE
 from beancount.core import amount
 from beancount.core.data import Transaction, Price
+from beancount.core import data
 from beancount.core import inventory
 from beancount.utils import misc_utils
 
 
-def get_price_entries(entries):
-    """Extract explicit price entries and implicitly defined prices from a list of
-    entries. Explicit price entries are simply included the the output. Prices
-    from postings with costs or with prices from Transaction entries are
-    synthesized as Price entries.
+def add_implicit_prices(entries):
+    """Insert implicitly defined prices from Transactions.
+
+    Explicit price entries are simply maintained in the output list. Prices from
+    postings with costs or with prices from Transaction entries are synthesized
+    as new Price entries in the list of entries output.
 
     Args:
-      entries: A list of directives. We're interested only in the Price and
-        Transaction instances.
+      entries: A list of directives. We're interested only in the Transaction instances.
     Returns:
-      A list of Price instances.
+      A list of entries, possibly with more Price entries than before.
     """
-    price_entries = []
-    total_balance = inventory.Inventory()
+    new_entries = []
+
+    balances = collections.defaultdict(inventory.Inventory)
     for entry in entries:
+        # Always replicate the existing entries.
+        new_entries.append(entry)
 
-        # Include price entries, obviously.
-        if isinstance(entry, Price):
-            price_entries.append(entry)
-
-        # FIXME: Move this in the parser... this should automatically generate a
-        # Price entry so that this function becomes trivial and perhaps we don't
-        # need it anymore. It will also help to print out the parsed contents of
-        # the input file, for debugging purposes.
-        elif isinstance(entry, Transaction):
+        if isinstance(entry, Transaction):
             # Inspect all the postings in the transaction.
             for posting in entry.postings:
                 # Check if the position is matching against an existing
                 # position.
-                reducing = total_balance.add_position(posting.position, True)
+                reducing = balances[posting.account].add_position(posting.position, True)
 
                 # Add prices when they're explicitly specified on a posting. An
                 # explicitly specified price may occur in a conversion, e.g.
@@ -56,20 +52,39 @@ def get_price_entries(entries):
                     entry = Price(entry.fileloc, entry.date,
                                   posting.position.lot.currency,
                                   posting.price)
-                    price_entries.append(entry)
+                    new_entries.append(entry)
 
                 # Add costs, when we're not matching against an existing
                 # position. This happens when we're just specifying the cost,
                 # e.g.
                 #      Asset:Account    100 GOOG {564.20}
                 elif posting.position.lot.cost is not None and not reducing:
-                    # Other add prices .
                     entry = Price(entry.fileloc, entry.date,
                                   posting.position.lot.currency,
                                   posting.position.lot.cost)
-                    price_entries.append(entry)
+                    new_entries.append(entry)
 
-    return price_entries
+    return new_entries
+
+
+def get_last_price_entries(entries, date):
+    """Run through the entries until the given date and return the last
+    Price entry encountered for each (currency, cost-currency) pair.
+
+    Args:
+      entries: A list of directives.
+      date: An instance of datetime.date.
+    Returns:
+      A list of price entries.
+    """
+    price_entry_map = {}
+    for entry in entries:
+        if entry.date >= date:
+            break
+        if isinstance(entry, Price):
+            base_quote = (entry.currency, entry.amount.currency)
+            price_entry_map[base_quote] = entry
+    return sorted(price_entry_map.values(), key=data.entry_sortkey)
 
 
 class PriceMap(dict):
@@ -110,11 +125,13 @@ def build_price_map(entries):
       generated in the price map.
     """
     # Fetch a list of all the price entries seen in the ledger.
-    price_entries = get_price_entries(entries)
+    price_entries = [entry
+                     for entry in entries
+                     if isinstance(entry, Price)]
 
     # Build a map of exchange rates between these units.
     # (base-currency, quote-currency) -> List of (date, rate).
-    price_map = defaultdict(list)
+    price_map = collections.defaultdict(list)
     for price in price_entries:
         base_quote = (price.currency, price.amount.currency)
         price_map[base_quote].append((price.date, price.amount.number))

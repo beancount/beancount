@@ -49,9 +49,13 @@
   Expenses:Commissions                                                     9.95 USD                                   ;       9.95 USD
   Assets:Bank:Investing:Cash                                           -4692.95 USD                                   ;   -4692.95 USD
 
+2014-06-10 price AAPL       468.30 USD
+
 2014-06-10 * "Buying some stocks."
   Assets:Bank:Investing:AAPL                                             -5.00 AAPL     {468.30 USD}     @ 487.02 USD ;   -2341.50 USD
   Expenses:Commissions                                                     9.95 USD                                   ;       9.95 USD
   Assets:Bank:Investing:Cash                                            2435.10 USD                                   ;    2435.10 USD
   Income:Bank:CapitalGains                                              -103.55 USD                                   ;    -103.55 USD
+
+2014-06-10 price AAPL       487.02 USD
 
