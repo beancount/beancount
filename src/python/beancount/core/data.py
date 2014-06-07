@@ -184,9 +184,10 @@ FileLocation = namedtuple('FileLocation', 'filename lineno')
 #   account: An Account, the account that is modified by this posting.
 #   position: An instance of Position (see position.py), the amount and lot that
 #     is to be posted to this leg's account.
-#   price: The price at which the position took place, or None, where not
-#     relevant. Providing a price member to a posting automatically adds a
-#     price in the prices database at the date of the transaction.
+#   price: An instance of Amount, the price at which the position took place, or
+#     None, where not relevant. Providing a price member to a posting
+#     automatically adds a price in the prices database at the date of the
+#     transaction.
 #   flag: An optional flag, a one-character string or None, which is to be
 #     associated with the posting. Most postings don't have a flag, but it can
 #     be convenient to mark a particular posting as problematic or pending to
