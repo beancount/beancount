@@ -5,12 +5,6 @@ beancount: TODO
   - Complete full unittests coverage (as per find-missing-tests.py).
     Remaining (to be processed in this order):
 
-       src/python/beancount/parser/printer.py                 INCOMPLETE
-
-         Add printer tests with round-trip.
-         Test all fields.
-         Also add a 'compare' command to bean-doctor, to compare two files.
-
        src/python/beancount/parser/documents.py               INCOMPLETE
 
          Could this move to a plugins directory? I think so.
@@ -291,18 +285,18 @@ lugins
   - Put all the Pad into a single file as a plugin, same with Open Close, and
     Balance. Maybe we can organize those codes to be all localized in single
     files, and for many of these features, they can be implemented in
-    self-contained plugins with all their codes together!  openclose.py,
-    pad.py, balance.py, etc.  And maybe a good way to disambiguate between ops
-    adn plugins is just this... maybe ops is non-plugins, e.g. prices,
-    summarize, etc.
+    self-contained plugins with all their codes together! openclose.py, pad.py,
+    balance.py, etc. I think even 'event' directives can become those. And maybe
+    a good way to disambiguate between ops adn plugins is just this... maybe ops
+    is non-plugins, e.g. prices, summarize, etc.
 
   - Make the plugins able to register types with the parser... this should
     allow the parser to call back on the plugins to create the appropriate
     types... this means true extensibility throughout! This is a fantastic
-    idea... do this after v2 ship.
-
-
-
+    idea... do this after v2 ship.  Maybe they get parsed as a special "Unknown"
+    directive that accepts a grab-bag of strings and tags and accounts and
+    amounts and they get replaced by the plugins; whatever Unknown trickles
+    through would generate a warning in the errors.
 
 
 * Current / Misc / To Be Classified
