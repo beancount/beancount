@@ -9,7 +9,6 @@ import datetime
 from os import path
 from collections import namedtuple
 
-from beancount.utils import misc_utils
 from beancount.core import account
 from beancount.core import account_types
 from beancount.core.data import FileLocation, Document
@@ -35,7 +34,9 @@ def process_documents(entries, filename, documents_dirs):
     """
 
     # Check that the entries from the input file are okay.
-    document_entries = misc_utils.filter_type(entries, Document)
+    document_entries = [entry
+                        for entry in entries
+                        if isinstance(entry, Document)]
     errors = verify_document_entries(document_entries)
 
     # Detect filenames that should convert into entries.

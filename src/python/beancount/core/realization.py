@@ -25,7 +25,6 @@ import itertools
 
 from beancount.core import inventory
 from beancount.core.amount import amount_sortkey
-from beancount.utils import misc_utils
 from beancount.core import data
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Document
 from beancount.core.data import Posting
@@ -441,7 +440,7 @@ def iterate_with_balance(postings_or_entries):
         if posting is not None:
             # De-dup multiple postings on the same transaction entry by
             # grouping their positions together.
-            index = misc_utils.index_key(date_entries, entry, first, operator.is_)
+            index = index_key(date_entries, entry, first, operator.is_)
             if index is None:
                 date_entries.append((entry, [posting]))
             else:
@@ -461,6 +460,25 @@ def iterate_with_balance(postings_or_entries):
                 balance.add_position(date_posting.position, True)
         yield date_entry, date_postings, change, balance
     date_entries.clear()
+
+
+def index_key(sequence, value, key, cmp):
+    """Find the index of the first element in 'sequence' which is equal to 'value'.
+    If 'key' is specified, the value compared to the value returned by this
+    function. If the value is not found, return None.
+
+    Args:
+      sequence: The sequence to search.
+      value: The value to search for.
+      key: A predicate to call to obtain the value to compare against.
+      cmp: A comparison predicate.
+    Returns:
+      The index of the first element found, or None, if the element was not found.
+    """
+    for index, element in enumerate(sequence):
+        if cmp(key(element), value):
+            return index
+    return
 
 
 def dump(root_account):

@@ -1,6 +1,7 @@
 """Unit tests for realizations.
 """
 import copy
+import operator
 import io
 import unittest
 import textwrap
@@ -666,3 +667,11 @@ class TestRealOther(test_utils.TestCase):
                 `-- US
                     `-- CreditCard       123.45 USD
         """, realization.dump_balances(real_account))
+
+
+class TestRealMisc(unittest.TestCase):
+
+    def test_index_key(self):
+        objects = [object() for _ in range(10)]
+        index = realization.index_key(objects, objects[4], lambda x: x, operator.is_)
+        self.assertEqual(4, index)

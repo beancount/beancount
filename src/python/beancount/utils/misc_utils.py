@@ -130,25 +130,6 @@ def get_tuple_values(ntuple, predicate, memo=None):
                 yield value
 
 
-def index_key(sequence, value, key, cmp):
-    """Find the index of the first element in 'sequence' which is equal to 'value'.
-    If 'key' is specified, the value compared to the value returned by this
-    function. If the value is not found, return None.
-
-    Args:
-      sequence: The sequence to search.
-      value: The value to search for.
-      key: A predicate to call to obtain the value to compare against.
-      cmp: A comparison predicate.
-    Returns:
-      The index of the first element found, or None, if the element was not found.
-    """
-    for index, element in enumerate(sequence):
-        if cmp(key(element), value):
-            return index
-    return
-
-
 def compute_unique_clean_ids(strings):
     """Given a sequence of strings, reduce them to corresponding ids without any
     funny characters and insure that the list of ids is unique. Yields pairs

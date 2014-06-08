@@ -55,35 +55,37 @@ grind:
 build/beancount.deps:
 	sfood -i bin src/python > $@
 
-CLUSTERS =					\
-	beancount/core/tests			\
-	beancount/ops/tests			\
-	beancount/parser/tests			\
-	beancount/imports/tests			\
-	beancount/utils/tests			\
-	beancount/web/tests			\
-	beancount/core				\
-	beancount/ops				\
-	beancount/parser			\
-	beancount/imports			\
-	beancount/sources			\
-	beancount/utils				\
-	beancount/web				\
-	beancount/scripts
+CLUSTERS_REGEXPS =					\
+	beancount/core/.*_test\.py	 core/tests	\
+	beancount/core			 core		\
+	beancount/ops/.*_test\.py	 ops/tests	\
+	beancount/ops			 ops		\
+	beancount/parser/.*_test\.py	 parser/tests	\
+	beancount/parser		 parser		\
+	beancount/plugins/.*_test\.py	 plugins/tests	\
+	beancount/plugins		 plugins	\
+	beancount/reports/.*_test\.py	 reports/tests	\
+	beancount/reports		 reports	\
+	beancount/scripts/.*_test\.py	 scripts/tests	\
+	beancount/scripts		 scripts	\
+	beancount/utils/.*_test\.py	 utils/tests	\
+	beancount/utils			 utils		\
+	beancount/web/.*_test\.py	 web/tests	\
+	beancount/web			 web		\
+	beancount/load.*_test\.py	 load/tests	\
+	beancount/load.*\.py		 load		\
+	beancount                        load
 
 GRAPHER = dot
 
 build/beancount.pdf: build/beancount.deps
-	cat $< | sfood-cluster $(CLUSTERS) | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
+	cat $< | sfood-cluster-regexp $(CLUSTERS_REGEXPS) | grep -v /tests| sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
+	evince $@
 
-showdeps: build/beancount.pdf
-	evince $<
+build/beancount_tests.pdf: build/beancount.deps
+	cat $< | sfood-cluster-regexp $(CLUSTERS_REGEXPS) | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
+	evince $@
 
-build/beancount-notests.pdf: build/beancount.deps
-	cat $< | grep -v /tests | sfood-cluster $(CLUSTERS) | sfood-graph | $(GRAPHER) -Tps | ps2pdf - $@
-
-showdeps-notests: build/beancount-notests.pdf
-	evince $<
 
 
 # Compute ahd plot the dependencies within the core.

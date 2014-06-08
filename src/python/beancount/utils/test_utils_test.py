@@ -46,7 +46,6 @@ class TestTestUtils(unittest.TestCase):
                          open(filename).read())
 
 
-
 class TestTestCase(test_utils.TestCase):
 
     def test_assertLines(self):

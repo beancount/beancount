@@ -57,11 +57,6 @@ class TestMiscUtils(unittest.TestCase):
         x = misc_utils.get_tuple_values(ntuple, lambda x: isinstance(x, A))
         self.assertEqual([A('a'), A('b')], list(x))
 
-    def test_index_key(self):
-        objects = [object() for _ in range(10)]
-        index = misc_utils.index_key(objects, objects[4], lambda x: x, operator.is_)
-        self.assertEqual(4, index)
-
     def test_compute_unique_clean_ids(self):
         self.assertEqual({'a': 'a', 'b': 'b', 'c': 'c'},
                          misc_utils.compute_unique_clean_ids(['a', 'b', 'c']))
