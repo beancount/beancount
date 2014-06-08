@@ -17,19 +17,18 @@ from beancount.core import data
 
 EXCLUDED_TAG = 'virtual'
 
-def exclude_tag(entries, errors, options_map):
+def exclude_tag(entries, options_map):
     """Select all transactions that do not have a #virtual tag.
 
     Args:
       entries: A list of entry instances.
-      errors: A list of errors generated during parsing.
       options_map: A dict of options parsed from the file.
     Returns:
-      A triple of the same, possibly modified.
+      A tuple of entries and errors.
     """
     filtered_entries = [entry
                         for entry in entries
                         if (not isinstance(entry, data.Transaction) or
                             entry.tags is None or
                             EXCLUDED_TAG not in entry.tags)]
-    return (filtered_entries, errors, options_map)
+    return (filtered_entries, [])

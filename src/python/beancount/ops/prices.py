@@ -26,7 +26,8 @@ def add_implicit_prices(entries):
     Args:
       entries: A list of directives. We're interested only in the Transaction instances.
     Returns:
-      A list of entries, possibly with more Price entries than before.
+      A list of entries, possibly with more Price entries than before, and a
+      list of errors.
     """
     new_entries = []
 
@@ -64,7 +65,7 @@ def add_implicit_prices(entries):
                                   posting.position.lot.cost)
                     new_entries.append(entry)
 
-    return new_entries
+    return new_entries, []
 
 
 def get_last_price_entries(entries, date):

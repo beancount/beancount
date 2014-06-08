@@ -53,7 +53,7 @@ class TestPriceEntries(test_utils.TestCase):
           Assets:Other
         """
         self.assertEqual(10, len(entries))
-        new_entries = prices.add_implicit_prices(entries)
+        new_entries, _ = prices.add_implicit_prices(entries)
         price_entries = list(filter(lambda entry: isinstance(entry, data.Price), new_entries))
 
         self.assertEqualEntries("""
@@ -133,7 +133,7 @@ class TestPriceEntries(test_utils.TestCase):
           Assets:Other
 
         """
-        new_entries = prices.add_implicit_prices(entries)
+        new_entries, _ = prices.add_implicit_prices(entries)
         self.assertEqualEntries ("""
 
         2013-01-01 open Assets:Account1

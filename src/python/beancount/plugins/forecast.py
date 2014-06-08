@@ -29,17 +29,16 @@ from beancount.core import data
 __plugins__ = ('forecast_plugin',)
 
 
-def forecast_plugin(entries, errors, options_map):
+def forecast_plugin(entries, options_map):
     """An example filter that piggybacks on top of the Beancount input syntax to
     insert forecast entries automatically. This functions accepts the return
     value of beancount.loader.load() and must return the same type of output.
 
     Args:
       entries: a list of entry instances
-      errors: a list of errors generated during parsing
       options_map: a dict of options parsed from the file
     Returns:
-      A triple of the same, possibly modifeid.
+      A tuple of entries and errors.
     """
 
     # Find the last entry's date.
@@ -72,4 +71,4 @@ def forecast_plugin(entries, errors, options_map):
     # Make sure the new entries inserted are sorted.
     new_entries.sort(key=data.entry_sortkey)
 
-    return (filtered_entries + new_entries, errors, options_map)
+    return (filtered_entries + new_entries, [])

@@ -67,7 +67,7 @@ def load(filename,
     # Validate the list of entries.
     with misc_utils.print_time('validate', quiet):
         valid_errors = validation.validate(entries)
-        errors += valid_errors
+        errors.extend(valid_errors)
 
     # Print out the list of errors.
     if do_print_errors:
@@ -98,46 +98,50 @@ def run_transformations(entries, parse_errors, options_map,
       A list of modified entries, and a list of errors, also possibly modified.
     """
 
+    # A list of error lists to flatten.
+    errors = list(parse_errors)
+
     # Pad the resulting entries (create synthetic Pad entries to balance checks
     # where desired).
     #
     # Note: I think a lot of these should be moved to plugins!
     with misc_utils.print_time('pad', quiet):
         entries, pad_errors = pad.pad(entries)
+        errors.extend(pad_errors)
 
     # Add implicitly defined prices.
     with misc_utils.print_time('prices', quiet):
-        entries = prices.add_implicit_prices(entries)
+        entries, price_errors = prices.add_implicit_prices(entries)
+        errors.extend(price_errors)
 
     with misc_utils.print_time('check', quiet):
         entries, check_errors = check.check(entries)
+        errors.extend(check_errors)
 
     # Process the document entries and find documents automatically.
     with misc_utils.print_time('documents', quiet):
         entries, doc_errors = documents.process_documents(entries,
                                                           filename,
                                                           options_map['documents'])
+        errors.extend(doc_errors)
 
     # Add unrealized gains.
     if add_unrealized_gains:
         with misc_utils.print_time('unrealized', quiet):
             account_types = options.get_account_types(options_map)
-            entries = unrealized.add_unrealized_gains(
+            entries, unrealized_errors = unrealized.add_unrealized_gains(
                 entries,
                 account_types,
                 options_map['account_unrealized'])
-
+            errors.extend(unrealized_errors)
 
     # Ensure that the entries are sorted.
     entries.sort(key=data.entry_sortkey)
 
-    # Collate all the errors encountered so far.
-    errors = parse_errors + pad_errors + check_errors + doc_errors
-
     # Run the load_filters on top of the results.
     for load_filter_function in LOAD_PLUGINS:
-        entries, errors, options_map = load_filter_function(
-            entries, errors, options_map)
+        entries, plugin_errors = load_filter_function(entries, options_map)
+        errors.extend(plugin_errors)
 
     return entries, errors
 

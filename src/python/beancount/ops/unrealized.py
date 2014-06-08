@@ -31,11 +31,12 @@ def add_unrealized_gains(entries, account_types, subaccount_name=None):
         under an account to book the unrealized gain. If this is left to its
         default value, the gain is booked directly in the same account.
     Returns:
-      A list of entries, which includes the new unrealized capital gains
-      entries at the end. The new list is still sorted.
+      A list of entries, which includes the new unrealized capital gains entries
+      at the end, and a list of errors. The new list of entries is still sorted.
     Raises:
       ValueError: If the subaccount name is not a valid account name component.
     """
+    errors = []
 
     # Assert the subaccount name is in valid format.
     if subaccount_name:
@@ -44,7 +45,7 @@ def add_unrealized_gains(entries, account_types, subaccount_name=None):
             raise ValueError("Invalid subaccount name: '{}'".format(subaccount_name))
 
     if not entries:
-        return entries
+        return (entries, errors)
 
     # Group positions by (account, cost, cost_currency).
     # FIXME: Make this use groupby.
@@ -146,8 +147,7 @@ def add_unrealized_gains(entries, account_types, subaccount_name=None):
             open_entry = data.Open(fileloc, latest_date, account_, None)
             new_open_entries.append(open_entry)
 
-
-    return entries + new_open_entries + new_entries
+    return (entries + new_open_entries + new_entries, errors)
 
 
 def get_unrealized_entries(entries):

@@ -83,17 +83,16 @@ def tag_pending_transactions(entries, tag_name='PENDING'):
             for entry in entries]
 
 
-def tag_pending_plugin(entries, errors, options_map):
+def tag_pending_plugin(entries, options_map):
     """A plugin that finds and tags pending transactions.
 
     Args:
       entries: A list of entry instances.
-      errors: A list of errors generated during parsing.
       options_map: A dict of options parsed from the file.
     Returns:
-      A triple of the same, possibly modified.
+      A tuple of entries and errors.
     """
-    return (tag_pending_transactions(entries, 'PENDING'), errors, options_map)
+    return (tag_pending_transactions(entries, 'PENDING'), [])
 
 
 def main():
