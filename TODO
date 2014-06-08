@@ -2,12 +2,6 @@
 beancount: TODO
 * Requirements for Shipping 1.0
 
-  - Make plugins not return options_map, they really don't have to, ever. It's
-    read-only.
-
-  - Remove ugly print in tests.
-
-
   - Complete full unittests coverage (as per find-missing-tests.py).
     Remaining (to be processed in this order):
 

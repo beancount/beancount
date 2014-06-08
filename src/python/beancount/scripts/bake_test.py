@@ -69,10 +69,11 @@ class TestScriptBake(test_utils.TestCase):
           Assets:Cash
         """
         with test_utils.tempdir() as tmpdir:
-            output = path.join(tmpdir, 'output')
-            test_utils.run_with_args(bake.main, self.args + [filename, output])
-            self.assertTrue(path.exists(output) and path.isdir(output))
-            directories = [root for root, _, _ in os.walk(output)]
+            outdir = path.join(tmpdir, 'output')
+            with test_utils.capture() as output:
+                test_utils.run_with_args(bake.main, self.args + [filename, outdir])
+            self.assertTrue(path.exists(outdir) and path.isdir(outdir))
+            directories = [root for root, _, _ in os.walk(outdir)]
             self.assertGreater(len(directories), 20)
 
     @test_utils.docfile
@@ -86,15 +87,16 @@ class TestScriptBake(test_utils.TestCase):
           Assets:Cash
         """
         with test_utils.tempdir() as tmpdir:
-            output = path.join(tmpdir, 'output.tar.gz')
-            test_utils.run_with_args(bake.main, self.args + [filename, output])
-            self.assertFalse(path.exists(bake.path_greedy_split(output)[0]))
-            self.assertTrue(path.exists(output) and path.getsize(output) > 0)
+            outfile = path.join(tmpdir, 'outfile.tar.gz')
+            with test_utils.capture() as output:
+                test_utils.run_with_args(bake.main, self.args + [filename, outfile])
+            self.assertFalse(path.exists(bake.path_greedy_split(outfile)[0]))
+            self.assertTrue(path.exists(outfile) and path.getsize(outfile) > 0)
 
         with test_utils.tempdir() as tmpdir:
-            for archive_name in ('output.tar.bz2',
-                                 'output.tar.zip',
-                                 'output.tar.xz'):
+            for archive_name in ('archive.tar.bz2',
+                                 'archive.tar.zip',
+                                 'archive.tar.xz'):
                 with self.assertRaises(SystemExit):
-                    output = path.join(tmpdir, archive_name)
-                    test_utils.run_with_args(bake.main, self.args + [filename, output])
+                    outfile = path.join(tmpdir, archive_name)
+                    test_utils.run_with_args(bake.main, self.args + [filename, outfile])
