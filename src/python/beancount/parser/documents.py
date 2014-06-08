@@ -21,14 +21,14 @@ DocumentError = namedtuple('DocumentError', 'fileloc message entry')
 
 
 def process_documents(entries, filename, documents_dirs):
-    """Do all the processing related to document directives.
+    """Check files for document directives and find documents automatically.
 
     Args:
       entries: a list of all entry objects parsed from the file.
       filename: the name of the ledger input file
       documents_dirs: a list of directory names to be used as roots
                       of the hierarchies that will be searched.
-    Returns:
+2    Returns:
       A pair of list of all entries (including new ones), and errors
       generated during the process of creating document directives.
     """
@@ -115,21 +115,6 @@ def process_auto_documents(input_filename, document_dirs, accounts):
     return new_entries, errors
 
 
-def walk_accounts(root_directory):
-    """A version of os.walk() which provides the directory as an account name.
-
-    Args:
-      root_directory: the name of the root of the hierarchy to be walked.
-    Returns:
-      A generator that walks over (root, account-name, dirs, files).
-    """
-    for root, dirs, files in os.walk(root_directory):
-        relroot = root[len(root_directory)+1:]
-        account_name = relroot.replace(os.sep, account.sep)
-        if account_types.is_valid_account_name(account_name):
-            yield (root, account_name, dirs, files)
-
-
 # FIXME: I think you can remove 'accounts' as a mapping here, should just be a set.
 def find_documents(root_directory, location_filename, accounts):
     """Find dated document files under the given directory 'root_directory', located
@@ -179,3 +164,21 @@ def find_documents(root_directory, location_filename, accounts):
             new_entries.append(entry)
 
     return new_entries
+
+
+def walk_accounts(root_directory):
+    """A version of os.walk() which yields directories that are valid account names.
+
+    This only yields directories that are accounts... it skips the other ones.
+    For convenience, it also yields you the account's name.
+
+    Args:
+      root_directory: the name of the root of the hierarchy to be walked.
+    Returns:
+      A generator that walks over (root, account-name, dirs, files).
+    """
+    for root, dirs, files in os.walk(root_directory):
+        relroot = root[len(root_directory)+1:]
+        account_name = relroot.replace(os.sep, account.sep)
+        if account_types.is_valid_account_name(account_name):
+            yield (root, account_name, dirs, files)
