@@ -161,8 +161,8 @@ def amount_mult(amount, number):
     Returns:
       An Amount, with the same currency, but with 'number' times units.
     """
-    assert isinstance(amount, Amount)
-    assert isinstance(number, Decimal)
+    assert isinstance(amount, Amount), repr(amount)
+    assert isinstance(number, Decimal), repr(number)
     return Amount(amount.number * number, amount.currency)
 
 def amount_div(amount, number):

@@ -296,6 +296,10 @@ lugins
          Expenses:Financial:Fees                                                  0.10 USD
 
 
+
+
+
+
   - Put all the Pad into a single file as a plugin, same with Open Close, and
     Balance. Maybe we can organize those codes to be all localized in single
     files, and for many of these features, they can be implemented in
@@ -304,8 +308,19 @@ lugins
     adn plugins is just this... maybe ops is non-plugins, e.g. prices,
     summarize, etc.
 
+  - Make the plugins able to register types with the parser... this should
+    allow the parser to call back on the plugins to create the appropriate
+    types... this means true extensibility throughout! This is a fantastic
+    idea... do this after v2 ship.
+
+
 
 * Current / Misc / To Be Classified
+
+  - parser: Make tags and payees "tagged strings", with their own data types.
+    You can derive from str.
+
+  - Rename "events" to "register"?  This makes a lot of sense.
 
   - Write doc about stages of life, "climbing the mountain."
 
@@ -1362,6 +1377,7 @@ Improve this bit:
       currency:USD
       link:7e4116fadbb4
       narration:Deposit
+      event:location:New York  <- like dates, but from events!
 
 
 * Operations
