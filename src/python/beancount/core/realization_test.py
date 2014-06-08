@@ -18,7 +18,6 @@ from beancount.core import data
 from beancount.core.inventory import Inventory
 from beancount.core import amount
 from beancount.core import account_types
-from beancount.parser import documents
 from beancount.parser import parsedoc
 from beancount.parser import printer
 from beancount.loader import loaddoc
@@ -218,7 +217,7 @@ class TestRealization(unittest.TestCase):
 
         2014-01-01 close Liabilities:CreditCard
         """
-        self.assertEqual([documents.DocumentError], list(map(type, errors)))
+        self.assertEqual(1, len(errors))
 
         postings_map = realization.group_by_account(entries)
         self.assertTrue(isinstance(postings_map, dict))

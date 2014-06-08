@@ -130,7 +130,7 @@ def transfer_balances(entries, date, account_pred, transfer_account):
     transfer_entries = create_entries_from_balances(
         transfer_balances, transfer_date, transfer_account, False,
         '<summarize>', flags.FLAG_TRANSFER,
-        "Transfer balance for '{account}' as of {date} (Transfer Balance)")
+        "Transfer balance for '{account}' as of {date} (Transfer balance)")
 
     # Split the new entries in a new list.
     return (entries[:index] + transfer_entries + entries[index:])
@@ -160,8 +160,7 @@ def summarize(entries, date, opening_account):
     index, balances = sum_to_date(entries, date)
 
     # We need to insert the entries with a date previous to subsequent checks,
-    # to maintain the invariant that all Balance and Open directive show up before
-    # any transaction.
+    # to maintain ensure the open directives show up before any transaction.
     summarize_date = date - datetime.timedelta(days=1)
 
     # Create summarization / opening balance entries.

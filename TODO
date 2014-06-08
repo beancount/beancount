@@ -7,8 +7,6 @@ beancount: TODO
 
        src/python/beancount/parser/documents.py               INCOMPLETE
 
-         Could this move to a plugins directory? I think so.
-         This is a transformation. Either ops or plugins.
 
      src/python/beancount/parser/lexer_test.py              MISSING
 
@@ -34,6 +32,11 @@ beancount: TODO
 
      src/python/beancount/loader.py                               INCOMPLETE
 
+  - balance.py -> autofill.py, check.py -> balance.py
+
+
+
+
 
   - Move report to UI: networth, holdings rolled by currency
     Reconcile web UI with the list of reports.
@@ -42,6 +45,9 @@ beancount: TODO
 
   - Look at deps for beancount.core.realization and move it upstream where it
     makes sense, maybe ops.
+
+
+
 
 
 
@@ -119,7 +125,6 @@ beancount: TODO
   - Add all docstrings with args Google-style.
   - Fix all FIXMEs everywhere.
   - Add __author__ to all files?
-  - Review deps once more before shipping and make attempts to simplify depgraph.
 
   (depends)
   - Write a new command to bean-doctor that checks the dependencies dynamically
@@ -248,6 +253,16 @@ lugins
 
 
 
+
+
+  - Review deps once more before shipping and make attempts to simplify depgraph.
+    Candidates for review:
+
+      beancount.parser.documents
+      beancount.core.realization
+      beancount.ops.*
+      beancount.plugins.*
+
   - Remove adding the unrealized gains for v2 from the loader in order to
     simplify the interface. Remove the option even. This will be reintroduced
     via a plugin in a further release. This is the right thing to do! Plugins
@@ -290,6 +305,11 @@ lugins
     a good way to disambiguate between ops adn plugins is just this... maybe ops
     is non-plugins, e.g. prices, summarize, etc.
 
+         Documents is totally a plugin/transformer, and the dependency picture
+         doesn't warrant it being within the parser.
+         Could this move to a plugins directory? Yes.
+         (This is clearly a transformation. Either ops or plugins.)
+
   - Make the plugins able to register types with the parser... this should
     allow the parser to call back on the plugins to create the appropriate
     types... this means true extensibility throughout! This is a fantastic
@@ -299,7 +319,12 @@ lugins
     through would generate a warning in the errors.
 
 
+
+
+
 * Current / Misc / To Be Classified
+
+  - Create an index page for all the possible reports, from the web page
 
   - plugin: Consider creating a plugin that would auto-create accounts not seen yet,
     for the purpose of making demos. Definitely must do.
