@@ -22,19 +22,12 @@ from distutils.core import setup, Extension
 
 
 install_scripts = [join('bin', x) for x in """
+bean-bake
 bean-check
-bean-accounts
+bean-directories
+bean-doctor
+bean-query
 bean-web
-bean-grep
-bean-import
-bean-prices
-bean-remove-crdb
-bean-trial
-bean-v1tov2
-# bean-bake, not working yet
-# bean-check-directories, not ready yet
-# bean-dump-lexer, developer tool
-# bean-sandbox, developer tool
 """.splitlines() if x and not x.startswith('#')]
 
 
@@ -62,10 +55,11 @@ setup(
               'beancount.parser',
               'beancount.core',
               'beancount.ops',
-              'beancount.sources',
-              'beancount.imports',
-              'beancount.utils',
+              'beancount.plugins',
+              'beancount.reports',
+              'beancount.scripts',
               'beancount.web',
+              'beancount.utils',
               ],
   package_data = {'beancount.web': ['*.ico', '*.html', '*.css']},
   scripts=install_scripts,
