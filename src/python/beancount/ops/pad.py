@@ -13,7 +13,9 @@ from beancount.core import flags
 
 PadError = namedtuple('PadError', 'fileloc message entry')
 
+# FIXME: Maybe this should become an option?
 PAD_PRECISION = Decimal('.015')
+
 
 def pad(entries):
     """Synthesize and insert Transaction entries right after Pad entries in order to
@@ -136,11 +138,20 @@ def pad(entries):
 
 
 def group_postings_by_account(entries, only_accounts=None):
-    """Build lists of entries by account.
-    Return a dict of account -> (entry or Posting instance)."""
+    """Builds a mapping of accounts to entries.
 
+    This is essentially a partial realization, without the hierarchy.
+    We need this just to quickly iterate on effects by account.
+
+    Args:
+      entries: A list of directives.
+      only_accounts: If specified, a set of strings, the names of accounts to
+        restrict the partial realization for. This makes the processing leaner by
+        not accumulating lists for accounts we won't need.
+    Returns:
+      A dict of account string to list of entries or posting instances.
+    """
     by_accounts = defaultdict(list)
-
     for entry in entries:
 
         if isinstance(entry, Transaction):

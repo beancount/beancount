@@ -19,18 +19,29 @@ beancount: TODO
        Rename this file to balance to match the directive?
        Not sure. Another file is named that way.
 
+       - balance.py -> autofill.py, check.py -> balance.py
+
+
+
+
      src/python/beancount/web/acctree.py                    MISSING
      src/python/beancount/web/journal.py                    MISSING
+
+       These need to move to reports, generate the intermediate tree
+       object, and then support rendering to txt, csv, html.
 
      src/python/beancount/web/bottle_utils.py               MISSING
 
      src/python/beancount/web/views.py                      MISSING
      src/python/beancount/web/gviz.py                       MISSING
 
-
      src/python/beancount/loader.py                               INCOMPLETE
 
-  - balance.py -> autofill.py, check.py -> balance.py
+
+  - (documents) documents found in parent directories don't end up creating a
+    directive because we skip them because we only restrict to accounts which
+    have had an open declaration... this is probably not what we want, in order
+    to maximize the number of documents captures by this. {fa96aa05361d}
 
 
 
@@ -46,17 +57,10 @@ beancount: TODO
 
 
 
-  - Look at deps for beancount.core.realization and move it upstream where it
-    makes sense, maybe ops.
 
 
 
 
-
-
-  - Prices:
-     Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
-     ledgerhub-fetch-prices is borked, outputs Nones
 
 
 
@@ -65,14 +69,20 @@ beancount: TODO
   - Rename/simplify function names in beancount.core.account (see FIXMEs)
   - Implement account.split() and perhaps remove references to
     split(account.sep) everywhere.
+  - Fix all docstrings re. Account instance, artifacts of having had an Account object.
+  - Configure and run a clean pylint on the entire codebase.
+  - Add all docstrings with args Google-style.
+  - Fix all FIXMEs everywhere.
+  - Add __author__ to all files?
+  - Convert to_decimal to 'D' everywhere... this is an important and nice convenience.
+
+  - Make sure all exceptions text do NOT end with a period, nor do any of the
+    logging.*() calls.
+
+  - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
 
 
 
-  (emacs setup)
-  - Add emacs configuration to highlight beyond 90 in this specific project,
-    that does not use the fringe.
-  - We really do need a little function that will align a paragraph's
-    currencies automatically.
 
 
 
@@ -107,23 +117,16 @@ beancount: TODO
 
 
 
-  - BUG: MSSB documents aren't found... fix FIXMEs in documents.py
 
 
 
   - Clean up the interface of loader.load(), it's ugly.
-  - Implement all the missing global pages.
-  - All errors should be displayed in an overlay
 
 
 
 
-  - Fix all docstrings re. Account instance, artifacts of having had an Account object.
 
-  - Configure and run a clean pylint on the entire codebase.
-  - Add all docstrings with args Google-style.
-  - Fix all FIXMEs everywhere.
-  - Add __author__ to all files?
+
 
   (depends)
   - Write a new command to bean-doctor that checks the dependencies dynamically
@@ -135,6 +138,15 @@ beancount: TODO
   - Review all the code and make all creation of Decimal objects use to_decimal
     instead of Decimal, for consistency.
   - Alias to_decimal to 'D' and replace everywhere.
+
+
+  (parser)
+
+  - Parsing this does not fail; it really should, this is a bug:
+      "2013-04-01 balance Assets:Bank:Checking   555.00 CAD.11"
+
+  - Make sure you can parse Amounts with space between the - sign and the number:
+    "- 20 USD" kicks an error.
 
   - There have been some rare, but occurring few instances of really odd syntax
     making the parser ignore some transactions silently; this is not
@@ -153,10 +165,13 @@ beancount: TODO
       This works okay:
       2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
 
-  - Make sure all exceptions do NOT end with a period, nor do any of the
-    logging.*() calls.
 
-  - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
+
+
+  (web)
+  - Implement all the missing global pages.
+  - All errors should be displayed in an overlay
+
 
 
 
@@ -211,7 +226,6 @@ beancount: TODO
 
   - Review usage of @parsedoc vs. @loaddoc, maybe we should be more thorough
     about that and use @loaddoc in more places, as it performs data validation.
-lugins
   - Maybe all the decorators for docstring parsers should be moved to a
     dedicated module. That would make sense.
 
@@ -234,13 +248,8 @@ lugins
 
 
 
-  - Parsing this does not fail; it really should, this is a bug:
-      "2013-04-01 balance Assets:Bank:Checking   555.00 CAD.11"
 
-  - Convert to_decimal to 'D' everywhere... this is an important and nice convenience.
 
-  - Make sure you can parse Amounts with space between the - sign and the number:
-    "- 20 USD" kicks an error.
 
 
 
@@ -254,6 +263,14 @@ lugins
 
 
 
+
+  (deps / moves)
+  - Look at deps for beancount.core.realization and move it upstream where it
+    makes sense, maybe ops.
+
+  - Can we move documents.py to ops? Look at that.
+  - Can core.getters move to ops.getters?
+
   - Review deps once more before shipping and make attempts to simplify depgraph.
     Candidates for review:
 
@@ -261,6 +278,10 @@ lugins
       beancount.core.realization
       beancount.ops.*
       beancount.plugins.*
+
+
+
+
 
   - Remove adding the unrealized gains for v2 from the loader in order to
     simplify the interface. Remove the option even. This will be reintroduced
@@ -273,6 +294,9 @@ lugins
     have it automatically insert a number of entries to spread the expense
     evenly. 'evenpad', 'multipad', 'distribution'? This should most definitely
     be a plugin.
+
+
+
 
   - Bug with unrealized - add a unit test, ensure this does not break it:
 
@@ -329,6 +353,19 @@ lugins
 
 * Current / Misc / To Be Classified
 
+  - Prices: Write a script to output the timeline of required prices/rates in
+    the database. Then use it to drive fetching a historical table of monthly or
+    perhaps weekly exchange rates for USD/CAD, USD/AUD, EUR/USD since the
+    beginning of my file. Make this script reusable.
+
+
+  (emacs setup)
+  - Add emacs configuration to highlight beyond 90 in this specific project,
+    that does not use the fringe.
+  - We really do need a little function that will align a paragraph's
+    currencies automatically.
+
+
   - Create an index page for all the possible reports, from the web page
 
   - plugin: Consider creating a plugin that would auto-create accounts not seen yet,
@@ -359,9 +396,6 @@ lugins
     for the postings with average cost. But in any case, all the balancing
     should move to a stage right after parsing and should not be an optional
     stage.
-
-  - Produce a currency exposure view by aggregating holdings to cost-currency,
-    and then include OANDA hedging position.
 
   - Remove legacy support for PIPE character in syntax, update cheatsheet.
 
@@ -688,10 +722,6 @@ lugins
   - You need to validate the account name options (empty, or no :, use regex to constrain).
 
   - Move utility functions from bean-prices to a reusable place.
-
-  - Teasing out groups:
-    - Can we move documents.py to ops? Look at that.
-    - Can core.getters move to ops.getters?
 
   - Have another script that takes that as input and spits out current positions
     in the market on a web page; CGI script, should be served on Furius. Update

@@ -9,6 +9,32 @@ from beancount.core.inventory import Inventory
 from beancount.core.data import Open, Pad, Balance, Posting
 from beancount.core.amount import Decimal, Amount
 from beancount.loader import loaddoc
+from beancount.parser import parser
+from beancount.ops import pad
+
+
+class TestPadUtils(unittest.TestCase):
+
+    @parser.parsedoc
+    def test_group_postings_by_account(self, entries, _, __):
+        """
+        2010-01-01 open Assets:Account1
+        2010-01-01 open Assets:Account2
+        2010-01-01 open Assets:Account3
+        2010-01-01 open Equity:OpeningBalances
+
+        2014-01-01 pad Assets:Account1 Equity:OpeningBalances
+
+        2014-06-01 *
+          Assets:Account1             1 USD
+          Assets:Account2             2 USD
+          Assets:Account3            -3 USD
+
+        2014-06-05 balance  Assets:Account2  2 USD
+        """
+        by_accounts = pad.group_postings_by_account(entries, {'Assets:Account1',
+                                                              'Assets:Account2'})
+        self.assertEqual({'Assets:Account1', 'Assets:Account2'}, set(by_accounts.keys()))
 
 
 class __TestPadding(unittest.TestCase):
