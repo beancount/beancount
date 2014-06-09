@@ -120,9 +120,10 @@ def run_transformations(entries, parse_errors, options_map,
 
     # Process the document entries and find documents automatically.
     with misc_utils.print_time('documents', quiet):
-        entries, doc_errors = documents.process_documents(entries,
-                                                          filename,
-                                                          options_map['documents'])
+        # FIXME: Maybe the filename can be passed in through the options_map in
+        # order to comply with the interface of all other plugins. Maybe
+        # documents can just become yet another plugin...
+        entries, doc_errors = documents.process_documents(entries, options_map, filename)
         errors.extend(doc_errors)
 
     # Add unrealized gains.

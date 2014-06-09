@@ -1,8 +1,6 @@
+"""Everything that relates to creating the Document directives.
 """
-Everything that relates to creating the Document directives.
 
-This is more related to the parser than the core.
-"""
 import os
 import re
 import datetime
@@ -20,117 +18,92 @@ from beancount.core import getters
 DocumentError = namedtuple('DocumentError', 'fileloc message entry')
 
 
-def process_documents(entries, filename, documents_dirs):
+def process_documents(entries, options_map, input_filename):
     """Check files for document directives and find documents automatically.
 
     Args:
-      entries: a list of all entry objects parsed from the file.
-      filename: the name of the ledger input file
-      documents_dirs: a list of directory names to be used as roots
-                      of the hierarchies that will be searched.
+      entries: A list of all directives parsed from the file.
+      options_map: An options dict, as is output by the parser.
+      input_filename: A string, the name of the ledger input file
     Returns:
       A pair of list of all entries (including new ones), and errors
       generated during the process of creating document directives.
     """
 
     # Check that the entries from the input file are okay.
-    document_entries = [entry
-                        for entry in entries
-                        if isinstance(entry, Document)]
-    errors = verify_document_entries(document_entries)
+    entries, document_errors = verify_document_entries(entries)
 
     # Detect filenames that should convert into entries.
-    if documents_dirs:
+    autodoc_entries = []
+    autodoc_errors = []
+    document_dirs = options_map['documents']
+    if document_dirs:
+        # Restrict to the list of valid accounts only.
         accounts = getters.get_accounts(entries)
-        document_entries, autodoc_errors = (
-            process_auto_documents(filename, documents_dirs, accounts))
 
-        errors.extend(autodoc_errors)
+        # Accumulate all the entries.
+        for directory in document_dirs:
+            new_entries, new_errors = find_documents(directory, input_filename, accounts)
+            autodoc_entries.extend(new_entries)
+            autodoc_errors.extend(new_errors)
 
-        # FIXME: I'd like the comparison function to be by 'date' here...
-        # We need a mergesort that can take a custom key.
-        # entries = heapq.merge(entries, document_entries)
-        entries.extend(document_entries)
-        entries.sort(key=data.entry_sortkey)
+    # Merge the two lists of entries and errors. Keep the entries sorted.
+    entries.extend(autodoc_entries)
+    entries.sort(key=data.entry_sortkey)
 
+    return (entries, document_errors + autodoc_errors)
+
+
+def verify_document_entries(entries):
+    """Verify that the document entries point to existing files.
+
+    Args:
+      entries: a list of directives whose documents need to be validated.
+    Returns:
+      The same list of entries, and a list of new errors, if any were encountered.
+    """
+    errors = []
+    for entry in entries:
+        if not isinstance(entry, Document):
+            continue
+        if not path.exists(entry.filename):
+            errors.append(
+                DocumentError(entry.fileloc,
+                              'File does not exist: "{}"'.format(entry.filename),
+                              entry))
     return entries, errors
 
 
-def verify_document_entries(document_entries):
-    """Verify that the document entries point to existing files.
-    Return a list of DocumentError errors (or an empty list).
+def find_documents(directory, input_filename, accounts_only=None):
+    """Find dated document files under the given directory.
+
+    If a restricting set of accounts is provided in 'accounts_only', only return
+    entries that correspond to one of the given accounts.
 
     Args:
-      document_entries: a list of Document objects to be validated.
+      directory: A string, the name of the root of the directory hierarchy to be searched.
+      input_filename: The name of the file to be used for the Document directives.
+      accounts_only: A set of valid accounts strings to search for.
     Returns:
-      A list of errors encountered (hopefully empty).
+      A list of new Document objects that were created from the files found, and a list
+      of new errors generated.
     """
-    document_errors = []
+    # Compute the documents directory name relative to the beancount input
+    # file itself.
+    if not path.isabs(directory):
+        input_directory = path.dirname(input_filename)
+        directory = path.normpath(path.join(input_directory, directory))
 
-    for entry in document_entries:
-        assert isinstance(entry, Document)
-        if not path.exists(entry.filename):
-            error = DocumentError(entry.fileloc, "File does not exist.", entry)
-            document_errors.append(error)
+    # If the directory does not exist, just generate an error and return.
+    if not path.exists(directory):
+        fileloc = FileLocation(input_filename, 0)
+        error = DocumentError(
+            fileloc, "Document root '{}' does not exist.".format(directory), None)
+        return ([], [error])
 
-    return document_errors
-
-
-def process_auto_documents(input_filename, document_dirs, accounts):
-    """Gather all the documents from the specified document roots in the options.
-
-    Args:
-      input_filename: the name of the ledger input file. This is used to resolve
-                      relative path names.
-      document_dirs: a list of string, the names of the roots of directory
-                     hierarchies to search.
-      accounts: a set of accounts to consider as valid ones.
-    Returns:
-      A pair of (list of new Document objects created from files, a list of errors
-      encountered during the processing.)
-    """
-    new_entries = []
-    errors = []
-
-    root = path.dirname(input_filename)
-    for document_dir in document_dirs:
-        # Compute the documents directory name relative to the beancount input
-        # file itself.
-        if not path.isabs(document_dir):
-            document_dir = path.normpath(path.join(root, document_dir))
-
-        # Ensure the path exists.
-        if not path.exists(document_dir):
-            fileloc = FileLocation(input_filename, 0)
-            error = DocumentError(fileloc,
-                                  "Document root '{}' does not exist.".format(document_dir),
-                                  None)
-            errors.append(error)
-        else:
-            # Find the documents under this root.
-            document_entries = find_documents(document_dir, input_filename, accounts)
-            new_entries.extend(document_entries)
-
-    new_entries.sort(key=data.entry_sortkey)
-    return new_entries, errors
-
-
-# FIXME: I think you can remove 'accounts' as a mapping here, should just be a set.
-def find_documents(root_directory, location_filename, accounts):
-    """Find dated document files under the given directory 'root_directory', located
-    only in directories that correspond to one of the given accounts.
-
-    Args:
-      root_directory: the name of the root of the directory hierarchy to be searched.
-      location_filename: the name of the file to be used for the Document directives.
-      accounts: a set of valid accounts strings to search for.
-    Returns:
-      A list of new Document objects that were created from the files found.
-    """
-    document_entries = []
-
-    root_directory = path.abspath(root_directory)
-    for root, account_name, dirs, files in walk_accounts(root_directory):
+    # Walk the hierarchy of files.
+    entries = []
+    for root, account_name, dirs, files in walk_accounts(directory):
 
         # Look for files that have a dated filename.
         for filename in files:
@@ -138,29 +111,18 @@ def find_documents(root_directory, location_filename, accounts):
             if not mo:
                 continue
 
-            # FIXME: Decide how we'll add documents that belong in parent
-            # accounts with no declarations. This generates errors if we enable
-            # it due to our tight error checking.
-            if 1:
-                # Only look for files in subdirectories that correspond to an account
-                # name.
-                if account_name not in accounts:
-                    # logging.warn(("Skipping document '{}' because no corresponding "
-                    #               "account.").format(path.join(root, filename)))
-                    continue
-                account = account_name
-            else:
-                # Try to find a corresponding account. If this is in a parent
-                # account, just create the account.
-                account = account_name
+            # If a restricting set of accounts was specified, skip document
+            # directives found in accounts with no corresponding account name.
+            if accounts_only and account_name not in accounts_only:
+                continue
 
-            # Found one! Create a new directive.
-            fileloc = FileLocation(location_filename, -1)
+            # Create a new directive.
+            fileloc = FileLocation(input_filename, 0)
             date = datetime.date(*map(int, mo.group(1, 2, 3)))
-            entry = Document(fileloc, date, account, path.join(root, filename))
-            document_entries.append(entry)
+            entry = Document(fileloc, date, account_name, path.join(root, filename))
+            entries.append(entry)
 
-    return document_entries
+    return (entries, [])
 
 
 def walk_accounts(root_directory):
@@ -170,9 +132,9 @@ def walk_accounts(root_directory):
     For convenience, it also yields you the account's name.
 
     Args:
-      root_directory: the name of the root of the hierarchy to be walked.
-    Returns:
-      A generator that walks over (root, account-name, dirs, files).
+      root_directory: A string, the name of the root of the hierarchy to be walked.
+    Yields:
+      Tuples of (root, account-name, dirs, files), similar to os.walk().
     """
     for root, dirs, files in os.walk(root_directory):
         relroot = root[len(root_directory)+1:]

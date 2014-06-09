@@ -5,9 +5,6 @@ beancount: TODO
   - Complete full unittests coverage (as per find-missing-tests.py).
     Remaining (to be processed in this order):
 
-       src/python/beancount/parser/documents.py               INCOMPLETE
-
-
      src/python/beancount/parser/lexer_test.py              MISSING
 
        Create an automated test for the lexer as well.
