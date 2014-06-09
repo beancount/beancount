@@ -24,67 +24,15 @@ is great for sectioning large files with many transactions."
     ([(control c)(\')] . beancount-insert-account)
     ([(control c)(control g)] . beancount-transaction-set-flag)
     ([(control c)(r)] . beancount-init-accounts)
+    ([(control c)(\;)] . beancount-align-transaction)
     )
   :group 'beancount
-
-
-
-
-(when nil
-  (make-local-variable 'paragraph-ignore-fill-prefix)
-  (setq paragraph-ignore-fill-prefix t)
-  (make-local-variable 'fill-paragraph-function)
-  (setq fill-paragraph-function 'lisp-fill-paragraph)
-  ;; Adaptive fill mode gets the fill wrong for a one-line paragraph made of
-  ;; a single docstring.  Let's fix it here.
-  (set (make-local-variable 'adaptive-fill-function)
-       (lambda () (if (looking-at "\\s-+\"[^\n\"]+\"\\s-*$") "")))
-  ;; Adaptive fill mode gets in the way of auto-fill,
-  ;; and should make no difference for explicit fill
-  ;; because lisp-fill-paragraph should do the job.
-  ;;  I believe that newcomment's auto-fill code properly deals with it  -stef
-  ;;(set (make-local-variable 'adaptive-fill-mode) nil)
-  (make-local-variable 'indent-line-function)
-  (setq indent-line-function 'lisp-indent-line)
-  (make-local-variable 'outline-regexp)
-  (setq outline-regexp ";;;\\(;* [^ \t\n]\\|###autoload\\)\\|(")
-  (make-local-variable 'outline-level)
-  (setq outline-level 'lisp-outline-level)
-  (make-local-variable 'comment-start)
-  (setq comment-start ";")
-  (make-local-variable 'comment-start-skip)
-  ;; Look within the line for a ; following an even number of backslashes
-  ;; after either a non-backslash or the line beginning.
-  (setq comment-start-skip "\\(\\(^\\|[^\\\\\n]\\)\\(\\\\\\\\\\)*\\);+ *")
-  (make-local-variable 'font-lock-comment-start-skip)
-  ;; Font lock mode uses this only when it KNOWS a comment is starting.
-  (setq font-lock-comment-start-skip ";+ *")
-  (make-local-variable 'comment-add)
-  (setq comment-add 1)			;default to `;;' in comment-region
-  (make-local-variable 'comment-column)
-  (setq comment-column 40)
-  ;; Don't get confused by `;' in doc strings when paragraph-filling.
-  (set (make-local-variable 'comment-use-global-state) t)
-  (make-local-variable 'imenu-generic-expression)
-  (setq imenu-generic-expression lisp-imenu-generic-expression)
-  (make-local-variable 'multibyte-syntax-as-symbol)
-  (setq multibyte-syntax-as-symbol t)
-  (set (make-local-variable 'syntax-begin-function) 'beginning-of-defun)
-
-)
-
-(when t
 
   ;; The following is mostly lifted from lisp-mode.
   (make-local-variable 'paragraph-ignore-fill-prefix)
   (setq paragraph-ignore-fill-prefix t)
   (make-local-variable 'fill-paragraph-function)
   (setq fill-paragraph-function 'lisp-fill-paragraph)
-
-  ;; (set (make-local-variable 'adaptive-fill-function)
-  ;;      (lambda () (if (looking-at "\\s-+\"[^\n\"]+\"\\s-*$") "")))
-;;  (set (make-local-variable 'comment-use-global-state) t)
-
 
   (make-local-variable 'comment-start)
   (setq comment-start ";; ")
@@ -99,9 +47,6 @@ is great for sectioning large files with many transactions."
   (make-local-variable 'comment-add)
   (setq comment-add 1) ;; Default to `;;' in comment-region
 
-)
-
-
   ;; No tabs by default.
   (set (make-local-variable 'indent-tabs-mode) nil)
 
@@ -111,7 +56,7 @@ is great for sectioning large files with many transactions."
   ;; modes (e.g. org-mode) the font-lock-keywords is a buffer-local variable.
   (if beancount-mode
       (font-lock-add-keywords nil beancount-font-lock-defaults)
-      (font-lock-remove-keywords nil beancount-font-lock-defaults))
+    (font-lock-remove-keywords nil beancount-font-lock-defaults))
   (font-lock-fontify-buffer)
 
   (when beancount-mode
@@ -131,16 +76,6 @@ is great for sectioning large files with many transactions."
   (setq beancount-accounts (beancount-get-accounts)))
 
 
-;; font-lock-builtin-face 	font-lock-comment-delimiter-face
-;; font-lock-comment-face 	font-lock-constant-face
-;; font-lock-doc-face 	font-lock-function-name-face
-;; font-lock-keyword-face 	font-lock-negation-char-face
-;; font-lock-preprocessor-face 	font-lock-reference-face
-;; font-lock-string-face 	font-lock-syntactic-face-function
-;; font-lock-type-face 	font-lock-variable-name-face
-;; font-lock-warning-face
-
-
 (defvar beancount-font-lock-defaults
   `(;; Comments
     (";.+" . font-lock-comment-face)
@@ -149,7 +84,7 @@ is great for sectioning large files with many transactions."
     ("\".*?\"" . font-lock-string-face)
 
     ;; Reserved keywords
-    (,(regexp-opt '("txn" "check" "balance" "open" "close" "pad" "event" "price" "note"
+    (,(regexp-opt '("txn" "balance" "open" "close" "pad" "event" "price" "note" "document"
                     "pushtag" "poptag")) . font-lock-keyword-face)
 
     ;; Tags & Links
@@ -224,3 +159,59 @@ niceness)."
 
 
 (provide 'beancount)
+
+
+
+
+
+(defmacro for-each-enclosing-paragraph-line (expr)
+  `(let ((begin (save-excursion
+                  (forward-paragraph -1)
+                  (point)))
+         (end (save-excursion
+                (forward-paragraph 1)
+                (point))))
+     (save-excursion
+       (goto-char begin)
+       (forward-line 1)
+       (beginning-of-line)
+       (while (and (< (point) end)
+                   (not (string-match "\\s*$" (thing-at-point 'line))))
+         ,expr
+         (forward-line 1)
+         (beginning-of-line)
+         ))))
+
+
+(defun beancount-align-transaction ()
+  (interactive)
+  (for-each-enclosing-paragraph-line
+   (progn
+     (let ((line (thing-at-point 'line)))
+       (when (string-match
+              (concat "\s+"
+                      "\\(?:\\(.\\)\s+\\)?"
+                      "\\([A-Z][A-Za-z0-9_-]+:[A-Za-z0-9_-]+\\)"
+                      "\s+"
+                      "\\(?:"
+                      "\\([0-9.]+\\)"
+                      "\s+"
+                      "\\(.*\\)"
+                      "\\)"
+                      )
+              line)
+         (delete-region (line-beginning-position) (line-end-position))
+         (let* ((flag (match-string 1 line))
+                (account (match-string 2 line))
+                (flag-account
+                 (if flag
+                     (format "%s %s" flag account)
+                   (format "%s" account)))
+                (number (match-string 3 line))
+                (rest (match-string 4 line)) )
+           (insert (format "  %-48s" flag-account))
+           (when (and number rest)
+             (insert (format "%12s %s" number rest))))
+         ))
+     (insert "^")
+     )))
