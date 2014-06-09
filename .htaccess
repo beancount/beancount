@@ -27,4 +27,5 @@ RedirectMatch /doc/application           /beancount/doc/custom-application
                                          
 RedirectMatch /doc/presentation          https://docs.google.com/presentation/d/1rcT42juRBnmlh7ZCXs_rR3GSCgcdLHnQFqoqEWUepN4/
 RedirectMatch /doc/preso                 /beancount/doc/presentation
+RedirectMatch /doc/slides                /beancount/doc/presentation
 
