@@ -28,7 +28,7 @@ def process_documents(entries, filename, documents_dirs):
       filename: the name of the ledger input file
       documents_dirs: a list of directory names to be used as roots
                       of the hierarchies that will be searched.
-2    Returns:
+    Returns:
       A pair of list of all entries (including new ones), and errors
       generated during the process of creating document directives.
     """
@@ -84,7 +84,7 @@ def process_auto_documents(input_filename, document_dirs, accounts):
                       relative path names.
       document_dirs: a list of string, the names of the roots of directory
                      hierarchies to search.
-      accounts: a dict of accounts to consider as valid ones.
+      accounts: a set of accounts to consider as valid ones.
     Returns:
       A pair of (list of new Document objects created from files, a list of errors
       encountered during the processing.)
@@ -123,11 +123,11 @@ def find_documents(root_directory, location_filename, accounts):
     Args:
       root_directory: the name of the root of the directory hierarchy to be searched.
       location_filename: the name of the file to be used for the Document directives.
-      accounts: a dict of valid accounts to search for.
+      accounts: a set of valid accounts strings to search for.
     Returns:
       A list of new Document objects that were created from the files found.
     """
-    new_entries = []
+    document_entries = []
 
     root_directory = path.abspath(root_directory)
     for root, account_name, dirs, files in walk_accounts(root_directory):
@@ -148,22 +148,19 @@ def find_documents(root_directory, location_filename, accounts):
                     # logging.warn(("Skipping document '{}' because no corresponding "
                     #               "account.").format(path.join(root, filename)))
                     continue
-                account = accounts[account_name]
+                account = account_name
             else:
                 # Try to find a corresponding account. If this is in a parent
                 # account, just create the account.
-                try:
-                    account = accounts[account_name]
-                except KeyError:
-                    account = account_name
+                account = account_name
 
             # Found one! Create a new directive.
             fileloc = FileLocation(location_filename, -1)
             date = datetime.date(*map(int, mo.group(1, 2, 3)))
             entry = Document(fileloc, date, account, path.join(root, filename))
-            new_entries.append(entry)
+            document_entries.append(entry)
 
-    return new_entries
+    return document_entries
 
 
 def walk_accounts(root_directory):

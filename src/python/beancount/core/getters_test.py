@@ -41,7 +41,7 @@ class TestGetters(unittest.TestCase):
                           'Expenses:Grocery',
                           'Expenses:Coffee',
                           'Expenses:Restaurant'},
-                         accounts.keys())
+                         accounts)
 
     def test_get_all_tags(self):
         entries = parser.parse_string(TEST_INPUT)[0]

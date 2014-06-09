@@ -141,7 +141,7 @@ def validate_unused_accounts(entries, accounts):
             misc_utils.get_tuple_values(entry, is_valid_account_name))
 
     # Unreferenced accounts are unused accounts.
-    unused_accounts = set(accounts) - referenced_accounts
+    unused_accounts = accounts - referenced_accounts
 
     # Create a list of suitable errors, with the location of the spurious Open
     # directives.
@@ -189,7 +189,7 @@ def validate_documents_paths(entries):
 def validate(entries):
     """Perform all the standard checks on parsed contents."""
 
-    accounts = getters.get_accounts(entries).values()
+    accounts = getters.get_accounts(entries)
 
     # Check for unused accounts.
     unused_errors = validate_unused_accounts(entries, accounts)

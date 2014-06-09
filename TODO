@@ -14,6 +14,7 @@ beancount: TODO
 
      src/python/beancount/ops/summarize.py                  INCOMPLETE
      src/python/beancount/ops/pad.py                        INCOMPLETE
+
      src/python/beancount/ops/validation.py                 INCOMPLETE
 
      src/python/beancount/ops/check.py                      INCOMPLETE
@@ -268,6 +269,12 @@ lugins
     via a plugin in a further release. This is the right thing to do! Plugins
     will be aplenty.
 
+  - New plugin type: a kind of spreaded Pad directive, that creates multiple
+    pads at regular intervals. This is to deal with smooth cash distributions or
+    Google meals assignment. You should be able to specify the frequency and
+    have it automatically insert a number of entries to spread the expense
+    evenly. 'evenpad', 'multipad', 'distribution'? This should most definitely
+    be a plugin.
 
   - Bug with unrealized - add a unit test, ensure this does not break it:
 

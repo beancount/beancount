@@ -21,12 +21,11 @@ class GetAccounts:
         Returns:
           A list of Account instances.
         """
-        # FIXME: Convert this to a set().
-        accounts = {}
+        accounts = set()
         for entry in entries:
             method = getattr(self, entry.__class__.__name__)
             for account in method(entry):
-                accounts[account] = account
+                accounts.add(account)
         return accounts
 
     def Transaction(_, entry):
@@ -81,7 +80,7 @@ def get_accounts(entries):
     Args:
       entries: A list of directive instances.
     Returns:
-      A list of Account instances.
+      A set of account strings.
     """
     return GetAccounts()(entries)
 
