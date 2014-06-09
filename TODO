@@ -35,6 +35,11 @@ beancount: TODO
 
 
 
+  - Check that an account without an Open directive has one that gets
+    automatically inserted for it in addition to the error that gets generated.
+
+
+
 
   - Move report to UI: networth, holdings rolled by currency
     Reconcile web UI with the list of reports.
@@ -52,19 +57,18 @@ beancount: TODO
   - Prices:
      Fetch and save a historical table of monthly exchange rates for USD/CAD, USD/AUD, EUR/USD since 2000
      ledgerhub-fetch-prices is borked, outputs Nones
-  - You also have to complete ledgerhub's code to correctly extract various
-    prices... many broken extractors there, but that's a different story.
 
 
 
 
+  (easy cleanup)
   - Rename/simplify function names in beancount.core.account (see FIXMEs)
   - Implement account.split() and perhaps remove references to
     split(account.sep) everywhere.
 
 
 
-
+  (emacs setup)
   - Add emacs configuration to highlight beyond 90 in this specific project,
     that does not use the fringe.
   - We really do need a little function that will align a paragraph's
@@ -73,9 +77,6 @@ beancount: TODO
 
 
 
-
-  - Check that an account without an Open directive has one that gets
-    automatically inserted for it in addition to the error that gets generated.
 
 
 

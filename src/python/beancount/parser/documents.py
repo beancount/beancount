@@ -92,7 +92,8 @@ def find_documents(directory, input_filename, accounts_only=None):
     # file itself.
     if not path.isabs(directory):
         input_directory = path.dirname(input_filename)
-        directory = path.normpath(path.join(input_directory, directory))
+        directory = path.abspath(path.normpath(path.join(input_directory,
+                                                         directory)))
 
     # If the directory does not exist, just generate an error and return.
     if not path.exists(directory):
