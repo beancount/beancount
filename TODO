@@ -1,9 +1,11 @@
 -*- mode: org -*-
 beancount: TODO
 * Requirements for Shipping 1.0
+** Complete 100% Coverage for Unit Tests
 
-  - Complete full unittests coverage (as per find-missing-tests.py).
-    Remaining (to be processed in this order):
+  - I want to complete full unittests coverage (as per find-missing-tests.py, or
+    "cd beancount && make status"). This is the standard I've set for this
+    project for shipping the next release. Tests remaining:
 
      src/python/beancount/parser/lexer_test.py              MISSING
 
@@ -22,9 +24,6 @@ beancount: TODO
        - balance.py -> autofill.py / residual.py / complete.py
        - check.py -> balance.py
 
-
-
-
      src/python/beancount/web/acctree.py                    MISSING
      src/python/beancount/web/journal.py                    MISSING
 
@@ -39,266 +38,47 @@ beancount: TODO
      src/python/beancount/loader.py                               INCOMPLETE
 
 
+** Move Files to Final Location
+
+  As I'm moving to a system with more plugins and less code in the core, and
+  with the intermediate reports stage instead of just the web interface, it's
+  becoming clearer where some files need to move. Try to make these moves
+  before shipping, so that things don't move nearly as much later on.
+
+  - beancount.core.realization: Look at deps for beancount.core.realization and
+    move it upstream where it makes sense, maybe ops.
+
+  - beancount.parser.documents: Can we move documents.py to ops? Look at that.
+    Documents is totally a plugin/transformer, and the dependency picture
+    doesn't warrant it being within the parser. Could this move to a plugins
+    directory? Yes. (This is clearly a transformation. Either ops or plugins.)
+
+  - beancount.core.getters: Can this move to ops as well? Check the dependency
+    tree.
+
+  - Emerge a principle for where the following files should separate:
+
+      beancount.ops.*
+      beancount.plugins.*
+
+  - Make various attempts to simplify depgraph, we want to ship with a really
+    lean dependency graph.
+
+
+** Fix Minor Nits & Bugs
+
+  A few minor bugs and improvements should be completed before marking this a
+  complete release:
+
   - (documents) documents found in parent directories don't end up creating a
     directive because we skip them because we only restrict to accounts which
     have had an open declaration... this is probably not what we want, in order
     to maximize the number of documents captures by this. {fa96aa05361d}
 
+  - (emacs) We really do need to provide a little Emacs function that will align
+    a paragraph's currencies automatically.
 
-
-
-  - Check that an account without an Open directive has one that gets
-    automatically inserted for it in addition to the error that gets generated.
-
-
-
-
-  - Move report to UI: networth, holdings rolled by currency
-    Reconcile web UI with the list of reports.
-
-
-
-
-
-
-
-
-
-
-
-  (easy cleanup)
-  - Rename/simplify function names in beancount.core.account (see FIXMEs)
-  - Implement account.split() and perhaps remove references to
-    split(account.sep) everywhere.
-  - Fix all docstrings re. Account instance, artifacts of having had an Account object.
-  - Configure and run a clean pylint on the entire codebase.
-  - Add all docstrings with args Google-style.
-  - Fix all FIXMEs everywhere.
-  - Add __author__ to all files?
-  - Convert to_decimal to 'D' everywhere... this is an important and nice convenience.
-
-  - Make sure all exceptions text do NOT end with a period, nor do any of the
-    logging.*() calls.
-
-  - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
-
-
-
-
-
-
-
-
-
-
-
-
-  - web: Render a table of prices, in case there are only a few price points.
-    We should also have a report type for prices.
-
-  - Merge Holdings tab into Shareholder's Equity, less tabs, similar report.
-    Complete the equity value page with prices.py, render the rates used to that page.
-
-
-
-
-
-  - Build a more complete and representative of reality example file, bake, and
-    share on ledger-cli
-
-  - Begin an examples files, create links to all docs from README, even if incomplete
-  - Convert all documentation to a GDoc
-  - Create cookbook
-
-
-
-
-
-  - Add a test for --view option.
-
-
-
-
-
-
-  - Clean up the interface of loader.load(), it's ugly.
-
-
-
-
-
-
-
-  (depends)
-  - Write a new command to bean-doctor that checks the dependencies dynamically
-    and reports on them, with versions if possible, for reporting bugs:
-    etc/check-depends.py, do this for 1.0, or better: bean-doctor 'depends'
-  - Include the version numbers, e.g. for Bottle.
-
-  - bake: Spit out a nice error if wget is not installed/available.
-
-  - Review all the code and make all creation of Decimal objects use to_decimal
-    instead of Decimal, for consistency.
-  - Alias to_decimal to 'D' and replace everywhere.
-
-
-  (parser)
-
-  - Parsing this does not fail; it really should, this is a bug:
-      "2013-04-01 balance Assets:Bank:Checking   555.00 CAD.11"
-
-  - Make sure you can parse Amounts with space between the - sign and the number:
-    "- 20 USD" kicks an error.
-
-  - There have been some rare, but occurring few instances of really odd syntax
-    making the parser ignore some transactions silently; this is not
-    acceptable. Attempt to reproduce this again (not obvious, problems have all
-    been fixed I think) and implement better error checking if possible.
-
-    Reproduction hints: before eeea4b4d5605, a transaciton line with no strings
-    at all, e.g. a line starting with "YYYY-MM-DD * ", would entirely ignore
-    a transaction. Find a way to trigger an error on this.
-
-    Other examples that bring up this problem (pre eeea4b4d5605):
-
-      This parses wrong and silently--fix it:
-      2014-04-20 * "Money from CC" ^610fa7f17e7a #trip-montreal-april-2014
-
-      This works okay:
-      2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
-
-
-
-
-  (web)
-  - Implement all the missing global pages.
-  - All errors should be displayed in an overlay
-
-
-
-
-
-
-  - Add a test for this (somewhere else): If something like this occurs, which
-    price should appear in the prices database? This should trigger a warning that
-    no price directive is inserted (this is what it should do: don't insert a
-    price in this case, because we don't know which):
-
-      2014-01-15 *
-        Income:Misc
-        Assets:Account1      1 HOUSE {100 USD}
-        Liabilities:Account1 1 HOUSE {101 USD}
-        Equity:Account1      1 HOUSE {102 USD}
-        Expenses:Account1    1 HOUSE {103 USD}
-        Income:Account1      1 HOUSE {104 USD}
-
-    Also, deal with multiple implied price points added from different
-    transactions on the same day... instead of just taking the later one, drop
-    the price points? But this breaks an assumptin in add_unrealized_gains()
-    which assumes that a price point will always be available if the unit is
-    held at cost. Make a decision.
-
-
-
-
-
-
-
-
-
-
-  - "Position with lots goes negative" should output an error message and be caught, because if it is run by the web
-    server, it serves no page. Needs to be integrated like all the other error messages:
-
-      127.0.0.1 - - [22/May/2014 21:51:14] "GET /view/year/2014/income HTTP/1.1" 500 762
-      Traceback (most recent call last):
-        File "/usr/local/lib/python3.3/dist-packages/bottle.py", line 783, in _handle
-          return route.call(**args)
-      ...
-        File "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 65, in __init__
-          self.add_position(position)
-        File "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 260, in add_position
-          return self._add(new_position.number, new_position.lot, allow_negative)
-        File "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 298, in _add
-          raise ValueError("Position with lots goes negative: {}".format(self))
-      ValueError: Position with lots goes negative: Inventory(-2.00 PUMP {20.00 USD})
-
-
-
-
-  - Review usage of @parsedoc vs. @loaddoc, maybe we should be more thorough
-    about that and use @loaddoc in more places, as it performs data validation.
-  - Maybe all the decorators for docstring parsers should be moved to a
-    dedicated module. That would make sense.
-
-
-
-
-  - COOL! I can subclass the namedtuples!  Do this to make printing the
-    postings and entries much easier.
-
-      class Posting(_Posting):
-          def __str__(self):
-              return _Posting.__str__(self._replace(entry=None))
-
-  - Also derive from namedtuple to provide a stable hash function instead of
-    code in beancount.core.compare.
-
-  - Can we make Inventory a subclass of 'list'?  That would be real nice, would
-    make a lot of sense.
-
-
-
-
-
-
-
-
-
-  - Documentation:
-
-    * Beancount: document "choices": subaccounts vs tags vs payees, postings at
-      leaves only or not,... Have a section to discuss these choices in the
-      documentation.
-
-
-
-
-
-
-  (deps / moves)
-  - Look at deps for beancount.core.realization and move it upstream where it
-    makes sense, maybe ops.
-
-  - Can we move documents.py to ops? Look at that.
-  - Can core.getters move to ops.getters?
-
-  - Review deps once more before shipping and make attempts to simplify depgraph.
-    Candidates for review:
-
-      beancount.parser.documents
-      beancount.core.realization
-      beancount.ops.*
-      beancount.plugins.*
-
-
-
-
-
-  - Remove adding the unrealized gains for v2 from the loader in order to
-    simplify the interface. Remove the option even. This will be reintroduced
-    via a plugin in a further release. This is the right thing to do! Plugins
-    will be aplenty.
-
-  - New plugin type: a kind of spreaded Pad directive, that creates multiple
-    pads at regular intervals. This is to deal with smooth cash distributions or
-    Google meals assignment. You should be able to specify the frequency and
-    have it automatically insert a number of entries to spread the expense
-    evenly. 'evenpad', 'multipad', 'distribution'? This should most definitely
-    be a plugin.
-
-
-
+  - Fix all FIXMEs everywhere, or convert them to items in this list.
 
   - Bug with unrealized - add a unit test, ensure this does not break it:
 
@@ -323,6 +103,263 @@ beancount: TODO
          Assets:US:Ameritrade:IRA:Cash                                         4150.73 USD
          Expenses:Financial:Fees                                                  0.10 USD
 
+  - Add a test for this (somewhere else): If something like this occurs, which
+    price should appear in the prices database? This should trigger a warning that
+    no price directive is inserted (this is what it should do: don't insert a
+    price in this case, because we don't know which):
+
+      2014-01-15 *
+        Income:Misc
+        Assets:Account1      1 HOUSE {100 USD}
+        Liabilities:Account1 1 HOUSE {101 USD}
+        Equity:Account1      1 HOUSE {102 USD}
+        Expenses:Account1    1 HOUSE {103 USD}
+        Income:Account1      1 HOUSE {104 USD}
+
+    Also, deal with multiple implied price points added from different
+    transactions on the same day... instead of just taking the later one, drop
+    the price points? But this breaks an assumptin in add_unrealized_gains()
+    which assumes that a price point will always be available if the unit is
+    held at cost. Make a decision.
+
+  - "Position with lots goes negative" should output an error message and be caught, because if it is run by the web
+    server, it serves no page. Needs to be integrated like all the other error messages:
+
+      127.0.0.1 - - [22/May/2014 21:51:14] "GET /view/year/2014/income HTTP/1.1" 500 762
+      Traceback (most recent call last):
+        File "/usr/local/lib/python3.3/dist-packages/bottle.py", line 783, in _handle
+          return route.call(**args)
+      ...
+        File "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 65, in __init__
+          self.add_position(position)
+        File "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 260, in add_position
+          return self._add(new_position.number, new_position.lot, allow_negative)
+        File "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 298, in _add
+          raise ValueError("Position with lots goes negative: {}".format(self))
+      ValueError: Position with lots goes negative: Inventory(-2.00 PUMP {20.00 USD})
+
+
+*** Parser-Related Minor Bugs
+
+  - Parsing this does not fail; it really should, this is a bug:
+      "2013-04-01 balance Assets:Bank:Checking   555.00 CAD.11"
+
+  - Make sure you can parse Amounts with space between the - sign and the number:
+    "- 20 USD" kicks an error.
+
+  - There have been some rare, but occurring few instances of really odd syntax
+    making the parser ignore some transactions silently; this is not
+    acceptable. Attempt to reproduce this again (not obvious, problems have all
+    been fixed I think) and implement better error checking if possible.
+
+    Reproduction hints: before eeea4b4d5605, a transaciton line with no strings
+    at all, e.g. a line starting with "YYYY-MM-DD * ", would entirely ignore
+    a transaction. Find a way to trigger an error on this.
+
+    Other examples that bring up this problem (pre eeea4b4d5605):
+
+      This parses wrong and silently--fix it:
+      2014-04-20 * "Money from CC" ^610fa7f17e7a #trip-montreal-april-2014
+
+      This works okay:
+      2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
+
+** Minor Features
+
+  A few really minor features should be added to the release task.
+
+  - An invariant that we would like to maintain is that all accounts that are
+    used in a list of entries should have an Open directive for them. In the
+    check for this, add code to automatically insert missing Open directives. In
+    the validation step, check that an account without an Open directive has one
+    that gets automatically inserted for it in addition to the error that gets
+    generated.
+
+
+
+
+** Reconcile Web Interface vs. Upcoming Reports Stage
+
+  The various reports that can be generated will be unified through an
+  intermediate stage, that will eventually allow us to render all the reports
+  either to text, CSV or HTML formats. This means that the web interface will
+  be using that report generation code too, and that each of its pages will
+  basically be housing the HTML version of each report.
+
+  - Newly created reports should have UI links: networth, holdings rolled by
+    currency. We need to reconcile web UI with the new reports that we created.
+
+  - Render a table of prices, in case there are only a few price points.
+    We should also have a report type for prices.
+
+  - The Equity pages are a mess right now. Merge Holdings tab into Shareholder's
+    Equity, for less tabs, and a list of similar reports. Complete the equity
+    value page with prices.py, render the rates used to that page. Include
+    links to the holdings reports here as well.
+
+  - Implement all the missing global pages, or remove them. The web interface
+    should be tight, no links to "Not Implemented" pages. There aren't many
+    left anyway.
+
+  - All errors should be displayed in an overlay; proper error handling and
+    display for the web interface is not optional. This needs to be done before
+    shipping.
+
+  - Add a test for --view option.
+
+
+** Cleanup Tasks
+
+  Some amount of generic cleanup should be performed before calling the release.
+  This is just tightening up the bolts on the beast before shipping. I want to
+  have a pretty solid pylint configuration passing.
+
+  - Rename/simplify function names in beancount.core.account (see FIXMEs)
+
+  - Implement account.split() and perhaps remove references to
+    split(account.sep) everywhere.
+
+  - Fix all docstrings re. Account instance, artifacts of having had an Account object.
+
+  - Configure and run a clean pylint on the entire codebase.
+
+  - Add all docstrings with args Google-style.
+
+  - Add __author__ to all files?
+
+  - Convert to_decimal to 'D' everywhere... this is an important and nice convenience.
+
+  - Make sure all exception messages do NOT end with a period, nor do any of the
+    logging.*() calls.
+
+  - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
+
+  - Review all the code and make all creation of Decimal objects use to_decimal
+    instead of Decimal, for consistency.
+
+  - Alias to_decimal to 'D' and replace everywhere.
+
+  - Review usage of @parsedoc vs. @loaddoc, maybe we should be more thorough
+    about that and use @loaddoc in more places, as it performs data validation.
+
+  - Maybe all the decorators for docstring parsers should be moved to a
+    dedicated module. That would make sense.
+
+
+** Documentation
+
+  I want to complete a snapshot of documentation before shipping. I often have
+  ideas that end up in this file instead of the actual documentation because I
+  don't have a good enough base to put them in. Bite the bullet. This means the
+  following Gdocs documents have to be completed and eventually made public
+  before release:
+
+  - A generic introduction to the double-entry method, in as simple as possible
+    terms:
+    http://furius.ca/beancount/doc/intro
+
+  - A cheatsheet to the syntax (COMPLETE):
+    http://furius.ca/beancount/doc/cheatsheet
+
+  - A "User's Manual" document, which explains how to work with Beancount from
+    a technical user's point-of-view (HALF):
+    http://furius.ca/beancount/doc/users-manual
+
+  - A design doc, which contains developer-level inforamtion about the
+    Beancount source code and instructions for developers, including
+    instructions for writing plugins (NOT STARTED):
+    http://furius.ca/beancount/doc/design-doc
+
+  - A comparison of Beancount and Ledger and other alternatives, such as
+    GnuCash and QuickBooks (EMPTY):
+    http://furius.ca/beancount/doc/comparison
+
+  - A cookbook of recipes with examples for how to book your various
+    transactions, this is probably the most important document of all, this is
+    the best way to learn how to use this software (INCOMPLETE):
+    http://furius.ca/beancount/doc/cookbook
+
+    * Beancount: document "choices": subaccounts vs tags vs payees, postings at
+      leaves only or not,... Have a section to discuss these choices in the
+      documentation.
+
+  - A good example of a custom application script built with Beancount: "Compute
+    IRR of property expenses":
+    http://furius.ca/beancount/doc/custom-application
+
+  - Slides to an upcoming presentation:
+    http://furius.ca/beancount/doc/presentation
+
+  - An extensive example file, that contains 2.5 years of a realistic user's
+    ledger (INCOMPLETE):
+    http://furius.ca/beancount/examples/basic/basic.beancount
+    (This should also be baked to a data directory not under version contro.)
+
+  - Convert all documentation to a GDoc
+
+
+
+
+** Prepare for Plugins Revamp
+
+  I recently teased out that many of the basic functions can be implemented as
+  individual stages of transformations on the list of directives. This started
+  out as a way to add plugins by adding a custom transformation stage, but now
+  I see that if I can make the parser able to consume generic syntax that might
+  allow extensions, and to allow these plugins to specify new directive types
+  for extensions, I might be able to shove a *lot* of the existing
+  functionality into nice isolated plugin modules. Even functionality as basic
+  as Balance checks.  I'm not going to to do this in the first release, but I
+  want to set the stage for it.
+
+  - Clean up the interface of loader.load(), it's ugly. Remvoe
+    add_unrealized_gains.
+
+  - Implement the "plugins" syntax in order to support unrealized gains
+    directly, while shipping with a clean interface for loader.load()..
+
+  - Remove adding the unrealized gains for v2 from the loader in order to
+    simplify the interface. Remove the option even. This will be reintroduced
+    via a plugin in a further release. This is the right thing to do! Plugins
+    will be aplenty.
+
+
+** Debugging Tools
+
+  I need to provide some basic diagnostic tools before shipping, because users
+  will report problems and I want to be able to ask them to generate some
+  information about their environment in order to diagnose problems.
+
+  - Write a new command to bean-doctor that checks the dependencies dynamically
+    and reports on them, with versions if possible, for reporting bugs:
+    etc/check-depends.py, do this for 1.0, or better: bean-doctor 'depends'
+
+  - Include the version numbers, e.g. for Bottle.
+
+  - bake: Spit out a nice error if wget is not installed/available.
+
+
+* Current / Misc / To Be Classified
+
+  (This is a grab bag of ideas. When I have a new idea coming to me, I don't
+  have time to think, I just come here and jot it down. Every couple of months
+  I clean this up and put it in the sections below. Please excuse the mess.)
+
+
+  (emacs setup)
+  - Add emacs configuration to highlight beyond 90 in this specific project,
+    that does not use the fringe.
+
+
+
+
+
+  - New plugin type: a kind of spreaded Pad directive, that creates multiple
+    pads at regular intervals. This is to deal with smooth cash distributions or
+    Google meals assignment. You should be able to specify the frequency and
+    have it automatically insert a number of entries to spread the expense
+    evenly. 'evenpad', 'multipad', 'distribution'? This should most definitely
+    be a plugin.
 
 
 
@@ -336,11 +373,6 @@ beancount: TODO
     a good way to disambiguate between ops adn plugins is just this... maybe ops
     is non-plugins, e.g. prices, summarize, etc.
 
-         Documents is totally a plugin/transformer, and the dependency picture
-         doesn't warrant it being within the parser.
-         Could this move to a plugins directory? Yes.
-         (This is clearly a transformation. Either ops or plugins.)
-
   - Make the plugins able to register types with the parser... this should
     allow the parser to call back on the plugins to create the appropriate
     types... this means true extensibility throughout! This is a fantastic
@@ -352,26 +384,27 @@ beancount: TODO
 
 
 
-  - Create redirect links for all docs from my web page, e.g.
-    furius.ca/beancount/doc/users-manual
-    furius.ca/beancount/doc/design-doc
-    furius.ca/beancount/doc/cookbook
+
+  (review types)
+  - COOL! I can subclass the namedtuples!  Do this to make printing the
+    postings and entries much easier.
+
+      class Posting(_Posting):
+          def __str__(self):
+              return _Posting.__str__(self._replace(entry=None))
+
+  - Also derive from namedtuple to provide a stable hash function instead of
+    code in beancount.core.compare.
+
+  - Can we make Inventory a subclass of 'list'?  That would be real nice, would
+    make a lot of sense.
 
 
-
-* Current / Misc / To Be Classified
 
   - Prices: Write a script to output the timeline of required prices/rates in
     the database. Then use it to drive fetching a historical table of monthly or
     perhaps weekly exchange rates for USD/CAD, USD/AUD, EUR/USD since the
     beginning of my file. Make this script reusable.
-
-
-  (emacs setup)
-  - Add emacs configuration to highlight beyond 90 in this specific project,
-    that does not use the fringe.
-  - We really do need a little function that will align a paragraph's
-    currencies automatically.
 
 
   - Create an index page for all the possible reports, from the web page
@@ -896,7 +929,6 @@ beancount: TODO
 
 
 ** Padding documentation from email
-   CLOCK: [2014-01-19 Sun 14:49]
 
   - Put this in the docs to explain "pad"
 
