@@ -19,7 +19,8 @@ beancount: TODO
        Rename this file to balance to match the directive?
        Not sure. Another file is named that way.
 
-       - balance.py -> autofill.py, check.py -> balance.py
+       - balance.py -> autofill.py / residual.py / complete.py
+       - check.py -> balance.py
 
 
 
@@ -132,6 +133,7 @@ beancount: TODO
   - Write a new command to bean-doctor that checks the dependencies dynamically
     and reports on them, with versions if possible, for reporting bugs:
     etc/check-depends.py, do this for 1.0, or better: bean-doctor 'depends'
+  - Include the version numbers, e.g. for Bottle.
 
   - bake: Spit out a nice error if wget is not installed/available.
 
@@ -348,6 +350,12 @@ beancount: TODO
     through would generate a warning in the errors.
 
 
+
+
+  - Create redirect links for all docs from my web page, e.g.
+    furius.ca/beancount/doc/users-manual
+    furius.ca/beancount/doc/design-doc
+    furius.ca/beancount/doc/cookbook
 
 
 
