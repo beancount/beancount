@@ -158,60 +158,62 @@ niceness)."
     (replace-string "!" "*" nil (line-beginning-position) (line-end-position))))
 
 
-(provide 'beancount)
-
-
-
-
-
-(defmacro for-each-enclosing-paragraph-line (expr)
-  `(let ((begin (save-excursion
-                  (forward-paragraph -1)
-                  (point)))
-         (end (save-excursion
-                (forward-paragraph 1)
-                (point))))
-     (save-excursion
-       (goto-char begin)
+(defmacro beancount-for-line-in-region (begin end &rest exprs)
+  "Iterate over each line in region until an empty line is encountered."
+  `(save-excursion
+     (let ((end-marker (set-marker (make-marker) ,end)))
+       (goto-char ,begin)
        (forward-line 1)
        (beginning-of-line)
-       (while (and (< (point) end)
-                   (not (string-match "\\s*$" (thing-at-point 'line))))
-         ,expr
+       (while (< (point) end-marker)
+         (progn ,@exprs)
          (forward-line 1)
          (beginning-of-line)
          ))))
 
+(defvar beancount-align-currency-column 72
+  "The column at which to align the currency.")
 
 (defun beancount-align-transaction ()
+  "Align postings under the point's paragraph."
   (interactive)
-  (for-each-enclosing-paragraph-line
-   (progn
-     (let ((line (thing-at-point 'line)))
-       (when (string-match
-              (concat "\s+"
-                      "\\(?:\\(.\\)\s+\\)?"
-                      "\\([A-Z][A-Za-z0-9_-]+:[A-Za-z0-9_-]+\\)"
-                      "\s+"
-                      "\\(?:"
-                      "\\([0-9.]+\\)"
-                      "\s+"
-                      "\\(.*\\)"
-                      "\\)"
-                      )
-              line)
-         (delete-region (line-beginning-position) (line-end-position))
-         (let* ((flag (match-string 1 line))
-                (account (match-string 2 line))
-                (flag-account
-                 (if flag
-                     (format "%s %s" flag account)
-                   (format "%s" account)))
-                (number (match-string 3 line))
-                (rest (match-string 4 line)) )
-           (insert (format "  %-48s" flag-account))
-           (when (and number rest)
-             (insert (format "%12s %s" number rest))))
-         ))
-     (insert "^")
-     )))
+  (let ((begin (save-excursion
+                 (forward-paragraph -1)
+                 (point)))
+        (end (save-excursion
+               (forward-paragraph 1)
+               (point))))
+    (beancount-align-postings begin end beancount-align-currency-column)))
+
+(defun beancount-align-postings (begin end &optional currency-column)
+  "Align all postings in the given region. CURRENCY-COLUMN is the character
+at which to align the beginning of the amount's currency."
+  (interactive "r")
+  (beancount-for-line-in-region
+   begin end
+   (let* ((line (thing-at-point 'line))
+          (number-width 12)
+          (number-format (format "%%%ss %%s" number-width))
+          (account-format (format "  %%-%ss" (- currency-column 2 number-width 1))))
+     (when (string-match
+            (concat "^[ \t]+"
+                    "\\(?:\\(.\\)[ \t]+\\)?"
+                    "\\([A-Z][A-Za-z0-9_-]+:[A-Za-z0-9_:\\-]+\\)"
+                    "[ \t]+"
+                    "\\(?:\\([-+]?[0-9.]+\\)[ \t]+\\(.*\\)\\)")
+            line)
+       (delete-region (line-beginning-position) (line-end-position))
+       (let* ((flag (match-string 1 line))
+              (account (match-string 2 line))
+              (flag-account
+               (if flag
+                   (format "%s %s" flag account)
+                 (format "%s" account)))
+              (number (match-string 3 line))
+              (rest (match-string 4 line)) )
+         (insert (format account-format flag-account))
+         (when (and number rest)
+           (insert (format number-format number rest))))))))
+
+
+(provide 'beancount)
