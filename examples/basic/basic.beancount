@@ -438,7 +438,7 @@ option "operating_currency" "USD"
 2008-03-01 check  Assets:UTrade:Account          40138.45 USD
 2008-03-01 check  Assets:UTrade:Account:AAPL     0 AAPL
 2008-03-01 check  Assets:UTrade:Account:EWJ      100 EWJ
- 
+
 
 
 
@@ -625,7 +625,8 @@ poptag #ski-trip
 
 2008-02-03 * "ITHURTS MEDICAL CENT" | "x-ray for broken bones"
   Expenses:Medical           312.00 USD
-  Assets:Cash
+  Assets:Cash  2.0 CAD
+
 
 2008-03-02 * "ZEN CENTER" | "Donation to Zen center"
   Expenses:Charity        50 USD
@@ -639,4 +640,3 @@ poptag #ski-trip
 
 
 2013-07-03 event "location" "New York City"
-
