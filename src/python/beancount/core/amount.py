@@ -93,6 +93,16 @@ class Amount:
         """
         return self.str(MAXDIGITS_QUANTIZE)
 
+    def __format__(self, format_spec):
+        """Explicit support for formatting.
+
+        Args:
+          format_spec: A string, the spec for formatting.
+        Returns:
+          A formatted string object.
+        """
+        return str(self).format(format_spec)
+
     def str(self, max_digits):
         """Convert an Amount instance to a printable string.
 

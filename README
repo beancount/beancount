@@ -54,9 +54,13 @@ For users:
 - Bottle (a tiny web server, pure Python)
 - wget (to bake reports to a zip file)
 
+You can install some of those using pip3 (cdecimal appears to require an
+otherwise straightforward install from source).
+
 For developers:
 
 - GNU flex and bison (to build the parser)
+- lxml
 - nosetests (to run the unit tests)
 - pylint >=1.2 (to run the linter)
 - snakefood (for unused imports check)

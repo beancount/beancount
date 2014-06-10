@@ -41,6 +41,9 @@ Your builder is responsible to accumulating results.");
 
 PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
 {
+    FILE* fp = NULL;
+    int result;
+
     /* Unpack and validate arguments */
     const char* filename = 0;
     const char* report_filename = 0;
@@ -59,7 +62,7 @@ PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
     Py_XINCREF(builder);
 
     /* Open the file. */
-    FILE* fp = fopen(filename, "r");
+    fp = fopen(filename, "r");
     if ( fp == NULL ) {
         return PyErr_Format(PyExc_IOError, "Cannot open file '%s'.", filename);
     }
@@ -75,7 +78,7 @@ PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
     yy_firstline = report_firstline;
 
     /* Parse! This will call back methods on the builder instance. */
-    int result = yyparse();
+    result = yyparse();
 
     /* Finalize the parser. */
     if ( fp != NULL ) {
@@ -113,6 +116,8 @@ PyObject* get_yylineno(PyObject *self, PyObject *args)
 /* Iniitalize the lexer to start running in debug mode. */
 PyObject* lexer_init(PyObject *self, PyObject *args)
 {
+    FILE* fp = NULL;
+
     /* Unpack and validate arguments */
     const char* filename = 0;
     if ( !PyArg_ParseTuple(args, "sO", &filename, &builder) ) {
@@ -121,7 +126,7 @@ PyObject* lexer_init(PyObject *self, PyObject *args)
     Py_XINCREF(builder);
 
     /* Open the file. */
-    FILE* fp = fopen(filename, "r");
+    fp = fopen(filename, "r");
     if ( fp == NULL ) {
         return PyErr_Format(PyExc_IOError, "Cannot open file '%s'.", filename);
     }
@@ -135,6 +140,8 @@ PyObject* lexer_init(PyObject *self, PyObject *args)
 /* Get the next token; return None if complete. */
 PyObject* lexer_next(PyObject *self, PyObject *args)
 {
+    const char* tokenName = NULL;
+
     /* Run the lexer. */
     YYSTYPE yylval;
     YYLTYPE yylloc;
@@ -144,7 +151,7 @@ PyObject* lexer_next(PyObject *self, PyObject *args)
         Py_RETURN_NONE;
     }
 
-    const char* tokenName = getTokenName(token);
+    tokenName = getTokenName(token);
     return Py_BuildValue("(ssi)", tokenName, yytext, yylloc.first_line);
 }
 
