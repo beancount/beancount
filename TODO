@@ -75,11 +75,6 @@ beancount: TODO
     have had an open declaration... this is probably not what we want, in order
     to maximize the number of documents captures by this. {fa96aa05361d}
 
-  - (emacs) We really do need to provide a little Emacs function that will align
-    a paragraph's currencies automatically.
-
-  - Fix all FIXMEs everywhere, or convert them to items in this list.
-
   - Bug with unrealized - add a unit test, ensure this does not break it:
 
        2012-03-01 open Assets:US:Ameritrade:IRA:Cash                                   USD
@@ -138,8 +133,17 @@ beancount: TODO
           raise ValueError("Position with lots goes negative: {}".format(self))
       ValueError: Position with lots goes negative: Inventory(-2.00 PUMP {20.00 USD})
 
+  - An invariant that we would like to maintain is that all accounts that are
+    used in a list of entries should have an Open directive for them. In the
+    check for this, add code to automatically insert missing Open directives. In
+    the validation step, check that an account without an Open directive has one
+    that gets automatically inserted for it in addition to the error that gets
+    generated.
 
-*** Parser-Related Minor Bugs
+  - Fix all FIXMEs everywhere, or convert them to items in this list.
+
+
+** Parser-Related Minor Bugs
 
   - Parsing this does not fail; it really should, this is a bug:
       "2013-04-01 balance Assets:Bank:Checking   555.00 CAD.11"
@@ -163,19 +167,6 @@ beancount: TODO
 
       This works okay:
       2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
-
-** Minor Features
-
-  A few really minor features should be added to the release task.
-
-  - An invariant that we would like to maintain is that all accounts that are
-    used in a list of entries should have an Open directive for them. In the
-    check for this, add code to automatically insert missing Open directives. In
-    the validation step, check that an account without an Open directive has one
-    that gets automatically inserted for it in addition to the error that gets
-    generated.
-
-
 
 
 ** Reconcile Web Interface vs. Upcoming Reports Stage
@@ -298,8 +289,6 @@ beancount: TODO
   - Convert all documentation to a GDoc
 
 
-
-
 ** Prepare for Plugins Revamp
 
   I recently teased out that many of the basic functions can be implemented as
@@ -316,7 +305,8 @@ beancount: TODO
     add_unrealized_gains.
 
   - Implement the "plugins" syntax in order to support unrealized gains
-    directly, while shipping with a clean interface for loader.load()..
+    directly, while shipping with a clean interface for loader.load(). This is
+    worth doing for the first release, to avoid adding much syntax later on.
 
   - Remove adding the unrealized gains for v2 from the loader in order to
     simplify the interface. Remove the option even. This will be reintroduced
@@ -344,12 +334,6 @@ beancount: TODO
   (This is a grab bag of ideas. When I have a new idea coming to me, I don't
   have time to think, I just come here and jot it down. Every couple of months
   I clean this up and put it in the sections below. Please excuse the mess.)
-
-
-  (emacs setup)
-  - Add emacs configuration to highlight beyond 90 in this specific project,
-    that does not use the fringe.
-
 
 
 
@@ -1887,10 +1871,6 @@ Improve this bit:
   - In the new mode, we need to recreate a function that will mark a posting as
     valid (replace '!' by '*').
 
-  - A new ledger mode should have functions to
-
-    * Automatically indent postings sensibly (for the amounts)
-    * Automatically align lines with currency numbers
 
 * Reports
 ** Warnings
