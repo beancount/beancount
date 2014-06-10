@@ -171,20 +171,6 @@ niceness)."
          (beginning-of-line)
          ))))
 
-(defvar beancount-align-currency-column 72
-  "The column at which to align the currency.")
-
-(defun beancount-align-transaction ()
-  "Align postings under the point's paragraph."
-  (interactive)
-  (let ((begin (save-excursion
-                 (forward-paragraph -1)
-                 (point)))
-        (end (save-excursion
-               (forward-paragraph 1)
-               (point))))
-    (beancount-align-postings begin end beancount-align-currency-column)))
-
 (defun beancount-align-postings (begin end &optional currency-column)
   "Align all postings in the given region. CURRENCY-COLUMN is the character
 at which to align the beginning of the amount's currency."
@@ -214,6 +200,20 @@ at which to align the beginning of the amount's currency."
          (insert (format account-format flag-account))
          (when (and number rest)
            (insert (format number-format number rest))))))))
+
+(defvar beancount-align-currency-column 72
+  "The column at which to align the currency.")
+
+(defun beancount-align-transaction ()
+  "Align postings under the point's paragraph."
+  (interactive)
+  (let ((begin (save-excursion
+                 (forward-paragraph -1)
+                 (point)))
+        (end (save-excursion
+               (forward-paragraph 1)
+               (point))))
+    (beancount-align-postings begin end beancount-align-currency-column)))
 
 
 (provide 'beancount)
