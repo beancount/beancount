@@ -101,7 +101,9 @@ class EntryPrinter:
         oss.write('\n')
 
     def Balance(_, entry, oss):
-        oss.write('{e.date} balance {e.account:47} {e.amount:>16}\n'.format(e=entry))
+        comment = '   ; Diff: {}'.format(entry.diff_amount) if entry.diff_amount else ''
+        oss.write(('{e.date} balance {e.account:47} {e.amount:>16}'
+                   '{comment}\n').format(e=entry, comment=comment))
 
     def Note(_, entry, oss):
         oss.write('{e.date} note {e.account} "{e.comment}"\n'.format(e=entry))
