@@ -21,7 +21,7 @@ beancount: TODO
        Rename this file to balance to match the directive?
        Not sure. Another file is named that way.
 
-       - balance.py -> autofill.py / residual.py / complete.py
+       - balance.py -> autofill.py / residual.py / complete.py / fill.py
        - check.py -> balance.py
 
      src/python/beancount/web/acctree.py                    MISSING
@@ -337,6 +337,8 @@ beancount: TODO
 
 
 
+  - New plugin: clean_payees, that processes the payee strings and cleans them
+    up for display. How well can we do?
 
   - New plugin type: a kind of spreaded Pad directive, that creates multiple
     pads at regular intervals. This is to deal with smooth cash distributions or
@@ -345,9 +347,13 @@ beancount: TODO
     evenly. 'evenpad', 'multipad', 'distribution'? This should most definitely
     be a plugin.
 
-
-
-
+  - I think if you relax the assumptions about having open and close accounts,
+    those could even be moved to a plugin. Without this 'open_close' plugin,
+    accounts would just get auto-created and no error output if they weren't.
+    With the plugin, we would have current strict behavior. This means that
+    non-plugin code that requires the full set of accounts from a list of
+    entries would not be able to rely anymore on the presence of open entries,
+    and so would the validation.
 
   - Put all the Pad into a single file as a plugin, same with Open Close, and
     Balance. Maybe we can organize those codes to be all localized in single
