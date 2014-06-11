@@ -37,6 +37,10 @@ beancount: TODO
 
      src/python/beancount/loader.py                               INCOMPLETE
 
+  - Make printer.print_errors() mirror printer.print_entries(), both sets of
+    functions in the same style.
+
+
 
 ** Move Files to Final Location
 

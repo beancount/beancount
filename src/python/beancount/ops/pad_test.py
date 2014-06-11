@@ -21,6 +21,7 @@ class TestPadUtils(unittest.TestCase):
     @parser.parsedoc
     def test_group_postings_by_account(self, entries, _, __):
         """
+
         2010-01-01 open Assets:Account1
         2010-01-01 open Assets:Account2
         2010-01-01 open Assets:Account3
@@ -34,6 +35,7 @@ class TestPadUtils(unittest.TestCase):
           Assets:Account3            -3 USD
 
         2014-06-05 balance  Assets:Account2  2 USD
+
         """
         by_accounts = pad.group_postings_by_account(entries, {'Assets:Account1',
                                                               'Assets:Account2'})
@@ -43,8 +45,9 @@ class TestPadUtils(unittest.TestCase):
 class TestPadding(test_utils.TestCase):
 
     @loaddoc
-    def test_pad_simple(self, entries, errors, options_map):
+    def test_pad_simple(self, entries, errors, __):
         """
+
           2013-05-01 open Assets:Checking
           2013-05-01 open Equity:OpeningBalances
 
@@ -52,6 +55,7 @@ class TestPadding(test_utils.TestCase):
           2013-05-01 pad Assets:Checking Equity:OpeningBalances
 
           2013-05-03 balance Assets:Checking                                 172.45 USD
+
         """
         self.assertFalse(errors)
         self.assertEqualEntries("""
@@ -67,12 +71,14 @@ class TestPadding(test_utils.TestCase):
             Equity:OpeningBalances                                                -172.45 USD
 
           2013-05-03 balance Assets:Checking                                 172.45 USD
+
         """, entries)
 
 
     @loaddoc
-    def test_pad_no_overflow(self, entries, errors, options_map):
+    def test_pad_no_overflow(self, entries, errors, __):
         """
+
           2013-05-01 open Assets:Checking
           2013-05-01 open Assets:Cash
           2013-05-01 open Equity:OpeningBalances
@@ -114,34 +120,15 @@ class TestPadding(test_utils.TestCase):
 
         """, entries)
 
-## FIXME: Continue here.
-
-
-
-
-
-
-
-
-
-
-
-
-    # def check_real_types(self, real_account, entry_types):
-    #     """Check the types of entries rendered."""
-    #     self.assertEqual(list(map(type, real_account.postings)),
-    #                      entry_types)
-
-    # def check_balance(self, real_account, position):
-    #     self.assertEqual(real_account.balance.get_position(position.lot), position)
-
     @loaddoc
-    def __test_pad_used_twice(self, entries, real_accounts, errors):
+    def test_pad_used_twice_legally(self, entries, errors, __):
         """
+
           2013-05-01 open Assets:Checking
           2013-05-01 open Assets:Cash
           2013-05-01 open Equity:OpeningBalances
 
+          ;; First pad.
           2013-05-01 pad  Assets:Checking   Equity:OpeningBalances
 
           2013-05-03 balance Assets:Checking   172.45 USD
@@ -150,17 +137,121 @@ class TestPadding(test_utils.TestCase):
             Assets:Checking             20 USD
             Assets:Cash
 
+          ;; Second pad.
           2013-05-20 pad  Assets:Checking   Equity:OpeningBalances
 
           2013-06-01 balance Assets:Checking   200 USD
 
         """
-        self.assertEqual(len(errors), 0)
-        self.check_real_types(real_accounts['Assets:Checking'],
-                              [Open, Pad, Posting, Balance, Posting, Pad, Posting, Balance])
+        self.assertFalse(errors)
+        self.assertEqualEntries("""
+
+          2013-05-01 open Assets:Checking
+          2013-05-01 open Assets:Cash
+          2013-05-01 open Equity:OpeningBalances
+
+          2013-05-01 pad Assets:Checking Equity:OpeningBalances
+
+          2013-05-01 P "(Padding inserted for Balance of 172.45 USD for difference 172.45 USD)"
+            Assets:Checking                                                        172.45 USD
+            Equity:OpeningBalances                                                -172.45 USD
+
+          2013-05-03 balance Assets:Checking                                 172.45 USD
+
+          2013-05-15 * "Add 20$"
+            Assets:Checking                                                         20.00 USD
+            Assets:Cash                                                            -20.00 USD
+
+          2013-05-20 pad Assets:Checking Equity:OpeningBalances
+
+          2013-05-20 P "(Padding inserted for Balance of 200.00 USD for difference 7.55 USD)"
+            Assets:Checking                                                          7.55 USD
+            Equity:OpeningBalances                                                  -7.55 USD
+
+          2013-06-01 balance Assets:Checking                                 200.00 USD
+
+        """, entries)
 
     @loaddoc
-    def __test_pad_check_balances(self, entries, real_accounts, errors):
+    def test_pad_used_twice_illegally(self, entries, errors, __):
+        """
+
+          2013-05-01 open Assets:Checking
+          2013-05-01 open Equity:OpeningBalances
+
+          2013-05-03 balance Assets:Checking   0.00 USD
+
+          ;; Two pads in between checks.
+          2013-05-10 pad  Assets:Checking   Equity:OpeningBalances
+          2013-05-20 pad  Assets:Checking   Equity:OpeningBalances
+
+          2013-06-01 balance Assets:Checking   200 USD
+
+        """
+        self.assertEqual([pad.PadError], list(map(type, errors)))
+        self.assertEqualEntries("""
+
+          2013-05-01 open Assets:Checking
+          2013-05-01 open Equity:OpeningBalances
+
+          2013-05-03 balance Assets:Checking                                 0.00 USD
+
+          2013-05-10 pad Assets:Checking Equity:OpeningBalances
+
+          2013-05-20 pad Assets:Checking Equity:OpeningBalances
+
+          2013-05-20 P "(Padding inserted for Balance of 200.00 USD for difference 200.00 USD)"
+            Assets:Checking                                                        200.00 USD
+            Equity:OpeningBalances                                                -200.00 USD
+
+          2013-06-01 balance Assets:Checking                                 200.00 USD
+
+        """, entries)
+
+    @loaddoc
+    def test_pad_unused(self, entries, errors, __):
+        """
+
+          2013-05-01 open Assets:Checking
+          2013-05-01 open Assets:Cash
+          2013-05-01 open Equity:OpeningBalances
+
+          2013-05-10 * "Add 200$"
+            Assets:Checking       200.00 USD
+            Assets:Cash          -200.00 USD
+
+          ;; This pad will do nothing, should raise a warning..
+          2013-05-20 pad  Assets:Checking   Equity:OpeningBalances
+
+          2013-06-01 balance Assets:Checking   200.0 USD
+
+        """
+        self.assertEqual([pad.PadError], list(map(type, errors)))
+        self.assertEqualEntries("""
+
+          2013-05-01 open Assets:Checking
+          2013-05-01 open Assets:Cash
+          2013-05-01 open Equity:OpeningBalances
+
+          2013-05-10 * "Add 200$"
+            Assets:Checking                                                        200.00 USD
+            Assets:Cash                                                           -200.00 USD
+
+          2013-05-20 pad Assets:Checking Equity:OpeningBalances
+
+          2013-06-01 balance Assets:Checking                                 200.00 USD
+
+        """, entries)
+
+
+
+
+
+    # def check_balance(self, real_account, position):
+    #     self.assertEqual(real_account.balance.get_position(position.lot), position)
+
+    @loaddoc
+    def __test_pad_check_balances(self, entries, errors, __):
         """
           2013-05-01 open Assets:Checking
           2013-05-01 open Assets:Cash
@@ -205,8 +296,9 @@ class TestPadding(test_utils.TestCase):
 
 
 
+# FIXME: Write tests balancing on parent accounts!
 
-# FIXME: Write a test that padding a parent account wouldn't pad its child accounts.
+
 
 
 __incomplete__ = True
