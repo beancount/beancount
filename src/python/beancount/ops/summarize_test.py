@@ -131,7 +131,7 @@ class TestSummarization(unittest.TestCase):
 #             Income:Job            -1000 USD
 #             Assets:Checking        1000 USD
 #
-#           2012-01-01 check Assets:Checking  1000 USD
+#           2012-01-01 balance Assets:Checking  1000 USD
 #         """
 #         self.assertTrue(compare_realizations(real_accounts, sum_real_accounts))
 #         self.assertTrue(sum_real_accounts[OPENING_BALANCES].postings)
@@ -151,7 +151,7 @@ class TestSummarization(unittest.TestCase):
 #             Expenses:Restaurant      80 USD
 #             Assets:Checking
 #
-#           2012-01-01 check Assets:Checking  920 USD
+#           2012-01-01 balance Assets:Checking  920 USD
 #
 #           2012-06-01 * "Salary"
 #             Income:Job            -1000 USD

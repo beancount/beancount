@@ -12,7 +12,7 @@ class __TestCheck(unittest.TestCase):
     def test_check_error(self, entries, _, __):
         """
           2013-05-01 open Assets:US:Checking   USD
-          2013-05-03 check Assets:US:Checking   100 USD
+          2013-05-03 balance Assets:US:Checking   100 USD
         """
         self.assertEqual(len(errors), 1)
 
@@ -26,7 +26,7 @@ class __TestCheck(unittest.TestCase):
             Assets:US:Checking            100 USD
             Expenses:Something           -100 USD
 
-          2013-05-03 check Assets:US:Checking   100 USD
+          2013-05-03 balance Assets:US:Checking   100 USD
 
         """
         self.assertEqual(len(errors), 0)
@@ -43,8 +43,8 @@ class __TestCheck(unittest.TestCase):
             Assets:US:Checking            100 USD
             Expenses:Something           -100 USD
 
-          2013-05-02 check Assets:US:Checking     0 USD
-          2013-05-03 check Assets:US:Checking   100 USD
+          2013-05-02 balance Assets:US:Checking     0 USD
+          2013-05-03 balance Assets:US:Checking   100 USD
         """
         print(printer.format_errors(errors))
         assert len(errors) == 0

@@ -54,7 +54,7 @@ class TestParserEntryTypes(unittest.TestCase):
     @parsedoc
     def test_entry_check(self, entries, _, __):
         """
-          2013-05-18 check Assets:US:BestBank:Checking  200 USD
+          2013-05-18 balance Assets:US:BestBank:Checking  200 USD
         """
         check_list(self, entries, [Balance])
 
@@ -216,7 +216,7 @@ class TestSyntaxErrors(unittest.TestCase):
             Expenses:Tips                10 USD
             Assets:US:Cash             -110 USD
 
-          2013-05-20 check Assets:US:Cash  -110 USD
+          2013-05-20 balance Assets:US:Cash  -110 USD
         """
         # This should fail to parse the "Expenses:Resta(urant" account name.
 
@@ -238,7 +238,7 @@ class TestLineNumbers(unittest.TestCase):
             Expenses:Restaurant         100 USD
             Assets:US:Cash
 
-          2013-05-19 check  Assets:US:Cash   -100 USD
+          2013-05-19 balance  Assets:US:Cash   -100 USD
 
           2013-05-20 note  Assets:US:Cash   "Something"
 
