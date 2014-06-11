@@ -10,7 +10,6 @@ from .position import Position, create_position
 from .account import has_component
 
 
-
 def stable_hash_namedtuple(objtuple, ignore=frozenset()):
     """Hash the given namedtuple and its child fields.
 
@@ -52,7 +51,7 @@ def hash_entry(entry):
     Returns:
       A stable hexadecimal hash of this entry.
     """
-    return stable_hash_namedtuple(entry, {'fileloc', 'entry'})
+    return stable_hash_namedtuple(entry, {'fileloc', 'entry', 'diff_amount'})
 
 
 def hash_entries(entries):
