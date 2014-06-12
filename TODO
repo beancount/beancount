@@ -240,6 +240,8 @@ beancount: TODO
   - Maybe all the decorators for docstring parsers should be moved to a
     dedicated module. That would make sense.
 
+  - Remove support for legacy: "check" (vs. "balance"), PIPE, etc. Not needed.
+
 
 ** Documentation
 
@@ -660,6 +662,11 @@ beancount: TODO
 
     Idea: Generalize lot-date to just a "lot" string. Doesn't have to be a date
     at all! It would also make the concept and usage intentions clearer I think.
+
+  - FIFO or LIFO booking could be "enforced" simply by declaring the expected
+    booking method of an account, and then issuing an error when explicit
+    entries deviate from that method. This is an easy idea... would be very
+    useful.
 
   - Implement a little plug-ins system that allows a user to insert a TAB in
     bean-web.
