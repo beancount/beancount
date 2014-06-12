@@ -20,11 +20,19 @@ class TestPrinter(unittest.TestCase):
         self.assertTrue(re.search('12345', fileloc_str))
         self.assertTrue(re.search(FILELOC.filename, fileloc_str))
 
-    def test_format_errors(self):
+    def test_format_and_print_error(self):
         entry = data.Open(FILELOC, date(2014, 1, 15), 'Assets:Bank:Checking', [])
-        errors = [balance.BalanceError(FILELOC, "Example balance error", entry)]
-        errors_str = printer.format_errors(errors)
-        self.assertTrue(isinstance(errors_str, str))
+        error = balance.BalanceError(FILELOC, "Example balance error", entry)
+        error_str = printer.format_error(error)
+        self.assertTrue(isinstance(error_str, str))
+
+        oss = io.StringIO()
+        printer.print_error(error, oss)
+        self.assertTrue(isinstance(oss.getvalue(), str))
+
+        oss = io.StringIO()
+        printer.print_errors([error], oss)
+        self.assertTrue(isinstance(oss.getvalue(), str))
 
 
 class TestEntryPrinter(test_utils.TestCase):

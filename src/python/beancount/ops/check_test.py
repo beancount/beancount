@@ -46,7 +46,7 @@ class __TestCheck(unittest.TestCase):
           2013-05-02 balance Assets:US:Checking     0 USD
           2013-05-03 balance Assets:US:Checking   100 USD
         """
-        print(printer.format_errors(errors))
+        printer.print_errors(errors)
         assert len(errors) == 0
 
 

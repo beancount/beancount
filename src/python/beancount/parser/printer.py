@@ -8,39 +8,6 @@ from beancount.core import amount
 from beancount.core import balance
 
 
-def render_fileloc(fileloc):
-    """Render the fileloc for errors in a way that it will be both detected by
-    Emacs and align and rendered nicely.
-
-    Args:
-      fileloc: an instance of FileLoc.
-    Returns:
-      A string, rendered to be interpretable as a message location for Emacs or
-      other editors.
-    """
-    return '{}:{:8}'.format(fileloc.filename, '{}:'.format(fileloc.lineno))
-
-
-def format_errors(errors):
-    """Given a list of error objects, return a formatted string of all the
-    errors.
-
-    Args:
-      errors: a list of namedtuple objects representing errors.
-    Returns:
-      A string, the errors rendered.
-    """
-    file = io.StringIO()
-    for error in errors:
-        file.write('{} {}\n'.format(render_fileloc(error.fileloc), error.message))
-        if error.entry is not None:
-            error_string = format_entry(error.entry)
-            file.write('\n')
-            file.write(textwrap.indent(error_string, '   '))
-            file.write('\n')
-    return file.getvalue()
-
-
 class EntryPrinter:
     "Multi-method for printing an entry."
 
@@ -139,6 +106,18 @@ def format_entry(entry):
     return EntryPrinter()(entry)
 
 
+def print_entry(entr, file=None):
+    """A convenience function that prints a single entry to a file.
+
+    Args:
+      entry: A directive entry.
+      file: An optional file object to write the entries to.
+    """
+    output = file or sys.stdout
+    output.write(format_entry(entry))
+    output.write('\n')
+
+
 def print_entries(entries, file=None):
     """A convenience function that prints a list of entries to a file.
 
@@ -149,4 +128,60 @@ def print_entries(entries, file=None):
     output = file or sys.stdout
     for entry in entries:
         output.write(format_entry(entry))
+        output.write('\n')
+
+
+def render_fileloc(fileloc):
+    """Render the fileloc for errors in a way that it will be both detected by
+    Emacs and align and rendered nicely.
+
+    Args:
+      fileloc: an instance of FileLoc.
+    Returns:
+      A string, rendered to be interpretable as a message location for Emacs or
+      other editors.
+    """
+    return '{}:{:8}'.format(fileloc.filename, '{}:'.format(fileloc.lineno))
+
+
+def format_error(error):
+    """Given an error objects, return a formatted string for it.
+
+    Args:
+      error: a namedtuple objects representing an error.
+    Returns:
+      A string, the errors rendered.
+    """
+    oss = io.StringIO()
+    oss.write('{} {}\n'.format(render_fileloc(error.fileloc), error.message))
+    if error.entry is not None:
+        error_string = format_entry(error.entry)
+        oss.write('\n')
+        oss.write(textwrap.indent(error_string, '   '))
+        oss.write('\n')
+    return oss.getvalue()
+
+
+def print_error(error, file=None):
+    """A convenience function that prints a single error to a file.
+
+    Args:
+      error: An error object.
+      file: An optional file object to write the errors to.
+    """
+    output = file or sys.stdout
+    output.write(format_error(error))
+    output.write('\n')
+
+
+def print_errors(errors, file=None):
+    """A convenience function that prints a list of errors to a file.
+
+    Args:
+      errors: A list of errors.
+      file: An optional file object to write the errors to.
+    """
+    output = file or sys.stdout
+    for error in errors:
+        output.write(format_error(error))
         output.write('\n')

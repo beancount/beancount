@@ -70,12 +70,10 @@ def load(filename,
         errors.extend(valid_errors)
 
     # Print out the list of errors.
-    if do_print_errors:
-        error_text = printer.format_errors(errors)
-        if error_text:
-            print(',----------------------------------------------------------------------')
-            print(error_text)
-            print('`----------------------------------------------------------------------')
+    if do_print_errors and errors:
+        print(',----------------------------------------------------------------------')
+        print_errors(errors, file=sys.stdout)
+        print('`----------------------------------------------------------------------')
 
     return entries, errors, options_map
 

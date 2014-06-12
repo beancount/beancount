@@ -127,11 +127,10 @@ def do_roundtrip(filename):
 
     # Print out the list of errors from parsing the results.
     if errors:
-        error_text = printer.format_errors(errors)
-        if error_text:
-            print(',----------------------------------------------------------------------')
-            print(error_text)
-            print('`----------------------------------------------------------------------')
+        print(',----------------------------------------------------------------------')
+        printer.print_errors(errors, file=sys.stdout)
+        print(error_text)
+        print('`----------------------------------------------------------------------')
 
     logging.info("Print what you read to yet another file")
     round2_filename = ''.join([basename, '.roundtrip2', extension])

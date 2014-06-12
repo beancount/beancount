@@ -2,30 +2,42 @@
 """
 from collections import namedtuple, defaultdict
 
-from beancount.core.position import Lot, Position
-from beancount.core.inventory import Inventory
-from beancount.core.amount import Decimal, amount_sub
-from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Document
-from beancount.core.data import Posting
+from beancount.core.amount import to_decimal, amount_sub
+from beancount.core import inventory
+from beancount.core import data
+from beancount.core import position
 from beancount.utils import misc_utils
 from beancount.core import flags
 
 
 PadError = namedtuple('PadError', 'fileloc message entry')
 
-# FIXME: Maybe this should become an option?
-PAD_PRECISION = Decimal('.015')
+# FIXME: Maybe this should become an option? Maybe this becomes a parameter of pad()?
+PAD_PRECISION = to_decimal('.015')
 
 
 def pad(entries):
-    """Synthesize and insert Transaction entries right after Pad entries in order to
-    fulfill checks in the padded accounts. Returns a new list of entries. Note
-    that this doesn't pad across parent-child relationships, it is a very simple
-    kind of pad. (I have found this to be sufficient in practice, and simpler to
-    implement and understand.) """
+    """Insert transaction entries for to fulfill a subsequent balance check.
+
+    Synthesize and insert Transaction entries right after Pad entries in order
+    to fulfill checks in the padded accounts. Returns a new list of entries.
+    Note that this doesn't pad across parent-child relationships, it is a very
+    simple kind of pad. (I have found this to be sufficient in practice, and
+    simpler to implement and understand.)
+
+    Furthermore, this pads for a single currency only, that is, balance checks
+    are specified only for one currency at a time, and pads will only be
+    inserted for those currencies.
+
+    Args:
+      entries: A list of directives.
+    Returns:
+      A new list of directives, with Pad entries inserte, and a list of new
+      errors produced.
+    """
 
     # Find all the pad entries and group them by account.
-    pads = list(misc_utils.filter_type(entries, Pad))
+    pads = list(misc_utils.filter_type(entries, data.Pad))
     pad_dict = misc_utils.groupby(lambda x: x.account, pads)
 
     # Partially realize the postings, so we can iterate them by account.
@@ -43,21 +55,21 @@ def pad(entries):
         # A set of currencies already padded so far in this account.
         padded_lots = set()
 
-        balance = Inventory()
+        balance = inventory.Inventory()
         for entry in by_account[account]:
 
-            if isinstance(entry, Posting):
+            if isinstance(entry, data.Posting):
                 # This is a transaction; update the running balance for this
                 # account.
                 balance.add_position(entry.position, allow_negative=True)
 
-            elif isinstance(entry, Pad):
+            elif isinstance(entry, data.Pad):
                 # Mark this newly encountered pad as active and allow all lots
                 # to be padded heretofore.
                 active_pad = entry
                 padded_lots = set()
 
-            elif isinstance(entry, Balance):
+            elif isinstance(entry, data.Balance):
                 check_amount = entry.amount
 
                 # Compare the current balance amount to the expected one from
@@ -84,8 +96,8 @@ def pad(entries):
                         # positions with that currency have no cost.
                         positions = balance.get_positions_with_currency(
                             check_amount.currency)
-                        for position in positions:
-                            if position.lot.cost is not None:
+                        for position_ in positions:
+                            if position_.lot.cost is not None:
                                 pad_errors.append(
                                     PadError(entry.fileloc,
                                              ("Attempt to pad an entry with cost for "
@@ -93,23 +105,23 @@ def pad(entries):
                                              active_pad))
 
                         # Thus our padding lot is without cost by default.
-                        lot = Lot(check_amount.currency, None, None)
-                        diff_position = Position(
+                        lot = position.Lot(check_amount.currency, None, None)
+                        diff_position = position.Position(
                             lot, check_amount.number - balance_amount.number)
 
                         # Synthesize a new transaction entry for the difference.
                         narration = ('(Padding inserted for Balance of {} for '
                                      'difference {})').format(check_amount, diff_position)
-                        new_entry = Transaction(
+                        new_entry = data.Transaction(
                             active_pad.fileloc, active_pad.date, flags.FLAG_PADDING,
                             None, narration, None, None, [])
 
                         new_entry.postings.append(
-                            Posting(new_entry, active_pad.account, diff_position,
-                                    None, None))
+                            data.Posting(new_entry, active_pad.account, diff_position,
+                                         None, None))
                         new_entry.postings.append(
-                            Posting(new_entry, active_pad.account_pad, -diff_position,
-                                    None, None))
+                            data.Posting(new_entry, active_pad.account_pad, -diff_position,
+                                         None, None))
 
                         # Save it for later insertion after the active pad.
                         new_entries[active_pad].append(new_entry)
@@ -125,7 +137,7 @@ def pad(entries):
     pad_errors = []
     for entry in entries:
         padded_entries.append(entry)
-        if isinstance(entry, Pad):
+        if isinstance(entry, data.Pad):
             entry_list = new_entries[entry]
             padded_entries.extend(entry_list)
 
@@ -154,7 +166,7 @@ def group_postings_by_account(entries, only_accounts=None):
     by_accounts = defaultdict(list)
     for entry in entries:
 
-        if isinstance(entry, Transaction):
+        if isinstance(entry, data.Transaction):
             for posting in entry.postings:
                 # pylint: disable=bad-continuation
                 if (only_accounts is not None and
@@ -162,7 +174,12 @@ def group_postings_by_account(entries, only_accounts=None):
                     continue
                 by_accounts[posting.account].append(posting)
 
-        elif isinstance(entry, (Balance, Open, Close, Pad, Note, Document)):
+        elif isinstance(entry, (data.Balance,
+                                data.Open,
+                                data.Close,
+                                data.Pad,
+                                data.Note,
+                                data.Document)):
             # pylint: disable=bad-continuation
             if (only_accounts is not None and
                 entry.account not in only_accounts):
