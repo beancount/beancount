@@ -1,0 +1,44 @@
+;; Developing a method for folding commissions into the cost basis, as discussed on the mailing-list.
+;; 2014-06-13
+
+2014-01-01 open Assets:US:Bank:Checking
+2014-01-01 open Assets:US:Invest:Cash
+2014-01-01 open Assets:US:Invest:GOOG
+2014-01-01 open Income:US:Invest:PnL
+2014-01-01 open Expenses:US:Invest:Commissions
+
+
+2014-06-13 * "Transactions with Commissions"
+  Assets:US:Invest:Cash                                        -5009.95 USD                  ;  5009.95 USD
+  Expenses:US:Invest:Commissions                                   9.95 USD                  ;     9.95 USD
+  Assets:US:Invest:GOOG                                           10.00 GOOG {500.00 USD}    ;  5000.00 USD
+
+2014-06-20 * "Transactions with Commissions"
+  Assets:US:Invest:GOOG                                          -10.00 GOOG {510.00 USD}    ; -5000.00 USD
+  Expenses:US:Invest:Commissions                                   9.95 USD                  ;     9.95 USD
+  Assets:US:Invest:Cash                                         5090.05 USD                  ;  5090.05 USD
+  Income:US:Invest:PnL                                          -100.00 USD                  ;  -100.00 USD
+
+
+;; Proposal (A):
+;;
+;; - Flag a posting to be automatically added to cost basis for a position.
+;;
+;; - You cannot use the cost basis of the lot to identify it anymore (the lot is
+;;   now at a different cost basis). That may not be a bad thing, I never liked
+;;   identifying lots by their cost in the first place, I prefer a method that
+;;   uses a label or the date to disambiguate.
+;;
+;; - Question: Should the expenses leg get added anyway? It breaks the
+;;   accounting equation if it is.
+
+2014-06-13 * "Transactions with Commissions"
+  Assets:US:Invest:Cash                                        -5009.95 USD                  ;  5009.95 USD
+  + Expenses:US:Invest:Commissions                                 9.95 USD                  ;     0.00 USD (+)
+  Assets:US:Invest:GOOG                                           10.00 GOOG {500.00 USD +}  ;  5009.95 USD =  10.00 GOOG {500.995 USD}
+
+2014-06-20 * "Transactions with Commissions"
+  Assets:US:Invest:GOOG                                          -10.00 GOOG {2014-06-13 -}  ; -5009.95 USD = -10.00 GOOG {500.995 USD}
+  - Expenses:US:Invest:Commissions                                 9.95 USD                  ;     0.00 USD (-)
+  Assets:US:Invest:Cash                                         5090.05 USD                  ;  5090.05 USD
+  Income:US:Invest:PnL                                           -80.10 USD                  ;   -80.10 USD
