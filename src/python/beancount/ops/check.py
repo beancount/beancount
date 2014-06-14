@@ -15,20 +15,29 @@ BalanceError = namedtuple('BalanceError', 'fileloc message entry')
 # insert checks on at regular spaces, so we set the maximum limit at 1bp.
 CHECK_PRECISION = Decimal('.015')
 
-def check(entries):
-    """Check for all the Balance directives and replace failing ones by new ones with
-    a flag that indicates failure."""
+def check(entries, unused_options_map):
+    """Process the balance assertion directives.
 
+    For each Balance directive, check that their expected balance corresponds to
+    the actual balance computed at that time and replace failing ones by new
+    ones with a flag that indicates failure.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: A dict of options, parsed from the inupt file.
+    Returns:
+      A pair of a list of directives and a list of balance check errors.
+    """
+    new_entries = []
     check_errors = []
 
-    # Running balance for each account.
+    # A dict of running balances for each account.
     balances = {}
 
-    new_entries = []
     for entry in entries:
 
         if isinstance(entry, Transaction):
-            # Update the balance inventory for each of the postings' accounts.
+            # For each of the postings' accounts, update the balance inventory.
             for posting in entry.postings:
                 try:
                     balance = balances[posting.account]
@@ -58,6 +67,9 @@ def check(entries):
                 # balances for all the sub-accounts. We want to support checks
                 # for parent accounts for the total sum of their subaccounts.
                 balance = Inventory()
+
+                # FIXME: This is very inefficient; replace 'balances' by a
+                # RealAccount instance instead.
                 match = lambda account_name: account_name.startswith(entry.account)
                 for account, balance_account in balances.items():
                     if match(account):

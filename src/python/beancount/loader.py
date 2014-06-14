@@ -113,7 +113,7 @@ def run_transformations(entries, parse_errors, options_map,
         errors.extend(price_errors)
 
     with misc_utils.print_time('check', quiet):
-        entries, check_errors = check.check(entries)
+        entries, check_errors = check.check(entries, options_map)
         errors.extend(check_errors)
 
     # Process the document entries and find documents automatically.
