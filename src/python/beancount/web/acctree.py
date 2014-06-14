@@ -144,7 +144,7 @@ def table_of_balances(real_root, currencies, classes=None):
     for real_account, cells, row_classes in tree_table(oss, real_root, header, classes):
 
         if real_account is TOTALS_LINE:
-            balance = balance_totals
+            line_balance = balance_totals
             row_classes.append('totals')
         else:
             # Check if this account has had activity; if not, skip rendering it.
@@ -157,17 +157,17 @@ def table_of_balances(real_root, currencies, classes=None):
                 row_classes.append('parent-node')
 
             # For each account line, get the final balance of the account (at cost).
-            balance = real_account.balance.get_cost()
+            line_balance = real_account.balance.get_cost()
 
             # Update the total balance for the totals line.
-            balance_totals += balance
+            balance_totals += line_balance
 
         # Extract all the positions that the user has identified as home
         # currencies.
-        positions = list(balance.get_positions())
+        positions = list(line_balance.get_positions())
 
         for currency in currencies:
-            position = balance.get_position(Lot(currency, None, None))
+            position = line_balance.get_position(Lot(currency, None, None))
             if position:
                 positions.remove(position)
                 cells.append('{:,.2f}'.format(position.number))

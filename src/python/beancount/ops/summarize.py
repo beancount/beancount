@@ -198,16 +198,16 @@ def conversions(entries, account, date=None):
     """
 
     # Compute the balance at the given date.
-    balance = inventory.Inventory()
+    conversion_balance = inventory.Inventory()
     for index, entry in enumerate(entries):
         if not (date is None or entry.date < date):
             break
         if isinstance(entry, Transaction):
             for posting in entry.postings:
-                balance.add_position(posting.position, True)
+                conversion_balance.add_position(posting.position, True)
 
     # Early exit if there is nothing to do.
-    if balance.is_empty():
+    if conversion_balance.is_empty():
         return entries
 
     new_entries = list(entries)
@@ -215,10 +215,10 @@ def conversions(entries, account, date=None):
     last_date = entries[-1].date - datetime.timedelta(days=1)
 
     fileloc = FileLocation('<conversions>', -1)
-    narration = 'Conversion for {}'.format(balance)
+    narration = 'Conversion for {}'.format(conversion_balance)
     conversion_entry = Transaction(fileloc, last_date, flags.FLAG_CONVERSIONS,
                                    None, narration, None, None, [])
-    for position in balance.get_cost().get_positions():
+    for position in conversion_balance.get_cost().get_positions():
         # FIXME: Set the cost to zero here to maintain the balance invariant.
         # (This is the only single place we cheap on the balance rule in the
         # entire system and this is necessary; see documentation on
@@ -253,26 +253,24 @@ def create_entries_from_balances(balances, date, other_account, direction,
     order for the sum total of all the resulting entries to reflect the correct
     final positions held.
     """
-
     new_entries = []
-    for account, balance in sorted(balances.items()):
+    for account, account_balance in sorted(balances.items()):
 
         # Don't create new entries where there is no balance.
-        if balance.is_empty():
+        if account_balance.is_empty():
             continue
 
         fileloc = FileLocation(filename, 0)
         narration = narration_template.format(account=account, date=date)
 
         if not direction:
-            balance = -balance
-
+            account_balance = -account_balance
 
         postings = []
         new_entry = Transaction(
             fileloc, date, flag, None, narration, None, None, postings)
 
-        for position in balance.get_positions():
+        for position in account_balance.get_positions():
             postings.append(Posting(new_entry, account, position, None, None))
             cost = position.get_cost_position()
             postings.append(Posting(new_entry, other_account, -cost, None, None))
@@ -297,7 +295,7 @@ def sum_to_date(entries, date=None):
 
         if isinstance(entry, Transaction):
             for posting in entry.postings:
-                balance = balances[posting.account]
+                account_balance = balances[posting.account]
 
                 # Note: We must allow negative lots at cost, because this may be
                 # used to reduce a filtered list of entries which may not
@@ -306,7 +304,7 @@ def sum_to_date(entries, date=None):
                 # zero is if all the entries are being summed together, no
                 # entries are filtered, at least for a particular account's
                 # postings.
-                balance.add_position(posting.position, True)
+                account_balance.add_position(posting.position, True)
     else:
         index = None
 
@@ -337,21 +335,21 @@ def compute_total_balance(entries):
     """Sum up all the positions in the transactions in the list of entries and
     return an inventory of it."""
 
-    balance = inventory.Inventory()
+    total_balance = inventory.Inventory()
     for entry in entries:
         if isinstance(entry, Transaction):
             for posting in entry.postings:
-                balance.add_position(posting.position, True)
-    return balance
+                total_balance.add_position(posting.position, True)
+    return total_balance
 
 
 def compute_balance_for_prefix(entries, account_prefix):
     """Compute the balance of all the accounts that match the given prefix."""
 
-    balance = inventory.Inventory()
+    prefix_balance = inventory.Inventory()
     for entry in entries:
         if isinstance(entry, Transaction):
             for posting in entry.postings:
                 if posting.account.startswith(account_prefix):
-                    balance.add_position(posting.position, True)
-    return balance
+                    prefix_balance.add_position(posting.position, True)
+    return prefix_balance

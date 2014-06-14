@@ -264,7 +264,7 @@ class TestRealization(unittest.TestCase):
           Assets:Other          1000 EUR @@ 1780 GBP
         """
         postings = entries[:-1] + entries[-1].postings
-        balance = realization.compute_postings_balance(postings)
+        computed_balance = realization.compute_postings_balance(postings)
 
         expected_balance = Inventory()
         expected_balance.add(amount.Amount('333.97', 'USD'))
@@ -272,7 +272,7 @@ class TestRealization(unittest.TestCase):
         expected_balance.add(amount.Amount('32', 'GOOG'),
                              amount.Amount('45.203', 'USD'))
         expected_balance.add(amount.Amount('12000', 'EUR'))
-        self.assertEqual(expected_balance, balance)
+        self.assertEqual(expected_balance, computed_balance)
 
     def test_realize_empty(self):
         real_account = realization.realize([])

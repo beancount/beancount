@@ -64,13 +64,13 @@ def pad(entries):
                 postings.extend(item_postings)
         postings.sort(key=data.posting_sortkey)
 
-        balance = inventory.Inventory()
+        pad_balance = inventory.Inventory()
         for entry in postings:
 
             if isinstance(entry, data.Posting):
                 # This is a transaction; update the running balance for this
                 # account.
-                balance.add_position(entry.position, True)
+                pad_balance.add_position(entry.position, True)
 
             elif isinstance(entry, data.Pad):
                 if entry.account == account:
@@ -87,7 +87,7 @@ def pad(entries):
                 # does not check a single position, but rather checks that the
                 # total amount for a particular currency (which itself is
                 # distinct from the cost).
-                balance_amount = balance.get_amount(check_amount.currency)
+                balance_amount = pad_balance.get_amount(check_amount.currency)
                 diff_amount = amount_sub(balance_amount, check_amount)
                 if abs(diff_amount.number) > PAD_PRECISION:
                     # The check fails; we need to pad.
@@ -104,14 +104,14 @@ def pad(entries):
                         # Note: we decide that it's an error to try to pad
                         # position at cost; we check here that all the existing
                         # positions with that currency have no cost.
-                        positions = balance.get_positions_with_currency(
+                        positions = pad_balance.get_positions_with_currency(
                             check_amount.currency)
                         for position_ in positions:
                             if position_.lot.cost is not None:
                                 pad_errors.append(
                                     PadError(entry.fileloc,
                                              ("Attempt to pad an entry with cost for "
-                                              "balance: {}".format(balance)),
+                                              "balance: {}".format(pad_balance)),
                                              active_pad))
 
                         # Thus our padding lot is without cost by default.
@@ -137,7 +137,7 @@ def pad(entries):
                         new_entries[active_pad].append(new_entry)
 
                         # Fixup the running balance.
-                        balance.add_position(diff_position, False)
+                        pad_balance.add_position(diff_position, False)
 
                         # Mark this lot as padded. Further checks should not pad this lot.
                         padded_lots.add(check_amount.currency)

@@ -35,12 +35,12 @@ def validate_non_negative_costs(entries):
 
     errors = []
     for account_name, postings in postings_map.items():
-        balance = inventory.Inventory()
+        running_balance = inventory.Inventory()
         for posting in postings:
             if not isinstance(posting, data.Posting):
                 continue
             try:
-                balance.add_position(posting.position, False)
+                running_balance.add_position(posting.position, False)
             except ValueError as e:
                 errors.append(
                     ValidationError(

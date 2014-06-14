@@ -58,10 +58,9 @@ def iterate_render_transactions(app, postings):
     for each cell.
     Yields:
     """
-    balance = Inventory()
-    for entry, leg_postings, change, balance in realization.iterate_with_balance(postings):
+    for entry, leg_postings, change, entry_balance in realization.iterate_with_balance(postings):
         # Prepare the data to be rendered for this row.
-        balance_str = balance_html(balance)
+        balance_str = balance_html(entry_balance)
 
         rowtype = entry.__class__.__name__
         flag = ''
@@ -92,7 +91,7 @@ def iterate_render_transactions(app, postings):
                 description = ('Balance in {} fails; '
                                'expected = {}, balance = {}, difference = {}').format(
                                    account_link(entry.account), entry.amount,
-                                   balance.get_amount(entry.amount.currency),
+                                   entry_balance.get_amount(entry.amount.currency),
                                    entry.diff_amount)
                 rowtype = 'CheckFail'
 

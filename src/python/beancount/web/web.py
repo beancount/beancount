@@ -581,7 +581,7 @@ def equity():
     if 0:
         view = request.view
 
-        balance = summarize.compute_balance_for_prefix(
+        equity_balance = summarize.compute_balance_for_prefix(
             view.closing_entries, '{}:'.format(view.options['name_equity']))
         header = io.StringIO()
         header.write('<th>Currency</th>\n')
@@ -591,7 +591,7 @@ def equity():
                                for currency in operating_currencies))
 
         body = io.StringIO()
-        for position in balance.get_positions():
+        for position in equity_balance.get_positions():
             body.write('<tr>')
             body.write('<td>{}</td>'.format(position.lot.currency))
             body.write('<td>{}</td>'.format(position.number))
@@ -678,7 +678,7 @@ def conversions():
     conversion_entries = get_conversion_entries(view.entries)
     journal.entries_table(app, oss, conversion_entries, render_postings=True)
 
-    balance = summarize.compute_total_balance(conversion_entries)
+    conversion_balance = summarize.compute_total_balance(conversion_entries)
 
     return render_view(
         pagetitle="Conversions",
@@ -687,7 +687,7 @@ def conversions():
             {}
           </div>
           <h3>Conversion Total:<span class="num">{}</span></h3>
-        """.format(oss.getvalue(), balance))
+        """.format(oss.getvalue(), conversion_balance))
 
 
 #--------------------------------------------------------------------------------

@@ -61,12 +61,12 @@ def check(entries, unused_options_map):
             # Sum up the current balances for this account and its
             # sub-accounts. We want to support checks for parent accounts
             # for the total sum of their subaccounts.
-            balance = inventory.Inventory()
+            subtree_balance = inventory.Inventory()
             for real_child in realization.iter_children(real_account, False):
-                balance += real_child.balance
+                subtree_balance += real_child.balance
 
             # Get only the amount in the desired currency.
-            balance_amount = balance.get_amount(expected_amount.currency)
+            balance_amount = subtree_balance.get_amount(expected_amount.currency)
 
             # Check if the amount is within bounds of the expected amount.
             diff_amount = amount_sub(balance_amount, expected_amount)

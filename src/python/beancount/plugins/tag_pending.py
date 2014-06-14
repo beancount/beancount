@@ -65,14 +65,14 @@ def tag_pending_transactions(entries, tag_name='PENDING'):
         else:
             # Compute the sum total balance of the common accounts.
             common_accounts = basicops.get_common_accounts(link_entries)
-            balance = inventory.Inventory()
+            common_balance = inventory.Inventory()
             for entry in link_entries:
                 for posting in entry.postings:
                     if posting.account in common_accounts:
-                        balance.add_position(posting.position)
+                        common_balance.add_position(posting.position)
 
             # Mark entries as pending if a residual balance is found.
-            if not balance.is_empty():
+            if not common_balance.is_empty():
                 for entry in link_entries:
                     pending_entry_ids.add(id(entry))
 

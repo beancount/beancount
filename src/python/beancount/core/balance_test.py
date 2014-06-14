@@ -55,20 +55,20 @@ class TestBalance(unittest.TestCase):
     def test_compute_residual(self):
 
         # Try with two accounts.
-        balance = compute_residual([
+        residual = compute_residual([
             create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD"),
             create_simple_posting(None, "Assets:Bank:Checking", "-194.50", "USD"),
             ])
-        self.assertEqual([Amount("-89", "USD")], balance.get_amounts())
+        self.assertEqual([Amount("-89", "USD")], residual.get_amounts())
 
         # Try with more accounts.
-        balance = compute_residual([
+        residual = compute_residual([
             create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD"),
             create_simple_posting(None, "Assets:Bank:Checking", "-194.50", "USD"),
             create_simple_posting(None, "Assets:Bank:Investing", "5", "AAPL"),
             create_simple_posting(None, "Assets:Bank:Savings", "89.00", "USD"),
             ])
-        self.assertEqual([Amount("5", "AAPL")], balance.get_amounts())
+        self.assertEqual([Amount("5", "AAPL")], residual.get_amounts())
 
     def test_get_incomplete_postings_pathological(self):
         fileloc = FileLocation(__file__, 0)
