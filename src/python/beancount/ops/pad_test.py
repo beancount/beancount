@@ -294,14 +294,6 @@ class TestPadding(test_utils.TestCase):
 
         """, entries)
 
-
-
-
-
-
-
-
-
     @loaddoc
     def test_pad_multiple_currencies(self, entries, errors, __):
         """
