@@ -204,7 +204,7 @@ def conversions(entries, account, date=None):
             break
         if isinstance(entry, Transaction):
             for posting in entry.postings:
-                balance.add_position(posting.position, allow_negative=True)
+                balance.add_position(posting.position, True)
 
     # Early exit if there is nothing to do.
     if balance.is_empty():
@@ -341,7 +341,7 @@ def compute_total_balance(entries):
     for entry in entries:
         if isinstance(entry, Transaction):
             for posting in entry.postings:
-                balance.add_position(posting.position, allow_negative=True)
+                balance.add_position(posting.position, True)
     return balance
 
 
@@ -353,5 +353,5 @@ def compute_balance_for_prefix(entries, account_prefix):
         if isinstance(entry, Transaction):
             for posting in entry.postings:
                 if posting.account.startswith(account_prefix):
-                    balance.add_position(posting.position, allow_negative=True)
+                    balance.add_position(posting.position, True)
     return balance

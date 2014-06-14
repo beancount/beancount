@@ -64,7 +64,7 @@ class Inventory:
         self.positions = []
         if positions:
             for position in positions:
-                self.add_position(position)
+                self.add_position(position, False)
 
     def __str__(self):
         """Render as a human-readable string.

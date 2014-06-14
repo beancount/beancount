@@ -2,6 +2,7 @@
 """
 from collections import namedtuple
 
+from beancount.ops import validation
 from beancount.core.inventory import Inventory
 from beancount.core.amount import Decimal, amount_sub
 from beancount.core.data import Transaction, Balance
@@ -44,14 +45,19 @@ def check(entries, unused_options_map):
                 except KeyError:
                     balance = balances[posting.account] = Inventory()
                 try:
-                    # Note: if this is from a padding transaction, we allow negative lots at
-                    # cost.
+                    # Note: Always allow negative lots for the purpose of
+                    # balancing. This error should show up somewhere else than
+                    # here.
+
+                    ## FIXME: Remove this, the check for negative positions
+                    ## should be performed in the validation step, not here.
+                    ## Do this with the help of realization.
                     allow_negative = entry.flag in (flags.FLAG_PADDING,
                                                     flags.FLAG_SUMMARIZE)
                     balance.add_position(posting.position, allow_negative)
                 except ValueError as e:
                     check_errors.append(
-                        BalanceError(
+                        validation.ValidationError(
                             entry.fileloc,
                             "Error balancing '{}' -- {}".format(posting.account, e),
                             entry))

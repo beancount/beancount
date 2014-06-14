@@ -378,7 +378,7 @@ class TestPadding(test_utils.TestCase):
         balance = Inventory()
         for posting in postings:
             if isinstance(posting, Posting):
-                balance.add_position(posting.position)
+                balance.add_position(posting.position, False)
             balances.append((type(posting), balance.get_amount('USD')))
 
         self.assertEqual(balances, [(Open, Amount('0.00', 'USD')),

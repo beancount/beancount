@@ -305,7 +305,7 @@ def compute_postings_balance(postings):
     balance = inventory.Inventory()
     for posting in postings:
         if isinstance(posting, data.Posting):
-            balance.add_position(posting.position, allow_negative=True)
+            balance.add_position(posting.position, True)
     return balance
 
 

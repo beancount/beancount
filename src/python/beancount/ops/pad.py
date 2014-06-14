@@ -61,7 +61,7 @@ def pad(entries):
             if isinstance(entry, data.Posting):
                 # This is a transaction; update the running balance for this
                 # account.
-                balance.add_position(entry.position, allow_negative=True)
+                balance.add_position(entry.position, True)
 
             elif isinstance(entry, data.Pad):
                 # Mark this newly encountered pad as active and allow all lots
@@ -127,7 +127,7 @@ def pad(entries):
                         new_entries[active_pad].append(new_entry)
 
                         # Fixup the running balance.
-                        balance.add_position(diff_position)
+                        balance.add_position(diff_position, False)
 
                         # Mark this lot as padded. Further checks should not pad this lot.
                         padded_lots.add(check_amount.currency)
