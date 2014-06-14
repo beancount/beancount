@@ -15,8 +15,6 @@ beancount: TODO
 
      src/python/beancount/ops/validation.py                 INCOMPLETE
 
-     src/python/beancount/ops/check.py                      INCOMPLETE
-
        Rename this file to balance to match the directive?
        Not sure. Another file is named that way.
 
@@ -72,6 +70,8 @@ beancount: TODO
 
   A few minor bugs and improvements should be completed before marking this a
   complete release:
+
+  - Minor refactoring for pad.group_postings_by_account(). Do it.
 
   - (documents) documents found in parent directories don't end up creating a
     directive because we skip them because we only restrict to accounts which
@@ -380,6 +380,8 @@ beancount: TODO
     amounts and they get replaced by the plugins; whatever Unknown trickles
     through would generate a warning in the errors.
 
+  - Setting the filename on options_map might help in making document
+    processing alos as a plugin.
 
 
 

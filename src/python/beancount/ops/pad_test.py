@@ -286,9 +286,9 @@ class TestPadding(test_utils.TestCase):
           2013-05-20 pad Assets:US Equity:OpeningBalances
 
           ;; A single pad that does not include child accounts should be inserted.
-          2013-05-20 P "(Padding inserted for Balance of 100.00 USD for difference 100.00 USD)"
-            Assets:US                                                              100.00 USD
-            Equity:OpeningBalances                                                -100.00 USD
+          2013-05-20 P "(Padding inserted for Balance of 100.00 USD for difference 90.00 USD)"
+            Assets:US                                                              90.00 USD
+            Equity:OpeningBalances                                                -90.00 USD
 
           2013-06-01 balance Assets:US                                       100.00 USD
 

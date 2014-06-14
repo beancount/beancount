@@ -8,6 +8,7 @@ from beancount.core import data
 from beancount.core import position
 from beancount.utils import misc_utils
 from beancount.core import flags
+from beancount.core import getters
 
 
 PadError = namedtuple('PadError', 'fileloc message entry')
@@ -40,8 +41,16 @@ def pad(entries):
     pads = list(misc_utils.filter_type(entries, data.Pad))
     pad_dict = misc_utils.groupby(lambda x: x.account, pads)
 
+    # Figure out the subset of accounts that we're interested in. This is all
+    # padded accounts and their child accounts.
+    accounts = getters.get_accounts(entries)
+    restrict_accounts = {account
+                         for account in accounts
+                         if any(account.startswith(pad_account)
+                                for pad_account in pad_dict.keys())}
+
     # Partially realize the postings, so we can iterate them by account.
-    by_account = group_postings_by_account(entries, set(pad_dict.keys()))
+    by_account = group_postings_by_account(entries, restrict_accounts)
 
     # A dict of pad -> list of entries to be inserted.
     new_entries = {pad: [] for pad in pads}
@@ -55,8 +64,15 @@ def pad(entries):
         # A set of currencies already padded so far in this account.
         padded_lots = set()
 
+        # Gather all the postings for the account and its children.
+        postings = []
+        for item_account, item_postings in by_account.items():
+            if item_account.startswith(account):
+                postings.extend(item_postings)
+        postings.sort(key=data.posting_sortkey)
+
         balance = inventory.Inventory()
-        for entry in by_account[account]:
+        for entry in postings:
 
             if isinstance(entry, data.Posting):
                 # This is a transaction; update the running balance for this
@@ -149,6 +165,9 @@ def pad(entries):
     return padded_entries, pad_errors
 
 
+# FIXME: This is similar to realization.group_by_account() but does not include
+# the padding source account on purpose. See if we can't just use that one
+# instead, adding a check in the call above.
 def group_postings_by_account(entries, only_accounts=None):
     """Builds a mapping of accounts to entries.
 
