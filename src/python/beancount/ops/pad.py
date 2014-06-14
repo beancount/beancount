@@ -1,6 +1,6 @@
 """Automatic padding of gaps between entries.
 """
-from collections import namedtuple, defaultdict
+import collections
 
 from beancount.core.amount import to_decimal, amount_sub
 from beancount.core import inventory
@@ -9,9 +9,10 @@ from beancount.core import position
 from beancount.utils import misc_utils
 from beancount.core import flags
 from beancount.core import getters
+from beancount.core import realization
 
 
-PadError = namedtuple('PadError', 'fileloc message entry')
+PadError = collections.namedtuple('PadError', 'fileloc message entry')
 
 # FIXME: Maybe this should become an option? Maybe this becomes a parameter of pad()?
 PAD_PRECISION = to_decimal('.015')
@@ -41,16 +42,8 @@ def pad(entries):
     pads = list(misc_utils.filter_type(entries, data.Pad))
     pad_dict = misc_utils.groupby(lambda x: x.account, pads)
 
-    # Figure out the subset of accounts that we're interested in. This is all
-    # padded accounts and their child accounts.
-    accounts = getters.get_accounts(entries)
-    restrict_accounts = {account
-                         for account in accounts
-                         if any(account.startswith(pad_account)
-                                for pad_account in pad_dict.keys())}
-
     # Partially realize the postings, so we can iterate them by account.
-    by_account = group_postings_by_account(entries, restrict_accounts)
+    by_account = realization.group_by_account(entries)
 
     # A dict of pad -> list of entries to be inserted.
     new_entries = {pad: [] for pad in pads}
@@ -80,10 +73,11 @@ def pad(entries):
                 balance.add_position(entry.position, True)
 
             elif isinstance(entry, data.Pad):
-                # Mark this newly encountered pad as active and allow all lots
-                # to be padded heretofore.
-                active_pad = entry
-                padded_lots = set()
+                if entry.account == account:
+                    # Mark this newly encountered pad as active and allow all lots
+                    # to be padded heretofore.
+                    active_pad = entry
+                    padded_lots = set()
 
             elif isinstance(entry, data.Balance):
                 check_amount = entry.amount
@@ -163,46 +157,3 @@ def pad(entries):
                     PadError(entry.fileloc, "Unused Pad entry: {}".format(entry), entry))
 
     return padded_entries, pad_errors
-
-
-# FIXME: This is similar to realization.group_by_account() but does not include
-# the padding source account on purpose. See if we can't just use that one
-# instead, adding a check in the call above.
-def group_postings_by_account(entries, only_accounts=None):
-    """Builds a mapping of accounts to entries.
-
-    This is essentially a partial realization, without the hierarchy.
-    We need this just to quickly iterate on effects by account.
-
-    Args:
-      entries: A list of directives.
-      only_accounts: If specified, a set of strings, the names of accounts to
-        restrict the partial realization for. This makes the processing leaner by
-        not accumulating lists for accounts we won't need.
-    Returns:
-      A dict of account string to list of entries or posting instances.
-    """
-    by_accounts = defaultdict(list)
-    for entry in entries:
-
-        if isinstance(entry, data.Transaction):
-            for posting in entry.postings:
-                # pylint: disable=bad-continuation
-                if (only_accounts is not None and
-                    posting.account not in only_accounts):
-                    continue
-                by_accounts[posting.account].append(posting)
-
-        elif isinstance(entry, (data.Balance,
-                                data.Open,
-                                data.Close,
-                                data.Pad,
-                                data.Note,
-                                data.Document)):
-            # pylint: disable=bad-continuation
-            if (only_accounts is not None and
-                entry.account not in only_accounts):
-                continue
-            by_accounts[entry.account].append(entry)
-
-    return by_accounts

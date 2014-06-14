@@ -272,6 +272,7 @@ def group_by_account(entries):
     Returns:
        A mapping of account name to list of postings, sorted in the same order
        as the entries.
+
     """
     postings_map = collections.defaultdict(list)
     for entry in entries:
