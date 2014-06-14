@@ -3,6 +3,7 @@
 import functools
 import textwrap
 import importlib
+import sys
 
 from beancount.utils import misc_utils
 from beancount.core import data
@@ -72,7 +73,7 @@ def load(filename,
     # Print out the list of errors.
     if do_print_errors and errors:
         print(',----------------------------------------------------------------------')
-        print_errors(errors, file=sys.stdout)
+        printer.print_errors(errors, file=sys.stdout)
         print('`----------------------------------------------------------------------')
 
     return entries, errors, options_map
