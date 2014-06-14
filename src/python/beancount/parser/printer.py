@@ -106,7 +106,7 @@ def format_entry(entry):
     return EntryPrinter()(entry)
 
 
-def print_entry(entr, file=None):
+def print_entry(entry, file=None):
     """A convenience function that prints a single entry to a file.
 
     Args:

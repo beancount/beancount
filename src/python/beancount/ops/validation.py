@@ -9,14 +9,49 @@ from beancount.core.account_types import is_valid_account_name
 from beancount.core.data import Open, Close, Balance, Transaction, Document
 from beancount.core import data
 from beancount.core import getters
+from beancount.core import inventory
+from beancount.core import realization
 from beancount.utils import misc_utils
+from beancount.parser import printer
 
 
 # An error from one of the checks.
 ValidationError = namedtuple('ValidationError', 'fileloc message entry')
 
 
+def validate_non_negative_costs(entries):
+    """Validate that no position at cost is allowed to go negative.
+
+    A real-world exception of this would be for trading future spreads or
+    allowing short-sales, but we plan to add support for enabling this
+    selectively.
+
+    Args:
+      entries: A list of directives.
+    Returns:
+      A list of errors.
+    """
+    postings_map = realization.group_by_account(entries)
+
+    errors = []
+    for account_name, postings in postings_map.items():
+        balance = inventory.Inventory()
+        for posting in postings:
+            if not isinstance(posting, data.Posting):
+                continue
+            try:
+                balance.add_position(posting.position, False)
+            except ValueError as e:
+                errors.append(
+                    ValidationError(
+                        posting.entry.fileloc,
+                        "Position/cost error: '{}' -- {}".format(posting.account, e),
+                        posting.entry))
+    return errors
+
+
 def validate_open_close(entries, accounts):
+
     """Some entries may not be present more than once for each account or date.
     Open and Close are unique per account, for instance. Balance is unique
     for each date. There are more. Return a list of errors on non-unique
@@ -191,6 +226,9 @@ def validate(entries):
 
     accounts = getters.get_accounts(entries)
 
+    # Check for negative amounts at cost.
+    cost_errors = validate_non_negative_costs(entries)
+
     # Check for unused accounts.
     unused_errors = validate_unused_accounts(entries, accounts)
 
@@ -203,4 +241,8 @@ def validate(entries):
     # Sanity checks for documents.
     doc_errors = validate_documents_paths(entries)
 
-    return (unused_errors + check_errors + constraint_errors + doc_errors)
+    return (cost_errors +
+            unused_errors +
+            check_errors +
+            constraint_errors +
+            doc_errors)

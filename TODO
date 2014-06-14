@@ -145,6 +145,9 @@ beancount: TODO
 
   - Fix all FIXMEs everywhere, or convert them to items in this list.
 
+  - Instead of ignoring diff_amount and parent and such for hashing purposes,
+    just make ignorable fields start with _, e.g. posting._entry, balance._diff,
+    entry._fileloc, etc. Call those non-essential fields.
 
 
 ** Parser-Related Minor Bugs
@@ -901,6 +904,13 @@ beancount: TODO
     gets: "Note that if you only pass PyObject * args, PyObject_CallMethodObjArgs() is a
     faster alternative."
     https://docs.python.org/3/c-api/object.html
+
+
+  - Allow short sales eventually. This should already work if all that you do is
+    selectively suppress the validation check that verifies that a position at
+    cost may not go negative. We could selectively suppress it by adding a flag
+    to the open directive associated with an account, or maybe adding some
+    special syntax in the cost specification that allows us to do this.
 
 
 ** Precision

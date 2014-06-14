@@ -44,23 +44,10 @@ def check(entries, unused_options_map):
                     balance = balances[posting.account]
                 except KeyError:
                     balance = balances[posting.account] = Inventory()
-                try:
-                    # Note: Always allow negative lots for the purpose of
-                    # balancing. This error should show up somewhere else than
-                    # here.
 
-                    ## FIXME: Remove this, the check for negative positions
-                    ## should be performed in the validation step, not here.
-                    ## Do this with the help of realization.
-                    allow_negative = entry.flag in (flags.FLAG_PADDING,
-                                                    flags.FLAG_SUMMARIZE)
-                    balance.add_position(posting.position, allow_negative)
-                except ValueError as e:
-                    check_errors.append(
-                        validation.ValidationError(
-                            entry.fileloc,
-                            "Error balancing '{}' -- {}".format(posting.account, e),
-                            entry))
+                # Note: Always allow negative lots for the purpose of balancing.
+                # This error should show up somewhere else than here.
+                balance.add_position(posting.position, True)
 
         elif isinstance(entry, Balance):
             # Check the balance against the check entry.
