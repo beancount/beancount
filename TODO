@@ -15,10 +15,6 @@ beancount: TODO
 
      src/python/beancount/ops/validation.py                 INCOMPLETE
 
-       Rename this file to balance to match the directive?
-
-       - beancount.ops.check.py -> beancount.ops.balance
-
      src/python/beancount/web/acctree.py                    MISSING
      src/python/beancount/web/journal.py                    MISSING
 
@@ -243,6 +239,10 @@ beancount: TODO
     dedicated module. That would make sense.
 
   - Remove support for legacy: "check" (vs. "balance"), PIPE, etc. Not needed.
+
+  - Rename "event" to its final name: "register". We don't have to care about
+    the possible confusion with the Ledger report... "register" is a much
+    better name for our concept of "event." "Event" is confusing.
 
 
 ** Documentation

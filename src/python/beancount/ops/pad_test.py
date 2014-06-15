@@ -13,7 +13,7 @@ from beancount.loader import loaddoc
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.ops import pad
-from beancount.ops import check
+from beancount.ops import balance
 from beancount.utils import test_utils
 
 
@@ -72,7 +72,7 @@ class TestPadding(test_utils.TestCase):
           2013-06-01 balance Assets:Checking                                 200.00 USD
 
         """
-        self.assertEqual([check.BalanceError], list(map(type, errors)))
+        self.assertEqual([balance.BalanceError], list(map(type, errors)))
         self.assertEqualEntries("""
 
           2013-05-01 open Assets:Checking

@@ -1,6 +1,6 @@
 import unittest
 
-from beancount.ops import check
+from beancount.ops import balance
 from beancount.ops import validation
 from beancount.loader import loaddoc
 from beancount.parser import printer
@@ -16,9 +16,9 @@ class TestCheck(unittest.TestCase):
 
           2013-05-03 balance Assets:US:Checking   100 USD
         """
-        self.assertEqual([check.BalanceError], list(map(type, errors)))
+        self.assertEqual([balance.BalanceError], list(map(type, errors)))
         entry = entries[1]
-        self.assertTrue(isinstance(entry, check.Balance))
+        self.assertTrue(isinstance(entry, balance.Balance))
         self.assertEqual(amount.Amount('-100', 'USD'), entry.diff_amount)
 
     @loaddoc
@@ -35,7 +35,7 @@ class TestCheck(unittest.TestCase):
         """
         self.assertEqual([], list(map(type, errors)))
         entry = entries[-1]
-        self.assertTrue(isinstance(entry, check.Balance))
+        self.assertTrue(isinstance(entry, balance.Balance))
         self.assertEqual(None, entry.diff_amount)
 
     @loaddoc
@@ -126,7 +126,7 @@ class TestCheck(unittest.TestCase):
         self.assertEqual([], list(map(type, errors)))
         diff_amounts = [entry.diff_amount
                         for entry in entries
-                        if isinstance(entry, check.Balance)]
+                        if isinstance(entry, balance.Balance)]
         self.assertEqual([None, None, None, None], diff_amounts)
 
     # Note: This may be more appropriate to be moved to the validation module,
