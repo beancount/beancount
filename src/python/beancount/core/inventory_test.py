@@ -8,7 +8,8 @@ import types
 
 from beancount.core.amount import Amount, Decimal
 from beancount.core.position import create_position, Lot
-from beancount.core.inventory import Inventory, check_invariants
+from beancount.core.inventory import Inventory
+from beancount.core import inventory
 
 
 def invariant_check(method, prefun, postfun):
@@ -46,7 +47,9 @@ def instrument_invariants(klass, prefun, postfun):
                 invariant_check(object_, prefun, postfun))
 
 def setUp(module):
-    instrument_invariants(Inventory, check_invariants, check_invariants)
+    instrument_invariants(Inventory,
+                          inventory.check_invariants,
+                          inventory.check_invariants)
 
 
 class TestInventory(unittest.TestCase):
@@ -320,3 +323,25 @@ class TestInventory(unittest.TestCase):
         inv2.add(Amount('55', 'GOOG'))
 
         inv = inv1 + inv2
+
+
+class TestInventoryFromString(unittest.TestCase):
+
+    def test_from_string(self):
+        inv = inventory.from_string('')
+        self.assertEqual(Inventory(), inv)
+
+        inv = inventory.from_string('10 USD')
+        self.assertEqual(Inventory([create_position('10', 'USD')]), inv)
+
+        inv = inventory.from_string(' 10.00  USD ')
+        self.assertEqual(Inventory([create_position('10', 'USD')]), inv)
+
+        inv = inventory.from_string('1 USD, 2 CAD')
+        self.assertEqual(Inventory([create_position('1', 'USD'),
+                                    create_position('2', 'CAD')]), inv)
+
+        inv = inventory.from_string('2.2 GOOG {532.43 USD}, 3.413 EUR')
+        self.assertEqual(Inventory([create_position('2.2', 'GOOG',
+                                                    Amount('532.43', 'USD')),
+                                    create_position('3.413', 'EUR')]), inv)
