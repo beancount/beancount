@@ -12,6 +12,7 @@ import collections
 from beancount.core import inventory
 from beancount.core.data import Transaction, Open, Close
 from beancount.core.data import FileLocation, Posting
+from beancount.core import data
 from beancount.core import flags
 from beancount.core.account_types import is_income_statement_account
 from beancount.ops import prices
@@ -127,7 +128,7 @@ def transfer_balances(entries, date, account_pred, transfer_account):
     # Create transfer entries.
     transfer_entries = create_entries_from_balances(
         transfer_balances, transfer_date, transfer_account, False,
-        '<summarize>', flags.FLAG_TRANSFER,
+        data.FileLocation('<transfer_balances>', 0), flags.FLAG_TRANSFER,
         "Transfer balance for '{account}' as of {date} (Transfer balance)")
 
     # Split the new entries in a new list.
@@ -164,7 +165,7 @@ def summarize(entries, date, opening_account):
     # Create summarization / opening balance entries.
     summarizing_entries = create_entries_from_balances(
         balances, summarize_date, opening_account, True,
-        '<summarize>', flags.FLAG_SUMMARIZE,
+        data.FileLocation('<summarize>', 0), flags.FLAG_SUMMARIZE,
         "Opening balance for '{account}' as of {date} (Summarization)")
 
     # Insert the last price entry for each commodity from before the date.
@@ -240,16 +241,33 @@ def truncate(entries, date):
     return new_entries
 
 
-def create_entries_from_balances(balances, date, other_account, direction,
-                                 filename, flag, narration_template):
-    """"Create a list of new entries to transfer the amounts in the 'balances' dict
-    to/from other_account. If 'direction' is True, the new entries transfer TO
-    the balances account from the other account; otherwise the new entries
-    transfer FROM the balances into the other account.
+def create_entries_from_balances(balances, date, source_account, direction,
+                                 fileloc, flag, narration_template):
+    """"Create a list of entries from a dict of balances.
 
-    IMPORTANT! The other leg of the transfers have to be carried out AT COST in
-    order for the sum total of all the resulting entries to reflect the correct
-    final positions held.
+    This method creates a list of new entries to transfer the amounts in the
+    'balances' dict to/from another account specified in 'source_account'.
+
+    The balancing posting is created with the equivalent at cost. In other
+    words, if you attempt to balance 10 GOOG {500 USD}, this will synthesize a
+    posting with this position on one leg, and with 5000 USD on the
+    'source_account' leg.
+
+    Args:
+      balances: A dict of account name strings to Inventory instances.
+      date: A datetime.date object, the date at which to create the transaction.
+      source_account: A string, the name of the account to pull the balances
+        from. This is the magician's hat to pull the rabbit from.
+      direction: If 'direction' is True, the new entries transfer TO the
+        balances account from the source account; otherwise the new entries
+        transfer FROM the balances into the source account.
+      fileloc: An instance of data.FileLocation to use to indicate the source of
+        the transactions
+      flag: A string, the flag to use for the transactinos.
+      narration_template: A format string for creating the narration. It is
+        formatted with 'account' and 'date' replacement variables.
+    Returns:
+      A list of newly synthesizes Transaction entries.
     """
     new_entries = []
     for account, account_balance in sorted(balances.items()):
@@ -258,7 +276,6 @@ def create_entries_from_balances(balances, date, other_account, direction,
         if account_balance.is_empty():
             continue
 
-        fileloc = FileLocation(filename, 0)
         narration = narration_template.format(account=account, date=date)
 
         if not direction:

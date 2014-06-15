@@ -164,6 +164,19 @@ class TestSummarization(unittest.TestCase):
 
 
 
+class TestEntriesFromBalance(test_utils.TestCase):
+
+    def test_create_entries_from_balances():
+        pass
+
+
+
+
+
+
+
+
+
 class TestBalanceByAccount(test_utils.TestCase):
 
     @parser.parsedoc
