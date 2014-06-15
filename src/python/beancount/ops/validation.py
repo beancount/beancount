@@ -245,3 +245,7 @@ def validate(entries):
             check_errors +
             constraint_errors +
             doc_errors)
+
+
+
+# FIXME: TODO - check that there are no duplicates on open entries.

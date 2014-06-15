@@ -253,11 +253,33 @@ class TestOpenAtDate(test_utils.TestCase):
         """, summarize.open_at_date(entries, date(2013, 1, 1)))
 
     @parser.parsedoc
-    def test_open_at_date_with_errors(self, entries, errors, options_map):
-        ""
-        pass
-        # FIXME: Test with two open entries on the same account... should
-        # trigger an error, not an assert!
+    def test_open_at_date_duplicate_open(self, entries, errors, options_map):
+        """
+          2011-01-01 open Assets:AccountA
+          2011-02-01 open Assets:AccountA
+        """
+        self.assertEqualEntries("""
+          2011-01-01 open Assets:AccountA
+        """, summarize.open_at_date(entries, date(2013, 1, 1)))
+
+    @parser.parsedoc
+    def test_open_at_date_closed_twice(self, entries, errors, options_map):
+        """
+          2011-01-01 open  Assets:AccountA
+          2011-02-01 close Assets:AccountA
+          2011-02-02 close Assets:AccountA
+        """
+        self.assertEqualEntries("""
+        """, summarize.open_at_date(entries, date(2013, 1, 1)))
+
+    @parser.parsedoc
+    def test_open_at_date_closed_without_open(self, entries, errors, options_map):
+        """
+          2011-02-02 close Assets:AccountA
+        """
+        self.assertEqualEntries("""
+        """, summarize.open_at_date(entries, date(2013, 1, 1)))
+
 
 
 

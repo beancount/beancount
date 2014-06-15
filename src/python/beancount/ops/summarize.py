@@ -327,11 +327,15 @@ def open_at_date(entries, date):
             break
 
         if isinstance(entry, Open):
-            assert entry.account not in open_entries, entry.account
-            open_entries[entry.account] = (index, entry)
+            try:
+                ex_index, ex_entry = open_entries[entry.account]
+                if entry.date < ex_entry.date:
+                    open_entries[entry.account] = (index, entry)
+            except KeyError:
+                open_entries[entry.account] = (index, entry)
 
         elif isinstance(entry, Close):
-            assert entry.account in open_entries
-            del open_entries[entry.account]
+            # If there is no coresponding open, don't raise an error.
+            open_entries.pop(entry.account, None)
 
     return [entry for (index, entry) in sorted(open_entries.values())]
