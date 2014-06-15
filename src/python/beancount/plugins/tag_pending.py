@@ -28,13 +28,9 @@ produce a listing of them.
 
 __author__ = 'Martin Blais <blais@furius.ca>'
 
-import argparse
-
 from beancount.core import data
 from beancount.core import inventory
 from beancount.ops import basicops
-from beancount import loader
-from beancount.parser import printer
 
 __plugins__ = ('tag_pending_plugin',)
 
@@ -93,26 +89,3 @@ def tag_pending_plugin(entries, options_map):
       A tuple of entries and errors.
     """
     return (tag_pending_transactions(entries, 'PENDING'), [])
-
-
-def main():
-    """Print out a list of the unpaid transactions."""
-    parser = argparse.ArgumentParser(__doc__)
-    parser.add_argument('filename', help='Beancount input filename.')
-    opts = parser.parse_args()
-
-    # Parse the entries with a filter plugin.
-    loader.install_load_plugin(tag_pending_plugin)
-    entries, errors, _ = loader.load(opts.filename, do_print_errors=True)
-
-    # Print the entries that have been tagged.
-    pending_entries = [entry for entry in basicops.filter_tag('PENDING', entries)]
-    if pending_entries:
-        print('Pending/incomplete transactions:')
-        print()
-        for entry in pending_entries:
-            print(printer.format_entry(entry))
-
-
-if __name__ == '__main__':
-    main()

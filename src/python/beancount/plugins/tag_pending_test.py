@@ -32,6 +32,3 @@ class TestExampleTrackPending(test_utils.TestCase):
         self.assertEqual(None, entries[4].tags)
         self.assertEqual(set(['PENDING']), entries[5].tags)
         self.assertEqual(None, entries[6].tags)
-
-        with test_utils.capture() as stdout:
-            test_utils.run_with_args(tag_pending.main, [filename])
