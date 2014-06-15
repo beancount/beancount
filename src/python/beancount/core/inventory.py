@@ -64,7 +64,7 @@ class Inventory:
         self.positions = []
         if positions:
             for position in positions:
-                self.add_position(position)
+                self.add_position(position, False)
 
     def __str__(self):
         """Render as a human-readable string.
@@ -275,7 +275,7 @@ class Inventory:
           True if the addition reduces an existing position.
         Raises:
            ValueError: if the result is a position at cost with a negative
-             number.
+             number. The inventory will have been updated correctly beforehand.
         """
         # Find the position.
         position = self._get_create_position(lot)

@@ -6,14 +6,10 @@ from beancount.utils import test_utils
 from beancount.scripts import bake
 
 
-# A new port allocation
-newport = itertools.count(9470)
-
-
 class TestScriptBake(test_utils.TestCase):
 
     def setUp(self):
-        self.args = ['--quiet', '--port', str(next(newport))]
+        self.args = ['--quiet', '--port', str(test_utils.get_test_port())]
 
     def test_path_greedy_split(self):
         self.assertEqual(('/tmp/tmp.ju3h4h/blabla', None),

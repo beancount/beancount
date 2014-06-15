@@ -9,10 +9,16 @@ import sys
 import contextlib
 import functools
 import shutil
+import itertools
 
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.core import compare
+
+
+# A port allocation global. All the tests should use this global in order to
+# avoid port collissions during testing.
+get_test_port = itertools.count(9470).__next__
 
 
 def run_with_args(function, args):

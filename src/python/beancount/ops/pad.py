@@ -1,6 +1,6 @@
 """Automatic padding of gaps between entries.
 """
-from collections import namedtuple, defaultdict
+import collections
 
 from beancount.core.amount import to_decimal, amount_sub
 from beancount.core import inventory
@@ -8,9 +8,11 @@ from beancount.core import data
 from beancount.core import position
 from beancount.utils import misc_utils
 from beancount.core import flags
+from beancount.core import getters
+from beancount.core import realization
 
 
-PadError = namedtuple('PadError', 'fileloc message entry')
+PadError = collections.namedtuple('PadError', 'fileloc message entry')
 
 # FIXME: Maybe this should become an option? Maybe this becomes a parameter of pad()?
 PAD_PRECISION = to_decimal('.015')
@@ -41,7 +43,7 @@ def pad(entries):
     pad_dict = misc_utils.groupby(lambda x: x.account, pads)
 
     # Partially realize the postings, so we can iterate them by account.
-    by_account = group_postings_by_account(entries, set(pad_dict.keys()))
+    by_account = realization.group_by_account(entries)
 
     # A dict of pad -> list of entries to be inserted.
     new_entries = {pad: [] for pad in pads}
@@ -55,19 +57,27 @@ def pad(entries):
         # A set of currencies already padded so far in this account.
         padded_lots = set()
 
-        balance = inventory.Inventory()
-        for entry in by_account[account]:
+        # Gather all the postings for the account and its children.
+        postings = []
+        for item_account, item_postings in by_account.items():
+            if item_account.startswith(account):
+                postings.extend(item_postings)
+        postings.sort(key=data.posting_sortkey)
+
+        pad_balance = inventory.Inventory()
+        for entry in postings:
 
             if isinstance(entry, data.Posting):
                 # This is a transaction; update the running balance for this
                 # account.
-                balance.add_position(entry.position, allow_negative=True)
+                pad_balance.add_position(entry.position, True)
 
             elif isinstance(entry, data.Pad):
-                # Mark this newly encountered pad as active and allow all lots
-                # to be padded heretofore.
-                active_pad = entry
-                padded_lots = set()
+                if entry.account == account:
+                    # Mark this newly encountered pad as active and allow all lots
+                    # to be padded heretofore.
+                    active_pad = entry
+                    padded_lots = set()
 
             elif isinstance(entry, data.Balance):
                 check_amount = entry.amount
@@ -77,7 +87,7 @@ def pad(entries):
                 # does not check a single position, but rather checks that the
                 # total amount for a particular currency (which itself is
                 # distinct from the cost).
-                balance_amount = balance.get_amount(check_amount.currency)
+                balance_amount = pad_balance.get_amount(check_amount.currency)
                 diff_amount = amount_sub(balance_amount, check_amount)
                 if abs(diff_amount.number) > PAD_PRECISION:
                     # The check fails; we need to pad.
@@ -94,14 +104,14 @@ def pad(entries):
                         # Note: we decide that it's an error to try to pad
                         # position at cost; we check here that all the existing
                         # positions with that currency have no cost.
-                        positions = balance.get_positions_with_currency(
+                        positions = pad_balance.get_positions_with_currency(
                             check_amount.currency)
                         for position_ in positions:
                             if position_.lot.cost is not None:
                                 pad_errors.append(
                                     PadError(entry.fileloc,
                                              ("Attempt to pad an entry with cost for "
-                                              "balance: {}".format(balance)),
+                                              "balance: {}".format(pad_balance)),
                                              active_pad))
 
                         # Thus our padding lot is without cost by default.
@@ -120,14 +130,14 @@ def pad(entries):
                             data.Posting(new_entry, active_pad.account, diff_position,
                                          None, None))
                         new_entry.postings.append(
-                            data.Posting(new_entry, active_pad.account_pad, -diff_position,
+                            data.Posting(new_entry, active_pad.source_account, -diff_position,
                                          None, None))
 
                         # Save it for later insertion after the active pad.
                         new_entries[active_pad].append(new_entry)
 
                         # Fixup the running balance.
-                        balance.add_position(diff_position)
+                        pad_balance.add_position(diff_position, False)
 
                         # Mark this lot as padded. Further checks should not pad this lot.
                         padded_lots.add(check_amount.currency)
@@ -147,43 +157,3 @@ def pad(entries):
                     PadError(entry.fileloc, "Unused Pad entry: {}".format(entry), entry))
 
     return padded_entries, pad_errors
-
-
-def group_postings_by_account(entries, only_accounts=None):
-    """Builds a mapping of accounts to entries.
-
-    This is essentially a partial realization, without the hierarchy.
-    We need this just to quickly iterate on effects by account.
-
-    Args:
-      entries: A list of directives.
-      only_accounts: If specified, a set of strings, the names of accounts to
-        restrict the partial realization for. This makes the processing leaner by
-        not accumulating lists for accounts we won't need.
-    Returns:
-      A dict of account string to list of entries or posting instances.
-    """
-    by_accounts = defaultdict(list)
-    for entry in entries:
-
-        if isinstance(entry, data.Transaction):
-            for posting in entry.postings:
-                # pylint: disable=bad-continuation
-                if (only_accounts is not None and
-                    posting.account not in only_accounts):
-                    continue
-                by_accounts[posting.account].append(posting)
-
-        elif isinstance(entry, (data.Balance,
-                                data.Open,
-                                data.Close,
-                                data.Pad,
-                                data.Note,
-                                data.Document)):
-            # pylint: disable=bad-continuation
-            if (only_accounts is not None and
-                entry.account not in only_accounts):
-                continue
-            by_accounts[entry.account].append(entry)
-
-    return by_accounts

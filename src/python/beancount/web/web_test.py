@@ -64,7 +64,7 @@ def find_links(html_text):
         yield a.attrib['href']
 
 
-def scrape(filename, predicate, port=9468, quiet=True):
+def scrape(filename, predicate, port, quiet=True):
     url_format = 'http://localhost:{}{{}}'.format(port)
 
     # Create a set of valid arguments to run the app.
@@ -85,10 +85,6 @@ def scrape(filename, predicate, port=9468, quiet=True):
     web.thread_server_shutdown(thread)
 
 
-# A new port allocation
-newport = itertools.count(9470).__next__
-
-
 class TestWeb(unittest.TestCase):
 
     def check_page_okay(self, response, url):
@@ -99,20 +95,20 @@ class TestWeb(unittest.TestCase):
         """
         ;; A file with no entries in it.
         """
-        scrape(filename, self.check_page_okay, newport())
+        scrape(filename, self.check_page_okay, test_utils.get_test_port())
 
     def test_scrape_basic(self):
         filename = path.join(find_repository_root(),
                              'examples', 'basic', 'basic.beancount')
-        scrape(filename, self.check_page_okay, newport())
+        scrape(filename, self.check_page_okay, test_utils.get_test_port())
 
     def test_scrape_starterkit(self):
         filename = path.join(find_repository_root(),
                              'examples', 'starterkit', 'starter.beancount')
-        scrape(filename, self.check_page_okay, newport())
+        scrape(filename, self.check_page_okay, test_utils.get_test_port())
 
     def __test_scrape_thisisreal(self):
         filename = path.join(os.environ['HOME'],
                              'r/q/office/accounting/blais.beancount')
         if path.exists(filename):
-            scrape(filename, self.check_page_okay, newport())
+            scrape(filename, self.check_page_okay, test_utils.get_test_port())

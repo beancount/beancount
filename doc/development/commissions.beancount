@@ -8,37 +8,75 @@
 2014-01-01 open Expenses:US:Invest:Commissions
 
 
-2014-06-13 * "Transactions with Commissions"
-  Assets:US:Invest:Cash                                        -5009.95 USD                  ;  5009.95 USD
-  Expenses:US:Invest:Commissions                                   9.95 USD                  ;     9.95 USD
-  Assets:US:Invest:GOOG                                           10.00 GOOG {500.00 USD}    ;  5000.00 USD
 
-2014-06-20 * "Transactions with Commissions"
-  Assets:US:Invest:GOOG                                          -10.00 GOOG {510.00 USD}    ; -5000.00 USD
-  Expenses:US:Invest:Commissions                                   9.95 USD                  ;     9.95 USD
-  Assets:US:Invest:Cash                                         5090.05 USD                  ;  5090.05 USD
-  Income:US:Invest:PnL                                          -100.00 USD                  ;  -100.00 USD
+Some more thinking about this: one possible method would be to allow the user to
+indicate that a particular leg of the transaction is meant to be folded into the
+cost of another leg's, something I would implement like the following.
 
-
-;; Proposal (A):
-;;
-;; - Flag a posting to be automatically added to cost basis for a position.
-;;
-;; - You cannot use the cost basis of the lot to identify it anymore (the lot is
-;;   now at a different cost basis). That may not be a bad thing, I never liked
-;;   identifying lots by their cost in the first place, I prefer a method that
-;;   uses a label or the date to disambiguate.
-;;
-;; - Question: Should the expenses leg get added anyway? It breaks the
-;;   accounting equation if it is.
+First let's make up an example of a transaction the way they're currently done,
+with the full capital gain, that is, one that unfairly (to you) includes
+commissions:
 
 2014-06-13 * "Transactions with Commissions"
-  Assets:US:Invest:Cash                                        -5009.95 USD                  ;  5009.95 USD
-  + Expenses:US:Invest:Commissions                                 9.95 USD                  ;     0.00 USD (+)
-  Assets:US:Invest:GOOG                                           10.00 GOOG {500.00 USD +}  ;  5009.95 USD =  10.00 GOOG {500.995 USD}
+  Assets:US:Invest:Cash            -5009.95 USD                  ;  5009.95 USD
+  Expenses:US:Invest:Commissions       9.95 USD                  ;     9.95 USD
+  Assets:US:Invest:GOOG               10.00 GOOG {500.00 USD}    ;  5000.00 USD
 
 2014-06-20 * "Transactions with Commissions"
-  Assets:US:Invest:GOOG                                          -10.00 GOOG {2014-06-13 -}  ; -5009.95 USD = -10.00 GOOG {500.995 USD}
-  - Expenses:US:Invest:Commissions                                 9.95 USD                  ;     0.00 USD (-)
-  Assets:US:Invest:Cash                                         5090.05 USD                  ;  5090.05 USD
-  Income:US:Invest:PnL                                           -80.10 USD                  ;   -80.10 USD
+  Assets:US:Invest:GOOG              -10.00 GOOG {500.00 USD}    ; -5000.00 USD
+  Expenses:US:Invest:Commissions       9.95 USD                  ;     9.95 USD
+  Assets:US:Invest:Cash             5090.05 USD                  ;  5090.05 USD
+  Income:US:Invest:PnL              -100.00 USD                  ;  -100.00 USD
+
+This is what we need to fix, we want the gain to become 100 USD - 2 x 9.95 USD.
+
+So now let's introduce a flag into the cost syntax (there's already a flag
+available on each posting):
+
+2014-06-13 * "Transactions with Commissions"
+  Assets:US:Invest:Cash              -5009.95 USD                  ;  5009.95 USD
+  + Expenses:US:Invest:Commissions       9.95 USD                  ;     0.00 USD (+)
+  Assets:US:Invest:GOOG                 10.00 GOOG {500.00 USD +}  ;  5009.95 USD =  10.00 GOOG {500.995 USD}
+
+2014-06-20 * "Transactions with Commissions"
+  Assets:US:Invest:GOOG                -10.00 GOOG {2014-06-13 -}  ; -5009.95 USD = -10.00 GOOG {500.995 USD}
+  - Expenses:US:Invest:Commissions       9.95 USD                  ;     0.00 USD (-)
+  Assets:US:Invest:Cash               5090.05 USD                  ;  5090.05 USD
+  Income:US:Invest:PnL                 -80.10 USD                  ;   -80.10 USD
+
+When a flag is encountered in the cost, this says, add to the total cost the
+amount from postings marked with that flag. In the case of the buy, this
+means (500.00 x 10 + 9.95) is the new total cost and the cost per unit is now
+500.995 USD. This works to give you a capital gain as you desired.
+
+However, here are some drawbacks:
+
+- You cannot use the cost basis of the lot to identify it anymore (the lot is
+  now at a different cost basis, 500.995 USD instead of 500.00 USD, and that
+  amounts shows up nowhere, we cannot realistically expect the user to know it).
+
+  That may not be a bad thing though, I never liked identifying lots by their
+  cost in the first place, I prefer a method that uses a label or the date to
+  disambiguate. When reducing a position, the purpose of that cost really is
+  just to identify which lot we should be using to reduce the position. I
+  already have a proposal to make this better, by using labels or dates instead
+  of cost (see sale transaction).
+
+- A bigger problem, however, and one that is preventing me from fully going
+  ahead with this idea just yet, is that the expenses are gone. The expenses leg
+  just cannot post to the commissions account, because its amount has been
+  incorporated into the cost of the position. Allowing the cost to show up in
+  both places would break the accounting equation; this transaction must balance.
+
+Maybe we should add an Income leg to absord the Expenses amount and post it
+anyhow?
+
+2014-06-13 * "Transactions with Commissions"
+  Assets:US:Invest:Cash              -5009.95 USD                  ;  5009.95 USD
+  + Expenses:US:Invest:Commissions       9.95 USD                  ;     0.00 USD (+)
+  + Income:US:Invest:Commissions-Rebate
+  Assets:US:Invest:GOOG                 10.00 GOOG {500.00 USD +}  ;  5009.95 USD =  10.00 GOOG {500.995 USD}
+
+I'm not quite sure how to solve this yet.
+
+Ideas welcome,

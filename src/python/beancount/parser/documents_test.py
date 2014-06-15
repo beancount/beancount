@@ -44,16 +44,8 @@ class TestDocuments(test_utils.TestCase):
         shutil.rmtree(self.tempdir, ignore_errors=True)
 
     def test_process_documents(self):
-
-        # In this test we set the root to the directory root, but only the
-        # checking account is declared, and so only that entry should get
-        # auto-generated from the files (the '2014-07-01.savings.pdf' file
-        # should be ignored).
-        #
-        # Moreover, we generate an error from a non-existing file and we assert
-        # that the entry is still indeed present.
-
-        entries, _, options_map = parser.parse_string(textwrap.dedent("""
+        input_filename = path.join(self.root, 'input.beancount')
+        open(input_filename, 'w').write(textwrap.dedent("""
 
           option "documents" "ROOT"
 
@@ -63,14 +55,22 @@ class TestDocuments(test_utils.TestCase):
           2014-07-10 document Liabilities:US:Bank  "does-not-exist.pdf"
 
         """).replace('ROOT', self.root))
+        entries, _, options_map = parser.parse(input_filename)
 
+        # In this test we set the root to the directory root, but only the
+        # checking account is declared, and so only that entry should get
+        # auto-generated from the files (the '2014-07-01.savings.pdf' file
+        # should be ignored).
+        #
+        # Moreover, we generate an error from a non-existing file and we
+        # assert that the entry is still indeed present.
         entries, errors = documents.process_documents(entries, options_map,
-                                                      '/tmp/input.beancount')
+                                                      input_filename)
 
-        # Check entrie
+        # Check entries.
         expected_entries, _, __ = parser.parse_string(textwrap.dedent("""
           2014-06-08 document Assets:US:Bank:Checking "ROOT/Assets/US/Bank/Checking/2014-06-08.bank-statement.pdf"
-          2014-07-10 document Liabilities:US:Bank "/tmp/does-not-exist.pdf"
+          2014-07-10 document Liabilities:US:Bank "ROOT/does-not-exist.pdf"
         """).replace('ROOT', self.root))
         self.assertEqualEntries(expected_entries,
                                 [entry

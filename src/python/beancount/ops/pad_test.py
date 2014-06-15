@@ -8,38 +8,13 @@ from beancount.core.position import Lot, Position
 from beancount.core.inventory import Inventory
 from beancount.core.data import Open, Pad, Balance, Posting
 from beancount.core.amount import Decimal, Amount
+from beancount.core import realization
 from beancount.loader import loaddoc
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.ops import pad
-from beancount.ops import check
+from beancount.ops import balance
 from beancount.utils import test_utils
-
-
-class TestPadUtils(unittest.TestCase):
-
-    @parser.parsedoc
-    def test_group_postings_by_account(self, entries, _, __):
-        """
-
-        2010-01-01 open Assets:Account1
-        2010-01-01 open Assets:Account2
-        2010-01-01 open Assets:Account3
-        2010-01-01 open Equity:OpeningBalances
-
-        2014-01-01 pad Assets:Account1 Equity:OpeningBalances
-
-        2014-06-01 *
-          Assets:Account1             1 USD
-          Assets:Account2             2 USD
-          Assets:Account3            -3 USD
-
-        2014-06-05 balance  Assets:Account2  2 USD
-
-        """
-        by_accounts = pad.group_postings_by_account(entries, {'Assets:Account1',
-                                                              'Assets:Account2'})
-        self.assertEqual({'Assets:Account1', 'Assets:Account2'}, set(by_accounts.keys()))
 
 
 class TestPadding(test_utils.TestCase):
@@ -97,7 +72,7 @@ class TestPadding(test_utils.TestCase):
           2013-06-01 balance Assets:Checking                                 200.00 USD
 
         """
-        self.assertEqual([check.BalanceError], list(map(type, errors)))
+        self.assertEqual([balance.BalanceError], list(map(type, errors)))
         self.assertEqualEntries("""
 
           2013-05-01 open Assets:Checking
@@ -286,9 +261,9 @@ class TestPadding(test_utils.TestCase):
           2013-05-20 pad Assets:US Equity:OpeningBalances
 
           ;; A single pad that does not include child accounts should be inserted.
-          2013-05-20 P "(Padding inserted for Balance of 100.00 USD for difference 100.00 USD)"
-            Assets:US                                                              100.00 USD
-            Equity:OpeningBalances                                                -100.00 USD
+          2013-05-20 P "(Padding inserted for Balance of 100.00 USD for difference 90.00 USD)"
+            Assets:US                                                              90.00 USD
+            Equity:OpeningBalances                                                -90.00 USD
 
           2013-06-01 balance Assets:US                                       100.00 USD
 
@@ -371,15 +346,15 @@ class TestPadding(test_utils.TestCase):
           2013-06-01 balance Assets:Checking      145 USD
 
         """
-        post_map = pad.group_postings_by_account(entries, only_accounts={'Assets:Checking'})
+        post_map = realization.group_by_account(entries)
         postings = post_map['Assets:Checking']
 
         balances = []
-        balance = Inventory()
+        pad_balance = Inventory()
         for posting in postings:
             if isinstance(posting, Posting):
-                balance.add_position(posting.position)
-            balances.append((type(posting), balance.get_amount('USD')))
+                pad_balance.add_position(posting.position, False)
+            balances.append((type(posting), pad_balance.get_amount('USD')))
 
         self.assertEqual(balances, [(Open, Amount('0.00', 'USD')),
                                     (Pad, Amount('0.00', 'USD')),
@@ -389,3 +364,6 @@ class TestPadding(test_utils.TestCase):
                                     (Posting, Amount('125.00', 'USD')),
                                     (Posting, Amount('145.00', 'USD')),
                                     (Balance, Amount('145.00', 'USD'))])
+
+
+    # Note: You could try padding A into B and B into A to see if it works.

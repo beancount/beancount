@@ -20,8 +20,8 @@ from beancount.core.position import Lot, Position
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price
 from beancount.core.data import Note, Document
 from beancount.core.data import FileLocation, Posting
-from beancount.core.balance import balance_incomplete_postings
-from beancount.core.balance import compute_residual, SMALL_EPSILON
+from beancount.core.complete import balance_incomplete_postings
+from beancount.core.complete import compute_residual, SMALL_EPSILON
 
 
 __sanity_checks__ = False
@@ -337,7 +337,7 @@ class Builder(object):
         fileloc = FileLocation(filename, lineno)
         return Close(fileloc, date, account)
 
-    def pad(self, filename, lineno, date, account, account_pad):
+    def pad(self, filename, lineno, date, account, source_account):
         """Process a pad directive.
 
         Args:
@@ -345,12 +345,12 @@ class Builder(object):
           lineno: the current line number.
           date: a datetime object.
           account: an Account instance, account to be padded.
-          account_pad: an Account instance, account to pad from.
+          source_account: an Account instance, account to pad from.
         Returns:
           A new Pad object.
         """
         fileloc = FileLocation(filename, lineno)
-        return Pad(fileloc, date, account, account_pad)
+        return Pad(fileloc, date, account, source_account)
 
     def balance(self, filename, lineno, date, account, amount):
         """Process an assertion directive.

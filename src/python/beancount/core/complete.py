@@ -1,5 +1,4 @@
-"""
-Code used to balance a list of postings.
+"""Code used to automatically complete postings without positions.
 """
 import collections
 

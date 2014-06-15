@@ -15,14 +15,6 @@ beancount: TODO
 
      src/python/beancount/ops/validation.py                 INCOMPLETE
 
-     src/python/beancount/ops/check.py                      INCOMPLETE
-
-       Rename this file to balance to match the directive?
-       Not sure. Another file is named that way.
-
-       - balance.py -> autofill.py / residual.py / complete.py / fill.py
-       - check.py -> balance.py
-
      src/python/beancount/web/acctree.py                    MISSING
      src/python/beancount/web/journal.py                    MISSING
 
@@ -145,6 +137,9 @@ beancount: TODO
 
   - Fix all FIXMEs everywhere, or convert them to items in this list.
 
+  - Instead of ignoring diff_amount and parent and such for hashing purposes,
+    just make ignorable fields start with _, e.g. posting._entry, balance._diff,
+    entry._fileloc, etc. Call those non-essential fields.
 
 
 ** Parser-Related Minor Bugs
@@ -191,6 +186,7 @@ beancount: TODO
     Equity, for less tabs, and a list of similar reports. Complete the equity
     value page with prices.py, render the rates used to that page. Include
     links to the holdings reports here as well.
+    Equity should just become an index for all the holdings pages.
 
   - Implement all the missing global pages, or remove them. The web interface
     should be tight, no links to "Not Implemented" pages. There aren't many
@@ -208,6 +204,9 @@ beancount: TODO
   Some amount of generic cleanup should be performed before calling the release.
   This is just tightening up the bolts on the beast before shipping. I want to
   have a pretty solid pylint configuration passing.
+
+  - Make all imports not import symbols directly, only packages, except where
+    performance really, really matters (the parser)
 
   - Rename/simplify function names in beancount.core.account (see FIXMEs)
 
@@ -241,6 +240,10 @@ beancount: TODO
     dedicated module. That would make sense.
 
   - Remove support for legacy: "check" (vs. "balance"), PIPE, etc. Not needed.
+
+  - Rename "event" to its final name: "register". We don't have to care about
+    the possible confusion with the Ledger report... "register" is a much
+    better name for our concept of "event." "Event" is confusing.
 
 
 ** Documentation
@@ -377,6 +380,8 @@ beancount: TODO
     amounts and they get replaced by the plugins; whatever Unknown trickles
     through would generate a warning in the errors.
 
+  - Setting the filename on options_map might help in making document
+    processing alos as a plugin.
 
 
 
@@ -901,6 +906,13 @@ beancount: TODO
     gets: "Note that if you only pass PyObject * args, PyObject_CallMethodObjArgs() is a
     faster alternative."
     https://docs.python.org/3/c-api/object.html
+
+
+  - Allow short sales eventually. This should already work if all that you do is
+    selectively suppress the validation check that verifies that a position at
+    cost may not go negative. We could selectively suppress it by adding a flag
+    to the open directive associated with an account, or maybe adding some
+    special syntax in the cost specification that allows us to do this.
 
 
 ** Precision

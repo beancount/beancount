@@ -272,6 +272,7 @@ def group_by_account(entries):
     Returns:
        A mapping of account name to list of postings, sorted in the same order
        as the entries.
+
     """
     postings_map = collections.defaultdict(list)
     for entry in entries:
@@ -288,7 +289,7 @@ def group_by_account(entries):
         elif isinstance(entry, Pad):
             # Insert the pad entry in both realized accounts.
             postings_map[entry.account].append(entry)
-            postings_map[entry.account_pad].append(entry)
+            postings_map[entry.source_account].append(entry)
 
     return postings_map
 
@@ -302,11 +303,33 @@ def compute_postings_balance(postings):
     Returns:
       An Inventory.
     """
-    balance = inventory.Inventory()
+    final_balance = inventory.Inventory()
     for posting in postings:
         if isinstance(posting, data.Posting):
-            balance.add_position(posting.position, allow_negative=True)
-    return balance
+            final_balance.add_position(posting.position, True)
+    return final_balance
+
+
+def compute_entries_balance(entries, prefix=None):
+    """Compute the balance of all postings of a list of entries.
+
+    Sum up all the positions in all the postings of all the transactions in the
+    list of entries and return an inventory of it.
+
+    Args:
+      entries: A list of directives.
+      prefix: If specified, a prefix string to restrict by account name. Only
+        postings with an account that starts with this prefix will be summed up.
+    Returns:
+      An instance of Inventory.
+    """
+    total_balance = inventory.Inventory()
+    for entry in entries:
+        if isinstance(entry, Transaction):
+            for posting in entry.postings:
+                if prefix is None or posting.account.startswith(prefix):
+                    total_balance.add_position(posting.position, True)
+    return total_balance
 
 
 def filter(real_account, predicate):
@@ -399,7 +422,7 @@ def iterate_with_balance(postings_or_entries):
     """
 
     # The running balance.
-    balance = inventory.Inventory()
+    running_balance = inventory.Inventory()
 
     # Previous date.
     prev_date = None
@@ -431,8 +454,8 @@ def iterate_with_balance(postings_or_entries):
                     # total balance at the same time.
                     for date_posting in date_postings:
                         change.add_position(date_posting.position, True)
-                        balance.add_position(date_posting.position, True)
-                yield date_entry, date_postings, change, balance
+                        running_balance.add_position(date_posting.position, True)
+                yield date_entry, date_postings, change, running_balance
 
             date_entries.clear()
             assert not date_entries
@@ -457,8 +480,8 @@ def iterate_with_balance(postings_or_entries):
         if date_postings:
             for date_posting in date_postings:
                 change.add_position(date_posting.position, True)
-                balance.add_position(date_posting.position, True)
-        yield date_entry, date_postings, change, balance
+                running_balance.add_position(date_posting.position, True)
+        yield date_entry, date_postings, change, running_balance
     date_entries.clear()
 
 

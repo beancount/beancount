@@ -13,7 +13,7 @@ from beancount.parser import documents
 from beancount.parser import printer
 from beancount.ops import pad
 from beancount.ops import validation
-from beancount.ops import check
+from beancount.ops import balance
 from beancount.ops import unrealized
 from beancount.ops import prices
 
@@ -114,7 +114,7 @@ def run_transformations(entries, parse_errors, options_map,
         errors.extend(price_errors)
 
     with misc_utils.print_time('check', quiet):
-        entries, check_errors = check.check(entries)
+        entries, check_errors = balance.check(entries, options_map)
         errors.extend(check_errors)
 
     # Process the document entries and find documents automatically.

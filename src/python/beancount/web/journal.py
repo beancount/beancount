@@ -4,10 +4,10 @@ from os import path
 
 from bottle import request
 
+from beancount.core.data import Open, Close, Balance, Transaction, Note, Document
 from beancount.core import data
 from beancount.core import account
-from beancount.core.data import Open, Close, Balance, Transaction, Note, Document
-from beancount.core.balance import get_balance_amount
+from beancount.core import complete
 from beancount.core.inventory import Inventory
 from beancount.core.account import account_name_leaf
 from beancount.core import realization
@@ -46,10 +46,10 @@ FLAG_ROWTYPES = {
     flags.FLAG_TRANSFER : 'Transfer',
 }
 
-def balance_html(balance):
+def balance_html(balance_inventory):
     """Render a list of balance position for an HTML table cell."""
-    return ('<br/>'.join(map(str, balance.get_positions()))
-            if not balance.is_empty()
+    return ('<br/>'.join(map(str, balance_inventory.get_positions()))
+            if not balance_inventory.is_empty()
             else '')
 
 
@@ -58,10 +58,9 @@ def iterate_render_transactions(app, postings):
     for each cell.
     Yields:
     """
-    balance = Inventory()
-    for entry, leg_postings, change, balance in realization.iterate_with_balance(postings):
+    for entry, leg_postings, change, entry_balance in realization.iterate_with_balance(postings):
         # Prepare the data to be rendered for this row.
-        balance_str = balance_html(balance)
+        balance_str = balance_html(entry_balance)
 
         rowtype = entry.__class__.__name__
         flag = ''
@@ -92,7 +91,7 @@ def iterate_render_transactions(app, postings):
                 description = ('Balance in {} fails; '
                                'expected = {}, balance = {}, difference = {}').format(
                                    account_link(entry.account), entry.amount,
-                                   balance.get_amount(entry.amount.currency),
+                                   entry_balance.get_amount(entry.amount.currency),
                                    entry.diff_amount)
                 rowtype = 'CheckFail'
 
@@ -193,7 +192,7 @@ def entries_table_with_balance(app, oss, account_postings, render_postings=True)
                            account_link(posting.account),
                            posting.position,
                            posting.price or '',
-                           get_balance_amount(posting)))
+                           complete.get_balance_amount(posting)))
 
     write('</table>')
 
@@ -259,7 +258,7 @@ def entries_table(app, oss, account_postings, render_postings=True):
                            posting.position.get_amount(),
                            posting.position.lot.cost or '',
                            posting.price or '',
-                           get_balance_amount(posting)))
+                           complete.get_balance_amount(posting)))
 
     write('</table>')
 
