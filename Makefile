@@ -55,26 +55,30 @@ grind:
 build/beancount.deps:
 	sfood -i bin src/python > $@
 
-CLUSTERS_REGEXPS =					\
-	beancount/core/.*_test\.py	 core/tests	\
-	beancount/core			 core		\
-	beancount/ops/.*_test\.py	 ops/tests	\
-	beancount/ops			 ops		\
-	beancount/parser/.*_test\.py	 parser/tests	\
-	beancount/parser		 parser		\
-	beancount/plugins/.*_test\.py	 plugins/tests	\
-	beancount/plugins		 plugins	\
-	beancount/reports/.*_test\.py	 reports/tests	\
-	beancount/reports		 reports	\
-	beancount/scripts/.*_test\.py	 scripts/tests	\
-	beancount/scripts		 scripts	\
-	beancount/utils/.*_test\.py	 utils/tests	\
-	beancount/utils			 utils		\
-	beancount/web/.*_test\.py	 web/tests	\
-	beancount/web			 web		\
-	beancount/load.*_test\.py	 load/tests	\
-	beancount/load.*\.py		 load		\
-	beancount                        load
+CLUSTERS_REGEXPS =							\
+	beancount/core/.*_test\.py	 	core/tests		\
+	beancount/core			 	core			\
+	beancount/ops/.*_test\.py	 	ops/tests		\
+	beancount/ops			 	ops			\
+	beancount/parser/.*_test\.py	 	parser/tests		\
+	beancount/parser		 	parser			\
+	beancount/plugins/.*_test\.py	 	plugins/tests		\
+	beancount/plugins		 	plugins			\
+	beancount/reports/.*_test\.py	 	reports/tests		\
+	beancount/reports		 	reports			\
+	beancount/scripts/bake.*_test\.py	scripts/bake/tests	\
+	beancount/scripts/bake.*		scripts/bake		\
+	beancount/scripts/.*_test\.py	 	scripts/tests		\
+	beancount/scripts		 	scripts			\
+	beancount/utils/test_utils_test\.py	utils/test_utils/tests	\
+	beancount/utils/test_utils.py	 	utils/test_utils	\
+	beancount/utils/.*_test\.py	 	utils/tests		\
+	beancount/utils			 	utils			\
+	beancount/web/.*_test\.py	 	web/tests		\
+	beancount/web			 	web			\
+	beancount/load.*_test\.py	 	load/tests		\
+	beancount/load.*\.py		 	load			\
+	beancount                        	load
 
 GRAPHER = dot
 

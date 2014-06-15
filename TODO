@@ -245,6 +245,8 @@ beancount: TODO
     the possible confusion with the Ledger report... "register" is a much
     better name for our concept of "event." "Event" is confusing.
 
+  - Remove dependency from beancount.utils.test_utils to beancount.core.
+    Simplify dependencies as much as possible for first release.
 
 ** Documentation
 
