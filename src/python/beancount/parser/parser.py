@@ -20,8 +20,8 @@ from beancount.core.position import Lot, Position
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price
 from beancount.core.data import Note, Document
 from beancount.core.data import FileLocation, Posting
-from beancount.core.balance import balance_incomplete_postings
-from beancount.core.balance import compute_residual, SMALL_EPSILON
+from beancount.core.complete import balance_incomplete_postings
+from beancount.core.complete import compute_residual, SMALL_EPSILON
 
 
 __sanity_checks__ = False

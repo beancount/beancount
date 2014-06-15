@@ -6,7 +6,7 @@ import re
 from beancount.parser import printer
 from beancount.parser import parser
 from beancount.core import data
-from beancount.core import balance
+from beancount.core import complete
 from beancount.utils import test_utils
 
 
@@ -22,7 +22,7 @@ class TestPrinter(unittest.TestCase):
 
     def test_format_and_print_error(self):
         entry = data.Open(FILELOC, date(2014, 1, 15), 'Assets:Bank:Checking', [])
-        error = balance.BalanceError(FILELOC, "Example balance error", entry)
+        error = complete.BalanceError(FILELOC, "Example balance error", entry)
         error_str = printer.format_error(error)
         self.assertTrue(isinstance(error_str, str))
 

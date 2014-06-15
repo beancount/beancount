@@ -5,7 +5,7 @@ import sys
 import textwrap
 
 from beancount.core import amount
-from beancount.core import balance
+from beancount.core import complete
 
 
 class EntryPrinter:
@@ -37,7 +37,7 @@ class EntryPrinter:
 
         oss.write('{e.date} {e.flag} {}\n'.format(' '.join(strings), e=entry))
 
-        non_trivial_balance = any(map(balance.has_nontrivial_balance, entry.postings))
+        non_trivial_balance = any(map(complete.has_nontrivial_balance, entry.postings))
         for posting in entry.postings:
             cls.Posting(cls, posting, oss, non_trivial_balance)
 
@@ -57,7 +57,7 @@ class EntryPrinter:
                      else '')
 
         if print_balance:
-            balance_amount = balance.get_balance_amount(posting)
+            balance_amount = complete.get_balance_amount(posting)
             balance_str = '; {:>14}'.format(balance_amount.str(amount.MAXDIGITS_PRINTER))
         else:
             balance_str = ''
