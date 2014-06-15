@@ -310,10 +310,18 @@ def sum_to_date(entries, date=None):
 
 
 def open_at_date(entries, date):
-    """Gather the list of active (i.e., non-closed) entries at date."""
+    """Gather the list of active Open entries at date.
 
+    This returns the list of Open entries that have not been closed at the given
+    date, in the same order they were observed in the document.
+
+    Args:
+      entries: A list of directives.
+      date: The date at which
+    Returns:
+      A list of Open directives.
+    """
     open_entries = {}
-
     for index, entry in enumerate(entries):
         if entry.date >= date:
             break

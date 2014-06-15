@@ -10,64 +10,19 @@ import functools
 
 from beancount.core import realization
 from beancount.ops.pad import pad
-from beancount.ops.summarize import summarize
 from beancount.core import realization
 from beancount.ops import summarize
 from beancount.loader import loaddoc
 from beancount.parser import parser
+from beancount.parser import printer
 from beancount.parser import options
-
-from beancount import parser
-
-
-DO_PRINT = object()
-
-def summarizedoc(date, other_account):
-
-    def summarizedoc_deco(fun):
-        """Decorator that parses, pads and summarizes, and realizes the function's
-        docstring as an argument."""
-        @functools.wraps(fun)
-        def newfun(self):
-            entries, parse_errors, options_map = parser.parse_string(
-                textwrap.dedent(fun.__doc__))
-            assert not parse_errors, parse_errors
-            entries, pad_errors = pad(entries)
-            assert not pad_errors, pad_errors
-
-            real_accounts = realization.realize(entries)
-
-            sum_entries, _ = summarize(entries, date, other_account)
-            sum_real_accounts = realization.realize(sum_entries)
-
-            # print('---')
-            # for entry in before: print(entry)
-            # print('---')
-            # for entry in after: print(entry)
-            # print('---')
-
-            result = None
-            try:
-                result = fun(self, entries, sum_entries, real_accounts, sum_real_accounts)
-            except AssertionError:
-                result = DO_PRINT
-                raise
-            finally:
-                if result is DO_PRINT:
-                    print("REAL")
-                    print(realization.dump_balances(real_accounts))
-                    print("SUM_REAL")
-                    print(realization.dump_balances(sum_real_accounts))
-
-        return newfun
-    return summarizedoc_deco
+from beancount.utils import test_utils
 
 
 OPENING_BALANCES = 'Equity:Opening-Balances'
 TRANSFER_BALANCES = 'Equity:Retained-Earnings'
 
 class TestSummarization(unittest.TestCase):
-
     pass
 
 #    @summarizedoc(date(2012, 1, 1), OPENING_BALANCES)
@@ -203,31 +158,110 @@ class TestSummarization(unittest.TestCase):
 #                          {'Assets:Checking': 'Inventory(2000.00 USD)',
 #                           'Income:Job': 'Inventory()',
 #                           'Equity:Retained-Earnings': 'Inventory(-2000.00 USD)'})
-#
-#
-# class TestOpenAtDate(unittest.TestCase):
-#
-#     @parsedoc
-#     def test_open_at_date(self, entries, errors, options_map):
-#         """
-#           2011-02-01 open Assets:CheckingA
-#           2011-02-28 open Assets:CheckingB
-#           2011-02-10 open Assets:CheckingC
-#           2011-02-20 open Assets:CheckingD
-#           2011-01-20 open Income:Job
-#
-#           2011-06-01 * "Salary"
-#             Income:Job            -1000 USD
-#             Assets:Checking        1000 USD
-#
-#         """
-#         open_entries = open_at_date(entries, date(2012, 1, 1))
-#         dates = [entry.date for entry in open_entries]
-#         self.assertEqual(dates, sorted(dates))
-#
-#
-#
-# # FIXME: Add a test of two open directives for the same account, should fail.
+
+
+
+
+
+class TestOpenAtDate(test_utils.TestCase):
+
+    @parser.parsedoc
+    def test_open_at_date(self, entries, errors, options_map):
+        """
+          2011-01-01 open Assets:AccountA
+          2011-02-01 open Assets:AccountB
+          2011-03-01 open Assets:AccountC
+
+          2011-03-15 close Assets:AccountA
+
+          2011-04-01 open Assets:AccountD
+          2011-05-01 open Assets:AccountE
+          2011-06-01 open Assets:AccountF
+          2011-07-01 open Assets:AccountG
+          2011-08-01 open Assets:AccountH
+          2011-09-01 open Assets:AccountI
+          2011-10-01 open Assets:AccountJ
+          2011-11-01 open Assets:AccountK
+          2011-12-01 open Assets:AccountL
+
+          2012-07-01 close Assets:AccountG
+          2012-07-01 close Assets:AccountH
+          2012-07-01 close Assets:AccountI
+          2012-07-01 close Assets:AccountJ
+          2012-07-01 close Assets:AccountK
+          2012-07-01 close Assets:AccountL
+
+        """
+        self.assertTrue(entries)
+
+        # Before all entries.
+        self.assertEqualEntries("""
+        """, summarize.open_at_date(entries, date(2010, 12, 1)))
+
+        # On the day of the first entry is open.
+        self.assertEqualEntries("""
+        """, summarize.open_at_date(entries, date(2011, 1, 1)))
+
+        # On the day after the first entry is open.
+        self.assertEqualEntries("""
+          2011-01-01 open Assets:AccountA
+        """, summarize.open_at_date(entries, date(2011, 1, 2)))
+
+        # On the day of the first close.
+        self.assertEqualEntries("""
+          2011-01-01 open Assets:AccountA
+          2011-02-01 open Assets:AccountB
+          2011-03-01 open Assets:AccountC
+        """, summarize.open_at_date(entries, date(2011, 3, 15)))
+
+        # On the day after the first close.
+        self.assertEqualEntries("""
+          2011-02-01 open Assets:AccountB
+          2011-03-01 open Assets:AccountC
+        """, summarize.open_at_date(entries, date(2011, 3, 16)))
+
+        # Other days after new opens.
+        self.assertEqualEntries("""
+          2011-02-01 open Assets:AccountB
+          2011-03-01 open Assets:AccountC
+          2011-04-01 open Assets:AccountD
+          2011-05-01 open Assets:AccountE
+        """, summarize.open_at_date(entries, date(2011, 5, 3)))
+
+        # After all opens.
+        self.assertEqualEntries("""
+          2011-02-01 open Assets:AccountB
+          2011-03-01 open Assets:AccountC
+          2011-04-01 open Assets:AccountD
+          2011-05-01 open Assets:AccountE
+          2011-06-01 open Assets:AccountF
+          2011-07-01 open Assets:AccountG
+          2011-08-01 open Assets:AccountH
+          2011-09-01 open Assets:AccountI
+          2011-10-01 open Assets:AccountJ
+          2011-11-01 open Assets:AccountK
+          2011-12-01 open Assets:AccountL
+        """, summarize.open_at_date(entries, date(2012, 1, 1)))
+
+        # After all entries.
+        self.assertEqualEntries("""
+          2011-02-01 open Assets:AccountB
+          2011-03-01 open Assets:AccountC
+          2011-04-01 open Assets:AccountD
+          2011-05-01 open Assets:AccountE
+          2011-06-01 open Assets:AccountF
+        """, summarize.open_at_date(entries, date(2013, 1, 1)))
+
+    @parser.parsedoc
+    def test_open_at_date_with_errors(self, entries, errors, options_map):
+        ""
+        pass
+        # FIXME: Test with two open entries on the same account... should
+        # trigger an error, not an assert!
+
+
+
+
 
 
 class TestConversions(unittest.TestCase):
@@ -292,6 +326,53 @@ class TestConversions(unittest.TestCase):
 #     return {real_account.account: str(real_account.balance.get_cost())
 #             for account_name, real_account in real_accounts.items()
 #             if real_account.account}
+
+
+
+
+
+
+DO_PRINT = object()
+
+def summarizedoc(date, other_account):
+
+    def summarizedoc_deco(fun):
+        """Decorator that parses, pads and summarizes, and realizes the function's
+        docstring as an argument."""
+        @functools.wraps(fun)
+        def newfun(self):
+            entries, parse_errors, options_map = parser.parse_string(
+                textwrap.dedent(fun.__doc__))
+            assert not parse_errors, parse_errors
+            entries, pad_errors = pad(entries)
+            assert not pad_errors, pad_errors
+
+            real_accounts = realization.realize(entries)
+
+            sum_entries, _ = summarize(entries, date, other_account)
+            sum_real_accounts = realization.realize(sum_entries)
+
+            # print('---')
+            # for entry in before: print(entry)
+            # print('---')
+            # for entry in after: print(entry)
+            # print('---')
+
+            result = None
+            try:
+                result = fun(self, entries, sum_entries, real_accounts, sum_real_accounts)
+            except AssertionError:
+                result = DO_PRINT
+                raise
+            finally:
+                if result is DO_PRINT:
+                    print("REAL")
+                    print(realization.dump_balances(real_accounts))
+                    print("SUM_REAL")
+                    print(realization.dump_balances(sum_real_accounts))
+
+        return newfun
+    return summarizedoc_deco
 
 
 

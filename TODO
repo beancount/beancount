@@ -150,6 +150,12 @@ beancount: TODO
   - Make sure you can parse Amounts with space between the - sign and the number:
     "- 20 USD" kicks an error.
 
+  - This parses silently! Needs detection:
+
+          2011-01-01 open Assets:A
+          2011-02-01 open Assets:B
+          2011-03-01 open Assets:C
+
   - There have been some rare, but occurring few instances of really odd syntax
     making the parser ignore some transactions silently; this is not
     acceptable. Attempt to reproduce this again (not obvious, problems have all
