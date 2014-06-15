@@ -126,6 +126,7 @@ def print_entries(entries, file=None):
       file: An optional file object to write the entries to.
     """
     output = file or sys.stdout
+    output.write('\n')
     for entry in entries:
         output.write(format_entry(entry))
         output.write('\n')
