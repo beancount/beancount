@@ -71,10 +71,6 @@ beancount: TODO
   A few minor bugs and improvements should be completed before marking this a
   complete release:
 
-  - Rename Pad.account_pad to Pad.source_account. Much better name.
-
-  - Minor refactoring for pad.group_postings_by_account(). Do it.
-
   - (documents) documents found in parent directories don't end up creating a
     directive because we skip them because we only restrict to accounts which
     have had an open declaration... this is probably not what we want, in order

@@ -130,7 +130,7 @@ def pad(entries):
                             data.Posting(new_entry, active_pad.account, diff_position,
                                          None, None))
                         new_entry.postings.append(
-                            data.Posting(new_entry, active_pad.account_pad, -diff_position,
+                            data.Posting(new_entry, active_pad.source_account, -diff_position,
                                          None, None))
 
                         # Save it for later insertion after the active pad.

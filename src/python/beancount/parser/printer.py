@@ -79,7 +79,7 @@ class EntryPrinter:
         oss.write('{e.date} document {e.account} "{e.filename}"\n'.format(e=entry))
 
     def Pad(_, entry, oss):
-        oss.write('{e.date} pad {e.account} {e.account_pad}\n'.format(e=entry))
+        oss.write('{e.date} pad {e.account} {e.source_account}\n'.format(e=entry))
 
     def Open(_, entry, oss):
         oss.write('{e.date} open {e.account:47} {currencies}\n'.format(

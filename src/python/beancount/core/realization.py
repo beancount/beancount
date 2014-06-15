@@ -289,7 +289,7 @@ def group_by_account(entries):
         elif isinstance(entry, Pad):
             # Insert the pad entry in both realized accounts.
             postings_map[entry.account].append(entry)
-            postings_map[entry.account_pad].append(entry)
+            postings_map[entry.source_account].append(entry)
 
     return postings_map
 

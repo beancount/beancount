@@ -47,7 +47,7 @@ class GetAccounts:
         Returns:
           The two accounts of the Pad directive.
         """
-        return (entry.account, entry.account_pad)
+        return (entry.account, entry.source_account)
 
     def _one(_, entry):
         """Process directives with a single account attribute.

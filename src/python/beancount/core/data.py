@@ -42,9 +42,9 @@ Close = namedtuple('Close', 'fileloc date account')
 #
 # Attributes:
 #   account: The Account which needs to be filled.
-#   account_pad: The Account which is used to debit from in order to fill
+#   source_account: The Account which is used to debit from in order to fill
 #     'account'.
-Pad = namedtuple('Pad', 'fileloc date account account_pad')
+Pad = namedtuple('Pad', 'fileloc date account source_account')
 
 # A "check the balance of this account" directive. This directive asserts that
 # the declared account should have a known number of units of a particular
