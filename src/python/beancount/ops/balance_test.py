@@ -3,7 +3,6 @@ import unittest
 from beancount.ops import balance
 from beancount.ops import validation
 from beancount.loader import loaddoc
-from beancount.parser import printer
 from beancount.core import amount
 
 

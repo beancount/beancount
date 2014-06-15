@@ -1,6 +1,3 @@
-import io
-import collections
-import textwrap
 import unittest
 
 from beancount.reports import rholdings

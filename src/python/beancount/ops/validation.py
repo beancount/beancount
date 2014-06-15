@@ -12,7 +12,6 @@ from beancount.core import getters
 from beancount.core import inventory
 from beancount.core import realization
 from beancount.utils import misc_utils
-from beancount.parser import printer
 
 
 # An error from one of the checks.

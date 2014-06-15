@@ -15,7 +15,7 @@ from beancount.parser import options
 from beancount.core import account
 from beancount.core import account_types
 from beancount.core import data
-from beancount.core.amount import decimal, ZERO, Decimal, Amount, amount_div
+from beancount.core.amount import ZERO, Decimal, Amount, amount_div
 from beancount.core.position import Lot, Position
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price
 from beancount.core.data import Note, Document
@@ -588,7 +588,8 @@ class Builder(object):
         # if postings is None or len(postings) < 2:
         #     self.errors.append(
         #         ParserError(fileloc,
-        #                     "Transaction with only one posting: {}".format(postings), None))
+        #                     "Transaction with only one posting: {}".format(postings),
+        #                     None))
         #     return None
 
         # Merge the tags from the stack with the explicit tags of this

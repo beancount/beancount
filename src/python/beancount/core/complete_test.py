@@ -15,20 +15,24 @@ class TestBalance(unittest.TestCase):
 
         # Entry without cost, without price.
         posting = create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD")
-        self.assertEqual(amount.Amount("105.50", "USD"), complete.get_balance_amount(posting))
+        self.assertEqual(amount.Amount("105.50", "USD"),
+                         complete.get_balance_amount(posting))
 
         # Entry without cost, with price.
         posting = posting._replace(price=amount.Amount("0.90", "CAD"))
-        self.assertEqual(amount.Amount("94.95", "CAD"), complete.get_balance_amount(posting))
+        self.assertEqual(amount.Amount("94.95", "CAD"),
+                         complete.get_balance_amount(posting))
 
         # Entry with cost, without price.
         posting = create_simple_posting_with_cost(None, "Assets:Bank:Checking",
                                                   "105.50", "USD", "0.80", "EUR")
-        self.assertEqual(amount.Amount("84.40", "EUR"), complete.get_balance_amount(posting))
+        self.assertEqual(amount.Amount("84.40", "EUR"),
+                         complete.get_balance_amount(posting))
 
         # Entry with cost, and with price (the price should be ignored).
         posting = posting._replace(price=amount.Amount("2.00", "CAD"))
-        self.assertEqual(amount.Amount("84.40", "EUR"), complete.get_balance_amount(posting))
+        self.assertEqual(amount.Amount("84.40", "EUR"),
+                         complete.get_balance_amount(posting))
 
     def test_has_nontrivial_balance(self):
 

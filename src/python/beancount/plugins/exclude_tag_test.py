@@ -1,11 +1,8 @@
 import textwrap
-import unittest
 
 from beancount import loader
 from beancount.plugins import exclude_tag
-from beancount.parser import printer
 from beancount.utils import test_utils
-
 
 
 class TestExampleExcludeTag(test_utils.TestCase):

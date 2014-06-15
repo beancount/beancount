@@ -1,4 +1,3 @@
-import itertools
 import unittest
 from os import path
 import os

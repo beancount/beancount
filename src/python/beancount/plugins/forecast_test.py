@@ -1,11 +1,8 @@
 import textwrap
-import unittest
 
 from beancount import loader
 from beancount.plugins import forecast
-from beancount.parser import printer
 from beancount.utils import test_utils
-
 
 
 class TestExampleForecast(test_utils.TestCase):

@@ -7,13 +7,11 @@ of time, so we fold them into a single transaction per account that has the sum
 total amount of that account.
 """
 import datetime
-import logging
 from collections import defaultdict
 
 from beancount.core import inventory
-from beancount.core.data import Transaction, Open, Close, Price
+from beancount.core.data import Transaction, Open, Close
 from beancount.core.data import FileLocation, Posting
-from beancount.core import data
 from beancount.core import flags
 from beancount.core.account_types import is_income_statement_account
 from beancount.ops import prices

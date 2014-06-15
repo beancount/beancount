@@ -1,5 +1,3 @@
-import unittest
-
 from beancount import loader
 from beancount.plugins import tag_pending
 from beancount.utils import test_utils

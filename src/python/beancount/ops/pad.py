@@ -8,7 +8,6 @@ from beancount.core import data
 from beancount.core import position
 from beancount.utils import misc_utils
 from beancount.core import flags
-from beancount.core import getters
 from beancount.core import realization
 
 
@@ -130,7 +129,8 @@ def pad(entries):
                             data.Posting(new_entry, active_pad.account, diff_position,
                                          None, None))
                         new_entry.postings.append(
-                            data.Posting(new_entry, active_pad.source_account, -diff_position,
+                            data.Posting(new_entry,
+                                         active_pad.source_account, -diff_position,
                                          None, None))
 
                         # Save it for later insertion after the active pad.

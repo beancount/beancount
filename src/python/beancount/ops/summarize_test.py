@@ -3,7 +3,6 @@ Unit tests for summarization.
 """
 
 import unittest
-import sys
 from datetime import date
 import datetime
 import textwrap

@@ -1,13 +1,8 @@
 """Comparison helpers for data objects.
 """
 import hashlib
-import datetime
-from collections import namedtuple
 
-from .data import Transaction, entry_sortkey
-from .amount import Amount, Decimal, to_decimal
-from .position import Position, create_position
-from .account import has_component
+from .data import entry_sortkey
 
 
 def stable_hash_namedtuple(objtuple, ignore=frozenset()):

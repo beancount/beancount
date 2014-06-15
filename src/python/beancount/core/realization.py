@@ -16,19 +16,15 @@ You should not build RealAccount trees yourself; instead, you should filter the
 list of desired directives to display and call the realize() function with them.
 """
 import io
-import sys
-import itertools
 import collections
 import operator
 import copy
-import itertools
 
 from beancount.core import inventory
 from beancount.core.amount import amount_sortkey
 from beancount.core import data
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Document
 from beancount.core.data import Posting
-from beancount.core.account import account_name_leaf, account_name_parent
 from beancount.core import account
 
 
@@ -591,8 +587,8 @@ def dump(root_account):
 
 PREFIX_CHILD_1 = '|-- '
 PREFIX_CHILD_C = '|   '
-PREFIX_LEAF_1  = '`-- '
-PREFIX_LEAF_C  = '    '
+PREFIX_LEAF_1 = '`-- '
+PREFIX_LEAF_C = '    '
 
 
 def dump_balances(real_account):

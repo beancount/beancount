@@ -1,4 +1,3 @@
-import itertools
 import os
 from os import path
 

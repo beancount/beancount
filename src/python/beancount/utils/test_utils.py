@@ -132,8 +132,8 @@ class TestCase(unittest.TestCase):
           expected_entries: Either a list of directives or a string, in which case the
             string is run through beancount.parser.parse_string() and the resulting
             list is used.
-          actual_entries: Same treatment as expected_entries, the other list of directives to
-            compare to.
+          actual_entries: Same treatment as expected_entries, the other list of
+            directives to compare to.
         Raises:
           AssertionError: If the exception fails.
         """
@@ -166,8 +166,8 @@ class TestCase(unittest.TestCase):
           expected_entries: Either a list of directives or a string, in which case the
             string is run through beancount.parser.parse_string() and the resulting
             list is used.
-          actual_entries: Same treatment as expected_entries, the other list of directives to
-            compare to.
+          actual_entries: Same treatment as expected_entries, the other list of
+            directives to compare to.
         Raises:
           AssertionError: If the exception fails.
         """

@@ -6,7 +6,6 @@ import re
 from beancount.web.journal import account_link
 from beancount.core import data
 from beancount.core.account_types import is_root_account
-from beancount.core import account
 from beancount.core.position import Lot
 from beancount.core.data import Open
 from beancount.core.inventory import Inventory

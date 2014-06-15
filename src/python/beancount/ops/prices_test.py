@@ -7,7 +7,6 @@ from beancount.core import amount
 from beancount.core import data
 from beancount.ops import prices
 from beancount.parser import parsedoc
-from beancount.parser import printer
 from beancount.utils import test_utils
 
 
@@ -38,7 +37,7 @@ class TestPriceEntries(test_utils.TestCase):
           Assets:Other
 
         ;; This one should generate the price, even if it is reducing.
-        2013-04-01 * "A transaction with a cost that reduces an existing position, with a price"
+        2013-04-01 * "A transaction with a cost that reduces existing position, with price"
           Assets:Account1            -100 GOOG {520 USD} @ 530 USD
           Assets:Other
 
@@ -54,7 +53,8 @@ class TestPriceEntries(test_utils.TestCase):
         """
         self.assertEqual(10, len(entries))
         new_entries, _ = prices.add_implicit_prices(entries)
-        price_entries = list(filter(lambda entry: isinstance(entry, data.Price), new_entries))
+        price_entries = list(filter(lambda entry: isinstance(entry, data.Price),
+                                    new_entries))
 
         self.assertEqualEntries("""
 
@@ -80,7 +80,7 @@ class TestPriceEntries(test_utils.TestCase):
           Assets:Account1                      -500.00 GOOG     {520.00 USD}
           Assets:Other                        260000.00 USD
 
-        2013-04-01 * "A transaction with a cost that reduces an existing position, with a price"
+        2013-04-01 * "A transaction with a cost that reduces existing position, with price"
           Assets:Account1                      -100.00 GOOG     {520.00 USD}     @ 530.00 USD
           Assets:Other                         52000.00 USD
 
@@ -134,7 +134,7 @@ class TestPriceEntries(test_utils.TestCase):
 
         """
         new_entries, _ = prices.add_implicit_prices(entries)
-        self.assertEqualEntries ("""
+        self.assertEqualEntries("""
 
         2013-01-01 open Assets:Account1
         2013-01-01 open Assets:Account2

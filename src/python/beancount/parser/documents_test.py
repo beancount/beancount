@@ -12,7 +12,6 @@ from os import path
 from beancount.utils import test_utils
 from beancount.parser import documents
 from beancount.parser import parser
-from beancount.parser import printer
 
 
 class TestDocuments(test_utils.TestCase):
@@ -90,7 +89,8 @@ class TestDocuments(test_utils.TestCase):
         _, errors = documents.verify_document_entries(entries)
         self.assertEqual(1, len(errors))
         document_error = errors[0]
-        self.assertTrue(document_error.entry.filename.endswith('2014-07-10.something-else.pdf'))
+        self.assertTrue(
+            document_error.entry.filename.endswith('2014-07-10.something-else.pdf'))
 
     def test_find_documents(self):
         # Test with an absolute directory name.

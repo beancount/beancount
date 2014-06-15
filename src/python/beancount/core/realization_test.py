@@ -4,12 +4,7 @@ import copy
 import operator
 import io
 import unittest
-import textwrap
-import functools
 import re
-import sys
-
-from beancount import parser
 
 from beancount.core.amount import to_decimal as D
 from beancount.core.realization import RealAccount
@@ -19,7 +14,6 @@ from beancount.core.inventory import Inventory
 from beancount.core import amount
 from beancount.core import account_types
 from beancount.parser import parsedoc
-from beancount.parser import printer
 from beancount.loader import loaddoc
 from beancount.utils import test_utils
 
@@ -629,6 +623,7 @@ class TestRealOther(test_utils.TestCase):
 
         # Surprinsingly enough, this covers all the legal cases that occur in
         # practice (checked for full coverage manually if you like).
+        # pylint: disable=bad-whitespace
         rtuple = realization.iterate_with_balance(real_account.postings[:-2])
         self.assertEqual([
             (data.Open        , 0 , 'Inventory()'          , 'Inventory()')          ,

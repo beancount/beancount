@@ -2,8 +2,6 @@
 """
 from collections import namedtuple
 
-from beancount.ops import validation
-from beancount.core.inventory import Inventory
 from beancount.core.amount import Decimal, amount_sub
 from beancount.core.data import Transaction, Balance
 from beancount.core import inventory

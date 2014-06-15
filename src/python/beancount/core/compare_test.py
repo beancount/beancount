@@ -1,6 +1,4 @@
 import unittest
-import datetime
-import pprint
 
 from beancount.core import data
 from beancount.core import compare
@@ -85,10 +83,10 @@ class TestCompare(unittest.TestCase):
         entries1, _, __ = parser.parse_string(TEST_INPUT)
         entries2, _, __ = parser.parse_string(TEST_INPUT)
 
-        includes, missing  = compare.includes_entries(entries1[0:-3], entries2)
+        includes, missing = compare.includes_entries(entries1[0:-3], entries2)
         self.assertTrue(includes)
         self.assertFalse(missing)
 
-        includes, missing  = compare.includes_entries(entries1, entries2[0:-3])
+        includes, missing = compare.includes_entries(entries1, entries2[0:-3])
         self.assertFalse(includes)
         self.assertEqual(3, len(missing))

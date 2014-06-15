@@ -12,7 +12,6 @@ from beancount.core import account_types
 from beancount.core.data import FileLocation, Document
 from beancount.core import data
 from beancount.core import getters
-from beancount.parser import printer
 
 
 # An error from trying to find the documents.

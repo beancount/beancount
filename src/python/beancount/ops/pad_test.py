@@ -1,17 +1,11 @@
 """
 Unit tests for padding.
 """
-
-import unittest
-
-from beancount.core.position import Lot, Position
 from beancount.core.inventory import Inventory
 from beancount.core.data import Open, Pad, Balance, Posting
-from beancount.core.amount import Decimal, Amount
+from beancount.core.amount import Amount
 from beancount.core import realization
 from beancount.loader import loaddoc
-from beancount.parser import parser
-from beancount.parser import printer
 from beancount.ops import pad
 from beancount.ops import balance
 from beancount.utils import test_utils
@@ -65,8 +59,8 @@ class TestPadding(test_utils.TestCase):
           2013-05-03 balance Assets:Checking                                 172.45 USD
 
           2013-05-15 * "Add 20$"
-            Assets:Checking                                                         20.00 USD
-            Assets:Cash                                                            -20.00 USD
+            Assets:Checking                                                   20.00 USD
+            Assets:Cash                                                      -20.00 USD
 
           ;; This is the next check, should not have been padded.
           2013-06-01 balance Assets:Checking                                 200.00 USD
@@ -230,11 +224,11 @@ class TestPadding(test_utils.TestCase):
           2013-05-01 open Equity:OpeningBalances
 
           2013-05-10 *
-            Assets:US:Bank1:Checking                                                 1.00 USD
-            Assets:US:Bank1:Savings                                                  2.00 USD
-            Assets:US:Bank2:Checking                                                 3.00 USD
-            Assets:US:Bank2:Savings                                                  4.00 USD
-            Equity:OpeningBalances                                                 -10.00 USD
+            Assets:US:Bank1:Checking                                 1.00 USD
+            Assets:US:Bank1:Savings                                  2.00 USD
+            Assets:US:Bank2:Checking                                 3.00 USD
+            Assets:US:Bank2:Savings                                  4.00 USD
+            Equity:OpeningBalances                                 -10.00 USD
 
           2013-05-20 pad Assets:US Equity:OpeningBalances
 

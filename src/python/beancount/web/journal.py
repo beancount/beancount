@@ -8,7 +8,6 @@ from beancount.core.data import Open, Close, Balance, Transaction, Note, Documen
 from beancount.core import data
 from beancount.core import account
 from beancount.core import complete
-from beancount.core.inventory import Inventory
 from beancount.core.account import account_name_leaf
 from beancount.core import realization
 from beancount.core import flags
@@ -58,7 +57,9 @@ def iterate_render_transactions(app, postings):
     for each cell.
     Yields:
     """
-    for entry, leg_postings, change, entry_balance in realization.iterate_with_balance(postings):
+    for entry_line in realization.iterate_with_balance(postings):
+        entry, leg_postings, change, entry_balance = entry_line
+
         # Prepare the data to be rendered for this row.
         balance_str = balance_html(entry_balance)
 

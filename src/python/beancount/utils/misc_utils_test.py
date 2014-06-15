@@ -4,7 +4,6 @@ Tests for general utils.
 import unittest
 import time
 from collections import namedtuple
-import operator
 
 from beancount.utils import misc_utils
 
