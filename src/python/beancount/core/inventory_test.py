@@ -6,8 +6,9 @@ import copy
 from datetime import date
 import types
 
-from beancount.core.amount import Amount, Decimal
-from beancount.core.position import create_position, Lot
+from beancount.core.amount import Amount, Decimal, to_decimal
+from beancount.core.position import Position, Lot
+from beancount.core import position
 from beancount.core.inventory import Inventory
 from beancount.core import inventory
 
@@ -59,19 +60,46 @@ class TestInventory(unittest.TestCase):
         inv_amount = inventory.get_amount(amount.currency)
         self.assertEqual(inv_amount, amount)
 
+    def test_from_string(self):
+        inv = inventory.from_string('')
+        self.assertEqual(Inventory(), inv)
+
+        inv = inventory.from_string('10 USD')
+        self.assertEqual(
+            Inventory([Position(Lot("USD", None, None), to_decimal('10'))]),
+            inv)
+
+        inv = inventory.from_string(' 10.00  USD ')
+        self.assertEqual(
+            Inventory([Position(Lot("USD", None, None), to_decimal('10'))]),
+            inv)
+
+        inv = inventory.from_string('1 USD, 2 CAD')
+        self.assertEqual(
+            Inventory([Position(Lot("USD", None, None), to_decimal('1')),
+                       Position(Lot("CAD", None, None), to_decimal('2'))]),
+            inv)
+
+        inv = inventory.from_string('2.2 GOOG {532.43 USD}, 3.413 EUR')
+        self.assertEqual(
+            Inventory([Position(Lot("GOOG", Amount('532.43', 'USD'), None),
+                                to_decimal('2.2')),
+                       Position(Lot("EUR", None, None), to_decimal('3.413'))]),
+            inv)
+
     def test_ctor_empty_len(self):
         # Test regular constructor.
         inv = Inventory()
         self.assertTrue(inv.is_empty())
         self.assertEqual(0, len(inv))
 
-        inv = Inventory([create_position('100.00', 'USD'),
-                         create_position('101.00', 'USD')])
+        inv = Inventory([position.from_string('100.00 USD'),
+                         position.from_string('101.00 USD')])
         self.assertFalse(inv.is_empty())
         self.assertEqual(1, len(inv))
 
-        inv = Inventory([create_position('100.00', 'USD'),
-                         create_position('100.00', 'CAD')])
+        inv = Inventory([position.from_string('100.00 USD'),
+                         position.from_string('100.00 CAD')])
         self.assertFalse(inv.is_empty())
         self.assertEqual(2, len(inv))
 
@@ -83,9 +111,7 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(2, len(inv))
 
     def test_str(self):
-        positions = [create_position('100.00', 'USD'),
-                     create_position('101.00', 'CAD')]
-        inv = Inventory(positions)
+        inv = Inventory.from_string('100.00 USD, 101.00 CAD')
         self.assertEqual('Inventory(100.00 USD, 101.00 CAD)', str(inv))
 
     def test_copy(self):
@@ -102,31 +128,24 @@ class TestInventory(unittest.TestCase):
         self.checkAmount(inv, '100', 'USD')
 
     def test_op_eq(self):
-        inv1 = Inventory([create_position('100', 'USD'),
-                          create_position('100', 'CAD')])
-        inv2 = Inventory([create_position('100', 'USD'),
-                          create_position('100', 'CAD')])
+        inv1 = Inventory.from_string('100 USD, 100 CAD')
+        inv2 = Inventory.from_string('100 CAD, 100 USD')
         self.assertEqual(inv1, inv2)
         self.assertEqual(inv2, inv1)
 
-        inv3 = Inventory([create_position('200', 'USD'),
-                          create_position('100', 'CAD')])
+        inv3 = Inventory.from_string('200 USD, 100 CAD')
         self.assertNotEqual(inv1, inv3)
         self.assertNotEqual(inv3, inv1)
 
-        inv4 = Inventory([create_position('100', 'USD'),
-                          create_position('100', 'JPY')])
+        inv4 = Inventory.from_string('100 USD, 100 JPY')
         self.assertNotEqual(inv1, inv4)
         self.assertNotEqual(inv4, inv1)
 
-        inv5 = Inventory([create_position('100', 'JPY'),
-                          create_position('100', 'USD')])
+        inv5 = Inventory.from_string('100 JPY, 100 USD')
         self.assertEqual(inv4, inv5)
 
     def test_is_small(self):
-        inv = Inventory([create_position('1.50', 'JPY'),
-                         create_position('1.51', 'USD'),
-                         create_position('1.52', 'CAD')])
+        inv = Inventory.from_string('1.50 JPY, 1.51 USD, 1.52 CAD')
         self.assertFalse(inv.is_small(Decimal('1.49')))
         self.assertFalse(inv.is_small(Decimal('1.50')))
         self.assertTrue(inv.is_small(Decimal('1.53')))
@@ -144,19 +163,12 @@ class TestInventory(unittest.TestCase):
         ninv = -inv
         self.checkAmount(ninv, '-10', 'USD')
 
-        pinv = Inventory([create_position('1.50', 'JPY'),
-                          create_position('1.51', 'USD'),
-                          create_position('1.52', 'CAD')])
-        ninv = Inventory([create_position('-1.50', 'JPY'),
-                          create_position('-1.51', 'USD'),
-                          create_position('-1.52', 'CAD')])
+        pinv = Inventory.from_string('1.50 JPY, 1.51 USD, 1.52 CAD')
+        ninv = Inventory.from_string('-1.50 JPY, -1.51 USD, -1.52 CAD')
         self.assertEqual(pinv, -ninv)
 
     def test_get_amount(self):
-        inv = Inventory([
-            create_position('40.50', 'JPY'),
-            create_position('40.51', 'USD', Amount('1.01', 'CAD')),
-            create_position('40.52', 'CAD')])
+        inv = Inventory.from_string('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
         self.assertEqual(inv.get_amount('JPY'), Amount('40.50', 'JPY'))
         self.assertEqual(inv.get_amount('USD'), Amount('40.51', 'USD'))
         self.assertEqual(inv.get_amount('CAD'), Amount('40.52', 'CAD'))
@@ -167,31 +179,26 @@ class TestInventory(unittest.TestCase):
         inv = Inventory()
         self.assertEqual(inv.get_amounts(), [])
 
-        inv = Inventory([
-            create_position('40.50', 'JPY'),
-            create_position('40.51', 'USD', Amount('1.01', 'CAD')),
-            create_position('40.52', 'CAD')])
+        inv = Inventory.from_string('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
         self.assertEqual(inv.get_amounts(), [
             Amount('40.50', 'JPY'),
             Amount('40.51', 'USD'),
             Amount('40.52', 'CAD')])
 
     POSITIONS_ALL_KINDS = [
-        create_position('40.50', 'USD'),
-        create_position('40.50', 'USD', Amount('1.10', 'CAD')),
-        create_position('40.50', 'USD', Amount('1.10', 'CAD'), date(2012, 1, 1))]
+        position.from_string('40.50 USD'),
+        position.from_string('40.50 USD {1.10 CAD}'),
+        position.from_string('40.50 USD {1.10 CAD / 2012-01-01}')]
 
     def test_get_cost(self):
         inv = Inventory(self.POSITIONS_ALL_KINDS +
-                        [create_position('50.00', 'CAD')])
+                        [position.from_string('50.00 CAD')])
         inv_cost = inv.get_cost()
-        self.assertEqual(Inventory([
-            create_position('40.50', 'USD'),
-            create_position('139.10', 'CAD')]), inv_cost)
+        self.assertEqual(Inventory.from_string('40.50 USD, 139.10 CAD'), inv_cost)
 
     def test_get_positions_with_currency(self):
         usd_positions = self.POSITIONS_ALL_KINDS
-        cad_positions = [create_position('50.00', 'CAD')]
+        cad_positions = [position.from_string('50.00 CAD')]
         inv = Inventory(usd_positions + cad_positions)
         self.assertEqual(cad_positions, inv.get_positions_with_currency('CAD'))
         self.assertEqual(usd_positions, inv.get_positions_with_currency('USD'))
@@ -199,13 +206,13 @@ class TestInventory(unittest.TestCase):
     def test_get_position(self):
         inv = Inventory(self.POSITIONS_ALL_KINDS)
         self.assertEqual(
-            create_position('40.50', 'USD'),
+            position.from_string('40.50 USD'),
             inv.get_position(Lot('USD', None, None)))
         self.assertEqual(
-            create_position('40.50', 'USD', Amount('1.10', 'CAD')),
+            position.from_string('40.50 USD {1.10 CAD}'),
             inv.get_position(Lot('USD', Amount('1.10', 'CAD'), None)))
         self.assertEqual(
-            create_position('40.50', 'USD', Amount('1.10', 'CAD'), date(2012, 1, 1)),
+            position.from_string('40.50 USD {1.10 CAD / 2012-01-01}'),
             inv.get_position(Lot('USD', Amount('1.10', 'CAD'), date(2012, 1, 1))))
 
     def test_add(self):
@@ -283,10 +290,7 @@ class TestInventory(unittest.TestCase):
         check_allow_negative(inv)
 
         # Test adding to a position that does exist.
-        inv = Inventory([
-            create_position('10', 'USD'),
-            create_position('10', 'USD', Amount('1.10', 'CAD')),
-            create_position('10', 'USD', Amount('1.10', 'CAD'), date(2012, 1, 1))])
+        inv = Inventory.from_string('10 USD, 10 USD {1.10 CAD}, 10 USD {1.10 CAD / 2012-01-01}')
         check_allow_negative(inv)
 
     def test_add_position(self):
@@ -296,21 +300,18 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(Inventory(self.POSITIONS_ALL_KINDS), inv)
 
     def test_op_add(self):
-        inv1 = Inventory([create_position('17.00', 'USD')])
-        orig_inv1 = Inventory([create_position('17.00', 'USD')])
-        inv2 = Inventory([create_position('21.00', 'CAD')])
+        inv1 = Inventory.from_string('17.00 USD')
+        orig_inv1 = Inventory.from_string('17.00 USD')
+        inv2 = Inventory.from_string('21.00 CAD')
         inv3 = inv1 + inv2
-        self.assertEqual(Inventory([create_position('17.00', 'USD'),
-                                    create_position('21.00', 'CAD')]),
-                         inv3)
+        self.assertEqual(Inventory.from_string('17.00 USD, 21.00 CAD'), inv3)
         self.assertEqual(orig_inv1, inv1)
 
     def test_update(self):
-        inv1 = Inventory([create_position('11', 'USD')])
-        inv2 = Inventory([create_position('12', 'CAD')])
+        inv1 = Inventory.from_string('11 USD')
+        inv2 = Inventory.from_string('12 CAD')
         inv_updated = inv1.update(inv2)
-        expect_updated = Inventory([create_position('11', 'USD'),
-                                    create_position('12', 'CAD')])
+        expect_updated = Inventory.from_string('11 USD, 12 CAD')
         self.assertEqual(expect_updated, inv_updated)
         self.assertEqual(expect_updated, inv1)
 
@@ -323,25 +324,3 @@ class TestInventory(unittest.TestCase):
         inv2.add(Amount('55', 'GOOG'))
 
         inv = inv1 + inv2
-
-
-class TestInventoryFromString(unittest.TestCase):
-
-    def test_from_string(self):
-        inv = inventory.from_string('')
-        self.assertEqual(Inventory(), inv)
-
-        inv = inventory.from_string('10 USD')
-        self.assertEqual(Inventory([create_position('10', 'USD')]), inv)
-
-        inv = inventory.from_string(' 10.00  USD ')
-        self.assertEqual(Inventory([create_position('10', 'USD')]), inv)
-
-        inv = inventory.from_string('1 USD, 2 CAD')
-        self.assertEqual(Inventory([create_position('1', 'USD'),
-                                    create_position('2', 'CAD')]), inv)
-
-        inv = inventory.from_string('2.2 GOOG {532.43 USD}, 3.413 EUR')
-        self.assertEqual(Inventory([create_position('2.2', 'GOOG',
-                                                    Amount('532.43', 'USD')),
-                                    create_position('3.413', 'EUR')]), inv)

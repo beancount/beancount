@@ -7,10 +7,29 @@ import copy
 from datetime import date
 
 from .amount import ZERO, to_decimal, Amount
-from .position import Lot, Position, create_position, from_string
+from .position import Lot, Position, from_string
 
 
 class TestPosition(unittest.TestCase):
+
+    def test_from_string(self):
+        with self.assertRaises(ValueError):
+            pos = from_string('')
+
+        pos = from_string('10 USD')
+        self.assertEqual(Position(Lot("USD", None, None), to_decimal('10')), pos)
+
+        pos = from_string(' 111.2934  CAD ')
+        self.assertEqual(Position(Lot("CAD", None, None), to_decimal('111.2934')), pos)
+
+        pos = from_string('2.2 GOOG {532.43 USD}')
+        cost = Amount(to_decimal('532.43'), 'USD')
+        self.assertEqual(Position(Lot("GOOG", cost, None), to_decimal('2.2')), pos)
+
+        pos = from_string('2.2 GOOG {532.43 USD / 2014-06-15}')
+        cost = Amount(to_decimal('532.43'), 'USD')
+        lot_date = datetime.date(2014, 6, 15)
+        self.assertEqual(Position(Lot("GOOG", cost, lot_date), to_decimal('2.2')), pos)
 
     def test_constructors(self):
         position = Position(Lot('USD', None, None),
@@ -80,36 +99,3 @@ class TestPosition(unittest.TestCase):
         negpos = pos.get_negative()
         self.assertEqual(Amount('-28372', 'USD'), negpos.get_amount())
         self.assertEqual(Amount('-283720', 'AUD'), negpos.get_cost())
-
-
-
-class TestPositionFromString(unittest.TestCase):
-
-    def test_from_string(self):
-        with self.assertRaises(ValueError):
-            pos = from_string('')
-
-        pos = from_string('10 USD')
-        self.assertEqual(Position(Lot("USD", None, None), to_decimal('10')), pos)
-
-        pos = from_string(' 111.2934  CAD ')
-        self.assertEqual(Position(Lot("CAD", None, None), to_decimal('111.2934')), pos)
-
-        pos = from_string('2.2 GOOG {532.43 USD}')
-        cost = Amount(to_decimal('532.43'), 'USD')
-        self.assertEqual(Position(Lot("GOOG", cost, None), to_decimal('2.2')), pos)
-
-        pos = from_string('2.2 GOOG {532.43 USD / 2014-06-15}')
-        cost = Amount(to_decimal('532.43'), 'USD')
-        lot_date = datetime.date(2014, 6, 15)
-        self.assertEqual(Position(Lot("GOOG", cost, lot_date), to_decimal('2.2')), pos)
-
-    # FIXME: Remvoe this eventually.
-    def test_create_position(self):
-        pos1 = Position(Lot("USD", Amount('10', 'AUD'), None), to_decimal('28372'))
-        pos2 = create_position('28372', 'USD', Amount('10', 'AUD'))
-        self.assertEqual(pos1, pos2)
-
-        pos1 = Position(Lot("USD", None, None), to_decimal('28372'))
-        pos2 = create_position('28372', 'USD')
-        self.assertEqual(pos1, pos2)

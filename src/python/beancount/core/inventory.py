@@ -64,6 +64,7 @@ class Inventory:
         """
         self.positions = []
         if positions:
+            assert isinstance(positions, list), positions
             for position in positions:
                 self.add_position(position, False)
 
@@ -328,21 +329,24 @@ class Inventory:
 
     __iadd__ = update
 
+    @staticmethod
+    def from_string(string):
+        """Create an Inventory from a string. This is useful for writing tests.
 
-def from_string(string):
-    """Create an Inventory from a string. This is useful for writing tests.
+        Args:
+          string: A comma-separated string of <number> <currency> with an
+            optional {<number> <currency>} for the cost.
+        Returns:
+          A new instance of Inventory with the given balances.
+        """
+        new_inventory = Inventory()
+        position_strs = string.split(',')
+        for position_str in filter(None, position_strs):
+            new_inventory.add_position(position_from_string(position_str), True)
+        return new_inventory
 
-    Args:
-      string: A comma-separated string of <number> <currency> with an
-        optional {<number> <currency>} for the cost.
-    Returns:
-      A new instance of Inventory with the given balances.
-    """
-    new_inventory = Inventory()
-    position_strs = string.split(',')
-    for position_str in filter(None, position_strs):
-        new_inventory.add_position(position_from_string(position_str), True)
-    return new_inventory
+
+from_string = Inventory.from_string
 
 
 def check_invariants(inventory):
