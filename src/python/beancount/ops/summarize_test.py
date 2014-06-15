@@ -162,6 +162,15 @@ class TestSummarization(unittest.TestCase):
 
 
 
+class TestSumToDate(test_utils.TestCase):
+
+    @parser.parsedoc
+    def test_sum_to_date(self, entries, errors, options_map):
+        """
+        """
+
+
+
 
 class TestOpenAtDate(test_utils.TestCase):
 

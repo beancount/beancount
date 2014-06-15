@@ -7,7 +7,7 @@ of time, so we fold them into a single transaction per account that has the sum
 total amount of that account.
 """
 import datetime
-from collections import defaultdict
+import collections
 
 from beancount.core import inventory
 from beancount.core.data import Transaction, Open, Close
@@ -285,7 +285,7 @@ def sum_to_date(entries, date=None):
     """
 
     # Sum up the balances up to the data of transfer.
-    balances = defaultdict(inventory.Inventory)
+    balances = collections.defaultdict(inventory.Inventory)
 
     for index, entry in enumerate(entries):
         if date and entry.date >= date:

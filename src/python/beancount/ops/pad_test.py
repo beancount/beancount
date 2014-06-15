@@ -340,7 +340,7 @@ class TestPadding(test_utils.TestCase):
           2013-06-01 balance Assets:Checking      145 USD
 
         """
-        post_map = realization.group_by_account(entries)
+        post_map = realization.postings_by_account(entries)
         postings = post_map['Assets:Checking']
 
         balances = []

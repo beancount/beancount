@@ -236,7 +236,7 @@ def realize(entries, min_accounts=None):
       The root RealAccount instance.
     """
     # Create lists of the entries by account.
-    postings_map = group_by_account(entries)
+    postings_map = postings_by_account(entries)
 
     # Create a RealAccount tree and compute the balance for each.
     real_root = RealAccount('')
@@ -254,7 +254,7 @@ def realize(entries, min_accounts=None):
     return real_root
 
 
-def group_by_account(entries):
+def postings_by_account(entries):
     """Create lists of postings and balances by account.
 
     This routine aggregates postings and entries grouping them by account name.
