@@ -109,7 +109,7 @@ def transfer_balances(entries, date, account_pred, transfer_account):
         return entries
 
     # Compute balances at date.
-    index, balances = sum_to_date(entries, date)
+    index, balances = balance_by_account(entries, date)
     if index is None:
         index = len(entries)
 
@@ -155,7 +155,7 @@ def summarize(entries, date, opening_account):
     """
 
     # Compute balances at date.
-    index, balances = sum_to_date(entries, date)
+    index, balances = balance_by_account(entries, date)
 
     # We need to insert the entries with a date previous to subsequent checks,
     # to maintain ensure the open directives show up before any transaction.
@@ -278,15 +278,20 @@ def create_entries_from_balances(balances, date, other_account, direction,
     return new_entries
 
 
-def sum_to_date(entries, date=None):
-    """Sum up the balances per account for all entries strictly before 'date'.
-    Return the index in the list of entries (or None, if all were before the
-    date) and a dict of accounts to balance inventory.
+def balance_by_account(entries, date=None):
+    """Sum up the balance per account for all entries strictly before 'date'.
+
+    Args:
+      entries: A list of directives.
+      date: An optional datetime.date instance. If provided, stop accumulating
+        on and after this date. This is useful for summarization before a
+        specific date.
+    Returns:
+      A pair of the index in the list of entries or None, if all were before the
+      date, and a dict of account string to instance Inventory (the balance of
+      this account before the given date).
     """
-
-    # Sum up the balances up to the data of transfer.
     balances = collections.defaultdict(inventory.Inventory)
-
     for index, entry in enumerate(entries):
         if date and entry.date >= date:
             break

@@ -8,6 +8,8 @@ import datetime
 import textwrap
 import functools
 
+from beancount.core.position import create_position
+from beancount.core.inventory import Inventory
 from beancount.core import realization
 from beancount.ops.pad import pad
 from beancount.core import realization
@@ -162,13 +164,41 @@ class TestSummarization(unittest.TestCase):
 
 
 
-class TestSumToDate(test_utils.TestCase):
+class TestBalanceByAccount(test_utils.TestCase):
 
     @parser.parsedoc
-    def test_sum_to_date(self, entries, errors, options_map):
+    def test_balance_by_account(self, entries, errors, options_map):
         """
-        """
+        2014-02-01 *
+          Assets:AccountA   10 USD
+          Equity:OpeningBalances
 
+        2014-03-01 *
+          Assets:AccountA   1 USD
+          Assets:AccountB  12 USD
+          Equity:OpeningBalances
+        """
+        # Test with no end date.
+        index, balances = summarize.balance_by_account(entries)
+        self.assertTrue(index is None)
+        self.assertEqual({
+            'Assets:AccountA': Inventory([create_position('11', 'USD')]),
+            'Equity:OpeningBalances': Inventory([create_position('-23', 'USD')]),
+            'Assets:AccountB': Inventory([create_position('12', 'USD')])
+            }, balances)
+
+        # Test on the first date (should be empty).
+        index, balances = summarize.balance_by_account(entries, datetime.date(2014, 2, 1))
+        self.assertEqual(0, index)
+        self.assertEqual({}, balances)
+
+        # Test in the middle.
+        index, balances = summarize.balance_by_account(entries, datetime.date(2014, 2, 10))
+        self.assertEqual(1, index)
+        self.assertEqual({
+            'Assets:AccountA': Inventory([create_position('10', 'USD')]),
+            'Equity:OpeningBalances': Inventory([create_position('-10', 'USD')]),
+            }, balances)
 
 
 

@@ -923,6 +923,10 @@ beancount: TODO
     special syntax in the cost specification that allows us to do this.
 
 
+
+  - Create Inventory.from_string() and simplify a lot of the tests with it.
+
+
 ** Precision
 
   - (precision) FIXME: The better way to render numbers at the end would be to
