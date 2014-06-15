@@ -186,6 +186,7 @@ beancount: TODO
     Equity, for less tabs, and a list of similar reports. Complete the equity
     value page with prices.py, render the rates used to that page. Include
     links to the holdings reports here as well.
+    Equity should just become an index for all the holdings pages.
 
   - Implement all the missing global pages, or remove them. The web interface
     should be tight, no links to "Not Implemented" pages. There aren't many

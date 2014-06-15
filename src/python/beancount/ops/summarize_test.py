@@ -274,7 +274,7 @@ class TestConversions(unittest.TestCase):
         # entries = conversions(entries, ACCOUNT_CONVERSIONS1, datetime.date(2013, 1, 1))
         # entries = conversions(entries, ACCOUNT_CONVERSIONS2)
 
-        converted_balance = summarize.compute_total_balance(entries)
+        converted_balance = realization.compute_entries_balance(entries)
         #print(converted_balance.get_cost())
         # assert converted_balance.get_cost().is_empty()
 

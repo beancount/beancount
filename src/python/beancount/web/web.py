@@ -23,7 +23,6 @@ from beancount.core import realization
 from beancount.core import account
 from beancount.core import account_types
 from beancount.ops import basicops
-from beancount.ops import summarize
 from beancount.ops import prices
 from beancount.ops import holdings
 from beancount.utils import misc_utils
@@ -457,7 +456,7 @@ def trial():
 
 
     ## FIXME: After conversions is fixed, this should always be zero.
-    total_balance = summarize.compute_total_balance(view.entries)
+    total_balance = realization.compute_entries_balance(view.entries)
     table += """
       Total Balance: <span class="num">{}</span>
     """.format(total_balance.get_cost())
@@ -581,7 +580,7 @@ def equity():
     if 0:
         view = request.view
 
-        equity_balance = summarize.compute_balance_for_prefix(
+        equity_balance = realization.compute_entries_balance(
             view.closing_entries, '{}:'.format(view.options['name_equity']))
         header = io.StringIO()
         header.write('<th>Currency</th>\n')
@@ -678,7 +677,7 @@ def conversions():
     conversion_entries = get_conversion_entries(view.entries)
     journal.entries_table(app, oss, conversion_entries, render_postings=True)
 
-    conversion_balance = summarize.compute_total_balance(conversion_entries)
+    conversion_balance = realization.compute_entries_balance(conversion_entries)
 
     return render_view(
         pagetitle="Conversions",

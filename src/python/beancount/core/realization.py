@@ -310,6 +310,28 @@ def compute_postings_balance(postings):
     return final_balance
 
 
+def compute_entries_balance(entries, prefix=None):
+    """Compute the balance of all postings of a list of entries.
+
+    Sum up all the positions in all the postings of all the transactions in the
+    list of entries and return an inventory of it.
+
+    Args:
+      entries: A list of directives.
+      prefix: If specified, a prefix string to restrict by account name. Only
+        postings with an account that starts with this prefix will be summed up.
+    Returns:
+      An instance of Inventory.
+    """
+    total_balance = inventory.Inventory()
+    for entry in entries:
+        if isinstance(entry, Transaction):
+            for posting in entry.postings:
+                if prefix is None or posting.account.startswith(prefix):
+                    total_balance.add_position(posting.position, True)
+    return total_balance
+
+
 def filter(real_account, predicate):
     """Filter a RealAccount tree of nodes by the predicate.
 
