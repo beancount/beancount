@@ -249,3 +249,5 @@ def validate(entries):
 
 
 # FIXME: TODO - check that there are no duplicates on open entries.
+# FIXME: TODO - check again that all transactions balance
+# FIXME: TODO - check posting entries

@@ -9,11 +9,13 @@ total amount of that account.
 import datetime
 import collections
 
+from beancount.core import amount
 from beancount.core import inventory
 from beancount.core.data import Transaction, Open, Close
 from beancount.core.data import FileLocation, Posting
 from beancount.core import data
 from beancount.core import flags
+from beancount.core import realization
 from beancount.core.account_types import is_income_statement_account
 from beancount.ops import prices
 from beancount.utils import bisect_key
@@ -184,35 +186,40 @@ def summarize(entries, date, opening_account):
             len(open_entries) + len(summarizing_entries))
 
 
-def conversions(entries, account, date=None):
+
+
+
+
+
+
+
+TRANSFER_CURRENCY = 'NOTHING'
+
+def conversions(entries, conversion_account, date=None, transfer_currency=TRANSFER_CURRENCY):
     """Insert a conversion entry at date 'date' at the given account.
 
     Args:
       entries: A list of entries.
-      account: The Account object to book against.
-      date: The date at which to insert the conversion entry. The new
-            entry will be inserted as the last entry and the date just previous
-            to this date.
+      conversion_account: The Account object to book against.
+      date: The date before which to insert the conversion entry. The new
+        entry will be inserted as the last entry of the date just previous
+        to this date.
+      transfer_currency: A string, the transfer currency to use for zero prices
+        on the conversion entry.
     Returns:
       A modified list of entries.
     """
-
     # Compute the balance at the given date.
-    conversion_balance = inventory.Inventory()
-    for index, entry in enumerate(entries):
-        if not (date is None or entry.date < date):
-            break
-        if isinstance(entry, Transaction):
-            for posting in entry.postings:
-                conversion_balance.add_position(posting.position, True)
+    conversion_balance = realization.compute_entries_balance(entries, date=date)
+    index = bisect_key.bisect_left_with_key(entries, date, key=lambda entry: entry.date)
 
     # Early exit if there is nothing to do.
     if conversion_balance.is_empty():
         return entries
 
-    new_entries = list(entries)
-
-    last_date = entries[-1].date - datetime.timedelta(days=1)
+    # Calculate the date for the new entry. We want to store it as the last
+    # transaction of the day before.
+    last_date = date - datetime.timedelta(days=1)
 
     fileloc = FileLocation('<conversions>', -1)
     narration = 'Conversion for {}'.format(conversion_balance)
@@ -223,17 +230,15 @@ def conversions(entries, account, date=None):
         # (This is the only single place we cheap on the balance rule in the
         # entire system and this is necessary; see documentation on
         # Conversions.)
+        price = amount.Amount(amount.ZERO, transfer_currency)
         conversion_entry.postings.append(
-            Posting(conversion_entry, account, -position, None, None))
+            Posting(conversion_entry, conversion_account, -position, price, None))
 
+    # Make a copy of the list of entries and insert the new transaction into it.
+    new_entries = list(entries)
     new_entries.insert(index, conversion_entry)
 
     return new_entries
-
-
-
-
-
 
 
 def truncate(entries, date):

@@ -3,9 +3,6 @@ beancount: TODO
 * Requirements for Shipping 1.0
 ** Complete 100% Coverage for Unit Tests
 
-  - Move part of test_utils.TestCase to compare.TestCase and fix the dependency
-    clustering.
-
   - I want to complete full unittests coverage (as per find-missing-tests.py, or
     "cd beancount && make status"). This is the standard I've set for this
     project for shipping the next release. Tests remaining:
@@ -62,9 +59,8 @@ beancount: TODO
   - Make various attempts to simplify depgraph, we want to ship with a really
     lean dependency graph.
 
-    * Move beancount.utils.test_utils comparison utils to
-      beancount.parser.cmputil. Remove special case for clustering in Makefile.
-
+    * realization.compute_*_balance() functions may benefit from moving to
+      their own module. Not sure yet. Find out.
 
 
 ** Fix Minor Nits & Bugs
@@ -264,6 +260,13 @@ beancount: TODO
   - Make a script to enforce dependency order as part of linting. Feed it off
     of beancount.deps.
 
+  - Split all multiple tests that run in the same function by putting the
+    docstring on the setUp() method instead; this works well:
+
+      @parser.parsedoc
+      def setUp(self, entries, _, __):
+
+  - Implement Amount.from_string() to be consistent with position and inventory?
 
 ** Documentation
 
