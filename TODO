@@ -1907,6 +1907,13 @@ Improve this bit:
     valid (replace '!' by '*').
 
 
+* Plugins
+** FBAR
+
+  - Automatically compute the maximum account values of foreign accounts for
+    the FBAR filing.
+
+
 * Reports
 ** Warnings
 
