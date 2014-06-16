@@ -62,6 +62,10 @@ beancount: TODO
   - Make various attempts to simplify depgraph, we want to ship with a really
     lean dependency graph.
 
+    * Move beancount.utils.test_utils comparison utils to
+      beancount.parser.cmputil. Remove special case for clustering in Makefile.
+
+
 
 ** Fix Minor Nits & Bugs
 

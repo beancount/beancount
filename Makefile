@@ -70,8 +70,6 @@ CLUSTERS_REGEXPS =							\
 	beancount/scripts/bake.*		scripts/bake		\
 	beancount/scripts/.*_test\.py	 	scripts/tests		\
 	beancount/scripts		 	scripts			\
-	beancount/utils/test_utils_test\.py	utils/test_utils/tests	\
-	beancount/utils/test_utils.py	 	utils/test_utils	\
 	beancount/utils/.*_test\.py	 	utils/tests		\
 	beancount/utils			 	utils			\
 	beancount/web/.*_test\.py	 	web/tests		\

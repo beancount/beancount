@@ -2,10 +2,10 @@ import textwrap
 
 from beancount import loader
 from beancount.plugins import forecast
-from beancount.utils import test_utils
+from beancount.parser import cmptest
 
 
-class TestExampleForecast(test_utils.TestCase):
+class TestExampleForecast(cmptest.TestCase):
 
     def setUp(self):
         loader.install_load_plugin(forecast.forecast_plugin)

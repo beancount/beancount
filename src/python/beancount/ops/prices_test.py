@@ -7,10 +7,10 @@ from beancount.core import amount
 from beancount.core import data
 from beancount.ops import prices
 from beancount.parser import parsedoc
-from beancount.utils import test_utils
+from beancount.parser import cmptest
 
 
-class TestPriceEntries(test_utils.TestCase):
+class TestPriceEntries(cmptest.TestCase):
 
     @parsedoc
     def test_add_implicit_prices(self, entries, _, __):

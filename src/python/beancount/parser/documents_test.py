@@ -9,12 +9,12 @@ import tempfile
 import textwrap
 from os import path
 
-from beancount.utils import test_utils
 from beancount.parser import documents
 from beancount.parser import parser
+from beancount.parser import cmptest
 
 
-class TestDocuments(test_utils.TestCase):
+class TestDocuments(cmptest.TestCase):
 
     test_documents = [
         'root/Assets/US/Bank/Checking/other.txt',

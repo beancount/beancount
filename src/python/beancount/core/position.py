@@ -16,10 +16,12 @@ A "Position" represents a specific number of units of an associated lot:
   (number, lot)
 
 """
+import datetime
 from collections import namedtuple
+import re
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
-from .amount import ZERO, Decimal, Amount, amount_mult, MAXDIGITS_PRINTER
+from .amount import ZERO, Decimal, to_decimal, Amount, amount_mult, MAXDIGITS_PRINTER
 
 
 # Lots are a representations of a commodity with an optional associated cost and
@@ -225,16 +227,34 @@ class Position:
 
     __neg__ = get_negative
 
+    @staticmethod
+    def from_string(string):
+        """Create a position from a string specification.
 
-def create_position(number, currency, cost=None, lot_date=None):
-    """Create a position from its component parts.
+        This is a miniature parser used for testing.
 
-    Args:
-      number: An instance of Decimal or an integer or string.
-      currency: The currency of the lot.
-      cost: An instance of Amount, or None if no cost.
-      lot_date: An instance of datetime.date, or None if no lot-date.
-    Returns:
-      A new instance of Position.
-    """
-    return Position(Lot(currency, cost, lot_date), Decimal(number))
+        Args:
+          string: A string of <number> <currency> with an optional {<number>
+            <currency>} for the cost, similar to the parser syntax.
+        Returns:
+          A new instance of Position.
+        """
+        mo = re.match(r'\s*([-+]?[0-9.]+)\s+([A-Z]+)'
+                      '(\s+{([-+]?[0-9.]+)\s+([A-Z]+)'
+                      '(\s*/\s*(\d\d\d\d-\d\d-\d\d))?})?', string)
+        if not mo:
+            raise ValueError("Invalid string for position: '{}'".format(string))
+        number, currency = mo.group(1, 2)
+        if mo.group(3):
+            cost_number, cost_currency = mo.group(4, 5)
+            cost = Amount(to_decimal(cost_number), cost_currency)
+        else:
+            cost = None
+        if mo.group(6):
+            lot_date = datetime.datetime.strptime(mo.group(7), '%Y-%m-%d').date()
+        else:
+            lot_date = None
+        return Position(Lot(currency, cost, lot_date), to_decimal(number))
+
+
+from_string = Position.from_string

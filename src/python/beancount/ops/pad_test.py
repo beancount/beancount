@@ -8,10 +8,10 @@ from beancount.core import realization
 from beancount.loader import loaddoc
 from beancount.ops import pad
 from beancount.ops import balance
-from beancount.utils import test_utils
+from beancount.parser import cmptest
 
 
-class TestPadding(test_utils.TestCase):
+class TestPadding(cmptest.TestCase):
 
     @loaddoc
     def test_pad_simple(self, entries, errors, __):
