@@ -211,15 +211,19 @@ def conversions(entries, conversion_account, date=None, transfer_currency=TRANSF
     """
     # Compute the balance at the given date.
     conversion_balance = realization.compute_entries_balance(entries, date=date)
-    index = bisect_key.bisect_left_with_key(entries, date, key=lambda entry: entry.date)
 
     # Early exit if there is nothing to do.
     if conversion_balance.is_empty():
         return entries
 
-    # Calculate the date for the new entry. We want to store it as the last
-    # transaction of the day before.
-    last_date = date - datetime.timedelta(days=1)
+    # Calculate the index and the date for the new entry. We want to store it as
+    # the last transaction of the day before.
+    if date is not None:
+        index = bisect_key.bisect_left_with_key(entries, date, key=lambda entry: entry.date)
+        last_date = date - datetime.timedelta(days=1)
+    else:
+        index = len(entries)
+        last_date = entries[-1].date
 
     fileloc = FileLocation('<conversions>', -1)
     narration = 'Conversion for {}'.format(conversion_balance)

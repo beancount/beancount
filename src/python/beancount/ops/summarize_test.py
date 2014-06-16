@@ -251,13 +251,26 @@ class TestConversions(cmptest.TestCase):
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__multiple(self):
-        conversion_entries = summarize.conversions(self.entries,
-                                                   'Equity:Conversions',
-                                                   datetime.date(2012, 5, 10))
+        date = datetime.date(2012, 5, 10)
+        conversion_entries = summarize.conversions(self.entries, 'Equity:Conversions', date)
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
         2012-05-09 C "Conversion for Inventory(-700.00 USD, 100.00 CAD, 60.00 NT {10.00 CAD})"
+          Equity:Conversions   700.00 USD  @ 0.00 NOTHING
+          Equity:Conversions  -700.00 CAD  @ 0.00 NOTHING
+
+        """, conversion_entries)
+
+        converted_balance = realization.compute_entries_balance(conversion_entries)
+        self.assertTrue(converted_balance.get_cost().is_empty())
+
+    def test_conversions__no_date(self):
+        conversion_entries = summarize.conversions(self.entries, 'Equity:Conversions')
+        self.assertIncludesEntries(self.entries, conversion_entries)
+        self.assertIncludesEntries("""
+
+        2012-05-01 C "Conversion for Inventory(-700.00 USD, 100.00 CAD, 60.00 NT {10.00 CAD})"
           Equity:Conversions   700.00 USD  @ 0.00 NOTHING
           Equity:Conversions  -700.00 CAD  @ 0.00 NOTHING
 
