@@ -290,7 +290,8 @@ class TestInventory(unittest.TestCase):
         check_allow_negative(inv)
 
         # Test adding to a position that does exist.
-        inv = Inventory.from_string('10 USD, 10 USD {1.10 CAD}, 10 USD {1.10 CAD / 2012-01-01}')
+        inv = Inventory.from_string(
+            '10 USD, 10 USD {1.10 CAD}, 10 USD {1.10 CAD / 2012-01-01}')
         check_allow_negative(inv)
 
     def test_add_position(self):

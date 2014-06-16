@@ -7,7 +7,7 @@ from beancount.parser import printer
 from beancount.parser import parser
 from beancount.core import data
 from beancount.core import complete
-from beancount.utils import test_utils
+from beancount.parser import cmptest
 
 
 FILELOC = data.FileLocation('beancount/core/testing.beancount', 12345)
@@ -35,7 +35,7 @@ class TestPrinter(unittest.TestCase):
         self.assertTrue(isinstance(oss.getvalue(), str))
 
 
-class TestEntryPrinter(test_utils.TestCase):
+class TestEntryPrinter(cmptest.TestCase):
 
     def assertRoundTrip(self, entries1, errors1):
         self.assertFalse(errors1)

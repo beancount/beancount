@@ -239,7 +239,9 @@ class Position:
         Returns:
           A new instance of Position.
         """
-        mo = re.match(r'\s*([-+]?[0-9.]+)\s+([A-Z]+)(\s+{([-+]?[0-9.]+)\s+([A-Z]+)(\s*/\s*(\d\d\d\d-\d\d-\d\d))?})?', string)
+        mo = re.match(r'\s*([-+]?[0-9.]+)\s+([A-Z]+)'
+                      '(\s+{([-+]?[0-9.]+)\s+([A-Z]+)'
+                      '(\s*/\s*(\d\d\d\d-\d\d-\d\d))?})?', string)
         if not mo:
             raise ValueError("Invalid string for position: '{}'".format(string))
         number, currency = mo.group(1, 2)

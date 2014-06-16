@@ -2,10 +2,10 @@ import textwrap
 
 from beancount import loader
 from beancount.plugins import exclude_tag
-from beancount.utils import test_utils
+from beancount.parser import cmptest
 
 
-class TestExampleExcludeTag(test_utils.TestCase):
+class TestExampleExcludeTag(cmptest.TestCase):
 
     def setUp(self):
         loader.install_load_plugin(exclude_tag.exclude_tag)
