@@ -16,6 +16,7 @@ from beancount.core import data
 from beancount.core import flags
 from beancount.core.account_types import is_income_statement_account
 from beancount.ops import prices
+from beancount.utils import bisect_key
 
 
 def clamp(entries, begin_date, end_date,
@@ -230,15 +231,22 @@ def conversions(entries, account, date=None):
     return new_entries
 
 
+
+
+
+
+
 def truncate(entries, date):
-    """Filter out all the entries at and after date. Returns a new list of entries."""
-    # FIXME: Do a bisect here, the list is sorted.
-    new_entries = []
-    for entry in entries:
-        if entry.date >= date:
-            break # Stop here, we're assuming the entries are sorted.
-        new_entries.append(entry)
-    return new_entries
+    """Filter out all the entries at and after date. Returns a new list of entries.
+
+    Args:
+      entries: A sorted list of directives.
+      date: A datetime.date instance.
+    Returns:
+      A truncated list of directives.
+    """
+    index = bisect_key.bisect_left_with_key(entries, date, key=lambda entry: entry.date)
+    return entries[index:]
 
 
 def create_entries_from_balances(balances, date, source_account, direction,
@@ -288,7 +296,7 @@ def create_entries_from_balances(balances, date, source_account, direction,
         for position in account_balance.get_positions():
             postings.append(Posting(new_entry, account, position, None, None))
             cost = position.get_cost_position()
-            postings.append(Posting(new_entry, other_account, -cost, None, None))
+            postings.append(Posting(new_entry, source_account, -cost, None, None))
 
         new_entries.append(new_entry)
 
