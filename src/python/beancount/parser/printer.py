@@ -53,7 +53,7 @@ class EntryPrinter:
             amount_str, cost_str = '', ''
 
         price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
-                     if posting.price
+                     if posting.price is not None
                      else '')
 
         if print_balance:
