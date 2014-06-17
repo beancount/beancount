@@ -12,6 +12,8 @@ import collections
 from beancount.core.inventory import Inventory
 from beancount.core import realization
 from beancount.core import data
+from beancount.core import flags
+from beancount.core import compare
 from beancount.ops.pad import pad
 from beancount.core import realization
 from beancount.ops import summarize
@@ -165,40 +167,191 @@ class TestSummarization(cmptest.TestCase):
 #                           'Equity:Retained-Earnings': 'Inventory(-2000.00 USD)'})
 
 
+OPENING_ACCOUNT = 'Equity:Opening-Balances'
+
+INPUT_OPEN = """
+
+;; These should be preserved after summarization.
+2010-01-01 open  Assets:US:Chase:Checking
+2010-01-01 open  Assets:US:Chase:Savings
+2010-01-01 open  Assets:US:Investing:GOOG
+2010-01-01 open  Assets:CA:BMO:Checking
+2010-01-01 open  Liabilities:US:Chase:CreditCard
+2010-01-01 open  Income:US:Employer:Salary
+2010-01-01 open  Expenses:Taxes
+2010-01-01 open  Expenses:Restaurant
+2010-01-01 open  Expenses:Flights
+2010-01-01 open  Expenses:Internet
+
+"""
+
+INPUT_PRICES_REDUNDANT = """
+
+;; These prices are redundant; only the last price will be preserved after
+;; summarization.
+2010-02-01 price USD  1.10 CAD
+2010-03-01 price USD  1.11 CAD
+2010-04-01 price USD  1.12 CAD
+2010-05-01 price USD  1.13 CAD
+2010-08-01 price USD  1.14 CAD
+2010-10-01 price USD  1.15 CAD
+
+"""
+
+INPUT_PRICES_LAST = """
+
+;; This is the last price before the period, will be preserved.
+2010-12-01 price USD  1.16 CAD
+
+"""
+
+INPUT_BEFORE = """
+
+;; An account that gets closed before the period, should not appear in the
+;; output.
+
+2010-01-01 open  Assets:US:Temporary
+2010-11-22 close  Assets:US:Temporary
+
+2010-11-16 *
+  Income:US:Employer:Salary     5000 USD
+  Assets:US:Chase:Checking      3000 USD
+  Expenses:Taxes                2000 USD
+
+2010-11-20 * "First hit on credit card account"
+  Liabilities:US:Chase:CreditCard   -67.20 USD
+  Expenses:Restaurant
+
+2010-11-26 * "Second hit on credit card account (same account)"
+  Liabilities:US:Chase:CreditCard   -345.23 USD
+  Expenses:Flights
+
+2010-11-30 *
+  Assets:US:Chase:Checking      -80.02 USD
+  Expenses:Internet
+
+2010-12-05 * "Unit held at cost"
+  Assets:US:Investing:GOOG      5 GOOG {510.00 USD}
+  Assets:US:Chase:Checking    -2550 USD
+
+2010-12-05 * "Conversion"
+  Assets:US:Chase:Checking    -910 USD
+  Assets:CA:BMO:Checking      1000 CAD @ 0.91 USD
+
+2010-12-16 *
+  Income:US:Employer:Salary     5000 USD
+  Assets:US:Chase:Checking      3000 USD
+  Expenses:Taxes                2000 USD
+
+"""
+
+INPUT_PERIOD = """
+
+2011-02-01 price USD  1.17 CAD
+2011-04-01 price USD  1.18 CAD
+
+2011-01-16 *
+  Income:US:Employer:Salary     5000 USD
+  Assets:US:Chase:Checking      3000 USD
+  Expenses:Taxes                2000 USD
+
+2011-01-20 * "Dinner at Cull & Pistol"
+  Liabilities:US:Chase:CreditCard   -89.23 USD
+  Expenses:Restaurant
+
+2011-02-01 open  Assets:US:ETrade:Cash
+
+2011-02-16 *
+  Income:US:Employer:Salary     5000 USD
+  Assets:US:Chase:Checking      3000 USD
+  Expenses:Taxes                2000 USD
+
+"""
+
+# Join all the inputs.
+INPUT = (INPUT_OPEN +
+         INPUT_PRICES_REDUNDANT +
+         INPUT_PRICES_LAST +
+         INPUT_BEFORE +
+         INPUT_PERIOD)
+
+
 class TestSummarize(cmptest.TestCase):
+    def test_summarize__complete(self):
+        entries, errors, options_map = parser.parse_string(INPUT)
+        summarize_date = datetime.date(2011, 1, 1)
+        summarized_entries, index = summarize.summarize(entries, summarize_date, OPENING_ACCOUNT)
 
-    opening_account = 'Equity:Opening-Balances'
+        # Make sure all the active open entries have been preserved.
+        self.assertIncludesEntries(INPUT_OPEN, summarized_entries)
+        self.assertExcludesEntries(INPUT_BEFORE, summarized_entries)
+        self.assertExcludesEntries(INPUT_PRICES_REDUNDANT, summarized_entries)
+        self.assertIncludesEntries(INPUT_PRICES_LAST, summarized_entries)
+        self.assertIncludesEntries(INPUT_PERIOD, summarized_entries)
 
-    @parser.parsedoc
-    def test_summarize__complete(self, entries, _, __):
-        """
-        2010-01-01 open  Assets:US:Chase:Checking
-        2010-01-01 open  Assets:US:Temporary
-        2010-01-01 open  Liabilities:US:Chase:CreditCard
+        summarizing_entries = [entry
+                               for entry in summarized_entries
+                               if (isinstance(entry, data.Transaction) and
+                                   entry.flag == flags.FLAG_SUMMARIZE)]
+        self.assertEqualEntries("""
 
+        2010-12-31 S "Opening balance for 'Assets:CA:BMO:Checking' as of 2010-12-31 (Summarization)"
+          Assets:CA:BMO:Checking                                                1000.00 CAD
+          Equity:Opening-Balances                                              -1000.00 CAD
 
-        2010-11-22 close  Assets:US:Temporary
+        2010-12-31 S "Opening balance for 'Assets:US:Chase:Checking' as of 2010-12-31 (Summarization)"
+          Assets:US:Chase:Checking                                              2459.98 USD
+          Equity:Opening-Balances                                              -2459.98 USD
 
-        ;; ----------------------------------------
+        2010-12-31 S "Opening balance for 'Assets:US:Investing:GOOG' as of 2010-12-31 (Summarization)"
+          Assets:US:Investing:GOOG                                                5.00 GOOG     {510.00 USD}                  ;    2550.00 USD
+          Equity:Opening-Balances                                              -2550.00 USD                                   ;   -2550.00 USD
 
+        2010-12-31 S "Opening balance for 'Expenses:Flights' as of 2010-12-31 (Summarization)"
+          Expenses:Flights                                                       345.23 USD
+          Equity:Opening-Balances                                               -345.23 USD
 
+        2010-12-31 S "Opening balance for 'Expenses:Internet' as of 2010-12-31 (Summarization)"
+          Expenses:Internet                                                       80.02 USD
+          Equity:Opening-Balances                                                -80.02 USD
 
-        2012-02-01 open  Assets:US:ETrade:Cash
+        2010-12-31 S "Opening balance for 'Expenses:Restaurant' as of 2010-12-31 (Summarization)"
+          Expenses:Restaurant                                                     67.20 USD
+          Equity:Opening-Balances                                                -67.20 USD
 
+        2010-12-31 S "Opening balance for 'Expenses:Taxes' as of 2010-12-31 (Summarization)"
+          Expenses:Taxes                                                        4000.00 USD
+          Equity:Opening-Balances                                              -4000.00 USD
 
+        2010-12-31 S "Opening balance for 'Income:US:Employer:Salary' as of 2010-12-31 (Summarization)"
+          Income:US:Employer:Salary                                            10000.00 USD
+          Equity:Opening-Balances                                             -10000.00 USD
 
-        """
-        summarize.summarize(entries, date, self.opening_account)
+        2010-12-31 S "Opening balance for 'Liabilities:US:Chase:CreditCard' as of 2010-12-31 (Summarization)"
+          Liabilities:US:Chase:CreditCard                                       -412.43 USD
+          Equity:Opening-Balances                                                412.43 USD
 
+        """, summarizing_entries)
 
+        # Check that all the transactions before the index are summarizing ones
+        # and dated before the summarizing date.
+        before_transactions = [entry
+                               for entry in summarized_entries[:index]
+                               if isinstance(entry, data.Transaction)]
+        self.assertTrue(all(entry.flag == flags.FLAG_SUMMARIZE
+                            for entry in before_transactions))
+        self.assertTrue(all(entry.date < summarize_date
+                            for entry in before_transactions))
 
-
-
-
-
-
-
-
+        # Check that all the transactions after the index are not summarizing
+        # ones and dated after the summarizing date.
+        after_transactions = [entry
+                              for entry in summarized_entries[index:]
+                              if isinstance(entry, data.Transaction)]
+        self.assertFalse(any(entry.flag == flags.FLAG_SUMMARIZE
+                             for entry in after_transactions))
+        self.assertFalse(any(entry.date < summarize_date
+                             for entry in after_transactions))
 
 
 class TestConversions(cmptest.TestCase):
@@ -610,53 +763,6 @@ class TestOpenAtDate(cmptest.TestCase):
 #     return {real_account.account: str(real_account.balance.get_cost())
 #             for account_name, real_account in real_accounts.items()
 #             if real_account.account}
-
-
-
-
-
-
-DO_PRINT = object()
-
-def summarizedoc(date, other_account):
-
-    def summarizedoc_deco(fun):
-        """Decorator that parses, pads and summarizes, and realizes the function's
-        docstring as an argument."""
-        @functools.wraps(fun)
-        def newfun(self):
-            entries, parse_errors, options_map = parser.parse_string(
-                textwrap.dedent(fun.__doc__))
-            assert not parse_errors, parse_errors
-            entries, pad_errors = pad(entries)
-            assert not pad_errors, pad_errors
-
-            real_accounts = realization.realize(entries)
-
-            sum_entries, _ = summarize(entries, date, other_account)
-            sum_real_accounts = realization.realize(sum_entries)
-
-            # print('---')
-            # for entry in before: print(entry)
-            # print('---')
-            # for entry in after: print(entry)
-            # print('---')
-
-            result = None
-            try:
-                result = fun(self, entries, sum_entries, real_accounts, sum_real_accounts)
-            except AssertionError:
-                result = DO_PRINT
-                raise
-            finally:
-                if result is DO_PRINT:
-                    print("REAL")
-                    print(realization.dump_balances(real_accounts))
-                    print("SUM_REAL")
-                    print(realization.dump_balances(sum_real_accounts))
-
-        return newfun
-    return summarizedoc_deco
 
 
 

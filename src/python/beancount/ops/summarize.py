@@ -143,6 +143,17 @@ def transfer_balances(entries, date, account_pred, transfer_account):
     return (entries[:index] + transfer_entries + entries[index:])
 
 
+
+
+
+
+
+
+
+
+
+
+
 def summarize(entries, date, opening_account):
     """Summarize all the entries before date.
 
@@ -182,22 +193,13 @@ def summarize(entries, date, opening_account):
     # Gather the list of active open entries at date.
     open_entries = open_at_date(entries, date)
 
-    # We will preserve the entries after the date.
+    # Compute entries before hte date and preserve the entries after the date.
+    before_entries = open_entries + price_entries + summarizing_entries
     after_entries = [] if index is None else entries[index:]
 
     # Return a new list of entries and the index that points after the entries
     # were inserted.
-    return ((open_entries + price_entries + summarizing_entries + after_entries),
-            len(open_entries) + len(summarizing_entries))
-
-    # FIXME: I think there is an error here in the index calculation.
-
-
-
-
-
-
-
+    return (before_entries + after_entries), len(before_entries)
 
 
 def conversions(entries, conversion_account, date=None, transfer_currency=TRANSFER_CURRENCY):
