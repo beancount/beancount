@@ -100,6 +100,14 @@ def close(entries,
     return entries
 
 
+
+
+
+
+
+
+
+
 def transfer_balances(entries, date, account_pred, transfer_account):
     """For all accounts that match the 'account_pred' predicate, create new
     entries to transfer the balance at the given date 'date' from the account
@@ -135,21 +143,10 @@ def transfer_balances(entries, date, account_pred, transfer_account):
     transfer_entries = create_entries_from_balances(
         transfer_balances, transfer_date, transfer_account, False,
         data.FileLocation('<transfer_balances>', 0), flags.FLAG_TRANSFER,
-        "Transfer balance for '{account}' as of {date} (Transfer balance)")
+        "Transfer balance for '{account}' (Transfer balance)")
 
     # Split the new entries in a new list.
     return (entries[:index] + transfer_entries + entries[index:])
-
-
-
-
-
-
-
-
-
-
-
 
 
 def summarize(entries, date, opening_account):
@@ -184,7 +181,7 @@ def summarize(entries, date, opening_account):
     summarizing_entries = create_entries_from_balances(
         balances, summarize_date, opening_account, True,
         data.FileLocation('<summarize>', 0), flags.FLAG_SUMMARIZE,
-        "Opening balance for '{account}' as of {date} (Summarization)")
+        "Opening balance for '{account}' (Summarization)")
 
     # Insert the last price entry for each commodity from before the date.
     price_entries = prices.get_last_price_entries(entries, date)

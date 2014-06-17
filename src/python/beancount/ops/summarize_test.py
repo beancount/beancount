@@ -8,6 +8,7 @@ import datetime
 import textwrap
 import functools
 import collections
+import re
 
 from beancount.core.inventory import Inventory
 from beancount.core import realization
@@ -26,8 +27,114 @@ from beancount.utils import test_utils
 from beancount import loader
 
 
-OPENING_BALANCES = 'Equity:Opening-Balances'
-TRANSFER_BALANCES = 'Equity:Retained-Earnings'
+INPUT_OPEN = """
+
+;; These should be preserved after summarization.
+2010-01-01 open  Assets:US:Chase:Checking
+2010-01-01 open  Assets:US:Chase:Savings
+2010-01-01 open  Assets:US:Investing:GOOG
+2010-01-01 open  Assets:CA:BMO:Checking
+2010-01-01 open  Liabilities:US:Chase:CreditCard
+2010-01-01 open  Income:US:Employer:Salary
+2010-01-01 open  Expenses:Taxes
+2010-01-01 open  Expenses:Restaurant
+2010-01-01 open  Expenses:Flights
+2010-01-01 open  Expenses:Internet
+
+"""
+
+INPUT_PRICES_REDUNDANT = """
+
+;; These prices are redundant; only the last price will be preserved after
+;; summarization.
+2010-02-01 price USD  1.10 CAD
+2010-03-01 price USD  1.11 CAD
+2010-04-01 price USD  1.12 CAD
+2010-05-01 price USD  1.13 CAD
+2010-08-01 price USD  1.14 CAD
+2010-10-01 price USD  1.15 CAD
+
+"""
+
+INPUT_PRICES_LAST = """
+
+;; This is the last price before the period, will be preserved.
+2010-12-01 price USD  1.16 CAD
+
+"""
+
+INPUT_BEFORE = """
+
+;; An account that gets closed before the period, should not appear in the
+;; output.
+
+2010-01-01 open  Assets:US:Temporary
+2010-11-22 close  Assets:US:Temporary
+
+2010-11-16 *
+  Income:US:Employer:Salary    -5000 USD
+  Assets:US:Chase:Checking      3000 USD
+  Expenses:Taxes                2000 USD
+
+2010-11-20 * "First hit on credit card account"
+  Liabilities:US:Chase:CreditCard   -67.20 USD
+  Expenses:Restaurant
+
+2010-11-26 * "Second hit on credit card account (same account)"
+  Liabilities:US:Chase:CreditCard   -345.23 USD
+  Expenses:Flights
+
+2010-11-30 *
+  Assets:US:Chase:Checking      -80.02 USD
+  Expenses:Internet
+
+2010-12-05 * "Unit held at cost"
+  Assets:US:Investing:GOOG      5 GOOG {510.00 USD}
+  Assets:US:Chase:Checking    -2550 USD
+
+2010-12-05 * "Conversion"
+  Assets:US:Chase:Checking    -910 USD
+  Assets:CA:BMO:Checking      1000 CAD @ 0.91 USD
+
+2010-12-16 *
+  Income:US:Employer:Salary    -5000 USD
+  Assets:US:Chase:Checking      3000 USD
+  Expenses:Taxes                2000 USD
+
+"""
+
+INPUT_PERIOD = """
+
+2011-02-01 price USD  1.17 CAD
+2011-04-01 price USD  1.18 CAD
+
+2011-01-16 *
+  Income:US:Employer:Salary    -5000 USD
+  Assets:US:Chase:Checking      3000 USD
+  Expenses:Taxes                2000 USD
+
+2011-01-20 * "Dinner at Cull & Pistol"
+  Liabilities:US:Chase:CreditCard   -89.23 USD
+  Expenses:Restaurant
+
+2011-02-01 open  Assets:US:ETrade:Cash
+
+2011-02-16 *
+  Income:US:Employer:Salary    -5000 USD
+  Assets:US:Chase:Checking      3000 USD
+  Expenses:Taxes                2000 USD
+
+"""
+
+# Join all the inputs.
+INPUT = (INPUT_OPEN +
+         INPUT_PRICES_REDUNDANT +
+         INPUT_PRICES_LAST +
+         INPUT_BEFORE +
+         INPUT_PERIOD)
+
+
+
 
 class TestSummarization(cmptest.TestCase):
     pass
@@ -138,159 +245,124 @@ class TestSummarization(cmptest.TestCase):
 
 class TestTransferBalances(cmptest.TestCase):
 
-    @parser.parsedoc
-    def test_transfer_balances(self, entries, errors, options_map):
-        """
-          2011-01-01 open Assets:Checking
-          2011-01-01 open Income:Job
+    TRANSFER_ACCOUNT = 'Equity:Transfer'
 
-          2011-02-01 * "Salary"
-            Income:Job            -1000 USD
-            Assets:Checking        1000 USD
+    def setUp(self):
+        self.entries, errors, __ = parser.parse_string(INPUT)
+        self.assertFalse(errors)
 
-          2012-02-01 * "Salary Next year"
-            Income:Job            -1000 USD
-            Assets:Checking        1000 USD
-        """
-        pass
-        # Test with no entries.
-        # Test with date.
-        # Test without date (at end).
+    def test_transfer_balances__empty(self):
+        xfer_entries = summarize.transfer_balances(
+            [], datetime.date(2011, 1, 1),
+            lambda account: account.startswith('Assets:US:Chase'),
+            self.TRANSFER_ACCOUNT)
+        self.assertEqual([], xfer_entries)
 
+    def test_transfer_balances__middle_assets(self):
+        date = datetime.date(2011, 1, 1)
+        xfer_entries = summarize.transfer_balances(
+            self.entries, date,
+            lambda account: account.startswith('Assets:US:Chase'),
+            self.TRANSFER_ACCOUNT)
+        self.assertIncludesEntries(self.entries, xfer_entries)
+        self.assertIncludesEntries(""",
 
+        2010-12-31 T "Transfer balance for 'Assets:US:Chase:Checking' (Transfer balance)"
+          Assets:US:Chase:Checking                                             -2459.98 USD
+          Equity:Transfer                                                       2459.98 USD
 
-        # real_accounts = realization.realize(entries)
-        # self.assertEqual(real_cost_as_dict(real_accounts),
-        #                  {'Assets:Checking': 'Inventory(2000.00 USD)',
-        #                   'Income:Job': 'Inventory(-2000.00 USD)'})
+        """, xfer_entries)
+        self.assertEqual(len(self.entries) + 1, len(xfer_entries))
 
-        # tran_entries = transfer_balances(entries, date(2012, 6, 1),
-        #                                  is_income_statement_account, TRANSFER_BALANCES)
+    def test_transfer_balances__middle_at_cost(self):
+        date = datetime.date(2011, 1, 1)
+        xfer_entries = summarize.transfer_balances(
+            self.entries, date,
+            lambda account: account.startswith('Assets:US:Investing'),
+            self.TRANSFER_ACCOUNT)
+        self.assertIncludesEntries(self.entries, xfer_entries)
+        self.assertIncludesEntries(""",
 
-        # real_accounts = realization.realize(tran_entries)
-        # self.assertEqual(real_cost_as_dict(real_accounts),
-        #                  {'Assets:Checking': 'Inventory(2000.00 USD)',
-        #                   'Income:Job': 'Inventory()',
-        #                   'Equity:Retained-Earnings': 'Inventory(-2000.00 USD)'})
+        2010-12-31 T "Transfer balance for 'Assets:US:Investing:GOOG' (Transfer balance)"
+          Assets:US:Investing:GOOG                                               -5.00 GOOG     {510.00 USD}                  ;   -2550.00 USD
+          Equity:Transfer                                                       2550.00 USD                                   ;    2550.00 USD
 
+        """, xfer_entries)
+        self.assertEqual(len(self.entries) + 1, len(xfer_entries))
 
+    def test_transfer_balances__end_assets_implicit(self):
+        xfer_entries = summarize.transfer_balances(
+            self.entries, datetime.date(2011, 3, 1),
+            lambda account: account.startswith('Assets:US:Chase'),
+            self.TRANSFER_ACCOUNT)
+        self.assertIncludesEntries(self.entries, xfer_entries)
+        self.assertIncludesEntries(""",
 
+        2011-02-28 T "Transfer balance for 'Assets:US:Chase:Checking' (Transfer balance)"
+          Assets:US:Chase:Checking                                             -8459.98 USD
+          Equity:Transfer                                                       8459.98 USD
 
+        """, xfer_entries)
+        self.assertEqual(len(self.entries) + 1, len(xfer_entries))
 
-OPENING_ACCOUNT = 'Equity:Opening-Balances'
+    def test_transfer_balances__end_assets_explicit(self):
+        xfer_entries = summarize.transfer_balances(
+            self.entries, None,
+            lambda account: account.startswith('Assets:US:Chase'),
+            self.TRANSFER_ACCOUNT)
+        self.assertIncludesEntries(self.entries, xfer_entries)
+        self.assertIncludesEntries(""",
 
-INPUT_OPEN = """
+        2011-04-01 T "Transfer balance for 'Assets:US:Chase:Checking' (Transfer balance)"
+          Assets:US:Chase:Checking                                             -8459.98 USD
+          Equity:Transfer                                                       8459.98 USD
 
-;; These should be preserved after summarization.
-2010-01-01 open  Assets:US:Chase:Checking
-2010-01-01 open  Assets:US:Chase:Savings
-2010-01-01 open  Assets:US:Investing:GOOG
-2010-01-01 open  Assets:CA:BMO:Checking
-2010-01-01 open  Liabilities:US:Chase:CreditCard
-2010-01-01 open  Income:US:Employer:Salary
-2010-01-01 open  Expenses:Taxes
-2010-01-01 open  Expenses:Restaurant
-2010-01-01 open  Expenses:Flights
-2010-01-01 open  Expenses:Internet
+        """, xfer_entries)
+        self.assertEqual(len(self.entries) + 1, len(xfer_entries))
 
-"""
+    def test_transfer_balances__middle_income(self):
+        date = datetime.date(2011, 1, 1)
+        xfer_entries = summarize.transfer_balances(
+            self.entries, date,
+            lambda account: re.match('(Income|Expenses):', account),
+            self.TRANSFER_ACCOUNT)
+        self.assertIncludesEntries(self.entries, xfer_entries)
+        self.assertIncludesEntries(""",
 
-INPUT_PRICES_REDUNDANT = """
+        2010-12-31 T "Transfer balance for 'Expenses:Flights' (Transfer balance)"
+          Expenses:Flights                                                      -345.23 USD
+          Equity:Transfer                                                        345.23 USD
 
-;; These prices are redundant; only the last price will be preserved after
-;; summarization.
-2010-02-01 price USD  1.10 CAD
-2010-03-01 price USD  1.11 CAD
-2010-04-01 price USD  1.12 CAD
-2010-05-01 price USD  1.13 CAD
-2010-08-01 price USD  1.14 CAD
-2010-10-01 price USD  1.15 CAD
+        2010-12-31 T "Transfer balance for 'Expenses:Internet' (Transfer balance)"
+          Expenses:Internet                                                      -80.02 USD
+          Equity:Transfer                                                         80.02 USD
 
-"""
+        2010-12-31 T "Transfer balance for 'Expenses:Restaurant' (Transfer balance)"
+          Expenses:Restaurant                                                    -67.20 USD
+          Equity:Transfer                                                         67.20 USD
 
-INPUT_PRICES_LAST = """
+        2010-12-31 T "Transfer balance for 'Expenses:Taxes' (Transfer balance)"
+          Expenses:Taxes                                                       -4000.00 USD
+          Equity:Transfer                                                       4000.00 USD
 
-;; This is the last price before the period, will be preserved.
-2010-12-01 price USD  1.16 CAD
+        2010-12-31 T "Transfer balance for 'Income:US:Employer:Salary' (Transfer balance)"
+          Income:US:Employer:Salary                                            10000.00 USD
+          Equity:Transfer                                                     -10000.00 USD
 
-"""
-
-INPUT_BEFORE = """
-
-;; An account that gets closed before the period, should not appear in the
-;; output.
-
-2010-01-01 open  Assets:US:Temporary
-2010-11-22 close  Assets:US:Temporary
-
-2010-11-16 *
-  Income:US:Employer:Salary     5000 USD
-  Assets:US:Chase:Checking      3000 USD
-  Expenses:Taxes                2000 USD
-
-2010-11-20 * "First hit on credit card account"
-  Liabilities:US:Chase:CreditCard   -67.20 USD
-  Expenses:Restaurant
-
-2010-11-26 * "Second hit on credit card account (same account)"
-  Liabilities:US:Chase:CreditCard   -345.23 USD
-  Expenses:Flights
-
-2010-11-30 *
-  Assets:US:Chase:Checking      -80.02 USD
-  Expenses:Internet
-
-2010-12-05 * "Unit held at cost"
-  Assets:US:Investing:GOOG      5 GOOG {510.00 USD}
-  Assets:US:Chase:Checking    -2550 USD
-
-2010-12-05 * "Conversion"
-  Assets:US:Chase:Checking    -910 USD
-  Assets:CA:BMO:Checking      1000 CAD @ 0.91 USD
-
-2010-12-16 *
-  Income:US:Employer:Salary     5000 USD
-  Assets:US:Chase:Checking      3000 USD
-  Expenses:Taxes                2000 USD
-
-"""
-
-INPUT_PERIOD = """
-
-2011-02-01 price USD  1.17 CAD
-2011-04-01 price USD  1.18 CAD
-
-2011-01-16 *
-  Income:US:Employer:Salary     5000 USD
-  Assets:US:Chase:Checking      3000 USD
-  Expenses:Taxes                2000 USD
-
-2011-01-20 * "Dinner at Cull & Pistol"
-  Liabilities:US:Chase:CreditCard   -89.23 USD
-  Expenses:Restaurant
-
-2011-02-01 open  Assets:US:ETrade:Cash
-
-2011-02-16 *
-  Income:US:Employer:Salary     5000 USD
-  Assets:US:Chase:Checking      3000 USD
-  Expenses:Taxes                2000 USD
-
-"""
-
-# Join all the inputs.
-INPUT = (INPUT_OPEN +
-         INPUT_PRICES_REDUNDANT +
-         INPUT_PRICES_LAST +
-         INPUT_BEFORE +
-         INPUT_PERIOD)
+        """, xfer_entries)
+        self.assertEqual(len(self.entries) + 5, len(xfer_entries))
 
 
 class TestSummarize(cmptest.TestCase):
+
+    OPENING_ACCOUNT = 'Equity:Opening-Balances'
+
     def test_summarize__complete(self):
         entries, errors, options_map = parser.parse_string(INPUT)
+        self.assertFalse(errors)
         summarize_date = datetime.date(2011, 1, 1)
-        summarized_entries, index = summarize.summarize(entries, summarize_date, OPENING_ACCOUNT)
+        summarized_entries, index = summarize.summarize(entries, summarize_date,
+                                                        self.OPENING_ACCOUNT)
 
         # Make sure all the active open entries have been preserved.
         self.assertIncludesEntries(INPUT_OPEN, summarized_entries)
@@ -305,39 +377,39 @@ class TestSummarize(cmptest.TestCase):
                                    entry.flag == flags.FLAG_SUMMARIZE)]
         self.assertEqualEntries("""
 
-        2010-12-31 S "Opening balance for 'Assets:CA:BMO:Checking' as of 2010-12-31 (Summarization)"
+        2010-12-31 S "Opening balance for 'Assets:CA:BMO:Checking' (Summarization)"
           Assets:CA:BMO:Checking                                                1000.00 CAD
           Equity:Opening-Balances                                              -1000.00 CAD
 
-        2010-12-31 S "Opening balance for 'Assets:US:Chase:Checking' as of 2010-12-31 (Summarization)"
+        2010-12-31 S "Opening balance for 'Assets:US:Chase:Checking' (Summarization)"
           Assets:US:Chase:Checking                                              2459.98 USD
           Equity:Opening-Balances                                              -2459.98 USD
 
-        2010-12-31 S "Opening balance for 'Assets:US:Investing:GOOG' as of 2010-12-31 (Summarization)"
+        2010-12-31 S "Opening balance for 'Assets:US:Investing:GOOG' (Summarization)"
           Assets:US:Investing:GOOG                                                5.00 GOOG     {510.00 USD}                  ;    2550.00 USD
           Equity:Opening-Balances                                              -2550.00 USD                                   ;   -2550.00 USD
 
-        2010-12-31 S "Opening balance for 'Expenses:Flights' as of 2010-12-31 (Summarization)"
+        2010-12-31 S "Opening balance for 'Expenses:Flights' (Summarization)"
           Expenses:Flights                                                       345.23 USD
           Equity:Opening-Balances                                               -345.23 USD
 
-        2010-12-31 S "Opening balance for 'Expenses:Internet' as of 2010-12-31 (Summarization)"
+        2010-12-31 S "Opening balance for 'Expenses:Internet' (Summarization)"
           Expenses:Internet                                                       80.02 USD
           Equity:Opening-Balances                                                -80.02 USD
 
-        2010-12-31 S "Opening balance for 'Expenses:Restaurant' as of 2010-12-31 (Summarization)"
+        2010-12-31 S "Opening balance for 'Expenses:Restaurant' (Summarization)"
           Expenses:Restaurant                                                     67.20 USD
           Equity:Opening-Balances                                                -67.20 USD
 
-        2010-12-31 S "Opening balance for 'Expenses:Taxes' as of 2010-12-31 (Summarization)"
+        2010-12-31 S "Opening balance for 'Expenses:Taxes' (Summarization)"
           Expenses:Taxes                                                        4000.00 USD
           Equity:Opening-Balances                                              -4000.00 USD
 
-        2010-12-31 S "Opening balance for 'Income:US:Employer:Salary' as of 2010-12-31 (Summarization)"
-          Income:US:Employer:Salary                                            10000.00 USD
-          Equity:Opening-Balances                                             -10000.00 USD
+        2010-12-31 S "Opening balance for 'Income:US:Employer:Salary' (Summarization)"
+          Income:US:Employer:Salary                                           -10000.00 USD
+          Equity:Opening-Balances                                              10000.00 USD
 
-        2010-12-31 S "Opening balance for 'Liabilities:US:Chase:CreditCard' as of 2010-12-31 (Summarization)"
+        2010-12-31 S "Opening balance for 'Liabilities:US:Chase:CreditCard' (Summarization)"
           Liabilities:US:Chase:CreditCard                                       -412.43 USD
           Equity:Opening-Balances                                                412.43 USD
 
@@ -365,6 +437,8 @@ class TestSummarize(cmptest.TestCase):
 
 
 class TestConversions(cmptest.TestCase):
+
+    ACCOUNT = 'Equity:Conversions'
 
     @parser.parsedoc
     def setUp(self, entries, _, __):
@@ -394,8 +468,8 @@ class TestConversions(cmptest.TestCase):
         self.entries = entries
 
     def test_conversions__empty(self):
-        date =datetime.date(2012, 2, 1)
-        conversion_entries = summarize.conversions(self.entries, 'Equity:Conversions', date)
+        date = datetime.date(2012, 2, 1)
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, date)
         self.assertEqualEntries(self.entries, conversion_entries)
 
         converted_balance = realization.compute_entries_balance(conversion_entries, date=date)
@@ -403,7 +477,7 @@ class TestConversions(cmptest.TestCase):
 
     def test_conversions__not_needed(self):
         date = datetime.date(2012, 3, 2)
-        conversion_entries = summarize.conversions(self.entries, 'Equity:Conversions', date)
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, date)
         self.assertEqualEntries(self.entries, conversion_entries)
 
         converted_balance = realization.compute_entries_balance(conversion_entries, date=date)
@@ -411,7 +485,7 @@ class TestConversions(cmptest.TestCase):
 
     def test_conversions__needed_middle(self):
         date = datetime.date(2012, 3, 3)
-        conversion_entries = summarize.conversions(self.entries, 'Equity:Conversions', date)
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, date)
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
@@ -426,7 +500,7 @@ class TestConversions(cmptest.TestCase):
 
     def test_conversions__with_transactions_at_cost(self):
         date = datetime.date(2012, 3, 10)
-        conversion_entries = summarize.conversions(self.entries, 'Equity:Conversions', date,
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, date,
                                                    transfer_currency='XFER')
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
@@ -442,7 +516,7 @@ class TestConversions(cmptest.TestCase):
 
     def test_conversions__multiple(self):
         date = datetime.date(2012, 5, 10)
-        conversion_entries = summarize.conversions(self.entries, 'Equity:Conversions', date)
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, date)
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
@@ -456,7 +530,7 @@ class TestConversions(cmptest.TestCase):
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__no_date(self):
-        conversion_entries = summarize.conversions(self.entries, 'Equity:Conversions')
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT)
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
@@ -789,4 +863,5 @@ class TestOpenAtDate(cmptest.TestCase):
 
 
 
+# FIXME: Add note to summarize entries before and during.
 __incomplete__ = True
