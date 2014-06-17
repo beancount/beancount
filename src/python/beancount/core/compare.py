@@ -121,3 +121,24 @@ def includes_entries(subset_entries, entries):
     missing = sorted([subset_hashes[key] for key in subset_keys - keys],
                      key=entry_sortkey)
     return (includes, missing)
+
+
+def excludes_entries(subset_entries, entries):
+    """Check that a list of entries does not appear in another list.
+
+    Args:
+      subset_entries: The set of entries to look for in 'entries'.
+      entries: The larger list of entries that should not include 'subset_entries'.
+    Returns:
+      A boolean and a list of entries that are not supposed to appear.
+    """
+    subset_hashes = hash_entries(subset_entries)
+    subset_keys = set(subset_hashes.keys())
+    hashes = hash_entries(entries)
+    keys = set(hashes.keys())
+
+    intersection = keys.intersection(subset_keys)
+    excludes = not bool(intersection)
+    extra = sorted([subset_hashes[key] for key in intersection],
+                   key=entry_sortkey)
+    return (excludes, extra)
