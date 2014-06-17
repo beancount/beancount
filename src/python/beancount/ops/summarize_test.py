@@ -31,7 +31,6 @@ INPUT_OPEN = """
 
 ;; These should be preserved after summarization.
 2010-01-01 open  Assets:US:Chase:Checking
-2010-01-01 open  Assets:US:Chase:Savings
 2010-01-01 open  Assets:US:Investing:GOOG
 2010-01-01 open  Assets:CA:BMO:Checking
 2010-01-01 open  Liabilities:US:Chase:CreditCard
@@ -117,7 +116,11 @@ INPUT_PERIOD = """
   Liabilities:US:Chase:CreditCard   -89.23 USD
   Expenses:Restaurant
 
-2011-02-01 open  Assets:US:ETrade:Cash
+2011-02-01 open  Assets:Cash
+
+2011-02-02 * "Cafe Mogador"
+  Expenses:Restaurant      37.92 USD
+  Assets:Cash
 
 2011-02-16 *
   Income:US:Employer:Salary    -5000 USD
@@ -126,121 +129,19 @@ INPUT_PERIOD = """
 
 """
 
+INPUT_PERIOD_REMOVED = """
+
+2011-03-15 balance Assets:US:Chase:Checking    8459.98 USD
+
+"""
+
 # Join all the inputs.
 INPUT = (INPUT_OPEN +
          INPUT_PRICES_REDUNDANT +
          INPUT_PRICES_LAST +
          INPUT_BEFORE +
-         INPUT_PERIOD)
-
-
-
-
-class TestSummarization(cmptest.TestCase):
-    pass
-
-#    @summarizedoc(date(2012, 1, 1), OPENING_BALANCES)
-#    def test_sum_basic(self, entries, sum_entries, real_accounts, sum_real_accounts):
-#        """
-#          2011-01-01 open Assets:Checking
-#
-#          2011-01-01 open Income:Job
-#
-#          2011-02-01 * "Salary"
-#            Income:Job            -1000 USD
-#            Assets:Checking        1000 USD
-#
-#          2012-02-01 * "Salary Next year"
-#            Income:Job            -1000 USD
-#            Assets:Checking        1000 USD
-#        """
-#        print('-' * 80)
-#        for x in real_accounts: print(x)
-#
-#        print('-' * 80)
-#        for x in sum_real_accounts: print(x)
-#
-#        print('-' * 80)
-#        for e in sum_real_accounts[OPENING_BALANCES]:
-#            print(type(e))
-#            for posting in e.postings:
-#                print(posting)
-#
-#        # self.assertTrue(compare_realizations(real_accounts, sum_real_accounts))
-#        # self.assertTrue(sum_real_accounts[OPENING_BALANCES].postings)
-
-#     @summarizedoc(date(2012, 1, 1), OPENING_BALANCES)
-#     def test_with_conversions(self, entries, sum_entries, real_accounts,
-#                               sum_real_accounts):
-#         """
-#           2011-01-01 open Assets:Checking
-#
-#           2011-01-01 open Income:Job
-#
-#           2011-02-01 * "Salary"
-#             Income:Job            -1000 USD
-#             Assets:Checking        1000 USD
-#
-#           2011-02-15 * "Conversion"
-#             Assets:Checking       -1000 USD
-#             Assets:Checking        1000 CAD @ 1 USD
-#         """
-#         self.assertTrue(compare_realizations(real_accounts, sum_real_accounts))
-#         self.assertTrue(sum_real_accounts[OPENING_BALANCES].postings)
-#
-#
-#     @summarizedoc(date(2012, 1, 1), OPENING_BALANCES)
-#     def test_limit_date(self, entries, sum_entries, real_accounts, sum_real_accounts):
-#         """
-#           2011-01-01 open Assets:Checking
-#           2011-01-01 open Income:Job
-#
-#           2011-06-01 * "Salary"
-#             Income:Job            -1000 USD
-#             Assets:Checking        1000 USD
-#
-#           2012-01-01 balance Assets:Checking  1000 USD
-#         """
-#         self.assertTrue(compare_realizations(real_accounts, sum_real_accounts))
-#         self.assertTrue(sum_real_accounts[OPENING_BALANCES].postings)
-#
-#     @parsedoc
-#     def test_transfer_and_summarization(self, entries, errors, options_map):
-#         """
-#           2011-01-01 open Assets:Checking
-#           2011-01-01 open Income:Job
-#           2011-01-01 open Expenses:Restaurant
-#
-#           2011-06-01 * "Salary"
-#             Income:Job            -1000 USD
-#             Assets:Checking        1000 USD
-#
-#           2011-06-02 * "Eating out"
-#             Expenses:Restaurant      80 USD
-#             Assets:Checking
-#
-#           2012-01-01 balance Assets:Checking  920 USD
-#
-#           2012-06-01 * "Salary"
-#             Income:Job            -1000 USD
-#             Assets:Checking        1000 USD
-#         """
-#
-#         entries, pad_errors = pad(entries)
-#
-#         report_date = date(2012, 1, 1)
-#         tran_entries = transfer_balances(entries, report_date,
-#                                          is_income_statement_account, TRANSFER_BALANCES)
-#
-#         sum_entries, _ = summarize(tran_entries, report_date, OPENING_BALANCES)
-#         real_accounts = realization.realize(sum_entries)
-#
-#         self.assertEqual(real_cost_as_dict(real_accounts),
-#                          {'Assets:Checking': 'Inventory(1920.00 USD)',
-#                           'Equity:Opening-Balancess': 'Inventory()',
-#                           'Equity:Retained-Earnings': 'Inventory(-920.00 USD)',
-#                           'Expenses:Restaurant': 'Inventory()',
-#                           'Income:Job': 'Inventory(-1000.00 USD)'})
+         INPUT_PERIOD +
+         INPUT_PERIOD_REMOVED)
 
 
 class TestTransferBalances(cmptest.TestCase):
@@ -248,7 +149,8 @@ class TestTransferBalances(cmptest.TestCase):
     TRANSFER_ACCOUNT = 'Equity:Transfer'
 
     def setUp(self):
-        self.entries, errors, __ = parser.parse_string(INPUT)
+        self.entries, errors, __ = loader.load(INPUT, parse_method='string')
+        printer.print_errors(errors)
         self.assertFalse(errors)
 
     def test_transfer_balances__empty(self):
@@ -264,7 +166,11 @@ class TestTransferBalances(cmptest.TestCase):
             self.entries, date,
             lambda account: account.startswith('Assets:US:Chase'),
             self.TRANSFER_ACCOUNT)
-        self.assertIncludesEntries(self.entries, xfer_entries)
+        self.assertIncludesEntries((INPUT_OPEN +
+                                    INPUT_PRICES_REDUNDANT +
+                                    INPUT_PRICES_LAST +
+                                    INPUT_BEFORE +
+                                    INPUT_PERIOD), xfer_entries)
         self.assertIncludesEntries(""",
 
         2010-12-31 T "Transfer balance for 'Assets:US:Chase:Checking' (Transfer balance)"
@@ -272,7 +178,7 @@ class TestTransferBalances(cmptest.TestCase):
           Equity:Transfer                                                       2459.98 USD
 
         """, xfer_entries)
-        self.assertEqual(len(self.entries) + 1, len(xfer_entries))
+        self.assertEqual(len(self.entries) + 1 - 1, len(xfer_entries))
 
     def test_transfer_balances__middle_at_cost(self):
         date = datetime.date(2011, 1, 1)
@@ -295,7 +201,11 @@ class TestTransferBalances(cmptest.TestCase):
             self.entries, datetime.date(2011, 3, 1),
             lambda account: account.startswith('Assets:US:Chase'),
             self.TRANSFER_ACCOUNT)
-        self.assertIncludesEntries(self.entries, xfer_entries)
+        self.assertIncludesEntries((INPUT_OPEN +
+                                    INPUT_PRICES_REDUNDANT +
+                                    INPUT_PRICES_LAST +
+                                    INPUT_BEFORE +
+                                    INPUT_PERIOD), xfer_entries)
         self.assertIncludesEntries(""",
 
         2011-02-28 T "Transfer balance for 'Assets:US:Chase:Checking' (Transfer balance)"
@@ -303,7 +213,7 @@ class TestTransferBalances(cmptest.TestCase):
           Equity:Transfer                                                       8459.98 USD
 
         """, xfer_entries)
-        self.assertEqual(len(self.entries) + 1, len(xfer_entries))
+        self.assertEqual(len(self.entries) + 1 - 1, len(xfer_entries))
 
     def test_transfer_balances__end_assets_explicit(self):
         xfer_entries = summarize.transfer_balances(

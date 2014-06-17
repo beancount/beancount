@@ -18,6 +18,7 @@ from beancount.core import flags
 from beancount.core import realization
 from beancount.core.account_types import is_income_statement_account
 from beancount.ops import prices
+from beancount.ops import balance
 from beancount.utils import bisect_key
 
 
@@ -109,19 +110,30 @@ def close(entries,
 
 
 def transfer_balances(entries, date, account_pred, transfer_account):
-    """For all accounts that match the 'account_pred' predicate, create new
-    entries to transfer the balance at the given date 'date' from the account
-    to the transfer account. Return a new list of entries, with the new
-    transfer entries added in.
+    """Synthesize transactions to transfer balances from some accounts at a given date.
 
-    This is used to transfer balances from income and expenses from a previous
-    period to a "retained earnings" account. This is accomplished by creating
-    new entries (like every other kind of safe manipulation of entry lists).
+    For all accounts that match the 'account_pred' predicate, create new entries
+    to transfer the balance at the given date from the account to the transfer
+    account. This is used to transfer balances from income and expenses from a
+    previous period to a "retained earnings" account. This is accomplished by
+    creating new entries.
 
-    (Note that inserting transfers breaks any Checks that are in the touched
-    accounts. This is basically to be used only on accounts without checks, such
-    as Income or Expense.)
+    Note that inserting transfers breaks any following balance checks that are
+    in the tranferred accounts. For this reason, all balance assertion entries
+    following the cutoff date for those accounts are removed from the list in
+    output.
+
+    Args:
+      entries: A list of directives.
+      date: A datetime.date instance, the date at which to make the transfer.
+      account_pred: A predicate function that, given an account string, returns
+        true if the account is meant to be transferred.
+      transfer_account: A string, the name of the source account to be used on
+        the transfer entries to receive balances at the given date.
+    Returns:
+      A new list of entries, with the new transfer entries added in.
     """
+    # Don't bother doing anything if there are no entries.
     if not entries:
         return entries
 
@@ -145,31 +157,39 @@ def transfer_balances(entries, date, account_pred, transfer_account):
         data.FileLocation('<transfer_balances>', 0), flags.FLAG_TRANSFER,
         "Transfer balance for '{account}' (Transfer balance)")
 
+    # Remove balance assertions that occur after a transfer on an account that
+    # has been transferred away; they would break.
+    after_entries = [entry
+                     for entry in entries[index:]
+                     if not (isinstance(entry, balance.Balance) and
+                             entry.account in transfer_balances)]
+
     # Split the new entries in a new list.
-    return (entries[:index] + transfer_entries + entries[index:])
+    return (entries[:index] + transfer_entries + after_entries)
 
 
 def summarize(entries, date, opening_account):
-    """Summarize all the entries before date.
+    """Summarize all entries before a date by replacing then with summarization entries.
 
     This function replaces the transactions up to (and not including) the given
-    date with a single opening balance transaction, for each account. It returns
-    new entries, all of the ones before the given date having been replaced by a
-    few summarization entries, one for each account. (You can then "realize"
-    that as a second step if desired.)
+    date with a opening balance transactions, one for each account. It returns
+    new entries, all of the transactions before the given date having been
+    replaced by a few summarization entries, one for each account.
 
-    The function returns two lists:
+    Notes:
+    - Open entries are preserved for active accounts.
+    - The last relevant price entry for each (base, quote) pair is preserved.
+    - All other entries before the cutoff date are culled.
 
-    - A list of Open entries and transactions that establish the new balance
-      right before the given date;
-    - A list of all the entries that follow.
-
-    You can simply contatenate the two lists to obtain the final balance sheet
-    entries. Using the first list only allows you to draw up the beginning
-    balance sheet if desired.
-
+    Args:
+      entries: A list of directives.
+      date: A datetime.date instance, the cutoff date before which to summararize.
+      opening_account: A string, the name of the source account to book summarization
+        entries against.
+    Returns:
+      The function returns a list of new entries and the integer index at which
+      the entries on or after the cutoff date begin.
     """
-
     # Compute balances at date.
     balances, index = balance_by_account(entries, date)
 

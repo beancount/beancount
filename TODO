@@ -367,6 +367,11 @@ beancount: TODO
   I clean this up and put it in the sections below. Please excuse the mess.)
 
 
+  - Look at Intuit's service for financial hub for financial data. Look for a
+    developer account.
+
+  - Do a presentation at meetup... Yodlee is in NY, might make sense.
+
 
   - New plugin: clean_payees, that processes the payee strings and cleans them
     up for display. How well can we do?
