@@ -138,7 +138,7 @@ class TestSummarization(cmptest.TestCase):
 
 class TestTransferBalances(cmptest.TestCase):
 
-    @parsedoc
+    @parser.parsedoc
     def test_transfer_balances(self, entries, errors, options_map):
         """
           2011-01-01 open Assets:Checking
@@ -604,7 +604,7 @@ class TestBalanceByAccount(cmptest.TestCase):
     def test_balance_by_account__no_end_date(self):
         # Test with no end date.
         balances, index = summarize.balance_by_account(self.entries)
-        self.assertTrue(index is None)
+        self.assertEqual(len(self.entries), index)
         self.assertEqual({
             'Assets:AccountA': Inventory.from_string('11 USD'),
             'Equity:OpeningBalances': Inventory.from_string('-23 USD'),

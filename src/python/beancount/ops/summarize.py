@@ -349,6 +349,8 @@ def balance_by_account(entries, date=None):
                 # entries are filtered, at least for a particular account's
                 # postings.
                 account_balance.add_position(posting.position, True)
+    else:
+        index = len(entries)
 
     return balances, index
 
