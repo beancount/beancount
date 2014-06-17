@@ -27,6 +27,21 @@ from beancount.utils import test_utils
 from beancount import loader
 
 
+class TestClamp(cmptest.TestCase):
+
+    @parser.parsedoc
+    def test_close(self, entries, errors, options_map):
+        """
+        """
+
+
+        # Cehck empty balance
+
+
+
+
+
+
 class TestClose(cmptest.TestCase):
 
     @parser.parsedoc

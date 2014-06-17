@@ -29,55 +29,63 @@ TRANSFER_CURRENCY = 'NOTHING'
 
 def clamp(entries, begin_date, end_date,
           account_types,
-          account_previous_earnings,
-          account_previous_balances,
-          account_previous_conversions):
-    """Filter entries to include only those between begin and end dates.
+          account_earnings,
+          account_opening,
+          account_conversions):
+    """Filter entries to include only those during a specified time period.
+
+    Firstly, this method will transfer all balances for the income and expense
+    accounts occurring before the given period begin date to the
+    'account_earnings' account (earnings before the period, or "retained
+    earnings") and summarize all of the transactions before that date against
+    the 'account_opening' account (usually "opening balances"). The resulting
+    income and expense accounts should have no transactions (since their
+    balances have been transferred out and summarization of zero balances should
+    not add any transactions).
+
+    Secondly, all the entries after the period end date will be truncated and a
+    conversion entry will be added for the resulting transactions that reflect
+    changes occurring between the beginning and end of the exercise period. The
+    resulting balance of all account should be empty.
 
     Args:
       entries: A list of directive tuples.
       begin_date: A datetime.date instance, the beginning of the period.
       end_date: A datetime.date instance, one day beyond the end of the period.
       account_types: An instance of AccountTypes.
-      account_previous_earnings: A string, the name of the account to transfer
+      account_earnings: A string, the name of the account to transfer
         previous earnings from the income statement accounts to the balance
         sheet.
-      account_previous_balances: A string, the name of the account in equity
+      account_opening: A string, the name of the account in equity
         to transfer previous balances from, in order to initialize account
         balances at the beginning of the period. This is typically called an
         opening balances account.
-      account_previous_conversions: A string, tne name of the equity account to
+      account_conversions: A string, tne name of the equity account to
         book currency conversions against.
 
-    This routine performs the standard procedure required to produce reports
-    only for entries between two dates. That is, it
-
-    - transfers the income and expense balances to a "previous retained
-      earnings" account,
-    - summarizes all the entries before the begin date to an "opening balances"
-      account
-    - truncates the entries to only those before the end date.
-
-    A new list of entries is returned, and the index that points to the first
-    original transaction (this is used to create the opening balances report,
-    i.e., the balance sheet with only the summarized entries).
+    Returns:
+      A new list of entries is returned, and the index that points to the first
+      original transaction after the beginning date of the period. This index
+      can be used to generate the opening balances report, which is a balance
+      sheet fed with only the summarized entries.
     """
 
+    # Transfer income and expenses before the period to equity.
     income_statement_account_pred = (
         lambda account: is_income_statement_account(account, account_types))
-
-    # Transfer income and expenses before the period to equity.
     entries = transfer_balances(entries, begin_date,
-                                income_statement_account_pred, account_previous_earnings)
+                                income_statement_account_pred, account_earnings)
 
-    # Summarize all the previous balances.
-    entries, index = summarize(entries, begin_date, account_previous_balances)
+    # Summarize all the previous balances, after transferring the income and
+    # expense balances, so all entries for those accounts before the begin date
+    # should now disappear.
+    entries, index = summarize(entries, begin_date, account_opening)
 
     # Truncate the entries after this.
     entries = truncate(entries, end_date)
 
     # Insert conversion entries.
-    entries = conversions(entries, account_previous_conversions, begin_date)
+    entries = conversions(entries, account_conversions, begin_date)
 
     return entries, index
 
@@ -179,7 +187,7 @@ def transfer_balances(entries, date, account_pred, transfer_account):
     return (entries[:index] + transfer_entries + after_entries)
 
 
-def summarize(entries, date, opening_account):
+def summarize(entries, date, account_opening):
     """Summarize all entries before a date by replacing then with summarization entries.
 
     This function replaces the transactions up to (and not including) the given
@@ -195,7 +203,7 @@ def summarize(entries, date, opening_account):
     Args:
       entries: A list of directives.
       date: A datetime.date instance, the cutoff date before which to summararize.
-      opening_account: A string, the name of the source account to book summarization
+      account_opening: A string, the name of the source account to book summarization
         entries against.
     Returns:
       The function returns a list of new entries and the integer index at which
@@ -210,7 +218,7 @@ def summarize(entries, date, opening_account):
 
     # Create summarization / opening balance entries.
     summarizing_entries = create_entries_from_balances(
-        balances, summarize_date, opening_account, True,
+        balances, summarize_date, account_opening, True,
         data.FileLocation('<summarize>', 0), flags.FLAG_SUMMARIZE,
         "Opening balance for '{account}' (Summarization)")
 
@@ -288,7 +296,8 @@ def truncate(entries, date):
     Returns:
       A truncated list of directives.
     """
-    index = bisect_key.bisect_left_with_key(entries, date, key=lambda entry: entry.date)
+    index = bisect_key.bisect_left_with_key(entries, date,
+                                            key=lambda entry: entry.date)
     return entries[index:]
 
 
