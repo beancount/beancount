@@ -82,31 +82,42 @@ def clamp(entries, begin_date, end_date,
     return entries, index
 
 
+
+
+
+
+
+
 def close(entries,
           account_types,
-          account_current_earnings,
-          account_current_conversions):
-    """Transfer net income to equity and insert a final conversion entry."""
+          account_earnings,
+          account_conversions):
+    """Transfer net income to equity and insert a final conversion entry.
 
+    Args:
+      entries: A list of directives.
+      account_types: An instance of AccountTypes.
+      account_earnings: A string, the name of the equity account to transfer
+        final balances of the income and expense accounts to.
+      account_conversions: A string, the name of the equity account to use as
+        the source for currency conversions.
+    Returns:
+      A modified list of entries, with the income and expense accounts
+      transferred..
+    """
+
+    # Transfer the balances of income and expense accounts as earnings / net
+    # income.
     income_statement_account_pred = (
         lambda account: is_income_statement_account(account, account_types))
-
-    # Transfer the balances as net-income.
     entries = transfer_balances(entries, None,
-                                income_statement_account_pred, account_current_earnings)
+                                income_statement_account_pred,
+                                account_earnings)
 
     # Insert final conversion entries.
-    entries = conversions(entries, account_current_conversions, None)
+    entries = conversions(entries, account_conversions, None)
 
     return entries
-
-
-
-
-
-
-
-
 
 
 def transfer_balances(entries, date, account_pred, transfer_account):

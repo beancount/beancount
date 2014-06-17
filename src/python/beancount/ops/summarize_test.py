@@ -27,6 +27,46 @@ from beancount.utils import test_utils
 from beancount import loader
 
 
+class TestClose(cmptest.TestCase):
+
+    @parser.parsedoc
+    def test_close(self, entries, errors, options_map):
+        """
+        2014-03-01 * "Some income and expense"
+          Income:Salary        10000 USD
+          Expenses:Taxes        3500 USD
+          Assets:US:Checking
+
+        2014-02-01 * "Some conversion"
+          Assets:US:Checking   -5000 USD @ 1.2 CAD
+          Assets:CA:Checking    6000 CAD
+        """
+        printer.print_errors(errors)
+        self.assertFalse(errors)
+        account_types = options.get_account_types(options_map)
+        closed_entries = summarize.close(entries, account_types,
+                                         'Equity:Earnings',
+                                         'Equity:Conversions')
+
+        self.assertIncludesEntries(entries, closed_entries)
+        self.assertIncludesEntries("""
+
+        2014-03-01 T "Transfer balance for 'Expenses:Taxes' (Transfer balance)"
+          Expenses:Taxes       -3500.00 USD
+          Equity:Earnings       3500.00 USD
+
+        2014-03-01 T "Transfer balance for 'Income:Salary' (Transfer balance)"
+          Income:Salary       -10000.00 USD
+          Equity:Earnings      10000.00 USD
+
+        2014-03-01 C "Conversion for Inventory(-5000.00 USD, 6000.00 CAD)"
+          Equity:Conversions    5000.00 USD @ 0.00 NOTHING
+          Equity:Conversions   -6000.00 CAD @ 0.00 NOTHING
+
+        """, closed_entries)
+        self.assertEqual(5, len(closed_entries))
+
+
 INPUT_OPEN = """
 
 ;; These should be preserved after summarization.
