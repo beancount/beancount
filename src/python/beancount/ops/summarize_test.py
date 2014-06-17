@@ -165,6 +165,33 @@ class TestSummarization(cmptest.TestCase):
 #                           'Equity:Retained-Earnings': 'Inventory(-2000.00 USD)'})
 
 
+class TestSummarize(cmptest.TestCase):
+
+    opening_account = 'Equity:Opening-Balances'
+
+    @parser.parsedoc
+    def test_summarize__complete(self, entries, _, __):
+        """
+        2010-01-01 open  Assets:US:Chase:Checking
+        2010-01-01 open  Assets:US:Temporary
+        2010-01-01 open  Liabilities:US:Chase:CreditCard
+
+
+        2010-11-22 close  Assets:US:Temporary
+
+        ;; ----------------------------------------
+
+
+
+        2012-02-01 open  Assets:US:ETrade:Cash
+
+
+
+        """
+        summarize.summarize(entries, date, self.opening_account)
+
+
+
 
 
 

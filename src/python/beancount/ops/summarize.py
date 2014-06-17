@@ -21,6 +21,11 @@ from beancount.ops import prices
 from beancount.utils import bisect_key
 
 
+# The imaginary currency used to convert all units for conversions at a
+# degenerate rate of zero.
+TRANSFER_CURRENCY = 'NOTHING'
+
+
 def clamp(entries, begin_date, end_date,
           account_types,
           account_previous_earnings,
@@ -185,6 +190,7 @@ def summarize(entries, date, opening_account):
     return ((open_entries + price_entries + summarizing_entries + after_entries),
             len(open_entries) + len(summarizing_entries))
 
+    # FIXME: I think there is an error here in the index calculation.
 
 
 
@@ -193,7 +199,6 @@ def summarize(entries, date, opening_account):
 
 
 
-TRANSFER_CURRENCY = 'NOTHING'
 
 def conversions(entries, conversion_account, date=None, transfer_currency=TRANSFER_CURRENCY):
     """Insert a conversion entry at date 'date' at the given account.

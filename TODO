@@ -1908,6 +1908,13 @@ Improve this bit:
     much of a difference though. Something to ponder.
 
 
+* Plugins
+** Tip Calculator
+
+  - Write another example plugin that splits "Expenses:Restaurant" legs into
+    two two postings: "Expenses:Restaurant x 83%" and "Expenses:Tips x 17%".
+
+
 * Tools
 ** Scripts
 
