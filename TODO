@@ -690,10 +690,35 @@ beancount: TODO
     Idea: Generalize lot-date to just a "lot" string. Doesn't have to be a date
     at all! It would also make the concept and usage intentions clearer I think.
 
+  - Lot improvement: the lot specification on a reducing posting is only present
+    to disambiguate which of the lots to reduce or match against. Maybe we
+    should provide a different syntax when an expected reduction takes place,
+    this would be allowed:
+
+       (augment)
+       2014-06-17 *
+          Assets:US:Investing:GOOG    10 GOOG {523.45 USD / i-want-more}
+
+       (reducing) All of the following should be allowed:
+          Assets:US:Investing:GOOG    -7 GOOG ; possibly ambiguous
+          Assets:US:Investing:GOOG    -7 GOOG [] ; possibly ambiguous
+          Assets:US:Investing:GOOG    -7 GOOG [523.45 USD]
+          Assets:US:Investing:GOOG    -7 GOOG [2014-06-17]
+          Assets:US:Investing:GOOG    -7 GOOG [i-want-more]
+
+    By enforcing a distinct syntax, the user is telling us that this leg is
+    expected to reduce an existing position. This information is useful, in
+    that it avoids possible mistakes. I like the explicitness of it.
+
+    Sufficient debugging output should be provided from the "print" command to
+    be able to identify which lot is being matched against and why. We need to
+    provide more transparency into this.
+
   - FIFO or LIFO booking could be "enforced" simply by declaring the expected
     booking method of an account, and then issuing an error when explicit
     entries deviate from that method. This is an easy idea... would be very
-    useful.
+    useful. The automatic method would only be used to resolve ambiguity! This
+    is nice.
 
   - Implement a little plug-ins system that allows a user to insert a TAB in
     bean-web.
@@ -1914,6 +1939,16 @@ Improve this bit:
   - Write another example plugin that splits "Expenses:Restaurant" legs into
     two two postings: "Expenses:Restaurant x 83%" and "Expenses:Tips x 17%".
 
+
+** Vacation Cap Date
+
+  - Make an plugin that computes the precise date at which my vacation will cap
+    (240 VACHR) base on an account.
+
+
+** Budget
+
+  - Implement a plugin with budget constraints, as an example.
 
 * Tools
 ** Scripts

@@ -134,37 +134,47 @@ class TestSummarization(cmptest.TestCase):
 #                           'Equity:Retained-Earnings': 'Inventory(-920.00 USD)',
 #                           'Expenses:Restaurant': 'Inventory()',
 #                           'Income:Job': 'Inventory(-1000.00 USD)'})
-#
-#
-# class TestTransferBalances(cmptest.TestCase):
-#
-#     @parsedoc
-#     def test_basic_transfer(self, entries, errors, options_map):
-#         """
-#           2011-01-01 open Assets:Checking
-#           2011-01-01 open Income:Job
-#
-#           2011-02-01 * "Salary"
-#             Income:Job            -1000 USD
-#             Assets:Checking        1000 USD
-#
-#           2012-02-01 * "Salary Next year"
-#             Income:Job            -1000 USD
-#             Assets:Checking        1000 USD
-#         """
-#         real_accounts = realization.realize(entries)
-#         self.assertEqual(real_cost_as_dict(real_accounts),
-#                          {'Assets:Checking': 'Inventory(2000.00 USD)',
-#                           'Income:Job': 'Inventory(-2000.00 USD)'})
-#
-#         tran_entries = transfer_balances(entries, date(2012, 6, 1),
-#                                          is_income_statement_account, TRANSFER_BALANCES)
-#
-#         real_accounts = realization.realize(tran_entries)
-#         self.assertEqual(real_cost_as_dict(real_accounts),
-#                          {'Assets:Checking': 'Inventory(2000.00 USD)',
-#                           'Income:Job': 'Inventory()',
-#                           'Equity:Retained-Earnings': 'Inventory(-2000.00 USD)'})
+
+
+class TestTransferBalances(cmptest.TestCase):
+
+    @parsedoc
+    def test_transfer_balances(self, entries, errors, options_map):
+        """
+          2011-01-01 open Assets:Checking
+          2011-01-01 open Income:Job
+
+          2011-02-01 * "Salary"
+            Income:Job            -1000 USD
+            Assets:Checking        1000 USD
+
+          2012-02-01 * "Salary Next year"
+            Income:Job            -1000 USD
+            Assets:Checking        1000 USD
+        """
+        pass
+        # Test with no entries.
+        # Test with date.
+        # Test without date (at end).
+
+
+
+        # real_accounts = realization.realize(entries)
+        # self.assertEqual(real_cost_as_dict(real_accounts),
+        #                  {'Assets:Checking': 'Inventory(2000.00 USD)',
+        #                   'Income:Job': 'Inventory(-2000.00 USD)'})
+
+        # tran_entries = transfer_balances(entries, date(2012, 6, 1),
+        #                                  is_income_statement_account, TRANSFER_BALANCES)
+
+        # real_accounts = realization.realize(tran_entries)
+        # self.assertEqual(real_cost_as_dict(real_accounts),
+        #                  {'Assets:Checking': 'Inventory(2000.00 USD)',
+        #                   'Income:Job': 'Inventory()',
+        #                   'Equity:Retained-Earnings': 'Inventory(-2000.00 USD)'})
+
+
+
 
 
 OPENING_ACCOUNT = 'Equity:Opening-Balances'
@@ -593,7 +603,7 @@ class TestBalanceByAccount(cmptest.TestCase):
 
     def test_balance_by_account__no_end_date(self):
         # Test with no end date.
-        index, balances = summarize.balance_by_account(self.entries)
+        balances, index = summarize.balance_by_account(self.entries)
         self.assertTrue(index is None)
         self.assertEqual({
             'Assets:AccountA': Inventory.from_string('11 USD'),
@@ -603,13 +613,13 @@ class TestBalanceByAccount(cmptest.TestCase):
 
     def test_balance_by_account__first_date(self):
         # Test on the first date (should be empty).
-        index, balances = summarize.balance_by_account(self.entries, datetime.date(2014, 2, 1))
+        balances, index = summarize.balance_by_account(self.entries, datetime.date(2014, 2, 1))
         self.assertEqual(0, index)
         self.assertEqual({}, balances)
 
     def test_balance_by_account__middle(self):
         # Test in the middle.
-        index, balances = summarize.balance_by_account(self.entries, datetime.date(2014, 2, 10))
+        balances, index = summarize.balance_by_account(self.entries, datetime.date(2014, 2, 10))
         self.assertEqual(1, index)
         self.assertEqual({
             'Assets:AccountA': Inventory.from_string('10 USD'),

@@ -118,9 +118,7 @@ def transfer_balances(entries, date, account_pred, transfer_account):
         return entries
 
     # Compute balances at date.
-    index, balances = balance_by_account(entries, date)
-    if index is None:
-        index = len(entries)
+    balances, index = balance_by_account(entries, date)
 
     # Filter out to keep only the accounts we want.
     transfer_balances = {account: balance
@@ -160,8 +158,8 @@ def summarize(entries, date, opening_account):
     This function replaces the transactions up to (and not including) the given
     date with a single opening balance transaction, for each account. It returns
     new entries, all of the ones before the given date having been replaced by a
-    few summarization entries. (You can then "realize" that as a second step if
-    desired.)
+    few summarization entries, one for each account. (You can then "realize"
+    that as a second step if desired.)
 
     The function returns two lists:
 
@@ -172,10 +170,11 @@ def summarize(entries, date, opening_account):
     You can simply contatenate the two lists to obtain the final balance sheet
     entries. Using the first list only allows you to draw up the beginning
     balance sheet if desired.
+
     """
 
     # Compute balances at date.
-    index, balances = balance_by_account(entries, date)
+    balances, index = balance_by_account(entries, date)
 
     # We need to insert the entries with a date previous to subsequent checks,
     # to maintain ensure the open directives show up before any transaction.
@@ -195,7 +194,7 @@ def summarize(entries, date, opening_account):
 
     # Compute entries before hte date and preserve the entries after the date.
     before_entries = open_entries + price_entries + summarizing_entries
-    after_entries = [] if index is None else entries[index:]
+    after_entries = entries[index:]
 
     # Return a new list of entries and the index that points after the entries
     # were inserted.
@@ -328,9 +327,10 @@ def balance_by_account(entries, date=None):
         on and after this date. This is useful for summarization before a
         specific date.
     Returns:
-      A pair of the index in the list of entries or None, if all were before the
-      date, and a dict of account string to instance Inventory (the balance of
-      this account before the given date).
+      A pair of a dict of account string to instance Inventory (the balance of
+      this account before the given date), and the index in the list of entries
+      where the date was encountered. If all entries are located before the
+      cutoff date, an index one beyond the last entry is returned.
     """
     balances = collections.defaultdict(inventory.Inventory)
     for index, entry in enumerate(entries):
@@ -349,10 +349,8 @@ def balance_by_account(entries, date=None):
                 # entries are filtered, at least for a particular account's
                 # postings.
                 account_balance.add_position(posting.position, True)
-    else:
-        index = None
 
-    return index, balances
+    return balances, index
 
 
 def open_at_date(entries, date):
