@@ -70,6 +70,20 @@ DEFAULT_OPTIONS = {
     # spreadsheet (e.g, "101.00 USD" does not get parsed by a spreadsheet
     # import, but "101.00" does).
     "operating_currency" : [],
+
+    # A list of Python modules containing transformation functions to run the
+    # entries through after parsing. The parser reads the entries as they are,
+    # transforms them through a list of standard functions, such as balance
+    # checks and inserting padding entries, and then hands the entries over to
+    # those plugins to add more auto-generated goodies. The list is a list of
+    # strings, each string should be the name of a Python module to import, and
+    # within the module we expect a special '__plugins__' attribute that should
+    # list the name of transform functions to run the entries through. Each
+    # function accepts a pair of (entries, options_map) and should return a pair
+    # of (new entries, error instances). Errors should not be printed out the
+    # output, they will be converted to strins by the loader and displayed as
+    # dictacted by the output medium.
+    "plugin": [],
 }
 
 
