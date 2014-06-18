@@ -82,7 +82,6 @@ class TestUnrealized(unittest.TestCase):
         2014-02-01 price MANSION  180 EUR
         2014-02-01 price HOTEL    330 USD
         """
-        options_map['account_unrealized'] = None
         new_entries, _ = unrealized.add_unrealized_gains(entries, options_map)
 
         self.assertEqual(2, len(unrealized.get_unrealized_entries(new_entries)))

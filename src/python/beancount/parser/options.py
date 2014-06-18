@@ -44,11 +44,6 @@ DEFAULT_OPTIONS = {
     # zero out remaining amounts due to transfers during the exercise period.
     "account_current_conversions" : "Conversions:Current",
 
-    # Leaf name of the subaccounts created for unrealized capital gains.
-    # FIXME: This should not be a global option; find a way to make this
-    # customizable.
-    "account_unrealized" : "Unrealized",
-
     # The imaginary currency used to convert all units for conversions at a
     # degenerate rate of zero. This can be any currency name that isn't used in
     # the rest of the ledger. Choose something unique that makes sense in your
