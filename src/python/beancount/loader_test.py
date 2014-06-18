@@ -59,5 +59,9 @@ class TestLoader(unittest.TestCase):
         self.assertTrue([loader.LoadError], list(map(type, errors)))
 
 
+# FIXME: Test plugins (working)
+# FIXME: Test plugins with option
+
+
 # You need to document all of the functions, and add test for the plugins functions.
 __incomplete__ = True

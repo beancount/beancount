@@ -5,6 +5,7 @@ import textwrap
 import importlib
 import sys
 import collections
+import re
 
 from beancount.utils import misc_utils
 from beancount.core import data
@@ -125,6 +126,15 @@ def run_transformations(entries, parse_errors, options_map, filename, quiet):
 
     # Process the plugins.
     for plugin_name in options_map["plugin"]:
+
+        # Parse out the option if one was specified.
+        mo = re.match('(.*):(.*)', plugin_name)
+        if mo:
+            plugin_name, plugin_option = mo.groups()
+        else:
+            plugin_option = None
+
+        # Try to import the module.
         try:
             module = importlib.import_module(plugin_name)
             if hasattr(module, '__plugins__'):
@@ -132,9 +142,14 @@ def run_transformations(entries, parse_errors, options_map, filename, quiet):
                     callback = getattr(module, function_name)
                     callback_name = '{}.{}'.format(plugin_name, function_name)
                     with misc_utils.print_time(callback_name, quiet):
-                        entries, plugin_errors = callback(entries, options_map)
+                        if plugin_option is not None:
+                            entries, plugin_errors = callback(entries, options_map, plugin_option)
+                        else:
+                            entries, plugin_errors = callback(entries, options_map)
                         errors.extend(plugin_errors)
+
         except ImportError as exc:
+            # Upon failure, just issue an error.
             errors.append(LoadError(data.FileLocation("<load>", 0),
                                     'Error importing "{}": {}'.format(
                                         plugin_name, str(exc)), None))
