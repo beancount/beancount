@@ -51,7 +51,7 @@ DEFAULT_OPTIONS = {
     # degenerate rate of zero. This can be any currency name that isn't used in
     # the rest of the ledger. Choose something unique that makes sense in your
     # language.
-    "transfer_currency": "NOTHING",
+    "conversion_currency": "NOTHING",
 
     # A list of directory roots, relative to the CWD, which should be searched
     # for document files. For the document files to be automatically found they

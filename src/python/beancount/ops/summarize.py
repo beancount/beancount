@@ -26,7 +26,7 @@ from beancount.parser import options
 def clamp(entries,
           begin_date, end_date,
           account_types,
-          transfer_currency,
+          conversion_currency,
           account_earnings,
           account_opening,
           account_conversions):
@@ -51,7 +51,7 @@ def clamp(entries,
       begin_date: A datetime.date instance, the beginning of the period.
       end_date: A datetime.date instance, one day beyond the end of the period.
       account_types: An instance of AccountTypes.
-      transfer_currency: A string, the transfer currency to use for zero prices
+      conversion_currency: A string, the transfer currency to use for zero prices
         on the conversion entry.
       account_earnings: A string, the name of the account to transfer
         previous earnings from the income statement accounts to the balance
@@ -83,7 +83,7 @@ def clamp(entries,
     entries = truncate(entries, end_date)
 
     # Insert conversion entries.
-    entries = conversions(entries, account_conversions, transfer_currency, end_date)
+    entries = conversions(entries, account_conversions, conversion_currency, end_date)
 
     return entries, index
 
@@ -101,16 +101,16 @@ def clamp_with_options(entries, begin_date, end_date, options_map):
     """
     account_types = options.get_account_types(options_map)
     previous_accounts = options.get_previous_accounts(options_map)
-    transfer_currency = options_map['transfer_currency']
+    conversion_currency = options_map['conversion_currency']
     return clamp(entries, begin_date, end_date,
                  account_types,
-                 transfer_currency,
+                 conversion_currency,
                  *previous_accounts)
 
 
 def close(entries,
           account_types,
-          transfer_currency,
+          conversion_currency,
           account_earnings,
           account_conversions):
     """Transfer net income to equity and insert a final conversion entry.
@@ -122,7 +122,7 @@ def close(entries,
     Args:
       entries: A list of directives.
       account_types: An instance of AccountTypes.
-      transfer_currency: A string, the transfer currency to use for zero prices
+      conversion_currency: A string, the transfer currency to use for zero prices
         on the conversion entry.
       account_earnings: A string, the name of the equity account to transfer
         final balances of the income and expense accounts to.
@@ -143,7 +143,7 @@ def close(entries,
                                 account_earnings)
 
     # Insert final conversion entries.
-    entries = conversions(entries, account_conversions, transfer_currency, None)
+    entries = conversions(entries, account_conversions, conversion_currency, None)
 
     return entries
 
@@ -257,13 +257,13 @@ def summarize(entries, date, account_opening):
     return (before_entries + after_entries), len(before_entries)
 
 
-def conversions(entries, conversion_account, transfer_currency, date=None):
+def conversions(entries, conversion_account, conversion_currency, date=None):
     """Insert a conversion entry at date 'date' at the given account.
 
     Args:
       entries: A list of entries.
       conversion_account: The Account object to book against.
-      transfer_currency: A string, the transfer currency to use for zero prices
+      conversion_currency: A string, the transfer currency to use for zero prices
         on the conversion entry.
       date: The date before which to insert the conversion entry. The new
         entry will be inserted as the last entry of the date just previous
@@ -296,7 +296,7 @@ def conversions(entries, conversion_account, transfer_currency, date=None):
         # invariant. (This is the only single place we cheat on the balance rule
         # in the entire system and this is necessary; see documentation on
         # Conversions.)
-        price = amount.Amount(amount.ZERO, transfer_currency)
+        price = amount.Amount(amount.ZERO, conversion_currency)
         conversion_entry.postings.append(
             Posting(conversion_entry, conversion_account, -position, price, None))
 
