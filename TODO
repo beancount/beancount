@@ -11,8 +11,6 @@ beancount: TODO
 
        Create an automated test for the lexer as well.
 
-     src/python/beancount/ops/summarize.py                  INCOMPLETE
-
      src/python/beancount/ops/validation.py                 INCOMPLETE
 
      src/python/beancount/web/acctree.py                    MISSING
@@ -59,9 +57,8 @@ beancount: TODO
   - Make various attempts to simplify depgraph, we want to ship with a really
     lean dependency graph.
 
-    * Move beancount.utils.test_utils comparison utils to
-      beancount.parser.cmputil. Remove special case for clustering in Makefile.
-
+    * realization.compute_*_balance() functions may benefit from moving to
+      their own module. Not sure yet. Find out.
 
 
 ** Fix Minor Nits & Bugs
@@ -153,6 +150,12 @@ beancount: TODO
 
   - Make sure you can parse Amounts with space between the - sign and the number:
     "- 20 USD" kicks an error.
+
+  - This parses silently! Needs detection:
+
+          2011-01-01 open Assets:A
+          2011-02-01 open Assets:B
+          2011-03-01 open Assets:C
 
   - There have been some rare, but occurring few instances of really odd syntax
     making the parser ignore some transactions silently; this is not
@@ -252,6 +255,17 @@ beancount: TODO
   - Remove dependency from beancount.utils.test_utils to beancount.core.
     Simplify dependencies as much as possible for first release.
 
+  - Make a script to enforce dependency order as part of linting. Feed it off
+    of beancount.deps.
+
+  - Split all multiple tests that run in the same function by putting the
+    docstring on the setUp() method instead; this works well:
+
+      @parser.parsedoc
+      def setUp(self, entries, _, __):
+
+  - Implement Amount.from_string() to be consistent with position and inventory?
+
 ** Documentation
 
   I want to complete a snapshot of documentation before shipping. I often have
@@ -350,6 +364,11 @@ beancount: TODO
   have time to think, I just come here and jot it down. Every couple of months
   I clean this up and put it in the sections below. Please excuse the mess.)
 
+
+  - Look at Intuit's service for financial hub for financial data. Look for a
+    developer account.
+
+  - Do a presentation at meetup... Yodlee is in NY, might make sense.
 
 
   - New plugin: clean_payees, that processes the payee strings and cleans them
@@ -674,10 +693,35 @@ beancount: TODO
     Idea: Generalize lot-date to just a "lot" string. Doesn't have to be a date
     at all! It would also make the concept and usage intentions clearer I think.
 
+  - Lot improvement: the lot specification on a reducing posting is only present
+    to disambiguate which of the lots to reduce or match against. Maybe we
+    should provide a different syntax when an expected reduction takes place,
+    this would be allowed:
+
+       (augment)
+       2014-06-17 *
+          Assets:US:Investing:GOOG    10 GOOG {523.45 USD / i-want-more}
+
+       (reducing) All of the following should be allowed:
+          Assets:US:Investing:GOOG    -7 GOOG ; possibly ambiguous
+          Assets:US:Investing:GOOG    -7 GOOG [] ; possibly ambiguous
+          Assets:US:Investing:GOOG    -7 GOOG [523.45 USD]
+          Assets:US:Investing:GOOG    -7 GOOG [2014-06-17]
+          Assets:US:Investing:GOOG    -7 GOOG [i-want-more]
+
+    By enforcing a distinct syntax, the user is telling us that this leg is
+    expected to reduce an existing position. This information is useful, in
+    that it avoids possible mistakes. I like the explicitness of it.
+
+    Sufficient debugging output should be provided from the "print" command to
+    be able to identify which lot is being matched against and why. We need to
+    provide more transparency into this.
+
   - FIFO or LIFO booking could be "enforced" simply by declaring the expected
     booking method of an account, and then issuing an error when explicit
     entries deviate from that method. This is an easy idea... would be very
-    useful.
+    useful. The automatic method would only be used to resolve ambiguity! This
+    is nice.
 
   - Implement a little plug-ins system that allows a user to insert a TAB in
     bean-web.
@@ -919,6 +963,10 @@ beancount: TODO
     cost may not go negative. We could selectively suppress it by adding a flag
     to the open directive associated with an account, or maybe adding some
     special syntax in the cost specification that allows us to do this.
+
+
+
+  - Create Inventory.from_string() and simplify a lot of the tests with it.
 
 
 ** Precision
@@ -1886,6 +1934,33 @@ Improve this bit:
     order to keep the file tidy. This is a nice idea... perhaps nicer than just
     insert entries for documents, an actual link. Not sure if it would make that
     much of a difference though. Something to ponder.
+
+
+* Plugins
+** Tip Calculator
+
+  - Write another example plugin that splits "Expenses:Restaurant" legs into
+    two two postings: "Expenses:Restaurant x 83%" and "Expenses:Tips x 17%".
+
+
+** Vacation Cap Date
+
+  - Make an plugin that computes the precise date at which my vacation will cap
+    (240 VACHR) base on an account.
+
+
+** Budget
+
+  - Implement a plugin with budget constraints, as an example.
+
+** Auto-Open, Auto-Remove, Auto-Pad
+
+  - Write a 'beancount.plugins.autoaccounts' plugin that automatically inserts
+    open directives for accounts not opened (at the date of the first entry) and
+    automatically removed open directives for unused accounts.
+
+  - Write a plugin that automatically inserts a padding directive for accounts
+    with no open directive and with a balance check.
 
 
 * Tools

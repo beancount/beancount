@@ -8,6 +8,7 @@ from beancount.parser import parsedoc
 from beancount.parser import parser, ParserError
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price, Note
 from beancount.core.amount import Amount
+from beancount.core import complete
 
 
 def check_list(test, objlist, explist):
@@ -115,8 +116,8 @@ class TestParserEntryTypes(unittest.TestCase):
         check_list(self, entries, [Price])
 
 
-class TestParserBalance(unittest.TestCase):
-    """Tests of auto-posting balance."""
+class TestParserComplete(unittest.TestCase):
+    """Tests of completion of balance."""
 
     @parsedoc
     def test_entry_transaction_single_posting_at_zero(self, entries, errors, _):
@@ -396,6 +397,27 @@ class TestTransactions(unittest.TestCase):
         self.assertEqual(None, entries[0].payee)
         self.assertEqual(set(["610fa7f17e7a"]), entries[0].links)
         self.assertEqual(set(["trip"]), entries[0].tags)
+
+    @parsedoc
+    def test_zero_prices(self, entries, errors, _):
+        """
+          2014-04-20 * "Like a conversion entry"
+            Equity:Conversions         100 USD @ 0 XFER
+            Equity:Conversions         101 CAD @ 0 XFER
+            Equity:Conversions         102 AUD @ 0 XFER
+        """
+        check_list(self, entries, [Transaction])
+        check_list(self, errors, [])
+
+    @parsedoc
+    def test_imbalance(self, entries, errors, _):
+        """
+          2014-04-20 * "Busted!"
+            Assets:Checking         100 USD
+            Assets:Checking         -99 USD
+        """
+        check_list(self, entries, [Transaction])
+        check_list(self, errors, [complete.BalanceError])
 
 
 class TestCurrencies(unittest.TestCase):

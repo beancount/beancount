@@ -236,7 +236,7 @@ def realize(entries, min_accounts=None):
       The root RealAccount instance.
     """
     # Create lists of the entries by account.
-    postings_map = group_by_account(entries)
+    postings_map = postings_by_account(entries)
 
     # Create a RealAccount tree and compute the balance for each.
     real_root = RealAccount('')
@@ -254,7 +254,7 @@ def realize(entries, min_accounts=None):
     return real_root
 
 
-def group_by_account(entries):
+def postings_by_account(entries):
     """Create lists of postings and balances by account.
 
     This routine aggregates postings and entries grouping them by account name.
@@ -306,7 +306,7 @@ def compute_postings_balance(postings):
     return final_balance
 
 
-def compute_entries_balance(entries, prefix=None):
+def compute_entries_balance(entries, prefix=None, date=None):
     """Compute the balance of all postings of a list of entries.
 
     Sum up all the positions in all the postings of all the transactions in the
@@ -316,11 +316,15 @@ def compute_entries_balance(entries, prefix=None):
       entries: A list of directives.
       prefix: If specified, a prefix string to restrict by account name. Only
         postings with an account that starts with this prefix will be summed up.
+      date: A datetime.date instance at which to stop adding up the balance.
+        The date is exclusive.
     Returns:
       An instance of Inventory.
     """
     total_balance = inventory.Inventory()
     for entry in entries:
+        if not (date is None or entry.date < date):
+            break
         if isinstance(entry, Transaction):
             for posting in entry.postings:
                 if prefix is None or posting.account.startswith(prefix):

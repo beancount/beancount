@@ -19,7 +19,16 @@ SMALL_EPSILON = Decimal('0.005')
 
 def get_balance_amount(posting):
     """Get the amount that will need to be balanced from a posting of a transaction.
-    (This is a *key* element of the semantics of transactions in this software.)
+
+    This is a *key* element of the semantics of transactions in this software. A
+    balance amount is the amount used to check the balance of a transaction.
+    Here are all relevant examples, with the amounts used to balance the
+    postings:
+
+      Assets:Account  5234.50 USD                             ->  5234.50 USD
+      Assets:Account  3877.41 EUR @ 1.35 USD                  ->  5234.50 USD
+      Assets:Account       10 GOOG {523.45 USD}               ->  5234.50 USD
+      Assets:Account       10 GOOG {523.45 USD} @ 545.60 CAD  ->  5234.50 USD
 
     Args:
       posting: A Posting instance.
@@ -30,11 +39,11 @@ def get_balance_amount(posting):
     lot = position.lot
 
     # It the position has a cost, use that to balance this posting.
-    if lot.cost:
+    if lot.cost is not None:
         amount = amount_mult(lot.cost, position.number)
 
     # If there is a price, use that to balance this posting.
-    elif posting.price:
+    elif posting.price is not None:
         amount = amount_mult(posting.price, position.number)
 
     # Otherwise, just use the amount itself.

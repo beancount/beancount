@@ -95,6 +95,9 @@ class TestEntryPrinter(cmptest.TestCase):
           * Assets:Account3       111.00 BEAN
           ? Assets:Account4      -333.00 BEAN
 
+        2014-06-09 * "An entry like a conversion entry"
+          Assets:Account1         1 USD @ 0 OTHER
+          Assets:Account2         1 CAD @ 0 OTHER
         """
         self.assertRoundTrip(entries, errors)
 

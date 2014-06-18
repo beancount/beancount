@@ -70,7 +70,7 @@ class TestTestCase(cmptest.TestCase):
         with self.assertRaises(AssertionError):
             self.assertEqualEntries(entries, mod_ledger_text)
 
-    def test_assertEqualEntries(self):
+    def test_assertIncludesEntries(self):
         entries, _, __ = parser.parse_string(self.ledger_text)
 
         # Check that non-strict inclusion succeeds.
@@ -99,3 +99,35 @@ class TestTestCase(cmptest.TestCase):
             Expenses:Books
 
         """, entries)
+
+
+    def test_assertExcludesEntries(self):
+        entries, _, __ = parser.parse_string(self.ledger_text)
+
+        # Check that exclusion of all entries fails.
+        with self.assertRaises(AssertionError):
+            self.assertExcludesEntries(entries, self.ledger_text)
+        with self.assertRaises(AssertionError):
+            self.assertExcludesEntries(self.ledger_text, entries)
+
+        # Check that partial exclusion of all entries fails.
+        first_two = '\n'.join(self.ledger_text.splitlines()[0:10])
+        with self.assertRaises(AssertionError):
+            self.assertExcludesEntries(first_two, entries)
+
+        self.assertExcludesEntries("""
+
+          2014-02-01 * "GOOGLE PLAY"
+            Liabilities:US:Amex:BlueCash     -9.99 USD
+            Expenses:Fun:Music
+
+        """, entries)
+
+        with self.assertRaises(AssertionError):
+            self.assertExcludesEntries("""
+
+              2014-01-30 * "AMAZON SERVICES-KIND866-216-107 / PRYETZFD58N DIGITAL" |
+                Liabilities:US:Amex:BlueCash                                           -12.74 USD
+                Expenses:Books
+
+            """, entries)

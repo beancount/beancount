@@ -66,7 +66,7 @@ class Inventory:
         if positions:
             assert isinstance(positions, list), positions
             for position in positions:
-                self.add_position(position, False)
+                self.add_position(position, True)
 
     def __str__(self):
         """Render as a human-readable string.

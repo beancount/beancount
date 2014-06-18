@@ -42,7 +42,7 @@ def pad(entries):
     pad_dict = misc_utils.groupby(lambda x: x.account, pads)
 
     # Partially realize the postings, so we can iterate them by account.
-    by_account = realization.group_by_account(entries)
+    by_account = realization.postings_by_account(entries)
 
     # A dict of pad -> list of entries to be inserted.
     new_entries = {pad: [] for pad in pads}

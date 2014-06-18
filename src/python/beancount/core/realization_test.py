@@ -179,7 +179,7 @@ class TestRealGetters(unittest.TestCase):
 class TestRealization(unittest.TestCase):
 
     @loaddoc
-    def test_group_by_account(self, entries, errors, _):
+    def test_postings_by_account(self, entries, errors, _):
         """
         2012-01-01 open Expenses:Restaurant
         2012-01-01 open Expenses:Movie
@@ -213,7 +213,7 @@ class TestRealization(unittest.TestCase):
         """
         self.assertEqual(1, len(errors))
 
-        postings_map = realization.group_by_account(entries)
+        postings_map = realization.postings_by_account(entries)
         self.assertTrue(isinstance(postings_map, dict))
 
         self.assertEqual([data.Open, data.Posting],

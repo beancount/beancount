@@ -90,3 +90,15 @@ class TestCompare(unittest.TestCase):
         includes, missing = compare.includes_entries(entries1, entries2[0:-3])
         self.assertFalse(includes)
         self.assertEqual(3, len(missing))
+
+    def test_excludes_entries(self):
+        entries1, _, __ = parser.parse_string(TEST_INPUT)
+        entries2, _, __ = parser.parse_string(TEST_INPUT)
+
+        excludes, extra = compare.excludes_entries(entries1[0:4], entries2)
+        self.assertFalse(excludes)
+        self.assertTrue(extra)
+
+        excludes, extra = compare.excludes_entries(entries1[0:4], entries2[4:])
+        self.assertTrue(excludes)
+        self.assertFalse(extra)

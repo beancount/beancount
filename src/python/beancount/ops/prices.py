@@ -49,7 +49,7 @@ def add_implicit_prices(entries):
                 # or, if a cost is also specified, as the current price of the
                 # underlying instrument, e.g.
                 #      Asset:Account    100 GOOG {564.20} @ {581.97} USD
-                if posting.price:
+                if posting.price is not None:
                     entry = Price(entry.fileloc, entry.date,
                                   posting.position.lot.currency,
                                   posting.price)

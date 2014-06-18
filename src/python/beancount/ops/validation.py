@@ -30,7 +30,7 @@ def validate_non_negative_costs(entries):
     Returns:
       A list of errors.
     """
-    postings_map = realization.group_by_account(entries)
+    postings_map = realization.postings_by_account(entries)
 
     errors = []
     for account_name, postings in postings_map.items():
@@ -245,3 +245,9 @@ def validate(entries):
             check_errors +
             constraint_errors +
             doc_errors)
+
+
+
+# FIXME: TODO - check that there are no duplicates on open entries.
+# FIXME: TODO - check again that all transactions balance
+# FIXME: TODO - check posting entries
