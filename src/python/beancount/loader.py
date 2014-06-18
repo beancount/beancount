@@ -4,6 +4,7 @@ import functools
 import textwrap
 import importlib
 import sys
+import collections
 
 from beancount.utils import misc_utils
 from beancount.core import data
@@ -16,6 +17,9 @@ from beancount.ops import validation
 from beancount.ops import balance
 from beancount.ops import unrealized
 from beancount.ops import prices
+
+
+LoadError = collections.namedtuple('LoadError', 'fileloc message entry')
 
 
 def load(filename,
@@ -140,14 +144,19 @@ def run_transformations(entries, parse_errors, options_map,
 
     # Process the plugins.
     for plugin_name in options_map["plugin"]:
-        module = importlib.import_module(plugin_name)
-        if hasattr(module, '__plugins__'):
-            for function_name in module.__plugins__:
-                callback = getattr(module, function_name)
-                callback_name = '{}.{}'.format(plugin_name, function_name)
-                with misc_utils.print_time(callback_name, quiet):
-                    entries, plugin_errors = callback(entries, options_map)
-                    errors.extend(plugin_errors)
+        try:
+            module = importlib.import_module(plugin_name)
+            if hasattr(module, '__plugins__'):
+                for function_name in module.__plugins__:
+                    callback = getattr(module, function_name)
+                    callback_name = '{}.{}'.format(plugin_name, function_name)
+                    with misc_utils.print_time(callback_name, quiet):
+                        entries, plugin_errors = callback(entries, options_map)
+                        errors.extend(plugin_errors)
+        except ImportError as exc:
+            errors.append(LoadError(data.FileLocation("<load>", 0),
+                                    'Error importing "{}": {}'.format(
+                                        plugin_name, str(exc)), None))
 
     # Ensure that the entries are sorted.
     entries.sort(key=data.entry_sortkey)

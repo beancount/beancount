@@ -2,6 +2,7 @@ import unittest
 import tempfile
 
 from beancount import loader
+from beancount.parser import printer
 
 
 TEST_FILE = """
@@ -41,12 +42,21 @@ class TestLoader(unittest.TestCase):
         test_function(self)
 
     @loader.loaddoc
-    def test_loaddoc_inline(self, entries, errors, options_map):
+    def test_loaddoc_empty(self, entries, errors, options_map):
         """
         """
         self.assertTrue(isinstance(entries, list))
         self.assertTrue(isinstance(errors, list))
         self.assertTrue(isinstance(options_map, dict))
+
+    @loader.loaddoc
+    def test_loaddoc_plugin(self, entries, errors, options_map):
+        """
+        option "plugin" "beancount.does.not.exist"
+        """
+        self.assertTrue(isinstance(entries, list))
+        self.assertTrue(isinstance(options_map, dict))
+        self.assertTrue([loader.LoadError], list(map(type, errors)))
 
 
 # You need to document all of the functions, and add test for the plugins functions.
