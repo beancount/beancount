@@ -15,7 +15,6 @@ from beancount.parser import printer
 from beancount.ops import pad
 from beancount.ops import validation
 from beancount.ops import balance
-from beancount.ops import unrealized
 from beancount.ops import prices
 
 

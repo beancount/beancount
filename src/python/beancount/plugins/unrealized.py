@@ -15,6 +15,9 @@ from beancount.ops import prices
 from beancount.parser import options
 
 
+__plugins__ = ('add_unrealized_gains',)
+
+
 def add_unrealized_gains(entries, options_map):
     """Insert entries for unrealized capital gains.
 
