@@ -333,7 +333,8 @@ beancount: TODO
   as Balance checks.  I'm not going to to do this in the first release, but I
   want to set the stage for it.
 
-  - Clean up the interface of loader.load(), it's ugly.
+  - Clean up the interface of loader.load(), it's ugly. In particular, make
+    parser.parse() and loader.load() very similar. We like a consistent API.
 
 
 ** Debugging Tools

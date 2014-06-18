@@ -21,7 +21,7 @@ __plugins__ = ('add_unrealized_gains',)
 UnrealizedError = collections.namedtuple('UnrealizedError', 'fileloc message entry')
 
 
-def add_unrealized_gains(entries, options_map):
+def add_unrealized_gains(entries, options_map, subaccount=None):
     """Insert entries for unrealized capital gains.
 
     This function inserts entries that represent unrealized gains, at the end of
@@ -33,31 +33,25 @@ def add_unrealized_gains(entries, options_map):
     Args:
       entries: A list of data directives.
       options_map: A dict of options, that confirms to beancount.parser.options.
+      subaccount: A string, and optional the name of a subaccount to create
+        under an account to book the unrealized gain. If this is left to its
+        default value, the gain is booked directly in the same account.
     Returns:
       A list of entries, which includes the new unrealized capital gains entries
       at the end, and a list of errors. The new list of entries is still sorted.
-    Raises:
-      ValueError: If the subaccount name is not a valid account name component.
     """
     errors = []
     fileloc = FileLocation('<unrealized_gains>', 0)
 
     account_types = options.get_account_types(options_map)
 
-    # An optional string, the name of a subaccount to create under an account to
-    # book the unrealized gain. If this is left to its default value, the gain
-    # is booked directly in the same account.
-    #
-    # FIXME: This should not be a global option. Find a way to pass options in.
-    subaccount_name = options_map['account_unrealized']
-
     # Assert the subaccount name is in valid format.
-    if subaccount_name:
-        validation_account = account.join(account_types.assets, subaccount_name)
+    if subaccount:
+        validation_account = account.join(account_types.assets, subaccount)
         if not is_valid_account_name(validation_account):
             errors.append(
                 UnrealizedError(fileloc,
-                                "Invalid subaccount name: '{}'".format(subaccount_name),
+                                "Invalid subaccount name: '{}'".format(subaccount),
                                 None))
             return entries, errors
 
@@ -131,9 +125,9 @@ def add_unrealized_gains(entries, options_map):
         asset_account = account_name
         income_account = account.join(account_types.income,
                                       account.account_name_sans_root(account_name))
-        if subaccount_name:
-            asset_account = account.join(asset_account, subaccount_name)
-            income_account = account.join(income_account, subaccount_name)
+        if subaccount:
+            asset_account = account.join(asset_account, subaccount)
+            income_account = account.join(income_account, subaccount)
 
         # Create a new transaction to account for this difference in gain.
         gain_loss_str = "gain" if pnl > ZERO else "loss"

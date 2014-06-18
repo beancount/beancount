@@ -156,12 +156,10 @@ class TestUnrealized(unittest.TestCase):
           Income:Misc
           Assets:Account1       10 HOUSE {100 USD}
         """
-        options_map['account_unrealized'] = '_invalid_'
-        entries, errors = unrealized.add_unrealized_gains(entries, options_map)
+        entries, errors = unrealized.add_unrealized_gains(entries, options_map, '_invalid_')
         self.assertEqual([unrealized.UnrealizedError], list(map(type, errors)))
 
-        options_map['account_unrealized'] = 'Gains'
-        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map)
+        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map, 'Gains')
         entries = unrealized.get_unrealized_entries(new_entries)
         entry = entries[0]
         self.assertEqual('Assets:Account1:Gains', entry.postings[0].account)
@@ -186,8 +184,7 @@ class TestUnrealized(unittest.TestCase):
 
         2014-01-16 price HOUSE 110 USD
         """
-        options_map['account_unrealized'] = 'Gains'
-        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map)
+        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map, 'Gains')
         unreal_entries = unrealized.get_unrealized_entries(new_entries)
 
         entry = get_entries_with_narration(unreal_entries, '1 units')[0]
@@ -239,7 +236,6 @@ class TestUnrealized(unittest.TestCase):
 
         # Test it out without a subaccount, only an open directive should be
         # added for the income account.
-        options_map['account_unrealized'] = None
         new_entries, errors = unrealized.add_unrealized_gains(entries, options_map)
         self.assertEqual({'Income:Misc',
                           'Assets:Account1',
@@ -249,8 +245,7 @@ class TestUnrealized(unittest.TestCase):
 
         # Test it with a subaccount; we should observe new open directives for
         # th esubaccounts as well.
-        options_map['account_unrealized'] = 'Gains'
-        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map)
+        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map, 'Gains')
 
         self.assertEqual({'Income:Misc',
                           'Assets:Account1',
