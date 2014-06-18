@@ -66,6 +66,7 @@ class TestClamp(cmptest.TestCase):
         account_types = options.get_account_types(options_map)
         clamped_entries, index  = summarize.clamp(entries, begin_date, end_date,
                                                   account_types,
+                                                  'NOTHING',
                                                   'Equity:Earnings',
                                                   'Equity:OpeningBalances',
                                                   'Equity:Conversions')
@@ -128,6 +129,7 @@ class TestClose(cmptest.TestCase):
         self.assertFalse(errors)
         account_types = options.get_account_types(options_map)
         closed_entries = summarize.close(entries, account_types,
+                                         'NOTHING',
                                          'Equity:Earnings',
                                          'Equity:Conversions')
 
@@ -502,7 +504,7 @@ class TestConversions(cmptest.TestCase):
 
     def test_conversions__empty(self):
         date = datetime.date(2012, 2, 1)
-        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, date)
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, 'NOTHING', date)
         self.assertEqualEntries(self.entries, conversion_entries)
 
         converted_balance = realization.compute_entries_balance(conversion_entries, date=date)
@@ -510,7 +512,7 @@ class TestConversions(cmptest.TestCase):
 
     def test_conversions__not_needed(self):
         date = datetime.date(2012, 3, 2)
-        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, date)
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, 'NOTHING', date)
         self.assertEqualEntries(self.entries, conversion_entries)
 
         converted_balance = realization.compute_entries_balance(conversion_entries, date=date)
@@ -518,7 +520,7 @@ class TestConversions(cmptest.TestCase):
 
     def test_conversions__needed_middle(self):
         date = datetime.date(2012, 3, 3)
-        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, date)
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, 'NOTHING', date)
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
@@ -533,8 +535,7 @@ class TestConversions(cmptest.TestCase):
 
     def test_conversions__with_transactions_at_cost(self):
         date = datetime.date(2012, 3, 10)
-        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, date,
-                                                   transfer_currency='XFER')
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, 'XFER', date)
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
@@ -549,7 +550,7 @@ class TestConversions(cmptest.TestCase):
 
     def test_conversions__multiple(self):
         date = datetime.date(2012, 5, 10)
-        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, date)
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, 'NOTHING', date)
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
@@ -563,7 +564,7 @@ class TestConversions(cmptest.TestCase):
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__no_date(self):
-        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT)
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, 'NOTHING')
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 

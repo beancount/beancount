@@ -47,6 +47,12 @@ DEFAULT_OPTIONS = {
     # Leaf name of the subaccounts created for unrealized capital gains.
     "account_unrealized" : "Unrealized",
 
+    # The imaginary currency used to convert all units for conversions at a
+    # degenerate rate of zero. This can be any currency name that isn't used in
+    # the rest of the ledger. Choose something unique that makes sense in your
+    # language.
+    "transfer_currency": "NOTHING",
+
     # A list of directory roots, relative to the CWD, which should be searched
     # for document files. For the document files to be automatically found they
     # must have the following filename format: YYYY-MM-DD.(.*)

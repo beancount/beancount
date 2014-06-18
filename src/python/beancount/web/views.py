@@ -67,6 +67,7 @@ class View:
             current_accounts = options.get_current_accounts(self.options)
             self.closing_entries = summarize.close(self.entries,
                                                    self.account_types,
+                                                   self.options['transfer_currency'],
                                                    *current_accounts)
 
         # Realize the three sets of entries.
@@ -130,6 +131,7 @@ class YearView(View):
         with misc_utils.print_time('clamp'):
             entries, index = summarize.clamp(entries, begin_date, end_date,
                                              account_types,
+                                             options_map['transfer_currency'],
                                              *previous_accounts)
 
         return entries, index
