@@ -20,6 +20,7 @@ from beancount.core.account_types import is_income_statement_account
 from beancount.ops import prices
 from beancount.ops import balance
 from beancount.utils import bisect_key
+from beancount.parser import printer
 
 
 # The imaginary currency used to convert all units for conversions at a
@@ -27,7 +28,8 @@ from beancount.utils import bisect_key
 TRANSFER_CURRENCY = 'NOTHING'
 
 
-def clamp(entries, begin_date, end_date,
+def clamp(entries,
+          begin_date, end_date,
           account_types,
           account_earnings,
           account_opening,
@@ -62,14 +64,12 @@ def clamp(entries, begin_date, end_date,
         opening balances account.
       account_conversions: A string, tne name of the equity account to
         book currency conversions against.
-
     Returns:
       A new list of entries is returned, and the index that points to the first
       original transaction after the beginning date of the period. This index
       can be used to generate the opening balances report, which is a balance
       sheet fed with only the summarized entries.
     """
-
     # Transfer income and expenses before the period to equity.
     income_statement_account_pred = (
         lambda account: is_income_statement_account(account, account_types))
@@ -85,15 +85,9 @@ def clamp(entries, begin_date, end_date,
     entries = truncate(entries, end_date)
 
     # Insert conversion entries.
-    entries = conversions(entries, account_conversions, begin_date)
+    entries = conversions(entries, account_conversions, end_date)
 
     return entries, index
-
-
-
-
-
-
 
 
 def close(entries,
@@ -272,9 +266,9 @@ def conversions(entries, conversion_account, date=None, transfer_currency=TRANSF
     conversion_entry = Transaction(fileloc, last_date, flags.FLAG_CONVERSIONS,
                                    None, narration, None, None, [])
     for position in conversion_balance.get_cost().get_positions():
-        # FIXME: Set the cost to zero here to maintain the balance invariant.
-        # (This is the only single place we cheap on the balance rule in the
-        # entire system and this is necessary; see documentation on
+        # Important note: Set the cost to zero here to maintain the balance
+        # invariant. (This is the only single place we cheat on the balance rule
+        # in the entire system and this is necessary; see documentation on
         # Conversions.)
         price = amount.Amount(amount.ZERO, transfer_currency)
         conversion_entry.postings.append(
@@ -298,7 +292,7 @@ def truncate(entries, date):
     """
     index = bisect_key.bisect_left_with_key(entries, date,
                                             key=lambda entry: entry.date)
-    return entries[index:]
+    return entries[:index]
 
 
 def create_entries_from_balances(balances, date, source_account, direction,
