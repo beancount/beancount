@@ -8,6 +8,7 @@ from beancount.parser import options
 from beancount.ops import unrealized
 from beancount.ops import validation
 from beancount.loader import loaddoc
+from beancount.loader import printer
 
 
 def get_entries_with_narration(entries, regexp):
@@ -269,3 +270,26 @@ class TestUnrealized(unittest.TestCase):
         # Validate the new entries; validation should pass.
         valid_errors = validation.validate(new_entries)
         self.assertFalse(valid_errors)
+
+    @loaddoc
+    def test_no_units_but_diff(self, entries, _, options_map):
+        """
+        ;; This probable mistake triggers an error in the unrealized gains
+        ;; calculation.
+
+        2009-08-17 open Assets:Cash
+        2009-08-17 open Assets:Stocks
+        2009-08-17 open Income:Stocks
+
+        2009-08-18 * "Bought titles"
+          Assets:Cash      -5000 EUR
+          Assets:Stocks     5000 PP {1.0 EUR}
+
+        2013-06-19 * "Sold with loss"
+          Assets:Stocks    -5000 PP {1.1 EUR} ;; Incorrect
+          Assets:Cash       3385 EUR
+          Income:Stocks
+        """
+        new_entries, errors = unrealized.add_unrealized_gains(
+            entries, options.get_account_types(options_map))
+        self.assertEqual([unrealized.UnrealizedError], list(map(type, errors)))

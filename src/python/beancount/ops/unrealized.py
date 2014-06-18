@@ -14,6 +14,10 @@ from beancount.ops import holdings
 from beancount.ops import prices
 
 
+UnrealizedError = collections.namedtuple('UnrealizedError',
+                                         'fileloc message entry')
+
+
 def add_unrealized_gains(entries, account_types, subaccount_name=None):
     """Insert entries for unrealized capital gains.
 
@@ -37,6 +41,7 @@ def add_unrealized_gains(entries, account_types, subaccount_name=None):
       ValueError: If the subaccount name is not a valid account name component.
     """
     errors = []
+    fileloc = FileLocation('<unrealized_gains>', 0)
 
     # Assert the subaccount name is in valid format.
     if subaccount_name:
@@ -75,8 +80,13 @@ def add_unrealized_gains(entries, account_types, subaccount_name=None):
         # Note: since we're only considering positions held at cost, the
         # transaction that created the position *must* have created at least one
         # price point for that commodity, so we never expect for a price not to
-        # be available, which is reasoable.
-        assert price_number is not None, (currency, cost_currency, latest_date)
+        # be available, which is reasonable.
+        if price_number is None:
+            errors.append(
+                UnrealizedError(fileloc,
+                                "Missing price number for {}/{} is missing.".format(
+                                    currency, cost_currency), None))
+            continue
 
         # Compute the total number of units and book value for set of positions.
         total_units = Decimal()
@@ -91,6 +101,17 @@ def add_unrealized_gains(entries, account_types, subaccount_name=None):
         # Compute the PnL; if there is no profit or loss, we create a
         # corresponding entry anyway.
         pnl = market_value - book_value
+        if total_units == ZERO:
+            # If the number of units sum to zero, the holdings should have been
+            # zero.
+            errors.append(
+                UnrealizedError(fileloc,
+                                "Number of units of {} in {} in holdings sum to zero "
+                                "for account {} and should not.".format(
+                                    currency, cost_currency, account_name),
+                                None))
+
+            continue
         average_cost = book_value / total_units
 
         # Compute the name of the accounts and add the requested subaccount name
@@ -103,7 +124,6 @@ def add_unrealized_gains(entries, account_types, subaccount_name=None):
             income_account = account.join(income_account, subaccount_name)
 
         # Create a new transaction to account for this difference in gain.
-        fileloc = FileLocation('<unrealized_gains>', 0)
         gain_loss_str = "gain" if pnl > ZERO else "loss"
         narration = ("Unrealized {} for {} units of {} "
                      "(price: {:.4f} {} as of {}, "
