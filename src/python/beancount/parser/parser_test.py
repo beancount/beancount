@@ -5,7 +5,6 @@ import unittest
 import inspect
 
 from beancount.parser import parsedoc
-from beancount.parser import printer
 from beancount.parser import parser, ParserError
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price, Note
 from beancount.core.amount import Amount

@@ -2,27 +2,20 @@
 Unit tests for summarization.
 """
 
-import unittest
 from datetime import date
 import datetime
-import textwrap
-import functools
 import collections
 import re
 
 from beancount.core.inventory import Inventory
 from beancount.core import data
 from beancount.core import flags
-from beancount.core import compare
-from beancount.ops.pad import pad
 from beancount.core import realization
 from beancount.ops import summarize
-from beancount.loader import loaddoc
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import options
 from beancount.parser import cmptest
-from beancount.utils import test_utils
 from beancount import loader
 
 
@@ -64,12 +57,12 @@ class TestClamp(cmptest.TestCase):
         begin_date = datetime.date(2012, 6, 1)
         end_date = datetime.date(2012, 9, 1)
         account_types = options.get_account_types(options_map)
-        clamped_entries, index  = summarize.clamp(entries, begin_date, end_date,
-                                                  account_types,
-                                                  'NOTHING',
-                                                  'Equity:Earnings',
-                                                  'Equity:OpeningBalances',
-                                                  'Equity:Conversions')
+        clamped_entries, index = summarize.clamp(entries, begin_date, end_date,
+                                                 account_types,
+                                                 'NOTHING',
+                                                 'Equity:Earnings',
+                                                 'Equity:OpeningBalances',
+                                                 'Equity:Conversions')
         self.assertEqualEntries("""
 
         2012-05-31 S "Opening balance for 'Assets:CA:Checking' (Summarization)"
@@ -504,23 +497,28 @@ class TestConversions(cmptest.TestCase):
 
     def test_conversions__empty(self):
         date = datetime.date(2012, 2, 1)
-        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, 'NOTHING', date)
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT,
+                                                   'NOTHING', date)
         self.assertEqualEntries(self.entries, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries, date=date)
+        converted_balance = realization.compute_entries_balance(conversion_entries,
+                                                                date=date)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__not_needed(self):
         date = datetime.date(2012, 3, 2)
-        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, 'NOTHING', date)
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT,
+                                                   'NOTHING', date)
         self.assertEqualEntries(self.entries, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries, date=date)
+        converted_balance = realization.compute_entries_balance(conversion_entries,
+                                                                date=date)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__needed_middle(self):
         date = datetime.date(2012, 3, 3)
-        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, 'NOTHING', date)
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT,
+                                                   'NOTHING', date)
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
@@ -530,12 +528,14 @@ class TestConversions(cmptest.TestCase):
 
         """, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries, date=date)
+        converted_balance = realization.compute_entries_balance(conversion_entries,
+                                                                date=date)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__with_transactions_at_cost(self):
         date = datetime.date(2012, 3, 10)
-        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, 'XFER', date)
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT,
+                                                   'XFER', date)
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
@@ -545,12 +545,14 @@ class TestConversions(cmptest.TestCase):
 
         """, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries, date=date)
+        converted_balance = realization.compute_entries_balance(conversion_entries,
+                                                                date=date)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__multiple(self):
         date = datetime.date(2012, 5, 10)
-        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, 'NOTHING', date)
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT,
+                                                   'NOTHING', date)
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
@@ -564,7 +566,8 @@ class TestConversions(cmptest.TestCase):
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__no_date(self):
-        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, 'NOTHING')
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT,
+                                                   'NOTHING')
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
@@ -681,9 +684,10 @@ class TestEntriesFromBalance(cmptest.TestCase):
         self.balances['Assets:US:Bank:Checking'] = Inventory.from_string('1823.23 USD')
 
     def test_create_entries_from_balances__simple(self):
-        entries = summarize.create_entries_from_balances(self.balances, datetime.date(2014, 1, 1),
-                                                         self.SOURCE_ACCOUNT, True,
-                                                         self.FILELOC, '!', 'Narration for {account} at {date}')
+        entries = summarize.create_entries_from_balances(
+            self.balances, datetime.date(2014, 1, 1),
+            self.SOURCE_ACCOUNT, True,
+            self.FILELOC, '!', 'Narration for {account} at {date}')
         self.assertEqualEntries("""
           2014-01-01 ! "Narration for Assets:US:Bank:Checking at 2014-01-01"
             Assets:US:Bank:Checking                                               1823.23 USD
@@ -695,9 +699,10 @@ class TestEntriesFromBalance(cmptest.TestCase):
         """, entries)
 
     def test_create_entries_from_balances__reverse(self):
-        entries = summarize.create_entries_from_balances(self.balances, datetime.date(2014, 1, 1),
-                                                         self.SOURCE_ACCOUNT, False,
-                                                         self.FILELOC, '*', 'Narration for {account} at {date}')
+        entries = summarize.create_entries_from_balances(
+            self.balances, datetime.date(2014, 1, 1),
+            self.SOURCE_ACCOUNT, False,
+            self.FILELOC, '*', 'Narration for {account} at {date}')
         self.assertEqualEntries("""
           2014-01-01 * "Narration for Assets:US:Bank:Checking at 2014-01-01"
             Assets:US:Bank:Checking                                              -1823.23 USD
@@ -737,13 +742,15 @@ class TestBalanceByAccount(cmptest.TestCase):
 
     def test_balance_by_account__first_date(self):
         # Test on the first date (should be empty).
-        balances, index = summarize.balance_by_account(self.entries, datetime.date(2014, 2, 1))
+        balances, index = summarize.balance_by_account(self.entries,
+                                                       datetime.date(2014, 2, 1))
         self.assertEqual(0, index)
         self.assertEqual({}, balances)
 
     def test_balance_by_account__middle(self):
         # Test in the middle.
-        balances, index = summarize.balance_by_account(self.entries, datetime.date(2014, 2, 10))
+        balances, index = summarize.balance_by_account(self.entries,
+                                                       datetime.date(2014, 2, 10))
         self.assertEqual(1, index)
         self.assertEqual({
             'Assets:AccountA': Inventory.from_string('10 USD'),

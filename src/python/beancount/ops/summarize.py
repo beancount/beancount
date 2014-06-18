@@ -20,7 +20,6 @@ from beancount.core.account_types import is_income_statement_account
 from beancount.ops import prices
 from beancount.ops import balance
 from beancount.utils import bisect_key
-from beancount.parser import printer
 
 
 def clamp(entries,
