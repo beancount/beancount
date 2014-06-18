@@ -520,16 +520,6 @@ beancount: TODO
 
 
   (plugins)
-  - Should we extend the syntax to allow the specification of loader plugins?
-    That might be an interesting idea... e.g.
-
-      plugin "beancount.plugins.forecast"
-
-    This is a powerful idea... means everyone could have their own little
-    custom mod function. We could provide a set of standard and useful ones.
-    And we would have to validate the produced entries to death, just to make
-    sure all the invariants are respected.
-
     - Adding the unrealized gains should be a loader plugin! This is an obvious
       one. Make this before the release, in order to simplify the loader()
       interface as much as possible.
@@ -1957,6 +1947,7 @@ Improve this bit:
 
   - Implement a plugin with budget constraints, as an example.
 
+
 ** Auto-Open, Auto-Remove, Auto-Pad
 
   - Write a 'beancount.plugins.autoaccounts' plugin that automatically inserts
@@ -1965,6 +1956,12 @@ Improve this bit:
 
   - Write a plugin that automatically inserts a padding directive for accounts
     with no open directive and with a balance check.
+
+
+** FBAR
+
+  - Automatically compute the maximum account values of foreign accounts for
+    the FBAR filing.
 
 
 * Tools
@@ -1984,13 +1981,6 @@ Improve this bit:
 
   - In the new mode, we need to recreate a function that will mark a posting as
     valid (replace '!' by '*').
-
-
-* Plugins
-** FBAR
-
-  - Automatically compute the maximum account values of foreign accounts for
-    the FBAR filing.
 
 
 * Reports
