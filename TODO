@@ -74,29 +74,6 @@ beancount: TODO
     have had an open declaration... this is probably not what we want, in order
     to maximize the number of documents captures by this. {fa96aa05361d}
 
-  - Bug with unrealized - add a unit test, ensure this does not break it:
-
-       2012-03-01 open Assets:US:Ameritrade:IRA:Cash                                   USD
-       2012-03-01 open Income:US:Ameritrade:IRA:Interest                               USD
-       2012-03-01 open Income:US:Ameritrade:IRA:Dividend                               USD
-       2012-03-01 open Assets:US:Ameritrade:IRA:MMDA1                                  USD
-
-       2012-03-01 open Assets:US:Ameritrade:IRA:HDV                                    HDV
-
-       2012-11-17 balance  Assets:US:Ameritrade:IRA:Cash    0 USD
-
-
-       2013-04-11 * "Bought 56 HDV @ 67.119" ^9849248919
-          Assets:US:Ameritrade:IRA:HDV                                    56.00 HDV {67.119 USD}
-          Expenses:Financial:Commissions                                           9.99 USD
-          Assets:US:Ameritrade:IRA:Cash                                       -3768.65 USD
-
-       2014-06-05 * "Sold 56 HDV @ 74.3003" ^11687887452
-         Assets:US:Ameritrade:IRA:HDV                                     -56.00 HDV {74.3003 USD}
-         Expenses:Financial:Commissions                                           9.99 USD
-         Assets:US:Ameritrade:IRA:Cash                                         4150.73 USD
-         Expenses:Financial:Fees                                                  0.10 USD
-
   - Add a test for this (somewhere else): If something like this occurs, which
     price should appear in the prices database? This should trigger a warning that
     no price directive is inserted (this is what it should do: don't insert a
