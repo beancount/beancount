@@ -138,10 +138,19 @@ def run_transformations(entries, parse_errors, options_map,
     # Ensure that the entries are sorted.
     entries.sort(key=data.entry_sortkey)
 
-    # Run the load_filters on top of the results.
-    for load_filter_function in LOAD_PLUGINS:
-        entries, plugin_errors = load_filter_function(entries, options_map)
-        errors.extend(plugin_errors)
+    # Process the plugins.
+    for plugin_name in options_map["plugin"]:
+        module = importlib.import_module(plugin_name)
+        if hasattr(module, '__plugins__'):
+            for function_name in module.__plugins__:
+                callback = getattr(module, function_name)
+                callback_name = '{}.{}'.format(plugin_name, function_name)
+                with misc_utils.print_time(callback_name, quiet):
+                    entries, plugin_errors = callback(entries, options_map)
+                    errors.extend(plugin_errors)
+
+    # Ensure that the entries are sorted.
+    entries.sort(key=data.entry_sortkey)
 
     return entries, errors
 
