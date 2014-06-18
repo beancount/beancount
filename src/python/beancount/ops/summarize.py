@@ -20,6 +20,7 @@ from beancount.core.account_types import is_income_statement_account
 from beancount.ops import prices
 from beancount.ops import balance
 from beancount.utils import bisect_key
+from beancount.parser import options
 
 
 def clamp(entries,
@@ -85,6 +86,26 @@ def clamp(entries,
     entries = conversions(entries, account_conversions, transfer_currency, end_date)
 
     return entries, index
+
+
+def clamp_with_options(entries, begin_date, end_date, options_map):
+    """Clamp with an options map. See clamp() for details.
+
+    Args:
+      entries: See clamp().
+      begin_date: See clamp().
+      end_date: See clamp().
+      options_map: A parser's option_map.
+    Returns:
+      Same as clamp().
+    """
+    account_types = options.get_account_types(options_map)
+    previous_accounts = options.get_previous_accounts(options_map)
+    transfer_currency = options_map['transfer_currency']
+    return clamp(entries, begin_date, end_date,
+                 account_types,
+                 transfer_currency,
+                 *previous_accounts)
 
 
 def close(entries,

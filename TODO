@@ -29,6 +29,9 @@ beancount: TODO
   - Make printer.print_errors() mirror printer.print_entries(), both sets of
     functions in the same style.
 
+  - Make helper functions in summarize, for clamp() and close() which accept
+    options_map and automatically derive everything they need from entries.
+
 
 
 ** Move Files to Final Location
@@ -363,6 +366,7 @@ beancount: TODO
   (This is a grab bag of ideas. When I have a new idea coming to me, I don't
   have time to think, I just come here and jot it down. Every couple of months
   I clean this up and put it in the sections below. Please excuse the mess.)
+
 
 
   - Look at Intuit's service for financial hub for financial data. Look for a
@@ -2330,6 +2334,13 @@ Improve this bit:
 ** SQL Export
 
   - Write a script to load the data into an SQL database.
+
+
+** Visualizations
+*** TreeMaps
+
+  - You just *have* to generate TreeMaps of the Expenses and Assets subtrees:
+    http://bost.ocks.org/mike/treemap/
 
 
 * Documentation
