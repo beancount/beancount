@@ -1,6 +1,6 @@
 """Automatic padding of gaps between entries.
 """
-from collections import namedtuple
+import collections
 
 from beancount.core.amount import Decimal, amount_sub
 from beancount.core.data import Transaction, Balance
@@ -8,11 +8,13 @@ from beancount.core import inventory
 from beancount.core import realization
 
 
-BalanceError = namedtuple('BalanceError', 'fileloc message entry')
+BalanceError = collections.namedtuple('BalanceError', 'fileloc message entry')
+
 
 # This is based on some real-world usage: FOREX brokerage, for instance,
 # accumulates error up to 1bp, and we need to tolerate that if our importers
 # insert checks on at regular spaces, so we set the maximum limit at 1bp.
+# FIXME: Move this up to options?
 CHECK_PRECISION = Decimal('.015')
 
 def check(entries, unused_options_map):
