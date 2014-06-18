@@ -137,10 +137,13 @@ option "account_previous_earnings"    "Earnings:Previous"
 option "account_previous_conversions" "Conversions:Previous"
 option "account_current_earnings"     "Earnings:Current"
 option "account_current_conversions"  "Conversions:Current"
-option "account_unrealized"           "Unrealized"
-option "documents"                    "Root directory where documents live"
-option "conversion_currency"          "Currency to use for conversion entries"
-option "operating_currency"           "Currencies with dedicated columns"
+option "documents"                    "/path/to/documents/directory"
+option "conversion_currency"          "NOTHING"
+
+;; Multiple values allowed for these.
+option "operating_currency"           "USD"
+option "plugin"                       "beancount.module.name"
+option "plugin"                       "beancount.module.name:OPTION"
 \end{verbatim}
 
 

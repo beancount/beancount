@@ -7,14 +7,10 @@ from beancount.parser import cmptest
 
 class TestExampleForecast(cmptest.TestCase):
 
-    def setUp(self):
-        loader.install_load_plugin(forecast.forecast_plugin)
-
-    def tearDown(self):
-        loader.uninstall_load_plugin(forecast.forecast_plugin)
-
     def test_forecast(self):
         INPUT = textwrap.dedent("""
+
+            option "plugin" "beancount.plugins.forecast"
 
             2011-01-01 open Expenses:Restaurant
             2011-01-01 open Assets:Cash

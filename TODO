@@ -74,29 +74,6 @@ beancount: TODO
     have had an open declaration... this is probably not what we want, in order
     to maximize the number of documents captures by this. {fa96aa05361d}
 
-  - Bug with unrealized - add a unit test, ensure this does not break it:
-
-       2012-03-01 open Assets:US:Ameritrade:IRA:Cash                                   USD
-       2012-03-01 open Income:US:Ameritrade:IRA:Interest                               USD
-       2012-03-01 open Income:US:Ameritrade:IRA:Dividend                               USD
-       2012-03-01 open Assets:US:Ameritrade:IRA:MMDA1                                  USD
-
-       2012-03-01 open Assets:US:Ameritrade:IRA:HDV                                    HDV
-
-       2012-11-17 balance  Assets:US:Ameritrade:IRA:Cash    0 USD
-
-
-       2013-04-11 * "Bought 56 HDV @ 67.119" ^9849248919
-          Assets:US:Ameritrade:IRA:HDV                                    56.00 HDV {67.119 USD}
-          Expenses:Financial:Commissions                                           9.99 USD
-          Assets:US:Ameritrade:IRA:Cash                                       -3768.65 USD
-
-       2014-06-05 * "Sold 56 HDV @ 74.3003" ^11687887452
-         Assets:US:Ameritrade:IRA:HDV                                     -56.00 HDV {74.3003 USD}
-         Expenses:Financial:Commissions                                           9.99 USD
-         Assets:US:Ameritrade:IRA:Cash                                         4150.73 USD
-         Expenses:Financial:Fees                                                  0.10 USD
-
   - Add a test for this (somewhere else): If something like this occurs, which
     price should appear in the prices database? This should trigger a warning that
     no price directive is inserted (this is what it should do: don't insert a
@@ -333,17 +310,8 @@ beancount: TODO
   as Balance checks.  I'm not going to to do this in the first release, but I
   want to set the stage for it.
 
-  - Clean up the interface of loader.load(), it's ugly. Remvoe
-    add_unrealized_gains.
-
-  - Implement the "plugins" syntax in order to support unrealized gains
-    directly, while shipping with a clean interface for loader.load(). This is
-    worth doing for the first release, to avoid adding much syntax later on.
-
-  - Remove adding the unrealized gains for v2 from the loader in order to
-    simplify the interface. Remove the option even. This will be reintroduced
-    via a plugin in a further release. This is the right thing to do! Plugins
-    will be aplenty.
+  - Clean up the interface of loader.load(), it's ugly. In particular, make
+    parser.parse() and loader.load() very similar. We like a consistent API.
 
 
 ** Debugging Tools
@@ -520,23 +488,9 @@ beancount: TODO
 
 
   (plugins)
-  - Should we extend the syntax to allow the specification of loader plugins?
-    That might be an interesting idea... e.g.
-
-      plugin "beancount.plugins.forecast"
-
-    This is a powerful idea... means everyone could have their own little
-    custom mod function. We could provide a set of standard and useful ones.
-    And we would have to validate the produced entries to death, just to make
-    sure all the invariants are respected.
-
-    - Adding the unrealized gains should be a loader plugin! This is an obvious
-      one. Make this before the release, in order to simplify the loader()
-      interface as much as possible.
-
     - Pad could be a plugin, definitely.
 
-    - Check could also be a plugin.
+    - Balance checks could also be a plugin.
 
     - It should be possible to make the parser accept unknown directives that
       accept an arbitrary list of accounts and string parameters, like this:
@@ -1941,6 +1895,41 @@ Improve this bit:
 
 
 * Plugins
+** Unrealized Gain
+
+  - Find a way to pass in a plug-specific option via the file.
+
+  - Unrealized capital gains could be inserted automatically into special
+    sub-accounts, based on the current price and the cost-basis of particular
+    accounts. This could be inserted automatically! e.g.
+
+        DATE check Assets:US:Ameritrade:AAPL       10 AAPL {200 USD}
+
+        DATE price AAPL  210 USD
+
+      Assets:US:Ameritrade:AAPL                    2000 USD
+      Assets:US:Ameritrade:AAPL:Gains               100 USD
+
+    The "Gains" subaccount could be inserted automatically if the price differs
+    from the cost basis... this would be a clever way to represent this! We
+    could even do this by inserting a transaction automatically with an
+    offsetting account... actually this would be the RIGHT way to do this!
+
+      We need an option to designate which subaccount leaf to create all
+      the new transactions for:
+
+        %option account_unrealized  "Unrealized"
+
+        2013-05-23 A "Booking unrealized gains for AAPL"
+          Assets:US:Ameritrade:AAPL:Unrealized              230.45 USD
+          Income:Unrealized                                -230.45 USD
+
+      By doing this, the reporting does not have anything to do... it can choose
+      to report positions at cost or in held units, and whether the gains are
+      included or not entirely depends on whether these transactions have been
+      inserted in or not.
+
+
 ** Tip Calculator
 
   - Write another example plugin that splits "Expenses:Restaurant" legs into
@@ -1957,6 +1946,7 @@ Improve this bit:
 
   - Implement a plugin with budget constraints, as an example.
 
+
 ** Auto-Open, Auto-Remove, Auto-Pad
 
   - Write a 'beancount.plugins.autoaccounts' plugin that automatically inserts
@@ -1965,6 +1955,12 @@ Improve this bit:
 
   - Write a plugin that automatically inserts a padding directive for accounts
     with no open directive and with a balance check.
+
+
+** FBAR
+
+  - Automatically compute the maximum account values of foreign accounts for
+    the FBAR filing.
 
 
 * Tools
@@ -1984,13 +1980,6 @@ Improve this bit:
 
   - In the new mode, we need to recreate a function that will mark a posting as
     valid (replace '!' by '*').
-
-
-* Plugins
-** FBAR
-
-  - Automatically compute the maximum account values of foreign accounts for
-    the FBAR filing.
 
 
 * Reports
@@ -2370,43 +2359,6 @@ Improve this bit:
 
   - Under "About Credits & Debits" - this is where you should write about how
     flows are relative to a boundary around the holder of the accounts.
-
-
-*** Unrealized Gain
-
-  - Unrealized capital gains could be inserted automatically into special
-    sub-accounts, based on the current price and the cost-basis of particular
-    accounts. This could be inserted automatically! e.g.
-
-        DATE check Assets:US:Ameritrade:AAPL       10 AAPL {200 USD}
-
-        DATE price AAPL  210 USD
-
-      Assets:US:Ameritrade:AAPL                    2000 USD
-      Assets:US:Ameritrade:AAPL:Gains               100 USD
-
-    The "Gains" subaccount could be inserted automatically if the price differs
-    from the cost basis... this would be a clever way to represent this! We
-    could even do this by inserting a transaction automatically with an
-    offsetting account... actually this would be the RIGHT way to do this!
-
-      This could be done as a simple filter function:
-
-        entries = add_unrealized(entries)
-
-      We would need an option to designate which subaccount leaf to create all
-      the new transactions for:
-
-        %option account_unrealized  "Unrealized"
-
-        2013-05-23 A "Booking unrealized gains for AAPL"
-          Assets:US:Ameritrade:AAPL:Unrealized              230.45 USD
-          Income:Unrealized                                -230.45 USD
-
-      By doing this, the reporting does not have anything to do... it can choose
-      to report positions at cost or in held units, and whether the gains are
-      included or not entirely depends on whether these transactions have been
-      inserted in or not.
 
 
 ** Design Doc

@@ -4,6 +4,8 @@ import functools
 import textwrap
 import importlib
 import sys
+import collections
+import re
 
 from beancount.utils import misc_utils
 from beancount.core import data
@@ -14,12 +16,13 @@ from beancount.parser import printer
 from beancount.ops import pad
 from beancount.ops import validation
 from beancount.ops import balance
-from beancount.ops import unrealized
 from beancount.ops import prices
 
 
+LoadError = collections.namedtuple('LoadError', 'fileloc message entry')
+
+
 def load(filename,
-         add_unrealized_gains=True,
          do_print_errors=False,
          quiet=False,
          parse_method='filename'):
@@ -32,9 +35,6 @@ def load(filename,
 
     Args:
       filename: the name of the file to be parsed.
-      add_unrealized_gains: a boolean, true if the unrealized gains should be
-                            inserted automatically in the list of entries, based
-                            on the current price of things held at cost.
       do_print_errors: a boolean, true if this function should format and print out
                        errors. This is only available here because it's a common
                        thing to do with this function.
@@ -62,8 +62,7 @@ def load(filename,
 
     # Transform the entries.
     entries, errors = run_transformations(entries, parse_errors, options_map,
-                                          filename,
-                                          add_unrealized_gains, quiet)
+                                          filename, quiet)
 
     # Validate the list of entries.
     with misc_utils.print_time('validate', quiet):
@@ -79,9 +78,7 @@ def load(filename,
     return entries, errors, options_map
 
 
-def run_transformations(entries, parse_errors, options_map,
-                        filename,
-                        add_unrealized_gains, quiet):
+def run_transformations(entries, parse_errors, options_map, filename, quiet):
     """Run the various transformations on the entries.
 
     This is where entries are being synthesized, checked, plugins are run, etc.
@@ -91,7 +88,6 @@ def run_transformations(entries, parse_errors, options_map,
       parse_errors: A list of errors so far.
       options_map: An options dict as read from the parser.
       filename: A string, the name of the file that's just been parsed.
-      add_unrealized_gains: A boolean, true if we should add the unrealized gains.
       quiet: A boolean, true if we should be quiet.
     Returns:
       A list of modified entries, and a list of errors, also possibly modified.
@@ -125,23 +121,41 @@ def run_transformations(entries, parse_errors, options_map,
         entries, doc_errors = documents.process_documents(entries, options_map, filename)
         errors.extend(doc_errors)
 
-    # Add unrealized gains.
-    if add_unrealized_gains:
-        with misc_utils.print_time('unrealized', quiet):
-            account_types = options.get_account_types(options_map)
-            entries, unrealized_errors = unrealized.add_unrealized_gains(
-                entries,
-                account_types,
-                options_map['account_unrealized'])
-            errors.extend(unrealized_errors)
-
     # Ensure that the entries are sorted.
     entries.sort(key=data.entry_sortkey)
 
-    # Run the load_filters on top of the results.
-    for load_filter_function in LOAD_PLUGINS:
-        entries, plugin_errors = load_filter_function(entries, options_map)
-        errors.extend(plugin_errors)
+    # Process the plugins.
+    for plugin_name in options_map["plugin"]:
+
+        # Parse out the option if one was specified.
+        mo = re.match('(.*):(.*)', plugin_name)
+        if mo:
+            plugin_name, plugin_option = mo.groups()
+        else:
+            plugin_option = None
+
+        # Try to import the module.
+        try:
+            module = importlib.import_module(plugin_name)
+            if hasattr(module, '__plugins__'):
+                for function_name in module.__plugins__:
+                    callback = getattr(module, function_name)
+                    callback_name = '{}.{}'.format(plugin_name, function_name)
+                    with misc_utils.print_time(callback_name, quiet):
+                        if plugin_option is not None:
+                            entries, plugin_errors = callback(entries, options_map, plugin_option)
+                        else:
+                            entries, plugin_errors = callback(entries, options_map)
+                        errors.extend(plugin_errors)
+
+        except ImportError as exc:
+            # Upon failure, just issue an error.
+            errors.append(LoadError(data.FileLocation("<load>", 0),
+                                    'Error importing "{}": {}'.format(
+                                        plugin_name, str(exc)), None))
+
+    # Ensure that the entries are sorted.
+    entries.sort(key=data.entry_sortkey)
 
     return entries, errors
 
@@ -153,49 +167,8 @@ def loaddoc(fun):
     def wrapper(self):
         contents = textwrap.dedent(fun.__doc__)
         entries, errors, options_map = load(contents,
-                                            add_unrealized_gains=False,
                                             parse_method='string',
                                             quiet=True)
         return fun(self, entries, errors, options_map)
     wrapper.__doc__ = None
     return wrapper
-
-
-# A global list of filter functions to be applied on all subsequent loads.
-# Each function should accept a triplet of (entries, errors, options_map) and
-# return a similar triplet.
-LOAD_PLUGINS = []
-
-def install_load_plugin(callback):
-    """Register a ledger load filter, that gets invoked after every time we load or
-    reload the ledger file.
-
-    Args:
-      callback: a callable that gets invoked with the result of load(), that is,
-                 with entries, errors, options_map. The function should return new
-                 values for these, that is, a triple of entries, errors, options_map.
-    """
-    LOAD_PLUGINS.append(callback)
-
-
-def uninstall_load_plugin(callback):
-    """Unregister a ledger load filter.
-
-    Args:
-      callback: See install_load_plugin.
-    """
-    LOAD_PLUGINS.remove(callback)
-
-
-def install_plugins(plugin_names):
-    """Install a list of plugin names.
-
-    Args:
-      plugin_name: A list of string, the names of modules to import.
-    """
-    for plugin_name in plugin_names:
-        module = importlib.import_module(plugin_name)
-        if hasattr(module, '__plugins__'):
-            for function_name in module.__plugins__:
-                callback = getattr(module, function_name)
-                install_load_plugin(callback)

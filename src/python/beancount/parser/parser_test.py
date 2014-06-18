@@ -256,13 +256,26 @@ class TestLineNumbers(unittest.TestCase):
 class TestParserOptions(unittest.TestCase):
 
     @parsedoc
-    def test_empty_1(self, entries, errors, options_map):
+    def test_option_single_value(self, entries, errors, options_map):
         """
           option "title" "Super Rich"
 
         """
         option = options_map['title']
         self.assertEqual(option, 'Super Rich')
+
+    @parsedoc
+    def test_option_list_value(self, entries, errors, options_map):
+        """
+          option "documents" "/path/docs/a"
+          option "documents" "/path/docs/b"
+          option "documents" "/path/docs/c"
+
+        """
+        documents = options_map['documents']
+        self.assertEqual(['/path/docs/a',
+                          '/path/docs/b',
+                          '/path/docs/c'], documents)
 
     @parsedoc
     def test_invalid_option(self, entries, errors, options_map):
