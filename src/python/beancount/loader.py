@@ -23,7 +23,6 @@ LoadError = collections.namedtuple('LoadError', 'fileloc message entry')
 
 
 def load(filename,
-         add_unrealized_gains=True,
          do_print_errors=False,
          quiet=False,
          parse_method='filename'):
@@ -36,9 +35,6 @@ def load(filename,
 
     Args:
       filename: the name of the file to be parsed.
-      add_unrealized_gains: a boolean, true if the unrealized gains should be
-                            inserted automatically in the list of entries, based
-                            on the current price of things held at cost.
       do_print_errors: a boolean, true if this function should format and print out
                        errors. This is only available here because it's a common
                        thing to do with this function.
@@ -66,8 +62,7 @@ def load(filename,
 
     # Transform the entries.
     entries, errors = run_transformations(entries, parse_errors, options_map,
-                                          filename,
-                                          add_unrealized_gains, quiet)
+                                          filename, quiet)
 
     # Validate the list of entries.
     with misc_utils.print_time('validate', quiet):
@@ -83,9 +78,7 @@ def load(filename,
     return entries, errors, options_map
 
 
-def run_transformations(entries, parse_errors, options_map,
-                        filename,
-                        add_unrealized_gains, quiet):
+def run_transformations(entries, parse_errors, options_map, filename, quiet):
     """Run the various transformations on the entries.
 
     This is where entries are being synthesized, checked, plugins are run, etc.
@@ -95,7 +88,6 @@ def run_transformations(entries, parse_errors, options_map,
       parse_errors: A list of errors so far.
       options_map: An options dict as read from the parser.
       filename: A string, the name of the file that's just been parsed.
-      add_unrealized_gains: A boolean, true if we should add the unrealized gains.
       quiet: A boolean, true if we should be quiet.
     Returns:
       A list of modified entries, and a list of errors, also possibly modified.
@@ -129,16 +121,6 @@ def run_transformations(entries, parse_errors, options_map,
         entries, doc_errors = documents.process_documents(entries, options_map, filename)
         errors.extend(doc_errors)
 
-    # Add unrealized gains.
-    if add_unrealized_gains:
-        with misc_utils.print_time('unrealized', quiet):
-            account_types = options.get_account_types(options_map)
-            entries, unrealized_errors = unrealized.add_unrealized_gains(
-                entries,
-                account_types,
-                options_map['account_unrealized'])
-            errors.extend(unrealized_errors)
-
     # Ensure that the entries are sorted.
     entries.sort(key=data.entry_sortkey)
 
@@ -171,7 +153,6 @@ def loaddoc(fun):
     def wrapper(self):
         contents = textwrap.dedent(fun.__doc__)
         entries, errors, options_map = load(contents,
-                                            add_unrealized_gains=False,
                                             parse_method='string',
                                             quiet=True)
         return fun(self, entries, errors, options_map)

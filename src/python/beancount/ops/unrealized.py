@@ -12,9 +12,10 @@ from beancount.core.position import Lot, Position
 from beancount.core import flags
 from beancount.ops import holdings
 from beancount.ops import prices
+from beancount.parser import options
 
 
-def add_unrealized_gains(entries, account_types, subaccount_name=None):
+def add_unrealized_gains(entries, options_map):
     """Insert entries for unrealized capital gains.
 
     This function inserts entries that represent unrealized gains, at the end of
@@ -25,11 +26,7 @@ def add_unrealized_gains(entries, account_types, subaccount_name=None):
 
     Args:
       entries: A list of data directives.
-      account_types: An instance of account_types.AccountTypes, derived from
-        the options.
-      subaccount_name: An optional string, the name of a subaccount to create
-        under an account to book the unrealized gain. If this is left to its
-        default value, the gain is booked directly in the same account.
+      options_map: A dict of options, that confirms to beancount.parser.options.
     Returns:
       A list of entries, which includes the new unrealized capital gains entries
       at the end, and a list of errors. The new list of entries is still sorted.
@@ -37,6 +34,15 @@ def add_unrealized_gains(entries, account_types, subaccount_name=None):
       ValueError: If the subaccount name is not a valid account name component.
     """
     errors = []
+
+    account_types = options.get_account_types(options_map)
+
+    # An optional string, the name of a subaccount to create under an account to
+    # book the unrealized gain. If this is left to its default value, the gain
+    # is booked directly in the same account.
+    #
+    # FIXME: This should not be a global option. Find a way to pass options in.
+    subaccount_name = options_map['account_unrealized']
 
     # Assert the subaccount name is in valid format.
     if subaccount_name:

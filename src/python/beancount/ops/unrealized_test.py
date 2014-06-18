@@ -29,8 +29,7 @@ def get_entries_with_narration(entries, regexp):
 class TestUnrealized(unittest.TestCase):
 
     def test_empty_entries(self):
-        entries, _ = unrealized.add_unrealized_gains(
-            [], account_types.DEFAULT_ACCOUNT_TYPES)
+        entries, _ = unrealized.add_unrealized_gains([], options.DEFAULT_OPTIONS.copy())
         self.assertEqual([], entries)
 
     @loaddoc
@@ -50,8 +49,7 @@ class TestUnrealized(unittest.TestCase):
 
         2014-02-01 price EUR  1.34 USD
         """
-        new_entries, _ = unrealized.add_unrealized_gains(
-            entries, options.get_account_types(options_map))
+        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map)
         self.assertEqual(new_entries, entries)
         self.assertEqual([],
                          unrealized.get_unrealized_entries(new_entries))
@@ -83,8 +81,8 @@ class TestUnrealized(unittest.TestCase):
         2014-02-01 price MANSION  180 EUR
         2014-02-01 price HOTEL    330 USD
         """
-        new_entries, _ = unrealized.add_unrealized_gains(
-            entries, options.get_account_types(options_map))
+        options_map['account_unrealized'] = None
+        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map)
 
         self.assertEqual(2, len(unrealized.get_unrealized_entries(new_entries)))
 
@@ -110,8 +108,7 @@ class TestUnrealized(unittest.TestCase):
         """
         # Well... if there is a cost, there is at least one price, derived from
         # the cost entry. This should always work.
-        new_entries, _ = unrealized.add_unrealized_gains(
-            entries, options.get_account_types(options_map))
+        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map)
         unreal_entries = unrealized.get_unrealized_entries(new_entries)
         self.assertEqual(1, len(unreal_entries))
         self.assertEqual(ZERO, unreal_entries[0].postings[0].position.number)
@@ -128,8 +125,7 @@ class TestUnrealized(unittest.TestCase):
         """
         # Well... if there is a cost, there is at least one price, derived from
         # the cost entry.
-        new_entries, _ = unrealized.add_unrealized_gains(
-            entries, options.get_account_types(options_map))
+        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map)
         unreal_entries = unrealized.get_unrealized_entries(new_entries)
         self.assertEqual(1, len(unreal_entries))
         self.assertEqual(to_decimal('200'),
@@ -146,8 +142,7 @@ class TestUnrealized(unittest.TestCase):
           Assets:Account1       600 EUR @ 1.3 USD
         """
         # Check to make sure values not held at cost are not included.
-        new_entries, _ = unrealized.add_unrealized_gains(
-            entries, options.get_account_types(options_map))
+        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map)
         self.assertEqual([], unrealized.get_unrealized_entries(new_entries))
 
     @loaddoc
@@ -161,11 +156,11 @@ class TestUnrealized(unittest.TestCase):
           Assets:Account1       10 HOUSE {100 USD}
         """
         with self.assertRaises(ValueError):
-            unrealized.add_unrealized_gains(
-                entries, options.get_account_types(options_map), '_invalid_')
+            options_map['account_unrealized'] = '_invalid_'
+            unrealized.add_unrealized_gains(entries, options_map)
 
-        new_entries, _ = unrealized.add_unrealized_gains(
-            entries, options.get_account_types(options_map), 'Gains')
+        options_map['account_unrealized'] = 'Gains'
+        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map)
         entries = unrealized.get_unrealized_entries(new_entries)
         entry = entries[0]
         self.assertEqual('Assets:Account1:Gains', entry.postings[0].account)
@@ -190,9 +185,8 @@ class TestUnrealized(unittest.TestCase):
 
         2014-01-16 price HOUSE 110 USD
         """
-        new_entries, _ = unrealized.add_unrealized_gains(
-            entries,
-            options.get_account_types(options_map), 'Gains')
+        options_map['account_unrealized'] = 'Gains'
+        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map)
         unreal_entries = unrealized.get_unrealized_entries(new_entries)
 
         entry = get_entries_with_narration(unreal_entries, '1 units')[0]
@@ -244,9 +238,8 @@ class TestUnrealized(unittest.TestCase):
 
         # Test it out without a subaccount, only an open directive should be
         # added for the income account.
-        new_entries, _ = unrealized.add_unrealized_gains(
-            entries,
-            options.get_account_types(options_map))
+        options_map['account_unrealized'] = None
+        new_entries, errors = unrealized.add_unrealized_gains(entries, options_map)
         self.assertEqual({'Income:Misc',
                           'Assets:Account1',
                           'Income:Account1'},
@@ -255,9 +248,8 @@ class TestUnrealized(unittest.TestCase):
 
         # Test it with a subaccount; we should observe new open directives for
         # th esubaccounts as well.
-        new_entries, _ = unrealized.add_unrealized_gains(
-            entries,
-            options.get_account_types(options_map), 'Gains')
+        options_map['account_unrealized'] = 'Gains'
+        new_entries, _ = unrealized.add_unrealized_gains(entries, options_map)
 
         self.assertEqual({'Income:Misc',
                           'Assets:Account1',

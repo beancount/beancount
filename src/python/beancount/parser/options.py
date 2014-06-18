@@ -45,6 +45,8 @@ DEFAULT_OPTIONS = {
     "account_current_conversions" : "Conversions:Current",
 
     # Leaf name of the subaccounts created for unrealized capital gains.
+    # FIXME: This should not be a global option; find a way to make this
+    # customizable.
     "account_unrealized" : "Unrealized",
 
     # The imaginary currency used to convert all units for conversions at a
