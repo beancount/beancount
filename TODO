@@ -2323,6 +2323,31 @@ Improve this bit:
 ** SQL Export
 
   - Write a script to load the data into an SQL database.
+    This is probably just another type of report.
+    Report names:
+
+      'postgresql'
+      'sqlite'
+
+    This would output SQL code to create tables and fill in a database with all
+    the contents of a filtered view (or of the entire DB).
+
+  - The data structure we hold in memory is not linear, we need to linearize it.
+    This this extent, we will output several structured tables:
+
+      transactions (key: hex MD5 hash of transaction)
+      - The balance amount should be output as a column
+      postings (hex MD5 hash of posting, join key hex MD5 hash of transaction)
+      prices
+      notes
+      balances (for each of an inventory)
+      entries: hash, type, fileloc, date
+
+    We leave it up to the user to use this data in any way they like.
+
+  - We could, as an option, implement an in-memory sqlite database, or even a
+    SQL parser and matching by ourselves, but that's probably not a great idea.
+    Better to leverage the features already present in SQL databases.
 
 
 ** Visualizations
