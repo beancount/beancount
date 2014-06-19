@@ -254,6 +254,8 @@ beancount: TODO
   following Gdocs documents have to be completed and eventually made public
   before release:
 
+  - Convert all current documentation to a GDoc
+
   - A generic introduction to the double-entry method, in as simple as possible
     terms:
     http://furius.ca/beancount/doc/intro
@@ -295,7 +297,8 @@ beancount: TODO
     http://furius.ca/beancount/examples/basic/basic.beancount
     (This should also be baked to a data directory not under version contro.)
 
-  - Convert all documentation to a GDoc
+  - A proposal for extending the syntax for booking transactions:
+    https://docs.google.com/document/d/1F8IJ_7fMHZ75XFPocMokLxVZczAhrBRBVN9uMhQFCZ4/
 
 
 ** Prepare for Plugins Revamp
@@ -1476,13 +1479,12 @@ Improve this bit:
 
 ** Language
 
-  - Example: a-la-Google
+  - Example: Simple a-la-Google syntax:
 
       type:Open, type:Price, etc.
       year:2014
       date:2014-05-20
       component:US
-      -component:US
       payee:MetroCard  # should be a regexp, not exact
       tag:trip-israel
       amount:>400.00
@@ -1490,6 +1492,14 @@ Improve this bit:
       link:7e4116fadbb4
       narration:Deposit
       event:location:New York  <- like dates, but from events!
+      attr:name=value <- any attribute on an entry
+
+      -component:US <- not component
+      !component:US <- not component
+
+  - You could also provide an SQL-like syntax, not sure it's useful though:
+    you should have a SQL database export as a report type.
+    What are the targets? What are the columns allowed for group-by aggregators?
 
 
 * Operations
@@ -1983,6 +1993,16 @@ Improve this bit:
     with no open directive and with a balance check.
 
 
+** Strict Signs Checker
+
+  - Write a plugin that enables a check that all postings' amounts are of the
+    correctly allowed sign, e.g. Expenses should almost always be a positive
+    amount, Income a negative one, Assets can be both, also Liabilities. If an
+    amount is posted in the contra direction, this should trigger a warning,
+    unless the transaction is flag with a particular character, or some special
+    tag is present.
+
+
 ** FBAR
 
   - Automatically compute the maximum account values of foreign accounts for
@@ -2342,9 +2362,17 @@ Improve this bit:
 
   - Test "bean-bake" with the v2, it doesn't appear to work.
 
+** XML
+
+  - Output to a structured XML format, some people are finding that useful to
+    build other visualizations.
+
+
 ** Ledger
 
-  - Export the compatible subset to Ledger format, so you can compare the reports.
+  - Export the compatible subset to Ledger format, so you can compare the
+    reports. This should be done from a tool called "bean-convert".
+
 
 ** SQL Export
 
@@ -2368,6 +2396,7 @@ Improve this bit:
       notes
       balances (for each of an inventory)
       entries: hash, type, fileloc, date
+      holdings (for each of an inventory)
 
     We leave it up to the user to use this data in any way they like.
 
