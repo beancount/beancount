@@ -2,44 +2,107 @@
 Unit tests for summarization.
 """
 
-import unittest
 from datetime import date
 import datetime
-import textwrap
-import functools
 import collections
 import re
 
 from beancount.core.inventory import Inventory
-from beancount.core import realization
 from beancount.core import data
 from beancount.core import flags
-from beancount.core import compare
-from beancount.ops.pad import pad
 from beancount.core import realization
 from beancount.ops import summarize
-from beancount.loader import loaddoc
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import options
 from beancount.parser import cmptest
-from beancount.utils import test_utils
 from beancount import loader
 
 
 class TestClamp(cmptest.TestCase):
 
     @parser.parsedoc
-    def test_close(self, entries, errors, options_map):
+    def test_clamp(self, entries, errors, options_map):
         """
+        2012-03-01 * "Some income and expense to be summarized"
+          Income:Salary        10000 USD
+          Expenses:Taxes        3600 USD
+          Assets:US:Checking
+
+        2012-03-02 * "Some conversion to be summarized"
+          Assets:US:Checking   -5000 USD @ 1.2 CAD
+          Assets:CA:Checking    6000 CAD
+
+        ;; 2012-06-01  BEGIN --------------------------------
+
+        2012-08-01 * "Some income and expense to show"
+          Income:Salary        11000 USD
+          Expenses:Taxes        3200 USD
+          Assets:US:Checking
+
+        2012-08-02 * "Some other conversion to be summarized"
+          Assets:US:Checking   -3000 USD @ 1.25 CAD
+          Assets:CA:Checking    3750 CAD
+
+        ;; 2012-09-01  END   --------------------------------
+
+        2012-11-01 * "Some income and expense to be truncated"
+          Income:Salary        10000 USD
+          Expenses:Taxes        3600 USD
+          Assets:US:Checking
+
         """
+        self.assertFalse(errors)
 
+        begin_date = datetime.date(2012, 6, 1)
+        end_date = datetime.date(2012, 9, 1)
+        account_types = options.get_account_types(options_map)
+        clamped_entries, index = summarize.clamp(entries, begin_date, end_date,
+                                                 account_types,
+                                                 'NOTHING',
+                                                 'Equity:Earnings',
+                                                 'Equity:OpeningBalances',
+                                                 'Equity:Conversions')
+        self.assertEqualEntries("""
 
-        # Cehck empty balance
+        2012-05-31 S "Opening balance for 'Assets:CA:Checking' (Summarization)"
+          Assets:CA:Checking              6000.00 CAD
+          Equity:OpeningBalances         -6000.00 CAD
 
+        2012-05-31 S "Opening balance for 'Assets:US:Checking' (Summarization)"
+          Assets:US:Checking            -18600.00 USD
+          Equity:OpeningBalances         18600.00 USD
 
+        2012-05-31 S "Opening balance for 'Equity:Earnings' (Summarization)"
+          Equity:Earnings                13600.00 USD
+          Equity:OpeningBalances        -13600.00 USD
 
+        ;; 2012-06-01  BEGIN --------------------------------
 
+        2012-08-01 * "Some income and expense to show"
+          Income:Salary                  11000.00 USD
+          Expenses:Taxes                  3200.00 USD
+          Assets:US:Checking            -14200.00 USD
+
+        2012-08-02 * "Some other conversion to be summarized"
+          Assets:US:Checking             -3000.00 USD  @ 1.25 CAD
+          Assets:CA:Checking              3750.00 CAD
+
+        ;; 2012-09-01  END   --------------------------------
+
+        2012-08-31 C "Conversion for Inventory(-3000.00 USD, 3750.00 CAD)"
+          Equity:Conversions              3000.00 USD  @ 0.00 NOTHING
+          Equity:Conversions             -3750.00 CAD  @ 0.00 NOTHING
+
+        """, clamped_entries)
+
+        self.assertEqual(3, index)
+
+        input_balance = realization.compute_entries_balance(entries)
+        self.assertFalse(input_balance.is_empty())
+
+        clamped_balance = realization.compute_entries_balance(clamped_entries)
+        self.assertTrue(clamped_balance.is_empty())
 
 
 class TestClose(cmptest.TestCase):
@@ -56,10 +119,10 @@ class TestClose(cmptest.TestCase):
           Assets:US:Checking   -5000 USD @ 1.2 CAD
           Assets:CA:Checking    6000 CAD
         """
-        printer.print_errors(errors)
         self.assertFalse(errors)
         account_types = options.get_account_types(options_map)
         closed_entries = summarize.close(entries, account_types,
+                                         'NOTHING',
                                          'Equity:Earnings',
                                          'Equity:Conversions')
 
@@ -434,23 +497,28 @@ class TestConversions(cmptest.TestCase):
 
     def test_conversions__empty(self):
         date = datetime.date(2012, 2, 1)
-        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, date)
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT,
+                                                   'NOTHING', date)
         self.assertEqualEntries(self.entries, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries, date=date)
+        converted_balance = realization.compute_entries_balance(conversion_entries,
+                                                                date=date)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__not_needed(self):
         date = datetime.date(2012, 3, 2)
-        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, date)
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT,
+                                                   'NOTHING', date)
         self.assertEqualEntries(self.entries, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries, date=date)
+        converted_balance = realization.compute_entries_balance(conversion_entries,
+                                                                date=date)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__needed_middle(self):
         date = datetime.date(2012, 3, 3)
-        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, date)
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT,
+                                                   'NOTHING', date)
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
@@ -460,13 +528,14 @@ class TestConversions(cmptest.TestCase):
 
         """, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries, date=date)
+        converted_balance = realization.compute_entries_balance(conversion_entries,
+                                                                date=date)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__with_transactions_at_cost(self):
         date = datetime.date(2012, 3, 10)
-        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, date,
-                                                   transfer_currency='XFER')
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT,
+                                                   'XFER', date)
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
@@ -476,12 +545,14 @@ class TestConversions(cmptest.TestCase):
 
         """, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries, date=date)
+        converted_balance = realization.compute_entries_balance(conversion_entries,
+                                                                date=date)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__multiple(self):
         date = datetime.date(2012, 5, 10)
-        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT, date)
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT,
+                                                   'NOTHING', date)
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
@@ -495,7 +566,8 @@ class TestConversions(cmptest.TestCase):
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__no_date(self):
-        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT)
+        conversion_entries = summarize.conversions(self.entries, self.ACCOUNT,
+                                                   'NOTHING')
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
@@ -542,21 +614,21 @@ class TestTruncate(cmptest.TestCase):
 
     def test_truncate__before(self):
         truncated_entries = summarize.truncate(self.entries, datetime.date(2014, 2, 15))
-        self.assertEqualEntries(self.entries, truncated_entries)
+        self.assertEqualEntries([], truncated_entries)
 
     def test_truncate__normal1(self):
         truncated_entries = summarize.truncate(self.entries, datetime.date(2014, 3, 13))
         self.assertEqualEntries("""
 
-        2014-03-13 * "D1"
+        2014-03-10 * "A"
           Assets:US:Bank:Checking   1 USD
           Equity:OpeningBalances
 
-        2014-03-13 * "D2"
+        2014-03-11 * "B"
           Assets:US:Bank:Checking   1 USD
           Equity:OpeningBalances
 
-        2014-03-14 * "E"
+        2014-03-12 * "C"
           Assets:US:Bank:Checking   1 USD
           Equity:OpeningBalances
 
@@ -566,7 +638,23 @@ class TestTruncate(cmptest.TestCase):
         truncated_entries = summarize.truncate(self.entries, datetime.date(2014, 3, 14))
         self.assertEqualEntries("""
 
-        2014-03-14 * "E"
+        2014-03-10 * "A"
+          Assets:US:Bank:Checking   1 USD
+          Equity:OpeningBalances
+
+        2014-03-11 * "B"
+          Assets:US:Bank:Checking   1 USD
+          Equity:OpeningBalances
+
+        2014-03-12 * "C"
+          Assets:US:Bank:Checking   1 USD
+          Equity:OpeningBalances
+
+        2014-03-13 * "D1"
+          Assets:US:Bank:Checking   1 USD
+          Equity:OpeningBalances
+
+        2014-03-13 * "D2"
           Assets:US:Bank:Checking   1 USD
           Equity:OpeningBalances
 
@@ -574,7 +662,7 @@ class TestTruncate(cmptest.TestCase):
 
     def test_truncate__after(self):
         truncated_entries = summarize.truncate(self.entries, datetime.date(2014, 3, 15))
-        self.assertEqual([], truncated_entries)
+        self.assertEqual(self.entries, truncated_entries)
 
 
 class TestEntriesFromBalance(cmptest.TestCase):
@@ -596,9 +684,10 @@ class TestEntriesFromBalance(cmptest.TestCase):
         self.balances['Assets:US:Bank:Checking'] = Inventory.from_string('1823.23 USD')
 
     def test_create_entries_from_balances__simple(self):
-        entries = summarize.create_entries_from_balances(self.balances, datetime.date(2014, 1, 1),
-                                                         self.SOURCE_ACCOUNT, True,
-                                                         self.FILELOC, '!', 'Narration for {account} at {date}')
+        entries = summarize.create_entries_from_balances(
+            self.balances, datetime.date(2014, 1, 1),
+            self.SOURCE_ACCOUNT, True,
+            self.FILELOC, '!', 'Narration for {account} at {date}')
         self.assertEqualEntries("""
           2014-01-01 ! "Narration for Assets:US:Bank:Checking at 2014-01-01"
             Assets:US:Bank:Checking                                               1823.23 USD
@@ -610,9 +699,10 @@ class TestEntriesFromBalance(cmptest.TestCase):
         """, entries)
 
     def test_create_entries_from_balances__reverse(self):
-        entries = summarize.create_entries_from_balances(self.balances, datetime.date(2014, 1, 1),
-                                                         self.SOURCE_ACCOUNT, False,
-                                                         self.FILELOC, '*', 'Narration for {account} at {date}')
+        entries = summarize.create_entries_from_balances(
+            self.balances, datetime.date(2014, 1, 1),
+            self.SOURCE_ACCOUNT, False,
+            self.FILELOC, '*', 'Narration for {account} at {date}')
         self.assertEqualEntries("""
           2014-01-01 * "Narration for Assets:US:Bank:Checking at 2014-01-01"
             Assets:US:Bank:Checking                                              -1823.23 USD
@@ -652,13 +742,15 @@ class TestBalanceByAccount(cmptest.TestCase):
 
     def test_balance_by_account__first_date(self):
         # Test on the first date (should be empty).
-        balances, index = summarize.balance_by_account(self.entries, datetime.date(2014, 2, 1))
+        balances, index = summarize.balance_by_account(self.entries,
+                                                       datetime.date(2014, 2, 1))
         self.assertEqual(0, index)
         self.assertEqual({}, balances)
 
     def test_balance_by_account__middle(self):
         # Test in the middle.
-        balances, index = summarize.balance_by_account(self.entries, datetime.date(2014, 2, 10))
+        balances, index = summarize.balance_by_account(self.entries,
+                                                       datetime.date(2014, 2, 10))
         self.assertEqual(1, index)
         self.assertEqual({
             'Assets:AccountA': Inventory.from_string('10 USD'),
@@ -792,41 +884,3 @@ class TestOpenAtDate(cmptest.TestCase):
         """
         self.assertEqualEntries("""
         """, summarize.open_at_date(entries, date(2013, 1, 1)))
-
-
-
-
-
-
-
-
-
-
-## FIXME: Build more good examples to understand, with positions held at cost, as tests
-
-
-# FIXME: You can redo this in a manual loop now, here, probably.
-# def real_cost_as_dict(real_accounts):
-#     """Convert a tree of real accounts as a dict for easily doing
-#     comparisons for testing."""
-#     return {real_account.account: str(real_account.balance.get_cost())
-#             for account_name, real_account in real_accounts.items()
-#             if real_account.account}
-
-
-
-        # account_types = options.get_account_types(options_map)
-        # previous_accounts = options.get_previous_accounts(options_map)
-        # entries, _ = summarize.clamp(entries,
-        #                              datetime.date(2013, 1, 1), datetime.date(2014, 1, 1),
-        #                              account_types,
-        #                              *previous_accounts)
-
-        # current_accounts = options.get_current_accounts(options_map)
-        # entries = summarize.close(entries, account_types, *current_accounts)
-
-
-
-
-# FIXME: Add note to summarize entries before and during.
-__incomplete__ = True

@@ -20,15 +20,13 @@ from beancount.core.account_types import is_income_statement_account
 from beancount.ops import prices
 from beancount.ops import balance
 from beancount.utils import bisect_key
+from beancount.parser import options
 
 
-# The imaginary currency used to convert all units for conversions at a
-# degenerate rate of zero.
-TRANSFER_CURRENCY = 'NOTHING'
-
-
-def clamp(entries, begin_date, end_date,
+def clamp(entries,
+          begin_date, end_date,
           account_types,
+          conversion_currency,
           account_earnings,
           account_opening,
           account_conversions):
@@ -53,6 +51,8 @@ def clamp(entries, begin_date, end_date,
       begin_date: A datetime.date instance, the beginning of the period.
       end_date: A datetime.date instance, one day beyond the end of the period.
       account_types: An instance of AccountTypes.
+      conversion_currency: A string, the transfer currency to use for zero prices
+        on the conversion entry.
       account_earnings: A string, the name of the account to transfer
         previous earnings from the income statement accounts to the balance
         sheet.
@@ -62,14 +62,12 @@ def clamp(entries, begin_date, end_date,
         opening balances account.
       account_conversions: A string, tne name of the equity account to
         book currency conversions against.
-
     Returns:
       A new list of entries is returned, and the index that points to the first
       original transaction after the beginning date of the period. This index
       can be used to generate the opening balances report, which is a balance
       sheet fed with only the summarized entries.
     """
-
     # Transfer income and expenses before the period to equity.
     income_statement_account_pred = (
         lambda account: is_income_statement_account(account, account_types))
@@ -85,26 +83,47 @@ def clamp(entries, begin_date, end_date,
     entries = truncate(entries, end_date)
 
     # Insert conversion entries.
-    entries = conversions(entries, account_conversions, begin_date)
+    entries = conversions(entries, account_conversions, conversion_currency, end_date)
 
     return entries, index
 
 
+def clamp_with_options(entries, begin_date, end_date, options_map):
+    """Clamp with an options map. See clamp() for details.
 
-
-
-
+    Args:
+      entries: See clamp().
+      begin_date: See clamp().
+      end_date: See clamp().
+      options_map: A parser's option_map.
+    Returns:
+      Same as clamp().
+    """
+    account_types = options.get_account_types(options_map)
+    previous_accounts = options.get_previous_accounts(options_map)
+    conversion_currency = options_map['conversion_currency']
+    return clamp(entries, begin_date, end_date,
+                 account_types,
+                 conversion_currency,
+                 *previous_accounts)
 
 
 def close(entries,
           account_types,
+          conversion_currency,
           account_earnings,
           account_conversions):
     """Transfer net income to equity and insert a final conversion entry.
 
+    This is used to move and nullify balances from the income and expense
+    accounts to an equity account in order to draw up a balance sheet with a
+    balance of precisely zero.
+
     Args:
       entries: A list of directives.
       account_types: An instance of AccountTypes.
+      conversion_currency: A string, the transfer currency to use for zero prices
+        on the conversion entry.
       account_earnings: A string, the name of the equity account to transfer
         final balances of the income and expense accounts to.
       account_conversions: A string, the name of the equity account to use as
@@ -112,6 +131,7 @@ def close(entries,
     Returns:
       A modified list of entries, with the income and expense accounts
       transferred..
+
     """
 
     # Transfer the balances of income and expense accounts as earnings / net
@@ -123,7 +143,7 @@ def close(entries,
                                 account_earnings)
 
     # Insert final conversion entries.
-    entries = conversions(entries, account_conversions, None)
+    entries = conversions(entries, account_conversions, conversion_currency, None)
 
     return entries
 
@@ -237,17 +257,17 @@ def summarize(entries, date, account_opening):
     return (before_entries + after_entries), len(before_entries)
 
 
-def conversions(entries, conversion_account, date=None, transfer_currency=TRANSFER_CURRENCY):
+def conversions(entries, conversion_account, conversion_currency, date=None):
     """Insert a conversion entry at date 'date' at the given account.
 
     Args:
       entries: A list of entries.
       conversion_account: The Account object to book against.
+      conversion_currency: A string, the transfer currency to use for zero prices
+        on the conversion entry.
       date: The date before which to insert the conversion entry. The new
         entry will be inserted as the last entry of the date just previous
         to this date.
-      transfer_currency: A string, the transfer currency to use for zero prices
-        on the conversion entry.
     Returns:
       A modified list of entries.
     """
@@ -272,11 +292,11 @@ def conversions(entries, conversion_account, date=None, transfer_currency=TRANSF
     conversion_entry = Transaction(fileloc, last_date, flags.FLAG_CONVERSIONS,
                                    None, narration, None, None, [])
     for position in conversion_balance.get_cost().get_positions():
-        # FIXME: Set the cost to zero here to maintain the balance invariant.
-        # (This is the only single place we cheap on the balance rule in the
-        # entire system and this is necessary; see documentation on
+        # Important note: Set the cost to zero here to maintain the balance
+        # invariant. (This is the only single place we cheat on the balance rule
+        # in the entire system and this is necessary; see documentation on
         # Conversions.)
-        price = amount.Amount(amount.ZERO, transfer_currency)
+        price = amount.Amount(amount.ZERO, conversion_currency)
         conversion_entry.postings.append(
             Posting(conversion_entry, conversion_account, -position, price, None))
 
@@ -298,7 +318,7 @@ def truncate(entries, date):
     """
     index = bisect_key.bisect_left_with_key(entries, date,
                                             key=lambda entry: entry.date)
-    return entries[index:]
+    return entries[:index]
 
 
 def create_entries_from_balances(balances, date, source_account, direction,

@@ -7,14 +7,10 @@ from beancount.parser import cmptest
 
 class TestExampleExcludeTag(cmptest.TestCase):
 
-    def setUp(self):
-        loader.install_load_plugin(exclude_tag.exclude_tag)
-
-    def tearDown(self):
-        loader.uninstall_load_plugin(exclude_tag.exclude_tag)
-
     def test_exclude_tag(self):
         INPUT = textwrap.dedent("""
+
+            option "plugin" "beancount.plugins.exclude_tag"
 
             2011-01-01 open Expenses:Restaurant
             2011-01-01 open Assets:Cash

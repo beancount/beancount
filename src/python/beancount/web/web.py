@@ -1068,8 +1068,6 @@ def run_app(args, quiet=None):
     logging.basicConfig(level=logging.INFO,
                         format='%(levelname)-8s: %(message)s')
 
-    loader.install_plugins(args.plugin)
-
     # Hide the numbers in incognito mode. We do this on response text via a plug-in.
     if args.incognito:
         args.no_source = True
@@ -1137,9 +1135,6 @@ def add_web_arguments(argparser):
 
     group.add_argument('filename',
                        help="Beancount input filename to serve.")
-
-    group.add_argument('--plugin', action='append', default=[],
-                       help="The name of a plugin to import before running.")
 
     group.add_argument('--port', action='store', type=int, default=8080,
                        help="Which port to listen on.")
