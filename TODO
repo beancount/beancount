@@ -1712,6 +1712,10 @@ Improve this bit:
 
 ** Documents
 
+  - Write a proposal for implementing a transformation on a specific set of
+    transactions, that supports capital gains with commission taken into
+    account.
+
   - Can we automatically add a ^LINK to the document directive in order to
     associate a PDF with a document?!? -> For trade tickets. Maybe let the
     modules provide a import_link() function on the associated PDF files?
@@ -1895,6 +1899,28 @@ Improve this bit:
 
 
 * Plugins
+** Capital Gain Without Cost
+
+  - Implement the proposal for putting the capital gain in the cost as a plugin
+    that transforms the relevant transactions, those tagged as such. This will
+    require some loosening of the booking method in order to make it easier to
+    disambiguate a sale, and some good debugging tools as well.
+
+    You could automatically look for the right amounts by looking at the signs.
+    I think you could automate a lot of it.
+
+
+** Auto-Link Booking Transactions
+
+  - Automatically create a link between transactions that book each other.
+    I'm not sure how I'm going to implement that - perhaps in the lot matching,
+    a hash to the original entry will be kept in the lot - but we should be
+    able to update the links to all the transactions that book together.
+
+    This will be a great debugging tool as well... a very powerful idea that
+    can be implemented entirely in a plug-in.
+
+
 ** Unrealized Gain
 
   - Find a way to pass in a plug-specific option via the file.
