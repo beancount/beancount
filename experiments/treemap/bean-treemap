@@ -56,11 +56,14 @@ def main():
     output = json.dumps(json_dict, indent=1)
     print(output)
 
+
 def fill(name, real_account):
     result = {"name": name}
     number = real_account.balance.get_cost().get_amount(opts.currency).number
+    # FIXME: TODO - convert all the amounts to a currency.
 
-    # Note: For now we don't deal with negative numbers.
+    # Note: For now we don't deal with negative numbers. We should just ignore
+    # them.
     if number < 0:
         number = 0
 
@@ -70,7 +73,7 @@ def fill(name, real_account):
         result["children"] = children = []
         if number:
             # Add a subnode for itself if a non-leaf node has a non-zero amount.
-            children.append({"name": "*", 
+            children.append({"name": "*",
                              "value": float(number)})
         for child_name, child_account in real_account.items():
             children.append(fill(child_name, child_account))
