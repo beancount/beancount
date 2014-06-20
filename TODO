@@ -254,8 +254,6 @@ beancount: TODO
   following Gdocs documents have to be completed and eventually made public
   before release:
 
-  - Convert all current documentation to a GDoc
-
   - A generic introduction to the double-entry method, in as simple as possible
     terms:
     http://furius.ca/beancount/doc/intro
