@@ -63,6 +63,9 @@ beancount: TODO
     * realization.compute_*_balance() functions may benefit from moving to
       their own module. Not sure yet. Find out.
 
+  - Maybe fold bean-directories functionality to bean-doctor, in the name of
+    minimizing the number of binaries we provide, keeping things simpler.
+
 
 ** Fix Minor Nits & Bugs
 
