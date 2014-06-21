@@ -2248,7 +2248,9 @@ Improve this bit:
 ** Multi-Period Reports
 
   - One kind of report that would be GREAT is a single grid with all income accounts
-    on the left with year by year on the horizontal. An overview of all the years.
+    on the left with year by year on the horizontal. An overview of all the
+    years. Same with month-by-month report.
+
 
 ** CSV Reports / Text Reports
 

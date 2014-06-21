@@ -1,6 +1,11 @@
-"""
-Sanity checks.
-(Note that these don't have anything to do with 'Balance' directives.
+"""Validation checks.
+
+These checks are intended to be run after all the plugins have transformed the
+list of entries, just before serving them or generating reports from them. The
+idea is to ensure a reasonable set of invariants and generate errors if those
+invariants are violated. They are not sanity checks--user data is subject to
+constraints which are hopefully detected here and which will result in errors
+trickled up to the user.
 """
 from os import path
 import collections
@@ -11,7 +16,6 @@ from beancount.core.data import Open, Close, Balance, Transaction, Document
 from beancount.core import data
 from beancount.core import getters
 from beancount.core import inventory
-from beancount.utils import misc_utils
 from beancount.parser import printer
 
 
@@ -140,20 +144,20 @@ def validate_duplicate_balances(entries, unused_options_map):
     """
     errors = []
 
-    # Mapping of (account, date) to Balance entry.
+    # Mapping of (account, currency, date) to Balance entry.
     balance_entries = {}
     for entry in entries:
         if not isinstance(entry, data.Balance):
             continue
 
-        key = (entry.account, entry.date)
+        key = (entry.account, entry.amount.currency, entry.date)
         try:
             previous_entry = balance_entries[key]
             if entry.amount != previous_entry.amount:
                 errors.append(
                     ValidationError(
                         entry.fileloc,
-                        "Duplicate Balance assertion with different amounts.",
+                        "Duplicate balance assertion with different amounts.",
                         entry))
         except KeyError:
             balance_entries[key] = entry
@@ -279,7 +283,10 @@ def validate_currency_constraints(entries, options_map):
                 if isinstance(entry, Open) and entry.currencies}
 
     errors = []
-    for entry in misc_utils.filter_type(entries, Transaction):
+    for entry in entries:
+        if not isinstance(entry, Transaction):
+            continue
+
         for posting in entry.postings:
             # Look up the corresponding account's valid currencies; skip the
             # check if there are none specified.
@@ -303,28 +310,24 @@ def validate_currency_constraints(entries, options_map):
     return errors
 
 
+def validate_documents_paths(entries, options_map):
+    """Check that all filenames in resolved Document entries are absolute filenames.
 
+    The processing of document entries is assumed to result in absolute paths.
+    Relative paths are resolved at the parsing stage and at point we want to
+    make sure we don't have to do any further processing on them.
 
-
-
-
-
-
-
-
-
-
-
-def validate_documents_paths(entries):
-    """Check that all filenames in Document entries are absolute filenames."""
-
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of new errors, if any were found.
+    """
     return [ValidationError(entry.fileloc, "Invalid relative path for entry.", entry)
-            for entry in misc_utils.filter_type(entries, Document)
-            if not path.isabs(entry.filename)]
+            for entry in entries
+            if (isinstance(entry, Document) and
+                not path.isabs(entry.filename))]
 
-
-
-# Remove the dependency on misc_utils.filter_type
 
 def validate(entries, options_map):
     """Perform all the standard checks on parsed contents.
@@ -342,35 +345,16 @@ def validate(entries, options_map):
                                 validate_open_close,
                                 validate_active_accounts,
                                 validate_unused_accounts,
-                                validate_duplicate_balances]:
-        new_errors = validate_function(entries, options_map)
+                                validate_currency_constraints,
+                                validate_duplicate_balances,
+                                validate_documents_paths]:
+
+        new_errors = validation_function(entries, options_map)
         errors.extend(new_errors)
 
+    return errors
 
 
-
-    accounts = getters.get_accounts(entries)
-
-    # Check for unused accounts.
-    unused_errors = validate_unused_accounts(entries, accounts)
-
-    # Check the currency constraints.
-    constraint_errors = validate_currency_constraints(entries)
-
-    # Sanity checks for documents.
-    doc_errors = validate_documents_paths(entries)
-
-    return (booking_errors +
-            open_close_errors +
-
-            unused_errors +
-            check_errors +
-            constraint_errors +
-            doc_errors)
-
-
-
-# FIXME: TODO - check that there are no duplicates on open entries.
-# FIXME: TODO - check again that all transactions balance
-# FIXME: TODO - check posting entries
-# FIXME: TODO - check the parent entries
+# FIXME: TODO - check again that all transactions balance, users may have
+# transformed transactions; we could limit our checks to the original
+# transactions by using the hash function in the loader.
