@@ -12,6 +12,7 @@ from beancount.core import data
 from beancount.core import getters
 from beancount.core import inventory
 from beancount.utils import misc_utils
+from beancount.parser import printer
 
 
 # An error from one of the checks.
@@ -160,9 +161,61 @@ def validate_duplicate_balances(entries, unused_options_map):
     return errors
 
 
-# def validate_active_accounts(entries):
-# Check that all directives other than Open and Close occur within the
-# open-close interval. This should be good for all of them.
+def validate_active_accounts(entries, unused_options_map):
+    """Check that all references to accounts occurs on active accounts.
+
+    We basically check that references to accounts from all directives other
+    than Open and Close occur at dates the open-close interval of that account.
+    This should be good for all of the directive types where we can extract an
+    account name.
+
+    Note that this is more strict a check than comparing the dates: we actually
+    check that no references to account are made on the same day before the open
+    directive appears for that account. This is a nice property to have, and is
+    supported by our custom sorting routine that will sort open entries before
+    transaction entries, given the same date.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of new errors, if any were found.
+
+    """
+    error_pairs = []
+    active_set = set()
+    opened_accounts = set()
+    for entry in entries:
+        if isinstance(entry, data.Open):
+            active_set.add(entry.account)
+            opened_accounts.add(entry.account)
+
+        elif isinstance(entry, data.Close):
+            active_set.discard(entry.account)
+
+        else:
+            for account in getters.get_entry_accounts(entry):
+                if account not in active_set:
+                    # Register an error to be logged later, with an appropriate
+                    # message.
+                    error_pairs.append((account, entry))
+
+    # Refine the error message to disambiguate between the case of an account
+    # that has never been seen and one that was simply not active at the time.
+    errors = []
+    for account, entry in error_pairs:
+        if account in opened_accounts:
+            message = "Invalid reference to inactive account '{}'".format(account)
+        else:
+            message = "Invalid reference to unknown account '{}'".format(account)
+        errors.append(ValidationError(entry.fileloc, message, entry))
+
+    return errors
+
+
+
+
+
 
 
 
@@ -349,29 +402,24 @@ def validate(entries, options_map):
       A list of new errors, if any were found.
     """
 
-    accounts = getters.get_accounts(entries)
-
-    # Check for negative amounts at cost.
-    booking_errors = validate_inventory_booking(entries, options_map)
-
-    # Check the validity of open close directives.
-    open_close_errors = validate_open_close(entries, accounts)
-
-
+    # Run various validation routines define above.
+    errors = []
+    for validation_function in [validate_inventory_booking,
+                                validate_open_close,
+                                validate_duplicate_balances,
+                                validate_active_accounts]:
+        new_errors = validate_function(entries, options_map)
+        errors.extend(new_errors)
 
 
 
 
     # Validate open/close directives and accounts referred outside of those.
+    accounts = getters.get_accounts(entries)
     check_errors, _, _ = validate_open_close__old(entries, accounts)
-
-
-
-
 
     # Check for unused accounts.
     unused_errors = validate_unused_accounts(entries, accounts)
-
 
     # Check the currency constraints.
     constraint_errors = validate_currency_constraints(entries)

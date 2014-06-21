@@ -13,7 +13,7 @@ from beancount.core import account
 class GetAccounts:
     """Accounts gatherer.
     """
-    def __call__(self, entries):
+    def get_accounts(self, entries):
         """Gather the list of accounts from the list of entries.
 
         Args:
@@ -27,6 +27,20 @@ class GetAccounts:
             for account in method(entry):
                 accounts.add(account)
         return accounts
+
+    def get_entry_accounts(self, entry):
+        """Gather all the accounts references by a single directive.
+
+        Note: This should get replaced by a method on each directive eventually,
+        that would be the clean way to do this.
+
+        Args:
+          entry: A directive instance.
+        Returns:
+          A set of Account instances.
+        """
+        method = getattr(self, entry.__class__.__name__)
+        return set(method(entry))
 
     def Transaction(_, entry):
         """Process a Transaction directive.
@@ -74,6 +88,10 @@ class GetAccounts:
     Event = Price = _zero
 
 
+# Global instance to share.
+_GetAccounts = GetAccounts()
+
+
 def get_accounts(entries):
     """Gather all the accounts references by a list of directives.
 
@@ -82,7 +100,22 @@ def get_accounts(entries):
     Returns:
       A set of account strings.
     """
-    return GetAccounts()(entries)
+    return _GetAccounts.get_accounts(entries)
+
+
+def get_entry_accounts(entry):
+    """Gather all the accounts references by a single directive.
+
+    Note: This should get replaced by a method on each directive eventually,
+    that would be the clean way to do this.
+
+    Args:
+      entries: A directive instance.
+    Returns:
+      A set of account strings.
+    """
+    return _GetAccounts.get_entry_accounts(entry)
+
 
 
 def get_account_components(entries):
@@ -193,16 +226,28 @@ def get_active_years(entries):
 def get_account_open_close(entries):
     """Fetch the open/close entries for each of the accounts.
 
+    If an open or close entry happens to be duplicated, accept the earliest
+    entry (chronologically).
+
     Args:
       entries: A list of directive instances.
     Returns:
       A map of Account instance to pairs of (open-directive,
       close-directive) tuples.
+
     """
-    open_closes_map = defaultdict(lambda: [None, None])
+
+    # A dict of account name to (open-entry, close-entry).
+    open_close_map = defaultdict(lambda: [None, None])
     for entry in entries:
         if not isinstance(entry, (Open, Close)):
             continue
+        open_close = open_close_map[entry.account]
         index = 0 if isinstance(entry, Open) else 1
-        open_closes_map[entry.account][index] = entry
-    return open_closes_map
+        previous_entry = open_close[index]
+        if previous_entry is not None:
+            if previous_entry.date <= entry.date:
+                entry = previous_entry
+        open_close[index] = entry
+
+    return open_close_map

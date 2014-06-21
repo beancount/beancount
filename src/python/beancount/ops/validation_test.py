@@ -6,6 +6,7 @@ idea is to ensure a reasonable set of invariants and generate errors if those
 invariants are violated.
 """
 import datetime
+import re
 
 from beancount.parser import parser
 from beancount.parser import printer
@@ -151,6 +152,68 @@ class TestValidateBalances(cmptest.TestCase):
         errors = validation.validate_duplicate_balances(entries, options_map)
         self.assertEqual([datetime.date(2014, 3, 1)],
                          [error.entry.date for error in errors])
+
+
+class TestValidateActiveAccounts(cmptest.TestCase):
+
+    @parser.parsedoc
+    def test_validate_active_accounts(self, entries, _, options_map):
+        """
+        2014-01-01 open  Equity:OpeningBalances
+
+        2014-02-01 * "Invalid before"
+          Assets:Temporary    1 USD
+          Equity:OpeningBalances
+
+        2014-02-02 note  Assets:Temporary "Invalid note entry"
+        2014-02-03 pad   Assets:Temporary Equity:OpeningBalances
+
+        2014-03-01 open  Assets:Temporary
+
+        2014-04-01 * "Valid"
+          Assets:Temporary    1 USD
+          Equity:OpeningBalances
+
+        2014-05-01 * "Unknown account"
+          Assets:Temporary    1 USD
+          Equity:ImUnknown
+
+        2014-09-01 close Assets:Temporary
+
+        2014-10-01 * "Invalid after"
+          Assets:Temporary    1 USD
+          Equity:OpeningBalances
+
+        2014-10-02 note  Assets:Temporary "Invalid note entry again"
+
+        """
+        errors = validation.validate_active_accounts(entries, options_map)
+
+        self.assertEqualEntries("""
+
+        2014-02-01 * "Invalid before"
+          Assets:Temporary    1 USD
+          Equity:OpeningBalances
+
+        2014-02-02 note  Assets:Temporary "Invalid note entry"
+        2014-02-03 pad   Assets:Temporary Equity:OpeningBalances
+
+        2014-05-01 * "Unknown account"
+          Assets:Temporary    1 USD
+          Equity:ImUnknown
+
+        2014-10-01 * "Invalid after"
+          Assets:Temporary    1 USD
+          Equity:OpeningBalances
+
+        2014-10-02 note  Assets:Temporary "Invalid note entry again"
+
+        """, [error.entry for error in errors])
+
+        self.assertTrue(all(
+            (re.search('inactive.*Assets:Temporary', error.message) or
+             re.search('unknown.*Equity:ImUnknown', error.message))
+            for error in errors))
 
 
 

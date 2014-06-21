@@ -175,6 +175,12 @@ Doc notes (move to document):
       This works okay:
       2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
 
+  - This easy mistake, disables a lot of entries:
+
+        2014-02-02 note  Assets:Temporary "Bla bla""
+
+    Find a way to detect too long strings and perhaps barf on it.
+
 
 ** Reconcile Web Interface vs. Upcoming Reports Stage
 
@@ -267,6 +273,8 @@ Doc notes (move to document):
 
   - Implement Amount.from_string() to be consistent with position and inventory?
 
+
+
 ** Documentation
 
   I want to complete a snapshot of documentation before shipping. I often have
@@ -357,6 +365,20 @@ Doc notes (move to document):
   have time to think, I just come here and jot it down. Every couple of months
   I clean this up and put it in the sections below. Please excuse the mess.)
 
+
+  - The creation of exceptions should be made easier: each error class should
+    inherit from a base class that is able to accept an optional list of
+    entries, that would automatically render the fileloc of each of those
+    entries, and that would use the fileloc of the first entry in order to
+    render the location of the error. If no entries are specified, an OPTIONAL
+    fileloc= parameter should be provided to specify where the error occurs.
+    This will make creating errors a lot easier and nicer.
+
+
+  - Directive abstraction: Add directives should be able to enumerate they
+    accounts. Maybe add a get_accounts() method to the base namedtuple or create
+    a mixin. Remove getters.get_accounts() and getters.get_entry_accounts() if
+    you have this, lots of code goes away, probably a good idea.
 
 
   - Look at Intuit's service for financial hub for financial data. Look for a

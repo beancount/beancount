@@ -43,6 +43,14 @@ class TestGetters(unittest.TestCase):
                           'Expenses:Restaurant'},
                          accounts)
 
+    def test_get_entry_accounts(self):
+        entries = parser.parse_string(TEST_INPUT)[0]
+        accounts = getters.get_entry_accounts(entries[5])
+        self.assertEqual({'Assets:US:Cash',
+                          'Expenses:Grocery',
+                          'Expenses:Restaurant'},
+                         accounts)
+
     def test_get_all_tags(self):
         entries = parser.parse_string(TEST_INPUT)[0]
         tags = getters.get_all_tags(entries)
@@ -94,6 +102,21 @@ class TestGetters(unittest.TestCase):
         self.assertEqual(mapfound('Expenses:Grocery'), (True, False))
         self.assertEqual(mapfound('Expenses:Coffee'), (True, False))
         self.assertEqual(mapfound('Expenses:Restaurant'), (True, False))
+
+    @parser.parsedoc
+    def test_get_account_open_close__duplicates(self, entries, _, __):
+        """
+        2014-01-01 open  Assets:Checking
+        2014-01-02 open  Assets:Checking
+
+        2014-01-28 close Assets:Checking
+        2014-01-29 close Assets:Checking
+        """
+        open_close_map = getters.get_account_open_close(entries)
+        self.assertEqual(1, len(open_close_map))
+        open_entry, close_entry = open_close_map['Assets:Checking']
+        self.assertEqual(datetime.date(2014, 1, 1), open_entry.date)
+        self.assertEqual(datetime.date(2014, 1, 28), close_entry.date)
 
     def test_get_account_components(self):
         entries = parser.parse_string(TEST_INPUT)[0]
