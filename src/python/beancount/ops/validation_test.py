@@ -1,6 +1,12 @@
+"""Validation tests.
+
+These tests are intended to be run after all the plugins have transformed the
+list of entries, just before serving them or generating reports from them. The
+idea is to ensure a reasonable set of invariants and generate errors if those
+invariants are violated.
 """
-FIXME TODO - Add validation tests.
-"""
+import datetime
+
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import cmptest
@@ -36,7 +42,7 @@ class TestValidateInventoryBooking(cmptest.TestCase):
           Assets:Investments:Cash
 
         """
-        validation_errors = validation.validate_inventory_booking(entries)
+        validation_errors = validation.validate_inventory_booking(entries, options_map)
 
         self.assertEqual([validation.ValidationError, validation.ValidationError],
                          list(map(type, validation_errors)))
@@ -52,8 +58,11 @@ class TestValidateInventoryBooking(cmptest.TestCase):
 
         """, [e.entry for e in validation_errors])
 
+
+class TestValidateOpenClose(cmptest.TestCase):
+
     @parser.parsedoc
-    def test_validate_open_close__duplicate_open(self, entries, _, __):
+    def test_validate_open_close__duplicate_open(self, entries, _, options_map):
         """
         ;; Regular, only appears once.
         2014-02-10 open  Assets:US:Bank:Checking1
@@ -66,13 +75,13 @@ class TestValidateInventoryBooking(cmptest.TestCase):
         2014-02-20 open  Assets:US:Bank:Checking3
         2014-02-21 open  Assets:US:Bank:Checking3
         """
-        errors = validation.validate_open_close(entries)
+        errors = validation.validate_open_close(entries, options_map)
         self.assertEqual(['Assets:US:Bank:Checking2',
                           'Assets:US:Bank:Checking3'],
                          [error.entry.account for error in errors])
 
     @parser.parsedoc
-    def test_validate_open_close__duplicate_close(self, entries, _, __):
+    def test_validate_open_close__duplicate_close(self, entries, _, options_map):
         """
         2014-02-10 open  Assets:US:Bank:Checking1
         2014-02-10 open  Assets:US:Bank:Checking2
@@ -90,29 +99,60 @@ class TestValidateInventoryBooking(cmptest.TestCase):
         2014-03-22 close Assets:US:Bank:Checking3
 
         """
-        errors = validation.validate_open_close(entries)
+        errors = validation.validate_open_close(entries, options_map)
         self.assertEqual(['Assets:US:Bank:Checking2',
                           'Assets:US:Bank:Checking3'],
                          [error.entry.account for error in errors])
 
     @parser.parsedoc
-    def test_validate_open_close__close_unopened(self, entries, _, __):
+    def test_validate_open_close__close_unopened(self, entries, _, options_map):
         """
         2014-03-01 close Assets:US:Bank:Checking1
         """
-        errors = validation.validate_open_close(entries)
+        errors = validation.validate_open_close(entries, options_map)
         self.assertEqual(['Assets:US:Bank:Checking1'],
                          [error.entry.account for error in errors])
 
     @parser.parsedoc
-    def test_validate_open_close__ordering(self, entries, _, __):
+    def test_validate_open_close__ordering(self, entries, _, options_map):
         """
         2014-03-01 open  Assets:US:Bank:Checking1
         2014-02-01 close Assets:US:Bank:Checking1
         """
-        errors = validation.validate_open_close(entries)
+        errors = validation.validate_open_close(entries, options_map)
         self.assertEqual(['Assets:US:Bank:Checking1'],
                          [error.entry.account for error in errors])
+
+
+class TestValidateBalances(cmptest.TestCase):
+
+    @parser.parsedoc
+    def test_validate_duplicate_balances(self, entries, _, options_map):
+        """
+        2014-01-01 balance Assets:US:Bank:Checking1
+        2014-01-01 balance Assets:US:Bank:Checking2
+
+        ;; Duplicates, with different amounts (error).
+        2014-03-01 balance Assets:US:Bank:Checking1  100 USD
+        2014-03-01 balance Assets:US:Bank:Checking1  101 USD
+
+        ;; Duplicates, with same amount (okay).
+        2014-03-02 balance Assets:US:Bank:Checking1  100 USD
+        2014-03-02 balance Assets:US:Bank:Checking1  100 USD
+
+        ;; Different dates (okay).
+        2014-03-03 balance Assets:US:Bank:Checking1  100 USD
+        2014-03-04 balance Assets:US:Bank:Checking1  101 USD
+
+        ;; Different accounts at same date (okay).
+        2014-03-05 balance Assets:US:Bank:Checking1  100 USD
+        2014-03-05 balance Assets:US:Bank:Checking2  100 USD
+        """
+        errors = validation.validate_duplicate_balances(entries, options_map)
+        self.assertEqual([datetime.date(2014, 3, 1)],
+                         [error.entry.date for error in errors])
+
+
 
 
 
@@ -133,5 +173,4 @@ class TestValidateInventoryBooking(cmptest.TestCase):
     # def test_validate(self):
     #     raise NotImplementedError
 
-        # print()
-        # printer.print_errors(validation_errors)
+        #printer.print_errors(errors, prefix='\n\n\n')

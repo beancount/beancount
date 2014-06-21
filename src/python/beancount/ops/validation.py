@@ -18,7 +18,7 @@ from beancount.utils import misc_utils
 ValidationError = collections.namedtuple('ValidationError', 'fileloc message entry')
 
 
-def validate_inventory_booking(entries):
+def validate_inventory_booking(entries, unused_options_map):
     """Validate that no position at cost is allowed to go negative.
 
     This routine checks that when a posting reduces a position, existing or not,
@@ -31,6 +31,7 @@ def validate_inventory_booking(entries):
 
     Args:
       entries: A list of directives.
+      unused_options_map: An options map.
     Returns:
       A list of errors.
     """
@@ -58,7 +59,7 @@ def validate_inventory_booking(entries):
     return errors
 
 
-def validate_open_close(entries):
+def validate_open_close(entries, unused_options_map):
     """Check constraints on open and close directives themselves.
 
     This method checks two kinds of constraints:
@@ -74,9 +75,9 @@ def validate_open_close(entries):
 
     Args:
       entries: A list of directives.
+      unused_options_map: An options map.
     Returns:
       A list of new errors, if any were found.
-
     """
     errors = []
     open_map = {}
@@ -122,16 +123,51 @@ def validate_open_close(entries):
     return errors
 
 
+def validate_duplicate_balances(entries, unused_options_map):
+    """Check that balance entries occur only once per day.
+
+    Because we do not support time, and the declaration order of entries is
+    meant to be kept irrelevant, two balance entries with different amounts
+    should not occur in the file. We do allow two identical balance assertions,
+    however, because this may occur during import.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of new errors, if any were found.
+    """
+    errors = []
+
+    # Mapping of (account, date) to Balance entry.
+    balance_entries = {}
+    for entry in entries:
+        if not isinstance(entry, data.Balance):
+            continue
+
+        key = (entry.account, entry.date)
+        try:
+            previous_entry = balance_entries[key]
+            if entry.amount != previous_entry.amount:
+                errors.append(
+                    ValidationError(
+                        entry.fileloc,
+                        "Duplicate Balance assertion with different amounts.",
+                        entry))
+        except KeyError:
+            balance_entries[key] = entry
+
+    return errors
 
 
-
-# def validate_duplicate_balances(entries):
-
-# def validate_transactions_on_closed(entries):
+# def validate_active_accounts(entries):
+# Check that all directives other than Open and Close occur within the
+# open-close interval. This should be good for all of them.
 
 
 
 def validate_open_close__old(entries, accounts):
+
     """Check that open and close directives are not duplicated.
 
     Open and Close directives may only show up once per account. Balance is
@@ -303,16 +339,32 @@ def validate_documents_paths(entries):
             if not path.isabs(entry.filename)]
 
 
-def validate(entries):
-    """Perform all the standard checks on parsed contents."""
+def validate(entries, options_map):
+    """Perform all the standard checks on parsed contents.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of new errors, if any were found.
+    """
 
     accounts = getters.get_accounts(entries)
 
     # Check for negative amounts at cost.
-    booking_errors = validate_inventory_booking(entries)
+    booking_errors = validate_inventory_booking(entries, options_map)
 
     # Check the validity of open close directives.
-    open_close_errors, _, _ = validate_open_close(entries, accounts)
+    open_close_errors = validate_open_close(entries, accounts)
+
+
+
+
+
+
+    # Validate open/close directives and accounts referred outside of those.
+    check_errors, _, _ = validate_open_close__old(entries, accounts)
+
 
 
 
@@ -320,8 +372,6 @@ def validate(entries):
     # Check for unused accounts.
     unused_errors = validate_unused_accounts(entries, accounts)
 
-    # Validate open/close directives and accounts referred outside of those.
-    check_errors, _, _ = validate_open_close__old(entries, accounts)
 
     # Check the currency constraints.
     constraint_errors = validate_currency_constraints(entries)

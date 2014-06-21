@@ -38,6 +38,9 @@ Doc notes (move to document):
 
   - Mention balance checks on parents.
 
+  - Ordering: mention how it may cause problems and we strictly enforce certain
+    things in order to make the model clearer, and easier to understand.
+
 
 ** Move Files to Final Location
 
@@ -70,6 +73,16 @@ Doc notes (move to document):
 
   - Maybe fold bean-directories functionality to bean-doctor, in the name of
     minimizing the number of binaries we provide, keeping things simpler.
+
+  - Would it make sense for every plugin to provide a validation function? We
+    could then move all the validation routines in their plugin file. I very
+    much like this idea: it creates more isolation for routines and less
+    dependencies. Open/Close, Balance checks, do seem to be able to fit in this
+    category. Those functions should return only a single list of errors, no
+    entries, and the calling function should perform a simple hash check to
+    ensure that the mutable portion of the entries hasn't been modified by the
+    user-provided validation functions.
+
 
 
 ** Fix Minor Nits & Bugs

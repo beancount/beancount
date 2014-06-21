@@ -66,8 +66,11 @@ def load(filename,
 
     # Validate the list of entries.
     with misc_utils.print_time('validate', quiet):
-        valid_errors = validation.validate(entries)
+        valid_errors = validation.validate(entries, options_map)
         errors.extend(valid_errors)
+
+        # FIXME: Check here that the entries haven't been modified, by comparing
+        # hashes before and after.
 
     # Print out the list of errors.
     if do_print_errors and errors:
