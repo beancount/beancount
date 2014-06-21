@@ -34,6 +34,11 @@ beancount: TODO
 
 
 
+Doc notes (move to document):
+
+  - Mention balance checks on parents.
+
+
 ** Move Files to Final Location
 
   As I'm moving to a system with more plugins and less code in the core, and
@@ -2412,7 +2417,9 @@ Improve this bit:
 ** XML
 
   - Output to a structured XML format, some people are finding that useful to
-    build other visualizations.
+    build other visualizations. In order to test this completely, do a
+    round-trip test.  The code should live in beancount.parser, parallel to the
+    existing code there.
 
 
 ** Ledger

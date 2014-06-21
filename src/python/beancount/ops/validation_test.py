@@ -52,25 +52,86 @@ class TestValidateInventoryBooking(cmptest.TestCase):
 
         """, [e.entry for e in validation_errors])
 
-    # @parser.parsedoc
-    def test_validate_open_close(self):
-        raise NotImplementedError
+    @parser.parsedoc
+    def test_validate_open_close__duplicate_open(self, entries, _, __):
+        """
+        ;; Regular, only appears once.
+        2014-02-10 open  Assets:US:Bank:Checking1
 
-    # @parser.parsedoc
-    def test_validate_unused_accounts(self):
-        raise NotImplementedError
+        ;; Open twice on the same date.
+        2014-02-11 open  Assets:US:Bank:Checking2
+        2014-02-11 open  Assets:US:Bank:Checking2
 
-    # @parser.parsedoc
-    def test_validate_currency_constraints(self):
-        raise NotImplementedError
+        ;; Open twice on different dates.
+        2014-02-20 open  Assets:US:Bank:Checking3
+        2014-02-21 open  Assets:US:Bank:Checking3
+        """
+        errors = validation.validate_open_close(entries)
+        self.assertEqual(['Assets:US:Bank:Checking2',
+                          'Assets:US:Bank:Checking3'],
+                         [error.entry.account for error in errors])
 
-    # @parser.parsedoc
-    def test_validate_documents_paths(self):
-        raise NotImplementedError
+    @parser.parsedoc
+    def test_validate_open_close__duplicate_close(self, entries, _, __):
+        """
+        2014-02-10 open  Assets:US:Bank:Checking1
+        2014-02-10 open  Assets:US:Bank:Checking2
+        2014-02-10 open  Assets:US:Bank:Checking3
 
-    # @parser.parsedoc
-    def test_validate(self):
-        raise NotImplementedError
+        ;; Regular, only appears once.
+        2014-03-01 close Assets:US:Bank:Checking1
+
+        ;; Close twice on the same date.
+        2014-03-11 close Assets:US:Bank:Checking2
+        2014-03-11 close Assets:US:Bank:Checking2
+
+        ;; Close twice on different dates.
+        2014-03-21 close Assets:US:Bank:Checking3
+        2014-03-22 close Assets:US:Bank:Checking3
+
+        """
+        errors = validation.validate_open_close(entries)
+        self.assertEqual(['Assets:US:Bank:Checking2',
+                          'Assets:US:Bank:Checking3'],
+                         [error.entry.account for error in errors])
+
+    @parser.parsedoc
+    def test_validate_open_close__close_unopened(self, entries, _, __):
+        """
+        2014-03-01 close Assets:US:Bank:Checking1
+        """
+        errors = validation.validate_open_close(entries)
+        self.assertEqual(['Assets:US:Bank:Checking1'],
+                         [error.entry.account for error in errors])
+
+    @parser.parsedoc
+    def test_validate_open_close__ordering(self, entries, _, __):
+        """
+        2014-03-01 open  Assets:US:Bank:Checking1
+        2014-02-01 close Assets:US:Bank:Checking1
+        """
+        errors = validation.validate_open_close(entries)
+        self.assertEqual(['Assets:US:Bank:Checking1'],
+                         [error.entry.account for error in errors])
+
+
+
+
+    # # @parser.parsedoc
+    # def test_validate_unused_accounts(self):
+    #     raise NotImplementedError
+
+    # # @parser.parsedoc
+    # def test_validate_currency_constraints(self):
+    #     raise NotImplementedError
+
+    # # @parser.parsedoc
+    # def test_validate_documents_paths(self):
+    #     raise NotImplementedError
+
+    # # @parser.parsedoc
+    # def test_validate(self):
+    #     raise NotImplementedError
 
         # print()
         # printer.print_errors(validation_errors)

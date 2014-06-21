@@ -58,12 +58,86 @@ def validate_inventory_booking(entries):
     return errors
 
 
-def validate_open_close(entries, accounts):
+def validate_open_close(entries):
+    """Check constraints on open and close directives themselves.
 
-    """Some entries may not be present more than once for each account or date.
-    Open and Close are unique per account, for instance. Balance is unique
-    for each date. There are more. Return a list of errors on non-unique
+    This method checks two kinds of constraints:
+
+    1. An open or a close directive may only show up once for each account. If a
+       duplicate is detected, an error is generated.
+
+    2. Close directives may only appears if an open directive has been seen
+       previous (chronologically).
+
+    3. The date of close directives must be strictly greater than their
+      corresponding open directive.
+
+    Args:
+      entries: A list of directives.
+    Returns:
+      A list of new errors, if any were found.
+
+    """
+    errors = []
+    open_map = {}
+    close_map = {}
+    for entry in entries:
+
+        if isinstance(entry, Open):
+            if entry.account in open_map:
+                errors.append(
+                    ValidationError(
+                        entry.fileloc,
+                        "Duplicate open directive for {}.".format(entry.account),
+                        entry))
+            else:
+                open_map[entry.account] = entry
+
+        elif isinstance(entry, Close):
+            if entry.account in close_map:
+                errors.append(
+                    ValidationError(
+                        entry.fileloc,
+                        "Duplicate close directive for {}.".format(entry.account),
+                        entry))
+            else:
+                try:
+                    open_entry = open_map[entry.account]
+                    if entry.date <= open_entry.date:
+                        errors.append(
+                            ValidationError(
+                                entry.fileloc,
+                                "Internal error: closing date for {} "
+                                "appears before opening date.".format(entry.account),
+                                entry))
+                except KeyError:
+                    errors.append(
+                        ValidationError(
+                            entry.fileloc,
+                            "Unopened account {}is being closed.".format(entry.account),
+                            entry))
+
+                close_map[entry.account] = entry
+
+    return errors
+
+
+
+
+
+# def validate_duplicate_balances(entries):
+
+# def validate_transactions_on_closed(entries):
+
+
+
+def validate_open_close__old(entries, accounts):
+    """Check that open and close directives are not duplicated.
+
+    Open and Close directives may only show up once per account. Balance is
+    unique for each date. There are more. Return a list of errors on non-unique
     entries.
+
     """
 
     open_map = {}
@@ -235,13 +309,19 @@ def validate(entries):
     accounts = getters.get_accounts(entries)
 
     # Check for negative amounts at cost.
-    cost_errors = validate_inventory_booking(entries)
+    booking_errors = validate_inventory_booking(entries)
+
+    # Check the validity of open close directives.
+    open_close_errors, _, _ = validate_open_close(entries, accounts)
+
+
+
 
     # Check for unused accounts.
     unused_errors = validate_unused_accounts(entries, accounts)
 
     # Validate open/close directives and accounts referred outside of those.
-    check_errors, _, _ = validate_open_close(entries, accounts)
+    check_errors, _, _ = validate_open_close__old(entries, accounts)
 
     # Check the currency constraints.
     constraint_errors = validate_currency_constraints(entries)
@@ -249,7 +329,9 @@ def validate(entries):
     # Sanity checks for documents.
     doc_errors = validate_documents_paths(entries)
 
-    return (cost_errors +
+    return (booking_errors +
+            open_close_errors +
+
             unused_errors +
             check_errors +
             constraint_errors +
