@@ -900,12 +900,35 @@ beancount: TODO
     expressions (e.g. Assets:Cash:Caroline).
 
 
+
+
   - Idea around documents: A link between a transaction to a document can be
     created by associating a document's checksum as the link of the
     transaction. If Beancount could associate them - and it could, it has
     access to the document files and the corpus of transactions - the web
     interface could insert a special link between the two. Maybe we could do
     the same thing with the filename as well.
+
+  - A better idea to do this would be to allow specifying an explicit document
+    directive, and finding document directives from files that are already
+    specified should not re-create them. This way you can specify both the
+    document and a transaction and use a common link as a natural way to
+    associate them, e.g.:
+
+       2014-06-20 document Income:US:Google:GSU "2014-06-20.google.0000000.pdf" ^ee63c6fc7aa6
+
+       2014-06-20 * "GOOGLE INC       PAYROLL" | "Refund for fractional shares" ^ee63c6fc7aa6
+         ...
+         ...
+
+  - Document finding from files should not create documents that have been
+    explicitly specified in the ledger. Avoid duplication! This is an important
+    fix to make, that will allow both to co-exist together.
+
+
+
+
+
 
   - Implement beancount.plugins.tag_pending as a general feature of links...
     this ought to be built-in by default, this is a great idea.
