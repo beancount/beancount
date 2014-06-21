@@ -3,49 +3,58 @@ Sanity checks.
 (Note that these don't have anything to do with 'Balance' directives.
 """
 from os import path
-from collections import namedtuple
+import collections
 
-from beancount.core.account_types import is_valid_account_name
+from beancount.core import account_types
+from beancount.core import data
 from beancount.core.data import Open, Close, Balance, Transaction, Document
 from beancount.core import data
 from beancount.core import getters
 from beancount.core import inventory
-from beancount.core import realization
 from beancount.utils import misc_utils
 
 
 # An error from one of the checks.
-ValidationError = namedtuple('ValidationError', 'fileloc message entry')
+ValidationError = collections.namedtuple('ValidationError', 'fileloc message entry')
 
 
-def validate_non_negative_costs(entries):
+def validate_inventory_booking(entries):
     """Validate that no position at cost is allowed to go negative.
 
-    A real-world exception of this would be for trading future spreads or
-    allowing short-sales, but we plan to add support for enabling this
-    selectively.
+    This routine checks that when a posting reduces a position, existing or not,
+    that the subsequent inventory does not result in a position with a negative
+    number of units. A negative number of units would only be required for short
+    trades of trading spreads on futures, and right now this is not supported.
+    It would not be difficult to support this, however, but we want to be strict
+    about it, because being pedantic about this is otherwise a great way to
+    detect user data entry mistakes.
 
     Args:
       entries: A list of directives.
     Returns:
       A list of errors.
     """
-    postings_map = realization.postings_by_account(entries)
-
     errors = []
-    for account_name, postings in postings_map.items():
-        running_balance = inventory.Inventory()
-        for posting in postings:
-            if not isinstance(posting, data.Posting):
-                continue
+
+    balances = collections.defaultdict(inventory.Inventory)
+    for entry in entries:
+        if not isinstance(entry, data.Transaction):
+            continue
+
+        for posting in entry.postings:
+            # Update the balance of each posting on its respective account
+            # without allowing booking to a negative position, and if an error
+            # is encountered, catch it and return it.
+            running_balance = balances[posting.account]
             try:
-                running_balance.add_position(posting.position, False)
+                running_balance.add_position(posting.position, allow_negative=False)
             except ValueError as e:
                 errors.append(
                     ValidationError(
                         posting.entry.fileloc,
-                        "Position/cost error: '{}' -- {}".format(posting.account, e),
+                        e,
                         posting.entry))
+
     return errors
 
 
@@ -172,7 +181,7 @@ def validate_unused_accounts(entries, accounts):
             open_map[entry.account] = entry
             continue
         referenced_accounts.update(
-            misc_utils.get_tuple_values(entry, is_valid_account_name))
+            misc_utils.get_tuple_values(entry, account_types.is_valid_account_name))
 
     # Unreferenced accounts are unused accounts.
     unused_accounts = accounts - referenced_accounts
@@ -226,7 +235,7 @@ def validate(entries):
     accounts = getters.get_accounts(entries)
 
     # Check for negative amounts at cost.
-    cost_errors = validate_non_negative_costs(entries)
+    cost_errors = validate_inventory_booking(entries)
 
     # Check for unused accounts.
     unused_errors = validate_unused_accounts(entries, accounts)
@@ -251,3 +260,4 @@ def validate(entries):
 # FIXME: TODO - check that there are no duplicates on open entries.
 # FIXME: TODO - check again that all transactions balance
 # FIXME: TODO - check posting entries
+# FIXME: TODO - check the parent entries
