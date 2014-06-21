@@ -219,116 +219,6 @@ def validate_active_accounts(entries, unused_options_map):
 
 
 
-def validate_open_close__old(entries, accounts):
-
-    """Check that open and close directives are not duplicated.
-
-    Open and Close directives may only show up once per account. Balance is
-    unique for each date. There are more. Return a list of errors on non-unique
-    entries.
-
-    """
-
-    open_map = {}
-    close_map = {}
-    check_errors = []
-
-    def check_one(entry, account):
-        """Check a single entry."""
-        open = open_map.get(account)
-        if open is None or entry.date < open.date:
-            check_errors.append(
-                ValidationError(
-                    entry.fileloc,
-                    "Unknown account {} (or perhaps wrong date?).".format(account),
-                    entry))
-
-        close = close_map.get(account)
-        if close is not None and entry.date > close.date:
-            check_errors.append(
-                ValidationError(entry.fileloc,
-                                "Entry after account {} closed.".format(account),
-                                entry))
-
-    # Check all entries for missing open directives and references to accounts
-    # which haven't been opened.
-    for entry in entries:
-        if isinstance(entry, Transaction):
-            for posting in entry.postings:
-                check_one(entry, posting.account)
-
-        elif isinstance(entry, Open):
-            account = entry.account
-            if account in open_map:
-                check_errors.append(
-                    ValidationError(entry.fileloc,
-                                    "Duplicate open entry for {}.".format(account),
-                                    entry))
-            else:
-                open_map[account] = entry
-
-        elif isinstance(entry, Close):
-            account = entry.account
-            if account in close_map:
-                check_errors.append(
-                    ValidationError(entry.fileloc,
-                                    "Duplicate close entry for {}.".format(account),
-                                    entry))
-            else:
-                close_map[account] = entry
-
-        elif isinstance(entry, Balance):
-            if entry.account in accounts:
-                # The account is an account with transactions; check the fast
-                # path.
-                check_one(entry, entry.account)
-            else:
-                # Parent accounts with subaccounts. Check that there exist at
-                # least one sub-account that is currently open for the check,
-                # where the check is valid.
-                error_entry = None
-                for account, open in open_map.items():
-                    if not account.startswith(entry.account):
-                        continue
-                    if entry.date >= open.date:
-                        close = close_map.get(account)
-                        if close is None or entry.date <= close.date:
-                            error_entry = None
-                            break
-                        else:
-                            error_entry = close
-                    else:
-                        error_entry = open
-
-                if error_entry:
-                    if isinstance(error_entry, Open):
-                        check_errors.append(
-                            ValidationError(error_entry.fileloc,
-                                            ("Unknown account {} (or perhaps wrong "
-                                             "date?).".format(error_entry.account)),
-                                            error_entry))
-                    else:
-                        assert isinstance(error_entry, Close)
-                        check_errors.append(
-                            ValidationError(error_entry.fileloc,
-                                            "Entry after account {} closed.".format(
-                                                error_entry.account),
-                                            error_entry))
-
-        # Documents are allowed to show up after closure, as they may be received after.
-        elif hasattr(entry, 'account') and not isinstance(entry, Document):
-            check_one(entry, entry.account)
-
-    # Check to make sure that all accounts parsed have a corresponding open directive.
-    for account in accounts:
-        if account not in open_map:
-            check_errors.append(
-                ValidationError(data.FileLocation('<validate_open_close>', 0),
-                                "No open directive for account {}.".format(account),
-                                None))
-
-    return check_errors, open_map, close_map
-
 
 def validate_unused_accounts(entries, accounts):
     """Find the list of accounts referred to by non-open entries,
@@ -406,17 +296,15 @@ def validate(entries, options_map):
     errors = []
     for validation_function in [validate_inventory_booking,
                                 validate_open_close,
-                                validate_duplicate_balances,
-                                validate_active_accounts]:
+                                validate_active_accounts,
+                                validate_duplicate_balances]:
         new_errors = validate_function(entries, options_map)
         errors.extend(new_errors)
 
 
 
 
-    # Validate open/close directives and accounts referred outside of those.
     accounts = getters.get_accounts(entries)
-    check_errors, _, _ = validate_open_close__old(entries, accounts)
 
     # Check for unused accounts.
     unused_errors = validate_unused_accounts(entries, accounts)
