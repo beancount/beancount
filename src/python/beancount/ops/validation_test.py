@@ -8,6 +8,7 @@ invariants are violated.
 import datetime
 import re
 
+from beancount.core import data
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.parser import cmptest
@@ -238,15 +239,60 @@ class TestValidateUnusedAccounts(cmptest.TestCase):
         self.assertEqual('Assets:Account3', errors[0].entry.account)
 
 
+class TestValidateCurrencyConstraints(cmptest.TestCase):
+
+    @parser.parsedoc
+    def test_validate_currency_constraints(self, entries, _, options_map):
+        """
+        2014-01-01 open  Assets:Account1    USD
+        2014-01-01 open  Assets:Account2    GOOG
+        2014-01-01 open  Assets:Account3    USD,GOOG
+
+        2014-01-02 * "Entries without cost"
+          Assets:Account1            1 USD
+          Equity:OpeningBalances
+
+        2014-01-03 * "Entries without cost" #expected
+          Assets:Account1            1 CAD
+          Equity:OpeningBalances
+
+        2014-01-04 * "Entries with cost"
+          Assets:Account2            1 GOOG {500 USD}
+          Equity:OpeningBalances
+
+        2014-01-05 * "Entries with cost" #expected
+          Assets:Account2            1 AAPL {500 USD}
+          Equity:OpeningBalances
+
+        2014-01-02 * "Multiple currencies"
+          Assets:Account3            1 USD
+          Assets:Account3            1 GOOG {500 USD}
+          Equity:OpeningBalances
+
+        2014-01-05 * "Multiple currencies" #expected
+          Assets:Account3            1 CAD
+          Equity:OpeningBalances
+
+        2014-01-05 * "Multiple currencies" #expected
+          Assets:Account3            1 AAPL {500 USD}
+          Equity:OpeningBalances
+
+        """
+        errors = validation.validate_currency_constraints(entries, options_map)
+
+        self.assertEqualEntries([entry for entry in entries
+                                 if (isinstance(entry, data.Transaction) and
+                                     entry.tags and
+                                     'expected' in entry.tags)],
+                                [error.entry for error in errors])
 
 
 
 
 
 
-    # # @parser.parsedoc
-    # def test_validate_currency_constraints(self):
-    #     raise NotImplementedError
+
+        #printer.print_errors(errors, prefix='\n\n\n')
 
     # # @parser.parsedoc
     # def test_validate_documents_paths(self):

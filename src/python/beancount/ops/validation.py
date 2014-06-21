@@ -247,8 +247,7 @@ def validate_unused_accounts(entries, options_map):
         if isinstance(entry, Open):
             open_map[entry.account] = entry
             continue
-        referenced_accounts.update(
-            misc_utils.get_tuple_values(entry, account_types.is_valid_account_name))
+        referenced_accounts.update(getters.get_entry_accounts(entry))
 
     # Create a list of suitable errors, with the location of the Open directives
     # corresponding to the unused accounts.
@@ -259,38 +258,61 @@ def validate_unused_accounts(entries, options_map):
             if account not in referenced_accounts]
 
 
+def validate_currency_constraints(entries, options_map):
+    """Check the currency constraints from account open declarations.
 
+    Open directives admit an optional list of currencies that specify the only
+    types of commodities that the running inventory for this account may
+    contain. This function checks that all postings are only made in those
+    commodities.
 
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of new errors, if any were found.
+    """
 
-
-
-
-
-def validate_currency_constraints(entries):
-    """Check that each account has currencies within its declared constraints."""
-
+    # Get all the open entries with currency constraints.
     open_map = {entry.account: entry
-                for entry in misc_utils.filter_type(entries, Open)}
+                for entry in entries
+                if isinstance(entry, Open) and entry.currencies}
 
     errors = []
     for entry in misc_utils.filter_type(entries, Transaction):
         for posting in entry.postings:
+            # Look up the corresponding account's valid currencies; skip the
+            # check if there are none specified.
             try:
                 open_entry = open_map[posting.account]
                 valid_currencies = open_entry.currencies
+                if not valid_currencies:
+                    continue
             except KeyError:
-                valid_currencies = []
-
-            if not valid_currencies:
                 continue
+
+            # Perform the check.
             if posting.position.lot.currency not in valid_currencies:
-                errors.append(ValidationError(
-                    entry.fileloc,
-                    "Invalid currency {} for account '{}'.".format(
-                        posting.position.lot.currency, posting.account),
-                    entry))
+                errors.append(
+                    ValidationError(
+                        entry.fileloc,
+                        "Invalid currency {} for account '{}'.".format(
+                            posting.position.lot.currency, posting.account),
+                        entry))
 
     return errors
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def validate_documents_paths(entries):
@@ -300,6 +322,9 @@ def validate_documents_paths(entries):
             for entry in misc_utils.filter_type(entries, Document)
             if not path.isabs(entry.filename)]
 
+
+
+# Remove the dependency on misc_utils.filter_type
 
 def validate(entries, options_map):
     """Perform all the standard checks on parsed contents.

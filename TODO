@@ -41,6 +41,8 @@ Doc notes (move to document):
   - Ordering: mention how it may cause problems and we strictly enforce certain
     things in order to make the model clearer, and easier to understand.
 
+  - In developer docs, mention 'D' special constructor to use.
+
 
 ** Move Files to Final Location
 
