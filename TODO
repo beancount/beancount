@@ -1926,6 +1926,13 @@ Improve this bit:
 
 
 * Plugins
+** Link Trades
+
+  - Create a plugin that will link together all reducing transactions
+    automatically. When a transaction reduces a position, both transactions
+    should have a common unique link. This can all get done in a plugin!
+
+
 ** Capital Gain Without Cost
 
   - Implement the proposal for putting the capital gain in the cost as a plugin
