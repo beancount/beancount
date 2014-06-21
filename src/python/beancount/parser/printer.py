@@ -118,7 +118,7 @@ def print_entry(entry, file=None):
     output.write('\n')
 
 
-def print_entries(entries, file=None):
+def print_entries(entries, file=None, prefix=None):
     """A convenience function that prints a list of entries to a file.
 
     Args:
@@ -126,7 +126,8 @@ def print_entries(entries, file=None):
       file: An optional file object to write the entries to.
     """
     output = file or sys.stdout
-    output.write('\n')
+    if prefix:
+        output.write(prefix)
     for entry in entries:
         output.write(format_entry(entry))
         output.write('\n')
@@ -175,7 +176,7 @@ def print_error(error, file=None):
     output.write('\n')
 
 
-def print_errors(errors, file=None):
+def print_errors(errors, file=None, prefix=None):
     """A convenience function that prints a list of errors to a file.
 
     Args:
@@ -183,6 +184,8 @@ def print_errors(errors, file=None):
       file: An optional file object to write the errors to.
     """
     output = file or sys.stdout
+    if prefix:
+        output.write(prefix)
     for error in errors:
         output.write(format_error(error))
         output.write('\n')

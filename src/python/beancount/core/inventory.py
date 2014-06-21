@@ -299,7 +299,7 @@ class Inventory:
             # there is a side-effect even if we raise an exception. This is on
             # purpose, we can help the user, but we shouldn't fix this
             # automatically by ignoring certain numbers (that's worse).
-            raise ValueError("Position with lots goes negative: {}".format(self))
+            raise ValueError("Position held at cost goes negative: {}".format(self))
 
         return reducing
 
