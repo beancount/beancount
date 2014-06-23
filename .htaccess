@@ -5,8 +5,8 @@ RedirectMatch /doc/double-entry          /beancount/doc/intro
 RedirectMatch /doc/de-method             /beancount/doc/intro
 
 RedirectMatch /doc/cheatsheet$           http://furius.ca/beancount/doc/cheatsheet/beancount-cheatsheet.pdf
-RedirectMatch /doc/cheat                 /beancount/doc/cheatsheet
-RedirectMatch /doc/sheet                 /beancount/doc/cheatsheet
+RedirectMatch /doc/cheat$                /beancount/doc/cheatsheet
+RedirectMatch /doc/sheet$                /beancount/doc/cheatsheet
 
 RedirectMatch /doc/users-manual          https://docs.google.com/document/d/1wAMVrKIA2qtRGmoVDSUBJGmYZSygUaR0uOMW1GV3YE0/
 RedirectMatch /doc/manual                /beancount/doc/users-manual
