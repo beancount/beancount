@@ -342,6 +342,8 @@ class TestValidate(cmptest.TestCase):
         self.assertEqual(3, len(errors))
         self.assertEqual({'Assets:Account2'}, set(error.entry.account for error in errors))
 
-    # @parser.parsedoc
+    @parser.parsedoc
     def test_validate(self):
-        raise NotImplementedError
+        """
+
+        """

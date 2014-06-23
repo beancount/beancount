@@ -1012,6 +1012,11 @@ Doc notes (move to document):
 
 
 
+  - Create a command in bean-doctor which lists all of the lots and their
+    changes for a particular account. This is meant to be a debugging tool for
+    booking algorithms. The rendering should be clear and detailed.
+
+
 ** Precision
 
   - (precision) FIXME: The better way to render numbers at the end would be to
