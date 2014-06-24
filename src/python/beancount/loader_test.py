@@ -2,7 +2,6 @@ import unittest
 import tempfile
 
 from beancount import loader
-from beancount.parser import printer
 
 
 TEST_FILE = """

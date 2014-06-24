@@ -11,8 +11,6 @@ beancount: TODO
 
        Create an automated test for the lexer as well.
 
-     src/python/beancount/ops/validation.py                 INCOMPLETE
-
      src/python/beancount/web/acctree.py                    MISSING
      src/python/beancount/web/journal.py                    MISSING
 
@@ -32,6 +30,16 @@ beancount: TODO
   - Make helper functions in summarize, for clamp() and close() which accept
     options_map and automatically derive everything they need from entries.
 
+
+
+Doc notes (move to document):
+
+  - Mention balance checks on parents.
+
+  - Ordering: mention how it may cause problems and we strictly enforce certain
+    things in order to make the model clearer, and easier to understand.
+
+  - In developer docs, mention 'D' special constructor to use.
 
 
 ** Move Files to Final Location
@@ -65,6 +73,16 @@ beancount: TODO
 
   - Maybe fold bean-directories functionality to bean-doctor, in the name of
     minimizing the number of binaries we provide, keeping things simpler.
+
+  - Would it make sense for every plugin to provide a validation function? We
+    could then move all the validation routines in their plugin file. I very
+    much like this idea: it creates more isolation for routines and less
+    dependencies. Open/Close, Balance checks, do seem to be able to fit in this
+    category. Those functions should return only a single list of errors, no
+    entries, and the calling function should perform a simple hash check to
+    ensure that the mutable portion of the entries hasn't been modified by the
+    user-provided validation functions.
+
 
 
 ** Fix Minor Nits & Bugs
@@ -156,6 +174,12 @@ beancount: TODO
 
       This works okay:
       2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
+
+  - This easy mistake, disables a lot of entries:
+
+        2014-02-02 note  Assets:Temporary "Bla bla""
+
+    Find a way to detect too long strings and perhaps barf on it.
 
 
 ** Reconcile Web Interface vs. Upcoming Reports Stage
@@ -249,7 +273,12 @@ beancount: TODO
 
   - Implement Amount.from_string() to be consistent with position and inventory?
 
+
+
 ** Documentation
+
+  - Create a documentation page with all the links below. Include other
+    documents written.
 
   I want to complete a snapshot of documentation before shipping. I often have
   ideas that end up in this file instead of the actual documentation because I
@@ -339,6 +368,25 @@ beancount: TODO
   have time to think, I just come here and jot it down. Every couple of months
   I clean this up and put it in the sections below. Please excuse the mess.)
 
+
+  - Make balancing precision configurable. This is an easy addition to the
+    options which I can reuse in the balancing.
+
+
+
+  - The creation of exceptions should be made easier: each error class should
+    inherit from a base class that is able to accept an optional list of
+    entries, that would automatically render the fileloc of each of those
+    entries, and that would use the fileloc of the first entry in order to
+    render the location of the error. If no entries are specified, an OPTIONAL
+    fileloc= parameter should be provided to specify where the error occurs.
+    This will make creating errors a lot easier and nicer.
+
+
+  - Directive abstraction: Add directives should be able to enumerate they
+    accounts. Maybe add a get_accounts() method to the base namedtuple or create
+    a mixin. Remove getters.get_accounts() and getters.get_entry_accounts() if
+    you have this, lots of code goes away, probably a good idea.
 
 
   - Look at Intuit's service for financial hub for financial data. Look for a
@@ -900,12 +948,35 @@ beancount: TODO
     expressions (e.g. Assets:Cash:Caroline).
 
 
+
+
   - Idea around documents: A link between a transaction to a document can be
     created by associating a document's checksum as the link of the
     transaction. If Beancount could associate them - and it could, it has
     access to the document files and the corpus of transactions - the web
     interface could insert a special link between the two. Maybe we could do
     the same thing with the filename as well.
+
+  - A better idea to do this would be to allow specifying an explicit document
+    directive, and finding document directives from files that are already
+    specified should not re-create them. This way you can specify both the
+    document and a transaction and use a common link as a natural way to
+    associate them, e.g.:
+
+       2014-06-20 document Income:US:Google:GSU "2014-06-20.google.0000000.pdf" ^ee63c6fc7aa6
+
+       2014-06-20 * "GOOGLE INC       PAYROLL" | "Refund for fractional shares" ^ee63c6fc7aa6
+         ...
+         ...
+
+  - Document finding from files should not create documents that have been
+    explicitly specified in the ledger. Avoid duplication! This is an important
+    fix to make, that will allow both to co-exist together.
+
+
+
+
+
 
   - Implement beancount.plugins.tag_pending as a general feature of links...
     this ought to be built-in by default, this is a great idea.
@@ -945,6 +1016,11 @@ beancount: TODO
     constructors should accept a single string, and that should call
     from_string() automatically, Amount, Position, Inventory, etc.
 
+
+
+  - Create a command in bean-doctor which lists all of the lots and their
+    changes for a particular account. This is meant to be a debugging tool for
+    booking algorithms. The rendering should be clear and detailed.
 
 
 ** Precision
@@ -1926,6 +2002,13 @@ Improve this bit:
 
 
 * Plugins
+** Link Trades
+
+  - Create a plugin that will link together all reducing transactions
+    automatically. When a transaction reduces a position, both transactions
+    should have a common unique link. This can all get done in a plugin!
+
+
 ** Capital Gain Without Cost
 
   - Implement the proposal for putting the capital gain in the cost as a plugin
@@ -2176,7 +2259,9 @@ Improve this bit:
 ** Multi-Period Reports
 
   - One kind of report that would be GREAT is a single grid with all income accounts
-    on the left with year by year on the horizontal. An overview of all the years.
+    on the left with year by year on the horizontal. An overview of all the
+    years. Same with month-by-month report.
+
 
 ** CSV Reports / Text Reports
 
@@ -2382,7 +2467,9 @@ Improve this bit:
 ** XML
 
   - Output to a structured XML format, some people are finding that useful to
-    build other visualizations.
+    build other visualizations. In order to test this completely, do a
+    round-trip test.  The code should live in beancount.parser, parallel to the
+    existing code there.
 
 
 ** Ledger
