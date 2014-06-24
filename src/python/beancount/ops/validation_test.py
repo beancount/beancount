@@ -343,7 +343,21 @@ class TestValidate(cmptest.TestCase):
         self.assertEqual({'Assets:Account2'}, set(error.entry.account for error in errors))
 
     @parser.parsedoc
-    def test_validate(self):
+    def test_validate(self, entries, _, options_map):
         """
+        ;; Just trigger a few errors from here to ensure at least some of the plugins
+        ;; tested above are run.
 
+        2014-01-01 open Assets:Investments:Cash
+        2014-01-01 open Assets:Investments:Stock   AAPL
+
+        2014-06-24 * "Go negative from zero"
+          Assets:Investments:Stock  -1 GOOG {500 USD}
+          Assets:Investments:Cash
         """
+        errors = validation.validate(entries, options_map)
+        self.assertEqual(2, len(errors))
+        self.assertTrue(any(re.match('Position.*negative', error.message)
+                            for error in errors))
+        self.assertTrue(any(re.match('Invalid currency', error.message)
+                            for error in errors))

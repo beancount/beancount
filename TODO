@@ -279,6 +279,9 @@ Doc notes (move to document):
 
 ** Documentation
 
+  - Create a documentation page with all the links below. Include other
+    documents written.
+
   I want to complete a snapshot of documentation before shipping. I often have
   ideas that end up in this file instead of the actual documentation because I
   don't have a good enough base to put them in. Bite the bullet. This means the
@@ -366,6 +369,11 @@ Doc notes (move to document):
   (This is a grab bag of ideas. When I have a new idea coming to me, I don't
   have time to think, I just come here and jot it down. Every couple of months
   I clean this up and put it in the sections below. Please excuse the mess.)
+
+
+  - Make balancing precision configurable. This is an easy addition to the
+    options which I can reuse in the balancing.
+
 
 
   - The creation of exceptions should be made easier: each error class should

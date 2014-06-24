@@ -58,7 +58,7 @@ def validate_inventory_booking(entries, unused_options_map):
                 errors.append(
                     ValidationError(
                         posting.entry.fileloc,
-                        e,
+                        str(e),
                         posting.entry))
 
     return errors
@@ -338,7 +338,6 @@ def validate(entries, options_map):
     Returns:
       A list of new errors, if any were found.
     """
-
     # Run various validation routines define above.
     errors = []
     for validation_function in [validate_inventory_booking,
