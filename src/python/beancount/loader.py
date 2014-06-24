@@ -10,7 +10,6 @@ import re
 from beancount.utils import misc_utils
 from beancount.core import data
 from beancount.parser import parser
-from beancount.parser import options
 from beancount.parser import documents
 from beancount.parser import printer
 from beancount.ops import pad
@@ -146,7 +145,8 @@ def run_transformations(entries, parse_errors, options_map, filename, quiet):
                     callback_name = '{}.{}'.format(plugin_name, function_name)
                     with misc_utils.print_time(callback_name, quiet):
                         if plugin_option is not None:
-                            entries, plugin_errors = callback(entries, options_map, plugin_option)
+                            entries, plugin_errors = callback(entries, options_map,
+                                                              plugin_option)
                         else:
                             entries, plugin_errors = callback(entries, options_map)
                         errors.extend(plugin_errors)

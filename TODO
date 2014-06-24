@@ -11,8 +11,6 @@ beancount: TODO
 
        Create an automated test for the lexer as well.
 
-     src/python/beancount/ops/validation.py                 INCOMPLETE
-
      src/python/beancount/web/acctree.py                    MISSING
      src/python/beancount/web/journal.py                    MISSING
 

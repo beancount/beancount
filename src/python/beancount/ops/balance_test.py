@@ -4,7 +4,6 @@ from beancount.ops import balance
 from beancount.ops import validation
 from beancount.loader import loaddoc
 from beancount.core import amount
-from beancount.parser import printer
 
 
 class TestBalance(unittest.TestCase):

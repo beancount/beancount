@@ -3,12 +3,10 @@ import re
 
 from beancount.plugins import unrealized
 from beancount.core.amount import to_decimal, ZERO
-from beancount.core import account_types
 from beancount.core import data
 from beancount.parser import options
 from beancount.ops import validation
 from beancount.loader import loaddoc
-from beancount.loader import printer
 
 
 def get_entries_with_narration(entries, regexp):
@@ -254,7 +252,7 @@ class TestUnrealized(unittest.TestCase):
                           if isinstance(entry, data.Open)})
 
         # Validate the new entries; validation should pass.
-        valid_errors = validation.validate(new_entries)
+        valid_errors = validation.validate(new_entries, options_map)
         self.assertFalse(valid_errors)
 
     @loaddoc

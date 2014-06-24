@@ -10,13 +10,11 @@ trickled up to the user.
 from os import path
 import collections
 
-from beancount.core import account_types
 from beancount.core import data
-from beancount.core.data import Open, Close, Balance, Transaction, Document
+from beancount.core.data import Open, Close, Transaction, Document
 from beancount.core import data
 from beancount.core import getters
 from beancount.core import inventory
-from beancount.parser import printer
 
 
 # An error from one of the checks.
