@@ -562,6 +562,8 @@ Doc notes (move to document):
     * Convert to HLedger
     * Convert to Penny
 
+    Add an option to anonimify account names and perhaps some amounts as well.
+
   - bean-format or bean-align: Write a script to autoamtically align a region's
     transactions, or an entire file.
 
@@ -1021,6 +1023,15 @@ Doc notes (move to document):
   - Create a command in bean-doctor which lists all of the lots and their
     changes for a particular account. This is meant to be a debugging tool for
     booking algorithms. The rendering should be clear and detailed.
+
+
+
+
+  - Implement a "fuzzing" input generator, that will output a very large input
+    file with all possible kinds of combinations, to see where Beancount hits
+    its limits and perhaps bring up some bugs from input I haven't thought of.
+    This is easy and fruitful.
+
 
 
 ** Precision
@@ -1892,6 +1903,7 @@ Improve this bit:
 
   - Add a unit test for pushtag/poptag errors.
   - Add unittests for tags, pushtag/poptag
+
 
 ** Dated Postings
 
