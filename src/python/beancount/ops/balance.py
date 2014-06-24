@@ -7,6 +7,8 @@ from beancount.core.data import Transaction, Balance
 from beancount.core import inventory
 from beancount.core import realization
 
+__plugins__ = ('check',)
+
 
 BalanceError = collections.namedtuple('BalanceError', 'fileloc message entry')
 
@@ -26,7 +28,7 @@ def check(entries, unused_options_map):
 
     Args:
       entries: A list of directives.
-      unused_options_map: A dict of options, parsed from the inupt file.
+      unused_options_map: A dict of options, parsed from the input file.
     Returns:
       A pair of a list of directives and a list of balance check errors.
     """
