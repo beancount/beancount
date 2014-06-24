@@ -1,7 +1,6 @@
 import textwrap
 
 from beancount import loader
-from beancount.plugins import forecast
 from beancount.parser import cmptest
 
 

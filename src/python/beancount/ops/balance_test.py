@@ -6,7 +6,7 @@ from beancount.loader import loaddoc
 from beancount.core import amount
 
 
-class TestCheck(unittest.TestCase):
+class TestBalance(unittest.TestCase):
 
     @loaddoc
     def test_simple_error(self, entries, errors, __):
@@ -128,9 +128,24 @@ class TestCheck(unittest.TestCase):
                         if isinstance(entry, balance.Balance)]
         self.assertEqual([None, None, None, None], diff_amounts)
 
-    # Note: This may be more appropriate to be moved to the validation module,
+    @loaddoc
+    def test_with_lots(self, entries, errors, __):
+        """
+          2013-05-01 open Assets:Bank:Investing
+          2013-05-01 open Equity:OpeningBalances
+
+          2013-05-02 *
+            Assets:Bank:Investing                1 GOOG {501 USD}
+            Equity:OpeningBalances
+
+          2013-05-03 balance Assets:Bank:Investing    1 GOOG
+        """
+        self.assertFalse(errors)
+
+    # FIXME: This may be more appropriate to be moved to the validation module,
     # but this used to be raised from the balance checking routine, which is why
-    # it is located here now.
+    # it is located here now. Maybe remove the diff_amount altogether? Unsure,
+    # maybe we should use insert an error.
     @loaddoc
     def test_negative_lots(self, entries, errors, __):
         """

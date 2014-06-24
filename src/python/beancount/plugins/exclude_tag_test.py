@@ -1,7 +1,6 @@
 import textwrap
 
 from beancount import loader
-from beancount.plugins import exclude_tag
 from beancount.parser import cmptest
 
 
