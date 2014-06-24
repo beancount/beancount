@@ -95,7 +95,7 @@ def run_transformations(entries, parse_errors, options_map, filename, quiet):
       A list of modified entries, and a list of errors, also possibly modified.
     """
 
-    # A list of error lists to flatten.
+    # A list of errors to flatten.
     errors = list(parse_errors)
 
     # Pad the resulting entries (create synthetic Pad entries to balance checks
@@ -103,7 +103,7 @@ def run_transformations(entries, parse_errors, options_map, filename, quiet):
     #
     # Note: I think a lot of these should be moved to plugins!
     with misc_utils.print_time('pad', quiet):
-        entries, pad_errors = pad.pad(entries)
+        entries, pad_errors = pad.pad(entries, options_map)
         errors.extend(pad_errors)
 
     # Add implicitly defined prices.

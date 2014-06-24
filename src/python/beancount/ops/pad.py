@@ -10,6 +10,8 @@ from beancount.utils import misc_utils
 from beancount.core import flags
 from beancount.core import realization
 
+__plugins__ = ('pad',)
+
 
 PadError = collections.namedtuple('PadError', 'fileloc message entry')
 
@@ -17,7 +19,7 @@ PadError = collections.namedtuple('PadError', 'fileloc message entry')
 PAD_PRECISION = to_decimal('.015')
 
 
-def pad(entries):
+def pad(entries, unused_options_map):
     """Insert transaction entries for to fulfill a subsequent balance check.
 
     Synthesize and insert Transaction entries right after Pad entries in order
@@ -32,6 +34,7 @@ def pad(entries):
 
     Args:
       entries: A list of directives.
+      unused_options_map: A parser options map.
     Returns:
       A new list of directives, with Pad entries inserte, and a list of new
       errors produced.
