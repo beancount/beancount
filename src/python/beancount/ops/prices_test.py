@@ -13,7 +13,7 @@ from beancount.parser import cmptest
 class TestPriceEntries(cmptest.TestCase):
 
     @parsedoc
-    def test_add_implicit_prices(self, entries, _, __):
+    def test_add_implicit_prices(self, entries, _, options_map):
         """
         2013-01-01 open Assets:Account1
         2013-01-01 open Assets:Account2
@@ -52,7 +52,7 @@ class TestPriceEntries(cmptest.TestCase):
           Assets:Other
         """
         self.assertEqual(10, len(entries))
-        new_entries, _ = prices.add_implicit_prices(entries)
+        new_entries, _ = prices.add_implicit_prices(entries, options_map)
         price_entries = list(filter(lambda entry: isinstance(entry, data.Price),
                                     new_entries))
 
@@ -113,7 +113,7 @@ class TestPriceEntries(cmptest.TestCase):
             self.assertEqual(expected, actual)
 
     @parsedoc
-    def test_add_implicit_prices_other_account(self, entries, _, __):
+    def test_add_implicit_prices_other_account(self, entries, _, options_map):
         """
         2013-01-01 open Assets:Account1
         2013-01-01 open Assets:Account2
@@ -133,7 +133,7 @@ class TestPriceEntries(cmptest.TestCase):
           Assets:Other
 
         """
-        new_entries, _ = prices.add_implicit_prices(entries)
+        new_entries, _ = prices.add_implicit_prices(entries, options_map)
         self.assertEqualEntries("""
 
         2013-01-01 open Assets:Account1

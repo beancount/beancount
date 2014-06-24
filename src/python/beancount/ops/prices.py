@@ -15,8 +15,11 @@ from beancount.core import data
 from beancount.core import inventory
 from beancount.utils import misc_utils
 
+__plugins__ = ('add_implicit_prices',)
 
-def add_implicit_prices(entries):
+
+
+def add_implicit_prices(entries, unused_options_map):
     """Insert implicitly defined prices from Transactions.
 
     Explicit price entries are simply maintained in the output list. Prices from
@@ -25,6 +28,7 @@ def add_implicit_prices(entries):
 
     Args:
       entries: A list of directives. We're interested only in the Transaction instances.
+      unused_options_map: A parser options dict.
     Returns:
       A list of entries, possibly with more Price entries than before, and a
       list of errors.

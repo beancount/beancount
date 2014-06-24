@@ -34,7 +34,7 @@ def pad(entries, unused_options_map):
 
     Args:
       entries: A list of directives.
-      unused_options_map: A parser options map.
+      unused_options_map: A parser options dict.
     Returns:
       A new list of directives, with Pad entries inserte, and a list of new
       errors produced.

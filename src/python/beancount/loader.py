@@ -108,7 +108,7 @@ def run_transformations(entries, parse_errors, options_map, filename, quiet):
 
     # Add implicitly defined prices.
     with misc_utils.print_time('prices', quiet):
-        entries, price_errors = prices.add_implicit_prices(entries)
+        entries, price_errors = prices.add_implicit_prices(entries, options_map)
         errors.extend(price_errors)
 
     with misc_utils.print_time('check', quiet):
