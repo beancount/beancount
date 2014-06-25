@@ -24,14 +24,22 @@ def get_report_generator(report_str):
 
     if report_str == 'holdings':
         return rholdings.report_holdings
+
     elif snooper(re.match('holdings_aggregated(?::([A-Z]+))?$', report_str)):
         return functools.partial(rholdings.report_holdings_aggregated,
                                  snooper.value.group(1))
+
     elif snooper(re.match('holdings_relative(?::([A-Z]+))?$', report_str)):
         return functools.partial(rholdings.report_holdings_relative,
                                  snooper.value.group(1))
+
+    elif snooper(re.match('holdings_byaccount(?::([A-Z]+))?$', report_str)):
+        return functools.partial(rholdings.report_holdings_byaccount,
+                                 snooper.value.group(1))
+
     elif snooper(re.match('currency_exposure$', report_str)):
         return rholdings.report_currency_exposure
+
     elif snooper(re.match('networth$', report_str)):
         return rholdings.report_networth
 

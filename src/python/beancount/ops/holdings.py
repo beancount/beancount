@@ -133,14 +133,36 @@ def aggregate_by_base_quote(holdings):
                   for key_holdings in grouped.values())
 
 
+def aggregate_by_account(holdings):
+    """Group and aggregate a list of holdings by account pair.
+
+    This groups the holdings and applies aggregation to each set of matching
+    rows. The 'account' fields should all be None.
+
+    Args:
+      holdings: A list of Holding instances.
+    Returns:
+      An aggregated list of Holding instances.
+    """
+    grouped = collections.defaultdict(list)
+    for holding in holdings:
+        grouped[holding.account].append(holding)
+    return sorted(aggregate_holdings_list(key_holdings)
+                  for key_holdings in grouped.values())
+
+
 def aggregate_holdings_list(holdings):
     """Aggregate a list of holdings.
+
+    If there are varying 'account', 'currency' or 'cost_currency' attributes,
+    their values are replaced by '*'. Otherwise they are preserved.
 
     Args:
       holdings: A list of Holding instances.
     Returns:
       A single Holding instance, or None, if there are no holdings in the input
       list.
+
     """
     if not holdings:
         return None
@@ -148,8 +170,14 @@ def aggregate_holdings_list(holdings):
     # Note: Holding is a bit overspecified with book and market values. We
     # recompute them from cost and price numbers here anyhow.
     units, total_book_value, total_market_value = ZERO, ZERO, ZERO
+    accounts = set()
+    currencies = set()
+    cost_currencies = set()
     for holding in holdings:
         units += holding.number
+        accounts.add(holding.account)
+        currencies.add(holding.currency)
+        cost_currencies.add(holding.cost_currency)
 
         if holding.cost_number:
             total_book_value += holding.number * holding.cost_number
@@ -169,8 +197,10 @@ def aggregate_holdings_list(holdings):
                      if total_market_value and units
                      else None)
 
-    first = holdings[0]
-    return Holding(None, units, first.currency, average_cost, first.cost_currency,
+    currency = currencies.pop() if len(currencies) == 1 else '*'
+    cost_currency = cost_currencies.pop() if len(cost_currencies) == 1 else '*'
+    account = accounts.pop() if len(accounts) == 1 else '*'
+    return Holding(account, units, currency, average_cost, cost_currency,
                    total_book_value, total_market_value, average_price, None)
 
 
