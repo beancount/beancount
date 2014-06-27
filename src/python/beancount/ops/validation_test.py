@@ -181,7 +181,9 @@ class TestValidateActiveAccounts(cmptest.TestCase):
           Assets:Temporary    1 USD
           Equity:OpeningBalances
 
+        ;; These should be allowed after close.
         2014-10-02 note  Assets:Temporary "Invalid note entry again"
+        2014-10-03 document  Assets:Temporary "/path/to/allowed-doc.pdf"
 
         """
         errors = validation.validate_active_accounts(entries, options_map)
@@ -202,8 +204,6 @@ class TestValidateActiveAccounts(cmptest.TestCase):
         2014-10-01 * "Invalid after"
           Assets:Temporary    1 USD
           Equity:OpeningBalances
-
-        2014-10-02 note  Assets:Temporary "Invalid note entry again"
 
         """, [error.entry for error in errors])
 

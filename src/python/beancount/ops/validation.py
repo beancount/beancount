@@ -11,7 +11,7 @@ from os import path
 import collections
 
 from beancount.core import data
-from beancount.core.data import Open, Close, Transaction, Document
+from beancount.core.data import Open, Close, Transaction, Document, Note
 from beancount.core import data
 from beancount.core import getters
 from beancount.core import inventory
@@ -19,6 +19,10 @@ from beancount.core import inventory
 
 # An error from one of the checks.
 ValidationError = collections.namedtuple('ValidationError', 'fileloc message entry')
+
+
+# Directive types that should be allowed after the account is closed.
+ALLOW_AFTER_CLOSE = (Document, Note)
 
 
 def validate_inventory_booking(entries, unused_options_map):
@@ -197,6 +201,12 @@ def validate_active_accounts(entries, unused_options_map):
         else:
             for account in getters.get_entry_accounts(entry):
                 if account not in active_set:
+                    # Allow document and note directives that occur after an
+                    # account is closed.
+                    if (isinstance(entry, ALLOW_AFTER_CLOSE) and
+                        account in opened_accounts):
+                        continue
+
                     # Register an error to be logged later, with an appropriate
                     # message.
                     error_pairs.append((account, entry))
@@ -212,13 +222,6 @@ def validate_active_accounts(entries, unused_options_map):
         errors.append(ValidationError(entry.fileloc, message, entry))
 
     return errors
-
-
-
-
-
-
-
 
 
 def validate_unused_accounts(entries, options_map):
@@ -355,3 +358,7 @@ def validate(entries, options_map):
 # FIXME: TODO - check again that all transactions balance, users may have
 # transformed transactions; we could limit our checks to the original
 # transactions by using the hash function in the loader.
+#
+# Check all data types.
+#
+# Check _entry from postings, should be circular.
