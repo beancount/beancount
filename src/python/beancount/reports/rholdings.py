@@ -71,7 +71,8 @@ def report_holdings_bycommodity(currency, entries, options_map):
     holdings_list, price_map = get_assets_holdings(entries, options_map)
 
     # Aggregate the holdings.
-    holdings_list = holdings.aggregate_by_base_quote(holdings_list)
+    holdings_list = holdings.aggregate_holdings_by(holdings_list,
+                                                   lambda holding: holding.currency)
 
     # Convert holdings to a unified currency.
     if currency:
@@ -103,7 +104,8 @@ def report_holdings_relative(currency, entries, options_map):
     holdings_list, price_map = get_assets_holdings(entries, options_map)
 
     # Aggregate the holdings.
-    holdings_list = holdings.aggregate_by_base_quote(holdings_list)
+    holdings_list = holdings.aggregate_holdings_by(holdings_list,
+                                                   lambda holding: holding.currency)
 
     # Convert holdings to a unified currency.
     if currency:
@@ -142,7 +144,8 @@ def report_holdings_byaccount(currency, entries, options_map):
     holdings_list = holdings.convert_to_currency(price_map, currency, holdings_list)
 
     # Aggregate the holdings by account.
-    holdings_list = holdings.aggregate_by_account(holdings_list)
+    holdings_list = holdings.aggregate_holdings_by(holdings_list,
+                                                   lambda holding: holding.account)
 
     field_spec = [
         ('account',),
@@ -169,7 +172,8 @@ def report_holdings_bycurrency(unused_currency, entries, options_map):
     holdings_list, _ = get_assets_holdings(entries, options_map)
 
     # Aggregate the holdings.
-    holdings_list = holdings.aggregate_by_base_quote(holdings_list)
+    holdings_list = holdings.aggregate_holdings_by(holdings_list,
+                                                   lambda holding: holding.currency)
 
     # Aggregate by cost_currency.
     currency_totals = collections.defaultdict(amount.Decimal)
@@ -198,9 +202,6 @@ def report_networth(entries, options_map):
       A Table instance, where each row is a currency and a total amount.
     """
     holdings_list, price_map = get_assets_holdings(entries, options_map)
-
-    # Aggregate the holdings.
-    holdings_list = holdings.aggregate_by_base_quote(holdings_list)
 
     net_worths = []
     for currency in options_map['operating_currency']:

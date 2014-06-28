@@ -763,7 +763,8 @@ def holdings_byinstrument():
                                             (app.account_types.assets,
                                              app.account_types.liabilities),
                                             price_map)
-    aggregated_holdings = holdings.aggregate_by_base_quote(holdings_)
+    aggregated_holdings = holdings.aggregate_holdings_by(holdings_,
+                                                         lambda holding: holding.currency)
 
     table_ = table.create_table(aggregated_holdings,
                                 field_spec=[

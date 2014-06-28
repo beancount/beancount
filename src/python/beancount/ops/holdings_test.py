@@ -156,7 +156,7 @@ class TestHoldings(unittest.TestCase):
             D('15572.10'), D('17402.20'), D('580.0733333333333333333333333'), None)
         self.assertEqual(expected_holding, holdings.aggregate_holdings_list(test_holdings))
 
-    def test_aggregate_by_base_quote(self):
+    def test_aggregate_holdings_by__commodity(self):
         # Note: Two different prices on GOOG on purpose.
         test_holdings = list(itertools.starmap(holdings.Holding, [
             ('Assets:Cash', D('101.11'), 'USD', None, None,
@@ -180,9 +180,11 @@ class TestHoldings(unittest.TestCase):
             ('Assets:Cash', D('101.11'), 'USD', None, None,
              None, None, None, None),
         ]))
-        self.assertEqual(expected_holdings, holdings.aggregate_by_base_quote(test_holdings))
+        self.assertEqual(expected_holdings,
+                         holdings.aggregate_holdings_by(test_holdings,
+                                                        lambda holding: holding.currency))
 
-    def test_aggregate_by_account(self):
+    def test_aggregate_holdings_by__account(self):
         test_holdings = list(itertools.starmap(holdings.Holding, [
             ('Assets:Cash', D('101.11'), 'USD', None, None,
              None, None, None, None),
@@ -205,7 +207,9 @@ class TestHoldings(unittest.TestCase):
             ('Assets:Cash', D('101.11'), 'USD', None, None,
              None, None, None, None),
         ]))
-        self.assertEqual(expected_holdings, holdings.aggregate_by_account(test_holdings))
+        self.assertEqual(expected_holdings,
+                         holdings.aggregate_holdings_by(test_holdings,
+                                                        lambda holding: holding.account))
 
     @parsedoc
     def test_convert_to_currency(self, entries, _, __):

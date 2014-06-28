@@ -26,7 +26,7 @@ def get_report_generator(report_str):
         return functools.partial(rholdings.report_holdings,
                                  snooper.value.group(1))
 
-    elif snooper(re.match('holdings_bycommodity(?::([A-Z]+))?$', report_str)):
+    elif snooper(re.match('holdings_by(?:commodity|instrument)(?::([A-Z]+))?$', report_str)):
         return functools.partial(rholdings.report_holdings_bycommodity,
                                  snooper.value.group(1))
 

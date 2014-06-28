@@ -119,39 +119,23 @@ def get_final_holdings(entries, included_account_types=None, price_map=None, dat
     return holdings
 
 
-def aggregate_by_base_quote(holdings):
-    """Group and aggregate a list of holdings by (base, quote) pair.
+def aggregate_holdings_by(holdings, keyfun):
+    """Aggregate holdings by some key.
 
-    This groups the holdings and applies aggregation to each set of matching
-    rows. The 'account' fields should all be None.
+    Note that the cost-currency must always be included in the group-key (sums
+    over multiple currency units do not make sense), so it is appended to the
+    sort-key automatically.
 
     Args:
-      holdings: A list of Holding instances.
+      keyfun: A callable, which returns the key to aggregate by. This key need
+        not include the cost-currency.
     Returns:
-      An aggregated list of Holding instances.
+      A list of aggregated holdings.
     """
     grouped = collections.defaultdict(list)
     for holding in holdings:
-        key = (holding.currency, holding.cost_currency)
+        key = (keyfun(holding), holding.cost_currency)
         grouped[key].append(holding)
-    return sorted(aggregate_holdings_list(key_holdings)
-                  for key_holdings in grouped.values())
-
-
-def aggregate_by_account(holdings):
-    """Group and aggregate a list of holdings by account pair.
-
-    This groups the holdings and applies aggregation to each set of matching
-    rows. The 'account' fields should all be None.
-
-    Args:
-      holdings: A list of Holding instances.
-    Returns:
-      An aggregated list of Holding instances.
-    """
-    grouped = collections.defaultdict(list)
-    for holding in holdings:
-        grouped[holding.account].append(holding)
     return sorted(aggregate_holdings_list(key_holdings)
                   for key_holdings in grouped.values())
 
