@@ -9,19 +9,6 @@ from beancount.ops import holdings
 from beancount.reports import table
 
 
-# A field spec that renders all fields.
-FIELD_SPEC = [
-    ('account', ),
-    ('number', "Units", '{:,.2f}'.format),
-    ('currency', ),
-    ('cost_currency', ),
-    ('cost_number', 'Average Cost', '{:,.2f}'.format),
-    ('price_number', 'Price', '{:,.2f}'.format),
-    ('book_value', 'Book Value', '{:,.2f}'.format),
-    ('market_value', 'Market Value', '{:,.2f}'.format),
-]
-
-
 def get_assets_holdings(entries, options_map, currency=None):
     """Return holdings for all assets and liabilities.
 
@@ -50,99 +37,95 @@ def get_assets_holdings(entries, options_map, currency=None):
     return holdings_list, price_map
 
 
-def report_holdings(currency, entries, options_map):
-    """Generate a detailed list of all holdings by account.
+# A field spec that renders all fields.
+FIELD_SPEC = [
+    ('account', ),
+    ('number', "Units", '{:,.2f}'.format),
+    ('currency', ),
+    ('cost_currency', ),
+    ('cost_number', 'Average Cost', '{:,.2f}'.format),
+    ('price_number', 'Price', '{:,.2f}'.format),
+    ('book_value', 'Book Value', '{:,.2f}'.format),
+    ('market_value', 'Market Value', '{:,.2f}'.format),
+]
+
+# A field spec for relative reports. Skipping the book value here because by
+# combining it with market value % and price one could theoretically determined
+# the total value of the portfolio.
+RELATIVE_FIELD_SPEC = FIELD_SPEC[:-2] + [
+    ('market_value', 'Market Value', '{:,.4f}'.format),
+]
+
+
+def report_holdings(currency, relative, entries, options_map, aggregation_key=None):
+    """Generate a detailed list of all holdings.
 
     Args:
       currency: A string, a currency to convert to. If left to None, no
         conversion is carried out.
+      relative: A boolean, true if we should reduce this to a relative value.
       entries: A list of directives.
       options_map: A dict of parsed options.
+      aggregation_key: A callable use to generate aggregations.
     Returns:
       A Table instance.
     """
     holdings_list, _ = get_assets_holdings(entries, options_map, currency)
-    return table.create_table(holdings_list, FIELD_SPEC)
+    if aggregation_key:
+        holdings_list = holdings.aggregate_holdings_by(holdings_list, aggregation_key)
+
+    if relative:
+        holdings_list = holdings.reduce_relative(holdings_list)
+        field_spec = RELATIVE_FIELD_SPEC
+    else:
+        field_spec = FIELD_SPEC
+    return table.create_table(holdings_list, field_spec)
 
 
-def report_holdings_bycommodity(currency, entries, options_map):
+def report_holdings_bycommodity(currency, relative, entries, options_map):
     """Generate a detailed list of all holdings by (base, quote) pair.
 
     Args:
       currency: A string, a currency to convert to. If left to None, no
         conversion is carried out.
+      relative: A boolean, true if we should reduce this to a relative value.
       entries: A list of directives.
       options_map: A dict of parsed options.
     Returns:
       A Table instance.
     """
-    holdings_list, _ = get_assets_holdings(entries, options_map, currency)
-    holdings_list = holdings.aggregate_holdings_by(holdings_list,
-                                                   lambda holding: holding.currency)
-    return table.create_table(holdings_list, FIELD_SPEC)
+    return report_holdings(currency, relative, entries, options_map,
+                           lambda holding: holding.currency)
 
 
-def report_holdings_relative(currency, entries, options_map):
-    """Generate a list of all holdings aggregated by instrument.
-
-    Args:
-      currency: A string, a currency to convert to. If left to None, no
-        conversion is carried out.
-      entries: A list of directives.
-      options_map: A dict of parsed options.
-    Returns:
-      A Table instance.
-    """
-    holdings_list, _ = get_assets_holdings(entries, options_map, currency)
-    holdings_list = holdings.aggregate_holdings_by(holdings_list,
-                                                   lambda holding: holding.currency)
-
-    # Reduce the holdings to relative (fractional) values.
-    holdings_list = holdings.reduce_relative(holdings_list)
-
-    # Skipping the book value here because by combining it with market value %
-    # and price one could theoretically determined the total value of the
-    # portfolio.
-    field_spec = [
-        ('currency', ),
-        ('cost_currency', ),
-        ('cost_number', 'Average Cost', '{:,.2f}'.format),
-        ('price_number', 'Price', '{:,.2f}'.format),
-        ('market_value', 'Fraction', '{:,.3%}'.format),
-    ]
-    return table.create_table(holdings_list, FIELD_SPEC)
-
-
-def report_holdings_byaccount(currency, entries, options_map):
+def report_holdings_byaccount(currency, relative, entries, options_map):
     """Generate a detailed list of all holdings by account.
 
     Args:
       currency: A string, a currency to convert to. Must be non-null.
+      relative: A boolean, true if we should reduce this to a relative value.
       entries: A list of directives.
       options_map: A dict of parsed options.
     Returns:
       A Table instance.
     """
-    holdings_list, _ = get_assets_holdings(entries, options_map, currency)
-    holdings_list = holdings.aggregate_holdings_by(holdings_list,
-                                                   lambda holding: holding.account)
-    return table.create_table(holdings_list, FIELD_SPEC)
+    return report_holdings(currency, relative, entries, options_map,
+                           lambda holding: holding.account)
 
 
-def report_holdings_bycurrency(currency, entries, options_map):
+def report_holdings_bycurrency(currency, relative, entries, options_map):
     """Generate a table of currency exposure.
 
     Args:
       currency: A string, a currency to convert to. Must be non-null.
+      relative: A boolean, true if we should reduce this to a relative value.
       entries: A list of directives.
       options_map: A dict of parsed options.
     Returns:
       A Table instance, where each row is a currency and a total amount.
     """
-    holdings_list, _ = get_assets_holdings(entries, options_map, currency)
-    holdings_list = holdings.aggregate_holdings_by(holdings_list,
-                                                   lambda holding: holding.cost_currency)
-    return table.create_table(holdings_list, FIELD_SPEC)
+    return report_holdings(currency, relative, entries, options_map,
+                           lambda holding: holding.cost_currency)
 
 
 def report_networth(entries, options_map):

@@ -19,28 +19,29 @@ def get_report_generator(report_str):
       A callable, that can generate the report. It should accept a list of
       entries and an options map.
     """
+    currency_re = '(?::([A-Z]+)(?::(%))?)?'
     if report_str == 'print':
         return report_print
 
-    elif snooper(re.match('holdings(?::([A-Z]+))?$', report_str)):
+    elif snooper(re.match('holdings{}$'.format(currency_re), report_str)):
         return functools.partial(rholdings.report_holdings,
-                                 snooper.value.group(1))
+                                 snooper.value.group(1),
+                                 bool(snooper.value.group(2)))
 
-    elif snooper(re.match('holdings_by(?:commodity|instrument)(?::([A-Z]+))?$', report_str)):
+    elif snooper(re.match('holdings_by(?:commodity|instrument){}$'.format(currency_re), report_str)):
         return functools.partial(rholdings.report_holdings_bycommodity,
-                                 snooper.value.group(1))
+                                 snooper.value.group(1),
+                                 bool(snooper.value.group(2)))
 
-    elif snooper(re.match('holdings_relative(?::([A-Z]+))?$', report_str)):
-        return functools.partial(rholdings.report_holdings_relative,
-                                 snooper.value.group(1))
-
-    elif snooper(re.match('holdings_byaccount(?::([A-Z]+))?$', report_str)):
+    elif snooper(re.match('holdings_byaccount{}$'.format(currency_re), report_str)):
         return functools.partial(rholdings.report_holdings_byaccount,
-                                 snooper.value.group(1))
+                                 snooper.value.group(1),
+                                 bool(snooper.value.group(2)))
 
-    elif snooper(re.match('holdings_by(?:currency|cost)(?::([A-Z]+))?$', report_str)):
+    elif snooper(re.match('holdings_by(?:currency|cost){}$'.format(currency_re), report_str)):
         return functools.partial(rholdings.report_holdings_bycurrency,
-                                 snooper.value.group(1))
+                                 snooper.value.group(1),
+                                 bool(snooper.value.group(2)))
 
     elif snooper(re.match('networth$', report_str)):
         return rholdings.report_networth
@@ -59,22 +60,18 @@ def get_report_types():
         ('print', None, None, ['beancount'],
          "Print out the entries."),
 
-        ('holdings', ['currency'], None, ['text'],
+        ('holdings', ['currency', 'relative'], None, ['text'],
          "The full list of holdings for Asset and Liabilities accounts."),
 
-        ('holdings_bycommodity', ['currency'], None, ['text', 'csv', 'html'],
+        ('holdings_bycommodity', ['currency', 'relative'], None, ['text', 'csv', 'html'],
          "A list of holdings aggregated by base/quote commodity."),
 
-        ('holdings_relative', ['currency'], None, ['text', 'csv', 'html'],
-         "A list of holdings aggregated by base/quote commodity, "
-         "only rendering relative values. This is useful to share with others."),
-
-        ('holdings_byaccount', ['currency'], None, ['text', 'csv', 'html'],
+        ('holdings_byaccount', ['currency', 'relative'], None, ['text', 'csv', 'html'],
          "A list of holdings aggregated by base/quote commodity, "
          "only rendering relative values. This is useful to share with others "
          "without disclosing the absolute values of your portfolio."),
 
-        ('holdings_bycurrency', [], None, ['text', 'csv', 'html'],
+        ('holdings_bycurrency', ['currency', 'relative'], None, ['text', 'csv', 'html'],
          "A list of holdings aggregated by cost currency."),
 
         ('networth', [], None, ['text', 'csv', 'html'],

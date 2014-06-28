@@ -375,7 +375,6 @@ Doc notes (move to document):
 
 
   (work on holdings)
-  - Make 'relative' be a parameter of all reports, not its own report type.
   - Adding a maximum depth argument to the byaccount report.
   - Holdings: support loading a list of holdings from a summary file.
   - Support output format "beancount" for holdings.
