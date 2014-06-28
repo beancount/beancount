@@ -22,8 +22,9 @@ def get_report_generator(report_str):
     if report_str == 'print':
         return report_print
 
-    if report_str == 'holdings':
-        return rholdings.report_holdings
+    elif snooper(re.match('holdings(?::([A-Z]+))?$', report_str)):
+        return functools.partial(rholdings.report_holdings,
+                                 snooper.value.group(1))
 
     elif snooper(re.match('holdings_aggregated(?::([A-Z]+))?$', report_str)):
         return functools.partial(rholdings.report_holdings_aggregated,

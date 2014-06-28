@@ -27,16 +27,22 @@ def get_assets_holdings(entries, options_map):
     return holdings_list, price_map
 
 
-def report_holdings(entries, options_map):
+def report_holdings(currency, entries, options_map):
     """Generate a detailed list of all holdings by account.
 
     Args:
+      currency: A string, a currency to convert to. If left to None, no
+        conversion is carried out.
       entries: A list of directives.
       options_map: A dict of parsed options.
     Returns:
       A Table instance.
     """
-    holdings_list, _ = get_assets_holdings(entries, options_map)
+    holdings_list, price_map = get_assets_holdings(entries, options_map)
+
+    # Convert holdings to a unified currency.
+    if currency:
+        holdings_list = holdings.convert_to_currency(price_map, currency, holdings_list)
 
     field_spec = [
         ('account', ),
