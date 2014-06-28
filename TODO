@@ -375,15 +375,18 @@ Doc notes (move to document):
 
 
   (work on holdings)
+  - Fill in book-value and market-value for holdings with no cost-currency.
+  - Make 'relative' be a parameter of all reports, not its own report type.
   - Complete byaccount report, adding a maximum depth argument.
   - Refactor the reports, the currency conversion could theoretically be always
     done before).
   - Holdings: support loading a list of holdings from a summary file.
-  - Fill in book-value and market-value for holdings with no cost-currency.
   - Rename "holdings_aggregated" to "holdings_byinstrument"
-  - Rename "currency_exposure" to "holdings_bycurrency"
+  - Rename "currency_exposure" to "holdings_bycurrency" and make it support a
+    target currency. This should just return a list of holdings as well.
   - The report for all aggregations should always look the same, they really are
     just different roll-ups.
+  - Support output format "beancount" for holdings.
   - Support currency parameter to "networth" report.
 
 

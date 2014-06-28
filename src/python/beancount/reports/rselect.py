@@ -48,6 +48,39 @@ def get_report_generator(report_str):
     # all the other possible reports that the web interface currently serves.
 
 
+def get_report_types():
+    """Return a list of the available reports and the formats they support.
+
+    Returns:
+      A list of (report-name, report-args, report-class, formats, description)..
+    """
+    return [
+        ('print', None, None, ['beancount'],
+         "Print out the entries."),
+
+        ('holdings', ['currency'], None, ['text'],
+         "The full list of holdings for Asset and Liabilities accounts."),
+
+        ('holdings_aggregated', ['currency'], None, ['text', 'csv', 'html'],
+         "A list of holdings aggregated by base/quote commodity."),
+
+        ('holdings_relative', ['currency'], None, ['text', 'csv', 'html'],
+         "A list of holdings aggregated by base/quote commodity, "
+         "only rendering relative values. This is useful to share with others."),
+
+        ('holdings_byaccount', ['currency'], None, ['text', 'csv', 'html'],
+         "A list of holdings aggregated by base/quote commodity, "
+         "only rendering relative values. This is useful to share with others "
+         "without disclosing the absolute values of your portfolio."),
+
+        ('currency_exposure', [], None, ['text', 'csv', 'html'],
+         "A list of holdings aggregated by cost currency."),
+
+        ('networth', [], None, ['text', 'csv', 'html'],
+         "A table of networth in each ofthe operating currencies."),
+
+        ]
+
 def report_print(entries, unused_options_map):
     """A simple report type that prints out the entries as parsed.
 
