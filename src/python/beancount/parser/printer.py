@@ -57,8 +57,12 @@ class EntryPrinter:
                      else '')
 
         if print_balance:
-            balance_amount = complete.get_balance_amount(posting)
-            balance_str = '; {:>14}'.format(balance_amount.str(amount.MAXDIGITS_PRINTER))
+            if posting.position:
+                balance_amount = complete.get_balance_amount(posting)
+                balance_amount_str = balance_amount.str(amount.MAXDIGITS_PRINTER)
+            else:
+                balance_amount_str = 'UNKNOWN'
+            balance_str = '; {:>14}'.format(balance_amount_str)
         else:
             balance_str = ''
 
