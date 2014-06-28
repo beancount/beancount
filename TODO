@@ -386,6 +386,7 @@ Doc notes (move to document):
     just different roll-ups.
   - Support output format "beancount" for holdings.
   - Support currency parameter to "networth" report.
+  - In add_unrealized_gains(), convert to use our holdings aggregator.
 
 
 

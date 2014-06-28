@@ -59,10 +59,12 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
         return (entries, errors)
 
     # Group positions by (account, cost, cost_currency).
-    # FIXME: Make this use groupby.
+    # FIXME: Make this use groupby. This should use our aggregator from ops.holdings.
     account_holdings = collections.defaultdict(list)
     for holding in holdings.get_final_holdings(entries):
-        if not holding.cost_currency:
+        # Skip
+        if (holding.currency == holding.cost_currency or
+            not holding.cost_currency):
             continue
         key = (holding.account,
                holding.currency,
@@ -101,8 +103,14 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
         for holding in holdings_list:
             units = holding.number
             total_units += units
-            market_value += units * price_number
-            book_value += units * holding.cost_number
+            if holding.market_value:
+                market_value += holding.market_value
+            else:
+                market_value += units * price_number
+            if holding.book_value:
+                book_value += holding.book_value
+            else:
+                book_value += units * holding.cost_number
 
         # Compute the PnL; if there is no profit or loss, we create a
         # corresponding entry anyway.
@@ -116,7 +124,6 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
                                 "for account {} and should not.".format(
                                     currency, cost_currency, account_name),
                                 None))
-
             continue
         average_cost = book_value / total_units
 
