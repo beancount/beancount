@@ -9,6 +9,19 @@ from beancount.ops import holdings
 from beancount.reports import table
 
 
+# A field spec that renders all fields.
+FIELD_SPEC = [
+    ('account', ),
+    ('number', "Units", '{:,.2f}'.format),
+    ('currency', ),
+    ('cost_currency', ),
+    ('cost_number', 'Average Cost', '{:,.2f}'.format),
+    ('price_number', 'Price', '{:,.2f}'.format),
+    ('book_value', 'Book Value', '{:,.2f}'.format),
+    ('market_value', 'Market Value', '{:,.2f}'.format),
+]
+
+
 def get_assets_holdings(entries, options_map, currency=None):
     """Return holdings for all assets and liabilities.
 
@@ -49,18 +62,7 @@ def report_holdings(currency, entries, options_map):
       A Table instance.
     """
     holdings_list, _ = get_assets_holdings(entries, options_map, currency)
-
-    field_spec = [
-        ('account', ),
-        ('number', "Units", '{:,.2f}'.format),
-        ('currency', ),
-        ('cost_currency', ),
-        ('cost_number', 'Average Cost', '{:,.2f}'.format),
-        ('price_number', 'Price', '{:,.2f}'.format),
-        ('book_value', 'Book Value', '{:,.2f}'.format),
-        ('market_value', 'Market Value', '{:,.2f}'.format),
-    ]
-    return table.create_table(holdings_list, field_spec)
+    return table.create_table(holdings_list, FIELD_SPEC)
 
 
 def report_holdings_bycommodity(currency, entries, options_map):
@@ -75,21 +77,9 @@ def report_holdings_bycommodity(currency, entries, options_map):
       A Table instance.
     """
     holdings_list, _ = get_assets_holdings(entries, options_map, currency)
-
-    # Aggregate the holdings.
     holdings_list = holdings.aggregate_holdings_by(holdings_list,
                                                    lambda holding: holding.currency)
-
-    field_spec = [
-        ('number', "Units", '{:,.2f}'.format),
-        ('currency', ),
-        ('cost_currency', ),
-        ('cost_number', 'Average Cost', '{:,.2f}'.format),
-        ('price_number', 'Price', '{:,.2f}'.format),
-        ('book_value', 'Book Value', '{:,.2f}'.format),
-        ('market_value', 'Market Value', '{:,.2f}'.format),
-    ]
-    return table.create_table(holdings_list, field_spec)
+    return table.create_table(holdings_list, FIELD_SPEC)
 
 
 def report_holdings_relative(currency, entries, options_map):
@@ -104,8 +94,6 @@ def report_holdings_relative(currency, entries, options_map):
       A Table instance.
     """
     holdings_list, _ = get_assets_holdings(entries, options_map, currency)
-
-    # Aggregate the holdings.
     holdings_list = holdings.aggregate_holdings_by(holdings_list,
                                                    lambda holding: holding.currency)
 
@@ -122,7 +110,7 @@ def report_holdings_relative(currency, entries, options_map):
         ('price_number', 'Price', '{:,.2f}'.format),
         ('market_value', 'Fraction', '{:,.3%}'.format),
     ]
-    return table.create_table(holdings_list, field_spec)
+    return table.create_table(holdings_list, FIELD_SPEC)
 
 
 def report_holdings_byaccount(currency, entries, options_map):
@@ -136,58 +124,29 @@ def report_holdings_byaccount(currency, entries, options_map):
       A Table instance.
     """
     holdings_list, _ = get_assets_holdings(entries, options_map, currency)
-
-    # Aggregate the holdings by account.
     holdings_list = holdings.aggregate_holdings_by(holdings_list,
                                                    lambda holding: holding.account)
-
-    field_spec = [
-        ('account',),
-        ('number', "Units", '{:,.2f}'.format),
-        ('currency', ),
-        ('cost_currency', ),
-        ('cost_number', 'Average Cost', '{:,.2f}'.format),
-        ('price_number', 'Price', '{:,.2f}'.format),
-        ('book_value', 'Book Value', '{:,.2f}'.format),
-        ('market_value', 'Market Value', '{:,.2f}'.format),
-    ]
-    return table.create_table(holdings_list, field_spec)
+    return table.create_table(holdings_list, FIELD_SPEC)
 
 
-def report_holdings_bycurrency(unused_currency, entries, options_map):
+def report_holdings_bycurrency(currency, entries, options_map):
     """Generate a table of currency exposure.
 
     Args:
+      currency: A string, a currency to convert to. Must be non-null.
       entries: A list of directives.
       options_map: A dict of parsed options.
     Returns:
       A Table instance, where each row is a currency and a total amount.
     """
-    holdings_list, _ = get_assets_holdings(entries, options_map)
-
-    # Aggregate the holdings.
+    holdings_list, _ = get_assets_holdings(entries, options_map, currency)
     holdings_list = holdings.aggregate_holdings_by(holdings_list,
-                                                   lambda holding: holding.currency)
-
-    # Aggregate by cost_currency.
-    currency_totals = collections.defaultdict(amount.Decimal)
-    for holding in holdings_list:
-        if holding.market_value:
-            currency_totals[holding.cost_currency] += holding.market_value
-        else:
-            currency_totals[holding.currency] += holding.number
-
-    field_spec = [
-        (0, 'Currency'),
-        (1, 'Exposure', '{:,.2f}'.format),
-    ]
-    return table.create_table(sorted(currency_totals.items(),
-                                     key=lambda x: x[1],
-                                     reverse=True), field_spec)
+                                                   lambda holding: holding.cost_currency)
+    return table.create_table(holdings_list, FIELD_SPEC)
 
 
 def report_networth(entries, options_map):
-    """Generate a table of net-worth, for each operating currency.
+    """Generate a table of total net worth for each operating currency.
 
     Args:
       entries: A list of directives.
@@ -205,10 +164,10 @@ def report_networth(entries, options_map):
         if not currency_holdings_list:
             continue
 
-        total = sum(holding.market_value
-                    for holding in currency_holdings_list
-                    if holding.market_value is not None)
-        net_worths.append((currency, total))
+        holdings_list = holdings.aggregate_holdings_by(currency_holdings_list,
+                                                       lambda holding: holding.cost_currency)
+        assert len(holdings_list) == 1, holdings_list
+        net_worths.append((currency, holdings_list[0].market_value))
 
     field_spec = [
         (0, 'Currency'),

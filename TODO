@@ -375,15 +375,10 @@ Doc notes (move to document):
 
 
   (work on holdings)
-  - Make "holdings_bycurrency" and support a target currency. This should just
-    return a list of holdings as well.
   - Make 'relative' be a parameter of all reports, not its own report type.
   - Adding a maximum depth argument to the byaccount report.
   - Holdings: support loading a list of holdings from a summary file.
-  - The report for all aggregations should always look the same, they really are
-    just different roll-ups.
   - Support output format "beancount" for holdings.
-  - Support currency parameter to "networth" report.
   - In add_unrealized_gains(), convert to use our holdings aggregator.
 
 

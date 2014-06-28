@@ -21,7 +21,7 @@
 
 option "title" "Beancount Example Ledger"
 option "operating_currency" "USD"
-;;option "operating_currency" "CAD"
+option "operating_currency" "CAD"
 
 
 * Initialization

@@ -38,7 +38,7 @@ def get_report_generator(report_str):
         return functools.partial(rholdings.report_holdings_byaccount,
                                  snooper.value.group(1))
 
-    elif snooper(re.match('holdings_bycurrency(?::([A-Z]+))?$', report_str)):
+    elif snooper(re.match('holdings_by(?:currency|cost)(?::([A-Z]+))?$', report_str)):
         return functools.partial(rholdings.report_holdings_bycurrency,
                                  snooper.value.group(1))
 
