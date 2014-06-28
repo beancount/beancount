@@ -379,8 +379,6 @@ Doc notes (move to document):
     return a list of holdings as well.
   - Make 'relative' be a parameter of all reports, not its own report type.
   - Adding a maximum depth argument to the byaccount report.
-  - Refactor the reports, the currency conversion could theoretically be always
-    done before).
   - Holdings: support loading a list of holdings from a summary file.
   - The report for all aggregations should always look the same, they really are
     just different roll-ups.

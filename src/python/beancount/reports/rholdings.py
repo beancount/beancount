@@ -9,21 +9,31 @@ from beancount.ops import holdings
 from beancount.reports import table
 
 
-def get_assets_holdings(entries, options_map):
+def get_assets_holdings(entries, options_map, currency=None):
     """Return holdings for all assets and liabilities.
 
     Args:
       entries: A list of directives.
       options_map: A dict of parsed options.
+      currency: If specified, a string, the target currency to convert all
+        holding values to.
     Returns:
       A list of Holding instances and a price-map.
     """
+    # Compute a price map, to perform conversions.
     price_map = prices.build_price_map(entries)
+
+    # Get the list of holdings.
     account_types = options.get_account_types(options_map)
     holdings_list = holdings.get_final_holdings(entries,
                                                 (account_types.assets,
                                                  account_types.liabilities),
                                                 price_map)
+
+    # Convert holdings to a unified currency.
+    if currency:
+        holdings_list = holdings.convert_to_currency(price_map, currency, holdings_list)
+
     return holdings_list, price_map
 
 
@@ -38,11 +48,7 @@ def report_holdings(currency, entries, options_map):
     Returns:
       A Table instance.
     """
-    holdings_list, price_map = get_assets_holdings(entries, options_map)
-
-    # Convert holdings to a unified currency.
-    if currency:
-        holdings_list = holdings.convert_to_currency(price_map, currency, holdings_list)
+    holdings_list, _ = get_assets_holdings(entries, options_map, currency)
 
     field_spec = [
         ('account', ),
@@ -68,15 +74,11 @@ def report_holdings_bycommodity(currency, entries, options_map):
     Returns:
       A Table instance.
     """
-    holdings_list, price_map = get_assets_holdings(entries, options_map)
+    holdings_list, _ = get_assets_holdings(entries, options_map, currency)
 
     # Aggregate the holdings.
     holdings_list = holdings.aggregate_holdings_by(holdings_list,
                                                    lambda holding: holding.currency)
-
-    # Convert holdings to a unified currency.
-    if currency:
-        holdings_list = holdings.convert_to_currency(price_map, currency, holdings_list)
 
     field_spec = [
         ('number', "Units", '{:,.2f}'.format),
@@ -101,15 +103,11 @@ def report_holdings_relative(currency, entries, options_map):
     Returns:
       A Table instance.
     """
-    holdings_list, price_map = get_assets_holdings(entries, options_map)
+    holdings_list, _ = get_assets_holdings(entries, options_map, currency)
 
     # Aggregate the holdings.
     holdings_list = holdings.aggregate_holdings_by(holdings_list,
                                                    lambda holding: holding.currency)
-
-    # Convert holdings to a unified currency.
-    if currency:
-        holdings_list = holdings.convert_to_currency(price_map, currency, holdings_list)
 
     # Reduce the holdings to relative (fractional) values.
     holdings_list = holdings.reduce_relative(holdings_list)
@@ -137,11 +135,7 @@ def report_holdings_byaccount(currency, entries, options_map):
     Returns:
       A Table instance.
     """
-    holdings_list, price_map = get_assets_holdings(entries, options_map)
-
-    # Convert holdings to a unified currency.
-    assert currency, "Currency is not specified."
-    holdings_list = holdings.convert_to_currency(price_map, currency, holdings_list)
+    holdings_list, _ = get_assets_holdings(entries, options_map, currency)
 
     # Aggregate the holdings by account.
     holdings_list = holdings.aggregate_holdings_by(holdings_list,
