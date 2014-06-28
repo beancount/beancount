@@ -108,7 +108,12 @@ def get_final_holdings(entries, included_account_types=None, price_map=None, dat
                 holding = Holding(real_account.account,
                                   position.number,
                                   position.lot.currency,
-                                  None, None, None, None, None, None)
+                                  None,
+                                  position.lot.currency,
+                                  position.number,
+                                  position.number,
+                                  None,
+                                  None)
             holdings.append(holding)
 
     return holdings

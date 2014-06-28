@@ -61,12 +61,12 @@ class TestHoldings(unittest.TestCase):
              D('5706.03'), None, None, None),
             ('Assets:Account3', D('50'), 'GOOG', D('540.00'), 'USD',
              D('27000.00'), None, None, None),
-            ('Assets:Cash', D('17170.37'), 'USD', None, None,
-             None, None, None, None),
-            ('Equity:Unknown', D('-50000'), 'USD', None, None,
-             None, None, None, None),
-            ('Liabilities:Loan', D('-5111'), 'USD', None, None,
-             None, None, None, None),
+            ('Assets:Cash', D('17170.37'), 'USD', None, 'USD',
+             D('17170.37'), D('17170.37'), None, None),
+            ('Equity:Unknown', D('-50000'), 'USD', None, 'USD',
+             D('-50000'), D('-50000'), None, None),
+            ('Liabilities:Loan', D('-5111'), 'USD', None, 'USD',
+             D('-5111'), D('-5111'), None, None),
         ]
         self.assertEqual(expected_values, holdings_list)
 
@@ -117,7 +117,8 @@ class TestHoldings(unittest.TestCase):
             ('Assets:Account1', D('15'), 'GOOG', D('518.73'), 'USD',
              D('7780.95'), D('8670.30'),
              D('578.02'), datetime.date(2013, 6, 1)),
-            ('Assets:Cash', D('42219.05'), 'USD', None, None, None, None, None, None),
+            ('Assets:Cash', D('42219.05'), 'USD', None, 'USD',
+             D('42219.05'), D('42219.05'), None, None),
             # Notice no Equity account.
         ]
         self.assertEqual(expected_values, holdings_list)
