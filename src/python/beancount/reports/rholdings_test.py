@@ -41,11 +41,11 @@ class TestReportHoldings(unittest.TestCase):
         table_ = rholdings.report_holdings('USD', self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
-    def test_report_holdings_aggregated(self):
-        table_ = rholdings.report_holdings_aggregated(None, self.entries, self.options_map)
+    def test_report_holdings_bycommodity(self):
+        table_ = rholdings.report_holdings_bycommodity(None, self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
-        table_ = rholdings.report_holdings_aggregated('USD', self.entries, self.options_map)
+        table_ = rholdings.report_holdings_bycommodity('USD', self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_report_holdings_byaccount(self):

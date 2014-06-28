@@ -236,24 +236,23 @@ def convert_to_currency(price_map, target_currency, holdings_list):
             # The holding is already priced in the target currency; do nothing.
             new_holding = holding
         else:
-            if holding.cost_currency is not None:
-                # There is a valid cost currency; attempt to convert all the fields.
-                base_quote = (holding.cost_currency, target_currency)
-            else:
-                # There is no cost currency; attempt to convert. Note that this may
-                # be a degenerate case of the currency itself being the target
-                # currency, in which case the price-map should yield a rate of 1.0
-                # and everything else works out.
-                assert holding.cost_currency is None
+            assert holding.currency, "Missing currency: {}".format(holding)
+
+            if holding.cost_currency is None:
+                # There is no cost currency; make the holding priced in its own
+                # units. The price-map should yield a rate of 1.0 and everything
+                # else works out.
                 if holding.currency is None:
                     raise ValueError("Invalid currency '{}'".format(holding.currency))
-                base_quote = (holding.currency, target_currency)
+                holding = holding._replace(cost_currency=holding.currency)
 
-                # Fill in with the units if the cost currency is not set.
+                # Fill in with book and market value as well.
                 if holding.book_value is None:
                     holding = holding._replace(book_value=holding.number)
                 if holding.market_value is None:
                     holding = holding._replace(market_value=holding.number)
+
+            base_quote = (holding.cost_currency, target_currency)
             try:
                 # Get the conversion rate and replace the required numerical
                 # fields..

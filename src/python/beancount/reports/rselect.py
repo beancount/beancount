@@ -14,7 +14,7 @@ def get_report_generator(report_str):
 
     Args:
       report_str: A string, the name of the report to produce. This name may
-        include embedded parameters, such as in 'holdings_aggregated:USD'.
+        include embedded parameters, such as in 'holdings_bycommodity:USD'.
     Returns:
       A callable, that can generate the report. It should accept a list of
       entries and an options map.
@@ -26,8 +26,8 @@ def get_report_generator(report_str):
         return functools.partial(rholdings.report_holdings,
                                  snooper.value.group(1))
 
-    elif snooper(re.match('holdings_aggregated(?::([A-Z]+))?$', report_str)):
-        return functools.partial(rholdings.report_holdings_aggregated,
+    elif snooper(re.match('holdings_bycommodity(?::([A-Z]+))?$', report_str)):
+        return functools.partial(rholdings.report_holdings_bycommodity,
                                  snooper.value.group(1))
 
     elif snooper(re.match('holdings_relative(?::([A-Z]+))?$', report_str)):
@@ -61,7 +61,7 @@ def get_report_types():
         ('holdings', ['currency'], None, ['text'],
          "The full list of holdings for Asset and Liabilities accounts."),
 
-        ('holdings_aggregated', ['currency'], None, ['text', 'csv', 'html'],
+        ('holdings_bycommodity', ['currency'], None, ['text', 'csv', 'html'],
          "A list of holdings aggregated by base/quote commodity."),
 
         ('holdings_relative', ['currency'], None, ['text', 'csv', 'html'],

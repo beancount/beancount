@@ -57,7 +57,7 @@ def report_holdings(currency, entries, options_map):
     return table.create_table(holdings_list, field_spec)
 
 
-def report_holdings_aggregated(currency, entries, options_map):
+def report_holdings_bycommodity(currency, entries, options_map):
     """Generate a detailed list of all holdings by (base, quote) pair.
 
     Args:
