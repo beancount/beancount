@@ -171,7 +171,7 @@ def amount_mult(amount, number):
     Returns:
       An Amount, with the same currency, but with 'number' times units.
     """
-    assert isinstance(amount, Amount), repr(amount)
+    assert isinstance(amount.number, Decimal), repr(amount)
     assert isinstance(number, Decimal), repr(number)
     return Amount(amount.number * number, amount.currency)
 
@@ -184,7 +184,7 @@ def amount_div(amount, number):
     Returns:
       An Amount, with the same currency, but with amount units divided by 'number'.
     """
-    assert isinstance(amount, Amount)
+    assert isinstance(amount.number, Decimal)
     assert isinstance(number, Decimal)
     return Amount(amount.number / number, amount.currency)
 
@@ -198,8 +198,8 @@ def amount_sub(amount1, amount2):
       An instance of Amount, with the difference between the two amount's
       numbers, in the same currency.
     """
-    assert isinstance(amount1, Amount)
-    assert isinstance(amount2, Amount)
+    assert isinstance(amount1.number, Decimal)
+    assert isinstance(amount2.number, Decimal)
     if amount1.currency != amount2.currency:
         raise ValueError(
             "Unmatching currencies for operation on {} and {}".format(
