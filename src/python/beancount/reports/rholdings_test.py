@@ -59,8 +59,8 @@ class TestReportHoldings(unittest.TestCase):
         table_ = rholdings.report_holdings_relative('USD', self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
-    def test_report_currency_exposure(self):
-        table_ = rholdings.report_currency_exposure(self.entries, self.options_map)
+    def test_report_holdings_bycurrency(self):
+        table_ = rholdings.report_holdings_bycurrency(self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_report_networth(self):

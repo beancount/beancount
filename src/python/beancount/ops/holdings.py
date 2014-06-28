@@ -160,14 +160,18 @@ def aggregate_holdings_list(holdings):
     """Aggregate a list of holdings.
 
     If there are varying 'account', 'currency' or 'cost_currency' attributes,
-    their values are replaced by '*'. Otherwise they are preserved.
+    their values are replaced by '*'. Otherwise they are preserved. Note that
+    all the cost-currency values must be equal in order for aggregations to
+    succeed (without this constraint a sum of units in different currencies has
+    no meaning).
 
     Args:
       holdings: A list of Holding instances.
     Returns:
       A single Holding instance, or None, if there are no holdings in the input
       list.
-
+    Raises:
+      ValueError: If multiple cost currencies encountered.
     """
     if not holdings:
         return None
@@ -206,8 +210,12 @@ def aggregate_holdings_list(holdings):
                      if total_market_value and units
                      else None)
 
+    if len(cost_currencies) != 1:
+        raise ValueError("Cost currencies are not homogeneous for aggregation: {}".format(
+            ','.join(cost_currencies)))
+
     currency = currencies.pop() if len(currencies) == 1 else '*'
-    cost_currency = cost_currencies.pop() if len(cost_currencies) == 1 else '*'
+    cost_currency = cost_currencies.pop()
     account = accounts.pop() if len(accounts) == 1 else '*'
     return Holding(account, units, currency, average_cost, cost_currency,
                    total_book_value, total_market_value, average_price, None)
@@ -236,8 +244,6 @@ def convert_to_currency(price_map, target_currency, holdings_list):
             # The holding is already priced in the target currency; do nothing.
             new_holding = holding
         else:
-            assert holding.currency, "Missing currency: {}".format(holding)
-
             if holding.cost_currency is None:
                 # There is no cost currency; make the holding priced in its own
                 # units. The price-map should yield a rate of 1.0 and everything
@@ -252,6 +258,7 @@ def convert_to_currency(price_map, target_currency, holdings_list):
                 if holding.market_value is None:
                     holding = holding._replace(market_value=holding.number)
 
+            assert holding.cost_currency, "Missing cost currency: {}".format(holding)
             base_quote = (holding.cost_currency, target_currency)
             try:
                 # Get the conversion rate and replace the required numerical

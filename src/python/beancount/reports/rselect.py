@@ -38,8 +38,9 @@ def get_report_generator(report_str):
         return functools.partial(rholdings.report_holdings_byaccount,
                                  snooper.value.group(1))
 
-    elif snooper(re.match('currency_exposure$', report_str)):
-        return rholdings.report_currency_exposure
+    elif snooper(re.match('holdings_bycurrency(?::([A-Z]+))?$', report_str)):
+        return functools.partial(rholdings.report_holdings_bycurrency,
+                                 snooper.value.group(1))
 
     elif snooper(re.match('networth$', report_str)):
         return rholdings.report_networth
@@ -73,7 +74,7 @@ def get_report_types():
          "only rendering relative values. This is useful to share with others "
          "without disclosing the absolute values of your portfolio."),
 
-        ('currency_exposure', [], None, ['text', 'csv', 'html'],
+        ('holdings_bycurrency', [], None, ['text', 'csv', 'html'],
          "A list of holdings aggregated by cost currency."),
 
         ('networth', [], None, ['text', 'csv', 'html'],

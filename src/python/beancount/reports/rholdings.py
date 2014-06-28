@@ -157,7 +157,7 @@ def report_holdings_byaccount(currency, entries, options_map):
     return table.create_table(holdings_list, field_spec)
 
 
-def report_currency_exposure(entries, options_map):
+def report_holdings_bycurrency(unused_currency, entries, options_map):
     """Generate a table of currency exposure.
 
     Args:
