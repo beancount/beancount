@@ -3,14 +3,12 @@ beancount: TODO
 * Requirements for Shipping 1.0
 ** Complete 100% Coverage for Unit Tests
 
-  - Complete byaccount report, remove leaf account that are currencies, figure
-    out why security deposit does not render market value (bug).
-
   - I want to complete full unittests coverage (as per find-missing-tests.py, or
     "cd beancount && make status"). This is the standard I've set for this
     project for shipping the next release. Tests remaining:
 
-     Move validation tests, we need to check the data types themselves.
+     Move validation tests, we need to check the data types themselves, move
+     this to validation code.
 
      src/python/beancount/parser/lexer_test.py              MISSING
 
@@ -34,6 +32,8 @@ beancount: TODO
 
 
 
+
+
 Doc notes (move to document):
 
   - Mention balance checks on parents.
@@ -42,6 +42,7 @@ Doc notes (move to document):
     things in order to make the model clearer, and easier to understand.
 
   - In developer docs, mention 'D' special constructor to use.
+
 
 
 ** Move Files to Final Location
@@ -369,6 +370,22 @@ Doc notes (move to document):
   (This is a grab bag of ideas. When I have a new idea coming to me, I don't
   have time to think, I just come here and jot it down. Every couple of months
   I clean this up and put it in the sections below. Please excuse the mess.)
+
+
+
+
+  (work on holdings)
+  - Complete byaccount report, adding a maximum depth argument.
+  - Refactor the reports, the currency conversion could theoretically be always
+    done before).
+  - Holdings: support loading a list of holdings from a summary file.
+  - Fill in book-value and market-value for holdings with no cost-currency.
+  - Rename "holdings_aggregated" to "holdings_byinstrument"
+  - Rename "currency_exposure" to "holdings_bycurrency"
+  - The report for all aggregations should always look the same, they really are
+    just different roll-ups.
+  - Support currency parameter to "networth" report.
+
 
 
   - In holdings: create the concept of a "composition" which can be associated
