@@ -35,7 +35,10 @@ class TestReportHoldings(unittest.TestCase):
         self.assertTrue(isinstance(price_map, dict))
 
     def test_report_holdings(self):
-        table_ = rholdings.report_holdings(self.entries, self.options_map)
+        table_ = rholdings.report_holdings(None, self.entries, self.options_map)
+        self.assertTrue(isinstance(table_, table.TableReport))
+
+        table_ = rholdings.report_holdings('USD', self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_report_holdings_aggregated(self):
