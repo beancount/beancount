@@ -179,10 +179,14 @@ def aggregate_holdings_list(holdings):
         currencies.add(holding.currency)
         cost_currencies.add(holding.cost_currency)
 
-        if holding.cost_number:
+        if holding.book_value:
+            total_book_value += holding.book_value
+        elif holding.cost_number:
             total_book_value += holding.number * holding.cost_number
 
-        if holding.price_number:
+        if holding.market_value:
+            total_market_value += holding.market_value
+        elif holding.price_number:
             total_market_value += holding.number * holding.price_number
 
     if not total_book_value:

@@ -129,7 +129,6 @@ class TestHoldings(unittest.TestCase):
             ('Assets:Account2', D('20'), 'GOOG', D('519.24'), 'USD',
              D('10384.80'), D('11622.00'), D('581.10'), datetime.date(2014, 2, 15)),
         ]))
-
         expected_holding = holdings.Holding(
             '*', D('30'), 'GOOG', D('519.07'), 'USD',
             D('15572.10'), D('17402.20'), D('580.0733333333333333333333333'), None)
@@ -138,11 +137,22 @@ class TestHoldings(unittest.TestCase):
         # Test with zero units.
         test_holdings = list(itertools.starmap(holdings.Holding, [
             ('Assets:Acc1', D('10'), 'GOOG', D('300'), 'USD', D('3000'), None, None, None),
-            ('Assets:Acc1', D('-10'), 'GOOG', D('400'), 'USD', D('4000'), None, None, None),
+            ('Assets:Acc1', D('-10'), 'GOOG', D('400'), 'USD', D('-4000'), None, None, None),
         ]))
-
         expected_holding = holdings.Holding(
             'Assets:Acc1', D('0'), 'GOOG', None, 'USD', D('-1000'), None, None, None)
+        self.assertEqual(expected_holding, holdings.aggregate_holdings_list(test_holdings))
+
+        # Test with aggregate holdings with no cost nor price price.
+        test_holdings = list(itertools.starmap(holdings.Holding, [
+            ('Assets:Account1', D('10'), 'GOOG', None, 'USD',
+             D('5187.30'), D('5780.20'), None, None),
+            ('Assets:Account2', D('20'), 'GOOG', None, 'USD',
+             D('10384.80'), D('11622.00'), None, None),
+        ]))
+        expected_holding = holdings.Holding(
+            '*', D('30'), 'GOOG', D('519.07'), 'USD',
+            D('15572.10'), D('17402.20'), D('580.0733333333333333333333333'), None)
         self.assertEqual(expected_holding, holdings.aggregate_holdings_list(test_holdings))
 
     def test_aggregate_by_base_quote(self):
