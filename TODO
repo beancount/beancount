@@ -10,6 +10,8 @@ beancount: TODO
     "cd beancount && make status"). This is the standard I've set for this
     project for shipping the next release. Tests remaining:
 
+     Move validation tests, we need to check the data types themselves.
+
      src/python/beancount/parser/lexer_test.py              MISSING
 
        Create an automated test for the lexer as well.
@@ -26,9 +28,6 @@ beancount: TODO
      src/python/beancount/web/gviz.py                       MISSING
 
      src/python/beancount/loader.py                               INCOMPLETE
-
-  - Make printer.print_errors() mirror printer.print_entries(), both sets of
-    functions in the same style.
 
   - Make helper functions in summarize, for clamp() and close() which accept
     options_map and automatically derive everything they need from entries.
