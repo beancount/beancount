@@ -372,6 +372,19 @@ Doc notes (move to document):
   I clean this up and put it in the sections below. Please excuse the mess.)
 
 
+  - In holdings: create the concept of a "composition" which can be associated
+    to any holding, based on the (account, currency, cost-currency), and which
+    is a vector of proportions to be normalized and associated to the holding.
+    You should then be able to compute the sum total of all compositions. This
+    should be a generalized concept, with the following applications:
+
+    * Liquidity (how easy is it to get money out of this account?)
+    * Taxability (pre-tax, roth, after-tax, usually 0 or 100%)
+    * Sector, industry exposures
+    * Currency exposure
+    * ...
+
+
   - Make balancing precision configurable. This is an easy addition to the
     options which I can reuse in the balancing.
 
