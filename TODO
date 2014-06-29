@@ -1853,6 +1853,9 @@ Improve this bit:
   - Write the builder object in C... it won't change very much anymore, and
     that's probably simple enough.
 
+  - Check the performance of to_decimal(). I suspect improving this routine
+    could have a dramatic effect on performance.
+
 ** Documents
 
   - Write a proposal for implementing a transformation on a specific set of

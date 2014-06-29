@@ -46,14 +46,15 @@ def to_decimal(strord):
     Returns:
       A Decimal instance.
     """
-    if isinstance(strord, Decimal):
+    # Note: try a map lookup and optimize performance here.
+    if not strord:
+        return Decimal()
+    elif isinstance(strord, str):
+        return Decimal(strord.replace(',', ''))
+    elif isinstance(strord, Decimal):
         return strord
-    else:
-        if not strord:
-            return Decimal()
-        else:
-            assert isinstance(strord, str)
-            return Decimal(strord.replace(',', ''))
+    elif isinstance(strord, float):
+        return Decimal(strord)
 
 
 # Number of digits to display all amounts if we can do so precisely.
