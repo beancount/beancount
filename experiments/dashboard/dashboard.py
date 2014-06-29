@@ -127,34 +127,53 @@ def print_features(title, features, currency):
     print()
 
 
-def dashboard_main():
-    parser = argparse.ArgumentParser(__doc__.strip())
-    parser.add_argument('holdings_filename', help='Holdings CSV filename')
-    parser.add_argument('prices_filename', help='Prices Beancount filename')
-    parser.add_argument('currency', help="Currency to convert all market values to.")
-    opts = parser.parse_args()
+def load(holdings_filename, prices_filename, currency):
+    """Load the holdings and prices from filenames and convert to a common currency.
 
+    Args:
+      holdings_filename: A string, the name of a CSV file containing the list of Holdings.
+      prices_filename: A string, the name of a Beancount file containing price directives.
+      currency: A string, the target currency to convert all the holdings to.
+    Returns:
+      Two lists of holdings: a list in the original currencies, and a list all
+      converted to the target currency.
+    """
     # Load the price database.
     # Generate with "bean-query LEDGER holdings"
-    price_entries, _, options_map = loader.load(opts.prices_filename, quiet=True)
+    price_entries, _, options_map = loader.load(prices_filename, quiet=True)
     price_map = prices.build_price_map(price_entries)
 
     # Load the holdings list.
     # Generate with "bean-query LEDGER print_prices"
-    mixed_holdings_list = list(rholdings.load_from_csv(open(opts.holdings_filename)))
+    mixed_holdings_list = list(rholdings.load_from_csv(open(holdings_filename)))
 
     # Convert all the amounts to a common currency (otherwise summing market
     # values makes no sense).
-    holdings_list = holdings.convert_to_currency(price_map, opts.currency,
+    holdings_list = holdings.convert_to_currency(price_map, currency,
                                                  mixed_holdings_list)
 
-    # Create a mapping of cost currencies. This can be derived automatically, no
-    # need to create this one manually.
-    currency_features = {
-        holding.currency: {holding.cost_currency: 1}
-        for holding in mixed_holdings_list}
+    return mixed_holdings_list, holdings_list
 
-    return holdings_list, opts.currency, currency_features
+
+def main():
+    parser = argparse.ArgumentParser(__doc__.strip())
+
+    parser.add_argument('holdings_filename',
+                        help='Holdings CSV filename')
+
+    parser.add_argument('prices_filename',
+                        help='Prices Beancount filename')
+
+    parser.add_argument('currency',
+                        help="Currency to convert all market values to.")
+
+    opts = parser.parse_args()
+
+    holdings_list = load(opts.holdings_filename,
+                         opts.prices_filename,
+                         opts.currency)
+    for holding in holdings_list:
+        print(holding)
 
 
 if __name__ == '__main__':
