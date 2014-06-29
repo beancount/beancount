@@ -1,6 +1,7 @@
 """Generate reports no holdings.
 """
 import collections
+import csv
 
 from beancount.core import amount
 from beancount.parser import options
@@ -53,7 +54,7 @@ FIELD_SPEC = [
 # combining it with market value % and price one could theoretically determined
 # the total value of the portfolio.
 RELATIVE_FIELD_SPEC = FIELD_SPEC[:-2] + [
-    ('market_value', 'Market Value', '{:,.4f}'.format),
+    ('market_value', 'Frac Market Value', '{:,.4f}'.format),
 ]
 
 
@@ -157,3 +158,51 @@ def report_networth(entries, options_map):
         (1, 'Net Worth', '{:,.2f}'.format),
     ]
     return table.create_table(net_worths, field_spec)
+
+
+def load_from_csv(fileobj):
+    """Load a list of holdings from a CSV output file.
+
+    Args:
+      fileobj: A file object.
+    Yields:
+      Instances of Holding, as read from the file.
+    """
+    column_spec = [
+        ('Account', 'account', None),
+        ('Units', 'number', amount.to_decimal),
+        ('Currency', 'currency', None),
+        ('Cost Currency', 'cost_currency', None),
+        ('Average Cost', 'cost_number', amount.to_decimal),
+        ('Price', 'price_number', amount.to_decimal),
+        ('Book Value', 'book_value', amount.to_decimal),
+        ('Market Value', 'market_value', amount.to_decimal),
+        ('Price Date', 'price_date', amount.to_decimal),
+        ]
+    column_dict = {name: (attr, converter)
+                   for name, attr, converter in column_spec}
+    klass = holdings.Holding
+
+    # Create a set of default values for the namedtuple.
+    defaults_dict = {attr: None for attr in klass._fields}
+
+    # Start reading the file.
+    reader = csv.reader(fileobj)
+
+    # Check that the header is readable.
+    header = next(reader)
+    attr_converters = []
+    for header_name in header:
+        try:
+            attr_converter = column_dict[header_name]
+            attr_converters.append(attr_converter)
+        except KeyError:
+            raise IOError("Invalid file contents for holdings.")
+
+    for line in reader:
+        value_dict = defaults_dict.copy()
+        for (attr, converter), value in zip(attr_converters, line):
+            if converter:
+                value = converter(value)
+            value_dict[attr] = value
+        yield holdings.Holding(**value_dict)

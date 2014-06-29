@@ -7,6 +7,7 @@ import sys
 from beancount.utils.snoop import snooper
 from beancount.reports import rholdings
 from beancount.parser import printer
+from beancount.core import data
 
 
 def get_report_generator(report_str):
@@ -20,8 +21,12 @@ def get_report_generator(report_str):
       entries and an options map.
     """
     currency_re = '(?::([A-Z]+)(?::(%))?)?'
+
     if report_str == 'print':
         return report_print
+
+    elif report_str == 'print_prices':
+        return report_print_prices
 
     elif snooper(re.match('holdings{}$'.format(currency_re), report_str)):
         return functools.partial(rholdings.report_holdings,
@@ -60,6 +65,10 @@ def get_report_types():
         ('print', None, None, ['beancount'],
          "Print out the entries."),
 
+        ('print_prices', None, None, ['beancount'],
+         "Print out just the price entries. This can be used to rebuild a prices "
+         "database without having to share the entire ledger file."),
+
         ('holdings', ['currency', 'relative'], None, ['text'],
          "The full list of holdings for Asset and Liabilities accounts."),
 
@@ -80,10 +89,25 @@ def get_report_types():
         ]
 
 def report_print(entries, unused_options_map):
-    """A simple report type that prints out the entries as parsed.
+    """A report type that prints out the entries as parsed.
 
     Args:
       entries: A list of directives.
       unused_options_map: An options dict, as read by the parser.
     """
     printer.print_entries(entries, sys.stdout)
+
+
+def report_print_prices(entries, unused_options_map):
+    """A report type that prints out just the price entries.
+
+    Note: this is a temporary solution, until we have proper filtering.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options dict, as read by the parser.
+    """
+    price_entries = [entry
+                     for entry in entries
+                     if isinstance(entry, data.Price)]
+    printer.print_entries(price_entries, sys.stdout)

@@ -1,7 +1,9 @@
 import unittest
+import io
 
 from beancount.reports import rholdings
 from beancount.reports import table
+from beancount.ops import holdings
 from beancount.loader import loaddoc
 
 
@@ -35,37 +37,43 @@ class TestReportHoldings(unittest.TestCase):
         self.assertTrue(isinstance(price_map, dict))
 
     def test_report_holdings(self):
-        table_ = rholdings.report_holdings(None, self.entries, self.options_map)
+        table_ = rholdings.report_holdings(None, False, self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
-        table_ = rholdings.report_holdings('USD', self.entries, self.options_map)
+        table_ = rholdings.report_holdings('USD', False, self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_report_holdings_bycommodity(self):
-        table_ = rholdings.report_holdings_bycommodity(None, self.entries, self.options_map)
+        table_ = rholdings.report_holdings_bycommodity(None, False, self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
-        table_ = rholdings.report_holdings_bycommodity('USD', self.entries, self.options_map)
+        table_ = rholdings.report_holdings_bycommodity('USD', False, self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_report_holdings_byaccount(self):
-        table_ = rholdings.report_holdings_byaccount('USD', self.entries, self.options_map)
+        table_ = rholdings.report_holdings_byaccount(None, False, self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
-    def test_report_holdings_relative(self):
-        table_ = rholdings.report_holdings_relative(None, self.entries, self.options_map)
-        self.assertTrue(isinstance(table_, table.TableReport))
-
-        table_ = rholdings.report_holdings_relative('USD', self.entries, self.options_map)
+        table_ = rholdings.report_holdings_byaccount('USD', False, self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_report_holdings_bycurrency(self):
-        table_ = rholdings.report_holdings_bycurrency(None, self.entries, self.options_map)
+        table_ = rholdings.report_holdings_bycurrency(None, False, self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
-        table_ = rholdings.report_holdings_bycurrency('USD', self.entries, self.options_map)
+        table_ = rholdings.report_holdings_bycurrency('USD', False, self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_report_networth(self):
         table_ = rholdings.report_networth(self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
+
+    def test_load_from_csv(self):
+        oss = io.StringIO()
+        table_ = rholdings.report_holdings(None, False, self.entries, self.options_map)
+        table.table_to_csv(table_, file=oss)
+        iss = io.StringIO(oss.getvalue())
+        holdings_list = list(rholdings.load_from_csv(iss))
+        self.assertEqual(2, len(holdings_list))
+        self.assertTrue(isinstance(holdings_list, list))
+        self.assertTrue(isinstance(holdings_list[0], holdings.Holding))
