@@ -316,3 +316,24 @@ def reduce_relative(holdings):
                                                if holding.market_value is not None
                                                else None)))
     return fractional_holdings
+
+
+def scale_holding(holding, scale_factor):
+    """Scale the values of a holding.
+
+    Args:
+      holding: An instance of Holding.
+      scale_factor: A float or Decimal number.
+    Returns:
+      A scaled copy of the holding.
+    """
+    return Holding(
+        holding.account,
+        holding.number * scale_factor if holding.number else None,
+        holding.currency,
+        holding.cost_number,
+        holding.cost_currency,
+        holding.book_value * scale_factor if holding.book_value else None,
+        holding.market_value * scale_factor if holding.market_value else None,
+        holding.price_number,
+        holding.price_date)

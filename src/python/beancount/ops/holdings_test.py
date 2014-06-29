@@ -317,3 +317,12 @@ class TestHoldings(unittest.TestCase):
         self.assertEqual(expected_holdings, converted_holdings)
         self.assertEqual(D('1'), sum(holding.market_value or ZERO
                                      for holding in converted_holdings))
+
+    def test_scale_holding(self):
+        test_holding = holdings.Holding(
+            'Assets:US:Checking', D('100'), 'MSFT', D('54.34'), 'USD',
+            D('5434.00'), D('6000.00'), D('60'), datetime.date(2012, 5, 2))
+        expected_holding = holdings.Holding(
+            'Assets:US:Checking', D('70.0'), 'MSFT', D('54.34'), 'USD',
+            D('3803.80'), D('4200.00'), D('60'), datetime.date(2012, 5, 2))
+        self.assertEqual(expected_holding, holdings.scale_holding(test_holding, D('0.7')))
