@@ -5,6 +5,7 @@ of their associated postings. This is achieved by building a realization; see
 realization.py for details.
 """
 import re
+from os import path
 
 
 # Component separator for account names.
@@ -80,3 +81,20 @@ def has_component(account, component):
       name must be whole, that is 'NY' is not in Expenses:Taxes:StateNY'.
     """
     return re.search('(^|:){}(:|$)'.format(component), account)
+
+
+def commonprefix(accounts):
+    """Return the common prefix of a list of account names.
+
+    Args:
+      accounts: A sequence of account name strings.
+    Returns:
+      A string, the common parent account. If none, returns an empty string.
+    """
+    accounts_lists = [account_.split(sep)
+                      for account_ in accounts]
+    # Note: the os.path.commonprefix() function just happens to work here.
+    # Inspect its code, and even the special case of no common prefix
+    # works well with str.join() below.
+    common_list = path.commonprefix(accounts_lists)
+    return sep.join(common_list)

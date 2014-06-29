@@ -42,3 +42,19 @@ class TestAccount(unittest.TestCase):
         self.assertTrue(account.has_component('Liabilities:US:Credit-Card', 'Liabilities'))
         self.assertFalse(account.has_component('Liabilities:US:Credit-Card', 'Credit'))
         self.assertFalse(account.has_component('Liabilities:US:Credit-Card', 'Card'))
+
+    def test_commonprefix(self):
+        self.assertEqual('Assets:US:TD',
+                         account.commonprefix(['Assets:US:TD:Checking',
+                                               'Assets:US:TD:Savings']))
+        self.assertEqual('Assets:US',
+                         account.commonprefix(['Assets:US:TD:Checking',
+                                               'Assets:US:BofA:Checking']))
+        self.assertEqual('Assets',
+                         account.commonprefix(['Assets:US:TD:Checking',
+                                               'Assets:CA:RBC:Savings']))
+        self.assertEqual('',
+                         account.commonprefix(['Assets:US:TD:Checking',
+                                               'Liabilities:US:CreditCard']))
+        self.assertEqual('',
+                         account.commonprefix(['']))
