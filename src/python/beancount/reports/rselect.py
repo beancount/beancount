@@ -44,6 +44,11 @@ def get_report_generator(report_str):
                                  snooper.value.group(1),
                                  bool(snooper.value.group(2)))
 
+    elif snooper(re.match('holdings_byaccount_shallow{}$'.format(currency_re), report_str)):
+        return functools.partial(rholdings.report_holdings_byaccount_shallow,
+                                 snooper.value.group(1),
+                                 bool(snooper.value.group(2)))
+
     elif snooper(re.match('holdings_by(?:currency|cost){}$'.format(currency_re), report_str)):
         return functools.partial(rholdings.report_holdings_bycurrency,
                                  snooper.value.group(1),
@@ -77,9 +82,10 @@ def get_report_types():
          "A list of holdings aggregated by base/quote commodity."),
 
         ('holdings_byaccount', ['currency', 'relative'], None, ['text', 'csv', 'html'],
-         "A list of holdings aggregated by base/quote commodity, "
-         "only rendering relative values. This is useful to share with others "
-         "without disclosing the absolute values of your portfolio."),
+         "A list of holdings aggregated by account."),
+
+        ('holdings_byaccount_shallow', ['currency', 'relative'], None, ['text', 'csv', 'html'],
+         "A list of holdings aggregated by account, at no more than a depth of 3."),
 
         ('holdings_bycurrency', ['currency', 'relative'], None, ['text', 'csv', 'html'],
          "A list of holdings aggregated by cost currency."),

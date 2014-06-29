@@ -4,6 +4,7 @@ import collections
 import csv
 
 from beancount.core import amount
+from beancount.core import account
 from beancount.parser import options
 from beancount.ops import prices
 from beancount.ops import holdings
@@ -58,7 +59,9 @@ RELATIVE_FIELD_SPEC = FIELD_SPEC[:-2] + [
 ]
 
 
-def report_holdings(currency, relative, entries, options_map, aggregation_key=None):
+def report_holdings(currency, relative, entries, options_map,
+                    aggregation_key=None,
+                    sort_key=None):
     """Generate a detailed list of all holdings.
 
     Args:
@@ -68,6 +71,7 @@ def report_holdings(currency, relative, entries, options_map, aggregation_key=No
       entries: A list of directives.
       options_map: A dict of parsed options.
       aggregation_key: A callable use to generate aggregations.
+      sort_key: A function to use to sort the holdings, if specified.
     Returns:
       A Table instance.
     """
@@ -80,6 +84,10 @@ def report_holdings(currency, relative, entries, options_map, aggregation_key=No
         field_spec = RELATIVE_FIELD_SPEC
     else:
         field_spec = FIELD_SPEC
+
+    if sort_key:
+        holdings_list.sort(key=sort_key, reverse=True)
+
     return table.create_table(holdings_list, field_spec)
 
 
@@ -111,7 +119,26 @@ def report_holdings_byaccount(currency, relative, entries, options_map):
       A Table instance.
     """
     return report_holdings(currency, relative, entries, options_map,
-                           lambda holding: holding.account)
+                           aggregation_key=lambda holding: holding.account)
+
+
+def report_holdings_byaccount_shallow(currency, relative, entries, options_map):
+    """Generate a detailed list of all holdings by account, with a max-depth.
+
+    Args:
+      currency: A string, a currency to convert to. Must be non-null.
+      relative: A boolean, true if we should reduce this to a relative value.
+      entries: A list of directives.
+      options_map: A dict of parsed options.
+    Returns:
+      A Table instance.
+    """
+    def account_maxdepth(n, account_):
+        return account.sep.join(account_.split(account.sep)[:n])
+    return report_holdings(
+        currency, relative, entries, options_map,
+        aggregation_key=lambda holding: account_maxdepth(3, holding.account),
+        sort_key=lambda holding: holding.market_value or amount.ZERO)
 
 
 def report_holdings_bycurrency(currency, relative, entries, options_map):
