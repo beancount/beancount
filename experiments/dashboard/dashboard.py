@@ -3,6 +3,7 @@
 """
 import argparse
 import functools
+import logging
 
 from beancount.core.amount import to_decimal, Decimal
 from beancount import loader
@@ -31,15 +32,16 @@ def join(holdings_list, features_map, keyfun):
       keyfun: A function that produces the join key from a Holding instance.
         The key is used to look up a feature vector from the features_map dict.
     Returns:
-      A dict of labels (from the values of features_map) to a Decimal number
-      of market_value amounts.
+      A dict of labels (from the values of features_map) to a pair of: Decimal
+      number of market_value amounts, and a list of corresponding scaled
+      holdings.
     """
     # Get the full list of features.
     all_labels = set(label
                      for features in features_map.values()
                      for label in features)
-    features_total = {label: to_decimal('0')
-                      for label in all_labels}
+    features_total = {label: to_decimal('0') for label in all_labels}
+    features_holdings = {label: [] for label in all_labels}
 
     # Normalize the feature vectors.
     norm_features_map = {key: normalize_features(features)
@@ -49,17 +51,22 @@ def join(holdings_list, features_map, keyfun):
     for holding in holdings_list:
         key = keyfun(holding)
         try:
+            if key is None:
+                logging.debug("Key not found: %s, %s, %s",
+                              holding.account, holding.currency, holding.cost_currency)
             features = norm_features_map[key]
             for label, fraction in features.items():
                 if not holding.market_value:
                     continue
-                features_total[label] += (
-                    holding.market_value * to_decimal(fraction))
+                scaled_holding = holdings.scale_holding(holding, to_decimal(fraction))
+                features_total[label] += scaled_holding.market_value
+                features_holdings[label].append(scaled_holding)
         except KeyError:
-            raise KeyError("Key {} not found in mapping: {}".format(
-                repr(key), norm_features_map))
+            raise KeyError("Key '{}' not found in mapping: {} for holding {}".format(
+                key, norm_features_map, holding))
 
-    return features_total
+    return {label: (features_total[label], features_holdings[label])
+            for label in all_labels}
 
 
 def normalize_features(features_dict):
@@ -77,7 +84,7 @@ def normalize_features(features_dict):
 
 
 def getitem_startswith(adict, key):
-    """A dict getter which returns the first key of dict matching the start of 'key'.
+    """A dict getter which returns the longest key of dict matching the start of 'key'.
 
     Args:
       adict: a dict object.
@@ -86,13 +93,17 @@ def getitem_startswith(adict, key):
       A key and value from 'adict'.
     """
     assert isinstance(key, str)
+    longest_key = None
+    longest_value = None
     for dict_key, dict_value in adict.items():
         if dict_key and key.startswith(dict_key):
-            return dict_key, dict_value
-    return None, None
+            if (not longest_key or longest_key < dict_key):
+                longest_key = dict_key
+                longest_value = dict_value
+    return longest_key, longest_value
 
 
-def startswith_key_getter(features_map, holding):
+def holding_account_prefix_getter(features_map, holding):
     """Return first key from features_map that matches the holding's account name.
 
     Args:
@@ -105,25 +116,30 @@ def startswith_key_getter(features_map, holding):
     return key
 
 
-def print_features(title, features, currency):
+def print_features(title, features, currency, print_holdings=False):
     """Print a features aggregation.
 
     Args:
       title: A string, the title to printfor this section.
-      features: A dict of label strings to numbers.
+      features: A dict of label strings to (number, list of scaled holdings).
       currency: A string, the currency to output.
+      print_holdings: A boolean, if true, print the holdings detail in each category.
     """
     if not features:
         return
 
     print(title)
     label_width = max(24, max(len(label) for label in features))
-    total_value = sum(features.values())
-    for label, value in sorted(features.items(), key=lambda x: x[1], reverse=1):
+    total_value = sum(value for value, _ in features.values())
+    for label, (value, holdings_list) in sorted(features.items(), key=lambda x: x[1], reverse=1):
         frac = value / total_value
         print('  {:{width}}  {:>16.2f} {} ( {:>6.1%} )'.format(
             label, value, currency, frac,
             width=label_width))
+        if print_holdings:
+            for holding in holdings_list:
+                print('      {:60} {:12} {:>16.2f} {:12}'.format(holding.account, holding.currency, holding.market_value, holding.cost_currency))
+
     print()
 
 
