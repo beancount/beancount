@@ -2,7 +2,6 @@
 """
 import functools
 import re
-import sys
 import io
 
 from beancount.utils.snoop import snooper
@@ -29,27 +28,32 @@ def get_report_generator(report_str):
     elif report_str == 'print_prices':
         return report_print_prices
 
-    elif snooper(re.match('holdings{}$'.format(currency_re), report_str)):
+    elif snooper(re.match('holdings{}$'.format(currency_re),
+                          report_str)):
         return functools.partial(rholdings.report_holdings,
                                  snooper.value.group(1),
                                  bool(snooper.value.group(2)))
 
-    elif snooper(re.match('holdings_by(?:commodity|instrument){}$'.format(currency_re), report_str)):
+    elif snooper(re.match('holdings_by(?:commodity|instrument){}$'.format(currency_re),
+                          report_str)):
         return functools.partial(rholdings.report_holdings_bycommodity,
                                  snooper.value.group(1),
                                  bool(snooper.value.group(2)))
 
-    elif snooper(re.match('holdings_byaccount{}$'.format(currency_re), report_str)):
+    elif snooper(re.match('holdings_byaccount{}$'.format(currency_re),
+                          report_str)):
         return functools.partial(rholdings.report_holdings_byaccount,
                                  snooper.value.group(1),
                                  bool(snooper.value.group(2)))
 
-    elif snooper(re.match('holdings_byaccount_shallow{}$'.format(currency_re), report_str)):
+    elif snooper(re.match('holdings_byaccount_shallow{}$'.format(currency_re),
+                          report_str)):
         return functools.partial(rholdings.report_holdings_byaccount_shallow,
                                  snooper.value.group(1),
                                  bool(snooper.value.group(2)))
 
-    elif snooper(re.match('holdings_by(?:currency|cost){}$'.format(currency_re), report_str)):
+    elif snooper(re.match('holdings_by(?:currency|cost){}$'.format(currency_re),
+                          report_str)):
         return functools.partial(rholdings.report_holdings_bycurrency,
                                  snooper.value.group(1),
                                  bool(snooper.value.group(2)))
@@ -68,29 +72,37 @@ def get_report_types():
       A list of (report-name, report-args, report-class, formats, description)..
     """
     return [
-        ('print', None, None, ['beancount'],
+        ('print', None, None,
+         ['beancount'],
          "Print out the entries."),
 
-        ('print_prices', None, None, ['beancount'],
+        ('print_prices', None, None,
+         ['beancount'],
          "Print out just the price entries. This can be used to rebuild a prices "
          "database without having to share the entire ledger file."),
 
-        ('holdings', ['currency', 'relative'], None, ['text'],
+        ('holdings', ['currency', 'relative'], None,
+         ['text'],
          "The full list of holdings for Asset and Liabilities accounts."),
 
-        ('holdings_bycommodity', ['currency', 'relative'], None, ['text', 'csv', 'html'],
+        ('holdings_bycommodity', ['currency', 'relative'], None,
+         ['text', 'csv', 'html'],
          "A list of holdings aggregated by base/quote commodity."),
 
-        ('holdings_byaccount', ['currency', 'relative'], None, ['text', 'csv', 'html'],
+        ('holdings_byaccount', ['currency', 'relative'], None,
+         ['text', 'csv', 'html'],
          "A list of holdings aggregated by account."),
 
-        ('holdings_byaccount_shallow', ['currency', 'relative'], None, ['text', 'csv', 'html'],
+        ('holdings_byaccount_shallow', ['currency', 'relative'], None,
+         ['text', 'csv', 'html'],
          "A list of holdings aggregated by account, at no more than a depth of 3."),
 
-        ('holdings_bycurrency', ['currency', 'relative'], None, ['text', 'csv', 'html'],
+        ('holdings_bycurrency', ['currency', 'relative'], None,
+         ['text', 'csv', 'html'],
          "A list of holdings aggregated by cost currency."),
 
-        ('networth', [], None, ['text', 'csv', 'html'],
+        ('networth', [], None,
+         ['text', 'csv', 'html'],
          "A table of networth in each ofthe operating currencies."),
 
         ]

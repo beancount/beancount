@@ -139,8 +139,10 @@ class TestHoldings(unittest.TestCase):
 
         # Test with zero units.
         test_holdings = list(itertools.starmap(holdings.Holding, [
-            ('Assets:Acc1', D('10'), 'GOOG', D('300'), 'USD', D('3000'), None, None, None),
-            ('Assets:Acc1', D('-10'), 'GOOG', D('400'), 'USD', D('-4000'), None, None, None),
+            ('Assets:Acc1', D('10'), 'GOOG', D('300'), 'USD', D('3000'),
+             None, None, None),
+            ('Assets:Acc1', D('-10'), 'GOOG', D('400'), 'USD', D('-4000'),
+             None, None, None),
         ]))
         expected_holding = holdings.Holding(
             'Assets:Acc1', D('0'), 'GOOG', None, 'USD', D('-1000'), None, None, None)

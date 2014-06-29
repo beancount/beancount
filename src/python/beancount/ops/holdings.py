@@ -2,7 +2,6 @@
 """
 import collections
 import functools
-from os import path
 
 from beancount.core.amount import ZERO
 from beancount.core import account

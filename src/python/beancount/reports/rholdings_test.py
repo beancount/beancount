@@ -32,7 +32,8 @@ class TestReportHoldings(unittest.TestCase):
     # Very basic tests, but still worthwhile. Running the code is a minimum.
 
     def test_get_assets_holdings(self):
-        holdings_list, price_map = rholdings.get_assets_holdings(self.entries, self.options_map)
+        holdings_list, price_map = rholdings.get_assets_holdings(self.entries,
+                                                                 self.options_map)
         self.assertTrue(isinstance(holdings_list, list))
         self.assertTrue(isinstance(price_map, dict))
 
@@ -44,24 +45,30 @@ class TestReportHoldings(unittest.TestCase):
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_report_holdings_bycommodity(self):
-        table_ = rholdings.report_holdings_bycommodity(None, False, self.entries, self.options_map)
+        table_ = rholdings.report_holdings_bycommodity(None, False,
+                                                       self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
-        table_ = rholdings.report_holdings_bycommodity('USD', False, self.entries, self.options_map)
+        table_ = rholdings.report_holdings_bycommodity('USD', False,
+                                                       self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_report_holdings_byaccount(self):
-        table_ = rholdings.report_holdings_byaccount(None, False, self.entries, self.options_map)
+        table_ = rholdings.report_holdings_byaccount(None, False,
+                                                     self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
-        table_ = rholdings.report_holdings_byaccount('USD', False, self.entries, self.options_map)
+        table_ = rholdings.report_holdings_byaccount('USD', False,
+                                                     self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_report_holdings_bycurrency(self):
-        table_ = rholdings.report_holdings_bycurrency(None, False, self.entries, self.options_map)
+        table_ = rholdings.report_holdings_bycurrency(None, False,
+                                                      self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
-        table_ = rholdings.report_holdings_bycurrency('USD', False, self.entries, self.options_map)
+        table_ = rholdings.report_holdings_bycurrency('USD', False,
+                                                      self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_report_networth(self):

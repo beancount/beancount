@@ -21,7 +21,9 @@ def get_list_report_string():
     oss = io.StringIO()
     oss.write("Available Reports:\n")
     for name, args, rclass, formats, description in rselect.get_report_types():
-        synopsys = '{}:{}'.format(name, ','.join(arg.upper() for arg in args)) if args else name
+        synopsys = ('{}:{}'.format(name, ','.join(arg.upper() for arg in args))
+                    if args
+                    else name)
         oss.write("  '{}' [{}]:\n".format(synopsys, ', '.join(formats)))
         oss.write(textwrap.fill(description,
                                 initial_indent="    ",

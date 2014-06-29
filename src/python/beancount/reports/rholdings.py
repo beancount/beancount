@@ -1,6 +1,5 @@
 """Generate reports no holdings.
 """
-import collections
 import csv
 
 from beancount.core import amount
@@ -171,12 +170,14 @@ def report_networth(entries, options_map):
     for currency in options_map['operating_currency']:
 
         # Convert holdings to a unified currency.
-        currency_holdings_list = holdings.convert_to_currency(price_map, currency, holdings_list)
+        currency_holdings_list = holdings.convert_to_currency(price_map,
+                                                              currency,
+                                                              holdings_list)
         if not currency_holdings_list:
             continue
 
-        holdings_list = holdings.aggregate_holdings_by(currency_holdings_list,
-                                                       lambda holding: holding.cost_currency)
+        holdings_list = holdings.aggregate_holdings_by(
+            currency_holdings_list, lambda holding: holding.cost_currency)
         assert len(holdings_list) == 1, holdings_list
         net_worths.append((currency, holdings_list[0].market_value))
 
