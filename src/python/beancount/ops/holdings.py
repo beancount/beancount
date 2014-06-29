@@ -197,7 +197,7 @@ def aggregate_holdings_list(holdings):
 
     if len(cost_currencies) != 1:
         raise ValueError("Cost currencies are not homogeneous for aggregation: {}".format(
-            ','.join(cost_currencies)))
+            ','.join(map(str, cost_currencies))))
 
     units = units if len(currencies) == 1 else ZERO
     currency = currencies.pop() if len(currencies) == 1 else '*'

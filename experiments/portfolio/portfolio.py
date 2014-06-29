@@ -133,6 +133,7 @@ def print_features(title, features, currency, print_holdings=False):
     total_value = sum(value for value, _ in features.values())
     for label, (value, holdings_list) in sorted(features.items(), key=lambda x: x[1], reverse=1):
         frac = value / total_value
+
         print('  {:{width}}  {:>16.2f} {} ( {:>6.1%} )'.format(
             label, value, currency, frac,
             width=label_width))

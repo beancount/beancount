@@ -178,6 +178,11 @@ def report_networth(entries, options_map):
 
         holdings_list = holdings.aggregate_holdings_by(
             currency_holdings_list, lambda holding: holding.cost_currency)
+
+        holdings_list = [holding
+                         for holding in holdings_list
+                         if holding.currency and holding.cost_currency]
+
         assert len(holdings_list) == 1, holdings_list
         net_worths.append((currency, holdings_list[0].market_value))
 

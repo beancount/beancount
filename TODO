@@ -375,9 +375,8 @@ Doc notes (move to document):
 
 
   (work on holdings)
-  - Adding a maximum depth argument to the byaccount report.
-  - Holdings: support loading a list of holdings from a summary file.
-  - Support output format "beancount" for holdings.
+  - Support output format "beancount" for holdings, use a single file instead of
+    a holdings I/O file (merge holdings.csv + prices.beancount -> holdings.beancount)
   - In add_unrealized_gains(), convert to use our holdings aggregator.
 
 
