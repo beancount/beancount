@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""An experimental dashboard for daily reports on portfolio composition and changes.
+"""A dashboard for portfolio composition and changes.
 """
 import argparse
 import functools
