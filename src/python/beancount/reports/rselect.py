@@ -3,6 +3,7 @@
 import functools
 import re
 import sys
+import io
 
 from beancount.utils.snoop import snooper
 from beancount.reports import rholdings
@@ -88,6 +89,7 @@ def get_report_types():
 
         ]
 
+
 def report_print(entries, unused_options_map):
     """A report type that prints out the entries as parsed.
 
@@ -95,7 +97,9 @@ def report_print(entries, unused_options_map):
       entries: A list of directives.
       unused_options_map: An options dict, as read by the parser.
     """
-    printer.print_entries(entries, sys.stdout)
+    oss = io.StringIO()
+    printer.print_entries(entries, oss)
+    return oss.getvalue()
 
 
 def report_print_prices(entries, unused_options_map):
@@ -110,4 +114,6 @@ def report_print_prices(entries, unused_options_map):
     price_entries = [entry
                      for entry in entries
                      if isinstance(entry, data.Price)]
-    printer.print_entries(price_entries, sys.stdout)
+    oss = io.StringIO()
+    printer.print_entries(price_entries, oss)
+    return oss.getvalue()
