@@ -13,6 +13,8 @@ D = to_decimal
 
 class TestHoldings(unittest.TestCase):
 
+    maxDiff = 4096
+
     @parsedoc
     def test_get_final_holdings(self, entries, _, __):
         """
@@ -131,7 +133,7 @@ class TestHoldings(unittest.TestCase):
              D('10384.80'), D('11622.00'), D('581.10'), datetime.date(2014, 2, 15)),
         ]))
         expected_holding = holdings.Holding(
-            '*', D('30'), 'GOOG', D('519.07'), 'USD',
+            'Assets', D('30'), 'GOOG', D('519.07'), 'USD',
             D('15572.10'), D('17402.20'), D('580.0733333333333333333333333'), None)
         self.assertEqual(expected_holding, holdings.aggregate_holdings_list(test_holdings))
 
@@ -152,7 +154,7 @@ class TestHoldings(unittest.TestCase):
              D('10384.80'), D('11622.00'), None, None),
         ]))
         expected_holding = holdings.Holding(
-            '*', D('30'), 'GOOG', D('519.07'), 'USD',
+            'Assets', D('30'), 'GOOG', D('519.07'), 'USD',
             D('15572.10'), D('17402.20'), D('580.0733333333333333333333333'), None)
         self.assertEqual(expected_holding, holdings.aggregate_holdings_list(test_holdings))
 
@@ -174,7 +176,7 @@ class TestHoldings(unittest.TestCase):
             ('Assets:Account1', D('10'), 'AAPL', D('593.27'), 'USD',
              D('5932.70'), D('6000.10'), D('600.01'), None),
 
-            ('*', D('30'), 'GOOG', D('519.07'), 'USD',
+            ('Assets', D('30'), 'GOOG', D('519.07'), 'USD',
              D('15572.10'), D('17402.20'), D('580.0733333333333333333333333'), None),
 
             ('Assets:Cash', D('101.11'), 'USD', None, None,
@@ -198,7 +200,7 @@ class TestHoldings(unittest.TestCase):
              D('5932.70'), D('6000.10'), D('600.01'), datetime.date(2014, 3, 1)),
         ]))
         expected_holdings = sorted(itertools.starmap(holdings.Holding, [
-            ('Assets:Account1', D('20'), '*', D('556.00'), 'USD',
+            ('Assets:Account1', D('0'), '*', D('556.00'), 'USD',
              D('11120.00'), D('11780.30'), D('589.015'), None),
 
             ('Assets:Account2', D('20'), 'GOOG', D('519.24'), 'USD',

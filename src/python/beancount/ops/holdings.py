@@ -2,8 +2,10 @@
 """
 import collections
 import functools
+from os import path
 
 from beancount.core.amount import ZERO
+from beancount.core import account
 from beancount.core import realization
 from beancount.core import account_types
 from beancount.core import data
@@ -198,10 +200,13 @@ def aggregate_holdings_list(holdings):
         raise ValueError("Cost currencies are not homogeneous for aggregation: {}".format(
             ','.join(cost_currencies)))
 
+    units = units if len(currencies) == 1 else ZERO
     currency = currencies.pop() if len(currencies) == 1 else '*'
     cost_currency = cost_currencies.pop()
-    account = accounts.pop() if len(accounts) == 1 else '*'
-    return Holding(account, units, currency, average_cost, cost_currency,
+    account_ = (accounts.pop()
+                if len(accounts) == 1
+                else account.commonprefix(accounts))
+    return Holding(account_, units, currency, average_cost, cost_currency,
                    total_book_value, total_market_value, average_price, None)
 
 
