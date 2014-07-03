@@ -373,11 +373,32 @@ Doc notes (move to document):
 
 
 
-
   (work on holdings)
   - Support output format "beancount" for holdings, use a single file instead of
     a holdings I/O file (merge holdings.csv + prices.beancount -> holdings.beancount)
+
+  - Check holdings I/O by saving and reloading a list of holdings created from
+    a set of entries (with sales, just to make sure).
+
   - In add_unrealized_gains(), convert to use our holdings aggregator.
+
+
+
+
+
+  - Add the acquisition date to each Holding instance, so that short/long-term can be
+    calculated for the lot.
+
+  - Fetch the CSV holdings of each Holding and compute the full list of stocks I
+    own from these ETFs in dollar value. Sort by larger to smaller. Also compute
+    the industry with that. You need to write Vanguard download (harder, need to
+    scrape), and iShares download (easier, CSV).
+
+
+  - Move 'portfolio' and other experiments to be its own library, under the
+    main source tree, validated and all.
+
+
 
 
 
@@ -1059,6 +1080,11 @@ Doc notes (move to document):
 
 
   - Replace gviz by some other library that does not require you to be online.
+
+
+  - Consider whether we can actually remove posting.entry (I think it is only
+    used in the realization) and thus make it easy to create transactions
+    programmatically.
 
 
 
@@ -2152,6 +2178,28 @@ Improve this bit:
     the FBAR filing.
 
 
+** After-Tax Balance Sheet
+
+  - Ha... I think you just gave me a fun idea!  I'll write a plugin in Beancount
+    that automatically adds a "future tax expense" entry to offset pre-tax money
+    for the balance sheet, e.g. if I have a 401k account with a value of say
+    100,000 USD in it, it would automatically insert an entry at the latest day
+    like this:
+
+      2014-07-03 F "Taxes to be paid on distributions."
+        Expenses:Taxes:Federal        27000 USD
+        Expenses:Taxes:StateNY         8000 USD
+        Liabilities:FutureTaxesOnDistirbutiosn  -35000 USD
+
+    This would make the balance sheet reflect only post-tax money, and thus be more
+    meaningful.
+    If I want to see post-tax money, I'll just enable the plugin from a
+    command-line option.
+    I'd have to find some generic way to identify which accounts are pre-tax
+    somehow.
+
+
+
 * Tools
 ** Scripts
 
@@ -2828,6 +2876,13 @@ come up with a creative solution that solves this problem.
     period, with the account ids and balances. This should be printable and
     storable, for someone else to take care of your things in case you die.
 
+
+**** Compare common costs using constant TMV
+
+  - Look at average meal 10 years ago, average electricity, etc. things that
+    should be equal, and correct for the time-value-of-money, compare prices
+    today with prices then. Maybe come up with some kind of constant unit that
+    I can convert everything to.
 
 ** Change List
 
