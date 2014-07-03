@@ -1082,6 +1082,11 @@ Doc notes (move to document):
   - Replace gviz by some other library that does not require you to be online.
 
 
+  - Consider whether we can actually remove posting.entry (I think it is only
+    used in the realization) and thus make it easy to create transactions
+    programmatically.
+
+
 
 ** Precision
 
@@ -2171,6 +2176,28 @@ Improve this bit:
 
   - Automatically compute the maximum account values of foreign accounts for
     the FBAR filing.
+
+
+** After-Tax Balance Sheet
+
+  - Ha... I think you just gave me a fun idea!  I'll write a plugin in Beancount
+    that automatically adds a "future tax expense" entry to offset pre-tax money
+    for the balance sheet, e.g. if I have a 401k account with a value of say
+    100,000 USD in it, it would automatically insert an entry at the latest day
+    like this:
+
+      2014-07-03 F "Taxes to be paid on distributions."
+        Expenses:Taxes:Federal        27000 USD
+        Expenses:Taxes:StateNY         8000 USD
+        Liabilities:FutureTaxesOnDistirbutiosn  -35000 USD
+
+    This would make the balance sheet reflect only post-tax money, and thus be more
+    meaningful.
+    If I want to see post-tax money, I'll just enable the plugin from a
+    command-line option.
+    I'd have to find some generic way to identify which accounts are pre-tax
+    somehow.
+
 
 
 * Tools
