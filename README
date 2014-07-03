@@ -99,6 +99,10 @@ Documentation
 - `CHANGES <CHANGES>`_
 - `TODO <TODO>`_
 
+Discussions about Beancount occur on the `Ledger mailing-list
+<https://groups.google.com/forum/#!forum/ledger-cli>`_, which has become the *de
+facto* discussion group for all command-line accounting softwares.
+
 I have yet to write full documentation, but basically, there are two main
 programs that you should care about:
 
