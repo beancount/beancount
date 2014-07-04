@@ -15,13 +15,20 @@ class View:
     display."""
 
     def __init__(self, all_entries, options_map, title):
+        """Build a View instance.
+
+        Args:
+          all_entries: The full list of directives as output from the loader.
+          options_map: The options dict, as output by the parser.
+          title: A string, the title of this view to render.
+        """
 
         # A reference to the full list of padded entries.
         self.all_entries = all_entries
 
         # List of filterered entries for this view, and index at the beginning
         # of the period transactions, past the opening balances. These are
-        # computed in _realize().
+        # computed in _initialize().
         self.entries = None
         self.opening_entries = None
         self.closing_entries = None
@@ -32,65 +39,69 @@ class View:
         # A reference to the global list of options and the account type names.
         # FIXME: These may be redundant, review whether we actually need these.
         self.options = options_map
-        self.account_types = options.get_account_types(options_map)
 
         # Realization of the filtered entries to display. These are computed in
-        # _realize().
+        # _initialize().
         self.real_accounts = None
         self.opening_real_accounts = None
         self.closing_real_accounts = None
 
         # Realize now, we don't need to do this lazily because we create these
         # view objects on-demand and cache them.
-        self._realize()
+        self._initialize()
 
-    def _realize(self):
-        """Compute the list of filtered entries and transaction tree."""
+    def _initialize(self):
+        """Compute the list of filtered entries and realization trees."""
 
         # Get the filtered list of entries.
         self.entries, self.begin_index = self.apply_filter(self.all_entries, self.options)
 
-        if not self.entries:
-            self.opening_entries = []
-            self.closing_entries = []
-        else:
-            # Compute the list of entries for the opening balances sheet.
-            self.opening_entries = (self.entries[:self.begin_index]
-                                    if self.begin_index is not None
-                                    else None)
+        # Compute the list of entries for the opening balances sheet.
+        self.opening_entries = (self.entries[:self.begin_index]
+                                if self.begin_index is not None
+                                else [])
 
-
-            # Compute the list of entries that includes transfer entries of the
-            # income/expenses amounts to the balance sheet's equity (as "net
-            # income"). This is used to render the end-period balance sheet, with
-            # the current period's net income, closing the period.
-            current_accounts = options.get_current_accounts(self.options)
-            self.closing_entries = summarize.close(self.entries,
-                                                   self.account_types,
-                                                   self.options['conversion_currency'],
-                                                   *current_accounts)
+        # Compute the list of entries that includes transfer entries of the
+        # income/expenses amounts to the balance sheet's equity (as "net
+        # income"). This is used to render the end-period balance sheet, with
+        # the current period's net income, closing the period.
+        current_accounts = options.get_current_accounts(self.options)
+        account_types = options.get_account_types(self.options)
+        self.closing_entries = summarize.close(self.entries,
+                                               account_types,
+                                               self.options['conversion_currency'],
+                                               *current_accounts)
 
         # Realize the three sets of entries.
-        if self.opening_entries:
-            with misc_utils.print_time('realize_opening'):
-                self.opening_real_accounts = realization.realize(self.opening_entries,
-                                                                 self.account_types)
-        else:
-            self.opening_real_accounts = None
+        with misc_utils.print_time('realize_opening'):
+            self.opening_real_accounts = realization.realize(self.opening_entries,
+                                                             account_types)
 
         with misc_utils.print_time('realize'):
             self.real_accounts = realization.realize(self.entries,
-                                                     self.account_types)
+                                                     account_types)
 
         with misc_utils.print_time('realize_closing'):
             self.closing_real_accounts = realization.realize(self.closing_entries,
-                                                             self.account_types)
+                                                             account_types)
 
         assert self.real_accounts is not None
         assert self.closing_real_accounts is not None
 
     def apply_filter(self, entries):
-        "Filter the list of entries."
+        """Filter the list of entries.
+
+        This is used to obtain the filtered list of entries.
+
+        Args:
+          entries: A list of directives to filter.
+        Returns:
+          A pair of
+            1. a list of filtered entries, and
+            2. an integer, the index at which the beginning of the entries for
+              the period begin, one directive past the opening
+              balances/initialization entries.
+        """
         raise NotImplementedError
 
 

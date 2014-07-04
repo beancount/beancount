@@ -6,9 +6,16 @@ from bottle import request
 
 
 class AttrMapper:
-    "A URL mapper that allows attribute access for view-links."
+    """A URL mapper that allows attribute access for view-links.
+    This is used in templates."""
 
     def __init__(self, mapper_function):
+        """Constructor for an attribute mapper.
+
+        Args:
+          mapper_function: A function to apply on attribute lookup, and
+            upon calling .build().
+        """
         self.mapper_function = mapper_function
 
     def __getattr__(self, name):
