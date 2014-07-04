@@ -678,7 +678,8 @@ def conversions():
 
     oss = io.StringIO()
     conversion_entries = get_conversion_entries(view.entries)
-    journal.entries_table(oss, conversion_entries, request.app.get_url, render_postings=True)
+    journal.entries_table(oss, conversion_entries, request.app.get_url,
+                          render_postings=True)
 
     conversion_balance = realization.compute_entries_balance(conversion_entries)
 

@@ -3,16 +3,12 @@
 import collections
 from os import path
 
-from bottle import request
-
 from beancount.core.data import Open, Close, Balance, Transaction, Note, Document
-from beancount.core import data
 from beancount.core import account
 from beancount.core import complete
 from beancount.core.account import account_name_leaf
 from beancount.core import realization
 from beancount.core import flags
-from beancount.utils import misc_utils
 
 
 def account_link(account_, build_url, leafonly=False):

@@ -9,7 +9,6 @@ from beancount.core import realization
 from beancount.core import account_types
 from beancount.core import data
 from beancount.core import flags
-from beancount.core import position
 from beancount.ops import prices
 from beancount.utils import misc_utils
 

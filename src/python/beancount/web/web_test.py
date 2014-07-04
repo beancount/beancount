@@ -3,7 +3,6 @@ from os import path
 import os
 import re
 import argparse
-import sys
 
 import urllib.request
 import lxml.html

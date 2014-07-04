@@ -4,10 +4,9 @@ import io
 import re
 
 from beancount.web.journal import account_link
-from beancount.core import data
 from beancount.core.account_types import is_root_account
 from beancount.core.position import Lot
-from beancount.core.data import Open
+from beancount.core import data
 from beancount.core.inventory import Inventory
 from beancount.core import realization
 
@@ -114,7 +113,7 @@ def is_account_active(real_account):
       A boolean, true if the account is active, according to the definition above.
     """
     for entry in real_account.postings:
-        if isinstance(entry, Open):
+        if isinstance(entry, data.Open):
             continue
         return True
     return False

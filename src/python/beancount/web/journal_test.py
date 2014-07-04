@@ -1,10 +1,8 @@
 import re
 import io
 import unittest
-from unittest import mock
 
 from beancount import loader
-from beancount.parser import options
 from beancount.core import realization
 from beancount.core import inventory
 from beancount.core import data

@@ -162,12 +162,12 @@ status test-status:
 
 
 # Check for unused imports.
-sfood:
+sfood-checker:
 	sfood-checker bin src/python
 
 # Run the linter on all source code.
 #LINT_PASS=line-too-long,bad-whitespace,bad-continuation,bad-indentation
-LINT_PASS=line-too-long,bad-whitespace,bad-indentation
+LINT_PASS=line-too-long,bad-whitespace,bad-indentation,unused-import
 LINT_FAIL=
 
 pylint-pass:
@@ -180,4 +180,4 @@ pylint-all:
 	pylint --rcfile=$(PWD)/etc/pylintrc $(SRC)
 
 # Run all currently configured linter checks.
-lint: sfood pylint-pass
+lint: pylint-pass sfood-checekr
