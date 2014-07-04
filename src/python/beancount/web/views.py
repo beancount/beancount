@@ -106,9 +106,18 @@ class View:
 
 
 class EmptyView(View):
-    """An empty view, as a placeholder until we implement one."""
+    """An empty view, for testing."""
 
     def __init__(self, entries, options_map, title, *args, **kw):
+        """Create an empty view.
+
+        Args:
+          entries: A list of directives.
+          options_map: A dict of options, as produced by the parser.
+          title: A string, the title of this view.
+          *args: Ignored.
+          **kw: Ignored.
+        """
         View.__init__(self, entries, options_map, title)
 
     def apply_filter(self, _, __):
@@ -117,21 +126,31 @@ class EmptyView(View):
 
 
 class AllView(View):
+    """A view that includes all the entries, unmodified."""
 
     def apply_filter(self, entries, options_map):
-        "Return the list of entries unmodified."
         return (entries, None)
 
 
 class YearView(View):
+    """A view of the entries for just a single year."""
 
     def __init__(self, entries, options_map, title, year):
+        """Create a view clamped to one year.
+
+        Note: this is the only view where the entries are summarized and
+        clamped.
+
+        Args:
+          entries: A list of directives.
+          options_map: A dict of options, as produced by the parser.
+          title: A string, the title of this view.
+          year: An integer, the year of the exercise period.
+        """
         self.year = year
         View.__init__(self, entries, options_map, title)
 
     def apply_filter(self, entries, options_map):
-        "Return entries for only that year."
-
         # Get the transfer account objects.
         previous_accounts = options.get_previous_accounts(options_map)
 
@@ -149,17 +168,26 @@ class YearView(View):
 
 
 class TagView(View):
+    """A view that includes only entries some specific tags."""
 
     def __init__(self, entries, options_map, title, tags):
-        # The tags we want to include.
+        """Create a view with only entries tagged with the given tags.
+
+        Note: this is the only view where the entries are summarized and
+        clamped.
+
+        Args:
+          entries: A list of directives.
+          options_map: A dict of options, as produced by the parser.
+          title: A string, the title of this view.
+          tags: A set of strings, the tags to include. Entries with at least
+            one of these tags will be included in the output.
+        """
         assert isinstance(tags, (set, list, tuple))
         self.tags = tags
-
         View.__init__(self, entries, options_map, title)
 
     def apply_filter(self, entries, options_map):
-        "Return only entries with the given tag."
-
         tags = self.tags
         tagged_entries = [
             entry
@@ -170,17 +198,25 @@ class TagView(View):
 
 
 class PayeeView(View):
+    """A view that includes entries with some specific payee."""
 
     def __init__(self, entries, options_map, title, payee):
-        # The payee to filter.
+        """Create a view clamped to one year.
+
+        Note: this is the only view where the entries are summarized and
+        clamped.
+
+        Args:
+          entries: A list of directives.
+          options_map: A dict of options, as produced by the parser.
+          title: A string, the title of this view.
+          payee: A string, the payee whose transactions to include.
+        """
         assert isinstance(payee, str)
         self.payee = payee
-
         View.__init__(self, entries, options_map, title)
 
     def apply_filter(self, entries, options_map):
-        "Return only transactions for the given payee."
-
         payee = self.payee
         payee_entries = [entry
                          for entry in entries
@@ -190,17 +226,26 @@ class PayeeView(View):
 
 
 class ComponentView(View):
+    """A view that includes transactions with at least one posting with an account
+    that includes a given component."""
 
     def __init__(self, entries, options_map, title, component):
-        # The payee to filter.
+        """Create a view clamped to one year.
+
+        Note: this is the only view where the entries are summarized and
+        clamped.
+
+        Args:
+          entries: A list of directives.
+          options_map: A dict of options, as produced by the parser.
+          title: A string, the title of this view.
+          compnent: A string, the name of an account component to include.
+        """
         assert isinstance(component, str)
         self.component = component
-
         View.__init__(self, entries, options_map, title)
 
     def apply_filter(self, entries, options_map):
-        "Return only transactions for the given payee."
-
         component = self.component
         component_entries = [entry
                              for entry in entries
