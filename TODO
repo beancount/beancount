@@ -15,7 +15,6 @@ beancount: TODO
        Create an automated test for the lexer as well.
 
      src/python/beancount/web/acctree.py                    MISSING
-     src/python/beancount/web/journal.py                    MISSING
 
        These need to move to reports, generate the intermediate tree
        object, and then support rendering to txt, csv, html.
@@ -1081,6 +1080,10 @@ Doc notes (move to document):
     used in the realization) and thus make it easy to create transactions
     programmatically.
 
+
+  - (performance) Profile the web pages, if account_link() is high, provide an
+    explicit cache for each unique view. (We had to remove this when we
+    simplified the function using build_url for adding tests.)
 
 
 ** Precision

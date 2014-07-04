@@ -1,4 +1,5 @@
 import re
+import io
 import unittest
 from unittest import mock
 
@@ -76,10 +77,10 @@ class TestHTMLBalance(unittest.TestCase):
         self.assertTrue(re.search(r'\b400\b', html_balance))
 
 
-class TestIterateRenderTransactions(unittest.TestCase):
+class TestJournalRender(unittest.TestCase):
 
     @loader.loaddoc
-    def test_iterate_render_postings(self, entries, _, __):
+    def setUp(self, entries, _, __):
         """
         2014-01-01 open Assets:Checking
         2014-01-01 open Assets:Investing
@@ -116,10 +117,12 @@ class TestIterateRenderTransactions(unittest.TestCase):
 
         2014-12-31 close Assets:Checking
         """
-        real_root = realization.realize(entries)
-        real_account = realization.get(real_root, 'Assets:Checking')
+        self.entries = entries
+        real_root = realization.realize(self.entries)
+        self.real_account = realization.get(real_root, 'Assets:Checking')
 
-        rows = list(journal.iterate_render_postings(real_account.postings,
+    def test_iterate_render_postings(self):
+        rows = list(journal.iterate_render_postings(self.real_account.postings,
                                                     mock_build_url))
 
         # Check (entry, leg_postings, rowtype, extra_class, flag).
@@ -148,15 +151,25 @@ class TestIterateRenderTransactions(unittest.TestCase):
         self.assertTrue(all(isinstance(row.amount_str, str) for row in rows))
         self.assertTrue(all(isinstance(row.balance_str, str) for row in rows))
 
+    def test_entries_table_with_balance(self):
+        oss = io.StringIO()
+        result = journal.entries_table_with_balance(oss, self.real_account.postings,
+                                                    mock_build_url, True)
+        html = oss.getvalue()
+        self.assertTrue(result is None)
+        self.assertTrue(isinstance(html, str))
+        self.assertTrue(re.search('<table', html))
 
+    def test_entries_table(self):
+        oss = io.StringIO()
+        result = journal.entries_table_with_balance(oss, self.real_account.postings,
+                                                    mock_build_url, True)
+        html = oss.getvalue()
+        self.assertTrue(result is None)
+        self.assertTrue(isinstance(html, str))
+        self.assertTrue(re.search('<table', html))
 
-
-
-    # def test_entries_table_with_balance(self):
-    #     raise NotImplementedError
-
-    # def test_entries_table(self):
-    #     raise NotImplementedError
-
-    # def test_render_links(self):
-    #     raise NotImplementedError
+    def test_render_links(self):
+        html = journal.render_links({'132333b32eab', '6e3ac126f337'})
+        self.assertTrue(re.search('132333b32eab', html))
+        self.assertTrue(re.search('6e3ac126f337', html))

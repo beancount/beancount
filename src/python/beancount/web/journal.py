@@ -182,7 +182,16 @@ def iterate_render_postings(postings, build_url):
 
 
 def entries_table_with_balance(oss, account_postings, build_url, render_postings=True):
-    """Render a list of entries into an HTML table.
+    """Render a list of entries into an HTML table, with a running balance.
+
+    (This function returns nothing, it write to oss as a side-effect.)
+
+    Args:
+      oss: A file object to write the output to.
+      account_postings: A list of Posting or directive instances.
+      build_url: If not None, a function to build/render URLs to.
+      render_postings: A boolean; if true, render the postings as rows under the
+        main transaction row.
     """
     write = lambda data: (oss.write(data), oss.write('\n'))
 
@@ -204,7 +213,8 @@ def entries_table_with_balance(oss, account_postings, build_url, render_postings
     for row in iterate_render_postings(account_postings, build_url):
         entry = row.entry
 
-        if links:
+        description = row.description
+        if row.links:
             description += render_links(row.links)
 
         # Render a row.
@@ -218,7 +228,7 @@ def entries_table_with_balance(oss, account_postings, build_url, render_postings
           <tr>
         '''.format(row.rowtype, row.extra_class,
                    '{}:{}'.format(entry.fileloc.filename, entry.fileloc.lineno),
-                   entry.date, row.flag, row.description,
+                   entry.date, row.flag, description,
                    row.amount_str, row.balance_str))
 
         if render_postings and isinstance(entry, Transaction):
@@ -252,7 +262,20 @@ def entries_table_with_balance(oss, account_postings, build_url, render_postings
 
 
 def entries_table(oss, account_postings, build_url, render_postings=True):
-    """Render a list of entries into an HTML table.
+    """Render a list of entries into an HTML table, with no running balance.
+
+    This is appropriate for rendering tables of entries for postings with
+    multiple accounts, whereby computing the running balances makes little
+    sense.
+
+    (This function returns nothing, it write to oss as a side-effect.)
+
+    Args:
+      oss: A file object to write the output to.
+      account_postings: A list of Posting or directive instances.
+      build_url: If not None, a function to build/render URLs to.
+      render_postings: A boolean; if true, render the postings as rows under the
+        main transaction row.
     """
     write = lambda data: (oss.write(data), oss.write('\n'))
 
@@ -273,7 +296,8 @@ def entries_table(oss, account_postings, build_url, render_postings=True):
     for row in iterate_render_postings(account_postings, build_url):
         entry = row.entry
 
-        if links:
+        description = row.description
+        if row.links:
             description += render_links(row.links)
 
         # Render a row.
@@ -285,7 +309,7 @@ def entries_table(oss, account_postings, build_url, render_postings=True):
           <tr>
         '''.format(row.rowtype, row.extra_class,
                    '{}:{}'.format(entry.fileloc.filename, entry.fileloc.lineno),
-                   entry.date, row.flag, row.description))
+                   entry.date, row.flag, description))
 
         if render_postings and isinstance(entry, Transaction):
             for posting in entry.postings:
@@ -316,7 +340,13 @@ def entries_table(oss, account_postings, build_url, render_postings=True):
 
 
 def render_links(links):
-    "Render the Transaction links as part of the description."
+    """Render Transaction links to HTML.
+
+    Args:
+      links: A list of set of strings, transaction "links" to be rendered.
+    Returns:
+      A string, a snippet of HTML to be rendering somewhere.
+    """
     return '<span class="links">{}</span>'.format(
         ''.join('<a href="{}">^</a>'.format(link)
                 for link in links))
