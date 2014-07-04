@@ -16,19 +16,21 @@ beancount: TODO
 
        Create an automated test for the lexer as well.
 
-     src/python/beancount/web/acctree.py                    MISSING
+     src/python/beancount/loader.py                               INCOMPLETE
+
+
+  - Make helper functions in summarize, for clamp() and close() which accept
+    options_map and automatically derive everything they need from entries.
+
+
+  - Isolate reports, at least from a functional POV, before the big revamp, in
+    order to avoid changing the interface much after releasing v2.0:
 
        These need to move to reports, generate the intermediate tree
        object, and then support rendering to txt, csv, html.
 
        We need to define two HTML types: 'html', and 'html_div'. The fisrt one
        renders to a full page; the second one only a div.
-
-     src/python/beancount/loader.py                               INCOMPLETE
-
-  - Make helper functions in summarize, for clamp() and close() which accept
-    options_map and automatically derive everything they need from entries.
-
 
 
 

@@ -42,12 +42,19 @@ class TestTables(unittest.TestCase):
     @loader.loaddoc
     def setUp(self, entries, _, __):
         """
-        2014-01-01 open Assets:Checking
+        2014-01-01 open Assets:US:Checking
+        2014-01-01 open Assets:CA:Checking
+        2014-01-01 open Assets:Inactive
         2014-01-01 open Equity:OpeningBalances
 
         2014-07-04 *
-          Assets:Checking      3000 USD
+          Assets:US:Checking      3000 USD
           Equity:OpeningBalances
+
+        2014-07-04 *
+          Assets:CA:Checking      3000 CAD
+          Equity:OpeningBalances
+
         """
         self.real_root = realization.realize(entries)
 
@@ -56,20 +63,42 @@ class TestTables(unittest.TestCase):
         for real_node, cells, classes in acctree.tree_table(oss,
                                                             self.real_root,
                                                             mock_build_url,
-                                                            ['Account', 'Balance']):
+                                                            header=['Account', 'Balance'],
+                                                            classes=['5cdc3b134179'],
+                                                            leafonly=False):
             if real_node is acctree.TOTALS_LINE:
                 cells.append('THE_TOTAL')
                 continue
             cells.append("<pre>{}</pre>".format(real_node.balance))
-
         html = oss.getvalue()
         self.assertTrue(re.search('<table', html))
         self.assertTrue(re.search('3000', html))
         self.assertTrue(re.search('-3000', html))
+        self.assertTrue(re.search('5cdc3b134179', html))
+        self.assertTrue(re.search('Assets:US:Checking', html))
 
+    def test_tree_table__leafonly(self):
+        # Complementary test to check that leafonly works.
+        oss = io.StringIO()
+        for real_node, cells, classes in acctree.tree_table(oss,
+                                                            self.real_root,
+                                                            mock_build_url,
+                                                            header=['Account', 'Balance'],
+                                                            classes=['5cdc3b134179'],
+                                                            leafonly=True):
+            cells.append("")
+        html = oss.getvalue()
 
+        self.assertFalse(re.search('Assets:US:Checking', html))
 
-# class TestTableOfBalances(unittest.TestCase):
+    def test_table_of_balances(self):
+        html = acctree.table_of_balances(self.real_root, ['USD', 'CAD'], mock_build_url,
+                                         classes=['586e8200b379'])
+        self.assertTrue(re.search('<table', html))
+        self.assertTrue(re.search('USD', html))
+        self.assertTrue(re.search('CAD', html))
+        self.assertTrue(re.search('586e8200b379', html))
+        self.assertTrue(re.search('Checking', html))
 
-#     def test_table_of_balances(self):
-#         raise NotImplementedError
+        # Check that an inactive account is being skipped.
+        self.assertFalse(re.search('Inactive', html))

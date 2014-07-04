@@ -127,7 +127,7 @@ def tree_table(oss, real_account, build_url, header=None, classes=None, leafonly
     write('</table>')
 
 
-def table_of_balances(real_root, currencies, build_url, classes=None):
+def table_of_balances(real_root, currencies, build_url, classes=None, leafonly=True):
     """Render a table of balances.
 
     Args:
@@ -149,7 +149,7 @@ def table_of_balances(real_root, currencies, build_url, classes=None):
     classes = list(classes) if classes else []
     classes.append('fullwidth')
     for real_account, cells, row_classes in tree_table(oss, real_root, build_url,
-                                                       header, classes):
+                                                       header, classes, leafonly=leafonly):
 
         if real_account is TOTALS_LINE:
             line_balance = balance_totals
