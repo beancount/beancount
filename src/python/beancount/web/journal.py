@@ -1,5 +1,6 @@
 """HTML rendering routines for serving a lists of postings/entries.
 """
+import collections
 from os import path
 
 from bottle import request
@@ -75,6 +76,27 @@ FLAG_ROWTYPES = {
 }
 
 
+# A rendered row.
+#
+# Attributes:
+#   entry: The parent entry we are rendering postings for. This can be of
+#     any valid directive type, not just Transaction instances.
+#   leg_postings: A list of postings that apply to this row.
+#   rowtype: A renderable string that dscribes the type of this row's directive.
+#   extra_class: A CSS class to be add to the row. This is used for marking some
+#     rows as warning rows.
+#   flag: The flag attached to this row, if Transaction, or an empty string.
+#   description: A string, the narration to render on the row.
+#   links: A list of link strings to render, if desired.
+#   change_str: A string, the rendered inventory of changes being posted by this row.
+#   balance_str: A string, the rendered inventory of the resulting balance after
+#     applying the change to this row.
+#
+Row = collections.namedtuple('Row',
+                             'entry leg_postings rowtype extra_class flag '
+                             'description links amount_str balance_str')
+
+
 def iterate_render_postings(postings, build_url):
     """Iterate through the list of transactions with rendered strings for each cell.
 
@@ -85,19 +107,7 @@ def iterate_render_postings(postings, build_url):
       postings: A list of Posting or directive instances.
       build_url: A function that builds/renders URLs based on a Bottle app.
     Yields:
-      Tuples of
-        entry: The parent entry we are rendering postings for. This can be of
-          any valid directive type, not just Transaction instances.
-        leg_postings: A list of postings that apply to this row.
-        rowtype: A renderable string that dscribes the type of this row's directive.
-        extra_class: A CSS class to be add to the row. This is used for marking some
-          rows as warning rows.
-        flag: The flag attached to this row, if Transaction, or an empty string.
-        description: A string, the narration to render on the row.
-        links: A list of link strings to render, if desired.
-        change_str: A string, the rendered inventory of changes being posted by this row.
-        balance_str: A string, the rendered inventory of the resulting balance after
-          applying the change to this row.
+      Instances of Row tuples. See above.
     """
     for entry_line in realization.iterate_with_balance(postings):
         entry, leg_postings, change, entry_balance = entry_line
@@ -119,7 +129,7 @@ def iterate_render_postings(postings, build_url):
                 description = ('<span class="payee">{}</span>'
                                '<span class="pnsep">|</span>'
                                '{}').format(entry.payee, description)
-            change_str = balance_html(change)
+            amount_str = balance_html(change)
 
             if entry.links:
                 links = [build_url('link', link=link)
@@ -138,18 +148,18 @@ def iterate_render_postings(postings, build_url):
                                    entry.amount,
                                    entry_balance.get_amount(entry.amount.currency),
                                    entry.diff_amount)
-                rowtype = 'CheckFail'
+                extra_class = 'fail'
 
-            change_str = str(entry.amount)
+            amount_str = str(entry.amount)
 
         elif isinstance(entry, (Open, Close)):
             description = '{} {}'.format(entry.__class__.__name__,
                                          account_link(entry.account, build_url))
-            change_str = ''
+            amount_str = ''
 
         elif isinstance(entry, Note):
             description = '{} {}'.format(entry.__class__.__name__, entry.comment)
-            change_str = ''
+            amount_str = ''
             balance_str = ''
 
         elif isinstance(entry, Document):
@@ -158,17 +168,17 @@ def iterate_render_postings(postings, build_url):
                 account_link(entry.account, build_url),
                 build_url('doc', filename=entry.filename.lstrip('/')),
                 path.basename(entry.filename))
-            change_str = ''
+            amount_str = ''
             balance_str = ''
 
         else:
             description = entry.__class__.__name__
-            change_str = ''
+            amount_str = ''
             balance_str = ''
 
-        yield (entry, leg_postings,
-               rowtype, extra_class,
-               flag, description, links, change_str, balance_str)
+        yield Row(entry, leg_postings,
+                  rowtype, extra_class,
+                  flag, description, links, amount_str, balance_str)
 
 
 def entries_table_with_balance(oss, account_postings, build_url, render_postings=True):
@@ -191,13 +201,11 @@ def entries_table_with_balance(oss, account_postings, build_url, render_postings
       </thead>
     ''')
 
-    for (entry, leg_postings,
-         rowtype, extra_class,
-         flag, description, links,
-         change_str, balance_str) in iterate_render_postings(account_postings, build_url):
+    for row in iterate_render_postings(account_postings, build_url):
+        entry = row.entry
 
         if links:
-            description += render_links(links)
+            description += render_links(row.links)
 
         # Render a row.
         write('''
@@ -208,9 +216,10 @@ def entries_table_with_balance(oss, account_postings, build_url, render_postings
             <td class="change num">{}</td>
             <td class="balance num">{}</td>
           <tr>
-        '''.format(rowtype, extra_class,
+        '''.format(row.rowtype, row.extra_class,
                    '{}:{}'.format(entry.fileloc.filename, entry.fileloc.lineno),
-                   entry.date, flag, description, change_str, balance_str))
+                   entry.date, row.flag, row.description,
+                   row.amount_str, row.balance_str))
 
         if render_postings and isinstance(entry, Transaction):
             for posting in entry.postings:
@@ -218,7 +227,7 @@ def entries_table_with_balance(oss, account_postings, build_url, render_postings
                 classes = ['Posting']
                 if posting.flag == flags.FLAG_WARNING:
                     classes.append('warning')
-                if posting in leg_postings:
+                if posting in row.leg_postings:
                     classes.append('leg')
 
                 write('''
@@ -261,13 +270,11 @@ def entries_table(oss, account_postings, build_url, render_postings=True):
       </thead>
     ''')
 
-    for (entry, leg_postings,
-         rowtype, extra_class,
-         flag, description, links,
-         _, _) in iterate_render_postings(account_postings, build_url):
+    for row in iterate_render_postings(account_postings, build_url):
+        entry = row.entry
 
         if links:
-            description += render_links(links)
+            description += render_links(row.links)
 
         # Render a row.
         write('''
@@ -276,9 +283,9 @@ def entries_table(oss, account_postings, build_url, render_postings=True):
             <td class="flag">{}</td>
             <td class="description" colspan="5">{}</td>
           <tr>
-        '''.format(rowtype, extra_class,
+        '''.format(row.rowtype, row.extra_class,
                    '{}:{}'.format(entry.fileloc.filename, entry.fileloc.lineno),
-                   entry.date, flag, description))
+                   entry.date, row.flag, row.description))
 
         if render_postings and isinstance(entry, Transaction):
             for posting in entry.postings:

@@ -206,7 +206,7 @@ table.entry-table tr.Balance {
     background-color: #cfc;
 }
 
-table.entry-table tr.CheckFail {
+table.entry-table tr.Balance.fail {
     background-color: #f8a;
 }
 
