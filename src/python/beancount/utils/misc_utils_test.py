@@ -72,3 +72,10 @@ class TestMiscUtils(unittest.TestCase):
         new_test = misc_utils.map_namedtuple_attributes(
             ('b', 'd'), lambda num: num if num is None else num * 10, test)
         self.assertEqual(Test(None, None, 1, 20), new_test)
+
+    def test_staticvar(self):
+        @misc_utils.staticvar('a', 42)
+        def foo():
+            return foo.a
+        self.assertEqual(42, foo())
+        self.assertEqual(42, foo.a)

@@ -201,3 +201,20 @@ def map_namedtuple_attributes(attributes, mapper, object_):
     """
     return object_._replace(**{attribute: mapper(getattr(object_, attribute))
                                for attribute in attributes})
+
+
+def staticvar(varname, initial_value):
+    """Returns a decorator that defines a Python function attribute.
+
+    This is used to simulate a static function variable in Python.
+
+    Args:
+      varname: A string, the name of the variable to define.
+      initial_value: The value to initialize the variable to.
+    Returns:
+      A function decorator.
+    """
+    def deco(fun):
+        setattr(fun, varname, initial_value)
+        return fun
+    return deco
