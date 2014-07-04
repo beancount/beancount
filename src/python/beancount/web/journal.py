@@ -11,32 +11,64 @@ from beancount.core import complete
 from beancount.core.account import account_name_leaf
 from beancount.core import realization
 from beancount.core import flags
+from beancount.utils import misc_utils
 
 
-_account_link_cache = {}
+@misc_utils.staticvar('cache', {})
+def account_link(account_, leafonly=False, request=request):
+    """Render an HTML anchor for the given account name.
 
-def account_link(account_name, leafonly=False):
-    "Render an anchor for the given account name."
-    if isinstance(account_name, str):
-        account_name = account_name
-    elif isinstance(account_name, realization.RealAccount):
-        account_name = account_name.account
+    The conversion to string is memoized, as it never changes.
+    An actual link to an account is only rendered if the request is currently
+    for a page with a resolved view. Otherwise, a snippet of HTML that will
+    just render the name of the account without a link is rendered.
+
+    Args:
+      account_name: A string, the name of the account to render, or an
+        instance of RealAccount. Both are accepted.
+      leafonly: A boolean, if true, render only the name of the leaf, not the
+        entire account name.
+      request: An instance of Bottle.Request. You can override this for testing,
+        otherwise just keep the default. This request object is inspected to
+        figure out whether the page being rendered is in a view or not.
+    Returns:
+      A string, a snippet of HTML that renders and links to the account name..
+    """
+    if isinstance(account_, str):
+        account_name = account_
+    elif isinstance(account_, realization.RealAccount):
+        account_name = account_.account
     try:
-        return _account_link_cache[(request.app, account_name)]
+        return account_link.cache[(request.app, account_name, leafonly)]
     except KeyError:
         slashed_name = account_name.replace(account.sep, '/')
 
         if leafonly:
             account_name = account_name_leaf(account_name)
 
-        if hasattr(request, 'view'):
+        if hasattr(request, 'view') and request.view is not None:
             link = '<a href="{}" class="account">{}</a>'.format(
                 request.app.get_url('account', slashed_account_name=slashed_name),
                 account_name)
-            _account_link_cache[account_name] = link
+            account_link.cache[account_name] = link
             return link
         else:
-            return account_name
+            return '<span class="account">{}</a>'.format(account_name)
+
+
+def balance_html(balance_inventory):
+    """Render a list of balance positions for an HTML table cell.
+
+    Each position is rendered on its own HTML row.
+
+    Args:
+      balance_inventory: An instance of Inventory.
+    Return:
+      A string, a snippet of HTML.
+    """
+    return ('<br/>'.join(map(str, balance_inventory.get_positions()))
+            if not balance_inventory.is_empty()
+            else '')
 
 
 FLAG_ROWTYPES = {
@@ -44,12 +76,6 @@ FLAG_ROWTYPES = {
     flags.FLAG_SUMMARIZE: 'Summarize',
     flags.FLAG_TRANSFER : 'Transfer',
 }
-
-def balance_html(balance_inventory):
-    """Render a list of balance position for an HTML table cell."""
-    return ('<br/>'.join(map(str, balance_inventory.get_positions()))
-            if not balance_inventory.is_empty()
-            else '')
 
 
 def iterate_render_transactions(app, postings):
