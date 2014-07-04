@@ -35,8 +35,9 @@ def is_account_active(real_account):
 
 def tree_table(oss, real_account, build_url, header=None, classes=None, leafonly=True):
     """Generator to a tree of accounts as an HTML table.
-    This yields the real_account object for each line and a
-    list object used to return the values for multiple cells.
+
+    This yields each real_account object in turn and a list object used to
+    provide the values for the various columns to render.
 
     Args:
       oss: a io.StringIO instance, into which we will render the HTML.
@@ -47,10 +48,17 @@ def tree_table(oss, real_account, build_url, header=None, classes=None, leafonly
       classes: a list of CSS class strings to apply to the table element.
       leafonly: a boolean, if true, render only the name of the leaf nodes.
     Returns:
-      A generator of (real_account, cells, row_classes). You need to append to
-      the given 'cells' object; if you don't, this will skip rendering the row.
-      On the very last line, the 'real_account' object will be a sentinel,
-      TOTALS_LINE.
+      A generator of tuples of
+        real_account: An instance of RealAccount to render as a row
+        cells: A mutable list object to accumulate values for each column you
+          want to render.
+        row_classes: A mutable list object to accumulate css classes that you
+          want to add for the row.
+
+      You need to append to the given 'cells' object; if you don't append
+      anything, this tells this routine to skip rendering the row. On the very
+      last line, the 'real_account' object will be a special sentinel value to
+      indicate that it is meant to render the totals line: TOTALS_LINE.
     """
     write = lambda data: (oss.write(data), oss.write('\n'))
 
