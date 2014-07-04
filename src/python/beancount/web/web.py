@@ -303,16 +303,11 @@ def prices_values(base=None, quote=None):
     date_rates = prices.get_all_prices(app.price_map, (base, quote))
     dates, rates = zip(*date_rates)
 
-    scripts = gviz.gviz_timeline(dates, {'rates': rates, 'rates2': rates})
+    scripts = gviz.gviz_timeline(dates, {'rates': rates, 'rates2': rates}, css_id='chart')
 
     return render_global(
         pagetitle="Price: {} / {}".format(base, quote),
-        scripts="""
-          <script src="//www.google.com/jsapi" type="text/javascript"></script>
-          <script type="text/javascript">
-            {}
-          </script>
-        """.format(scripts),
+        scripts=scripts,
         contents="""
            <div id="chart" style="height: 800px"></div>
            <div id="price-table">

@@ -6,6 +6,7 @@ import io
 
 def gviz_timeline(time_array, data_array_map, css_id='chart'):
     """Create a HTML rendering of the given arrays.
+
     Args:
       time_array: A sequence of datetime objects.
       data_array_map: A dict or list of items of name to
@@ -22,6 +23,10 @@ def gviz_timeline(time_array, data_array_map, css_id='chart'):
 
     # Write preamble.
     oss = io.StringIO()
+
+    oss.write('<script src="http://www.google.com/jsapi" type="text/javascript"></script>\n')
+    oss.write('<script type="text/javascript">\n')
+
     oss.write("""\
       google.load('visualization', '1', {packages: ['annotatedtimeline']});
       function draw() {
@@ -59,14 +64,6 @@ def gviz_timeline(time_array, data_array_map, css_id='chart'):
       google.setOnLoadCallback(draw);
     """.format(css_id=css_id))
 
+    oss.write('</script>\n')
+
     return oss.getvalue()
-
-
-# times = [datetime.datetime(2013, 1, day) for day in range(1, 11)]
-# data1 = [random.random() for _ in range(10)]
-# data2 = [random.random() for _ in range(10)]
-# datas = {'A': data1,
-#          'B': data2}
-
-# javascript = gviz_timeline(times, datas)
-# print(javascript)
