@@ -7,8 +7,10 @@ beancount: TODO
     "cd beancount && make status"). This is the standard I've set for this
     project for shipping the next release. Tests remaining:
 
+
      Move validation tests, we need to check the data types themselves, move
      this to validation code.
+
 
      src/python/beancount/parser/lexer_test.py              MISSING
 
@@ -18,6 +20,9 @@ beancount: TODO
 
        These need to move to reports, generate the intermediate tree
        object, and then support rendering to txt, csv, html.
+
+       We need to define two HTML types: 'html', and 'html_div'. The fisrt one
+       renders to a full page; the second one only a div.
 
      src/python/beancount/loader.py                               INCOMPLETE
 
@@ -36,6 +41,9 @@ Doc notes (move to document):
     things in order to make the model clearer, and easier to understand.
 
   - In developer docs, mention 'D' special constructor to use.
+
+  - Terminology: "directives" or "entries" used indiscriminately to refer to
+    one of the possible entry types defined in beancount.core.data.
 
 
 
@@ -1087,6 +1095,10 @@ Doc notes (move to document):
   - (performance) Profile the web pages, if account_link() is high, provide an
     explicit cache for each unique view. (We had to remove this when we
     simplified the function using build_url for adding tests.)
+
+
+  - Add an optional parameter to the loaddoc() and parsedoc() decorators to
+    have them automatically check for expected no-errors.
 
 
 ** Precision
@@ -2605,6 +2617,12 @@ Improve this bit:
   - You just *have* to generate TreeMaps of the Expenses and Assets subtrees:
     http://bost.ocks.org/mike/treemap/
 
+
+** Portfolio tracking softwares
+
+  - You should be able to export to input files or APIs for websites that track
+    portfolios for you, such as Google Finance and Yahoo and others. Use the
+    list of holdings as input. This should perhaps just be another report name.
 
 * Documentation
 ** Users's Manual

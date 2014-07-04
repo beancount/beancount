@@ -17,6 +17,22 @@ TOTALS_LINE = object()
 EMS_PER_SPACE = 2.5
 
 
+def is_account_active(real_account):
+    """Return true if the account should be rendered. An active account has
+    at least one directive that is not an Open directive.
+
+    Args:
+      real_account: An instance of RealAccount.
+    Returns:
+      A boolean, true if the account is active, according to the definition above.
+    """
+    for entry in real_account.postings:
+        if isinstance(entry, data.Open):
+            continue
+        return True
+    return False
+
+
 def tree_table(oss, real_account, build_url, header=None, classes=None, leafonly=True):
     """Generator to a tree of accounts as an HTML table.
     This yields the real_account object for each line and a
@@ -101,22 +117,6 @@ def tree_table(oss, real_account, build_url, header=None, classes=None, leafonly
         write('</tr>')
 
     write('</table>')
-
-
-def is_account_active(real_account):
-    """Return true if the account should be rendered. An inactive account only has
-    an Open directive and nothing else.
-
-    Args:
-      real_account: An instance of RealAccount.
-    Returns:
-      A boolean, true if the account is active, according to the definition above.
-    """
-    for entry in real_account.postings:
-        if isinstance(entry, data.Open):
-            continue
-        return True
-    return False
 
 
 def table_of_balances(real_root, currencies, build_url, classes=None):
