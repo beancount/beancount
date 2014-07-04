@@ -378,6 +378,9 @@ Doc notes (move to document):
 
 
 
+  - Create a new report type: "days" that counts the days of any event in the
+    filtered log.
+
 
 
   - Add the acquisition date to each Holding instance, so that short/long-term can be
