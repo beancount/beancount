@@ -191,6 +191,7 @@ def update():
     for root in (app.account_types.assets,
                  app.account_types.liabilities):
         table = acctree.tree_table(oss, realization.get(view.real_accounts, root),
+                                   None,
                                    ['Account', 'Last Entry'],
                                    leafonly=False)
         for real_account, cells, row_classes in table:
@@ -330,7 +331,7 @@ def link(link=None):
     linked_entries = basicops.filter_link(link, app.entries)
 
     oss = io.StringIO()
-    journal.entries_table_with_balance(app, oss, linked_entries)
+    journal.entries_table_with_balance(oss, linked_entries, None)
     return render_global(
         pagetitle="Link: {}".format(link),
         contents=oss.getvalue())
@@ -446,7 +447,9 @@ def trial():
     view = request.view
     real_accounts = view.real_accounts
     operating_currencies = view.options['operating_currency']
-    table = acctree.table_of_balances(real_accounts, operating_currencies,
+    table = acctree.table_of_balances(real_accounts,
+                                      operating_currencies,
+                                      request.app.get_url,
                                       classes=['trial'])
 
 
@@ -462,19 +465,22 @@ def trial():
         )
 
 
-def balance_sheet_table(real_accounts, options_map):
+def balance_sheet_table(real_accounts, options_map, build_url):
     """Render an HTML balance sheet of the real_accounts tree."""
 
     operating_currencies = options_map['operating_currency']
     assets = acctree.table_of_balances(
         realization.get(real_accounts, options_map['name_assets']),
-        operating_currencies)
+        operating_currencies,
+        build_url)
     liabilities = acctree.table_of_balances(
         realization.get(real_accounts, options_map['name_liabilities']),
-        operating_currencies)
+        operating_currencies,
+        build_url)
     equity = acctree.table_of_balances(
         realization.get(real_accounts, options_map['name_equity']),
-        operating_currencies)
+        operating_currencies,
+        build_url)
 
     return """
            <div class="halfleft">
@@ -508,7 +514,7 @@ def balsheet():
 
     view = request.view
     real_accounts = request.view.closing_real_accounts
-    contents = balance_sheet_table(real_accounts, view.options)
+    contents = balance_sheet_table(real_accounts, view.options, request.app.get_url)
 
     return render_view(pagetitle="Balance Sheet",
                        contents=contents)
@@ -523,7 +529,7 @@ def openbal():
     if real_accounts is None:
         contents = 'N/A'
     else:
-        contents = balance_sheet_table(real_accounts, view.options)
+        contents = balance_sheet_table(real_accounts, view.options, request.app.get_url)
 
     return render_view(pagetitle="Opening Balances",
                        contents=contents)
@@ -540,10 +546,12 @@ def income():
     operating_currencies = view.options['operating_currency']
     income = acctree.table_of_balances(realization.get(real_accounts,
                                                        view.options['name_income']),
-                                       operating_currencies)
+                                       operating_currencies,
+                                       request.app.get_url)
     expenses = acctree.table_of_balances(realization.get(real_accounts,
                                                          view.options['name_expenses']),
-                                         operating_currencies)
+                                         operating_currencies,
+                                         request.app.get_url)
 
     contents = """
        <div id="income" class="halfleft">
@@ -649,7 +657,7 @@ def account_(slashed_account_name=None):
     account_postings = realization.get_postings(real_account)
 
     oss = io.StringIO()
-    journal.entries_table_with_balance(app, oss, account_postings)
+    journal.entries_table_with_balance(oss, account_postings, request.app.get_url)
     return render_view(
         pagetitle='{}'.format(account_name or 'ROOT'),
         contents=oss.getvalue())
@@ -670,7 +678,7 @@ def conversions():
 
     oss = io.StringIO()
     conversion_entries = get_conversion_entries(view.entries)
-    journal.entries_table(app, oss, conversion_entries, render_postings=True)
+    journal.entries_table(oss, conversion_entries, request.app.get_url, render_postings=True)
 
     conversion_balance = realization.compute_entries_balance(conversion_entries)
 
@@ -806,7 +814,7 @@ def documents():
     document_entries = list(misc_utils.filter_type(request.view.entries, Document))
     oss = io.StringIO()
     if document_entries:
-        journal.entries_table(app, oss, document_entries)
+        journal.entries_table(oss, document_entries, request.app.get_url)
     else:
         oss.write("(No documents.)")
     return render_view(

@@ -18,14 +18,15 @@ TOTALS_LINE = object()
 EMS_PER_SPACE = 2.5
 
 
-def tree_table(oss, real_account, header=None, classes=None, leafonly=True):
+def tree_table(oss, real_account, build_url, header=None, classes=None, leafonly=True):
     """Generator to a tree of accounts as an HTML table.
     This yields the real_account object for each line and a
     list object used to return the values for multiple cells.
 
     Args:
       oss: a io.StringIO instance, into which we will render the HTML.
-      tree: an instance of a RealAccount node.
+      real_account: an instance of a RealAccount node.
+      build_url: A function to build/render a URL from an app.
       header: a list of header columns to render. The first column is special,
               and is used for the account name.
       classes: a list of CSS class strings to apply to the table element.
@@ -86,10 +87,10 @@ def tree_table(oss, real_account, header=None, classes=None, leafonly=True):
                 mo = re.search('[A-Za-z]', first_line)
                 length = mo.start() if mo else 0
                 indent = '{:.1f}'.format(length/EMS_PER_SPACE)
-                label = account_link(real_account, leafonly=True)
+                label = account_link(real_account, build_url, leafonly=True)
             else:
                 indent = '0'
-                label = account_link(real_account, leafonly=False)
+                label = account_link(real_account, build_url, leafonly=False)
 
         write('<td class="tree-node-name" style="padding-left: {}em">{}</td>'.format(
             indent, label))
@@ -119,7 +120,7 @@ def is_account_active(real_account):
     return False
 
 
-def table_of_balances(real_root, currencies, classes=None):
+def table_of_balances(real_root, currencies, build_url, classes=None):
     """Render a table of balances.
 
     Args:
@@ -140,7 +141,8 @@ def table_of_balances(real_root, currencies, classes=None):
     oss = io.StringIO()
     classes = list(classes) if classes else []
     classes.append('fullwidth')
-    for real_account, cells, row_classes in tree_table(oss, real_root, header, classes):
+    for real_account, cells, row_classes in tree_table(oss, real_root, build_url,
+                                                       header, classes):
 
         if real_account is TOTALS_LINE:
             line_balance = balance_totals

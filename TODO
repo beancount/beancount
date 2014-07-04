@@ -20,8 +20,6 @@ beancount: TODO
        These need to move to reports, generate the intermediate tree
        object, and then support rendering to txt, csv, html.
 
-     src/python/beancount/web/views.py                      MISSING
-
      src/python/beancount/loader.py                               INCOMPLETE
 
   - Make helper functions in summarize, for clamp() and close() which accept
