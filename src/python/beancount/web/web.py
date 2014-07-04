@@ -905,8 +905,8 @@ def handle_view(path_depth):
                 # We need to create the view.
                 view = app.views[viewid] = callback(*args, **kwargs)
 
-            # Save for hte subrequest and redirect. populate_view() picks this
-            # up and saves it in request.view.
+            # Save the view for the subrequest and redirect. populate_view()
+            # picks this up and saves it in request.view.
             request.environ['VIEW'] = view
             return internal_redirect(viewapp, path_depth)
         return wrapper
