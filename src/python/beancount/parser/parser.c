@@ -113,7 +113,7 @@ PyObject* get_yylineno(PyObject *self, PyObject *args)
 
 
 
-/* Iniitalize the lexer to start running in debug mode. */
+/* Inititalize the lexer to start running in debug mode. */
 PyObject* lexer_init(PyObject *self, PyObject *args)
 {
     FILE* fp = NULL;

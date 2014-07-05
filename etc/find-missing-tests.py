@@ -20,7 +20,6 @@ def find_missing_tests(source_dir):
     Yields:
       Tuples of source filename, test filename, and an is-missing boolean.
     """
-
     for root, dirs, files in os.walk(source_dir):
         for relative_filename in files:
             if ((not relative_filename.endswith('.py')) or

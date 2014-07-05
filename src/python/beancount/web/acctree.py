@@ -4,10 +4,9 @@ import io
 import re
 
 from beancount.web.journal import account_link
-from beancount.core import data
 from beancount.core.account_types import is_root_account
 from beancount.core.position import Lot
-from beancount.core.data import Open
+from beancount.core import data
 from beancount.core.inventory import Inventory
 from beancount.core import realization
 
@@ -18,23 +17,48 @@ TOTALS_LINE = object()
 EMS_PER_SPACE = 2.5
 
 
-def tree_table(oss, real_account, header=None, classes=None, leafonly=True):
+def is_account_active(real_account):
+    """Return true if the account should be rendered. An active account has
+    at least one directive that is not an Open directive.
+
+    Args:
+      real_account: An instance of RealAccount.
+    Returns:
+      A boolean, true if the account is active, according to the definition above.
+    """
+    for entry in real_account.postings:
+        if isinstance(entry, data.Open):
+            continue
+        return True
+    return False
+
+
+def tree_table(oss, real_account, build_url, header=None, classes=None, leafonly=True):
     """Generator to a tree of accounts as an HTML table.
-    This yields the real_account object for each line and a
-    list object used to return the values for multiple cells.
+
+    This yields each real_account object in turn and a list object used to
+    provide the values for the various columns to render.
 
     Args:
       oss: a io.StringIO instance, into which we will render the HTML.
-      tree: an instance of a RealAccount node.
+      real_account: an instance of a RealAccount node.
+      build_url: A function to build/render a URL from an app.
       header: a list of header columns to render. The first column is special,
               and is used for the account name.
       classes: a list of CSS class strings to apply to the table element.
       leafonly: a boolean, if true, render only the name of the leaf nodes.
     Returns:
-      A generator of (real_account, cells, row_classes). You need to append to
-      the given 'cells' object; if you don't, this will skip rendering the row.
-      On the very last line, the 'real_account' object will be a sentinel,
-      TOTALS_LINE.
+      A generator of tuples of
+        real_account: An instance of RealAccount to render as a row
+        cells: A mutable list object to accumulate values for each column you
+          want to render.
+        row_classes: A mutable list object to accumulate css classes that you
+          want to add for the row.
+
+      You need to append to the given 'cells' object; if you don't append
+      anything, this tells this routine to skip rendering the row. On the very
+      last line, the 'real_account' object will be a special sentinel value to
+      indicate that it is meant to render the totals line: TOTALS_LINE.
     """
     write = lambda data: (oss.write(data), oss.write('\n'))
 
@@ -86,10 +110,10 @@ def tree_table(oss, real_account, header=None, classes=None, leafonly=True):
                 mo = re.search('[A-Za-z]', first_line)
                 length = mo.start() if mo else 0
                 indent = '{:.1f}'.format(length/EMS_PER_SPACE)
-                label = account_link(real_account, leafonly=True)
+                label = account_link(real_account, build_url, leafonly=True)
             else:
                 indent = '0'
-                label = account_link(real_account, leafonly=False)
+                label = account_link(real_account, build_url, leafonly=False)
 
         write('<td class="tree-node-name" style="padding-left: {}em">{}</td>'.format(
             indent, label))
@@ -103,23 +127,7 @@ def tree_table(oss, real_account, header=None, classes=None, leafonly=True):
     write('</table>')
 
 
-def is_account_active(real_account):
-    """Return true if the account should be rendered. An inactive account only has
-    an Open directive and nothing else.
-
-    Args:
-      real_account: An instance of RealAccount.
-    Returns:
-      A boolean, true if the account is active, according to the definition above.
-    """
-    for entry in real_account.postings:
-        if isinstance(entry, Open):
-            continue
-        return True
-    return False
-
-
-def table_of_balances(real_root, currencies, classes=None):
+def table_of_balances(real_root, currencies, build_url, classes=None, leafonly=True):
     """Render a table of balances.
 
     Args:
@@ -140,7 +148,8 @@ def table_of_balances(real_root, currencies, classes=None):
     oss = io.StringIO()
     classes = list(classes) if classes else []
     classes.append('fullwidth')
-    for real_account, cells, row_classes in tree_table(oss, real_root, header, classes):
+    for real_account, cells, row_classes in tree_table(oss, real_root, build_url,
+                                                       header, classes, leafonly=leafonly):
 
         if real_account is TOTALS_LINE:
             line_balance = balance_totals

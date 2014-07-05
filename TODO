@@ -7,28 +7,33 @@ beancount: TODO
     "cd beancount && make status"). This is the standard I've set for this
     project for shipping the next release. Tests remaining:
 
+
      Move validation tests, we need to check the data types themselves, move
      this to validation code.
+
 
      src/python/beancount/parser/lexer_test.py              MISSING
 
        Create an automated test for the lexer as well.
 
-     src/python/beancount/web/acctree.py                    MISSING
-     src/python/beancount/web/journal.py                    MISSING
-
-       These need to move to reports, generate the intermediate tree
-       object, and then support rendering to txt, csv, html.
-
-     src/python/beancount/web/views.py                      MISSING
-
      src/python/beancount/loader.py                               INCOMPLETE
+
 
   - Make helper functions in summarize, for clamp() and close() which accept
     options_map and automatically derive everything they need from entries.
 
 
+  - Isolate reports, at least from a functional POV, before the big revamp, in
+    order to avoid changing the interface much after releasing v2.0:
 
+       These need to move to reports, generate the intermediate tree
+       object, and then support rendering to txt, csv, html.
+
+       We need to define two HTML types: 'html', and 'html_div'. The fisrt one
+       renders to a full page; the second one only a div.
+
+
+  - List all bean-doctor command in --help.
 
 
 Doc notes (move to document):
@@ -39,6 +44,9 @@ Doc notes (move to document):
     things in order to make the model clearer, and easier to understand.
 
   - In developer docs, mention 'D' special constructor to use.
+
+  - Terminology: "directives" or "entries" used indiscriminately to refer to
+    one of the possible entry types defined in beancount.core.data.
 
 
 
@@ -206,9 +214,9 @@ Doc notes (move to document):
     should be tight, no links to "Not Implemented" pages. There aren't many
     left anyway.
 
-  - All errors should be displayed in an overlay; proper error handling and
-    display for the web interface is not optional. This needs to be done before
-    shipping.
+  - IMPORTANT AND URGENT! All errors should be displayed in an overlay; proper
+    error handling and display for the web interface is not optional. This needs
+    to be done before shipping.
 
   - Add a test for --view option.
 
@@ -380,6 +388,14 @@ Doc notes (move to document):
   - In add_unrealized_gains(), convert to use our holdings aggregator.
 
 
+
+  - Create a new report type: "days" that counts the days of any event in the
+    filtered log.
+
+
+
+  - Document args of C functions in the same way as Python's, perhaps using the
+    new Python3 syntax definition thingamajig (I forget the name, there's a PEP).
 
 
 
@@ -1083,6 +1099,14 @@ Doc notes (move to document):
     used in the realization) and thus make it easy to create transactions
     programmatically.
 
+
+  - (performance) Profile the web pages, if account_link() is high, provide an
+    explicit cache for each unique view. (We had to remove this when we
+    simplified the function using build_url for adding tests.)
+
+
+  - Add an optional parameter to the loaddoc() and parsedoc() decorators to
+    have them automatically check for expected no-errors.
 
 
 ** Precision
@@ -2601,6 +2625,12 @@ Improve this bit:
   - You just *have* to generate TreeMaps of the Expenses and Assets subtrees:
     http://bost.ocks.org/mike/treemap/
 
+
+** Portfolio tracking softwares
+
+  - You should be able to export to input files or APIs for websites that track
+    portfolios for you, such as Google Finance and Yahoo and others. Use the
+    list of holdings as input. This should perhaps just be another report name.
 
 * Documentation
 ** Users's Manual

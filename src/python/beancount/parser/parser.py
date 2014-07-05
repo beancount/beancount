@@ -202,6 +202,23 @@ class Builder(object):
         """
         return string
 
+    def NUMBER(self, number):
+        """Process a NUMBER token. Convert into Decimal.
+
+        Args:
+          number: a str, the number to be converted.
+        Returns:
+          A Decimal instance built of the number string.
+        """
+        try:
+            return Decimal(number)
+        except Exception as e:
+            fileloc = FileLocation(_parser.get_yyfilename(),
+                                   _parser.get_yylineno())
+            message = "Error parsing NUMBER for token '{}': {}".format(number, e)
+            self.errors.append(
+                ParserError(fileloc, message, None))
+
     def TAG(self, tag):
         """Process a TAG token.
 
@@ -223,23 +240,6 @@ class Builder(object):
           an object.
         """
         return link
-
-    def NUMBER(self, number):
-        """Process a NUMBER token. Convert into Decimal.
-
-        Args:
-          number: a str, the number to be converted.
-        Returns:
-          A Decimal instance built of the number string.
-        """
-        try:
-            return Decimal(number)
-        except Exception as e:
-            fileloc = FileLocation(_parser.get_yyfilename(),
-                                   _parser.get_yylineno())
-            message = "Error parsing NUMBER for token '{}': {}".format(number, e)
-            self.errors.append(
-                ParserError(fileloc, message, None))
 
     def amount(self, number, currency):
         """Process an amount grammar rule.
@@ -684,43 +684,3 @@ def parsedoc(fun):
         return fun(self, entries, errors, options_map)
     newfun.__doc__ = None
     return newfun
-
-
-class LexOnlyBuilder(object):
-    """A builder used only for getting the lexer to pass.
-    The methods do nothing."""
-
-    # pylint: disable=bad-whitespace
-    def DATE(self, year, month, day): pass
-    def ACCOUNT(self, s):             pass
-    def CURRENCY(self, s):            pass
-    def STRING(self, s):              pass
-    def TAG(self, s):                 pass
-    def NUMBER(self, s):              pass
-
-
-def dump_lexer(filename, outfile):
-    """Parse a beancount input file and print a list of transactions to stdout.
-
-    Args:
-      filename: a str, the name of the file to be parsed.
-    """
-    _parser.lexer_init(filename, LexOnlyBuilder())
-    while 1:
-        x = _parser.lexer_next()
-        if x is None:
-            break
-        token, text, lineno = x
-        outfile.write('{:12} {:6d} {}\n'.format(token, lineno, repr(text)))
-
-
-def dump_lexer_string(input_string):
-    """Parse a beancount input file and print a list of transactions.
-
-    Args:
-      input_string: a str, the contents of the ledger to be parsed.
-    """
-    with tempfile.NamedTemporaryFile('w') as tmp_file:
-        tmp_file.write(input_string)
-        tmp_file.flush()
-        return dump_lexer(tmp_file.name)

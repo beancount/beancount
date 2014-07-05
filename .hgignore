@@ -12,3 +12,4 @@ rewrite/golang/bin
 rewrite/golang/y.output
 rewrite/golang/src/beancount/grammar.go
 lib/python/_beancount.cpython-33m.so
+.noseids

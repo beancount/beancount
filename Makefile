@@ -158,16 +158,20 @@ sandbox:
 # Report on the sorry state of test coverage, for 1.0 release.
 # sources and imports are going to move to ledgerhub.
 status test-status:
-	./etc/find-missing-tests.py $(SRC)
+	@echo "Missing tests:"
+	@./etc/find-missing-tests.py $(SRC)
+	@echo ""
+	@echo "Remaining FIXME:"
+	@grep -srn FIXME $(SRC)
 
 
 # Check for unused imports.
-sfood:
+sfood-checker:
 	sfood-checker bin src/python
 
 # Run the linter on all source code.
 #LINT_PASS=line-too-long,bad-whitespace,bad-continuation,bad-indentation
-LINT_PASS=line-too-long,bad-whitespace,bad-indentation
+LINT_PASS=line-too-long,bad-whitespace,bad-indentation,unused-import
 LINT_FAIL=
 
 pylint-pass:
@@ -180,4 +184,4 @@ pylint-all:
 	pylint --rcfile=$(PWD)/etc/pylintrc $(SRC)
 
 # Run all currently configured linter checks.
-lint: sfood pylint-pass
+lint: pylint-pass sfood-checekr
