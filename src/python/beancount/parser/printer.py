@@ -29,10 +29,10 @@ class EntryPrinter:
             strings.append('""')
 
         if entry.tags:
-            for tag in entry.tags:
+            for tag in sorted(entry.tags):
                 strings.append('#{}'.format(tag))
         if entry.links:
-            for link in entry.links:
+            for link in sorted(entry.links):
                 strings.append('^{}'.format(link))
 
         oss.write('{e.date} {e.flag} {}\n'.format(' '.join(strings), e=entry))
