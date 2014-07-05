@@ -61,20 +61,6 @@ def get_account_type(account_name):
     return account_name.split(account.sep)[0]
 
 
-def is_valid_account_name(string):
-    """Return true if the given string is an account name.
-
-    Args:
-      string: A string, to be checked for account name pattern.
-    Returns:
-      A boolean, true if the string has the form of an account's name.
-    """
-    return (isinstance(string, str) and
-            bool(re.match(
-                '([A-Z][A-Za-z0-9\-]+)({}[A-Z][A-Za-z0-9\-]+)+$'.format(account.sep),
-                string)))
-
-
 def is_root_account(account_name, account_types=None):
     """Return true if the account name is a root account.
     This function does not verify whether the account root is a valid

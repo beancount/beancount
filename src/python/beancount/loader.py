@@ -21,7 +21,7 @@ DEFAULT_PLUGINS = [
     "beancount.ops.pad",
     "beancount.ops.prices",
     "beancount.ops.balance",
-    "beancount.parser.documents",
+    "beancount.ops.documents",
     ]
 
 

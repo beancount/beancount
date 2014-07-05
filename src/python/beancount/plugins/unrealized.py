@@ -6,7 +6,6 @@ from beancount.core.amount import Decimal, ZERO
 from beancount.core import data
 from beancount.core import account
 from beancount.core import getters
-from beancount.core.account_types import is_valid_account_name
 from beancount.core.data import Transaction, Posting, FileLocation
 from beancount.core.position import Lot, Position
 from beancount.core import flags
@@ -48,7 +47,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
     # Assert the subaccount name is in valid format.
     if subaccount:
         validation_account = account.join(account_types.assets, subaccount)
-        if not is_valid_account_name(validation_account):
+        if not account.is_valid(validation_account):
             errors.append(
                 UnrealizedError(fileloc,
                                 "Invalid subaccount name: '{}'".format(subaccount),
@@ -136,7 +135,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
         # if requested.
         asset_account = account_name
         income_account = account.join(account_types.income,
-                                      account.account_name_sans_root(account_name))
+                                      account.sans_root(account_name))
         if subaccount:
             asset_account = account.join(asset_account, subaccount)
             income_account = account.join(income_account, subaccount)

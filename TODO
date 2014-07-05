@@ -3,12 +3,6 @@ beancount: TODO
 * Requirements for Shipping 1.0
 ** Complete 100% Coverage for Unit Tests
 
-  - I want to complete full unittests coverage (as per find-missing-tests.py, or
-    "cd beancount && make status"). This is the standard I've set for this
-    project for shipping the next release. Tests remaining:
-
-     src/python/beancount/loader.py                               INCOMPLETE
-
 
   - Move validation tests, we need to check the data types themselves, move
     this to validation code.
@@ -54,11 +48,6 @@ Doc notes (move to document):
 
   - beancount.core.realization: Look at deps for beancount.core.realization and
     move it upstream where it makes sense, maybe ops.
-
-  - beancount.parser.documents: Can we move documents.py to ops? Look at that.
-    Documents is totally a plugin/transformer, and the dependency picture
-    doesn't warrant it being within the parser. Could this move to a plugins
-    directory? Yes. (This is clearly a transformation. Either ops or plugins.)
 
   - beancount.core.getters: Can this move to ops as well? Check the dependency
     tree.
@@ -224,8 +213,6 @@ Doc notes (move to document):
 
   - Make all imports not import symbols directly, only packages, except where
     performance really, really matters (the parser)
-
-  - Rename/simplify function names in beancount.core.account (see FIXMEs)
 
   - Implement account.split() and perhaps remove references to
     split(account.sep) everywhere.

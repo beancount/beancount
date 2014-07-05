@@ -4,7 +4,6 @@ import argparse
 import sys
 
 from beancount import load
-from beancount.parser import documents
 from beancount.parser import printer
 from beancount.core import getters
 from beancount.core import account
@@ -32,7 +31,7 @@ def validate_directories(accounts, document_dir):
     accounts_with_parents = accounts.copy()
     for account_ in accounts:
         while True:
-            parent = account.account_name_parent(account_)
+            parent = account.parent(account_)
             if not parent:
                 break
             if parent in accounts_with_parents:
@@ -41,7 +40,7 @@ def validate_directories(accounts, document_dir):
             account_ = parent
 
     errors = []
-    for directory, account_name, _, _ in documents.walk_accounts(document_dir):
+    for directory, account_name, _, _ in account.walk(document_dir):
         if account_name not in accounts_with_parents:
             errors.append(ValidateDirectoryError(
                 "Invalid directory '{}': no corresponding account '{}'".format(

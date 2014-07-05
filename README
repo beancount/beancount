@@ -64,6 +64,7 @@ For developers:
 - nosetests (to run the unit tests)
 - pylint >=1.2 (to run the linter)
 - snakefood (for unused imports check)
+- graphviz (for graphing module dependencies)
 
 
 Installation
