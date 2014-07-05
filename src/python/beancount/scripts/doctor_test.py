@@ -1,5 +1,13 @@
+import unittest
+import tempfile
+import os
+import re
+from os import path
+
+from beancount.core import account
 from beancount.utils import test_utils
 from beancount.scripts import doctor
+from beancount.scripts import directories_test
 
 
 class TestScriptDoctor(test_utils.TestCase):
@@ -120,3 +128,36 @@ class TestScriptDoctor(test_utils.TestCase):
             GOOG,USD,2014-02-01,524.02
             GOOG,USD,2014-02-10,536.03
         """, output)
+
+
+class TestScriptCheckDirectories(directories_test.TestScriptCheckDirectories):
+
+    @test_utils.docfile
+    def test_invocation(self, filename):
+        """
+            2013-01-01 open Expenses:Restaurant
+            2013-01-01 open Expenses:Movie
+            2013-01-01 open Expenses:Alcohol
+            2013-01-01 open Assets:Cash
+
+            2014-03-02 * "Something"
+              Expenses:Restaurant   50.02 USD
+              Expenses:Alcohol      10.30 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
+        """
+        for directory in self.TEST_DIRECTORIES:
+            os.makedirs(path.join(self.tmpdir, directory))
+
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(doctor.main, ['validate_directories', filename, self.tmpdir])
+        self.assertEqual(2, len(stdout.getvalue().splitlines()))
+        matches = set(mo.group(1) for mo in re.finditer("'(.*?)'", stdout.getvalue()))
+        clean_matches = set(match[len(self.tmpdir)+1:]
+                            if match.startswith(self.tmpdir)
+                            else match
+                            for match in matches)
+        self.assertEqual({'Expenses/Restaurant/Sub',
+                          'Expenses:Restaurant:Sub',
+                          'Assets:Extra',
+                          'Assets/Extra'}, clean_matches)

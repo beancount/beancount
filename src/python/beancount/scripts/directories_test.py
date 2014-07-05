@@ -11,7 +11,6 @@ from beancount.scripts import directories
 
 class TestScriptCheckDirectories(unittest.TestCase):
 
-
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
 
@@ -39,7 +38,7 @@ class TestScriptCheckDirectories(unittest.TestCase):
             Expenses:Alcohol
             Assets:Cash
         """.strip().split())
-        errors = directories.validate_directories(accounts, self.tmpdir)
+        errors = directories.validate_directory(accounts, self.tmpdir)
         self.assertEqual(2, len(errors))
 
         expected_error_accounts = set("""
@@ -51,36 +50,6 @@ class TestScriptCheckDirectories(unittest.TestCase):
             self.assertTrue(any(expected_account in message
                                 for expected_account in expected_error_accounts))
 
-    @test_utils.docfile
-    def test_invocation(self, filename):
-        """
-            2013-01-01 open Expenses:Restaurant
-            2013-01-01 open Expenses:Movie
-            2013-01-01 open Expenses:Alcohol
-            2013-01-01 open Assets:Cash
-
-            2014-03-02 * "Something"
-              Expenses:Restaurant   50.02 USD
-              Expenses:Alcohol      10.30 USD
-              Expenses:Movie        25.00 USD
-              Assets:Cash
-        """
-        for directory in self.TEST_DIRECTORIES:
-            os.makedirs(path.join(self.tmpdir, directory))
-
-        with test_utils.capture() as stdout:
-            test_utils.run_with_args(directories.main, [filename, self.tmpdir])
-        self.assertEqual(2, len(stdout.getvalue().splitlines()))
-        matches = set(mo.group(1) for mo in re.finditer("'(.*?)'", stdout.getvalue()))
-        clean_matches = set(match[len(self.tmpdir)+1:]
-                            if match.startswith(self.tmpdir)
-                            else match
-                            for match in matches)
-        self.assertEqual({'Expenses/Restaurant/Sub',
-                          'Expenses:Restaurant:Sub',
-                          'Assets:Extra',
-                          'Assets/Extra'}, clean_matches)
-
     def test_validation_no_parent(self):
         for directory in ['Liabilities/US/CreditCard']:
             os.makedirs(path.join(self.tmpdir, directory))
@@ -88,7 +57,7 @@ class TestScriptCheckDirectories(unittest.TestCase):
         accounts = set("""
             Liabilities:US:CreditCard
         """.strip().split())
-        errors = directories.validate_directories(accounts, self.tmpdir)
+        errors = directories.validate_directory(accounts, self.tmpdir)
 
         # The parent directory Liabilities:US should not trigger an error here.
         self.assertEqual([], errors)

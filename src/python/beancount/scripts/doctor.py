@@ -14,15 +14,18 @@ from beancount.parser import parser
 from beancount.parser import lexer
 from beancount.parser import options
 from beancount.parser import printer
+from beancount.core import account
 from beancount.core import account_types
 from beancount.core import getters
 from beancount.core import realization
 from beancount.ops import prices
 from beancount.core import compare
 from beancount import loader
+from beancount.utils import misc_utils
+from beancount.scripts import directories
 
 
-def do_dump_lexer(filename):
+def do_dump_lexer(filename, unused_args):
     """Dump the lexer output for a Beancount syntax file.
 
     Args:
@@ -32,7 +35,7 @@ def do_dump_lexer(filename):
         sys.stdout.write('{:12} {:6d} {}\n'.format(token, lineno, repr(text)))
 
 
-def do_list_accounts(filename):
+def do_list_accounts(filename, unused_args):
     """Dump the lexer output for a Beancount syntax file.
 
     Args:
@@ -57,7 +60,7 @@ def do_list_accounts(filename):
 
 
 # FIXME: Move this to a report.
-def do_print_trial(filename):
+def do_print_trial(filename, unused_args):
     """Render and print the trial balance for a ledger.
 
     Args:
@@ -73,7 +76,7 @@ def do_print_trial(filename):
 
 
 # FIXME: Move this to a report.
-def do_prices(filename):
+def do_prices(filename, unused_args):
     """Render and print a list of the prices in a ledger.
 
     Args:
@@ -93,23 +96,7 @@ def do_prices(filename):
         writer.writerow(())
 
 
-def first_doc_sentence(docstring):
-    """Return the first sentence of a docstring.
-
-    Args:
-      docstring: A doc string.
-    Returns:
-      A string with just the first sentence on a single line.
-    """
-    lines = []
-    for line in docstring.strip().splitlines():
-        if not line:
-            break
-        lines.append(line.rstrip())
-    return ' '.join(lines)
-
-
-def do_roundtrip(filename):
+def do_roundtrip(filename, unused_args):
     """Round-trip test on arbitrary Ledger.
 
     Read a Ledger's transactions, print them out, re-read them again and compare
@@ -171,6 +158,23 @@ def do_roundtrip(filename):
             print()
 
 
+def do_directories(filename, args):
+    """Validate a directory hierarchy against a ledger's account names.
+
+    Read a ledger's list of account names and check that all the capitalized
+    subdirectory names under the given roots match the account names.
+
+    Args:
+      filename: A string, the Beancount input filename.
+      args: The rest of the arguments provided on the command-line, which in this
+        case will be interpreted as the names of root directories to validate against
+        the accounts in the given ledger.
+    """
+    entries, _, __ = loader.load(filename)
+
+    directories.validate_directories(entries, args)
+
+
 def get_commands():
     """Return a list of available commands in this file.
 
@@ -181,7 +185,7 @@ def get_commands():
     for attr_name, attr_value in globals().items():
         mo = re.match('do_(.*)', attr_name)
         if mo:
-            commands.append((mo.group(1), first_doc_sentence(attr_value.__doc__)))
+            commands.append((mo.group(1), misc_utils.first_paragraph(attr_value.__doc__)))
     return commands
 
 
@@ -194,13 +198,14 @@ def main():
     parser.add_argument('command', action='store',
                         help="The command to run.")
     parser.add_argument('filename', help='Beancount input filename.')
+    parser.add_argument('rest', nargs='*', help='All remaining arguments.')
     opts = parser.parse_args()
 
     # Run the command.
     try:
         command_name = "do_{}".format(opts.command.replace('-', '_'))
         function = globals()[command_name]
-        function(opts.filename)
+        function(opts.filename, opts.rest)
     except KeyError:
         parser.error("Invalid command name: '{}'".format(opts.command))
 

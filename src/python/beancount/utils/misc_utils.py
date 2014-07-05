@@ -216,3 +216,20 @@ def staticvar(varname, initial_value):
         setattr(fun, varname, initial_value)
         return fun
     return deco
+
+
+def first_paragraph(docstring):
+    """Return the first sentence of a docstring.
+    The sentence has to be delimited by an empty line.
+
+    Args:
+      docstring: A doc string.
+    Returns:
+      A string with just the first sentence on a single line.
+    """
+    lines = []
+    for line in docstring.strip().splitlines():
+        if not line:
+            break
+        lines.append(line.rstrip())
+    return ' '.join(lines)

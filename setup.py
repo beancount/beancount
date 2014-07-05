@@ -24,7 +24,6 @@ from distutils.core import setup, Extension
 install_scripts = [join('bin', x) for x in """
 bean-bake
 bean-check
-bean-directories
 bean-doctor
 bean-query
 bean-web

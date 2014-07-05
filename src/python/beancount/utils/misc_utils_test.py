@@ -4,6 +4,7 @@ Tests for general utils.
 import unittest
 import re
 import time
+import textwrap
 from collections import namedtuple
 
 from beancount.utils import misc_utils
@@ -89,3 +90,14 @@ class TestMiscUtils(unittest.TestCase):
             return foo.a
         self.assertEqual(42, foo())
         self.assertEqual(42, foo.a)
+
+    def test_first_paragraph(self):
+        docstring = textwrap.dedent("""\
+          Dump the lexer output for a Beancount syntax file.
+          Bla di blah.
+
+          Args:
+            filename: A string, the Beancount input filename.
+        """)
+        self.assertEqual('Dump the lexer output for a Beancount syntax file. Bla di blah.',
+                         misc_utils.first_paragraph(docstring))
