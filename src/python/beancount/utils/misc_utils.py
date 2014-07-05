@@ -22,7 +22,7 @@ def print_time(operation_name, log_function):
     yield t1
     t2 = time()
     if log_function:
-        log_function("Operation: {:32}  Time: {:6.0f} ms".format(
+        log_function("Operation: {:48} Time: {:6.0f} ms".format(
             "'{}'".format(operation_name), (t2 - t1)*1000))
 
 

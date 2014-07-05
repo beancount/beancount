@@ -21,7 +21,7 @@ def main():
         logging.basicConfig(level=logging.INFO,
                             format='%(levelname)-8s: %(message)s')
 
-    with misc_utils.print_time('load', logging.info):
+    with misc_utils.print_time('beancount.loader (total)', logging.info):
         # Load up the file, print errors, checking and validation are invoked
         # automatically.
         entries, errors, _ = load(opts.filename, logging.info)

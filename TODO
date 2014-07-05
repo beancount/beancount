@@ -12,6 +12,8 @@ beancount: TODO
     options_map and automatically derive everything they need from entries.
 
 
+** Minimum Cleanup of Reports Before Release
+
   - Isolate reports, at least from a functional POV, before the big revamp, in
     order to avoid changing the interface much after releasing v2.0:
 
@@ -21,7 +23,8 @@ beancount: TODO
        We need to define two HTML types: 'html', and 'html_div'. The fisrt one
        renders to a full page; the second one only a div.
 
-
+  - Move print_trial and other function from doctor to this new reports
+    infrastructure.
 
 
 ** Move Files to Final Location
@@ -56,7 +59,6 @@ beancount: TODO
     entries, and the calling function should perform a simple hash check to
     ensure that the mutable portion of the entries hasn't been modified by the
     user-provided validation functions.
-
 
 
 ** Fix Minor Nits & Bugs
@@ -218,12 +220,6 @@ beancount: TODO
     instead of Decimal, for consistency.
 
   - Alias to_decimal to 'D' and replace everywhere.
-
-  - Review usage of @parsedoc vs. @loaddoc, maybe we should be more thorough
-    about that and use @loaddoc in more places, as it performs data validation.
-
-  - Maybe all the decorators for docstring parsers should be moved to a
-    dedicated module. That would make sense.
 
   - Remove support for legacy: "check" (vs. "balance"), PIPE, etc. Not needed.
 
