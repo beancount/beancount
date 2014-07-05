@@ -38,7 +38,7 @@ def main():
         opts.year = datetime.date.today().year
 
     # Parse the input file.
-    entries, _, options_map = loader.load(opts.filename, quiet=True)
+    entries, _, options_map = loader.load(opts.filename)
 
     # Create a view for the current year.
     begin_date = datetime.date(opts.year, 1, 1)

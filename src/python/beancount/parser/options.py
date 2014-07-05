@@ -6,6 +6,12 @@ from beancount.core import account
 
 
 DEFAULT_OPTIONS = {
+
+    # The name of the top-level Beancoount input file parsed from which the
+    # contents of the ledger have been extracted. This may be None, if no file
+    # was used.
+    "filename": None,
+
     # The title of this ledger / input file. This shows up at the top of every
     # page.
     "title" : "Beancount",
@@ -82,6 +88,10 @@ DEFAULT_OPTIONS = {
     # dictacted by the output medium.
     "plugin": [],
 }
+
+
+# A list of options that cannot be modified.
+READ_ONLY_OPTIONS = {"filename"}
 
 
 def get_account_types(options):

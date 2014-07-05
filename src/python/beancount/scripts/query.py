@@ -58,7 +58,7 @@ def main():
     opts.format = opts.format or file_utils.guess_file_format(opts.output)
 
     # Parse the input file.
-    entries, errors, options_map = load(opts.filename, quiet=True)
+    entries, errors, options_map = load(opts.filename)
 
     # Dispatch on which report to generate.
     report_function = rselect.get_report_generator(opts.report)

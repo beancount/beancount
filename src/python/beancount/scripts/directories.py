@@ -1,9 +1,11 @@
 """Check that document directories mirror a list of accounts correctly.
 """
 import argparse
+import sys
 
 from beancount import load
 from beancount.parser import documents
+from beancount.parser import printer
 from beancount.core import getters
 from beancount.core import account
 
@@ -59,7 +61,8 @@ def main():
     opts = parser.parse_args()
 
     # Load up the ledger file, print errors.
-    entries, _, _ = load(opts.filename, do_print_errors=True)
+    entries, errors, _ = load(opts.filename)
+    printer.print_errors(errors, file=sys.stderr)
 
     # Get the list of accounts declared in the ledge.
     accounts = getters.get_accounts(entries)

@@ -117,6 +117,10 @@ class Builder(lexer.LexBuilder):
             fileloc = FileLocation(filename, lineno)
             self.errors.append(
                 ParserError(fileloc, "Invalid option: '{}'".format(key), None))
+        elif key in options.READ_ONLY_OPTIONS:
+            fileloc = FileLocation(filename, lineno)
+            self.errors.append(
+                ParserError(fileloc, "Option '{}' may not be set.".format(key), None))
         else:
             option = self.options[key]
             if isinstance(option, list):
@@ -524,22 +528,24 @@ def parse(filename, **kw):
         a dict of the option values that were parsed from the file.)
     """
     builder = Builder()
-    _parser.parse(path.abspath(filename), builder, **kw)
+    abs_filename = path.abspath(filename)
+    builder.options["filename"] = abs_filename
+    _parser.parse(abs_filename, builder, **kw)
     entries = sorted(builder.entries, key=data.entry_sortkey)
     return (entries, builder.errors, builder.options)
 
 
-def parse_string(input_string, **kw):
+def parse_string(string, **kw):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts.
 
     Args:
-      input_string: a str, the contents to be parsed instead of a file's.
+      string: a str, the contents to be parsed instead of a file's.
     Return:
       Same as the output of parse().
     """
     with tempfile.NamedTemporaryFile('w') as tmp_file:
-        tmp_file.write(input_string)
+        tmp_file.write(string)
         tmp_file.flush()
         return parse(tmp_file.name, **kw)
 

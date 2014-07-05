@@ -120,7 +120,7 @@ def main():
     opts = argparser.parse_args()
 
     with utils.print_time('load'):
-        entries, errors, options = load(opts.filename)
+        entries, errors, options = load(opts.filename, logging.info)
 
     for entry in entries:
         print(format_entry(entry))

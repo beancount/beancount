@@ -2,17 +2,27 @@
 Tests for general utils.
 """
 import unittest
+import re
 import time
 from collections import namedtuple
 
 from beancount.utils import misc_utils
+from beancount.utils import test_utils
 
 
 class TestMiscUtils(unittest.TestCase):
 
     def test_print_time(self):
-        with misc_utils.print_time('test-op'):
-            time.sleep(0.1)
+        with test_utils.capture() as stdout:
+            with misc_utils.print_time('test-op', None):
+                time.sleep(0.1)
+        self.assertEqual("", stdout.getvalue())
+
+        with test_utils.capture() as stdout:
+            with misc_utils.print_time('test-op', print):
+                time.sleep(0.1)
+        self.assertTrue(re.search("Operation", stdout.getvalue()))
+        self.assertTrue(re.search("Time", stdout.getvalue()))
 
     def test_groupby(self):
         data = [('a', 1), ('b', 2), ('c', 3), ('d', 4)]

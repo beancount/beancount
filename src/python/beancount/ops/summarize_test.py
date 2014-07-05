@@ -267,7 +267,7 @@ class TestTransferBalances(cmptest.TestCase):
     TRANSFER_ACCOUNT = 'Equity:Transfer'
 
     def setUp(self):
-        self.entries, errors, __ = loader.load(INPUT, parse_method='string')
+        self.entries, errors, __ = loader.load_string(INPUT)
         printer.print_errors(errors)
         self.assertFalse(errors)
 

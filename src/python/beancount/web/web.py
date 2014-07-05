@@ -7,6 +7,7 @@ import datetime
 from os import path
 import io
 import logging
+import sys
 import time
 import threading
 
@@ -29,6 +30,7 @@ from beancount.utils import misc_utils
 from beancount.utils.text_utils import replace_numbers
 from beancount.web.bottle_utils import AttrMapper, internal_redirect
 from beancount.parser import options
+from beancount.parser import printer
 from beancount import loader
 from beancount.web import views
 from beancount.web import journal
@@ -1045,8 +1047,13 @@ def auto_reload_input_file(callback):
                 app.source = f.read()
 
             # Parse the beancount file.
-            entries, errors, options_map = loader.load(
-                filename, do_print_errors=True)
+            entries, errors, options_map = loader.load(filename)
+
+            # Print out the list of errors.
+            if errors:
+                print(',----------------------------------------------------------------')
+                printer.print_errors(errors, file=sys.stdout)
+                print('`----------------------------------------------------------------')
 
             # Save globals in the global app.
             app.entries = entries

@@ -23,7 +23,8 @@ class TestExampleExcludeTag(cmptest.TestCase):
               Assets:Cash
 
         """)
-        entries, _, __ = loader.load(INPUT, parse_method='string')
+        entries, errors, __ = loader.load_string(INPUT)
+        self.assertFalse(errors)
         self.assertEqualEntries("""
 
             2011-01-01 open Expenses:Restaurant

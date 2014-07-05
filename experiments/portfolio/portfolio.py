@@ -157,7 +157,7 @@ def load(holdings_filename, prices_filename, currency):
     """
     # Load the price database.
     # Generate with "bean-query LEDGER holdings"
-    price_entries, _, options_map = loader.load(prices_filename, quiet=True)
+    price_entries, errors, options_map = loader.load(prices_filename)
     price_map = prices.build_price_map(price_entries)
 
     # Load the holdings list.
