@@ -1,7 +1,6 @@
 """Beancount syntax parser.
 """
 import collections
-import datetime
 import functools
 import inspect
 import textwrap
@@ -13,8 +12,6 @@ from os import path
 from beancount.parser import _parser
 from beancount.parser import lexer
 from beancount.parser import options
-from beancount.core import account
-from beancount.core import account_types
 from beancount.core import data
 from beancount.core.amount import ZERO, Decimal, Amount, amount_div
 from beancount.core.position import Lot, Position
