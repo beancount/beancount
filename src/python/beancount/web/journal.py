@@ -6,7 +6,6 @@ from os import path
 from beancount.core.data import Open, Close, Balance, Transaction, Note, Document
 from beancount.core import account
 from beancount.core import complete
-from beancount.core.account import account_name_leaf
 from beancount.core import realization
 from beancount.core import flags
 
@@ -37,7 +36,7 @@ def account_link(account_, build_url, leafonly=False):
     slashed_name = account_name.replace(account.sep, '/')
 
     if leafonly:
-        account_name = account_name_leaf(account_name)
+        account_name = account.leaf(account_name)
 
     if build_url is None:
         link = '<span class="account">{}</a>'.format(account_name)

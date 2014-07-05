@@ -54,8 +54,7 @@ def parent(account_name):
     return sep.join(components)
 
 
-# FIXME: convert to just leaf().
-def account_name_leaf(account_name):
+def leaf(account_name):
     """Get the name of the leaf of this account.
 
     Args:
