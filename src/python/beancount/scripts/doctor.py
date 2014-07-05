@@ -4,6 +4,7 @@ This tool is able to dump lexer/parser state, and will provide other services in
 the name of debugging.
 """
 import csv
+import re
 import sys
 import argparse
 import logging
@@ -92,16 +93,16 @@ def do_prices(filename):
         writer.writerow(())
 
 
-def first_doc_sentence(object_):
+def first_doc_sentence(docstring):
     """Return the first sentence of a docstring.
 
     Args:
-      object_: An object, that has a docstring attached to it.
+      docstring: A doc string.
     Returns:
       A string with just the first sentence on a single line.
     """
     lines = []
-    for line in object_.__doc__.strip().splitlines():
+    for line in docstring.strip().splitlines():
         if not line:
             break
         lines.append(line.rstrip())
@@ -170,11 +171,26 @@ def do_roundtrip(filename):
             print()
 
 
-def main():
-    # FIXME: Add help for each command
-    # help=first_doc_sentence(do_print_trial))
+def get_commands():
+    """Return a list of available commands in this file.
 
-    parser = argparse.ArgumentParser(__doc__)
+    Returns:
+      A list of pairs of (command-name string, docstring).
+    """
+    commands = []
+    for attr_name, attr_value in globals().items():
+        mo = re.match('do_(.*)', attr_name)
+        if mo:
+            commands.append((mo.group(1), first_doc_sentence(attr_value.__doc__)))
+    return commands
+
+
+def main():
+    commands_doc = ('Available Commands:\n' +
+                    '\n'.join('  {:24}: {}'.format(*x) for x in get_commands()))
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawTextHelpFormatter,
+                                     epilog=commands_doc)
     parser.add_argument('command', action='store',
                         help="The command to run.")
     parser.add_argument('filename', help='Beancount input filename.')

@@ -22,21 +22,6 @@ beancount: TODO
        renders to a full page; the second one only a div.
 
 
-  - List all bean-doctor command in --help.
-
-
-Doc notes (move to document):
-
-  - Mention balance checks on parents.
-
-  - Ordering: mention how it may cause problems and we strictly enforce certain
-    things in order to make the model clearer, and easier to understand.
-
-  - In developer docs, mention 'D' special constructor to use.
-
-  - Terminology: "directives" or "entries" used indiscriminately to refer to
-    one of the possible entry types defined in beancount.core.data.
-
 
 
 ** Move Files to Final Location
