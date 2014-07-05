@@ -135,7 +135,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
         # if requested.
         asset_account = account_name
         income_account = account.join(account_types.income,
-                                      account.account_name_sans_root(account_name))
+                                      account.sans_root(account_name))
         if subaccount:
             asset_account = account.join(asset_account, subaccount)
             income_account = account.join(income_account, subaccount)

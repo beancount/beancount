@@ -66,8 +66,7 @@ def leaf(account_name):
     return account_name.split(sep)[-1] if account_name else None
 
 
-# FIXME: convert to just sans_root().
-def account_name_sans_root(account_name):
+def sans_root(account_name):
     """Get the name of the account without the root.
 
     For example, an in put of 'Assets:BofA:Checking' will produce 'BofA:Checking'.

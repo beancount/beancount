@@ -214,8 +214,6 @@ Doc notes (move to document):
   - Make all imports not import symbols directly, only packages, except where
     performance really, really matters (the parser)
 
-  - Rename/simplify function names in beancount.core.account (see FIXMEs)
-
   - Implement account.split() and perhaps remove references to
     split(account.sep) everywhere.
 
