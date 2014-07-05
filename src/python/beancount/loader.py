@@ -112,8 +112,7 @@ def run_transformations(entries, parse_errors, options_map, log_function):
     Returns:
       A list of modified entries, and a list of errors, also possibly modified.
     """
-
-    # A list of errors to extend.
+    # A list of errors to extend (make a copy to avoid modifying the input).
     errors = list(parse_errors)
 
     # Ensure that the entries are sorted before running the plugins.
@@ -162,8 +161,17 @@ def run_transformations(entries, parse_errors, options_map, log_function):
 
 
 def loaddoc(fun):
-    """A decorator that will load the docstring and call the wrapped function with
-    the results."""
+    """A decorator that loads the docstring and calls the function with parsed entries.
+
+    This is an incredibly convenient tool to write lots of tests. Write a
+    unittest using the standard TestCase class and put the input entries in the
+    function's docstring.
+
+    Args:
+      fun: A callable method, that accepts the three return arguments that load() returns.
+    Returns:
+      A wrapped method that accepts a single 'self' argument.
+    """
     @functools.wraps(fun)
     def wrapper(self):
         contents = textwrap.dedent(fun.__doc__)

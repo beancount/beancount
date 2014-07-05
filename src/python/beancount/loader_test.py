@@ -2,6 +2,8 @@ import unittest
 import tempfile
 
 from beancount import loader
+from beancount.parser import parser
+from beancount.utils import test_utils
 
 
 TEST_INPUT = """
@@ -21,34 +23,46 @@ TEST_INPUT = """
 
 class TestLoader(unittest.TestCase):
 
-    def test_load(self):
-        with tempfile.NamedTemporaryFile('w') as f:
-            f.write(TEST_INPUT)
-            f.flush()
-            entries, errors, options_map = loader.load(f.name)
-            self.assertTrue(isinstance(entries, list))
-            self.assertTrue(isinstance(errors, list))
-            self.assertTrue(isinstance(options_map, dict))
+    def test_run_transformations(self):
+        # Test success case.
+        entries, errors, options_map = parser.parse_string(TEST_INPUT)
+        trans_entries, trans_errors = loader.run_transformations(
+            entries, errors, options_map, None)
+        self.assertEqual(0, len(trans_errors))
 
-            entries, errors, options_map = loader.load(f.name, log_function=print)
-            self.assertTrue(isinstance(entries, list))
-            self.assertTrue(isinstance(errors, list))
-            self.assertTrue(isinstance(options_map, dict))
+        # Test an invalid plugin name.
+        entries, errors, options_map = parser.parse_string(
+            'option "plugin" "invalid.module.name"\n\n' + TEST_INPUT)
+        trans_entries, trans_errors = loader.run_transformations(
+            entries, errors, options_map, None)
+        self.assertEqual(1, len(trans_errors))
+
+    def test_load(self):
+        with test_utils.capture():
+            with tempfile.NamedTemporaryFile('w') as f:
+                f.write(TEST_INPUT)
+                f.flush()
+                entries, errors, options_map = loader.load(f.name)
+                self.assertTrue(isinstance(entries, list))
+                self.assertTrue(isinstance(errors, list))
+                self.assertTrue(isinstance(options_map, dict))
+
+                entries, errors, options_map = loader.load(f.name, log_function=print)
+                self.assertTrue(isinstance(entries, list))
+                self.assertTrue(isinstance(errors, list))
+                self.assertTrue(isinstance(options_map, dict))
 
     def test_load_string(self):
-        entries, errors, options_map = loader.load_string(TEST_INPUT)
-        self.assertTrue(isinstance(entries, list))
-        self.assertTrue(isinstance(errors, list))
-        self.assertTrue(isinstance(options_map, dict))
+        with test_utils.capture():
+            entries, errors, options_map = loader.load_string(TEST_INPUT)
+            self.assertTrue(isinstance(entries, list))
+            self.assertTrue(isinstance(errors, list))
+            self.assertTrue(isinstance(options_map, dict))
 
-        entries, errors, options_map = loader.load_string(TEST_INPUT, log_function=print)
-        self.assertTrue(isinstance(entries, list))
-        self.assertTrue(isinstance(errors, list))
-        self.assertTrue(isinstance(options_map, dict))
-
-    def test_run_transformations(self):
-        pass
-
+            entries, errors, options_map = loader.load_string(TEST_INPUT, log_function=print)
+            self.assertTrue(isinstance(entries, list))
+            self.assertTrue(isinstance(errors, list))
+            self.assertTrue(isinstance(options_map, dict))
 
 
 class TestLoadDoc(unittest.TestCase):
@@ -79,11 +93,3 @@ class TestLoadDoc(unittest.TestCase):
         self.assertTrue(isinstance(entries, list))
         self.assertTrue(isinstance(options_map, dict))
         self.assertTrue([loader.LoadError], list(map(type, errors)))
-
-
-# FIXME: Test plugins (working)
-# FIXME: Test plugins with option
-
-
-# You need to document all of the functions, and add test for the plugins functions.
-__incomplete__ = True
