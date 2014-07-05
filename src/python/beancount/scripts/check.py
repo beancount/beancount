@@ -4,9 +4,11 @@ This also measures the time it takes to run all these steps.
 """
 import argparse
 import logging
+import sys
 
 from beancount import load
 from beancount.utils import misc_utils
+from beancount.parser import printer
 
 
 def main():
@@ -22,7 +24,10 @@ def main():
     with misc_utils.print_time('load'):
         # Load up the file, print errors, checking and validation are invoked
         # automatically.
-        entries, errors, _ = load(opts.filename, do_print_errors=True)
+        entries, errors, _ = load(opts.filename)
+
+    # Print out the list of errors.
+    printer.print_errors(errors, file=sys.stdout)
 
 
 if __name__ == '__main__':

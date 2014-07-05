@@ -22,7 +22,6 @@ LoadError = collections.namedtuple('LoadError', 'fileloc message entry')
 
 
 def load(filename,
-         do_print_errors=False,
          quiet=False,
          parse_method='filename'):
     """Load an input file: open the file and parse it, pad, check and validate it.
@@ -34,13 +33,8 @@ def load(filename,
 
     Args:
       filename: the name of the file to be parsed.
-      do_print_errors: a boolean, true if this function should format and print out
-                       errors. This is only available here because it's a common
-                       thing to do with this function.
-
       quiet: a boolean, if true, the timing of each section of the parsing and
              validation process will be printed out on logging.info.
-
       parse_method: a string, 'filename' or 'string', that describes the contents
                     of 'filename'.
     Returns:
@@ -70,12 +64,6 @@ def load(filename,
 
         # FIXME: Check here that the entries haven't been modified, by comparing
         # hashes before and after.
-
-    # Print out the list of errors.
-    if do_print_errors and errors:
-        print(',----------------------------------------------------------------------')
-        printer.print_errors(errors, file=sys.stdout)
-        print('`----------------------------------------------------------------------')
 
     return entries, errors, options_map
 

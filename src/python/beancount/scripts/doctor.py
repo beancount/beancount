@@ -55,6 +55,7 @@ def do_list_accounts(filename):
         print('{:{len}}  {}  {}'.format(account, open_date, close_date, len=maxlen))
 
 
+# FIXME: Move this to a report.
 def do_print_trial(filename):
     """Render and print the trial balance for a ledger.
 
@@ -62,20 +63,25 @@ def do_print_trial(filename):
       filename: A string, the Beancount input filename.
     """
     # Load the file, realize it, and dump the accounts tree.
-    entries, errors, options_map = loader.load(filename, do_print_errors=True)
+    entries, errors, options_map = loader.load(filename)
+    printer.print_errors(errors, file=sys.stderr)
+
     real_accounts = realization.realize(entries)
     dump_str = realization.dump_balances(real_accounts)
     print(dump_str)
 
 
+# FIXME: Move this to a report.
 def do_prices(filename):
-    """Render and print the trial balance for a ledger.
+    """Render and print a list of the prices in a ledger.
 
     Args:
       filename: A string, the Beancount input filename.
     """
     # Load the file, realize it, and dump the accounts tree.
-    entries, errors, options_map = loader.load(filename, do_print_errors=True)
+    entries, errors, options_map = loader.load(filename)
+    printer.print_errors(errors, file=sys.stderr)
+
     price_map = prices.build_price_map(entries)
     for base_quote in price_map.forward_pairs:
         price_list = price_map[base_quote]
@@ -114,7 +120,8 @@ def do_roundtrip(filename):
     """
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     logging.info("Read the entries")
-    entries, errors, options = loader.load(filename, do_print_errors=True, quiet=True)
+    entries, errors, options = loader.load(filename, quiet=True)
+    printer.print_errors(errors, file=sys.stderr)
 
     logging.info("Print them out to a file")
     basename, extension = path.splitext(filename)

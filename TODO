@@ -14,6 +14,10 @@ beancount: TODO
     this to validation code.
 
 
+  - Clean up the interface of loader.load(), it's ugly. In particular, make
+    parser.parse() and loader.load() very similar. We like a consistent API.
+
+
   - Make helper functions in summarize, for clamp() and close() which accept
     options_map and automatically derive everything they need from entries.
 
@@ -346,8 +350,6 @@ Doc notes (move to document):
   as Balance checks.  I'm not going to to do this in the first release, but I
   want to set the stage for it.
 
-  - Clean up the interface of loader.load(), it's ugly. In particular, make
-    parser.parse() and loader.load() very similar. We like a consistent API.
 
 
 ** Debugging Tools

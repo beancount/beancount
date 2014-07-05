@@ -4,7 +4,7 @@ import tempfile
 from beancount import loader
 
 
-TEST_FILE = """
+TEST_INPUT = """
 
 2014-01-01 open Assets:MyBank:Checking   USD
 2014-01-01 open Expenses:Restaurant   USD
@@ -21,14 +21,27 @@ TEST_FILE = """
 
 class TestLoader(unittest.TestCase):
 
-    def test_load(self):
+    def test_load__filename(self):
         with tempfile.NamedTemporaryFile('w') as f:
-            f.write(TEST_FILE)
+            f.write(TEST_INPUT)
             f.flush()
-            entries, errors, options_map = loader.load(f.name)
+            entries, errors, options_map = loader.load(f.name, parse_method='filename')
             self.assertTrue(isinstance(entries, list))
             self.assertTrue(isinstance(errors, list))
             self.assertTrue(isinstance(options_map, dict))
+
+    def test_load__string(self):
+        entries, errors, options_map = loader.load(TEST_INPUT, parse_method='string')
+        self.assertTrue(isinstance(entries, list))
+        self.assertTrue(isinstance(errors, list))
+        self.assertTrue(isinstance(options_map, dict))
+
+        entries, errors, options_map = loader.load(TEST_INPUT, parse_method='string', quiet=False)
+        self.assertTrue(isinstance(entries, list))
+        self.assertTrue(isinstance(errors, list))
+        self.assertTrue(isinstance(options_map, dict))
+
+class TestLoadDoc(unittest.TestCase):
 
     def test_loaddoc(self):
         def test_function(self_, entries, errors, options_map):
@@ -36,7 +49,7 @@ class TestLoader(unittest.TestCase):
             self.assertTrue(isinstance(errors, list))
             self.assertTrue(isinstance(options_map, dict))
 
-        test_function.__doc__ = TEST_FILE
+        test_function.__doc__ = TEST_INPUT
         test_function = loader.loaddoc(test_function)
         test_function(self)
 
