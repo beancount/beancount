@@ -6,6 +6,7 @@ import importlib
 import sys
 import collections
 import re
+import logging
 
 from beancount.utils import misc_utils
 from beancount.core import data
@@ -44,6 +45,8 @@ def load(filename,
           the file.
         options_map: A dict of the options parsed from the file.
     """
+    log_function = None if quiet else logging.info
+
     # Parse the input file.
     if parse_method == 'filename':
         parse_fun = parser.parse
@@ -51,15 +54,15 @@ def load(filename,
         parse_fun = parser.parse_string
     else:
         raise NotImplementedError("Method: {}".format(parse_method))
-    with misc_utils.print_time('parse', quiet):
+    with misc_utils.print_time('parse', log_function):
         entries, parse_errors, options_map = parse_fun(filename)
 
     # Transform the entries.
     entries, errors = run_transformations(entries, parse_errors, options_map,
-                                          filename, quiet)
+                                          filename, log_function)
 
     # Validate the list of entries.
-    with misc_utils.print_time('validate', quiet):
+    with misc_utils.print_time('validate', log_function):
         valid_errors = validation.validate(entries, options_map)
         errors.extend(valid_errors)
 
@@ -69,7 +72,7 @@ def load(filename,
     return entries, errors, options_map
 
 
-def run_transformations(entries, parse_errors, options_map, filename, quiet):
+def run_transformations(entries, parse_errors, options_map, filename, log_function):
     """Run the various transformations on the entries.
 
     This is where entries are being synthesized, checked, plugins are run, etc.
@@ -79,7 +82,8 @@ def run_transformations(entries, parse_errors, options_map, filename, quiet):
       parse_errors: A list of errors so far.
       options_map: An options dict as read from the parser.
       filename: A string, the name of the file that's just been parsed.
-      quiet: A boolean, true if we should be quiet.
+      log_function: A function to write timing log entries to, or None, if it
+        should be quiet.
     Returns:
       A list of modified entries, and a list of errors, also possibly modified.
     """
@@ -91,21 +95,21 @@ def run_transformations(entries, parse_errors, options_map, filename, quiet):
     # where desired).
     #
     # Note: I think a lot of these should be moved to plugins!
-    with misc_utils.print_time('pad', quiet):
+    with misc_utils.print_time('pad', log_function):
         entries, pad_errors = pad.pad(entries, options_map)
         errors.extend(pad_errors)
 
     # Add implicitly defined prices.
-    with misc_utils.print_time('prices', quiet):
+    with misc_utils.print_time('prices', log_function):
         entries, price_errors = prices.add_implicit_prices(entries, options_map)
         errors.extend(price_errors)
 
-    with misc_utils.print_time('check', quiet):
+    with misc_utils.print_time('check', log_function):
         entries, check_errors = balance.check(entries, options_map)
         errors.extend(check_errors)
 
     # Process the document entries and find documents automatically.
-    with misc_utils.print_time('documents', quiet):
+    with misc_utils.print_time('documents', log_function):
         # FIXME: Maybe the filename can be passed in through the options_map in
         # order to comply with the interface of all other plugins. Maybe
         # documents can just become yet another plugin...
@@ -132,7 +136,7 @@ def run_transformations(entries, parse_errors, options_map, filename, quiet):
                 for function_name in module.__plugins__:
                     callback = getattr(module, function_name)
                     callback_name = '{}.{}'.format(plugin_name, function_name)
-                    with misc_utils.print_time(callback_name, quiet):
+                    with misc_utils.print_time(callback_name, log_function):
                         if plugin_option is not None:
                             entries, plugin_errors = callback(entries, options_map,
                                                               plugin_option)

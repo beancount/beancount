@@ -10,22 +10,22 @@ import logging
 
 
 @contextlib.contextmanager
-def print_time(operation_name, quiet=False):
+def print_time(operation_name, log_function):
     """A context manager that times the block and logs it to info level.
 
     Args:
       operation_name: A string, a label for the name of the operation.
-      quiet: A boolean, true if this should be a no-op.
+      log_function: A function to write log messages to. If left to None,
+        no timings are written (this becomes a no-op).
     Yields:
       The start time of the operation.
     """
-    if quiet:
-        yield; return
     t1 = time()
     yield t1
     t2 = time()
-    logging.info(">>>>> Operation: '{}'  Time: {:.0f}ms".format(operation_name,
-                                                                (t2 - t1)*1000))
+    if log_function:
+        log_function("Operation: {:32}  Time: {:6.0f} ms".format(
+            "'{}'".format(operation_name), (t2 - t1)*1000))
 
 
 def groupby(keyfun, elements):
