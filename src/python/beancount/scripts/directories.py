@@ -4,7 +4,6 @@ import argparse
 import sys
 
 from beancount import load
-from beancount.parser import documents
 from beancount.parser import printer
 from beancount.core import getters
 from beancount.core import account

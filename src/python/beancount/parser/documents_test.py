@@ -1,11 +1,8 @@
 """
 Tests for documents.
 """
-import os
 import re
 import datetime
-import shutil
-import tempfile
 import textwrap
 from os import path
 

@@ -1,7 +1,5 @@
 """Everything that relates to creating the Document directives.
 """
-
-import os
 import re
 import datetime
 from os import path
