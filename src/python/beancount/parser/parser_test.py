@@ -286,6 +286,15 @@ class TestParserOptions(unittest.TestCase):
         check_list(self, errors, [parser.ParserError])
         self.assertFalse("bladibla_invalid" in options_map)
 
+    @parsedoc
+    def test_readonly_option(self, entries, errors, options_map):
+        """
+          option "filename" "gniagniagniagniagnia"
+
+        """
+        check_list(self, errors, [parser.ParserError])
+        self.assertNotEqual("filename", "gniagniagniagniagnia")
+
 
 class TestParserLinks(unittest.TestCase):
 

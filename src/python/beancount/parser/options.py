@@ -90,6 +90,10 @@ DEFAULT_OPTIONS = {
 }
 
 
+# A list of options that cannot be modified.
+READ_ONLY_OPTIONS = {"filename"}
+
+
 def get_account_types(options):
     """Extract the account type names from the parser's options.
 

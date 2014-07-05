@@ -117,6 +117,10 @@ class Builder(lexer.LexBuilder):
             fileloc = FileLocation(filename, lineno)
             self.errors.append(
                 ParserError(fileloc, "Invalid option: '{}'".format(key), None))
+        elif key in options.READ_ONLY_OPTIONS:
+            fileloc = FileLocation(filename, lineno)
+            self.errors.append(
+                ParserError(fileloc, "Option '{}' may not be set.".format(key), None))
         else:
             option = self.options[key]
             if isinstance(option, list):
