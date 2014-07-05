@@ -24,12 +24,12 @@ LoadError = collections.namedtuple('LoadError', 'fileloc message entry')
 def load(filename,
          quiet=False,
          parse_method='filename'):
-    """Load an input file: open the file and parse it, pad, check and validate it.
-    This also optionally prints out the error messages.
+    """Open the a Beancount input file, parse it, run transformations and validate.
 
-    This file provides convenience routines that do all that's necessary to obtain a
-    list of entries ready for realization and working with them. This is the most
-    common entry point.
+    This routines does all that is necessary to obtain a list of entries ready
+    for realization and working with them. This is the principal call for of the
+    scripts that load a ledger. It returns a list of entries transformed and
+    ready for reporting, a list of errors, and parser's options dict.
 
     Args:
       filename: the name of the file to be parsed.
@@ -38,11 +38,12 @@ def load(filename,
       parse_method: a string, 'filename' or 'string', that describes the contents
                     of 'filename'.
     Returns:
-      A triple of (sorted list of entries from the file, a list of errors
-      generated while parsing and validating the file, and a dict of the options
-      parsed from the file).
+      A triple of:
+        entries: A date-sorted list of entries from the file.
+        errors: A list of error objects generated while parsing and validating
+          the file.
+        options_map: A dict of the options parsed from the file.
     """
-
     # Parse the input file.
     if parse_method == 'filename':
         parse_fun = parser.parse
