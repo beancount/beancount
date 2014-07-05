@@ -7,16 +7,11 @@ beancount: TODO
     "cd beancount && make status"). This is the standard I've set for this
     project for shipping the next release. Tests remaining:
 
-
-     Move validation tests, we need to check the data types themselves, move
-     this to validation code.
-
-
-     src/python/beancount/parser/lexer_test.py              MISSING
-
-       Create an automated test for the lexer as well.
-
      src/python/beancount/loader.py                               INCOMPLETE
+
+
+  - Move validation tests, we need to check the data types themselves, move
+    this to validation code.
 
 
   - Make helper functions in summarize, for clamp() and close() which accept
