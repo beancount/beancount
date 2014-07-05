@@ -63,8 +63,7 @@ class TestDocuments(cmptest.TestCase):
         #
         # Moreover, we generate an error from a non-existing file and we
         # assert that the entry is still indeed present.
-        entries, errors = documents.process_documents(entries, options_map,
-                                                      input_filename)
+        entries, errors = documents.process_documents(entries, options_map)
 
         # Check entries.
         expected_entries, _, __ = parser.parse_string(textwrap.dedent("""

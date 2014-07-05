@@ -24,17 +24,39 @@ LoadError = collections.namedtuple('LoadError', 'fileloc message entry')
 
 def load(filename, log_function=None):
     """Open a Beancount input file, parse it, run transformations and validate.
+
+    Args:
+      filename: The name of the file to be parsed.
+      log_function: A function to write timing log entries to, or None, if it
+        should be quiet.
+    Returns:
+      A triple of:
+        entries: A date-sorted list of entries from the file.
+        errors: A list of error objects generated while parsing and validating
+          the file.
+        options_map: A dict of the options parsed from the file.
     """
     return _load(filename, log_function, parser.parse)
 
 
-def load_string(filename, log_function=None):
+def load_string(string, log_function=None):
     """Open a Beancount input string, parse it, run transformations and validate.
+
+    Args:
+      string: A Beancount input string.
+      log_function: A function to write timing log entries to, or None, if it
+        should be quiet.
+    Returns:
+      A triple of:
+        entries: A date-sorted list of entries from the file.
+        errors: A list of error objects generated while parsing and validating
+          the file.
+        options_map: A dict of the options parsed from the file.
     """
-    return _load(filename, log_function, parser.parse_string)
+    return _load(string, log_function, parser.parse_string)
 
 
-def _load(filename, log_function, parse_function):
+def _load(file_or_string, log_function, parse_function):
     """Parse Beancount input, run its transformations and validate it.
 
     (This is an internal method.)
@@ -50,19 +72,14 @@ def _load(filename, log_function, parse_function):
       parse_function: A function used to parse file_or_string. Either
         parser.parse() or parser.parse_string().
     Returns:
-      A triple of:
-        entries: A date-sorted list of entries from the file.
-        errors: A list of error objects generated while parsing and validating
-          the file.
-        options_map: A dict of the options parsed from the file.
+      See load() or load_string().
     """
     # Parse the input file.
     with misc_utils.print_time('parse', log_function):
-        entries, parse_errors, options_map = parse_function(filename)
+        entries, parse_errors, options_map = parse_function(file_or_string)
 
     # Transform the entries.
-    entries, errors = run_transformations(entries, parse_errors, options_map,
-                                          filename, log_function)
+    entries, errors = run_transformations(entries, parse_errors, options_map, log_function)
 
     # Validate the list of entries.
     with misc_utils.print_time('validate', log_function):
@@ -75,7 +92,7 @@ def _load(filename, log_function, parse_function):
     return entries, errors, options_map
 
 
-def run_transformations(entries, parse_errors, options_map, filename, log_function):
+def run_transformations(entries, parse_errors, options_map, log_function):
     """Run the various transformations on the entries.
 
     This is where entries are being synthesized, checked, plugins are run, etc.
@@ -84,7 +101,6 @@ def run_transformations(entries, parse_errors, options_map, filename, log_functi
       entries: A list of directives as read from the parser.
       parse_errors: A list of errors so far.
       options_map: An options dict as read from the parser.
-      filename: A string, the name of the file that's just been parsed.
       log_function: A function to write timing log entries to, or None, if it
         should be quiet.
     Returns:
@@ -113,10 +129,7 @@ def run_transformations(entries, parse_errors, options_map, filename, log_functi
 
     # Process the document entries and find documents automatically.
     with misc_utils.print_time('documents', log_function):
-        # FIXME: Maybe the filename can be passed in through the options_map in
-        # order to comply with the interface of all other plugins. Maybe
-        # documents can just become yet another plugin...
-        entries, doc_errors = documents.process_documents(entries, options_map, filename)
+        entries, doc_errors = documents.process_documents(entries, options_map)
         errors.extend(doc_errors)
 
     # Ensure that the entries are sorted.

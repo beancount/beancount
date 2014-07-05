@@ -18,17 +18,19 @@ from beancount.core import getters
 DocumentError = namedtuple('DocumentError', 'fileloc message entry')
 
 
-def process_documents(entries, options_map, input_filename):
+def process_documents(entries, options_map):
     """Check files for document directives and find documents automatically.
 
     Args:
       entries: A list of all directives parsed from the file.
       options_map: An options dict, as is output by the parser.
-      input_filename: A string, the name of the ledger input file
+        We're using its 'filename' option to figure out relative path to
+        search for documents.
     Returns:
       A pair of list of all entries (including new ones), and errors
       generated during the process of creating document directives.
     """
+    filename = options_map["filename"]
 
     # Check that the entries from the input file are okay.
     entries, document_errors = verify_document_entries(entries)
@@ -43,7 +45,7 @@ def process_documents(entries, options_map, input_filename):
 
         # Accumulate all the entries.
         for directory in document_dirs:
-            new_entries, new_errors = find_documents(directory, input_filename, accounts)
+            new_entries, new_errors = find_documents(directory, filename, accounts)
             autodoc_entries.extend(new_entries)
             autodoc_errors.extend(new_errors)
 

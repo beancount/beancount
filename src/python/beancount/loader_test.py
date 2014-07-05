@@ -46,6 +46,10 @@ class TestLoader(unittest.TestCase):
         self.assertTrue(isinstance(errors, list))
         self.assertTrue(isinstance(options_map, dict))
 
+    def test_run_transformations(self):
+        pass
+
+
 
 class TestLoadDoc(unittest.TestCase):
 
