@@ -150,7 +150,7 @@ class TestScriptCheckDirectories(directories_test.TestScriptCheckDirectories):
             os.makedirs(path.join(self.tmpdir, directory))
 
         with test_utils.capture() as stdout:
-            test_utils.run_with_args(doctor.main, ['validate_directories', filename, self.tmpdir])
+            test_utils.run_with_args(doctor.main, ['directories', filename, self.tmpdir])
         self.assertEqual(2, len(stdout.getvalue().splitlines()))
         matches = set(mo.group(1) for mo in re.finditer("'(.*?)'", stdout.getvalue()))
         clean_matches = set(match[len(self.tmpdir)+1:]
