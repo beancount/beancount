@@ -7,19 +7,25 @@ import sys
 import collections
 import re
 import logging
+import itertools
 
 from beancount.utils import misc_utils
 from beancount.core import data
 from beancount.parser import parser
-from beancount.parser import documents
 from beancount.parser import printer
-from beancount.ops import pad
 from beancount.ops import validation
-from beancount.ops import balance
-from beancount.ops import prices
 
 
 LoadError = collections.namedtuple('LoadError', 'fileloc message entry')
+
+
+# List of default plugins to run.
+DEFAULT_PLUGINS = [
+    "beancount.ops.pad",
+    "beancount.ops.prices",
+    "beancount.ops.balance",
+    "beancount.parser.documents",
+    ]
 
 
 def load(filename, log_function=None):
@@ -107,36 +113,15 @@ def run_transformations(entries, parse_errors, options_map, log_function):
       A list of modified entries, and a list of errors, also possibly modified.
     """
 
-    # A list of errors to flatten.
+    # A list of errors to extend.
     errors = list(parse_errors)
 
-    # Pad the resulting entries (create synthetic Pad entries to balance checks
-    # where desired).
-    #
-    # Note: I think a lot of these should be moved to plugins!
-    with misc_utils.print_time('pad', log_function):
-        entries, pad_errors = pad.pad(entries, options_map)
-        errors.extend(pad_errors)
-
-    # Add implicitly defined prices.
-    with misc_utils.print_time('prices', log_function):
-        entries, price_errors = prices.add_implicit_prices(entries, options_map)
-        errors.extend(price_errors)
-
-    with misc_utils.print_time('check', log_function):
-        entries, check_errors = balance.check(entries, options_map)
-        errors.extend(check_errors)
-
-    # Process the document entries and find documents automatically.
-    with misc_utils.print_time('documents', log_function):
-        entries, doc_errors = documents.process_documents(entries, options_map)
-        errors.extend(doc_errors)
-
-    # Ensure that the entries are sorted.
+    # Ensure that the entries are sorted before running the plugins.
     entries.sort(key=data.entry_sortkey)
 
     # Process the plugins.
-    for plugin_name in options_map["plugin"]:
+    for plugin_name in itertools.chain(DEFAULT_PLUGINS,
+                                       options_map["plugin"]):
 
         # Parse out the option if one was specified.
         mo = re.match('(.*):(.*)', plugin_name)
@@ -148,17 +133,21 @@ def run_transformations(entries, parse_errors, options_map, log_function):
         # Try to import the module.
         try:
             module = importlib.import_module(plugin_name)
-            if hasattr(module, '__plugins__'):
-                for function_name in module.__plugins__:
-                    callback = getattr(module, function_name)
-                    callback_name = '{}.{}'.format(plugin_name, function_name)
-                    with misc_utils.print_time(callback_name, log_function):
-                        if plugin_option is not None:
-                            entries, plugin_errors = callback(entries, options_map,
-                                                              plugin_option)
-                        else:
-                            entries, plugin_errors = callback(entries, options_map)
-                        errors.extend(plugin_errors)
+            if not hasattr(module, '__plugins__'):
+                continue
+
+            # Run each transformer function in the plugin.
+            for function_name in module.__plugins__:
+                callback = getattr(module, function_name)
+                callback_name = '{}.{}'.format(plugin_name, function_name)
+
+                with misc_utils.print_time(callback_name, log_function):
+                    if plugin_option is not None:
+                        entries, plugin_errors = callback(entries, options_map,
+                                                          plugin_option)
+                    else:
+                        entries, plugin_errors = callback(entries, options_map)
+                    errors.extend(plugin_errors)
 
         except ImportError as exc:
             # Upon failure, just issue an error.

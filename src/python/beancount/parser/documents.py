@@ -13,6 +13,8 @@ from beancount.core.data import FileLocation, Document
 from beancount.core import data
 from beancount.core import getters
 
+__plugins__ = ('process_documents',)
+
 
 # An error from trying to find the documents.
 DocumentError = namedtuple('DocumentError', 'fileloc message entry')

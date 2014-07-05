@@ -18,7 +18,6 @@ from beancount.utils import misc_utils
 __plugins__ = ('add_implicit_prices',)
 
 
-
 def add_implicit_prices(entries, unused_options_map):
     """Insert implicitly defined prices from Transactions.
 

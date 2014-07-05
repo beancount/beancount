@@ -334,20 +334,6 @@ Doc notes (move to document):
     https://docs.google.com/document/d/1F8IJ_7fMHZ75XFPocMokLxVZczAhrBRBVN9uMhQFCZ4/
 
 
-** Prepare for Plugins Revamp
-
-  I recently teased out that many of the basic functions can be implemented as
-  individual stages of transformations on the list of directives. This started
-  out as a way to add plugins by adding a custom transformation stage, but now
-  I see that if I can make the parser able to consume generic syntax that might
-  allow extensions, and to allow these plugins to specify new directive types
-  for extensions, I might be able to shove a *lot* of the existing
-  functionality into nice isolated plugin modules. Even functionality as basic
-  as Balance checks.  I'm not going to to do this in the first release, but I
-  want to set the stage for it.
-
-
-
 ** Debugging Tools
 
   I need to provide some basic diagnostic tools before shipping, because users
@@ -1102,6 +1088,17 @@ Doc notes (move to document):
     have them automatically check for expected no-errors.
 
 
+** Prepare for Plugins Revamp
+
+  I recently teased out that many of the basic functions can be implemented as
+  individual stages of transformations on the list of directives. This started
+  out as a way to add plugins by adding a custom transformation stage, but now
+  I see that if I can make the parser able to consume generic syntax that might
+  allow extensions, and to allow these plugins to specify new directive types
+  for extensions, I might be able to shove a *lot* of the existing
+  functionality into nice isolated plugin modules. Even functionality as basic
+  as Balance checks.  I'm not going to to do this in the first release, but I
+  want to set the stage for it.
 ** Precision
 
   - (precision) FIXME: The better way to render numbers at the end would be to
