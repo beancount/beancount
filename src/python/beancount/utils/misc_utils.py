@@ -2,11 +2,9 @@
 Generic utility packages and functions.
 """
 import re
-import logging
 from time import time
 import contextlib
 from collections import defaultdict
-import logging
 
 
 @contextlib.contextmanager

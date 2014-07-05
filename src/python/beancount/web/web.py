@@ -1051,9 +1051,9 @@ def auto_reload_input_file(callback):
 
             # Print out the list of errors.
             if errors:
-                print(',----------------------------------------------------------------------')
+                print(',----------------------------------------------------------------')
                 printer.print_errors(errors, file=sys.stdout)
-                print('`----------------------------------------------------------------------')
+                print('`----------------------------------------------------------------')
 
             # Save globals in the global app.
             app.entries = entries
