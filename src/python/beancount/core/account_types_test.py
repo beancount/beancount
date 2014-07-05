@@ -56,21 +56,6 @@ class TestAccountTypes(unittest.TestCase):
         self.assertEqual("Invalid",
                          account_types.get_account_type("Invalid:Toys:Computer"))
 
-    def test_is_valid_account_name(self):
-        is_valid = account_types.is_valid_account_name
-        self.assertTrue(is_valid("Assets:US:RBS:Checking"))
-        self.assertTrue(is_valid("Equity:OpeningBalances"))
-        self.assertTrue(is_valid("Income:US:ETrade:Dividends-USD"))
-        self.assertTrue(is_valid("Assets:US:RBS"))
-        self.assertTrue(is_valid("Assets:US"))
-        self.assertFalse(is_valid("Assets"))
-        self.assertFalse(is_valid("Invalid"))
-        self.assertFalse(is_valid("Other"))
-        self.assertFalse(is_valid("Assets:US:RBS*Checking"))
-        self.assertFalse(is_valid("Assets:US:RBS:Checking&"))
-        self.assertFalse(is_valid("Assets:US:RBS:checking"))
-        self.assertFalse(is_valid("Assets:us:RBS:checking"))
-
     def test_is_root_account(self):
         for types in (None, account_types.DEFAULT_ACCOUNT_TYPES):
             for account_name, expected in [

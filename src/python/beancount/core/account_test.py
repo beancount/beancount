@@ -5,6 +5,20 @@ from . import account
 
 class TestAccount(unittest.TestCase):
 
+    def test_is_valid(self):
+        self.assertTrue(account.is_valid("Assets:US:RBS:Checking"))
+        self.assertTrue(account.is_valid("Equity:OpeningBalances"))
+        self.assertTrue(account.is_valid("Income:US:ETrade:Dividends-USD"))
+        self.assertTrue(account.is_valid("Assets:US:RBS"))
+        self.assertTrue(account.is_valid("Assets:US"))
+        self.assertFalse(account.is_valid("Assets"))
+        self.assertFalse(account.is_valid("Invalid"))
+        self.assertFalse(account.is_valid("Other"))
+        self.assertFalse(account.is_valid("Assets:US:RBS*Checking"))
+        self.assertFalse(account.is_valid("Assets:US:RBS:Checking&"))
+        self.assertFalse(account.is_valid("Assets:US:RBS:checking"))
+        self.assertFalse(account.is_valid("Assets:us:RBS:checking"))
+
     def test_account_join(self):
         account_name = account.join("Expenses", "Toys", "Computer")
         self.assertEqual("Expenses:Toys:Computer", account_name)

@@ -3,12 +3,6 @@ beancount: TODO
 * Requirements for Shipping 1.0
 ** Complete 100% Coverage for Unit Tests
 
-  - I want to complete full unittests coverage (as per find-missing-tests.py, or
-    "cd beancount && make status"). This is the standard I've set for this
-    project for shipping the next release. Tests remaining:
-
-     src/python/beancount/loader.py                               INCOMPLETE
-
 
   - Move validation tests, we need to check the data types themselves, move
     this to validation code.
