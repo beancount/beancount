@@ -33,12 +33,12 @@ class TestAccount(unittest.TestCase):
         account_name = account.join()
         self.assertEqual("", account_name)
 
-    def test_account_name_parent(self):
+    def test_parent(self):
         self.assertEqual("Expenses:Toys",
-                         account.account_name_parent("Expenses:Toys:Computer"))
-        self.assertEqual("Expenses", account.account_name_parent("Expenses:Toys"))
-        self.assertEqual("", account.account_name_parent("Expenses"))
-        self.assertEqual(None, account.account_name_parent(""))
+                         account.parent("Expenses:Toys:Computer"))
+        self.assertEqual("Expenses", account.parent("Expenses:Toys"))
+        self.assertEqual("", account.parent("Expenses"))
+        self.assertEqual(None, account.parent(""))
 
     def test_account_name_leaf(self):
         self.assertEqual("Computer", account.account_name_leaf("Expenses:Toys:Computer"))

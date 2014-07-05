@@ -162,7 +162,7 @@ status test-status:
 	@./etc/find-missing-tests.py $(SRC)
 	@echo ""
 	@echo "Remaining FIXME:"
-	@grep -srn FIXME $(SRC)
+	@egrep -srn '\b(FIXME|TODO\()' $(SRC)
 
 
 # Check for unused imports.

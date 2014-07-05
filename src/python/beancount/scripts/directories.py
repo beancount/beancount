@@ -31,7 +31,7 @@ def validate_directories(accounts, document_dir):
     accounts_with_parents = accounts.copy()
     for account_ in accounts:
         while True:
-            parent = account.account_name_parent(account_)
+            parent = account.parent(account_)
             if not parent:
                 break
             if parent in accounts_with_parents:

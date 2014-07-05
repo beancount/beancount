@@ -49,11 +49,6 @@ Doc notes (move to document):
   - beancount.core.realization: Look at deps for beancount.core.realization and
     move it upstream where it makes sense, maybe ops.
 
-  - beancount.parser.documents: Can we move documents.py to ops? Look at that.
-    Documents is totally a plugin/transformer, and the dependency picture
-    doesn't warrant it being within the parser. Could this move to a plugins
-    directory? Yes. (This is clearly a transformation. Either ops or plugins.)
-
   - beancount.core.getters: Can this move to ops as well? Check the dependency
     tree.
 

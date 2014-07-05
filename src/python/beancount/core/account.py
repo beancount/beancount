@@ -38,8 +38,7 @@ def join(*components):
     return sep.join(components)
 
 
-# FIXME: convert to just parent().
-def account_name_parent(account_name):
+def parent(account_name):
     """Return the name of the parent account of the given account.
 
     Args:
