@@ -9,13 +9,16 @@ import tempfile
 import textwrap
 from os import path
 
+from beancount.core import account_test
 from beancount.parser import documents
 from beancount.parser import parser
 from beancount.parser import cmptest
 
 
-class TestDocuments(cmptest.TestCase):
+class TestDocuments(account_test.TestWalk,
+                    cmptest.TestCase):
 
+    # This is used by TestWalk.
     test_documents = [
         'root/Assets/US/Bank/Checking/other.txt',
         'root/Assets/US/Bank/Checking/2014-06-08.bank-statement.pdf',
@@ -25,22 +28,6 @@ class TestDocuments(cmptest.TestCase):
         'root/Assets/US/Bank/Savings/2014-07-01.savings.pdf',
         'root/Liabilities/US/Bank/',  # Empty directory.
     ]
-
-    def setUp(self):
-        self.tempdir = tempfile.mkdtemp(prefix="beancount-test-tmpdir.")
-        self.root = path.join(self.tempdir, 'root')
-        for filename in self.test_documents:
-            abs_filename = path.join(self.tempdir, filename)
-            if filename.endswith('/'):
-                os.makedirs(abs_filename)
-            else:
-                parent_dir = path.dirname(abs_filename)
-                if not path.exists(parent_dir):
-                    os.makedirs(parent_dir)
-                open(abs_filename, 'w')
-
-    def tearDown(self):
-        shutil.rmtree(self.tempdir, ignore_errors=True)
 
     def test_process_documents(self):
         input_filename = path.join(self.root, 'input.beancount')
@@ -142,31 +129,3 @@ class TestDocuments(cmptest.TestCase):
             self.root, '/tmp/input.beancount', accounts)
         self.assertEqualEntries(entries1[:1], entries6)
         self.assertEqual([], errors1)
-
-    def test_walk_accounts(self):
-        actual_data = [
-            (root[len(self.root):], account, dirs, files)
-            for root, account, dirs, files in documents.walk_accounts(self.root)]
-
-        self.assertEqual([
-            ('/Assets/US', 'Assets:US',
-             ['Bank'],
-             []),
-            ('/Assets/US/Bank', 'Assets:US:Bank',
-             ['Checking', 'Savings'],
-             []),
-            ('/Assets/US/Bank/Checking', 'Assets:US:Bank:Checking',
-             ['otherdir'],
-             ['2014-06-08.bank-statement.pdf', 'other.txt']),
-
-            ('/Assets/US/Bank/Savings', 'Assets:US:Bank:Savings',
-             [],
-             ['2014-07-01.savings.pdf']),
-
-            ('/Liabilities/US', 'Liabilities:US',
-             ['Bank'],
-             []),
-            ('/Liabilities/US/Bank', 'Liabilities:US:Bank',
-             [],
-             []),
-            ], actual_data)

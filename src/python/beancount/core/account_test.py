@@ -1,4 +1,8 @@
 import unittest
+import tempfile
+import os
+import shutil
+from os import path
 
 from . import account
 
@@ -72,3 +76,77 @@ class TestAccount(unittest.TestCase):
                                                'Liabilities:US:CreditCard']))
         self.assertEqual('',
                          account.commonprefix(['']))
+
+
+def create_file_hierarchy(test_files, subdir='root'):
+    """Create a hierarchy of files.
+
+    Args:
+      test_files: A list of strings, relative filenames to a temporary root
+        directory. If the filename ends with a '/', we create a directory;
+        otherwise, we create a regular file.
+      subdir: A string, the subdirectory name under the temporary directory
+        location, to create the hierarchy under.
+    Returns:
+      A pair of strings, the temporary directory, and the subdirectory under
+        that which hosts the root of the tree.
+    """
+    tempdir = tempfile.mkdtemp(prefix="beancount-test-tmpdir.")
+    root = path.join(tempdir, subdir)
+    for filename in test_files:
+        abs_filename = path.join(tempdir, filename)
+        if filename.endswith('/'):
+            os.makedirs(abs_filename)
+        else:
+            parent_dir = path.dirname(abs_filename)
+            if not path.exists(parent_dir):
+                os.makedirs(parent_dir)
+            open(abs_filename, 'w')
+    return tempdir, root
+
+
+class TestWalk(unittest.TestCase):
+
+    test_documents = [
+        'root/Assets/US/Bank/Checking/other.txt',
+        'root/Assets/US/Bank/Checking/2014-06-08.bank-statement.pdf',
+        'root/Assets/US/Bank/Checking/otherdir/',
+        'root/Assets/US/Bank/Checking/otherdir/another.txt',
+        'root/Assets/US/Bank/Checking/otherdir/2014-06-08.bank-statement.pdf',
+        'root/Assets/US/Bank/Savings/2014-07-01.savings.pdf',
+        'root/Liabilities/US/Bank/',  # Empty directory.
+    ]
+
+    def setUp(self):
+        self.tempdir, self.root = create_file_hierarchy(self.test_documents)
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir, ignore_errors=True)
+
+    def test_walk(self):
+        actual_data = [
+            (root[len(self.root):], account, dirs, files)
+            for root, account, dirs, files in account.walk(self.root)]
+
+        self.assertEqual([
+            ('/Assets/US', 'Assets:US',
+             ['Bank'],
+             []),
+            ('/Assets/US/Bank', 'Assets:US:Bank',
+             ['Checking', 'Savings'],
+             []),
+            ('/Assets/US/Bank/Checking', 'Assets:US:Bank:Checking',
+             ['otherdir'],
+             ['2014-06-08.bank-statement.pdf', 'other.txt']),
+
+            ('/Assets/US/Bank/Savings', 'Assets:US:Bank:Savings',
+             [],
+             ['2014-07-01.savings.pdf']),
+
+            ('/Liabilities/US', 'Liabilities:US',
+             ['Bank'],
+             []),
+            ('/Liabilities/US/Bank', 'Liabilities:US:Bank',
+             [],
+             []),
+            ], actual_data)

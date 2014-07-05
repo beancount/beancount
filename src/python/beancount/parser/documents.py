@@ -107,7 +107,7 @@ def find_documents(directory, input_filename, accounts_only=None):
 
     # Walk the hierarchy of files.
     entries = []
-    for root, account_name, dirs, files in walk_accounts(directory):
+    for root, account_name, dirs, files in account.walk(directory):
 
         # Look for files that have a dated filename.
         for filename in files:
@@ -129,21 +129,3 @@ def find_documents(directory, input_filename, accounts_only=None):
             entries.append(entry)
 
     return (entries, [])
-
-
-def walk_accounts(root_directory):
-    """A version of os.walk() which yields directories that are valid account names.
-
-    This only yields directories that are accounts... it skips the other ones.
-    For convenience, it also yields you the account's name.
-
-    Args:
-      root_directory: A string, the name of the root of the hierarchy to be walked.
-    Yields:
-      Tuples of (root, account-name, dirs, files), similar to os.walk().
-    """
-    for root, dirs, files in os.walk(root_directory):
-        relroot = root[len(root_directory)+1:]
-        account_name = relroot.replace(os.sep, account.sep)
-        if account.is_valid(account_name):
-            yield (root, account_name, dirs, files)

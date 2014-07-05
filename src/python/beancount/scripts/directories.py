@@ -41,7 +41,7 @@ def validate_directories(accounts, document_dir):
             account_ = parent
 
     errors = []
-    for directory, account_name, _, _ in documents.walk_accounts(document_dir):
+    for directory, account_name, _, _ in account.walk(document_dir):
         if account_name not in accounts_with_parents:
             errors.append(ValidateDirectoryError(
                 "Invalid directory '{}': no corresponding account '{}'".format(

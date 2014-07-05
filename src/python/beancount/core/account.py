@@ -5,6 +5,7 @@ of their associated postings. This is achieved by building a realization; see
 realization.py for details.
 """
 import re
+import os
 from os import path
 
 
@@ -112,3 +113,21 @@ def commonprefix(accounts):
     # works well with str.join() below.
     common_list = path.commonprefix(accounts_lists)
     return sep.join(common_list)
+
+
+def walk(root_directory):
+    """A version of os.walk() which yields directories that are valid account names.
+
+    This only yields directories that are accounts... it skips the other ones.
+    For convenience, it also yields you the account's name.
+
+    Args:
+      root_directory: A string, the name of the root of the hierarchy to be walked.
+    Yields:
+      Tuples of (root, account-name, dirs, files), similar to os.walk().
+    """
+    for root, dirs, files in os.walk(root_directory):
+        relroot = root[len(root_directory)+1:]
+        account_name = relroot.replace(os.sep, sep)
+        if is_valid(account_name):
+            yield (root, account_name, dirs, files)
