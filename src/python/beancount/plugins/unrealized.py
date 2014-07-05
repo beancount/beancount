@@ -149,7 +149,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
                          gain_loss_str, total_units, currency,
                          price_number, cost_currency, price_date,
                          average_cost, cost_currency)
-        entry = Transaction(fileloc._replace(lineno=index),
+        entry = Transaction(fileloc._replace(lineno=1000 + index),
                             latest_date, flags.FLAG_UNREALIZED,
                             None, narration, None, None, [])
 
@@ -180,10 +180,10 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
                     for posting in entry.postings}
     open_entries = getters.get_account_open_close(entries)
     new_open_entries = []
-    fileloc = FileLocation('<unrealized_gains>', 0)
-    for account_ in new_accounts:
+    for account_ in sorted(new_accounts):
         if account_ not in open_entries:
-            open_entry = data.Open(fileloc, latest_date, account_, None)
+            open_entry = data.Open(fileloc._replace(lineno=index),
+                                   latest_date, account_, None)
             new_open_entries.append(open_entry)
 
     return (entries + new_open_entries + new_entries, errors)
