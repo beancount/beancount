@@ -7,7 +7,7 @@ import textwrap
 from os import path
 
 from beancount.core import account_test
-from beancount.parser import documents
+from beancount.ops import documents
 from beancount.parser import parser
 from beancount.parser import cmptest
 
