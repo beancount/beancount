@@ -1,7 +1,6 @@
 """Beancount syntax parser.
 """
 import collections
-import datetime
 import functools
 import inspect
 import textwrap
@@ -11,9 +10,8 @@ import re
 from os import path
 
 from beancount.parser import _parser
+from beancount.parser import lexer
 from beancount.parser import options
-from beancount.core import account
-from beancount.core import account_types
 from beancount.core import data
 from beancount.core.amount import ZERO, Decimal, Amount, amount_div
 from beancount.core.position import Lot, Position
@@ -56,29 +54,28 @@ def valid_account_regexp(options):
 TxnFields = collections.namedtuple('TxnFields', 'strings tags links has_pipe')
 
 
-class Builder(object):
-    """A builder used by the lexer and grammer parser as callbacks to create
+class Builder(lexer.LexBuilder):
+    """A builder used by the lexer and grammar parser as callbacks to create
     the data objects corresponding to rules parsed from the input file."""
 
     def __init__(self):
+        lexer.LexBuilder.__init__(self)
+
         # A stack of the current active tags.
         self.tags = []
 
         # The result from running the parser, a list of entries.
         self.entries = []
 
-        # A mapping of all the accounts created.
-        self.accounts = {}
-
         # Errors that occurred during parsing.
         self.errors = []
 
         # Accumulated and unprocessed options.
         self.options = copy.deepcopy(options.DEFAULT_OPTIONS)
-        self.account_regexp = valid_account_regexp(self.options)
 
-        # Initialize the parsing options.
-        self.account_types = account_types.DEFAULT_ACCOUNT_TYPES
+        # Make the account regexp more restrictive than the default: check
+        # types.
+        self.account_regexp = valid_account_regexp(self.options)
 
     def store_result(self, entries):
         """Start rule stores the final result here.
@@ -131,115 +128,6 @@ class Builder(object):
             if key.startswith('name_'):
                 # Update the set of valid account types.
                 self.account_regexp = valid_account_regexp(self.options)
-                self.account_types = options.get_account_types(self.options)
-
-    def DATE(self, year, month, day):
-        """Process a DATE token.
-
-        Args:
-          year: integer year.
-          month: integer month.
-          day: integer day
-        Returns:
-          A new datetime object.
-        """
-        return datetime.date(year, month, day)
-
-    def ACCOUNT(self, account_name):
-        """Process an ACCOUNT token.
-
-        This function attempts to reuse an existing account if one exists,
-        otherwise creates one on-demand.
-
-        Args:
-          account_name: a str, the valid name of an account.
-        Returns:
-          A new Account object.
-        """
-        # Check account name validity.
-        if not self.account_regexp.match(account_name):
-            fileloc = FileLocation('<ACCOUNT>', 0)
-            self.errors.append(
-                ParserError(fileloc,
-                            "Invalid account name: {}".format(account_name), None))
-            return account.join(self.options['name_equity'], 'InvalidAccountName')
-
-        # Check account type validity.
-        account_type = account_types.get_account_type(account_name)
-        if account_type not in self.account_types:
-            self.errors.append(
-                ParserError(fileloc,
-                            "Invalid account type for: {}".format(account_name), None))
-            return account.join(self.options['name_equity'], 'InvalidAccountType')
-
-        # Create an account, reusing their strings as we go.
-        try:
-            account_name = self.accounts[account_name]
-        except KeyError:
-            self.accounts[account_name] = account_name
-
-        return account_name
-
-    def CURRENCY(self, currency_name):
-        """Process a CURRENCY token.
-
-        Args:
-          currency_name: the name of the currency.
-        Returns:
-          A new currency object; for now, these are simply represented
-          as the currency name.
-        """
-        return currency_name
-
-    def STRING(self, string):
-        """Process a STRING token.
-
-        Args:
-          string: the string to process.
-        Returns:
-          The string. Nothing to be done or cleaned up. Eventually we might
-          do some decoding here.
-        """
-        return string
-
-    def NUMBER(self, number):
-        """Process a NUMBER token. Convert into Decimal.
-
-        Args:
-          number: a str, the number to be converted.
-        Returns:
-          A Decimal instance built of the number string.
-        """
-        try:
-            return Decimal(number)
-        except Exception as e:
-            fileloc = FileLocation(_parser.get_yyfilename(),
-                                   _parser.get_yylineno())
-            message = "Error parsing NUMBER for token '{}': {}".format(number, e)
-            self.errors.append(
-                ParserError(fileloc, message, None))
-
-    def TAG(self, tag):
-        """Process a TAG token.
-
-        Args:
-          tag: a str, the tag to be processed.
-        Returns:
-          The tag string itself. For now we don't need an object to represent
-          those; keeping it simple.
-        """
-        return tag
-
-    def LINK(self, link):
-        """Process a LINK token.
-
-        Args:
-          link: a str, the name of the string.
-        Returns:
-          The link string itself. For now we don't need to represent this by
-          an object.
-        """
-        return link
 
     def amount(self, number, currency):
         """Process an amount grammar rule.
