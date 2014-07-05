@@ -26,7 +26,8 @@ class TestExampleTrackPending(test_utils.TestCase):
           Liabilities:AccountsPayable
 
         """
-        original_entries, _, _ = loader.load(filename)
+        original_entries, errors, _ = loader.load(filename)
+        self.assertFalse(errors)
         entries = tag_pending.tag_pending_transactions(original_entries, 'PENDING')
         self.assertEqual(len(original_entries), len(entries))
         self.assertEqual(None, entries[4].tags)

@@ -24,7 +24,7 @@ def main():
     with misc_utils.print_time('load', logging.info):
         # Load up the file, print errors, checking and validation are invoked
         # automatically.
-        entries, errors, _ = load(opts.filename)
+        entries, errors, _ = load(opts.filename, logging.info)
 
     # Print out the list of errors.
     printer.print_errors(errors, file=sys.stdout)

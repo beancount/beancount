@@ -38,7 +38,7 @@ def do_list_accounts(filename):
       filename: A string, the Beancount input filename.
     """
     # Load the input file and gather the open/close directives.
-    entries, errors, options_map = loader.load(filename, quiet=True)
+    entries, errors, options_map = loader.load(filename)
     open_close = getters.get_account_open_close(entries)
 
     if not entries:
@@ -120,7 +120,7 @@ def do_roundtrip(filename):
     """
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     logging.info("Read the entries")
-    entries, errors, options = loader.load(filename, quiet=True)
+    entries, errors, options = loader.load(filename)
     printer.print_errors(errors, file=sys.stderr)
 
     logging.info("Print them out to a file")

@@ -22,9 +22,7 @@ from beancount.ops import prices
 LoadError = collections.namedtuple('LoadError', 'fileloc message entry')
 
 
-def load(filename,
-         quiet=False,
-         parse_method='filename'):
+def load(filename, log_function=None, parse_method='filename'):
     """Open the a Beancount input file, parse it, run transformations and validate.
 
     This routines does all that is necessary to obtain a list of entries ready
@@ -34,8 +32,8 @@ def load(filename,
 
     Args:
       filename: the name of the file to be parsed.
-      quiet: a boolean, if true, the timing of each section of the parsing and
-             validation process will be printed out on logging.info.
+      log_function: A function to write timing log entries to, or None, if it
+        should be quiet.
       parse_method: a string, 'filename' or 'string', that describes the contents
                     of 'filename'.
     Returns:
@@ -45,7 +43,6 @@ def load(filename,
           the file.
         options_map: A dict of the options parsed from the file.
     """
-    log_function = None if quiet else logging.info
 
     # Parse the input file.
     if parse_method == 'filename':
@@ -162,9 +159,7 @@ def loaddoc(fun):
     @functools.wraps(fun)
     def wrapper(self):
         contents = textwrap.dedent(fun.__doc__)
-        entries, errors, options_map = load(contents,
-                                            parse_method='string',
-                                            quiet=True)
+        entries, errors, options_map = load(contents, parse_method='string')
         return fun(self, entries, errors, options_map)
     wrapper.__doc__ = None
     return wrapper

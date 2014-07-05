@@ -11,6 +11,7 @@ class TestViewsFromEmpty(unittest.TestCase):
     def test_from_empty(self):
         # Test with no input.
         entries, errors, options_map = loader.load("", parse_method="string")
+        self.assertFalse(errors)
         self.assertEqual([], entries)
 
         view = views.AllView(entries, options_map, 'FROM_EMPTY')

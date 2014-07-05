@@ -19,7 +19,8 @@ class TestExampleForecast(cmptest.TestCase):
               Assets:Cash
 
         """)
-        entries, _, __ = loader.load(INPUT, parse_method='string')
+        entries, errors, __ = loader.load(INPUT, parse_method='string')
+        self.assertFalse(errors)
         self.assertEqualEntries("""
 
             2011-01-01 open Expenses:Restaurant
