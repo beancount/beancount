@@ -13,14 +13,14 @@ from beancount.utils import test_utils
 
 class TestMiscUtils(unittest.TestCase):
 
-    def test_print_time(self):
+    def test_log_time(self):
         with test_utils.capture() as stdout:
-            with misc_utils.print_time('test-op', None):
+            with misc_utils.log_time('test-op', None):
                 time.sleep(0.1)
         self.assertEqual("", stdout.getvalue())
 
         with test_utils.capture() as stdout:
-            with misc_utils.print_time('test-op', print):
+            with misc_utils.log_time('test-op', print):
                 time.sleep(0.1)
         self.assertTrue(re.search("Operation", stdout.getvalue()))
         self.assertTrue(re.search("Time", stdout.getvalue()))

@@ -8,7 +8,7 @@ from collections import defaultdict
 
 
 @contextlib.contextmanager
-def print_time(operation_name, log_function):
+def log_time(operation_name, log_function):
     """A context manager that times the block and logs it to info level.
 
     Args:

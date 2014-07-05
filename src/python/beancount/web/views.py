@@ -74,15 +74,15 @@ class View:
                                                *current_accounts)
 
         # Realize the three sets of entries.
-        with misc_utils.print_time('realize_opening', logging.info):
+        with misc_utils.log_time('realize_opening', logging.info):
             self.opening_real_accounts = realization.realize(self.opening_entries,
                                                              account_types)
 
-        with misc_utils.print_time('realize', logging.info):
+        with misc_utils.log_time('realize', logging.info):
             self.real_accounts = realization.realize(self.entries,
                                                      account_types)
 
-        with misc_utils.print_time('realize_closing', logging.info):
+        with misc_utils.log_time('realize_closing', logging.info):
             self.closing_real_accounts = realization.realize(self.closing_entries,
                                                              account_types)
 
@@ -159,7 +159,7 @@ class YearView(View):
         begin_date = datetime.date(self.year, 1, 1)
         end_date = datetime.date(self.year+1, 1, 1)
         account_types = options.get_account_types(options_map)
-        with misc_utils.print_time('clamp', logging.info):
+        with misc_utils.log_time('clamp', logging.info):
             entries, index = summarize.clamp(entries, begin_date, end_date,
                                              account_types,
                                              options_map['conversion_currency'],

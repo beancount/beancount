@@ -78,14 +78,14 @@ def _load(file_or_string, log_function, parse_function):
       See load() or load_string().
     """
     # Parse the input file.
-    with misc_utils.print_time('beancount.parser.parser', log_function):
+    with misc_utils.log_time('beancount.parser.parser', log_function):
         entries, parse_errors, options_map = parse_function(file_or_string)
 
     # Transform the entries.
     entries, errors = run_transformations(entries, parse_errors, options_map, log_function)
 
     # Validate the list of entries.
-    with misc_utils.print_time('beancount.ops.validate', log_function):
+    with misc_utils.log_time('beancount.ops.validate', log_function):
         valid_errors = validation.validate(entries, options_map)
         errors.extend(valid_errors)
 
@@ -132,7 +132,7 @@ def run_transformations(entries, parse_errors, options_map, log_function):
             if not hasattr(module, '__plugins__'):
                 continue
 
-            with misc_utils.print_time(plugin_name, log_function):
+            with misc_utils.log_time(plugin_name, log_function):
 
                 # Run each transformer function in the plugin.
                 for function_name in module.__plugins__:
