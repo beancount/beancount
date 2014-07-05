@@ -524,7 +524,9 @@ def parse(filename, **kw):
         a dict of the option values that were parsed from the file.)
     """
     builder = Builder()
-    _parser.parse(path.abspath(filename), builder, **kw)
+    abs_filename = path.abspath(filename)
+    builder.options["filename"] = abs_filename
+    _parser.parse(abs_filename, builder, **kw)
     entries = sorted(builder.entries, key=data.entry_sortkey)
     return (entries, builder.errors, builder.options)
 
