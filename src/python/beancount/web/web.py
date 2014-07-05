@@ -693,6 +693,22 @@ def conversions():
         """.format(oss.getvalue(), conversion_balance))
 
 
+# Note: these redirects are necessary to let the view router create global links
+# from routines that work from a single build_url() argument being passed in. We
+# can just pass in the view's request.app.get_url() function and it can call
+# this with 'doc' or 'link' and a redirect moves it to the corresponding global
+# page.
+@viewapp.route('/doc/<filename:re:.*>', name=doc_name)
+def doc(filename=None):
+    # Redirect to global page.
+    bottle.redirect(app.router.build('doc', filename=filename))
+
+@viewapp.route('/link/<link:re:.*>', name='link')
+def link(link=None):
+    # Redirect to global page.
+    bottle.redirect(app.router.build('link', link=link))
+
+
 #--------------------------------------------------------------------------------
 
 
