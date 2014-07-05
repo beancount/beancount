@@ -10,6 +10,7 @@ import logging
 from os import path
 
 from beancount.parser import parser
+from beancount.parser import lexer
 from beancount.parser import options
 from beancount.parser import printer
 from beancount.core import account_types
@@ -26,7 +27,7 @@ def do_dump_lexer(filename):
     Args:
       filename: A string, the Beancount input filename.
     """
-    parser.dump_lexer(filename, sys.stdout)
+    lexer.dump_lexer(filename, sys.stdout)
 
 
 def do_list_accounts(filename):
