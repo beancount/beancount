@@ -28,10 +28,7 @@ def do_dump_lexer(filename):
       filename: A string, the Beancount input filename.
     """
     for token, lineno, text, obj in lexer.lex_iter(filename):
-        sys.stdout.write('{:12} {:6d} {} {}\n'.format(token,
-                                                      lineno,
-                                                      repr(text),
-                                                      repr(obj) if obj is not None else ''))
+        sys.stdout.write('{:12} {:6d} {}\n'.format(token, lineno, repr(text)))
 
 
 def do_list_accounts(filename):
