@@ -141,20 +141,33 @@ PyObject* lexer_init(PyObject *self, PyObject *args)
 PyObject* lexer_next(PyObject *self, PyObject *args)
 {
     const char* tokenName = NULL;
-
-    /* Run the lexer. */
     YYSTYPE yylval;
     YYLTYPE yylloc;
-    int token = yylex(&yylval, &yylloc);
+    int token;
+    PyObject* obj;
+
+    /* Run the lexer. */
+    token = yylex(&yylval, &yylloc);
     if ( token == 0 ) {
         yylex_destroy();
         Py_RETURN_NONE;
     }
 
-    tokenName = getTokenName(token);
-    return Py_BuildValue("(ssi)", tokenName, yytext, yylloc.first_line);
-}
+    obj = Py_None;
+    if (token == DATE ||
+        token == ACCOUNT ||
+        token == CURRENCY ||
+        token == STRING ||
+        token == NUMBER ||
+        token == TAG ||
+        token == LINK) {
 
+        obj = yylval.pyobj;
+    }
+
+    tokenName = getTokenName(token);
+    return Py_BuildValue("(sis#O)", tokenName, yylloc.first_line, yytext, yyleng, obj);
+}
 
 
 static PyMethodDef module_functions[] = {

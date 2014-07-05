@@ -99,8 +99,8 @@ int strtonl(const char* buf, size_t nchars);
 \/		{ return SLASH; }
 
  /* Skip commented output (but not the accompanying newline). */
-;+		{
-    yy_skip_line();
+;+.*		{
+    /* yy_skip_line(); */
     return COMMENT;
 }
 
@@ -162,8 +162,7 @@ option		{ return OPTION; }
 
  /* String literals. */
 \"[^\"]*\" 			{
-    yytext[yyleng-1] = '\0';
-    yylval->pyobj = BUILD("STRING", "s", &(yytext[1]));
+    yylval->pyobj = BUILD("STRING", "s#", yytext+1, yyleng-2);
     return STRING;
 }
 
