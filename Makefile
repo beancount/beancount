@@ -158,7 +158,11 @@ sandbox:
 # Report on the sorry state of test coverage, for 1.0 release.
 # sources and imports are going to move to ledgerhub.
 status test-status:
-	./etc/find-missing-tests.py $(SRC)
+	@echo "Missing tests:"
+	@./etc/find-missing-tests.py $(SRC)
+	@echo ""
+	@echo "Remaining FIXME:"
+	@grep -srn FIXME $(SRC)
 
 
 # Check for unused imports.

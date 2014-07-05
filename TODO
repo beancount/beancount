@@ -33,6 +33,7 @@ beancount: TODO
        renders to a full page; the second one only a div.
 
 
+  - List all bean-doctor command in --help.
 
 
 Doc notes (move to document):
@@ -213,9 +214,9 @@ Doc notes (move to document):
     should be tight, no links to "Not Implemented" pages. There aren't many
     left anyway.
 
-  - All errors should be displayed in an overlay; proper error handling and
-    display for the web interface is not optional. This needs to be done before
-    shipping.
+  - IMPORTANT AND URGENT! All errors should be displayed in an overlay; proper
+    error handling and display for the web interface is not optional. This needs
+    to be done before shipping.
 
   - Add a test for --view option.
 
@@ -390,6 +391,11 @@ Doc notes (move to document):
 
   - Create a new report type: "days" that counts the days of any event in the
     filtered log.
+
+
+
+  - Document args of C functions in the same way as Python's, perhaps using the
+    new Python3 syntax definition thingamajig (I forget the name, there's a PEP).
 
 
 
