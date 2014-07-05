@@ -22,20 +22,33 @@ from beancount.ops import prices
 LoadError = collections.namedtuple('LoadError', 'fileloc message entry')
 
 
-def load(filename, log_function=None, parse_method='filename'):
-    """Open the a Beancount input file, parse it, run transformations and validate.
+def load(filename, log_function=None):
+    """Open a Beancount input file, parse it, run transformations and validate.
+    """
+    return _load(filename, log_function, parser.parse)
 
-    This routines does all that is necessary to obtain a list of entries ready
+
+def load_string(filename, log_function=None):
+    """Open a Beancount input string, parse it, run transformations and validate.
+    """
+    return _load(filename, log_function, parser.parse_string)
+
+
+def _load(filename, log_function, parse_function):
+    """Parse Beancount input, run its transformations and validate it.
+
+    (This is an internal method.)
+    This routine does all that is necessary to obtain a list of entries ready
     for realization and working with them. This is the principal call for of the
     scripts that load a ledger. It returns a list of entries transformed and
     ready for reporting, a list of errors, and parser's options dict.
 
     Args:
-      filename: the name of the file to be parsed.
+      file_or_string: The name of the file to be parsed, or an input string.
       log_function: A function to write timing log entries to, or None, if it
         should be quiet.
-      parse_method: a string, 'filename' or 'string', that describes the contents
-                    of 'filename'.
+      parse_function: A function used to parse file_or_string. Either
+        parser.parse() or parser.parse_string().
     Returns:
       A triple of:
         entries: A date-sorted list of entries from the file.
@@ -43,16 +56,9 @@ def load(filename, log_function=None, parse_method='filename'):
           the file.
         options_map: A dict of the options parsed from the file.
     """
-
     # Parse the input file.
-    if parse_method == 'filename':
-        parse_fun = parser.parse
-    elif parse_method == 'string':
-        parse_fun = parser.parse_string
-    else:
-        raise NotImplementedError("Method: {}".format(parse_method))
     with misc_utils.print_time('parse', log_function):
-        entries, parse_errors, options_map = parse_fun(filename)
+        entries, parse_errors, options_map = parse_function(filename)
 
     # Transform the entries.
     entries, errors = run_transformations(entries, parse_errors, options_map,
@@ -159,7 +165,7 @@ def loaddoc(fun):
     @functools.wraps(fun)
     def wrapper(self):
         contents = textwrap.dedent(fun.__doc__)
-        entries, errors, options_map = load(contents, parse_method='string')
+        entries, errors, options_map = load_string(contents)
         return fun(self, entries, errors, options_map)
     wrapper.__doc__ = None
     return wrapper

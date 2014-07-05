@@ -19,7 +19,7 @@ class TestExampleForecast(cmptest.TestCase):
               Assets:Cash
 
         """)
-        entries, errors, __ = loader.load(INPUT, parse_method='string')
+        entries, errors, __ = loader.load_string(INPUT)
         self.assertFalse(errors)
         self.assertEqualEntries("""
 

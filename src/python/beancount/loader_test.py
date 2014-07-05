@@ -21,26 +21,31 @@ TEST_INPUT = """
 
 class TestLoader(unittest.TestCase):
 
-    def test_load__filename(self):
+    def test_load(self):
         with tempfile.NamedTemporaryFile('w') as f:
             f.write(TEST_INPUT)
             f.flush()
-            entries, errors, options_map = loader.load(f.name, parse_method='filename')
+            entries, errors, options_map = loader.load(f.name)
             self.assertTrue(isinstance(entries, list))
             self.assertTrue(isinstance(errors, list))
             self.assertTrue(isinstance(options_map, dict))
 
-    def test_load__string(self):
-        entries, errors, options_map = loader.load(TEST_INPUT, parse_method='string')
+            entries, errors, options_map = loader.load(f.name, log_function=print)
+            self.assertTrue(isinstance(entries, list))
+            self.assertTrue(isinstance(errors, list))
+            self.assertTrue(isinstance(options_map, dict))
+
+    def test_load_string(self):
+        entries, errors, options_map = loader.load_string(TEST_INPUT)
         self.assertTrue(isinstance(entries, list))
         self.assertTrue(isinstance(errors, list))
         self.assertTrue(isinstance(options_map, dict))
 
-        entries, errors, options_map = loader.load(TEST_INPUT, log_function=print,
-                                                   parse_method='string')
+        entries, errors, options_map = loader.load_string(TEST_INPUT, log_function=print)
         self.assertTrue(isinstance(entries, list))
         self.assertTrue(isinstance(errors, list))
         self.assertTrue(isinstance(options_map, dict))
+
 
 class TestLoadDoc(unittest.TestCase):
 

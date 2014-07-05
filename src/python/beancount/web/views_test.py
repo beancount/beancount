@@ -10,7 +10,7 @@ class TestViewsFromEmpty(unittest.TestCase):
 
     def test_from_empty(self):
         # Test with no input.
-        entries, errors, options_map = loader.load("", parse_method="string")
+        entries, errors, options_map = loader.load_string("")
         self.assertFalse(errors)
         self.assertEqual([], entries)
 

@@ -529,17 +529,17 @@ def parse(filename, **kw):
     return (entries, builder.errors, builder.options)
 
 
-def parse_string(input_string, **kw):
+def parse_string(string, **kw):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts.
 
     Args:
-      input_string: a str, the contents to be parsed instead of a file's.
+      string: a str, the contents to be parsed instead of a file's.
     Return:
       Same as the output of parse().
     """
     with tempfile.NamedTemporaryFile('w') as tmp_file:
-        tmp_file.write(input_string)
+        tmp_file.write(string)
         tmp_file.flush()
         return parse(tmp_file.name, **kw)
 
