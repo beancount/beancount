@@ -4,10 +4,6 @@ beancount: TODO
 ** Complete 100% Coverage for Unit Tests
 
 
-  - Move validation tests, we need to check the data types themselves, move
-    this to validation code.
-
-
   - Make helper functions in summarize, for clamp() and close() which accept
     options_map and automatically derive everything they need from entries.
 
@@ -33,6 +29,10 @@ beancount: TODO
   with the intermediate reports stage instead of just the web interface, it's
   becoming clearer where some files need to move. Try to make these moves
   before shipping, so that things don't move nearly as much later on.
+
+  - beancount.ops.prices: the add_implicit_prices function should be moved out
+    of this file and on its own file. There's too much other material in the
+    'prices' module.
 
   - beancount.core.realization: Look at deps for beancount.core.realization and
     move it upstream where it makes sense, maybe ops.
@@ -83,6 +83,14 @@ beancount: TODO
         Equity:Account1      1 HOUSE {102 USD}
         Expenses:Account1    1 HOUSE {103 USD}
         Income:Account1      1 HOUSE {104 USD}
+
+    You must ALLOW and test for this, however:
+
+      2004-11-29 * "Closed Cisco"
+        Assets:CA:RBC-Investing:RRSP:CSCO           -18 CSCO {79.50 USD} @ 19.00 USD
+        Assets:CA:RBC-Investing:RRSP:CSCO           -45 CSCO {30.50 USD} @ 19.00 USD
+        Assets:CA:RBC-Investing:RRSP:Cash            1372.07 CAD @ 0.87240446916 USD
+        Income:CA:RBC-Investing:RRSP:PnL      ;; gains = 1372.07 - (2129.19 + 2122.12) = 2879.24 CAD ; loss
 
     Also, deal with multiple implied price points added from different
     transactions on the same day... instead of just taking the later one, drop
@@ -1047,6 +1055,12 @@ beancount: TODO
   - (performance) Profile the web pages, if account_link() is high, provide an
     explicit cache for each unique view. (We had to remove this when we
     simplified the function using build_url for adding tests.)
+
+  - (performance) Implement the stable hashing function in C and reinstall the
+    validate_hash test.
+
+  - (performance) Implement inventories in C and reinstall the
+    validate_check_balances test.
 
 
   - Add an optional parameter to the loaddoc() and parsedoc() decorators to
@@ -2399,6 +2413,12 @@ Improve this bit:
        ;; Check that the balance of this account on 2013-12-31 is >= 1000 USD
        2013-12-31 goal  Assets:Savings  >= 1000 USD
 
+
+** Trades
+
+  - You should be able to report on all booked trades during a period,
+    especially with the new booking algorithm, this will be useful.
+    Create a new report type for this.
 
 * Web Interface
 ** Programmable View

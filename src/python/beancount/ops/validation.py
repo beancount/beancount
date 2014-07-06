@@ -9,12 +9,17 @@ trickled up to the user.
 """
 from os import path
 import collections
+import logging
 
 from beancount.core import data
 from beancount.core.data import Open, Close, Transaction, Document, Note
 from beancount.core import data
 from beancount.core import getters
 from beancount.core import inventory
+from beancount.core import complete
+from beancount.core import compare
+from beancount.parser import printer
+from beancount.utils import misc_utils
 
 
 # An error from one of the checks.
@@ -330,6 +335,67 @@ def validate_documents_paths(entries, options_map):
                 not path.isabs(entry.filename))]
 
 
+def validate_data_types(entries, options_map):
+    """Check that all the data types of the attributes of entries are as expected.
+
+    Users are provided with a means to filter the list of entries. They're able to
+    write code that manipulates those tuple objects without any type constraints.
+    With discipline, this mostly works, but I know better: check, just to make sure.
+    This routine checks all the data types and assumptions on entries.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of new errors, if any were found.
+    """
+    errors = []
+    for entry in entries:
+        try:
+            data.sanity_check_types(entry)
+        except AssertionError as exc:
+            # FIXME: TODO - insert validation errors
+            printer.print_entry(entry)
+    return errors
+
+
+def validate_check_balances(entries, options_map):
+    """Check again that all transactions balance, as users may have transformed
+    transactions.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of new errors, if any were found.
+    """
+    # Note: this is a bit slow; we could limit our checks to the original
+    # transactions by using the hash function in the loader.
+    errors = []
+    for entry in entries:
+        if isinstance(entry, Transaction):
+            balance = complete.compute_residual(entry.postings)
+            if not balance.is_small(complete.SMALL_EPSILON):
+                errors.append(
+                    ValidationError(entry.fileloc,
+                                 "Transaction does not balance: {}.".format(inventory),
+                                 entry))
+    return errors
+
+
+def validate_duplicates(entries, options_map):
+    """Check that the entries are unique, by computing hashes.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of new errors, if any were found.
+    """
+    unused_hashes, errors = compare.hash_entries(entries)
+    return errors
+
+
 def validate(entries, options_map):
     """Perform all the standard checks on parsed contents.
 
@@ -341,24 +407,20 @@ def validate(entries, options_map):
     """
     # Run various validation routines define above.
     errors = []
-    for validation_function in [validate_inventory_booking,
+    for validation_function in [validate_data_types,
+                                validate_inventory_booking,
                                 validate_open_close,
                                 validate_active_accounts,
                                 validate_unused_accounts,
                                 validate_currency_constraints,
                                 validate_duplicate_balances,
-                                validate_documents_paths]:
+                                validate_documents_paths,
+                                validate_check_balances,
+                                validate_duplicates]:
 
-        new_errors = validation_function(entries, options_map)
+        with misc_utils.log_time('function: {}'.format(validation_function.__name__),
+                                 logging.info):
+            new_errors = validation_function(entries, options_map)
         errors.extend(new_errors)
 
     return errors
-
-
-# FIXME: TODO - check again that all transactions balance, users may have
-# transformed transactions; we could limit our checks to the original
-# transactions by using the hash function in the loader.
-#
-# Check all data types.
-#
-# Check _entry from postings, should be circular.
