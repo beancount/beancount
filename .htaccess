@@ -14,21 +14,27 @@ RedirectMatch /doc/de                    /beancount/doc/double-entry
 RedirectMatch /doc/double                /beancount/doc/double-entry
 RedirectMatch /doc/de-method             /beancount/doc/double-entry
 
+RedirectMatch /doc/cookbook              https://docs.google.com/document/d/1WjARst_cSxNE-Lq6JnJ5CC41T3WndEsiMw4d46r2694/
+RedirectMatch /doc/examples              /beancount/doc/cookbook
+
+RedirectMatch /doc/trading               https://docs.google.com/document/d/1WjARst_cSxNE-Lq6JnJ5CC41T3WndEsiMw4d46r2694/
+RedirectMatch /doc/stock                 /beancount/doc/trading
+RedirectMatch /doc/stocks                /beancount/doc/trading
+RedirectMatch /doc/pnl                   /beancount/doc/trading
+
 RedirectMatch /doc/users-manual          https://docs.google.com/document/d/1wAMVrKIA2qtRGmoVDSUBJGmYZSygUaR0uOMW1GV3YE0/
 RedirectMatch /doc/manual                /beancount/doc/users-manual
 RedirectMatch /doc/manual                /beancount/doc/user-manual
+
+RedirectMatch /doc/cheatsheet$           http://furius.ca/beancount/doc/cheatsheet/beancount-cheatsheet.pdf
+RedirectMatch /doc/cheat$                /beancount/doc/cheatsheet
+RedirectMatch /doc/sheet$                /beancount/doc/cheatsheet
 
 RedirectMatch /doc/design-doc            https://docs.google.com/document/d/1N7HDXuNWgLG2PqFS4Kkgv5LzAAtU6c97UVNT7tdTIjA/
 RedirectMatch /doc/design                /beancount/doc/design-doc
 RedirectMatch /doc/devel-doc             /beancount/doc/design-doc
 RedirectMatch /doc/devel                 /beancount/doc/design-doc
 
-RedirectMatch /doc/cookbook              https://docs.google.com/document/d/1WjARst_cSxNE-Lq6JnJ5CC41T3WndEsiMw4d46r2694/
-
 RedirectMatch /doc/custom-appplication   https://docs.google.com/document/d/1SnR7BdE2VXFTMEvnkhAd9PwXu_AxytTYpiS1LjXdP0E/
 RedirectMatch /doc/custom                /beancount/doc/custom-application
 RedirectMatch /doc/application           /beancount/doc/custom-application
-
-RedirectMatch /doc/cheatsheet$           http://furius.ca/beancount/doc/cheatsheet/beancount-cheatsheet.pdf
-RedirectMatch /doc/cheat$                /beancount/doc/cheatsheet
-RedirectMatch /doc/sheet$                /beancount/doc/cheatsheet
