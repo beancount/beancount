@@ -1,12 +1,18 @@
 # Short redirect links for most of the documentation on Google Drive.
 
-RedirectMatch /doc/intro                 https://docs.google.com/document/d/100tGcA4blh6KSXPRGCZpUlyxaRUwFHEvnz_k9DyZFn4/
-RedirectMatch /doc/double-entry          /beancount/doc/intro
-RedirectMatch /doc/de-method             /beancount/doc/intro
+RedirectMatch /doc/index                 https://docs.google.com/document/d/1RaondTJCS_IUPBHFNdT8oqFKJjVJDsfsn6JEjBG04eA/
+RedirectMatch /doc/meta                  /beancount/doc/index
 
-RedirectMatch /doc/cheatsheet$           http://furius.ca/beancount/doc/cheatsheet/beancount-cheatsheet.pdf
-RedirectMatch /doc/cheat$                /beancount/doc/cheatsheet
-RedirectMatch /doc/sheet$                /beancount/doc/cheatsheet
+RedirectMatch /doc/motivation            https://docs.google.com/document/d/1e4Vz3wZB_8-ZcAwIFde8X5CjzKshE4-OXtVVHm4RQ8s/
+RedirectMatch /doc/intro                 /beancount/doc/motivation
+RedirectMatch /doc/context               /beancount/doc/motivation
+
+RedirectMatch /doc/double-entry          https://docs.google.com/document/d/100tGcA4blh6KSXPRGCZpUlyxaRUwFHEvnz_k9DyZFn4/
+RedirectMatch /doc/double_entry          /beancount/doc/double-entry
+RedirectMatch /doc/doubleentry           /beancount/doc/double-entry
+RedirectMatch /doc/de                    /beancount/doc/double-entry
+RedirectMatch /doc/double                /beancount/doc/double-entry
+RedirectMatch /doc/de-method             /beancount/doc/double-entry
 
 RedirectMatch /doc/users-manual          https://docs.google.com/document/d/1wAMVrKIA2qtRGmoVDSUBJGmYZSygUaR0uOMW1GV3YE0/
 RedirectMatch /doc/manual                /beancount/doc/users-manual
@@ -17,15 +23,12 @@ RedirectMatch /doc/design                /beancount/doc/design-doc
 RedirectMatch /doc/devel-doc             /beancount/doc/design-doc
 RedirectMatch /doc/devel                 /beancount/doc/design-doc
 
-RedirectMatch /doc/comparison            https://docs.google.com/document/d/1qdd3RwDfV6j3DDmM_tYaZnBrs04jcyFaOghd2r6WEUA/
-RedirectMatch /doc/ledger-comparison     /beancount/doc/comparison
-
 RedirectMatch /doc/cookbook              https://docs.google.com/document/d/1WjARst_cSxNE-Lq6JnJ5CC41T3WndEsiMw4d46r2694/
 
 RedirectMatch /doc/custom-appplication   https://docs.google.com/document/d/1SnR7BdE2VXFTMEvnkhAd9PwXu_AxytTYpiS1LjXdP0E/
 RedirectMatch /doc/custom                /beancount/doc/custom-application
 RedirectMatch /doc/application           /beancount/doc/custom-application
 
-RedirectMatch /doc/presentation          https://docs.google.com/presentation/d/1rcT42juRBnmlh7ZCXs_rR3GSCgcdLHnQFqoqEWUepN4/
-RedirectMatch /doc/preso                 /beancount/doc/presentation
-RedirectMatch /doc/slides                /beancount/doc/presentation
+RedirectMatch /doc/cheatsheet$           http://furius.ca/beancount/doc/cheatsheet/beancount-cheatsheet.pdf
+RedirectMatch /doc/cheat$                /beancount/doc/cheatsheet
+RedirectMatch /doc/sheet$                /beancount/doc/cheatsheet

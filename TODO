@@ -249,9 +249,6 @@ beancount: TODO
 
 ** Documentation
 
-  - Create a documentation page with all the links below. Include other
-    documents written, clean up README file.
-
   I want to complete a snapshot of documentation before shipping. I often have
   ideas that end up in this file instead of the actual documentation because I
   don't have a good enough base to put them in. Bite the bullet. This means the
@@ -260,7 +257,7 @@ beancount: TODO
 
   - A generic introduction to the double-entry method, in as simple as possible
     terms:
-    http://furius.ca/beancount/doc/intro
+    http://furius.ca/beancount/doc/double-entry
 
   - A cheatsheet to the syntax (COMPLETE):
     http://furius.ca/beancount/doc/cheatsheet
