@@ -14,8 +14,12 @@ from beancount.core.data import Transaction, Price
 from beancount.core import data
 from beancount.core import inventory
 from beancount.utils import misc_utils
+from beancount.parser import printer
 
 __plugins__ = ('add_implicit_prices',)
+
+
+ImplicitPriceError = collections.namedtuple('ImplicitPriceError', 'fileloc message entry')
 
 
 def add_implicit_prices(entries, unused_options_map):
@@ -33,6 +37,10 @@ def add_implicit_prices(entries, unused_options_map):
       list of errors.
     """
     new_entries = []
+    errors = []
+
+    # A dict of (date, currency, cost-currency) to price entry.
+    new_price_entry_map = {}
 
     balances = collections.defaultdict(inventory.Inventory)
     for entry in entries:
@@ -53,22 +61,52 @@ def add_implicit_prices(entries, unused_options_map):
                 # underlying instrument, e.g.
                 #      Asset:Account    100 GOOG {564.20} @ {581.97} USD
                 if posting.price is not None:
-                    entry = Price(entry.fileloc, entry.date,
-                                  posting.position.lot.currency,
-                                  posting.price)
-                    new_entries.append(entry)
+                    price_entry = Price(entry.fileloc, entry.date,
+                                        posting.position.lot.currency,
+                                        posting.price)
 
                 # Add costs, when we're not matching against an existing
                 # position. This happens when we're just specifying the cost,
                 # e.g.
                 #      Asset:Account    100 GOOG {564.20}
                 elif posting.position.lot.cost is not None and not reducing:
-                    entry = Price(entry.fileloc, entry.date,
-                                  posting.position.lot.currency,
-                                  posting.position.lot.cost)
-                    new_entries.append(entry)
+                    price_entry = Price(entry.fileloc, entry.date,
+                                        posting.position.lot.currency,
+                                        posting.position.lot.cost)
 
-    return new_entries, []
+                else:
+                    price_entry = None
+
+                if price_entry is not None:
+                    key = (price_entry.date,
+                           price_entry.currency,
+                           price_entry.amount.number,  # Ideally should bd removed.
+                           price_entry.amount.currency)
+                    try:
+                        dup_entry = new_price_entry_map[key]
+
+                        ## Do not fail for now. We still have many valid use
+                        ## cases of duplicate prices on the same date, for
+                        ## example, stock splits, or trades on two dates with
+                        ## two separate reported prices. We need to figure out a
+                        ## more elegant solution for this in the long term.
+                        ## Keeping both for now. We should ideally not use the
+                        ## number in the de-dup key above.
+                        #
+                        # if price_entry.amount.number == dup_entry.amount.number:
+                        #     # Skip duplicates.
+                        #     continue
+                        # else:
+                        #     errors.append(
+                        #         ImplicitPriceError(
+                        #             entry.fileloc,
+                        #             "Duplicate prices for {} on {}".format(entry, dup_entry),
+                        #             entry))
+                    except KeyError:
+                        new_price_entry_map[key] = price_entry
+                        new_entries.append(price_entry)
+
+    return new_entries, errors
 
 
 def get_last_price_entries(entries, date):
