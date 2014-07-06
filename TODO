@@ -247,59 +247,6 @@ beancount: TODO
 
 
 
-** Documentation
-
-  I want to complete a snapshot of documentation before shipping. I often have
-  ideas that end up in this file instead of the actual documentation because I
-  don't have a good enough base to put them in. Bite the bullet. This means the
-  following Gdocs documents have to be completed and eventually made public
-  before release:
-
-  - A generic introduction to the double-entry method, in as simple as possible
-    terms:
-    http://furius.ca/beancount/doc/double-entry
-
-  - A cheatsheet to the syntax (COMPLETE):
-    http://furius.ca/beancount/doc/cheatsheet
-
-  - A "User's Manual" document, which explains how to work with Beancount from
-    a technical user's point-of-view (HALF):
-    http://furius.ca/beancount/doc/users-manual
-
-  - A design doc, which contains developer-level inforamtion about the
-    Beancount source code and instructions for developers, including
-    instructions for writing plugins (NOT STARTED):
-    http://furius.ca/beancount/doc/design-doc
-
-  - A comparison of Beancount and Ledger and other alternatives, such as
-    GnuCash and QuickBooks (EMPTY):
-    http://furius.ca/beancount/doc/comparison
-
-  - A cookbook of recipes with examples for how to book your various
-    transactions, this is probably the most important document of all, this is
-    the best way to learn how to use this software (INCOMPLETE):
-    http://furius.ca/beancount/doc/cookbook
-
-    * Beancount: document "choices": subaccounts vs tags vs payees, postings at
-      leaves only or not,... Have a section to discuss these choices in the
-      documentation.
-
-  - A good example of a custom application script built with Beancount: "Compute
-    IRR of property expenses":
-    http://furius.ca/beancount/doc/custom-application
-
-  - Slides to an upcoming presentation:
-    http://furius.ca/beancount/doc/presentation
-
-  - An extensive example file, that contains 2.5 years of a realistic user's
-    ledger (INCOMPLETE):
-    http://furius.ca/beancount/examples/basic/basic.beancount
-    (This should also be baked to a data directory not under version contro.)
-
-  - A proposal for extending the syntax for booking transactions:
-    https://docs.google.com/document/d/1F8IJ_7fMHZ75XFPocMokLxVZczAhrBRBVN9uMhQFCZ4/
-
-
 ** Debugging Tools
 
   I need to provide some basic diagnostic tools before shipping, because users
