@@ -14,7 +14,7 @@ RedirectMatch /doc/de                    /beancount/doc/double-entry
 RedirectMatch /doc/double                /beancount/doc/double-entry
 RedirectMatch /doc/de-method             /beancount/doc/double-entry
 
-RedirectMatch /doc/cookbook              https://docs.google.com/document/d/1WjARst_cSxNE-Lq6JnJ5CC41T3WndEsiMw4d46r2694/
+RedirectMatch /doc/cookbook              https://docs.google.com/document/d/1P5At-z1sP8rgwYLHso5sEy3u4rMnIUDDgob9Y_BYuWE/
 RedirectMatch /doc/examples              /beancount/doc/cookbook
 
 RedirectMatch /doc/trading               https://docs.google.com/document/d/1WjARst_cSxNE-Lq6JnJ5CC41T3WndEsiMw4d46r2694/
