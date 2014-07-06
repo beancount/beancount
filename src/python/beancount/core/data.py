@@ -273,9 +273,11 @@ def sanity_check_types(entry):
     """Check that the entry and its postings has all correct data types.
 
     Args:
-      entry: an instance of one of the entries to be checked.
+      entry: An instance of one of the entries to be checked.
+    Raises:
+      AssertionError: If there is anything that is unexpected, raises an exception.
     """
-    assert isinstance(entry, (Transaction, Open, Close, Pad, Balance, Note, Event, Price))
+    assert isinstance(entry, ALL_DIRECTIVES)
     assert isinstance(entry.fileloc, FileLocation)
     assert isinstance(entry.date, datetime.date)
     if isinstance(entry, Transaction):
