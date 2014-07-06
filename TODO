@@ -30,10 +30,6 @@ beancount: TODO
   becoming clearer where some files need to move. Try to make these moves
   before shipping, so that things don't move nearly as much later on.
 
-  - beancount.ops.prices: the add_implicit_prices function should be moved out
-    of this file and on its own file. There's too much other material in the
-    'prices' module.
-
   - beancount.core.realization: Look at deps for beancount.core.realization and
     move it upstream where it makes sense, maybe ops.
 

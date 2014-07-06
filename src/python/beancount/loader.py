@@ -19,7 +19,7 @@ LoadError = collections.namedtuple('LoadError', 'fileloc message entry')
 # List of default plugins to run.
 DEFAULT_PLUGINS = [
     "beancount.ops.pad",
-    "beancount.ops.prices",
+    "beancount.ops.implicit_prices",
     "beancount.ops.balance",
     "beancount.ops.documents",
     ]
