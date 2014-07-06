@@ -9,6 +9,7 @@ import sys
 from beancount import load
 from beancount.utils import misc_utils
 from beancount.parser import printer
+from beancount.ops import validation
 
 
 def main():
@@ -20,6 +21,9 @@ def main():
     if opts.verbose:
         logging.basicConfig(level=logging.INFO,
                             format='%(levelname)-8s: %(message)s')
+
+    # Force hardcore validations, just for check.
+    validation.VALIDATIONS.extend(validation.HARDCORE_VALIDATIONS)
 
     with misc_utils.log_time('beancount.loader (total)', logging.info):
         # Load up the file, print errors, checking and validation are invoked

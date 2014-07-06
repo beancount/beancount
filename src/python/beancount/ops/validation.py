@@ -396,6 +396,28 @@ def validate_duplicates(entries, options_map):
     return errors
 
 
+# A list of reasonably fast validations to always run by default.
+BASIC_VALIDATIONS = [validate_data_types,
+                     validate_inventory_booking,
+                     validate_open_close,
+                     validate_active_accounts,
+                     validate_unused_accounts,
+                     validate_currency_constraints,
+                     validate_duplicate_balances,
+                     validate_documents_paths]
+
+# These are slow, and thus only turned on in the check() routine.
+# We're hoping to optimize these and make them decently fast, so
+# we're not providing an option at this moment, this can be enabled
+# by modifying the 'VALIDATIONS' attribute below.
+HARDCORE_VALIDATIONS = [validate_data_types,
+                        validate_check_balances,
+                        validate_duplicates]
+
+# The list of validations to run.
+VALIDATIONS = BASIC_VALIDATIONS
+
+
 def validate(entries, options_map):
     """Perform all the standard checks on parsed contents.
 
@@ -407,17 +429,7 @@ def validate(entries, options_map):
     """
     # Run various validation routines define above.
     errors = []
-    for validation_function in [validate_data_types,
-                                validate_inventory_booking,
-                                validate_open_close,
-                                validate_active_accounts,
-                                validate_unused_accounts,
-                                validate_currency_constraints,
-                                validate_duplicate_balances,
-                                validate_documents_paths,
-                                validate_check_balances,
-                                validate_duplicates]:
-
+    for validation_function in VALIDATIONS:
         with misc_utils.log_time('function: {}'.format(validation_function.__name__),
                                  logging.info):
             new_errors = validation_function(entries, options_map)

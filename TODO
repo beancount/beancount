@@ -337,6 +337,12 @@ beancount: TODO
 
 
 
+  - (validation/performance) Optimize the performance of validations and bring
+    all the HARDCORE_VALIDATIONS in by default.
+
+
+
+
   - Create a new report type: "days" that counts the days of any event in the
     filtered log.
 
