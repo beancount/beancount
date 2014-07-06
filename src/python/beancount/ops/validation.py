@@ -354,8 +354,10 @@ def validate_data_types(entries, options_map):
         try:
             data.sanity_check_types(entry)
         except AssertionError as exc:
-            # FIXME: TODO - insert validation errors
-            printer.print_entry(entry)
+            errors.append(
+                ValidationError(entry.fileloc,
+                                "Invalid data types: {}".format(exc),
+                                entry))
     return errors
 
 
