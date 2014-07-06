@@ -37,7 +37,8 @@ class TestCompare(unittest.TestCase):
         previous_hashes = None
         for _ in range(64):
             entries, errors, options_map = parser.parse_string(TEST_INPUT)
-            hashes = compare.hash_entries(entries)
+            hashes, errors = compare.hash_entries(entries)
+            self.assertFalse(errors)
             if previous_hashes is None:
                 previous_hashes = hashes
             else:

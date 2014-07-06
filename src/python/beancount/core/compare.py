@@ -1,8 +1,12 @@
 """Comparison helpers for data objects.
 """
+import collections
 import hashlib
 
 from .data import entry_sortkey
+
+
+CompareError = collections.namedtuple('CompareError', 'fileloc message entry')
 
 
 def stable_hash_namedtuple(objtuple, ignore=frozenset()):
@@ -57,21 +61,26 @@ def hash_entries(entries):
     Args:
       entries: A list of directives.
     Returns:
-      A dict of hash-value to entry, for all entries.
+      A dict of hash-value to entry (for all entries) and a list of errors.
+      Errors are created when duplicate entries are found.
     """
     entry_hash_dict = {}
+    errors = []
     for entry in entries:
         entry_type = type(entry)
 
         hash_ = hash_entry(entry)
         if hash_ in entry_hash_dict:
             other_entry = entry_hash_dict[hash_]
-            raise ValueError("Duplicate entry: {} == {}".format(entry,
-                                                                other_entry))
+            errors.append(
+                CompareError(entry.fileloc,
+                             "Duplicate entry: {} == {}".format(entry, other_entry),
+                             entry))
         entry_hash_dict[hash_] = entry
 
-    assert len(entry_hash_dict) == len(entries)
-    return entry_hash_dict
+    if not errors:
+        assert len(entry_hash_dict) == len(entries), (len(entry_hash_dict), len(entries))
+    return entry_hash_dict, errors
 
 
 def compare_entries(entries1, entries2):
@@ -89,11 +98,17 @@ def compare_entries(entries1, entries2):
           'entries2'.
         missing2: A list of directives from 'entries2' not found in
           'entries1'.
+    Raises:
+      ValueError: If a duplicate entry is found.
     """
-    hashes1 = hash_entries(entries1)
-    hashes2 = hash_entries(entries2)
+    hashes1, errors1 = hash_entries(entries1)
+    hashes2, errors2 = hash_entries(entries2)
     keys1 = set(hashes1.keys())
     keys2 = set(hashes2.keys())
+
+    if errors1 or errors2:
+        error = (errors1 + errors2)[0]
+        raise ValueError(str(error))
 
     same = keys1 == keys2
     missing1 = sorted([hashes1[key] for key in keys1 - keys2],
@@ -111,11 +126,17 @@ def includes_entries(subset_entries, entries):
       entries: The larger list of entries that could include 'subset_entries'.
     Returns:
       A boolean and a list of missing entries.
+    Raises:
+      ValueError: If a duplicate entry is found.
     """
-    subset_hashes = hash_entries(subset_entries)
+    subset_hashes, subset_errors = hash_entries(subset_entries)
     subset_keys = set(subset_hashes.keys())
-    hashes = hash_entries(entries)
+    hashes, errors = hash_entries(entries)
     keys = set(hashes.keys())
+
+    if subset_errors or errors:
+        error = (subset_errors + errors)[0]
+        raise ValueError(str(error))
 
     includes = subset_keys.issubset(keys)
     missing = sorted([subset_hashes[key] for key in subset_keys - keys],
@@ -131,11 +152,17 @@ def excludes_entries(subset_entries, entries):
       entries: The larger list of entries that should not include 'subset_entries'.
     Returns:
       A boolean and a list of entries that are not supposed to appear.
+    Raises:
+      ValueError: If a duplicate entry is found.
     """
-    subset_hashes = hash_entries(subset_entries)
+    subset_hashes, subset_errors = hash_entries(subset_entries)
     subset_keys = set(subset_hashes.keys())
-    hashes = hash_entries(entries)
+    hashes, errors = hash_entries(entries)
     keys = set(hashes.keys())
+
+    if subset_errors or errors:
+        error = (subset_errors + errors)[0]
+        raise ValueError(str(error))
 
     intersection = keys.intersection(subset_keys)
     excludes = not bool(intersection)
