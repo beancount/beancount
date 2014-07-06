@@ -85,9 +85,12 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
                  cost_currency), holdings_list) in enumerate(sorted_holdings):
 
         # Get the price of this currency/cost pair.
-        price_date, price_number = prices.get_price(price_map,
-                                                    (currency, cost_currency),
-                                                    latest_date)
+        try:
+            price_date, price_number = prices.get_price(price_map,
+                                                        (currency, cost_currency),
+                                                        latest_date)
+        except KeyError:
+            price_number = None
 
         # Note: since we're only considering positions held at cost, the
         # transaction that created the position *must* have created at least one
@@ -96,7 +99,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
         if price_number is None:
             errors.append(
                 UnrealizedError(fileloc,
-                                "Missing price number for {}/{} is missing.".format(
+                                "A valid price for {}/{} could not be found.".format(
                                     currency, cost_currency), None))
             continue
 
