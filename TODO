@@ -245,6 +245,11 @@ beancount: TODO
 
   - Implement Amount.from_string() to be consistent with position and inventory?
 
+  - Rename FileLocation to Source and .fileloc to .source, before we ship, in
+    order to avoid breaking scripts further. Also, instead of '<...>' for the
+    source, we should use a scheme:..., like file://..., and
+    plugin:beancount.... . This makes a lot more sense. Do this now before the
+    release.
 
 
 ** Debugging Tools
