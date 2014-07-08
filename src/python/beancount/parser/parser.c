@@ -61,9 +61,6 @@ PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
     }
     Py_XINCREF(builder);
 
-    fprintf(stderr, "REPORT: %s\n", filename);
-    exit(1);
-
     /* Open the file. */
     fp = fopen(filename, "r");
     if ( fp == NULL ) {
@@ -136,6 +133,7 @@ PyObject* lexer_init(PyObject *self, PyObject *args)
 
     /* Initialize the parser. */
     yyin = fp;
+    yy_filename = filename;
 
     Py_RETURN_NONE;
 }

@@ -28,21 +28,14 @@ class LexBuilder(object):
         self.errors = []
 
     def get_lexer_location(self):
-        import sys
-        print(_parser.get_yyfilename())
-        sys.stdout.flush()
-        print(_parser.get_yylineno())
-        sys.stdout.flush()
         return data.FileLocation(_parser.get_yyfilename(),
                                  _parser.get_yylineno())
 
     def ERROR(self, string):
-        print("ERROR", self.get_lexer_location())
-        if 0:
-            self.errors.append(
-                LexerError(self.get_lexer_location(),
-                           "Error token: {}".format(string),
-                           None))
+        self.errors.append(
+            LexerError(self.get_lexer_location(),
+                       "Lexer error; erroneous token: {}".format(string),
+                       None))
 
     def DATE(self, year, month, day):
         """Process a DATE token.
@@ -144,11 +137,13 @@ class LexBuilder(object):
         return link
 
 
-def lex_iter(file):
+def lex_iter(file, builder=None):
     """An iterator that yields all the tokens in the given file.
 
     Args:
       file: A string, the filename to run the lexer on, or a file object.
+      builder: A builder of your choice. If not specified, a LexBuilder is
+        used and discarded (along with its errors).
     Yields:
       Tuples of the token (a string), the matched text (a string), and the line
       no (an integer).
@@ -157,7 +152,9 @@ def lex_iter(file):
         filename = file
     else:
         filename = file.name
-    _parser.lexer_init(filename, LexBuilder())
+    if builder is None:
+        builder = LexBuilder()
+    _parser.lexer_init(filename, builder)
     while 1:
         token_tuple = _parser.lexer_next()
         if token_tuple is None:
@@ -165,16 +162,18 @@ def lex_iter(file):
         yield token_tuple
 
 
-def lex_iter_string(string):
+def lex_iter_string(string, builder=None):
     """Parse an input string and print the tokens to an output file.
 
     Args:
       input_string: a str, the contents of the ledger to be parsed.
+      builder: A builder of your choice. If not specified, a LexBuilder is
+        used and discarded (along with its errors).
     Returns:
       A iterator on the string. See lex_iter() for details.
     """
     tmp_file = tempfile.NamedTemporaryFile('w')
     tmp_file.write(string)
     tmp_file.flush()
-    return lex_iter(tmp_file) # Note: Pass in the file object in order to keep
-                              # it alive during parsing.
+    return lex_iter(tmp_file, builder) # Note: We pass in the file object in
+                                       # order to keep it alive during parsing.

@@ -8,6 +8,7 @@ import unittest
 
 from beancount.core.amount import Decimal
 from beancount.parser import lexer
+from beancount.parser import printer
 
 
 
@@ -18,13 +19,15 @@ class TestLexer(unittest.TestCase):
         @functools.wraps(fun)
         def wrapped(self):
             string = fun.__doc__
-            tokens = list(lexer.lex_iter_string(textwrap.dedent(string)))
-            return fun(self, tokens)
+            builder = lexer.LexBuilder()
+            tokens = list(lexer.lex_iter_string(textwrap.dedent(string),
+                                                builder))
+            return fun(self, tokens, builder.errors)
         wrapped.__doc__ = None
         return wrapped
 
     @lex_tokens
-    def test_lex_iter(self, tokens):
+    def test_lex_iter(self, tokens, errors):
         """\
           2013-05-18
           2014-01-02
@@ -87,7 +90,7 @@ class TestLexer(unittest.TestCase):
             ], tokens)
 
     @lex_tokens
-    def test_lex_indent(self, tokens):
+    def test_lex_indent(self, tokens, errors):
         """\
           2014-07-05 *
             Equity:Something
@@ -102,16 +105,27 @@ class TestLexer(unittest.TestCase):
             ], tokens)
 
     @lex_tokens
-    def test_number(self, tokens):
+    def test_number_okay(self, tokens, errors):
         """\
           1001 USD
           1002.00 USD
           -1001 USD
           -1002.00 USD
-          - 1001 USD
-          - 1002.00 USD
           +1001 USD
           +1002.00 USD
         """
-        for token in tokens:
-            print(repr(token))
+        self.assertFalse(errors)
+
+    @lex_tokens
+    def test_number_space(self, tokens, errors):
+        """\
+          - 1002.00 USD
+        """
+        self.assertTrue(errors)
+
+    @lex_tokens
+    def test_number_dots(self, tokens, errors):
+        """\
+          1.234.00 USD
+        """
+        self.assertTrue(errors)
