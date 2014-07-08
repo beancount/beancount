@@ -126,13 +126,15 @@ beancount: TODO
 
 ** Parser-Related Minor Bugs
 
-  - Another lexer bug:  1.122.00 USD, fails as well.
-
   - Parsing this does not fail; it really should, this is a bug:
       "2013-04-01 balance Assets:Bank:Checking   555.00 CAD.11"
 
-  - Make sure you can parse Amounts with space between the - sign and the number:
-    "- 20 USD" kicks an error.
+        @lex_tokens
+        def test_number_curency_number(self, tokens, errors):
+            """\
+            2013-04-01 balance Assets:Bank:Checking   555.00 CAD.11
+            """
+            self.assertTrue(errors)
 
   - This parses silently! Needs detection:
 
