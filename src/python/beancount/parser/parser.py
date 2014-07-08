@@ -67,9 +67,6 @@ class Builder(lexer.LexBuilder):
         # The result from running the parser, a list of entries.
         self.entries = []
 
-        # Errors that occurred during parsing.
-        self.errors = []
-
         # Accumulated and unprocessed options.
         self.options = copy.deepcopy(options.DEFAULT_OPTIONS)
 

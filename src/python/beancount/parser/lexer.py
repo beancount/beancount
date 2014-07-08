@@ -24,6 +24,26 @@ class LexBuilder(object):
         # A regexp for valid account names.
         self.account_regexp = re.compile('([A-Z][A-Za-z0-9\-]+)(:[A-Z][A-Za-z0-9\-]+)*$')
 
+        # Errors that occurred during lexing and parsing.
+        self.errors = []
+
+    def get_lexer_location(self):
+        import sys
+        print(_parser.get_yyfilename())
+        sys.stdout.flush()
+        print(_parser.get_yylineno())
+        sys.stdout.flush()
+        return data.FileLocation(_parser.get_yyfilename(),
+                                 _parser.get_yylineno())
+
+    def ERROR(self, string):
+        print("ERROR", self.get_lexer_location())
+        if 0:
+            self.errors.append(
+                LexerError(self.get_lexer_location(),
+                           "Error token: {}".format(string),
+                           None))
+
     def DATE(self, year, month, day):
         """Process a DATE token.
 
@@ -49,9 +69,10 @@ class LexBuilder(object):
         """
         # Check account name validity.
         if not self.account_regexp.match(account_name):
-            fileloc = data.FileLocation('<ACCOUNT>', 0)
             self.errors.append(
-                LexerError(fileloc, "Invalid account name: {}".format(account_name), None))
+                LexerError(self.get_lexer_location(),
+                           "Invalid account name: {}".format(account_name),
+                           None))
             return account.join(self.options['name_equity'], 'InvalidAccountName')
 
         # Create an account, reusing their strings as we go.
@@ -95,10 +116,10 @@ class LexBuilder(object):
         try:
             return Decimal(number)
         except Exception as e:
-            fileloc = data.FileLocation(_parser.get_yyfilename(),
-                                        _parser.get_yylineno())
-            message = "Error parsing NUMBER for token '{}': {}".format(number, e)
-            self.errors.append(LexerError(fileloc, message, None))
+            self.errors.append(
+                LexerError(self.get_lexer_location(),
+                           "Error parsing NUMBER for token '{}': {}".format(number, e),
+                           None))
 
     def TAG(self, tag):
         """Process a TAG token.

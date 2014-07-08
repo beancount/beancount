@@ -186,6 +186,7 @@ option		{ return OPTION; }
 
  /* Default rule. This should never be reached. */
 .	{
+    yylval->pyobj = BUILD("ERROR", "s", yytext);
     return ERROR;
 }
 

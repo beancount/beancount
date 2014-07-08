@@ -61,6 +61,9 @@ PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
     }
     Py_XINCREF(builder);
 
+    fprintf(stderr, "REPORT: %s\n", filename);
+    exit(1);
+
     /* Open the file. */
     fp = fopen(filename, "r");
     if ( fp == NULL ) {
