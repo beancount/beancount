@@ -6,6 +6,7 @@ import inspect
 
 from beancount.parser import parsedoc
 from beancount.parser import parser, ParserError
+from beancount.parser import lexer
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price, Note
 from beancount.core.amount import Amount
 from beancount.core import complete
@@ -207,7 +208,8 @@ class TestSyntaxErrors(unittest.TestCase):
           Account:*:Bla
         """
         self.assertEqual(entries, [])
-        self.assertEqual(1, len(errors))
+        self.assertTrue(errors)
+        self.assertTrue(lexer.LexerError in map(type, errors))
 
     @parsedoc
     def test_lexer_default_rule_2(self, entries, errors, _):
@@ -226,7 +228,8 @@ class TestSyntaxErrors(unittest.TestCase):
         check_list(self, entries, [Balance])
 
         # Make sure at least one error is reported.
-        check_list(self, errors, [parser.ParserSyntaxError])
+        self.assertTrue(parser.ParserSyntaxError in map(type, errors))
+        self.assertTrue(lexer.LexerError in map(type, errors))
 
 
 class TestLineNumbers(unittest.TestCase):
