@@ -126,6 +126,8 @@ beancount: TODO
 
 ** Parser-Related Minor Bugs
 
+  - Another lexer bug:  1.122.00 USD, fails as well.
+
   - Parsing this does not fail; it really should, this is a bug:
       "2013-04-01 balance Assets:Bank:Checking   555.00 CAD.11"
 
@@ -1283,23 +1285,6 @@ Improve this bit:
 
   Test: Items of the same kind with and without cost basis
   Test: Multiple items of different types with a cost basis in the same account
-
-** Smarter elision
-
-  - It would be nice extra feature to allow the user to at least specify the
-    currency when a posting's amount is elided; this would constraint the
-    elision, and further allow multiple postingsto be elided, like this:
-
-     2013-07-05 * "COMPANY INC PAYROLL"
-       Assets:US:TD:Checking                                    USD
-       Income:US:Company:GroupTermLife                   -25.38 USD
-       Income:US:Company:Salary                        -5000.00 USD
-       Assets:US:Vanguard:Cash                           540.00 USD
-       Assets:US:Federal:IRAContrib                     -540.00 IRAUSD
-       Expenses:Taxes:US:Federal:IRAContrib                     IRAUSD
-       Assets:US:Company:Vacation                          4.62 VACHR
-       Income:US:Company:Vacation                               VACHR
-
 
 ** Realization
 
@@ -2571,16 +2556,6 @@ Improve this bit:
 
   - Checks
     - Checks work for subaccount balances too (add joint account example)
-
-  - Document the fact that the conversions problem occurs
-
-    * Because we don't reduce to a single "home" currency, and
-    * That if you do all your work in a single currency with accounts with
-      costs, the value will always be zero, and
-    * Explain that currency trading accounts have little to do with this,
-      because they are contained, and all in and out flows are in a single
-      currency (the base currency of the account). The differences can be
-      accounted like positions in financial assets, with corresponding PnLs.
 
 
   - Under "About Credits & Debits" - this is where you should write about how
