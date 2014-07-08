@@ -133,6 +133,7 @@ PyObject* lexer_init(PyObject *self, PyObject *args)
 
     /* Initialize the parser. */
     yyin = fp;
+    yy_filename = filename;
 
     Py_RETURN_NONE;
 }

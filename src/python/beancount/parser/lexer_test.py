@@ -2,21 +2,33 @@
 Tests for lexer.
 """
 import datetime
+import functools
 import textwrap
 import unittest
 
 from beancount.core.amount import Decimal
 from beancount.parser import lexer
+from beancount.parser import printer
+
 
 
 class TestLexer(unittest.TestCase):
     """Test output of the lexer."""
 
-    def lex_tokens(self, string):
-        return list(lexer.lex_iter_string(textwrap.dedent(string)))
+    def lex_tokens(fun):
+        @functools.wraps(fun)
+        def wrapped(self):
+            string = fun.__doc__
+            builder = lexer.LexBuilder()
+            tokens = list(lexer.lex_iter_string(textwrap.dedent(string),
+                                                builder))
+            return fun(self, tokens, builder.errors)
+        wrapped.__doc__ = None
+        return wrapped
 
-    def test_lex_iter(self):
-        tokens = self.lex_tokens("""\
+    @lex_tokens
+    def test_lex_iter(self, tokens, errors):
+        """\
           2013-05-18
           2014-01-02
           Assets:US:Bank:Checking
@@ -35,7 +47,7 @@ class TestLexer(unittest.TestCase):
           -123.456789
           #sometag123
           ^sometag123
-        """)
+        """
         self.assertEqual([
             ('DATE', 1, '2013-05-18', datetime.date(2013, 5, 18)),
             ('EOL', 2, '\n', None),
@@ -77,11 +89,12 @@ class TestLexer(unittest.TestCase):
             ('EOL', 19, '\n', None),
             ], tokens)
 
-    def test_lex_indent(self):
-        tokens = self.lex_tokens("""\
+    @lex_tokens
+    def test_lex_indent(self, tokens, errors):
+        """\
           2014-07-05 *
             Equity:Something
-        """)
+        """
         self.assertEqual([
             ('DATE', 1, '2014-07-05', datetime.date(2014, 7, 5)),
             ('FLAG', 1, '*', None),
@@ -90,3 +103,29 @@ class TestLexer(unittest.TestCase):
             ('ACCOUNT', 2, 'Equity:Something', 'Equity:Something'),
             ('EOL', 3, '\n', None),
             ], tokens)
+
+    @lex_tokens
+    def test_number_okay(self, tokens, errors):
+        """\
+          1001 USD
+          1002.00 USD
+          -1001 USD
+          -1002.00 USD
+          +1001 USD
+          +1002.00 USD
+        """
+        self.assertFalse(errors)
+
+    @lex_tokens
+    def test_number_space(self, tokens, errors):
+        """\
+          - 1002.00 USD
+        """
+        self.assertTrue(errors)
+
+    @lex_tokens
+    def test_number_dots(self, tokens, errors):
+        """\
+          1.234.00 USD
+        """
+        self.assertTrue(errors)

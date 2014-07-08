@@ -1188,15 +1188,16 @@ case 34:
 YY_RULE_SETUP
 #line 188 "src/python/beancount/parser/lexer.l"
 {
+    yylval->pyobj = BUILD("ERROR", "s", yytext);
     return ERROR;
 }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 194 "src/python/beancount/parser/lexer.l"
+#line 195 "src/python/beancount/parser/lexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1200 "src/python/beancount/parser/lexer.c"
+#line 1201 "src/python/beancount/parser/lexer.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2203,7 +2204,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 194 "src/python/beancount/parser/lexer.l"
+#line 195 "src/python/beancount/parser/lexer.l"
 
 
 /*--------------------------------------------------------------------------------------*/
