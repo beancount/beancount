@@ -246,7 +246,7 @@ def summarize(entries, date, account_opening):
     price_entries = prices.get_last_price_entries(entries, date)
 
     # Gather the list of active open entries at date.
-    open_entries = open_at_date(entries, date)
+    open_entries = get_open_entries(entries, date)
 
     # Compute entries before hte date and preserve the entries after the date.
     before_entries = open_entries + price_entries + summarizing_entries
@@ -412,7 +412,7 @@ def balance_by_account(entries, date=None):
     return balances, index
 
 
-def open_at_date(entries, date):
+def get_open_entries(entries, date):
     """Gather the list of active Open entries at date.
 
     This returns the list of Open entries that have not been closed at the given
@@ -420,13 +420,14 @@ def open_at_date(entries, date):
 
     Args:
       entries: A list of directives.
-      date: The date at which
+      date: The date at which to look for an open entry. If not specified, will
+        return the entries still open at the latest date.
     Returns:
       A list of Open directives.
     """
     open_entries = {}
     for index, entry in enumerate(entries):
-        if entry.date >= date:
+        if date is not None and entry.date >= date:
             break
 
         if isinstance(entry, Open):

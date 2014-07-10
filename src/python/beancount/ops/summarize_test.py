@@ -791,46 +791,46 @@ class TestOpenAtDate(cmptest.TestCase):
         self.assertTrue(entries)
         self.entries = entries
 
-    def test_open_at_date__before(self):
+    def test_get_open_entries__before(self):
         self.assertEqualEntries("""
-        """, summarize.open_at_date(self.entries, date(2010, 12, 1)))
+        """, summarize.get_open_entries(self.entries, date(2010, 12, 1)))
 
-    def test_open_at_date__first_entry_open(self):
+    def test_get_open_entries__first_entry_open(self):
         # On the day of the first entry is open.
         self.assertEqualEntries("""
-        """, summarize.open_at_date(self.entries, date(2011, 1, 1)))
+        """, summarize.get_open_entries(self.entries, date(2011, 1, 1)))
 
-    def test_open_at_date__after_first_entry_open(self):
+    def test_get_open_entries__after_first_entry_open(self):
         # On the day after the first entry is open.
         self.assertEqualEntries("""
           2011-01-01 open Assets:AccountA
-        """, summarize.open_at_date(self.entries, date(2011, 1, 2)))
+        """, summarize.get_open_entries(self.entries, date(2011, 1, 2)))
 
-    def test_open_at_date__first_close(self):
+    def test_get_open_entries__first_close(self):
         # On the day of the first close.
         self.assertEqualEntries("""
           2011-01-01 open Assets:AccountA
           2011-02-01 open Assets:AccountB
           2011-03-01 open Assets:AccountC
-        """, summarize.open_at_date(self.entries, date(2011, 3, 15)))
+        """, summarize.get_open_entries(self.entries, date(2011, 3, 15)))
 
-    def test_open_at_date__after_first_close(self):
+    def test_get_open_entries__after_first_close(self):
         # On the day after the first close.
         self.assertEqualEntries("""
           2011-02-01 open Assets:AccountB
           2011-03-01 open Assets:AccountC
-        """, summarize.open_at_date(self.entries, date(2011, 3, 16)))
+        """, summarize.get_open_entries(self.entries, date(2011, 3, 16)))
 
-    def test_open_at_date__after_new_opens(self):
+    def test_get_open_entries__after_new_opens(self):
         # Other days after new opens.
         self.assertEqualEntries("""
           2011-02-01 open Assets:AccountB
           2011-03-01 open Assets:AccountC
           2011-04-01 open Assets:AccountD
           2011-05-01 open Assets:AccountE
-        """, summarize.open_at_date(self.entries, date(2011, 5, 3)))
+        """, summarize.get_open_entries(self.entries, date(2011, 5, 3)))
 
-    def test_open_at_date__after_all_opens(self):
+    def test_get_open_entries__after_all_opens(self):
         # After all opens.
         self.assertEqualEntries("""
           2011-02-01 open Assets:AccountB
@@ -844,9 +844,9 @@ class TestOpenAtDate(cmptest.TestCase):
           2011-10-01 open Assets:AccountJ
           2011-11-01 open Assets:AccountK
           2011-12-01 open Assets:AccountL
-        """, summarize.open_at_date(self.entries, date(2012, 1, 1)))
+        """, summarize.get_open_entries(self.entries, date(2012, 1, 1)))
 
-    def test_open_at_date__after_all_entries(self):
+    def test_get_open_entries__after_all_entries(self):
         # After all entries.
         self.assertEqualEntries("""
           2011-02-01 open Assets:AccountB
@@ -854,33 +854,33 @@ class TestOpenAtDate(cmptest.TestCase):
           2011-04-01 open Assets:AccountD
           2011-05-01 open Assets:AccountE
           2011-06-01 open Assets:AccountF
-        """, summarize.open_at_date(self.entries, date(2013, 1, 1)))
+        """, summarize.get_open_entries(self.entries, date(2013, 1, 1)))
 
 
     @parser.parsedoc
-    def test_open_at_date__duplicate_open(self, entries, errors, _):
+    def test_get_open_entries__duplicate_open(self, entries, errors, _):
         """
           2011-01-01 open Assets:AccountA
           2011-02-01 open Assets:AccountA
         """
         self.assertEqualEntries("""
           2011-01-01 open Assets:AccountA
-        """, summarize.open_at_date(entries, date(2013, 1, 1)))
+        """, summarize.get_open_entries(entries, date(2013, 1, 1)))
 
     @parser.parsedoc
-    def test_open_at_date__closed_twice(self, entries, errors, _):
+    def test_get_open_entries__closed_twice(self, entries, errors, _):
         """
           2011-01-01 open  Assets:AccountA
           2011-02-01 close Assets:AccountA
           2011-02-02 close Assets:AccountA
         """
         self.assertEqualEntries("""
-        """, summarize.open_at_date(entries, date(2013, 1, 1)))
+        """, summarize.get_open_entries(entries, date(2013, 1, 1)))
 
     @parser.parsedoc
-    def test_open_at_date__closed_without_open(self, entries, errors, _):
+    def test_get_open_entries__closed_without_open(self, entries, errors, _):
         """
           2011-02-02 close Assets:AccountA
         """
         self.assertEqualEntries("""
-        """, summarize.open_at_date(entries, date(2013, 1, 1)))
+        """, summarize.get_open_entries(entries, date(2013, 1, 1)))
