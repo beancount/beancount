@@ -420,12 +420,13 @@ HARDCORE_VALIDATIONS = [validate_data_types,
 VALIDATIONS = BASIC_VALIDATIONS
 
 
-def validate(entries, options_map):
+def validate(entries, options_map, log_function=None):
     """Perform all the standard checks on parsed contents.
 
     Args:
       entries: A list of directives.
       unused_options_map: An options map.
+      log_function: An optional function to use for logging time of operations.
     Returns:
       A list of new errors, if any were found.
     """
@@ -433,7 +434,7 @@ def validate(entries, options_map):
     errors = []
     for validation_function in VALIDATIONS:
         with misc_utils.log_time('function: {}'.format(validation_function.__name__),
-                                 logging.info):
+                                 log_function):
             new_errors = validation_function(entries, options_map)
         errors.extend(new_errors)
 

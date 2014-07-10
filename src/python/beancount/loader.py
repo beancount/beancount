@@ -86,7 +86,7 @@ def _load(file_or_string, log_function, parse_function):
 
     # Validate the list of entries.
     with misc_utils.log_time('beancount.ops.validate', log_function):
-        valid_errors = validation.validate(entries, options_map)
+        valid_errors = validation.validate(entries, options_map, log_function)
         errors.extend(valid_errors)
 
         # FIXME: Check here that the entries haven't been modified, by comparing

@@ -279,9 +279,17 @@ beancount: TODO
 
 
 
+  - You need to create a unit test for @@ price conversions.
+
+  - You need to unit-test for multiline notes... do they work as expected?
+
+
+
+
   (work on holdings)
   - Support output format "beancount" for holdings, use a single file instead of
     a holdings I/O file (merge holdings.csv + prices.beancount -> holdings.beancount)
+    This would be much nicer.
 
   - Check holdings I/O by saving and reloading a list of holdings created from
     a set of entries (with sales, just to make sure).
