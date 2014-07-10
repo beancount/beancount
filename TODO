@@ -1030,6 +1030,11 @@ beancount: TODO
     have them automatically check for expected no-errors.
 
 
+  - Add the acquisition date of each lot to each Holding, and it should be
+    output at that date by print_holdings as well.
+
+
+
 ** Prepare for Plugins Revamp
 
   I recently teased out that many of the basic functions can be implemented as

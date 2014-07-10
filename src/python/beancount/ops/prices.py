@@ -23,13 +23,14 @@ def get_last_price_entries(entries, date):
 
     Args:
       entries: A list of directives.
-      date: An instance of datetime.date.
+      date: An instance of datetime.date. If None, the very latest price
+        is returned.
     Returns:
       A list of price entries.
     """
     price_entry_map = {}
     for entry in entries:
-        if entry.date >= date:
+        if date is not None and entry.date >= date:
             break
         if isinstance(entry, Price):
             base_quote = (entry.currency, entry.amount.currency)
