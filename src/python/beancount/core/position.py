@@ -256,5 +256,18 @@ class Position:
             lot_date = None
         return Position(Lot(currency, cost, lot_date), to_decimal(number))
 
+    @staticmethod
+    def from_amounts(amount, cost_amount=None):
+        """Create a position from an amount and a cost.
+
+        Args:
+          amount: An amount, that represents the number of units and the lot currency.
+          cost_amount: If not None, represents the cost amount.
+        Returns:
+          A Position instance.
+        """
+        return Position(Lot(amount.currency, cost_amount, None), amount.number)
+
 
 from_string = Position.from_string
+from_amounts = Position.from_amounts
