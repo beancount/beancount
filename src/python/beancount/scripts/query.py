@@ -61,19 +61,23 @@ def main():
     entries, errors, options_map = load(opts.filename)
 
     # Dispatch on which report to generate.
-    report_function = rselect.get_report_generator(opts.report)
+    report_function = rselect.get_report_generator(opts.report, opts.format)
     if report_function is None:
         parser.error("Unknown report.")
 
     # Create holdings list.
     result = report_function(entries, options_map)
 
-    if isinstance(result, str):
-        outfile.write(result)
+    try:
+        if isinstance(result, str):
+            outfile.write(result)
 
-    elif isinstance(result, table.TableReport):
-        # Create the table report.
-        table.render_table(result, outfile, opts.format)
+        elif isinstance(result, table.TableReport):
+            # Create the table report.
+            table.render_table(result, outfile, opts.format)
+    except NotImplementedError as exc:
+        print(exc)
+        sys.exit(1)
 
 
 if __name__ == '__main__':

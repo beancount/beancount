@@ -247,7 +247,7 @@ def compute_table_widths(rows):
     return column_widths
 
 
-def render_table(table_, output, format):
+def render_table(table_, output, output_format):
     """Render the given table to the output file object in the requested format.
 
     The table gets written out to the 'output' file.
@@ -255,19 +255,22 @@ def render_table(table_, output, format):
     Args:
       table_: An instance of Table.
       output: A file object you can write to.
-      format: A string, the format to write the table to, either 'csv', 'txt' or 'html'.
+      output_format: A string, the format to write the table to, either 'csv', 'txt' or 'html'.
     """
     # Render the table.
-    if format == 'txt':
+    if output_format == 'txt':
         text = table_to_text(table_, "  ", formats={'*': '>', 'account': '<'})
         output.write(text)
 
-    elif format == 'csv':
+    elif output_format == 'csv':
         table_to_csv(table_, file=output)
 
-    elif format == 'html':
+    elif output_format == 'html':
         output.write('<html>\n')
         output.write('<body>\n')
         table_to_html(table_, file=output)
         output.write('</body>\n')
         output.write('</html>\n')
+
+    else:
+        raise NotImplementedError("Unsupported format: {}".format(output_format))
