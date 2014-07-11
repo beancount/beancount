@@ -25,7 +25,10 @@ def get_report_generator(report_str):
     """
     currency_re = '(?::([A-Z]+)(?::(%))?)?'
 
-    if report_str == 'print':
+    if report_str in ('check', 'validate', None):
+        return report_validate
+
+    elif report_str == 'print':
         return report_print
 
     elif report_str == 'print_prices':
@@ -81,6 +84,10 @@ def get_report_types():
       A list of (report-name, report-args, report-class, formats, description)..
     """
     return [
+        ('check', None, None,
+         [],
+         "Validate the entries."),
+
         ('print', None, None,
          ['beancount'],
          "Print out the entries."),
@@ -128,6 +135,18 @@ def get_report_types():
          "A table of networth in each ofthe operating currencies."),
 
         ]
+
+
+def report_validate(unused_entries, unused_options_map):
+    """A report type that does nothing.
+
+    The entries should have been validated on load.
+
+    Args:
+      unused_entries: A list of directives.
+      unused_options_map: An options dict, as read by the parser.
+    """
+    # Do nothing indeed.
 
 
 def report_print(entries, unused_options_map):
