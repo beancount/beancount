@@ -380,8 +380,8 @@ def validate_check_balances(entries, options_map):
             if not balance.is_small(complete.SMALL_EPSILON):
                 errors.append(
                     ValidationError(entry.fileloc,
-                                 "Transaction does not balance: {}.".format(inventory),
-                                 entry))
+                                    "Transaction does not balance: {}.".format(balance),
+                                    entry))
     return errors
 
 

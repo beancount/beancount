@@ -7,6 +7,12 @@ beancount: TODO
   - Make helper functions in summarize, for clamp() and close() which accept
     options_map and automatically derive everything they need from entries.
 
+  - Validation: A Balance failure currently triggers two errors, one from
+    complete and one from validation routine. We need to perform all balance
+    checks _after_ the plugins run to make sure that they produce only
+    balancing transactions. Need to figure out how to do this properly without
+    raising two errors.
+
 
 ** Commands Cleanup
 
@@ -361,6 +367,9 @@ beancount: TODO
     render the location of the error. If no entries are specified, an OPTIONAL
     fileloc= parameter should be provided to specify where the error occurs.
     This will make creating errors a lot easier and nicer.
+
+    As part of this, we should also somehow produce a list of all possible
+    errors with a lavish description.
 
 
   - Directive abstraction: Add directives should be able to enumerate they

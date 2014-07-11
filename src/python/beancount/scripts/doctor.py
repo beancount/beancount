@@ -35,6 +35,7 @@ def do_dump_lexer(filename, unused_args):
         sys.stdout.write('{:12} {:6d} {}\n'.format(token, lineno, repr(text)))
 
 
+## FIXME: Move this to bean-query, it's a type of 'report', really.
 def do_list_accounts(filename, unused_args):
     """Dump the lexer output for a Beancount syntax file.
 
