@@ -197,6 +197,24 @@ class TestUglyBugs(unittest.TestCase):
         check_list(self, errors, [])
 
 
+class TestMultipleLines(unittest.TestCase):
+
+    @parsedoc
+    def test_multiline_narration(self, entries, errors, _):
+        """
+          2014-07-11 * "Hello one line
+          and yet another,
+          and why not another!"
+            Expenses:Restaurant         100 USD
+            Assets:Cash
+        """
+        self.assertEqual(1, len(entries))
+        self.assertFalse(errors)
+        self.assertFalse(lexer.LexerError in map(type, errors))
+        expected_narration = "Hello one line\nand yet another,\nand why not another!"
+        self.assertEqual(expected_narration, entries[0].narration)
+
+
 class TestSyntaxErrors(unittest.TestCase):
     """Test syntax errors that occur within the parser.
     One of our goals is to recover and report without ever
