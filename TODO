@@ -8,6 +8,12 @@ beancount: TODO
     options_map and automatically derive everything they need from entries.
 
 
+** Commands Cleanup
+
+  - Invert the arguments for bean-doctor, so that they are in the same order as
+    bean-query.  Just a matter of cleanliness.
+
+
 ** Minimum Cleanup of Reports Before Release
 
   - Isolate reports, at least from a functional POV, before the big revamp, in

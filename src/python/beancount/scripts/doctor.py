@@ -59,43 +59,6 @@ def do_list_accounts(filename, unused_args):
         print('{:{len}}  {}  {}'.format(account, open_date, close_date, len=maxlen))
 
 
-# FIXME: Move this to a report.
-def do_print_trial(filename, unused_args):
-    """Render and print the trial balance for a ledger.
-
-    Args:
-      filename: A string, the Beancount input filename.
-    """
-    # Load the file, realize it, and dump the accounts tree.
-    entries, errors, options_map = loader.load(filename)
-    printer.print_errors(errors, file=sys.stderr)
-
-    real_accounts = realization.realize(entries)
-    dump_str = realization.dump_balances(real_accounts)
-    print(dump_str)
-
-
-# FIXME: Move this to a report.
-def do_prices(filename, unused_args):
-    """Render and print a list of the prices in a ledger.
-
-    Args:
-      filename: A string, the Beancount input filename.
-    """
-    # Load the file, realize it, and dump the accounts tree.
-    entries, errors, options_map = loader.load(filename)
-    printer.print_errors(errors, file=sys.stderr)
-
-    price_map = prices.build_price_map(entries)
-    for base_quote in price_map.forward_pairs:
-        price_list = price_map[base_quote]
-        base, quote = base_quote
-        writer = csv.writer(sys.stdout)
-        for date, price in price_list:
-            writer.writerow((base, quote, date, price))
-        writer.writerow(())
-
-
 def do_roundtrip(filename, unused_args):
     """Round-trip test on arbitrary Ledger.
 

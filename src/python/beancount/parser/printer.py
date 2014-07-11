@@ -93,7 +93,7 @@ class EntryPrinter:
         oss.write('{e.date} close {e.account}\n'.format(e=entry))
 
     def Price(_, entry, oss):
-        oss.write('{e.date} price {e.currency:<8} {e.amount:>20}\n'.format(e=entry))
+        oss.write('{e.date} price {e.currency:<16} {e.amount:>20}\n'.format(e=entry))
 
     def Event(_, entry, oss):
         oss.write('{e.date} event "{e.type}" "{e.description}"\n'.format(e=entry))
