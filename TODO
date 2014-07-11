@@ -3,9 +3,17 @@ beancount: TODO
 * Requirements for Shipping 1.0
 ** Complete 100% Coverage for Unit Tests
 
-
   - Make helper functions in summarize, for clamp() and close() which accept
     options_map and automatically derive everything they need from entries.
+
+
+** Binaries
+
+  Explore the idea of merging binaries... might make a lot of sense:
+
+  - Should bean-check be folded into 'bean-query check'?
+  - Might 'bean-query' be more aptly named 'bean-count'?
+  - Should bean-bake be folded into 'bean-web --bake'?
 
 
 ** Minimum Cleanup of Reports Before Release
@@ -2731,7 +2739,7 @@ result of paying taxes:
 
 
 
-** Challenges
+** Challenges / Projects
 
   - Document those below which I'm already able to do, and those which require
     new features to be able to be done, move them into a separate appendix,
@@ -2826,6 +2834,16 @@ come up with a creative solution that solves this problem.
     should be equal, and correct for the time-value-of-money, compare prices
     today with prices then. Maybe come up with some kind of constant unit that
     I can convert everything to.
+
+**** GIFI Reporting
+
+  - You could write a script to automatically fill this form:
+    http://www.cra-arc.gc.ca/E/pub/tg/rc4088/rc4088-12e.pdf
+
+      "With Beancount, one thing that would be doable _outside_ of Beancount, as
+    a separate script, is to associate a set of accounts to these GIFI codes and
+    automatically generate the forms."
+
 
 ** Change List
 
