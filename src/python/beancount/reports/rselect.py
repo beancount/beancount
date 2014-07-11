@@ -31,11 +31,11 @@ def get_report_generator(report_str):
     elif report_str == 'print':
         return report_print
 
-    elif report_str == 'print_prices':
-        return report_print_prices
+    elif report_str == 'prices':
+        return report_prices
 
-    elif report_str == 'print_prices_db':
-        return report_print_prices_db
+    elif report_str == 'prices_db':
+        return report_prices_db
 
     elif report_str in ('trial', 'bal'):
         return report_trial
@@ -92,14 +92,14 @@ def get_report_types():
          ['beancount'],
          "Print out the entries."),
 
-        ('print_prices', None, None,
+        ('prices', None, None,
          ['beancount'],
          "Print out the unnormalized price entries that we input. "
          "Unnormalized means that we may render both (base,quote) and (quote,base). "
          "This can be used to rebuild a prices database without having to share the "
          "entire ledger file."),
 
-        ('print_prices_db', None, None,
+        ('prices_db', None, None,
          ['beancount'],
          "Print out the normalized price entries from the price db. "
          "Normalized means that we print prices in the most common (base, quote) order."
@@ -163,7 +163,7 @@ def report_print(entries, unused_options_map):
     return oss.getvalue()
 
 
-def report_print_prices(entries, unused_options_map):
+def report_prices(entries, unused_options_map):
     """A report type that prints out just the price entries.
 
     Note: this is a temporary solution, until we have proper filtering.
@@ -182,7 +182,7 @@ def report_print_prices(entries, unused_options_map):
     return oss.getvalue()
 
 
-def report_print_prices_db(entries, unused_options_map):
+def report_prices_db(entries, unused_options_map):
     """A report type that prints price entries from the price map.
 
     Only the forward prices are printed; which (base, quote) pair is selected is
@@ -197,7 +197,7 @@ def report_print_prices_db(entries, unused_options_map):
     """
     oss = io.StringIO()
     price_map = prices.build_price_map(entries)
-    fileloc = data.FileLocation('<report_print_prices_db>', 0)
+    fileloc = data.FileLocation('<report_prices_db>', 0)
     for base_quote in price_map.forward_pairs:
         price_list = price_map[base_quote]
         base, quote = base_quote

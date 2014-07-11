@@ -81,54 +81,6 @@ class TestScriptDoctor(test_utils.TestCase):
         with test_utils.capture() as stdout:
             test_utils.run_with_args(doctor.main, ['list-accounts', filename])
 
-    @test_utils.docfile
-    def test_print_trial(self, filename):
-        """
-        2013-01-01 open Expenses:Restaurant
-        2013-01-01 open Assets:Cash
-
-        2014-03-02 * "Something"
-          Expenses:Restaurant   50.02 USD
-          Assets:Cash
-        """
-        with test_utils.capture() as stdout:
-            test_utils.run_with_args(doctor.main, ['print-trial', filename])
-        output = stdout.getvalue()
-        self.assertLines("""
-            |-- Assets
-            |   `-- Cash               -50.02 USD
-            `-- Expenses
-                `-- Restaurant          50.02 USD
-        """, output)
-
-    @test_utils.docfile
-    def test_print_trial_empty(self, filename):
-        ""
-        with test_utils.capture() as stdout:
-            test_utils.run_with_args(doctor.main, ['print-trial', filename])
-
-    @test_utils.docfile
-    def test_prices(self, filename):
-        """
-        2014-01-01 open Assets:Account1
-        2014-01-01 open Income:Misc
-
-        2014-01-15 *
-          Assets:Account1       10 GOOG @ 512.01 USD
-          Income:Misc
-
-        2014-02-01 price GOOG 524.02 USD
-        2014-02-10 price GOOG 536.03 USD
-        """
-        with test_utils.capture() as stdout:
-            test_utils.run_with_args(doctor.main, ['prices', filename])
-        output = stdout.getvalue()
-        self.assertLines("""
-            GOOG,USD,2014-01-15,512.01
-            GOOG,USD,2014-02-01,524.02
-            GOOG,USD,2014-02-10,536.03
-        """, output)
-
 
 class TestScriptCheckDirectories(directories_test.TestScriptCheckDirectories):
 
