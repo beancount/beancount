@@ -37,8 +37,8 @@ def get_report_generator(report_str):
     elif report_str == 'prices_db':
         return report_prices_db
 
-    elif report_str in ('trial', 'bal'):
-        return report_trial
+    elif snooper(re.match('(?:trial|bal|balances)(?::(.*))?$', report_str)):
+        return functools.partial(report_trial, snooper.value.group(1))
 
     elif snooper(re.match('holdings{}$'.format(currency_re),
                           report_str)):
@@ -106,7 +106,7 @@ def get_report_types():
          "This can be used to rebuild a prices database without having to share the "
          "entire ledger file."),
 
-        ('trial,bal', None, None,
+        ('trial', ['regexp'], None,
          ['text'],
          "Print out the trial balance of all accounts."),
 
@@ -208,13 +208,22 @@ def report_prices_db(entries, unused_options_map):
     return oss.getvalue()
 
 
-def report_trial(entries, unused_options_map):
+def report_trial(expression, entries, unused_options_map):
     """Render and print the trial balance for a ledger.
 
     Args:
-      filename: A string, the Beancount input filename.
+      expression: A regular expression string, or None, to be matched against
+        the account names to include. If None, render all account names.
+      entries: A list of directives.
+      unused_options_map: An options dict, as read by the parser.
     Returns:
       A string, the text to print.
     """
     real_accounts = realization.realize(entries)
-    return realization.dump_balances(real_accounts)
+    if expression:
+        regexp = re.compile(expression)
+        real_accounts = realization.filter(
+            real_accounts,
+            lambda real_account: regexp.search(real_account.account))
+    if real_accounts:
+        return realization.dump_balances(real_accounts)

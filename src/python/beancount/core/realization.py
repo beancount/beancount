@@ -614,6 +614,6 @@ def dump_balances(real_account):
 
         line = first_line
         for position in positions:
-            oss.write('{} {:16}\n'.format(line, position))
+            oss.write('{}       {}\n'.format(line, position))
             line = cont_line
     return oss.getvalue()
