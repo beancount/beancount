@@ -126,7 +126,7 @@ def iterate_render_postings(postings, build_url):
                                '{}').format(entry.payee, description)
             amount_str = balance_html(change)
 
-            if entry.links:
+            if entry.links and build_url:
                 links = [build_url('link', link=link)
                          for link in entry.links]
 
