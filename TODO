@@ -132,6 +132,8 @@ beancount: TODO
     just make ignorable fields start with _, e.g. posting._entry, balance._diff,
     entry._fileloc, etc. Call those non-essential fields.
 
+  - bean-bake on basic.beancount fails. You should fix it before the release,
+    something to do with prices, add a relevant test.
 
 ** Parser-Related Minor Bugs
 
@@ -1051,6 +1053,8 @@ beancount: TODO
 
   - Add an optional parameter to the loaddoc() and parsedoc() decorators to
     have them automatically check for expected no-errors.
+
+  - Add an option to bean-bake to
 
 
 ** Prepare for Plugins Revamp
