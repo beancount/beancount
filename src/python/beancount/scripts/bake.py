@@ -92,9 +92,10 @@ def archive(command_template, directory, archive, quiet=False):
 
 
 ARCHIVERS = {
-    '.tar.gz' : 'tar -C {dirname} -zcvf {archive} {basename}',
-    '.tgz'    : 'tar -C {dirname} -zcvf {archive} {basename}',
-    '.zip'    : 'zip -r {archive} {basename}',
+    '.tar.gz'  : 'tar -C {dirname} -zcvf {archive} {basename}',
+    '.tgz'     : 'tar -C {dirname} -zcvf {archive} {basename}',
+    '.tar.bz2' : 'tar -C {dirname} -jcvf {archive} {basename}',
+    '.zip'     : 'zip -r {archive} {basename}',
     }
 
 

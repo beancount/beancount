@@ -84,6 +84,7 @@ class TestScriptBake(test_utils.TestCase):
         with test_utils.tempdir() as tmpdir:
             for archive_name in ('archive.tar.gz',
                                  'archive.tgz',
+                                 'archive.tar.bz2',
                                  'archive.zip'):
                 outfile = path.join(tmpdir, archive_name)
                 with test_utils.capture() as output:
@@ -102,8 +103,7 @@ class TestScriptBake(test_utils.TestCase):
           Assets:Cash
         """
         with test_utils.tempdir() as tmpdir:
-            for archive_name in ('archive.tar.bz2',
-                                 'archive.tar.zip',
+            for archive_name in ('archive.tar.zip',
                                  'archive.tar.xz'):
                 with self.assertRaises(SystemExit):
                     outfile = path.join(tmpdir, archive_name)
