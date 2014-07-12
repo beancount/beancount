@@ -2163,6 +2163,23 @@ Improve this bit:
 
 
 
+** Payees as Subaccounts
+
+  - Create a plugin that will define subaccounts for payees within accounts and
+    modify all the transactions accordingly. This would be a great way to kick
+    the tires on this idea without affecting the rest of the system.
+
+      Expenses:Electricity:ConEdison
+      Expenses:Phone:TMobile
+      Expenses:Groceries:WholeFoodsMarket
+      Expenses:Groceries:UnionMarket
+
+  - Should we define some notion of the default level for aggregation, per
+    account? For example, in Expenses:Electricity:ConEdison, the default level
+    of aggregation should be Expenses:Electricity. If we define that, using
+    subaccounts should not bother us much.
+
+
 * Tools
 ** Scripts
 
