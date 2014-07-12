@@ -35,31 +35,6 @@ def do_dump_lexer(filename, unused_args):
         sys.stdout.write('{:12} {:6d} {}\n'.format(token, lineno, repr(text)))
 
 
-## FIXME: Move this to bean-query, it's a type of 'report', really.
-def do_list_accounts(filename, unused_args):
-    """Dump the lexer output for a Beancount syntax file.
-
-    Args:
-      filename: A string, the Beancount input filename.
-    """
-    # Load the input file and gather the open/close directives.
-    entries, errors, options_map = loader.load(filename)
-    open_close = getters.get_account_open_close(entries)
-
-    if not entries:
-        return
-
-    # Render to stdout.
-    maxlen = max(len(account) for account in open_close)
-    sortkey_fun = account_types.get_account_sort_function(
-        options.get_account_types(options_map))
-    for account, (open, close) in sorted(open_close.items(),
-                                         key=lambda entry: sortkey_fun(entry[0])):
-        open_date = open.date if open else ''
-        close_date = close.date if close else ''
-        print('{:{len}}  {}  {}'.format(account, open_date, close_date, len=maxlen))
-
-
 def do_roundtrip(filename, unused_args):
     """Round-trip test on arbitrary Ledger.
 
