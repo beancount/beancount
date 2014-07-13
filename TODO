@@ -12,6 +12,8 @@ beancount: TODO
     balancing transactions. Need to figure out how to do this properly without
     raising two errors.
 
+  - Make sure bean-check returns a correct error code (1 for errors, 0 on
+    success) and add unit tests for it.
 
 ** Commands Cleanup
 
@@ -19,6 +21,18 @@ beancount: TODO
     bean-query.  Just a matter of cleanliness.
 
   - bean-check --list-options needs to work. Same with bean-query.
+
+
+** Relax Constraints
+
+  - You can implement the sign check for positions held-at-cost only when there
+    are other of that same commodity held at cost in the inventory in the
+    opposite sign. This should allow holding short positions yet still retain
+    the benefit of the check for data entry errors.
+
+    It also removes what for most people will appear as a limitation from the
+    docs (although with experience you would realize that it is not much of a
+    limitation at atll).
 
 
 ** Minimum Cleanup of Reports Before Release
@@ -1070,6 +1084,24 @@ beancount: TODO
     * An account has received units in the opposite direction
     * If the posting cross the zero boundary. Maybe starting from zero in
       either direction could be fine.
+
+  - Idea: You could add a further constraint property to an account name: that
+    the amounts may never be allowed to balance to a particular sign. This
+    could be useful to avoid data entry mistakes. You could even write a doc
+    just focused on all features designed to avoid data entry mistakes.
+
+
+
+  - Idea: Relax checks for negative values: from docs
+
+      "PLEASE NOTE! In a future version of Beancount, we will relax this constraint
+      somewhat. We will allow an account to hold a negative number of units of a
+      commodity if and only if there are no other units of that commodity held in the
+      account. Either that, or we will allow you to mark an account has having no
+      such constraints at all."
+
+  - You could make the narrations for padding and summarization transactions
+    specifiable via options.
 
 
 ** Prepare for Plugins Revamp

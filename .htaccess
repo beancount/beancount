@@ -31,6 +31,11 @@ RedirectMatch /doc/users-manual$          https://docs.google.com/document/d/1wA
 RedirectMatch /doc/manual$                /beancount/doc/users-manual
 RedirectMatch /doc/manual$                /beancount/doc/user-manual
 
+RedirectMatch /doc/booking$              https://docs.google.com/document/d/11a9bIoNuxpSOth3fmfuIFzlZtpTJbvw-bPaQCnezQJs/
+RedirectMatch /doc/inventories$          /beancount/doc/booking
+RedirectMatch /doc/inventory$            /beancount/doc/booking
+RedirectMatch /doc/how-inventories-work  /beancount/doc/booking
+
 RedirectMatch /doc/cheatsheet$            http://furius.ca/beancount/doc/cheatsheet/beancount-cheatsheet.pdf
 RedirectMatch /doc/cheat$                /beancount/doc/cheatsheet
 RedirectMatch /doc/sheet$                 /beancount/doc/cheatsheet
