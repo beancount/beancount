@@ -14,7 +14,7 @@ DEFAULT_OPTIONS = {
 
     # The title of this ledger / input file. This shows up at the top of every
     # page.
-    "title" : "Beancount",
+    "title": "Beancount",
 
     # Root names of every account. This can be used to customize your category
     # names, so that if you prefer "Revenue" over "Income" or "Capital" over
@@ -28,27 +28,27 @@ DEFAULT_OPTIONS = {
 
     # Leaf name of the equity account used for summarizing previous transactions
     # into opening balances.
-    "account_previous_balances" : "Opening-Balances",
+    "account_previous_balances": "Opening-Balances",
 
     # Leaf name of the equity account used for transferring previous retained
     # earnings from income and expenses accrued before the beginning of the
     # exercise into the balance sheet.
-    "account_previous_earnings" : "Earnings:Previous",
+    "account_previous_earnings": "Earnings:Previous",
 
     # Leaf name of the equity account used for inserting conversions that will
     # zero out remaining amounts due to transfers before the opening date. This
     # will essentially "fixup" the basic accounting equation due to the errors
     # that priced conversions introduce.
-    "account_previous_conversions" : "Conversions:Previous",
+    "account_previous_conversions": "Conversions:Previous",
 
     # Leaf name of the equity account used for transferring current retained
     # earnings from income and expenses accrued during the current exercise into
     # the balance sheet. This is most often called "Net Income".
-    "account_current_earnings" : "Earnings:Current",
+    "account_current_earnings": "Earnings:Current",
 
     # Leaf name of the equity account used for inserting conversions that will
     # zero out remaining amounts due to transfers during the exercise period.
-    "account_current_conversions" : "Conversions:Current",
+    "account_current_conversions": "Conversions:Current",
 
     # The imaginary currency used to convert all units for conversions at a
     # degenerate rate of zero. This can be any currency name that isn't used in
@@ -59,7 +59,7 @@ DEFAULT_OPTIONS = {
     # A list of directory roots, relative to the CWD, which should be searched
     # for document files. For the document files to be automatically found they
     # must have the following filename format: YYYY-MM-DD.(.*)
-    "documents" : [],
+    "documents": [],
 
     # A list of currencies that we single out during reporting and create
     # dedicated columns for. This is used to indicate the main currencies that
@@ -72,7 +72,7 @@ DEFAULT_OPTIONS = {
     # their associated unit strings. This allows you to import the numbers in a
     # spreadsheet (e.g, "101.00 USD" does not get parsed by a spreadsheet
     # import, but "101.00" does).
-    "operating_currency" : [],
+    "operating_currency": [],
 
     # A list of Python modules containing transformation functions to run the
     # entries through after parsing. The parser reads the entries as they are,

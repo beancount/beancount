@@ -20,6 +20,9 @@ RedirectMatch /doc/examples              /beancount/doc/cookbook
 RedirectMatch /doc/cookbook              https://docs.google.com/document/d/1Tss0IEzEyAPuKSGeNsfNgb0BfiW2ZHyP5nCFBW1uWlk/
 RedirectMatch /doc/examples              /beancount/doc/cookbook
 
+RedirectMatch /doc/payee                 https://docs.google.com/document/d/17_u_cYxeXVsCV4GmaubK_xsTQl_H9rP87E_vnZHKNb0/
+RedirectMatch /doc/subaccount            /beancount/doc/payee
+
 RedirectMatch /doc/trading               https://docs.google.com/document/d/1WjARst_cSxNE-Lq6JnJ5CC41T3WndEsiMw4d46r2694/
 RedirectMatch /doc/stock                 /beancount/doc/trading
 RedirectMatch /doc/stocks                /beancount/doc/trading
