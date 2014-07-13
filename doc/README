@@ -1,8 +1,12 @@
-This directory contains the documentation for Beancount.
+This directory used to contain the documentation for Beancount.
+All the documentation has been migrated to Google Docs.
 
-- users-manual.org: A manual for regular users.
+You can access the index via a redirect to the documentation here:
 
-- design-doc.org: Documentation of the internal design choices, intended for
-  developers (not users).
+  http://furius.ca/beancount/doc/index
 
-- cheatsheet.org: reference sheet for Beancount.
+Or directly, here (same doc):
+
+  https://docs.google.com/document/d/1RaondTJCS_IUPBHFNdT8oqFKJjVJDsfsn6JEjBG04eA/
+
+The only local documentation that remains here is a cheatsheet.
