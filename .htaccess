@@ -28,9 +28,9 @@ RedirectMatch /doc/users-manual$          https://docs.google.com/document/d/1wA
 RedirectMatch /doc/manual$                /beancount/doc/users-manual
 RedirectMatch /doc/manual$                /beancount/doc/user-manual
 
-RedirectMatch /doc/cheatsheet$$           http://furius.ca/beancount/doc/cheatsheet/beancount-cheatsheet.pdf
-RedirectMatch /doc/cheat$$                /beancount/doc/cheatsheet
-RedirectMatch /doc/sheet$$                /beancount/doc/cheatsheet
+RedirectMatch /doc/cheatsheet$            http://furius.ca/beancount/doc/cheatsheet/beancount-cheatsheet.pdf
+RedirectMatch /doc/cheat$                /beancount/doc/cheatsheet
+RedirectMatch /doc/sheet$                 /beancount/doc/cheatsheet
 
 RedirectMatch /doc/design-doc$            https://docs.google.com/document/d/1N7HDXuNWgLG2PqFS4Kkgv5LzAAtU6c97UVNT7tdTIjA/
 RedirectMatch /doc/design$                /beancount/doc/design-doc
@@ -38,6 +38,8 @@ RedirectMatch /doc/devel-doc$             /beancount/doc/design-doc
 RedirectMatch /doc/devel$                 /beancount/doc/design-doc
 
 RedirectMatch /doc/conversions$           https://docs.google.com/document/d/1rW7zQyMiv8hKZ0993pwQiu5vTxzEOQf_Q67GvVk6zu0/
+
+RedirectMatch /doc/example$               https://docs.google.com/document/d/1G-gsmwK551lSyuHboVLW3xbLhh99JfoKIbNnZSJxteE/
 
 RedirectMatch /doc/custom-appplication$   https://docs.google.com/document/d/1SnR7BdE2VXFTMEvnkhAd9PwXu_AxytTYpiS1LjXdP0E/
 RedirectMatch /doc/custom$                /beancount/doc/custom-application
