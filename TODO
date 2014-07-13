@@ -18,6 +18,8 @@ beancount: TODO
   - Invert the arguments for bean-doctor, so that they are in the same order as
     bean-query.  Just a matter of cleanliness.
 
+  - bean-check --list-options needs to work. Same with bean-query.
+
 
 ** Minimum Cleanup of Reports Before Release
 
@@ -175,6 +177,13 @@ beancount: TODO
         2014-02-02 note  Assets:Temporary "Bla bla""
 
     Find a way to detect too long strings and perhaps barf on it.
+
+  - Is it possible to specify no flag on a transaction?, e.g.
+
+       2014-07-12
+         ...
+
+    Does this work?
 
 
 ** File Input as Environment Variable
@@ -1054,7 +1063,13 @@ beancount: TODO
   - Add an optional parameter to the loaddoc() and parsedoc() decorators to
     have them automatically check for expected no-errors.
 
-  - Add an option to bean-bake to
+
+  - In order to relax the constraint that you may not add negativ units at
+    cost, we could only disallow under certain circumstances:
+
+    * An account has received units in the opposite direction
+    * If the posting cross the zero boundary. Maybe starting from zero in
+      either direction could be fine.
 
 
 ** Prepare for Plugins Revamp
@@ -2598,178 +2613,6 @@ Improve this bit:
     list of holdings as input. This should perhaps just be another report name.
 
 * Documentation
-** Users's Manual
-
-  - Include the nice diagram made for DGreenberg, we need a 3D version of it.
-
-  - Defining your accounts
-    - Basic structures: *:Country:Institution:SubAccounts
-    - "When and why to put accounts together under a single subaccount?"
-      - When it makes sense to sum the total together.
-        e.g. IRA employer contribution and your own contribution.
-
-  - Checks
-    - Checks work for subaccount balances too (add joint account example)
-
-
-  - Under "About Credits & Debits" - this is where you should write about how
-    flows are relative to a boundary around the holder of the accounts.
-
-
-** Design Doc
-
-  - INVARIANT: All the entries lists are assumed to be sorted by date
-    everywhere.
-
-  - INVARIANT: All Check and Open entries are always at the beginning of a new
-    date in a list of entries.
-
-  - Describe and document the data structures in a language-independent way,
-    this is really important.  I have a really nice subset by now.
-
-** Developer Documentation
-
-  - Add nosetests, pylint to tools required for development
-
-  - Document the realization process, need that large zoom-out graphic that
-    shows closing, and opening balances.
-
-  - Add a "team project" as an example use case, or even an example file.
-
-  - Look at GnuCash for some of the reports... some good ideas maybe? I could
-    perhaps learn a few things, it looks informed.
-
-  - Start documentation so you have a place to put all these ideas.
-    Set it up using Sphinx, or something else.
-
-  - Consider serving the user's manual directly from the web interface.
-
-  - Do some serious thinking about payees vs. subaccounts vs. tags w.r.t. to
-    named tags.
-
-** Cookbook
-
-  - Write a series of real-life problems solved. This should be really much
-    more helpful than boring docs.
-
-  - The examples should be drawn from the demo file; the demo file should be
-    rewritten, with multiple years, and with good templates for most of the
-    important operations that can take place.
-
-  - Add loft4530 IRR calculation as an example of a custom application script
-
-*** Transfers Between Accounts
-*** mortgage, buying a home
-*** capital gains (note about how to do commissions)
-*** cie expenses, the way I'm doing it.
-*** misc, e.g. credit card
-*** stock splits
-*** Tracking IRA or RSP Contributions
-**** Option 1
-
-2012-10-15 * Contribution 1 to RSP
-  Assets:Checking                           -2500 CAD
-  Assets:Bank1:RSP                           2500 CAD
-  Liabilities:PendingContributions          -2500 RSPCAD
-  Expenses:RSPContrib                        2500 RSPCAD
-
-2012-11-15 * Contribution 2 to RSP
-  Assets:Checking                           -1500 CAD
-  Assets:Bank1:RSP                           1500 CAD
-  Liabilities:PendingContributions          -1500 RSPCAD
-  Expenses:RSPContrib                        1500 RSPCAD
-
-2013-04-30 * Filing Taxes
-  Assets:Receivable                           800 CAD
-  Expenses:Taxes                             -800 CAD
-  Assets:RSPContrib                         -3500 RSPCAD  ; Not claiming all
-  Liabilities:PendingContributions          +4000 RSPCAD
-  Assets:RSPContrib:Unclaimed                 500 RSPCAD
-
-2013-05-15 * Paying Taxes - Receiving Amount Due
-  Assets:Checking                             800 CAD
-  Assets:Receivable                          -800 CAD
-  Assets:RSPContrib                          1200 RSPCAD
-  Income:RSPContrib                         -1200 RSPCAD
-
-
-Two RSP investment accounts:
-
-  Assets:Bank1:RSP
-  Assets:Bank1:RSP
-
-An account to hold maximum RSP contributions allowed:
-
-  Assets:RSPContrib
-
-How much I've contributed to RSPs in total:
-
-  Expenses:RSPContrib
-
-How much my maximum contributions have increased from the governement as a
-result of paying taxes:
-
-  Income:RSPContrib
-
-Pending contributions for this year, some of which to be claimed on my tax filing:
-
-  Liabilities:PendingContributions
-
-Unused RSP contributions made, carried forward to future years:
-
-  Assets:RSPContrib:Unclaimed
-
-**** Option 2 (favourite)
-
-2012-10-15 * Contribution 1 to RSP
-  Assets:Checking                           -2500 CAD
-  Assets:Bank1:RSP                           2500 CAD
-  Assets:RSPContrib:MaxDeductible           -2500 RSPCAD
-  Assets:RSPContrib:Contributed              2500 RSPCAD
-
-2012-11-15 * Contribution 2 to RSP
-  Assets:Checking                           -1500 CAD
-  Assets:Bank1:RSP                           1500 CAD
-  Assets:RSPContrib:MaxDeductible           -1500 RSPCAD
-  Assets:RSPContrib:Contributed              1500 RSPCAD
-
-2013-04-30 * Filing Taxes
-  Assets:Receivable                           800 CAD
-  Expenses:Taxes                             -800 CAD
-  Assets:RSPContrib:Contributed             -3500 RSPCAD  ; Not claiming all
-  Expenses:RSPContrib                       +3500 RSPCAD
-
-2013-05-15 * Paying Taxes - Receiving Amount Due
-  Assets:Checking                             800 CAD
-  Assets:Receivable                          -800 CAD
-  Assets:RSPContrib:MaxDeductible            1200 RSPCAD
-  Income:RSPContrib                         -1200 RSPCAD
-
-Two RSP investment accounts:
-
-  Assets:Bank1:RSP
-  Assets:Bank1:RSP
-
-An account to hold maximum RSP contributions allowed:
-
-  Assets:RSPContrib:MaxDeductible
-
-Pending unused contributions for this year, some of which to be claimed on my
-tax filing:
-
-  Assets:RSPContrib:Contributed
-
-How much I've contributed to RSPs in total:
-
-  Expenses:RSPContrib
-
-How much my maximum contributions have increased from the governement as a
-result of paying taxes:
-
-  Income:RSPContrib
-
-
-
 ** Challenges
 
   - Document those below which I'm already able to do, and those which require

@@ -7,9 +7,12 @@ import io
 from beancount.utils.snoop import snooper
 from beancount.reports import rholdings
 from beancount.parser import printer
+from beancount.parser import options
 from beancount.core import data
 from beancount.core import realization
 from beancount.core import amount
+from beancount.core import getters
+from beancount.core import account_types
 from beancount.ops import prices
 
 
@@ -36,6 +39,9 @@ def get_report_generator(report_str):
 
     elif report_str == 'prices_db':
         return report_prices_db
+
+    elif report_str == 'accounts':
+        return report_accounts
 
     elif snooper(re.match('(?:trial|bal|balances)(?::(.*))?$', report_str)):
         return functools.partial(report_trial, snooper.value.group(1))
@@ -227,3 +233,31 @@ def report_trial(expression, entries, unused_options_map):
             lambda real_account: regexp.search(real_account.account))
     if real_accounts:
         return realization.dump_balances(real_accounts)
+
+
+def report_accounts(entries, options_map):
+    """Produce a list of all the accounts.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options dict, as read by the parser.
+    Returns:
+      A string, the text to print.
+    """
+    if not entries:
+        return
+
+    open_close = getters.get_account_open_close(entries)
+
+    # Render to stdout.
+    maxlen = max(len(account) for account in open_close)
+    sortkey_fun = account_types.get_account_sort_function(
+        options.get_account_types(options_map))
+    oss = io.StringIO()
+    for account, (open, close) in sorted(open_close.items(),
+                                         key=lambda entry: sortkey_fun(entry[0])):
+        open_date = open.date if open else ''
+        close_date = close.date if close else ''
+        print('{:{len}}  {}  {}'.format(account, open_date, close_date, len=maxlen),
+              file=oss)
+    return oss.getvalue()
