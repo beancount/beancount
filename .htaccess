@@ -1,63 +1,62 @@
 # Short redirect links for most of the documentation on Google Drive.
 
-RedirectMatch /doc/index                 https://docs.google.com/document/d/1RaondTJCS_IUPBHFNdT8oqFKJjVJDsfsn6JEjBG04eA/
-RedirectMatch /doc/meta                  /beancount/doc/index
+RedirectMatch /doc/index$                 https://docs.google.com/document/d/1RaondTJCS_IUPBHFNdT8oqFKJjVJDsfsn6JEjBG04eA/
+RedirectMatch /doc/meta$                  /beancount/doc/index
 
-RedirectMatch /doc/motivation            https://docs.google.com/document/d/1e4Vz3wZB_8-ZcAwIFde8X5CjzKshE4-OXtVVHm4RQ8s/
-RedirectMatch /doc/intro                 /beancount/doc/motivation
-RedirectMatch /doc/context               /beancount/doc/motivation
+RedirectMatch /doc/motivation$            https://docs.google.com/document/d/1e4Vz3wZB_8-ZcAwIFde8X5CjzKshE4-OXtVVHm4RQ8s/
+RedirectMatch /doc/intro$                 /beancount/doc/motivation
+RedirectMatch /doc/context$               /beancount/doc/motivation
 
-RedirectMatch /doc/double-entry          https://docs.google.com/document/d/100tGcA4blh6KSXPRGCZpUlyxaRUwFHEvnz_k9DyZFn4/
-RedirectMatch /doc/double_entry          /beancount/doc/double-entry
-RedirectMatch /doc/doubleentry           /beancount/doc/double-entry
-RedirectMatch /doc/de                    /beancount/doc/double-entry
-RedirectMatch /doc/double                /beancount/doc/double-entry
-RedirectMatch /doc/de-method             /beancount/doc/double-entry
+RedirectMatch /doc/double-entry$          https://docs.google.com/document/d/100tGcA4blh6KSXPRGCZpUlyxaRUwFHEvnz_k9DyZFn4/
+RedirectMatch /doc/double_entry$          /beancount/doc/double-entry
+RedirectMatch /doc/doubleentry$           /beancount/doc/double-entry
+RedirectMatch /doc/double$                /beancount/doc/double-entry
+RedirectMatch /doc/de-method$             /beancount/doc/double-entry
 
-RedirectMatch /doc/getting-started       https://docs.google.com/document/d/1P5At-z1sP8rgwYLHso5sEy3u4rMnIUDDgob9Y_BYuWE/
-RedirectMatch /doc/examples              /beancount/doc/cookbook
+RedirectMatch /doc/getting-started$       https://docs.google.com/document/d/1P5At-z1sP8rgwYLHso5sEy3u4rMnIUDDgob9Y_BYuWE/
+RedirectMatch /doc/examples$              /beancount/doc/cookbook
 
-RedirectMatch /doc/cookbook              https://docs.google.com/document/d/1Tss0IEzEyAPuKSGeNsfNgb0BfiW2ZHyP5nCFBW1uWlk/
-RedirectMatch /doc/examples              /beancount/doc/cookbook
+RedirectMatch /doc/cookbook$              https://docs.google.com/document/d/1Tss0IEzEyAPuKSGeNsfNgb0BfiW2ZHyP5nCFBW1uWlk/
+RedirectMatch /doc/examples$              /beancount/doc/cookbook
 
-RedirectMatch /doc/trading               https://docs.google.com/document/d/1WjARst_cSxNE-Lq6JnJ5CC41T3WndEsiMw4d46r2694/
-RedirectMatch /doc/stock                 /beancount/doc/trading
-RedirectMatch /doc/stocks                /beancount/doc/trading
-RedirectMatch /doc/pnl                   /beancount/doc/trading
+RedirectMatch /doc/trading$               https://docs.google.com/document/d/1WjARst_cSxNE-Lq6JnJ5CC41T3WndEsiMw4d46r2694/
+RedirectMatch /doc/stock$                 /beancount/doc/trading
+RedirectMatch /doc/stocks$                /beancount/doc/trading
+RedirectMatch /doc/pnl$                   /beancount/doc/trading
 
-RedirectMatch /doc/users-manual          https://docs.google.com/document/d/1wAMVrKIA2qtRGmoVDSUBJGmYZSygUaR0uOMW1GV3YE0/
-RedirectMatch /doc/manual                /beancount/doc/users-manual
-RedirectMatch /doc/manual                /beancount/doc/user-manual
+RedirectMatch /doc/users-manual$          https://docs.google.com/document/d/1wAMVrKIA2qtRGmoVDSUBJGmYZSygUaR0uOMW1GV3YE0/
+RedirectMatch /doc/manual$                /beancount/doc/users-manual
+RedirectMatch /doc/manual$                /beancount/doc/user-manual
 
-RedirectMatch /doc/cheatsheet$           http://furius.ca/beancount/doc/cheatsheet/beancount-cheatsheet.pdf
-RedirectMatch /doc/cheat$                /beancount/doc/cheatsheet
-RedirectMatch /doc/sheet$                /beancount/doc/cheatsheet
+RedirectMatch /doc/cheatsheet$$           http://furius.ca/beancount/doc/cheatsheet/beancount-cheatsheet.pdf
+RedirectMatch /doc/cheat$$                /beancount/doc/cheatsheet
+RedirectMatch /doc/sheet$$                /beancount/doc/cheatsheet
 
-RedirectMatch /doc/design-doc            https://docs.google.com/document/d/1N7HDXuNWgLG2PqFS4Kkgv5LzAAtU6c97UVNT7tdTIjA/
-RedirectMatch /doc/design                /beancount/doc/design-doc
-RedirectMatch /doc/devel-doc             /beancount/doc/design-doc
-RedirectMatch /doc/devel                 /beancount/doc/design-doc
+RedirectMatch /doc/design-doc$            https://docs.google.com/document/d/1N7HDXuNWgLG2PqFS4Kkgv5LzAAtU6c97UVNT7tdTIjA/
+RedirectMatch /doc/design$                /beancount/doc/design-doc
+RedirectMatch /doc/devel-doc$             /beancount/doc/design-doc
+RedirectMatch /doc/devel$                 /beancount/doc/design-doc
 
-RedirectMatch /doc/conversions           https://docs.google.com/document/d/1rW7zQyMiv8hKZ0993pwQiu5vTxzEOQf_Q67GvVk6zu0/
+RedirectMatch /doc/conversions$           https://docs.google.com/document/d/1rW7zQyMiv8hKZ0993pwQiu5vTxzEOQf_Q67GvVk6zu0/
 
-RedirectMatch /doc/custom-appplication   https://docs.google.com/document/d/1SnR7BdE2VXFTMEvnkhAd9PwXu_AxytTYpiS1LjXdP0E/
-RedirectMatch /doc/custom                /beancount/doc/custom-application
-RedirectMatch /doc/application           /beancount/doc/custom-application
+RedirectMatch /doc/custom-appplication$   https://docs.google.com/document/d/1SnR7BdE2VXFTMEvnkhAd9PwXu_AxytTYpiS1LjXdP0E/
+RedirectMatch /doc/custom$                /beancount/doc/custom-application
+RedirectMatch /doc/application$           /beancount/doc/custom-application
 
-RedirectMatch /doc/proposal-booking      https://docs.google.com/document/d/1F8IJ_7fMHZ75XFPocMokLxVZczAhrBRBVN9uMhQFCZ4/
-RedirectMatch /doc/proposal-inventory    /beancount/doc/proposal-booking
+RedirectMatch /doc/proposal-booking$      https://docs.google.com/document/d/1F8IJ_7fMHZ75XFPocMokLxVZczAhrBRBVN9uMhQFCZ4/
+RedirectMatch /doc/proposal-inventory$    /beancount/doc/proposal-booking
 
-RedirectMatch /doc/proposal-filtering    https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
-RedirectMatch /doc/proposal-filter       /beancount/doc/proposal-filtering
-RedirectMatch /doc/proposal-filters      /beancount/doc/proposal-filtering
-RedirectMatch /doc/proposal-views        /beancount/doc/proposal-filtering
+RedirectMatch /doc/proposal-filtering$    https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
+RedirectMatch /doc/proposal-filter$       /beancount/doc/proposal-filtering
+RedirectMatch /doc/proposal-filters$      /beancount/doc/proposal-filtering
+RedirectMatch /doc/proposal-views$        /beancount/doc/proposal-filtering
 
-RedirectMatch /doc/proposal-dates        https://docs.google.com/document/d/1x0qqWGRHi02ef-FtUW172SHkdJ8quOZD-Xli7r4Nl_k/
-RedirectMatch /doc/proposal-dates        /beancount/doc/proposal-settlement
+RedirectMatch /doc/proposal-dates$        https://docs.google.com/document/d/1x0qqWGRHi02ef-FtUW172SHkdJ8quOZD-Xli7r4Nl_k/
+RedirectMatch /doc/proposal-dates$        /beancount/doc/proposal-settlement
 
-RedirectMatch /doc/proposal-balance      https://docs.google.com/document/d/1vyemZFox47IZjuBrT2RjhSHZyTgloYOUeJb73RxMRD0/
-RedirectMatch /doc/proposal-assertions   /beancount/doc/proposal-balance
+RedirectMatch /doc/proposal-balance$      https://docs.google.com/document/d/1vyemZFox47IZjuBrT2RjhSHZyTgloYOUeJb73RxMRD0/
+RedirectMatch /doc/proposal-assertions$   /beancount/doc/proposal-balance
 
-RedirectMatch /doc/proposal-budget       https://docs.google.com/document/d/12BVfdhnHy1Ruqyyu3JGf3OdWrpXFKB2zFyHFrznwuOU/
-RedirectMatch /doc/proposal-budgeting    /beancount/doc/proposal-budget
-RedirectMatch /doc/proposal-forecast     /beancount/doc/proposal-budget
+RedirectMatch /doc/proposal-budget$       https://docs.google.com/document/d/12BVfdhnHy1Ruqyyu3JGf3OdWrpXFKB2zFyHFrznwuOU/
+RedirectMatch /doc/proposal-budgeting$    /beancount/doc/proposal-budget
+RedirectMatch /doc/proposal-forecast$     /beancount/doc/proposal-budget
