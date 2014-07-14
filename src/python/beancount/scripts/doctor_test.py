@@ -57,6 +57,24 @@ class TestScriptDoctor(test_utils.TestCase):
         with test_utils.capture() as stdout:
             test_utils.run_with_args(doctor.main, ['dump-lexer', filename])
 
+    @test_utils.docfile
+    def test_dump_roundtrip(self, filename):
+        """
+        2013-01-01 open Expenses:Restaurant
+        2013-01-01 open Assets:Cash
+
+        2014-03-02 * "Something"
+          Expenses:Restaurant   50.02 USD
+          Assets:Cash
+        """
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(doctor.main, ['roundtrip', filename])
+
+    def test_list_options(self):
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(doctor.main, ['list_options'])
+            test_utils.run_with_args(doctor.main, ['list-options'])
+
 
 class TestScriptCheckDirectories(directories_test.TestScriptCheckDirectories):
 

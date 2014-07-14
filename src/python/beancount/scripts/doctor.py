@@ -114,6 +114,15 @@ def do_directories(filename, args):
     directories.validate_directories(entries, args)
 
 
+def do_list_options(*unused_args):
+    """Print out a list of the available options.
+
+    Args:
+      unused_args: Ignored.
+    """
+    print(options.list_options())
+
+
 def get_commands():
     """Return a list of available commands in this file.
 
@@ -136,7 +145,7 @@ def main():
                                      epilog=commands_doc)
     parser.add_argument('command', action='store',
                         help="The command to run.")
-    parser.add_argument('filename', help='Beancount input filename.')
+    parser.add_argument('filename', nargs='?', help='Beancount input filename.')
     parser.add_argument('rest', nargs='*', help='All remaining arguments.')
     opts = parser.parse_args()
 

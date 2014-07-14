@@ -46,3 +46,7 @@ class TestOptions(unittest.TestCase):
         result = options.get_current_accounts(options_)
         self.assertEqual(2, len(result))
         self.assertTrue(all(isinstance(x, str) for x in result))
+
+    def test_list_options(self):
+        options_doc = options.list_options()
+        self.assertTrue(isinstance(options_doc, str))
