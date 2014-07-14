@@ -48,6 +48,9 @@ dump_lexer:
 grind:
 	valgrind --leak-check=full /usr/local/bin/python3 bean-sandbox $(INPUT)
 
+# Regenerate the website.
+html:
+	projects docs beancount
 
 # Compute and plot inter-module dependencies.
 # We want to insure a really strict set of relationships between the modules,
