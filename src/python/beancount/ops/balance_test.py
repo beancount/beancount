@@ -129,6 +129,60 @@ class TestBalance(unittest.TestCase):
         self.assertEqual([None, None, None, None], diff_amounts)
 
     @loaddoc
+    def test_parents_only(self, entries, errors, __):
+        """
+          2013-05-01 open Assets:Bank
+          2013-05-01 open Assets:Bank:Checking1
+          2013-05-01 open Assets:Bank:Checking2
+          2013-05-01 open Equity:OpeningBalances
+
+          2013-05-02 *
+            Assets:Bank:Checking1                100 USD
+            Equity:OpeningBalances
+
+          2013-05-03 *
+            Assets:Bank:Checking2                10 USD
+            Equity:OpeningBalances
+
+          2013-05-05 balance Assets:Bank             110 USD
+        """
+        self.assertEqual([], list(map(type, errors)))
+        diff_amounts = [entry.diff_amount
+                        for entry in entries
+                        if isinstance(entry, balance.Balance)]
+        self.assertEqual([None], diff_amounts)
+
+    @loaddoc
+    def test_parents_with_postings(self, entries, errors, __):
+        """
+          2013-05-01 open Assets:Bank
+          2013-05-01 open Assets:Bank:Checking1
+          2013-05-01 open Assets:Bank:Checking2
+          2013-05-01 open Equity:OpeningBalances
+
+          2013-05-02 *
+            Assets:Bank:Checking1                100 USD
+            Equity:OpeningBalances
+
+          2013-05-03 *
+            Assets:Bank:Checking2                10 USD
+            Equity:OpeningBalances
+
+          2013-05-04 * "Posting on a parent account"
+            Assets:Bank                          15 USD
+            Equity:OpeningBalances
+
+          2013-05-05 balance Assets:Bank             125 USD
+        """
+        from beancount.parser import printer
+        printer.print_errors(errors)
+        self.assertFalse(errors)
+        diff_amounts = [entry.diff_amount
+                        for entry in entries
+                        if isinstance(entry, balance.Balance)]
+        self.assertEqual([None], diff_amounts)
+
+    @loaddoc
     def test_with_lots(self, entries, errors, __):
         """
           2013-05-01 open Assets:Bank:Investing
@@ -198,5 +252,19 @@ class TestBalance(unittest.TestCase):
             Income:Interest
 
           2013-05-05 balance Assets:Bank:Checking   0.01502 USD
+        """
+        self.assertEqual([], list(map(type, errors)))
+
+    @loaddoc
+    def test_balance_before_create(self, entries, errors, __):
+        """
+          2013-05-01 open Assets:US:Checking   USD
+          2013-05-01 open Expenses:Something
+
+          2013-05-01 balance Assets:US:Checking     0 USD
+
+          2013-05-03 txn "Testing!"
+            Assets:US:Checking            100 USD
+            Expenses:Something           -100 USD
         """
         self.assertEqual([], list(map(type, errors)))

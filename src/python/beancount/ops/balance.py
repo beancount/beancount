@@ -6,6 +6,7 @@ from beancount.core.amount import Decimal, amount_sub
 from beancount.core.data import Transaction, Balance
 from beancount.core import inventory
 from beancount.core import realization
+from beancount.core import getters
 
 __plugins__ = ('check',)
 
@@ -35,30 +36,48 @@ def check(entries, unused_options_map):
     new_entries = []
     check_errors = []
 
-    # This is similar to realization, but performed in a different order. Here
-    # we process the entries one by one along with the balance checks. We use a
-    # temporary realization in order to hold the incremental tree of balances,
-    # so that we can easily get the amounts of an account's subaccounts for
-    # making checks on parent accounts.
+    # This is similar to realization, but performed in a different order, and
+    # where we only accumulate inventories for accounts that have balance
+    # assertions in them (this saves on time). Here we process the entries one
+    # by one along with the balance checks. We use a temporary realization in
+    # order to hold the incremental tree of balances, so that we can easily get
+    # the amounts of an account's subaccounts for making checks on parent
+    # accounts.
     real_root = realization.RealAccount('')
+
+    # Figure out the set of accounts for which we need to compute a running
+    # inventory balance.
+    asserted_accounts = {entry.account
+                         for entry in entries
+                         if isinstance(entry, Balance)}
+
+    # Add all children accounts of an asserted account to be calculated as well,
+    # and pre-create these accounts, and only those (we're just being tight to
+    # make sure).
+    for account in getters.get_accounts(entries):
+        if (account in asserted_accounts or
+            any(account.startswith(asserted_account)
+                for asserted_account in asserted_accounts)):
+            realization.get_or_create(real_root, account)
 
     for entry in entries:
         if isinstance(entry, Transaction):
             # For each of the postings' accounts, update the balance inventory.
             for posting in entry.postings:
-                real_account = realization.get_or_create(real_root,
-                                                         posting.account)
+                real_account = realization.get(real_root, posting.account)
 
-                # Note: Always allow negative lots for the purpose of balancing.
-                # This error should show up somewhere else than here.
-                real_account.balance.add_position(posting.position, True)
+                # The account will have been created only if we're meant to track it.
+                if real_account is not None:
+                    # Note: Always allow negative lots for the purpose of balancing.
+                    # This error should show up somewhere else than here.
+                    real_account.balance.add_position(posting.position, True)
 
         elif isinstance(entry, Balance):
             # Check the balance against the check entry.
             expected_amount = entry.amount
 
-            real_account = realization.get_or_create(real_root,
-                                                     entry.account)
+            real_account = realization.get(real_root, entry.account)
+            assert real_account is not None, "Missing {}".format(entry.account)
 
             # Sum up the current balances for this account and its
             # sub-accounts. We want to support checks for parent accounts
