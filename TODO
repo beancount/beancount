@@ -23,6 +23,21 @@ beancount: TODO
   - bean-check --list-options needs to work. Same with bean-query.
 
 
+** Minimal Reports to Console
+
+  - Differentiate between the concept of "journal" and "register" report: a
+    "journal" should include all the postings and no running balance. A
+    "register" should by default only render just one account's postings and
+    render a running balance column. This is the distinction between the two,
+    and making this distinction will allow us to produce two useful but
+    distinct reports for the console output, even if these are somewhat similar
+    for the web output.
+
+    This should probably be done before the release, so that at least the first
+    version has some decent console reports, even if the revamp of reports
+    comes later on.
+
+
 ** Relax Constraints
 
   - You can implement the sign check for positions held-at-cost only when there
@@ -347,6 +362,9 @@ beancount: TODO
     all the HARDCORE_VALIDATIONS in by default.
 
 
+
+  - (reports) Bring back the trades report into the mainline version, using
+    inventory reductions.
 
 
   - Create a new report type: "days" that counts the days of any event in the

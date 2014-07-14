@@ -89,3 +89,27 @@ class TestScriptPositions(test_utils.TestCase):
 
            2014-02-10 price GOOG             536.03 USD
         """, output)
+
+    @test_utils.docfile
+    def test_list_accounts(self, filename):
+        """
+        2013-01-01 open Expenses:Restaurant
+        2013-01-01 open Assets:Cash
+
+        2014-03-02 * "Something"
+          Expenses:Restaurant   50.02 USD
+          Assets:Cash
+        """
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(query.main, [filename, 'accounts'])
+
+        r = self.assertLines("""
+            Assets:Cash          2013-01-01
+            Expenses:Restaurant  2013-01-01
+        """, stdout.getvalue())
+
+    @test_utils.docfile
+    def test_list_accounts_empty(self, filename):
+        ""
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(query.main, [filename, 'accounts'])
