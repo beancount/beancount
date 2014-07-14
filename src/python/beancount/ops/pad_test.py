@@ -9,6 +9,7 @@ from beancount.loader import loaddoc
 from beancount.ops import pad
 from beancount.ops import balance
 from beancount.parser import cmptest
+from beancount.parser import printer
 
 
 class TestPadding(cmptest.TestCase):
@@ -359,5 +360,17 @@ class TestPadding(cmptest.TestCase):
                                     (Posting, Amount('145.00', 'USD')),
                                     (Balance, Amount('145.00', 'USD'))])
 
-
     # Note: You could try padding A into B and B into A to see if it works.
+
+    @loaddoc
+    def test_pad_multiple_times(self, entries, errors, __):
+        """
+          2013-05-01 open Assets:Checking
+          2013-05-01 open Equity:OpeningBalances
+
+          2013-06-01 pad Assets:Checking Equity:OpeningBalances
+          2013-07-01 pad Assets:Checking Equity:OpeningBalances
+
+          2013-10-01 balance Assets:Checking    5.00 USD
+        """
+        self.assertTrue(errors)

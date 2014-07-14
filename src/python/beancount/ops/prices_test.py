@@ -184,3 +184,25 @@ class TestPriceMap(unittest.TestCase):
         self.assertEqual(None,
                          prices.convert_amount(price_map, 'EUR',
                                                amount.Amount('100', 'USD')))
+
+    @parsedoc
+    def test_ordering_same_date(self, entries, _, __):
+        """
+        ;; The last one to appear in the file should be selected.
+        2013-06-02 price  USD  1.13 CAD
+        2013-06-02 price  USD  1.12 CAD
+        2013-06-02 price  USD  1.11 CAD
+        """
+        price_map = prices.build_price_map(entries)
+
+        self.assertEqual(2, len(price_map))
+        self.assertEqual(set([('USD', 'CAD'), ('CAD', 'USD')]),
+                         set(price_map.keys()))
+
+        values = price_map[('USD', 'CAD')]
+        expected = [(datetime.date(2013, 6, 2), D('1.11'))]
+        for (exp_date, exp_value), (act_date, act_value) in zip(expected, values):
+            self.assertEqual(exp_date, act_date)
+            self.assertEqual(exp_value, act_value.quantize(D('0.01')))
+
+        self.assertEqual(1, len(price_map[('CAD', 'USD')]))

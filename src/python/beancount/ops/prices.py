@@ -51,7 +51,6 @@ class PriceMap(dict):
 
 
 def build_price_map(entries):
-
     """Build a price map from a list of arbitrary entries.
 
     If multiple prices are found for the same (currency, cost-currency) pair at

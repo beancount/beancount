@@ -15,6 +15,9 @@ beancount: TODO
   - Make sure bean-check returns a correct error code (1 for errors, 0 on
     success) and add unit tests for it.
 
+  - Rename OpeningBalances to be Opening-Balances everywhere before the
+    release, even in the tests, just for consistency's sake.
+
 ** Commands Cleanup
 
   - Invert the arguments for bean-doctor, so that they are in the same order as
@@ -356,6 +359,10 @@ beancount: TODO
 
   - In add_unrealized_gains(), convert to use our holdings aggregator.
 
+
+
+  - (reports) We really do need to report on position reduction as trades. This
+    is an important report to generate!
 
 
   - (validation/performance) Optimize the performance of validations and bring
@@ -2099,6 +2106,13 @@ Improve this bit:
 
 
 * Plugins
+** Strict Unused Pad Directives
+
+  - The validation check that pushes an error on unused pad directives should
+    be moved to a plugin, that should be optional. There is rationale for
+    allowing to keep unused pad directives. Don't be so strict, Martin.
+
+
 ** Link Trades
 
   - Create a plugin that will link together all reducing transactions
@@ -2161,6 +2175,22 @@ Improve this bit:
       to report positions at cost or in held units, and whether the gains are
       included or not entirely depends on whether these transactions have been
       inserted in or not.
+
+
+** Strict Average Cost Inventory Booking Checker
+
+  - Build a plugin that will check that accounts with average cost inventory
+    booking method only have such reductions in them:
+
+    https://docs.google.com/document/d/1F8IJ_7fMHZ75XFPocMokLxVZczAhrBRBVN9uMhQFCZ4/edit#heading=h.m74dwkjzqojh
+
+      "Another approach would be to not enforce these aggregations, but to provide a
+      plugin that would check that for those accounts that are marked as using the
+      average cost inventory booking method by default, that only such bookings
+      actually take place."
+
+   This is, of cource, to be implemented only after implementing support for
+   the average cost inventory booking method.
 
 
 ** Tip Calculator

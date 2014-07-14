@@ -70,3 +70,6 @@ RedirectMatch /doc/proposal-assertions$   /beancount/doc/proposal-balance
 RedirectMatch /doc/proposal-budget$       https://docs.google.com/document/d/12BVfdhnHy1Ruqyyu3JGf3OdWrpXFKB2zFyHFrznwuOU/
 RedirectMatch /doc/proposal-budgeting$    /beancount/doc/proposal-budget
 RedirectMatch /doc/proposal-forecast$     /beancount/doc/proposal-budget
+
+RedirectMatch /doc/proposal-padding$      https://docs.google.com/document/d/1rZW3Hz5oJw1x9AwbcBj6uw5FabCHqubiIvaHwAjmCvk/
+RedirectMatch /doc/proposal-pad$          /beancount/doc/proposal-padding

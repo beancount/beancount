@@ -174,8 +174,6 @@ class TestBalance(unittest.TestCase):
 
           2013-05-05 balance Assets:Bank             125 USD
         """
-        from beancount.parser import printer
-        printer.print_errors(errors)
         self.assertFalse(errors)
         diff_amounts = [entry.diff_amount
                         for entry in entries
