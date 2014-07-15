@@ -344,6 +344,8 @@ beancount: TODO
 
 
 
+
+
   - (reports revamp) Write a generic test that simply enumerates all the
     reports and invokes them with their default values. This should extend
     automatically when new reports are created.
@@ -2148,6 +2150,23 @@ Improve this bit:
 
 
 * Plugins
+** Wash Sales
+
+  - (script) Write a script to check whether an account's trades are subject to
+    the wash sale rule (I need this for Google stock):
+
+      "An Internal Revenue Service (IRS) rule that prohibits a taxpayer from
+    claiming a loss on the sale or trade of a security in a wash sale. The rule
+    defines a wash sale as one that occurs when an individual sells or trades a
+    security at a loss, and within 30 days before or after this sale, buys a
+    “substantially identical” stock or security, or acquires a contract or
+    option to do so. A wash sale also results if an individual sells a security,
+    and the spouse or a company controlled by the individual buys a
+    substantially equivalent security."
+
+    The wash sales amount should be reported in an account, and should be
+    calculated as a plugin.
+
 ** Strict Unused Pad Directives
 
   - The validation check that pushes an error on unused pad directives should
