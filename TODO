@@ -64,9 +64,6 @@ beancount: TODO
        We need to define two HTML types: 'html', and 'html_div'. The fisrt one
        renders to a full page; the second one only a div.
 
-  - Move print_trial and other function from doctor to this new reports
-    infrastructure.
-
 
 ** Move Files to Final Location
 
@@ -237,6 +234,10 @@ beancount: TODO
   be using that report generation code too, and that each of its pages will
   basically be housing the HTML version of each report.
 
+  - Rename /account to /journal in the web interface to be consistent with
+    console reports. Maybe a separate register should be provided too (see
+    comment about distinguishing between these two elsewhere in the TODO file).
+
   - Newly created reports should have UI links: networth, holdings rolled by
     currency. We need to reconcile web UI with the new reports that we created.
 
@@ -337,8 +338,27 @@ beancount: TODO
 * Current / Misc / To Be Classified
 
   (This is a grab bag of ideas. When I have a new idea coming to me, I don't
-  have time to think, I just come here and jot it down. Every couple of months
-  I clean this up and put it in the sections below. Please excuse the mess.)
+  have time to think about where to put it, I just come here and jot it down.
+  Every couple of months I clean this mess up and put it in the sections below.
+  Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+
+  - (reports revamp) Write a generic test that simply enumerates all the
+    reports and invokes them with their default values. This should extend
+    automatically when new reports are created.
+
+
+  - (trial balance) In order to zero out the trial balance perfectly, you could
+    insert a conversion entry at the end of it, in the same way that I do for
+    the balance sheet. There is no reason that this is any different; this
+    should be done the same.
+
+
+
+  - Build a 'events' report that will print out the current value of all events.
+
+
 
 
 
@@ -359,10 +379,14 @@ beancount: TODO
 
   - In add_unrealized_gains(), convert to use our holdings aggregator.
 
+  - Build a new category to portfolio to identify accountings holding
+    "Uninvested Cash", which should be cash available to invest now.
 
 
-  - (reports) We really do need to report on position reduction as trades. This
-    is an important report to generate!
+
+  - (reports) We really do need to report on position reduction as TRADES. This
+    is an important report to generate! This should be done separately from the
+    improved inventory booking method.
 
 
   - (validation/performance) Optimize the performance of validations and bring
@@ -1127,6 +1151,24 @@ beancount: TODO
 
   - You could make the narrations for padding and summarization transactions
     specifiable via options.
+
+  - Silence BrokenPipeError errors from bottle using wsgiref. You could use
+    CherryPy, which doesn't suffer from that, or just... fix it and silence
+    them.
+
+
+  - Do support rendering options to invert the amounts of the minus accounts.
+    This is an important feature.
+
+
+  - (sanity check for conversions) Insert a validation check when transferring
+    amounts to the balance sheet that the implied rate of the conversion entries
+    is within certain bounds of the price, for each pair of commodities (find a
+    way). These bounds should be proportional to the variance of the price. This
+    would just provide an extra amount of good fuzzy feeling, knowing for sure
+    that my solution to the conversions problem is always meaningful and
+    correct.
+
 
 
 ** Prepare for Plugins Revamp

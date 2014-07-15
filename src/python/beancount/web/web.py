@@ -175,8 +175,8 @@ def source():
         )
 
 
-@app.route('/update', name='update')
-def update():
+@app.route('/activity', name='activity')
+def activity():
     "Render the update activity."
 
     errors = []
@@ -190,6 +190,8 @@ def update():
     oss = io.StringIO()
     view = get_all_view(app)
 
+    # FIXME: This renders not as a tree, and also the Liabilities table is not
+    # the same width. Fix this, this doesn't look good.
     for root in (app.account_types.assets,
                  app.account_types.liabilities):
         table = acctree.tree_table(oss, realization.get(view.real_accounts, root),
@@ -353,7 +355,7 @@ GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{A.toc}}">Table of Contents</a></li>
   <li><a href="{{A.errors}}">Errors</a></li>
   <li><a href="{{A.source}}">Source</a></li>
-  <li><a href="{{A.update}}">Update Activity</a></li>
+  <li><a href="{{A.activity}}">Update Activity</a></li>
   <li><a href="{{A.events}}">Events</a></li>
   <li><a href="{{A.prices}}">Prices</a></li>
 </ul>

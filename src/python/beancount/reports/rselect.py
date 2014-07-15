@@ -6,6 +6,7 @@ import io
 
 from beancount.utils.snoop import snooper
 from beancount.reports import rholdings
+from beancount.reports import table
 from beancount.parser import printer
 from beancount.parser import options
 from beancount.core import data
@@ -43,7 +44,10 @@ def get_report_generator(report_str):
     elif report_str == 'accounts':
         return report_accounts
 
-    elif snooper(re.match('(?:trial|bal|balances)(?::(.*))?$', report_str)):
+    elif report_str == 'events':
+        return report_events
+
+    elif snooper(re.match('(?:trial|bal|balances|ledger)(?::(.*))?$', report_str)):
         return functools.partial(report_trial, snooper.value.group(1))
 
     elif snooper(re.match('holdings{}$'.format(currency_re),
@@ -261,3 +265,22 @@ def report_accounts(entries, options_map):
         print('{:{len}}  {}  {}'.format(account, open_date, close_date, len=maxlen),
               file=oss)
     return oss.getvalue()
+
+
+def report_events(entries, options_map):
+    """Produce a table of the latest values of all event types.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options dict, as read by the parser.
+    Returns:
+      A string, the text to print.
+    """
+    events = {}
+    for entry in entries:
+        if isinstance(entry, data.Event):
+            events[entry.type] = entry.description
+
+    return table.create_table([(type_, description)
+                               for type_, description in sorted(events.items())],
+                              [(0, "Type"), (1, "Description")])

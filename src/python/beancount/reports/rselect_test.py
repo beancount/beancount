@@ -26,6 +26,7 @@ class TestReportSelect(unittest.TestCase):
         'holdings_bycurrency',
         'holdings_bycurrency:USD',
         'networth',
+        'events',
         ]
 
     def test_get_report_generator(self):
