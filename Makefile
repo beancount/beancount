@@ -49,7 +49,7 @@ grind:
 	valgrind --leak-check=full /usr/local/bin/python3 bean-sandbox $(INPUT)
 
 # Regenerate the website.
-html:
+html docs:
 	projects docs beancount
 
 # Compute and plot inter-module dependencies.
