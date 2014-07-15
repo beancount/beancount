@@ -10,6 +10,20 @@ def search_words(words, line):
     return re.search('.*'.join(r'\b{}\b'.format(word) for word in words), line)
 
 
+class TestHelpReports(test_utils.TestCase):
+
+    def test_get_list_report_string(self):
+        help_string = query.get_list_report_string()
+        self.assertTrue(help_string and isinstance(help_string, str))
+
+    def test_get_list_report_string__one_report(self):
+        help_string = query.get_list_report_string('print')
+        self.assertTrue(help_string and isinstance(help_string, str))
+
+    def test_get_list_report_string__invalid_report(self):
+        help_string = query.get_list_report_string('blablabla')
+        self.assertEqual(None, help_string)
+
 
 class TestScriptPositions(test_utils.TestCase):
 
