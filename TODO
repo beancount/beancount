@@ -3,6 +3,8 @@ beancount: TODO
 * Requirements for Shipping 1.0
 ** Complete 100% Coverage for Unit Tests
 
+  - Complete the diagram in the Motivation document
+
   - Make helper functions in summarize, for clamp() and close() which accept
     options_map and automatically derive everything they need from entries.
 
@@ -343,6 +345,8 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Deal with wash sales... complete doc, call MSSB to figure out if/how they
+    adjust the cost basis of a future stock vesting event.
 
 
 

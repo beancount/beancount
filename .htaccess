@@ -7,11 +7,16 @@ RedirectMatch /doc/motivation$            https://docs.google.com/document/d/1e4
 RedirectMatch /doc/intro$                 /beancount/doc/motivation
 RedirectMatch /doc/context$               /beancount/doc/motivation
 
+RedirectMatch /doc/history$               https://docs.google.com/document/d/17wTH7aKnN_7-6nCxsOad6zIQfHwQgJUdI02RjzQuNi8/
+RedirectMatch /doc/credits$               /beancount/doc/history
+
 RedirectMatch /doc/double-entry$          https://docs.google.com/document/d/100tGcA4blh6KSXPRGCZpUlyxaRUwFHEvnz_k9DyZFn4/
 RedirectMatch /doc/double_entry$          /beancount/doc/double-entry
 RedirectMatch /doc/doubleentry$           /beancount/doc/double-entry
 RedirectMatch /doc/double$                /beancount/doc/double-entry
 RedirectMatch /doc/de-method$             /beancount/doc/double-entry
+
+RedirectMatch /doc/install$               https://docs.google.com/document/d/1FqyrTPwiHVLyncWTf3v5TcooCu9z5JRX8Nm41lVZi0U/
 
 RedirectMatch /doc/getting-started$       https://docs.google.com/document/d/1P5At-z1sP8rgwYLHso5sEy3u4rMnIUDDgob9Y_BYuWE/
 RedirectMatch /doc/examples$              /beancount/doc/cookbook
