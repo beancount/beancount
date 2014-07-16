@@ -1,10 +1,7 @@
-import unittest
-import tempfile
 import os
 import re
 from os import path
 
-from beancount.core import account
 from beancount.utils import test_utils
 from beancount.scripts import doctor
 from beancount.scripts import directories_test

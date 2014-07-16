@@ -3,7 +3,6 @@
 This tool is able to dump lexer/parser state, and will provide other services in
 the name of debugging.
 """
-import csv
 import re
 import sys
 import argparse
@@ -14,15 +13,11 @@ from beancount.parser import parser
 from beancount.parser import lexer
 from beancount.parser import options
 from beancount.parser import printer
-from beancount.core import account
-from beancount.core import account_types
-from beancount.core import getters
-from beancount.core import realization
-from beancount.ops import prices
 from beancount.core import compare
 from beancount import loader
 from beancount.utils import misc_utils
 from beancount.scripts import directories
+from beancount.scripts import checkdeps
 
 
 def do_dump_lexer(filename, unused_args):
@@ -135,6 +130,18 @@ def get_commands():
         if mo:
             commands.append((mo.group(1), misc_utils.first_paragraph(attr_value.__doc__)))
     return commands
+
+
+def do_checkdeps(*unused_args):
+    """Report on the runtime dependencies.
+
+    Args:
+      unused_args: Ignored.
+    """
+    print("Dependencies:")
+    for package, version, sufficient in checkdeps.check_dependencies():
+        print("  {:16}: {} {}".format(package, version or 'NOT INSTALLED',
+                                    "(INSUFFICIENT)" if version and not sufficient else ""))
 
 
 def main():
