@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+"""Group all transaction types by similarity (set of accounts they use) and
+print a few of each of these entries as templates. This is used on my personal
+ledger and identify all the types of transactions to discuss in the cookbook.
+"""
+import re
+import collections
+
+from beancount.core import data
+from beancount.core import account
+from beancount.core import getters
+from beancount import loader
+from beancount.parser import printer
+from beancount.utils import misc_utils
+
+
+def rename_accounts(entry, rename_map):
+    """Rename all the accounts from the entry via the rename map.
+
+    Args:
+      entry: Any directive type.
+      rename_map: A dict of account names replacements to process.
+    Returns:
+      A new entry, with the account names replaced.
+    """
+    return misc_utils.replace_namedtuple_values(
+        entry,
+        lambda x: isinstance(x, str) and account.is_valid(x),
+        rename_map)
+
+
+def main():
+    import argparse, logging
+    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    parser = argparse.ArgumentParser(description=__doc__.strip())
+
+    parser.add_argument('filename', help='Filename.')
+
+    parser.add_argument('-n', '--num_entries', action='store',
+                        type=int, default=1,
+                        help="Number of entries to print")
+
+    parser.add_argument('-r', '--rename_map', action='store',
+                        help=("A filename to eval in Python to get a dictionary of account "
+                              "translation names. This is used to reduce equivalent "
+                              "accounts to an identical name, to de-dup similar sets of "
+                              "transactions of similar type."))
+
+    opts = parser.parse_args()
+
+    # Load the contents.
+    entries, errors, options_map = loader.load(opts.filename)
+
+    # Load the rename map, if specified.
+    rename_map = {}
+    if opts.rename_map:
+        with open(opts.rename_map) as f:
+            code = compile(f.read(), opts.rename_map, 'exec')
+            # globals_ = globals()
+            # locals_ = locals()
+            exec(code, globals(), globals())
+            rename_map = globals()['__call__']
+
+    # Group the entries by set of accounts.
+    groups = collections.defaultdict(list)
+    for entry in entries:
+        if not isinstance(entry, data.Transaction):
+            continue
+
+        accounts = tuple(sorted(rename_map(posting.account)
+                                for posting in entry.postings))
+        groups[accounts].append(entry)
+
+    # Sort by frequency.
+    groups_list = sorted(groups.items(),
+                         key=lambda key_value: len(key_value[1]),
+                         reverse=True)
+
+    # Print template transactions.
+    print(';; Number of groups: {}'.format(len(groups_list)))
+    print()
+    for group_accounts, group_entries in groups_list:
+        print(';; {} entries with ({})'.format(len(group_entries), ', '.join(group_accounts)))
+        print()
+        for index in range(1, min(len(group_entries), opts.num_entries)+1):
+            entry = group_entries[-index]
+            renamed_entry = rename_accounts(entry, rename_map)
+            printer.print_entry(renamed_entry)
+        print()
+        print()
+
+    # Print all renamed account names.
+    print()
+    for account in sorted({account
+                           for accounts in groups.keys()
+                           for account in accounts}):
+        print(account)
+    print()
+
+if __name__ == '__main__':
+    main()
