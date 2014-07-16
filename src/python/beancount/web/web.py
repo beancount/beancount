@@ -1187,7 +1187,7 @@ def add_web_arguments(argparser):
 def main():
     """Main web service runner. This runs the event loop and blocks indefinitely."""
 
-    argparser = argparse.ArgumentParser(__doc__.strip())
+    argparser = argparse.ArgumentParser(description=__doc__.strip())
     add_web_arguments(argparser)
     args = argparser.parse_args()
 

@@ -13,7 +13,7 @@ from beancount.ops import validation
 
 
 def main():
-    parser = argparse.ArgumentParser(__doc__)
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('filename', help='Beancount input filename.')
     parser.add_argument('-v', '--verbose', action='store_true', help='Print timings.')
     opts = parser.parse_args()

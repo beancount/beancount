@@ -20,13 +20,6 @@ beancount: TODO
   - Rename OpeningBalances to be Opening-Balances everywhere before the
     release, even in the tests, just for consistency's sake.
 
-** Commands Cleanup
-
-  - Invert the arguments for bean-doctor, so that they are in the same order as
-    bean-query.  Just a matter of cleanliness.
-
-  - bean-check --list-options needs to work. Same with bean-query.
-
 
 ** Minimal Reports to Console
 
