@@ -9,7 +9,6 @@ from beancount.loader import loaddoc
 from beancount.ops import pad
 from beancount.ops import balance
 from beancount.parser import cmptest
-from beancount.parser import printer
 
 
 class TestPadding(cmptest.TestCase):

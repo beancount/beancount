@@ -1,10 +1,5 @@
 """Check that document directories mirror a list of accounts correctly.
 """
-import argparse
-import sys
-
-from beancount import load
-from beancount.parser import printer
 from beancount.core import getters
 from beancount.core import account
 

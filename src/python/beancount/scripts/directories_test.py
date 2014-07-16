@@ -1,11 +1,9 @@
 import tempfile
-import re
 import unittest
 import os
 from os import path
 import shutil
 
-from beancount.utils import test_utils
 from beancount.scripts import directories
 
 

@@ -4,11 +4,9 @@ import re
 
 from beancount.core.amount import to_decimal as D
 from beancount.core import amount
-from beancount.core import data
 from beancount.ops import prices
 from beancount.parser import parsedoc
 from beancount.parser import cmptest
-from beancount.parser import printer
 
 
 class TestPriceEntries(cmptest.TestCase):

@@ -8,13 +8,8 @@ live prices online and create entries on-the-fly).
 """
 import collections
 
-from beancount.core.amount import ONE
-from beancount.core import amount
 from beancount.core.data import Transaction, Price
-from beancount.core import data
 from beancount.core import inventory
-from beancount.utils import misc_utils
-from beancount.parser import printer
 
 __plugins__ = ('add_implicit_prices',)
 
@@ -100,7 +95,8 @@ def add_implicit_prices(entries, unused_options_map):
                         #     errors.append(
                         #         ImplicitPriceError(
                         #             entry.fileloc,
-                        #             "Duplicate prices for {} on {}".format(entry, dup_entry),
+                        #             "Duplicate prices for {} on {}".format(entry,
+                        #                                                    dup_entry),
                         #             entry))
                     except KeyError:
                         new_price_entry_map[key] = price_entry

@@ -8,7 +8,6 @@ import unittest
 
 from beancount.core.amount import Decimal
 from beancount.parser import lexer
-from beancount.parser import printer
 
 
 

@@ -88,7 +88,8 @@ class TestScriptBake(test_utils.TestCase):
                                  'archive.zip'):
                 outfile = path.join(tmpdir, archive_name)
                 with test_utils.capture() as output:
-                    test_utils.run_with_args(bake.main, self.get_args() + [filename, outfile])
+                    test_utils.run_with_args(bake.main,
+                                             self.get_args() + [filename, outfile])
                 self.assertFalse(path.exists(bake.path_greedy_split(outfile)[0]))
                 self.assertTrue(path.exists(outfile) and path.getsize(outfile) > 0)
 
@@ -107,4 +108,5 @@ class TestScriptBake(test_utils.TestCase):
                                  'archive.tar.xz'):
                 with self.assertRaises(SystemExit):
                     outfile = path.join(tmpdir, archive_name)
-                    test_utils.run_with_args(bake.main, self.get_args() + [filename, outfile])
+                    test_utils.run_with_args(bake.main,
+                                             self.get_args() + [filename, outfile])

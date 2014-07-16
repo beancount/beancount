@@ -9,7 +9,6 @@ trickled up to the user.
 """
 from os import path
 import collections
-import logging
 
 from beancount.core import data
 from beancount.core.data import Open, Close, Transaction, Document, Note
@@ -18,7 +17,6 @@ from beancount.core import getters
 from beancount.core import inventory
 from beancount.core import complete
 from beancount.core import compare
-from beancount.parser import printer
 from beancount.utils import misc_utils
 
 
