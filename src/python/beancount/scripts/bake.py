@@ -10,7 +10,9 @@ import subprocess
 import shutil
 import shlex
 from os import path
+
 from beancount.web import web
+from beancount.scripts import checkdeps
 
 
 def bake_to_directory(webargs, output, quiet_subproc=False, quiet_server=False):
@@ -119,7 +121,7 @@ def path_greedy_split(filename):
 
 
 def main():
-    parser = argparse.ArgumentParser(__doc__)
+    parser = argparse.ArgumentParser(description=__doc__)
 
     web_group = web.add_web_arguments(parser)
     web_group.set_defaults(port=9475)
@@ -161,6 +163,12 @@ def main():
     if path.exists(output_directory):
         raise SystemExit(
             "ERROR: Output directory already exists '{}'".format(output_directory))
+
+    # Make sure that wget is installed.
+    package, version, sufficient = checkdeps.check_wget()
+    if not sufficient:
+        parser.error("Package {} is not installed or insufficient (version: {}).".format(
+            package, version or 'N/A'))
 
     baked = bake_to_directory(opts, output_directory, not opts.verbose, opts.quiet)
     if not baked:

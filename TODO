@@ -322,21 +322,6 @@ beancount: TODO
     release.
 
 
-** Debugging Tools
-
-  I need to provide some basic diagnostic tools before shipping, because users
-  will report problems and I want to be able to ask them to generate some
-  information about their environment in order to diagnose problems.
-
-  - Write a new command to bean-doctor that checks the dependencies dynamically
-    and reports on them, with versions if possible, for reporting bugs:
-    etc/check-depends.py, do this for 1.0, or better: bean-doctor 'depends'
-
-  - Include the version numbers, e.g. for Bottle.
-
-  - bake: Spit out a nice error if wget is not installed/available.
-
-
 * Current / Misc / To Be Classified
 
   (This is a grab bag of ideas. When I have a new idea coming to me, I don't
