@@ -109,14 +109,17 @@ def get_tuple_values(ntuple, predicate, memo=None):
       ntuple: A tuple or namedtuple.
       predicate: A predicate function that returns true if an attribute is to be
         output.
+      memo: An optional memoizing dictionary. If a tuple has already been seen, the
+        recursion will be avoided.
     Yields:
       Attributes of the tuple and its sub-elements if the predicate is true.
     """
     if memo is None:
         memo = set()
-    if id(ntuple) in memo:
+    id_ntuple = id(ntuple)
+    if id_ntuple in memo:
         return
-    memo.add(id(ntuple))
+    memo.add(id_ntuple)
 
     if predicate(ntuple):
         yield
@@ -126,6 +129,44 @@ def get_tuple_values(ntuple, predicate, memo=None):
         if isinstance(attribute, (list, tuple)):
             for value in get_tuple_values(attribute, predicate, memo):
                 yield value
+
+
+def replace_namedtuple_values(ntuple, predicate, mapper, memo=None):
+    """Recurse through all the members of namedtuples and lists, and for
+    members that match the given predicate, run them through the given mapper.
+
+    Args:
+      ntuple: A namedtuple instance.
+      predicate: A predicate function that returns true if an attribute is to be
+        output.
+      mapper: A callable, that will accept a single argument and return its
+        replacement value.
+      memo: An optional memoizing dictionary. If a tuple has already been seen, the
+        recursion will be avoided.
+    Yields:
+      Attributes of the tuple and its sub-elements if the predicate is true.
+    """
+    if memo is None:
+        memo = set()
+    id_ntuple = id(ntuple)
+    if id_ntuple in memo:
+        return
+    memo.add(id_ntuple)
+
+    if not (type(ntuple) is not tuple and isinstance(ntuple, tuple)):
+        return ntuple
+    replacements = {}
+    for attribute_name, attribute in zip(ntuple._fields, ntuple):
+        if predicate(attribute):
+            replacements[attribute_name] = mapper(attribute)
+        elif type(attribute) is not tuple and isinstance(attribute, tuple):
+            replacements[attribute_name] = replace_namedtuple_values(
+                attribute, predicate, mapper, memo)
+        elif type(attribute) in (list, tuple):
+            replacements[attribute_name] = [
+                replace_namedtuple_values(member, predicate, mapper, memo)
+                for member in attribute]
+    return ntuple._replace(**replacements)
 
 
 def compute_unique_clean_ids(strings):

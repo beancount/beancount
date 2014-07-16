@@ -67,6 +67,20 @@ class TestMiscUtils(unittest.TestCase):
         x = misc_utils.get_tuple_values(ntuple, lambda x: isinstance(x, A))
         self.assertEqual([A('a'), A('b')], list(x))
 
+    def test_replace_tuple_values(self):
+        Something = namedtuple('Something', 'a b c d e')
+        SomethingElse = namedtuple('SomethingElse', 'f g')
+
+        something = Something(1, 2, '3', SomethingElse(10, '11'), [SomethingElse(100, '101')])
+        replacements = {'3': '3000', '101': '1010', '11': '1100'}
+        something_else = misc_utils.replace_namedtuple_values(
+            something,
+            lambda x: isinstance(x, str),
+            lambda x: replacements.get(x, x))
+
+        expected = Something(a=1, b=2, c='3000', d=SomethingElse(f=10, g='1100'), e=[SomethingElse(f=100, g='1010')])
+        self.assertEqual(expected, something_else)
+
     def test_compute_unique_clean_ids(self):
         self.assertEqual({'a': 'a', 'b': 'b', 'c': 'c'},
                          misc_utils.compute_unique_clean_ids(['a', 'b', 'c']))
