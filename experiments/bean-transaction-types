@@ -5,6 +5,7 @@ ledger and identify all the types of transactions to discuss in the cookbook.
 """
 import re
 import collections
+import random
 
 from beancount.core import data
 from beancount.core import account
@@ -76,26 +77,32 @@ def main():
                          key=lambda key_value: len(key_value[1]),
                          reverse=True)
 
-    # Print template transactions.
-    print(';; Number of groups: {}'.format(len(groups_list)))
-    print()
-    for group_accounts, group_entries in groups_list:
-        print(';; {} entries with ({})'.format(len(group_entries), ', '.join(group_accounts)))
-        print()
-        for index in range(1, min(len(group_entries), opts.num_entries)+1):
-            entry = group_entries[-index]
-            renamed_entry = rename_accounts(entry, rename_map)
-            printer.print_entry(renamed_entry)
-        print()
-        print()
+    print(';; -*- mode: org; mode: beancount; coding: utf-8; fill-column: 400; -*-')
 
     # Print all renamed account names.
+    print('* Account Names')
     print()
     for account in sorted({account
                            for accounts in groups.keys()
                            for account in accounts}):
         print(account)
     print()
+
+    # Print template transactions.
+    print('* Template Transactions')
+    print(';; Number of groups: {}'.format(len(groups_list)))
+    print()
+    for group_accounts, group_entries in groups_list:
+        print('** {} entries with ({})'.format(len(group_entries), ', '.join(group_accounts)))
+        print()
+        #for index in range(1, min(len(group_entries), opts.num_entries)+1):
+        #    entry = group_entries[-index]
+        for entry in random.sample(group_entries, min(len(group_entries), opts.num_entries)):
+            renamed_entry = rename_accounts(entry, rename_map)
+            printer.print_entry(renamed_entry)
+        print()
+        print()
+
 
 if __name__ == '__main__':
     main()
