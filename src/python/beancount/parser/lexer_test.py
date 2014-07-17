@@ -46,7 +46,7 @@ class TestLexer(unittest.TestCase):
           -123.456789
           #sometag123
           ^sometag123
-          :somekey
+          somekey:
         """
         self.assertEqual([
             ('DATE', 1, '2013-05-18', datetime.date(2013, 5, 18)),
@@ -87,7 +87,7 @@ class TestLexer(unittest.TestCase):
             ('EOL', 18, '\n', None),
             ('LINK', 18, '^sometag123', 'sometag123'),
             ('EOL', 19, '\n', None),
-            ('KEY', 19, ':somekey', 'somekey'),
+            ('KEY', 19, 'somekey:', 'somekey'),
             ('EOL', 20, '\n', None),
             ], tokens)
 
