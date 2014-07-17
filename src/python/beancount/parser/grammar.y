@@ -109,6 +109,7 @@ const char* getTokenName(int token);
 %type <pyobj> transaction
 %type <pyobj> posting
 %type <pyobj> key_value
+%type <pyobj> key_value_list
 %type <pyobj> posting_list
 %type <pyobj> currency_list
 %type <pyobj> open
@@ -132,7 +133,7 @@ const char* getTokenName(int token);
 %start file
 
 /* We have four expected shift/reduce conflicts at 'eol'. */
-%expect 3
+%expect 4
 
 
 /*--------------------------------------------------------------------------------*/
@@ -242,6 +243,17 @@ posting_list : empty
                  DECREF2($1, $2);
              }
 
+key_value_list : empty
+               {
+                   Py_INCREF(Py_None);
+                   $$ = Py_None;
+               }
+               | key_value_list key_value
+               {
+                   $$ = BUILD("handle_list", "OO", $1, $2);
+                   DECREF2($1, $2);
+               }
+
 currency_list : empty
               {
                   Py_INCREF(Py_None);
@@ -346,10 +358,10 @@ event : DATE EVENT STRING STRING eol
           DECREF3($1, $3, $4);
       }
 
-note : DATE NOTE ACCOUNT STRING eol
+note : DATE NOTE ACCOUNT STRING eol key_value_list
       {
-          $$ = BUILD("note", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
-          DECREF3($1, $3, $4);
+          $$ = BUILD("note", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+          DECREF4($1, $3, $4, $6);
       }
 
 filename : STRING

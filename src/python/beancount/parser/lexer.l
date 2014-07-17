@@ -185,7 +185,7 @@ option		{ return OPTION; }
 }
 
  /* Key */
-[A-Za-z0-9\-_/.]+: 		{
+[a-z][a-z0-9\-_]+: 		{
     yylval->pyobj = BUILD("KEY", "s#", yytext, yyleng-1);
     return KEY;
 }

@@ -295,7 +295,7 @@ class Builder(lexer.LexBuilder):
         fileloc = FileLocation(filename, lineno)
         return Price(fileloc, date, currency, amount)
 
-    def note(self, filename, lineno, date, account, comment):
+    def note(self, filename, lineno, date, account, comment, kvlist):
         """Process a note directive.
 
         Args:
@@ -304,10 +304,12 @@ class Builder(lexer.LexBuilder):
           date: a datetime object.
           account: an Account instance.
           comment: a str, the note's comments contents.
+          kvlist: a list of KeyValue instances.
         Returns:
           A new Note object.
         """
         fileloc = FileLocation(filename, lineno)
+        # FIXME: Store this. print(dict(kvlist))
         return Note(fileloc, date, account, comment)
 
     def document(self, filename, lineno, date, account, document_filename):

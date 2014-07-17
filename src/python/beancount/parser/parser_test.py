@@ -510,7 +510,7 @@ class TestBalance(unittest.TestCase):
 class TestMetaData(unittest.TestCase):
 
     @parsedoc
-    def test_metadata__begin(self, entries, errors, _):
+    def test_metadata_transaction__begin(self, entries, errors, _):
         """
           2013-05-18 * ""
             test: "Something"
@@ -520,7 +520,7 @@ class TestMetaData(unittest.TestCase):
         self.assertEqual(1, len(entries))
 
     @parsedoc
-    def test_metadata__middle(self, entries, errors, _):
+    def test_metadata_transaction__middle(self, entries, errors, _):
         """
           2013-05-18 * ""
             Assets:Investments:MSFT      10 MSFT @@ 2000 USD
@@ -530,7 +530,7 @@ class TestMetaData(unittest.TestCase):
         self.assertEqual(1, len(entries))
 
     @parsedoc
-    def test_metadata__end(self, entries, errors, _):
+    def test_metadata_transaction__end(self, entries, errors, _):
         """
           2013-05-18 * ""
             Assets:Investments:MSFT      10 MSFT @@ 2000 USD
@@ -540,7 +540,7 @@ class TestMetaData(unittest.TestCase):
         self.assertEqual(1, len(entries))
 
     @parsedoc
-    def test_metadata__many(self, entries, errors, _):
+    def test_metadata_transaction__many(self, entries, errors, _):
         """
           2013-05-18 * ""
             test1: "Something"
@@ -551,5 +551,13 @@ class TestMetaData(unittest.TestCase):
             test4: "come"
             test5: "from"
             test6: "this"
+        """
+        self.assertEqual(1, len(entries))
+
+    @parsedoc
+    def test_metadata_note(self, entries, errors, _):
+        """
+          2013-05-18 note Assets:Investments "Bla"
+            test1: "Something"
         """
         self.assertEqual(1, len(entries))
