@@ -3,6 +3,11 @@ beancount: TODO
 * Requirements for Shipping 1.0
 ** Complete 100% Coverage for Unit Tests
 
+  - loader.load() should have an option to print error. error_function=None.
+    If specified, print out errors. This will make the minimal program smaller
+    and is worth it.
+
+
   - Complete the diagram in the Motivation document
 
   - Make helper functions in summarize, for clamp() and close() which accept
@@ -1105,6 +1110,10 @@ beancount: TODO
 
   - (performance) Implement inventories in C and reinstall the
     validate_check_balances test.
+
+  - Can I use Py_RETURN_NONE in order to incref and assign, in the lexer,
+    instead of doing it in two steps?
+
 
 
   - Add an optional parameter to the loaddoc() and parsedoc() decorators to
