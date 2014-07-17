@@ -133,7 +133,7 @@ const char* getTokenName(int token);
 %start file
 
 /* We have four expected shift/reduce conflicts at 'eol'. */
-%expect 4
+%expect 11
 
 
 /*--------------------------------------------------------------------------------*/
@@ -282,28 +282,28 @@ poptag : POPTAG TAG eol
            DECREF1($2);
        }
 
-open : DATE OPEN ACCOUNT currency_list eol
+open : DATE OPEN ACCOUNT currency_list eol key_value_list
      {
-         $$ = BUILD("open", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
-         DECREF3($1, $3, $4);
+         $$ = BUILD("open", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+         DECREF4($1, $3, $4, $6);
      }
 
-close : DATE CLOSE ACCOUNT eol
+close : DATE CLOSE ACCOUNT eol key_value_list
       {
-          $$ = BUILD("close", "siOO", FILE_LINE_ARGS, $1, $3);
-          DECREF2($1, $3);
+          $$ = BUILD("close", "siOOO", FILE_LINE_ARGS, $1, $3, $5);
+          DECREF3($1, $3, $5);
       }
 
-pad : DATE PAD ACCOUNT ACCOUNT eol
+pad : DATE PAD ACCOUNT ACCOUNT eol key_value_list
     {
-        $$ = BUILD("pad", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
-        DECREF3($1, $3, $4);
+        $$ = BUILD("pad", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+        DECREF4($1, $3, $4, $6);
     }
 
-balance : DATE BALANCE ACCOUNT amount eol
+balance : DATE BALANCE ACCOUNT amount eol key_value_list
       {
-          $$ = BUILD("balance", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
-          DECREF3($1, $3, $4);
+          $$ = BUILD("balance", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+          DECREF4($1, $3, $4, $6);
       }
 
 amount : NUMBER CURRENCY
@@ -346,16 +346,16 @@ lot_cost_date : LCURL amount RCURL
          }
 
 
-price : DATE PRICE CURRENCY amount eol
+price : DATE PRICE CURRENCY amount eol key_value_list
       {
-          $$ = BUILD("price", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
-          DECREF3($1, $3, $4);
+          $$ = BUILD("price", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+          DECREF4($1, $3, $4, $6);
       }
 
-event : DATE EVENT STRING STRING eol
+event : DATE EVENT STRING STRING eol key_value_list
       {
-          $$ = BUILD("event", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
-          DECREF3($1, $3, $4);
+          $$ = BUILD("event", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+          DECREF4($1, $3, $4, $6);
       }
 
 note : DATE NOTE ACCOUNT STRING eol key_value_list
@@ -366,11 +366,11 @@ note : DATE NOTE ACCOUNT STRING eol key_value_list
 
 filename : STRING
 
-document : DATE DOCUMENT ACCOUNT filename eol
-      {
-        $$ = BUILD("document", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
-        DECREF3($1, $3, $4);
-      }
+document : DATE DOCUMENT ACCOUNT filename eol key_value_list
+         {
+             $$ = BUILD("document", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+             DECREF4($1, $3, $4, $6);
+         }
 
 entry : transaction
       | balance

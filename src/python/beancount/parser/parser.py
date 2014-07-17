@@ -201,7 +201,7 @@ class Builder(lexer.LexBuilder):
         fileloc = FileLocation(filename, lineno)
         self.errors.append(ParserSyntaxError(fileloc, message, None))
 
-    def open(self, filename, lineno, date, account, currencies):
+    def open(self, filename, lineno, date, account, currencies, kvlist):
         """Process an open directive.
 
         Args:
@@ -210,13 +210,14 @@ class Builder(lexer.LexBuilder):
           date: a datetime object.
           account: an Account instance.
           currencies: a list of constraint currencies.
+          kvlist: a list of KeyValue instances.
         Returns:
           A new Open object.
         """
         fileloc = FileLocation(filename, lineno)
         return Open(fileloc, date, account, currencies)
 
-    def close(self, filename, lineno, date, account):
+    def close(self, filename, lineno, date, account, kvlist):
         """Process a close directive.
 
         Args:
@@ -224,13 +225,14 @@ class Builder(lexer.LexBuilder):
           lineno: the current line number.
           date: a datetime object.
           account: an Account instance.
+          kvlist: a list of KeyValue instances.
         Returns:
           A new Close object.
         """
         fileloc = FileLocation(filename, lineno)
         return Close(fileloc, date, account)
 
-    def pad(self, filename, lineno, date, account, source_account):
+    def pad(self, filename, lineno, date, account, source_account, kvlist):
         """Process a pad directive.
 
         Args:
@@ -239,13 +241,14 @@ class Builder(lexer.LexBuilder):
           date: a datetime object.
           account: an Account instance, account to be padded.
           source_account: an Account instance, account to pad from.
+          kvlist: a list of KeyValue instances.
         Returns:
           A new Pad object.
         """
         fileloc = FileLocation(filename, lineno)
         return Pad(fileloc, date, account, source_account)
 
-    def balance(self, filename, lineno, date, account, amount):
+    def balance(self, filename, lineno, date, account, amount, kvlist):
         """Process an assertion directive.
 
         We produce no errors here by default. We replace the failing ones in the
@@ -258,6 +261,7 @@ class Builder(lexer.LexBuilder):
           date: a datetime object.
           account: an Account instance.
           amount: the expected amount, to be checked.
+          kvlist: a list of KeyValue instances.
         Returns:
           A new Balance object.
         """
@@ -265,7 +269,7 @@ class Builder(lexer.LexBuilder):
         fileloc = FileLocation(filename, lineno)
         return Balance(fileloc, date, account, amount, diff_amount)
 
-    def event(self, filename, lineno, date, event_type, description):
+    def event(self, filename, lineno, date, event_type, description, kvlist):
         """Process an event directive.
 
         Args:
@@ -274,13 +278,14 @@ class Builder(lexer.LexBuilder):
           date: a datetime object.
           event_type: a str, the name of the event type.
           description: a str, the event value, the contents.
+          kvlist: a list of KeyValue instances.
         Returns:
           A new Event object.
         """
         fileloc = FileLocation(filename, lineno)
         return Event(fileloc, date, event_type, description)
 
-    def price(self, filename, lineno, date, currency, amount):
+    def price(self, filename, lineno, date, currency, amount, kvlist):
         """Process a price directive.
 
         Args:
@@ -289,6 +294,7 @@ class Builder(lexer.LexBuilder):
           date: a datetime object.
           currency: the currency to be priced.
           amount: an instance of Amount, that is the price of the currency.
+          kvlist: a list of KeyValue instances.
         Returns:
           A new Price object.
         """
@@ -309,10 +315,9 @@ class Builder(lexer.LexBuilder):
           A new Note object.
         """
         fileloc = FileLocation(filename, lineno)
-        # FIXME: Store this. print(dict(kvlist))
         return Note(fileloc, date, account, comment)
 
-    def document(self, filename, lineno, date, account, document_filename):
+    def document(self, filename, lineno, date, account, document_filename, kvlist):
         """Process a document directive.
 
         Args:
@@ -321,6 +326,7 @@ class Builder(lexer.LexBuilder):
           date: a datetime object.
           account: an Account instance.
           document_filename: a str, the name of the document file.
+          kvlist: a list of KeyValue instances.
         Returns:
           A new Document object.
         """
