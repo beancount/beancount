@@ -161,7 +161,8 @@ PyObject* lexer_next(PyObject *self, PyObject *args)
         token == STRING ||
         token == NUMBER ||
         token == TAG ||
-        token == LINK) {
+        token == LINK ||
+        token == KEY) {
 
         obj = yylval.pyobj;
     }

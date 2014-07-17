@@ -10,6 +10,7 @@ from beancount.parser import lexer
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price, Note
 from beancount.core.amount import Amount
 from beancount.core import complete
+from beancount.parser import printer
 
 
 def check_list(test, objlist, explist):
@@ -504,3 +505,51 @@ class TestBalance(unittest.TestCase):
             posting = entry.postings[0]
             self.assertEqual(Amount('200', 'USD'), posting.position.lot.cost)
             self.assertEqual(None, posting.price)
+
+
+class TestMetaData(unittest.TestCase):
+
+    @parsedoc
+    def test_metadata__begin(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            test: "Something"
+            Assets:Investments:MSFT      10 MSFT @@ 2000 USD
+            Assets:Investments:Cash
+        """
+        self.assertEqual(1, len(entries))
+
+    @parsedoc
+    def test_metadata__middle(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      10 MSFT @@ 2000 USD
+            test: "Something"
+            Assets:Investments:Cash
+        """
+        self.assertEqual(1, len(entries))
+
+    @parsedoc
+    def test_metadata__end(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      10 MSFT @@ 2000 USD
+            Assets:Investments:Cash
+            test: "Something"
+        """
+        self.assertEqual(1, len(entries))
+
+    @parsedoc
+    def test_metadata__many(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            test1: "Something"
+            Assets:Investments:MSFT      10 MSFT @@ 2000 USD
+            test2: "has"
+            test3: "to"
+            Assets:Investments:Cash
+            test4: "come"
+            test5: "from"
+            test6: "this"
+        """
+        self.assertEqual(1, len(entries))

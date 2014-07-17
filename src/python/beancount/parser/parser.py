@@ -29,6 +29,10 @@ ParserError = collections.namedtuple('ParserError', 'fileloc message entry')
 ParserSyntaxError = collections.namedtuple('ParserError', 'fileloc message entry')
 
 
+# Temporary holder for key-value pairs.
+KeyValue = collections.namedtuple('KeyValue', 'key value')
+
+
 def valid_account_regexp(options):
     """Build a regexp to validate account names from the options."""
     names = map(options.__getitem__, ('name_assets',
@@ -325,6 +329,20 @@ class Builder(lexer.LexBuilder):
 
         return Document(fileloc, date, account, document_filename)
 
+    def key_value(self, key, value):
+        """Process a document directive.
+
+        Args:
+          filename: the current filename.
+          lineno: the current line number.
+          date: a datetime object.
+          account: an Account instance.
+          document_filename: a str, the name of the document file.
+        Returns:
+          A new Document object.
+        """
+        return KeyValue(key, value)
+
     def posting(self, account, position, price, istotal, flag):
         """Process a posting grammar rule.
 
@@ -438,7 +456,7 @@ class Builder(lexer.LexBuilder):
             return None
         return payee, narration
 
-    def transaction(self, filename, lineno, date, flag, txn_fields, postings):
+    def transaction(self, filename, lineno, date, flag, txn_fields, postings_and_kv):
         """Process a transaction directive.
 
         All the postings of the transaction are available at this point, and so the
@@ -456,11 +474,29 @@ class Builder(lexer.LexBuilder):
           flag: a str, one-character, the flag associated with this transaction.
           txn_fields: A tuple of transaction fields, which includes descriptions
             (payee and narration), tags, and links.
-          postings: a list of Posting instances, to be inserted in this transaction.
+          postings_and_kv: a list of Posting of KeyValue instances, to be inserted in this
+            transaction.
         Returns:
           A new Transaction object.
         """
         fileloc = FileLocation(filename, lineno)
+
+        # Separate postings and key-valus.
+        postings = []
+        key_values = []
+        for posting in postings_and_kv:
+            if isinstance(posting, Posting):
+                postings.append(posting)
+            else:
+                key_values.append(posting)
+
+        # # FIXME: Disallow the same key multiple times on the same transaction.
+        # print()
+        # for key_value in key_values:
+        #     pass
+        #     print(key_value)
+        # print()
+
 
         # Unpack the transaction fields.
         payee_narration = self.unpack_txn_strings(txn_fields, fileloc)

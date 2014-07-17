@@ -184,6 +184,12 @@ option		{ return OPTION; }
     return LINK;
 }
 
+ /* Key */
+[A-Za-z0-9\-_/.]+: 		{
+    yylval->pyobj = BUILD("KEY", "s#", yytext, yyleng-1);
+    return KEY;
+}
+
  /* Default rule. This should never be reached. */
 .	{
     yylval->pyobj = BUILD("ERROR", "s", yytext);

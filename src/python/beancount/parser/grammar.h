@@ -79,7 +79,8 @@ extern int yydebug;
     STRING = 289,
     NUMBER = 290,
     TAG = 291,
-    LINK = 292
+    LINK = 292,
+    KEY = 293
   };
 #endif
 
@@ -94,7 +95,7 @@ union YYSTYPE
     const char* string;
     PyObject* pyobj;
 
-#line 98 "src/python/beancount/parser/grammar.h" /* yacc.c:1909  */
+#line 99 "src/python/beancount/parser/grammar.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
