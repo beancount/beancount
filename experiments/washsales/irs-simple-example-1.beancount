@@ -1,0 +1,61 @@
+;; IRS Pub 550 - Wash Sales - Example 1.
+
+;; If your loss was disallowed because of the wash sale rules, add the
+;; disallowed loss to the cost of the new stock or securities (except in (4)
+;; above). The result is your basis in the new stock or securities. This
+;; adjustment postpones the loss deduction until the disposition of the new
+;; stock or securities. Your holding period for the new stock or securities
+;; includes the holding period of the stock or securities sold.
+;;
+;; Example 1.
+;;
+;; You buy 100 shares of X stock for $1,000. You sell these shares for $750 and
+;; within 30 days from the sale you buy 100 shares of the same stock for $800.
+;; Because you bought substantially identical stock, you cannot deduct your loss
+;; of $250 on the sale. However, you add the disallowed loss of $250 to the cost
+;; of the new stock, $800, to obtain your basis in the new stock, which is
+;; $1,050.
+
+2000-01-01 open Assets:Investments:Cash
+2000-01-01 open Income:Investments:PnL
+2000-01-01 open Assets:Investments:STOCK
+
+2012-01-01 * "You buy 100 shares of X stock for $1,000."
+  Assets:Investments:Cash                                         -1000 USD
+  Assets:Investments:STOCK                                          100 STOCK {10 USD}
+
+
+2013-01-01 * "You sell these shares for $750 and" ^wash-605d69499713
+  Assets:Investments:Cash                                           750 USD
+  Assets:Investments:STOCK                                         -100 STOCK {10 USD}
+  Income:Investments:PnL                                            250 USD
+
+2013-01-31 * "within 30 days from the sale you buy 100 shares of the same stock for $800." ^wash-605d69499713
+  Assets:Investments:Cash                                          -800 USD
+  Assets:Investments:STOCK                                          100 STOCK {8 USD}
+
+
+2013-01-31 & "Because you bought substantially identical stock, you cannot deduct your loss of $250 on the sale. However, you add the disallowed loss of $250 to the cost of the new stock, $800, to obtain your basis in the new stock, which is $1,050." ^wash-605d69499713
+  Assets:Investments:STOCK                                         -100 STOCK {8 USD}
+  Assets:Investments:STOCK                                          100 STOCK {10.5 USD / 2012-01-01} ;; Also propagate the date.
+  Income:Investments:PnL                                           -250 USD
+
+
+
+
+;; NOTE: We ahve to potentially split this transaction in two, with a transfer
+;; account, because across years where we might filter washing transactions
+;; happening in the future, we want to ensure that the correct profit gets
+;; reported. FIXME: Figure this out.
+;
+;
+; 2000-01-01 open Income:Investments:PnL:Wash
+;
+; 2013-01-31 & "Because you bought substantially identical stock, you cannot deduct your loss of $250 on the sale." ^wash-605d69499713
+;   Income:Investments:PnL                                           -250 USD
+;   Income:Investments:PnL:Wash                                       250 USD
+;
+; 2013-01-31 & "However, you add the disallowed loss of $250 to the cost of the new stock, $800, to obtain your basis in the new stock, which is $1,050." ^wash-605d69499713
+;   Assets:Investments:STOCK                                         -100 STOCK {8 USD}
+;   Assets:Investments:STOCK                                          100 STOCK {10.5 USD / 2012-01-01} ;; Also propagate the date.
+;   Income:Investments:PnL:Wash                                      -250 USD

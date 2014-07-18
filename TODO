@@ -7,6 +7,8 @@ beancount: TODO
     If specified, print out errors. This will make the minimal program smaller
     and is worth it.
 
+    * Print errors by default in bean-query.
+
 
   - Complete the diagram in the Motivation document
 
@@ -321,6 +323,28 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - (design) New inventory booking:
+    1. for each posting, classify by currency
+    2. for each posting at cost, classify whether position augmentation or reduction
+    3. For position reductions, match against inventory
+    4. Within currency groups, process interpolation, including those in
+       position augmentations
+
+    It should be possible to do something like this for cost basis adjustments:
+       Assets:Account         -10 MSFT {34 USD}
+       Assets:Account          10 MSFT {USD}
+       Income:PnL             400 USD
+
+
+
+  - Brilliant idea!: Add Emacs functionality to run a special script that, given
+    the filename and a line no (where the cursor is), will print the detail of
+    the inventory _before_ the transaction, the transaction itself with all
+    interpolated values inserted, and the inventory _after_ the transaction.
+    You invoke this with the cursor on the transaction that you want to get
+    debug output for. This would be powerful powerful for dealing with lots!!!
 
 
   - Deal with wash sales... complete doc, call MSSB to figure out if/how they
