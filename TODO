@@ -372,6 +372,13 @@ beancount: TODO
     is an important report to generate! This should be done separately from the
     improved inventory booking method.
 
+    This report needs to include the long-term vs. short-term nature of those
+    trades! The right way to do this is to run a separate plug-in that will
+    add appropriate #long-term and #short-term tags or meta-data to those
+    transactions, based on their booking dates..
+
+
+
 
   - (validation/performance) Optimize the performance of validations and bring
     all the HARDCORE_VALIDATIONS in by default.
