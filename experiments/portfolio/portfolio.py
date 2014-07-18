@@ -5,7 +5,7 @@ import argparse
 import functools
 import logging
 
-from beancount.core.amount import to_decimal, Decimal
+from beancount.core.amount import D
 from beancount import loader
 from beancount.ops import prices
 from beancount.ops import holdings
@@ -40,7 +40,7 @@ def join(holdings_list, features_map, keyfun):
     all_labels = set(label
                      for features in features_map.values()
                      for label in features)
-    features_total = {label: to_decimal('0') for label in all_labels}
+    features_total = {label: D('0') for label in all_labels}
     features_holdings = {label: [] for label in all_labels}
 
     # Normalize the feature vectors.
@@ -58,7 +58,7 @@ def join(holdings_list, features_map, keyfun):
             for label, fraction in features.items():
                 if not holding.market_value:
                     continue
-                scaled_holding = holdings.scale_holding(holding, to_decimal(fraction))
+                scaled_holding = holdings.scale_holding(holding, D(fraction))
                 features_total[label] += scaled_holding.market_value
                 features_holdings[label].append(scaled_holding)
         except KeyError:

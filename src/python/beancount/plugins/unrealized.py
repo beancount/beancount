@@ -2,7 +2,7 @@
 """
 import collections
 
-from beancount.core.amount import Decimal, ZERO
+from beancount.core.amount import D, ZERO
 from beancount.core import data
 from beancount.core import account
 from beancount.core import getters
@@ -104,9 +104,9 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
             continue
 
         # Compute the total number of units and book value for set of positions.
-        total_units = Decimal()
-        market_value = Decimal()
-        book_value = Decimal()
+        total_units = D()
+        market_value = D()
+        book_value = D()
         for holding in holdings_list:
             units = holding.number
             total_units += units

@@ -3,7 +3,7 @@ import collections
 import textwrap
 import unittest
 
-from beancount.core.amount import Decimal
+from beancount.core.amount import D
 from beancount.reports import table
 
 
@@ -17,9 +17,9 @@ class TestTable(unittest.TestCase):
         Tup = collections.namedtuple('Tup', 'country capital currency amount')
 
         tuples = [
-            Tup("Malawi", "Lilongwe", "Kwacha", Decimal("0.111")),
-            Tup("Mali", "Bamako", "CFA franc", Decimal("0.222")),
-            Tup("Mauritania", "Nouakchott", "Ouguiya", Decimal("0.333")),
+            Tup("Malawi", "Lilongwe", "Kwacha", D("0.111")),
+            Tup("Mali", "Bamako", "CFA franc", D("0.222")),
+            Tup("Mauritania", "Nouakchott", "Ouguiya", D("0.333")),
             ]
         table_object = table.create_table(
             tuples, ["country",

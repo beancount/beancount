@@ -6,7 +6,7 @@ import functools
 import textwrap
 import unittest
 
-from beancount.core.amount import Decimal
+from beancount.core.amount import D
 from beancount.parser import lexer
 
 
@@ -64,7 +64,7 @@ class TestLexer(unittest.TestCase):
             ('CURRENCY', 7, 'GOOG', 'GOOG'),
             ('EOL', 8, '\n', None),
             ('CURRENCY', 8, 'TEST', 'TEST'),
-            ('NUMBER', 8, '-3', Decimal('-3')),
+            ('NUMBER', 8, '-3', D('-3')),
             ('EOL', 9, '\n', None),
             ('CURRENCY', 9, 'TEST_3', 'TEST_3'),
             ('EOL', 10, '\n', None),
@@ -72,15 +72,15 @@ class TestLexer(unittest.TestCase):
             ('EOL', 11, '\n', None),
             ('STRING', 11, '""', ''),
             ('EOL', 12, '\n', None),
-            ('NUMBER', 12, '123', Decimal('123')),
+            ('NUMBER', 12, '123', D('123')),
             ('EOL', 13, '\n', None),
-            ('NUMBER', 13, '123.45', Decimal('123.45')),
+            ('NUMBER', 13, '123.45', D('123.45')),
             ('EOL', 14, '\n', None),
-            ('NUMBER', 14, '123.456789', Decimal('123.456789')),
+            ('NUMBER', 14, '123.456789', D('123.456789')),
             ('EOL', 15, '\n', None),
-            ('NUMBER', 15, '-123', Decimal('-123')),
+            ('NUMBER', 15, '-123', D('-123')),
             ('EOL', 16, '\n', None),
-            ('NUMBER', 16, '-123.456789', Decimal('-123.456789')),
+            ('NUMBER', 16, '-123.456789', D('-123.456789')),
             ('EOL', 17, '\n', None),
             ('TAG', 17, '#sometag123', 'sometag123'),
             ('EOL', 18, '\n', None),

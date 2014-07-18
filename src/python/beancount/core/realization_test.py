@@ -6,7 +6,7 @@ import io
 import unittest
 import re
 
-from beancount.core.amount import to_decimal as D
+from beancount.core.amount import D
 from beancount.core.realization import RealAccount
 from beancount.core import realization
 from beancount.core import data

@@ -2,7 +2,7 @@
 """
 import collections
 
-from beancount.core.amount import Decimal, amount_mult, ZERO
+from beancount.core.amount import D, amount_mult, ZERO
 from beancount.core.inventory import Inventory
 from beancount.core.position import Lot, Position
 from beancount.core.data import Posting, reparent_posting
@@ -14,7 +14,7 @@ BalanceError = collections.namedtuple('BalanceError', 'fileloc message entry')
 
 # The difference amount at which we consider a transaction to be balanced.
 # Note: This could probably be a little smaller and that would be a good thing.
-SMALL_EPSILON = Decimal('0.005')
+SMALL_EPSILON = D('0.005')
 
 
 def get_balance_amount(posting):

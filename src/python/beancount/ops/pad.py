@@ -2,7 +2,7 @@
 """
 import collections
 
-from beancount.core.amount import to_decimal, amount_sub
+from beancount.core.amount import D, amount_sub
 from beancount.core import inventory
 from beancount.core import data
 from beancount.core import position
@@ -16,7 +16,7 @@ __plugins__ = ('pad',)
 PadError = collections.namedtuple('PadError', 'fileloc message entry')
 
 # FIXME: Maybe this should become an option? Maybe this becomes a parameter of pad()?
-PAD_PRECISION = to_decimal('.015')
+PAD_PRECISION = D('.015')
 
 
 def pad(entries, unused_options_map):

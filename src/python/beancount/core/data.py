@@ -4,7 +4,7 @@ import datetime
 from collections import namedtuple
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
-from .amount import Amount, Decimal, to_decimal
+from .amount import Amount, Decimal, D
 from .position import Position, Lot
 from .account import has_component
 
@@ -229,7 +229,7 @@ def create_simple_posting(entry, account, number, currency):
         position = None
     else:
         if not isinstance(number, Decimal):
-            number = to_decimal(number)
+            number = D(number)
         position = Position(Lot(currency, None, None), number)
     posting = Posting(entry, account, position, None, None)
     if entry is not None:
@@ -256,9 +256,9 @@ def create_simple_posting_with_cost(entry, account,
     if isinstance(account, str):
         pass
     if not isinstance(number, Decimal):
-        number = to_decimal(number)
+        number = D(number)
     if cost_number and not isinstance(cost_number, Decimal):
-        cost_number = to_decimal(cost_number)
+        cost_number = D(cost_number)
     cost = Amount(cost_number, cost_currency)
     position = Position(Lot(currency, cost, None), number)
     posting = Posting(entry, account, position, None, None)

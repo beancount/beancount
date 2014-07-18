@@ -6,7 +6,7 @@ import unittest
 import copy
 from datetime import date
 
-from .amount import ZERO, to_decimal, Amount
+from .amount import ZERO, D, Amount
 from .position import Lot, Position, from_string
 
 
@@ -17,29 +17,29 @@ class TestPosition(unittest.TestCase):
             pos = from_string('')
 
         pos = from_string('10 USD')
-        self.assertEqual(Position(Lot("USD", None, None), to_decimal('10')), pos)
+        self.assertEqual(Position(Lot("USD", None, None), D('10')), pos)
 
         pos = from_string(' 111.2934  CAD ')
-        self.assertEqual(Position(Lot("CAD", None, None), to_decimal('111.2934')), pos)
+        self.assertEqual(Position(Lot("CAD", None, None), D('111.2934')), pos)
 
         pos = from_string('2.2 GOOG {532.43 USD}')
-        cost = Amount(to_decimal('532.43'), 'USD')
-        self.assertEqual(Position(Lot("GOOG", cost, None), to_decimal('2.2')), pos)
+        cost = Amount(D('532.43'), 'USD')
+        self.assertEqual(Position(Lot("GOOG", cost, None), D('2.2')), pos)
 
         pos = from_string('2.2 GOOG {532.43 USD / 2014-06-15}')
-        cost = Amount(to_decimal('532.43'), 'USD')
+        cost = Amount(D('532.43'), 'USD')
         lot_date = datetime.date(2014, 6, 15)
-        self.assertEqual(Position(Lot("GOOG", cost, lot_date), to_decimal('2.2')), pos)
+        self.assertEqual(Position(Lot("GOOG", cost, lot_date), D('2.2')), pos)
 
     def test_constructors(self):
         position = Position(Lot('USD', None, None),
-                            to_decimal('123.45'))
+                            D('123.45'))
         position = Position(Lot('USD', Amount('74.00', 'CAD'), None),
-                            to_decimal('123.45'))
+                            D('123.45'))
         position = Position(Lot('USD', Amount('74.00', 'CAD'), date(2013, 2, 3)),
-                            to_decimal('123.45'))
+                            D('123.45'))
         with self.assertRaises(Exception):
-            Position(None, to_decimal('123.45'))
+            Position(None, D('123.45'))
         with self.assertRaises(Exception):
             Position(Lot('USD', None, None), None)
 
@@ -53,11 +53,11 @@ class TestPosition(unittest.TestCase):
         self.assertNotEqual(pos1, pos2)
 
     def test_eq_and_sortkey(self):
-        pos1 = Position(Lot("USD", None, None), to_decimal('200'))
-        pos2 = Position(Lot("USD", None, None), to_decimal('201'))
-        pos3 = Position(Lot("CAD", None, None), to_decimal('100'))
-        pos4 = Position(Lot("CAD", None, None), to_decimal('101'))
-        pos5 = Position(Lot("ZZZ", None, None), to_decimal('50'))
+        pos1 = Position(Lot("USD", None, None), D('200'))
+        pos2 = Position(Lot("USD", None, None), D('201'))
+        pos3 = Position(Lot("CAD", None, None), D('100'))
+        pos4 = Position(Lot("CAD", None, None), D('101'))
+        pos5 = Position(Lot("ZZZ", None, None), D('50'))
         positions = [pos5, pos4, pos3, pos2, pos1]
         positions.sort()
 
@@ -74,12 +74,12 @@ class TestPosition(unittest.TestCase):
 
     def test_copy(self):
         # Ensure that the lot instances are shared.
-        pos1 = Position(Lot("USD", None, None), to_decimal('200'))
+        pos1 = Position(Lot("USD", None, None), D('200'))
         pos2 = copy.copy(pos1)
         self.assertTrue(pos1.lot is pos2.lot)
 
     def test_getamount(self):
-        pos = Position(Lot("USD", Amount('10', 'AUD'), None), to_decimal('28372'))
+        pos = Position(Lot("USD", Amount('10', 'AUD'), None), D('28372'))
         self.assertEqual(Amount('28372', 'USD'), pos.get_amount())
         self.assertEqual(Amount('283720', 'AUD'), pos.get_cost())
 
@@ -89,13 +89,13 @@ class TestPosition(unittest.TestCase):
         self.assertEqual(Amount('283720', 'AUD'), cpos.get_cost())
 
     def test_add(self):
-        pos = Position(Lot("USD", Amount('10', 'AUD'), None), to_decimal('28372'))
-        pos.add(to_decimal('337'))
+        pos = Position(Lot("USD", Amount('10', 'AUD'), None), D('28372'))
+        pos.add(D('337'))
         self.assertEqual(Amount('28709', 'USD'), pos.get_amount())
         self.assertEqual(Amount('287090', 'AUD'), pos.get_cost())
 
     def test_negative(self):
-        pos = Position(Lot("USD", Amount('10', 'AUD'), None), to_decimal('28372'))
+        pos = Position(Lot("USD", Amount('10', 'AUD'), None), D('28372'))
         negpos = pos.get_negative()
         self.assertEqual(Amount('-28372', 'USD'), negpos.get_amount())
         self.assertEqual(Amount('-283720', 'AUD'), negpos.get_cost())

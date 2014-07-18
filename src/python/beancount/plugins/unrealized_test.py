@@ -2,7 +2,7 @@ import unittest
 import re
 
 from beancount.plugins import unrealized
-from beancount.core.amount import to_decimal, ZERO
+from beancount.core.amount import D, ZERO
 from beancount.core import data
 from beancount.parser import options
 from beancount.ops import validation
@@ -86,13 +86,13 @@ class TestUnrealized(unittest.TestCase):
 
         house = get_entries_with_narration(new_entries, "units of HOUSE")[0]
         self.assertEqual(2, len(house.postings))
-        self.assertEqual(to_decimal('350'), house.postings[0].position.number)
+        self.assertEqual(D('350'), house.postings[0].position.number)
         self.assertEqual('Assets:Account1', house.postings[0].account)
         self.assertEqual('Income:Account1', house.postings[1].account)
 
         mansion = get_entries_with_narration(new_entries, "units of MANSION")[0]
         self.assertEqual(2, len(mansion.postings))
-        self.assertEqual(to_decimal('-100'), mansion.postings[0].position.number)
+        self.assertEqual(D('-100'), mansion.postings[0].position.number)
 
     @loaddoc
     def test_no_price(self, entries, _, options_map):
@@ -126,7 +126,7 @@ class TestUnrealized(unittest.TestCase):
         new_entries, _ = unrealized.add_unrealized_gains(entries, options_map)
         unreal_entries = unrealized.get_unrealized_entries(new_entries)
         self.assertEqual(1, len(unreal_entries))
-        self.assertEqual(to_decimal('200'),
+        self.assertEqual(D('200'),
                          unreal_entries[0].postings[0].position.number)
 
     @loaddoc
@@ -187,32 +187,32 @@ class TestUnrealized(unittest.TestCase):
         entry = get_entries_with_narration(unreal_entries, '1 units')[0]
         self.assertEqual("Assets:Account1:Gains", entry.postings[0].account)
         self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
-        self.assertEqual(to_decimal("10.00"), entry.postings[0].position.number)
-        self.assertEqual(to_decimal("-10.00"), entry.postings[1].position.number)
+        self.assertEqual(D("10.00"), entry.postings[0].position.number)
+        self.assertEqual(D("-10.00"), entry.postings[1].position.number)
 
         entry = get_entries_with_narration(unreal_entries, '2 units')[0]
         self.assertEqual("Liabilities:Account1:Gains", entry.postings[0].account)
         self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
-        self.assertEqual(to_decimal("18.00"), entry.postings[0].position.number)
-        self.assertEqual(to_decimal("-18.00"), entry.postings[1].position.number)
+        self.assertEqual(D("18.00"), entry.postings[0].position.number)
+        self.assertEqual(D("-18.00"), entry.postings[1].position.number)
 
         entry = get_entries_with_narration(unreal_entries, '3 units')[0]
         self.assertEqual("Equity:Account1:Gains", entry.postings[0].account)
         self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
-        self.assertEqual(to_decimal("24.00"), entry.postings[0].position.number)
-        self.assertEqual(to_decimal("-24.00"), entry.postings[1].position.number)
+        self.assertEqual(D("24.00"), entry.postings[0].position.number)
+        self.assertEqual(D("-24.00"), entry.postings[1].position.number)
 
         entry = get_entries_with_narration(unreal_entries, '4 units')[0]
         self.assertEqual("Expenses:Account1:Gains", entry.postings[0].account)
         self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
-        self.assertEqual(to_decimal("28.00"), entry.postings[0].position.number)
-        self.assertEqual(to_decimal("-28.00"), entry.postings[1].position.number)
+        self.assertEqual(D("28.00"), entry.postings[0].position.number)
+        self.assertEqual(D("-28.00"), entry.postings[1].position.number)
 
         entry = get_entries_with_narration(unreal_entries, '5 units')[0]
         self.assertEqual("Income:Account1:Gains", entry.postings[0].account)
         self.assertEqual("Income:Account1:Gains", entry.postings[1].account)
-        self.assertEqual(to_decimal("30.00"), entry.postings[0].position.number)
-        self.assertEqual(to_decimal("-30.00"), entry.postings[1].position.number)
+        self.assertEqual(D("30.00"), entry.postings[0].position.number)
+        self.assertEqual(D("-30.00"), entry.postings[1].position.number)
 
     @loaddoc
     def test_create_open_directive(self, entries, errors, options_map):

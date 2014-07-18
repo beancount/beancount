@@ -2,13 +2,10 @@ import itertools
 import unittest
 import datetime
 
-from beancount.core.amount import to_decimal, ZERO
+from beancount.core.amount import D, ZERO
 from beancount.ops import holdings
 from beancount.ops import prices
 from beancount.parser import parsedoc
-
-
-D = to_decimal
 
 
 class TestHoldings(unittest.TestCase):

@@ -288,9 +288,6 @@ beancount: TODO
 
   - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
 
-  - Review all the code and make all creation of Decimal objects use to_decimal
-    instead of Decimal, for consistency.
-
   - Split all multiple tests that run in the same function by putting the
     docstring on the setUp() method instead; this works well:
 
@@ -302,8 +299,6 @@ beancount: TODO
 
   - Implement account.split() and perhaps remove references to
     split(account.sep) everywhere.
-
-  - Convert to_decimal to 'D' everywhere... this is an important and nice convenience.
 
   - Remove support for legacy: "check" (vs. "balance"), PIPE, etc. Not needed.
 
@@ -1948,7 +1943,7 @@ Improve this bit:
   - Write the builder object in C... it won't change very much anymore, and
     that's probably simple enough.
 
-  - Check the performance of to_decimal(). I suspect improving this routine
+  - Check the performance of D(). I suspect improving this routine
     could have a dramatic effect on performance.
 
 ** Documents

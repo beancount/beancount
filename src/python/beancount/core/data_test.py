@@ -2,7 +2,7 @@ from datetime import date
 import unittest
 import datetime
 
-from .amount import to_decimal
+from .amount import D
 from . import data
 from . import amount
 
@@ -119,7 +119,7 @@ class TestData(unittest.TestCase):
                              None, "Next day", None, None, []),
             data.Close(FL(".", 1000), date2, account),
             data.Balance(FL(".", 1001), date2, account,
-                         amount.Amount(to_decimal('200.00'), 'USD"'), None),
+                         amount.Amount(D('200.00'), 'USD"'), None),
             data.Open(FL(".", 1002), date2, account, 'USD'),
             data.Transaction(FL(".", 1009), date2, FLAG,
                              None, "Transaction 2", None, None, []),

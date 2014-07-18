@@ -1,5 +1,4 @@
-
-from beancount.core.amount import to_decimal as D
+from beancount.core.amount import D
 from beancount.core import data
 from beancount.ops import implicit_prices
 from beancount.parser import parsedoc

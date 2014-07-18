@@ -2,7 +2,7 @@ import unittest
 import datetime
 import re
 
-from beancount.core.amount import to_decimal as D
+from beancount.core.amount import D
 from beancount.core import amount
 from beancount.ops import prices
 from beancount.parser import parsedoc

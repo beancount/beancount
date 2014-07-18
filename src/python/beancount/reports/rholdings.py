@@ -2,6 +2,7 @@
 """
 import csv
 
+from beancount.core.amount import D
 from beancount.core import amount
 from beancount.core import account
 from beancount.parser import options
@@ -203,14 +204,14 @@ def load_from_csv(fileobj):
     """
     column_spec = [
         ('Account', 'account', None),
-        ('Units', 'number', amount.to_decimal),
+        ('Units', 'number', D),
         ('Currency', 'currency', None),
         ('Cost Currency', 'cost_currency', None),
-        ('Average Cost', 'cost_number', amount.to_decimal),
-        ('Price', 'price_number', amount.to_decimal),
-        ('Book Value', 'book_value', amount.to_decimal),
-        ('Market Value', 'market_value', amount.to_decimal),
-        ('Price Date', 'price_date', amount.to_decimal),
+        ('Average Cost', 'cost_number', D),
+        ('Price', 'price_number', D),
+        ('Book Value', 'book_value', D),
+        ('Market Value', 'market_value', D),
+        ('Price Date', 'price_date', D),
         ]
     column_dict = {name: (attr, converter)
                    for name, attr, converter in column_spec}

@@ -1,7 +1,7 @@
 import unittest
 import re
 
-from .amount import to_decimal, Decimal, ZERO
+from .amount import D, Decimal, ZERO
 from .amount import Amount
 from . import amount
 
@@ -16,7 +16,7 @@ class TestDecimalPrecision(unittest.TestCase):
         # during arithmetic operations."
         with amount.decimal.localcontext() as context:
             context.prec = 2
-            number = to_decimal('0.1122334455')
+            number = D('0.1122334455')
             self.assertEqual('0.1122334455', str(number))
 
 
@@ -25,14 +25,14 @@ class TestToDecimal(unittest.TestCase):
     def test_ZERO(self):
         self.assertEqual(ZERO, Decimal('0'))
 
-    def test_to_decimal(self):
+    def test_D(self):
         d = Decimal('10.345')
-        self.assertEqual(to_decimal(d), d)
-        self.assertEqual(to_decimal('10.345'), d)
-        self.assertEqual(to_decimal('10,034.45'), Decimal('10034.45'))
-        self.assertEqual(to_decimal('-83,434,309.10'), Decimal('-83434309.10'))
-        self.assertEqual(to_decimal(''), Decimal())
-        self.assertEqual(to_decimal(None), Decimal())
+        self.assertEqual(d, D(d))
+        self.assertEqual(d, D('10.345'))
+        self.assertEqual(Decimal('10034.45'), D('10,034.45'))
+        self.assertEqual(Decimal('-83434309.10'), D('-83,434,309.10'))
+        self.assertEqual(Decimal(), D(''))
+        self.assertEqual(Decimal(), D(None))
 
 
 class TestAmount(unittest.TestCase):

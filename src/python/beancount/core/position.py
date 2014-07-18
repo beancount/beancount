@@ -21,7 +21,7 @@ from collections import namedtuple
 import re
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
-from .amount import ZERO, Decimal, to_decimal, Amount, amount_mult, MAXDIGITS_PRINTER
+from .amount import ZERO, Decimal, D, Amount, amount_mult, MAXDIGITS_PRINTER
 
 
 # Lots are a representations of a commodity with an optional associated cost and
@@ -162,6 +162,7 @@ class Position:
         Returns:
           A shallow copy of this position.
         """
+        # Note: We use Decimal() for efficiency.
         return Position(self.lot, Decimal(self.number))
 
     def get_amount(self):
@@ -223,6 +224,7 @@ class Position:
         Returns:
           An instance of Position which represents the inserse of this Position.
         """
+        # Note: We use Decimal() for efficiency.
         return Position(self.lot, Decimal(-self.number))
 
     __neg__ = get_negative
@@ -247,14 +249,14 @@ class Position:
         number, currency = mo.group(1, 2)
         if mo.group(3):
             cost_number, cost_currency = mo.group(4, 5)
-            cost = Amount(to_decimal(cost_number), cost_currency)
+            cost = Amount(D(cost_number), cost_currency)
         else:
             cost = None
         if mo.group(6):
             lot_date = datetime.datetime.strptime(mo.group(7), '%Y-%m-%d').date()
         else:
             lot_date = None
-        return Position(Lot(currency, cost, lot_date), to_decimal(number))
+        return Position(Lot(currency, cost, lot_date), D(number))
 
 
 from_string = Position.from_string

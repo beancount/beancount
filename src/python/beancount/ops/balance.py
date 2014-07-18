@@ -2,7 +2,7 @@
 """
 import collections
 
-from beancount.core.amount import Decimal, amount_sub
+from beancount.core.amount import D, amount_sub
 from beancount.core.data import Transaction, Balance
 from beancount.core import inventory
 from beancount.core import realization
@@ -18,7 +18,7 @@ BalanceError = collections.namedtuple('BalanceError', 'fileloc message entry')
 # accumulates error up to 1bp, and we need to tolerate that if our importers
 # insert checks on at regular spaces, so we set the maximum limit at 1bp.
 # FIXME: Move this up to options?
-CHECK_PRECISION = Decimal('.015')
+CHECK_PRECISION = D('.015')
 
 def check(entries, unused_options_map):
     """Process the balance assertion directives.

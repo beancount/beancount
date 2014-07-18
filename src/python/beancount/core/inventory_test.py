@@ -6,7 +6,7 @@ import copy
 from datetime import date
 import types
 
-from beancount.core.amount import Amount, Decimal, to_decimal
+from beancount.core.amount import Amount, Decimal, D
 from beancount.core.position import Position, Lot
 from beancount.core import position
 from beancount.core.inventory import Inventory
@@ -66,25 +66,25 @@ class TestInventory(unittest.TestCase):
 
         inv = inventory.from_string('10 USD')
         self.assertEqual(
-            Inventory([Position(Lot("USD", None, None), to_decimal('10'))]),
+            Inventory([Position(Lot("USD", None, None), D('10'))]),
             inv)
 
         inv = inventory.from_string(' 10.00  USD ')
         self.assertEqual(
-            Inventory([Position(Lot("USD", None, None), to_decimal('10'))]),
+            Inventory([Position(Lot("USD", None, None), D('10'))]),
             inv)
 
         inv = inventory.from_string('1 USD, 2 CAD')
         self.assertEqual(
-            Inventory([Position(Lot("USD", None, None), to_decimal('1')),
-                       Position(Lot("CAD", None, None), to_decimal('2'))]),
+            Inventory([Position(Lot("USD", None, None), D('1')),
+                       Position(Lot("CAD", None, None), D('2'))]),
             inv)
 
         inv = inventory.from_string('2.2 GOOG {532.43 USD}, 3.413 EUR')
         self.assertEqual(
             Inventory([Position(Lot("GOOG", Amount('532.43', 'USD'), None),
-                                to_decimal('2.2')),
-                       Position(Lot("EUR", None, None), to_decimal('3.413'))]),
+                                D('2.2')),
+                       Position(Lot("EUR", None, None), D('3.413'))]),
             inv)
 
     def test_ctor_empty_len(self):
@@ -146,16 +146,16 @@ class TestInventory(unittest.TestCase):
 
     def test_is_small(self):
         inv = Inventory.from_string('1.50 JPY, 1.51 USD, 1.52 CAD')
-        self.assertFalse(inv.is_small(Decimal('1.49')))
-        self.assertFalse(inv.is_small(Decimal('1.50')))
-        self.assertTrue(inv.is_small(Decimal('1.53')))
-        self.assertTrue(inv.is_small(Decimal('1.52')))
+        self.assertFalse(inv.is_small(D('1.49')))
+        self.assertFalse(inv.is_small(D('1.50')))
+        self.assertTrue(inv.is_small(D('1.53')))
+        self.assertTrue(inv.is_small(D('1.52')))
 
         ninv = -inv
-        self.assertFalse(ninv.is_small(Decimal('1.49')))
-        self.assertFalse(ninv.is_small(Decimal('1.50')))
-        self.assertTrue(ninv.is_small(Decimal('1.53')))
-        self.assertTrue(ninv.is_small(Decimal('1.52')))
+        self.assertFalse(ninv.is_small(D('1.49')))
+        self.assertFalse(ninv.is_small(D('1.50')))
+        self.assertTrue(ninv.is_small(D('1.53')))
+        self.assertTrue(ninv.is_small(D('1.52')))
 
     def test_op_neg(self):
         inv = Inventory()

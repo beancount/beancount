@@ -107,6 +107,8 @@ class LexBuilder(object):
           A Decimal instance built of the number string.
         """
         try:
+            # Note: We don't use D() for efficiency here.
+            # We could consider it to extend the syntax to support commas.
             return Decimal(number)
         except Exception as e:
             self.errors.append(
