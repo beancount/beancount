@@ -340,6 +340,9 @@ beancount: TODO
   I clean this up and put it in the sections below. Please excuse the mess.)
 
 
+  - Try to run the tests using 'watchr', 'sniffer', 'autonose' or other such tool.
+
+
 
   - Look at Intuit's service for financial hub for financial data. Look for a
     developer account.
@@ -945,6 +948,20 @@ beancount: TODO
     constructors should accept a single string, and that should call
     from_string() automatically, Amount, Position, Inventory, etc.
 
+
+
+
+  - Create a new directive for balance that checks for the complete balance.
+    Ideas for syntax:
+
+      2014-06-20 balance      Assets:Some:Account    10 GOOG, 640.40 USD   FULL
+      2014-06-20 balance      Assets:Some:Account    [10 GOOG, 640.40 USD]
+      2014-06-20 balance      Assets:Some:Account    <10 GOOG, 640.40 USD>
+      2014-06-20 balance*     Assets:Some:Account    10 GOOG, 640.40 USD
+      2014-06-20 full_balance Assets:Some:Account    10 GOOG, 640.40 USD
+
+    Maybe we should define a general syntax for input'ing an Inventory object,
+    that could be read at parsing time.
 
 
 ** Precision
