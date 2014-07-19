@@ -47,7 +47,7 @@ class TestLoader(unittest.TestCase):
                 self.assertTrue(isinstance(errors, list))
                 self.assertTrue(isinstance(options_map, dict))
 
-                entries, errors, options_map = loader.load(f.name, log_function=print)
+                entries, errors, options_map = loader.load(f.name, log_timings=print)
                 self.assertTrue(isinstance(entries, list))
                 self.assertTrue(isinstance(errors, list))
                 self.assertTrue(isinstance(options_map, dict))
@@ -60,7 +60,7 @@ class TestLoader(unittest.TestCase):
             self.assertTrue(isinstance(options_map, dict))
 
             entries, errors, options_map = loader.load_string(TEST_INPUT,
-                                                              log_function=print)
+                                                              log_timings=print)
             self.assertTrue(isinstance(entries, list))
             self.assertTrue(isinstance(errors, list))
             self.assertTrue(isinstance(options_map, dict))

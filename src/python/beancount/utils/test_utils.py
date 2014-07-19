@@ -52,16 +52,20 @@ def tempdir():
 
 
 @contextlib.contextmanager
-def capture():
+def capture(attribute='stdout'):
     """A context manager that captures what's printed to stdout.
 
+    Args:
+      attribute: A string, the name of the sys attribute to override.
     Yields:
       A StringIO string accumulator.
     """
-    sys.saved_stdout = sys.stdout
-    oss = sys.stdout = io.StringIO()
+    sys.__capture__ = getattr(sys, attribute)
+    oss = io.StringIO()
+    setattr(sys, attribute, oss)
     yield oss
-    sys.stdout = sys.saved_stdout
+    setattr(sys, attribute, sys.__capture__)
+    del sys.__capture__
 
 
 def docfile(function):

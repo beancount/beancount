@@ -8,12 +8,12 @@ from collections import defaultdict
 
 
 @contextlib.contextmanager
-def log_time(operation_name, log_function):
+def log_time(operation_name, log_timings):
     """A context manager that times the block and logs it to info level.
 
     Args:
       operation_name: A string, a label for the name of the operation.
-      log_function: A function to write log messages to. If left to None,
+      log_timings: A function to write log messages to. If left to None,
         no timings are written (this becomes a no-op).
     Yields:
       The start time of the operation.
@@ -21,8 +21,8 @@ def log_time(operation_name, log_function):
     t1 = time()
     yield t1
     t2 = time()
-    if log_function:
-        log_function("Operation: {:48} Time: {:6.0f} ms".format(
+    if log_timings:
+        log_timings("Operation: {:48} Time: {:6.0f} ms".format(
             "'{}'".format(operation_name), (t2 - t1)*1000))
 
 

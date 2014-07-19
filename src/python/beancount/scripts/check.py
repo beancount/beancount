@@ -14,8 +14,13 @@ from beancount.ops import validation
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('filename', help='Beancount input filename.')
-    parser.add_argument('-v', '--verbose', action='store_true', help='Print timings.')
+
+    parser.add_argument('filename',
+                        help='Beancount input filename.')
+
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='Print timings.')
+
     opts = parser.parse_args()
 
     if opts.verbose:
@@ -28,10 +33,9 @@ def main():
     with misc_utils.log_time('beancount.loader (total)', logging.info):
         # Load up the file, print errors, checking and validation are invoked
         # automatically.
-        entries, errors, _ = load(opts.filename, logging.info)
-
-    # Print out the list of errors.
-    printer.print_errors(errors, file=sys.stdout)
+        entries, errors, _ = load(opts.filename,
+                                  log_timings=logging.info,
+                                  log_errors=sys.stderr)
 
 
 if __name__ == '__main__':

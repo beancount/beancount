@@ -89,7 +89,7 @@ def main():
                               "sensible default format, if one is not requested."))
 
     parser.add_argument('-v', '--verbose', action='store_true',
-                        help='Print timings and errors.')
+                        help='Print timings.')
 
     opts = parser.parse_args()
 
@@ -117,11 +117,9 @@ def main():
 
     # Parse the input file.
     with misc_utils.log_time('beancount.loader (total)', logging.info):
-        entries, errors, options_map = load(opts.filename, logging.info)
-
-    # Print out the list of errors.
-    if opts.verbose or is_check:
-        printer.print_errors(errors, file=sys.stdout)
+        entries, errors, options_map = load(opts.filename,
+                                            log_timings=logging.info,
+                                            log_errors=sys.stderr)
 
     # Create holdings list.
     result = report_function(entries, options_map)
