@@ -10,19 +10,19 @@ from beancount.core import complete
 from beancount.parser import cmptest
 
 
-FILELOC = data.FileLocation('beancount/core/testing.beancount', 12345)
+SOURCE = data.Source('beancount/core/testing.beancount', 12345)
 
 class TestPrinter(unittest.TestCase):
 
-    def test_render_fileloc(self):
-        fileloc_str = printer.render_fileloc(FILELOC)
-        self.assertTrue(isinstance(fileloc_str, str))
-        self.assertTrue(re.search('12345', fileloc_str))
-        self.assertTrue(re.search(FILELOC.filename, fileloc_str))
+    def test_render_source(self):
+        source_str = printer.render_source(SOURCE)
+        self.assertTrue(isinstance(source_str, str))
+        self.assertTrue(re.search('12345', source_str))
+        self.assertTrue(re.search(SOURCE.filename, source_str))
 
     def test_format_and_print_error(self):
-        entry = data.Open(FILELOC, date(2014, 1, 15), 'Assets:Bank:Checking', [])
-        error = complete.BalanceError(FILELOC, "Example balance error", entry)
+        entry = data.Open(SOURCE, date(2014, 1, 15), 'Assets:Bank:Checking', [])
+        error = complete.BalanceError(SOURCE, "Example balance error", entry)
         error_str = printer.format_error(error)
         self.assertTrue(isinstance(error_str, str))
 

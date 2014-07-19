@@ -17,7 +17,7 @@ from beancount.core.amount import ZERO, Decimal, Amount, amount_div
 from beancount.core.position import Lot, Position
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price
 from beancount.core.data import Note, Document
-from beancount.core.data import FileLocation, Posting
+from beancount.core.data import Source, Posting
 from beancount.core.complete import balance_incomplete_postings
 from beancount.core.complete import compute_residual, SMALL_EPSILON
 
@@ -25,8 +25,8 @@ from beancount.core.complete import compute_residual, SMALL_EPSILON
 __sanity_checks__ = False
 
 
-ParserError = collections.namedtuple('ParserError', 'fileloc message entry')
-ParserSyntaxError = collections.namedtuple('ParserError', 'fileloc message entry')
+ParserError = collections.namedtuple('ParserError', 'source message entry')
+ParserSyntaxError = collections.namedtuple('ParserError', 'source message entry')
 
 
 def valid_account_regexp(options):
@@ -111,13 +111,13 @@ class Builder(lexer.LexBuilder):
           value: option's value
         """
         if key not in self.options:
-            fileloc = FileLocation(filename, lineno)
+            source = Source(filename, lineno)
             self.errors.append(
-                ParserError(fileloc, "Invalid option: '{}'".format(key), None))
+                ParserError(source, "Invalid option: '{}'".format(key), None))
         elif key in options.READ_ONLY_OPTIONS:
-            fileloc = FileLocation(filename, lineno)
+            source = Source(filename, lineno)
             self.errors.append(
-                ParserError(fileloc, "Option '{}' may not be set.".format(key), None))
+                ParserError(source, "Option '{}' may not be set.".format(key), None))
         else:
             option = self.options[key]
             if isinstance(option, list):
@@ -194,8 +194,8 @@ class Builder(lexer.LexBuilder):
           lineno: the current line number
         Returns:
         """
-        fileloc = FileLocation(filename, lineno)
-        self.errors.append(ParserSyntaxError(fileloc, message, None))
+        source = Source(filename, lineno)
+        self.errors.append(ParserSyntaxError(source, message, None))
 
     def open(self, filename, lineno, date, account, currencies):
         """Process an open directive.
@@ -209,8 +209,8 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Open object.
         """
-        fileloc = FileLocation(filename, lineno)
-        return Open(fileloc, date, account, currencies)
+        source = Source(filename, lineno)
+        return Open(source, date, account, currencies)
 
     def close(self, filename, lineno, date, account):
         """Process a close directive.
@@ -223,8 +223,8 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Close object.
         """
-        fileloc = FileLocation(filename, lineno)
-        return Close(fileloc, date, account)
+        source = Source(filename, lineno)
+        return Close(source, date, account)
 
     def pad(self, filename, lineno, date, account, source_account):
         """Process a pad directive.
@@ -238,8 +238,8 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Pad object.
         """
-        fileloc = FileLocation(filename, lineno)
-        return Pad(fileloc, date, account, source_account)
+        source = Source(filename, lineno)
+        return Pad(source, date, account, source_account)
 
     def balance(self, filename, lineno, date, account, amount):
         """Process an assertion directive.
@@ -258,8 +258,8 @@ class Builder(lexer.LexBuilder):
           A new Balance object.
         """
         diff_amount = None
-        fileloc = FileLocation(filename, lineno)
-        return Balance(fileloc, date, account, amount, diff_amount)
+        source = Source(filename, lineno)
+        return Balance(source, date, account, amount, diff_amount)
 
     def event(self, filename, lineno, date, event_type, description):
         """Process an event directive.
@@ -273,8 +273,8 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Event object.
         """
-        fileloc = FileLocation(filename, lineno)
-        return Event(fileloc, date, event_type, description)
+        source = Source(filename, lineno)
+        return Event(source, date, event_type, description)
 
     def price(self, filename, lineno, date, currency, amount):
         """Process a price directive.
@@ -288,8 +288,8 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Price object.
         """
-        fileloc = FileLocation(filename, lineno)
-        return Price(fileloc, date, currency, amount)
+        source = Source(filename, lineno)
+        return Price(source, date, currency, amount)
 
     def note(self, filename, lineno, date, account, comment):
         """Process a note directive.
@@ -303,8 +303,8 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Note object.
         """
-        fileloc = FileLocation(filename, lineno)
-        return Note(fileloc, date, account, comment)
+        source = Source(filename, lineno)
+        return Note(source, date, account, comment)
 
     def document(self, filename, lineno, date, account, document_filename):
         """Process a document directive.
@@ -318,12 +318,12 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Document object.
         """
-        fileloc = FileLocation(filename, lineno)
+        source = Source(filename, lineno)
         if not path.isabs(document_filename):
             document_filename = path.abspath(path.join(path.dirname(filename),
                                                        document_filename))
 
-        return Document(fileloc, date, account, document_filename)
+        return Document(source, date, account, document_filename)
 
     def posting(self, account, position, price, istotal, flag):
         """Process a posting grammar rule.
@@ -408,7 +408,7 @@ class Builder(lexer.LexBuilder):
         txn_fields.has_pipe.append(1)
         return txn_fields
 
-    def unpack_txn_strings(self, txn_fields, fileloc):
+    def unpack_txn_strings(self, txn_fields, source):
         """Unpack a txn_fields accumulator to its payee and narration fields.
 
         Args:
@@ -423,7 +423,7 @@ class Builder(lexer.LexBuilder):
             payee, narration = None, txn_fields.strings[0]
             if txn_fields.has_pipe:
                 self.errors.append(
-                    ParserError(fileloc,
+                    ParserError(source,
                                 "One string with a | symbol yields only a narration: "
                                 "{}".format(txn_fields.strings), None))
         elif num_strings == 2:
@@ -432,7 +432,7 @@ class Builder(lexer.LexBuilder):
             payee, narration = None, ""
         else:
             self.errors.append(
-                ParserError(fileloc,
+                ParserError(source,
                             "Too many strings on transaction description: {}".format(
                                 txn_fields.strings), None))
             return None
@@ -460,10 +460,10 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Transaction object.
         """
-        fileloc = FileLocation(filename, lineno)
+        source = Source(filename, lineno)
 
         # Unpack the transaction fields.
-        payee_narration = self.unpack_txn_strings(txn_fields, fileloc)
+        payee_narration = self.unpack_txn_strings(txn_fields, source)
         if payee_narration is None:
             return None
         payee, narration = payee_narration
@@ -476,7 +476,7 @@ class Builder(lexer.LexBuilder):
         # # Detect when a transaction does not have at least two legs.
         # if postings is None or len(postings) < 2:
         #     self.errors.append(
-        #         ParserError(fileloc,
+        #         ParserError(source,
         #                     "Transaction with only one posting: {}".format(postings),
         #                     None))
         #     return None
@@ -494,7 +494,7 @@ class Builder(lexer.LexBuilder):
         links = frozenset(links) if links else None
 
         # Create the transaction. Note: we need to parent the postings.
-        entry = Transaction(fileloc, date, chr(flag),
+        entry = Transaction(source, date, chr(flag),
                             payee, narration, tags, links, postings)
 
         # Balance incomplete auto-postings and set the parent link to this entry as well.

@@ -10,7 +10,7 @@ from beancount.core.amount import Decimal
 from beancount.parser import _parser
 
 
-LexerError = collections.namedtuple('LexerError', 'fileloc message entry')
+LexerError = collections.namedtuple('LexerError', 'source message entry')
 
 
 class LexBuilder(object):
@@ -28,7 +28,7 @@ class LexBuilder(object):
         self.errors = []
 
     def get_lexer_location(self):
-        return data.FileLocation(_parser.get_yyfilename(),
+        return data.Source(_parser.get_yyfilename(),
                                  _parser.get_yylineno())
 
     def ERROR(self, string):

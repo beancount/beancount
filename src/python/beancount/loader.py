@@ -15,7 +15,7 @@ from beancount.parser import printer
 from beancount.ops import validation
 
 
-LoadError = collections.namedtuple('LoadError', 'fileloc message entry')
+LoadError = collections.namedtuple('LoadError', 'source message entry')
 
 
 # List of default plugins to run.
@@ -168,7 +168,7 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
 
         except ImportError as exc:
             # Upon failure, just issue an error.
-            errors.append(LoadError(data.FileLocation("<load>", 0),
+            errors.append(LoadError(data.Source("<load>", 0),
                                     'Error importing "{}": {}'.format(
                                         plugin_name, str(exc)), None))
 

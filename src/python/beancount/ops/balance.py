@@ -11,7 +11,7 @@ from beancount.core import getters
 __plugins__ = ('check',)
 
 
-BalanceError = collections.namedtuple('BalanceError', 'fileloc message entry')
+BalanceError = collections.namedtuple('BalanceError', 'source message entry')
 
 
 # This is based on some real-world usage: FOREX brokerage, for instance,
@@ -93,7 +93,7 @@ def check(entries, unused_options_map):
             diff_amount = amount_sub(balance_amount, expected_amount)
             if abs(diff_amount.number) > CHECK_PRECISION:
                 check_errors.append(
-                    BalanceError(entry.fileloc,
+                    BalanceError(entry.source,
                                  ("Balance failed for '{}': "
                                   "expected {} != accumulated {} ({} {})").format(
                                       entry.account, balance_amount, expected_amount,
@@ -106,7 +106,7 @@ def check(entries, unused_options_map):
                 # of ideas, maybe leaving the original check intact and insert a
                 # new error entry might be more functional or easier to
                 # understand.
-                entry = Balance(entry.fileloc, entry.date, entry.account,
+                entry = Balance(entry.source, entry.date, entry.account,
                                 entry.amount, diff_amount)
 
         new_entries.append(entry)

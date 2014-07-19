@@ -668,14 +668,14 @@ class TestTruncate(cmptest.TestCase):
 class TestEntriesFromBalance(cmptest.TestCase):
 
     SOURCE_ACCOUNT = 'Equity:OpeningBalances'
-    FILELOC = data.FileLocation('<test>', 0)
+    SOURCE = data.Source('<test>', 0)
 
     def test_create_entries_from_balances__empty(self):
         balances = collections.defaultdict(Inventory)
         balances['Assets:US:Bank:Empty']
         entries = summarize.create_entries_from_balances(balances, datetime.date.today(),
                                                          self.SOURCE_ACCOUNT, True,
-                                                         self.FILELOC, '!', 'narration')
+                                                         self.SOURCE, '!', 'narration')
         self.assertEqual([], entries)
 
     def setUp(self):
@@ -687,7 +687,7 @@ class TestEntriesFromBalance(cmptest.TestCase):
         entries = summarize.create_entries_from_balances(
             self.balances, datetime.date(2014, 1, 1),
             self.SOURCE_ACCOUNT, True,
-            self.FILELOC, '!', 'Narration for {account} at {date}')
+            self.SOURCE, '!', 'Narration for {account} at {date}')
         self.assertEqualEntries("""
           2014-01-01 ! "Narration for Assets:US:Bank:Checking at 2014-01-01"
             Assets:US:Bank:Checking                                               1823.23 USD
@@ -702,7 +702,7 @@ class TestEntriesFromBalance(cmptest.TestCase):
         entries = summarize.create_entries_from_balances(
             self.balances, datetime.date(2014, 1, 1),
             self.SOURCE_ACCOUNT, False,
-            self.FILELOC, '*', 'Narration for {account} at {date}')
+            self.SOURCE, '*', 'Narration for {account} at {date}')
         self.assertEqualEntries("""
           2014-01-01 * "Narration for Assets:US:Bank:Checking at 2014-01-01"
             Assets:US:Bank:Checking                                              -1823.23 USD
