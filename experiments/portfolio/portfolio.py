@@ -50,20 +50,18 @@ def join(holdings_list, features_map, keyfun):
     # Accumulate the market value of each holding in buckets for each label.
     for holding in holdings_list:
         key = keyfun(holding)
-        try:
-            if key is None:
-                logging.debug("Key not found: %s, %s, %s",
-                              holding.account, holding.currency, holding.cost_currency)
-            features = norm_features_map[key]
-            for label, fraction in features.items():
-                if not holding.market_value:
-                    continue
-                scaled_holding = holdings.scale_holding(holding, D(fraction))
-                features_total[label] += scaled_holding.market_value
-                features_holdings[label].append(scaled_holding)
-        except KeyError:
-            raise KeyError("Key '{}' not found in mapping: {} for holding {}".format(
-                key, norm_features_map, holding))
+
+        if key is None:
+            logging.debug("Key not found: %s, %s, %s",
+                          holding.account, holding.currency, holding.cost_currency)
+
+        features = norm_features_map[key]
+        for label, fraction in features.items():
+            if not holding.market_value:
+                continue
+            scaled_holding = holdings.scale_holding(holding, D(fraction))
+            features_total[label] += scaled_holding.market_value
+            features_holdings[label].append(scaled_holding)
 
     return {label: (features_total[label], features_holdings[label])
             for label in all_labels}
