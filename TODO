@@ -138,6 +138,23 @@ beancount: TODO
     which assumes that a price point will always be available if the unit is
     held at cost. Make a decision.
 
+  - This spits out an error during interpolation:
+
+        2014-07-17 * "(JRN) INTRA-ACCOUNT TRANSFER" ^795422780
+
+      bean-check /home/blais/r/q/office/accounting/blais.beancount
+      Traceback (most recent call last):
+        File "/home/blais/p/beancount/src/python/beancount/parser/parser.py", line 501, in transaction
+          balance_errors = balance_incomplete_postings(entry)
+        File "/home/blais/p/beancount/src/python/beancount/core/complete.py", line 209, in balance_incomplete_postings
+          postings, inserted, errors = get_incomplete_postings(entry)
+        File "/home/blais/p/beancount/src/python/beancount/core/complete.py", line 104, in get_incomplete_postings
+          postings = list(entry.postings)
+      TypeError: 'NoneType' object is not iterable
+
+    Deal with it more handsomely.
+
+
   - "Position with lots goes negative" should output an error message and be caught, because if it is run by the web
     server, it serves no page. Needs to be integrated like all the other error messages:
 
@@ -179,6 +196,10 @@ beancount: TODO
             2013-04-01 balance Assets:Bank:Checking   555.00 CAD.11
             """
             self.assertTrue(errors)
+
+  - A date with an extra number also parses silently, what's up with that?
+
+      2013-12-228 *
 
   - This parses silently! Needs detection:
 
@@ -325,6 +346,12 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Register (with filter) should have "print" mode that also includes
+    file:lineno so that we can make Emacs "jump" between the transactions in
+    the order they appear.
+
+
+
   - (design) New inventory booking:
     1. for each posting, classify by currency
     2. for each posting at cost, classify whether position augmentation or reduction
@@ -337,6 +364,7 @@ beancount: TODO
        Assets:Account          10 MSFT {USD}
        Income:PnL             400 USD
 
+    (See doc on Smarter Elision for a better version of this)
 
 
   - Brilliant idea!: Add Emacs functionality to run a special script that, given
