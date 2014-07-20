@@ -6,7 +6,7 @@ from os import path
 from collections import namedtuple
 
 from beancount.core import account
-from beancount.core.data import FileLocation, Document
+from beancount.core.data import Source, Document
 from beancount.core import data
 from beancount.core import getters
 
@@ -14,7 +14,7 @@ __plugins__ = ('process_documents',)
 
 
 # An error from trying to find the documents.
-DocumentError = namedtuple('DocumentError', 'fileloc message entry')
+DocumentError = namedtuple('DocumentError', 'source message entry')
 
 
 def process_documents(entries, options_map):
@@ -69,7 +69,7 @@ def verify_document_entries(entries):
             continue
         if not path.exists(entry.filename):
             errors.append(
-                DocumentError(entry.fileloc,
+                DocumentError(entry.source,
                               'File does not exist: "{}"'.format(entry.filename),
                               entry))
     return entries, errors
@@ -98,9 +98,9 @@ def find_documents(directory, input_filename, accounts_only=None):
 
     # If the directory does not exist, just generate an error and return.
     if not path.exists(directory):
-        fileloc = FileLocation(input_filename, 0)
+        source = Source(input_filename, 0)
         error = DocumentError(
-            fileloc, "Document root '{}' does not exist.".format(directory), None)
+            source, "Document root '{}' does not exist.".format(directory), None)
         return ([], [error])
 
     # Walk the hierarchy of files.
@@ -121,9 +121,9 @@ def find_documents(directory, input_filename, accounts_only=None):
                 continue
 
             # Create a new directive.
-            fileloc = FileLocation(input_filename, 0)
+            source = Source(input_filename, 0)
             date = datetime.date(*map(int, mo.group(1, 2, 3)))
-            entry = Document(fileloc, date, account_name, path.join(root, filename))
+            entry = Document(source, date, account_name, path.join(root, filename))
             entries.append(entry)
 
     return (entries, [])

@@ -9,7 +9,7 @@ from beancount.core.data import Posting, reparent_posting
 
 
 # An error from balancing the postings.
-BalanceError = collections.namedtuple('BalanceError', 'fileloc message entry')
+BalanceError = collections.namedtuple('BalanceError', 'source message entry')
 
 
 # The difference amount at which we consider a transaction to be balanced.
@@ -142,7 +142,7 @@ def get_incomplete_postings(entry):
         # If there are too many such postings, we can't do anything, barf.
         if len(auto_postings_indices) > 1:
             balance_errors.append(
-                BalanceError(entry.fileloc,
+                BalanceError(entry.source,
                              "Too many auto-postings; cannot fill in.",
                              entry))
             # Delete the redundant auto-postings.
@@ -165,7 +165,7 @@ def get_incomplete_postings(entry):
         if not residual_positions and ((has_regular_postings and has_nonzero_amount) or
                                        not has_regular_postings):
             balance_errors.append(
-                BalanceError(entry.fileloc,
+                BalanceError(entry.source,
                              "Useless auto-posting: {}.".format(inventory), entry))
             for currency in currencies:
                 position = Position(Lot(currency, None, None), ZERO)
@@ -188,7 +188,7 @@ def get_incomplete_postings(entry):
         # this is where we detect that the user has made a mistake.
         if not inventory.is_small(SMALL_EPSILON):
             balance_errors.append(
-                BalanceError(entry.fileloc,
+                BalanceError(entry.source,
                              "Transaction does not balance: {}.".format(inventory),
                              entry))
 

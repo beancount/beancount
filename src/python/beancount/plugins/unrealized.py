@@ -6,7 +6,7 @@ from beancount.core.amount import D, ZERO
 from beancount.core import data
 from beancount.core import account
 from beancount.core import getters
-from beancount.core.data import Transaction, Posting, FileLocation
+from beancount.core.data import Transaction, Posting, Source
 from beancount.core.position import Lot, Position
 from beancount.core import flags
 from beancount.ops import holdings
@@ -17,7 +17,7 @@ from beancount.parser import options
 __plugins__ = ('add_unrealized_gains',)
 
 
-UnrealizedError = collections.namedtuple('UnrealizedError', 'fileloc message entry')
+UnrealizedError = collections.namedtuple('UnrealizedError', 'source message entry')
 
 
 def add_unrealized_gains(entries, options_map, subaccount=None):
@@ -40,7 +40,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
       at the end, and a list of errors. The new list of entries is still sorted.
     """
     errors = []
-    fileloc = FileLocation('<unrealized_gains>', 0)
+    source = Source('<unrealized_gains>', 0)
 
     account_types = options.get_account_types(options_map)
 
@@ -49,7 +49,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
         validation_account = account.join(account_types.assets, subaccount)
         if not account.is_valid(validation_account):
             errors.append(
-                UnrealizedError(fileloc,
+                UnrealizedError(source,
                                 "Invalid subaccount name: '{}'".format(subaccount),
                                 None))
             return entries, errors
@@ -98,7 +98,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
         # be available, which is reasonable.
         if price_number is None:
             errors.append(
-                UnrealizedError(fileloc,
+                UnrealizedError(source,
                                 "A valid price for {}/{} could not be found.".format(
                                     currency, cost_currency), None))
             continue
@@ -126,7 +126,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
             # If the number of units sum to zero, the holdings should have been
             # zero.
             errors.append(
-                UnrealizedError(fileloc,
+                UnrealizedError(source,
                                 "Number of units of {} in {} in holdings sum to zero "
                                 "for account {} and should not.".format(
                                     currency, cost_currency, account_name),
@@ -151,7 +151,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
                          gain_loss_str, total_units, currency,
                          price_number, cost_currency, price_date,
                          average_cost, cost_currency)
-        entry = Transaction(fileloc._replace(lineno=1000 + index),
+        entry = Transaction(source._replace(lineno=1000 + index),
                             latest_date, flags.FLAG_UNREALIZED,
                             None, narration, None, None, [])
 
@@ -184,7 +184,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
     new_open_entries = []
     for account_ in sorted(new_accounts):
         if account_ not in open_entries:
-            open_entry = data.Open(fileloc._replace(lineno=index),
+            open_entry = data.Open(source._replace(lineno=index),
                                    latest_date, account_, None)
             new_open_entries.append(open_entry)
 

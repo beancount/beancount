@@ -207,12 +207,12 @@ def report_prices_db(entries, unused_options_map):
     """
     oss = io.StringIO()
     price_map = prices.build_price_map(entries)
-    fileloc = data.FileLocation('<report_prices_db>', 0)
+    source = data.Source('<report_prices_db>', 0)
     for base_quote in price_map.forward_pairs:
         price_list = price_map[base_quote]
         base, quote = base_quote
         for date, price in price_list:
-            entry = data.Price(fileloc, date, base, amount.Amount(price, quote))
+            entry = data.Price(source, date, base, amount.Amount(price, quote))
             oss.write(printer.format_entry(entry))
         oss.write('\n')
     return oss.getvalue()

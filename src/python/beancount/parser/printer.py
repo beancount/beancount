@@ -137,17 +137,17 @@ def print_entries(entries, file=None, prefix=None):
         output.write('\n')
 
 
-def render_fileloc(fileloc):
-    """Render the fileloc for errors in a way that it will be both detected by
+def render_source(source):
+    """Render the source for errors in a way that it will be both detected by
     Emacs and align and rendered nicely.
 
     Args:
-      fileloc: an instance of FileLoc.
+      source: an instance of Source.
     Returns:
       A string, rendered to be interpretable as a message location for Emacs or
       other editors.
     """
-    return '{}:{:8}'.format(fileloc.filename, '{}:'.format(fileloc.lineno))
+    return '{}:{:8}'.format(source.filename, '{}:'.format(source.lineno))
 
 
 def format_error(error):
@@ -159,7 +159,7 @@ def format_error(error):
       A string, the errors rendered.
     """
     oss = io.StringIO()
-    oss.write('{} {}\n'.format(render_fileloc(error.fileloc), error.message))
+    oss.write('{} {}\n'.format(render_source(error.source), error.message))
     if error.entry is not None:
         error_string = format_entry(error.entry)
         oss.write('\n')

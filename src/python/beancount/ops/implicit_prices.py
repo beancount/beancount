@@ -14,7 +14,7 @@ from beancount.core import inventory
 __plugins__ = ('add_implicit_prices',)
 
 
-ImplicitPriceError = collections.namedtuple('ImplicitPriceError', 'fileloc message entry')
+ImplicitPriceError = collections.namedtuple('ImplicitPriceError', 'source message entry')
 
 
 def add_implicit_prices(entries, unused_options_map):
@@ -56,7 +56,7 @@ def add_implicit_prices(entries, unused_options_map):
                 # underlying instrument, e.g.
                 #      Asset:Account    100 GOOG {564.20} @ {581.97} USD
                 if posting.price is not None:
-                    price_entry = Price(entry.fileloc, entry.date,
+                    price_entry = Price(entry.source, entry.date,
                                         posting.position.lot.currency,
                                         posting.price)
 
@@ -65,7 +65,7 @@ def add_implicit_prices(entries, unused_options_map):
                 # e.g.
                 #      Asset:Account    100 GOOG {564.20}
                 elif posting.position.lot.cost is not None and not reducing:
-                    price_entry = Price(entry.fileloc, entry.date,
+                    price_entry = Price(entry.source, entry.date,
                                         posting.position.lot.currency,
                                         posting.position.lot.cost)
 
@@ -94,7 +94,7 @@ def add_implicit_prices(entries, unused_options_map):
                         # else:
                         #     errors.append(
                         #         ImplicitPriceError(
-                        #             entry.fileloc,
+                        #             entry.source,
                         #             "Duplicate prices for {} on {}".format(entry,
                         #                                                    dup_entry),
                         #             entry))

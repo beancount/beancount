@@ -3,13 +3,6 @@ beancount: TODO
 * Requirements for Shipping 1.0
 ** Complete 100% Coverage for Unit Tests
 
-  - loader.load() should have an option to print error. error_function=None.
-    If specified, print out errors. This will make the minimal program smaller
-    and is worth it.
-
-    * Print errors by default in bean-query.
-
-
   - Complete the diagram in the Motivation document
 
   - Make helper functions in summarize, for clamp() and close() which accept
@@ -331,11 +324,9 @@ beancount: TODO
 
   - Implement Amount.from_string() to be consistent with position and inventory?
 
-  - Rename FileLocation to Source and .fileloc to .source, before we ship, in
-    order to avoid breaking scripts further. Also, instead of '<...>' for the
-    source, we should use a scheme:..., like file://..., and
-    plugin:beancount.... . This makes a lot more sense. Do this now before the
-    release.
+  - For .source, instead of '<...>' for the source, we should use a scheme:...,
+    like file://..., and plugin:beancount.... . This makes a lot more sense. Do
+    this now before the release.
 
 
 * Current / Misc / To Be Classified
@@ -377,6 +368,21 @@ beancount: TODO
 
   - Deal with wash sales... complete doc, call MSSB to figure out if/how they
     adjust the cost basis of a future stock vesting event.
+
+
+
+  - Idea: In order to give the user more control over what plugins get run, add
+    an option to disable the processing of the built-in plugins:
+
+      option "processing" "raw" ; No plugins are run beyond the parser and interpolation.
+      option "processing" "default" ; The default list of plugins is run
+      option "processing" "strict" ; Plugins including the hardcore validation are run.
+
+    Somehow making the hardcore validation into a plugin might be a good way to
+    provide a strict mode.  Also, you could build a beancount.plugins.builtins
+    module that defines the list of default plugins that gets run instead of
+    having a list in the loader. This way the user could easily invoke it at
+    any point in time.
 
 
 
