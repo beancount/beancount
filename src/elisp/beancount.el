@@ -73,7 +73,8 @@ is great for sectioning large files with many transactions."
 (defun beancount-init-accounts ()
   "Initialize or reset the list of accounts."
   (interactive)
-  (setq beancount-accounts (beancount-get-accounts)))
+  (setq beancount-accounts (beancount-get-accounts))
+  (message "Accounts updated."))
 
 
 (defvar beancount-font-lock-defaults
