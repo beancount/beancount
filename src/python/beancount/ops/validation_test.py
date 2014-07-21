@@ -332,14 +332,14 @@ class TestValidate(cmptest.TestCase):
 
     def test_validate_documents_paths(self):
         date = datetime.date(2014, 3, 3)
-        fileloc = data.FileLocation('<validation_test>', 0)
-        entries = [data.Document(fileloc, date, 'Assets:Account1',
+        source = data.Source('<validation_test>', 0)
+        entries = [data.Document(source, date, 'Assets:Account1',
                                  "/abs/path/to/something.pdf"),
-                   data.Document(fileloc, date, 'Assets:Account2',
+                   data.Document(source, date, 'Assets:Account2',
                                  "relative/something.pdf"),
-                   data.Document(fileloc, date, 'Assets:Account2',
+                   data.Document(source, date, 'Assets:Account2',
                                  "../something.pdf"),
-                   data.Document(fileloc, date, 'Assets:Account2',
+                   data.Document(source, date, 'Assets:Account2',
                                  "")]
         errors = validation.validate_documents_paths(entries, {})
         self.assertEqual(3, len(errors))

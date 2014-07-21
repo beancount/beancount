@@ -12,7 +12,7 @@ import collections
 from beancount.core import amount
 from beancount.core import inventory
 from beancount.core.data import Transaction, Open, Close
-from beancount.core.data import FileLocation, Posting
+from beancount.core.data import Source, Posting
 from beancount.core import data
 from beancount.core import flags
 from beancount.core import realization
@@ -193,7 +193,7 @@ def transfer_balances(entries, date, account_pred, transfer_account):
     # Create transfer entries.
     transfer_entries = create_entries_from_balances(
         transfer_balances, transfer_date, transfer_account, False,
-        data.FileLocation('<transfer_balances>', 0), flags.FLAG_TRANSFER,
+        data.Source('<transfer_balances>', 0), flags.FLAG_TRANSFER,
         "Transfer balance for '{account}' (Transfer balance)")
 
     # Remove balance assertions that occur after a transfer on an account that
@@ -239,7 +239,7 @@ def summarize(entries, date, account_opening):
     # Create summarization / opening balance entries.
     summarizing_entries = create_entries_from_balances(
         balances, summarize_date, account_opening, True,
-        data.FileLocation('<summarize>', 0), flags.FLAG_SUMMARIZE,
+        data.Source('<summarize>', 0), flags.FLAG_SUMMARIZE,
         "Opening balance for '{account}' (Summarization)")
 
     # Insert the last price entry for each commodity from before the date.
@@ -287,9 +287,9 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
         index = len(entries)
         last_date = entries[-1].date
 
-    fileloc = FileLocation('<conversions>', -1)
+    source = Source('<conversions>', -1)
     narration = 'Conversion for {}'.format(conversion_balance)
-    conversion_entry = Transaction(fileloc, last_date, flags.FLAG_CONVERSIONS,
+    conversion_entry = Transaction(source, last_date, flags.FLAG_CONVERSIONS,
                                    None, narration, None, None, [])
     for position in conversion_balance.get_cost().get_positions():
         # Important note: Set the cost to zero here to maintain the balance
@@ -322,7 +322,7 @@ def truncate(entries, date):
 
 
 def create_entries_from_balances(balances, date, source_account, direction,
-                                 fileloc, flag, narration_template):
+                                 source, flag, narration_template):
     """"Create a list of entries from a dict of balances.
 
     This method creates a list of new entries to transfer the amounts in the
@@ -341,7 +341,7 @@ def create_entries_from_balances(balances, date, source_account, direction,
       direction: If 'direction' is True, the new entries transfer TO the
         balances account from the source account; otherwise the new entries
         transfer FROM the balances into the source account.
-      fileloc: An instance of data.FileLocation to use to indicate the source of
+      source: An instance of data.Source to use to indicate the source of
         the transactions
       flag: A string, the flag to use for the transactinos.
       narration_template: A format string for creating the narration. It is
@@ -363,7 +363,7 @@ def create_entries_from_balances(balances, date, source_account, direction,
 
         postings = []
         new_entry = Transaction(
-            fileloc, date, flag, None, narration, None, None, postings)
+            source, date, flag, None, narration, None, None, postings)
 
         for position in account_balance.get_positions():
             postings.append(Posting(new_entry, account, position, None, None))

@@ -21,7 +21,7 @@ from beancount.utils import misc_utils
 
 
 # An error from one of the checks.
-ValidationError = collections.namedtuple('ValidationError', 'fileloc message entry')
+ValidationError = collections.namedtuple('ValidationError', 'source message entry')
 
 
 # Directive types that should be allowed after the account is closed.
@@ -62,7 +62,7 @@ def validate_inventory_booking(entries, unused_options_map):
             except ValueError as e:
                 errors.append(
                     ValidationError(
-                        posting.entry.fileloc,
+                        posting.entry.source,
                         str(e),
                         posting.entry))
 
@@ -98,7 +98,7 @@ def validate_open_close(entries, unused_options_map):
             if entry.account in open_map:
                 errors.append(
                     ValidationError(
-                        entry.fileloc,
+                        entry.source,
                         "Duplicate open directive for {}.".format(entry.account),
                         entry))
             else:
@@ -108,7 +108,7 @@ def validate_open_close(entries, unused_options_map):
             if entry.account in close_map:
                 errors.append(
                     ValidationError(
-                        entry.fileloc,
+                        entry.source,
                         "Duplicate close directive for {}.".format(entry.account),
                         entry))
             else:
@@ -117,14 +117,14 @@ def validate_open_close(entries, unused_options_map):
                     if entry.date <= open_entry.date:
                         errors.append(
                             ValidationError(
-                                entry.fileloc,
+                                entry.source,
                                 "Internal error: closing date for {} "
                                 "appears before opening date.".format(entry.account),
                                 entry))
                 except KeyError:
                     errors.append(
                         ValidationError(
-                            entry.fileloc,
+                            entry.source,
                             "Unopened account {}is being closed.".format(entry.account),
                             entry))
 
@@ -161,7 +161,7 @@ def validate_duplicate_balances(entries, unused_options_map):
             if entry.amount != previous_entry.amount:
                 errors.append(
                     ValidationError(
-                        entry.fileloc,
+                        entry.source,
                         "Duplicate balance assertion with different amounts.",
                         entry))
         except KeyError:
@@ -222,7 +222,7 @@ def validate_active_accounts(entries, unused_options_map):
             message = "Invalid reference to inactive account '{}'".format(account)
         else:
             message = "Invalid reference to unknown account '{}'".format(account)
-        errors.append(ValidationError(entry.fileloc, message, entry))
+        errors.append(ValidationError(entry.source, message, entry))
 
     return errors
 
@@ -259,7 +259,7 @@ def validate_unused_accounts(entries, options_map):
 
     # Create a list of suitable errors, with the location of the Open directives
     # corresponding to the unused accounts.
-    return [ValidationError(open_entry.fileloc,
+    return [ValidationError(open_entry.source,
                             "Unused account '{}'.".format(account),
                             open_entry)
             for account, open_entry in open_map.items()
@@ -306,7 +306,7 @@ def validate_currency_constraints(entries, options_map):
             if posting.position.lot.currency not in valid_currencies:
                 errors.append(
                     ValidationError(
-                        entry.fileloc,
+                        entry.source,
                         "Invalid currency {} for account '{}'.".format(
                             posting.position.lot.currency, posting.account),
                         entry))
@@ -327,7 +327,7 @@ def validate_documents_paths(entries, options_map):
     Returns:
       A list of new errors, if any were found.
     """
-    return [ValidationError(entry.fileloc, "Invalid relative path for entry.", entry)
+    return [ValidationError(entry.source, "Invalid relative path for entry.", entry)
             for entry in entries
             if (isinstance(entry, Document) and
                 not path.isabs(entry.filename))]
@@ -353,7 +353,7 @@ def validate_data_types(entries, options_map):
             data.sanity_check_types(entry)
         except AssertionError as exc:
             errors.append(
-                ValidationError(entry.fileloc,
+                ValidationError(entry.source,
                                 "Invalid data types: {}".format(exc),
                                 entry))
     return errors
@@ -377,7 +377,7 @@ def validate_check_balances(entries, options_map):
             balance = complete.compute_residual(entry.postings)
             if not balance.is_small(complete.SMALL_EPSILON):
                 errors.append(
-                    ValidationError(entry.fileloc,
+                    ValidationError(entry.source,
                                     "Transaction does not balance: {}.".format(balance),
                                     entry))
     return errors

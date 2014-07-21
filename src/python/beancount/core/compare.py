@@ -6,7 +6,7 @@ import hashlib
 from .data import entry_sortkey
 
 
-CompareError = collections.namedtuple('CompareError', 'fileloc message entry')
+CompareError = collections.namedtuple('CompareError', 'source message entry')
 
 
 def stable_hash_namedtuple(objtuple, ignore=frozenset()):
@@ -50,7 +50,7 @@ def hash_entry(entry):
     Returns:
       A stable hexadecimal hash of this entry.
     """
-    return stable_hash_namedtuple(entry, {'fileloc', 'entry', 'diff_amount'})
+    return stable_hash_namedtuple(entry, {'source', 'entry', 'diff_amount'})
 
 
 def hash_entries(entries):
@@ -73,7 +73,7 @@ def hash_entries(entries):
         if hash_ in entry_hash_dict:
             other_entry = entry_hash_dict[hash_]
             errors.append(
-                CompareError(entry.fileloc,
+                CompareError(entry.source,
                              "Duplicate entry: {} == {}".format(entry, other_entry),
                              entry))
         entry_hash_dict[hash_] = entry

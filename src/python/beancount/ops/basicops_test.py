@@ -47,7 +47,7 @@ class TestBasicOpsLinks(unittest.TestCase):
 
     def test_group_entries_by_link(self):
         entries, _, __ = parse_string(self.test_doc)
-        entries = [entry._replace(fileloc=None, postings=None)
+        entries = [entry._replace(source=None, postings=None)
                    for entry in entries
                    if isinstance(entry, Transaction)]
         link_groups = basicops.group_entries_by_link(entries)

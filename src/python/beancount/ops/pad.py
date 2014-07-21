@@ -13,7 +13,7 @@ from beancount.core import realization
 __plugins__ = ('pad',)
 
 
-PadError = collections.namedtuple('PadError', 'fileloc message entry')
+PadError = collections.namedtuple('PadError', 'source message entry')
 
 # FIXME: Maybe this should become an option? Maybe this becomes a parameter of pad()?
 PAD_PRECISION = D('.015')
@@ -111,7 +111,7 @@ def pad(entries, unused_options_map):
                         for position_ in positions:
                             if position_.lot.cost is not None:
                                 pad_errors.append(
-                                    PadError(entry.fileloc,
+                                    PadError(entry.source,
                                              ("Attempt to pad an entry with cost for "
                                               "balance: {}".format(pad_balance)),
                                              active_pad))
@@ -125,7 +125,7 @@ def pad(entries, unused_options_map):
                         narration = ('(Padding inserted for Balance of {} for '
                                      'difference {})').format(check_amount, diff_position)
                         new_entry = data.Transaction(
-                            active_pad.fileloc, active_pad.date, flags.FLAG_PADDING,
+                            active_pad.source, active_pad.date, flags.FLAG_PADDING,
                             None, narration, None, None, [])
 
                         new_entry.postings.append(
@@ -157,6 +157,6 @@ def pad(entries, unused_options_map):
             # Generate errors on unused pad entries.
             if not entry_list:
                 pad_errors.append(
-                    PadError(entry.fileloc, "Unused Pad entry: {}".format(entry), entry))
+                    PadError(entry.source, "Unused Pad entry: {}".format(entry), entry))
 
     return padded_entries, pad_errors
