@@ -344,6 +344,32 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Idea: Allow sub-account names to include a special character, e.g., '#',
+    (only one) that would indicate to the reporting facilities that, by default,
+    the aggregation should be reported to the parent account. A "detail" or
+    "verbose" switch could be used to trigger the detailing of subaccounts. For
+    example,
+
+       Expenses:Health:Medical:#Claims
+       Expenses:Health:Medical:#PatientSavings
+       Expenses:Health:Medical:#ClaimsPayments
+
+    would be reported as
+
+      Expenses:Health:Medical
+
+    by default, but with the detailed switch, would be reported as
+
+       Expenses:Health:Medical:Claims
+       Expenses:Health:Medical:PatientSavings
+       Expenses:Health:Medical:ClaimsPayments
+
+    This could be used for various subaccounts actually. It's a nice way to
+    guide reporting that does not complexify the semantics.
+
+
+
+
   - beancount-align-transaction does not appear to align the last posting
     somehow:
 
