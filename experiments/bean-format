@@ -20,7 +20,7 @@ def main():
 
     parser.add_argument('filename', help='Beancount filename')
 
-    parser.add_argument('-o', '--output', action='store_true',
+    parser.add_argument('-o', '--output', action='store',
                         help="Output file (stdout if not specified)")
 
     opts = parser.parse_args()
@@ -64,7 +64,10 @@ def main():
     # open('/tmp/after', 'w').write(re.sub(r'[ \t]+', ' ', formatted_contents))
     assert re.sub(r'[ \t]+', ' ', contents) == re.sub(r'[ \t]+', ' ', formatted_contents)
 
-    outfile = open(opts.output) if opts.output else sys.stdout
+    # Make sure not to open the output file until we've passed out sanity
+    # checks. We want to allow overwriting the input file, but want to avoid
+    # losing it in case of errors!
+    outfile = open(opts.output, 'w') if opts.output else sys.stdout
     outfile.write(formatted_contents)
 
 
