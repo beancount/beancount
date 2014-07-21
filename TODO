@@ -185,6 +185,13 @@ beancount: TODO
   - bean-bake on basic.beancount fails. You should fix it before the release,
     something to do with prices, add a relevant test.
 
+  - Add a test for name_assets and others, at the beginning or output and then
+    not, test that it works, and fails if not at the top of the file. When it
+    fails, check the error message and improve it, make it clear why an account
+    name could not be parsed.
+
+
+
 ** Parser-Related Minor Bugs
 
   - Parsing this does not fail; it really should, this is a bug:
@@ -344,6 +351,16 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - beancount-align-transaction does not appear to align the last posting
+    somehow:
+
+      2014-06-01 * "Transfer"
+        Income:US:Govt:PreTax                                            -500 HSAUSD
+        Assets:US:Govt:PreTax                                             500 HSAUSD
+        Assets:Health-Savings                                             500 USD
+          Assets:Checking
 
 
   - Register (with filter) should have "print" mode that also includes

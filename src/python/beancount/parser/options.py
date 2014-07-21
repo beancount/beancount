@@ -43,7 +43,9 @@ PUBLIC_OPTION_GROUPS = [
       Root names of every account. This can be used to customize your category
       names, so that if you prefer "Revenue" over "Income" or "Capital" over
       "Equity", you can set them here. The account names in your input files
-      must match, and the parser will validate these.
+      must match, and the parser will validate these. You should place these
+      options at the beginning of your file, because they affect how the parser
+      recognizes account names.
     """, [
         OptDesc("name_assets", _TYPES.assets, _TYPES.assets),
         OptDesc("name_liabilities", _TYPES.liabilities, _TYPES.liabilities),
