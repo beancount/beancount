@@ -193,9 +193,6 @@ at which to align the beginning of the amount's currency."
          (when (and number rest)
            (insert (format number-format number rest))))))))
 
-(defvar beancount-align-currency-column 72
-  "The column at which to align the currency.")
-
 (defun beancount-align-transaction ()
   "Align postings under the point's paragraph."
   (interactive)
@@ -204,7 +201,8 @@ at which to align the beginning of the amount's currency."
                  (point)))
         (end (save-excursion
                (forward-paragraph 1)
-               (point))))
+               (point)))
+        (beancount-align-currency-column fill-column))
     (beancount-align-postings begin end beancount-align-currency-column)))
 
 
