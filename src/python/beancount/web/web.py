@@ -743,11 +743,10 @@ def holdings_overview():
 def holdings_detail():
     "Render a detailed table of all holdings."
 
-    price_map = prices.build_price_map(request.view.entries)
     holdings_ = holdings.get_final_holdings(request.view.entries,
                                             (app.account_types.assets,
                                              app.account_types.liabilities),
-                                            price_map)
+                                            app.price_map)
 
     table_ = table.create_table(holdings_,
                                 field_spec=[
@@ -782,11 +781,10 @@ def holdings_detail():
 def holdings_byinstrument():
     "Render a table of holdings by instrument."
 
-    price_map = prices.build_price_map(request.view.entries)
     holdings_ = holdings.get_final_holdings(request.view.entries,
                                             (app.account_types.assets,
                                              app.account_types.liabilities),
-                                            price_map)
+                                            app.price_map)
     aggregated_holdings = holdings.aggregate_holdings_by(holdings_,
                                                          lambda holding: holding.currency)
 

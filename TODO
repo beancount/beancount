@@ -14,6 +14,8 @@ beancount: TODO
     balancing transactions. Need to figure out how to do this properly without
     raising two errors.
 
+  - How come the unit tests did not fail on an error 500?
+
 
 ** Minimal Reports to Console
 
@@ -168,9 +170,6 @@ beancount: TODO
   - Instead of ignoring diff_amount and parent and such for hashing purposes,
     just make ignorable fields start with _, e.g. posting._entry, balance._diff,
     entry._fileloc, etc. Call those non-essential fields.
-
-  - bean-bake on basic.beancount fails. You should fix it before the release,
-    something to do with prices, add a relevant test.
 
   - Add a test for name_assets and others, at the beginning or output and then
     not, test that it works, and fails if not at the top of the file. When it
@@ -336,6 +335,16 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+
+
+  - There's a fundamental question about which date to be used for pricing
+    entries. This really would depend on the view. If this is a period view, the
+    date of the last entry is most appropriate. If it is any other kind of view,
+    the latest price is best. All the reports should be adjusted for this.
+
+
 
 
   - Idea: Allow sub-account names to include a special character, e.g., '#',
