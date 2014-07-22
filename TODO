@@ -14,8 +14,6 @@ beancount: TODO
     balancing transactions. Need to figure out how to do this properly without
     raising two errors.
 
-  - How come the unit tests did not fail on an error 500?
-
 
 ** Minimal Reports to Console
 
