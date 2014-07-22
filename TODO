@@ -3,6 +3,9 @@ beancount: TODO
 * Requirements for Shipping 1.0
 ** Complete 100% Coverage for Unit Tests
 
+  - As soon as the Getting Started guide, write some example input syntax and
+    show how to run the program.
+
   - Complete the diagram in the Motivation document
 
   - Make helper functions in summarize, for clamp() and close() which accept
