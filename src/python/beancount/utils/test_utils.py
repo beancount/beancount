@@ -26,12 +26,14 @@ def run_with_args(function, args):
       function: A function object to call with no arguments.
       argv: A list of arguments, excluding the script name, to be temporarily
         set on sys.argv.
+    Returns:
+      The return value of the function run.
     """
     saved_argv = sys.argv
     try:
         module = sys.modules[function.__module__]
         sys.argv = [module.__file__] + args
-        function()
+        return function()
     finally:
         sys.argv = saved_argv
 

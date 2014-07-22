@@ -37,6 +37,10 @@ def main():
                                   log_timings=logging.info,
                                   log_errors=sys.stderr)
 
+    # Exit with an error code if there were any errors, so this can be used in a
+    # shell conditional.
+    return 1 if errors else 0
+
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

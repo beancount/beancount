@@ -14,9 +14,6 @@ beancount: TODO
     balancing transactions. Need to figure out how to do this properly without
     raising two errors.
 
-  - Make sure bean-check returns a correct error code (1 for errors, 0 on
-    success) and add unit tests for it.
-
 
 ** Minimal Reports to Console
 
