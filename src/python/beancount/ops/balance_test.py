@@ -24,11 +24,11 @@ class TestBalance(unittest.TestCase):
     def test_simple_first(self, entries, errors, __):
         """
           2013-05-01 open Assets:Bank:Checking
-          2013-05-01 open Equity:OpeningBalances
+          2013-05-01 open Equity:Opening-Balances
 
           2013-05-02 *
             Assets:Bank:Checking                100 USD
-            Equity:OpeningBalances
+            Equity:Opening-Balances
 
           2013-05-03 balance Assets:Bank:Checking   100 USD
         """
@@ -41,17 +41,17 @@ class TestBalance(unittest.TestCase):
     def test_simple_cont(self, entries, errors, __):
         """
           2013-05-01 open Assets:Bank:Checking
-          2013-05-01 open Equity:OpeningBalances
+          2013-05-01 open Equity:Opening-Balances
 
           2013-05-02 *
             Assets:Bank:Checking                100 USD
-            Equity:OpeningBalances
+            Equity:Opening-Balances
 
           2013-05-03 balance Assets:Bank:Checking   100 USD
 
           2013-05-04 *
             Assets:Bank:Checking                 10 USD
-            Equity:OpeningBalances
+            Equity:Opening-Balances
 
           2013-05-05 balance Assets:Bank:Checking   110 USD
         """
@@ -61,12 +61,12 @@ class TestBalance(unittest.TestCase):
     def test_simple_partial_currency_first(self, entries, errors, __):
         """
           2013-05-01 open Assets:Bank:Checking
-          2013-05-01 open Equity:OpeningBalances
+          2013-05-01 open Equity:Opening-Balances
 
           2013-05-02 *
             Assets:Bank:Checking                100 USD
             Assets:Bank:Checking                200 CAD
-            Equity:OpeningBalances
+            Equity:Opening-Balances
 
           2013-05-03 balance Assets:Bank:Checking   100 USD
           2013-05-03 balance Assets:Bank:Checking   200 CAD
@@ -77,19 +77,19 @@ class TestBalance(unittest.TestCase):
     def test_simple_partial_currency_cont(self, entries, errors, __):
         """
           2013-05-01 open Assets:Bank:Checking
-          2013-05-01 open Equity:OpeningBalances
+          2013-05-01 open Equity:Opening-Balances
 
           2013-05-02 *
             Assets:Bank:Checking                100 USD
             Assets:Bank:Checking                200 CAD
-            Equity:OpeningBalances
+            Equity:Opening-Balances
 
           2013-05-03 balance Assets:Bank:Checking   100 USD
 
           2013-05-04 *
             Assets:Bank:Checking                 10 USD
             Assets:Bank:Checking                 20 CAD
-            Equity:OpeningBalances
+            Equity:Opening-Balances
 
           2013-05-05 balance Assets:Bank:Checking   110 USD
           2013-05-05 balance Assets:Bank:Checking   220 CAD
@@ -103,19 +103,19 @@ class TestBalance(unittest.TestCase):
           2013-05-01 open Assets:Bank:Checking1
           2013-05-01 open Assets:Bank:Checking2
           2013-05-01 open Assets:Bank:Savings   ;; Will go negative
-          2013-05-01 open Equity:OpeningBalances
+          2013-05-01 open Equity:Opening-Balances
 
           2013-05-02 *
             Assets:Bank:Checking1                100 USD
-            Equity:OpeningBalances
+            Equity:Opening-Balances
 
           2013-05-03 *
             Assets:Bank:Checking2                10 USD
-            Equity:OpeningBalances
+            Equity:Opening-Balances
 
           2013-05-04 *
             Assets:Bank:Savings                 -50 USD
-            Equity:OpeningBalances
+            Equity:Opening-Balances
 
           2013-05-05 balance Assets:Bank:Checking1  100 USD
           2013-05-05 balance Assets:Bank:Checking2   10 USD
@@ -134,15 +134,15 @@ class TestBalance(unittest.TestCase):
           2013-05-01 open Assets:Bank
           2013-05-01 open Assets:Bank:Checking1
           2013-05-01 open Assets:Bank:Checking2
-          2013-05-01 open Equity:OpeningBalances
+          2013-05-01 open Equity:Opening-Balances
 
           2013-05-02 *
             Assets:Bank:Checking1                100 USD
-            Equity:OpeningBalances
+            Equity:Opening-Balances
 
           2013-05-03 *
             Assets:Bank:Checking2                10 USD
-            Equity:OpeningBalances
+            Equity:Opening-Balances
 
           2013-05-05 balance Assets:Bank             110 USD
         """
@@ -158,19 +158,19 @@ class TestBalance(unittest.TestCase):
           2013-05-01 open Assets:Bank
           2013-05-01 open Assets:Bank:Checking1
           2013-05-01 open Assets:Bank:Checking2
-          2013-05-01 open Equity:OpeningBalances
+          2013-05-01 open Equity:Opening-Balances
 
           2013-05-02 *
             Assets:Bank:Checking1                100 USD
-            Equity:OpeningBalances
+            Equity:Opening-Balances
 
           2013-05-03 *
             Assets:Bank:Checking2                10 USD
-            Equity:OpeningBalances
+            Equity:Opening-Balances
 
           2013-05-04 * "Posting on a parent account"
             Assets:Bank                          15 USD
-            Equity:OpeningBalances
+            Equity:Opening-Balances
 
           2013-05-05 balance Assets:Bank             125 USD
         """
@@ -184,11 +184,11 @@ class TestBalance(unittest.TestCase):
     def test_with_lots(self, entries, errors, __):
         """
           2013-05-01 open Assets:Bank:Investing
-          2013-05-01 open Equity:OpeningBalances
+          2013-05-01 open Equity:Opening-Balances
 
           2013-05-02 *
             Assets:Bank:Investing                1 GOOG {501 USD}
-            Equity:OpeningBalances
+            Equity:Opening-Balances
 
           2013-05-03 balance Assets:Bank:Investing    1 GOOG
         """
@@ -202,11 +202,11 @@ class TestBalance(unittest.TestCase):
     def test_negative_lots(self, entries, errors, __):
         """
           2013-05-01 open Assets:Bank:Investing
-          2013-05-01 open Equity:OpeningBalances
+          2013-05-01 open Equity:Opening-Balances
 
           2013-05-02 *
             Assets:Bank:Investing                -1 GOOG {501 USD}
-            Equity:OpeningBalances
+            Equity:Opening-Balances
         """
         self.assertEqual([validation.ValidationError], list(map(type, errors)))
 

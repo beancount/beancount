@@ -43,15 +43,15 @@ class TestTables(unittest.TestCase):
         2014-01-01 open Assets:US:Checking
         2014-01-01 open Assets:CA:Checking
         2014-01-01 open Assets:Inactive
-        2014-01-01 open Equity:OpeningBalances
+        2014-01-01 open Equity:Opening-Balances
 
         2014-07-04 *
           Assets:US:Checking      3000 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-07-04 *
           Assets:CA:Checking      3000 CAD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         """
         self.real_root = realization.realize(entries)

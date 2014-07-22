@@ -11,7 +11,7 @@ class TestAccount(unittest.TestCase):
 
     def test_is_valid(self):
         self.assertTrue(account.is_valid("Assets:US:RBS:Checking"))
-        self.assertTrue(account.is_valid("Equity:OpeningBalances"))
+        self.assertTrue(account.is_valid("Equity:Opening-Balances"))
         self.assertTrue(account.is_valid("Income:US:ETrade:Dividends-USD"))
         self.assertTrue(account.is_valid("Assets:US:RBS"))
         self.assertTrue(account.is_valid("Assets:US"))

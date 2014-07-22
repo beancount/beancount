@@ -156,20 +156,20 @@ class TestValidateActiveAccounts(cmptest.TestCase):
     @parser.parsedoc
     def test_validate_active_accounts(self, entries, _, options_map):
         """
-        2014-01-01 open  Equity:OpeningBalances
+        2014-01-01 open  Equity:Opening-Balances
 
         2014-02-01 * "Invalid before"
           Assets:Temporary    1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-02-02 note  Assets:Temporary "Invalid note entry"
-        2014-02-03 pad   Assets:Temporary Equity:OpeningBalances
+        2014-02-03 pad   Assets:Temporary Equity:Opening-Balances
 
         2014-03-01 open  Assets:Temporary
 
         2014-04-01 * "Valid"
           Assets:Temporary    1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-05-01 * "Unknown account"
           Assets:Temporary    1 USD
@@ -179,7 +179,7 @@ class TestValidateActiveAccounts(cmptest.TestCase):
 
         2014-10-01 * "Invalid after"
           Assets:Temporary    1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         ;; These should be allowed after close.
         2014-10-02 note  Assets:Temporary "Invalid note entry again"
@@ -192,10 +192,10 @@ class TestValidateActiveAccounts(cmptest.TestCase):
 
         2014-02-01 * "Invalid before"
           Assets:Temporary    1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-02-02 note  Assets:Temporary "Invalid note entry"
-        2014-02-03 pad   Assets:Temporary Equity:OpeningBalances
+        2014-02-03 pad   Assets:Temporary Equity:Opening-Balances
 
         2014-05-01 * "Unknown account"
           Assets:Temporary    1 USD
@@ -203,7 +203,7 @@ class TestValidateActiveAccounts(cmptest.TestCase):
 
         2014-10-01 * "Invalid after"
           Assets:Temporary    1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         """, [error.entry for error in errors])
 
@@ -221,12 +221,12 @@ class TestValidateUnusedAccounts(cmptest.TestCase):
         2014-01-01 open  Assets:Account1 ; Used, kept open
         2014-01-01 open  Assets:Account2 ; Used and closed
         2014-01-01 open  Assets:Account3 ; Unused
-        2014-01-01 open  Equity:OpeningBalances
+        2014-01-01 open  Equity:Opening-Balances
 
         2014-02-01 *
           Assets:Account1            1 USD
           Assets:Account2            1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-06-01 close Assets:Account2
         """
@@ -246,32 +246,32 @@ class TestValidateCurrencyConstraints(cmptest.TestCase):
 
         2014-01-02 * "Entries without cost"
           Assets:Account1            1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-01-03 * "Entries without cost" #expected
           Assets:Account1            1 CAD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-01-04 * "Entries with cost"
           Assets:Account2            1 GOOG {500 USD}
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-01-05 * "Entries with cost" #expected
           Assets:Account2            1 AAPL {500 USD}
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-01-02 * "Multiple currencies"
           Assets:Account3            1 USD
           Assets:Account3            1 GOOG {500 USD}
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-01-05 * "Multiple currencies" #expected
           Assets:Account3            1 CAD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-01-05 * "Multiple currencies" #expected
           Assets:Account3            1 AAPL {500 USD}
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         """
         errors = validation.validate_currency_constraints(entries, options_map)
@@ -294,32 +294,32 @@ class TestValidate(cmptest.TestCase):
 
         2014-01-02 * "Entries without cost"
           Assets:Account1            1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-01-03 * "Entries without cost" #expected
           Assets:Account1            1 CAD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-01-04 * "Entries with cost"
           Assets:Account2            1 GOOG {500 USD}
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-01-05 * "Entries with cost" #expected
           Assets:Account2            1 AAPL {500 USD}
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-01-02 * "Multiple currencies"
           Assets:Account3            1 USD
           Assets:Account3            1 GOOG {500 USD}
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-01-05 * "Multiple currencies" #expected
           Assets:Account3            1 CAD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-01-05 * "Multiple currencies" #expected
           Assets:Account3            1 AAPL {500 USD}
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         """
         errors = validation.validate_currency_constraints(entries, options_map)

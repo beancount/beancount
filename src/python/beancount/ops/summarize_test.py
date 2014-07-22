@@ -61,21 +61,21 @@ class TestClamp(cmptest.TestCase):
                                                  account_types,
                                                  'NOTHING',
                                                  'Equity:Earnings',
-                                                 'Equity:OpeningBalances',
+                                                 'Equity:Opening-Balances',
                                                  'Equity:Conversions')
         self.assertEqualEntries("""
 
         2012-05-31 S "Opening balance for 'Assets:CA:Checking' (Summarization)"
           Assets:CA:Checking              6000.00 CAD
-          Equity:OpeningBalances         -6000.00 CAD
+          Equity:Opening-Balances         -6000.00 CAD
 
         2012-05-31 S "Opening balance for 'Assets:US:Checking' (Summarization)"
           Assets:US:Checking            -18600.00 USD
-          Equity:OpeningBalances         18600.00 USD
+          Equity:Opening-Balances         18600.00 USD
 
         2012-05-31 S "Opening balance for 'Equity:Earnings' (Summarization)"
           Equity:Earnings                13600.00 USD
-          Equity:OpeningBalances        -13600.00 USD
+          Equity:Opening-Balances        -13600.00 USD
 
         ;; 2012-06-01  BEGIN --------------------------------
 
@@ -588,27 +588,27 @@ class TestTruncate(cmptest.TestCase):
         """
         2014-03-10 * "A"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-11 * "B"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-12 * "C"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-13 * "D1"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-13 * "D2"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-14 * "E"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
         """
         self.entries = entries
 
@@ -622,15 +622,15 @@ class TestTruncate(cmptest.TestCase):
 
         2014-03-10 * "A"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-11 * "B"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-12 * "C"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         """, truncated_entries)
 
@@ -640,23 +640,23 @@ class TestTruncate(cmptest.TestCase):
 
         2014-03-10 * "A"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-11 * "B"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-12 * "C"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-13 * "D1"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-13 * "D2"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         """, truncated_entries)
 
@@ -667,7 +667,7 @@ class TestTruncate(cmptest.TestCase):
 
 class TestEntriesFromBalance(cmptest.TestCase):
 
-    SOURCE_ACCOUNT = 'Equity:OpeningBalances'
+    SOURCE_ACCOUNT = 'Equity:Opening-Balances'
     SOURCE = data.Source('<test>', 0)
 
     def test_create_entries_from_balances__empty(self):
@@ -691,11 +691,11 @@ class TestEntriesFromBalance(cmptest.TestCase):
         self.assertEqualEntries("""
           2014-01-01 ! "Narration for Assets:US:Bank:Checking at 2014-01-01"
             Assets:US:Bank:Checking                                               1823.23 USD
-            Equity:OpeningBalances                                               -1823.23 USD
+            Equity:Opening-Balances                                               -1823.23 USD
 
           2014-01-01 ! "Narration for Assets:US:Investment at 2014-01-01"
             Assets:US:Investment                                                   10.00 GOOG     {500.00 USD}
-            Equity:OpeningBalances                                               -5000.00 USD
+            Equity:Opening-Balances                                               -5000.00 USD
         """, entries)
 
     def test_create_entries_from_balances__reverse(self):
@@ -706,11 +706,11 @@ class TestEntriesFromBalance(cmptest.TestCase):
         self.assertEqualEntries("""
           2014-01-01 * "Narration for Assets:US:Bank:Checking at 2014-01-01"
             Assets:US:Bank:Checking                                              -1823.23 USD
-            Equity:OpeningBalances                                                1823.23 USD
+            Equity:Opening-Balances                                                1823.23 USD
 
           2014-01-01 * "Narration for Assets:US:Investment at 2014-01-01"
             Assets:US:Investment                                                  -10.00 GOOG     {500.00 USD}
-            Equity:OpeningBalances                                                5000.00 USD
+            Equity:Opening-Balances                                                5000.00 USD
         """, entries)
 
 
@@ -721,12 +721,12 @@ class TestBalanceByAccount(cmptest.TestCase):
         """
         2014-02-01 *
           Assets:AccountA   10 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-01 *
           Assets:AccountA   1 USD
           Assets:AccountB  12 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
         """
         self.entries = entries
 
@@ -736,7 +736,7 @@ class TestBalanceByAccount(cmptest.TestCase):
         self.assertEqual(len(self.entries), index)
         self.assertEqual({
             'Assets:AccountA': Inventory.from_string('11 USD'),
-            'Equity:OpeningBalances': Inventory.from_string('-23 USD'),
+            'Equity:Opening-Balances': Inventory.from_string('-23 USD'),
             'Assets:AccountB': Inventory.from_string('12 USD')
             }, balances)
 
@@ -754,7 +754,7 @@ class TestBalanceByAccount(cmptest.TestCase):
         self.assertEqual(1, index)
         self.assertEqual({
             'Assets:AccountA': Inventory.from_string('10 USD'),
-            'Equity:OpeningBalances': Inventory.from_string('-10 USD'),
+            'Equity:Opening-Balances': Inventory.from_string('-10 USD'),
             }, balances)
 
 

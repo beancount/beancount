@@ -17,9 +17,6 @@ beancount: TODO
   - Make sure bean-check returns a correct error code (1 for errors, 0 on
     success) and add unit tests for it.
 
-  - Rename OpeningBalances to be Opening-Balances everywhere before the
-    release, even in the tests, just for consistency's sake.
-
 
 ** Minimal Reports to Console
 

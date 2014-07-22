@@ -185,9 +185,9 @@ class TestRealization(unittest.TestCase):
         2012-01-01 open Expenses:Movie
         2012-01-01 open Assets:Cash
         2012-01-01 open Liabilities:CreditCard
-        2012-01-01 open Equity:OpeningBalances
+        2012-01-01 open Equity:Opening-Balances
 
-        2012-01-15 pad Liabilities:CreditCard Equity:OpeningBalances
+        2012-01-15 pad Liabilities:CreditCard Equity:Opening-Balances
 
         2012-03-01 * "Food"
           Expenses:Restaurant     100 CAD
@@ -237,7 +237,7 @@ class TestRealization(unittest.TestCase):
                          list(map(type, postings_map['Liabilities:CreditCard'])))
 
         self.assertEqual([data.Open, data.Pad, data.Posting],
-                         list(map(type, postings_map['Equity:OpeningBalances'])))
+                         list(map(type, postings_map['Equity:Opening-Balances'])))
 
     @parsedoc
     def test_compute_postings_balance(self, entries, _, __):
@@ -378,9 +378,9 @@ class TestRealization(unittest.TestCase):
         2012-01-01 open Expenses:Movie
         2012-01-01 open Assets:Cash
         2012-01-01 open Liabilities:CreditCard
-        2012-01-01 open Equity:OpeningBalances
+        2012-01-01 open Equity:Opening-Balances
 
-        2012-01-15 pad Liabilities:CreditCard Equity:OpeningBalances
+        2012-01-15 pad Liabilities:CreditCard Equity:Opening-Balances
 
         2012-03-01 * "Food"
           Expenses:Restaurant     100 CAD
@@ -501,9 +501,9 @@ class TestRealOther(test_utils.TestCase):
         2012-01-01 open Expenses:Restaurant
         2012-01-01 open Expenses:Movie
         2012-01-01 open Liabilities:CreditCard
-        2012-01-01 open Equity:OpeningBalances
+        2012-01-01 open Equity:Opening-Balances
 
-        2012-01-15 pad Assets:Bank:Checking Equity:OpeningBalances
+        2012-01-15 pad Assets:Bank:Checking Equity:Opening-Balances
 
         2012-03-01 * "Food"
           Expenses:Restaurant     11.11 CAD
@@ -535,11 +535,11 @@ class TestRealOther(test_utils.TestCase):
             (data.Open, 'Expenses:Restaurant', None),
             (data.Open, 'Expenses:Movie', None),
             (data.Open, 'Liabilities:CreditCard', None),
-            (data.Open, 'Equity:OpeningBalances', None),
+            (data.Open, 'Equity:Opening-Balances', None),
             (data.Pad, 'Assets:Bank:Checking', None),
             (data.Posting, 'Assets:Bank:Checking', '621.66'),
             (data.Pad, 'Assets:Bank:Checking', None),
-            (data.Posting, 'Equity:OpeningBalances', '-621.66'),
+            (data.Posting, 'Equity:Opening-Balances', '-621.66'),
             (data.Posting, 'Assets:Bank:Checking', '-11.11'),
             (data.Posting, 'Expenses:Restaurant', '11.11'),
             (data.Posting, 'Assets:Bank:Checking', '-22.22'),
@@ -599,7 +599,7 @@ class TestRealOther(test_utils.TestCase):
         2012-01-01 open Assets:Bank:Checking
         2012-01-01 open Expenses:Restaurant
 
-        2012-01-15 pad Assets:Bank:Checking Equity:OpeningBalances
+        2012-01-15 pad Assets:Bank:Checking Equity:Opening-Balances
 
         2012-03-01 * "With a single entry"
           Expenses:Restaurant     11.11 CAD
@@ -670,38 +670,38 @@ class TestRealOther(test_utils.TestCase):
         2012-01-01 open Expenses:Restaurant
         2012-01-01 open Expenses:Movie
         2012-01-01 open Liabilities:CreditCard
-        2012-01-01 open Equity:OpeningBalances
+        2012-01-01 open Equity:Opening-Balances
         """
         real_account = realization.realize(entries)
         oss = io.StringIO()
         lines = realization.dump(real_account)
         self.assertEqual([
-            ('|-- Assets             ',
-             '|   |                  '),
-            ('|   |-- Bank1          ',
-             '|   |   |              '),
-            ('|   |   |-- Checking   ',
-             '|   |   |              '),
-            ('|   |   `-- Savings    ',
-             '|   |                  '),
-            ('|   `-- Bank2          ',
-             '|       |              '),
-            ('|       `-- Checking   ',
-             '|                      '),
-            ('|-- Equity             ',
-             '|   |                  '),
-            ('|   `-- OpeningBalances',
-             '|                      '),
-            ('|-- Expenses           ',
-             '|   |                  '),
-            ('|   |-- Movie          ',
-             '|   |                  '),
-            ('|   `-- Restaurant     ',
-             '|                      '),
-            ('`-- Liabilities        ',
-             '    |                  '),
-            ('    `-- CreditCard     ',
-             '                       '),
+            ('|-- Assets              ',
+             '|   |                   '),
+            ('|   |-- Bank1           ',
+             '|   |   |               '),
+            ('|   |   |-- Checking    ',
+             '|   |   |               '),
+            ('|   |   `-- Savings     ',
+             '|   |                   '),
+            ('|   `-- Bank2           ',
+             '|       |               '),
+            ('|       `-- Checking    ',
+             '|                       '),
+            ('|-- Equity              ',
+             '|   |                   '),
+            ('|   `-- Opening-Balances',
+             '|                       '),
+            ('|-- Expenses            ',
+             '|   |                   '),
+            ('|   |-- Movie           ',
+             '|   |                   '),
+            ('|   `-- Restaurant      ',
+             '|                       '),
+            ('`-- Liabilities         ',
+             '    |                   '),
+            ('    `-- CreditCard      ',
+             '                        '),
             ], [(first_line, cont_line)
                 for first_line, cont_line, _ in lines])
 
