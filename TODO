@@ -75,6 +75,9 @@ beancount: TODO
     ensure that the mutable portion of the entries hasn't been modified by the
     user-provided validation functions.
 
+  - SHould bean-query not be called bean-count or bean-report? Choose a final
+    name and live with it. I like 'bean-count' best.
+
 
 ** Fix Minor Nits & Bugs
 
@@ -157,12 +160,6 @@ beancount: TODO
     just make ignorable fields start with _, e.g. posting._entry, balance._diff,
     entry._fileloc, etc. Call those non-essential fields.
 
-  - Add a test for name_assets and others, at the beginning or output and then
-    not, test that it works, and fails if not at the top of the file. When it
-    fails, check the error message and improve it, make it clear why an account
-    name could not be parsed.
-
-
 
 ** Parser-Related Minor Bugs
 
@@ -217,6 +214,7 @@ beancount: TODO
     Does this work?
 
 
+
 ** File Input as Environment Variable
 
   - It might be really nice if all the commands would accept an environment
@@ -225,7 +223,8 @@ beancount: TODO
     It *IS* true that in almost all cases I'm using the one, same input file
     for all the programs, that is, the concept of a "default" is quite real.
 
-    This should probably go in before the first release.
+    This should probably go in before the first release because it has highly
+    visible impact on all the bean-query commands.
 
 
 ** Reconcile Web Interface vs. Upcoming Reports Stage
@@ -321,6 +320,15 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+
+  - When an error occurs while parsing a directive/transaction, add the ability
+    to let the parser skip until the next directive and ignore the parsed
+    transaction because of the error. Maybe this should be an exception
+    mechanism, or just storing a flag that gets reset when the directive is
+    completed. Not sure. This would be a more elegant way to deal with some
+    errors.
 
 
 
