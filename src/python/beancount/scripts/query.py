@@ -10,7 +10,6 @@ import logging
 
 from beancount import load
 from beancount.ops import validation
-from beancount.parser import printer
 from beancount.reports import rselect
 from beancount.reports import table
 from beancount.utils import file_utils

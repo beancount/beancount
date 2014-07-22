@@ -30,18 +30,6 @@ beancount: TODO
     comes later on.
 
 
-** Relax Constraints
-
-  - You can implement the sign check for positions held-at-cost only when there
-    are other of that same commodity held at cost in the inventory in the
-    opposite sign. This should allow holding short positions yet still retain
-    the benefit of the check for data entry errors.
-
-    It also removes what for most people will appear as a limitation from the
-    docs (although with experience you would realize that it is not much of a
-    limitation at atll).
-
-
 ** Minimum Cleanup of Reports Before Release
 
   - Isolate reports, at least from a functional POV, before the big revamp, in
@@ -333,6 +321,18 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+
+  - You can implement the sign check for positions held-at-cost only when there
+    are other of that same commodity held at cost in the inventory in the
+    opposite sign. This should allow holding short positions yet still retain
+    the benefit of the check for data entry errors.
+
+    It also removes what for most people will appear as a limitation from the
+    docs (although with experience you would realize that it is not much of a
+    limitation at atll).
+
 
 
 

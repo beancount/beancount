@@ -6,7 +6,7 @@ import copy
 from datetime import date
 import types
 
-from beancount.core.amount import Amount, Decimal, D
+from beancount.core.amount import Amount, D
 from beancount.core.position import Position, Lot
 from beancount.core import position
 from beancount.core.inventory import Inventory

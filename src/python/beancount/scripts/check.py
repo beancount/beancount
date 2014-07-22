@@ -8,7 +8,6 @@ import sys
 
 from beancount import load
 from beancount.utils import misc_utils
-from beancount.parser import printer
 from beancount.ops import validation
 
 

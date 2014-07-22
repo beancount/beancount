@@ -71,14 +71,17 @@ class TestMiscUtils(unittest.TestCase):
         Something = namedtuple('Something', 'a b c d e')
         SomethingElse = namedtuple('SomethingElse', 'f g')
 
-        something = Something(1, 2, '3', SomethingElse(10, '11'), [SomethingElse(100, '101')])
+        something = Something(1, 2, '3', SomethingElse(10, '11'),
+                              [SomethingElse(100, '101')])
         replacements = {'3': '3000', '101': '1010', '11': '1100'}
         something_else = misc_utils.replace_namedtuple_values(
             something,
             lambda x: isinstance(x, str),
             lambda x: replacements.get(x, x))
 
-        expected = Something(a=1, b=2, c='3000', d=SomethingElse(f=10, g='1100'), e=[SomethingElse(f=100, g='1010')])
+        expected = Something(a=1, b=2, c='3000',
+                             d=SomethingElse(f=10, g='1100'),
+                             e=[SomethingElse(f=100, g='1010')])
         self.assertEqual(expected, something_else)
 
     def test_compute_unique_clean_ids(self):
