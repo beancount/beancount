@@ -5,6 +5,7 @@ import unittest
 import re
 import time
 import textwrap
+import sys
 from collections import namedtuple
 
 from beancount.utils import misc_utils
@@ -20,7 +21,7 @@ class TestMiscUtils(unittest.TestCase):
         self.assertEqual("", stdout.getvalue())
 
         with test_utils.capture() as stdout:
-            with misc_utils.log_time('test-op', print):
+            with misc_utils.log_time('test-op', sys.stdout.write):
                 time.sleep(0.1)
         self.assertTrue(re.search("Operation", stdout.getvalue()))
         self.assertTrue(re.search("Time", stdout.getvalue()))

@@ -172,6 +172,10 @@ status test-status:
 sfood-checker:
 	sfood-checker bin src/python
 
+# Check dependency constraints.
+deps: build/beancount.deps
+	@./etc/dependency-constraints.py $<
+
 # Run the linter on all source code.
 #LINT_PASS=line-too-long,bad-whitespace,bad-continuation,bad-indentation
 LINT_PASS=line-too-long,bad-whitespace,bad-indentation,unused-import

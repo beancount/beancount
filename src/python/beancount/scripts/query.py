@@ -8,7 +8,7 @@ import textwrap
 import io
 import logging
 
-from beancount import load
+from beancount import loader
 from beancount.ops import validation
 from beancount.reports import rselect
 from beancount.reports import table
@@ -56,7 +56,7 @@ class ListReportsAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         help_string = get_list_report_string(values)
         if values and help_string is None:
-            print("Error: Invalid report name '{}'".format(values), file=sys.stderr)
+            sys.stderr.write("Error: Invalid report name '{}'\n".format(values))
             sys.exit(1)
         else:
             print(help_string)
@@ -116,9 +116,9 @@ def main():
 
     # Parse the input file.
     with misc_utils.log_time('beancount.loader (total)', logging.info):
-        entries, errors, options_map = load(opts.filename,
-                                            log_timings=logging.info,
-                                            log_errors=sys.stderr)
+        entries, errors, options_map = loader.load(opts.filename,
+                                                   log_timings=logging.info,
+                                                   log_errors=sys.stderr)
 
     # Create holdings list.
     result = report_function(entries, options_map)

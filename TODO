@@ -271,9 +271,6 @@ beancount: TODO
 
   - Add all docstrings with args Google-style.
 
-  - Make a script to enforce dependency order as part of linting. Feed it off
-    of beancount.deps.
-
   - Add __author__ to all files?
 
   - Make sure all exception messages do NOT end with a period, nor do any of the

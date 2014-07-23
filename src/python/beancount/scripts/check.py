@@ -6,7 +6,7 @@ import argparse
 import logging
 import sys
 
-from beancount import load
+from beancount import loader
 from beancount.utils import misc_utils
 from beancount.ops import validation
 
@@ -32,9 +32,9 @@ def main():
     with misc_utils.log_time('beancount.loader (total)', logging.info):
         # Load up the file, print errors, checking and validation are invoked
         # automatically.
-        entries, errors, _ = load(opts.filename,
-                                  log_timings=logging.info,
-                                  log_errors=sys.stderr)
+        entries, errors, _ = loader.load(opts.filename,
+                                         log_timings=logging.info,
+                                         log_errors=sys.stderr)
 
     # Exit with an error code if there were any errors, so this can be used in a
     # shell conditional.

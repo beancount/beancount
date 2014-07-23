@@ -262,8 +262,7 @@ def report_accounts(entries, options_map):
                                          key=lambda entry: sortkey_fun(entry[0])):
         open_date = open.date if open else ''
         close_date = close.date if close else ''
-        print('{:{len}}  {}  {}'.format(account, open_date, close_date, len=maxlen),
-              file=oss)
+        oss.write('{:{len}}  {}  {}\n'.format(account, open_date, close_date, len=maxlen))
     return oss.getvalue()
 
 

@@ -1,3 +1,4 @@
+import logging
 import unittest
 import tempfile
 
@@ -47,7 +48,7 @@ class TestLoader(unittest.TestCase):
                 self.assertTrue(isinstance(errors, list))
                 self.assertTrue(isinstance(options_map, dict))
 
-                entries, errors, options_map = loader.load(f.name, log_timings=print)
+                entries, errors, options_map = loader.load(f.name, log_timings=logging.info)
                 self.assertTrue(isinstance(entries, list))
                 self.assertTrue(isinstance(errors, list))
                 self.assertTrue(isinstance(options_map, dict))
@@ -60,7 +61,7 @@ class TestLoader(unittest.TestCase):
             self.assertTrue(isinstance(options_map, dict))
 
             entries, errors, options_map = loader.load_string(TEST_INPUT,
-                                                              log_timings=print)
+                                                              log_timings=logging.info)
             self.assertTrue(isinstance(entries, list))
             self.assertTrue(isinstance(errors, list))
             self.assertTrue(isinstance(options_map, dict))
