@@ -3,11 +3,6 @@ beancount: TODO
 * Requirements for Shipping 1.0
 ** Complete 100% Coverage for Unit Tests
 
-  - Complete the diagram in the Motivation document
-
-  - Make helper functions in summarize, for clamp() and close() which accept
-    options_map and automatically derive everything they need from entries.
-
   - Validation: A Balance failure currently triggers two errors, one from
     complete and one from validation routine. We need to perform all balance
     checks _after_ the plugins run to make sure that they produce only
