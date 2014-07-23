@@ -126,7 +126,6 @@ int strtonl(const char* buf, size_t nchars);
  /* Keywords. */
 txn		{ return TXN; }
 balance		{ return BALANCE; }
-check		{ return BALANCE; } /* To be removed eventually */
 open		{ return OPEN; }
 close		{ return CLOSE; }
 pad		{ return PAD; }

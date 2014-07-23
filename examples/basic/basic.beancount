@@ -152,7 +152,7 @@ option "operating_currency" "CAD"
 ;; This directive tells the software to assert that at the given
 ;; date, in the given account, a specific amount of the given
 ;; commodity was present.
-2008-01-01 check Assets:BestBank:Checking  1412.24 USD
+2008-01-01 balance Assets:BestBank:Checking  1412.24 USD
 
 
 ;; A check deposit, e.g. depositing a government check.
@@ -259,7 +259,7 @@ option "operating_currency" "CAD"
 ;; At the end of the month, I take my statements, look at the
 ;; bottom and enter the amount that the bank says was there at
 ;; that date. It should corroborate with the data in my Ledger.
-2008-02-01 check Assets:BestBank:Checking   661.49 USD
+2008-02-01 balance Assets:BestBank:Checking   661.49 USD
 
 
 
@@ -271,7 +271,7 @@ option "operating_currency" "CAD"
 1970-01-01 open Assets:BestBank:Savings                                  USD
 2007-12-31 pad  Assets:BestBank:Savings   Equity:Opening-Balances
 
-2008-01-01 check Assets:BestBank:Savings    12000 USD
+2008-01-01 balance Assets:BestBank:Savings    12000 USD
 
 ;; Interest paid on balance in savings account.
 2008-01-03 * "DEPOSIT INTEREST"
@@ -295,7 +295,7 @@ option "operating_currency" "CAD"
 
 
 ;; A monthly check using the amount on the stament.
-2008-03-01 check Assets:BestBank:Savings    2340.19 USD
+2008-03-01 balance Assets:BestBank:Savings    2340.19 USD
 
 
 
@@ -335,7 +335,7 @@ option "operating_currency" "CAD"
 * Liabilities:Credit-Card:VISA
 
 2007-12-31 pad Liabilities:Credit-Card:VISA  Equity:Opening-Balances
-2008-01-01 check Liabilities:Credit-Card:VISA  -791.34 USD
+2008-01-01 balance Liabilities:Credit-Card:VISA  -791.34 USD
 
 ;; Paying back my credit card.
 2008-01-22 * "Online Banking payment - 5051 - VISA"
@@ -372,7 +372,7 @@ option "operating_currency" "CAD"
 
 2007-12-31 pad Assets:UTrade:Account  Equity:Opening-Balances
 
-2008-01-01 check  Assets:UTrade:Account  31273.02 USD
+2008-01-01 balance  Assets:UTrade:Account  31273.02 USD
 
 ;; Some example trades.
 ;;
@@ -435,9 +435,9 @@ option "operating_currency" "CAD"
 
 ;; Run checks against statement summary of positions that gets
 ;; mailed periodically.
-2008-03-01 check  Assets:UTrade:Account          40138.45 USD
-2008-03-01 check  Assets:UTrade:Account:AAPL     0 AAPL
-2008-03-01 check  Assets:UTrade:Account:EWJ      100 EWJ
+2008-03-01 balance  Assets:UTrade:Account          40138.45 USD
+2008-03-01 balance  Assets:UTrade:Account:AAPL     0 AAPL
+2008-03-01 balance  Assets:UTrade:Account:EWJ      100 EWJ
 
 
 
@@ -473,7 +473,7 @@ option "operating_currency" "CAD"
 
 2007-12-31 pad Liabilities:Condo-Management      Equity:Opening-Balances
 
-2008-01-01 check Liabilities:Condo-Management      -41.11 USD
+2008-01-01 balance Liabilities:Condo-Management      -41.11 USD
 
 2008-01-01 * "Propri-Manage" | ""
   Expenses:Home:Monthly:Condo-Fees        212.61 USD
@@ -495,7 +495,7 @@ option "operating_currency" "CAD"
   Expenses:Home:Monthly:Condo-Fees     61.25 USD
   Liabilities:Condo-Management
 
-2008-04-01 check Liabilities:Condo-Management     59.81 USD
+2008-04-01 balance Liabilities:Condo-Management     59.81 USD
 
 
 
@@ -512,8 +512,8 @@ option "operating_currency" "CAD"
 
 
 ;; Amount in wallet at a given time.
-2007-12-31 check  Assets:Cash                          200 CAD
-2007-12-31 check  Assets:Cash                          300 USD
+2007-12-31 balance  Assets:Cash                          200 CAD
+2007-12-31 balance  Assets:Cash                          300 USD
 
 ;; Because I don't track individual cash expenses very tightly,
 ;; I still need to distribute the cash that disappeared into
@@ -635,8 +635,8 @@ poptag #ski-trip
 
 
 
-2008-03-01 check  Assets:Cash                          200.00 CAD
-2008-03-01 check  Assets:Cash                          30.96 USD
+2008-03-01 balance  Assets:Cash                          200.00 CAD
+2008-03-01 balance  Assets:Cash                          30.96 USD
 
 2008-03-15 price USD  1.0934 CAD
 

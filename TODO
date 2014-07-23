@@ -15,21 +15,6 @@ beancount: TODO
     raising two errors.
 
 
-** Minimal Reports to Console
-
-  - Differentiate between the concept of "journal" and "register" report: a
-    "journal" should include all the postings and no running balance. A
-    "register" should by default only render just one account's postings and
-    render a running balance column. This is the distinction between the two,
-    and making this distinction will allow us to produce two useful but
-    distinct reports for the console output, even if these are somewhat similar
-    for the web output.
-
-    This should probably be done before the release, so that at least the first
-    version has some decent console reports, even if the revamp of reports
-    comes later on.
-
-
 ** Minimum Cleanup of Reports Before Release
 
   - Isolate reports, at least from a functional POV, before the big revamp, in
@@ -213,6 +198,18 @@ beancount: TODO
 
     Does this work?
 
+  - This:
+
+      2008-03-01 check Assets:BestBank:Savings    2340.19 USD
+
+    Fails the lexer with errors that look like this:
+
+      /home/blais/p/beancount/examples/basic/basic.beancount:375:     syntax error, unexpected ERROR
+      /home/blais/p/beancount/examples/basic/basic.beancount:375:     Lexer error; erroneous token: h
+      /home/blais/p/beancount/examples/basic/basic.beancount:375:     Lexer error; erroneous token: e
+      /home/blais/p/beancount/examples/basic/basic.beancount:375:     Lexer error; erroneous token: c
+      /home/blais/p/beancount/examples/basic/basic.beancount:375:     Lexer error; erroneous token: k
+      /home/blais/p/beancount/examples/basic/basic.beancount:438:     Lexer error; erroneous token: c
 
 
 ** File Input as Environment Variable
@@ -298,17 +295,34 @@ beancount: TODO
 
 ** Renames and Such
 
-  - Remove support for legacy: "check" (vs. "balance"), PIPE, etc. Not needed.
+  - Remove support for legacy, PIPE, Not needed.
 
-  - Rename "event" to its final name: "register". We don't have to care about
-    the possible confusion with the Ledger report... "register" is a much
-    better name for our concept of "event." "Event" is confusing.
 
   - Implement Amount.from_string() to be consistent with position and inventory?
 
   - For .source, instead of '<...>' for the source, we should use a scheme:...,
     like file://..., and plugin:beancount.... . This makes a lot more sense. Do
     this now before the release.
+
+** Unsure
+
+  - Rename "event" to its final name: "register". We don't have to care about
+    the possible confusion with the Ledger report... "register" is a much
+    better name for our concept of "event." "Event" is confusing.
+
+  - Differentiate between the concept of "journal" and "register" report: a
+    "journal" should include all the postings and no running balance. A
+    "register" should by default only render just one account's postings and
+    render a running balance column. This is the distinction between the two,
+    and making this distinction will allow us to produce two useful but
+    distinct reports for the console output, even if these are somewhat similar
+    for the web output.
+
+    This should probably be done before the release, so that at least the first
+    version has some decent console reports, even if the revamp of reports
+    comes later on.
+
+
 
 
 * Current / Misc / To Be Classified
