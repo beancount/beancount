@@ -1292,6 +1292,12 @@ beancount: TODO
     correct.
 
 
+  - (plugin/validation) Consider a strict validation plugin that kicks off
+    errors when amounts are posted to accounts which have children. Basically,
+    make it possible to disallow postings on accounts with children.
+
+
+
 
 ** Prepare for Plugins Revamp
 
