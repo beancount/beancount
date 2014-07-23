@@ -10,11 +10,23 @@ import contextlib
 import functools
 import shutil
 import itertools
+from os import path
 
 
 # A port allocation global. All the tests should use this global in order to
 # avoid port collissions during testing.
 get_test_port = itertools.count(9470).__next__
+
+
+def find_repository_root(filename):
+    """Return the path to the repository root.
+
+    Returns:
+      A string, the root directory.
+    """
+    while not path.exists(path.join(filename, 'README')):
+        filename = path.dirname(filename)
+    return filename
 
 
 def run_with_args(function, args):

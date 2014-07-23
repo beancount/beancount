@@ -116,7 +116,7 @@ def find_documents(directory, input_filename, accounts_only=None):
             # If a restricting set of accounts was specified, skip document
             # directives found in accounts with no corresponding account name.
             if accounts_only and account_name not in accounts_only:
-                # FIXME: We need ot perhaps create the missing accounts here
+                # FIXME: We need to perhaps create the missing accounts here
                 # instead of skipping the documents. See TODO file. {fa96aa05361d}
                 continue
 

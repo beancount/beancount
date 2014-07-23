@@ -123,8 +123,11 @@ debug:
 
 
 # Run the unittests.
-test tests unittest unittests:
+test tests unittests:
 	nosetests -v $(SRC)
+
+tests-quiet:
+	nosetests $(SRC)
 
 
 # Run the parser and measure its performance.
@@ -158,23 +161,19 @@ import:
 sandbox:
 	bean-sandbox $(INPUT)
 
-# Report on the sorry state of test coverage, for 1.0 release.
-# sources and imports are going to move to ledgerhub.
-status test-status:
-	@echo "Missing tests:"
-	@./etc/find-missing-tests.py $(SRC)
-	@echo ""
-	@echo "Remaining FIXME:"
-	@egrep -srn '\b(FIXME|TODO\()' $(SRC)
+missing-tests:
+	./etc/find-missing-tests.py $(SRC)
 
+fixmes:
+	egrep -srn '\b(FIXME|TODO\()' $(SRC)
 
 # Check for unused imports.
 sfood-checker:
 	sfood-checker bin src/python
 
 # Check dependency constraints.
-deps: build/beancount.deps
-	@./etc/dependency-constraints.py $<
+dep-constraints: build/beancount.deps
+	./etc/dependency-constraints.py $<
 
 # Run the linter on all source code.
 #LINT_PASS=line-too-long,bad-whitespace,bad-continuation,bad-indentation
@@ -192,3 +191,7 @@ pylint-all:
 
 # Run all currently configured linter checks.
 lint: pylint-pass
+
+
+# Check everything.
+status check: pylint-pass missing-tests fixmes dep-constraints tests-quiet

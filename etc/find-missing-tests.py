@@ -59,7 +59,7 @@ def main():
     if missing_tests:
         for filename, test_filename, missing in missing_tests:
             missing_str = 'MISSING' if missing else 'INCOMPLETE'
-            print('{:60} {}'.format(filename, missing_str))
+            print('Missing Test: {:60} {}'.format(filename, missing_str))
 
 
 if __name__ == '__main__':

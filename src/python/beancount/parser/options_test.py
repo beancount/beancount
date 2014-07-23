@@ -5,7 +5,6 @@ import unittest
 
 from beancount.parser import parsedoc
 from beancount.parser import options
-from beancount.parser import printer
 from beancount.core import account_types
 
 

@@ -608,8 +608,8 @@ def dump_balances(real_account):
     for first_line, cont_line, real_account in dump(real_account):
         if not real_account.balance.is_empty():
             amounts = real_account.balance.get_cost().get_amounts()
-            positions = ['{0.number:12,.2f} {0.currency}'.format(amount)
-                         for amount in sorted(amounts, key=amount.amount_sortkey)]
+            positions = ['{0.number:12,.2f} {0.currency}'.format(amount_)
+                         for amount_ in sorted(amounts, key=amount.amount_sortkey)]
         else:
             positions = ['']
 
