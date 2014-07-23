@@ -21,8 +21,9 @@ import operator
 import copy
 
 from beancount.core import inventory
-from beancount.core.amount import amount_sortkey
+from beancount.core import amount
 from beancount.core import data
+from beancount.core import account
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Document
 from beancount.core.data import Posting
 from beancount.core import account
@@ -146,7 +147,7 @@ def get(real_account, account_name, default=None):
     """
     if not isinstance(account_name, str):
         raise ValueError
-    components = account_name.split(account.sep)
+    components = account.split(account_name)
     for component in components:
         real_child = real_account.get(component, default)
         if real_child is default:
@@ -169,7 +170,7 @@ def get_or_create(real_account, account_name):
     """
     if not isinstance(account_name, str):
         raise ValueError
-    components = account_name.split(account.sep)
+    components = account.split(account_name)
     path = []
     for component in components:
         path.append(component)
@@ -608,7 +609,7 @@ def dump_balances(real_account):
         if not real_account.balance.is_empty():
             amounts = real_account.balance.get_cost().get_amounts()
             positions = ['{0.number:12,.2f} {0.currency}'.format(amount)
-                         for amount in sorted(amounts, key=amount_sortkey)]
+                         for amount in sorted(amounts, key=amount.amount_sortkey)]
         else:
             positions = ['']
 

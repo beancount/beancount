@@ -134,7 +134,7 @@ def report_holdings_byaccount_shallow(currency, relative, entries, options_map):
       A Table instance.
     """
     def account_maxdepth(n, account_):
-        return account.sep.join(account_.split(account.sep)[:n])
+        return account.join.join(*(account.split(account_)[:n]))
     return report_holdings(
         currency, relative, entries, options_map,
         aggregation_key=lambda holding: account_maxdepth(3, holding.account),

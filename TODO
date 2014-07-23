@@ -298,9 +298,6 @@ beancount: TODO
 
 ** Renames and Such
 
-  - Implement account.split() and perhaps remove references to
-    split(account.sep) everywhere.
-
   - Remove support for legacy: "check" (vs. "balance"), PIPE, etc. Not needed.
 
   - Rename "event" to its final name: "register". We don't have to care about

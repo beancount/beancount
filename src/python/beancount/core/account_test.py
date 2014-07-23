@@ -33,6 +33,16 @@ class TestAccount(unittest.TestCase):
         account_name = account.join()
         self.assertEqual("", account_name)
 
+    def test_account_split(self):
+        account_name = account.split("Expenses:Toys:Computer")
+        self.assertEqual(["Expenses", "Toys", "Computer"], account_name)
+
+        account_name = account.split("Expenses")
+        self.assertEqual(["Expenses"], account_name)
+
+        account_name = account.split("")
+        self.assertEqual([""], account_name)
+
     def test_parent(self):
         self.assertEqual("Expenses:Toys",
                          account.parent("Expenses:Toys:Computer"))
