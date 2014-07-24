@@ -54,8 +54,12 @@ FIELD_SPEC = [
 # A field spec for relative reports. Skipping the book value here because by
 # combining it with market value % and price one could theoretically determined
 # the total value of the portfolio.
-RELATIVE_FIELD_SPEC = FIELD_SPEC[:-2] + [
-    ('market_value', 'Frac Market Value', '{:,.4f}'.format),
+RELATIVE_FIELD_SPEC = [
+    field_desc
+    for field_desc in FIELD_SPEC
+    if field_desc[0] not in ('account', 'number', 'book_value', 'market_value')
+] + [
+    ('market_value', 'Frac Folio', '{:,.2%}'.format),
 ]
 
 
