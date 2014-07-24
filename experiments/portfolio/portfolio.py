@@ -114,7 +114,7 @@ def holding_account_prefix_getter(features_map, holding):
     return key
 
 
-def print_features(title, features, currency, print_holdings=False):
+def print_features(title, features, currency, relative=False, print_holdings=False):
     """Print a features aggregation.
 
     Args:
@@ -132,9 +132,14 @@ def print_features(title, features, currency, print_holdings=False):
     for label, (value, holdings_list) in sorted(features.items(), key=lambda x: x[1], reverse=1):
         frac = value / total_value
 
-        print('  {:{width}}  {:>16.2f} {} ( {:>6.1%} )'.format(
-            label, value, currency, frac,
-            width=label_width))
+        if not relative:
+            print('  {:{width}}  {:>16.2f} {} ( {:>6.1%} )'.format(
+                label, value, currency, frac,
+                width=label_width))
+        else:
+            print('  {:{width}}  {:>6.1%}'.format(
+                label, frac,
+                width=label_width))
         if print_holdings:
             for holding in holdings_list:
                 print('      {:60} {:12} {:>16.2f} {:12}'.format(holding.account, holding.currency, holding.market_value, holding.cost_currency))
