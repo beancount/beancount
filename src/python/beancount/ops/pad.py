@@ -15,11 +15,8 @@ __plugins__ = ('pad',)
 
 PadError = collections.namedtuple('PadError', 'source message entry')
 
-# FIXME: Maybe this should become an option? Maybe this becomes a parameter of pad()?
-PAD_PRECISION = D('.015')
 
-
-def pad(entries, unused_options_map):
+def pad(entries, options_map):
     """Insert transaction entries for to fulfill a subsequent balance check.
 
     Synthesize and insert Transaction entries right after Pad entries in order
@@ -34,11 +31,12 @@ def pad(entries, unused_options_map):
 
     Args:
       entries: A list of directives.
-      unused_options_map: A parser options dict.
+      options_map: A parser options dict.
     Returns:
       A new list of directives, with Pad entries inserte, and a list of new
       errors produced.
     """
+    tolerance = D(options_map['tolerance'])
 
     # Find all the pad entries and group them by account.
     pads = list(misc_utils.filter_type(entries, data.Pad))
@@ -91,7 +89,7 @@ def pad(entries, unused_options_map):
                 # distinct from the cost).
                 balance_amount = pad_balance.get_amount(check_amount.currency)
                 diff_amount = amount_sub(balance_amount, check_amount)
-                if abs(diff_amount.number) > PAD_PRECISION:
+                if abs(diff_amount.number) > tolerance:
                     # The check fails; we need to pad.
 
                     # Pad only if pad entry is active and we haven't already

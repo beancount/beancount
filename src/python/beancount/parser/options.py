@@ -97,6 +97,14 @@ PUBLIC_OPTION_GROUPS = [
                   "NOTHING", "NOTHING")]),
 
     OptGroup("""
+      The tolerance allowed for balance checks and padding directives. In the
+      real world, rounding occurs in various places, and we need to allow a
+      small (but very samll) amount of tolerance in checking the balance of
+      transactions and in requiring padding entries to be auto-inserted. This is
+      the tolerance amount, which you can override.
+    """, [OptDesc("tolerance", "0.015", "0.015")]),
+
+    OptGroup("""
       A list of directory roots, relative to the CWD, which should be searched
       for document files. For the document files to be automatically found they
       must have the following filename format: YYYY-MM-DD.(.*)

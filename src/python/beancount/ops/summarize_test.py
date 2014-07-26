@@ -10,7 +10,6 @@ import re
 from beancount.core.inventory import Inventory
 from beancount.core import data
 from beancount.core import flags
-from beancount.core import realization
 from beancount.core import complete
 from beancount.ops import summarize
 from beancount.parser import parser

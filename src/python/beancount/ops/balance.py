@@ -14,13 +14,7 @@ __plugins__ = ('check',)
 BalanceError = collections.namedtuple('BalanceError', 'source message entry')
 
 
-# This is based on some real-world usage: FOREX brokerage, for instance,
-# accumulates error up to 1bp, and we need to tolerate that if our importers
-# insert checks on at regular spaces, so we set the maximum limit at 1bp.
-# FIXME: Move this up to options?
-CHECK_PRECISION = D('.015')
-
-def check(entries, unused_options_map):
+def check(entries, options_map):
     """Process the balance assertion directives.
 
     For each Balance directive, check that their expected balance corresponds to
@@ -29,10 +23,12 @@ def check(entries, unused_options_map):
 
     Args:
       entries: A list of directives.
-      unused_options_map: A dict of options, parsed from the input file.
+      options_map: A dict of options, parsed from the input file.
     Returns:
       A pair of a list of directives and a list of balance check errors.
     """
+    tolerance = D(options_map['tolerance'])
+
     new_entries = []
     check_errors = []
 
@@ -91,7 +87,7 @@ def check(entries, unused_options_map):
 
             # Check if the amount is within bounds of the expected amount.
             diff_amount = amount_sub(balance_amount, expected_amount)
-            if abs(diff_amount.number) > CHECK_PRECISION:
+            if abs(diff_amount.number) > tolerance:
                 check_errors.append(
                     BalanceError(entry.source,
                                  ("Balance failed for '{}': "

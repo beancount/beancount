@@ -80,7 +80,7 @@ class View:
         self.title = title
 
         # A reference to the global list of options and the account type names.
-        # FIXME: These may be redundant, review whether we actually need these.
+        # FIXME: These may be redundant, review whether we actually need these in the view.
         self.options = options_map
 
         # Realization of the filtered entries to display. These are computed in
