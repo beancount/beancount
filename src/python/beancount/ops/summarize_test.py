@@ -11,6 +11,7 @@ from beancount.core.inventory import Inventory
 from beancount.core import data
 from beancount.core import flags
 from beancount.core import realization
+from beancount.core import complete
 from beancount.ops import summarize
 from beancount.parser import parser
 from beancount.parser import printer
@@ -98,10 +99,10 @@ class TestClamp(cmptest.TestCase):
 
         self.assertEqual(3, index)
 
-        input_balance = realization.compute_entries_balance(entries)
+        input_balance = complete.compute_entries_balance(entries)
         self.assertFalse(input_balance.is_empty())
 
-        clamped_balance = realization.compute_entries_balance(clamped_entries)
+        clamped_balance = complete.compute_entries_balance(clamped_entries)
         self.assertTrue(clamped_balance.is_empty())
 
 
@@ -501,8 +502,8 @@ class TestConversions(cmptest.TestCase):
                                                    'NOTHING', date)
         self.assertEqualEntries(self.entries, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries,
-                                                                date=date)
+        converted_balance = complete.compute_entries_balance(conversion_entries,
+                                                             date=date)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__not_needed(self):
@@ -511,8 +512,8 @@ class TestConversions(cmptest.TestCase):
                                                    'NOTHING', date)
         self.assertEqualEntries(self.entries, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries,
-                                                                date=date)
+        converted_balance = complete.compute_entries_balance(conversion_entries,
+                                                             date=date)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__needed_middle(self):
@@ -528,8 +529,8 @@ class TestConversions(cmptest.TestCase):
 
         """, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries,
-                                                                date=date)
+        converted_balance = complete.compute_entries_balance(conversion_entries,
+                                                             date=date)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__with_transactions_at_cost(self):
@@ -545,8 +546,8 @@ class TestConversions(cmptest.TestCase):
 
         """, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries,
-                                                                date=date)
+        converted_balance = complete.compute_entries_balance(conversion_entries,
+                                                             date=date)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__multiple(self):
@@ -562,7 +563,7 @@ class TestConversions(cmptest.TestCase):
 
         """, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries)
+        converted_balance = complete.compute_entries_balance(conversion_entries)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__no_date(self):
@@ -577,7 +578,7 @@ class TestConversions(cmptest.TestCase):
 
         """, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries)
+        converted_balance = complete.compute_entries_balance(conversion_entries)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
 

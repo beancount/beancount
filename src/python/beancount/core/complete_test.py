@@ -4,6 +4,7 @@ import copy
 from beancount.core.data import create_simple_posting, create_simple_posting_with_cost
 from beancount.core import complete
 from beancount.core import data
+from beancount.core import inventory
 from beancount.core import complete
 from beancount.core import amount
 from beancount.parser import parser
@@ -215,3 +216,106 @@ class TestBalance(unittest.TestCase):
         errors = complete.balance_incomplete_postings(entry)
         self.assertFalse(errors)
         self.assertEqual(4, len(entry.postings))
+
+
+class TestComputeBalance(unittest.TestCase):
+
+    @parser.parsedoc
+    def test_compute_postings_balance(self, entries, _, __):
+        """
+        2014-01-01 open Assets:Bank:Checking
+        2014-01-01 open Assets:Bank:Savings
+        2014-01-01 open Assets:Investing
+
+        2014-05-26 note Assets:Investing "Buying some Googles"
+
+        2014-05-30 *
+          Assets:Bank:Checking  111.23 USD
+          Assets:Bank:Savings   222.74 USD
+          Assets:Bank:Savings   17.23 CAD
+          Assets:Investing      10000 EUR
+          Assets:Investing      32 GOOG {45.203 USD}
+          Assets:Other          1000 EUR @ 1.78 GBP
+          Assets:Other          1000 EUR @@ 1780 GBP
+        """
+        postings = entries[:-1] + entries[-1].postings
+        computed_balance = complete.compute_postings_balance(postings)
+
+        expected_balance = inventory.Inventory()
+        expected_balance.add(amount.Amount('333.97', 'USD'))
+        expected_balance.add(amount.Amount('17.23', 'CAD'))
+        expected_balance.add(amount.Amount('32', 'GOOG'),
+                             amount.Amount('45.203', 'USD'))
+        expected_balance.add(amount.Amount('12000', 'EUR'))
+        self.assertEqual(expected_balance, computed_balance)
+
+    @parser.parsedoc
+    def test_compute_entries_balance_currencies(self, entries, _, __):
+        """
+        2014-01-01 open Assets:Bank:Checking
+        2014-01-01 open Assets:Bank:Savings
+        2014-01-01 open Assets:Investing
+
+        2014-06-01 *
+          Assets:Bank:Checking  111.23 USD
+          Assets:Other
+
+        2014-06-02 *
+          Assets:Bank:Savings   222.74 USD
+          Assets:Other
+
+        2014-06-03 *
+          Assets:Bank:Savings   17.23 CAD
+          Assets:Other
+
+        2014-06-04 *
+          Assets:Investing      10000 EUR
+          Assets:Other
+
+        """
+        computed_balance = complete.compute_entries_balance(entries)
+        expected_balance = inventory.Inventory()
+        self.assertEqual(expected_balance, computed_balance)
+
+    @parser.parsedoc
+    def test_compute_entries_balance_at_cost(self, entries, _, __):
+        """
+        2014-01-01 open Assets:Bank:Checking
+        2014-01-01 open Assets:Bank:Savings
+        2014-01-01 open Assets:Investing
+
+        2014-06-05 *
+          Assets:Investing      30 GOOG {40 USD}
+          Assets:Other
+
+        2014-06-05 *
+          Assets:Investing      -20 GOOG {40 USD}
+          Assets:Other
+
+        """
+        computed_balance = complete.compute_entries_balance(entries)
+        expected_balance = inventory.Inventory()
+        expected_balance.add(amount.Amount('-400', 'USD'))
+        expected_balance.add(amount.Amount('10', 'GOOG'), amount.Amount('40', 'USD'))
+        self.assertEqual(expected_balance, computed_balance)
+
+    @parser.parsedoc
+    def test_compute_entries_balance_conversions(self, entries, _, __):
+        """
+        2014-01-01 open Assets:Bank:Checking
+        2014-01-01 open Assets:Bank:Savings
+        2014-01-01 open Assets:Investing
+
+        2014-06-06 *
+          Assets:Investing          1000 EUR @ 1.78 GBP
+          Assets:Other
+
+        2014-06-07 *
+          Assets:Investing          1000 EUR @@ 1780 GBP
+          Assets:Other
+        """
+        computed_balance = complete.compute_entries_balance(entries)
+        expected_balance = inventory.Inventory()
+        expected_balance.add(amount.Amount('2000.00', 'EUR'))
+        expected_balance.add(amount.Amount('-3560.00', 'GBP'))
+        self.assertEqual(expected_balance, computed_balance)

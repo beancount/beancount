@@ -3,17 +3,6 @@ beancount: TODO
 * Requirements for Shipping 1.0
 ** Complete 100% Coverage for Unit Tests
 
-<<<<<<< local
-=======
-  - As soon as the Getting Started guide, write some example input syntax and
-    show how to run the program.
-
-  - Complete the diagram in the Motivation document
-
-  - Make helper functions in summarize, for clamp() and close() which accept
-    options_map and automatically derive everything they need from entries.
-
->>>>>>> other
   - Validation: A Balance failure currently triggers two errors, one from
     complete and one from validation routine. We need to perform all balance
     checks _after_ the plugins run to make sure that they produce only
@@ -54,9 +43,6 @@ beancount: TODO
   - Make various attempts to simplify depgraph, we want to ship with a really
     lean dependency graph.
 
-    * realization.compute_*_balance() functions may benefit from moving to
-      their own module. Not sure yet. Find out.
-
   - Would it make sense for every plugin to provide a validation function? We
     could then move all the validation routines in their plugin file. I very
     much like this idea: it creates more isolation for routines and less
@@ -66,7 +52,7 @@ beancount: TODO
     ensure that the mutable portion of the entries hasn't been modified by the
     user-provided validation functions.
 
-  - SHould bean-query not be called bean-count or bean-report? Choose a final
+  - Should 'bean-query not be called bean-count or bean-report? Choose a final
     name and live with it. I like 'bean-count' best.
 
 
@@ -81,25 +67,21 @@ beancount: TODO
     to maximize the number of documents captures by this. {fa96aa05361d}
 
   - Add a test for this (somewhere else): If something like this occurs, which
-    price should appear in the prices database? This should trigger a warning that
-    no price directive is inserted (this is what it should do: don't insert a
-    price in this case, because we don't know which):
+    price should appear in the prices database? This should trigger a warning
+    that no price directive is inserted (this is what it should do: don't insert
+    a price in this case, because we don't know which):
 
-      2014-01-15 *
-        Income:Misc
-        Assets:Account1      1 HOUSE {100 USD}
-        Liabilities:Account1 1 HOUSE {101 USD}
-        Equity:Account1      1 HOUSE {102 USD}
-        Expenses:Account1    1 HOUSE {103 USD}
-        Income:Account1      1 HOUSE {104 USD}
+      2014-01-15 * Income:Misc Assets:Account1 1 HOUSE {100 USD}
+    Liabilities:Account1 1 HOUSE {101 USD} Equity:Account1 1 HOUSE {102 USD}
+    Expenses:Account1 1 HOUSE {103 USD} Income:Account1 1 HOUSE {104 USD}
 
     You must ALLOW and test for this, however:
 
-      2004-11-29 * "Closed Cisco"
-        Assets:CA:RBC-Investing:RRSP:CSCO           -18 CSCO {79.50 USD} @ 19.00 USD
-        Assets:CA:RBC-Investing:RRSP:CSCO           -45 CSCO {30.50 USD} @ 19.00 USD
-        Assets:CA:RBC-Investing:RRSP:Cash            1372.07 CAD @ 0.87240446916 USD
-        Income:CA:RBC-Investing:RRSP:PnL      ;; gains = 1372.07 - (2129.19 + 2122.12) = 2879.24 CAD ; loss
+      2004-11-29 * "Closed Cisco" Assets:CA:RBC-Investing:RRSP:CSCO -18 CSCO
+    {79.50 USD} @ 19.00 USD Assets:CA:RBC-Investing:RRSP:CSCO -45 CSCO {30.50
+    USD} @ 19.00 USD Assets:CA:RBC-Investing:RRSP:Cash 1372.07 CAD @
+    0.87240446916 USD Income:CA:RBC-Investing:RRSP:PnL ;; gains = 1372.07 -
+    (2129.19 + 2122.12) = 2879.24 CAD ; loss
 
     Also, deal with multiple implied price points added from different
     transactions on the same day... instead of just taking the later one, drop
@@ -111,34 +93,37 @@ beancount: TODO
 
         2014-07-17 * "(JRN) INTRA-ACCOUNT TRANSFER" ^795422780
 
-      bean-check /home/blais/r/q/office/accounting/blais.beancount
-      Traceback (most recent call last):
-        File "/home/blais/p/beancount/src/python/beancount/parser/parser.py", line 501, in transaction
-          balance_errors = balance_incomplete_postings(entry)
-        File "/home/blais/p/beancount/src/python/beancount/core/complete.py", line 209, in balance_incomplete_postings
-          postings, inserted, errors = get_incomplete_postings(entry)
-        File "/home/blais/p/beancount/src/python/beancount/core/complete.py", line 104, in get_incomplete_postings
-          postings = list(entry.postings)
-      TypeError: 'NoneType' object is not iterable
+      bean-check /home/blais/r/q/office/accounting/blais.beancount Traceback
+    (most recent call last):  File
+    "/home/blais/p/beancount/src/python/beancount/parser/parser.py", line 501,
+    in transaction balance_errors = balance_incomplete_postings(entry) File
+    "/home/blais/p/beancount/src/python/beancount/core/complete.py", line 209,
+    in balance_incomplete_postings postings, inserted, errors =
+    get_incomplete_postings(entry) File
+    "/home/blais/p/beancount/src/python/beancount/core/complete.py", line 104,
+    in get_incomplete_postings postings = list(entry.postings) TypeError:
+    'NoneType' object is not iterable
 
     Deal with it more handsomely.
 
 
-  - "Position with lots goes negative" should output an error message and be caught, because if it is run by the web
-    server, it serves no page. Needs to be integrated like all the other error messages:
+  - "Position with lots goes negative" should output an error message and be
+    caught, because if it is run by the web server, it serves no page. Needs to
+    be integrated like all the other error messages:
 
-      127.0.0.1 - - [22/May/2014 21:51:14] "GET /view/year/2014/income HTTP/1.1" 500 762
-      Traceback (most recent call last):
-        File "/usr/local/lib/python3.3/dist-packages/bottle.py", line 783, in _handle
-          return route.call(**args)
-      ...
-        File "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 65, in __init__
-          self.add_position(position)
-        File "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 260, in add_position
-          return self._add(new_position.number, new_position.lot, allow_negative)
-        File "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 298, in _add
-          raise ValueError("Position with lots goes negative: {}".format(self))
-      ValueError: Position with lots goes negative: Inventory(-2.00 PUMP {20.00 USD})
+      127.0.0.1 - - [22/May/2014 21:51:14] "GET /view/year/2014/income HTTP/1.1"
+    500 762 Traceback (most recent call last):  File
+    "/usr/local/lib/python3.3/dist-packages/bottle.py", line 783, in _handle
+    return route.call(**args) ... File
+    "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 65,
+    in __init__ self.add_position(position) File
+    "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 260,
+    in add_position return self._add(new_position.number, new_position.lot,
+    allow_negative) File
+    "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 298,
+    in _add raise ValueError("Position with lots goes negative:
+    {}".format(self)) ValueError: Position with lots goes negative:
+    Inventory(-2.00 PUMP {20.00 USD})
 
   - An invariant that we would like to maintain is that all accounts that are
     used in a list of entries should have an Open directive for them. In the
@@ -154,15 +139,12 @@ beancount: TODO
 
 ** Parser-Related Minor Bugs
 
-  - Parsing this does not fail; it really should, this is a bug:
-      "2013-04-01 balance Assets:Bank:Checking   555.00 CAD.11"
+  - Parsing this does not fail; it really should, this is a bug:  "2013-04-01
+    balance Assets:Bank:Checking 555.00 CAD.11"
 
-        @lex_tokens
-        def test_number_curency_number(self, tokens, errors):
-            """\
-            2013-04-01 balance Assets:Bank:Checking   555.00 CAD.11
-            """
-            self.assertTrue(errors)
+        @lex_tokens def test_number_curency_number(self, tokens, errors):  """\
+    2013-04-01 balance Assets:Bank:Checking 555.00 CAD.11 """
+    self.assertTrue(errors)
 
   - A date with an extra number also parses silently, what's up with that?
 
@@ -170,61 +152,64 @@ beancount: TODO
 
   - This parses silently! Needs detection:
 
-          2011-01-01 open Assets:A
-          2011-02-01 open Assets:B
-          2011-03-01 open Assets:C
+          2011-01-01 open Assets:A 2011-02-01 open Assets:B 2011-03-01 open
+    Assets:C
 
   - There have been some rare, but occurring few instances of really odd syntax
-    making the parser ignore some transactions silently; this is not
-    acceptable. Attempt to reproduce this again (not obvious, problems have all
-    been fixed I think) and implement better error checking if possible.
+    making the parser ignore some transactions silently; this is not acceptable.
+    Attempt to reproduce this again (not obvious, problems have all been fixed I
+    think) and implement better error checking if possible.
 
     Reproduction hints: before eeea4b4d5605, a transaciton line with no strings
-    at all, e.g. a line starting with "YYYY-MM-DD * ", would entirely ignore
-    a transaction. Find a way to trigger an error on this.
+    at all, e.g. a line starting with "YYYY-MM-DD * ", would entirely ignore a
+    transaction. Find a way to trigger an error on this.
 
     Other examples that bring up this problem (pre eeea4b4d5605):
 
-      This parses wrong and silently--fix it:
-      2014-04-20 * "Money from CC" ^610fa7f17e7a #trip-montreal-april-2014
+      This parses wrong and silently--fix it:  2014-04-20 * "Money from CC"
+    ^610fa7f17e7a #trip-montreal-april-2014
 
-      This works okay:
-      2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
+      This works okay:  2014-04-20 * "Money from CC" #trip-montreal-april-2014
+    ^610fa7f17e7a
 
   - This easy mistake, disables a lot of entries:
 
-        2014-02-02 note  Assets:Temporary "Bla bla""
+        2014-02-02 note Assets:Temporary "Bla bla""
 
     Find a way to detect too long strings and perhaps barf on it.
 
   - Is it possible to specify no flag on a transaction?, e.g.
 
-       2014-07-12
-         ...
+       2014-07-12 ...
 
     Does this work?
 
   - This:
 
-      2008-03-01 check Assets:BestBank:Savings    2340.19 USD
+      2008-03-01 check Assets:BestBank:Savings 2340.19 USD
 
     Fails the lexer with errors that look like this:
 
-      /home/blais/p/beancount/examples/basic/basic.beancount:375:     syntax error, unexpected ERROR
-      /home/blais/p/beancount/examples/basic/basic.beancount:375:     Lexer error; erroneous token: h
-      /home/blais/p/beancount/examples/basic/basic.beancount:375:     Lexer error; erroneous token: e
-      /home/blais/p/beancount/examples/basic/basic.beancount:375:     Lexer error; erroneous token: c
-      /home/blais/p/beancount/examples/basic/basic.beancount:375:     Lexer error; erroneous token: k
-      /home/blais/p/beancount/examples/basic/basic.beancount:438:     Lexer error; erroneous token: c
+      /home/blais/p/beancount/examples/basic/basic.beancount:375:  syntax error,
+    unexpected ERROR /home/blais/p/beancount/examples/basic/basic.beancount:375:
+    Lexer error; erroneous token: h
+    /home/blais/p/beancount/examples/basic/basic.beancount:375:  Lexer error;
+    erroneous token: e
+    /home/blais/p/beancount/examples/basic/basic.beancount:375:  Lexer error;
+    erroneous token: c
+    /home/blais/p/beancount/examples/basic/basic.beancount:375:  Lexer error;
+    erroneous token: k
+    /home/blais/p/beancount/examples/basic/basic.beancount:438:  Lexer error;
+    erroneous token: c
 
 
 ** File Input as Environment Variable
 
   - It might be really nice if all the commands would accept an environment
     variable for the default file to use, if set. This means that the Beancount
-    filename could be an option like in Ledger and HLedger, e.g. with -f.
-    It *IS* true that in almost all cases I'm using the one, same input file
-    for all the programs, that is, the concept of a "default" is quite real.
+    filename could be an option like in Ledger and HLedger, e.g. with -f. It
+    *IS* true that in almost all cases I'm using the one, same input file for
+    all the programs, that is, the concept of a "default" is quite real.
 
     This should probably go in before the first release because it has highly
     visible impact on all the bean-query commands.
@@ -234,8 +219,8 @@ beancount: TODO
 
   The various reports that can be generated will be unified through an
   intermediate stage, that will eventually allow us to render all the reports
-  either to text, CSV or HTML formats. This means that the web interface will
-  be using that report generation code too, and that each of its pages will
+  either to text, CSV or HTML formats. This means that the web interface will be
+  using that report generation code too, and that each of its pages will
   basically be housing the HTML version of each report.
 
   - Rename /account to /journal in the web interface to be consistent with
@@ -245,18 +230,18 @@ beancount: TODO
   - Newly created reports should have UI links: networth, holdings rolled by
     currency. We need to reconcile web UI with the new reports that we created.
 
-  - Render a table of prices, in case there are only a few price points.
-    We should also have a report type for prices.
+  - Render a table of prices, in case there are only a few price points. We
+    should also have a report type for prices.
 
   - The Equity pages are a mess right now. Merge Holdings tab into Shareholder's
     Equity, for less tabs, and a list of similar reports. Complete the equity
-    value page with prices.py, render the rates used to that page. Include
-    links to the holdings reports here as well.
-    Equity should just become an index for all the holdings pages.
+    value page with prices.py, render the rates used to that page. Include links
+    to the holdings reports here as well. Equity should just become an index for
+    all the holdings pages.
 
   - Implement all the missing global pages, or remove them. The web interface
-    should be tight, no links to "Not Implemented" pages. There aren't many
-    left anyway.
+    should be tight, no links to "Not Implemented" pages. There aren't many left
+    anyway.
 
   - IMPORTANT AND URGENT! All errors should be displayed in an overlay; proper
     error handling and display for the web interface is not optional. This needs
@@ -276,7 +261,8 @@ beancount: TODO
   - Make all imports not import symbols directly, only packages, except where
     performance really, really matters (the parser)
 
-  - Fix all docstrings re. Account instance, artifacts of having had an Account object.
+  - Fix all docstrings re. Account instance, artifacts of having had an Account
+    object.
 
   - Configure and run a clean pylint on the entire codebase.
 
@@ -292,8 +278,7 @@ beancount: TODO
   - Split all multiple tests that run in the same function by putting the
     docstring on the setUp() method instead; this works well:
 
-      @parser.parsedoc
-      def setUp(self, entries, _, __):
+      @parser.parsedoc def setUp(self, entries, _, __):
 
 
 ** Renames and Such

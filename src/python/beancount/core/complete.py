@@ -5,7 +5,7 @@ import collections
 from beancount.core.amount import D, amount_mult, ZERO
 from beancount.core.inventory import Inventory
 from beancount.core.position import Lot, Position
-from beancount.core.data import Posting, reparent_posting
+from beancount.core.data import Posting, Transaction, reparent_posting
 
 
 # An error from balancing the postings.
@@ -216,3 +216,45 @@ def balance_incomplete_postings(entry):
         entry.postings.append(reparent_posting(posting, entry))
 
     return errors or None
+
+
+def compute_postings_balance(postings):
+    """Compute the balance of a list of Postings's positions.
+
+    Args:
+      postings: A list of Posting instances and other directives (which are
+        skipped).
+    Returns:
+      An Inventory.
+    """
+    final_balance = Inventory()
+    for posting in postings:
+        if isinstance(posting, Posting):
+            final_balance.add_position(posting.position, True)
+    return final_balance
+
+
+def compute_entries_balance(entries, prefix=None, date=None):
+    """Compute the balance of all postings of a list of entries.
+
+    Sum up all the positions in all the postings of all the transactions in the
+    list of entries and return an inventory of it.
+
+    Args:
+      entries: A list of directives.
+      prefix: If specified, a prefix string to restrict by account name. Only
+        postings with an account that starts with this prefix will be summed up.
+      date: A datetime.date instance at which to stop adding up the balance.
+        The date is exclusive.
+    Returns:
+      An instance of Inventory.
+    """
+    total_balance = Inventory()
+    for entry in entries:
+        if not (date is None or entry.date < date):
+            break
+        if isinstance(entry, Transaction):
+            for posting in entry.postings:
+                if prefix is None or posting.account.startswith(prefix):
+                    total_balance.add_position(posting.position, True)
+    return total_balance

@@ -15,7 +15,7 @@ from beancount.core.data import Transaction, Open, Close
 from beancount.core.data import Source, Posting
 from beancount.core import data
 from beancount.core import flags
-from beancount.core import realization
+from beancount.core import complete
 from beancount.core.account_types import is_income_statement_account
 from beancount.ops import prices
 from beancount.ops import balance
@@ -251,7 +251,7 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
       A modified list of entries.
     """
     # Compute the balance at the given date.
-    conversion_balance = realization.compute_entries_balance(entries, date=date)
+    conversion_balance = complete.compute_entries_balance(entries, date=date)
 
     # Early exit if there is nothing to do.
     if conversion_balance.is_empty():
