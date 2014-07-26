@@ -28,6 +28,7 @@ from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Do
 from beancount.core.data import Posting
 from beancount.core import account
 from beancount.core import complete
+from beancount.core import flags
 
 
 class RealAccount(dict):
@@ -443,6 +444,29 @@ def iterate_with_balance(postings_or_entries):
                 running_balance.add_position(date_posting.position, True)
         yield date_entry, date_postings, change, running_balance
     date_entries.clear()
+
+
+def find_last_active_posting(postings):
+    """Look at the end of the list of postings, and find the last
+    posting or entry that is not an automatically added directive.
+    Note that if the account is closed, the last posting is assumed
+    to be a Close directive (this is the case if the input is valid
+    and checks without errors.
+
+    Args:
+      postings: a list of postings or entries.
+    Returns:
+      An entry, or None, if the input list was empty.
+    """
+    for posting in reversed(postings):
+        if not isinstance(posting, (Posting, Open, Close, Pad, Balance, Note)):
+            continue
+
+        # pylint: disable=bad-continuation
+        if (isinstance(posting, Posting) and
+            posting.entry.flag == flags.FLAG_UNREALIZED):
+            continue
+        return posting
 
 
 def index_key(sequence, value, key, cmp):

@@ -14,11 +14,9 @@ import threading
 import bottle
 from bottle import response, request
 
-from beancount.core.data import Open, Close, Pad, Balance, Transaction, Note
+from beancount.core.data import Open, Close, Transaction
 from beancount.core.data import Document, Event
-from beancount.core.data import Posting
 from beancount.core import data
-from beancount.core import flags
 from beancount.core import getters
 from beancount.core import realization
 from beancount.core import complete
@@ -202,7 +200,7 @@ def activity():
         for real_account, cells, row_classes in table:
             if not isinstance(real_account, realization.RealAccount):
                 continue
-            last_posting = find_last_active_posting(real_account.postings)
+            last_posting = realization.find_last_active_posting(real_account.postings)
 
             # Don't render updates to accounts that have been closed.
             # Note: this is O(N), maybe we can store this at realization.
@@ -226,30 +224,6 @@ def activity():
         contents=oss.getvalue(),
         errors=errors
         )
-
-
-# FIXME: Move this to realization.py.
-def find_last_active_posting(postings):
-    """Look at the end of the list of postings, and find the last
-    posting or entry that is not an automatically added directive.
-    Note that if the account is closed, the last posting is assumed
-    to be a close directive (this is the case if the input is valid
-    and checks without errors.
-
-    Args:
-      postings: a list of postings or entries.
-    Returns:
-      An entry, or None, if the input list was empty.
-    """
-    for posting in misc_utils.filter_type(reversed(postings),
-                                          (Open, Close, Pad, Balance, Posting, Note)):
-        # pylint: disable=bad-continuation
-        if (isinstance(posting, Posting) and
-            posting.entry.flag == flags.FLAG_UNREALIZED):
-            continue
-        return posting
-    else:
-        return None
 
 
 @app.route('/events', name='events')

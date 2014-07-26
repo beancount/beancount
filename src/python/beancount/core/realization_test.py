@@ -1,10 +1,11 @@
 """Unit tests for realizations.
 """
 import copy
-import operator
+import datetime
 import io
-import unittest
+import operator
 import re
+import unittest
 
 from beancount.core.amount import D
 from beancount.core.realization import RealAccount
@@ -640,3 +641,30 @@ class TestRealMisc(unittest.TestCase):
         objects = [object() for _ in range(10)]
         index = realization.index_key(objects, objects[4], lambda x: x, operator.is_)
         self.assertEqual(4, index)
+
+
+class TestFindLastActive(unittest.TestCase):
+
+    @loaddoc
+    def test_find_last_active_posting(self, entries, _, __):
+        """
+        2012-01-01 open Assets:Target
+        2012-01-01 open Equity:Other
+
+        2014-02-01 *
+          Assets:Target            123.45 CAD
+          Equity:Other
+
+        2014-03-01 U "This should get ignored because of the unrealized flag."
+          Assets:Target            -23.45 CAD
+          Equity:Other
+
+        ;; This should get ignored because it's not one of the directives checked for
+        ;; active.
+        2014-03-02 document Assets:Target  "/path/to/somewhere.txt"
+
+        """
+        real_account = realization.realize(entries)
+        postings = realization.get(real_account, 'Assets:Target').postings
+        posting = realization.find_last_active_posting(postings)
+        self.assertEqual(datetime.date(2014, 2, 1), posting.entry.date)
