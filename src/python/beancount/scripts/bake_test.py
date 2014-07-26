@@ -2,6 +2,7 @@ import os
 from os import path
 
 from beancount.utils import test_utils
+from beancount.utils import file_utils
 from beancount.scripts import bake
 
 
@@ -9,14 +10,6 @@ class TestScriptBake(test_utils.TestCase):
 
     def get_args(self):
         return ['--quiet', '--port', str(test_utils.get_test_port())]
-
-    def test_path_greedy_split(self):
-        self.assertEqual(('/tmp/tmp.ju3h4h/blabla', None),
-                         bake.path_greedy_split('/tmp/tmp.ju3h4h/blabla'))
-        self.assertEqual(('/tmp/tmp.ju3h4h/bla', '.tgz'),
-                         bake.path_greedy_split('/tmp/tmp.ju3h4h/bla.tgz'))
-        self.assertEqual(('/tmp/tmp.ju3h4h/bla', '.tar.gz'),
-                         bake.path_greedy_split('/tmp/tmp.ju3h4h/bla.tar.gz'))
 
     def test_bake_missing_input(self):
         with test_utils.tempdir() as tmpdir:
@@ -90,7 +83,7 @@ class TestScriptBake(test_utils.TestCase):
                 with test_utils.capture() as output:
                     test_utils.run_with_args(bake.main,
                                              self.get_args() + [filename, outfile])
-                self.assertFalse(path.exists(bake.path_greedy_split(outfile)[0]))
+                self.assertFalse(path.exists(file_utils.path_greedy_split(outfile)[0]))
                 self.assertTrue(path.exists(outfile) and path.getsize(outfile) > 0)
 
     @test_utils.docfile

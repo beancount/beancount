@@ -13,6 +13,7 @@ from os import path
 
 from beancount.web import web
 from beancount.scripts import checkdeps
+from beancount.utils import file_utils
 
 
 def bake_to_directory(webargs, output, quiet_subproc=False, quiet_server=False):
@@ -101,25 +102,6 @@ ARCHIVERS = {
     }
 
 
-# FIXME: Move this to utils.
-def path_greedy_split(filename):
-    """Split a path, returning the longest possible extension.
-
-    Args:
-      filename: A string, the filename to split.
-    Returns:
-      A pair of basename, extension (which includes the leading period).
-    """
-    basename = path.basename(filename)
-    index = basename.find('.')
-    if index == -1:
-        extension = None
-    else:
-        extension = basename[index:]
-        basename = basename[:index]
-    return (path.join(path.dirname(filename), basename), extension)
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
 
@@ -146,7 +128,7 @@ def main():
         parser.error("Invalid options, cannot specify both --verbose and --quiet")
 
     # Figure out the archival method.
-    output_directory, extension = path_greedy_split(opts.output)
+    output_directory, extension = file_utils.path_greedy_split(opts.output)
     if extension:
         try:
             archival_command = ARCHIVERS[extension]

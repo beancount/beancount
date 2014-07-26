@@ -1,5 +1,7 @@
 """File utilities.
 """
+from os import path
+
 
 def guess_file_format(filename, default='txt'):
     """Guess the file format from the filename.
@@ -21,3 +23,21 @@ def guess_file_format(filename, default='txt'):
     else:
         format = default
     return format
+
+
+def path_greedy_split(filename):
+    """Split a path, returning the longest possible extension.
+
+    Args:
+      filename: A string, the filename to split.
+    Returns:
+      A pair of basename, extension (which includes the leading period).
+    """
+    basename = path.basename(filename)
+    index = basename.find('.')
+    if index == -1:
+        extension = None
+    else:
+        extension = basename[index:]
+        basename = basename[:index]
+    return (path.join(path.dirname(filename), basename), extension)
