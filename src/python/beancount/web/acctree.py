@@ -127,14 +127,22 @@ def tree_table(oss, real_account, build_url, header=None, classes=None, leafonly
     write('</table>')
 
 
-def table_of_balances(real_root, currencies, build_url, classes=None, leafonly=True):
+def table_of_balances(real_root, operating_currencies, build_url,
+                      classes=None, leafonly=True):
     """Render a table of balances.
 
     Args:
-      real_root: a RealAccount node.
-    FIXME: TODO
+      real_root: A RealAccount node, the root node to render.
+      operating_currencies: A list of strings, the operating currencies to render
+        in this own dedicated columns.
+      build_url: A function to build/render a URL from an app.
+      classes: A list of strings, the CSS classes to attach to the renderd
+        top-level table objet.
+      leafonly: a boolean, if true, render only the name of the leaf nodes.
+    Returns:
+      A string with HTML contents, the rendered table.
     """
-    header = ['Account'] + currencies + ['Other']
+    header = ['Account'] + operating_currencies + ['Other']
 
     # Pre-calculate which accounts should be rendered.
     real_active = realization.filter(real_root, is_account_active)
@@ -170,11 +178,11 @@ def table_of_balances(real_root, currencies, build_url, classes=None, leafonly=T
             # Update the total balance for the totals line.
             balance_totals += line_balance
 
-        # Extract all the positions that the user has identified as home
+        # Extract all the positions that the user has identified as operating
         # currencies.
         positions = list(line_balance.get_positions())
 
-        for currency in currencies:
+        for currency in operating_currencies:
             position = line_balance.get_position(Lot(currency, None, None))
             if position:
                 positions.remove(position)
