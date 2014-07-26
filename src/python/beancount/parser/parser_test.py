@@ -196,6 +196,17 @@ class TestUglyBugs(unittest.TestCase):
         check_list(self, entries, [Transaction])
         check_list(self, errors, [])
 
+    @parsedoc
+    def test_indent_eof(self, entries, errors, _):
+        "\t"
+        check_list(self, entries, [])
+        check_list(self, errors, [])
+
+    @parsedoc
+    def test_comment_eof(self, entries, errors, _):
+        "; comment"
+        check_list(self, entries, [])
+        check_list(self, errors, [])
 
 class TestMultipleLines(unittest.TestCase):
 
