@@ -58,7 +58,6 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
         return (entries, errors)
 
     # Group positions by (account, cost, cost_currency).
-    # FIXME: Make this use groupby. This should use our aggregator from ops.holdings.
     account_holdings = collections.defaultdict(list)
     for holding in holdings.get_final_holdings(entries):
         # Skip

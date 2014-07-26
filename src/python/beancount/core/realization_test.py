@@ -74,9 +74,6 @@ class TestRealAccount(unittest.TestCase):
         self.assertNotEqual(ra1, ra2)
         ra2.account = saved_account
 
-        # FIXME: Test postings equality; should not take into account parent
-        # links!
-
     def test_getitem_setitem(self):
         ra = create_simple_account()
         self.assertTrue(isinstance(ra['Assets'], RealAccount))
