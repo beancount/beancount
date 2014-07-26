@@ -99,7 +99,7 @@ PUBLIC_OPTION_GROUPS = [
     OptGroup("""
       The tolerance allowed for balance checks and padding directives. In the
       real world, rounding occurs in various places, and we need to allow a
-      small (but very samll) amount of tolerance in checking the balance of
+      small (but very small) amount of tolerance in checking the balance of
       transactions and in requiring padding entries to be auto-inserted. This is
       the tolerance amount, which you can override.
     """, [OptDesc("tolerance", "0.015", "0.015")]),

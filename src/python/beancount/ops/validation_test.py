@@ -5,6 +5,7 @@ from beancount.core import data
 from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.ops import validation
+from beancount import loader
 
 
 class TestValidateInventoryBooking(cmptest.TestCase):
@@ -51,6 +52,18 @@ class TestValidateInventoryBooking(cmptest.TestCase):
           Assets:Investments:Cash
 
         """, [e.entry for e in validation_errors])
+
+    @loader.loaddoc
+    def test_negative_lots(self, entries, errors, __):
+        """
+          2013-05-01 open Assets:Bank:Investing
+          2013-05-01 open Equity:Opening-Balances
+
+          2013-05-02 *
+            Assets:Bank:Investing                -1 GOOG {501 USD}
+            Equity:Opening-Balances
+        """
+        self.assertEqual([validation.ValidationError], list(map(type, errors)))
 
 
 class TestValidateOpenClose(cmptest.TestCase):

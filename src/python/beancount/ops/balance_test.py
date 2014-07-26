@@ -194,22 +194,6 @@ class TestBalance(unittest.TestCase):
         """
         self.assertFalse(errors)
 
-    # FIXME: This may be more appropriate to be moved to the validation module,
-    # but this used to be raised from the balance checking routine, which is why
-    # it is located here now. Maybe remove the diff_amount altogether? Unsure,
-    # maybe we should use insert an error.
-    @loaddoc
-    def test_negative_lots(self, entries, errors, __):
-        """
-          2013-05-01 open Assets:Bank:Investing
-          2013-05-01 open Equity:Opening-Balances
-
-          2013-05-02 *
-            Assets:Bank:Investing                -1 GOOG {501 USD}
-            Equity:Opening-Balances
-        """
-        self.assertEqual([validation.ValidationError], list(map(type, errors)))
-
     # This test ensures that the 'check' directives apply at the beginning of
     # the day.
     @loaddoc
