@@ -64,7 +64,7 @@ beancount: TODO
   - (documents) documents found in parent directories don't end up creating a
     directive because we skip them because we only restrict to accounts which
     have had an open declaration... this is probably not what we want, in order
-    to maximize the number of documents captures by this. {fa96aa05361d}
+    to maximize the number of documents captured by this. {fa96aa05361d}
 
   - Add a test for this (somewhere else): If something like this occurs, which
     price should appear in the prices database? This should trigger a warning
