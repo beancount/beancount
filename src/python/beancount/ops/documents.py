@@ -32,7 +32,6 @@ def process_documents(entries, options_map):
     filename = options_map["filename"]
 
     # Check that the entries from the input file are okay.
-    # FIXME: This should move to a verification stage.
     entries, document_errors = verify_document_entries(entries)
 
     # Detect filenames that should convert into entries.

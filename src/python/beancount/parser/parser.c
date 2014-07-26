@@ -49,7 +49,6 @@ PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
     const char* report_filename = 0;
     int report_firstline = 0;
     extern int yydebug;
-    /* FIXME: You could support flex debugging too: yyset_debug(int bdebug) */
     static char *kwlist[] = {"filename", "builder",
                              "report_filename", "report_firstline",
                              "yydebug", NULL};
@@ -96,9 +95,6 @@ PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
 
     Py_RETURN_NONE;
 }
-
-/* FIXME: Make a version of this which takes a string as input! For
- * unit-testing... */
 
 
 PyObject* get_yyfilename(PyObject *self, PyObject *args)
