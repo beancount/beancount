@@ -79,10 +79,6 @@ class View:
         # Title.
         self.title = title
 
-        # A reference to the global list of options and the account type names.
-        # FIXME: These may be redundant, review whether we actually need these in the view.
-        self.options = options_map
-
         # Realization of the filtered entries to display. These are computed in
         # _initialize().
         self.real_accounts = None
@@ -91,13 +87,13 @@ class View:
 
         # Realize now, we don't need to do this lazily because we create these
         # view objects on-demand and cache them.
-        self._initialize()
+        self._initialize(options_map)
 
-    def _initialize(self):
+    def _initialize(self, options_map):
         """Compute the list of filtered entries and realization trees."""
 
         # Get the filtered list of entries.
-        self.entries, self.begin_index = self.apply_filter(self.all_entries, self.options)
+        self.entries, self.begin_index = self.apply_filter(self.all_entries, options_map)
 
         # Compute the list of entries for the opening balances sheet.
         self.opening_entries = (self.entries[:self.begin_index]
@@ -108,10 +104,10 @@ class View:
         # income/expenses amounts to the balance sheet's equity (as "net
         # income"). This is used to render the end-period balance sheet, with
         # the current period's net income, closing the period.
-        self.closing_entries = close_with_options(self.entries, self.options)
+        self.closing_entries = close_with_options(self.entries, options_map)
 
         # Realize the three sets of entries.
-        account_types = options.get_account_types(self.options)
+        account_types = options.get_account_types(options_map)
         with misc_utils.log_time('realize_opening', logging.info):
             self.opening_real_accounts = realization.realize(self.opening_entries,
                                                              account_types)

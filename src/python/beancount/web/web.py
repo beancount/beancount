@@ -451,7 +451,7 @@ def trial():
 
     view = request.view
     real_accounts = view.real_accounts
-    operating_currencies = view.options['operating_currency']
+    operating_currencies = app.options['operating_currency']
     table = acctree.table_of_balances(real_accounts,
                                       operating_currencies,
                                       request.app.get_url,
@@ -519,7 +519,7 @@ def balsheet():
 
     view = request.view
     real_accounts = request.view.closing_real_accounts
-    contents = balance_sheet_table(real_accounts, view.options, request.app.get_url)
+    contents = balance_sheet_table(real_accounts, app.options, request.app.get_url)
 
     return render_view(pagetitle="Balance Sheet",
                        contents=contents)
@@ -534,7 +534,7 @@ def openbal():
     if real_accounts is None:
         contents = 'N/A'
     else:
-        contents = balance_sheet_table(real_accounts, view.options, request.app.get_url)
+        contents = balance_sheet_table(real_accounts, app.options, request.app.get_url)
 
     return render_view(pagetitle="Opening Balances",
                        contents=contents)
@@ -548,13 +548,13 @@ def income():
     real_accounts = request.view.real_accounts
 
     # Render the income statement tables.
-    operating_currencies = view.options['operating_currency']
+    operating_currencies = app.options['operating_currency']
     income = acctree.table_of_balances(realization.get(real_accounts,
-                                                       view.options['name_income']),
+                                                       app.options['name_income']),
                                        operating_currencies,
                                        request.app.get_url)
     expenses = acctree.table_of_balances(realization.get(real_accounts,
-                                                         view.options['name_expenses']),
+                                                         app.options['name_expenses']),
                                          operating_currencies,
                                          request.app.get_url)
 
@@ -589,11 +589,11 @@ def equity():
         view = request.view
 
         equity_balance = complete.compute_entries_balance(
-            view.closing_entries, '{}:'.format(view.options['name_equity']))
+            view.closing_entries, '{}:'.format(app.options['name_equity']))
         header = io.StringIO()
         header.write('<th>Currency</th>\n')
         header.write('<th>Amount</th>\n')
-        operating_currencies = view.options['operating_currency']
+        operating_currencies = app.options['operating_currency']
         header.write('\n'.join('<th>{}</th>\n'.format(currency)
                                for currency in operating_currencies))
 
