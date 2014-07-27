@@ -58,70 +58,39 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
         return (entries, errors)
 
     # Group positions by (account, cost, cost_currency).
-    account_holdings = collections.defaultdict(list)
-    for holding in holdings.get_final_holdings(entries):
-        # Skip
-        if (holding.currency == holding.cost_currency or
-            not holding.cost_currency):
-            continue
-        key = (holding.account,
-               holding.currency,
-               holding.cost_currency)
-        account_holdings[key].append(holding)
+    price_map = prices.build_price_map(entries)
+    holdings_list = holdings.get_final_holdings(entries, price_map=price_map)
+
+    # Group positions by (account, cost, cost_currency).
+    holdings_list = holdings.aggregate_holdings_by(
+        holdings_list, lambda h: (h.account, h.currency, h.cost_currency))
 
     # Get the latest prices from the entries.
     price_map = prices.build_price_map(entries)
 
-    # Sort the holdings, to order synthesized file locations, in order to
-    # produce a stable output.
-    sorted_holdings = sorted(account_holdings.items())
-
     # Create transactions to account for each position.
     new_entries = []
     latest_date = entries[-1].date
-    for index, ((account_name,
-                 currency,
-                 cost_currency), holdings_list) in enumerate(sorted_holdings):
-
-        # Get the price of this currency/cost pair.
-        try:
-            price_date, price_number = prices.get_price(price_map,
-                                                        (currency, cost_currency),
-                                                        latest_date)
-        except KeyError:
-            price_number = None
+    for index, holding in enumerate(holdings_list):
+        if (holding.currency == holding.cost_currency or
+            holding.cost_currency is None):
+            continue
 
         # Note: since we're only considering positions held at cost, the
         # transaction that created the position *must* have created at least one
         # price point for that commodity, so we never expect for a price not to
         # be available, which is reasonable.
-        if price_number is None:
+        if holding.price_number is None:
             errors.append(
                 UnrealizedError(source,
-                                "A valid price for {}/{} could not be found.".format(
-                                    currency, cost_currency), None))
+                                "A valid price for {h.currency}/{h.cost_currency} "
+                                "could not be found.".format(h=holding), None))
             continue
-
-        # Compute the total number of units and book value for set of positions.
-        total_units = D()
-        market_value = D()
-        book_value = D()
-        for holding in holdings_list:
-            units = holding.number
-            total_units += units
-            if holding.market_value:
-                market_value += holding.market_value
-            else:
-                market_value += units * price_number
-            if holding.book_value:
-                book_value += holding.book_value
-            else:
-                book_value += units * holding.cost_number
 
         # Compute the PnL; if there is no profit or loss, we create a
         # corresponding entry anyway.
-        pnl = market_value - book_value
-        if total_units == ZERO:
+        pnl = holding.market_value - holding.book_value
+        if holding.number == ZERO:
             # If the number of units sum to zero, the holdings should have been
             # zero.
             errors.append(
@@ -131,25 +100,22 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
                                     currency, cost_currency, account_name),
                                 None))
             continue
-        average_cost = book_value / total_units
 
         # Compute the name of the accounts and add the requested subaccount name
         # if requested.
-        asset_account = account_name
+        asset_account = holding.account
         income_account = account.join(account_types.income,
-                                      account.sans_root(account_name))
+                                      account.sans_root(holding.account))
         if subaccount:
             asset_account = account.join(asset_account, subaccount)
             income_account = account.join(income_account, subaccount)
 
         # Create a new transaction to account for this difference in gain.
         gain_loss_str = "gain" if pnl > ZERO else "loss"
-        narration = ("Unrealized {} for {} units of {} "
-                     "(price: {:.4f} {} as of {}, "
-                     "average cost: {:.4f} {})").format(
-                         gain_loss_str, total_units, currency,
-                         price_number, cost_currency, price_date,
-                         average_cost, cost_currency)
+        narration = ("Unrealized {} for {h.number} units of {h.currency} "
+                     "(price: {h.price_number:.4f} {h.cost_currency} as of {h.price_date}, "
+                     "average cost: {h.cost_number:.4f} {h.cost_currency})").format(
+                         gain_loss_str, h=holding)
         entry = Transaction(source._replace(lineno=1000 + index),
                             latest_date, flags.FLAG_UNREALIZED,
                             None, narration, None, None, [])
@@ -162,16 +128,21 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
         # Note: we never set a price because we don't want these to end up in Conversions.
         entry.postings.extend([
             Posting(entry, asset_account,
-                    Position(Lot(cost_currency, None, None), pnl),
+                    Position(Lot(holding.cost_currency, None, None), pnl),
                     None,
                     None),
             Posting(entry, income_account,
-                    Position(Lot(cost_currency, None, None), -pnl),
+                    Position(Lot(holding.cost_currency, None, None), -pnl),
                     None,
                     None)
         ])
 
         new_entries.append(entry)
+
+    ## FIXME: remove
+    from beancount.parser import printer
+    with open('/tmp/unrealized.beancount.new', 'a') as f:
+        printer.print_entries(new_entries, file=f)
 
     # Ensure that the accounts we're going to use to book the postings exist, by
     # creating open entries for those that we generated that weren't already
