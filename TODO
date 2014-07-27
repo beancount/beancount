@@ -52,6 +52,10 @@ beancount: TODO
     ensure that the mutable portion of the entries hasn't been modified by the
     user-provided validation functions.
 
+    * In beancount.ops.documents, split up process_documents in a verification
+      stage and in a document finding and addition stage.
+
+
   - Should 'bean-query not be called bean-count or bean-report? Choose a final
     name and live with it. I like 'bean-count' best.
 
@@ -64,7 +68,7 @@ beancount: TODO
   - (documents) documents found in parent directories don't end up creating a
     directive because we skip them because we only restrict to accounts which
     have had an open declaration... this is probably not what we want, in order
-    to maximize the number of documents captures by this. {fa96aa05361d}
+    to maximize the number of documents captured by this. {fa96aa05361d}
 
   - Add a test for this (somewhere else): If something like this occurs, which
     price should appear in the prices database? This should trigger a warning
@@ -311,6 +315,9 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+
 
 
 
@@ -1285,6 +1292,22 @@ beancount: TODO
     errors when amounts are posted to accounts which have children. Basically,
     make it possible to disallow postings on accounts with children.
 
+
+
+
+
+
+  - (parser) Make a version of C's beancount.core._parser.parse() that parses a
+    string directly, instead of our current solution which involves writing to a
+    temporary file. This may be faster and avoid leaking test beancount contents
+    to a temp file by accident:
+
+      PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
+      /* FIXME: Make a version of this which takes a string as input! For
+       * unit-testing... */
+
+  - (parser) Support enabling flex debugging in beancount.core._parser.parse(),
+    using "yyset_debug(int bdebug)".
 
 
 

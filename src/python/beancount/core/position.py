@@ -174,9 +174,6 @@ class Position:
         """
         return Amount(self.number, self.lot.currency)
 
-    # FIXME: We really should have the default get_cost() return a position, and
-    # then have the caller .get_amount(). This would be the perfect way to do
-    # this; do this.
     def get_cost(self):
         """Return the cost associated with this position. The cost is the number of
         units of the lot times the cost of the lot. If the lot has no associated
@@ -191,7 +188,7 @@ class Position:
         else:
             return amount_mult(cost, self.number)
 
-    def get_cost_position(self):
+    def at_cost(self):
         """Return a Position representing the cost of this position. See get_cost().
 
         Returns:

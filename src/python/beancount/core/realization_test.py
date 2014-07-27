@@ -74,9 +74,6 @@ class TestRealAccount(unittest.TestCase):
         self.assertNotEqual(ra1, ra2)
         ra2.account = saved_account
 
-        # FIXME: Test postings equality; should not take into account parent
-        # links!
-
     def test_getitem_setitem(self):
         ra = create_simple_account()
         self.assertTrue(isinstance(ra['Assets'], RealAccount))
@@ -106,11 +103,10 @@ class TestRealAccount(unittest.TestCase):
         self.assertEqual(['posting1', 'posting2'], ra_clone.postings)
         self.assertEqual({'Assets'}, ra_clone.keys())
 
-        # # FIXME: Make this one work too, there's a way.
-        # ra_clone = ra.copy()
-        # self.assertEqual(42, ra_clone.balance)
-        # self.assertEqual(['posting1', 'posting2'], ra_clone.postings)
-        # self.assertEqual({'Assets'}, ra_clone.keys())
+        ra_clone = ra.copy()
+        self.assertEqual(42, ra_clone.balance)
+        self.assertEqual(['posting1', 'posting2'], ra_clone.postings)
+        self.assertEqual({'Assets'}, ra_clone.keys())
 
 
 class TestRealGetters(unittest.TestCase):
