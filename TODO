@@ -140,6 +140,11 @@ beancount: TODO
     just make ignorable fields start with _, e.g. posting._entry, balance._diff,
     entry._fileloc, etc. Call those non-essential fields.
 
+  - This parses... we should not allow I think, according to the doc I recently
+    wrote:
+
+          2013-10-01 balance Assets:Investmments   10 MSFT {45.30 USD}
+
 
 ** Parser-Related Minor Bugs
 
@@ -317,6 +322,8 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+
+  - Add an option for spacing in the revamped reports.
 
 
 
