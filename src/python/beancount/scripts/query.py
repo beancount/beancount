@@ -7,6 +7,7 @@ import sys
 import textwrap
 import io
 import logging
+import re
 
 from beancount import loader
 from beancount.ops import validation
@@ -27,24 +28,36 @@ def get_list_report_string(only_report=None):
       report name.
     """
     oss = io.StringIO()
-    if not only_report:
-        oss.write("Available Reports:\n")
-    else:
-        oss.write("Report:\n")
     num_reports = 0
-    for name, args, rclass, formats, description in rselect.get_report_types():
-        if only_report and name != only_report:
+    for report_class in rselect.REPORTS:
+        # Filter the name
+        if only_report and only_report not in report_class.names:
             continue
-        synopsys = ('{}:{}'.format(name, ','.join(arg.upper() for arg in args))
-                    if args
-                    else name)
-        oss.write("  '{}' [{}]:\n".format(synopsys, ', '.join(formats)))
-        oss.write(textwrap.fill(description,
-                                initial_indent="    ",
-                                subsequent_indent="    "
-                            ))
-        oss.write("\n\n")
+        name = report_class.names[0]
+
+        # Get the texttual description.
+        description = textwrap.fill(
+            re.sub(' +', ' ', ' '.join(report_class.__doc__.splitlines())),
+            initial_indent="    ",
+            subsequent_indent="    ",
+            width=80)
+
+        # Get the report's arguments.
+        report = report_class()
+        parser = argparse.ArgumentParser()
+        report.add_args(parser)
+        args_str = parser.format_help()
+
+        # Get the list of supported formats.
+        formats = report.get_supported_formats()
+
+        oss.write('{}:\n'.format(','.join(report.names)))
+        oss.write('  Formats: {}\n'.format(','.join(formats)))
+        oss.write('  Description:\n')
+        oss.write(description)
+        oss.write('\n\n')
         num_reports += 1
+
     if not num_reports:
         return None
     return oss.getvalue()
@@ -75,7 +88,7 @@ def main():
     parser.add_argument('filename',
                         help='The Beancout input filename to load.')
 
-    parser.add_argument('report', nargs='?',
+    parser.add_argument('report',
                         help='Name/specification of the desired report.')
 
     parser.add_argument('-f', '--format', default=None,
@@ -90,7 +103,7 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Print timings.')
 
-    opts = parser.parse_args()
+    opts, rest_args = parser.parse_known_args()
 
     # Handle special commands.
     if opts.help_reports:
@@ -100,6 +113,17 @@ def main():
     # Open output file and guess file format.
     outfile = open(opts.output, 'w') if opts.output else sys.stdout
     opts.format = opts.format or file_utils.guess_file_format(opts.output)
+
+
+
+
+    report = rselect.get_report(opts.report)
+    filter_args = report.parse_args(rest_args)
+    print('FILTER_ARGS', filter_args)
+## FIXME: continue here
+
+
+
 
     # Dispatch on which report to generate.
     report_function = rselect.get_report_generator(opts.report)

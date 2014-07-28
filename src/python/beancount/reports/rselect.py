@@ -5,6 +5,7 @@ import re
 import io
 
 from beancount.utils.snoop import snooper
+from beancount.reports import report
 from beancount.reports import rholdings
 from beancount.reports import table
 from beancount.parser import printer
@@ -91,7 +92,7 @@ def get_report_types():
     """Return a list of the available reports and the formats they support.
 
     Returns:
-      A list of (report-name, report-args, report-class, formats, description)..
+      A list of (report-name, report-args, report-class, formats, description).
     """
     return [
         ('check', None, None,
@@ -145,6 +146,52 @@ def get_report_types():
          "A table of networth in each ofthe operating currencies."),
 
         ]
+
+
+
+
+class PrintReport(report.Report):
+    """Print out the entries."""
+
+    names = ['print']
+
+    def render_beancount(self, entries, errors, options_map, file):
+        file.write(report_print(entries, options_map))
+
+class PricesReport(report.Report):
+    """Print out the unnormalized price entries that we input.
+    Unnormalized means that we may render both (base,quote) and (quote,base).
+    This can be used to rebuild a prices database without having to share the
+    entire ledger file."""
+
+    names = ['prices']
+
+    def render_beancount(self, entries, errors, options_map, file):
+        file.write(report_prices(entries, options_map))
+
+
+REPORTS = [
+    PrintReport,
+    PricesReport,
+    ]
+
+def get_report(report_name):
+    """Instantiate a report class.
+
+    Args:
+      report_name: A string, the name of the report to generate.
+    Returns:
+      An instance of the report generator.
+    """
+    for report in REPORTS:
+        if report_name in report.names:
+            return report()
+
+
+
+
+
+
 
 
 def report_validate(unused_entries, unused_options_map):
