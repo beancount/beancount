@@ -327,6 +327,15 @@ beancount: TODO
 
 
 
+  - (pad) Review the possibility of padding units held at cost:
+
+      "The reason it fails is that there must have been units of those commodities
+      held at cost before the pad date, and it is an error to pad commodities at
+      cost, because Beancount has no way to know what the cost basis of those
+      commodities should be."
+
+
+
 
   - When an error occurs while parsing a directive/transaction, add the ability
     to let the parser skip until the next directive and ignore the parsed
