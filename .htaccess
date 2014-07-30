@@ -90,3 +90,6 @@ RedirectMatch /doc/proposal-forecast$     /beancount/doc/proposal-budget
 
 RedirectMatch /doc/proposal-padding$      https://docs.google.com/document/d/1rZW3Hz5oJw1x9AwbcBj6uw5FabCHqubiIvaHwAjmCvk/
 RedirectMatch /doc/proposal-pad$          /beancount/doc/proposal-padding
+
+RedirectMatch /doc/proposal-mirror$       https://docs.google.com/document/d/1dhz-_Of-hdubafHg-OESEMdMG_-fJqw4P4KcJsKPqk0/
+RedirectMatch /doc/mirror$      	  /beancount/doc/proposal-mirror
