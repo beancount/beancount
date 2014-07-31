@@ -55,8 +55,15 @@ class Report:
         Returns:
           If no 'file' is provided, return the contents of the report as a
           string.
+        Raises:
+          ReportError: If the requested format is not supported.
         """
-        render_method = getattr(self, 'render_{}'.format(output_format))
+        try:
+            render_method = getattr(self, 'render_{}'.format(output_format or
+                                                             self.default_format))
+        except AttributeError:
+            raise ReportError("Unsupported format: '{}'".format(output_format))
+
         outfile = io.StringIO() if file is None else file
         result = render_method(entries, errors, options_map, outfile)
         assert result is None, "Render method must write to file."
@@ -64,3 +71,7 @@ class Report:
             return outfile.getvalue()
 
     __call__ = render
+
+
+class ReportError(Exception):
+    "Error that occurred during report generation."

@@ -579,15 +579,17 @@ PREFIX_LEAF_1 = '`-- '
 PREFIX_LEAF_C = '    '
 
 
-def dump_balances(real_account):
+def dump_balances(real_account, file=None):
     """Dump a realization tree with balances.
 
     Args:
       real_account: An instance of RealAccount.
+      file: A file object to dump the output to. If not specified, we
+        return the output as a string.
     Returns:
-      A string, the rendered tree.
+      A string, the rendered tree, or nothing, if 'file' was provided.
     """
-    oss = io.StringIO()
+    output = file or io.StringIO()
     for first_line, cont_line, real_account in dump(real_account):
         if not real_account.balance.is_empty():
             amounts = real_account.balance.get_cost().get_amounts()
@@ -598,6 +600,7 @@ def dump_balances(real_account):
 
         line = first_line
         for position in positions:
-            oss.write('{}       {}\n'.format(line, position))
+            output.write('{}       {}\n'.format(line, position))
             line = cont_line
-    return oss.getvalue()
+    if file is None:
+        return output.getvalue()

@@ -95,28 +95,6 @@ def get_report_types():
       A list of (report-name, report-args, report-class, formats, description).
     """
     return [
-        ('check', None, None,
-         [],
-         "Validate the entries."),
-
-        ('print', None, None,
-         ['beancount'],
-         "Print out the entries."),
-
-        ('prices', None, None,
-         ['beancount'],
-         "Print out the unnormalized price entries that we input. "
-         "Unnormalized means that we may render both (base,quote) and (quote,base). "
-         "This can be used to rebuild a prices database without having to share the "
-         "entire ledger file."),
-
-        ('prices_db', None, None,
-         ['beancount'],
-         "Print out the normalized price entries from the price db. "
-         "Normalized means that we print prices in the most common (base, quote) order."
-         "This can be used to rebuild a prices database without having to share the "
-         "entire ledger file."),
-
         ('trial', ['regexp'], None,
          ['text'],
          "Print out the trial balance of all accounts."),
@@ -148,15 +126,25 @@ def get_report_types():
         ]
 
 
+class ErrorReport(report.Report):
+    """Report the errors."""
+
+    names = ['check', 'validate', 'errors']
+    default_format = 'beancount'
+
+    def render_beancount(self, entries, errors, options_map, file):
+        printer.print_errors(errors, file=file)
 
 
 class PrintReport(report.Report):
     """Print out the entries."""
 
     names = ['print']
+    default_format = 'beancount'
 
     def render_beancount(self, entries, errors, options_map, file):
-        file.write(report_print(entries, options_map))
+        printer.print_entries(entries, file=file)
+
 
 class PricesReport(report.Report):
     """Print out the unnormalized price entries that we input.
@@ -165,14 +153,71 @@ class PricesReport(report.Report):
     entire ledger file."""
 
     names = ['prices']
+    default_format = 'beancount'
 
     def render_beancount(self, entries, errors, options_map, file):
-        file.write(report_prices(entries, options_map))
+        price_entries = [entry
+                         for entry in entries
+                         if isinstance(entry, data.Price)]
+        printer.print_entries(price_entries, file=file)
+
+
+class PriceDBReport(report.Report):
+    """Print out the normalized price entries from the price db.
+    Normalized means that we print prices in the most common (base, quote) order.
+    This can be used to rebuild a prices database without having to share the
+    entire ledger file.
+
+    Only the forward prices are printed; which (base, quote) pair is selected is
+    selected based on the most common occurrence between (base, quote) and
+    (quote, base). This is done in the price map.
+    """
+
+    names = ['pricedb', 'prices_db']
+    default_format = 'beancount'
+
+    def render_beancount(self, entries, errors, options_map, file):
+        price_map = prices.build_price_map(entries)
+        source = data.Source('<report_prices_db>', 0)
+        for base_quote in price_map.forward_pairs:
+            price_list = price_map[base_quote]
+            base, quote = base_quote
+            for date, price in price_list:
+                entry = data.Price(source, date, base, amount.Amount(price, quote))
+                file.write(printer.format_entry(entry))
+            file.write('\n')
+
+
+class BalancesReport(report.Report):
+    """Print out the trial balance of accounts matching an expression."""
+
+    names = ['balances', 'bal', 'trial', 'ledger']
+    default_format = 'text'
+
+    def add_args(self, parser):
+        parser.add_argument('-e', '--expression', action='store', default=None,
+                            help="Filter expression for which account balances to display.")
+
+    def render_text(self, entries, errors, options_map, file):
+        real_accounts = realization.realize(entries)
+        if self.opts.expression:
+            regexp = re.compile(self.opts.expression)
+            real_accounts = realization.filter(
+                real_accounts,
+                lambda real_account: regexp.search(real_account.account))
+        if real_accounts:
+            realization.dump_balances(real_accounts, file=file)
+
+
+
 
 
 REPORTS = [
+    ErrorReport,
     PrintReport,
     PricesReport,
+    PriceDBReport,
+    BalancesReport,
     ]
 
 def get_report(report_name):
@@ -194,96 +239,14 @@ def get_report(report_name):
 
 
 
-def report_validate(unused_entries, unused_options_map):
-    """A report type that does nothing.
-
-    The entries should have been validated on load.
-
-    Args:
-      unused_entries: A list of directives.
-      unused_options_map: An options dict, as read by the parser.
-    """
-    # Do nothing indeed.
 
 
-def report_print(entries, unused_options_map):
-    """A report type that prints out the entries as parsed.
-
-    Args:
-      entries: A list of directives.
-      unused_options_map: An options dict, as read by the parser.
-    Returns:
-      A string, the text to print.
-    """
-    oss = io.StringIO()
-    printer.print_entries(entries, oss)
-    return oss.getvalue()
 
 
-def report_prices(entries, unused_options_map):
-    """A report type that prints out just the price entries.
-
-    Note: this is a temporary solution, until we have proper filtering.
-
-    Args:
-      entries: A list of directives.
-      unused_options_map: An options dict, as read by the parser.
-    Returns:
-      A string, the text to print.
-    """
-    price_entries = [entry
-                     for entry in entries
-                     if isinstance(entry, data.Price)]
-    oss = io.StringIO()
-    printer.print_entries(price_entries, oss)
-    return oss.getvalue()
 
 
-def report_prices_db(entries, unused_options_map):
-    """A report type that prints price entries from the price map.
-
-    Only the forward prices are printed; which (base, quote) pair is selected is
-    selected based on the most common occurrence between (base, quote) and
-    (quote, base). This is done in the price map.
-
-    Args:
-      entries: A list of directives.
-      unused_options_map: An options dict, as read by the parser.
-    Returns:
-      A string, the text to print.
-    """
-    oss = io.StringIO()
-    price_map = prices.build_price_map(entries)
-    source = data.Source('<report_prices_db>', 0)
-    for base_quote in price_map.forward_pairs:
-        price_list = price_map[base_quote]
-        base, quote = base_quote
-        for date, price in price_list:
-            entry = data.Price(source, date, base, amount.Amount(price, quote))
-            oss.write(printer.format_entry(entry))
-        oss.write('\n')
-    return oss.getvalue()
 
 
-def report_trial(expression, entries, unused_options_map):
-    """Render and print the trial balance for a ledger.
-
-    Args:
-      expression: A regular expression string, or None, to be matched against
-        the account names to include. If None, render all account names.
-      entries: A list of directives.
-      unused_options_map: An options dict, as read by the parser.
-    Returns:
-      A string, the text to print.
-    """
-    real_accounts = realization.realize(entries)
-    if expression:
-        regexp = re.compile(expression)
-        real_accounts = realization.filter(
-            real_accounts,
-            lambda real_account: regexp.search(real_account.account))
-    if real_accounts:
-        return realization.dump_balances(real_accounts)
 
 
 def report_accounts(entries, options_map):

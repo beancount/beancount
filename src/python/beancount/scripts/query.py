@@ -13,6 +13,7 @@ from beancount import loader
 from beancount.ops import validation
 from beancount.reports import rselect
 from beancount.reports import table
+from beancount.reports import report
 from beancount.utils import file_utils
 from beancount.utils import misc_utils
 
@@ -43,15 +44,15 @@ def get_list_report_string(only_report=None):
             width=80)
 
         # Get the report's arguments.
-        report = report_class()
+        report_ = report_class()
         parser = argparse.ArgumentParser()
-        report.add_args(parser)
+        report_.add_args(parser)
         args_str = parser.format_help()
 
         # Get the list of supported formats.
-        formats = report.get_supported_formats()
+        formats = report_.get_supported_formats()
 
-        oss.write('{}:\n'.format(','.join(report.names)))
+        oss.write('{}:\n'.format(','.join(report_.names)))
         oss.write('  Formats: {}\n'.format(','.join(formats)))
         oss.write('  Description:\n')
         oss.write(description)
@@ -114,22 +115,14 @@ def main():
     outfile = open(opts.output, 'w') if opts.output else sys.stdout
     opts.format = opts.format or file_utils.guess_file_format(opts.output)
 
-
-
-
-    report = rselect.get_report(opts.report)
-    filter_args = report.parse_args(rest_args)
-    print('FILTER_ARGS', filter_args)
-## FIXME: continue here
-
-
-
-
-    # Dispatch on which report to generate.
-    report_function = rselect.get_report_generator(opts.report)
-    if report_function is None:
+    # Create the requested report and parse its arguments.
+    report_ = rselect.get_report(opts.report)
+    filter_args = report_.parse_args(rest_args)
+    if report_ is None:
         parser.error("Unknown report.")
-    is_check = report_function is rselect.report_validate
+    is_check = isinstance(report_, rselect.ErrorReport)
+
+    ## print('FILTER_ARGS', filter_args) ## FIXME: TODO, apply those.
 
     # Force hardcore validations, just for check.
     if is_check:
@@ -145,14 +138,14 @@ def main():
                                                    log_errors=sys.stderr)
 
     # Create holdings list.
-    result = report_function(entries, options_map)
+    report_.render(entries, errors, options_map, opts.format, outfile)
 
-    if isinstance(result, str):
-        outfile.write(result)
+    # if isinstance(result, str):
+    #     outfile.write(result)
 
-    elif isinstance(result, table.TableReport):
-        # Create the table report.
-        table.render_table(result, outfile, opts.format)
+    # elif isinstance(result, table.TableReport):
+    #     # Create the table report.
+    #     table.render_table(result, outfile, opts.format)
 
 
 if __name__ == '__main__':
