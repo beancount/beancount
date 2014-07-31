@@ -12,6 +12,9 @@ beancount: TODO
 
 ** Minimum Cleanup of Reports Before Release
 
+  - Report commands have to support a --help too, to share the options they
+    support.
+
   - Isolate reports, at least from a functional POV, before the big revamp, in
     order to avoid changing the interface much after releasing v2.0:
 

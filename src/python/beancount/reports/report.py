@@ -8,6 +8,12 @@ import argparse
 import io
 import re
 
+from beancount.reports import table
+
+
+class ReportError(Exception):
+    "Error that occurred during report generation."
+
 
 class Report:
 
@@ -73,5 +79,35 @@ class Report:
     __call__ = render
 
 
-class ReportError(Exception):
-    "Error that occurred during report generation."
+class TableReport(Report):
+    """A base class for reports that supports automatic conversions from Table."""
+
+    default_format = 'text'
+
+    def render_table(self, entries, errors, options_map):
+        """Render the report to a Table instance.
+
+        Args:
+          entries: A list of directives to render.
+          errors: A list of errors that occurred during processing.
+          options_map: A dict of options, as produced by the parser.
+        Returns:
+          An instance of Table, that will get converted to another format.
+        """
+        raise NotImplementedError
+
+    def render_text(self, entries, errors, options_map, file):
+        table_ = self.render_table(entries, errors, options_map)
+        table.render_table(table_, file, 'text')
+
+    def render_html(self, entries, errors, options_map, file):
+        table_ = self.render_table(entries, errors, options_map)
+        table.render_table(table_, file, 'html')
+
+    def render_htmldiv(self, entries, errors, options_map, file):
+        table_ = self.render_table(entries, errors, options_map)
+        table.render_table(table_, file, 'htmldiv')
+
+    def render_csv(self, entries, errors, options_map, file):
+        table_ = self.render_table(entries, errors, options_map)
+        table.render_table(table_, file, 'csv')

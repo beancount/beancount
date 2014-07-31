@@ -9,6 +9,7 @@ from beancount.parser import options
 from beancount.ops import prices
 from beancount.ops import holdings
 from beancount.reports import table
+from beancount.reports import report
 
 
 def get_assets_holdings(entries, options_map, currency=None):
@@ -95,107 +96,8 @@ def report_holdings(currency, relative, entries, options_map,
     return table.create_table(holdings_list, field_spec)
 
 
-def report_holdings_bycommodity(currency, relative, entries, options_map):
-    """Generate a detailed list of all holdings by (base, quote) pair.
-
-    Args:
-      currency: A string, a currency to convert to. If left to None, no
-        conversion is carried out.
-      relative: A boolean, true if we should reduce this to a relative value.
-      entries: A list of directives.
-      options_map: A dict of parsed options.
-    Returns:
-      A Table instance.
-    """
-    return report_holdings(currency, relative, entries, options_map,
-                           lambda holding: holding.currency)
 
 
-def report_holdings_byaccount(currency, relative, entries, options_map):
-    """Generate a detailed list of all holdings by account.
-
-    Args:
-      currency: A string, a currency to convert to. Must be non-null.
-      relative: A boolean, true if we should reduce this to a relative value.
-      entries: A list of directives.
-      options_map: A dict of parsed options.
-    Returns:
-      A Table instance.
-    """
-    return report_holdings(currency, relative, entries, options_map,
-                           aggregation_key=lambda holding: holding.account)
-
-
-def report_holdings_byaccount_shallow(currency, relative, entries, options_map):
-    """Generate a detailed list of all holdings by account, with a max-depth.
-
-    Args:
-      currency: A string, a currency to convert to. Must be non-null.
-      relative: A boolean, true if we should reduce this to a relative value.
-      entries: A list of directives.
-      options_map: A dict of parsed options.
-    Returns:
-      A Table instance.
-    """
-    def account_maxdepth(n, account_):
-        return account.join.join(*(account.split(account_)[:n]))
-    return report_holdings(
-        currency, relative, entries, options_map,
-        aggregation_key=lambda holding: account_maxdepth(3, holding.account),
-        sort_key=lambda holding: holding.market_value or amount.ZERO)
-
-
-def report_holdings_bycurrency(currency, relative, entries, options_map):
-    """Generate a table of currency exposure.
-
-    Args:
-      currency: A string, a currency to convert to. Must be non-null.
-      relative: A boolean, true if we should reduce this to a relative value.
-      entries: A list of directives.
-      options_map: A dict of parsed options.
-    Returns:
-      A Table instance, where each row is a currency and a total amount.
-    """
-    return report_holdings(currency, relative, entries, options_map,
-                           lambda holding: holding.cost_currency)
-
-
-def report_networth(entries, options_map):
-    """Generate a table of total net worth for each operating currency.
-
-    Args:
-      entries: A list of directives.
-      options_map: A dict of parsed options.
-    Returns:
-      A Table instance, where each row is a currency and a total amount.
-    """
-    holdings_list, price_map = get_assets_holdings(entries, options_map)
-
-    net_worths = []
-    for currency in options_map['operating_currency']:
-
-        # Convert holdings to a unified currency.
-        currency_holdings_list = holdings.convert_to_currency(price_map,
-                                                              currency,
-                                                              holdings_list)
-        if not currency_holdings_list:
-            continue
-
-        holdings_list = holdings.aggregate_holdings_by(
-            currency_holdings_list, lambda holding: holding.cost_currency)
-
-        holdings_list = [holding
-                         for holding in holdings_list
-                         if holding.currency and holding.cost_currency]
-
-        assert len(holdings_list) == 1, holdings_list
-        net_worths.append((currency, holdings_list[0].market_value))
-
-    field_spec = [
-        (0, 'Currency'),
-        (1, 'Net Worth', '{:,.2f}'.format),
-    ]
-    return table.create_table(net_worths, field_spec)
 
 
 def load_from_csv(fileobj):
@@ -215,7 +117,7 @@ def load_from_csv(fileobj):
         ('Price', 'price_number', D),
         ('Book Value', 'book_value', D),
         ('Market Value', 'market_value', D),
-        ('Price Date', 'price_date', D),
+        ('Price Date', 'price_date', None),
         ]
     column_dict = {name: (attr, converter)
                    for name, attr, converter in column_spec}
@@ -244,3 +146,104 @@ def load_from_csv(fileobj):
                 value = converter(value)
             value_dict[attr] = value
         yield holdings.Holding(**value_dict)
+
+
+
+def account_maxdepth(n, account_):
+    return account.join(*(account.split(account_)[:n]))
+
+
+class HoldingsReport(report.TableReport):
+    """The full list of holdings for Asset and Liabilities accounts."""
+
+    names = ['holdings']
+
+    aggregations = {
+        'instrument': dict(aggregation_key=lambda holding: holding.currency),
+
+        'account': dict(aggregation_key=lambda holding: holding.account),
+
+        'account-shallow': dict(
+            aggregation_key=lambda holding: account_maxdepth(3, holding.account),
+            sort_key=lambda holding: holding.market_value or amount.ZERO),
+
+        'currency': dict(aggregation_key=lambda holding: holding.cost_currency),
+        }
+    aggregations['commodity'] = aggregations['instrument']
+    aggregations['cost'] = aggregations['currency']
+
+    def add_args(self, parser):
+        parser.add_argument('-c', '--currency',
+                            action='store', default=None,
+                            help="Which currency to convert all the holdings to.")
+
+        parser.add_argument('-r', '--relative',
+                            action='store_true',
+                            help="True if we should render as relative values only.")
+
+        parser.add_argument('-g', '--groupby', '--by',
+                            action='store', default=None,
+                            choices=self.aggregations.keys(),
+                            help="How to group the holdings (default is: don't group)")
+
+    def render_table(self, entries, errors, options_map):
+        keywords = self.aggregations[self.opts.groupby] if self.opts.groupby else {}
+        return report_holdings(self.opts.currency, self.opts.relative,
+                               entries, options_map,
+                               **keywords)
+
+
+
+class NetWorthReport(report.TableReport):
+    """Generate a table of total net worth for each operating currency."""
+
+    names = ['networth', 'equity']
+
+    def render_table(self, entries, errors, options_map):
+        holdings_list, price_map = get_assets_holdings(entries, options_map)
+
+        net_worths = []
+        for currency in options_map['operating_currency']:
+            # Convert holdings to a unified currency.
+            currency_holdings_list = holdings.convert_to_currency(price_map,
+                                                                  currency,
+                                                                  holdings_list)
+            if not currency_holdings_list:
+                continue
+
+            holdings_list = holdings.aggregate_holdings_by(
+                currency_holdings_list, lambda holding: holding.cost_currency)
+
+            holdings_list = [holding
+                             for holding in holdings_list
+                             if holding.currency and holding.cost_currency]
+
+            assert len(holdings_list) == 1, holdings_list
+            net_worths.append((currency, holdings_list[0].market_value))
+
+        field_spec = [
+            (0, 'Currency'),
+            (1, 'Net Worth', '{:,.2f}'.format),
+        ]
+        return table.create_table(net_worths, field_spec)
+
+
+
+
+REPORTS = [
+    HoldingsReport,
+    NetWorthReport,
+    ]
+
+
+# Deal with docs for choices.
+    # """Generate a detailed list of all holdings by (base, quote) pair.
+    # """Generate a detailed list of all holdings by account.
+    # """Generate a detailed list of all holdings by account, with a max-depth.
+    # """Generate a table of currency exposure.
+
+         # "A list of holdings aggregated by base/quote commodity."),
+         # "A list of holdings aggregated by account."),
+         # "A list of holdings aggregated by account, at no more than a depth of 3."),
+         # "A list of holdings aggregated by cost currency."),
+         # "A table of networth in each ofthe operating currencies."),

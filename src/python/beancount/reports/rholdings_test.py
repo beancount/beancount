@@ -84,3 +84,7 @@ class TestReportHoldings(unittest.TestCase):
         self.assertEqual(2, len(holdings_list))
         self.assertTrue(isinstance(holdings_list, list))
         self.assertTrue(isinstance(holdings_list[0], holdings.Holding))
+
+
+# Add appropriate tests for all combinations.
+__incomplete__ = True

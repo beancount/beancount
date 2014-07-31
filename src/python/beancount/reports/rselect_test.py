@@ -35,3 +35,7 @@ class TestReportSelect(unittest.TestCase):
             generator = rselect.get_report_generator(report_name)
             self.assertTrue(generator is not None, report_name)
             generator([], options_map)
+
+
+# Add appropriate tests for all combinations.
+__incomplete__ = True

@@ -138,14 +138,12 @@ def main():
                                                    log_errors=sys.stderr)
 
     # Create holdings list.
-    report_.render(entries, errors, options_map, opts.format, outfile)
-
-    # if isinstance(result, str):
-    #     outfile.write(result)
-
-    # elif isinstance(result, table.TableReport):
-    #     # Create the table report.
-    #     table.render_table(result, outfile, opts.format)
+    with misc_utils.log_time('report.render', logging.info):
+        try:
+            report_.render(entries, errors, options_map, opts.format, outfile)
+        except report.ReportError as e:
+            sys.stderr.write("Error: {}\n".format(e))
+            sys.exit(1)
 
 
 if __name__ == '__main__':
