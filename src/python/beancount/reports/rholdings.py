@@ -159,20 +159,24 @@ class HoldingsReport(report.TableReport):
     names = ['holdings']
 
     aggregations = {
-        'instrument': dict(aggregation_key=lambda holding: holding.currency),
+        'commodity': dict(aggregation_key=lambda holding: holding.currency),
 
         'account': dict(aggregation_key=lambda holding: holding.account),
 
-        'account-shallow': dict(
+        'root-account': dict(
             aggregation_key=lambda holding: account_maxdepth(3, holding.account),
             sort_key=lambda holding: holding.market_value or amount.ZERO),
 
         'currency': dict(aggregation_key=lambda holding: holding.cost_currency),
         }
-    aggregations['commodity'] = aggregations['instrument']
-    aggregations['cost'] = aggregations['currency']
 
-    def add_args(self, parser):
+    def __init__(self, *rest):
+        super().__init__(*rest)
+        if self.args.relative and not self.args.currency:
+            self.parser.error("--relative needs to have --currency set")
+
+    @classmethod
+    def add_args(cls, parser):
         parser.add_argument('-c', '--currency',
                             action='store', default=None,
                             help="Which currency to convert all the holdings to.")
@@ -183,15 +187,14 @@ class HoldingsReport(report.TableReport):
 
         parser.add_argument('-g', '--groupby', '--by',
                             action='store', default=None,
-                            choices=self.aggregations.keys(),
+                            choices=cls.aggregations.keys(),
                             help="How to group the holdings (default is: don't group)")
 
     def render_table(self, entries, errors, options_map):
-        keywords = self.aggregations[self.opts.groupby] if self.opts.groupby else {}
-        return report_holdings(self.opts.currency, self.opts.relative,
+        keywords = self.aggregations[self.args.groupby] if self.args.groupby else {}
+        return report_holdings(self.args.currency, self.args.relative,
                                entries, options_map,
                                **keywords)
-
 
 
 class NetWorthReport(report.TableReport):
@@ -228,22 +231,7 @@ class NetWorthReport(report.TableReport):
         return table.create_table(net_worths, field_spec)
 
 
-
-
-REPORTS = [
+__reports__ = [
     HoldingsReport,
     NetWorthReport,
     ]
-
-
-# Deal with docs for choices.
-    # """Generate a detailed list of all holdings by (base, quote) pair.
-    # """Generate a detailed list of all holdings by account.
-    # """Generate a detailed list of all holdings by account, with a max-depth.
-    # """Generate a table of currency exposure.
-
-         # "A list of holdings aggregated by base/quote commodity."),
-         # "A list of holdings aggregated by account."),
-         # "A list of holdings aggregated by account, at no more than a depth of 3."),
-         # "A list of holdings aggregated by cost currency."),
-         # "A table of networth in each ofthe operating currencies."),

@@ -6,7 +6,6 @@ import io
 
 from beancount.utils.snoop import snooper
 from beancount.reports import report
-from beancount.reports import rholdings
 from beancount.reports import table
 from beancount.parser import printer
 from beancount.parser import options
@@ -86,15 +85,16 @@ class BalancesReport(report.Report):
     names = ['balances', 'bal', 'trial', 'ledger']
     default_format = 'text'
 
-    def add_args(self, parser):
+    @classmethod
+    def add_args(cls, parser):
         parser.add_argument('-e', '--expression', '--regexp',
                             action='store', default=None,
                             help="Filter expression for which account balances to display.")
 
     def render_text(self, entries, errors, options_map, file):
         real_accounts = realization.realize(entries)
-        if self.opts.expression:
-            regexp = re.compile(self.opts.expression)
+        if self.args.expression:
+            regexp = re.compile(self.args.expression)
             real_accounts = realization.filter(
                 real_accounts,
                 lambda real_account: regexp.search(real_account.account))
@@ -140,7 +140,7 @@ class EventsReport(report.TableReport):
                                   [(0, "Type"), (1, "Description")])
 
 
-REPORTS = [
+__reports__ = [
     ErrorReport,
     PrintReport,
     PricesReport,
@@ -148,16 +148,4 @@ REPORTS = [
     AccountsReport,
     BalancesReport,
     EventsReport,
-    ] + rholdings.REPORTS
-
-def get_report(report_name):
-    """Instantiate a report class.
-
-    Args:
-      report_name: A string, the name of the report to generate.
-    Returns:
-      An instance of the report generator.
-    """
-    for report in REPORTS:
-        if report_name in report.names:
-            return report()
+    ]

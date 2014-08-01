@@ -16,17 +16,25 @@ class ReportError(Exception):
 
 
 class Report:
+    """Base class for all reports.
+
+    Attributes:
+      names: A list of strings, the various names of this report. The first name
+        is taken to be the authoritative name of the report; the rest are
+        considered aliases.
+      parser: The parser for the command's arguments. This is used to raise errors.
+      args: An object that contains the values of this command's parsed arguments.
+    """
 
     # The names of this report. Must be overridden by derived classes.
     names = None
 
-    def parse_args(self, args):
-        parser = argparse.ArgumentParser()
-        self.add_args(parser)
-        self.opts, rest_args = parser.parse_known_args(args)
-        return rest_args
+    def __init__(self, args, parser):
+        self.parser = parser
+        self.args = args
 
-    def add_args(self, parser):
+    @classmethod
+    def add_args(cls, parser):
         """Add arguments to parse for this report.
 
         Args:
@@ -34,14 +42,15 @@ class Report:
         """
         # No-op.
 
-    def get_supported_formats(self):
+    @classmethod
+    def get_supported_formats(cls):
         """Enumerates the list of supported formats, by inspecting methods of this object.
 
         Returns:
           A list of strings, such as ['html', 'text'].
         """
         formats = []
-        for name in dir(self):
+        for name in dir(cls):
             mo = re.match('render_(.*)', name)
             if mo:
                 formats.append(mo.group(1))

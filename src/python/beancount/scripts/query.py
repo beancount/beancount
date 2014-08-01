@@ -3,19 +3,30 @@
 This is to share my portfolio with others, or to compute its daily changes.
 """
 import argparse
-import sys
-import textwrap
 import io
+import itertools
 import logging
 import re
+import sys
+import textwrap
 
 from beancount import loader
 from beancount.ops import validation
 from beancount.reports import rselect
+from beancount.reports import rholdings
 from beancount.reports import table
 from beancount.reports import report
 from beancount.utils import file_utils
 from beancount.utils import misc_utils
+
+
+def get_all_reports():
+    """Return all report classes.
+
+    Returns:
+      A list of all available report classes.
+    """
+    return rselect.__reports__ + rholdings.__reports__
 
 
 def get_list_report_string(only_report=None):
@@ -30,7 +41,7 @@ def get_list_report_string(only_report=None):
     """
     oss = io.StringIO()
     num_reports = 0
-    for report_class in rselect.REPORTS:
+    for report_class in get_all_reports():
         # Filter the name
         if only_report and only_report not in report_class.names:
             continue
@@ -44,16 +55,17 @@ def get_list_report_string(only_report=None):
             width=80)
 
         # Get the report's arguments.
-        report_ = report_class()
         parser = argparse.ArgumentParser()
-        report_.add_args(parser)
+        report_ = report_class
+        report_class.add_args(parser)
         args_str = parser.format_help()
 
         # Get the list of supported formats.
-        formats = report_.get_supported_formats()
+        formats = report_class.get_supported_formats()
 
         oss.write('{}:\n'.format(','.join(report_.names)))
         oss.write('  Formats: {}\n'.format(','.join(formats)))
+        #oss.write('  Arguments: {}\n'.format(args_str))
         oss.write('  Description:\n')
         oss.write(description)
         oss.write('\n\n')
@@ -86,12 +98,6 @@ def main():
                         action=ListReportsAction,
                         help="Special: Print the full list of supported reports and exit.")
 
-    parser.add_argument('filename',
-                        help='The Beancout input filename to load.')
-
-    parser.add_argument('report',
-                        help='Name/specification of the desired report.')
-
     parser.add_argument('-f', '--format', default=None,
                         choices=['text', 'csv', 'html', 'beancount'],
                         help="Output format.")
@@ -104,43 +110,55 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Print timings.')
 
-    opts, rest_args = parser.parse_known_args()
+    parser.add_argument('filename', metavar='FILENAME.beancount',
+                        help='The Beancout input filename to load.')
+
+    subparsers = parser.add_subparsers(title='report',
+                                       help='Name/specification of the desired report.')
+
+    for report_class in get_all_reports():
+        name, aliases = report_class.names[0], report_class.names[1:]
+        help = report_class.__doc__.splitlines()[0]
+        report_parser = subparsers.add_parser(name, aliases=aliases,
+                                              description=report_class.__doc__,
+                                              help=help)
+        report_parser.set_defaults(report_class=report_class)
+        report_class.add_args(report_parser)
+
+    args, filter_args = parser.parse_known_args()
 
     # Handle special commands.
-    if opts.help_reports:
+    if args.help_reports:
         print(get_list_report_string())
         return
 
     # Open output file and guess file format.
-    outfile = open(opts.output, 'w') if opts.output else sys.stdout
-    opts.format = opts.format or file_utils.guess_file_format(opts.output)
+    outfile = open(args.output, 'w') if args.output else sys.stdout
+    args.format = args.format or file_utils.guess_file_format(args.output)
 
     # Create the requested report and parse its arguments.
-    report_ = rselect.get_report(opts.report)
-    filter_args = report_.parse_args(rest_args)
-    if report_ is None:
+    chosen_report = args.report_class(args, parser)
+    if chosen_report is None:
         parser.error("Unknown report.")
-    is_check = isinstance(report_, rselect.ErrorReport)
-
-    ## print('FILTER_ARGS', filter_args) ## FIXME: TODO, apply those.
+    is_check = isinstance(chosen_report, rselect.ErrorReport)
 
     # Force hardcore validations, just for check.
     if is_check:
         validation.VALIDATIONS.extend(validation.HARDCORE_VALIDATIONS)
 
-    if opts.verbose:
+    if args.verbose:
         logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
 
     # Parse the input file.
     with misc_utils.log_time('beancount.loader (total)', logging.info):
-        entries, errors, options_map = loader.load(opts.filename,
+        entries, errors, options_map = loader.load(args.filename,
                                                    log_timings=logging.info,
                                                    log_errors=sys.stderr)
 
     # Create holdings list.
     with misc_utils.log_time('report.render', logging.info):
         try:
-            report_.render(entries, errors, options_map, opts.format, outfile)
+            chosen_report.render(entries, errors, options_map, args.format, outfile)
         except report.ReportError as e:
             sys.stderr.write("Error: {}\n".format(e))
             sys.exit(1)
