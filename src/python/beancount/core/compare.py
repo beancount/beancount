@@ -3,7 +3,7 @@
 import collections
 import hashlib
 
-from .data import entry_sortkey
+from .data import entry_sortkey, Price
 
 
 CompareError = collections.namedtuple('CompareError', 'source message entry')
@@ -66,20 +66,30 @@ def hash_entries(entries):
     """
     entry_hash_dict = {}
     errors = []
+    num_legal_duplicates = 0
     for entry in entries:
         entry_type = type(entry)
 
         hash_ = hash_entry(entry)
+
         if hash_ in entry_hash_dict:
-            other_entry = entry_hash_dict[hash_]
-            errors.append(
-                CompareError(entry.source,
-                             "Duplicate entry: {} == {}".format(entry, other_entry),
-                             entry))
+            if isinstance(entry, Price):
+                # Note: Allow duplicate Price entries, they should be common
+                # because of the nature of stock markets (if they're closed, the
+                # data source is likely to return an entry for the previously
+                # available date, which may already have been fetched).
+                num_legal_duplicates += 1
+            else:
+                other_entry = entry_hash_dict[hash_]
+                errors.append(
+                    CompareError(entry.source,
+                                 "Duplicate entry: {} == {}".format(entry, other_entry),
+                                 entry))
         entry_hash_dict[hash_] = entry
 
     if not errors:
-        assert len(entry_hash_dict) == len(entries), (len(entry_hash_dict), len(entries))
+        assert len(entry_hash_dict) + num_legal_duplicates == len(entries), (
+            len(entry_hash_dict), len(entries), num_legal_duplicates)
     return entry_hash_dict, errors
 
 
