@@ -2,7 +2,7 @@
 """
 import collections
 
-from beancount.core.amount import D, ZERO
+from beancount.core.amount import ZERO
 from beancount.core import data
 from beancount.core import account
 from beancount.core import getters
@@ -138,11 +138,6 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
         ])
 
         new_entries.append(entry)
-
-    ## FIXME: remove
-    from beancount.parser import printer
-    with open('/tmp/unrealized.beancount.new', 'a') as f:
-        printer.print_entries(new_entries, file=f)
 
     # Ensure that the accounts we're going to use to book the postings exist, by
     # creating open entries for those that we generated that weren't already

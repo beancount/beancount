@@ -113,12 +113,8 @@ def toc():
          [(view_url('component', component=component), '{}'.format(component))
           for component in components]))
 
-    # FIXME: This deserves its own page, with options for cleanup (or a helper tool).
-    if 0:
-        # By payee views.
-        viewboxes.append(('payee', 'Payees',
-                          [(view_url('payee', payee=payee), '{}'.format(payee))
-                           for payee in sorted(getters.get_all_payees(app.entries))]))
+    # Note: With the filtering language, payees will be added and much many more
+    # options. Don't worry.
 
     oss = io.StringIO()
     oss.write('<div id="viewboxes">\n')
@@ -189,8 +185,8 @@ def activity():
     oss = io.StringIO()
     view = get_all_view(app)
 
-    # FIXME: This renders not as a tree, and also the Liabilities table is not
-    # the same width. Fix this, this doesn't look good.
+    # FIXME(reports): This renders not as a tree, and also the Liabilities table
+    # is not the same width. Fix this, this doesn't look good.
     for root in (app.account_types.assets,
                  app.account_types.liabilities):
         table = acctree.tree_table(oss, realization.get(view.real_accounts, root),
@@ -240,7 +236,7 @@ def events():
 
     return render_global(
         pagetitle="Events",
-        ##contents=contents.getvalue() # FIXME: TODO
+        ##contents=contents.getvalue() # FIXME(reports): TODO
         contents=NOT_IMPLEMENTED
         )
 
@@ -432,7 +428,7 @@ def trial():
                                       classes=['trial'])
 
 
-    ## FIXME: After conversions is fixed, this should always be zero.
+    ## FIXME(reports): After conversions is fixed, this should always be zero.
     total_balance = complete.compute_entries_balance(view.entries)
     table += """
       Total Balance: <span class="num">{}</span>
@@ -559,6 +555,7 @@ def income():
 def equity():
     "Render a table of the net worth at the beginning, end, and net income."
 
+    # FIXME(reports): This whole shebang gets replaced by the holdings reports.
     if 0:
         view = request.view
 
@@ -581,9 +578,9 @@ def equity():
                                                       (position.lot.currency, currency))
                 value = position.number * rate
 
-                # FIXME: We may not have an appropriate conversion here, we may need
-                # to get the cost and then convert the cost to the target currency. Do
-                # this.
+                # FIXME(reports): We may not have an appropriate conversion
+                # here, we may need to get the cost and then convert the cost to
+                # the target currency. Do this.
                 body.write('<td>{}</td>'.format(value))
             body.write('</tr>')
 
@@ -600,8 +597,8 @@ def equity():
            </div>
         """.format(header=header.getvalue(), body=body.getvalue())
 
-        ## FIXME: Render the equity at opening too.
-        ## FIXME: Insert a summary of the net income.
+        ## FIXME(reports): Render the equity at opening too.
+        ## FIXME(reports): Insert a summary of the net income.
 
     return render_view(pagetitle="Shareholder's Equity",
                        contents=NOT_IMPLEMENTED)
