@@ -1,7 +1,7 @@
 import unittest
 import io
 
-from beancount.reports import rholdings
+from beancount.reports import holdings_reports
 from beancount.reports import table
 from beancount.ops import holdings
 from beancount.loader import loaddoc
@@ -32,55 +32,55 @@ class TestReportHoldings(unittest.TestCase):
     # Very basic tests, but still worthwhile. Running the code is a minimum.
 
     def test_get_assets_holdings(self):
-        holdings_list, price_map = rholdings.get_assets_holdings(self.entries,
+        holdings_list, price_map = holdings_reports.get_assets_holdings(self.entries,
                                                                  self.options_map)
         self.assertTrue(isinstance(holdings_list, list))
         self.assertTrue(isinstance(price_map, dict))
 
     def test_report_holdings(self):
-        table_ = rholdings.report_holdings(None, False, self.entries, self.options_map)
+        table_ = holdings_reports.report_holdings(None, False, self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
-        table_ = rholdings.report_holdings('USD', False, self.entries, self.options_map)
+        table_ = holdings_reports.report_holdings('USD', False, self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_report_holdings_bycommodity(self):
-        table_ = rholdings.report_holdings_bycommodity(None, False,
+        table_ = holdings_reports.report_holdings_bycommodity(None, False,
                                                        self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
-        table_ = rholdings.report_holdings_bycommodity('USD', False,
+        table_ = holdings_reports.report_holdings_bycommodity('USD', False,
                                                        self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_report_holdings_byaccount(self):
-        table_ = rholdings.report_holdings_byaccount(None, False,
+        table_ = holdings_reports.report_holdings_byaccount(None, False,
                                                      self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
-        table_ = rholdings.report_holdings_byaccount('USD', False,
+        table_ = holdings_reports.report_holdings_byaccount('USD', False,
                                                      self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_report_holdings_bycurrency(self):
-        table_ = rholdings.report_holdings_bycurrency(None, False,
+        table_ = holdings_reports.report_holdings_bycurrency(None, False,
                                                       self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
-        table_ = rholdings.report_holdings_bycurrency('USD', False,
+        table_ = holdings_reports.report_holdings_bycurrency('USD', False,
                                                       self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_report_networth(self):
-        table_ = rholdings.report_networth(self.entries, self.options_map)
+        table_ = holdings_reports.report_networth(self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_load_from_csv(self):
         oss = io.StringIO()
-        table_ = rholdings.report_holdings(None, False, self.entries, self.options_map)
+        table_ = holdings_reports.report_holdings(None, False, self.entries, self.options_map)
         table.table_to_csv(table_, file=oss)
         iss = io.StringIO(oss.getvalue())
-        holdings_list = list(rholdings.load_from_csv(iss))
+        holdings_list = list(holdings_reports.load_from_csv(iss))
         self.assertEqual(2, len(holdings_list))
         self.assertTrue(isinstance(holdings_list, list))
         self.assertTrue(isinstance(holdings_list[0], holdings.Holding))

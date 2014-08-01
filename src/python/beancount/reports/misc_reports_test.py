@@ -1,6 +1,6 @@
 import unittest
 
-from beancount.reports import rselect
+from beancount.reports import misc_reports
 from beancount.parser import options
 
 
@@ -32,7 +32,7 @@ class TestReportSelect(unittest.TestCase):
     def test_get_report_generator(self):
         options_map = options.DEFAULT_OPTIONS.copy()
         for report_name in self.REPORTS:
-            generator = rselect.get_report_generator(report_name)
+            generator = misc_reports.get_report_generator(report_name)
             self.assertTrue(generator is not None, report_name)
             generator([], options_map)
 

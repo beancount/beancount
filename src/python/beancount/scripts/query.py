@@ -12,8 +12,8 @@ import textwrap
 
 from beancount import loader
 from beancount.ops import validation
-from beancount.reports import rselect
-from beancount.reports import rholdings
+from beancount.reports import misc_reports
+from beancount.reports import holdings_reports
 from beancount.reports import table
 from beancount.reports import report
 from beancount.utils import file_utils
@@ -26,7 +26,7 @@ def get_all_reports():
     Returns:
       A list of all available report classes.
     """
-    return rselect.__reports__ + rholdings.__reports__
+    return misc_reports.__reports__ + holdings_reports.__reports__
 
 
 def get_list_report_string(only_report=None):
@@ -140,7 +140,7 @@ def main():
     chosen_report = args.report_class(args, parser)
     if chosen_report is None:
         parser.error("Unknown report.")
-    is_check = isinstance(chosen_report, rselect.ErrorReport)
+    is_check = isinstance(chosen_report, misc_reports.ErrorReport)
 
     # Force hardcore validations, just for check.
     if is_check:
