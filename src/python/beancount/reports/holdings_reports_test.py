@@ -38,37 +38,39 @@ class TestReportHoldings(unittest.TestCase):
         self.assertTrue(isinstance(price_map, dict))
 
     def test_report_holdings(self):
-        table_ = holdings_reports.report_holdings(None, False, self.entries, self.options_map)
+        table_ = holdings_reports.report_holdings(
+            None, False, self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
-        table_ = holdings_reports.report_holdings('USD', False, self.entries, self.options_map)
+        table_ = holdings_reports.report_holdings(
+            'USD', False, self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_report_holdings_bycommodity(self):
-        table_ = holdings_reports.report_holdings_bycommodity(None, False,
-                                                       self.entries, self.options_map)
+        table_ = holdings_reports.report_holdings_bycommodity(
+            None, False, self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
-        table_ = holdings_reports.report_holdings_bycommodity('USD', False,
-                                                       self.entries, self.options_map)
+        table_ = holdings_reports.report_holdings_bycommodity(
+            'USD', False, self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_report_holdings_byaccount(self):
-        table_ = holdings_reports.report_holdings_byaccount(None, False,
-                                                     self.entries, self.options_map)
+        table_ = holdings_reports.report_holdings_byaccount(
+            None, False, self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
-        table_ = holdings_reports.report_holdings_byaccount('USD', False,
-                                                     self.entries, self.options_map)
+        table_ = holdings_reports.report_holdings_byaccount(
+            'USD', False, self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_report_holdings_bycurrency(self):
-        table_ = holdings_reports.report_holdings_bycurrency(None, False,
-                                                      self.entries, self.options_map)
+        table_ = holdings_reports.report_holdings_bycurrency(
+            None, False, self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
-        table_ = holdings_reports.report_holdings_bycurrency('USD', False,
-                                                      self.entries, self.options_map)
+        table_ = holdings_reports.report_holdings_bycurrency(
+            'USD', False, self.entries, self.options_map)
         self.assertTrue(isinstance(table_, table.TableReport))
 
     def test_report_networth(self):
@@ -77,7 +79,8 @@ class TestReportHoldings(unittest.TestCase):
 
     def test_load_from_csv(self):
         oss = io.StringIO()
-        table_ = holdings_reports.report_holdings(None, False, self.entries, self.options_map)
+        table_ = holdings_reports.report_holdings(
+            None, False, self.entries, self.options_map)
         table.table_to_csv(table_, file=oss)
         iss = io.StringIO(oss.getvalue())
         holdings_list = list(holdings_reports.load_from_csv(iss))

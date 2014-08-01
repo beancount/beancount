@@ -1,4 +1,4 @@
-"""Select a report generator based on an expression.
+"""Miscellaneous report classes.
 """
 import functools
 import re
