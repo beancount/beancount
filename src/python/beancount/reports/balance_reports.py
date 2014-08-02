@@ -14,7 +14,7 @@ from beancount.core import account_types
 from beancount.ops import prices
 
 
-class BalancesReport(report.Report):
+class BalancesReport(report.Report, metaclass=report.RealizationMeta):
     """Print out the trial balance of accounts matching an expression."""
 
     names = ['balances', 'bal', 'trial', 'ledger']
@@ -26,15 +26,14 @@ class BalancesReport(report.Report):
                             action='store', default=None,
                             help="Filter expression for which account balances to display.")
 
-    def render_text(self, entries, errors, options_map, file):
-        real_accounts = realization.realize(entries)
+    def render_real_text(self, real_root, options_map, file):
         if self.args.expression:
             regexp = re.compile(self.args.expression)
-            real_accounts = realization.filter(
-                real_accounts,
+            real_root = realization.filter(
+                real_root,
                 lambda real_account: regexp.search(real_account.account))
-        if real_accounts:
-            realization.dump_balances(real_accounts, file=file)
+        if real_root:
+            realization.dump_balances(real_root, file=file)
 
 
 __reports__ = [
