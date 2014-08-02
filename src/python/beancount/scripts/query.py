@@ -105,8 +105,11 @@ def main():
                               "to stdout. The filename is inspected to select a "
                               "sensible default format, if one is not requested."))
 
-    parser.add_argument('-v', '--verbose', action='store_true',
+    parser.add_argument('-t', '--timings', '--verbose', action='store_true',
                         help='Print timings.')
+
+    parser.add_argument('-q', '--no-errors', action='store_true',
+                        help='Do not report errors.')
 
     parser.add_argument('filename', metavar='FILENAME.beancount',
                         help='The Beancout input filename to load.')
@@ -126,7 +129,7 @@ def main():
     args, filter_args = parser.parse_known_args()
 
     # Handle special commands.
-    if args.help_reports:
+    if args.help_reports or not hasattr(args, 'report_class'):
         print(get_list_report_string())
         return
 
@@ -144,14 +147,15 @@ def main():
     if is_check:
         validation.VALIDATIONS.extend(validation.HARDCORE_VALIDATIONS)
 
-    if args.verbose:
+    if args.timings:
         logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
 
     # Parse the input file.
+    errors_file = None if args.no_errors else sys.stderr
     with misc_utils.log_time('beancount.loader (total)', logging.info):
         entries, errors, options_map = loader.load(args.filename,
                                                    log_timings=logging.info,
-                                                   log_errors=sys.stderr)
+                                                   log_errors=errors_file)
 
     # Create holdings list.
     with misc_utils.log_time('report.render', logging.info):
