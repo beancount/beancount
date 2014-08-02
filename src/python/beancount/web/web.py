@@ -32,8 +32,8 @@ from beancount.parser import options
 from beancount.parser import printer
 from beancount import loader
 from beancount.web import views
-from beancount.web import journal
-from beancount.web import acctree
+from beancount.reports import journal
+from beancount.reports import tree_table
 from beancount.web import gviz
 from beancount.reports import table
 from beancount.reports import html_formatter
@@ -260,7 +260,7 @@ def activity():
     # is not the same width. Fix this, this doesn't look good.
     for root in (app.account_types.assets,
                  app.account_types.liabilities):
-        table = acctree.tree_table(oss, realization.get(view.real_accounts, root),
+        table = tree_table.tree_table(oss, realization.get(view.real_accounts, root),
                                    None,
                                    ['Account', 'Last Entry'])
         for real_account, cells, row_classes in table:
@@ -493,7 +493,7 @@ def trial():
     view = request.view
     real_accounts = view.real_accounts
     operating_currencies = app.options['operating_currency']
-    table = acctree.table_of_balances(real_accounts,
+    table = tree_table.table_of_balances(real_accounts,
                                       operating_currencies,
                                       HTMLFormatter(request.app.get_url, True),
                                       classes=['trial'])
@@ -516,15 +516,15 @@ def balance_sheet_table(real_accounts, options_map, build_url):
 
     operating_currencies = options_map['operating_currency']
     formatter = HTMLFormatter(build_url, True)
-    assets = acctree.table_of_balances(
+    assets = tree_table.table_of_balances(
         realization.get(real_accounts, options_map['name_assets']),
         operating_currencies,
         formatter)
-    liabilities = acctree.table_of_balances(
+    liabilities = tree_table.table_of_balances(
         realization.get(real_accounts, options_map['name_liabilities']),
         operating_currencies,
         formatter)
-    equity = acctree.table_of_balances(
+    equity = tree_table.table_of_balances(
         realization.get(real_accounts, options_map['name_equity']),
         operating_currencies,
         formatter)
@@ -592,11 +592,11 @@ def income():
     # Render the income statement tables.
     operating_currencies = app.options['operating_currency']
     formatter = HTMLFormatter(request.app.get_url, True)
-    income = acctree.table_of_balances(realization.get(real_accounts,
+    income = tree_table.table_of_balances(realization.get(real_accounts,
                                                        app.options['name_income']),
                                        operating_currencies,
                                        formatter)
-    expenses = acctree.table_of_balances(realization.get(real_accounts,
+    expenses = tree_table.table_of_balances(realization.get(real_accounts,
                                                          app.options['name_expenses']),
                                          operating_currencies,
                                          formatter)

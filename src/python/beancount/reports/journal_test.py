@@ -7,7 +7,7 @@ from beancount.core import realization
 from beancount.core import inventory
 from beancount.core import data
 from beancount.reports import html_formatter
-from beancount.web import journal
+from beancount.reports import journal
 
 
 class TestHTMLBalance(unittest.TestCase):
