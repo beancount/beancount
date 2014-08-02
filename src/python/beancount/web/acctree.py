@@ -14,20 +14,6 @@ from beancount.core import realization
 TOTALS_LINE = object()
 
 
-class HTMLFormatter:
-    """A trivial formatter object that can be used to render accounts links.
-    """
-    def render_account(self, account_name):
-        """Render an account name.
-
-        Args:
-          account_name: A string, the name of the account to render.
-        Returns:
-          A string of HTML to be spliced inside an HTML template.
-        """
-        return account_name
-
-
 def is_account_active(real_account):
     """Return true if the account should be rendered. An active account has
     at least one directive that is not an Open directive.

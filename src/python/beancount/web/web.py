@@ -36,9 +36,10 @@ from beancount.web import journal
 from beancount.web import acctree
 from beancount.web import gviz
 from beancount.reports import table
+from beancount.reports import html_formatter
 
 
-class HTMLFormatter(acctree.HTMLFormatter):
+class HTMLFormatter(html_formatter.HTMLFormatter):
     """A formatter object that can be used to render accounts links.
 
     Attributes:
@@ -53,24 +54,59 @@ class HTMLFormatter(acctree.HTMLFormatter):
     EMS_PER_COMPONENT = 1.5
 
     def render_account(self, account_name):
-        """Render an account name, with or without link.
-
-        Args:
-          account_name: A string, the name of the account to render.
-        Returns:
-          A string of HTML to be spliced inside an HTML template.
-        """
+        """See base class."""
         if self.leaf_only:
             # Calculate the number of components to figure out the indent to
             # render at.
             components = account.split(account_name)
             indent = '{:.1f}'.format(len(components) * self.EMS_PER_COMPONENT)
-            anchor = journal.account_link(account_name, self.build_url, leafonly=True)
+            anchor = account_link(account_name, self.build_url, leafonly=True)
             return '<span "account" style="padding-left: {}em">{}</span>'.format(
                 indent, anchor)
         else:
-            anchor = journal.account_link(account_name, self.build_url, leafonly=False)
+            anchor = account_link(account_name, self.build_url, leafonly=False)
             return '<span "account">{}</span>'.format(anchor)
+
+    def render_link(self, link):
+        """See base class."""
+        return self.build_url('link', link=link)
+
+    def render_doc(self, filename):
+        """See base class."""
+        return self.build_url('doc', filename=filename.lstrip('/'))
+
+
+def account_link(account_name, build_url, leafonly=False):
+    """Render an HTML anchor for the given account name.
+
+    The conversion to string is memoized, as it never changes. An actual link to
+    an account is only rendered if a build_url callable is provided. Otherwise,
+    a snippet of HTML that will just render the name of the account without a
+    link is rendered.
+
+    Args:
+      account_name: A string, the name of the account to render, or an
+        instance of RealAccount. Both are accepted.
+      build_url: A function used to build a URL. If not specified, a snippet of
+        HTML to at least render the account name without a link is produced.
+      leafonly: A boolean, if true, render only the name of the leaf, not the
+        entire account name.
+    Returns:
+      A string, a snippet of HTML that renders and links to the account name.
+    """
+    assert isinstance(account_name, str), account_name
+    slashed_name = account_name.replace(account.sep, '/')
+    if leafonly:
+        account_name = account.leaf(account_name)
+
+    if build_url is None:
+        link = '<span class="account">{}</a>'.format(account_name)
+    else:
+        link = '<a href="{}" class="account">{}</a>'.format(
+            build_url('account', slashed_account_name=slashed_name),
+            account_name)
+
+    return link
 
 
 #--------------------------------------------------------------------------------
@@ -340,7 +376,8 @@ def link(link=None):
     linked_entries = basicops.filter_link(link, app.entries)
 
     oss = io.StringIO()
-    journal.entries_table_with_balance(oss, linked_entries, None)
+    formatter = HTMLFormatter(request.app.get_url, False)
+    journal.entries_table_with_balance(oss, linked_entries, formatter)
     return render_global(
         pagetitle="Link: {}".format(link),
         contents=oss.getvalue())
@@ -669,7 +706,8 @@ def account_(slashed_account_name=None):
     account_postings = realization.get_postings(real_account)
 
     oss = io.StringIO()
-    journal.entries_table_with_balance(oss, account_postings, request.app.get_url)
+    formatter = HTMLFormatter(request.app.get_url, False)
+    journal.entries_table_with_balance(oss, account_postings, formatter)
     return render_view(
         pagetitle='{}'.format(account_name or 'ROOT'),
         contents=oss.getvalue())
@@ -690,7 +728,8 @@ def conversions():
 
     oss = io.StringIO()
     conversion_entries = get_conversion_entries(view.entries)
-    journal.entries_table(oss, conversion_entries, request.app.get_url,
+    formatter = HTMLFormatter(request.app.get_url, False)
+    journal.entries_table(oss, conversion_entries, formatter,
                           render_postings=True)
 
     conversion_balance = complete.compute_entries_balance(conversion_entries)
@@ -841,7 +880,8 @@ def documents():
     document_entries = list(misc_utils.filter_type(request.view.entries, Document))
     oss = io.StringIO()
     if document_entries:
-        journal.entries_table(oss, document_entries, request.app.get_url)
+        formatter = HTMLFormatter(request.app.get_url, True)
+        journal.entries_table(oss, document_entries, formatter)
     else:
         oss.write("(No documents.)")
     return render_view(
