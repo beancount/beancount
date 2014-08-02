@@ -4,7 +4,6 @@ Each report class should be able to render a filtered list of entries to a
 variety of formats. Each report has a name, some command-line options, and
 supports some subset of formats.
 """
-import argparse
 import io
 import re
 

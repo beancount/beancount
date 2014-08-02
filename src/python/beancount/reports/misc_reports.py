@@ -1,10 +1,7 @@
 """Miscellaneous report classes.
 """
-import functools
 import re
-import io
 
-from beancount.utils.snoop import snooper
 from beancount.reports import report
 from beancount.reports import table
 from beancount.parser import printer
@@ -122,7 +119,8 @@ class AccountsReport(report.Report):
                                              key=lambda entry: sortkey_fun(entry[0])):
             open_date = open.date if open else ''
             close_date = close.date if close else ''
-            file.write('{:{len}}  {}  {}\n'.format(account, open_date, close_date, len=maxlen))
+            file.write('{:{len}}  {}  {}\n'.format(account, open_date, close_date,
+                                                   len=maxlen))
 
 
 class EventsReport(report.TableReport):

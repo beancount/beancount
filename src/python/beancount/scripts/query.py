@@ -4,7 +4,6 @@ This is to share my portfolio with others, or to compute its daily changes.
 """
 import argparse
 import io
-import itertools
 import logging
 import re
 import sys
@@ -14,7 +13,6 @@ from beancount import loader
 from beancount.ops import validation
 from beancount.reports import misc_reports
 from beancount.reports import holdings_reports
-from beancount.reports import table
 from beancount.reports import report
 from beancount.utils import file_utils
 from beancount.utils import misc_utils
