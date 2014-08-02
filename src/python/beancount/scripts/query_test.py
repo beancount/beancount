@@ -5,6 +5,14 @@ from beancount.scripts import query
 
 
 def search_words(words, line):
+    """Search for a sequence of words in a line.
+
+    Args:
+      words: A list of strings, the words to look for, or a space-separated string.
+      line: A string, the line to search into.
+    Returns:
+      A MatchObject, or None.
+    """
     if isinstance(words, str):
         words = words.split()
     return re.search('.*'.join(r'\b{}\b'.format(word) for word in words), line)
@@ -23,6 +31,17 @@ class TestHelpReports(test_utils.TestCase):
     def test_get_list_report_string__invalid_report(self):
         help_string = query.get_list_report_string('blablabla')
         self.assertEqual(None, help_string)
+
+
+class TestScriptQuery(test_utils.TestCase):
+
+    @test_utils.docfile
+    def test_list_accounts_empty(self, filename):
+        ""
+        # Check that invocation with just a filename prints something (the list of reports).
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(query.main, [filename])
+        self.assertTrue(stdout.getvalue())
 
 
 class TestScriptPositions(test_utils.TestCase):
