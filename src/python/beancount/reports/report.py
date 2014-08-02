@@ -4,6 +4,7 @@ Each report class should be able to render a filtered list of entries to a
 variety of formats. Each report has a name, some command-line options, and
 supports some subset of formats.
 """
+import argparse
 import io
 import re
 
@@ -31,6 +32,23 @@ class Report:
     def __init__(self, args, parser):
         self.parser = parser
         self.args = args
+
+    @classmethod
+    def from_args(cls, argv=None):
+        """A convenience method used to create an instance from arguments.
+
+        This creates an instance of the report with default arguments. This is a
+        convenience that may be used for tests. Our actual script uses subparsers
+        and invokes add_args() and creates an appropriate instance directly.
+
+        Args:
+          argv: A list of strings, command-line arguments to use to construct tbe report.
+        Returns:
+          A new instace of the report.
+        """
+        parser = argparse.ArgumentParser()
+        cls.add_args(parser)
+        return cls(parser.parse_args(argv or []), parser)
 
     @classmethod
     def add_args(cls, parser):
@@ -92,7 +110,7 @@ class TableReport(Report):
 
     default_format = 'text'
 
-    def render_table(self, entries, errors, options_map):
+    def generate_table(self, entries, errors, options_map):
         """Render the report to a Table instance.
 
         Args:
@@ -105,17 +123,17 @@ class TableReport(Report):
         raise NotImplementedError
 
     def render_text(self, entries, errors, options_map, file):
-        table_ = self.render_table(entries, errors, options_map)
-        table.render_table(table_, file, 'text')
+        table_ = self.generate_table(entries, errors, options_map)
+        table.generate_table(table_, file, 'text')
 
     def render_html(self, entries, errors, options_map, file):
-        table_ = self.render_table(entries, errors, options_map)
-        table.render_table(table_, file, 'html')
+        table_ = self.generate_table(entries, errors, options_map)
+        table.generate_table(table_, file, 'html')
 
     def render_htmldiv(self, entries, errors, options_map, file):
-        table_ = self.render_table(entries, errors, options_map)
-        table.render_table(table_, file, 'htmldiv')
+        table_ = self.generate_table(entries, errors, options_map)
+        table.generate_table(table_, file, 'htmldiv')
 
     def render_csv(self, entries, errors, options_map, file):
-        table_ = self.render_table(entries, errors, options_map)
-        table.render_table(table_, file, 'csv')
+        table_ = self.generate_table(entries, errors, options_map)
+        table.generate_table(table_, file, 'csv')

@@ -10,7 +10,7 @@ from beancount.loader import loaddoc
 class TestReportHoldings(unittest.TestCase):
 
     @loaddoc
-    def setUp(self, entries, _, options_map):
+    def setUp(self, entries, errors, options_map):
         """
         2014-01-01 open Assets:Bank1
         2014-01-01 open Assets:Bank2
@@ -26,6 +26,7 @@ class TestReportHoldings(unittest.TestCase):
           Income:Something
         """
         self.entries = entries
+        self.errors = errors
         self.options_map = options_map
 
     # Basically just call these functions below, to exercise them.
@@ -38,44 +39,21 @@ class TestReportHoldings(unittest.TestCase):
         self.assertTrue(isinstance(price_map, dict))
 
     def test_report_holdings(self):
-        table_ = holdings_reports.report_holdings(
-            None, False, self.entries, self.options_map)
-        self.assertTrue(isinstance(table_, table.TableReport))
-
-        table_ = holdings_reports.report_holdings(
-            'USD', False, self.entries, self.options_map)
-        self.assertTrue(isinstance(table_, table.TableReport))
-
-    def test_report_holdings_bycommodity(self):
-        table_ = holdings_reports.report_holdings_bycommodity(
-            None, False, self.entries, self.options_map)
-        self.assertTrue(isinstance(table_, table.TableReport))
-
-        table_ = holdings_reports.report_holdings_bycommodity(
-            'USD', False, self.entries, self.options_map)
-        self.assertTrue(isinstance(table_, table.TableReport))
-
-    def test_report_holdings_byaccount(self):
-        table_ = holdings_reports.report_holdings_byaccount(
-            None, False, self.entries, self.options_map)
-        self.assertTrue(isinstance(table_, table.TableReport))
-
-        table_ = holdings_reports.report_holdings_byaccount(
-            'USD', False, self.entries, self.options_map)
-        self.assertTrue(isinstance(table_, table.TableReport))
-
-    def test_report_holdings_bycurrency(self):
-        table_ = holdings_reports.report_holdings_bycurrency(
-            None, False, self.entries, self.options_map)
-        self.assertTrue(isinstance(table_, table.TableReport))
-
-        table_ = holdings_reports.report_holdings_bycurrency(
-            'USD', False, self.entries, self.options_map)
-        self.assertTrue(isinstance(table_, table.TableReport))
+        for args in [[],
+                     ['--currency=USD'],
+                     ['--by=commodity'],
+                     ['--by=account'],
+                     ['--by=currency']]:
+            report_ = holdings_reports.HoldingsReport.from_args(args)
+            for format_ in report_.get_supported_formats():
+                output = report_.render(self.entries, self.errors, self.options_map, format_)
+                self.assertTrue(output)
 
     def test_report_networth(self):
-        table_ = holdings_reports.report_networth(self.entries, self.options_map)
-        self.assertTrue(isinstance(table_, table.TableReport))
+        report_ = holdings_reports.NetWorthReport.from_args([])
+        for format_ in report_.get_supported_formats():
+            output = report_.render(self.entries, self.errors, self.options_map, format_)
+            self.assertTrue(output)
 
     def test_load_from_csv(self):
         oss = io.StringIO()
@@ -87,7 +65,3 @@ class TestReportHoldings(unittest.TestCase):
         self.assertEqual(2, len(holdings_list))
         self.assertTrue(isinstance(holdings_list, list))
         self.assertTrue(isinstance(holdings_list[0], holdings.Holding))
-
-
-# Add appropriate tests for all combinations.
-__incomplete__ = True

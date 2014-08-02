@@ -15,7 +15,7 @@ import itertools
 #   header: A sequence of strings, a header to be rendered for each column.
 #   rows: A list of rows, each of which is a sequence of strings, the
 #     contents of all the cells of the table body.
-TableReport = collections.namedtuple('TableReport', 'columns header body')
+Table = collections.namedtuple('Table', 'columns header body')
 
 
 def attribute_to_title(fieldname):
@@ -40,7 +40,7 @@ def create_table(rows, field_spec=None):
         functions to call on the fields to render them. If a function is set to
         None, we will just call str() on the field.
     Returns:
-      A TableReport instance.
+      A Table instance.
     """
     # Normalize field_spec to a dict.
     if field_spec is None:
@@ -106,14 +106,14 @@ def create_table(rows, field_spec=None):
             body_row.append(value)
         body.append(body_row)
 
-    return TableReport(columns, header, body)
+    return Table(columns, header, body)
 
 
 def table_to_html(table, classes=None, file=None):
-    """Render a TableReport to HTML.
+    """Render a Table to HTML.
 
     Args:
-      table: An instance of a TableReport.
+      table: An instance of a Table.
       classes: A list of string, CSS classes to set on the table.
       file: A file object to write to. If no object is provided, this
         function returns a string.
@@ -152,10 +152,10 @@ def table_to_html(table, classes=None, file=None):
 def table_to_text(table,
                   column_interspace=" ",
                   formats=None):
-    """Render a TableReport to ASCII text.
+    """Render a Table to ASCII text.
 
     Args:
-      table: An instance of a TableReport.
+      table: An instance of a Table.
       column_interspace: A string to render between the columns as spacer.
       formats: An optional dict of column name to a format character that gets
         inserted in a format string specified, like this (where '<char>' is):
@@ -200,10 +200,10 @@ def table_to_text(table,
 
 
 def table_to_csv(table, file=None, **kwargs):
-    """Render a TableReport to a CSV file.
+    """Render a Table to a CSV file.
 
     Args:
-      table: An instance of a TableReport.
+      table: An instance of a Table.
       file: A file object to write to. If no object is provided, this
         function returns a string.
       **kwargs: Optional arguments forwarded to csv.writer().
@@ -247,7 +247,7 @@ def compute_table_widths(rows):
     return column_widths
 
 
-def render_table(table_, output, format, css_id=None, css_class=None):
+def generate_table(table_, output, format, css_id=None, css_class=None):
     """Render the given table to the output file object in the requested format.
 
     The table gets written out to the 'output' file.

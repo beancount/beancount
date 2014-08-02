@@ -190,7 +190,7 @@ class HoldingsReport(report.TableReport):
                             choices=cls.aggregations.keys(),
                             help="How to group the holdings (default is: don't group)")
 
-    def render_table(self, entries, errors, options_map):
+    def generate_table(self, entries, errors, options_map):
         keywords = self.aggregations[self.args.groupby] if self.args.groupby else {}
         return report_holdings(self.args.currency, self.args.relative,
                                entries, options_map,
@@ -202,7 +202,7 @@ class NetWorthReport(report.TableReport):
 
     names = ['networth', 'equity']
 
-    def render_table(self, entries, errors, options_map):
+    def generate_table(self, entries, errors, options_map):
         holdings_list, price_map = get_assets_holdings(entries, options_map)
 
         net_worths = []

@@ -1,41 +1,21 @@
+import argparse
 import unittest
 
 from beancount.reports import misc_reports
+from beancount.reports import report
+from beancount.reports import report_test
 from beancount.parser import options
 
 
 class TestReportSelect(unittest.TestCase):
 
-    REPORTS = [
-        'check',
-        'validate',
-        'print',
-        'prices',
-        'prices_db',
-        'accounts',
-        'trial',
-        'bal',
-        'balances',
-        'balances:Assets',
-        'balances:.*US.*',
-        'holdings',
-        'holdings_bycommodity',
-        'holdings_bycommodity:USD',
-        'holdings_byaccount',
-        'holdings_byaccount:USD',
-        'holdings_bycurrency',
-        'holdings_bycurrency:USD',
-        'networth',
-        'events',
-        ]
-
-    def test_get_report_generator(self):
+    def test_all_reports_empty(self):
+        # Test rendering all reports from empty liss of entries.
+        entries = []
+        errors = []
         options_map = options.DEFAULT_OPTIONS.copy()
-        for report_name in self.REPORTS:
-            generator = misc_reports.get_report_generator(report_name)
-            self.assertTrue(generator is not None, report_name)
-            generator([], options_map)
 
-
-# Add appropriate tests for all combinations.
-__incomplete__ = True
+        for report_, format_ in report_test.iter_reports(misc_reports.__reports__):
+            output = report_.render(entries, errors, options_map, format_)
+            self.assertEqual(options.DEFAULT_OPTIONS, options_map)
+            self.assertTrue(isinstance(output, str))

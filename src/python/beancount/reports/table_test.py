@@ -36,7 +36,7 @@ class TestTable(unittest.TestCase):
         ]
         table_object = table.create_table(tuples, [(0, 'Currency'), 1])
 
-        self.assertEqual(table.TableReport(columns=[0, 1],
+        self.assertEqual(table.Table(columns=[0, 1],
                                            header=['Currency', 'Field 1'],
                                            body=[['USD', '1111.00'],
                                                  ['CAD', '1333.33']]),
@@ -126,14 +126,14 @@ class TestTable(unittest.TestCase):
                 ['aaaa', 'bb', 'c', 'd'],
             ])
 
-    def test_render_table(self):
+    def test_generate_table(self):
         table_object = self.test_create_table()
         oss = io.StringIO()
-        table.render_table(table_object, oss, 'csv')
+        table.generate_table(table_object, oss, 'csv')
         self.assertTrue(oss.getvalue())
         oss = io.StringIO()
-        table.render_table(table_object, oss, 'txt')
+        table.generate_table(table_object, oss, 'txt')
         self.assertTrue(oss.getvalue())
         oss = io.StringIO()
-        table.render_table(table_object, oss, 'html')
+        table.generate_table(table_object, oss, 'html')
         self.assertTrue(oss.getvalue())

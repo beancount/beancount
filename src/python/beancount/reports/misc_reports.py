@@ -121,14 +121,12 @@ class AccountsReport(report.Report):
             close_date = close.date if close else ''
             file.write('{:{len}}  {}  {}\n'.format(account, open_date, close_date,
                                                    len=maxlen))
-
-
 class EventsReport(report.TableReport):
     """Produce a table of the latest values of all event types."""
 
     names = ['events']
 
-    def render_table(self, entries, errors, options_map):
+    def generate_table(self, entries, errors, options_map):
         events = {}
         for entry in entries:
             if isinstance(entry, data.Event):
