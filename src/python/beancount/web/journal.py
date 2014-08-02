@@ -10,7 +10,9 @@ from beancount.core import realization
 from beancount.core import flags
 
 
-def account_link(account_, build_url, leafonly=False):
+# FIXME: This needs to move into web, and journal needs to use HTMLFormatter in
+# the same way that acctree uses it too.
+def account_link(account_name, build_url, leafonly=False):
     """Render an HTML anchor for the given account name.
 
     The conversion to string is memoized, as it never changes. An actual link to
@@ -28,10 +30,7 @@ def account_link(account_, build_url, leafonly=False):
     Returns:
       A string, a snippet of HTML that renders and links to the account name.
     """
-    if isinstance(account_, str):
-        account_name = account_
-    elif isinstance(account_, realization.RealAccount):
-        account_name = account_.account
+    assert isinstance(account_name, str), account_name
 
     slashed_name = account_name.replace(account.sep, '/')
 

@@ -28,13 +28,6 @@ class TestActiveAccounts(unittest.TestCase):
             realization.get(real_root, 'Assets:Active')))
 
 
-
-def mock_build_url(name, **kw):
-    "A fake URL builder, just for testing."
-    return '/{}/{}'.format(name, '/'.join(value
-                                          for _, value in sorted(kw.items())))
-
-
 class TestTables(unittest.TestCase):
 
     @loader.loaddoc
@@ -60,10 +53,9 @@ class TestTables(unittest.TestCase):
         oss = io.StringIO()
         for real_node, cells, classes in acctree.tree_table(oss,
                                                             self.real_root,
-                                                            mock_build_url,
+                                                            None,
                                                             header=['Account', 'Balance'],
-                                                            classes=['5cdc3b134179'],
-                                                            leafonly=False):
+                                                            classes=['5cdc3b134179']):
             if real_node is acctree.TOTALS_LINE:
                 cells.append('THE_TOTAL')
                 continue
@@ -75,22 +67,8 @@ class TestTables(unittest.TestCase):
         self.assertTrue(re.search('5cdc3b134179', html))
         self.assertTrue(re.search('Assets:US:Checking', html))
 
-    def test_tree_table__leafonly(self):
-        # Complementary test to check that leafonly works.
-        oss = io.StringIO()
-        for real_node, cells, classes in acctree.tree_table(oss,
-                                                            self.real_root,
-                                                            mock_build_url,
-                                                            header=['Account', 'Balance'],
-                                                            classes=['5cdc3b134179'],
-                                                            leafonly=True):
-            cells.append("")
-        html = oss.getvalue()
-
-        self.assertFalse(re.search('Assets:US:Checking', html))
-
     def test_table_of_balances(self):
-        html = acctree.table_of_balances(self.real_root, ['USD', 'CAD'], mock_build_url,
+        html = acctree.table_of_balances(self.real_root, ['USD', 'CAD'], None,
                                          classes=['586e8200b379'])
         self.assertTrue(re.search('<table', html))
         self.assertTrue(re.search('USD', html))

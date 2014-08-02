@@ -38,6 +38,41 @@ from beancount.web import gviz
 from beancount.reports import table
 
 
+class HTMLFormatter(acctree.HTMLFormatter):
+    """A formatter object that can be used to render accounts links.
+
+    Attributes:
+      build_url: A function used to render links to a Bottle application.
+      leafonly: a boolean, if true, render only the name of the leaf nodes.
+    """
+    def __init__(self, build_url, leaf_only):
+        super().__init__()
+        self.build_url = build_url
+        self.leaf_only = leaf_only
+
+    EMS_PER_COMPONENT = 1.5
+
+    def render_account(self, account_name):
+        """Render an account name, with or without link.
+
+        Args:
+          account_name: A string, the name of the account to render.
+        Returns:
+          A string of HTML to be spliced inside an HTML template.
+        """
+        if self.leaf_only:
+            # Calculate the number of components to figure out the indent to
+            # render at.
+            components = account.split(account_name)
+            indent = '{:.1f}'.format(len(components) * self.EMS_PER_COMPONENT)
+            anchor = journal.account_link(account_name, self.build_url, leafonly=True)
+            return '<span "account" style="padding-left: {}em">{}</span>'.format(
+                indent, anchor)
+        else:
+            anchor = journal.account_link(account_name, self.build_url, leafonly=False)
+            return '<span "account">{}</span>'.format(anchor)
+
+
 #--------------------------------------------------------------------------------
 # Global application pages.
 
@@ -191,8 +226,7 @@ def activity():
                  app.account_types.liabilities):
         table = acctree.tree_table(oss, realization.get(view.real_accounts, root),
                                    None,
-                                   ['Account', 'Last Entry'],
-                                   leafonly=False)
+                                   ['Account', 'Last Entry'])
         for real_account, cells, row_classes in table:
             if not isinstance(real_account, realization.RealAccount):
                 continue
@@ -424,7 +458,7 @@ def trial():
     operating_currencies = app.options['operating_currency']
     table = acctree.table_of_balances(real_accounts,
                                       operating_currencies,
-                                      request.app.get_url,
+                                      HTMLFormatter(request.app.get_url, True),
                                       classes=['trial'])
 
 
@@ -444,18 +478,19 @@ def balance_sheet_table(real_accounts, options_map, build_url):
     """Render an HTML balance sheet of the real_accounts tree."""
 
     operating_currencies = options_map['operating_currency']
+    formatter = HTMLFormatter(build_url, True)
     assets = acctree.table_of_balances(
         realization.get(real_accounts, options_map['name_assets']),
         operating_currencies,
-        build_url)
+        formatter)
     liabilities = acctree.table_of_balances(
         realization.get(real_accounts, options_map['name_liabilities']),
         operating_currencies,
-        build_url)
+        formatter)
     equity = acctree.table_of_balances(
         realization.get(real_accounts, options_map['name_equity']),
         operating_currencies,
-        build_url)
+        formatter)
 
     return """
            <div class="halfleft">
@@ -519,14 +554,15 @@ def income():
 
     # Render the income statement tables.
     operating_currencies = app.options['operating_currency']
+    formatter = HTMLFormatter(request.app.get_url, True)
     income = acctree.table_of_balances(realization.get(real_accounts,
                                                        app.options['name_income']),
                                        operating_currencies,
-                                       request.app.get_url)
+                                       formatter)
     expenses = acctree.table_of_balances(realization.get(real_accounts,
                                                          app.options['name_expenses']),
                                          operating_currencies,
-                                         request.app.get_url)
+                                         formatter)
 
     contents = """
        <div id="income" class="halfleft">

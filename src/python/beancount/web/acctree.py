@@ -3,7 +3,6 @@
 import io
 import re
 
-from beancount.web.journal import account_link
 from beancount.core.account_types import is_root_account
 from beancount.core.position import Lot
 from beancount.core import data
@@ -14,7 +13,19 @@ from beancount.core import realization
 # A special enum for the "Totals" line at the bottom of the table.
 TOTALS_LINE = object()
 
-EMS_PER_SPACE = 2.5
+
+class HTMLFormatter:
+    """A trivial formatter object that can be used to render accounts links.
+    """
+    def render_account(self, account_name):
+        """Render an account name.
+
+        Args:
+          account_name: A string, the name of the account to render.
+        Returns:
+          A string of HTML to be spliced inside an HTML template.
+        """
+        return account_name
 
 
 def is_account_active(real_account):
@@ -33,7 +44,7 @@ def is_account_active(real_account):
     return False
 
 
-def tree_table(oss, real_account, build_url, header=None, classes=None, leafonly=True):
+def tree_table(oss, real_account, formatter, header=None, classes=None):
     """Generator to a tree of accounts as an HTML table.
 
     This yields each real_account object in turn and a list object used to
@@ -42,11 +53,10 @@ def tree_table(oss, real_account, build_url, header=None, classes=None, leafonly
     Args:
       oss: a io.StringIO instance, into which we will render the HTML.
       real_account: an instance of a RealAccount node.
-      build_url: A function to build/render a URL from an app.
+      formatter: A object used to render account names and other links.
       header: a list of header columns to render. The first column is special,
               and is used for the account name.
       classes: a list of CSS class strings to apply to the table element.
-      leafonly: a boolean, if true, render only the name of the leaf nodes.
     Returns:
       A generator of tuples of
         real_account: An instance of RealAccount to render as a row
@@ -101,22 +111,13 @@ def tree_table(oss, real_account, build_url, header=None, classes=None, leafonly
         write('<tr class="{}">'.format(' '.join(row_classes)))
 
         if real_account is TOTALS_LINE:
-            indent = '0'
             label = '<span class="totals-label">Totals</span>'
         else:
-            if leafonly:
-                # Look for the first account character to figure out how much
-                # indent to create.
-                mo = re.search('[A-Za-z]', first_line)
-                length = mo.start() if mo else 0
-                indent = '{:.1f}'.format(length/EMS_PER_SPACE)
-                label = account_link(real_account, build_url, leafonly=True)
-            else:
-                indent = '0'
-                label = account_link(real_account, build_url, leafonly=False)
+            label = (formatter.render_account(real_account.account)
+                     if formatter
+                     else real_account.account)
 
-        write('<td class="tree-node-name" style="padding-left: {}em">{}</td>'.format(
-            indent, label))
+        write('<td class="tree-node-name">{}</td>'.format(label))
 
         # Add columns for each value rendered.
         for cell in cells:
@@ -127,18 +128,16 @@ def tree_table(oss, real_account, build_url, header=None, classes=None, leafonly
     write('</table>')
 
 
-def table_of_balances(real_root, operating_currencies, build_url,
-                      classes=None, leafonly=True):
+def table_of_balances(real_root, operating_currencies, formatter, classes=None):
     """Render a table of balances.
 
     Args:
       real_root: A RealAccount node, the root node to render.
       operating_currencies: A list of strings, the operating currencies to render
         in this own dedicated columns.
-      build_url: A function to build/render a URL from an app.
+      formatter: A object used to render account names and other links.
       classes: A list of strings, the CSS classes to attach to the renderd
         top-level table objet.
-      leafonly: a boolean, if true, render only the name of the leaf nodes.
     Returns:
       A string with HTML contents, the rendered table.
     """
@@ -156,8 +155,8 @@ def table_of_balances(real_root, operating_currencies, build_url,
     oss = io.StringIO()
     classes = list(classes) if classes else []
     classes.append('fullwidth')
-    for real_account, cells, row_classes in tree_table(oss, real_root, build_url,
-                                                       header, classes, leafonly=leafonly):
+    for real_account, cells, row_classes in tree_table(oss, real_root, formatter,
+                                                       header, classes):
 
         if real_account is TOTALS_LINE:
             line_balance = balance_totals
