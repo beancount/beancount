@@ -494,10 +494,9 @@ def trial():
     real_accounts = view.real_accounts
     operating_currencies = app.options['operating_currency']
     table = tree_table.table_of_balances(real_accounts,
-                                      operating_currencies,
-                                      HTMLFormatter(request.app.get_url, True),
-                                      classes=['trial'])
-
+                                         operating_currencies,
+                                         HTMLFormatter(request.app.get_url, True),
+                                         classes=['trial'])
 
     ## FIXME(reports): After conversions is fixed, this should always be zero.
     total_balance = complete.compute_entries_balance(view.entries)

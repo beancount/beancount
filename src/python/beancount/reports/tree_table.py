@@ -115,12 +115,12 @@ def tree_table(oss, real_account, formatter, header=None, classes=None):
 
 
 def table_of_balances(real_root, operating_currencies, formatter, classes=None):
-    """Render a table of balances.
+    """Render a tree table with the balance of each accounts.
 
     Args:
       real_root: A RealAccount node, the root node to render.
       operating_currencies: A list of strings, the operating currencies to render
-        in this own dedicated columns.
+        to their own dedicated columns.
       formatter: A object used to render account names and other links.
       classes: A list of strings, the CSS classes to attach to the renderd
         top-level table objet.

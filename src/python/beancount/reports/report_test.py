@@ -2,10 +2,13 @@ import argparse
 import collections
 import unittest
 import re
+import io
 
 from beancount.core.amount import D
+from beancount.core import realization
 from beancount.reports import report
 from beancount.reports import table
+from beancount.parser import options
 from beancount import loader
 
 
@@ -129,6 +132,28 @@ class TestTableReport(unittest.TestCase):
         output = self.report.render(self.entries, self.errors, self.options_map, 'csv')
         self.assertTrue(all(re.search(x, output)
                             for x in ['account1', 'account2', 'Account', 'Balance']))
+
+
+class TestRealizationMeta(unittest.TestCase):
+
+    def test_realization_metaclass(self):
+
+        class MyReport(report.Report, metaclass=report.RealizationMeta):
+
+            def render_real_text(self, real_account, options_map, file):
+                realization.dump_balances(real_account, file)
+
+            def render_real_html(self, real_account, options_map, file):
+                self.render_real_text(real_account, options_map, file)
+
+        self.assertEqual({'html', 'text'}, set(MyReport.get_supported_formats()))
+
+        report_ = MyReport.from_args([])
+        oss = io.StringIO()
+        report_.render([], [], options.DEFAULT_OPTIONS, 'text', oss)
+        self.assertTrue(oss.getvalue())
+        report_.render([], [], options.DEFAULT_OPTIONS, 'html', oss)
+        self.assertTrue(oss.getvalue())
 
 
 class TestReportFunctions(unittest.TestCase):

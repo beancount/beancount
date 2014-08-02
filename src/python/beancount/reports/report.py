@@ -9,6 +9,8 @@ import io
 import re
 
 from beancount.reports import table
+from beancount.parser import options
+from beancount.core import realization
 
 
 class ReportError(Exception):
@@ -68,7 +70,7 @@ class Report:
         """
         formats = []
         for name in dir(cls):
-            mo = re.match('render_(.*)', name)
+            mo = re.match('render_([a-z0-9]+)$', name)
             if mo:
                 formats.append(mo.group(1))
         return sorted(formats)
@@ -137,6 +139,61 @@ class TableReport(Report):
     def render_csv(self, entries, errors, options_map, file):
         table_ = self.generate_table(entries, errors, options_map)
         table.generate_table(table_, file, 'csv')
+
+
+class RealizationMeta(type):
+    """A metaclass for reports that render a realization.
+
+    The main use of this metaclass is to allow us to create report classes with
+    render_real_*() methods that accept a RealAccount instance as the basis for
+    producing a report.
+
+    RealAccount can be expensive to build, and may be pre-computed and kept
+    around to generate the various reports related to a particular filter of a
+    subset of transactions, and it would be inconvenient to have to recalculate
+    it every time we need to produce a report. In particular, this is the case
+    for the web interface: the user selects a particular subset of transactions
+    to view, and can then click to the various reports related to this subset of
+    transactions. This is why this is useful.
+
+    The classes generated with this metaclass respond to the same interface as
+    the regular report classes, so that if invoked from the command-line, it
+    will automatically build the realization from the given set of entries. This
+    metaclass looks at the class' existing render_real_*() methods and generate
+    the corresponding render_*() methods automatically.
+    """
+
+    # Note: I'm not a big fan of metaclass magic, but this use case is squarely
+    # relevant for it, so I'm using it.
+    def __new__(cls, name, bases, namespace):
+        new_type = super(RealizationMeta, cls).__new__(cls, name, bases, namespace)
+
+        # Go through the methods of the new type and look for render_real() methods.
+        new_methods = {}
+        for attr, value in new_type.__dict__.items():
+            mo = re.match('render_real_(.*)', attr)
+            if not mo:
+                continue
+
+            # Make sure that if an explicit version of render_*() has already
+            # been declared, that we don't override it.
+            render_function_name = 'render_{}'.format(mo.group(1))
+            if render_function_name in new_type.__dict__:
+                continue
+
+            # Define a render_*() method on the class.
+            def forward_method(self, entries, errors, options_map, file, fwdfunc=value):
+                account_types = options.get_account_types(options_map)
+                real_root = realization.realize(entries, account_types)
+                return fwdfunc(self, real_root, options_map, file)
+            forward_method.__name__ = render_function_name
+            new_methods[render_function_name] = forward_method
+
+        # Update the type with the newly defined methods..
+        for name, value in new_methods.items():
+            setattr(new_type, name, value)
+
+        return new_type
 
 
 def get_all_reports():
