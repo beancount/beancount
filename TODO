@@ -315,13 +315,6 @@ beancount: TODO
 
   - Implement Amount.from_string() to be consistent with position and inventory?
 
-  - For .source, instead of '<...>' for the source, we should use a scheme:...,
-    like file://..., and plugin:beancount.... . This makes a lot more sense. Do
-    this now before the release.
-
-  - 'Source' should just be a string. For the file:// case, just add the line
-    number as part of the URL, at the end. file:///path/to/ledger.beancount:182
-
 
 ** Unsure
 
@@ -351,6 +344,13 @@ beancount: TODO
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
+
+
+  - Refine 'source' attribute on all directives: For .source, instead of '<...>'
+    for the filename, we should use a scheme:..., like file://..., and
+    plugin:beancount.... . This makes a lot more sense. The lineno still needs
+    to be separate, we need that for sorting and prefer not to have it part of
+    the string.
 
 
   - Add an option for spacing in the revamped reports.
