@@ -32,8 +32,8 @@ beancount: TODO
   - beancount.core.realization: Look at deps for beancount.core.realization and
     move it upstream where it makes sense, maybe ops.
 
-  - beancount.core.getters: Can this move to ops as well? Check the dependency
-    tree.
+  - beancount.core.getters: Should this move to ops as well? Check the
+    dependency tree, see if it makes sense.
 
   - Emerge a principle for where the following files should separate:
 
