@@ -163,6 +163,8 @@ ALL_DIRECTIVES = (
 #
 # Attributes:
 #   filename: A string, the name of the input that the directive was read from.
+#     If the directive was synthesized by a plugin, this should be the plugin
+#     name instead.
 #   lineno: An integer, the line number where the directive was found. For
 #     automatically created directives, this may be None.
 Source = namedtuple('Source', 'filename lineno')
