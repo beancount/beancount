@@ -38,7 +38,12 @@ class PricesReport(report.Report):
     """Print out the unnormalized price entries that we input.
     Unnormalized means that we may render both (base,quote) and (quote,base).
     This can be used to rebuild a prices database without having to share the
-    entire ledger file."""
+    entire ledger file.
+
+    Note: this type of report should be removed once we have filtering on
+    directive type, this is simply the 'print' report with type:price. Maybe
+    rename the 'pricedb' report to just 'prices' for simplicity's sake.
+    """
 
     names = ['prices']
     default_format = 'beancount'
@@ -121,6 +126,8 @@ class AccountsReport(report.Report):
             close_date = close.date if close else ''
             file.write('{:{len}}  {}  {}\n'.format(account, open_date, close_date,
                                                    len=maxlen))
+
+
 class EventsReport(report.TableReport):
     """Produce a table of the latest values of all event types."""
 

@@ -230,6 +230,27 @@ beancount: TODO
   using that report generation code too, and that each of its pages will
   basically be housing the HTML version of each report.
 
+  - Move web pages to reports generation:
+
+      activity
+      events
+      prices_values (rename index to have consistent report name)
+      trial
+      balsheet
+      openbal (as balsheet at previous date)
+      income
+      equity (becomes holdings)
+      journal
+      account
+      conversions
+      holdings_detail
+      holdings_byinstrument
+      trades (remove for now, reintroduce later)
+      documents
+      stats (as table)
+      errors
+
+
   - Rename /account to /journal in the web interface to be consistent with
     console reports. Maybe a separate register should be provided too (see
     comment about distinguishing between these two elsewhere in the TODO file).
