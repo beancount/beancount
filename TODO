@@ -230,6 +230,16 @@ beancount: TODO
   using that report generation code too, and that each of its pages will
   basically be housing the HTML version of each report.
 
+  + remove beancount.reports.tree_table -> beancount.web.journal.account_link,
+    add formatter object
+  beancount.web.acctree -> beancount.reports.tree_table
+  beancount.web.journal -> beancount.reports.journal
+  convert beancount.web.web.activity
+  convert beancount.web.web.events, with index
+  convert beancount.web.web.prices, with index
+  convert beancount.web.web.trial
+  move balance_sheet_table to beancount.reports.balance_reports
+
   - Move web pages to reports generation:
 
       activity
