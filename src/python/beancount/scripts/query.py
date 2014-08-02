@@ -102,7 +102,7 @@ def main():
     opts.format = opts.format or file_utils.guess_file_format(opts.output)
 
     # Dispatch on which report to generate.
-    report_function = rselect.get_report_generator(opts.report, opts.format)
+    report_function = rselect.get_report_generator(opts.report)
     if report_function is None:
         parser.error("Unknown report.")
     is_check = report_function is rselect.report_validate

@@ -7,7 +7,7 @@ import copy
 from datetime import date
 
 from .amount import ZERO, D, Amount
-from .position import Lot, Position, from_string
+from .position import Lot, Position, from_string, from_amounts
 
 
 class TestPosition(unittest.TestCase):
@@ -30,15 +30,15 @@ class TestPosition(unittest.TestCase):
         cost = Amount(D('532.43'), 'USD')
         lot_date = datetime.date(2014, 6, 15)
         self.assertEqual(Position(Lot("GOOG", cost, lot_date), D('2.2')), pos)
-    def test_from_amounts(self):
-        pos = from_amounts(Amount(to_decimal('10.00'), 'USD'))
-        self.assertEqual(Position(Lot("USD", None, None), to_decimal('10')), pos)
 
-        pos = from_amounts(Amount(to_decimal('10'), 'GOOG'),
-                           Amount(to_decimal('510.00'), 'USD'))
+    def test_from_amounts(self):
+        pos = from_amounts(Amount(D('10.00'), 'USD'))
+        self.assertEqual(Position(Lot("USD", None, None), D('10')), pos)
+
+        pos = from_amounts(Amount(D('10'), 'GOOG'),
+                           Amount(D('510.00'), 'USD'))
         self.assertEqual(
-            Position(Lot("GOOG", Amount(to_decimal('510'), 'USD'), None), to_decimal('10')),
-            pos)
+            Position(Lot("GOOG", Amount(D('510'), 'USD'), None), D('10')), pos)
 
     def test_constructors(self):
         position = Position(Lot('USD', None, None),

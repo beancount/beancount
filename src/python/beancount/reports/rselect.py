@@ -17,13 +17,12 @@ from beancount.core import account_types
 from beancount.ops import prices
 
 
-def get_report_generator(report_str, output_format):
+def get_report_generator(report_str):
     """Given a report name/spec, return a function to generate that report.
 
     Args:
       report_str: A string, the name of the report to produce. This name may
         include embedded parameters, such as in 'holdings_bycommodity:USD'.
-      output_format: A string, the name of the desired output format.
     Returns:
       A callable, that can generate the report. It should accept a list of
       entries and an options map.
@@ -33,10 +32,12 @@ def get_report_generator(report_str, output_format):
     if report_str in ('check', 'validate', None):
         return report_validate
 
+    elif report_str in 'print':
         return report_print
 
     elif report_str == 'print_holdings':
         return rholdings.report_holdings_print
+
     elif report_str == 'prices':
         return report_prices
 
