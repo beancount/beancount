@@ -9,10 +9,11 @@ class TestFileUtils(unittest.TestCase):
 
     def test_guess_file_format(self):
         self.assertEqual('csv', file_utils.guess_file_format('/user/output.csv'))
-        self.assertEqual('txt', file_utils.guess_file_format('/user/output.txt'))
+        self.assertEqual('text', file_utils.guess_file_format('/user/output.text'))
+        self.assertEqual('text', file_utils.guess_file_format('/user/output.txt'))
         self.assertEqual('html', file_utils.guess_file_format('/user/output.html'))
         self.assertEqual('html', file_utils.guess_file_format('/user/output.xhtml'))
-        self.assertEqual('txt', file_utils.guess_file_format('/user/output'))
+        self.assertEqual(None, file_utils.guess_file_format('/user/output'))
 
     def test_path_greedy_split(self):
         self.assertEqual(('/tmp/tmp.ju3h4h/blabla', None),
