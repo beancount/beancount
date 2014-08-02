@@ -154,7 +154,7 @@ def report_holdings(currency, relative, entries, options_map,
       aggregation_key: A callable use to generate aggregations.
       sort_key: A function to use to sort the holdings, if specified.
     Returns:
-      A list of holdings, ready to render.
+      A Table instance.
     """
     holdings_list, _ = get_assets_holdings(entries, options_map, currency)
     if aggregation_key:
