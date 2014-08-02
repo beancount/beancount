@@ -2049,6 +2049,36 @@ Improve this bit:
 
   - When an error occurs, skip the lexer to the next empty line and recommence.
 
+** Reentrant
+
+  - Make the parser reentrant [2014-08-02]. This is _not_ a difficult task.
+
+    * You need to add unit tests that check the correctness of line numbers on
+      parsed directives and errors.
+
+    * You need to remove the get_yylineno and get_yyfilename accessors.
+
+    * You need to make the parser reentrant, by add this directive to the grammar:
+
+         %parse-param { PyObject* builder}
+
+      You also need to redefine yyerror() accordingly. I've done it and it
+      works, it's simple, it's a 20 minute change:
+      http://www.gnu.org/software/bison/manual/html_node/Parser-Function.html
+
+    * You also need to make the lexer reentrant:
+      http://flex.sourceforge.net/manual/Reentrant-Overview.html#Reentrant-Overview
+
+         %option reentrant
+
+      (I haven't tried this yet.)
+
+    * Most of the "real" work involved is in removing the globals for lineno and
+      filename.
+
+    * Make sure the performance does not degrade as a result of doing this.
+
+
 ** Options
 
   - FIXME: We need to parse the options using the same argparse parser....

@@ -54,9 +54,6 @@ const char* getTokenName(int token);
 %locations
 /* %glr-parser */
 
-/* FIXME: Pass this explicitly eventually. */
-/* %parse-param { PyObject* builder} */
-
 
 /* Collection of value types. */
 %union {
