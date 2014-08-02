@@ -1,6 +1,12 @@
 -*- mode: org -*-
 beancount: TODO
 * Requirements for Shipping 1.0
+** Branches
+
+  - Complete report_consolidation
+  - Merge print_holdings, add new holdings function as render_beancount()
+  - Complete and merge sampled_quantization
+
 ** Complete 100% Coverage for Unit Tests
 
   - Validation: A Balance failure currently triggers two errors, one from
