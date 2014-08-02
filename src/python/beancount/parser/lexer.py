@@ -30,7 +30,7 @@ class LexBuilder(object):
 
     def get_lexer_location(self):
         return data.Source(_parser.get_yyfilename(),
-                                 _parser.get_yylineno())
+                           _parser.get_yylineno())
 
     def ERROR(self, string):
         self.errors.append(

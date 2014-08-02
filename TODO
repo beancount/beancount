@@ -1,6 +1,12 @@
 -*- mode: org -*-
 beancount: TODO
 * Requirements for Shipping 1.0
+** Branches
+
+  - Complete report_consolidation
+  - Merge print_holdings, add new holdings function as render_beancount()
+  - Complete and merge sampled_quantization
+
 ** Complete 100% Coverage for Unit Tests
 
   - Validation: A Balance failure currently triggers two errors, one from
@@ -35,8 +41,8 @@ beancount: TODO
   - beancount.core.realization: Look at deps for beancount.core.realization and
     move it upstream where it makes sense, maybe ops.
 
-  - beancount.core.getters: Can this move to ops as well? Check the dependency
-    tree.
+  - beancount.core.getters: Should this move to ops as well? Check the
+    dependency tree, see if it makes sense.
 
   - Emerge a principle for where the following files should separate:
 
@@ -142,6 +148,11 @@ beancount: TODO
   - Instead of ignoring diff_amount and parent and such for hashing purposes,
     just make ignorable fields start with _, e.g. posting._entry, balance._diff,
     entry._fileloc, etc. Call those non-essential fields.
+
+  - This parses... we should not allow I think, according to the doc I recently
+    wrote:
+
+          2013-10-01 balance Assets:Investmments   10 MSFT {45.30 USD}
 
 
 ** Parser-Related Minor Bugs
@@ -320,6 +331,17 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+
+  - Add an option for spacing in the revamped reports.
+
+
+
+  - (pad) Review the possibility of padding units held at cost:
+
+      "The reason it fails is that there must have been units of those commodities
+      held at cost before the pad date, and it is an error to pad commodities at
+      cost, because Beancount has no way to know what the cost basis of those
+      commodities should be."
 
 
 
@@ -2035,6 +2057,36 @@ Improve this bit:
 *** Lexer Level Errors
 
   - When an error occurs, skip the lexer to the next empty line and recommence.
+
+** Reentrant
+
+  - Make the parser reentrant [2014-08-02]. This is _not_ a difficult task.
+
+    * You need to add unit tests that check the correctness of line numbers on
+      parsed directives and errors.
+
+    * You need to remove the get_yylineno and get_yyfilename accessors.
+
+    * You need to make the parser reentrant, by add this directive to the grammar:
+
+         %parse-param { PyObject* builder}
+
+      You also need to redefine yyerror() accordingly. I've done it and it
+      works, it's simple, it's a 20 minute change:
+      http://www.gnu.org/software/bison/manual/html_node/Parser-Function.html
+
+    * You also need to make the lexer reentrant:
+      http://flex.sourceforge.net/manual/Reentrant-Overview.html#Reentrant-Overview
+
+         %option reentrant
+
+      (I haven't tried this yet.)
+
+    * Most of the "real" work involved is in removing the globals for lineno and
+      filename.
+
+    * Make sure the performance does not degrade as a result of doing this.
+
 
 ** Options
 

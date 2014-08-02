@@ -7,9 +7,6 @@ from beancount.core.data import Transaction, Open, Close
 from beancount.core import account
 
 
-# FIXME: Ideally this would live under ops, pending dependencies.
-
-
 class GetAccounts:
     """Accounts gatherer.
     """

@@ -1,6 +1,5 @@
-"""
-Unit tests for padding.
-"""
+import re
+
 from beancount.core.inventory import Inventory
 from beancount.core.data import Open, Pad, Balance, Posting
 from beancount.core.amount import Amount
@@ -372,4 +371,22 @@ class TestPadding(cmptest.TestCase):
 
           2013-10-01 balance Assets:Checking    5.00 USD
         """
-        self.assertTrue(errors)
+        self.assertEqual([pad.PadError], list(map(type, errors)))
+
+    @loaddoc
+    def test_pad_at_cost(self, entries, errors, __):
+        """
+          2013-05-01 open Assets:Investments
+          2013-05-01 open Equity:Opening-Balances
+
+          2013-05-15 *
+            Assets:Investments   10 MSFT {54.30 USD}
+            Equity:Opening-Balances
+
+          2013-06-01 pad Assets:Investments Equity:Opening-Balances
+
+          2013-10-01 balance Assets:Investments   12 MSFT
+        """
+        self.assertEqual([pad.PadError], list(map(type, errors)))
+        self.assertTrue(re.search('Attempt to pad an entry with cost for',
+                                  errors[0].message))

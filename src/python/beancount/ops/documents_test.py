@@ -10,7 +10,6 @@ from beancount.core import account_test
 from beancount.ops import documents
 from beancount.parser import parser
 from beancount.parser import cmptest
-from beancount.parser import printer
 
 
 class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):

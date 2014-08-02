@@ -1,9 +1,6 @@
 import unittest
 import re
-import time
 from os import path
-import textwrap
-import sys
 import shelve
 import os
 import io

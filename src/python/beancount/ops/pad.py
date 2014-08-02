@@ -37,6 +37,7 @@ def pad(entries, options_map):
       errors produced.
     """
     tolerance = D(options_map['tolerance'])
+    pad_errors = []
 
     # Find all the pad entries and group them by account.
     pads = list(misc_utils.filter_type(entries, data.Pad))
@@ -102,7 +103,7 @@ def pad(entries, options_map):
                                           else balance_amount.number)
 
                         # Note: we decide that it's an error to try to pad
-                        # position at cost; we check here that all the existing
+                        # positions at cost; we check here that all the existing
                         # positions with that currency have no cost.
                         positions = pad_balance.get_positions_with_currency(
                             check_amount.currency)
@@ -145,7 +146,6 @@ def pad(entries, options_map):
 
     # Insert the newly created entries right after the pad entries that created them.
     padded_entries = []
-    pad_errors = []
     for entry in entries:
         padded_entries.append(entry)
         if isinstance(entry, data.Pad):
@@ -155,6 +155,6 @@ def pad(entries, options_map):
             # Generate errors on unused pad entries.
             if not entry_list:
                 pad_errors.append(
-                    PadError(entry.source, "Unused Pad entry: {}".format(entry), entry))
+                    PadError(entry.source, "Unused Pad entry", entry))
 
     return padded_entries, pad_errors

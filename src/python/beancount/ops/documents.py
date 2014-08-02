@@ -125,15 +125,15 @@ def find_documents(directory, input_filename, accounts_only=None, strict=False):
             if accounts_only and not account_name in accounts_only:
                 if strict:
                     if any(account_name.startswith(account) for account in accounts_only):
-                        errors.append(
-                            DocumentError(Source(input_filename, 0),
-                                          "Document '{}' found in child account {}.".format(
-                                              filename, account_name), None))
+                        errors.append(DocumentError(
+                            Source(input_filename, 0),
+                            "Document '{}' found in child account {}.".format(
+                                filename, account_name), None))
                     elif any(account.startswith(account_name) for account in accounts_only):
-                        errors.append(
-                            DocumentError(Source(input_filename, 0),
-                                          "Document '{}' found in parent account {}.".format(
-                                              filename, account_name), None))
+                        errors.append(DocumentError(
+                            Source(input_filename, 0),
+                            "Document '{}' found in parent account {}.".format(
+                                filename, account_name), None))
                 continue
 
             # Create a new directive.
