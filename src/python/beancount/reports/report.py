@@ -137,3 +137,17 @@ class TableReport(Report):
     def render_csv(self, entries, errors, options_map, file):
         table_ = self.generate_table(entries, errors, options_map)
         table.generate_table(table_, file, 'csv')
+
+
+def get_all_reports():
+    """Return all report classes.
+
+    Returns:
+      A list of all available report classes.
+    """
+    from beancount.reports import misc_reports
+    from beancount.reports import holdings_reports
+    from beancount.reports import balance_reports
+    return (misc_reports.__reports__ +
+            holdings_reports.__reports__ +
+            balance_reports.__reports__)

@@ -7,7 +7,7 @@ from beancount.ops import holdings
 from beancount.loader import loaddoc
 
 
-class TestReportHoldings(unittest.TestCase):
+class TestHoldingsReports(unittest.TestCase):
 
     @loaddoc
     def setUp(self, entries, errors, options_map):

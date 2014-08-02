@@ -129,3 +129,11 @@ class TestTableReport(unittest.TestCase):
         output = self.report.render(self.entries, self.errors, self.options_map, 'csv')
         self.assertTrue(all(re.search(x, output)
                             for x in ['account1', 'account2', 'Account', 'Balance']))
+
+
+class TestReportFunctions(unittest.TestCase):
+
+    def test_get_all_report(self):
+        all_reports = report.get_all_reports()
+        self.assertTrue(all(issubclass(report_, report.Report)
+                            for report_ in all_reports))

@@ -11,20 +11,10 @@ import textwrap
 
 from beancount import loader
 from beancount.ops import validation
-from beancount.reports import misc_reports
-from beancount.reports import holdings_reports
 from beancount.reports import report
+from beancount.reports import misc_reports
 from beancount.utils import file_utils
 from beancount.utils import misc_utils
-
-
-def get_all_reports():
-    """Return all report classes.
-
-    Returns:
-      A list of all available report classes.
-    """
-    return misc_reports.__reports__ + holdings_reports.__reports__
 
 
 def get_list_report_string(only_report=None):
@@ -39,7 +29,7 @@ def get_list_report_string(only_report=None):
     """
     oss = io.StringIO()
     num_reports = 0
-    for report_class in get_all_reports():
+    for report_class in report.get_all_reports():
         # Filter the name
         if only_report and only_report not in report_class.names:
             continue
@@ -117,7 +107,7 @@ def main():
     subparsers = parser.add_subparsers(title='report',
                                        help='Name/specification of the desired report.')
 
-    for report_class in get_all_reports():
+    for report_class in report.get_all_reports():
         name, aliases = report_class.names[0], report_class.names[1:]
         help = report_class.__doc__.splitlines()[0]
         report_parser = subparsers.add_parser(name, aliases=aliases,
