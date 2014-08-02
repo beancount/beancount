@@ -21,7 +21,7 @@ from collections import namedtuple
 import re
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
-from .amount import ZERO, Decimal, to_decimal, Amount, amount_mult, MAXDIGITS_PRINTER
+from .amount import ZERO, Decimal, D, Amount, amount_mult, MAXDIGITS_PRINTER
 
 
 # Lots are a representations of a commodity with an optional associated cost and
@@ -162,6 +162,7 @@ class Position:
         Returns:
           A shallow copy of this position.
         """
+        # Note: We use Decimal() for efficiency.
         return Position(self.lot, Decimal(self.number))
 
     def get_amount(self):
@@ -173,9 +174,6 @@ class Position:
         """
         return Amount(self.number, self.lot.currency)
 
-    # FIXME: We really should have the default get_cost() return a position, and
-    # then have the caller .get_amount(). This would be the perfect way to do
-    # this; do this.
     def get_cost(self):
         """Return the cost associated with this position. The cost is the number of
         units of the lot times the cost of the lot. If the lot has no associated
@@ -190,7 +188,7 @@ class Position:
         else:
             return amount_mult(cost, self.number)
 
-    def get_cost_position(self):
+    def at_cost(self):
         """Return a Position representing the cost of this position. See get_cost().
 
         Returns:
@@ -223,6 +221,7 @@ class Position:
         Returns:
           An instance of Position which represents the inserse of this Position.
         """
+        # Note: We use Decimal() for efficiency.
         return Position(self.lot, Decimal(-self.number))
 
     __neg__ = get_negative
@@ -247,14 +246,14 @@ class Position:
         number, currency = mo.group(1, 2)
         if mo.group(3):
             cost_number, cost_currency = mo.group(4, 5)
-            cost = Amount(to_decimal(cost_number), cost_currency)
+            cost = Amount(D(cost_number), cost_currency)
         else:
             cost = None
         if mo.group(6):
             lot_date = datetime.datetime.strptime(mo.group(7), '%Y-%m-%d').date()
         else:
             lot_date = None
-        return Position(Lot(currency, cost, lot_date), to_decimal(number))
+        return Position(Lot(currency, cost, lot_date), D(number))
 
     @staticmethod
     def from_amounts(amount, cost_amount=None):

@@ -13,3 +13,11 @@ class TestFileUtils(unittest.TestCase):
         self.assertEqual('html', file_utils.guess_file_format('/user/output.html'))
         self.assertEqual('html', file_utils.guess_file_format('/user/output.xhtml'))
         self.assertEqual('txt', file_utils.guess_file_format('/user/output'))
+
+    def test_path_greedy_split(self):
+        self.assertEqual(('/tmp/tmp.ju3h4h/blabla', None),
+                         file_utils.path_greedy_split('/tmp/tmp.ju3h4h/blabla'))
+        self.assertEqual(('/tmp/tmp.ju3h4h/bla', '.tgz'),
+                         file_utils.path_greedy_split('/tmp/tmp.ju3h4h/bla.tgz'))
+        self.assertEqual(('/tmp/tmp.ju3h4h/bla', '.tar.gz'),
+                         file_utils.path_greedy_split('/tmp/tmp.ju3h4h/bla.tar.gz'))

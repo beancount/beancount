@@ -2,6 +2,7 @@
 """
 import unittest
 import io
+import textwrap
 
 from beancount.parser import parser
 from beancount.parser import printer
@@ -24,9 +25,9 @@ class TestCase(unittest.TestCase):
           AssertionError: If the exception fails.
         """
         if isinstance(expected_entries, str):
-            expected_entries, _, __ = parser.parse_string(expected_entries)
+            expected_entries, _, __ = parser.parse_string(textwrap.dedent(expected_entries))
         if isinstance(actual_entries, str):
-            actual_entries, _, __ = parser.parse_string(actual_entries)
+            actual_entries, _, __ = parser.parse_string(textwrap.dedent(actual_entries))
         same, expected_missing, actual_missing = compare.compare_entries(expected_entries,
                                                                          actual_entries)
         if not same:
@@ -57,9 +58,9 @@ class TestCase(unittest.TestCase):
           AssertionError: If the exception fails.
         """
         if isinstance(subset_entries, str):
-            subset_entries, _, __ = parser.parse_string(subset_entries)
+            subset_entries, _, __ = parser.parse_string(textwrap.dedent(subset_entries))
         if isinstance(entries, str):
-            entries, _, __ = parser.parse_string(entries)
+            entries, _, __ = parser.parse_string(textwrap.dedent(entries))
         includes, missing = compare.includes_entries(subset_entries, entries)
         if not includes:
             assert missing
@@ -84,9 +85,9 @@ class TestCase(unittest.TestCase):
           AssertionError: If the exception fails.
         """
         if isinstance(subset_entries, str):
-            subset_entries, _, __ = parser.parse_string(subset_entries)
+            subset_entries, _, __ = parser.parse_string(textwrap.dedent(subset_entries))
         if isinstance(entries, str):
-            entries, _, __ = parser.parse_string(entries)
+            entries, _, __ = parser.parse_string(textwrap.dedent(entries))
         excludes, extra = compare.excludes_entries(subset_entries, entries)
         if not excludes:
             assert extra

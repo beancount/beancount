@@ -10,7 +10,7 @@ import re
 from beancount.core.inventory import Inventory
 from beancount.core import data
 from beancount.core import flags
-from beancount.core import realization
+from beancount.core import complete
 from beancount.ops import summarize
 from beancount.parser import parser
 from beancount.parser import printer
@@ -61,21 +61,21 @@ class TestClamp(cmptest.TestCase):
                                                  account_types,
                                                  'NOTHING',
                                                  'Equity:Earnings',
-                                                 'Equity:OpeningBalances',
+                                                 'Equity:Opening-Balances',
                                                  'Equity:Conversions')
         self.assertEqualEntries("""
 
         2012-05-31 S "Opening balance for 'Assets:CA:Checking' (Summarization)"
           Assets:CA:Checking              6000.00 CAD
-          Equity:OpeningBalances         -6000.00 CAD
+          Equity:Opening-Balances         -6000.00 CAD
 
         2012-05-31 S "Opening balance for 'Assets:US:Checking' (Summarization)"
           Assets:US:Checking            -18600.00 USD
-          Equity:OpeningBalances         18600.00 USD
+          Equity:Opening-Balances         18600.00 USD
 
         2012-05-31 S "Opening balance for 'Equity:Earnings' (Summarization)"
           Equity:Earnings                13600.00 USD
-          Equity:OpeningBalances        -13600.00 USD
+          Equity:Opening-Balances        -13600.00 USD
 
         ;; 2012-06-01  BEGIN --------------------------------
 
@@ -98,10 +98,10 @@ class TestClamp(cmptest.TestCase):
 
         self.assertEqual(3, index)
 
-        input_balance = realization.compute_entries_balance(entries)
+        input_balance = complete.compute_entries_balance(entries)
         self.assertFalse(input_balance.is_empty())
 
-        clamped_balance = realization.compute_entries_balance(clamped_entries)
+        clamped_balance = complete.compute_entries_balance(clamped_entries)
         self.assertTrue(clamped_balance.is_empty())
 
 
@@ -501,8 +501,8 @@ class TestConversions(cmptest.TestCase):
                                                    'NOTHING', date)
         self.assertEqualEntries(self.entries, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries,
-                                                                date=date)
+        converted_balance = complete.compute_entries_balance(conversion_entries,
+                                                             date=date)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__not_needed(self):
@@ -511,8 +511,8 @@ class TestConversions(cmptest.TestCase):
                                                    'NOTHING', date)
         self.assertEqualEntries(self.entries, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries,
-                                                                date=date)
+        converted_balance = complete.compute_entries_balance(conversion_entries,
+                                                             date=date)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__needed_middle(self):
@@ -528,8 +528,8 @@ class TestConversions(cmptest.TestCase):
 
         """, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries,
-                                                                date=date)
+        converted_balance = complete.compute_entries_balance(conversion_entries,
+                                                             date=date)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__with_transactions_at_cost(self):
@@ -545,8 +545,8 @@ class TestConversions(cmptest.TestCase):
 
         """, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries,
-                                                                date=date)
+        converted_balance = complete.compute_entries_balance(conversion_entries,
+                                                             date=date)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__multiple(self):
@@ -562,7 +562,7 @@ class TestConversions(cmptest.TestCase):
 
         """, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries)
+        converted_balance = complete.compute_entries_balance(conversion_entries)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
     def test_conversions__no_date(self):
@@ -577,7 +577,7 @@ class TestConversions(cmptest.TestCase):
 
         """, conversion_entries)
 
-        converted_balance = realization.compute_entries_balance(conversion_entries)
+        converted_balance = complete.compute_entries_balance(conversion_entries)
         self.assertTrue(converted_balance.get_cost().is_empty())
 
 
@@ -588,27 +588,27 @@ class TestTruncate(cmptest.TestCase):
         """
         2014-03-10 * "A"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-11 * "B"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-12 * "C"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-13 * "D1"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-13 * "D2"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-14 * "E"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
         """
         self.entries = entries
 
@@ -622,15 +622,15 @@ class TestTruncate(cmptest.TestCase):
 
         2014-03-10 * "A"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-11 * "B"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-12 * "C"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         """, truncated_entries)
 
@@ -640,23 +640,23 @@ class TestTruncate(cmptest.TestCase):
 
         2014-03-10 * "A"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-11 * "B"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-12 * "C"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-13 * "D1"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-13 * "D2"
           Assets:US:Bank:Checking   1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         """, truncated_entries)
 
@@ -667,15 +667,15 @@ class TestTruncate(cmptest.TestCase):
 
 class TestEntriesFromBalance(cmptest.TestCase):
 
-    SOURCE_ACCOUNT = 'Equity:OpeningBalances'
-    FILELOC = data.FileLocation('<test>', 0)
+    SOURCE_ACCOUNT = 'Equity:Opening-Balances'
+    SOURCE = data.Source('<test>', 0)
 
     def test_create_entries_from_balances__empty(self):
         balances = collections.defaultdict(Inventory)
         balances['Assets:US:Bank:Empty']
         entries = summarize.create_entries_from_balances(balances, datetime.date.today(),
                                                          self.SOURCE_ACCOUNT, True,
-                                                         self.FILELOC, '!', 'narration')
+                                                         self.SOURCE, '!', 'narration')
         self.assertEqual([], entries)
 
     def setUp(self):
@@ -687,30 +687,30 @@ class TestEntriesFromBalance(cmptest.TestCase):
         entries = summarize.create_entries_from_balances(
             self.balances, datetime.date(2014, 1, 1),
             self.SOURCE_ACCOUNT, True,
-            self.FILELOC, '!', 'Narration for {account} at {date}')
+            self.SOURCE, '!', 'Narration for {account} at {date}')
         self.assertEqualEntries("""
           2014-01-01 ! "Narration for Assets:US:Bank:Checking at 2014-01-01"
             Assets:US:Bank:Checking                                               1823.23 USD
-            Equity:OpeningBalances                                               -1823.23 USD
+            Equity:Opening-Balances                                               -1823.23 USD
 
           2014-01-01 ! "Narration for Assets:US:Investment at 2014-01-01"
             Assets:US:Investment                                                   10.00 GOOG     {500.00 USD}
-            Equity:OpeningBalances                                               -5000.00 USD
+            Equity:Opening-Balances                                               -5000.00 USD
         """, entries)
 
     def test_create_entries_from_balances__reverse(self):
         entries = summarize.create_entries_from_balances(
             self.balances, datetime.date(2014, 1, 1),
             self.SOURCE_ACCOUNT, False,
-            self.FILELOC, '*', 'Narration for {account} at {date}')
+            self.SOURCE, '*', 'Narration for {account} at {date}')
         self.assertEqualEntries("""
           2014-01-01 * "Narration for Assets:US:Bank:Checking at 2014-01-01"
             Assets:US:Bank:Checking                                              -1823.23 USD
-            Equity:OpeningBalances                                                1823.23 USD
+            Equity:Opening-Balances                                                1823.23 USD
 
           2014-01-01 * "Narration for Assets:US:Investment at 2014-01-01"
             Assets:US:Investment                                                  -10.00 GOOG     {500.00 USD}
-            Equity:OpeningBalances                                                5000.00 USD
+            Equity:Opening-Balances                                                5000.00 USD
         """, entries)
 
 
@@ -721,12 +721,12 @@ class TestBalanceByAccount(cmptest.TestCase):
         """
         2014-02-01 *
           Assets:AccountA   10 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-03-01 *
           Assets:AccountA   1 USD
           Assets:AccountB  12 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
         """
         self.entries = entries
 
@@ -736,7 +736,7 @@ class TestBalanceByAccount(cmptest.TestCase):
         self.assertEqual(len(self.entries), index)
         self.assertEqual({
             'Assets:AccountA': Inventory.from_string('11 USD'),
-            'Equity:OpeningBalances': Inventory.from_string('-23 USD'),
+            'Equity:Opening-Balances': Inventory.from_string('-23 USD'),
             'Assets:AccountB': Inventory.from_string('12 USD')
             }, balances)
 
@@ -754,7 +754,7 @@ class TestBalanceByAccount(cmptest.TestCase):
         self.assertEqual(1, index)
         self.assertEqual({
             'Assets:AccountA': Inventory.from_string('10 USD'),
-            'Equity:OpeningBalances': Inventory.from_string('-10 USD'),
+            'Equity:Opening-Balances': Inventory.from_string('-10 USD'),
             }, balances)
 
 

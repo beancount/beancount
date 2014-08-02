@@ -3,6 +3,7 @@
 import csv
 import io
 
+from beancount.core.amount import D
 from beancount.core import amount
 from beancount.core import account
 from beancount.core import data
@@ -60,8 +61,12 @@ FIELD_SPEC = [
 # A field spec for relative reports. Skipping the book value here because by
 # combining it with market value % and price one could theoretically determined
 # the total value of the portfolio.
-RELATIVE_FIELD_SPEC = FIELD_SPEC[:-2] + [
-    ('market_value', 'Frac Market Value', '{:,.4f}'.format),
+RELATIVE_FIELD_SPEC = [
+    field_desc
+    for field_desc in FIELD_SPEC
+    if field_desc[0] not in ('account', 'number', 'book_value', 'market_value')
+] + [
+    ('market_value', 'Frac Folio', '{:,.2%}'.format),
 ]
 
 
@@ -210,7 +215,7 @@ def report_holdings_byaccount_shallow(currency, relative, entries, options_map):
       A Table instance.
     """
     def account_maxdepth(n, account_):
-        return account.sep.join(account_.split(account.sep)[:n])
+        return account.join.join(*(account.split(account_)[:n]))
     return report_holdings(
         currency, relative, entries, options_map,
         aggregation_key=lambda holding: account_maxdepth(3, holding.account),
@@ -280,14 +285,14 @@ def load_from_csv(fileobj):
     """
     column_spec = [
         ('Account', 'account', None),
-        ('Units', 'number', amount.to_decimal),
+        ('Units', 'number', D),
         ('Currency', 'currency', None),
         ('Cost Currency', 'cost_currency', None),
-        ('Average Cost', 'cost_number', amount.to_decimal),
-        ('Price', 'price_number', amount.to_decimal),
-        ('Book Value', 'book_value', amount.to_decimal),
-        ('Market Value', 'market_value', amount.to_decimal),
-        ('Price Date', 'price_date', amount.to_decimal),
+        ('Average Cost', 'cost_number', D),
+        ('Price', 'price_number', D),
+        ('Book Value', 'book_value', D),
+        ('Market Value', 'market_value', D),
+        ('Price Date', 'price_date', D),
         ]
     column_dict = {name: (attr, converter)
                    for name, attr, converter in column_spec}

@@ -1,14 +1,8 @@
-import unittest
-import datetime
-import re
-
-from beancount.core.amount import to_decimal as D
-from beancount.core import amount
+from beancount.core.amount import D
 from beancount.core import data
 from beancount.ops import implicit_prices
 from beancount.parser import parsedoc
 from beancount.parser import cmptest
-from beancount.parser import printer
 
 
 class TestImplicitPrices(cmptest.TestCase):
@@ -169,7 +163,8 @@ class TestImplicitPrices(cmptest.TestCase):
         """, new_entries)
 
     @parsedoc
-    def test_add_implicit_prices__duplicates_on_same_transaction(self, entries, _, options_map):
+    def test_add_implicit_prices__duplicates_on_same_transaction(self,
+                                                                 entries, _, options_map):
         """
         2013-01-01 open Assets:Account1
         2013-01-01 open Assets:Account2
@@ -212,7 +207,9 @@ class TestImplicitPrices(cmptest.TestCase):
         """, new_entries)
 
     @parsedoc
-    def test_add_implicit_prices__duplicates_on_different_transactions(self, entries, _, options_map):
+    def test_add_implicit_prices__duplicates_on_different_transactions(self,
+                                                                       entries, _,
+                                                                       options_map):
         """
         2013-01-01 open Assets:Account1
         2013-01-01 open Assets:Account2

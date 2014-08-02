@@ -6,7 +6,7 @@ from os import path
 from collections import namedtuple
 
 from beancount.core import account
-from beancount.core.data import FileLocation, Document
+from beancount.core.data import Source, Document
 from beancount.core import data
 from beancount.core import getters
 
@@ -14,7 +14,7 @@ __plugins__ = ('process_documents',)
 
 
 # An error from trying to find the documents.
-DocumentError = namedtuple('DocumentError', 'fileloc message entry')
+DocumentError = namedtuple('DocumentError', 'source message entry')
 
 
 def process_documents(entries, options_map):
@@ -69,13 +69,13 @@ def verify_document_entries(entries):
             continue
         if not path.exists(entry.filename):
             errors.append(
-                DocumentError(entry.fileloc,
+                DocumentError(entry.source,
                               'File does not exist: "{}"'.format(entry.filename),
                               entry))
     return entries, errors
 
 
-def find_documents(directory, input_filename, accounts_only=None):
+def find_documents(directory, input_filename, accounts_only=None, strict=False):
     """Find dated document files under the given directory.
 
     If a restricting set of accounts is provided in 'accounts_only', only return
@@ -83,12 +83,19 @@ def find_documents(directory, input_filename, accounts_only=None):
 
     Args:
       directory: A string, the name of the root of the directory hierarchy to be searched.
-      input_filename: The name of the file to be used for the Document directives.
+      input_filename: The name of the file to be used for the Document directives. This is
+        also used to resolve relative directory names.
       accounts_only: A set of valid accounts strings to search for.
+      strict: A boolean, set to true if you want to generate errors on documents
+        found in accounts not provided in accounts_only. This is only meaningful
+        if accounts_only is specified.
     Returns:
       A list of new Document objects that were created from the files found, and a list
       of new errors generated.
+
     """
+    errors = []
+
     # Compute the documents directory name relative to the beancount input
     # file itself.
     if not path.isabs(directory):
@@ -98,9 +105,9 @@ def find_documents(directory, input_filename, accounts_only=None):
 
     # If the directory does not exist, just generate an error and return.
     if not path.exists(directory):
-        fileloc = FileLocation(input_filename, 0)
+        source = Source(input_filename, 0)
         error = DocumentError(
-            fileloc, "Document root '{}' does not exist.".format(directory), None)
+            source, "Document root '{}' does not exist.".format(directory), None)
         return ([], [error])
 
     # Walk the hierarchy of files.
@@ -115,15 +122,24 @@ def find_documents(directory, input_filename, accounts_only=None):
 
             # If a restricting set of accounts was specified, skip document
             # directives found in accounts with no corresponding account name.
-            if accounts_only and account_name not in accounts_only:
-                # FIXME: We need ot perhaps create the missing accounts here
-                # instead of skipping the documents. See TODO file. {fa96aa05361d}
+            if accounts_only and not account_name in accounts_only:
+                if strict:
+                    if any(account_name.startswith(account) for account in accounts_only):
+                        errors.append(DocumentError(
+                            Source(input_filename, 0),
+                            "Document '{}' found in child account {}.".format(
+                                filename, account_name), None))
+                    elif any(account.startswith(account_name) for account in accounts_only):
+                        errors.append(DocumentError(
+                            Source(input_filename, 0),
+                            "Document '{}' found in parent account {}.".format(
+                                filename, account_name), None))
                 continue
 
             # Create a new directive.
-            fileloc = FileLocation(input_filename, 0)
+            source = Source(input_filename, 0)
             date = datetime.date(*map(int, mo.group(1, 2, 3)))
-            entry = Document(fileloc, date, account_name, path.join(root, filename))
+            entry = Document(source, date, account_name, path.join(root, filename))
             entries.append(entry)
 
-    return (entries, [])
+    return (entries, errors)

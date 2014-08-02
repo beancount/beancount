@@ -3,10 +3,6 @@ beancount: TODO
 * Requirements for Shipping 1.0
 ** Complete 100% Coverage for Unit Tests
 
-  - Make helper functions in summarize, for clamp() and close() which accept
-    options_map and automatically derive everything they need from entries.
-
-
 ** Binaries
 
   Explore the idea of merging binaries... might make a lot of sense:
@@ -15,6 +11,14 @@ beancount: TODO
   - Might 'bean-query' be more aptly named 'bean-count'?
   - Should bean-bake be folded into 'bean-web --bake'?
 
+  - Make helper functions in summarize, for clamp() and close() which accept
+    options_map and automatically derive everything they need from entries.
+  - Validation: A Balance failure currently triggers two errors, one from
+    complete and one from validation routine. We need to perform all balance
+    checks _after_ the plugins run to make sure that they produce only
+    balancing transactions. Need to figure out how to do this properly without
+    raising two errors.
+
 
 ** Minimum Cleanup of Reports Before Release
 
@@ -22,13 +26,10 @@ beancount: TODO
     order to avoid changing the interface much after releasing v2.0:
 
        These need to move to reports, generate the intermediate tree
-       object, and then support rendering to txt, csv, html.
+       object, and then support rendering to txt, csv, html, htmldiv.
 
        We need to define two HTML types: 'html', and 'html_div'. The fisrt one
        renders to a full page; the second one only a div.
-
-  - Move print_trial and other function from doctor to this new reports
-    infrastructure.
 
 
 ** Move Files to Final Location
@@ -41,8 +42,8 @@ beancount: TODO
   - beancount.core.realization: Look at deps for beancount.core.realization and
     move it upstream where it makes sense, maybe ops.
 
-  - beancount.core.getters: Can this move to ops as well? Check the dependency
-    tree.
+  - beancount.core.getters: Should this move to ops as well? Check the
+    dependency tree, see if it makes sense.
 
   - Emerge a principle for where the following files should separate:
 
@@ -51,9 +52,6 @@ beancount: TODO
 
   - Make various attempts to simplify depgraph, we want to ship with a really
     lean dependency graph.
-
-    * realization.compute_*_balance() functions may benefit from moving to
-      their own module. Not sure yet. Find out.
 
   - Would it make sense for every plugin to provide a validation function? We
     could then move all the validation routines in their plugin file. I very
@@ -64,6 +62,13 @@ beancount: TODO
     ensure that the mutable portion of the entries hasn't been modified by the
     user-provided validation functions.
 
+    * In beancount.ops.documents, split up process_documents in a verification
+      stage and in a document finding and addition stage.
+
+
+  - Should 'bean-query not be called bean-count or bean-report? Choose a final
+    name and live with it. I like 'bean-count' best.
+
 
 ** Fix Minor Nits & Bugs
 
@@ -73,28 +78,24 @@ beancount: TODO
   - (documents) documents found in parent directories don't end up creating a
     directive because we skip them because we only restrict to accounts which
     have had an open declaration... this is probably not what we want, in order
-    to maximize the number of documents captures by this. {fa96aa05361d}
+    to maximize the number of documents captured by this. {fa96aa05361d}
 
   - Add a test for this (somewhere else): If something like this occurs, which
-    price should appear in the prices database? This should trigger a warning that
-    no price directive is inserted (this is what it should do: don't insert a
-    price in this case, because we don't know which):
+    price should appear in the prices database? This should trigger a warning
+    that no price directive is inserted (this is what it should do: don't insert
+    a price in this case, because we don't know which):
 
-      2014-01-15 *
-        Income:Misc
-        Assets:Account1      1 HOUSE {100 USD}
-        Liabilities:Account1 1 HOUSE {101 USD}
-        Equity:Account1      1 HOUSE {102 USD}
-        Expenses:Account1    1 HOUSE {103 USD}
-        Income:Account1      1 HOUSE {104 USD}
+      2014-01-15 * Income:Misc Assets:Account1 1 HOUSE {100 USD}
+    Liabilities:Account1 1 HOUSE {101 USD} Equity:Account1 1 HOUSE {102 USD}
+    Expenses:Account1 1 HOUSE {103 USD} Income:Account1 1 HOUSE {104 USD}
 
     You must ALLOW and test for this, however:
 
-      2004-11-29 * "Closed Cisco"
-        Assets:CA:RBC-Investing:RRSP:CSCO           -18 CSCO {79.50 USD} @ 19.00 USD
-        Assets:CA:RBC-Investing:RRSP:CSCO           -45 CSCO {30.50 USD} @ 19.00 USD
-        Assets:CA:RBC-Investing:RRSP:Cash            1372.07 CAD @ 0.87240446916 USD
-        Income:CA:RBC-Investing:RRSP:PnL      ;; gains = 1372.07 - (2129.19 + 2122.12) = 2879.24 CAD ; loss
+      2004-11-29 * "Closed Cisco" Assets:CA:RBC-Investing:RRSP:CSCO -18 CSCO
+    {79.50 USD} @ 19.00 USD Assets:CA:RBC-Investing:RRSP:CSCO -45 CSCO {30.50
+    USD} @ 19.00 USD Assets:CA:RBC-Investing:RRSP:Cash 1372.07 CAD @
+    0.87240446916 USD Income:CA:RBC-Investing:RRSP:PnL ;; gains = 1372.07 -
+    (2129.19 + 2122.12) = 2879.24 CAD ; loss
 
     Also, deal with multiple implied price points added from different
     transactions on the same day... instead of just taking the later one, drop
@@ -102,21 +103,41 @@ beancount: TODO
     which assumes that a price point will always be available if the unit is
     held at cost. Make a decision.
 
-  - "Position with lots goes negative" should output an error message and be caught, because if it is run by the web
-    server, it serves no page. Needs to be integrated like all the other error messages:
+  - This spits out an error during interpolation:
 
-      127.0.0.1 - - [22/May/2014 21:51:14] "GET /view/year/2014/income HTTP/1.1" 500 762
-      Traceback (most recent call last):
-        File "/usr/local/lib/python3.3/dist-packages/bottle.py", line 783, in _handle
-          return route.call(**args)
-      ...
-        File "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 65, in __init__
-          self.add_position(position)
-        File "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 260, in add_position
-          return self._add(new_position.number, new_position.lot, allow_negative)
-        File "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 298, in _add
-          raise ValueError("Position with lots goes negative: {}".format(self))
-      ValueError: Position with lots goes negative: Inventory(-2.00 PUMP {20.00 USD})
+        2014-07-17 * "(JRN) INTRA-ACCOUNT TRANSFER" ^795422780
+
+      bean-check /home/blais/r/q/office/accounting/blais.beancount Traceback
+    (most recent call last):  File
+    "/home/blais/p/beancount/src/python/beancount/parser/parser.py", line 501,
+    in transaction balance_errors = balance_incomplete_postings(entry) File
+    "/home/blais/p/beancount/src/python/beancount/core/complete.py", line 209,
+    in balance_incomplete_postings postings, inserted, errors =
+    get_incomplete_postings(entry) File
+    "/home/blais/p/beancount/src/python/beancount/core/complete.py", line 104,
+    in get_incomplete_postings postings = list(entry.postings) TypeError:
+    'NoneType' object is not iterable
+
+    Deal with it more handsomely.
+
+
+  - "Position with lots goes negative" should output an error message and be
+    caught, because if it is run by the web server, it serves no page. Needs to
+    be integrated like all the other error messages:
+
+      127.0.0.1 - - [22/May/2014 21:51:14] "GET /view/year/2014/income HTTP/1.1"
+    500 762 Traceback (most recent call last):  File
+    "/usr/local/lib/python3.3/dist-packages/bottle.py", line 783, in _handle
+    return route.call(**args) ... File
+    "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 65,
+    in __init__ self.add_position(position) File
+    "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 260,
+    in add_position return self._add(new_position.number, new_position.lot,
+    allow_negative) File
+    "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 298,
+    in _add raise ValueError("Position with lots goes negative:
+    {}".format(self)) ValueError: Position with lots goes negative:
+    Inventory(-2.00 PUMP {20.00 USD})
 
   - An invariant that we would like to maintain is that all accounts that are
     used in a list of entries should have an Open directive for them. In the
@@ -125,24 +146,28 @@ beancount: TODO
     that gets automatically inserted for it in addition to the error that gets
     generated.
 
-  - Fix all FIXMEs everywhere, or convert them to items in this list.
-
   - Instead of ignoring diff_amount and parent and such for hashing purposes,
     just make ignorable fields start with _, e.g. posting._entry, balance._diff,
     entry._fileloc, etc. Call those non-essential fields.
 
+  - This parses... we should not allow I think, according to the doc I recently
+    wrote:
+
+          2013-10-01 balance Assets:Investmments   10 MSFT {45.30 USD}
+
 
 ** Parser-Related Minor Bugs
 
-  - Parsing this does not fail; it really should, this is a bug:
-      "2013-04-01 balance Assets:Bank:Checking   555.00 CAD.11"
+  - Parsing this does not fail; it really should, this is a bug:  "2013-04-01
+    balance Assets:Bank:Checking 555.00 CAD.11"
 
-        @lex_tokens
-        def test_number_curency_number(self, tokens, errors):
-            """\
-            2013-04-01 balance Assets:Bank:Checking   555.00 CAD.11
-            """
-            self.assertTrue(errors)
+        @lex_tokens def test_number_curency_number(self, tokens, errors):  """\
+    2013-04-01 balance Assets:Bank:Checking 555.00 CAD.11 """
+    self.assertTrue(errors)
+
+  - A date with an extra number also parses silently, what's up with that?
+
+      2013-12-228 *
 
   - This parses silently! Needs detection:
 
@@ -151,52 +176,80 @@ beancount: TODO
           2011-03-01 open Assets:C
 
   - There have been some rare, but occurring few instances of really odd syntax
-    making the parser ignore some transactions silently; this is not
-    acceptable. Attempt to reproduce this again (not obvious, problems have all
-    been fixed I think) and implement better error checking if possible.
+    making the parser ignore some transactions silently; this is not acceptable.
+    Attempt to reproduce this again (not obvious, problems have all been fixed I
+    think) and implement better error checking if possible.
 
     Reproduction hints: before eeea4b4d5605, a transaciton line with no strings
-    at all, e.g. a line starting with "YYYY-MM-DD * ", would entirely ignore
-    a transaction. Find a way to trigger an error on this.
+    at all, e.g. a line starting with "YYYY-MM-DD * ", would entirely ignore a
+    transaction. Find a way to trigger an error on this.
 
     Other examples that bring up this problem (pre eeea4b4d5605):
 
-      This parses wrong and silently--fix it:
-      2014-04-20 * "Money from CC" ^610fa7f17e7a #trip-montreal-april-2014
+      This parses wrong and silently--fix it:  2014-04-20 * "Money from CC"
+    ^610fa7f17e7a #trip-montreal-april-2014
 
-      This works okay:
-      2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
+      This works okay:  2014-04-20 * "Money from CC" #trip-montreal-april-2014
+    ^610fa7f17e7a
 
   - This easy mistake, disables a lot of entries:
 
-        2014-02-02 note  Assets:Temporary "Bla bla""
+        2014-02-02 note Assets:Temporary "Bla bla""
 
     Find a way to detect too long strings and perhaps barf on it.
+
+  - Is it possible to specify no flag on a transaction?, e.g.
+
+       2014-07-12 ...
+
+    Does this work?
+
+  - This:
+
+      2008-03-01 check Assets:BestBank:Savings 2340.19 USD
+
+    Fails the lexer with errors that look like this:
+
+      /home/blais/p/beancount/examples/basic/basic.beancount:375:  syntax error,
+    unexpected ERROR /home/blais/p/beancount/examples/basic/basic.beancount:375:
+    Lexer error; erroneous token: h
+    /home/blais/p/beancount/examples/basic/basic.beancount:375:  Lexer error;
+    erroneous token: e
+    /home/blais/p/beancount/examples/basic/basic.beancount:375:  Lexer error;
+    erroneous token: c
+    /home/blais/p/beancount/examples/basic/basic.beancount:375:  Lexer error;
+    erroneous token: k
+    /home/blais/p/beancount/examples/basic/basic.beancount:438:  Lexer error;
+    erroneous token: c
 
 
 ** Reconcile Web Interface vs. Upcoming Reports Stage
 
   The various reports that can be generated will be unified through an
   intermediate stage, that will eventually allow us to render all the reports
-  either to text, CSV or HTML formats. This means that the web interface will
-  be using that report generation code too, and that each of its pages will
+  either to text, CSV or HTML formats. This means that the web interface will be
+  using that report generation code too, and that each of its pages will
   basically be housing the HTML version of each report.
+
+  - Rename /account to /journal in the web interface to be consistent with
+    console reports. Maybe a separate register should be provided too (see
+    comment about distinguishing between these two elsewhere in the TODO file).
 
   - Newly created reports should have UI links: networth, holdings rolled by
     currency. We need to reconcile web UI with the new reports that we created.
 
-  - Render a table of prices, in case there are only a few price points.
-    We should also have a report type for prices.
+  - Render a table of prices, in case there are only a few price points. We
+    should also have a report type for prices.
 
   - The Equity pages are a mess right now. Merge Holdings tab into Shareholder's
     Equity, for less tabs, and a list of similar reports. Complete the equity
-    value page with prices.py, render the rates used to that page. Include
-    links to the holdings reports here as well.
-    Equity should just become an index for all the holdings pages.
+    value page with prices.py, render the rates used to that page. Include links
+    to the holdings reports here as well. Equity should just become an index for
+    all the holdings pages.
 
   - Implement all the missing global pages, or remove them. The web interface
-    should be tight, no links to "Not Implemented" pages. There aren't many
-    left anyway.
+    should be tight, no links to "Not Implemented" pages. There aren't many left
+    anyway.
 
   - IMPORTANT AND URGENT! All errors should be displayed in an overlay; proper
     error handling and display for the web interface is not optional. This needs
@@ -211,13 +264,13 @@ beancount: TODO
   This is just tightening up the bolts on the beast before shipping. I want to
   have a pretty solid pylint configuration passing.
 
+  - Fix all FIXMEs everywhere, or convert them to items in this list.
+
   - Make all imports not import symbols directly, only packages, except where
     performance really, really matters (the parser)
 
-  - Implement account.split() and perhaps remove references to
-    split(account.sep) everywhere.
-
-  - Fix all docstrings re. Account instance, artifacts of having had an Account object.
+  - Fix all docstrings re. Account instance, artifacts of having had an Account
+    object.
 
   - Configure and run a clean pylint on the entire codebase.
 
@@ -225,65 +278,205 @@ beancount: TODO
 
   - Add __author__ to all files?
 
-  - Convert to_decimal to 'D' everywhere... this is an important and nice convenience.
-
   - Make sure all exception messages do NOT end with a period, nor do any of the
     logging.*() calls.
 
   - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
 
-  - Review all the code and make all creation of Decimal objects use to_decimal
-    instead of Decimal, for consistency.
+  - Split all multiple tests that run in the same function by putting the
+    docstring on the setUp() method instead; this works well:
 
-  - Alias to_decimal to 'D' and replace everywhere.
+      @parser.parsedoc def setUp(self, entries, _, __):
 
-  - Remove support for legacy: "check" (vs. "balance"), PIPE, etc. Not needed.
+
+** Renames and Such
+
+  - Remove support for legacy, PIPE, Not needed.
+
+  - Implement Amount.from_string() to be consistent with position and inventory?
+
+  - For .source, instead of '<...>' for the source, we should use a scheme:...,
+    like file://..., and plugin:beancount.... . This makes a lot more sense. Do
+    this now before the release.
+
+  - 'Source' should just be a string. For the file:// case, just add the line
+    number as part of the URL, at the end. file:///path/to/ledger.beancount:182
+
+
+** Unsure
 
   - Rename "event" to its final name: "register". We don't have to care about
     the possible confusion with the Ledger report... "register" is a much
     better name for our concept of "event." "Event" is confusing.
 
-  - Remove dependency from beancount.utils.test_utils to beancount.core.
-    Simplify dependencies as much as possible for first release.
+  - Differentiate between the concept of "journal" and "register" report: a
+    "journal" should include all the postings and no running balance. A
+    "register" should by default only render just one account's postings and
+    render a running balance column. This is the distinction between the two,
+    and making this distinction will allow us to produce two useful but
+    distinct reports for the console output, even if these are somewhat similar
+    for the web output.
 
-  - Make a script to enforce dependency order as part of linting. Feed it off
-    of beancount.deps.
-
-  - Split all multiple tests that run in the same function by putting the
-    docstring on the setUp() method instead; this works well:
-
-      @parser.parsedoc
-      def setUp(self, entries, _, __):
-
-  - Implement Amount.from_string() to be consistent with position and inventory?
-
-  - Rename FileLocation to Source and .fileloc to .source, before we ship, in
-    order to avoid breaking scripts further. Also, instead of '<...>' for the
-    source, we should use a scheme:..., like file://..., and
-    plugin:beancount.... . This makes a lot more sense. Do this now before the
-    release.
+    This should probably be done before the release, so that at least the first
+    version has some decent console reports, even if the revamp of reports
+    comes later on.
 
 
-** Debugging Tools
-
-  I need to provide some basic diagnostic tools before shipping, because users
-  will report problems and I want to be able to ask them to generate some
-  information about their environment in order to diagnose problems.
-
-  - Write a new command to bean-doctor that checks the dependencies dynamically
-    and reports on them, with versions if possible, for reporting bugs:
-    etc/check-depends.py, do this for 1.0, or better: bean-doctor 'depends'
-
-  - Include the version numbers, e.g. for Bottle.
-
-  - bake: Spit out a nice error if wget is not installed/available.
 
 
 * Current / Misc / To Be Classified
 
   (This is a grab bag of ideas. When I have a new idea coming to me, I don't
-  have time to think, I just come here and jot it down. Every couple of months
-  I clean this up and put it in the sections below. Please excuse the mess.)
+  have time to think about where to put it, I just come here and jot it down.
+  Every couple of months I clean this mess up and put it in the sections below.
+  Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+
+  - Add an option for spacing in the revamped reports.
+
+
+
+  - (pad) Review the possibility of padding units held at cost:
+
+      "The reason it fails is that there must have been units of those commodities
+      held at cost before the pad date, and it is an error to pad commodities at
+      cost, because Beancount has no way to know what the cost basis of those
+      commodities should be."
+
+
+
+
+  - When an error occurs while parsing a directive/transaction, add the ability
+    to let the parser skip until the next directive and ignore the parsed
+    transaction because of the error. Maybe this should be an exception
+    mechanism, or just storing a flag that gets reset when the directive is
+    completed. Not sure. This would be a more elegant way to deal with some
+    errors.
+
+
+
+  - You can implement the sign check for positions held-at-cost only when there
+    are other of that same commodity held at cost in the inventory in the
+    opposite sign. This should allow holding short positions yet still retain
+    the benefit of the check for data entry errors.
+
+    It also removes what for most people will appear as a limitation from the
+    docs (although with experience you would realize that it is not much of a
+    limitation at atll).
+
+
+
+
+
+  - There's a fundamental question about which date to be used for pricing
+    entries. This really would depend on the view. If this is a period view, the
+    date of the last entry is most appropriate. If it is any other kind of view,
+    the latest price is best. All the reports should be adjusted for this.
+
+
+
+
+  - Idea: Allow sub-account names to include a special character, e.g., '#',
+    (only one) that would indicate to the reporting facilities that, by default,
+    the aggregation should be reported to the parent account. A "detail" or
+    "verbose" switch could be used to trigger the detailing of subaccounts. For
+    example,
+
+       Expenses:Health:Medical:#Claims
+       Expenses:Health:Medical:#PatientSavings
+       Expenses:Health:Medical:#ClaimsPayments
+
+    would be reported as
+
+      Expenses:Health:Medical
+
+    by default, but with the detailed switch, would be reported as
+
+       Expenses:Health:Medical:Claims
+       Expenses:Health:Medical:PatientSavings
+       Expenses:Health:Medical:ClaimsPayments
+
+    This could be used for various subaccounts actually. It's a nice way to
+    guide reporting that does not complexify the semantics.
+
+
+
+
+  - beancount-align-transaction does not appear to align the last posting
+    somehow:
+
+      2014-06-01 * "Transfer"
+        Income:US:Govt:PreTax                                            -500 HSAUSD
+        Assets:US:Govt:PreTax                                             500 HSAUSD
+        Assets:Health-Savings                                             500 USD
+          Assets:Checking
+
+
+  - Register (with filter) should have "print" mode that also includes
+    file:lineno so that we can make Emacs "jump" between the transactions in
+    the order they appear.
+
+
+
+  - (design) New inventory booking:
+    1. for each posting, classify by currency
+    2. for each posting at cost, classify whether position augmentation or reduction
+    3. For position reductions, match against inventory
+    4. Within currency groups, process interpolation, including those in
+       position augmentations
+
+    It should be possible to do something like this for cost basis adjustments:
+       Assets:Account         -10 MSFT {34 USD}
+       Assets:Account          10 MSFT {USD}
+       Income:PnL             400 USD
+
+    (See doc on Smarter Elision for a better version of this)
+
+
+  - Brilliant idea!: Add Emacs functionality to run a special script that, given
+    the filename and a line no (where the cursor is), will print the detail of
+    the inventory _before_ the transaction, the transaction itself with all
+    interpolated values inserted, and the inventory _after_ the transaction.
+    You invoke this with the cursor on the transaction that you want to get
+    debug output for. This would be powerful powerful for dealing with lots!!!
+
+
+  - Deal with wash sales... complete doc, call MSSB to figure out if/how they
+    adjust the cost basis of a future stock vesting event.
+
+
+
+  - Idea: In order to give the user more control over what plugins get run, add
+    an option to disable the processing of the built-in plugins:
+
+      option "processing" "raw" ; No plugins are run beyond the parser and interpolation.
+      option "processing" "default" ; The default list of plugins is run
+      option "processing" "strict" ; Plugins including the hardcore validation are run.
+
+    Somehow making the hardcore validation into a plugin might be a good way to
+    provide a strict mode.  Also, you could build a beancount.plugins.builtins
+    module that defines the list of default plugins that gets run instead of
+    having a list in the loader. This way the user could easily invoke it at
+    any point in time.
+
+
+
+  - (reports revamp) Write a generic test that simply enumerates all the
+    reports and invokes them with their default values. This should extend
+    automatically when new reports are created.
+
+
+  - (trial balance) In order to zero out the trial balance perfectly, you could
+    insert a conversion entry at the end of it, in the same way that I do for
+    the balance sheet. There is no reason that this is any different; this
+    should be done the same.
+
+
+
+  - Build a 'events' report that will print out the current value of all events.
+
+
 
 
 
@@ -304,12 +497,30 @@ beancount: TODO
 
   - In add_unrealized_gains(), convert to use our holdings aggregator.
 
+  - Build a new category to portfolio to identify accountings holding
+    "Uninvested Cash", which should be cash available to invest now.
+
+
+
+  - (reports) We really do need to report on position reduction as TRADES. This
+    is an important report to generate! This should be done separately from the
+    improved inventory booking method.
+
+    This report needs to include the long-term vs. short-term nature of those
+    trades! The right way to do this is to run a separate plug-in that will
+    add appropriate #long-term and #short-term tags or meta-data to those
+    transactions, based on their booking dates..
+
+
 
 
   - (validation/performance) Optimize the performance of validations and bring
     all the HARDCORE_VALIDATIONS in by default.
 
 
+
+  - (reports) Bring back the trades report into the mainline version, using
+    inventory reductions.
 
 
   - Create a new report type: "days" that counts the days of any event in the
@@ -351,8 +562,6 @@ beancount: TODO
     * ...
 
 
-  - Make balancing precision configurable. This is an easy addition to the
-    options which I can reuse in the balancing.
 
 
 
@@ -364,11 +573,17 @@ beancount: TODO
     fileloc= parameter should be provided to specify where the error occurs.
     This will make creating errors a lot easier and nicer.
 
+    As part of this, we should also somehow produce a list of all possible
+    errors with a lavish description.
+
 
   - Directive abstraction: Add directives should be able to enumerate they
     accounts. Maybe add a get_accounts() method to the base namedtuple or create
     a mixin. Remove getters.get_accounts() and getters.get_entry_accounts() if
     you have this, lots of code goes away, probably a good idea.
+
+  - Try to run the tests using 'watchr', 'sniffer', 'autonose' or other such tool.
+
 
 
   - Look at Intuit's service for financial hub for financial data. Look for a
@@ -1002,6 +1217,20 @@ beancount: TODO
 
 
 
+
+  - Create a new directive for balance that checks for the complete balance.
+    Ideas for syntax:
+
+      2014-06-20 balance      Assets:Some:Account    10 GOOG, 640.40 USD   FULL
+      2014-06-20 balance      Assets:Some:Account    [10 GOOG, 640.40 USD]
+      2014-06-20 balance      Assets:Some:Account    <10 GOOG, 640.40 USD>
+      2014-06-20 balance*     Assets:Some:Account    10 GOOG, 640.40 USD
+      2014-06-20 full_balance Assets:Some:Account    10 GOOG, 640.40 USD
+
+    Maybe we should define a general syntax for input'ing an Inventory object,
+    that could be read at parsing time.
+
+
   - Create a command in bean-doctor which lists all of the lots and their
     changes for a particular account. This is meant to be a debugging tool for
     booking algorithms. The rendering should be clear and detailed.
@@ -1033,6 +1262,10 @@ beancount: TODO
   - (performance) Implement inventories in C and reinstall the
     validate_check_balances test.
 
+  - Can I use Py_RETURN_NONE in order to incref and assign, in the lexer,
+    instead of doing it in two steps?
+
+
 
   - Add an optional parameter to the loaddoc() and parsedoc() decorators to
     have them automatically check for expected no-errors.
@@ -1041,6 +1274,84 @@ beancount: TODO
   - Add the acquisition date of each lot to each Holding, and it should be
     output at that date by print_holdings as well.
 
+
+
+  - In order to relax the constraint that you may not add negativ units at
+    cost, we could only disallow under certain circumstances:
+
+    * An account has received units in the opposite direction
+    * If the posting cross the zero boundary. Maybe starting from zero in
+      either direction could be fine.
+
+  - Idea: You could add a further constraint property to an account name: that
+    the amounts may never be allowed to balance to a particular sign. This
+    could be useful to avoid data entry mistakes. You could even write a doc
+    just focused on all features designed to avoid data entry mistakes.
+
+
+
+  - Idea: Relax checks for negative values: from docs
+
+      "PLEASE NOTE! In a future version of Beancount, we will relax this constraint
+      somewhat. We will allow an account to hold a negative number of units of a
+      commodity if and only if there are no other units of that commodity held in the
+      account. Either that, or we will allow you to mark an account has having no
+      such constraints at all."
+
+  - You could make the narrations for padding and summarization transactions
+    specifiable via options.
+
+  - Silence BrokenPipeError errors from bottle using wsgiref. You could use
+    CherryPy, which doesn't suffer from that, or just... fix it and silence
+    them.
+
+
+  - Do support rendering options to invert the amounts of the minus accounts.
+    This is an important feature.
+
+
+  - (sanity check for conversions) Insert a validation check when transferring
+    amounts to the balance sheet that the implied rate of the conversion entries
+    is within certain bounds of the price, for each pair of commodities (find a
+    way). These bounds should be proportional to the variance of the price. This
+    would just provide an extra amount of good fuzzy feeling, knowing for sure
+    that my solution to the conversions problem is always meaningful and
+    correct.
+
+
+  - (plugin/validation) Consider a strict validation plugin that kicks off
+    errors when amounts are posted to accounts which have children. Basically,
+    make it possible to disallow postings on accounts with children.
+
+
+
+
+
+
+  - (parser) Make a version of C's beancount.core._parser.parse() that parses a
+    string directly, instead of our current solution which involves writing to a
+    temporary file. This may be faster and avoid leaking test beancount contents
+    to a temp file by accident:
+
+      PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
+      /* FIXME: Make a version of this which takes a string as input! For
+       * unit-testing... */
+
+  - (parser) Support enabling flex debugging in beancount.core._parser.parse(),
+    using "yyset_debug(int bdebug)".
+
+
+
+** File Input as Environment Variable
+
+  - It might be really nice if all the commands would accept an environment
+    variable for the default file to use, if set. This means that the Beancount
+    filename could be an option like in Ledger and HLedger, e.g. with -f. It
+    *IS* true that in almost all cases I'm using the one, same input file for
+    all the programs, that is, the concept of a "default" is quite common.
+
+    This should probably go in before the first release because it has highly
+    visible impact on all the bean-query commands.
 
 
 ** Prepare for Plugins Revamp
@@ -1632,13 +1943,6 @@ Improve this bit:
   -  Sanity check: Check that all postings of Transaction entries point to their
      actual parent.
 
-  - Add a special option to set the EPSILON for the check.
-
-      option "check_precision"  "0.01"
-
-    Note: Maybe this check is per-currency, maybe different currencies need
-    different precisions.
-
   - (validation) In addition to the Check/Open before-constraint, check that
     the entries are always sorted. Add this sanity check.
 
@@ -1760,6 +2064,36 @@ Improve this bit:
 
   - When an error occurs, skip the lexer to the next empty line and recommence.
 
+** Reentrant
+
+  - Make the parser reentrant [2014-08-02]. This is _not_ a difficult task.
+
+    * You need to add unit tests that check the correctness of line numbers on
+      parsed directives and errors.
+
+    * You need to remove the get_yylineno and get_yyfilename accessors.
+
+    * You need to make the parser reentrant, by add this directive to the grammar:
+
+         %parse-param { PyObject* builder}
+
+      You also need to redefine yyerror() accordingly. I've done it and it
+      works, it's simple, it's a 20 minute change:
+      http://www.gnu.org/software/bison/manual/html_node/Parser-Function.html
+
+    * You also need to make the lexer reentrant:
+      http://flex.sourceforge.net/manual/Reentrant-Overview.html#Reentrant-Overview
+
+         %option reentrant
+
+      (I haven't tried this yet.)
+
+    * Most of the "real" work involved is in removing the globals for lineno and
+      filename.
+
+    * Make sure the performance does not degrade as a result of doing this.
+
+
 ** Options
 
   - FIXME: We need to parse the options using the same argparse parser....
@@ -1827,7 +2161,7 @@ Improve this bit:
   - Write the builder object in C... it won't change very much anymore, and
     that's probably simple enough.
 
-  - Check the performance of to_decimal(). I suspect improving this routine
+  - Check the performance of D(). I suspect improving this routine
     could have a dramatic effect on performance.
 
 ** Documents
@@ -2020,6 +2354,30 @@ Improve this bit:
 
 
 * Plugins
+** Wash Sales
+
+  - (script) Write a script to check whether an account's trades are subject to
+    the wash sale rule (I need this for Google stock):
+
+      "An Internal Revenue Service (IRS) rule that prohibits a taxpayer from
+    claiming a loss on the sale or trade of a security in a wash sale. The rule
+    defines a wash sale as one that occurs when an individual sells or trades a
+    security at a loss, and within 30 days before or after this sale, buys a
+    “substantially identical” stock or security, or acquires a contract or
+    option to do so. A wash sale also results if an individual sells a security,
+    and the spouse or a company controlled by the individual buys a
+    substantially equivalent security."
+
+    The wash sales amount should be reported in an account, and should be
+    calculated as a plugin.
+
+** Strict Unused Pad Directives
+
+  - The validation check that pushes an error on unused pad directives should
+    be moved to a plugin, that should be optional. There is rationale for
+    allowing to keep unused pad directives. Don't be so strict, Martin.
+
+
 ** Link Trades
 
   - Create a plugin that will link together all reducing transactions
@@ -2082,6 +2440,22 @@ Improve this bit:
       to report positions at cost or in held units, and whether the gains are
       included or not entirely depends on whether these transactions have been
       inserted in or not.
+
+
+** Strict Average Cost Inventory Booking Checker
+
+  - Build a plugin that will check that accounts with average cost inventory
+    booking method only have such reductions in them:
+
+    https://docs.google.com/document/d/1F8IJ_7fMHZ75XFPocMokLxVZczAhrBRBVN9uMhQFCZ4/edit#heading=h.m74dwkjzqojh
+
+      "Another approach would be to not enforce these aggregations, but to provide a
+      plugin that would check that for those accounts that are marked as using the
+      average cost inventory booking method by default, that only such bookings
+      actually take place."
+
+   This is, of cource, to be implemented only after implementing support for
+   the average cost inventory booking method.
 
 
 ** Tip Calculator
@@ -2147,6 +2521,23 @@ Improve this bit:
     I'd have to find some generic way to identify which accounts are pre-tax
     somehow.
 
+
+
+** Payees as Subaccounts
+
+  - Create a plugin that will define subaccounts for payees within accounts and
+    modify all the transactions accordingly. This would be a great way to kick
+    the tires on this idea without affecting the rest of the system.
+
+      Expenses:Electricity:ConEdison
+      Expenses:Phone:TMobile
+      Expenses:Groceries:WholeFoodsMarket
+      Expenses:Groceries:UnionMarket
+
+  - Should we define some notion of the default level for aggregation, per
+    account? For example, in Expenses:Electricity:ConEdison, the default level
+    of aggregation should be Expenses:Electricity. If we define that, using
+    subaccounts should not bother us much.
 
 
 * Tools
@@ -2567,179 +2958,7 @@ Improve this bit:
     list of holdings as input. This should perhaps just be another report name.
 
 * Documentation
-** Users's Manual
-
-  - Include the nice diagram made for DGreenberg, we need a 3D version of it.
-
-  - Defining your accounts
-    - Basic structures: *:Country:Institution:SubAccounts
-    - "When and why to put accounts together under a single subaccount?"
-      - When it makes sense to sum the total together.
-        e.g. IRA employer contribution and your own contribution.
-
-  - Checks
-    - Checks work for subaccount balances too (add joint account example)
-
-
-  - Under "About Credits & Debits" - this is where you should write about how
-    flows are relative to a boundary around the holder of the accounts.
-
-
-** Design Doc
-
-  - INVARIANT: All the entries lists are assumed to be sorted by date
-    everywhere.
-
-  - INVARIANT: All Check and Open entries are always at the beginning of a new
-    date in a list of entries.
-
-  - Describe and document the data structures in a language-independent way,
-    this is really important.  I have a really nice subset by now.
-
-** Developer Documentation
-
-  - Add nosetests, pylint to tools required for development
-
-  - Document the realization process, need that large zoom-out graphic that
-    shows closing, and opening balances.
-
-  - Add a "team project" as an example use case, or even an example file.
-
-  - Look at GnuCash for some of the reports... some good ideas maybe? I could
-    perhaps learn a few things, it looks informed.
-
-  - Start documentation so you have a place to put all these ideas.
-    Set it up using Sphinx, or something else.
-
-  - Consider serving the user's manual directly from the web interface.
-
-  - Do some serious thinking about payees vs. subaccounts vs. tags w.r.t. to
-    named tags.
-
-** Cookbook
-
-  - Write a series of real-life problems solved. This should be really much
-    more helpful than boring docs.
-
-  - The examples should be drawn from the demo file; the demo file should be
-    rewritten, with multiple years, and with good templates for most of the
-    important operations that can take place.
-
-  - Add loft4530 IRR calculation as an example of a custom application script
-
-*** Transfers Between Accounts
-*** mortgage, buying a home
-*** capital gains (note about how to do commissions)
-*** cie expenses, the way I'm doing it.
-*** misc, e.g. credit card
-*** stock splits
-*** Tracking IRA or RSP Contributions
-**** Option 1
-
-2012-10-15 * Contribution 1 to RSP
-  Assets:Checking                           -2500 CAD
-  Assets:Bank1:RSP                           2500 CAD
-  Liabilities:PendingContributions          -2500 RSPCAD
-  Expenses:RSPContrib                        2500 RSPCAD
-
-2012-11-15 * Contribution 2 to RSP
-  Assets:Checking                           -1500 CAD
-  Assets:Bank1:RSP                           1500 CAD
-  Liabilities:PendingContributions          -1500 RSPCAD
-  Expenses:RSPContrib                        1500 RSPCAD
-
-2013-04-30 * Filing Taxes
-  Assets:Receivable                           800 CAD
-  Expenses:Taxes                             -800 CAD
-  Assets:RSPContrib                         -3500 RSPCAD  ; Not claiming all
-  Liabilities:PendingContributions          +4000 RSPCAD
-  Assets:RSPContrib:Unclaimed                 500 RSPCAD
-
-2013-05-15 * Paying Taxes - Receiving Amount Due
-  Assets:Checking                             800 CAD
-  Assets:Receivable                          -800 CAD
-  Assets:RSPContrib                          1200 RSPCAD
-  Income:RSPContrib                         -1200 RSPCAD
-
-
-Two RSP investment accounts:
-
-  Assets:Bank1:RSP
-  Assets:Bank1:RSP
-
-An account to hold maximum RSP contributions allowed:
-
-  Assets:RSPContrib
-
-How much I've contributed to RSPs in total:
-
-  Expenses:RSPContrib
-
-How much my maximum contributions have increased from the governement as a
-result of paying taxes:
-
-  Income:RSPContrib
-
-Pending contributions for this year, some of which to be claimed on my tax filing:
-
-  Liabilities:PendingContributions
-
-Unused RSP contributions made, carried forward to future years:
-
-  Assets:RSPContrib:Unclaimed
-
-**** Option 2 (favourite)
-
-2012-10-15 * Contribution 1 to RSP
-  Assets:Checking                           -2500 CAD
-  Assets:Bank1:RSP                           2500 CAD
-  Assets:RSPContrib:MaxDeductible           -2500 RSPCAD
-  Assets:RSPContrib:Contributed              2500 RSPCAD
-
-2012-11-15 * Contribution 2 to RSP
-  Assets:Checking                           -1500 CAD
-  Assets:Bank1:RSP                           1500 CAD
-  Assets:RSPContrib:MaxDeductible           -1500 RSPCAD
-  Assets:RSPContrib:Contributed              1500 RSPCAD
-
-2013-04-30 * Filing Taxes
-  Assets:Receivable                           800 CAD
-  Expenses:Taxes                             -800 CAD
-  Assets:RSPContrib:Contributed             -3500 RSPCAD  ; Not claiming all
-  Expenses:RSPContrib                       +3500 RSPCAD
-
-2013-05-15 * Paying Taxes - Receiving Amount Due
-  Assets:Checking                             800 CAD
-  Assets:Receivable                          -800 CAD
-  Assets:RSPContrib:MaxDeductible            1200 RSPCAD
-  Income:RSPContrib                         -1200 RSPCAD
-
-Two RSP investment accounts:
-
-  Assets:Bank1:RSP
-  Assets:Bank1:RSP
-
-An account to hold maximum RSP contributions allowed:
-
-  Assets:RSPContrib:MaxDeductible
-
-Pending unused contributions for this year, some of which to be claimed on my
-tax filing:
-
-  Assets:RSPContrib:Contributed
-
-How much I've contributed to RSPs in total:
-
-  Expenses:RSPContrib
-
-How much my maximum contributions have increased from the governement as a
-result of paying taxes:
-
-  Income:RSPContrib
-
-
-
-** Challenges / Projects
+** Challenges
 
   - Document those below which I'm already able to do, and those which require
     new features to be able to be done, move them into a separate appendix,

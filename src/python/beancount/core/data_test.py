@@ -2,12 +2,12 @@ from datetime import date
 import unittest
 import datetime
 
-from .amount import to_decimal
+from .amount import D
 from . import data
 from . import amount
 
 
-FILELOC = data.FileLocation('beancount/core/testing.beancount', 12345)
+SOURCE = data.Source('beancount/core/testing.beancount', 12345)
 
 FLAG = '*'
 
@@ -15,11 +15,11 @@ FLAG = '*'
 class TestData(unittest.TestCase):
 
     def create_empty_transaction(self):
-        return data.Transaction(FILELOC, date(2014, 1, 15), FLAG, None,
+        return data.Transaction(SOURCE, date(2014, 1, 15), FLAG, None,
                                 "Some example narration", None, None, [])
 
     def test_strip_back_reference(self):
-        entry = data.Transaction(data.FileLocation(".", 0), datetime.date.today(), FLAG,
+        entry = data.Transaction(data.Source(".", 0), datetime.date.today(), FLAG,
                                  None, "Something", None, None, [])
         data.create_simple_posting(entry, 'Liabilities:CreditCard', '-50', 'USD')
         data.create_simple_posting(entry, 'Expenses:Restaurant', '50', 'USD')
@@ -52,7 +52,7 @@ class TestData(unittest.TestCase):
         with self.assertRaises(AssertionError):
             data.sanity_check_types('a string')
         with self.assertRaises(AssertionError):
-            data.sanity_check_types(FILELOC)
+            data.sanity_check_types(SOURCE)
         with self.assertRaises(AssertionError):
             data.sanity_check_types(datetime.date.today())
         with self.assertRaises(AssertionError):
@@ -109,23 +109,22 @@ class TestData(unittest.TestCase):
         self.assertEqual(data.get_entry(posting), entry)
 
     def create_sort_data(self):
-        FL = data.FileLocation
         account = 'Assets:Bank:Checking'
         date1 = date(2014, 1, 15)
         date2 = date(2014, 1, 18)
         date3 = date(2014, 1, 20)
         entries = [
-            data.Transaction(FL(".", 1100), date3, FLAG,
+            data.Transaction(data.Source(".", 1100), date3, FLAG,
                              None, "Next day", None, None, []),
-            data.Close(FL(".", 1000), date2, account),
-            data.Balance(FL(".", 1001), date2, account,
-                         amount.Amount(to_decimal('200.00'), 'USD"'), None),
-            data.Open(FL(".", 1002), date2, account, 'USD'),
-            data.Transaction(FL(".", 1009), date2, FLAG,
+            data.Close(data.Source(".", 1000), date2, account),
+            data.Balance(data.Source(".", 1001), date2, account,
+                         amount.Amount(D('200.00'), 'USD"'), None),
+            data.Open(data.Source(".", 1002), date2, account, 'USD'),
+            data.Transaction(data.Source(".", 1009), date2, FLAG,
                              None, "Transaction 2", None, None, []),
-            data.Transaction(FL(".", 1008), date2, FLAG,
+            data.Transaction(data.Source(".", 1008), date2, FLAG,
                              None, "Transaction 1", None, None, []),
-            data.Transaction(FL(".", 900), date1, FLAG,
+            data.Transaction(data.Source(".", 900), date1, FLAG,
                              None, "Previous day", None, None, []),
             ]
 
@@ -148,7 +147,7 @@ class TestData(unittest.TestCase):
                           data.Transaction], list(map(type, sorted_entries)))
 
         self.assertEqual([900, 1002, 1001, 1008, 1009, 1000, 1100],
-                         [entry.fileloc.lineno
+                         [entry.source.lineno
                           for entry in sorted_entries])
 
     def test_posting_sortkey(self):
@@ -168,11 +167,11 @@ class TestData(unittest.TestCase):
                           data.Posting], list(map(type, sorted_postings)))
 
         self.assertEqual([900, 1002, 1001, 1008, 1009, 1000, 1100],
-                         [entry.fileloc.lineno
+                         [entry.source.lineno
                           for entry in map(data.get_entry, sorted_postings)])
 
     def test_has_entry_account_component(self):
-        entry = data.Transaction(data.FileLocation(".", 0), datetime.date.today(), FLAG,
+        entry = data.Transaction(data.Source(".", 0), datetime.date.today(), FLAG,
                                  None, "Something", None, None, [])
         data.create_simple_posting(entry, 'Liabilities:US:CreditCard', '-50', 'USD')
         data.create_simple_posting(entry, 'Expenses:Food:Restaurant', '50', 'USD')

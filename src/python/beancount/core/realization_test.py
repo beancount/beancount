@@ -1,12 +1,13 @@
 """Unit tests for realizations.
 """
 import copy
-import operator
+import datetime
 import io
-import unittest
+import operator
 import re
+import unittest
 
-from beancount.core.amount import to_decimal as D
+from beancount.core.amount import D
 from beancount.core.realization import RealAccount
 from beancount.core import realization
 from beancount.core import data
@@ -73,9 +74,6 @@ class TestRealAccount(unittest.TestCase):
         self.assertNotEqual(ra1, ra2)
         ra2.account = saved_account
 
-        # FIXME: Test postings equality; should not take into account parent
-        # links!
-
     def test_getitem_setitem(self):
         ra = create_simple_account()
         self.assertTrue(isinstance(ra['Assets'], RealAccount))
@@ -105,11 +103,10 @@ class TestRealAccount(unittest.TestCase):
         self.assertEqual(['posting1', 'posting2'], ra_clone.postings)
         self.assertEqual({'Assets'}, ra_clone.keys())
 
-        # # FIXME: Make this one work too, there's a way.
-        # ra_clone = ra.copy()
-        # self.assertEqual(42, ra_clone.balance)
-        # self.assertEqual(['posting1', 'posting2'], ra_clone.postings)
-        # self.assertEqual({'Assets'}, ra_clone.keys())
+        ra_clone = ra.copy()
+        self.assertEqual(42, ra_clone.balance)
+        self.assertEqual(['posting1', 'posting2'], ra_clone.postings)
+        self.assertEqual({'Assets'}, ra_clone.keys())
 
 
 class TestRealGetters(unittest.TestCase):
@@ -185,9 +182,9 @@ class TestRealization(unittest.TestCase):
         2012-01-01 open Expenses:Movie
         2012-01-01 open Assets:Cash
         2012-01-01 open Liabilities:CreditCard
-        2012-01-01 open Equity:OpeningBalances
+        2012-01-01 open Equity:Opening-Balances
 
-        2012-01-15 pad Liabilities:CreditCard Equity:OpeningBalances
+        2012-01-15 pad Liabilities:CreditCard Equity:Opening-Balances
 
         2012-03-01 * "Food"
           Expenses:Restaurant     100 CAD
@@ -237,107 +234,7 @@ class TestRealization(unittest.TestCase):
                          list(map(type, postings_map['Liabilities:CreditCard'])))
 
         self.assertEqual([data.Open, data.Pad, data.Posting],
-                         list(map(type, postings_map['Equity:OpeningBalances'])))
-
-    @parsedoc
-    def test_compute_postings_balance(self, entries, _, __):
-        """
-        2014-01-01 open Assets:Bank:Checking
-        2014-01-01 open Assets:Bank:Savings
-        2014-01-01 open Assets:Investing
-
-        2014-05-26 note Assets:Investing "Buying some Googles"
-
-        2014-05-30 *
-          Assets:Bank:Checking  111.23 USD
-          Assets:Bank:Savings   222.74 USD
-          Assets:Bank:Savings   17.23 CAD
-          Assets:Investing      10000 EUR
-          Assets:Investing      32 GOOG {45.203 USD}
-          Assets:Other          1000 EUR @ 1.78 GBP
-          Assets:Other          1000 EUR @@ 1780 GBP
-        """
-        postings = entries[:-1] + entries[-1].postings
-        computed_balance = realization.compute_postings_balance(postings)
-
-        expected_balance = Inventory()
-        expected_balance.add(amount.Amount('333.97', 'USD'))
-        expected_balance.add(amount.Amount('17.23', 'CAD'))
-        expected_balance.add(amount.Amount('32', 'GOOG'),
-                             amount.Amount('45.203', 'USD'))
-        expected_balance.add(amount.Amount('12000', 'EUR'))
-        self.assertEqual(expected_balance, computed_balance)
-
-    @parsedoc
-    def test_compute_entries_balance_currencies(self, entries, _, __):
-        """
-        2014-01-01 open Assets:Bank:Checking
-        2014-01-01 open Assets:Bank:Savings
-        2014-01-01 open Assets:Investing
-
-        2014-06-01 *
-          Assets:Bank:Checking  111.23 USD
-          Assets:Other
-
-        2014-06-02 *
-          Assets:Bank:Savings   222.74 USD
-          Assets:Other
-
-        2014-06-03 *
-          Assets:Bank:Savings   17.23 CAD
-          Assets:Other
-
-        2014-06-04 *
-          Assets:Investing      10000 EUR
-          Assets:Other
-
-        """
-        computed_balance = realization.compute_entries_balance(entries)
-        expected_balance = Inventory()
-        self.assertEqual(expected_balance, computed_balance)
-
-    @parsedoc
-    def test_compute_entries_balance_at_cost(self, entries, _, __):
-        """
-        2014-01-01 open Assets:Bank:Checking
-        2014-01-01 open Assets:Bank:Savings
-        2014-01-01 open Assets:Investing
-
-        2014-06-05 *
-          Assets:Investing      30 GOOG {40 USD}
-          Assets:Other
-
-        2014-06-05 *
-          Assets:Investing      -20 GOOG {40 USD}
-          Assets:Other
-
-        """
-        computed_balance = realization.compute_entries_balance(entries)
-        expected_balance = Inventory()
-        expected_balance.add(amount.Amount('-400', 'USD'))
-        expected_balance.add(amount.Amount('10', 'GOOG'), amount.Amount('40', 'USD'))
-        self.assertEqual(expected_balance, computed_balance)
-
-    @parsedoc
-    def test_compute_entries_balance_conversions(self, entries, _, __):
-        """
-        2014-01-01 open Assets:Bank:Checking
-        2014-01-01 open Assets:Bank:Savings
-        2014-01-01 open Assets:Investing
-
-        2014-06-06 *
-          Assets:Investing          1000 EUR @ 1.78 GBP
-          Assets:Other
-
-        2014-06-07 *
-          Assets:Investing          1000 EUR @@ 1780 GBP
-          Assets:Other
-        """
-        computed_balance = realization.compute_entries_balance(entries)
-        expected_balance = Inventory()
-        expected_balance.add(amount.Amount('2000.00', 'EUR'))
-        expected_balance.add(amount.Amount('-3560.00', 'GBP'))
-        self.assertEqual(expected_balance, computed_balance)
+                         list(map(type, postings_map['Equity:Opening-Balances'])))
 
     def test_realize_empty(self):
         real_account = realization.realize([])
@@ -378,9 +275,9 @@ class TestRealization(unittest.TestCase):
         2012-01-01 open Expenses:Movie
         2012-01-01 open Assets:Cash
         2012-01-01 open Liabilities:CreditCard
-        2012-01-01 open Equity:OpeningBalances
+        2012-01-01 open Equity:Opening-Balances
 
-        2012-01-15 pad Liabilities:CreditCard Equity:OpeningBalances
+        2012-01-15 pad Liabilities:CreditCard Equity:Opening-Balances
 
         2012-03-01 * "Food"
           Expenses:Restaurant     100 CAD
@@ -501,9 +398,9 @@ class TestRealOther(test_utils.TestCase):
         2012-01-01 open Expenses:Restaurant
         2012-01-01 open Expenses:Movie
         2012-01-01 open Liabilities:CreditCard
-        2012-01-01 open Equity:OpeningBalances
+        2012-01-01 open Equity:Opening-Balances
 
-        2012-01-15 pad Assets:Bank:Checking Equity:OpeningBalances
+        2012-01-15 pad Assets:Bank:Checking Equity:Opening-Balances
 
         2012-03-01 * "Food"
           Expenses:Restaurant     11.11 CAD
@@ -535,11 +432,11 @@ class TestRealOther(test_utils.TestCase):
             (data.Open, 'Expenses:Restaurant', None),
             (data.Open, 'Expenses:Movie', None),
             (data.Open, 'Liabilities:CreditCard', None),
-            (data.Open, 'Equity:OpeningBalances', None),
+            (data.Open, 'Equity:Opening-Balances', None),
             (data.Pad, 'Assets:Bank:Checking', None),
             (data.Posting, 'Assets:Bank:Checking', '621.66'),
             (data.Pad, 'Assets:Bank:Checking', None),
-            (data.Posting, 'Equity:OpeningBalances', '-621.66'),
+            (data.Posting, 'Equity:Opening-Balances', '-621.66'),
             (data.Posting, 'Assets:Bank:Checking', '-11.11'),
             (data.Posting, 'Expenses:Restaurant', '11.11'),
             (data.Posting, 'Assets:Bank:Checking', '-22.22'),
@@ -599,7 +496,7 @@ class TestRealOther(test_utils.TestCase):
         2012-01-01 open Assets:Bank:Checking
         2012-01-01 open Expenses:Restaurant
 
-        2012-01-15 pad Assets:Bank:Checking Equity:OpeningBalances
+        2012-01-15 pad Assets:Bank:Checking Equity:Opening-Balances
 
         2012-03-01 * "With a single entry"
           Expenses:Restaurant     11.11 CAD
@@ -670,38 +567,38 @@ class TestRealOther(test_utils.TestCase):
         2012-01-01 open Expenses:Restaurant
         2012-01-01 open Expenses:Movie
         2012-01-01 open Liabilities:CreditCard
-        2012-01-01 open Equity:OpeningBalances
+        2012-01-01 open Equity:Opening-Balances
         """
         real_account = realization.realize(entries)
         oss = io.StringIO()
         lines = realization.dump(real_account)
         self.assertEqual([
-            ('|-- Assets             ',
-             '|   |                  '),
-            ('|   |-- Bank1          ',
-             '|   |   |              '),
-            ('|   |   |-- Checking   ',
-             '|   |   |              '),
-            ('|   |   `-- Savings    ',
-             '|   |                  '),
-            ('|   `-- Bank2          ',
-             '|       |              '),
-            ('|       `-- Checking   ',
-             '|                      '),
-            ('|-- Equity             ',
-             '|   |                  '),
-            ('|   `-- OpeningBalances',
-             '|                      '),
-            ('|-- Expenses           ',
-             '|   |                  '),
-            ('|   |-- Movie          ',
-             '|   |                  '),
-            ('|   `-- Restaurant     ',
-             '|                      '),
-            ('`-- Liabilities        ',
-             '    |                  '),
-            ('    `-- CreditCard     ',
-             '                       '),
+            ('|-- Assets              ',
+             '|   |                   '),
+            ('|   |-- Bank1           ',
+             '|   |   |               '),
+            ('|   |   |-- Checking    ',
+             '|   |   |               '),
+            ('|   |   `-- Savings     ',
+             '|   |                   '),
+            ('|   `-- Bank2           ',
+             '|       |               '),
+            ('|       `-- Checking    ',
+             '|                       '),
+            ('|-- Equity              ',
+             '|   |                   '),
+            ('|   `-- Opening-Balances',
+             '|                       '),
+            ('|-- Expenses            ',
+             '|   |                   '),
+            ('|   |-- Movie           ',
+             '|   |                   '),
+            ('|   `-- Restaurant      ',
+             '|                       '),
+            ('`-- Liabilities         ',
+             '    |                   '),
+            ('    `-- CreditCard      ',
+             '                        '),
             ], [(first_line, cont_line)
                 for first_line, cont_line, _ in lines])
 
@@ -740,3 +637,30 @@ class TestRealMisc(unittest.TestCase):
         objects = [object() for _ in range(10)]
         index = realization.index_key(objects, objects[4], lambda x: x, operator.is_)
         self.assertEqual(4, index)
+
+
+class TestFindLastActive(unittest.TestCase):
+
+    @loaddoc
+    def test_find_last_active_posting(self, entries, _, __):
+        """
+        2012-01-01 open Assets:Target
+        2012-01-01 open Equity:Other
+
+        2014-02-01 *
+          Assets:Target            123.45 CAD
+          Equity:Other
+
+        2014-03-01 U "This should get ignored because of the unrealized flag."
+          Assets:Target            -23.45 CAD
+          Equity:Other
+
+        ;; This should get ignored because it's not one of the directives checked for
+        ;; active.
+        2014-03-02 document Assets:Target  "/path/to/somewhere.txt"
+
+        """
+        real_account = realization.realize(entries)
+        postings = realization.get(real_account, 'Assets:Target').postings
+        posting = realization.find_last_active_posting(postings)
+        self.assertEqual(datetime.date(2014, 2, 1), posting.entry.date)

@@ -58,7 +58,7 @@ def get_account_type(account_name):
 
     """
     assert isinstance(account_name, str), account_name
-    return account_name.split(account.sep)[0]
+    return account.split(account_name)[0]
 
 
 def is_root_account(account_name, account_types=None):

@@ -126,7 +126,7 @@ def iterate_render_postings(postings, build_url):
                                '{}').format(entry.payee, description)
             amount_str = balance_html(change)
 
-            if entry.links:
+            if entry.links and build_url:
                 links = [build_url('link', link=link)
                          for link in entry.links]
 
@@ -222,7 +222,7 @@ def entries_table_with_balance(oss, account_postings, build_url, render_postings
             <td class="balance num">{}</td>
           <tr>
         '''.format(row.rowtype, row.extra_class,
-                   '{}:{}'.format(entry.fileloc.filename, entry.fileloc.lineno),
+                   '{}:{}'.format(entry.source.filename, entry.source.lineno),
                    entry.date, row.flag, description,
                    row.amount_str, row.balance_str))
 
@@ -303,7 +303,7 @@ def entries_table(oss, account_postings, build_url, render_postings=True):
             <td class="description" colspan="5">{}</td>
           <tr>
         '''.format(row.rowtype, row.extra_class,
-                   '{}:{}'.format(entry.fileloc.filename, entry.fileloc.lineno),
+                   '{}:{}'.format(entry.source.filename, entry.source.lineno),
                    entry.date, row.flag, description))
 
         if render_postings and isinstance(entry, Transaction):

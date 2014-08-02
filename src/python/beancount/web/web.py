@@ -14,13 +14,12 @@ import threading
 import bottle
 from bottle import response, request
 
-from beancount.core.data import Open, Close, Pad, Balance, Transaction, Note
+from beancount.core.data import Open, Close, Transaction
 from beancount.core.data import Document, Event
-from beancount.core.data import Posting
 from beancount.core import data
-from beancount.core import flags
 from beancount.core import getters
 from beancount.core import realization
+from beancount.core import complete
 from beancount.core import account
 from beancount.core import account_types
 from beancount.ops import basicops
@@ -114,12 +113,8 @@ def toc():
          [(view_url('component', component=component), '{}'.format(component))
           for component in components]))
 
-    # FIXME: This deserves its own page, with options for cleanup (or a helper tool).
-    if 0:
-        # By payee views.
-        viewboxes.append(('payee', 'Payees',
-                          [(view_url('payee', payee=payee), '{}'.format(payee))
-                           for payee in sorted(getters.get_all_payees(app.entries))]))
+    # Note: With the filtering language, payees will be added and much many more
+    # options. Don't worry.
 
     oss = io.StringIO()
     oss.write('<div id="viewboxes">\n')
@@ -175,8 +170,8 @@ def source():
         )
 
 
-@app.route('/update', name='update')
-def update():
+@app.route('/activity', name='activity')
+def activity():
     "Render the update activity."
 
     errors = []
@@ -190,6 +185,8 @@ def update():
     oss = io.StringIO()
     view = get_all_view(app)
 
+    # FIXME(reports): This renders not as a tree, and also the Liabilities table
+    # is not the same width. Fix this, this doesn't look good.
     for root in (app.account_types.assets,
                  app.account_types.liabilities):
         table = acctree.tree_table(oss, realization.get(view.real_accounts, root),
@@ -199,7 +196,7 @@ def update():
         for real_account, cells, row_classes in table:
             if not isinstance(real_account, realization.RealAccount):
                 continue
-            last_posting = find_last_active_posting(real_account.postings)
+            last_posting = realization.find_last_active_posting(real_account.postings)
 
             # Don't render updates to accounts that have been closed.
             # Note: this is O(N), maybe we can store this at realization.
@@ -225,30 +222,6 @@ def update():
         )
 
 
-# FIXME: Move this to realization.py.
-def find_last_active_posting(postings):
-    """Look at the end of the list of postings, and find the last
-    posting or entry that is not an automatically added directive.
-    Note that if the account is closed, the last posting is assumed
-    to be a close directive (this is the case if the input is valid
-    and checks without errors.
-
-    Args:
-      postings: a list of postings or entries.
-    Returns:
-      An entry, or None, if the input list was empty.
-    """
-    for posting in misc_utils.filter_type(reversed(postings),
-                                          (Open, Close, Pad, Balance, Posting, Note)):
-        # pylint: disable=bad-continuation
-        if (isinstance(posting, Posting) and
-            posting.entry.flag == flags.FLAG_UNREALIZED):
-            continue
-        return posting
-    else:
-        return None
-
-
 @app.route('/events', name='events')
 def events():
     "Render an index for the various kinds of events."
@@ -263,7 +236,7 @@ def events():
 
     return render_global(
         pagetitle="Events",
-        ##contents=contents.getvalue() # FIXME: TODO
+        ##contents=contents.getvalue() # FIXME(reports): TODO
         contents=NOT_IMPLEMENTED
         )
 
@@ -353,7 +326,7 @@ GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{A.toc}}">Table of Contents</a></li>
   <li><a href="{{A.errors}}">Errors</a></li>
   <li><a href="{{A.source}}">Source</a></li>
-  <li><a href="{{A.update}}">Update Activity</a></li>
+  <li><a href="{{A.activity}}">Update Activity</a></li>
   <li><a href="{{A.events}}">Events</a></li>
   <li><a href="{{A.prices}}">Prices</a></li>
 </ul>
@@ -448,15 +421,15 @@ def trial():
 
     view = request.view
     real_accounts = view.real_accounts
-    operating_currencies = view.options['operating_currency']
+    operating_currencies = app.options['operating_currency']
     table = acctree.table_of_balances(real_accounts,
                                       operating_currencies,
                                       request.app.get_url,
                                       classes=['trial'])
 
 
-    ## FIXME: After conversions is fixed, this should always be zero.
-    total_balance = realization.compute_entries_balance(view.entries)
+    ## FIXME(reports): After conversions is fixed, this should always be zero.
+    total_balance = complete.compute_entries_balance(view.entries)
     table += """
       Total Balance: <span class="num">{}</span>
     """.format(total_balance.get_cost())
@@ -516,7 +489,7 @@ def balsheet():
 
     view = request.view
     real_accounts = request.view.closing_real_accounts
-    contents = balance_sheet_table(real_accounts, view.options, request.app.get_url)
+    contents = balance_sheet_table(real_accounts, app.options, request.app.get_url)
 
     return render_view(pagetitle="Balance Sheet",
                        contents=contents)
@@ -531,7 +504,7 @@ def openbal():
     if real_accounts is None:
         contents = 'N/A'
     else:
-        contents = balance_sheet_table(real_accounts, view.options, request.app.get_url)
+        contents = balance_sheet_table(real_accounts, app.options, request.app.get_url)
 
     return render_view(pagetitle="Opening Balances",
                        contents=contents)
@@ -545,13 +518,13 @@ def income():
     real_accounts = request.view.real_accounts
 
     # Render the income statement tables.
-    operating_currencies = view.options['operating_currency']
+    operating_currencies = app.options['operating_currency']
     income = acctree.table_of_balances(realization.get(real_accounts,
-                                                       view.options['name_income']),
+                                                       app.options['name_income']),
                                        operating_currencies,
                                        request.app.get_url)
     expenses = acctree.table_of_balances(realization.get(real_accounts,
-                                                         view.options['name_expenses']),
+                                                         app.options['name_expenses']),
                                          operating_currencies,
                                          request.app.get_url)
 
@@ -582,15 +555,16 @@ def income():
 def equity():
     "Render a table of the net worth at the beginning, end, and net income."
 
+    # FIXME(reports): This whole shebang gets replaced by the holdings reports.
     if 0:
         view = request.view
 
-        equity_balance = realization.compute_entries_balance(
-            view.closing_entries, '{}:'.format(view.options['name_equity']))
+        equity_balance = complete.compute_entries_balance(
+            view.closing_entries, '{}:'.format(app.options['name_equity']))
         header = io.StringIO()
         header.write('<th>Currency</th>\n')
         header.write('<th>Amount</th>\n')
-        operating_currencies = view.options['operating_currency']
+        operating_currencies = app.options['operating_currency']
         header.write('\n'.join('<th>{}</th>\n'.format(currency)
                                for currency in operating_currencies))
 
@@ -604,9 +578,9 @@ def equity():
                                                       (position.lot.currency, currency))
                 value = position.number * rate
 
-                # FIXME: We may not have an appropriate conversion here, we may need
-                # to get the cost and then convert the cost to the target currency. Do
-                # this.
+                # FIXME(reports): We may not have an appropriate conversion
+                # here, we may need to get the cost and then convert the cost to
+                # the target currency. Do this.
                 body.write('<td>{}</td>'.format(value))
             body.write('</tr>')
 
@@ -623,8 +597,8 @@ def equity():
            </div>
         """.format(header=header.getvalue(), body=body.getvalue())
 
-        ## FIXME: Render the equity at opening too.
-        ## FIXME: Insert a summary of the net income.
+        ## FIXME(reports): Render the equity at opening too.
+        ## FIXME(reports): Insert a summary of the net income.
 
     return render_view(pagetitle="Shareholder's Equity",
                        contents=NOT_IMPLEMENTED)
@@ -683,7 +657,7 @@ def conversions():
     journal.entries_table(oss, conversion_entries, request.app.get_url,
                           render_postings=True)
 
-    conversion_balance = realization.compute_entries_balance(conversion_entries)
+    conversion_balance = complete.compute_entries_balance(conversion_entries)
 
     return render_view(
         pagetitle="Conversions",
@@ -741,11 +715,10 @@ def holdings_overview():
 def holdings_detail():
     "Render a detailed table of all holdings."
 
-    price_map = prices.build_price_map(request.view.entries)
     holdings_ = holdings.get_final_holdings(request.view.entries,
                                             (app.account_types.assets,
                                              app.account_types.liabilities),
-                                            price_map)
+                                            app.price_map)
 
     table_ = table.create_table(holdings_,
                                 field_spec=[
@@ -780,11 +753,10 @@ def holdings_detail():
 def holdings_byinstrument():
     "Render a table of holdings by instrument."
 
-    price_map = prices.build_price_map(request.view.entries)
     holdings_ = holdings.get_final_holdings(request.view.entries,
                                             (app.account_types.assets,
                                              app.account_types.liabilities),
-                                            price_map)
+                                            app.price_map)
     aggregated_holdings = holdings.aggregate_holdings_by(holdings_,
                                                          lambda holding: holding.currency)
 
@@ -1185,7 +1157,7 @@ def add_web_arguments(argparser):
 def main():
     """Main web service runner. This runs the event loop and blocks indefinitely."""
 
-    argparser = argparse.ArgumentParser(__doc__.strip())
+    argparser = argparse.ArgumentParser(description=__doc__.strip())
     add_web_arguments(argparser)
     args = argparser.parse_args()
 

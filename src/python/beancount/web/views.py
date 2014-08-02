@@ -11,6 +11,48 @@ from beancount.utils import misc_utils
 
 
 
+def clamp_with_options(entries, begin_date, end_date, options_map):
+    """Clamp by getting all the parameters from an options map.
+
+    See clamp() for details.
+
+    Args:
+      entries: See clamp().
+      begin_date: See clamp().
+      end_date: See clamp().
+      options_map: A parser's option_map.
+    Returns:
+      Same as clamp().
+    """
+    account_types = options.get_account_types(options_map)
+    previous_accounts = options.get_previous_accounts(options_map)
+    conversion_currency = options_map['conversion_currency']
+    return summarize.clamp(entries, begin_date, end_date,
+                           account_types,
+                           conversion_currency,
+                           *previous_accounts)
+
+
+def close_with_options(entries, options_map):
+    """Close by getting all the parameters from an options map.
+
+    See summarize.close() for details.
+
+    Args:
+      entries: See close().
+      options_map: A parser's option_map.
+    Returns:
+      Same as close().
+    """
+    account_types = options.get_account_types(options_map)
+    current_accounts = options.get_current_accounts(options_map)
+    conversion_currency = options_map['conversion_currency']
+    return summarize.close(entries,
+                           account_types,
+                           conversion_currency,
+                           *current_accounts)
+
+
 class View:
     """A container for filtering a subset of entries and realizing that for
     display."""
@@ -37,10 +79,6 @@ class View:
         # Title.
         self.title = title
 
-        # A reference to the global list of options and the account type names.
-        # FIXME: These may be redundant, review whether we actually need these.
-        self.options = options_map
-
         # Realization of the filtered entries to display. These are computed in
         # _initialize().
         self.real_accounts = None
@@ -49,13 +87,13 @@ class View:
 
         # Realize now, we don't need to do this lazily because we create these
         # view objects on-demand and cache them.
-        self._initialize()
+        self._initialize(options_map)
 
-    def _initialize(self):
+    def _initialize(self, options_map):
         """Compute the list of filtered entries and realization trees."""
 
         # Get the filtered list of entries.
-        self.entries, self.begin_index = self.apply_filter(self.all_entries, self.options)
+        self.entries, self.begin_index = self.apply_filter(self.all_entries, options_map)
 
         # Compute the list of entries for the opening balances sheet.
         self.opening_entries = (self.entries[:self.begin_index]
@@ -66,14 +104,10 @@ class View:
         # income/expenses amounts to the balance sheet's equity (as "net
         # income"). This is used to render the end-period balance sheet, with
         # the current period's net income, closing the period.
-        current_accounts = options.get_current_accounts(self.options)
-        account_types = options.get_account_types(self.options)
-        self.closing_entries = summarize.close(self.entries,
-                                               account_types,
-                                               self.options['conversion_currency'],
-                                               *current_accounts)
+        self.closing_entries = close_with_options(self.entries, options_map)
 
         # Realize the three sets of entries.
+        account_types = options.get_account_types(options_map)
         with misc_utils.log_time('realize_opening', logging.info):
             self.opening_real_accounts = realization.realize(self.opening_entries,
                                                              account_types)
@@ -152,19 +186,11 @@ class YearView(View):
         View.__init__(self, entries, options_map, title)
 
     def apply_filter(self, entries, options_map):
-        # Get the transfer account objects.
-        previous_accounts = options.get_previous_accounts(options_map)
-
         # Clamp to the desired period.
         begin_date = datetime.date(self.year, 1, 1)
         end_date = datetime.date(self.year+1, 1, 1)
-        account_types = options.get_account_types(options_map)
         with misc_utils.log_time('clamp', logging.info):
-            entries, index = summarize.clamp(entries, begin_date, end_date,
-                                             account_types,
-                                             options_map['conversion_currency'],
-                                             *previous_accounts)
-
+            entries, index = clamp_with_options(entries, begin_date, end_date, options_map)
         return entries, index
 
 

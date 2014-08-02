@@ -166,9 +166,11 @@ def aggregate_holdings_list(holdings):
     accounts = set()
     currencies = set()
     cost_currencies = set()
+    price_dates = set()
     for holding in holdings:
         units += holding.number
         accounts.add(holding.account)
+        price_dates.add(holding.price_date)
         currencies.add(holding.currency)
         cost_currencies.add(holding.cost_currency)
 
@@ -204,8 +206,9 @@ def aggregate_holdings_list(holdings):
     account_ = (accounts.pop()
                 if len(accounts) == 1
                 else account.commonprefix(accounts))
+    price_date = price_dates.pop() if len(price_dates) == 1 else None
     return Holding(account_, units, currency, average_cost, cost_currency,
-                   total_book_value, total_market_value, average_price, None)
+                   total_book_value, total_market_value, average_price, price_date)
 
 
 def convert_to_currency(price_map, target_currency, holdings_list):

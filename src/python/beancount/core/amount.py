@@ -12,7 +12,8 @@ About Decimal usage:
 - Do not import Decimal from 'decimal' or 'cdecimal' modules; always import your
   Decimal class from beancount.core.amount.
 
-- Prefer to use to_decimal() to create new instances of Decimal objects, which
+
+- Prefer to use D() to create new instances of Decimal objects, which
   handles more syntax, e.g., handles None, and numbers with commas.
 
 """
@@ -33,7 +34,7 @@ Decimal = decimal.Decimal
 ZERO = Decimal()
 ONE = Decimal('1')
 
-def to_decimal(strord):
+def D(strord=None):
     """Convert a string, possibly with commas, into a Decimal object.
 
     This function just returns the argument if it is already a Decimal object,
@@ -83,7 +84,7 @@ class Amount:
           number: A string or Decimal instance. Will get converted automatically.
           currency: A string, the currency symbol to use.
         """
-        self.number = to_decimal(number)
+        self.number = D(number)
         self.currency = currency
 
     def __str__(self):

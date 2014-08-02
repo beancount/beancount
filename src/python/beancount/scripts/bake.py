@@ -8,8 +8,12 @@ fetched directory contents to the archive and delete them.
 import argparse
 import subprocess
 import shutil
+import shlex
 from os import path
+
 from beancount.web import web
+from beancount.scripts import checkdeps
+from beancount.utils import file_utils
 
 
 def bake_to_directory(webargs, output, quiet_subproc=False, quiet_server=False):
@@ -52,29 +56,37 @@ def bake_to_directory(webargs, output, quiet_subproc=False, quiet_server=False):
     return (p.returncode == 0)
 
 
-def archive_targz(directory, archive_name, quiet=False):
-    """Archive the directory to the given tar/gz filename.
+def archive(command_template, directory, archive, quiet=False):
+    """Archive the directory to the given tar/gz archive filename.
 
     Args:
+      command_template: A string, the command template to format with in order
+        to compute the command to run.
       directory: A string, the name of the directory to archive.
-      archive_name: A string, the name of the file to output.
+      archive: A string, the name of the file to output.
       quiet: A boolean, True to suppress output.
     Raises:
       IOError: if the directory does not exist or if the archive name already
       exists.
+
     """
+    directory = path.abspath(directory)
+    archive = path.abspath(archive)
     if not path.exists(directory):
         raise IOError("Directory to archive '{}' does not exist".format(
             directory))
-    if path.exists(archive_name):
+    if path.exists(archive):
         raise IOError("Output archive name '{}' already exists".format(
-            archive_name))
+            archive))
 
-    p = subprocess.Popen(['tar',
-                          '-C', path.dirname(directory),
-                          '-zcvf', archive_name,
-                          path.basename(directory)],
+    command = command_template.format(directory=directory,
+                                      dirname=path.dirname(directory),
+                                      basename=path.basename(directory),
+                                      archive=archive)
+
+    p = subprocess.Popen(shlex.split(command),
                          shell=False,
+                         cwd=path.dirname(directory),
                          stdout=subprocess.PIPE if quiet else None,
                          stderr=subprocess.PIPE if quiet else None)
     _, _ = p.communicate()
@@ -83,32 +95,15 @@ def archive_targz(directory, archive_name, quiet=False):
 
 
 ARCHIVERS = {
-    '.tar.gz': archive_targz,
-    '.tgz': archive_targz,
+    '.tar.gz'  : 'tar -C {dirname} -zcvf {archive} {basename}',
+    '.tgz'     : 'tar -C {dirname} -zcvf {archive} {basename}',
+    '.tar.bz2' : 'tar -C {dirname} -jcvf {archive} {basename}',
+    '.zip'     : 'zip -r {archive} {basename}',
     }
 
 
-# FIXME: Move this to utils.
-def path_greedy_split(filename):
-    """Split a path, returning the longest possible extension.
-
-    Args:
-      filename: A string, the filename to split.
-    Returns:
-      A pair of basename, extension (which includes the leading period).
-    """
-    basename = path.basename(filename)
-    index = basename.find('.')
-    if index == -1:
-        extension = None
-    else:
-        extension = basename[index:]
-        basename = basename[:index]
-    return (path.join(path.dirname(filename), basename), extension)
-
-
 def main():
-    parser = argparse.ArgumentParser(__doc__)
+    parser = argparse.ArgumentParser(description=__doc__)
 
     web_group = web.add_web_arguments(parser)
     web_group.set_defaults(port=9475)
@@ -121,10 +116,10 @@ def main():
                              'we automatically archive the fetched directory '
                              'contents to this archive name and delete them.'))
 
-    group.add_argument('--verbose', action='store_true',
+    group.add_argument('-v', '--verbose', action='store_true',
                        help="Let subcommand output through.")
 
-    group.add_argument('--quiet', action='store_true',
+    group.add_argument('-q', '--quiet', action='store_true',
                        help="Don't even print out web server log")
 
     opts = parser.parse_args()
@@ -132,16 +127,15 @@ def main():
     if opts.verbose and opts.quiet:
         parser.error("Invalid options, cannot specify both --verbose and --quiet")
 
-    # Figure out the directory to actually bake to, regardless of whether we
-    # archive later on.
-    output_directory, extension = path_greedy_split(opts.output)
+    # Figure out the archival method.
+    output_directory, extension = file_utils.path_greedy_split(opts.output)
     if extension:
         try:
-            archiver = ARCHIVERS[extension]
+            archival_command = ARCHIVERS[extension]
         except KeyError:
             raise SystemExit("ERROR: Unknown archiver type '{}'".format(extension))
     else:
-        archiver = None
+        archival_command = None
 
     # Check pre-conditions on input/output filenames.
     if not path.exists(opts.filename):
@@ -152,14 +146,20 @@ def main():
         raise SystemExit(
             "ERROR: Output directory already exists '{}'".format(output_directory))
 
+    # Make sure that wget is installed.
+    package, version, sufficient = checkdeps.check_wget()
+    if not sufficient:
+        parser.error("Package {} is not installed or insufficient (version: {}).".format(
+            package, version or 'N/A'))
+
     baked = bake_to_directory(opts, output_directory, not opts.verbose, opts.quiet)
     if not baked:
         raise SystemExit("ERROR: Error baking into directory '{}'".format(
             output_directory))
 
     # Archive if requested.
-    if archiver:
-        archiver(output_directory, opts.output, not opts.verbose)
+    if archival_command:
+        archive(archival_command, output_directory, opts.output, True)
         shutil.rmtree(output_directory)
 
     print("Output in '{}'".format(opts.output))

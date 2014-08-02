@@ -38,6 +38,17 @@ def join(*components):
     return sep.join(components)
 
 
+def split(account_name):
+    """Split an account's name into its components.
+
+    Args:
+      account_name: A string, an account name.
+    Returns:
+      A list of strings, the components of the account name (without the separators).
+    """
+    return account_name.split(sep)
+
+
 def parent(account_name):
     """Return the name of the parent account of the given account.
 
@@ -81,18 +92,18 @@ def sans_root(account_name):
     return join(*components) if account_name else None
 
 
-def has_component(account, component):
+def has_component(account_name, component):
     """Return true if one of the account contains a given component.
 
     Args:
-      account: A string, an account name.
+      account_name: A string, an account name.
       component: A string, a component of an account name. For instance,
         'Food' in 'Expenses:Food:Restaurant'. All components are considered.
     Returns:
       A boolean, true if the component is in the account. Note that a component
       name must be whole, that is 'NY' is not in Expenses:Taxes:StateNY'.
     """
-    return re.search('(^|:){}(:|$)'.format(component), account)
+    return re.search('(^|:){}(:|$)'.format(component), account_name)
 
 
 def commonprefix(accounts):

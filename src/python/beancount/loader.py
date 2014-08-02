@@ -5,15 +5,17 @@ import textwrap
 import importlib
 import collections
 import re
+import io
 import itertools
 
 from beancount.utils import misc_utils
 from beancount.core import data
 from beancount.parser import parser
+from beancount.parser import printer
 from beancount.ops import validation
 
 
-LoadError = collections.namedtuple('LoadError', 'fileloc message entry')
+LoadError = collections.namedtuple('LoadError', 'source message entry')
 
 
 # List of default plugins to run.
@@ -25,13 +27,15 @@ DEFAULT_PLUGINS = [
     ]
 
 
-def load(filename, log_function=None):
+def load(filename, log_timings=None, log_errors=None):
     """Open a Beancount input file, parse it, run transformations and validate.
 
     Args:
       filename: The name of the file to be parsed.
-      log_function: A function to write timing log entries to, or None, if it
-        should be quiet.
+      log_timings: A file object or function to write timings to,
+        or None, if it should remain quiet.
+      log_errors: A file object or function to write errors to,
+        or None, if it should remain quiet.
     Returns:
       A triple of:
         entries: A date-sorted list of entries from the file.
@@ -39,16 +43,18 @@ def load(filename, log_function=None):
           the file.
         options_map: A dict of the options parsed from the file.
     """
-    return _load(filename, log_function, parser.parse)
+    return _load(parser.parse, filename, log_timings, log_errors)
 
 
-def load_string(string, log_function=None):
+def load_string(string, log_timings=None, log_errors=None):
     """Open a Beancount input string, parse it, run transformations and validate.
 
     Args:
       string: A Beancount input string.
-      log_function: A function to write timing log entries to, or None, if it
-        should be quiet.
+      log_timings: A file object or function to write timings to,
+        or None, if it should remain quiet.
+      log_errors: A file object or function to write errors to,
+        or None, if it should remain quiet.
     Returns:
       A triple of:
         entries: A date-sorted list of entries from the file.
@@ -56,10 +62,10 @@ def load_string(string, log_function=None):
           the file.
         options_map: A dict of the options parsed from the file.
     """
-    return _load(string, log_function, parser.parse_string)
+    return _load(parser.parse_string, string, log_timings, log_errors)
 
 
-def _load(file_or_string, log_function, parse_function):
+def _load(parse_function, file_or_string, log_timings, log_errors):
     """Parse Beancount input, run its transformations and validate it.
 
     (This is an internal method.)
@@ -69,33 +75,47 @@ def _load(file_or_string, log_function, parse_function):
     ready for reporting, a list of errors, and parser's options dict.
 
     Args:
-      file_or_string: The name of the file to be parsed, or an input string.
-      log_function: A function to write timing log entries to, or None, if it
-        should be quiet.
       parse_function: A function used to parse file_or_string. Either
         parser.parse() or parser.parse_string().
+      file_or_string: The name of the file to be parsed, or an input string.
+      log_timings: A file object or function to write timings to,
+        or None, if it should remain quiet.
+      log_errors: A file object or function to write errors to,
+        or None, if it should remain quiet.
     Returns:
       See load() or load_string().
     """
+    if hasattr(log_timings, 'write'):
+        log_timings = log_timings.write
+
     # Parse the input file.
-    with misc_utils.log_time('beancount.parser.parser', log_function):
+    with misc_utils.log_time('beancount.parser.parser', log_timings):
         entries, parse_errors, options_map = parse_function(file_or_string)
 
     # Transform the entries.
-    entries, errors = run_transformations(entries, parse_errors, options_map, log_function)
+    entries, errors = run_transformations(entries, parse_errors, options_map, log_timings)
 
     # Validate the list of entries.
-    with misc_utils.log_time('beancount.ops.validate', log_function):
-        valid_errors = validation.validate(entries, options_map, log_function)
+    with misc_utils.log_time('beancount.ops.validate', log_timings):
+        valid_errors = validation.validate(entries, options_map, log_timings)
         errors.extend(valid_errors)
 
-        # FIXME: Check here that the entries haven't been modified, by comparing
-        # hashes before and after.
+        # Note: We could go hardcode here and further verify that the entries
+        # haven't been modified by user-provided validation routines, by
+        # comparing hashes before and after. Not needed for now.
+
+    if log_errors and errors:
+        if hasattr(log_errors, 'write'):
+            printer.print_errors(errors, file=log_errors)
+        else:
+            error_io = io.StringIO()
+            printer.print_errors(errors, file=error_io)
+            log_errors(error_io.getvalue())
 
     return entries, errors, options_map
 
 
-def run_transformations(entries, parse_errors, options_map, log_function):
+def run_transformations(entries, parse_errors, options_map, log_timings):
     """Run the various transformations on the entries.
 
     This is where entries are being synthesized, checked, plugins are run, etc.
@@ -104,7 +124,7 @@ def run_transformations(entries, parse_errors, options_map, log_function):
       entries: A list of directives as read from the parser.
       parse_errors: A list of errors so far.
       options_map: An options dict as read from the parser.
-      log_function: A function to write timing log entries to, or None, if it
+      log_timings: A function to write timing log entries to, or None, if it
         should be quiet.
     Returns:
       A list of modified entries, and a list of errors, also possibly modified.
@@ -132,7 +152,7 @@ def run_transformations(entries, parse_errors, options_map, log_function):
             if not hasattr(module, '__plugins__'):
                 continue
 
-            with misc_utils.log_time(plugin_name, log_function):
+            with misc_utils.log_time(plugin_name, log_timings):
 
                 # Run each transformer function in the plugin.
                 for function_name in module.__plugins__:
@@ -148,7 +168,7 @@ def run_transformations(entries, parse_errors, options_map, log_function):
 
         except ImportError as exc:
             # Upon failure, just issue an error.
-            errors.append(LoadError(data.FileLocation("<load>", 0),
+            errors.append(LoadError(data.Source("<load>", 0),
                                     'Error importing "{}": {}'.format(
                                         plugin_name, str(exc)), None))
 

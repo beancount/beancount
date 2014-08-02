@@ -8,11 +8,6 @@
 (require 'font-lock)
 
 
-(defvar beancount-check-program "bean-check"
-  "Program to run to run just the parser and validator on an
-  input file.")
-
-
 (define-minor-mode beancount-mode
   "A minor mode to help editing Beancount files.
 This can be used within other text modes, in particular, org-mode
@@ -24,6 +19,7 @@ is great for sectioning large files with many transactions."
     ([(control c)(\')] . beancount-insert-account)
     ([(control c)(control g)] . beancount-transaction-set-flag)
     ([(control c)(r)] . beancount-init-accounts)
+    ([(control c)(l)] . beancount-check)
     ([(control c)(\;)] . beancount-align-transaction)
     )
   :group 'beancount
@@ -62,18 +58,14 @@ is great for sectioning large files with many transactions."
   (when beancount-mode
     (make-variable-buffer-local 'beancount-accounts)
     (beancount-init-accounts))
-
-  ;; Set the default compilation command to run a check on the current buffer's
-  ;; file.
-  (setq compile-command
-        (format "%s %s" beancount-check-program (buffer-file-name)))
   )
 
 
 (defun beancount-init-accounts ()
   "Initialize or reset the list of accounts."
   (interactive)
-  (setq beancount-accounts (beancount-get-accounts)))
+  (setq beancount-accounts (beancount-get-accounts))
+  (message "Accounts updated."))
 
 
 (defvar beancount-font-lock-defaults
@@ -201,9 +193,6 @@ at which to align the beginning of the amount's currency."
          (when (and number rest)
            (insert (format number-format number rest))))))))
 
-(defvar beancount-align-currency-column 72
-  "The column at which to align the currency.")
-
 (defun beancount-align-transaction ()
   "Align postings under the point's paragraph."
   (interactive)
@@ -212,8 +201,21 @@ at which to align the beginning of the amount's currency."
                  (point)))
         (end (save-excursion
                (forward-paragraph 1)
-               (point))))
+               (point)))
+        (beancount-align-currency-column fill-column))
     (beancount-align-postings begin end beancount-align-currency-column)))
+
+
+(defvar beancount-check-program "bean-check"
+  "Program to run to run just the parser and validator on an
+  input file.")
+
+(defun beancount-check ()
+  (interactive)
+  (let ((compilation-read-command nil)
+        (compile-command
+         (format "%s %s" beancount-check-program (buffer-file-name))))
+    (call-interactively 'compile)))
 
 
 (provide 'beancount)

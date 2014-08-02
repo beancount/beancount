@@ -1,119 +1,58 @@
 ========================================================
-   beancount: Double-Entry Accounting from Text Input
+   beancount: Double-Entry Accounting from Text Files
 ========================================================
 
 .. contents::
 ..
     1  Description
-    2  Project Status
-    3  Dependencies
-    4  Installation
-    5  Download
-    6  Documentation
-    7  Copyright and License
-    8  Author
+    2  Documentation
+    3  Download & Installation
+    4  Filing Bugs
+    5  Copyright and License
+    6  Author
 
 
 Description
 ===========
 
-A double-entry bookkeeping computer language, that lets you define financial
-transaction records in a text file, read them into memory, and generate a
-variety of output reports from a web interface. This project
-
-- Defines a set of very simple core data structures, a language and an
-  associated parser. You should be able to read the input file and easily
-  process its contents.
-
-- A web front-end which renders a variety of common reports.
-
-- Tools to help you import and file CSV, OFX and other files downloaded from
-  various financial institutions.
-
-- This is a 2.0 version, a complete clean-room rewrite of Beancount 1.0.
-
-.. _Ledger: http://www.newartisans.com/blog/projects/ledger.html
-
-
-Project Status
-==============
-
-Beancount v2 is now the only beancount as of summer 2013. It's a full rewrite,
-stable and I'm using only this version now, it is maintained, and I have 7-8
-years worth of my personal data relying on it and use it every week or two. It
-works.
-
-
-Dependencies
-============
-
-For users:
-
-- Python 3.3 or above.
-- cdecimal (optional but strongly suggested, for performance)
-- Bottle (a tiny web server, pure Python)
-- wget (to bake reports to a zip file)
-
-You can install some of those using pip3 (cdecimal appears to require an
-otherwise straightforward install from source).
-
-For developers:
-
-- GNU flex and bison (to build the parser)
-- lxml
-- nosetests (to run the unit tests)
-- pylint >=1.2 (to run the linter)
-- snakefood (for unused imports check)
-- graphviz (for graphing module dependencies)
-
-
-Installation
-============
-
-Installation instructions are under beancount/install.
-
-
-Download
-========
-
-You can obtain the source code from a Mercurial repository, found at:
-
-  http://hg.furius.ca/public/beancount/
-
-Download it like this:
-
-  hg clone --insecure http://hg.furius.ca/public/beancount/
-
-(Use the --insecure flag because I sometimes have a self-signed SSL certificate
-on my server.)
-
-This is the authoritative location for the latest version. I don't use github--I
-roll my own Mercurial server. github clones are probably out of date, clone from
-the URL above.
-
-`Click here for download instructions. </web-furius/downloading.html>`_
+A double-entry bookkeeping computer language that lets you define financial
+transaction records in a text file, read them in memory, generate a variety of
+reports from them, and provides a web interface.
 
 
 Documentation
 =============
 
-- `CHANGES <CHANGES>`_
-- `TODO <TODO>`_
+Documentation lives on Google Docs. You can find an index to all the available
+documents here:
+
+  http://furius.ca/beancount/doc/index
 
 Discussions about Beancount occur on the `Ledger mailing-list
 <https://groups.google.com/forum/#!forum/ledger-cli>`_, which has become the *de
 facto* discussion group for all command-line accounting softwares.
 
-I have yet to write full documentation, but basically, there are two main
-programs that you should care about:
 
-  bean-check: Checks for errors in a Beancount input file.
-  bean-web: Starts a local web server so you can browse a Beancount ledger.
+Download & Installation
+=======================
 
-All the other are toy tools.
+You can obtain the source code from a Mercurial repository on my server or from
+BitBucket:
 
-Check out the examples for now in order to get a sense of how this works.
-There is also a cheatsheet under doc/cheatsheet.org.
+  | http://hg.furius.ca/public/beancount/
+  | https://bitbucket.org/blais/beancount/
+
+See the `Installing Beancount`__ document for more details.
+
+__ http://furius.ca/beancount/doc/install
+
+
+Filing Bugs
+===========
+
+Tickets can be filed at on the BitBucket project page:
+
+  https://bitbucket.org/blais/beancount/issues
 
 
 Copyright and License

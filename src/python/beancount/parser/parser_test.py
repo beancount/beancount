@@ -196,6 +196,35 @@ class TestUglyBugs(unittest.TestCase):
         check_list(self, entries, [Transaction])
         check_list(self, errors, [])
 
+    @parsedoc
+    def test_indent_eof(self, entries, errors, _):
+        "\t"
+        check_list(self, entries, [])
+        check_list(self, errors, [])
+
+    @parsedoc
+    def test_comment_eof(self, entries, errors, _):
+        "; comment"
+        check_list(self, entries, [])
+        check_list(self, errors, [])
+
+class TestMultipleLines(unittest.TestCase):
+
+    @parsedoc
+    def test_multiline_narration(self, entries, errors, _):
+        """
+          2014-07-11 * "Hello one line
+          and yet another,
+          and why not another!"
+            Expenses:Restaurant         100 USD
+            Assets:Cash
+        """
+        self.assertEqual(1, len(entries))
+        self.assertFalse(errors)
+        self.assertFalse(lexer.LexerError in map(type, errors))
+        expected_narration = "Hello one line\nand yet another,\nand why not another!"
+        self.assertEqual(expected_narration, entries[0].narration)
+
 
 class TestSyntaxErrors(unittest.TestCase):
     """Test syntax errors that occur within the parser.
@@ -251,9 +280,9 @@ class TestLineNumbers(unittest.TestCase):
             TestLineNumbers.test_line_numbers.__wrapped__)
         first_line += 1
 
-        self.assertEqual(2, entries[0].fileloc.lineno - first_line)
-        self.assertEqual(6, entries[1].fileloc.lineno - first_line)
-        self.assertEqual(8, entries[2].fileloc.lineno - first_line)
+        self.assertEqual(2, entries[0].source.lineno - first_line)
+        self.assertEqual(6, entries[1].source.lineno - first_line)
+        self.assertEqual(8, entries[2].source.lineno - first_line)
 
 
 class TestParserOptions(unittest.TestCase):

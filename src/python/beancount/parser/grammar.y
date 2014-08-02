@@ -54,9 +54,6 @@ const char* getTokenName(int token);
 %locations
 /* %glr-parser */
 
-/* FIXME: Pass this explicitly eventually. */
-/* %parse-param { PyObject* builder} */
-
 
 /* Collection of value types. */
 %union {
@@ -152,7 +149,8 @@ txn : TXN
 eol : EOL
     | COMMENT EOL
 
-/* FIXME: I want to add INDENT EOF and COMMENT EOF here.*/
+/* Note: Technically we could have the lexer yield EOF and handle INDENT EOF and
+   COMMENT EOF. However this is not necessary. */
 empty_line : EOL
            | COMMENT EOL
            | INDENT EOL

@@ -5,6 +5,7 @@ import unittest
 import re
 import time
 import textwrap
+import sys
 from collections import namedtuple
 
 from beancount.utils import misc_utils
@@ -20,7 +21,7 @@ class TestMiscUtils(unittest.TestCase):
         self.assertEqual("", stdout.getvalue())
 
         with test_utils.capture() as stdout:
-            with misc_utils.log_time('test-op', print):
+            with misc_utils.log_time('test-op', sys.stdout.write):
                 time.sleep(0.1)
         self.assertTrue(re.search("Operation", stdout.getvalue()))
         self.assertTrue(re.search("Time", stdout.getvalue()))
@@ -66,6 +67,23 @@ class TestMiscUtils(unittest.TestCase):
         ntuple = Something(1, 2, SomethingElse(A('a'), None, 2), [A('b'), 'c'], 5)
         x = misc_utils.get_tuple_values(ntuple, lambda x: isinstance(x, A))
         self.assertEqual([A('a'), A('b')], list(x))
+
+    def test_replace_tuple_values(self):
+        Something = namedtuple('Something', 'a b c d e')
+        SomethingElse = namedtuple('SomethingElse', 'f g')
+
+        something = Something(1, 2, '3', SomethingElse(10, '11'),
+                              [SomethingElse(100, '101')])
+        replacements = {'3': '3000', '101': '1010', '11': '1100'}
+        something_else = misc_utils.replace_namedtuple_values(
+            something,
+            lambda x: isinstance(x, str),
+            lambda x: replacements.get(x, x))
+
+        expected = Something(a=1, b=2, c='3000',
+                             d=SomethingElse(f=10, g='1100'),
+                             e=[SomethingElse(f=100, g='1010')])
+        self.assertEqual(expected, something_else)
 
     def test_compute_unique_clean_ids(self):
         self.assertEqual({'a': 'a', 'b': 'b', 'c': 'c'},

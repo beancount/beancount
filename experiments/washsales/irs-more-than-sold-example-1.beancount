@@ -1,0 +1,57 @@
+;; IRS Pub 550 - More or less stock bought than sold - Example 1.
+
+;; More or less stock bought than sold. If the number of shares of substantially
+;; identical stock or securities you buy within 30 days before or after the sale
+;; is either more or less than the number of shares you sold, you must determine
+;; the particular shares to which the wash sale rules apply. You do this by
+;; matching the shares bought with an equal number of the shares sold. Match the
+;; shares bought in the same order that you bought them, beginning with the
+;; first shares bought. The shares or securities so matched are subject to the
+;; wash sale rules.
+;;
+;; Example 1.
+;;
+;; You bought 100 shares of M stock on September 26, 2012, for $5,000. On
+;; December 19, 2012, you bought 50 shares of substantially identical stock for
+;; $2,750. On December 27, 2012, you bought 25 shares of substantially identical
+;; stock for $1,125. On January 9, 2013, you sold for $4,000 the 100 shares you
+;; bought in September. You have a $1,000 loss on the sale. However, because you
+;; bought 75 shares of substantially identical stock within 30 days before the
+;; sale, you cannot deduct the loss ($750) on 75 shares. You can deduct the loss
+;; ($250) on the other 25 shares. The basis of the 50 shares bought on December
+;; 19, 2012, is increased by two-thirds (50 ÷ 75) of the $750 disallowed loss.
+;; The new basis of those shares is $3,250 ($2,750 + $500). The basis of the 25
+;; shares bought on December 27, 2012, is increased by the rest of the loss to
+;; $1,375 ($1,125 + $250).
+
+2000-01-01 open Assets:Investments:Cash
+2000-01-01 open Income:Investments:PnL
+2000-01-01 open Assets:Investments:MMM
+
+2012-09-26 * "You bought 100 shares of M stock on September 26, 2012, for $5,000."
+  Assets:Investments:Cash                                         -5000 USD
+  Assets:Investments:MMM                                            100 MMM {50 USD}
+
+2012-12-19 * "On December 19, 2012, you bought 50 shares of substantially identical stock for $2,750." ^wash-6442c01ea24b
+  Assets:Investments:Cash                                         -2750 USD
+  Assets:Investments:MMM                                             50 MMM {55 USD}
+
+2012-12-27 * "On December 27, 2012, you bought 25 shares of substantially identical stock for $1,125." ^wash-6442c01ea24b
+  Assets:Investments:Cash                                         -1125 USD
+  Assets:Investments:MMM                                             25 MMM {45 USD}
+
+2013-01-09 * "On January 9, 2013, you sold for $4,000 the 100 shares you bought in September. You have a $1,000 loss on the sale." ^wash-6442c01ea24b
+  Assets:Investments:MMM                                           -100 MMM {50 USD}
+  Assets:Investments:Cash                                          4000 USD
+  Income:Investments:PnL                                           1000 USD
+
+;; However, because you bought 75 shares of substantially identical stock within 30 days before the sale, you cannot deduct the loss ($750) on 75 shares.
+;; You can deduct the loss ($250) on the other 25 shares.
+;; The basis of the 50 shares bought on December 19, 2012, is increased by two-thirds (50 ÷ 75) of the $750 disallowed loss. The new basis of those shares is $3,250 ($2,750 + $500).
+;; The basis of the 25 shares bought on December 27, 2012, is increased by the rest of the loss to $1,375 ($1,125 + $250).
+2013-01-09 * ^wash-6442c01ea24b
+  Income:Investments:PnL                                           -750 USD
+  Assets:Investments:MMM                                            -25 MMM {45 USD}
+  Assets:Investments:MMM                                             25 MMM {55 USD / 2012-12-27}
+  Assets:Investments:MMM                                            -50 MMM {55 USD}
+  Assets:Investments:MMM                                             50 MMM {65 USD / 2012-12-19}

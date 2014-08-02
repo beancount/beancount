@@ -11,19 +11,6 @@ from beancount.web import web
 from beancount.utils import test_utils
 
 
-# FIXME: Move this to test_utils.py
-def find_repository_root():
-    """Return the path to the repository root.
-
-    Returns:
-      A string, the root directory.
-    """
-    filename = __file__
-    while not path.exists(path.join(filename, 'README')):
-        filename = path.dirname(filename)
-    return filename
-
-
 def scrape_urls(url_format, predicate, ignore_regexp=None):
     # The set of all URLs processed
     done = set()
@@ -77,9 +64,11 @@ def scrape(filename, predicate, port, quiet=True):
     thread = web.thread_server_start(args)
 
     # Skips:
-    # Docs cannot be read for external files.
-    # Components views... well there are just too many, makes the tests impossibly slow.
-    scrape_urls(url_format, predicate, '^/(doc|view/component)/')
+    # - Docs cannot be read for external files.
+    #
+    # - Components views... well there are just too many, makes the tests
+    #   impossibly slow. Just keep the A's so some are covered.
+    scrape_urls(url_format, predicate, '^/(doc/|view/component/[^A])')
 
     web.thread_server_shutdown(thread)
 
@@ -97,12 +86,12 @@ class TestWeb(unittest.TestCase):
         scrape(filename, self.check_page_okay, test_utils.get_test_port())
 
     def test_scrape_basic(self):
-        filename = path.join(find_repository_root(),
+        filename = path.join(test_utils.find_repository_root(__file__),
                              'examples', 'basic', 'basic.beancount')
         scrape(filename, self.check_page_okay, test_utils.get_test_port())
 
     def test_scrape_starterkit(self):
-        filename = path.join(find_repository_root(),
+        filename = path.join(test_utils.find_repository_root(__file__),
                              'examples', 'starterkit', 'starter.beancount')
         scrape(filename, self.check_page_okay, test_utils.get_test_port())
 

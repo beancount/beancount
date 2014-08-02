@@ -21,11 +21,14 @@ import operator
 import copy
 
 from beancount.core import inventory
-from beancount.core.amount import amount_sortkey
+from beancount.core import amount
 from beancount.core import data
+from beancount.core import account
 from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Document
 from beancount.core.data import Posting
 from beancount.core import account
+from beancount.core import complete
+from beancount.core import flags
 
 
 class RealAccount(dict):
@@ -146,7 +149,7 @@ def get(real_account, account_name, default=None):
     """
     if not isinstance(account_name, str):
         raise ValueError
-    components = account_name.split(account.sep)
+    components = account.split(account_name)
     for component in components:
         real_child = real_account.get(component, default)
         if real_child is default:
@@ -169,7 +172,7 @@ def get_or_create(real_account, account_name):
     """
     if not isinstance(account_name, str):
         raise ValueError
-    components = account_name.split(account.sep)
+    components = account.split(account_name)
     path = []
     for component in components:
         path.append(component)
@@ -243,7 +246,7 @@ def realize(entries, min_accounts=None):
     for account_name, postings in postings_map.items():
         real_account = get_or_create(real_root, account_name)
         real_account.postings = postings
-        real_account.balance = compute_postings_balance(postings)
+        real_account.balance = complete.compute_postings_balance(postings)
 
     # Ensure a minimum set of accounts that should exist. This is typically
     # called with an instance of AccountTypes to make sure that those exist.
@@ -288,48 +291,6 @@ def postings_by_account(entries):
             postings_map[entry.source_account].append(entry)
 
     return postings_map
-
-
-def compute_postings_balance(postings):
-    """Compute the balance of a list of Postings's positions.
-
-    Args:
-      postings: A list of Posting instances and other directives (which are
-        skipped).
-    Returns:
-      An Inventory.
-    """
-    final_balance = inventory.Inventory()
-    for posting in postings:
-        if isinstance(posting, data.Posting):
-            final_balance.add_position(posting.position, True)
-    return final_balance
-
-
-def compute_entries_balance(entries, prefix=None, date=None):
-    """Compute the balance of all postings of a list of entries.
-
-    Sum up all the positions in all the postings of all the transactions in the
-    list of entries and return an inventory of it.
-
-    Args:
-      entries: A list of directives.
-      prefix: If specified, a prefix string to restrict by account name. Only
-        postings with an account that starts with this prefix will be summed up.
-      date: A datetime.date instance at which to stop adding up the balance.
-        The date is exclusive.
-    Returns:
-      An instance of Inventory.
-    """
-    total_balance = inventory.Inventory()
-    for entry in entries:
-        if not (date is None or entry.date < date):
-            break
-        if isinstance(entry, Transaction):
-            for posting in entry.postings:
-                if prefix is None or posting.account.startswith(prefix):
-                    total_balance.add_position(posting.position, True)
-    return total_balance
 
 
 def filter(real_account, predicate):
@@ -485,6 +446,29 @@ def iterate_with_balance(postings_or_entries):
     date_entries.clear()
 
 
+def find_last_active_posting(postings):
+    """Look at the end of the list of postings, and find the last
+    posting or entry that is not an automatically added directive.
+    Note that if the account is closed, the last posting is assumed
+    to be a Close directive (this is the case if the input is valid
+    and checks without errors.
+
+    Args:
+      postings: a list of postings or entries.
+    Returns:
+      An entry, or None, if the input list was empty.
+    """
+    for posting in reversed(postings):
+        if not isinstance(posting, (Posting, Open, Close, Pad, Balance, Note)):
+            continue
+
+        # pylint: disable=bad-continuation
+        if (isinstance(posting, Posting) and
+            posting.entry.flag == flags.FLAG_UNREALIZED):
+            continue
+        return posting
+
+
 def index_key(sequence, value, key, cmp):
     """Find the index of the first element in 'sequence' which is equal to 'value'.
     If 'key' is specified, the value compared to the value returned by this
@@ -607,13 +591,13 @@ def dump_balances(real_account):
     for first_line, cont_line, real_account in dump(real_account):
         if not real_account.balance.is_empty():
             amounts = real_account.balance.get_cost().get_amounts()
-            positions = ['{0.number:12,.2f} {0.currency}'.format(amount)
-                         for amount in sorted(amounts, key=amount_sortkey)]
+            positions = ['{0.number:12,.2f} {0.currency}'.format(amount_)
+                         for amount_ in sorted(amounts, key=amount.amount_sortkey)]
         else:
             positions = ['']
 
         line = first_line
         for position in positions:
-            oss.write('{} {:16}\n'.format(line, position))
+            oss.write('{}       {}\n'.format(line, position))
             line = cont_line
     return oss.getvalue()

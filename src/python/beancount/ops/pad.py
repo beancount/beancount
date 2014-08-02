@@ -2,7 +2,7 @@
 """
 import collections
 
-from beancount.core.amount import to_decimal, amount_sub
+from beancount.core.amount import D, amount_sub
 from beancount.core import inventory
 from beancount.core import data
 from beancount.core import position
@@ -13,13 +13,10 @@ from beancount.core import realization
 __plugins__ = ('pad',)
 
 
-PadError = collections.namedtuple('PadError', 'fileloc message entry')
-
-# FIXME: Maybe this should become an option? Maybe this becomes a parameter of pad()?
-PAD_PRECISION = to_decimal('.015')
+PadError = collections.namedtuple('PadError', 'source message entry')
 
 
-def pad(entries, unused_options_map):
+def pad(entries, options_map):
     """Insert transaction entries for to fulfill a subsequent balance check.
 
     Synthesize and insert Transaction entries right after Pad entries in order
@@ -34,11 +31,13 @@ def pad(entries, unused_options_map):
 
     Args:
       entries: A list of directives.
-      unused_options_map: A parser options dict.
+      options_map: A parser options dict.
     Returns:
       A new list of directives, with Pad entries inserte, and a list of new
       errors produced.
     """
+    tolerance = D(options_map['tolerance'])
+    pad_errors = []
 
     # Find all the pad entries and group them by account.
     pads = list(misc_utils.filter_type(entries, data.Pad))
@@ -91,7 +90,7 @@ def pad(entries, unused_options_map):
                 # distinct from the cost).
                 balance_amount = pad_balance.get_amount(check_amount.currency)
                 diff_amount = amount_sub(balance_amount, check_amount)
-                if abs(diff_amount.number) > PAD_PRECISION:
+                if abs(diff_amount.number) > tolerance:
                     # The check fails; we need to pad.
 
                     # Pad only if pad entry is active and we haven't already
@@ -104,14 +103,14 @@ def pad(entries, unused_options_map):
                                           else balance_amount.number)
 
                         # Note: we decide that it's an error to try to pad
-                        # position at cost; we check here that all the existing
+                        # positions at cost; we check here that all the existing
                         # positions with that currency have no cost.
                         positions = pad_balance.get_positions_with_currency(
                             check_amount.currency)
                         for position_ in positions:
                             if position_.lot.cost is not None:
                                 pad_errors.append(
-                                    PadError(entry.fileloc,
+                                    PadError(entry.source,
                                              ("Attempt to pad an entry with cost for "
                                               "balance: {}".format(pad_balance)),
                                              active_pad))
@@ -125,7 +124,7 @@ def pad(entries, unused_options_map):
                         narration = ('(Padding inserted for Balance of {} for '
                                      'difference {})').format(check_amount, diff_position)
                         new_entry = data.Transaction(
-                            active_pad.fileloc, active_pad.date, flags.FLAG_PADDING,
+                            active_pad.source, active_pad.date, flags.FLAG_PADDING,
                             None, narration, None, None, [])
 
                         new_entry.postings.append(
@@ -147,7 +146,6 @@ def pad(entries, unused_options_map):
 
     # Insert the newly created entries right after the pad entries that created them.
     padded_entries = []
-    pad_errors = []
     for entry in entries:
         padded_entries.append(entry)
         if isinstance(entry, data.Pad):
@@ -157,6 +155,6 @@ def pad(entries, unused_options_map):
             # Generate errors on unused pad entries.
             if not entry_list:
                 pad_errors.append(
-                    PadError(entry.fileloc, "Unused Pad entry: {}".format(entry), entry))
+                    PadError(entry.source, "Unused Pad entry", entry))
 
     return padded_entries, pad_errors

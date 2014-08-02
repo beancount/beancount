@@ -84,9 +84,9 @@ class TestJournalRender(unittest.TestCase):
         2014-01-01 open Assets:Investing
         2014-01-01 open Assets:Savings
         2014-01-01 open Income:MountainOfMoney
-        2014-01-01 open Equity:OpeningBalances
+        2014-01-01 open Equity:Opening-Balances
 
-        2014-01-05 pad Assets:Checking Equity:OpeningBalances
+        2014-01-05 pad Assets:Checking Equity:Opening-Balances
 
         2014-02-10 balance Assets:Checking   100.00 USD
 

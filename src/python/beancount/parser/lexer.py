@@ -6,11 +6,12 @@ import re
 import tempfile
 
 from beancount.core import data
+from beancount.core import account
 from beancount.core.amount import Decimal
 from beancount.parser import _parser
 
 
-LexerError = collections.namedtuple('LexerError', 'fileloc message entry')
+LexerError = collections.namedtuple('LexerError', 'source message entry')
 
 
 class LexBuilder(object):
@@ -28,8 +29,8 @@ class LexBuilder(object):
         self.errors = []
 
     def get_lexer_location(self):
-        return data.FileLocation(_parser.get_yyfilename(),
-                                 _parser.get_yylineno())
+        return data.Source(_parser.get_yyfilename(),
+                           _parser.get_yylineno())
 
     def ERROR(self, string):
         self.errors.append(
@@ -107,6 +108,8 @@ class LexBuilder(object):
           A Decimal instance built of the number string.
         """
         try:
+            # Note: We don't use D() for efficiency here.
+            # We could consider it to extend the syntax to support commas.
             return Decimal(number)
         except Exception as e:
             self.errors.append(

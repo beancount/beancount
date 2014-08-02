@@ -1,0 +1,61 @@
+;; IRS Pub 550 - More or less stock bought than sold - Example 1.
+
+;; More or less stock bought than sold. If the number of shares of substantially
+;; identical stock or securities you buy within 30 days before or after the sale
+;; is either more or less than the number of shares you sold, you must determine
+;; the particular shares to which the wash sale rules apply. You do this by
+;; matching the shares bought with an equal number of the shares sold. Match the
+;; shares bought in the same order that you bought them, beginning with the
+;; first shares bought. The shares or securities so matched are subject to the
+;; wash sale rules.
+;;
+;; Example 2.
+;;
+;; You bought 100 shares of M stock on September 26, 2012. On February 6, 2013,
+;; you sold those shares at a $1,000 loss. On each of the 4 days from February
+;; 11, 2013, to February 14, 2013, you bought 50 shares of substantially
+;; identical stock. You cannot deduct your $1,000 loss. You must add half the
+;; disallowed loss ($500) to the basis of the 50 shares bought on February 11.
+;; Add the other half ($500) to the basis of the shares bought on February 12.
+
+2000-01-01 open Assets:Investments:Cash
+2000-01-01 open Income:Investments:PnL
+2000-01-01 open Assets:Investments:MMM
+
+
+2012-09-26 * "You bought 100 shares of M stock on September 26, 2012."
+  Assets:Investments:Cash                                         -5000 USD
+  Assets:Investments:MMM                                            100 MMM {50 USD}
+
+2013-02-06 * "On February 6, 2013, you sold those shares at a $1,000 loss." ^wash-75017841a4b6
+  Assets:Investments:MMM                                           -100 MMM {50 USD}
+  Assets:Investments:Cash                                          4000 USD
+  Income:Investments:PnL                                           1000 USD
+
+;; "On each of the 4 days from February 11, 2013, to February 14, 2013, you bought 50 shares of substantially identical stock."
+2013-02-11 *
+  Assets:Investments:Cash                                         -2250 USD
+  Assets:Investments:MMM                                             50 MMM {45 USD}
+
+2013-02-12 *
+  Assets:Investments:Cash                                         -2300 USD
+  Assets:Investments:MMM                                             50 MMM {46 USD}
+
+2013-02-13 *
+  Assets:Investments:Cash                                         -2350 USD
+  Assets:Investments:MMM                                             50 MMM {47 USD}
+
+2013-02-14 *
+  Assets:Investments:Cash                                         -2400 USD
+  Assets:Investments:MMM                                             50 MMM {48 USD}
+
+
+2013-02-11 * "You cannot deduct your $1,000 loss. You must add half the disallowed loss ($500) to the basis of the 50 shares bought on February 11." ^wash-75017841a4b6
+  Income:Investments:PnL                                           -500 USD
+  Assets:Investments:MMM                                            -50 MMM {45 USD}
+  Assets:Investments:MMM                                             50 MMM {55 USD / 2013-02-11}
+
+2013-02-12 * "Add the other half ($500) to the basis of the shares bought on February 12." ^wash-75017841a4b6
+  Income:Investments:PnL                                           -500 USD
+  Assets:Investments:MMM                                            -50 MMM {46 USD}
+  Assets:Investments:MMM                                             50 MMM {56 USD / 2013-02-12}

@@ -7,9 +7,6 @@ from beancount.core.data import Transaction, Open, Close
 from beancount.core import account
 
 
-# FIXME: Ideally this would live under ops, pending dependencies.
-
-
 class GetAccounts:
     """Accounts gatherer.
     """
@@ -130,7 +127,7 @@ def get_account_components(entries):
     accounts = get_accounts(entries)
     components = set()
     for account_name in accounts:
-        components.update(account_name.split(account.sep))
+        components.update(account.split(account_name))
     return components
 
 
@@ -181,7 +178,7 @@ def get_leveln_parent_accounts(account_names, n, nrepeats=0):
     """
     leveldict = defaultdict(int)
     for account_name in set(account_names):
-        components = account_name.split(account.sep)
+        components = account.split(account_name)
         if n < len(components):
             leveldict[components[n]] += 1
     levels = {level

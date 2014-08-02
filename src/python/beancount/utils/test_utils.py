@@ -10,11 +10,23 @@ import contextlib
 import functools
 import shutil
 import itertools
+from os import path
 
 
 # A port allocation global. All the tests should use this global in order to
 # avoid port collissions during testing.
 get_test_port = itertools.count(9470).__next__
+
+
+def find_repository_root(filename):
+    """Return the path to the repository root.
+
+    Returns:
+      A string, the root directory.
+    """
+    while not path.exists(path.join(filename, 'README')):
+        filename = path.dirname(filename)
+    return filename
 
 
 def run_with_args(function, args):
@@ -26,12 +38,14 @@ def run_with_args(function, args):
       function: A function object to call with no arguments.
       argv: A list of arguments, excluding the script name, to be temporarily
         set on sys.argv.
+    Returns:
+      The return value of the function run.
     """
     saved_argv = sys.argv
     try:
         module = sys.modules[function.__module__]
         sys.argv = [module.__file__] + args
-        function()
+        return function()
     finally:
         sys.argv = saved_argv
 
@@ -52,16 +66,20 @@ def tempdir():
 
 
 @contextlib.contextmanager
-def capture():
+def capture(attribute='stdout'):
     """A context manager that captures what's printed to stdout.
 
+    Args:
+      attribute: A string, the name of the sys attribute to override.
     Yields:
       A StringIO string accumulator.
     """
-    sys.saved_stdout = sys.stdout
-    oss = sys.stdout = io.StringIO()
+    sys.__capture__ = getattr(sys, attribute)
+    oss = io.StringIO()
+    setattr(sys, attribute, oss)
     yield oss
-    sys.stdout = sys.saved_stdout
+    setattr(sys, attribute, sys.__capture__)
+    del sys.__capture__
 
 
 def docfile(function):

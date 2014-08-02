@@ -3,7 +3,6 @@
 This tool is able to dump lexer/parser state, and will provide other services in
 the name of debugging.
 """
-import csv
 import re
 import sys
 import argparse
@@ -14,15 +13,11 @@ from beancount.parser import parser
 from beancount.parser import lexer
 from beancount.parser import options
 from beancount.parser import printer
-from beancount.core import account
-from beancount.core import account_types
-from beancount.core import getters
-from beancount.core import realization
-from beancount.ops import prices
 from beancount.core import compare
 from beancount import loader
 from beancount.utils import misc_utils
 from beancount.scripts import directories
+from beancount.scripts import checkdeps
 
 
 def do_dump_lexer(filename, unused_args):
@@ -33,67 +28,6 @@ def do_dump_lexer(filename, unused_args):
     """
     for token, lineno, text, obj in lexer.lex_iter(filename):
         sys.stdout.write('{:12} {:6d} {}\n'.format(token, lineno, repr(text)))
-
-
-def do_list_accounts(filename, unused_args):
-    """Dump the lexer output for a Beancount syntax file.
-
-    Args:
-      filename: A string, the Beancount input filename.
-    """
-    # Load the input file and gather the open/close directives.
-    entries, errors, options_map = loader.load(filename)
-    open_close = getters.get_account_open_close(entries)
-
-    if not entries:
-        return
-
-    # Render to stdout.
-    maxlen = max(len(account) for account in open_close)
-    sortkey_fun = account_types.get_account_sort_function(
-        options.get_account_types(options_map))
-    for account, (open, close) in sorted(open_close.items(),
-                                         key=lambda entry: sortkey_fun(entry[0])):
-        open_date = open.date if open else ''
-        close_date = close.date if close else ''
-        print('{:{len}}  {}  {}'.format(account, open_date, close_date, len=maxlen))
-
-
-# FIXME: Move this to a report.
-def do_print_trial(filename, unused_args):
-    """Render and print the trial balance for a ledger.
-
-    Args:
-      filename: A string, the Beancount input filename.
-    """
-    # Load the file, realize it, and dump the accounts tree.
-    entries, errors, options_map = loader.load(filename)
-    printer.print_errors(errors, file=sys.stderr)
-
-    real_accounts = realization.realize(entries)
-    dump_str = realization.dump_balances(real_accounts)
-    print(dump_str)
-
-
-# FIXME: Move this to a report.
-def do_prices(filename, unused_args):
-    """Render and print a list of the prices in a ledger.
-
-    Args:
-      filename: A string, the Beancount input filename.
-    """
-    # Load the file, realize it, and dump the accounts tree.
-    entries, errors, options_map = loader.load(filename)
-    printer.print_errors(errors, file=sys.stderr)
-
-    price_map = prices.build_price_map(entries)
-    for base_quote in price_map.forward_pairs:
-        price_list = price_map[base_quote]
-        base, quote = base_quote
-        writer = csv.writer(sys.stdout)
-        for date, price in price_list:
-            writer.writerow((base, quote, date, price))
-        writer.writerow(())
 
 
 def do_roundtrip(filename, unused_args):
@@ -175,6 +109,15 @@ def do_directories(filename, args):
     directories.validate_directories(entries, args)
 
 
+def do_list_options(*unused_args):
+    """Print out a list of the available options.
+
+    Args:
+      unused_args: Ignored.
+    """
+    print(options.list_options())
+
+
 def get_commands():
     """Return a list of available commands in this file.
 
@@ -189,6 +132,18 @@ def get_commands():
     return commands
 
 
+def do_checkdeps(*unused_args):
+    """Report on the runtime dependencies.
+
+    Args:
+      unused_args: Ignored.
+    """
+    print("Dependencies:")
+    for package, version, sufficient in checkdeps.check_dependencies():
+        print("  {:16}: {} {}".format(package, version or 'NOT INSTALLED',
+                                    "(INSUFFICIENT)" if version and not sufficient else ""))
+
+
 def main():
     commands_doc = ('Available Commands:\n' +
                     '\n'.join('  {:24}: {}'.format(*x) for x in get_commands()))
@@ -197,7 +152,7 @@ def main():
                                      epilog=commands_doc)
     parser.add_argument('command', action='store',
                         help="The command to run.")
-    parser.add_argument('filename', help='Beancount input filename.')
+    parser.add_argument('filename', nargs='?', help='Beancount input filename.')
     parser.add_argument('rest', nargs='*', help='All remaining arguments.')
     opts = parser.parse_args()
 
