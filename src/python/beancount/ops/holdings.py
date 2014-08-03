@@ -250,17 +250,18 @@ def convert_to_currency(price_map, target_currency, holdings_list):
 
             assert holding.cost_currency, "Missing cost currency: {}".format(holding)
             base_quote = (holding.cost_currency, target_currency)
-            try:
-                # Get the conversion rate and replace the required numerical
-                # fields..
-                _, rate = prices.get_latest_price(price_map, base_quote)
+
+            # Get the conversion rate and replace the required numerical
+            # fields..
+            _, rate = prices.get_latest_price(price_map, base_quote)
+            if rate is not None:
                 new_holding = misc_utils.map_namedtuple_attributes(
                     convert_fields,
                     lambda number: number if number is None else number * rate,
                     holding)
                 # Ensure we set the new cost currency after conversion.
                 new_holding = new_holding._replace(cost_currency=target_currency)
-            except KeyError:
+            else:
                 # Could not get the rate... clear every field and set the cost
                 # currency to None. This enough marks the holding conversion as
                 # a failure.
