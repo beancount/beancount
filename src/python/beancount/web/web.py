@@ -697,15 +697,6 @@ def link(link=None):
     bottle.redirect(app.router.build('link', link=link))
 
 
-@viewapp.route('/trades', name='trades')
-def trades():
-    "Render a list of the transactions booked against inventory-at-cost."
-    return render_view(
-        pagetitle="Trades",
-        contents=NOT_IMPLEMENTED
-        )
-
-
 @viewapp.route('/documents', name='documents')
 def documents():
     "Render a tree with all the documents found."
