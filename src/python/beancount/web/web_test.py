@@ -12,55 +12,6 @@ from beancount.core import realization
 from beancount.utils import test_utils
 
 
-def mock_build_url(name, **kw):
-    "A fake URL builder, just for testing."
-    return '/{}/{}'.format(name, '/'.join(value
-                                          for _, value in sorted(kw.items())))
-
-
-class TestHTMLAccountLink(unittest.TestCase):
-
-    def test_account_link(self):
-        # Call with string, with no view.
-        link = web.account_link('Assets:US:BofA:Checking', None, False)
-        self.assertTrue(re.search('<span', link))
-        self.assertTrue(re.search('class="account"', link))
-        self.assertTrue(re.search('Assets:US:BofA:Checking', link))
-
-        # Call with string, with a build function.
-        link = web.account_link('Assets:US:BofA:Checking', mock_build_url, False)
-        self.assertTrue(re.search(r'<a\b', link))
-        self.assertTrue(re.search('class="account"', link))
-        self.assertTrue(re.search('Assets:US:BofA:Checking', link))
-
-        # Call with RealAccount instance.
-        real_root = realization.RealAccount('')
-        real_account = realization.get_or_create(real_root, 'Assets:US:BofA:Checking')
-        link_real = web.account_link('Assets:US:BofA:Checking', mock_build_url, False)
-        self.assertEqual(link, link_real)
-
-        # Call rendering the leaf only.
-        link = web.account_link('Assets:US:BofA:Checking', mock_build_url, True)
-        self.assertTrue(re.search(r'<a\b', link))
-        self.assertTrue(re.search('class="account"', link))
-        self.assertTrue(re.search('Checking', link))
-        self.assertFalse(re.search('Assets:US:BofA:Checking', link))
-
-    def test_account_link_rootonly(self):
-        # Call with just a root account name.
-        link = web.account_link('Income', None, False)
-        self.assertTrue(re.search('Income', link))
-
-        link = web.account_link('Income', None, True)
-        self.assertTrue(re.search('Income', link))
-
-        link = web.account_link('Income', mock_build_url, False)
-        self.assertTrue(re.search('Income', link))
-
-        link = web.account_link('Income', mock_build_url, True)
-        self.assertTrue(re.search('Income', link))
-
-
 def scrape_urls(url_format, predicate, ignore_regexp=None):
     # The set of all URLs processed
     done = set()

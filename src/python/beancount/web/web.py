@@ -59,16 +59,22 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
 
     def render_account(self, account_name):
         """See base class."""
+        slashed_name = account_name.replace(account.sep, '/')
         if self.leaf_only:
             # Calculate the number of components to figure out the indent to
             # render at.
             components = account.split(account_name)
             indent = '{:.1f}'.format(len(components) * self.EMS_PER_COMPONENT)
-            anchor = account_link(account_name, self.build_url, leafonly=True)
+            anchor = '<a href="{}" class="account">{}</a>'.format(
+                self.build_url('journal', slashed_account_name=slashed_name),
+                account.leaf(account_name))
+
             return '<span "account" style="padding-left: {}em">{}</span>'.format(
                 indent, anchor)
         else:
-            anchor = account_link(account_name, self.build_url, leafonly=False)
+            anchor = '<a href="{}" class="account">{}</a>'.format(
+                self.build_url('journal', slashed_account_name=slashed_name),
+                account_name)
             return '<span "account">{}</span>'.format(anchor)
 
     def render_link(self, link):
@@ -135,39 +141,6 @@ def render_real_report(report_class, real_root, args=None, leaf_only=False):
     report_ = report_class.from_args(args, formatter=formatter)
     report_.render_real_htmldiv(real_root, app.options, oss)
     return oss.getvalue()
-
-
-def account_link(account_name, build_url, leafonly=False):
-    """Render an HTML anchor for the given account name.
-
-    The conversion to string is memoized, as it never changes. An actual link to
-    an account is only rendered if a build_url callable is provided. Otherwise,
-    a snippet of HTML that will just render the name of the account without a
-    link is rendered.
-
-    Args:
-      account_name: A string, the name of the account to render, or an
-        instance of RealAccount. Both are accepted.
-      build_url: A function used to build a URL. If not specified, a snippet of
-        HTML to at least render the account name without a link is produced.
-      leafonly: A boolean, if true, render only the name of the leaf, not the
-        entire account name.
-    Returns:
-      A string, a snippet of HTML that renders and links to the account name.
-    """
-    assert isinstance(account_name, str), account_name
-    slashed_name = account_name.replace(account.sep, '/')
-    if leafonly:
-        account_name = account.leaf(account_name)
-
-    if build_url is None:
-        link = '<span class="account">{}</a>'.format(account_name)
-    else:
-        link = '<a href="{}" class="account">{}</a>'.format(
-            build_url('journal', slashed_account_name=slashed_name),
-            account_name)
-
-    return link
 
 
 #--------------------------------------------------------------------------------
