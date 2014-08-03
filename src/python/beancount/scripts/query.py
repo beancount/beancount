@@ -116,7 +116,17 @@ def main():
         report_parser.set_defaults(report_class=report_class)
         report_class.add_args(report_parser)
 
-    args, filter_args = parser.parse_known_args()
+        # Each subparser must gather the filter arguments. This is unfortunate,
+        # but it works.
+        report_parser.add_argument(
+            'filters', nargs='*',
+            help='Filter expression(s) to select the subset of transactions.')
+
+    args = parser.parse_args()
+
+    # Warn on filters--not supported at this time. Coming soon.
+    if hasattr(args, 'filters') and args.filters:
+        parser.error("Filters are not supported yet. Extra args: {}".format(args.filters))
 
     # Handle special commands.
     if args.help_reports or not hasattr(args, 'report_class'):

@@ -43,14 +43,6 @@ class BalancesReport(report.Report, metaclass=report.RealizationMeta):
         if real_root:
             realization.dump_balances(real_root, file=file)
 
-
-    def render_real_html(self, real_root, options_map, file):
-        template = report.get_html_template()
-        oss = io.StringIO()
-        self.render_real_htmldiv(real_root, options_map, oss)
-        file.write(template.format(body=oss.getvalue(),
-                                   title=''))
-
     def render_real_htmldiv(self, real_root, options_map, file):
         text = tree_table.table_of_balances(real_root,
                                             options_map['operating_currency'],
@@ -66,6 +58,58 @@ class BalancesReport(report.Report, metaclass=report.RealizationMeta):
         file.write(text)
 
 
+class BalanceSheetReport(report.HTMLReport, metaclass=report.RealizationMeta):
+    """Print out a balance sheet."""
+
+    names = ['balsheet']
+    default_format = 'html'
+
+    def __init__(self, *args, formatter=None):
+        super().__init__(*args)
+        self.formatter = formatter
+
+    def render_real_htmldiv(self, real_root, options_map, file):
+        operating_currencies = options_map['operating_currency']
+        assets = tree_table.table_of_balances(
+            realization.get(real_root, options_map['name_assets']),
+            operating_currencies,
+            self.formatter)
+        liabilities = tree_table.table_of_balances(
+            realization.get(real_root, options_map['name_liabilities']),
+            operating_currencies,
+            self.formatter)
+        equity = tree_table.table_of_balances(
+            realization.get(real_root, options_map['name_equity']),
+            operating_currencies,
+            self.formatter)
+
+        file.write("""
+               <div class="halfleft">
+
+                 <div id="assets">
+                  <h3>Assets</h3>
+                  {assets}
+                 </div>
+
+               </div>
+               <div class="halfright">
+
+                 <div id="liabilities">
+                  <h3>Liabilities</h3>
+                  {liabilities}
+                 </div>
+                 <div class="spacer">
+                 </div>
+                 <div id="equity">
+                  <h3>Equity</h3>
+                  {equity}
+                 </div>
+
+               </div>
+            """.format(**vars()))
+
+
 __reports__ = [
     BalancesReport,
+    BalanceSheetReport,
     ]

@@ -77,7 +77,7 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
         return self.build_url('doc', filename=filename.lstrip('/'))
 
 
-def render_report(report_class):
+def render_report(report_class, real_root):
     """Instantiate a report and rendering it to a string.
 
     This is intended to be called in the context of a Bottle view app request
@@ -85,13 +85,14 @@ def render_report(report_class):
 
     Args:
       report_class: A class, the type of the report to render.
+      real_root: An instance of RealAccount to render.
     Returns:
       A string, the rendered report.
     """
     formatter = HTMLFormatter(request.app.get_url, True)
     oss = io.StringIO()
     report_ = report_class.from_args([], formatter=formatter)
-    report_.render_real_htmldiv(request.view.real_accounts, app.options, oss)
+    report_.render_real_htmldiv(real_root, app.options, oss)
     return oss.getvalue()
 
 
@@ -510,78 +511,24 @@ def trial():
     "Trial balance / Chart of Accounts."
     return render_view(
         pagetitle="Trial Balance",
-        contents=render_report(balance_reports.BalancesReport))
-
-
-def balance_sheet_table(real_accounts, options_map, build_url):
-    """Render an HTML balance sheet of the real_accounts tree."""
-
-    operating_currencies = options_map['operating_currency']
-    formatter = HTMLFormatter(build_url, True)
-    assets = tree_table.table_of_balances(
-        realization.get(real_accounts, options_map['name_assets']),
-        operating_currencies,
-        formatter)
-    liabilities = tree_table.table_of_balances(
-        realization.get(real_accounts, options_map['name_liabilities']),
-        operating_currencies,
-        formatter)
-    equity = tree_table.table_of_balances(
-        realization.get(real_accounts, options_map['name_equity']),
-        operating_currencies,
-        formatter)
-
-    return """
-           <div class="halfleft">
-
-             <div id="assets">
-              <h3>Assets</h3>
-              {assets}
-             </div>
-
-           </div>
-           <div class="halfright">
-
-             <div id="liabilities">
-              <h3>Liabilities</h3>
-              {liabilities}
-             </div>
-             <div class="spacer">
-             </div>
-             <div id="equity">
-              <h3>Equity</h3>
-              {equity}
-             </div>
-
-           </div>
-        """.format(**vars())
+        contents=render_report(balance_reports.BalancesReport,
+                               request.view.real_accounts))
 
 
 @viewapp.route('/balsheet', name='balsheet')
 def balsheet():
     "Balance sheet."
-
-    view = request.view
-    real_accounts = request.view.closing_real_accounts
-    contents = balance_sheet_table(real_accounts, app.options, request.app.get_url)
-
     return render_view(pagetitle="Balance Sheet",
-                       contents=contents)
+                       contents=render_report(balance_reports.BalanceSheetReport,
+                                              request.view.closing_real_accounts))
 
 
 @viewapp.route('/openbal', name='openbal')
 def openbal():
     "Opening balances."
-
-    view = request.view
-    real_accounts = request.view.opening_real_accounts
-    if real_accounts is None:
-        contents = 'N/A'
-    else:
-        contents = balance_sheet_table(real_accounts, app.options, request.app.get_url)
-
     return render_view(pagetitle="Opening Balances",
-                       contents=contents)
+                       contents=render_report(balance_reports.BalanceSheetReport,
+                                              request.view.opening_real_accounts))
 
 
 @viewapp.route('/income', name='income')

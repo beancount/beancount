@@ -110,7 +110,19 @@ class Report:
     __call__ = render
 
 
-class TableReport(Report):
+class HTMLReport(Report):
+    """A mixin for reports that support forwarding html to htmldiv implementation."""
+
+    def render_html(self, entries, errors, options_map, file):
+        template = get_html_template()
+        oss = io.StringIO()
+        self.render_htmldiv(entries, errors, options_map, oss)
+        file.write(template.format(body=oss.getvalue(),
+                                   title=''))
+
+
+
+class TableReport(HTMLReport):
     """A base class for reports that supports automatic conversions from Table."""
 
     default_format = 'text'
@@ -130,14 +142,6 @@ class TableReport(Report):
     def render_text(self, entries, errors, options_map, file):
         table_ = self.generate_table(entries, errors, options_map)
         table.generate_table(table_, file, 'text')
-
-    def render_html(self, entries, errors, options_map, file):
-        table_ = self.generate_table(entries, errors, options_map)
-        template = get_html_template()
-        oss = io.StringIO()
-        table.generate_table(table_, oss, 'html')
-        file.write(template.format(body=oss.getvalue(),
-                                   title=''))
 
     def render_htmldiv(self, entries, errors, options_map, file):
         table_ = self.generate_table(entries, errors, options_map)
@@ -200,7 +204,25 @@ class RealizationMeta(type):
         for name, value in new_methods.items():
             setattr(new_type, name, value)
 
+        # Auto-generate other methods if necessary.
+        if hasattr(new_type, 'render_real_htmldiv'):
+            setattr(new_type, 'render_real_html', cls.render_real_html)
+
         return new_type
+
+    def render_real_html(self, real_root, options_map, file):
+        """Wrap an htmldiv into our standard HTML template.
+
+        Args:
+          real_root: An instance of RealAccount.
+          options_map: A dict, options as produced by the parser.
+          file: A file object to write the output to.
+        """
+        template = get_html_template()
+        oss = io.StringIO()
+        self.render_real_htmldiv(real_root, options_map, oss)
+        file.write(template.format(body=oss.getvalue(),
+                                   title=''))
 
 
 def get_all_reports():
