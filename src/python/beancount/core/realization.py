@@ -446,6 +446,20 @@ def iterate_with_balance(postings_or_entries):
     date_entries.clear()
 
 
+def compute_balance(real_account):
+    """Compute the total balance of this account and all its subaccounts.
+
+    Args:
+      real_account: A RealAccount instance.
+    Returns:
+      An Inventory.
+    """
+    total_balance = inventory.Inventory()
+    for real_account in iter_children(real_account):
+        total_balance += real_account.balance
+    return total_balance
+
+
 def find_last_active_posting(postings):
     """Look at the end of the list of postings, and find the last
     posting or entry that is not an automatically added directive.
