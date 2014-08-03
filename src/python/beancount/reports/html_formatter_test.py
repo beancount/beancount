@@ -10,3 +10,4 @@ class TestHTMLFormatter(unittest.TestCase):
         formatter.render_account('Assets:US:Bank:Checking')
         formatter.render_link('fc6189c48a53')
         formatter.render_doc('/path/to/my/document.pdf')
+        formatter.render_event_type('location')

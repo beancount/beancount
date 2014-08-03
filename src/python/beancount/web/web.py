@@ -77,7 +77,9 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
 
     def render_doc(self, filename):
         """See base class."""
-        return self.build_url('doc', filename=filename.lstrip('/'))
+        return '<a href="{}" class="filename">{}</a>'.format(
+            self.build_url('doc', filename=filename.lstrip('/')),
+            path.basename(filename))
 
     def render_event_type(self, event):
         """See base class."""

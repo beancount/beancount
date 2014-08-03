@@ -120,10 +120,9 @@ def iterate_render_postings(postings, formatter):
 
         elif isinstance(entry, Document):
             assert path.isabs(entry.filename)
-            description = 'Document for {}: "<a href="{}" class="filename">{}</a>"'.format(
+            description = 'Document for {}: {}'.format(
                 formatter.render_account(entry.account),
-                formatter.render_doc(entry.filename),
-                path.basename(entry.filename))
+                formatter.render_doc(entry.filename))
             amount_str = ''
             balance_str = ''
 
