@@ -18,15 +18,19 @@ from beancount.core import inventory
 from beancount.ops import prices
 
 
-class BalancesReport(report.Report, metaclass=report.RealizationMeta):
-    """Print out the trial balance of accounts matching an expression."""
-
-    names = ['balances', 'bal', 'trial', 'ledger']
-    default_format = 'text'
+class Formatted(object):
 
     def __init__(self, *args, formatter=None):
         super().__init__(*args)
         self.formatter = formatter
+
+
+class BalancesReport(Formatted, report.Report,
+                     metaclass=report.RealizationMeta):
+    """Print out the trial balance of accounts matching an expression."""
+
+    names = ['balances', 'bal', 'trial', 'ledger']
+    default_format = 'text'
 
     @classmethod
     def add_args(cls, parser):
@@ -58,15 +62,12 @@ class BalancesReport(report.Report, metaclass=report.RealizationMeta):
         file.write(text)
 
 
-class BalanceSheetReport(report.HTMLReport, metaclass=report.RealizationMeta):
+class BalanceSheetReport(Formatted, report.HTMLReport,
+                         metaclass=report.RealizationMeta):
     """Print out a balance sheet."""
 
     names = ['balsheet']
     default_format = 'html'
-
-    def __init__(self, *args, formatter=None):
-        super().__init__(*args)
-        self.formatter = formatter
 
     def render_real_htmldiv(self, real_root, options_map, file):
         operating_currencies = options_map['operating_currency']
@@ -109,7 +110,47 @@ class BalanceSheetReport(report.HTMLReport, metaclass=report.RealizationMeta):
             """.format(**vars()))
 
 
+class IncomeStatementReport(Formatted, report.HTMLReport,
+                            metaclass=report.RealizationMeta):
+    """Print out a balance sheet."""
+
+    names = ['income']
+    default_format = 'html'
+
+    def render_real_htmldiv(self, real_root, options_map, file):
+        # Render the income statement tables.
+        operating_currencies = options_map['operating_currency']
+        income = tree_table.table_of_balances(
+            realization.get(real_root, options_map['name_income']),
+            operating_currencies,
+            self.formatter)
+        expenses = tree_table.table_of_balances(
+            realization.get(real_root, options_map['name_expenses']),
+            operating_currencies,
+            self.formatter)
+
+        file.write("""
+           <div id="income" class="halfleft">
+
+             <div id="income">
+              <h3>Income</h3>
+              {income}
+             </div>
+
+           </div>
+           <div class="halfright">
+
+             <div id="expenses">
+              <h3>Expenses</h3>
+              {expenses}
+             </div>
+
+           </div>
+        """.format(**vars()))
+
+
 __reports__ = [
     BalancesReport,
     BalanceSheetReport,
+    IncomeStatementReport,
     ]

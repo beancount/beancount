@@ -534,43 +534,9 @@ def openbal():
 @viewapp.route('/income', name='income')
 def income():
     "Income statement."
-
-    view = request.view
-    real_accounts = request.view.real_accounts
-
-    # Render the income statement tables.
-    operating_currencies = app.options['operating_currency']
-    formatter = HTMLFormatter(request.app.get_url, True)
-    income = tree_table.table_of_balances(realization.get(real_accounts,
-                                                       app.options['name_income']),
-                                       operating_currencies,
-                                       formatter)
-    expenses = tree_table.table_of_balances(realization.get(real_accounts,
-                                                         app.options['name_expenses']),
-                                         operating_currencies,
-                                         formatter)
-
-    contents = """
-       <div id="income" class="halfleft">
-
-         <div id="income">
-          <h3>Income</h3>
-          {income}
-         </div>
-
-       </div>
-       <div class="halfright">
-
-         <div id="expenses">
-          <h3>Expenses</h3>
-          {expenses}
-         </div>
-
-       </div>
-    """.format(**vars())
-
     return render_view(pagetitle="Income Statement",
-                       contents=contents)
+                       contents=render_report(balance_reports.IncomeStatementReport,
+                                              request.view.real_accounts))
 
 
 @viewapp.route('/equity', name='equity')
