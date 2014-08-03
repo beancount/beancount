@@ -87,7 +87,7 @@ def main():
                         help="Special: Print the full list of supported reports and exit.")
 
     parser.add_argument('-f', '--format', default=None,
-                        choices=['text', 'csv', 'html', 'beancount'],
+                        choices=['text', 'csv', 'html', 'htmldiv', 'beancount', 'xls'],
                         help="Output format.")
 
     parser.add_argument('-o', '--output', action='store',

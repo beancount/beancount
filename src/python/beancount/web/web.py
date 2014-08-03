@@ -37,6 +37,7 @@ from beancount.reports import tree_table
 from beancount.web import gviz
 from beancount.reports import table
 from beancount.reports import html_formatter
+from beancount.reports import balance_reports
 
 
 class HTMLFormatter(html_formatter.HTMLFormatter):
@@ -490,23 +491,16 @@ def approot():
 def trial():
     "Trial balance / Chart of Accounts."
 
-    view = request.view
-    real_accounts = view.real_accounts
-    operating_currencies = app.options['operating_currency']
-    table = tree_table.table_of_balances(real_accounts,
-                                         operating_currencies,
-                                         HTMLFormatter(request.app.get_url, True),
-                                         classes=['trial'])
-
-    ## FIXME(reports): After conversions is fixed, this should always be zero.
-    total_balance = complete.compute_entries_balance(view.entries)
-    table += """
-      Total Balance: <span class="num">{}</span>
-    """.format(total_balance.get_cost())
+    ## FIXME(reports): Share the formatter somewhere.
+    ## FIXME(reports): Make the report creation much easier.
+    report_ = balance_reports.BalancesReport.from_args(
+        formatter=HTMLFormatter(request.app.get_url, True))
+    oss = io.StringIO()
+    report_.render_real_htmldiv(request.view.real_accounts, app.options, oss)
 
     return render_view(
         pagetitle="Trial Balance",
-        contents=table
+        contents=oss.getvalue(),
         )
 
 

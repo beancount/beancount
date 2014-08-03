@@ -7,6 +7,7 @@ supports some subset of formats.
 import argparse
 import io
 import re
+from os import path
 
 from beancount.reports import table
 from beancount.parser import options
@@ -36,7 +37,7 @@ class Report:
         self.args = args
 
     @classmethod
-    def from_args(cls, argv=None):
+    def from_args(cls, argv=None, **kwds):
         """A convenience method used to create an instance from arguments.
 
         This creates an instance of the report with default arguments. This is a
@@ -45,12 +46,13 @@ class Report:
 
         Args:
           argv: A list of strings, command-line arguments to use to construct tbe report.
+          kwds: A dict of other keyword arguments to pass to the report's constructor.
         Returns:
           A new instace of the report.
         """
         parser = argparse.ArgumentParser()
         cls.add_args(parser)
-        return cls(parser.parse_args(argv or []), parser)
+        return cls(parser.parse_args(argv or []), parser, **kwds)
 
     @classmethod
     def add_args(cls, parser):
@@ -130,7 +132,11 @@ class TableReport(Report):
 
     def render_html(self, entries, errors, options_map, file):
         table_ = self.generate_table(entries, errors, options_map)
-        table.generate_table(table_, file, 'html')
+        template = get_html_template()
+        oss = io.StringIO()
+        table.generate_table(table_, oss, 'html')
+        file.write(template.format(body=oss.getvalue(),
+                                   title=''))
 
     def render_htmldiv(self, entries, errors, options_map, file):
         table_ = self.generate_table(entries, errors, options_map)
@@ -208,3 +214,14 @@ def get_all_reports():
     return (misc_reports.__reports__ +
             holdings_reports.__reports__ +
             balance_reports.__reports__)
+
+
+def get_html_template():
+    """Returns our vanilla HTML template for embedding an HTML div.
+
+    Returns:
+      A string, with a formatting style placeholders:
+        {title}: for the title of the page.
+        {body}: for the body, where the div goes.
+    """
+    return open(path.join(path.dirname(__file__), 'template.html')).read()

@@ -162,3 +162,9 @@ class TestReportFunctions(unittest.TestCase):
         all_reports = report.get_all_reports()
         self.assertTrue(all(issubclass(report_, report.Report)
                             for report_ in all_reports))
+
+    def test_get_html_template(self):
+        template = report.get_html_template()
+        self.assertTrue(template)
+        self.assertTrue(re.search('{title}', template))
+        self.assertTrue(re.search('{body}', template))
