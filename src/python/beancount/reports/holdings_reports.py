@@ -170,8 +170,8 @@ class HoldingsReport(report.TableReport):
         'currency': dict(aggregation_key=lambda holding: holding.cost_currency),
         }
 
-    def __init__(self, *rest):
-        super().__init__(*rest)
+    def __init__(self, *rest, **kwds):
+        super().__init__(*rest, **kwds)
         if self.args.relative and not self.args.currency:
             self.parser.error("--relative needs to have --currency set")
 

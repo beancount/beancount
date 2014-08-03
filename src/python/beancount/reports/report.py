@@ -114,11 +114,13 @@ class Report:
 class HTMLReport(Report):
     """A mixin for reports that support forwarding html to htmldiv implementation."""
 
-    def __init__(self, *args, formatter=None):
+    def __init__(self, *args, formatter=None, css_id=None, css_class=None):
         super().__init__(*args)
         if formatter is None:
             formatter = html_formatter.HTMLFormatter()
         self.formatter = formatter
+        self.css_id = css_id
+        self.css_class = css_class
 
     def render_html(self, entries, errors, options_map, file):
         template = get_html_template()
@@ -148,15 +150,16 @@ class TableReport(HTMLReport):
 
     def render_text(self, entries, errors, options_map, file):
         table_ = self.generate_table(entries, errors, options_map)
-        table.generate_table(table_, file, 'text')
+        table.render_table(table_, file, 'text')
 
     def render_htmldiv(self, entries, errors, options_map, file):
         table_ = self.generate_table(entries, errors, options_map)
-        table.generate_table(table_, file, 'htmldiv')
+        table.render_table(table_, file, 'htmldiv',
+                           css_id=self.css_id, css_class=self.css_class)
 
     def render_csv(self, entries, errors, options_map, file):
         table_ = self.generate_table(entries, errors, options_map)
-        table.generate_table(table_, file, 'csv')
+        table.render_table(table_, file, 'csv')
 
 
 class RealizationMeta(type):

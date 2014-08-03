@@ -39,6 +39,7 @@ from beancount.reports import table
 from beancount.reports import html_formatter
 from beancount.reports import misc_reports
 from beancount.reports import balance_reports
+from beancount.reports import holdings_reports
 
 
 class HTMLFormatter(html_formatter.HTMLFormatter):
@@ -84,19 +85,31 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
             event)
 
 
-def render_report(report_class, entries, args=None):
+def render_report(report_class, entries, args=None,
+                  css_id=None, css_class=None, center=False):
     """Instantiate a report and rendering it to a string.
 
     Args:
       report_class: A class, the type of the report to render.
       real_root: An instance of RealAccount to render.
+      args: A list of strings, the arguments to initialize the report with.
+      css_id: An optional string, the CSS id for the div to render.
+      css_class: An optional string, the CSS class for the div to render.
+      center: A boolean flag, if true, wrap the results in a <center> tag.
     Returns:
       A string, the rendered report.
     """
     formatter = HTMLFormatter(request.app.get_url, True)
     oss = io.StringIO()
-    report_ = report_class.from_args(args, formatter=formatter)
+    if center:
+        oss.write('<center>\n')
+    report_ = report_class.from_args(args,
+                                     formatter=formatter,
+                                     css_id=css_id,
+                                     css_class=css_class)
     report_.render_htmldiv(entries, app.errors, app.options, oss)
+    if center:
+        oss.write('</center>\n')
     return oss.getvalue()
 
 
@@ -495,10 +508,9 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{V.openbal}}">Opening Balances</a></li>
   <li><a href="{{V.balsheet}}">Balance Sheet</a></li>
   <li><a href="{{V.income}}">Income Statement</a></li>
-  <li><a href="{{V.equity}}">Shareholder's Equity</a></li>
+  <li><a href="{{V.equity}}">Equity/Holdings</a></li>
   <li><a href="{{V.trial}}">Trial Balance</a></li>
   <li><a href="{{V.journal}}">Journal</a></li>
-  <li><a href="{{V.holdings}}">Holdings</a></li>
   <li><a href="{{V.conversions}}">Conversions</a></li>
   <li><a href="{{V.documents}}">Documents</a></li>
   <li><a href="{{V.stats}}">Statistics</a></li>
@@ -549,53 +561,78 @@ def income():
 def equity():
     "Render a table of the net worth at the beginning, end, and net income."
 
-    # FIXME(reports): This whole shebang gets replaced by the holdings reports.
-    if 0:
-        view = request.view
+    navigation = """
+    <ul>
+      <li><a href="{V.holdings}">Holdings (Full Detail)</a></li>
+      <li><a href="{V.holdings_byaccount}">Holdings By Account</a></li>
+      <li><a href="{V.holdings_byrootaccount}">Holdings By Root Account</a></li>
+      <li><a href="{V.holdings_bycommodity}">Holdings By Commodity</a></li>
+      <li><a href="{V.holdings_bycurrency}">Holdings By Currency</a></li>
+    </ul>
+    """.format(V=V)
+    return render_view(pagetitle="Equity / Holdings",
+                       contents=navigation)
 
-        equity_balance = complete.compute_entries_balance(
-            view.closing_entries, '{}:'.format(app.options['name_equity']))
-        header = io.StringIO()
-        header.write('<th>Currency</th>\n')
-        header.write('<th>Amount</th>\n')
-        operating_currencies = app.options['operating_currency']
-        header.write('\n'.join('<th>{}</th>\n'.format(currency)
-                               for currency in operating_currencies))
 
-        body = io.StringIO()
-        for position in equity_balance.get_positions():
-            body.write('<tr>')
-            body.write('<td>{}</td>'.format(position.lot.currency))
-            body.write('<td>{}</td>'.format(position.number))
-            for currency in operating_currencies:
-                date_, rate = prices.get_latest_price(app.price_map,
-                                                      (position.lot.currency, currency))
-                value = position.number * rate
+@viewapp.route('/equity/holdings', name='holdings')
+def holdings_():
+    "Render a detailed table of all holdings."
+    html_table = render_report(holdings_reports.HoldingsReport, request.view.entries,
+                               [],
+                               css_class='holdings detail-table sortable', center=True)
+    return render_view(
+        pagetitle="Holdings",
+        contents=html_table,
+        scripts='<script src="/third_party/sorttable.js"></script>')
 
-                # FIXME(reports): We may not have an appropriate conversion
-                # here, we may need to get the cost and then convert the cost to
-                # the target currency. Do this.
-                body.write('<td>{}</td>'.format(value))
-            body.write('</tr>')
+@viewapp.route('/equity/holdings_byaccount', name='holdings_byaccount')
+def holdings_byaccount():
+    "Render a table of holdings by account."
 
-        contents = """
-           <div id="equity-table">
-             <table>
-               <thead>
-                 {header}
-               </thead>
-               <tbody>
-                 {body}
-               </tbody>
-             </table>
-           </div>
-        """.format(header=header.getvalue(), body=body.getvalue())
+    html_table = render_report(holdings_reports.HoldingsReport, request.view.entries,
+                               ['--by', 'account'],
+                               css_class='holdings detail-table sortable', center=True)
+    return render_view(
+        pagetitle="Holdings By Account",
+        contents=html_table,
+        scripts='<script src="/third_party/sorttable.js"></script>')
 
-        ## FIXME(reports): Render the equity at opening too.
-        ## FIXME(reports): Insert a summary of the net income.
+@viewapp.route('/equity/holdings_byrootaccount', name='holdings_byrootaccount')
+def holdings_byrootaccount():
+    "Render a table of holdings by account."
 
-    return render_view(pagetitle="Shareholder's Equity",
-                       contents=NOT_IMPLEMENTED)
+    html_table = render_report(holdings_reports.HoldingsReport, request.view.entries,
+                               ['--by', 'root-account'],
+                               css_class='holdings detail-table sortable', center=True)
+    return render_view(
+        pagetitle="Holdings By Account",
+        contents=html_table,
+        scripts='<script src="/third_party/sorttable.js"></script>')
+
+@viewapp.route('/equity/holdings_bycommodity', name='holdings_bycommodity')
+def holdings_bycommodity():
+    "Render a table of holdings by commodity."
+
+    html_table = render_report(holdings_reports.HoldingsReport, request.view.entries,
+                               ['--by', 'commodity'],
+                               css_class='holdings detail-table sortable', center=True)
+    return render_view(
+        pagetitle="Holdings By Commodity",
+        contents=html_table,
+        scripts='<script src="/third_party/sorttable.js"></script>')
+
+@viewapp.route('/equity/holdings_bycurrency', name='holdings_bycurrency')
+def holdings_bycurrency():
+    "Render a table of holdings by currency."
+
+    html_table = render_report(holdings_reports.HoldingsReport, request.view.entries,
+                               ['--by', 'currency'],
+                               css_class='holdings detail-table sortable', center=True)
+    return render_view(
+        pagetitle="Holdings By Currency",
+        contents=html_table,
+        scripts='<script src="/third_party/sorttable.js"></script>')
+
 
 
 @viewapp.route('/journal', name='journal')
@@ -681,111 +718,6 @@ def link(link=None):
     bottle.redirect(app.router.build('link', link=link))
 
 
-#--------------------------------------------------------------------------------
-
-
-FORMATTERS = {
-    'number': '{:.3f}'.format,
-    'book_value': '{:.0f}'.format,
-    'market_value': '{:.0f}'.format,
-    'pnl': '{:.2f}'.format,
-    'avg_cost': '{:.3f}'.format,
-    'price_number': '{:.3f}'.format,
-    }
-
-
-@viewapp.route('/holdings', name='holdings')
-def holdings_overview():
-    "Render an index of the pages detailing holdings."
-    return render_view(
-        pagetitle="Holdings",
-        contents="""
-          <ul>
-            <li><a href="{V.holdings_detail}">Detailed Holdings List</a></li>
-            <li><a href="{V.holdings_byinstrument}">By Instrument</a></li>
-          </ul>
-        """.format(V=V))
-
-
-@viewapp.route('/holdings/detail', name='holdings_detail')
-def holdings_detail():
-    "Render a detailed table of all holdings."
-
-    holdings_ = holdings.get_final_holdings(request.view.entries,
-                                            (app.account_types.assets,
-                                             app.account_types.liabilities),
-                                            app.price_map)
-
-    table_ = table.create_table(holdings_,
-                                field_spec=[
-                                    'account',
-                                    ('number', None, '{:,.2f}'.format),
-                                    'currency',
-                                    'cost_currency',
-                                    ('cost_number', 'Cost Price', '{:,.2f}'.format),
-                                    ('price_number', 'Market Price', '{:,.2f}'.format),
-                                    ('book_value', None, '{:,.2f}'.format),
-                                    ('market_value', None, '{:,.2f}'.format),
-                                    'price_date',
-                                ])
-
-    oss = io.StringIO()
-    oss.write('<center>\n')
-    if holdings_:
-        table.table_to_html(table_,
-                            classes=['holdings', 'detail-table', 'sortable'],
-                            file=oss)
-    else:
-        oss.write("(No holdings.)")
-    oss.write('</center>\n')
-
-    return render_view(
-        pagetitle="Holdings - Detailed List",
-        scripts='<script src="/third_party/sorttable.js"></script>',
-        contents=oss.getvalue())
-
-
-@viewapp.route('/holdings/byinstrument', name='holdings_byinstrument')
-def holdings_byinstrument():
-    "Render a table of holdings by instrument."
-
-    holdings_ = holdings.get_final_holdings(request.view.entries,
-                                            (app.account_types.assets,
-                                             app.account_types.liabilities),
-                                            app.price_map)
-    aggregated_holdings = holdings.aggregate_holdings_by(holdings_,
-                                                         lambda holding: holding.currency)
-
-    table_ = table.create_table(aggregated_holdings,
-                                field_spec=[
-                                    ('number', None, '{:,.2f}'.format),
-                                    'currency',
-                                    'cost_currency',
-                                    ('cost_number', 'Average Cost', '{:,.2f}'.format),
-                                    ('price_number', 'Average Price', '{:,.2f}'.format),
-                                    ('book_value', None, '{:,.2f}'.format),
-                                    ('market_value', None, '{:,.2f}'.format)
-                                ])
-
-    oss = io.StringIO()
-    oss.write('<center>\n')
-    if holdings_:
-        table.table_to_html(table_,
-                            classes=['holdings', 'byinst-account-table', 'sortable'],
-                            file=oss)
-    else:
-        oss.write("(No holdings.)")
-    oss.write('</center>\n')
-
-    return render_view(
-        pagetitle="Holdings - By Instrument",
-        scripts='<script src="/third_party/sorttable.js"></script>',
-        contents=oss.getvalue())
-
-
-#--------------------------------------------------------------------------------
-
-
 @viewapp.route('/trades', name='trades')
 def trades():
     "Render a list of the transactions booked against inventory-at-cost."
@@ -821,7 +753,7 @@ def event(event=None):
     "Render all values of a particular event."
     if not event:
         bottle.redirect(app.get_url('event_index'))
-    return render_global(
+    return render_view(
         pagetitle="Event: {}".format(event),
         contents=render_report(misc_reports.EventsReport, app.entries,
                                ['--expr', event]))
@@ -829,7 +761,7 @@ def event(event=None):
 @viewapp.route('/event', name='event_index')
 def event_index():
     "Render the latest values of all events and an index."
-    return render_global(
+    return render_view(
         pagetitle="Events Index",
         contents=render_report(misc_reports.CurrentEventsReport,
                                app.entries))

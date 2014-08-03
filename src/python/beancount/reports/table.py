@@ -247,7 +247,7 @@ def compute_table_widths(rows):
     return column_widths
 
 
-def generate_table(table_, output, format, css_id=None, css_class=None):
+def render_table(table_, output, format, css_id=None, css_class=None):
     """Render the given table to the output file object in the requested format.
 
     The table gets written out to the 'output' file.
