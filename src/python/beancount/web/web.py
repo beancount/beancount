@@ -37,9 +37,10 @@ from beancount.reports import tree_table
 from beancount.web import gviz
 from beancount.reports import table
 from beancount.reports import html_formatter
-from beancount.reports import misc_reports
 from beancount.reports import balance_reports
+from beancount.reports import journal_reports
 from beancount.reports import holdings_reports
+from beancount.reports import misc_reports
 
 
 class HTMLFormatter(html_formatter.HTMLFormatter):
@@ -113,7 +114,7 @@ def render_report(report_class, entries, args=None,
     return oss.getvalue()
 
 
-def render_real_report(report_class, real_root):
+def render_real_report(report_class, real_root, args=None, leaf_only=False):
     """Instantiate a report and rendering it to a string.
 
     This is intended to be called in the context of a Bottle view app request
@@ -122,12 +123,14 @@ def render_real_report(report_class, real_root):
     Args:
       report_class: A class, the type of the report to render.
       real_root: An instance of RealAccount to render.
+      args: A list of strings, the arguments to initialize the report with.
+      leaf_only: A boolean, whether to render the leaf names only.
     Returns:
       A string, the rendered report.
     """
-    formatter = HTMLFormatter(request.app.get_url, True)
+    formatter = HTMLFormatter(request.app.get_url, leaf_only)
     oss = io.StringIO()
-    report_ = report_class.from_args([], formatter=formatter)
+    report_ = report_class.from_args(args, formatter=formatter)
     report_.render_real_htmldiv(real_root, app.options, oss)
     return oss.getvalue()
 
@@ -530,7 +533,8 @@ def trial():
     return render_view(
         pagetitle="Trial Balance",
         contents=render_real_report(balance_reports.BalancesReport,
-                                    request.view.real_accounts))
+                                    request.view.real_accounts,
+                                    leaf_only=True))
 
 
 @viewapp.route('/balsheet', name='balsheet')
@@ -538,7 +542,8 @@ def balsheet():
     "Balance sheet."
     return render_view(pagetitle="Balance Sheet",
                        contents=render_real_report(balance_reports.BalanceSheetReport,
-                                                   request.view.closing_real_accounts))
+                                                   request.view.closing_real_accounts,
+                                                   leaf_only=True))
 
 
 @viewapp.route('/openbal', name='openbal')
@@ -546,7 +551,8 @@ def openbal():
     "Opening balances."
     return render_view(pagetitle="Opening Balances",
                        contents=render_real_report(balance_reports.BalanceSheetReport,
-                                                   request.view.opening_real_accounts))
+                                                   request.view.opening_real_accounts,
+                                                   leaf_only=True))
 
 
 @viewapp.route('/income', name='income')
@@ -554,7 +560,8 @@ def income():
     "Income statement."
     return render_view(pagetitle="Income Statement",
                        contents=render_real_report(balance_reports.IncomeStatementReport,
-                                                   request.view.real_accounts))
+                                                   request.view.real_accounts,
+                                                   leaf_only=True))
 
 
 @viewapp.route('/equity', name='equity')
@@ -649,26 +656,23 @@ def account_(slashed_account_name=None):
     # want to include the net-income transferred from the exercise period.
     account_name = slashed_account_name.strip('/').replace('/', account.sep)
 
+    # Figure out which account to render this from.
+    real_accounts = request.view.real_accounts
     if account_name:
         if account_name and account_types.is_balance_sheet_account(account_name,
                                                                    app.account_types):
             real_accounts = request.view.closing_real_accounts
-        else:
-            real_accounts = request.view.real_accounts
-        real_account = realization.get(real_accounts, account_name)
-        if real_account is None:
-            raise bottle.HTTPError(404, "Not found.")
-    else:
-        real_account = request.view.real_accounts
 
-    account_postings = realization.get_postings(real_account)
+    # Render the report.
+    try:
+        args = ['--account={}'.format(account_name)] if account_name else []
+        html_journal = render_real_report(journal_reports.JournalReport,
+                                          real_accounts, args, leaf_only=False)
+    except KeyError as e:
+        raise bottle.HTTPError(404, '{}'.format(e))
 
-    oss = io.StringIO()
-    formatter = HTMLFormatter(request.app.get_url, False)
-    journal.entries_table_with_balance(oss, account_postings, formatter)
-    return render_view(
-        pagetitle='{}'.format(account_name or 'ROOT'),
-        contents=oss.getvalue())
+    return render_view(pagetitle='{}'.format(account_name or 'General Ledger (All Accounts)'),
+                       contents=html_journal)
 
 
 def get_conversion_entries(entries):

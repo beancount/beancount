@@ -241,12 +241,14 @@ def get_all_reports():
     Returns:
       A list of all available report classes.
     """
-    from beancount.reports import misc_reports
-    from beancount.reports import holdings_reports
     from beancount.reports import balance_reports
-    return (misc_reports.__reports__ +
+    from beancount.reports import journal_reports
+    from beancount.reports import holdings_reports
+    from beancount.reports import misc_reports
+    return (balance_reports.__reports__ +
+            journal_reports.__reports__ +
             holdings_reports.__reports__ +
-            balance_reports.__reports__)
+            misc_reports.__reports__)
 
 
 def get_html_template():
