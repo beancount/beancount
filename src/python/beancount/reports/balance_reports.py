@@ -57,16 +57,11 @@ class BalancesReport(report.Report, metaclass=report.RealizationMeta):
                                             self.formatter,
                                             classes=['trial'])
 
-        ## FIXME(reports): Put what follows in a function.
-        ## FIXME(reports): Write a test that includes balances at the non-leaves, just to make sure
-
-        ## FIXME(reports): After conversions is fixed, this should always be zero.
-        total_balance = inventory.Inventory()
-        for real_account in realization.iter_children(real_root):
-            total_balance += real_account.balance
-        text += """
-          Total Balance: <span class="num">{}</span>
-        """.format(total_balance.get_cost())
+        balance_cost = realization.compute_balance(real_root).get_cost()
+        if not balance_cost.is_empty():
+            text += """
+              Total Balance: <span class="num">{}</span>
+            """.format(balance_cost)
 
         file.write(text)
 

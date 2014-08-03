@@ -77,7 +77,7 @@ class Report:
                 formats.append(mo.group(1))
         return sorted(formats)
 
-    def render(self, entries, errors, options_map, output_format, file=None):
+    def render(self, entries, errors, options_map, output_format=None, file=None):
         """Render a report of filtered entries to any format.
 
         This function dispatches to a specific method.
@@ -86,7 +86,8 @@ class Report:
           entries: A list of directives to render.
           errors: A list of errors that occurred during processing.
           options_map: A dict of options, as produced by the parser.
-          output_format: A string, the name of the format.
+          output_format: A string, the name of the format. I fnot specified, use
+            the default format.
           file: The file to write the output to.
         Returns:
           If no 'file' is provided, return the contents of the report as a

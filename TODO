@@ -356,6 +356,12 @@ beancount: TODO
 
 
 
+
+  - Make conversions report sum up to zero by adding a similar conversions
+    entry as for the balance sheet.
+
+
+
   - Refine 'source' attribute on all directives: For .source, instead of '<...>'
     for the filename, we should use a scheme:..., like file://..., and
     plugin:beancount.... . This makes a lot more sense. The lineno still needs

@@ -88,9 +88,12 @@ class TestScriptPositions(test_utils.TestCase):
         output = stdout.getvalue()
         self.assertLines("""
             |-- Assets
-            |   `-- Cash               -50.02 USD
-            `-- Expenses
-                `-- Restaurant          50.02 USD
+            |   `-- Cash                   -50.02 USD
+            |-- Equity
+            |-- Expenses
+            |   `-- Restaurant              50.02 USD
+            |-- Income
+            `-- Liabilities
         """, output)
 
     @test_utils.docfile

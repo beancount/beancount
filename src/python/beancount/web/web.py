@@ -77,6 +77,24 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
         return self.build_url('doc', filename=filename.lstrip('/'))
 
 
+def render_report(report_class):
+    """Instantiate a report and rendering it to a string.
+
+    This is intended to be called in the context of a Bottle view app request
+    (it uses 'request').
+
+    Args:
+      report_class: A class, the type of the report to render.
+    Returns:
+      A string, the rendered report.
+    """
+    formatter = HTMLFormatter(request.app.get_url, True)
+    oss = io.StringIO()
+    report_ = report_class.from_args([], formatter=formatter)
+    report_.render_real_htmldiv(request.view.real_accounts, app.options, oss)
+    return oss.getvalue()
+
+
 def account_link(account_name, build_url, leafonly=False):
     """Render an HTML anchor for the given account name.
 
@@ -490,18 +508,9 @@ def approot():
 @viewapp.route('/trial', name='trial')
 def trial():
     "Trial balance / Chart of Accounts."
-
-    ## FIXME(reports): Share the formatter somewhere.
-    ## FIXME(reports): Make the report creation much easier.
-    report_ = balance_reports.BalancesReport.from_args(
-        formatter=HTMLFormatter(request.app.get_url, True))
-    oss = io.StringIO()
-    report_.render_real_htmldiv(request.view.real_accounts, app.options, oss)
-
     return render_view(
         pagetitle="Trial Balance",
-        contents=oss.getvalue(),
-        )
+        contents=render_report(balance_reports.BalancesReport))
 
 
 def balance_sheet_table(real_accounts, options_map, build_url):
@@ -960,8 +969,13 @@ def handle_view(path_depth):
     """A decorator for handlers which create views lazily.
     If you decorate a method with this, the wrapper does the redirect
     handling and your method is just a factory for a View instance,
-    which is cached."""
+    which is cached.
 
+    Args:
+      path_depth: An integer, the number of components that form the view id.
+    Returns:
+      A decorator function, used to wrap view handlers.
+    """
     def view_populator(callback):
         def wrapper(*args, **kwargs):
             components = request.path.split('/')
@@ -982,7 +996,13 @@ def handle_view(path_depth):
 
 
 def populate_view(callback):
-    "A plugin that will populate the request with the current view instance."
+    """A plugin that will populate the request with the current view instance.
+
+    Args:
+      callback: A continuation function to call to handle the request.
+    Returns:
+      A function to call to install view-specific parameters on the request.
+    """
     def wrapper(*args, **kwargs):
         request.view = request.environ['VIEW']
         return callback(*args, **kwargs)
