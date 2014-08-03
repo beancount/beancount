@@ -118,7 +118,7 @@ table.tree-table tr.parent-node {
 }
 
 table tr.totals {
-    background-color: #d0d0d0;
+    background-color: #eee;
 }
 
 span.totals-label {

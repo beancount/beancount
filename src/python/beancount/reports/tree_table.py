@@ -97,7 +97,7 @@ def tree_table(oss, real_account, formatter, header=None, classes=None):
         write('<tr class="{}">'.format(' '.join(row_classes)))
 
         if real_account is TOTALS_LINE:
-            label = '<span class="totals-label">Totals</span>'
+            label = '<span class="totals-label"></span>'
         else:
             label = (formatter.render_account(real_account.account)
                      if formatter
