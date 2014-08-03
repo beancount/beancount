@@ -164,7 +164,7 @@ def account_link(account_name, build_url, leafonly=False):
         link = '<span class="account">{}</a>'.format(account_name)
     else:
         link = '<a href="{}" class="account">{}</a>'.format(
-            build_url('account', slashed_account_name=slashed_name),
+            build_url('journal', slashed_account_name=slashed_name),
             account_name)
 
     return link
@@ -515,7 +515,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{V.income}}">Income Statement</a></li>
   <li><a href="{{V.equity}}">Equity/Holdings</a></li>
   <li><a href="{{V.trial}}">Trial Balance</a></li>
-  <li><a href="{{V.journal}}">Journal</a></li>
+  <li><a href="{{V.journal_root}}">General Journal</a></li>
   <li><a href="{{V.conversions}}">Conversions</a></li>
   <li><a href="{{V.documents}}">Documents</a></li>
   <li><a href="{{V.stats}}">Statistics</a></li>
@@ -644,14 +644,14 @@ def holdings_bycurrency():
 
 
 
-@viewapp.route('/journal', name='journal')
-def journal_():
+@viewapp.route('/journal', name='journal_root')
+def journal_root():
     "A list of all the entries in this realization."
-    bottle.redirect(request.app.get_url('account', slashed_account_name=''))
+    bottle.redirect(request.app.get_url('journal', slashed_account_name=''))
 
 
-@viewapp.route('/account/<slashed_account_name:re:[^:]*>', name='account')
-def account_(slashed_account_name=None):
+@viewapp.route('/journal/<slashed_account_name:re:[^:]*>', name='journal')
+def journal_(slashed_account_name=None):
     "A list of all the entries for this account realization."
 
     # Get the appropriate realization: if we're looking at the balance sheet, we

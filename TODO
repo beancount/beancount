@@ -250,8 +250,8 @@ beancount: TODO
       -- openbal (as balsheet at previous date)
       -- income
       -- equity (becomes holdings)
-      journal
-      account
+      -- journal
+      -- account
       conversions
       -- holdings_detail
       -- holdings_byinstrument
