@@ -1,4 +1,4 @@
-"""Miscellaneous report classes.
+"""Report classes for all reports that display ending balances of accounts.
 """
 import io
 import re
@@ -18,14 +18,7 @@ from beancount.core import inventory
 from beancount.ops import prices
 
 
-class Formatted(object):
-
-    def __init__(self, *args, formatter=None):
-        super().__init__(*args)
-        self.formatter = formatter
-
-
-class BalancesReport(Formatted, report.Report,
+class BalancesReport(report.HTMLReport,
                      metaclass=report.RealizationMeta):
     """Print out the trial balance of accounts matching an expression."""
 
@@ -62,7 +55,7 @@ class BalancesReport(Formatted, report.Report,
         file.write(text)
 
 
-class BalanceSheetReport(Formatted, report.HTMLReport,
+class BalanceSheetReport(report.HTMLReport,
                          metaclass=report.RealizationMeta):
     """Print out a balance sheet."""
 
@@ -110,7 +103,7 @@ class BalanceSheetReport(Formatted, report.HTMLReport,
             """.format(**vars()))
 
 
-class IncomeStatementReport(Formatted, report.HTMLReport,
+class IncomeStatementReport(report.HTMLReport,
                             metaclass=report.RealizationMeta):
     """Print out a balance sheet."""
 

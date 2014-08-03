@@ -10,6 +10,7 @@ import re
 from os import path
 
 from beancount.reports import table
+from beancount.reports import html_formatter
 from beancount.parser import options
 from beancount.core import realization
 
@@ -112,6 +113,12 @@ class Report:
 
 class HTMLReport(Report):
     """A mixin for reports that support forwarding html to htmldiv implementation."""
+
+    def __init__(self, *args, formatter=None):
+        super().__init__(*args)
+        if formatter is None:
+            formatter = html_formatter.HTMLFormatter()
+        self.formatter = formatter
 
     def render_html(self, entries, errors, options_map, file):
         template = get_html_template()

@@ -1,5 +1,6 @@
 """Miscellaneous report classes.
 """
+import datetime
 import re
 
 from beancount.reports import report
@@ -105,10 +106,10 @@ class AccountsReport(report.Report):
                                                    len=maxlen))
 
 
-class EventsReport(report.TableReport):
-    """Produce a table of the latest values of all event types."""
+class CurrentEventsReport(report.TableReport):
+    """Produce a table of the current values of all event types."""
 
-    names = ['events']
+    names = ['current_events', 'latest_events']
 
     def generate_table(self, entries, errors, options_map):
         events = {}
@@ -117,7 +118,34 @@ class EventsReport(report.TableReport):
                 events[entry.type] = entry.description
         return table.create_table([(type_, description)
                                    for type_, description in sorted(events.items())],
-                                  [(0, "Type"), (1, "Description")])
+                                  [(0, "Type", self.formatter.render_event_type),
+                                   (1, "Description")])
+
+
+class EventsReport(report.TableReport):
+    """Produce a table of all the values of a particular event."""
+
+    names = ['events']
+
+    @classmethod
+    def add_args(cls, parser):
+        parser.add_argument('-e', '--expr',
+                            action='store', default=None,
+                            help="A regexp to filer on which events to display.")
+
+    def generate_table(self, entries, errors, options_map):
+        event_entries = []
+        for entry in entries:
+            if not isinstance(entry, data.Event):
+                continue
+            if self.args.expr and not re.match(self.args.expr, entry.type):
+                continue
+            event_entries.append(entry)
+        return table.create_table([(entry.date, entry.type, entry.description)
+                                   for entry in event_entries],
+                                  [(0, "Date", datetime.date.isoformat),
+                                   (1, "Type"),
+                                   (2, "Description")])
 
 
 __reports__ = [
@@ -126,5 +154,6 @@ __reports__ = [
     PricesReport,
     PriceDBReport,
     AccountsReport,
+    CurrentEventsReport,
     EventsReport,
     ]

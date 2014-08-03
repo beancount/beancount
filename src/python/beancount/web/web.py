@@ -37,6 +37,7 @@ from beancount.reports import tree_table
 from beancount.web import gviz
 from beancount.reports import table
 from beancount.reports import html_formatter
+from beancount.reports import misc_reports
 from beancount.reports import balance_reports
 
 
@@ -76,8 +77,30 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
         """See base class."""
         return self.build_url('doc', filename=filename.lstrip('/'))
 
+    def render_event_type(self, event):
+        """See base class."""
+        return '<a href="{}">{}</a>'.format(
+            self.build_url('event', event=event),
+            event)
 
-def render_report(report_class, real_root):
+
+def render_report(report_class, entries, args=None):
+    """Instantiate a report and rendering it to a string.
+
+    Args:
+      report_class: A class, the type of the report to render.
+      real_root: An instance of RealAccount to render.
+    Returns:
+      A string, the rendered report.
+    """
+    formatter = HTMLFormatter(request.app.get_url, True)
+    oss = io.StringIO()
+    report_ = report_class.from_args(args, formatter=formatter)
+    report_.render_htmldiv(entries, app.errors, app.options, oss)
+    return oss.getvalue()
+
+
+def render_real_report(report_class, real_root):
     """Instantiate a report and rendering it to a string.
 
     This is intended to be called in the context of a Bottle view app request
@@ -312,23 +335,6 @@ def activity():
         )
 
 
-@app.route('/events', name='events')
-def events():
-    "Render an index for the various kinds of events."
-
-    events = misc_utils.filter_type(app.entries, Event)
-    events_by_type = misc_utils.groupby(lambda event: event.type, events)
-
-    contents = io.StringIO()
-    for event_type, events in sorted(events_by_type.items()):
-        contents.write(event_type)
-        contents.write(str(len(events)))
-
-    return render_global(
-        pagetitle="Events",
-        ##contents=contents.getvalue() # FIXME(reports): TODO
-        contents=NOT_IMPLEMENTED
-        )
 
 
 @app.route('/prices', name='prices')
@@ -418,7 +424,6 @@ GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{A.errors}}">Errors</a></li>
   <li><a href="{{A.source}}">Source</a></li>
   <li><a href="{{A.activity}}">Update Activity</a></li>
-  <li><a href="{{A.events}}">Events</a></li>
   <li><a href="{{A.prices}}">Prices</a></li>
 </ul>
 """).render(A=A)
@@ -497,6 +502,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{V.conversions}}">Conversions</a></li>
   <li><a href="{{V.documents}}">Documents</a></li>
   <li><a href="{{V.stats}}">Statistics</a></li>
+  <li><a href="{{V.event_index}}">Events</a></li>
 </ul>
 """)
 
@@ -511,32 +517,32 @@ def trial():
     "Trial balance / Chart of Accounts."
     return render_view(
         pagetitle="Trial Balance",
-        contents=render_report(balance_reports.BalancesReport,
-                               request.view.real_accounts))
+        contents=render_real_report(balance_reports.BalancesReport,
+                                    request.view.real_accounts))
 
 
 @viewapp.route('/balsheet', name='balsheet')
 def balsheet():
     "Balance sheet."
     return render_view(pagetitle="Balance Sheet",
-                       contents=render_report(balance_reports.BalanceSheetReport,
-                                              request.view.closing_real_accounts))
+                       contents=render_real_report(balance_reports.BalanceSheetReport,
+                                                   request.view.closing_real_accounts))
 
 
 @viewapp.route('/openbal', name='openbal')
 def openbal():
     "Opening balances."
     return render_view(pagetitle="Opening Balances",
-                       contents=render_report(balance_reports.BalanceSheetReport,
-                                              request.view.opening_real_accounts))
+                       contents=render_real_report(balance_reports.BalanceSheetReport,
+                                                   request.view.opening_real_accounts))
 
 
 @viewapp.route('/income', name='income')
 def income():
     "Income statement."
     return render_view(pagetitle="Income Statement",
-                       contents=render_report(balance_reports.IncomeStatementReport,
-                                              request.view.real_accounts))
+                       contents=render_real_report(balance_reports.IncomeStatementReport,
+                                                   request.view.real_accounts))
 
 
 @viewapp.route('/equity', name='equity')
@@ -808,6 +814,25 @@ def row_data_to_html_rows(items):
     return "\n".join(('<tr><td>{}</td>'
                       '<td style="text-align: right">{}</td></tr>').format(*item)
                      for item in items)
+
+
+@viewapp.route('/event/<event:re:([a-zA-Z0-9._]+)?>', name='event')
+def event(event=None):
+    "Render all values of a particular event."
+    if not event:
+        bottle.redirect(app.get_url('event_index'))
+    return render_global(
+        pagetitle="Event: {}".format(event),
+        contents=render_report(misc_reports.EventsReport, app.entries,
+                               ['--expr', event]))
+
+@viewapp.route('/event', name='event_index')
+def event_index():
+    "Render the latest values of all events and an index."
+    return render_global(
+        pagetitle="Events Index",
+        contents=render_report(misc_reports.CurrentEventsReport,
+                               app.entries))
 
 
 @viewapp.route('/stats', name='stats')

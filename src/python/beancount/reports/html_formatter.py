@@ -39,3 +39,13 @@ class HTMLFormatter:
           A string of HTML to be spliced inside an HTML template.
         """
         return filename
+
+    def render_event_type(self, event):
+        """Render an event type
+
+        Args:
+          event: A string, the name of the even type.
+        Returns:
+          A string of HTML to be spliced inside an HTML template.
+        """
+        return event
