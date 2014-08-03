@@ -143,6 +143,13 @@ def main():
         parser.error("Unknown report.")
     is_check = isinstance(chosen_report, misc_reports.ErrorReport)
 
+    # Verify early that the format is supported, in order to avoid parsing the
+    # input file if we need to bail out.
+    supported_formats = chosen_report.get_supported_formats()
+    if args.format and args.format not in supported_formats:
+        parser.error("Unsupported format '{}' for {} (available: {})".format(
+            args.format, chosen_report.names[0], ','.join(supported_formats)))
+
     # Force hardcore validations, just for check.
     if is_check:
         validation.VALIDATIONS.extend(validation.HARDCORE_VALIDATIONS)
