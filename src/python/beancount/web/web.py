@@ -310,7 +310,7 @@ def activity():
             last_date = data.get_entry(last_posting).date
 
             # Skip this posting if a cutoff date has been specified and the
-            # account has been updated to at least the cutoff date.s
+            # account has been updated to at least the cutoff date.
             if cutoff and cutoff <= last_date:
                 continue
 
@@ -327,6 +327,29 @@ def activity():
 
 
 
+
+@app.route('/prices/<base:re:[A-Z0-9._\']+>_<quote:re:[A-Z0-9._\']+>', name='prices_values')
+def prices_values(base=None, quote=None):
+    date_rates = prices.get_all_prices(app.price_map, (base, quote))
+    dates, rates = zip(*date_rates)
+
+    scripts = gviz.gviz_timeline(dates, {'rates': rates, 'rates2': rates}, css_id='chart')
+
+    return render_global(
+        pagetitle="Price: {} / {}".format(base, quote),
+        scripts=scripts,
+        contents="""
+           <div id="chart" style="height: 800px"></div>
+           <div id="price-table">
+             <table id="prices">
+               <thead>
+                 <tr><td>Date</td><td>Price</td></tr>
+               </thead>
+               {}
+             </table>
+           </div>
+        """.format("\n".join("<tr><td>{}</td><td>{}</td></tr>".format(date, rate)
+                             for (date, rate) in zip(dates, rates))))
 
 @app.route('/prices', name='prices')
 def prices_():
@@ -361,28 +384,6 @@ def prices_():
         """.format(oss.getvalue()))
 
 
-@app.route('/prices/<base:re:[A-Z0-9._\']+>_<quote:re:[A-Z0-9._\']+>', name='prices_values')
-def prices_values(base=None, quote=None):
-    date_rates = prices.get_all_prices(app.price_map, (base, quote))
-    dates, rates = zip(*date_rates)
-
-    scripts = gviz.gviz_timeline(dates, {'rates': rates, 'rates2': rates}, css_id='chart')
-
-    return render_global(
-        pagetitle="Price: {} / {}".format(base, quote),
-        scripts=scripts,
-        contents="""
-           <div id="chart" style="height: 800px"></div>
-           <div id="price-table">
-             <table id="prices">
-               <thead>
-                 <tr><td>Date</td><td>Price</td></tr>
-               </thead>
-               {}
-             </table>
-           </div>
-        """.format("\n".join("<tr><td>{}</td><td>{}</td></tr>".format(date, rate)
-                             for (date, rate) in zip(dates, rates))))
 
 
 

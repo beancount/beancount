@@ -4,6 +4,8 @@ Each report class should be able to render a filtered list of entries to a
 variety of formats. Each report has a name, some command-line options, and
 supports some subset of formats.
 """
+import functools
+import operator
 import argparse
 import io
 import re
@@ -244,11 +246,15 @@ def get_all_reports():
     from beancount.reports import balance_reports
     from beancount.reports import journal_reports
     from beancount.reports import holdings_reports
+    from beancount.reports import price_reports
     from beancount.reports import misc_reports
-    return (balance_reports.__reports__ +
-            journal_reports.__reports__ +
-            holdings_reports.__reports__ +
-            misc_reports.__reports__)
+    return functools.reduce(operator.add,
+                            map(lambda module: module.__reports__,
+                                [balance_reports,
+                                 journal_reports,
+                                 holdings_reports,
+                                 price_reports,
+                                 misc_reports]))
 
 
 def get_html_template():
