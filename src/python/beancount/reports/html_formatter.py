@@ -41,7 +41,7 @@ class HTMLFormatter:
         return filename
 
     def render_event_type(self, event):
-        """Render an event type
+        """Render an event type.
 
         Args:
           event: A string, the name of the even type.
@@ -49,3 +49,15 @@ class HTMLFormatter:
           A string of HTML to be spliced inside an HTML template.
         """
         return event
+
+    def render_commodity(self, base_quote):
+        """Render a commodity (base currency / quote currency).
+
+        This is only used when we want the commodity to link to its prices.
+
+        Args:
+          commodity: A pair of strings, the base and quote currency names.
+        Returns:
+          A string of HTML to be spliced inside an HTML template.
+        """
+        return '{} / {}'.format(*base_quote)

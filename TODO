@@ -230,52 +230,13 @@ beancount: TODO
   using that report generation code too, and that each of its pages will
   basically be housing the HTML version of each report.
 
-  + remove beancount.reports.tree_table -> beancount.web.journal.account_link,
-    add formatter object
-  beancount.web.acctree -> beancount.reports.tree_table
-  beancount.web.journal -> beancount.reports.journal
-  convert beancount.web.web.activity
-  convert beancount.web.web.events, with index
-  convert beancount.web.web.prices, with index
-  convert beancount.web.web.trial
-  move balance_sheet_table to beancount.reports.balance_reports
-
   - Move web pages to reports generation:
 
       activity
-      -- events
-      prices_values (rename index to have consistent report name)
-      -- trial
-      -- balsheet
-      -- openbal (as balsheet at previous date)
-      -- income
-      -- equity (becomes holdings)
-      -- journal
-      -- account
       conversions
-      -- holdings_detail
-      -- holdings_byinstrument
-      trades (remove for now, reintroduce later)
       documents
       stats (as table)
       errors
-
-
-  - Rename /account to /journal in the web interface to be consistent with
-    console reports. Maybe a separate register should be provided too (see
-    comment about distinguishing between these two elsewhere in the TODO file).
-
-  - Newly created reports should have UI links: networth, holdings rolled by
-    currency. We need to reconcile web UI with the new reports that we created.
-
-  - Render a table of prices, in case there are only a few price points. We
-    should also have a report type for prices.
-
-  - The Equity pages are a mess right now. Merge Holdings tab into Shareholder's
-    Equity, for less tabs, and a list of similar reports. Complete the equity
-    value page with prices.py, render the rates used to that page. Include links
-    to the holdings reports here as well. Equity should just become an index for
-    all the holdings pages.
 
   - Implement all the missing global pages, or remove them. The web interface
     should be tight, no links to "Not Implemented" pages. There aren't many left
@@ -353,6 +314,10 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - Render a matrix Report vs. Supported Format
+
 
 
   - Implement a report of Trades booked in the list of filtered transactions!

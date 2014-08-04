@@ -11,3 +11,4 @@ class TestHTMLFormatter(unittest.TestCase):
         formatter.render_link('fc6189c48a53')
         formatter.render_doc('/path/to/my/document.pdf')
         formatter.render_event_type('location')
+        formatter.render_commodity(('GOOG', 'USD'))

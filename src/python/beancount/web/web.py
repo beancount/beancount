@@ -34,12 +34,12 @@ from beancount import loader
 from beancount.web import views
 from beancount.reports import journal
 from beancount.reports import tree_table
-from beancount.web import gviz
 from beancount.reports import table
 from beancount.reports import html_formatter
 from beancount.reports import balance_reports
 from beancount.reports import journal_reports
 from beancount.reports import holdings_reports
+from beancount.reports import price_reports
 from beancount.reports import misc_reports
 
 
@@ -89,9 +89,14 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
 
     def render_event_type(self, event):
         """See base class."""
-        return '<a href="{}">{}</a>'.format(
-            self.build_url('event', event=event),
-            event)
+        return '<a href="{}">{}</a>'.format(self.build_url('event', event=event),
+                                            event)
+
+    def render_commodity(self, base_quote):
+        """See base class."""
+        base, quote = base_quote
+        return '<a href="{}">{} / {}</a>'.format(
+            self.build_url('prices', base=base, quote=quote), base, quote)
 
 
 def render_report(report_class, entries, args=None,
@@ -326,67 +331,6 @@ def activity():
         )
 
 
-
-
-@app.route('/prices/<base:re:[A-Z0-9._\']+>_<quote:re:[A-Z0-9._\']+>', name='prices_values')
-def prices_values(base=None, quote=None):
-    date_rates = prices.get_all_prices(app.price_map, (base, quote))
-    dates, rates = zip(*date_rates)
-
-    scripts = gviz.gviz_timeline(dates, {'rates': rates, 'rates2': rates}, css_id='chart')
-
-    return render_global(
-        pagetitle="Price: {} / {}".format(base, quote),
-        scripts=scripts,
-        contents="""
-           <div id="chart" style="height: 800px"></div>
-           <div id="price-table">
-             <table id="prices">
-               <thead>
-                 <tr><td>Date</td><td>Price</td></tr>
-               </thead>
-               {}
-             </table>
-           </div>
-        """.format("\n".join("<tr><td>{}</td><td>{}</td></tr>".format(date, rate)
-                             for (date, rate) in zip(dates, rates))))
-
-@app.route('/prices', name='prices')
-def prices_():
-    "Render a list of links to instruments, to list their prices."
-
-    oss = io.StringIO()
-    for quote, baselist in sorted(
-        misc_utils.groupby(lambda x: x[1], app.price_map.forward_pairs).items(),
-        key=lambda x: -len(x[1])):
-
-        links = ['<a href="{link}">{0} ({1})</a>'.format(
-            base_, quote_,
-            link=request.app.get_url('prices_values', base=base_, quote=quote_)
-        ) for base_, quote_ in sorted(baselist)]
-
-        oss.write("""
-          <td>
-            <ul>
-              {}
-            </ul>
-          </td>
-        """.format('\n'.join(map('<li>{}</li>'.format, links))))
-
-    return render_global(
-        pagetitle="Prices",
-        contents="""
-          <table id="price-index">
-            <tr>
-            {}
-            </tr>
-          </table>
-        """.format(oss.getvalue()))
-
-
-
-
-
 @app.route('/link/<link:re:.*>', name='link')
 def link(link=None):
     "Serve journals for links."
@@ -416,7 +360,6 @@ GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{A.errors}}">Errors</a></li>
   <li><a href="{{A.source}}">Source</a></li>
   <li><a href="{{A.activity}}">Update Activity</a></li>
-  <li><a href="{{A.prices}}">Prices</a></li>
 </ul>
 """).render(A=A)
 
@@ -492,6 +435,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{V.journal_root}}">General Journal</a></li>
   <li><a href="{{V.conversions}}">Conversions</a></li>
   <li><a href="{{V.documents}}">Documents</a></li>
+  <li><a href="{{V.commodities}}">Commodities</a></li>
   <li><a href="{{V.stats}}">Statistics</a></li>
   <li><a href="{{V.event_index}}">Events</a></li>
 </ul>
@@ -551,6 +495,7 @@ def equity():
       <li><a href="{V.holdings_byrootaccount}">Holdings By Root Account</a></li>
       <li><a href="{V.holdings_bycommodity}">Holdings By Commodity</a></li>
       <li><a href="{V.holdings_bycurrency}">Holdings By Currency</a></li>
+      <li><a href="{V.networth}">Net Worth</a></li>
     </ul>
     """.format(V=V)
     return render_view(pagetitle="Equity / Holdings",
@@ -615,6 +560,15 @@ def holdings_bycurrency():
         pagetitle="Holdings By Currency",
         contents=html_table,
         scripts='<script src="/third_party/sorttable.js"></script>')
+
+@viewapp.route('/equity/networth', name='networth')
+def networth():
+    "Render a table of the net worth for this filter."
+
+    html_table = render_report(holdings_reports.NetWorthReport, request.view.entries)
+    return render_view(
+        pagetitle="Net Worth",
+        contents=html_table)
 
 
 
@@ -713,10 +667,26 @@ def documents():
         contents=oss.getvalue())
 
 
-def row_data_to_html_rows(items):
-    return "\n".join(('<tr><td>{}</td>'
-                      '<td style="text-align: right">{}</td></tr>').format(*item)
-                     for item in items)
+@viewapp.route('/prices/<base:re:[A-Z0-9._\']+>/<quote:re:[A-Z0-9._\']+>', name='prices')
+def prices_values(base=None, quote=None):
+
+    html_table = render_report(price_reports.CommodityPricesReport, request.view.entries,
+                               ['--commodity', '{}/{}'.format(base, quote)],
+                               css_id='price-index')
+    return render_view(
+        pagetitle="Price: {} / {}".format(base, quote),
+        contents=html_table)
+
+
+@viewapp.route('/commodities', name='commodities')
+def commodities():
+    "Render a list commodities with list their prices page."
+    html_table = render_report(price_reports.CommoditiesReport, request.view.entries,
+                               [],
+                               css_id='price-index')
+    return render_view(
+        pagetitle="Commodities",
+        contents=html_table)
 
 
 @viewapp.route('/event/<event:re:([a-zA-Z0-9._]+)?>', name='event')
@@ -736,6 +706,12 @@ def event_index():
         pagetitle="Events Index",
         contents=render_report(misc_reports.CurrentEventsReport,
                                app.entries))
+
+
+def row_data_to_html_rows(items):
+    return "\n".join(('<tr><td>{}</td>'
+                      '<td style="text-align: right">{}</td></tr>').format(*item)
+                     for item in items)
 
 
 @viewapp.route('/stats', name='stats')
