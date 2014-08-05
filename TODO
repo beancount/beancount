@@ -321,6 +321,16 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - New plugin: no transactions on accounts with children: "I like the idea of
+    creating a strict mode, e.g., using a Beancount plugin that one can load in
+    order to turn on "strict" more, that would simply look for transactions with
+    postings to accounts that have children and issue corresponding errors. If
+    you like to be strict and avoid this, you would insert this in your input
+    file:
+
+      option "plugin" "beancount.plugins.empty_parents"
+
+
 
   - Refine 'source' attribute on all directives: For .source, instead of '<...>'
     for the filename, we should use a scheme:..., like file://..., and
