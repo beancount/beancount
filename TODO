@@ -317,9 +317,6 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
-  - Render a matrix Report vs. Supported Format
-
-
 
   - Implement a report of Trades booked in the list of filtered transactions!
     Create this report, I removed the placeholder for it in the web app.

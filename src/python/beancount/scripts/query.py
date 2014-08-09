@@ -13,6 +13,7 @@ from beancount import loader
 from beancount.ops import validation
 from beancount.reports import report
 from beancount.reports import misc_reports
+from beancount.reports import table
 from beancount.utils import file_utils
 from beancount.utils import misc_utils
 
@@ -77,6 +78,39 @@ class ListReportsAction(argparse.Action):
             sys.exit(0)
 
 
+class ListFormatsAction(argparse.Action):
+    """An argparse action that prints all supported formats (for each report)."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # Get all the report types and formats.
+        matrix = []
+        for report_class in report.get_all_reports():
+            formats = report_class.get_supported_formats()
+            matrix.append((report_class.names[0], formats))
+
+        # Compute a list of unique output formats.
+        all_formats = list({format_
+                            for name, formats in matrix
+                            for format_ in formats})
+
+        # Bulid a list of rows.
+        rows = []
+        for name, formats in matrix:
+            x = ['X' if fmt in formats else ''
+                 for fmt in all_formats]
+            rows.append([name] + x)
+
+        # Build a description of the rows, a field specificaiton.
+        header = ['Name'] + all_formats
+        field_spec = [(index, name) for index, name in enumerate(header)]
+
+        # Create and render an ASCII table.
+        table_ = table.create_table(rows, field_spec)
+        sys.stdout.write(table.table_to_text(table_, "  "))
+
+        sys.exit(0)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
 
@@ -84,7 +118,13 @@ def main():
                         nargs='?',
                         default=None,
                         action=ListReportsAction,
-                        help="Special: Print the full list of supported reports and exit.")
+                        help="Print the full list of supported reports and exit.")
+
+    parser.add_argument('--help-formats', '--list-formats',
+                        nargs='?',
+                        default=None,
+                        action=ListFormatsAction,
+                        help="Print the full list of supported formats and exit.")
 
     parser.add_argument('-f', '--format', default=None,
                         choices=['text', 'csv', 'html', 'htmldiv', 'beancount', 'xls'],
