@@ -100,7 +100,7 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
 
 
 def render_report(report_class, entries, args=None,
-                  css_id=None, css_class=None, center=False):
+                  css_id=None, css_class=None, center=False, leaf_only=True):
     """Instantiate a report and rendering it to a string.
 
     Args:
@@ -110,10 +110,11 @@ def render_report(report_class, entries, args=None,
       css_id: An optional string, the CSS id for the div to render.
       css_class: An optional string, the CSS class for the div to render.
       center: A boolean flag, if true, wrap the results in a <center> tag.
+      leaf_only: A boolean, whether to render the leaf names only.
     Returns:
       A string, the rendered report.
     """
-    formatter = HTMLFormatter(request.app.get_url, True)
+    formatter = HTMLFormatter(request.app.get_url, leaf_only)
     oss = io.StringIO()
     if center:
         oss.write('<center>\n')
@@ -556,11 +557,10 @@ def journal_(slashed_account_name=None):
 @viewapp.route('/conversions', name='conversions')
 def conversions():
     "Render the list of transactions with conversions."
-
     return render_view(
         pagetitle="Conversions",
         contents=render_report(journal_reports.ConversionsReport,
-                               request.view.entries))
+                               request.view.entries, leaf_only=False))
 
 
 # Note: these redirects are necessary to let the view router create global links
@@ -582,16 +582,10 @@ def link(link=None):
 @viewapp.route('/documents', name='documents')
 def documents():
     "Render a tree with all the documents found."
-    document_entries = list(misc_utils.filter_type(request.view.entries, Document))
-    oss = io.StringIO()
-    if document_entries:
-        formatter = HTMLFormatter(request.app.get_url, True)
-        journal.entries_table(oss, document_entries, formatter)
-    else:
-        oss.write("(No documents.)")
     return render_view(
         pagetitle="Documents",
-        contents=oss.getvalue())
+        contents=render_report(journal_reports.DocumentsReport,
+                               request.view.entries, leaf_only=False))
 
 
 @viewapp.route('/prices/<base:re:[A-Z0-9._\']+>/<quote:re:[A-Z0-9._\']+>', name='prices')

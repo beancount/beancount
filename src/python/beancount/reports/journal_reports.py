@@ -20,7 +20,7 @@ from beancount.utils import misc_utils
 
 
 class JournalReport(report.HTMLReport,
-                     metaclass=report.RealizationMeta):
+                    metaclass=report.RealizationMeta):
     """Print out an account register/journal."""
 
     names = ['journal', 'register', 'account']
@@ -51,12 +51,6 @@ class ConversionsReport(report.HTMLReport):
 
     names = ['conversions']
 
-    @classmethod
-    def add_args(cls, parser):
-        parser.add_argument('-a', '--account',
-                            action='store', default=None,
-                            help="Account to render.")
-
     def render_htmldiv(self, entries, errors, options_map, file):
         # Return the subset of transaction entries which have a conversion.
         conversion_entries = [entry
@@ -70,7 +64,21 @@ class ConversionsReport(report.HTMLReport):
         # conversion_balance = complete.compute_entries_balance(conversion_entries)
 
 
+class DocumentsReport(report.HTMLReport):
+    """Print out a report of documents."""
+
+    names = ['documents']
+
+    def render_htmldiv(self, entries, errors, options_map, file):
+        document_entries = list(misc_utils.filter_type(entries, data.Document))
+        if document_entries:
+            journal.entries_table(file, document_entries, self.formatter)
+        else:
+            file.write("<p>(No documents.)</p>")
+
+
 __reports__ = [
     JournalReport,
     ConversionsReport,
+    DocumentsReport,
     ]
