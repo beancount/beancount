@@ -236,7 +236,6 @@ beancount: TODO
 
       conversions
       documents
-      stats (as table)
       errors
 
   - Implement all the missing global pages, or remove them. The web interface

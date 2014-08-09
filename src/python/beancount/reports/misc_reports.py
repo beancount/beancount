@@ -17,6 +17,7 @@ from beancount.core import amount
 from beancount.core import getters
 from beancount.core import account_types
 from beancount.ops import prices
+from beancount.utils import misc_utils
 
 
 class ErrorReport(report.Report):
@@ -160,6 +161,49 @@ class ActivityReport(report.HTMLReport,
                 file.write(oss.getvalue())
 
 
+
+class StatsDirectivesReport(report.TableReport):
+    """Render statistics on each directive type, the number of entries by type."""
+
+    names = ['stats-types', 'stats-directives', 'stats-entries']
+
+    def generate_table(self, entries, _, __):
+        entries_by_type = misc_utils.groupby(lambda entry: type(entry).__name__,
+                                             entries)
+        nb_entries_by_type = {name: len(entries)
+                              for name, entries in entries_by_type.items()}
+        rows = sorted(nb_entries_by_type.items(),
+                      key=lambda x: x[1], reverse=True)
+        rows = [(name, str(count)) for (name, count) in rows]
+        rows.append(('~Total~', str(len(entries))))
+
+        return table.create_table(rows, [(0, 'Type'),
+                                         (1, 'Num Entries', '{:>}'.format)])
+
+
+
+class StatsPostingsReport(report.TableReport):
+    """Render the number of postings for each account."""
+
+    names = ['stats-postings']
+
+    def generate_table(self, entries, _, __):
+        all_postings = [posting
+                        for entry in entries
+                        if isinstance(entry, data.Transaction)
+                        for posting in entry.postings]
+        postings_by_account = misc_utils.groupby(lambda posting: posting.account,
+                                                 all_postings)
+        nb_postings_by_account = {key: len(postings)
+                                  for key, postings in postings_by_account.items()}
+        rows = sorted(nb_postings_by_account.items(), key=lambda x: x[1], reverse=True)
+        rows = [(name, str(count)) for (name, count) in rows]
+        rows.append(('~Total~', str(sum(nb_postings_by_account.values()))))
+
+        return table.create_table(rows, [(0, 'Account'),
+                                         (1, 'Num Postings', '{:>}'.format)])
+
+
 __reports__ = [
     ErrorReport,
     PrintReport,
@@ -167,4 +211,6 @@ __reports__ = [
     CurrentEventsReport,
     EventsReport,
     ActivityReport,
+    StatsDirectivesReport,
+    StatsPostingsReport,
     ]
