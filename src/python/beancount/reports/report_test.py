@@ -30,6 +30,7 @@ def iter_reports(report_classes):
 class ExampleReport(report.Report):
 
     names = ['example']
+    default_format = 'text'
 
     @classmethod
     def add_args(cls, parser):
@@ -139,6 +140,8 @@ class TestRealizationMeta(unittest.TestCase):
     def test_realization_metaclass(self):
 
         class MyReport(report.Report, metaclass=report.RealizationMeta):
+
+            default_format = 'html'
 
             def render_real_text(self, real_account, options_map, file):
                 realization.dump_balances(real_account, file)

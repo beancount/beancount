@@ -103,7 +103,7 @@ class TestScriptPositions(test_utils.TestCase):
             test_utils.run_with_args(query.main, [filename, 'trial'])
 
     @test_utils.docfile
-    def test_prices(self, filename):
+    def test_all_prices(self, filename):
         """
         2014-01-01 open Assets:Account1
         2014-01-01 open Income:Misc
@@ -116,7 +116,7 @@ class TestScriptPositions(test_utils.TestCase):
         2014-02-10 price GOOG 536.03 USD
         """
         with test_utils.capture() as stdout:
-            test_utils.run_with_args(query.main, [filename, 'prices'])
+            test_utils.run_with_args(query.main, [filename, 'all_prices'])
         output = stdout.getvalue()
         self.assertLines("""
            2014-01-15 price GOOG             512.01 USD

@@ -35,9 +35,13 @@ class Report:
     # The names of this report. Must be overridden by derived classes.
     names = None
 
+    # The defaault format to use.
+    default_format = None
+
     def __init__(self, args, parser):
         self.parser = parser
         self.args = args
+        assert self.default_format, "You must provide a default foramt."
 
     @classmethod
     def from_args(cls, argv=None, **kwds):
@@ -115,6 +119,8 @@ class Report:
 
 class HTMLReport(Report):
     """A mixin for reports that support forwarding html to htmldiv implementation."""
+
+    default_format = 'html'
 
     def __init__(self, *args, formatter=None, css_id=None, css_class=None):
         super().__init__(*args)
