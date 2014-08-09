@@ -234,7 +234,6 @@ beancount: TODO
 
   - Move web pages to reports generation:
 
-      conversions
       documents
       errors
 

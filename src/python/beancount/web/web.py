@@ -553,35 +553,14 @@ def journal_(slashed_account_name=None):
                        contents=html_journal)
 
 
-def get_conversion_entries(entries):
-    """Return the subset of transaction entries which have a conversion."""
-    return [entry
-            for entry in misc_utils.filter_type(entries, Transaction)
-            if data.transaction_has_conversion(entry)]
-
-
 @viewapp.route('/conversions', name='conversions')
 def conversions():
     "Render the list of transactions with conversions."
 
-    view = request.view
-
-    oss = io.StringIO()
-    conversion_entries = get_conversion_entries(view.entries)
-    formatter = HTMLFormatter(request.app.get_url, False)
-    journal.entries_table(oss, conversion_entries, formatter,
-                          render_postings=True)
-
-    conversion_balance = complete.compute_entries_balance(conversion_entries)
-
     return render_view(
         pagetitle="Conversions",
-        contents="""
-          <div id="table">
-            {}
-          </div>
-          <h3>Conversion Total:<span class="num">{}</span></h3>
-        """.format(oss.getvalue(), conversion_balance))
+        contents=render_report(journal_reports.ConversionsReport,
+                               request.view.entries))
 
 
 # Note: these redirects are necessary to let the view router create global links
