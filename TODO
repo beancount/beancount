@@ -18,21 +18,6 @@ beancount: TODO
   - Add dateutil to list of depdendencies, it's too great to pass on, for scripts.
 
 
-** Minimum Cleanup of Reports Before Release
-
-  - Report commands have to support a --help too, to share the options they
-    support.
-
-  - Isolate reports, at least from a functional POV, before the big revamp, in
-    order to avoid changing the interface much after releasing v2.0:
-
-       These need to move to reports, generate the intermediate tree
-       object, and then support rendering to txt, csv, html, htmldiv.
-
-       We need to define two HTML types: 'html', and 'html_div'. The fisrt one
-       renders to a full page; the second one only a div.
-
-
 ** Move Files to Final Location
 
   As I'm moving to a system with more plugins and less code in the core, and
@@ -236,6 +221,8 @@ beancount: TODO
 
       errors
 
+  - Implement an index
+
   - Implement all the missing global pages, or remove them. The web interface
     should be tight, no links to "Not Implemented" pages. There aren't many left
     anyway.
@@ -243,6 +230,7 @@ beancount: TODO
   - IMPORTANT AND URGENT! All errors should be displayed in an overlay; proper
     error handling and display for the web interface is not optional. This needs
     to be done before shipping.
+
 
   - Add a test for --view option.
 
