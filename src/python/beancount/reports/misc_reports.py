@@ -2,9 +2,13 @@
 """
 import datetime
 import re
+import io
+
+import dateutil.parser
 
 from beancount.reports import report
 from beancount.reports import table
+from beancount.reports import tree_table
 from beancount.parser import printer
 from beancount.parser import options
 from beancount.core import data
@@ -101,10 +105,66 @@ class EventsReport(report.TableReport):
                                    (2, "Description")])
 
 
+
+class ActivityReport(report.HTMLReport,
+                     metaclass=report.RealizationMeta):
+    """Render the last or recent update activity."""
+
+    names = ['activity', 'updated']
+
+    @classmethod
+    def add_args(cls, parser):
+        parser.add_argument('--cutoff',
+                            action='store', default=None,
+                            type=lambda arg_str: dateutil.parser.parse(arg_str).date(),
+                            help="Cutoff date where we ignore whatever comes after.")
+
+    def render_real_htmldiv(self, real_root, options_map, file):
+        cutoff = self.args.cutoff
+        errors = []
+
+        # FIXME(reports): This renders not as a tree, and also the Liabilities table
+        # is not the same width. Fix this, this doesn't look good.
+        account_types = options.get_account_types(options_map)
+        for root in (account_types.assets,
+                     account_types.liabilities):
+            oss = io.StringIO()
+            table = tree_table.tree_table(oss, realization.get(real_root, root),
+                                          None,
+                                          ['Account', 'Last Entry'])
+            num_cells = 0
+            for real_account, cells, row_classes in table:
+                if not isinstance(real_account, realization.RealAccount):
+                    continue
+                last_posting = realization.find_last_active_posting(real_account.postings)
+
+                # Don't render updates to accounts that have been closed.
+                # Note: this is O(N), maybe we can store this at realization.
+                if last_posting is None or isinstance(last_posting, data.Close):
+                    continue
+
+                last_date = data.get_entry(last_posting).date
+
+                # Skip this posting if a cutoff date has been specified and the
+                # account has been updated to at least the cutoff date.
+                if cutoff and cutoff <= last_date:
+                    continue
+
+                # Okay, we need to render this. Append.
+                cells.append(data.get_entry(last_posting).date
+                             if real_account.postings
+                             else '-')
+                num_cells += 1
+
+            if num_cells:
+                file.write(oss.getvalue())
+
+
 __reports__ = [
     ErrorReport,
     PrintReport,
     AccountsReport,
     CurrentEventsReport,
     EventsReport,
+    ActivityReport,
     ]

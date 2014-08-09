@@ -280,57 +280,6 @@ def source():
         )
 
 
-@app.route('/activity', name='activity')
-def activity():
-    "Render the update activity."
-
-    errors = []
-    cutoff = None
-    try:
-        if 'cutoff' in request.params:
-            cutoff = datetime.datetime.strptime(request.params['cutoff'], '%Y-%m-%d').date()
-    except ValueError:
-        errors.append("Invalid cutoff date: {}".format(request.params['cutoff']))
-
-    oss = io.StringIO()
-    view = get_all_view(app)
-
-    # FIXME(reports): This renders not as a tree, and also the Liabilities table
-    # is not the same width. Fix this, this doesn't look good.
-    for root in (app.account_types.assets,
-                 app.account_types.liabilities):
-        table = tree_table.tree_table(oss, realization.get(view.real_accounts, root),
-                                   None,
-                                   ['Account', 'Last Entry'])
-        for real_account, cells, row_classes in table:
-            if not isinstance(real_account, realization.RealAccount):
-                continue
-            last_posting = realization.find_last_active_posting(real_account.postings)
-
-            # Don't render updates to accounts that have been closed.
-            # Note: this is O(N), maybe we can store this at realization.
-            if last_posting is None or isinstance(last_posting, Close):
-                continue
-
-            last_date = data.get_entry(last_posting).date
-
-            # Skip this posting if a cutoff date has been specified and the
-            # account has been updated to at least the cutoff date.
-            if cutoff and cutoff <= last_date:
-                continue
-
-            # Okay, we need to render this. Append.
-            cells.append(data.get_entry(last_posting).date
-                         if real_account.postings
-                         else '-')
-
-    return render_global(
-        pagetitle="Update Activity",
-        contents=oss.getvalue(),
-        errors=errors
-        )
-
-
 @app.route('/link/<link:re:.*>', name='link')
 def link(link=None):
     "Serve journals for links."
@@ -359,7 +308,6 @@ GLOBAL_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{A.toc}}">Table of Contents</a></li>
   <li><a href="{{A.errors}}">Errors</a></li>
   <li><a href="{{A.source}}">Source</a></li>
-  <li><a href="{{A.activity}}">Update Activity</a></li>
 </ul>
 """).render(A=A)
 
@@ -436,6 +384,7 @@ APP_NAVIGATION = bottle.SimpleTemplate("""
   <li><a href="{{V.conversions}}">Conversions</a></li>
   <li><a href="{{V.documents}}">Documents</a></li>
   <li><a href="{{V.commodities}}">Commodities</a></li>
+  <li><a href="{{V.activity}}">Update Activity</a></li>
   <li><a href="{{V.stats}}">Statistics</a></li>
   <li><a href="{{V.event_index}}">Events</a></li>
 </ul>
@@ -713,6 +662,15 @@ def row_data_to_html_rows(items):
                       '<td style="text-align: right">{}</td></tr>').format(*item)
                      for item in items)
 
+
+@viewapp.route('/activity', name='activity')
+def activity():
+    "Render the update activity."
+    return render_global(
+        pagetitle="Update Activity",
+        contents=render_real_report(misc_reports.ActivityReport,
+                                    request.view.real_accounts,
+                                    leaf_only=False))
 
 @viewapp.route('/stats', name='stats')
 def stats():

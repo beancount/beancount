@@ -15,6 +15,8 @@ beancount: TODO
     balancing transactions. Need to figure out how to do this properly without
     raising two errors.
 
+  - Add dateutil to list of depdendencies, it's too great to pass on, for scripts.
+
 
 ** Minimum Cleanup of Reports Before Release
 
@@ -232,7 +234,6 @@ beancount: TODO
 
   - Move web pages to reports generation:
 
-      activity
       conversions
       documents
       stats (as table)

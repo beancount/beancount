@@ -207,7 +207,13 @@ class NetWorthReport(report.TableReport):
 
         net_worths = []
         for currency in options_map['operating_currency']:
+
             # Convert holdings to a unified currency.
+            #
+            # Note: It's entirely possible that the price map does not have all
+            # the necessary rate conversions here. The resulting holdings will
+            # simply have no cost when that is the case. We must handle this
+            # gracefully below.
             currency_holdings_list = holdings.convert_to_currency(price_map,
                                                                   currency,
                                                                   holdings_list)
@@ -221,7 +227,11 @@ class NetWorthReport(report.TableReport):
                              for holding in holdings_list
                              if holding.currency and holding.cost_currency]
 
-            assert len(holdings_list) == 1, holdings_list
+            # If after conversion there are no valid holdings, skip the currency
+            # altogether.
+            if not holdings_list:
+                continue
+
             net_worths.append((currency, holdings_list[0].market_value))
 
         field_spec = [
