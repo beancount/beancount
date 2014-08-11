@@ -294,6 +294,50 @@ beancount: TODO
 
 
 
+** Documentation / Ongoing
+
+  - Add to motivation doc: useful to make a will. Where's all the stuff?
+
+  - Add to motivation doc: "I have some new money to invest. How should I invest it to
+    fulfill my desired portfolio allocation?"
+
+  - Nice Health Care section is nearly complete... complete it with DEDUC and COPAY
+    legs explanation
+
+
+  - Add this to inventory proposal doc:
+
+      Beancount: great idea design...
+
+      Adjustment on a posting is like a reduction: ignore the number of units and
+      post a change in cost basis, that should be nice syntax actually!
+
+        Assets:Account GOOG {500 USD +250 USD}
+
+      With no difference should trigger an error.
+
+      We can probably allow all costs to enjoy an optional total cost like this: {500
+      USD +45 USD}
+
+      The cost could also be with just the total value: {+45 USD}
+
+      And you can leave the amount, like this: {+} and this leaves a single amount to
+      be filled on a reducing leg
+
+      This works!
+
+      If you specify a number of units this only applies to the units. Otherwise it
+      applies to the entire existing lot.
+
+      Maybe use the ~ to specify no modification , like this: ~10 GOOG {+} to make a
+      basis adjustment on 10 of the shares without changing them!
+
+      Finally, the number of units can always be elided on a whole lot in order to
+      specify the entire current position!
+
+      You can eliminate the {{...}} Syntax, replace with +!
+
+
 * Current / Misc / To Be Classified
 
   (This is a grab bag of ideas. When I have a new idea coming to me, I don't
@@ -2129,6 +2173,8 @@ Improve this bit:
     It's actually a lot more accurate to what's going on...
 
 ** Performance
+
+  - Implement "D" in C, it's worth it. This should make a substantial difference.
 
   - Test using the empty case of list parsing to create the initial empty lists
     instead of the conditional in Parser.handle_list() and measure, to see if
