@@ -208,6 +208,9 @@ beancount: TODO
     /home/blais/p/beancount/examples/basic/basic.beancount:438:  Lexer error;
     erroneous token: c
 
+  - Add parser tests with no empty lines between directives and make sure the
+    number of directives is correct.
+
 
 ** Reconcile Web Interface vs. Upcoming Reports Stage
 
@@ -338,6 +341,11 @@ beancount: TODO
       You can eliminate the {{...}} Syntax, replace with +!
 
 
+  - Motivation doc: "Why not just use an SQL database?" Cannot because of
+    inventory operations, because of two-legged structure. "But don't let me
+    convince you; see for yourself with the bean-sql conversion script."
+
+
 * Current / Misc / To Be Classified
 
   (This is a grab bag of ideas. When I have a new idea coming to me, I don't
@@ -345,6 +353,25 @@ beancount: TODO
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
+
+
+  - Idea: a plugin that autopads all initial balance asserttions! Do it for
+    demos, will be very useful for making demos easier, not having to be so
+    strict.
+
+  - (parser) Add an option to the parser to not just ignore unparsed lines, more
+    strict.
+
+
+  - Beancount: Add a "lineno" format for journals that renders in "Emacs errors"
+    compatible format, so we can easily jump in time throughout the input file
+    instead of rendering a journal. Offer the option to list in reverse to.
+
+  - (rendering) Journals should render in either order.
+
+
+  - Use the same option on all tools for showing the timings, --verbose timings,
+    maybe add it from the loader module.
 
 
   - Implement a report of Trades booked in the list of filtered transactions!
