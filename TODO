@@ -144,6 +144,10 @@ beancount: TODO
 
 ** Parser-Related Minor Bugs
 
+  - Inserting a cost of "0 somethings" results in DivisionByZero errors. Simply
+    disallow using a cost of 0, or a negative number, this should not be
+    allowed.
+
   - Parsing this does not fail; it really should, this is a bug:  "2013-04-01
     balance Assets:Bank:Checking 555.00 CAD.11"
 
