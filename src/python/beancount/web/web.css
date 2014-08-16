@@ -20,10 +20,6 @@ table td {
     padding-right: 4px;
 }
 
-div#errors {
-    background-color: #F66;
-    padding: 1em;
-}
 
 /* The document/file title at the top. */
 #title {
@@ -362,4 +358,34 @@ table#price-index td {
 div#source pre {
    margin-top: 0px;
    margin-bottom: 0px;
+}
+
+
+/* Overlay */
+
+/* @keyframes fadeaway { */
+/*       0% { opacity: 1; background-color: black; } */
+/*     100% { opacity: 0; background-color: white; } */
+/* } */
+
+#overlay {
+    left: 3%;
+    right: 3%;
+    padding: 1em;
+    margin-left: auto;
+    margin-right: auto;
+    position: absolute;
+    background-color: #FEE;
+    opacity: 0.95;
+    border: 3px solid black;
+    border-radius: 10px;
+
+    /* transition: fadeaway 1s; */
+
+    /* animation: fadeaway 1s; */
+
+    /* animation-name: fadeaway; */
+    /* animation-iteration-count: 1; */
+    /* animation-timing-function: ease-in; */
+    /* animation-duration: 1s; */
 }

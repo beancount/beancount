@@ -4,6 +4,8 @@ This object encapsulates the rendering of various objects to HTML.
 You may, and should, derive and override from this object in order to
 provide links within a web interface.
 """
+from beancount.parser import printer
+
 
 class HTMLFormatter:
     """A trivial formatter object that can be used to format strings as themselves.
@@ -61,3 +63,13 @@ class HTMLFormatter:
           A string of HTML to be spliced inside an HTML template.
         """
         return '{} / {}'.format(*base_quote)
+
+    def render_source(self, source):
+        """Render a reference to the source file.
+
+        Args:
+          source: A Source object.
+        Returns:
+          A string of HTML to be spliced inside an HTML template.
+        """
+        return printer.render_source(source)

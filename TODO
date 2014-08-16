@@ -215,6 +215,10 @@ beancount: TODO
   - Add parser tests with no empty lines between directives and make sure the
     number of directives is correct.
 
+  - 2014-05-42 causes an uncaught ValueError and crashes on Mac OS X. Surely we
+    can do better: catch all exceptions from the top-level handler and report
+    errors nicely.
+
 
 ** Reconcile Web Interface vs. Upcoming Reports Stage
 

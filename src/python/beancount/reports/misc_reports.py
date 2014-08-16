@@ -3,6 +3,7 @@
 import datetime
 import re
 import io
+import textwrap
 
 import dateutil.parser
 
@@ -20,14 +21,40 @@ from beancount.ops import prices
 from beancount.utils import misc_utils
 
 
-class ErrorReport(report.Report):
+class NoopReport(report.Report):
+    """Report nothing."""
+
+    names = ['check', 'validate']
+    default_format = 'text'
+
+    def render_text(self, entries, errors, options_map, file):
+        pass
+
+
+class ErrorReport(report.HTMLReport):
     """Report the errors."""
 
-    names = ['check', 'validate', 'errors']
+    names = ['errors']
     default_format = 'text'
 
     def render_text(self, entries, errors, options_map, file):
         printer.print_errors(errors, file=file)
+
+    def render_htmldiv(self, entries, errors, options_map, file):
+        file.write('<div id="errors">\n')
+        for error in errors:
+            file.write('<div class="error">\n')
+            file.write('<a class="source" href="{}">{}</a><br/>\n'.format(
+                self.formatter.render_source(error.source),
+                printer.render_source(error.source)))
+            file.write('<span class="error-message">{}</span>\n'.format(
+                error.message))
+            if error.entry is not None:
+                file.write('<pre class="syntax">\n')
+                file.write(textwrap.indent(printer.format_entry(error.entry), '  '))
+                file.write('</pre>\n')
+            file.write('</div>\n')
+        file.write('</div>\n')
 
 
 class PrintReport(report.Report):
@@ -205,6 +232,7 @@ class StatsPostingsReport(report.TableReport):
 
 
 __reports__ = [
+    NoopReport,
     ErrorReport,
     PrintReport,
     AccountsReport,

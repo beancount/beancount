@@ -98,6 +98,10 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
         return '<a href="{}">{} / {}</a>'.format(
             self.build_url('prices', base=base, quote=quote), base, quote)
 
+    def render_source(self, source):
+        """See base class."""
+        return '{}#{}'.format(app.get_url('source'), source.lineno)
+
 
 def render_report(report_class, entries, args=None,
                   css_id=None, css_class=None, center=False, leaf_only=True):
@@ -163,15 +167,32 @@ app = bottle.Bottle()
 A = AttrMapper(app.router.build)
 
 
-def render_errors(errors_list):
-    if errors_list:
-        errors_str = "<div id='errors'>{}</div>".format("\n".join(errors_list))
-    else:
-        errors_str = ""
-    return errors_str
+def render_overlay():
+    """Render an overlay with the current errors.
+
+    This is used to bring up new errors on any page when they occur.
+
+    Returns:
+      A string of HTML for the contents of the errors overlay.
+    """
+    formatter = HTMLFormatter(request.app.get_url, leaf_only=False)
+    oss = io.StringIO()
+    oss.write('<div id="overlay">\n')
+    report_ = misc_reports.ErrorReport.from_args(formatter=formatter)
+    report_.render_htmldiv([], app.errors, app.options, oss)
+    oss.write('</div>\n')
+    return oss.getvalue()
+
 
 def render_global(*args, **kw):
-    """Render the title and contents in our standard template."""
+    """Render the title and contents in our standard template for a global page.
+
+    Args:
+      *args: A tuple of values for the HTML template.
+      *kw: A dict of optional values for the HTML template.
+    Returns:
+      An HTML string of the rendered template.
+    """
     response.content_type = 'text/html'
     kw['A'] = A # Application mapper
     kw['V'] = V # View mapper
@@ -179,7 +200,9 @@ def render_global(*args, **kw):
     kw['view_title'] = ''
     kw['navigation'] = GLOBAL_NAVIGATION
     kw['scripts'] = kw.get('scripts', '')
-    kw['errors_str'] = render_errors(kw.pop('errors', None))
+    kw['overlay'] = (render_overlay()
+                     if request.params.pop('render_overlay', True)
+                     else '')
     return template.render(*args, **kw)
 
 
@@ -255,8 +278,7 @@ def errors():
     "Report error encountered during parsing, checking and realization."
     return render_global(
         pagetitle="Errors",
-        contents=NOT_IMPLEMENTED
-        )
+        contents=render_report(misc_reports.ErrorReport, [], leaf_only=False))
 
 
 @app.route('/source', name='source')
@@ -361,7 +383,14 @@ V = AttrMapper(lambda *args, **kw: request.app.get_url(*args, **kw))
 
 
 def render_view(*args, **kw):
-    """Render the title and contents in our standard template."""
+    """Render the title and contents in our standard template for a view page.
+
+    Args:
+      *args: A tuple of values for the HTML template.
+      *kw: A dict of optional values for the HTML template.
+    Returns:
+      An HTML string of the rendered template.
+    """
     response.content_type = 'text/html'
     kw['A'] = A # Application mapper
     kw['V'] = V # View mapper
@@ -369,7 +398,9 @@ def render_view(*args, **kw):
     kw['view_title'] = ' - ' + request.view.title
     kw['navigation'] = APP_NAVIGATION.render(A=A, V=V, view_title=request.view.title)
     kw['scripts'] = kw.get('scripts', '')
-    kw['errors_str'] = render_errors(kw.pop('errors', None))
+    kw['overlay'] = (render_overlay()
+                     if request.params.pop('render_overlay', False)
+                     else '')
     return template.render(*args, **kw)
 
 APP_NAVIGATION = bottle.SimpleTemplate("""
@@ -793,13 +824,12 @@ def auto_reload_input_file(callback):
     """A plugin that automatically reloads the input file if it changed since the
     last page was loaded."""
     def wrapper(*posargs, **kwargs):
-
         filename = app.args.filename
         mtime = path.getmtime(filename)
         if mtime > app.last_mtime:
             app.last_mtime = mtime
 
-            logging.info('RELOADING')
+            logging.info('Reloading...')
 
             # Save the source for later, to render.
             with open(filename, encoding='utf8') as f:
@@ -810,6 +840,7 @@ def auto_reload_input_file(callback):
 
             # Print out the list of errors.
             if errors:
+                request.params['render_overlay'] = True
                 print(',----------------------------------------------------------------')
                 printer.print_errors(errors, file=sys.stdout)
                 print('`----------------------------------------------------------------')
@@ -825,6 +856,8 @@ def auto_reload_input_file(callback):
 
             # Reset the view cache.
             app.views.clear()
+
+
 
         return callback(*posargs, **kwargs)
     return wrapper
