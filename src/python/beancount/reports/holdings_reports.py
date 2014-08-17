@@ -71,8 +71,8 @@ RELATIVE_FIELD_SPEC = [
 ]
 
 
-def report_holdings_print(entries, options_map):
-    """Generate a printed list of entries that represent the holdings.
+def get_holdings_entries(entries, options_map):
+    """Summarizes the entries to list of entries representing the final holdings..
 
     This list includes the latest prices entries as well. This can be used to
     load a full snapshot of holdings without including the entire history. This
@@ -83,8 +83,8 @@ def report_holdings_print(entries, options_map):
       options_map: A dict of parsed options.
     Returns:
       A string, the entries to print out.
-
     """
+
     # The entries will be create at the latest date, against an equity account.
     latest_date = entries[-1].date
     _, equity_account, _ = options.get_previous_accounts(options_map)
@@ -96,20 +96,22 @@ def report_holdings_print(entries, options_map):
     holdings_entries = []
 
     for index, holding in enumerate(holdings_list):
-        fileloc = data.FileLocation('report_holdings_print', index)
+        fileloc = data.Source('report_holdings_print', index)
         entry = data.Transaction(fileloc, latest_date, flags.FLAG_SUMMARIZE,
                                  None, "", None, None, [])
-
 
         # Convert the holding to a position.
         # (FIXME: Move this to a function.)
         cost = (amount.Amount(holding.cost_number, holding.cost_currency)
                 if holding.cost_number
                 else None)
-        position_ = position.Position(position.Lot(holding.currency, cost, None), holding.number)
+        position_ = position.Position(position.Lot(holding.currency, cost, None),
+                                      holding.number)
 
-        entry.postings.append(data.Posting(entry, holding.account, position_, None, None))
-        entry.postings.append(data.Posting(entry, equity_account, -position_.get_cost_position(), None, None))
+        entry.postings.append(
+            data.Posting(entry, holding.account, position_, None, None))
+        entry.postings.append(
+            data.Posting(entry, equity_account, -position_.at_cost(), None, None))
 
         holdings_entries.append(entry)
 
@@ -123,22 +125,14 @@ def report_holdings_print(entries, options_map):
 
     # FIXME: Why doesn't this appear anywhere... did we forget to add it in?
     # If so, why doesn't the validation routine warn about it? WTF?
-    fileloc = data.FileLocation('report_holdings_print', -1)
+    fileloc = data.Source('report_holdings_print', -1)
     used_open_entries.insert(0,
                              data.Open(fileloc, latest_date, equity_account, None))
-
 
     # Get the latest price entries.
     price_entries = prices.get_last_price_entries(entries, None)
 
-
-
-    # FIXME: You have to output the options too.
-    oss = io.StringIO()
-    printer.print_entries(used_open_entries, oss)
-    printer.print_entries(holdings_entries, oss)
-    printer.print_entries(price_entries, oss)
-    return oss.getvalue()
+    return used_open_entries + holdings_entries + price_entries
 
 
 def report_holdings(currency, relative, entries, options_map,
@@ -171,10 +165,6 @@ def report_holdings(currency, relative, entries, options_map,
         holdings_list.sort(key=sort_key, reverse=True)
 
     return table.create_table(holdings_list, field_spec)
-
-
-
-
 
 
 def load_from_csv(fileobj):
@@ -272,6 +262,17 @@ class HoldingsReport(report.TableReport):
         return report_holdings(self.args.currency, self.args.relative,
                                entries, options_map,
                                **keywords)
+
+    def render_beancount(self, entries, errors, options_map, file):
+        # Don't allow any aggregations if we output as beancount format.
+        for attribute in 'currency', 'relative', 'groupby':
+            if getattr(self.args, attribute):
+                self.parser.error(
+                    "'beancount' format does not support --{} option".format(attribute))
+
+        # Get the summarized entries and print them out.
+        holdings_entries = get_holdings_entries(entries, options_map)
+        printer.print_entries(holdings_entries, file)
 
 
 class NetWorthReport(report.TableReport):

@@ -46,7 +46,10 @@ class TestHoldingsReports(unittest.TestCase):
                      ['--by=currency']]:
             report_ = holdings_reports.HoldingsReport.from_args(args)
             for format_ in report_.get_supported_formats():
-                output = report_.render(self.entries, self.errors, self.options_map, format_)
+                if format_ == 'beancount' and args:
+                    continue
+                output = report_.render(self.entries, self.errors, self.options_map,
+                                        format_)
                 self.assertTrue(output)
 
     def test_report_networth(self):
