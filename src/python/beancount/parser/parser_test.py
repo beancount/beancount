@@ -517,6 +517,7 @@ class TestTransactions(unittest.TestCase):
         """
           2014-07-17 * "(JRN) INTRA-ACCOUNT TRANSFER" ^795422780
         """
+        self.assertTrue(isinstance(entries[0].postings, list))
 
 
 class TestCurrencies(unittest.TestCase):

@@ -456,7 +456,8 @@ class Builder(lexer.LexBuilder):
           flag: a str, one-character, the flag associated with this transaction.
           txn_fields: A tuple of transaction fields, which includes descriptions
             (payee and narration), tags, and links.
-          postings: a list of Posting instances, to be inserted in this transaction.
+          postings: a list of Posting instances, to be inserted in this transaction, or
+            None, if no postings have been declared.
         Returns:
           A new Transaction object.
         """
@@ -480,6 +481,10 @@ class Builder(lexer.LexBuilder):
         #                     "Transaction with only one posting: {}".format(postings),
         #                     None))
         #     return None
+
+        # If there are no postings, make sure we insert a list object.
+        if postings is None:
+            postings = []
 
         # Merge the tags from the stack with the explicit tags of this
         # transaction, or make None.
