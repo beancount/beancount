@@ -512,6 +512,12 @@ class TestTransactions(unittest.TestCase):
         check_list(self, entries, [Transaction])
         check_list(self, errors, [complete.BalanceError])
 
+    @parsedoc
+    def test_no_postings(self, entries, errors, _):
+        """
+          2014-07-17 * "(JRN) INTRA-ACCOUNT TRANSFER" ^795422780
+        """
+
 
 class TestCurrencies(unittest.TestCase):
 

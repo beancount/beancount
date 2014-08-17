@@ -66,40 +66,27 @@ beancount: TODO
     that no price directive is inserted (this is what it should do: don't insert
     a price in this case, because we don't know which):
 
-      2014-01-15 * Income:Misc Assets:Account1 1 HOUSE {100 USD}
-    Liabilities:Account1 1 HOUSE {101 USD} Equity:Account1 1 HOUSE {102 USD}
-    Expenses:Account1 1 HOUSE {103 USD} Income:Account1 1 HOUSE {104 USD}
+      2014-01-15 *
+        Income:Misc
+        Assets:Account1       1 HOUSE {100 USD}
+        Liabilities:Account1  1 HOUSE {101 USD}
+        Equity:Account1       1 HOUSE {102 USD}
+        Expenses:Account1     1 HOUSE {103 USD}
+        Income:Account1       1 HOUSE {104 USD}
 
     You must ALLOW and test for this, however:
 
-      2004-11-29 * "Closed Cisco" Assets:CA:RBC-Investing:RRSP:CSCO -18 CSCO
-    {79.50 USD} @ 19.00 USD Assets:CA:RBC-Investing:RRSP:CSCO -45 CSCO {30.50
-    USD} @ 19.00 USD Assets:CA:RBC-Investing:RRSP:Cash 1372.07 CAD @
-    0.87240446916 USD Income:CA:RBC-Investing:RRSP:PnL ;; gains = 1372.07 -
-    (2129.19 + 2122.12) = 2879.24 CAD ; loss
+      2004-11-29 * "Closed Cisco"
+        Assets:CA:RBC-Investing:RRSP:CSCO -18 CSCO {79.50 USD} @ 19.00 USD
+        Assets:CA:RBC-Investing:RRSP:CSCO -45 CSCO {30.50 USD} @ 19.00 USD
+        Assets:CA:RBC-Investing:RRSP:Cash 1372.07 CAD @ 0.87240446916 USD
+        Income:CA:RBC-Investing:RRSP:PnL ;; gains = 1372.07 - (2129.19 + 2122.12) = 2879.24 CAD ; loss
 
     Also, deal with multiple implied price points added from different
     transactions on the same day... instead of just taking the later one, drop
     the price points? But this breaks an assumptin in add_unrealized_gains()
     which assumes that a price point will always be available if the unit is
     held at cost. Make a decision.
-
-  - This spits out an error during interpolation:
-
-        2014-07-17 * "(JRN) INTRA-ACCOUNT TRANSFER" ^795422780
-
-      bean-check /home/blais/r/q/office/accounting/blais.beancount Traceback
-    (most recent call last):  File
-    "/home/blais/p/beancount/src/python/beancount/parser/parser.py", line 501,
-    in transaction balance_errors = balance_incomplete_postings(entry) File
-    "/home/blais/p/beancount/src/python/beancount/core/complete.py", line 209,
-    in balance_incomplete_postings postings, inserted, errors =
-    get_incomplete_postings(entry) File
-    "/home/blais/p/beancount/src/python/beancount/core/complete.py", line 104,
-    in get_incomplete_postings postings = list(entry.postings) TypeError:
-    'NoneType' object is not iterable
-
-    Deal with it more handsomely.
 
 
   - "Position with lots goes negative" should output an error message and be
@@ -175,6 +162,7 @@ beancount: TODO
         2014-02-02 note Assets:Temporary "Bla bla""
 
     Find a way to detect too long strings and perhaps barf on it.
+    Note: This could easily be handled with a custom tokenizer.
 
 
 ** Lexer: Default Rule to Chomp Remaining

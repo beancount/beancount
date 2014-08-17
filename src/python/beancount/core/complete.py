@@ -206,6 +206,10 @@ def balance_incomplete_postings(entry):
     Returns:
       A list of errors, or None, if none occurred.
     """
+    # Nopostings... nothing to do.
+    if not entry.postings:
+        return None
+
     postings, inserted, errors = get_incomplete_postings(entry)
 
     # If we could make this faster to avoid the unnecessary copying, it would
