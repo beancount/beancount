@@ -180,7 +180,7 @@ def render_overlay():
         <ul>
           <li><a href="{}">Errors</a></li>
         </ul>
-      </div>'''.format(app.get_url('errors'))
+      </div>'''.format(app.router.build('errors'))
     # FIXME: Disabled fancy overlay for now, until we figure out how to
     # smoothly make it fade out.
     #
@@ -866,7 +866,11 @@ def auto_reload_input_file(callback):
             # Reset the view cache.
             app.views.clear()
 
-
+        else:
+            # For now, the overlay is a link to the errors page. Always render
+            # it on the right when there are errors.
+            if app.errors:
+                request.params['render_overlay'] = True
 
         return callback(*posargs, **kwargs)
     return wrapper
