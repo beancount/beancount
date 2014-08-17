@@ -15,18 +15,7 @@ beancount: TODO
     balancing transactions. Need to figure out how to do this properly without
     raising two errors.
 
-
-** Minimum Cleanup of Reports Before Release
-
-  - Isolate reports, at least from a functional POV, before the big revamp, in
-    order to avoid changing the interface much after releasing v2.0:
-
-       These need to move to reports, generate the intermediate tree
-       object, and then support rendering to txt, csv, html, htmldiv.
-
-       We need to define two HTML types: 'html', and 'html_div'. The fisrt one
-       renders to a full page; the second one only a div.
-
+  - Add dateutil to list of depdendencies, it's too great to pass on, for scripts.
 
 ** Move Files to Final Location
 
@@ -154,6 +143,10 @@ beancount: TODO
 
 ** Parser-Related Minor Bugs
 
+  - Inserting a cost of "0 somethings" results in DivisionByZero errors. Simply
+    disallow using a cost of 0, or a negative number, this should not be
+    allowed.
+
   - Parsing this does not fail; it really should, this is a bug:  "2013-04-01
     balance Assets:Bank:Checking 555.00 CAD.11"
 
@@ -218,40 +211,12 @@ beancount: TODO
     /home/blais/p/beancount/examples/basic/basic.beancount:438:  Lexer error;
     erroneous token: c
 
+  - Add parser tests with no empty lines between directives and make sure the
+    number of directives is correct.
 
-** Reconcile Web Interface vs. Upcoming Reports Stage
-
-  The various reports that can be generated will be unified through an
-  intermediate stage, that will eventually allow us to render all the reports
-  either to text, CSV or HTML formats. This means that the web interface will be
-  using that report generation code too, and that each of its pages will
-  basically be housing the HTML version of each report.
-
-  - Rename /account to /journal in the web interface to be consistent with
-    console reports. Maybe a separate register should be provided too (see
-    comment about distinguishing between these two elsewhere in the TODO file).
-
-  - Newly created reports should have UI links: networth, holdings rolled by
-    currency. We need to reconcile web UI with the new reports that we created.
-
-  - Render a table of prices, in case there are only a few price points. We
-    should also have a report type for prices.
-
-  - The Equity pages are a mess right now. Merge Holdings tab into Shareholder's
-    Equity, for less tabs, and a list of similar reports. Complete the equity
-    value page with prices.py, render the rates used to that page. Include links
-    to the holdings reports here as well. Equity should just become an index for
-    all the holdings pages.
-
-  - Implement all the missing global pages, or remove them. The web interface
-    should be tight, no links to "Not Implemented" pages. There aren't many left
-    anyway.
-
-  - IMPORTANT AND URGENT! All errors should be displayed in an overlay; proper
-    error handling and display for the web interface is not optional. This needs
-    to be done before shipping.
-
-  - Add a test for --view option.
+  - 2014-05-42 causes an uncaught ValueError and crashes on Mac OS X. Surely we
+    can do better: catch all exceptions from the top-level handler and report
+    errors nicely.
 
 
 ** Cleanup Tasks
@@ -313,12 +278,66 @@ beancount: TODO
 
 
 
+** Documentation / Ongoing
+
+  - Add to motivation doc: useful to make a will. Where's all the stuff?
+
+  - Add to motivation doc: "I have some new money to invest. How should I invest it to
+    fulfill my desired portfolio allocation?"
+
+  - Nice Health Care section is nearly complete... complete it with DEDUC and COPAY
+    legs explanation
+
+
+  - Add this to inventory proposal doc:
+
+      Beancount: great idea design...
+
+      Adjustment on a posting is like a reduction: ignore the number of units and
+      post a change in cost basis, that should be nice syntax actually!
+
+        Assets:Account GOOG {500 USD +250 USD}
+
+      With no difference should trigger an error.
+
+      We can probably allow all costs to enjoy an optional total cost like this: {500
+      USD +45 USD}
+
+      The cost could also be with just the total value: {+45 USD}
+
+      And you can leave the amount, like this: {+} and this leaves a single amount to
+      be filled on a reducing leg
+
+      This works!
+
+      If you specify a number of units this only applies to the units. Otherwise it
+      applies to the entire existing lot.
+
+      Maybe use the ~ to specify no modification , like this: ~10 GOOG {+} to make a
+      basis adjustment on 10 of the shares without changing them!
+
+      Finally, the number of units can always be elided on a whole lot in order to
+      specify the entire current position!
+
+      You can eliminate the {{...}} Syntax, replace with +!
+
+
+  - Motivation doc: "Why not just use an SQL database?" Cannot because of
+    inventory operations, because of two-legged structure. "But don't let me
+    convince you; see for yourself with the bean-sql conversion script."
+
+
 * Current / Misc / To Be Classified
 
   (This is a grab bag of ideas. When I have a new idea coming to me, I don't
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - (web) All errors should be displayed in an overlay; proper error handling
+    and display for the web interface is not optional. This needs to be done
+    before shipping.
 
 
   - Figure out how to disable googleapis fonts when on a very slow connection.
@@ -334,6 +353,40 @@ beancount: TODO
     file:
 
       option "plugin" "beancount.plugins.empty_parents"
+
+
+
+  - Idea: Emacs align function should automatically align the same as the
+    previous transaction found before the cursor! And use fill-column instead.
+    It should also work on balance directives!
+
+
+
+  - Idea: a plugin that autopads all initial balance asserttions! Do it for
+    demos, will be very useful for making demos easier, not having to be so
+    strict.
+
+  - (parser) Add an option to the parser to not just ignore unparsed lines, more
+    strict.
+
+
+  - Beancount: Add a "lineno" format for journals that renders in "Emacs errors"
+    compatible format, so we can easily jump in time throughout the input file
+    instead of rendering a journal. Offer the option to list in reverse to.
+
+  - (rendering) Journals should render in either order.
+
+
+  - Use the same option on all tools for showing the timings, --verbose timings,
+    maybe add it from the loader module.
+
+
+  - Implement a report of Trades booked in the list of filtered transactions!
+    Create this report, I removed the placeholder for it in the web app.
+
+
+  - Make conversions report sum up to zero by adding a similar conversions
+    entry as for the balance sheet.
 
 
 
@@ -1282,6 +1335,11 @@ beancount: TODO
     have them automatically check for expected no-errors.
 
 
+  - Add the acquisition date of each lot to each Holding, and it should be
+    output at that date by print_holdings as well.
+
+
+
   - In order to relax the constraint that you may not add negativ units at
     cost, we could only disallow under certain circumstances:
 
@@ -2154,6 +2212,8 @@ Improve this bit:
     It's actually a lot more accurate to what's going on...
 
 ** Performance
+
+  - Implement "D" in C, it's worth it. This should make a substantial difference.
 
   - Test using the empty case of list parsing to create the initial empty lists
     instead of the conditional in Parser.handle_list() and measure, to see if
@@ -3059,6 +3119,16 @@ come up with a creative solution that solves this problem.
     should be equal, and correct for the time-value-of-money, compare prices
     today with prices then. Maybe come up with some kind of constant unit that
     I can convert everything to.
+
+**** GIFI Reporting
+
+  - You could write a script to automatically fill this form:
+    http://www.cra-arc.gc.ca/E/pub/tg/rc4088/rc4088-12e.pdf
+
+      "With Beancount, one thing that would be doable _outside_ of Beancount, as
+    a separate script, is to associate a set of accounts to these GIFI codes and
+    automatically generate the forms."
+
 
 ** Change List
 

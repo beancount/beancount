@@ -121,6 +121,10 @@ class TestPriceMap(unittest.TestCase):
         inv_price_list = prices.get_all_prices(price_map, ('CAD', 'USD'))
         self.assertEqual(len(price_list), len(inv_price_list))
 
+        # Test not found.
+        with self.assertRaises(KeyError):
+            x = prices.get_all_prices(price_map, ('EWJ', 'JPY'))
+
     @parsedoc
     def test_get_latest_price(self, entries, _, __):
         """
@@ -132,6 +136,10 @@ class TestPriceMap(unittest.TestCase):
         price_list = prices.get_latest_price(price_map, ('USD', 'CAD'))
         expected = (datetime.date(2013, 6, 11), D('1.11'))
         self.assertEqual(expected, price_list)
+
+        # Test not found.
+        result = prices.get_latest_price(price_map, ('EWJ', 'JPY'))
+        self.assertEqual((None, None), result)
 
     @parsedoc
     def test_get_price(self, entries, _, __):
@@ -166,6 +174,10 @@ class TestPriceMap(unittest.TestCase):
         # With no date, should devolved to get_latest_price().
         date, price = prices.get_price(price_map, 'USD/CAD', None)
         self.assertEqual(D('2.00'), price)
+
+        # Test not found.
+        result = prices.get_price(price_map, ('EWJ', 'JPY'))
+        self.assertEqual((None, None), result)
 
     @parsedoc
     def test_convert_amount(self, entries, _, __):

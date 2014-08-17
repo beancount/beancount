@@ -10,44 +10,6 @@ from beancount.core import realization
 from beancount.core import flags
 
 
-def account_link(account_, build_url, leafonly=False):
-    """Render an HTML anchor for the given account name.
-
-    The conversion to string is memoized, as it never changes. An actual link to
-    an account is only rendered if a build_url callable is provided. Otherwise,
-    a snippet of HTML that will just render the name of the account without a
-    link is rendered.
-
-    Args:
-      account_name: A string, the name of the account to render, or an
-        instance of RealAccount. Both are accepted.
-      build_url: A function used to build a URL. If not specified, a snippet of
-        HTML to at least render the account name without a link is produced.
-      leafonly: A boolean, if true, render only the name of the leaf, not the
-        entire account name.
-    Returns:
-      A string, a snippet of HTML that renders and links to the account name.
-    """
-    if isinstance(account_, str):
-        account_name = account_
-    elif isinstance(account_, realization.RealAccount):
-        account_name = account_.account
-
-    slashed_name = account_name.replace(account.sep, '/')
-
-    if leafonly:
-        account_name = account.leaf(account_name)
-
-    if build_url is None:
-        link = '<span class="account">{}</a>'.format(account_name)
-    else:
-        link = '<a href="{}" class="account">{}</a>'.format(
-            build_url('account', slashed_account_name=slashed_name),
-            account_name)
-
-    return link
-
-
 def balance_html(balance_inventory):
     """Render a list of balance positions for an HTML table cell.
 
@@ -92,7 +54,7 @@ Row = collections.namedtuple('Row',
                              'description links amount_str balance_str')
 
 
-def iterate_render_postings(postings, build_url):
+def iterate_render_postings(postings, formatter):
     """Iterate through the list of transactions with rendered strings for each cell.
 
     This pre-renders all the data for each row to HTML. This is reused by the entries
@@ -100,7 +62,7 @@ def iterate_render_postings(postings, build_url):
 
     Args:
       postings: A list of Posting or directive instances.
-      build_url: A function that builds/renders URLs based on a Bottle app.
+      formatter: An instance of HTMLFormatter, to be render accounts, links and docs.
     Yields:
       Instances of Row tuples. See above.
     """
@@ -126,20 +88,19 @@ def iterate_render_postings(postings, build_url):
                                '{}').format(entry.payee, description)
             amount_str = balance_html(change)
 
-            if entry.links and build_url:
-                links = [build_url('link', link=link)
-                         for link in entry.links]
+            if entry.links and formatter:
+                links = [formatter.render_link(link) for link in entry.links]
 
         elif isinstance(entry, Balance):
             # Check the balance here and possibly change the rowtype
             if entry.diff_amount is None:
                 description = 'Balance {} has {}'.format(
-                    account_link(entry.account, build_url),
+                    formatter.render_account(entry.account),
                     entry.amount)
             else:
                 description = ('Balance in {} fails; '
                                'expected = {}, balance = {}, difference = {}').format(
-                                   account_link(entry.account, build_url),
+                                   formatter.render_account(entry.account),
                                    entry.amount,
                                    entry_balance.get_amount(entry.amount.currency),
                                    entry.diff_amount)
@@ -149,7 +110,7 @@ def iterate_render_postings(postings, build_url):
 
         elif isinstance(entry, (Open, Close)):
             description = '{} {}'.format(entry.__class__.__name__,
-                                         account_link(entry.account, build_url))
+                                         formatter.render_account(entry.account))
             amount_str = ''
 
         elif isinstance(entry, Note):
@@ -159,10 +120,9 @@ def iterate_render_postings(postings, build_url):
 
         elif isinstance(entry, Document):
             assert path.isabs(entry.filename)
-            description = 'Document for {}: "<a href="{}" class="filename">{}</a>"'.format(
-                account_link(entry.account, build_url),
-                build_url('doc', filename=entry.filename.lstrip('/')),
-                path.basename(entry.filename))
+            description = 'Document for {}: {}'.format(
+                formatter.render_account(entry.account),
+                formatter.render_doc(entry.filename))
             amount_str = ''
             balance_str = ''
 
@@ -176,7 +136,7 @@ def iterate_render_postings(postings, build_url):
                   flag, description, links, amount_str, balance_str)
 
 
-def entries_table_with_balance(oss, account_postings, build_url, render_postings=True):
+def entries_table_with_balance(oss, account_postings, formatter, render_postings=True):
     """Render a list of entries into an HTML table, with a running balance.
 
     (This function returns nothing, it write to oss as a side-effect.)
@@ -184,7 +144,7 @@ def entries_table_with_balance(oss, account_postings, build_url, render_postings
     Args:
       oss: A file object to write the output to.
       account_postings: A list of Posting or directive instances.
-      build_url: If not None, a function to build/render URLs to.
+      formatter: An instance of HTMLFormatter, to be render accounts, links and docs.
       render_postings: A boolean; if true, render the postings as rows under the
         main transaction row.
     """
@@ -205,7 +165,7 @@ def entries_table_with_balance(oss, account_postings, build_url, render_postings
       </thead>
     ''')
 
-    for row in iterate_render_postings(account_postings, build_url):
+    for row in iterate_render_postings(account_postings, formatter):
         entry = row.entry
 
         description = row.description
@@ -248,7 +208,7 @@ def entries_table_with_balance(oss, account_postings, build_url, render_postings
                   <tr>
                 '''.format(' '.join(classes),
                            posting.flag or '',
-                           account_link(posting.account, build_url),
+                           formatter.render_account(posting.account),
                            posting.position,
                            posting.price or '',
                            complete.get_balance_amount(posting)))
@@ -256,7 +216,7 @@ def entries_table_with_balance(oss, account_postings, build_url, render_postings
     write('</table>')
 
 
-def entries_table(oss, account_postings, build_url, render_postings=True):
+def entries_table(oss, account_postings, formatter, render_postings=True):
     """Render a list of entries into an HTML table, with no running balance.
 
     This is appropriate for rendering tables of entries for postings with
@@ -268,7 +228,7 @@ def entries_table(oss, account_postings, build_url, render_postings=True):
     Args:
       oss: A file object to write the output to.
       account_postings: A list of Posting or directive instances.
-      build_url: If not None, a function to build/render URLs to.
+      formatter: An instance of HTMLFormatter, to be render accounts, links and docs.
       render_postings: A boolean; if true, render the postings as rows under the
         main transaction row.
     """
@@ -288,7 +248,7 @@ def entries_table(oss, account_postings, build_url, render_postings=True):
       </thead>
     ''')
 
-    for row in iterate_render_postings(account_postings, build_url):
+    for row in iterate_render_postings(account_postings, formatter):
         entry = row.entry
 
         description = row.description
@@ -325,7 +285,7 @@ def entries_table(oss, account_postings, build_url, render_postings=True):
                   <tr>
                 '''.format(' '.join(classes),
                            posting.flag or '',
-                           account_link(posting.account, build_url),
+                           formatter.render_account(posting.account),
                            posting.position.get_amount(),
                            posting.position.lot.cost or '',
                            posting.price or '',

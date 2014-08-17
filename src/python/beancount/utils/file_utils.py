@@ -3,17 +3,17 @@
 from os import path
 
 
-def guess_file_format(filename, default='txt'):
+def guess_file_format(filename, default=None):
     """Guess the file format from the filename.
 
     Args:
-      filenmae: A string, the name of the file. This can be None.
+      filename: A string, the name of the file. This can be None.
     Returns:
       A string, the extension of the format, without a leading period.
     """
     if filename:
-        if filename.endswith('.txt'):
-            format = 'txt'
+        if filename.endswith('.txt') or filename.endswith('.text'):
+            format = 'text'
         elif filename.endswith('.csv'):
             format = 'csv'
         elif filename.endswith('.html') or filename.endswith('.xhtml'):

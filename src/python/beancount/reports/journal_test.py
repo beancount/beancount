@@ -6,56 +6,8 @@ from beancount import loader
 from beancount.core import realization
 from beancount.core import inventory
 from beancount.core import data
-from beancount.web import journal
-
-
-def mock_build_url(name, **kw):
-    "A fake URL builder, just for testing."
-    return '/{}/{}'.format(name, '/'.join(value
-                                          for _, value in sorted(kw.items())))
-
-
-class TestHTMLAccountLink(unittest.TestCase):
-
-    def test_account_link(self):
-        # Call with string, with no view.
-        link = journal.account_link('Assets:US:BofA:Checking', None, False)
-        self.assertTrue(re.search('<span', link))
-        self.assertTrue(re.search('class="account"', link))
-        self.assertTrue(re.search('Assets:US:BofA:Checking', link))
-
-        # Call with string, with a build function.
-        link = journal.account_link('Assets:US:BofA:Checking', mock_build_url, False)
-        self.assertTrue(re.search(r'<a\b', link))
-        self.assertTrue(re.search('class="account"', link))
-        self.assertTrue(re.search('Assets:US:BofA:Checking', link))
-
-        # Call with RealAccount instance.
-        real_root = realization.RealAccount('')
-        real_account = realization.get_or_create(real_root, 'Assets:US:BofA:Checking')
-        link_real = journal.account_link('Assets:US:BofA:Checking', mock_build_url, False)
-        self.assertEqual(link, link_real)
-
-        # Call rendering the leaf only.
-        link = journal.account_link('Assets:US:BofA:Checking', mock_build_url, True)
-        self.assertTrue(re.search(r'<a\b', link))
-        self.assertTrue(re.search('class="account"', link))
-        self.assertTrue(re.search('Checking', link))
-        self.assertFalse(re.search('Assets:US:BofA:Checking', link))
-
-    def test_account_link_rootonly(self):
-        # Call with just a root account name.
-        link = journal.account_link('Income', None, False)
-        self.assertTrue(re.search('Income', link))
-
-        link = journal.account_link('Income', None, True)
-        self.assertTrue(re.search('Income', link))
-
-        link = journal.account_link('Income', mock_build_url, False)
-        self.assertTrue(re.search('Income', link))
-
-        link = journal.account_link('Income', mock_build_url, True)
-        self.assertTrue(re.search('Income', link))
+from beancount.reports import html_formatter
+from beancount.reports import journal
 
 
 class TestHTMLBalance(unittest.TestCase):
@@ -120,8 +72,9 @@ class TestJournalRender(unittest.TestCase):
         self.real_account = realization.get(real_root, 'Assets:Checking')
 
     def test_iterate_render_postings(self):
+        formatter = html_formatter.HTMLFormatter()
         rows = list(journal.iterate_render_postings(self.real_account.postings,
-                                                    mock_build_url))
+                                                    formatter))
 
         # Check (entry, leg_postings, rowtype, extra_class, flag).
         self.assertEqual([
@@ -151,8 +104,9 @@ class TestJournalRender(unittest.TestCase):
 
     def test_entries_table_with_balance(self):
         oss = io.StringIO()
+        formatter = html_formatter.HTMLFormatter()
         result = journal.entries_table_with_balance(oss, self.real_account.postings,
-                                                    mock_build_url, True)
+                                                    formatter, True)
         html = oss.getvalue()
         self.assertTrue(result is None)
         self.assertTrue(isinstance(html, str))
@@ -160,8 +114,9 @@ class TestJournalRender(unittest.TestCase):
 
     def test_entries_table(self):
         oss = io.StringIO()
+        formatter = html_formatter.HTMLFormatter()
         result = journal.entries_table_with_balance(oss, self.real_account.postings,
-                                                    mock_build_url, True)
+                                                    formatter, True)
         html = oss.getvalue()
         self.assertTrue(result is None)
         self.assertTrue(isinstance(html, str))

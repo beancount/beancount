@@ -21,13 +21,14 @@ def get_last_price_entries(entries, date):
 
     Args:
       entries: A list of directives.
-      date: An instance of datetime.date.
+      date: An instance of datetime.date. If None, the very latest price
+        is returned.
     Returns:
       A list of price entries.
     """
     price_entry_map = {}
     for entry in entries:
-        if entry.date >= date:
+        if date is not None and entry.date >= date:
             break
         if isinstance(entry, Price):
             base_quote = (entry.currency, entry.amount.currency)
@@ -181,7 +182,8 @@ def get_all_prices(price_map, base_quote):
         denominated in. This may also just be a string, with a '/' separator.
     Returns:
       A list of (date, Decimal) pairs, sorted by date.
-
+    Raises:
+      KeyError: If the base/quote could not be found.
     """
     base_quote = normalize_base_quote(base_quote)
     return _lookup_price_and_inverse(price_map, base_quote)
@@ -209,11 +211,14 @@ def get_latest_price(price_map, base_quote):
 
     # Look up the list and return the latest element. The lists are assumed to
     # be sorted.
-    price_list = _lookup_price_and_inverse(price_map, base_quote)
+    try:
+        price_list = _lookup_price_and_inverse(price_map, base_quote)
+    except KeyError:
+        price_list = None
     if price_list:
         return price_list[-1]
     else:
-        return None
+        return None, None
 
 
 def get_price(price_map, base_quote, date=None):
@@ -243,12 +248,15 @@ def get_price(price_map, base_quote, date=None):
     if quote is None or base == quote:
         return (None, ONE)
 
-    price_list = _lookup_price_and_inverse(price_map, base_quote)
-    index = misc_utils.bisect_right_with_key(price_list, date, key=lambda x: x[0])
-    if index == 0:
+    try:
+        price_list = _lookup_price_and_inverse(price_map, base_quote)
+        index = misc_utils.bisect_right_with_key(price_list, date, key=lambda x: x[0])
+        if index == 0:
+            return None, None
+        else:
+            return price_list[index-1]
+    except KeyError:
         return None, None
-    else:
-        return price_list[index-1]
 
 
 def convert_amount(price_map, target_currency, amount_):
@@ -264,10 +272,10 @@ def convert_amount(price_map, target_currency, amount_):
     """
     if amount_.currency != target_currency:
         base_quote = (amount_.currency, target_currency)
-        try:
-            _, rate = get_latest_price(price_map, base_quote)
+        _, rate = get_latest_price(price_map, base_quote)
+        if rate is not None:
             converted_amount = amount.Amount(amount_.number * rate, target_currency)
-        except KeyError:
+        else:
             # If a rate is not found, simply remove the market value.
             converted_amount = None
     else:

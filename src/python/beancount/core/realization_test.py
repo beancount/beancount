@@ -11,7 +11,7 @@ from beancount.core.amount import D
 from beancount.core.realization import RealAccount
 from beancount.core import realization
 from beancount.core import data
-from beancount.core.inventory import Inventory
+from beancount.core import inventory
 from beancount.core import amount
 from beancount.core import account_types
 from beancount.parser import parsedoc
@@ -25,6 +25,14 @@ def create_simple_account():
     ra['Assets']['US']['Bank'] = RealAccount('Assets:US:Bank')
     ra['Assets']['US']['Bank']['Checking'] = RealAccount('Assets:US:Bank:Checking')
     return ra
+
+
+def create_real(account_value_pairs):
+    real_root = RealAccount('')
+    for account_name, value in account_value_pairs:
+        real_account = realization.get_or_create(real_root, account_name)
+        real_account.balance += inventory.from_string(value)
+    return real_root
 
 
 class TestRealAccount(unittest.TestCase):
@@ -303,35 +311,28 @@ class TestRealization(unittest.TestCase):
         real_account = realization.realize(entries)
         ra_movie = realization.get(real_account, 'Expenses:Movie')
         self.assertEqual('Expenses:Movie', ra_movie.account)
-        expected_balance = Inventory()
+        expected_balance = inventory.Inventory()
         expected_balance.add(amount.Amount('20', 'CAD'))
         self.assertEqual(expected_balance, ra_movie.balance)
 
 
 class TestRealFilter(unittest.TestCase):
 
-    def create_real(self, account_value_pairs):
-        real_root = RealAccount('')
-        for account_name, value in account_value_pairs:
-            real_account = realization.get_or_create(real_root, account_name)
-            real_account.balance.add(amount.Amount(value, 'USD'))
-        return real_root
-
     def test_filter_to_empty(self):
         # Test filtering down to empty.
-        real_root = self.create_real([('Assets:US:Bank:Checking', '1'),
-                                      ('Assets:US:Bank:Savings', '2'),
-                                      ('Liabilities:Bank:CreditCard', '3')])
+        real_root = create_real([('Assets:US:Bank:Checking', '1 USD'),
+                                 ('Assets:US:Bank:Savings', '2 USD'),
+                                 ('Liabilities:Bank:CreditCard', '3 USD')])
         real_copy = realization.filter(real_root, lambda ra: False)
         self.assertTrue(real_copy is None)
 
     def test_filter_almost_all(self):
         # Test filtering that culls leaves, to make sure that works.
-        real_root = self.create_real([('Assets:US:Bank:Checking', '1'),
-                                      ('Assets:US:Bank:Savings', '2'),
-                                      ('Liabilities:USBank:CreditCard', '3'),
-                                      ('Assets', '100'),
-                                      ('Liabilities:US:Bank', '101')])
+        real_root = create_real([('Assets:US:Bank:Checking', '1 USD'),
+                                 ('Assets:US:Bank:Savings', '2 USD'),
+                                 ('Liabilities:USBank:CreditCard', '3 USD'),
+                                 ('Assets', '100 USD'),
+                                 ('Liabilities:US:Bank', '101 USD')])
         def ge100(ra):
             return ra.balance.get_amount('USD').number >= 100
         real_copy = realization.filter(real_root, ge100)
@@ -343,9 +344,9 @@ class TestRealFilter(unittest.TestCase):
     def test_filter_with_leaves(self):
         # Test filtering that keeps some leaf nodes with some intermediate nodes
         # that would otherwise be eliminated.
-        real_root = self.create_real([('Assets:US:Bank:Checking', '1'),
-                                      ('Assets:US:Bank:Savings', '2'),
-                                      ('Liabilities:USBank:CreditCard', '3')])
+        real_root = create_real([('Assets:US:Bank:Checking', '1 USD'),
+                                 ('Assets:US:Bank:Savings', '2 USD'),
+                                 ('Liabilities:USBank:CreditCard', '3 USD')])
         def not_empty(ra):
             return not ra.balance.is_empty()
         real_copy = realization.filter(real_root, not_empty)
@@ -359,10 +360,10 @@ class TestRealFilter(unittest.TestCase):
     def test_filter_no_leaves(self):
         # Test filtering that drops leaf nodes but that keeps intermediate
         # nodes.
-        real_root = self.create_real([('Assets:US:Bank:Checking', '1'),
-                                      ('Assets:US:Bank:Savings', '2'),
-                                      ('Assets:US', '100'),
-                                      ('Assets', '100')])
+        real_root = create_real([('Assets:US:Bank:Checking', '1 USD'),
+                                 ('Assets:US:Bank:Savings', '2 USD'),
+                                 ('Assets:US', '100 USD'),
+                                 ('Assets', '100 USD')])
         def ge100(ra):
             return ra.balance.get_amount('USD').number >= 100
         real_copy = realization.filter(real_root, ge100)
@@ -372,15 +373,15 @@ class TestRealFilter(unittest.TestCase):
                              for ra in realization.iter_children(real_copy, True)))
 
     def test_filter_misc(self):
-        real_root = self.create_real([('Assets:US:Bank:Checking', '1'),
-                                      ('Assets:US:Bank:Savings', '2'),
-                                      ('Assets:US:Cash', '3'),
-                                      ('Assets:CA:Cash', '4'),
-                                      ('Liabilities:Bank:CreditCard', '5'),
-                                      ('Expenses:Food:Grocery', '6'),
-                                      ('Expenses:Food:Restaurant', '7'),
-                                      ('Expenses:Food:Alcohol', '8'),
-                                      ('Expenses:Food', '10')])
+        real_root = create_real([('Assets:US:Bank:Checking', '1 USD'),
+                                 ('Assets:US:Bank:Savings', '2 USD'),
+                                 ('Assets:US:Cash', '3 USD'),
+                                 ('Assets:CA:Cash', '4 USD'),
+                                 ('Liabilities:Bank:CreditCard', '5 USD'),
+                                 ('Expenses:Food:Grocery', '6 USD'),
+                                 ('Expenses:Food:Restaurant', '7 USD'),
+                                 ('Expenses:Food:Alcohol', '8 USD'),
+                                 ('Expenses:Food', '10 USD')])
         def even(real_account):
             return (not real_account.balance.is_empty() and
                     real_account.balance.get_amount('NOK').number % 2 == 0)
@@ -455,8 +456,8 @@ class TestRealOther(test_utils.TestCase):
 
     def test_compare_realizations(self):
         # Check that value comparison uses our balance comparison properly.
-        map1 = {'Assets:US:Bank:Checking': Inventory()}
-        map2 = {'Assets:US:Bank:Checking': Inventory()}
+        map1 = {'Assets:US:Bank:Checking': inventory.Inventory()}
+        map2 = {'Assets:US:Bank:Checking': inventory.Inventory()}
         map2['Assets:US:Bank:Checking'].add(amount.Amount('0.01', 'USD'))
         self.assertNotEqual(map1, map2)
 
@@ -556,6 +557,17 @@ class TestRealOther(test_utils.TestCase):
         postings[-1], postings[-2] = postings[-2], postings[-1]
         with self.assertRaises(AssertionError):
             list(realization.iterate_with_balance(postings))
+
+    def test_compute_balance(self):
+        real_root = create_real([('Assets:US:Bank:Checking', '100 USD'),
+                                 ('Assets:US:Bank:Savings', '200 USD'),
+                                 ('Assets:US:Bank', '10 USD'),
+                                 ('Liabilities:Bank:CreditCard', '-500 USD')])
+        balance = realization.compute_balance(real_root)
+        self.assertEqual(inventory.from_string('-190 USD'), balance)
+
+        balance = realization.compute_balance(realization.get(real_root, 'Assets:US:Bank'))
+        self.assertEqual(inventory.from_string('310 USD'), balance)
 
     @parsedoc
     def test_dump(self, entries, _, __):

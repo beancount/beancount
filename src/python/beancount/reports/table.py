@@ -15,7 +15,7 @@ import itertools
 #   header: A sequence of strings, a header to be rendered for each column.
 #   rows: A list of rows, each of which is a sequence of strings, the
 #     contents of all the cells of the table body.
-TableReport = collections.namedtuple('TableReport', 'columns header body')
+Table = collections.namedtuple('Table', 'columns header body')
 
 
 def attribute_to_title(fieldname):
@@ -40,7 +40,7 @@ def create_table(rows, field_spec=None):
         functions to call on the fields to render them. If a function is set to
         None, we will just call str() on the field.
     Returns:
-      A TableReport instance.
+      A Table instance.
     """
     # Normalize field_spec to a dict.
     if field_spec is None:
@@ -106,14 +106,14 @@ def create_table(rows, field_spec=None):
             body_row.append(value)
         body.append(body_row)
 
-    return TableReport(columns, header, body)
+    return Table(columns, header, body)
 
 
 def table_to_html(table, classes=None, file=None):
-    """Render a TableReport to HTML.
+    """Render a Table to HTML.
 
     Args:
-      table: An instance of a TableReport.
+      table: An instance of a Table.
       classes: A list of string, CSS classes to set on the table.
       file: A file object to write to. If no object is provided, this
         function returns a string.
@@ -152,10 +152,10 @@ def table_to_html(table, classes=None, file=None):
 def table_to_text(table,
                   column_interspace=" ",
                   formats=None):
-    """Render a TableReport to ASCII text.
+    """Render a Table to ASCII text.
 
     Args:
-      table: An instance of a TableReport.
+      table: An instance of a Table.
       column_interspace: A string to render between the columns as spacer.
       formats: An optional dict of column name to a format character that gets
         inserted in a format string specified, like this (where '<char>' is):
@@ -200,10 +200,10 @@ def table_to_text(table,
 
 
 def table_to_csv(table, file=None, **kwargs):
-    """Render a TableReport to a CSV file.
+    """Render a Table to a CSV file.
 
     Args:
-      table: An instance of a TableReport.
+      table: An instance of a Table.
       file: A file object to write to. If no object is provided, this
         function returns a string.
       **kwargs: Optional arguments forwarded to csv.writer().
@@ -247,7 +247,7 @@ def compute_table_widths(rows):
     return column_widths
 
 
-def render_table(table_, output, format):
+def render_table(table_, output, output_format, css_id=None, css_class=None):
     """Render the given table to the output file object in the requested format.
 
     The table gets written out to the 'output' file.
@@ -255,19 +255,31 @@ def render_table(table_, output, format):
     Args:
       table_: An instance of Table.
       output: A file object you can write to.
-      format: A string, the format to write the table to, either 'csv', 'txt' or 'html'.
+      output_format: A string, the format to write the table to, either 'csv', 'txt' or 'html'.
+      css_id: A string, an optional CSS id for the table object (only used for HTML).
+      css_class: A string, an optional CSS class for the table object (only used for HTML).
     """
-    # Render the table.
-    if format == 'txt':
+    if output_format in ('txt', 'text'):
         text = table_to_text(table_, "  ", formats={'*': '>', 'account': '<'})
         output.write(text)
 
-    elif format == 'csv':
+    elif output_format in ('csv',):
         table_to_csv(table_, file=output)
 
-    elif format == 'html':
-        output.write('<html>\n')
-        output.write('<body>\n')
-        table_to_html(table_, file=output)
-        output.write('</body>\n')
-        output.write('</html>\n')
+    elif output_format in ('htmldiv', 'html'):
+
+        if output_format == 'html':
+            output.write('<html>\n')
+            output.write('<body>\n')
+
+        output.write('<div id="{}">\n'.format(css_id) if css_id else '<div>\n')
+        classes = [css_class] if css_class else None
+        table_to_html(table_, file=output, classes=classes)
+        output.write('</div>\n')
+
+        if output_format == 'html':
+            output.write('</body>\n')
+            output.write('</html>\n')
+
+    else:
+        raise NotImplementedError("Unsupported format: {}".format(output_format))

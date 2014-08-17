@@ -8,6 +8,7 @@ import urllib.request
 import lxml.html
 
 from beancount.web import web
+from beancount.core import realization
 from beancount.utils import test_utils
 
 
@@ -50,7 +51,7 @@ def find_links(html_text):
         yield a.attrib['href']
 
 
-def scrape(filename, predicate, port, quiet=True):
+def scrape(filename, predicate, port, quiet=True, extra_args=None):
     url_format = 'http://localhost:{}{{}}'.format(port)
 
     # Create a set of valid arguments to run the app.
@@ -59,7 +60,11 @@ def scrape(filename, predicate, port, quiet=True):
     group.set_defaults(filename=filename,
                        port=port,
                        quiet=quiet)
-    args = argparser.parse_args(args=[filename])
+
+    all_args = [filename]
+    if extra_args:
+        all_args.extend(extra_args)
+    args = argparser.parse_args(args=all_args)
 
     thread = web.thread_server_start(args)
 
@@ -90,13 +95,22 @@ class TestWeb(unittest.TestCase):
                              'examples', 'basic', 'basic.beancount')
         scrape(filename, self.check_page_okay, test_utils.get_test_port())
 
+    def test_scrape_basic_view(self):
+        filename = path.join(test_utils.find_repository_root(__file__),
+                             'examples', 'basic', 'basic.beancount')
+        scrape(filename, self.check_page_okay, test_utils.get_test_port(),
+               extra_args=['--view', 'year/2013'])
+
     def test_scrape_starterkit(self):
         filename = path.join(test_utils.find_repository_root(__file__),
                              'examples', 'starterkit', 'starter.beancount')
         scrape(filename, self.check_page_okay, test_utils.get_test_port())
 
-    def __test_scrape_thisisreal(self):
-        filename = path.join(os.environ['HOME'],
-                             'r/q/office/accounting/blais.beancount')
-        if path.exists(filename):
-            scrape(filename, self.check_page_okay, test_utils.get_test_port())
+    def test_scrape_environ_var_ledger(self):
+        try:
+            filename = os.environ['TEST_LEDGER']
+        except KeyError:
+            raise unittest.SkipTest()
+        if not path.exists(filename):
+            raise unittest.SkipTest()
+        scrape(filename, self.check_page_okay, test_utils.get_test_port())

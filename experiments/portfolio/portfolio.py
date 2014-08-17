@@ -9,7 +9,7 @@ from beancount.core.amount import D
 from beancount import loader
 from beancount.ops import prices
 from beancount.ops import holdings
-from beancount.reports import rholdings
+from beancount.reports import holdings_reports
 from beancount.parser import options
 
 
@@ -165,7 +165,7 @@ def load(holdings_filename, prices_filename, currency):
 
     # Load the holdings list.
     # Generate with "bean-query LEDGER print_prices"
-    mixed_holdings_list = list(rholdings.load_from_csv(open(holdings_filename)))
+    mixed_holdings_list = list(holdings_reports.load_from_csv(open(holdings_filename)))
 
     # Convert all the amounts to a common currency (otherwise summing market
     # values makes no sense).

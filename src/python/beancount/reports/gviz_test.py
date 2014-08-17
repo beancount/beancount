@@ -3,7 +3,7 @@ import datetime
 import random
 import re
 
-from beancount.web import gviz
+from beancount.reports import gviz
 
 
 class TestGviz(unittest.TestCase):
