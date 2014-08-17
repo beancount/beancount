@@ -36,7 +36,6 @@ class TestLexer(unittest.TestCase):
           Other:Bank
           USD
           GOOG
-          TEST-3
           TEST_3
           "Nice dinner at Mermaid Inn"
           ""
@@ -64,29 +63,26 @@ class TestLexer(unittest.TestCase):
             ('EOL', 7, '\n', None),
             ('CURRENCY', 7, 'GOOG', 'GOOG'),
             ('EOL', 8, '\n', None),
-            ('CURRENCY', 8, 'TEST', 'TEST'),
-            ('NUMBER', 8, '-3', D('-3')),
+            ('CURRENCY', 8, 'TEST_3', 'TEST_3'),
             ('EOL', 9, '\n', None),
-            ('CURRENCY', 9, 'TEST_3', 'TEST_3'),
+            ('STRING', 9, '"Nice dinner at Mermaid Inn"', 'Nice dinner at Mermaid Inn'),
             ('EOL', 10, '\n', None),
-            ('STRING', 10, '"Nice dinner at Mermaid Inn"', 'Nice dinner at Mermaid Inn'),
+            ('STRING', 10, '""', ''),
             ('EOL', 11, '\n', None),
-            ('STRING', 11, '""', ''),
+            ('NUMBER', 11, '123', D('123')),
             ('EOL', 12, '\n', None),
-            ('NUMBER', 12, '123', D('123')),
+            ('NUMBER', 12, '123.45', D('123.45')),
             ('EOL', 13, '\n', None),
-            ('NUMBER', 13, '123.45', D('123.45')),
+            ('NUMBER', 13, '123.456789', D('123.456789')),
             ('EOL', 14, '\n', None),
-            ('NUMBER', 14, '123.456789', D('123.456789')),
+            ('NUMBER', 14, '-123', D('-123')),
             ('EOL', 15, '\n', None),
-            ('NUMBER', 15, '-123', D('-123')),
+            ('NUMBER', 15, '-123.456789', D('-123.456789')),
             ('EOL', 16, '\n', None),
-            ('NUMBER', 16, '-123.456789', D('-123.456789')),
+            ('TAG', 16, '#sometag123', 'sometag123'),
             ('EOL', 17, '\n', None),
-            ('TAG', 17, '#sometag123', 'sometag123'),
+            ('LINK', 17, '^sometag123', 'sometag123'),
             ('EOL', 18, '\n', None),
-            ('LINK', 18, '^sometag123', 'sometag123'),
-            ('EOL', 19, '\n', None),
             ], tokens)
 
     @lex_tokens
@@ -102,6 +98,20 @@ class TestLexer(unittest.TestCase):
             ('INDENT', 2, '  ', None),
             ('ACCOUNT', 2, 'Equity:Something', 'Equity:Something'),
             ('EOL', 3, '\n', None),
+            ], tokens)
+
+    @lex_tokens
+    def test_comma_currencies(self, tokens, errors):
+        """\
+          USD,CAD,AUD
+        """
+        self.assertEqual([
+            ('CURRENCY', 1, 'USD', 'USD'),
+            ('COMMA', 1, ',', None),
+            ('CURRENCY', 1, 'CAD', 'CAD'),
+            ('COMMA', 1, ',', None),
+            ('CURRENCY', 1, 'AUD', 'AUD'),
+            ('EOL', 2, '\n', None),
             ], tokens)
 
     @lex_tokens
@@ -142,6 +152,16 @@ class TestLexer(unittest.TestCase):
             ], tokens)
 
     @lex_tokens
+    def test_currency_dash(self, tokens, errors):
+        """\
+          TEST-DA
+        """
+        self.assertEqual(1, len(errors))
+        # FIXME: Improve the tokenizer not to return 'TEST' here.
+        # self.assertEqual([('ERROR', 1, 'TEST-DA', None),
+        #                   ('EOL', 2, '\n', None)], tokens)
+
+    @lex_tokens
     def test_bad_date(self, tokens, errors):
         """\
           2013-12-98
@@ -163,4 +183,15 @@ class TestLexer(unittest.TestCase):
         # print()
         # for tk in tokens: print(tk)
         # print()
-        self.assertEqual([], tokens)
+        # self.assertEqual([], tokens)
+
+    @lex_tokens
+    def test_single_letter_account(self, tokens, errors):
+        """\
+          Assets:A
+        """
+        # FIXME: This should return a single error. Fix the lexer for it.
+        # print()
+        # print()
+        # for tk in tokens: print(tk)
+        # print()

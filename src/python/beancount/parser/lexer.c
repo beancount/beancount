@@ -1165,10 +1165,11 @@ YY_RULE_SETUP
     return LINK;
 }
 	YY_BREAK
-/* Default rule. This should never be reached. */
+/* Default rule. This should never be reached.
+    Consume all the non-whitespace characters for the error token. */
 case 33:
 YY_RULE_SETUP
-#line 187 "src/python/beancount/parser/lexer.l"
+#line 188 "src/python/beancount/parser/lexer.l"
 {
     yylval->pyobj = BUILD("ERROR", "s", yytext);
     return ERROR;
@@ -1176,10 +1177,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 194 "src/python/beancount/parser/lexer.l"
+#line 195 "src/python/beancount/parser/lexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1183 "src/python/beancount/parser/lexer.c"
+#line 1184 "src/python/beancount/parser/lexer.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2185,7 +2186,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 194 "src/python/beancount/parser/lexer.l"
+#line 195 "src/python/beancount/parser/lexer.l"
 
 
 /*--------------------------------------------------------------------------------------*/

@@ -183,8 +183,9 @@ option		{ return OPTION; }
     return LINK;
 }
 
- /* Default rule. This should never be reached. */
-.	{
+ /* Default rule. This should never be reached.
+    Consume all the non-whitespace characters for the error token. */
+.			{
     yylval->pyobj = BUILD("ERROR", "s", yytext);
     return ERROR;
 }
