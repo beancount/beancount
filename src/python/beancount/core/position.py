@@ -230,7 +230,7 @@ class Position:
     def from_string(string):
         """Create a position from a string specification.
 
-        This is a miniature parser used for testing.
+        This is a miniature parser used for building tests.
 
         Args:
           string: A string of <number> <currency> with an optional {<number>
@@ -238,8 +238,8 @@ class Position:
         Returns:
           A new instance of Position.
         """
-        mo = re.match(r'\s*([-+]?[0-9.]+)\s+([A-Z]+)'
-                      '(\s+{([-+]?[0-9.]+)\s+([A-Z]+)'
+        mo = re.match(r'\s*([-+]?[0-9.]+)\s+([A-Z][A-Z0-9\'._]+)'
+                      '(\s+{([-+]?[0-9.]+)\s+([A-Z][A-Z0-9\'._]+)'
                       '(\s*/\s*(\d\d\d\d-\d\d-\d\d))?})?', string)
         if not mo:
             raise ValueError("Invalid string for position: '{}'".format(string))

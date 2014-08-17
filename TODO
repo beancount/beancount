@@ -141,19 +141,11 @@ beancount: TODO
 
 ** Parser-Related Minor Bugs
 
-  - You need to make the default rule consume the entire token, like this:
-        [^ \t\n]+ {
-    instead of consuming a single char.
-
-  - A date with an extra number also parses silently, what's up with that?
+  - A date with an extra number parses silently, what's up with that?
       2013-12-228 *
-    Ha! This parsses as DATE(2013-12-22), NUMBER(8).
+    Ha! This parses as DATE(2013-12-22), NUMBER(8).
     We need to add word boundary constraints to our lexer!
     How do we do that? (I'm offline, need flex docs...)
-
-  - Because of the two errors above, we may end up writing our own hand-crafted
-    tokenizer instead of flex, which is not a big deal, really.
-
 
   - Inserting a cost of "0 somethings" results in DivisionByZero errors. Simply
     disallow using a cost of 0, or a negative number, this should not be
@@ -171,17 +163,30 @@ beancount: TODO
 
     Other examples that bring up this problem (pre eeea4b4d5605):
 
-      This parses wrong and silently--fix it:  2014-04-20 * "Money from CC"
-    ^610fa7f17e7a #trip-montreal-april-2014
+      This parses wrong and silently--fix it:
 
-      This works okay:  2014-04-20 * "Money from CC" #trip-montreal-april-2014
-    ^610fa7f17e7a
+        2014-04-20 * "Money from CC" ^610fa7f17e7a #trip-montreal-april-2014
+
+      This works okay:
+
+        2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
+
 
   - This easy mistake, disables a lot of entries:
 
         2014-02-02 note Assets:Temporary "Bla bla""
 
     Find a way to detect too long strings and perhaps barf on it.
+
+
+** Lexer: Default Rule to Chomp Remaining
+
+  The following issues would be dealt by fixing the lexer default rule.
+  Should we hand-craft our own tokenizer? Seems reasonable to me.
+
+  - You need to make the default rule consume the entire token, like this:
+        [^ \t\n]+ {
+    instead of consuming a single char.
 
   - This:
 
@@ -231,13 +236,6 @@ beancount: TODO
     docstring on the setUp() method instead; this works well:
 
       @parser.parsedoc def setUp(self, entries, _, __):
-
-
-** Renames and Such
-
-  - Remove support for legacy, PIPE, Not needed.
-
-  - Implement Amount.from_string() to be consistent with position and inventory?
 
 
 ** Unsure
@@ -1395,6 +1393,15 @@ beancount: TODO
 
   - (parser) Support enabling flex debugging in beancount.core._parser.parse(),
     using "yyset_debug(int bdebug)".
+
+
+  - Interesting idea: Maybe instead of returning errors, "errors" could simply
+    become "Error" directives and be inserted into the flow, and picked up by
+    the various rendering routines in different ways?!?  I love this. One less
+    thing to return. Hmmm ponder it seriously.
+
+  - Remove support for legacy, PIPE, Not needed.
+
 
 
 

@@ -18,6 +18,7 @@ About Decimal usage:
 
 """
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
+import re
 
 # Attempt to import a fast Decimal implementation; if we can't, fall back on the
 # slower pure-Python Decimal object. Note that because of the small and
@@ -148,6 +149,23 @@ class Amount:
           An integer, the hash for this amount."""
         return hash((self.number, self.currency))
 
+    @staticmethod
+    def from_string(string):
+        """Create an amount from a string.
+
+        This is a miniature parser used for building tests.
+
+        Args:
+          string: A string of <number> <currency>.
+        Returns:
+          A new instance of Amount.
+        """
+        mo = re.match(r'\s*([-+]?[0-9.]+)\s+([A-Z][A-Z0-9\'._]+)', string)
+        if not mo:
+            raise ValueError("Invalid string for amount: '{}'".format(string))
+        number, currency = mo.group(1, 2)
+        return Amount(D(number), currency)
+
 
 # Note: We don't implement operators on Amount here in favour of the more
 # explicit functional style. This should all be LISP anyhow. I like dumb data
@@ -207,3 +225,6 @@ def amount_sub(amount1, amount2):
             "Unmatching currencies for operation on {} and {}".format(
                 amount1, amount2))
     return Amount(amount1.number - amount2.number, amount1.currency)
+
+
+from_string = Amount.from_string

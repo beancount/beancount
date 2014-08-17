@@ -45,6 +45,22 @@ class TestAmount(unittest.TestCase):
         amount = Amount('100,034.02', 'USD')
         self.assertEqual(amount.number, Decimal('100034.02'))
 
+    def test_fromstring(self):
+        amount1 = Amount(Decimal('100'), 'USD')
+        amount2 = Amount.from_string('100 USD')
+        self.assertEqual(amount1, amount2)
+
+        Amount.from_string('  100.00 USD  ')
+
+        with self.assertRaises(ValueError):
+            Amount.from_string('100')
+
+        with self.assertRaises(ValueError):
+            Amount.from_string('USD')
+
+        with self.assertRaises(ValueError):
+            Amount.from_string('100.00 U')
+
     def test_tostring(self):
         amount = Amount('100,034.02', 'USD')
         self.assertTrue(re.search(r'\.\d\d\b', str(amount)))
