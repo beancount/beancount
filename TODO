@@ -207,10 +207,6 @@ beancount: TODO
     /home/blais/p/beancount/examples/basic/basic.beancount:438:  Lexer error;
     erroneous token: c
 
-  - 2014-05-42 causes an uncaught ValueError and crashes on Mac OS X. Surely we
-    can do better: catch all exceptions from the top-level handler and report
-    errors nicely.
-
 
 ** Cleanup Tasks
 
