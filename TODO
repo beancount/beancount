@@ -1,6 +1,12 @@
 -*- mode: org -*-
 beancount: TODO
 * Requirements for Shipping 1.0
+** Branches
+
+  - Complete report_consolidation
+  - Merge print_holdings, add new holdings function as render_beancount()
+  - Complete and merge sampled_quantization
+
 ** Complete 100% Coverage for Unit Tests
 
   - Validation: A Balance failure currently triggers two errors, one from
@@ -295,13 +301,6 @@ beancount: TODO
 
   - Implement Amount.from_string() to be consistent with position and inventory?
 
-  - For .source, instead of '<...>' for the source, we should use a scheme:...,
-    like file://..., and plugin:beancount.... . This makes a lot more sense. Do
-    this now before the release.
-
-  - 'Source' should just be a string. For the file:// case, just add the line
-    number as part of the URL, at the end. file:///path/to/ledger.beancount:182
-
 
 ** Unsure
 
@@ -331,6 +330,28 @@ beancount: TODO
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
+
+  - Figure out how to disable googleapis fonts when on a very slow connection.
+    I'd like to enable the fonts, but if they cannot be fetched quickly, or
+    cached, this should be disabled.
+
+
+  - New plugin: no transactions on accounts with children: "I like the idea of
+    creating a strict mode, e.g., using a Beancount plugin that one can load in
+    order to turn on "strict" more, that would simply look for transactions with
+    postings to accounts that have children and issue corresponding errors. If
+    you like to be strict and avoid this, you would insert this in your input
+    file:
+
+      option "plugin" "beancount.plugins.empty_parents"
+
+
+
+  - Refine 'source' attribute on all directives: For .source, instead of '<...>'
+    for the filename, we should use a scheme:..., like file://..., and
+    plugin:beancount.... . This makes a lot more sense. The lineno still needs
+    to be separate, we need that for sorting and prefer not to have it part of
+    the string.
 
 
   - Add an option for spacing in the revamped reports.

@@ -15,7 +15,6 @@ from beancount.core.inventory import Inventory
 from beancount.core import amount
 from beancount.core import account_types
 from beancount.parser import parsedoc
-from beancount.loader import loaddoc
 from beancount.utils import test_utils
 
 
@@ -175,7 +174,7 @@ class TestRealGetters(unittest.TestCase):
 
 class TestRealization(unittest.TestCase):
 
-    @loaddoc
+    @parsedoc
     def test_postings_by_account(self, entries, errors, _):
         """
         2012-01-01 open Expenses:Restaurant
@@ -208,7 +207,7 @@ class TestRealization(unittest.TestCase):
 
         2014-01-01 close Liabilities:CreditCard
         """
-        self.assertEqual(1, len(errors))
+        self.assertEqual(0, len(errors))
 
         postings_map = realization.postings_by_account(entries)
         self.assertTrue(isinstance(postings_map, dict))
@@ -226,14 +225,14 @@ class TestRealization(unittest.TestCase):
 
         self.assertEqual([data.Open,
                           data.Pad,
-                          data.Posting, data.Posting, data.Posting,
+                          data.Posting, data.Posting, # data.Posting,
                           data.Note,
                           data.Document,
                           data.Balance,
                           data.Close],
                          list(map(type, postings_map['Liabilities:CreditCard'])))
 
-        self.assertEqual([data.Open, data.Pad, data.Posting],
+        self.assertEqual([data.Open, data.Pad],
                          list(map(type, postings_map['Equity:Opening-Balances'])))
 
     def test_realize_empty(self):
@@ -268,7 +267,7 @@ class TestRealization(unittest.TestCase):
             real_account = realization.get(real_root, account_name)
             self.assertEqual(account_name, real_account.account)
 
-    @loaddoc
+    @parsedoc
     def test_realize(self, entries, errors, _):
         """
         2012-01-01 open Expenses:Restaurant
@@ -391,7 +390,7 @@ class TestRealFilter(unittest.TestCase):
 
 class TestRealOther(test_utils.TestCase):
 
-    @loaddoc
+    @parsedoc
     def test_get_postings(self, entries, errors, _):
         """
         2012-01-01 open Assets:Bank:Checking
@@ -434,9 +433,9 @@ class TestRealOther(test_utils.TestCase):
             (data.Open, 'Liabilities:CreditCard', None),
             (data.Open, 'Equity:Opening-Balances', None),
             (data.Pad, 'Assets:Bank:Checking', None),
-            (data.Posting, 'Assets:Bank:Checking', '621.66'),
+            #(data.Posting, 'Assets:Bank:Checking', '621.66'),
             (data.Pad, 'Assets:Bank:Checking', None),
-            (data.Posting, 'Equity:Opening-Balances', '-621.66'),
+            #(data.Posting, 'Equity:Opening-Balances', '-621.66'),
             (data.Posting, 'Assets:Bank:Checking', '-11.11'),
             (data.Posting, 'Expenses:Restaurant', '11.11'),
             (data.Posting, 'Assets:Bank:Checking', '-22.22'),
@@ -490,7 +489,7 @@ class TestRealOther(test_utils.TestCase):
         ra3['Sub'] = RealAccount('Assets:US:Bank:Checking:Sub')
         self.assertNotEqual(root1, root3)
 
-    @loaddoc
+    @parsedoc
     def test_iterate_with_balance(self, entries, _, __):
         """
         2012-01-01 open Assets:Bank:Checking
@@ -558,7 +557,7 @@ class TestRealOther(test_utils.TestCase):
         with self.assertRaises(AssertionError):
             list(realization.iterate_with_balance(postings))
 
-    @loaddoc
+    @parsedoc
     def test_dump(self, entries, _, __):
         """
         2012-01-01 open Assets:Bank1:Checking
@@ -602,7 +601,7 @@ class TestRealOther(test_utils.TestCase):
             ], [(first_line, cont_line)
                 for first_line, cont_line, _ in lines])
 
-    @loaddoc
+    @parsedoc
     def test_dump_balances(self, entries, _, __):
         """
         2012-01-01 open Expenses:Restaurant
@@ -641,7 +640,7 @@ class TestRealMisc(unittest.TestCase):
 
 class TestFindLastActive(unittest.TestCase):
 
-    @loaddoc
+    @parsedoc
     def test_find_last_active_posting(self, entries, _, __):
         """
         2012-01-01 open Assets:Target

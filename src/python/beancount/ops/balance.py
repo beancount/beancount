@@ -92,9 +92,9 @@ def check(entries, options_map):
                     BalanceError(entry.source,
                                  ("Balance failed for '{}': "
                                   "expected {} != accumulated {} ({} {})").format(
-                                      entry.account, balance_amount, expected_amount,
-                                      diff_amount,
-                                      'too much' if diff_amount else 'too little'),
+                                      entry.account, expected_amount, balance_amount,
+                                      abs(diff_amount.number),
+                                      'too much' if diff_amount.number > 0 else 'too little'),
                                  entry))
 
                 # Substitute the entry by a failing entry, with the diff_amount
