@@ -51,10 +51,10 @@ def add_implicit_prices(entries, unused_options_map):
 
                 # Add prices when they're explicitly specified on a posting. An
                 # explicitly specified price may occur in a conversion, e.g.
-                #      Asset:Account    100 USD @ 1.10 CAD
+                #      Assets:Account    100 USD @ 1.10 CAD
                 # or, if a cost is also specified, as the current price of the
                 # underlying instrument, e.g.
-                #      Asset:Account    100 GOOG {564.20} @ {581.97} USD
+                #      Assets:Account    100 GOOG {564.20} @ {581.97} USD
                 if posting.price is not None:
                     price_entry = Price(entry.source, entry.date,
                                         posting.position.lot.currency,
@@ -63,7 +63,7 @@ def add_implicit_prices(entries, unused_options_map):
                 # Add costs, when we're not matching against an existing
                 # position. This happens when we're just specifying the cost,
                 # e.g.
-                #      Asset:Account    100 GOOG {564.20}
+                #      Assets:Account    100 GOOG {564.20}
                 elif posting.position.lot.cost is not None and not reducing:
                     price_entry = Price(entry.source, entry.date,
                                         posting.position.lot.currency,

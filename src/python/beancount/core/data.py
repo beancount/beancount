@@ -21,7 +21,7 @@ from .account import has_component
 # An "open account" directive.
 #
 # Attributes:
-#   account: An Account, the account that is being opened.
+#   account: A string, the name of the account that is being opened.
 #   currencies: A list of strings, currencies that are allowed in this account.
 #     May be None, in which case it means that there are no restrictions on which
 #     currencies may be stored in this account.
@@ -30,7 +30,7 @@ Open = namedtuple('Open', 'source date account currencies')
 # A "close account" directive.
 #
 # Attributes:
-#   account: An Account, the account that is being closed.
+#   account: A string, the name of the account that is being closed.
 Close = namedtuple('Close', 'source date account')
 
 # A "pad this account with this other account" directive. This directive
@@ -40,9 +40,9 @@ Close = namedtuple('Close', 'source date account')
 # in case you need it, while you're enterering past history into your Ledger.
 #
 # Attributes:
-#   account: The Account which needs to be filled.
-#   source_account: The Account which is used to debit from in order to fill
-#     'account'.
+#   account: A string, the name of the account which needs to be filled.
+#   source_account: A string, the anem of the account which is used to debit from
+#     in order to fill 'account'.
 Pad = namedtuple('Pad', 'source date account source_account')
 
 # A "check the balance of this account" directive. This directive asserts that
@@ -53,7 +53,7 @@ Pad = namedtuple('Pad', 'source date account source_account')
 # transactions correctly.
 #
 # Attributes:
-#   account: The Account whose balance to check at the given date.
+#   account: A string, the account whose balance to check at the given date.
 #   amount: An Amount, the number of units of the given currency you're
 #     expecting 'account' to have at this date.
 #   diff_amount: None if the balance check succeeds. This value is set to
@@ -88,8 +88,8 @@ Transaction = namedtuple('Transaction',
 # file, which does not get parsed and stored.
 #
 # Attributes:
-#   account: An Account which the note is to be attached to. This is never None,
-#     notes always have an account they correspond to.
+#   account: A string, the account which the note is to be attached to. This is
+#     never None, notes always have an account they correspond to.
 #   comment: A free-form string, the text of the note. This can be logn if you
 #     want it to.
 Note = namedtuple('Note', 'source date account comment')
@@ -147,7 +147,8 @@ Price = namedtuple('Price', 'source date currency amount')
 # on the file hierarchy, and you can get them by parsing the list of entries.
 #
 # Attributes:
-#   account: An Account, which the statement or document is associated with.
+#   account: A string, the accountwhich the statement or document is associated
+#     with.
 #   filename: The absolute filename of the document file.
 Document = namedtuple('Document', 'source date account filename')
 
@@ -182,7 +183,7 @@ Source = namedtuple('Source', 'filename lineno')
 #     entries and though it creates a circular dependency between Transaction
 #     and Posting, it allows us to easily resolve the lists of Postings to their
 #     transactions for rendering.
-#   account: An Account, the account that is modified by this posting.
+#   account: A string, the account that is modified by this posting.
 #   position: An instance of Position (see position.py), the amount and lot that
 #     is to be posted to this leg's account.
 #   price: An instance of Amount, the price at which the position took place, or
@@ -217,10 +218,10 @@ def create_simple_posting(entry, account, number, currency):
     """Create a simple posting on the entry, with just a number and currency (no cost).
 
     Args:
-      entry: the entry instance to add the posting to
-      account: an instance of Account to use on the posting
-      number: a Decimal number or string to use in the posting's Amount
-      currency: a string, the currency for the Amount
+      entry: The entry instance to add the posting to.
+      account: A string, the account to use on the posting.
+      number: A Decimal number or string to use in the posting's Amount.
+      currency: A string, the currency for the Amount.
     Returns:
       An instance of Posting, and as a side-effect the entry has had its list of
       postings modified with the new Posting instance.
@@ -245,12 +246,12 @@ def create_simple_posting_with_cost(entry, account,
     """Create a simple posting on the entry, with just a number and currency (no cost).
 
     Args:
-      entry: the entry instance to add the posting to
-      account: an instance of Account to use on the posting
-      number: a Decimal number or string to use in the posting's Amount
-      currency: a string, the currency for the Amount
-      cost_number: a Decimal number or string to use for the posting's cost Amount
-      cost_currency: a string, the currency for the cost Amount
+      entry: The entry instance to add the posting to.
+      account: A string, the account to use on the posting.
+      number: A Decimal number or string to use in the posting's Amount.
+      currency: A string, the currency for the Amount.
+      cost_number: A Decimal number or string to use for the posting's cost Amount.
+      cost_currency: a string, the currency for the cost Amount.
     Returns:
       An instance of Posting, and as a side-effect the entry has had its list of
       postings modified with the new Posting instance.

@@ -201,11 +201,11 @@ class Builder(lexer.LexBuilder):
         """Process an open directive.
 
         Args:
-          filename: the current filename.
-          lineno: the current line number.
-          date: a datetime object.
-          account: an Account instance.
-          currencies: a list of constraint currencies.
+          filename: The current filename.
+          lineno: The current line number.
+          date: A datetime object.
+          account: A string, the name of the account.
+          currencies: A list of constraint currencies.
         Returns:
           A new Open object.
         """
@@ -216,10 +216,10 @@ class Builder(lexer.LexBuilder):
         """Process a close directive.
 
         Args:
-          filename: the current filename.
-          lineno: the current line number.
-          date: a datetime object.
-          account: an Account instance.
+          filename: The current filename.
+          lineno: The current line number.
+          date: A datetime object.
+          account: A string, the name of the account.
         Returns:
           A new Close object.
         """
@@ -230,11 +230,11 @@ class Builder(lexer.LexBuilder):
         """Process a pad directive.
 
         Args:
-          filename: the current filename.
-          lineno: the current line number.
-          date: a datetime object.
-          account: an Account instance, account to be padded.
-          source_account: an Account instance, account to pad from.
+          filename: The current filename.
+          lineno: The current line number.
+          date: A datetime object.
+          account: A string, the account to be padded.
+          source_account: A string, the account to pad from.
         Returns:
           A new Pad object.
         """
@@ -249,11 +249,11 @@ class Builder(lexer.LexBuilder):
         or failed.
 
         Args:
-          filename: the current filename.
-          lineno: the current line number.
-          date: a datetime object.
-          account: an Account instance.
-          amount: the expected amount, to be checked.
+          filename: The current filename.
+          lineno: The current line number.
+          date: A datetime object.
+          account: A string, the account to balance.
+          amount: The expected amount, to be checked.
         Returns:
           A new Balance object.
         """
@@ -295,11 +295,11 @@ class Builder(lexer.LexBuilder):
         """Process a note directive.
 
         Args:
-          filename: the current filename.
-          lineno: the current line number.
-          date: a datetime object.
-          account: an Account instance.
-          comment: a str, the note's comments contents.
+          filename: The current filename.
+          lineno: The current line number.
+          date: A datetime object.
+          account: A string, the account to attach the note to.
+          comment: A str, the note's comments contents.
         Returns:
           A new Note object.
         """
@@ -310,11 +310,11 @@ class Builder(lexer.LexBuilder):
         """Process a document directive.
 
         Args:
-          filename: the current filename.
-          lineno: the current line number.
-          date: a datetime object.
-          account: an Account instance.
-          document_filename: a str, the name of the document file.
+          filename: The current filename.
+          lineno: The current line number.
+          date: A datetime object.
+          account: A string, the account the document relates to.
+          document_filename: A str, the name of the document file.
         Returns:
           A new Document object.
         """
@@ -329,12 +329,12 @@ class Builder(lexer.LexBuilder):
         """Process a posting grammar rule.
 
         Args:
-          account: an Account instance for the posting.
-          position: an instance of Position from the grammar rule.
+          account: A string, the account of the posting.
+          position: An instance of Position from the grammar rule.
           price: Either None, or an instance of Amount that is the cost of the position.
-          istotal: a bool, True if the price is for the total amount being parsed, or
+          istotal: A bool, True if the price is for the total amount being parsed, or
                    False if the price is for each lot of the position.
-          flag: a str, one-character, the flag associated with this posting.
+          flag: A string, one-character, the flag associated with this posting.
         Returns:
           A new Posting object, with no parent entry.
         """

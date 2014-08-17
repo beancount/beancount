@@ -65,7 +65,7 @@ class LexBuilder(object):
         Args:
           account_name: a str, the valid name of an account.
         Returns:
-          A new Account object.
+          A string, the naem of the account.
         """
         # Check account name validity.
         if not self.account_regexp.match(account_name):

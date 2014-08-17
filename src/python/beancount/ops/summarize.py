@@ -241,7 +241,7 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
 
     Args:
       entries: A list of entries.
-      conversion_account: The Account object to book against.
+      conversion_account: A string, the account to book against.
       conversion_currency: A string, the transfer currency to use for zero prices
         on the conversion entry.
       date: The date before which to insert the conversion entry. The new

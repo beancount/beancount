@@ -16,7 +16,7 @@ class GetAccounts:
         Args:
           entries: A list of directive instances.
         Returns:
-          A list of Account instances.
+          A list of account name strings.
         """
         accounts = set()
         for entry in entries:
@@ -34,7 +34,7 @@ class GetAccounts:
         Args:
           entry: A directive instance.
         Returns:
-          A set of Account instances.
+          A set of account name strings.
         """
         method = getattr(self, entry.__class__.__name__)
         return set(method(entry))
@@ -229,11 +229,9 @@ def get_account_open_close(entries):
     Args:
       entries: A list of directive instances.
     Returns:
-      A map of Account instance to pairs of (open-directive,
-      close-directive) tuples.
-
+      A map of account name strings to pairs of (open-directive, close-directive)
+      tuples.
     """
-
     # A dict of account name to (open-entry, close-entry).
     open_close_map = defaultdict(lambda: [None, None])
     for entry in entries:

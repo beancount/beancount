@@ -218,9 +218,6 @@ beancount: TODO
   - Make all imports not import symbols directly, only packages, except where
     performance really, really matters (the parser)
 
-  - Fix all docstrings re. Account instance, artifacts of having had an Account
-    object.
-
   - Configure and run a clean pylint on the entire codebase.
 
   - Add all docstrings with args Google-style.

@@ -1,4 +1,4 @@
-"""Account object.
+"""Functions that operate on account strings.
 
 These account objects are rather simple and dumb; they do not contain the list
 of their associated postings. This is achieved by building a realization; see
