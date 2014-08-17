@@ -229,6 +229,8 @@ beancount: TODO
 
   - Implement an index
 
+  - Integrate "print" version of holdings.
+
   - Add a test for --view option; remove --view option?
 
 
