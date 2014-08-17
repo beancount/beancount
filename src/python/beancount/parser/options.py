@@ -172,7 +172,7 @@ def get_account_types(options):
 
 
 def get_previous_accounts(options):
-    """Return Account objects for the opening, earnings, and conversion accounts.
+    """Return Account objects for the previous earnings, balances and conversion accounts.
 
     Args:
       options: a dict of ledger options.
@@ -193,7 +193,7 @@ def get_previous_accounts(options):
 
 
 def get_current_accounts(options):
-    """Return Account objects for the opening, earnings, and conversion accounts.
+    """Return Account objects for the current earnings and conversion accounts.
 
     Args:
       options: a dict of ledger options.

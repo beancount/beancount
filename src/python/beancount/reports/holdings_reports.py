@@ -1,13 +1,20 @@
 """Generate reports no holdings.
 """
 import csv
+import io
 
 from beancount.core.amount import D
 from beancount.core import amount
 from beancount.core import account
+from beancount.core import data
+from beancount.core import position
+from beancount.core import flags
+from beancount.parser import options
+from beancount.parser import printer
 from beancount.parser import options
 from beancount.ops import prices
 from beancount.ops import holdings
+from beancount.ops import summarize
 from beancount.reports import table
 from beancount.reports import report
 
@@ -62,6 +69,76 @@ RELATIVE_FIELD_SPEC = [
 ] + [
     ('market_value', 'Frac Folio', '{:,.2%}'.format),
 ]
+
+
+def report_holdings_print(entries, options_map):
+    """Generate a printed list of entries that represent the holdings.
+
+    This list includes the latest prices entries as well. This can be used to
+    load a full snapshot of holdings without including the entire history. This
+    is a way of summarizing a balance sheet in a way that filters away history.
+
+    Args:
+      entries: A list of directives.
+      options_map: A dict of parsed options.
+    Returns:
+      A string, the entries to print out.
+
+    """
+    # The entries will be create at the latest date, against an equity account.
+    latest_date = entries[-1].date
+    _, equity_account, _ = options.get_previous_accounts(options_map)
+
+    # Get all the assets.
+    holdings_list, _ = get_assets_holdings(entries, options_map)
+
+    # Create synthetic entries for them.
+    holdings_entries = []
+
+    for index, holding in enumerate(holdings_list):
+        fileloc = data.FileLocation('report_holdings_print', index)
+        entry = data.Transaction(fileloc, latest_date, flags.FLAG_SUMMARIZE,
+                                 None, "", None, None, [])
+
+
+        # Convert the holding to a position.
+        # (FIXME: Move this to a function.)
+        cost = (amount.Amount(holding.cost_number, holding.cost_currency)
+                if holding.cost_number
+                else None)
+        position_ = position.Position(position.Lot(holding.currency, cost, None), holding.number)
+
+        entry.postings.append(data.Posting(entry, holding.account, position_, None, None))
+        entry.postings.append(data.Posting(entry, equity_account, -position_.get_cost_position(), None, None))
+
+        holdings_entries.append(entry)
+
+
+    # Get opening directives for all the accounts.
+    used_accounts = {holding.account for holding in holdings_list}
+    open_entries = summarize.get_open_entries(entries, latest_date)
+    used_open_entries = [entry
+                         for entry in open_entries
+                         if entry.account in used_accounts]
+
+    # FIXME: Why doesn't this appear anywhere... did we forget to add it in?
+    # If so, why doesn't the validation routine warn about it? WTF?
+    fileloc = data.FileLocation('report_holdings_print', -1)
+    used_open_entries.insert(0,
+                             data.Open(fileloc, latest_date, equity_account, None))
+
+
+    # Get the latest price entries.
+    price_entries = prices.get_last_price_entries(entries, None)
+
+
+
+    # FIXME: You have to output the options too.
+    oss = io.StringIO()
+    printer.print_entries(used_open_entries, oss)
+    printer.print_entries(holdings_entries, oss)
+    printer.print_entries(price_entries, oss)
+    return oss.getvalue()
 
 
 def report_holdings(currency, relative, entries, options_map,
