@@ -128,3 +128,14 @@ class TestLexer(unittest.TestCase):
           1.234.00 USD
         """
         self.assertTrue(errors)
+
+    @lex_tokens
+    def test_currency_number(self, tokens, errors):
+        """\
+          555.00 CAD.11
+        """
+        self.assertEqual([
+            ('NUMBER', 1, '555.00', D('555.00')),
+            ('CURRENCY', 1, 'CAD.11', 'CAD.11'),
+            ('EOL', 2, '\n', None),
+            ], tokens)

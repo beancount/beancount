@@ -464,6 +464,28 @@ class TestTransactions(unittest.TestCase):
         check_list(self, errors, [])
 
     @parsedoc
+    def test_zero_units(self, entries, errors, _):
+        """
+          2014-04-20 * "Zero number of units"
+            Assets:Investment         0 GOOG {500.00 USD}
+            Assets:Cash
+        """
+        check_list(self, entries, [Transaction])
+        check_list(self, errors, [])
+        # FIXME: This should ideally raise a proper error. {61581979e3d4}
+
+    @parsedoc
+    def test_zero_costs(self, entries, errors, _):
+        """
+          2014-04-20 * "Like a conversion entry"
+            Assets:Investment         10 GOOG {0 USD}
+            Assets:Cash
+        """
+        check_list(self, entries, [Transaction])
+        check_list(self, errors, [])
+        # FIXME: This should ideally raise a proper error. {61581979e3d4}
+
+    @parsedoc
     def test_imbalance(self, entries, errors, _):
         """
           2014-04-20 * "Busted!"

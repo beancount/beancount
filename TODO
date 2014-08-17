@@ -3,8 +3,6 @@ beancount: TODO
 * Requirements for Shipping 1.0
 ** Branches
 
-  - Complete report_consolidation
-  - Merge print_holdings, add new holdings function as render_beancount()
   - Complete and merge sampled_quantization
 
 ** Complete 100% Coverage for Unit Tests
@@ -147,12 +145,8 @@ beancount: TODO
     disallow using a cost of 0, or a negative number, this should not be
     allowed.
 
-  - Parsing this does not fail; it really should, this is a bug:  "2013-04-01
-    balance Assets:Bank:Checking 555.00 CAD.11"
-
-        @lex_tokens def test_number_curency_number(self, tokens, errors):  """\
-    2013-04-01 balance Assets:Bank:Checking 555.00 CAD.11 """
-    self.assertTrue(errors)
+    * Figure out from DC'es email how to reproduce this. Where did the error
+      occur exactly? {61581979e3d4}
 
   - A date with an extra number also parses silently, what's up with that?
 
@@ -259,10 +253,6 @@ beancount: TODO
 
 ** Unsure
 
-  - Rename "event" to its final name: "register". We don't have to care about
-    the possible confusion with the Ledger report... "register" is a much
-    better name for our concept of "event." "Event" is confusing.
-
   - Differentiate between the concept of "journal" and "register" report: a
     "journal" should include all the postings and no running balance. A
     "register" should by default only render just one account's postings and
@@ -274,8 +264,6 @@ beancount: TODO
     This should probably be done before the release, so that at least the first
     version has some decent console reports, even if the revamp of reports
     comes later on.
-
-
 
 
 ** Documentation / Ongoing
