@@ -3,9 +3,9 @@
   <head>
     <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
 
-    <link href="http://fonts.googleapis.com/css?family=Roboto+Condensed:400italic,700italic,700,400" rel="stylesheet" type="text/css" />
-    <link href="http://fonts.googleapis.com/css?family=Roboto:400italic,700italic,700,400" rel="stylesheet" type="text/css" />
-    <link href='http://fonts.googleapis.com/css?family=Droid+Sans+Mono' rel='stylesheet' type='text/css' />
+    <!-- <link href="http://fonts.googleapis.com/css?family=Roboto+Condensed:400italic,700italic,700,400" rel="stylesheet" type="text/css" /> -->
+    <!-- <link href="http://fonts.googleapis.com/css?family=Roboto:400italic,700italic,700,400" rel="stylesheet" type="text/css" /> -->
+    <!-- <link href='http://fonts.googleapis.com/css?family=Droid+Sans+Mono' rel='stylesheet' type='text/css' /> -->
 
     <link href="/web.css" rel="stylesheet" type="text/css" />
     <title>{{title}}: {{pagetitle}}</title>
@@ -20,11 +20,11 @@
     <!-- The title of the input file, from the 'title' option. -->
     <div id="title">{{title}}{{view_title}}</div>
 
-    <div id="navigation">
+    {{!overlay}}
+
+    <div class="navigation">
       {{!navigation}}
     </div>
-
-    {{!overlay}}
 
     <!-- The title of this page, what information we're displaying. -->
     <h1 id="pagetitle">{{pagetitle}}</h1>

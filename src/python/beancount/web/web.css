@@ -40,11 +40,11 @@ table td {
 
 /* The navigation links. */
 
-div#navigation {
+div.navigation {
     font-size: small;
 }
 
-div#navigation ul {
+div.navigation ul {
     /* margin: 10px 0px 0px 0px; */
     margin-top: 5px;
     /* padding-top: 5px; */
@@ -52,15 +52,21 @@ div#navigation ul {
     /* border: thin solid red; */
 }
 
-div#navigation li {
+div.navigation li {
     display: inline;
     margin: 4px;
 /* font-size: x-small; */
 }
 
-div#navigation li span.ledger-name {
+div.navigation li span.ledger-name {
     margin-left: 1.5em;
     /* font-weight: bold; */
+}
+
+div.navigation#nav-right {
+    /* position: absolute; */
+    /* right: 1.5em; */
+    float: right;
 }
 
 
@@ -362,13 +368,7 @@ div#source pre {
 
 
 /* Overlay */
-
-/* @keyframes fadeaway { */
-/*       0% { opacity: 1; background-color: black; } */
-/*     100% { opacity: 0; background-color: white; } */
-/* } */
-
-#overlay {
+div#overlay {
     left: 3%;
     right: 3%;
     padding: 1em;
@@ -379,13 +379,13 @@ div#source pre {
     opacity: 0.95;
     border: 3px solid black;
     border-radius: 10px;
-
-    /* transition: fadeaway 1s; */
-
-    /* animation: fadeaway 1s; */
-
-    /* animation-name: fadeaway; */
-    /* animation-iteration-count: 1; */
-    /* animation-timing-function: ease-in; */
-    /* animation-duration: 1s; */
 }
+
+/* div#overlay { */
+/*     -webkit-animation: fadeaway 2s; */
+/* } */
+
+/* @-webkit-keyframes fadeaway { */
+/*       0% { opacity: 1;  } */
+/*     100% { opacity: 0;  } */
+/* } */

@@ -175,13 +175,22 @@ def render_overlay():
     Returns:
       A string of HTML for the contents of the errors overlay.
     """
-    formatter = HTMLFormatter(request.app.get_url, leaf_only=False)
-    oss = io.StringIO()
-    oss.write('<div id="overlay">\n')
-    report_ = misc_reports.ErrorReport.from_args(formatter=formatter)
-    report_.render_htmldiv([], app.errors, app.options, oss)
-    oss.write('</div>\n')
-    return oss.getvalue()
+    return '''
+      <div class="navigation" id="nav-right">
+        <ul>
+          <li><a href="{}">Errors</a></li>
+        </ul>
+      </div>'''.format(app.get_url('errors'))
+    # FIXME: Disabled fancy overlay for now, until we figure out how to
+    # smoothly make it fade out.
+    #
+    # formatter = HTMLFormatter(request.app.get_url, leaf_only=False)
+    # oss = io.StringIO()
+    # oss.write('<div id="overlay">\n')
+    # report_ = misc_reports.ErrorReport.from_args(formatter=formatter)
+    # report_.render_htmldiv([], app.errors, app.options, oss)
+    # oss.write('</div>\n')
+    # return oss.getvalue()
 
 
 def render_global(*args, **kw):
