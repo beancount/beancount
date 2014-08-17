@@ -183,12 +183,6 @@ beancount: TODO
 
     Find a way to detect too long strings and perhaps barf on it.
 
-  - Is it possible to specify no flag on a transaction?, e.g.
-
-       2014-07-12 ...
-
-    Does this work? (It would be nice if it did. Make it so.)
-
   - This:
 
       2008-03-01 check Assets:BestBank:Savings 2340.19 USD
@@ -316,6 +310,17 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - (parser) Is it possible to specify no flag on a transaction?, e.g. just the date?
+
+       2014-07-12
+         ..
+
+    Does this work? (It would be nice if it did. Make it so.)
+    We should change the grammar so that the flag is part of the txn_fields.
+    This is elegant: basically, instead of the flag taking the place of the
+    transaction, the 'txn' keyword just becomes optional. That's it. DO THIS!
 
 
   - (parser) Should we disallow periods in currency names? It allows for weird
