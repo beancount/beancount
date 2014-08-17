@@ -227,22 +227,9 @@ beancount: TODO
   using that report generation code too, and that each of its pages will
   basically be housing the HTML version of each report.
 
-  - Move web pages to reports generation:
-
-      errors
-
   - Implement an index
 
-  - Implement all the missing global pages, or remove them. The web interface
-    should be tight, no links to "Not Implemented" pages. There aren't many left
-    anyway.
-
-  - IMPORTANT AND URGENT! All errors should be displayed in an overlay; proper
-    error handling and display for the web interface is not optional. This needs
-    to be done before shipping.
-
-
-  - Add a test for --view option.
+  - Add a test for --view option; remove --view option?
 
 
 ** Cleanup Tasks
@@ -359,6 +346,11 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - (web) All errors should be displayed in an overlay; proper error handling
+    and display for the web interface is not optional. This needs to be done
+    before shipping.
 
 
   - Figure out how to disable googleapis fonts when on a very slow connection.
