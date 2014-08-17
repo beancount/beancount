@@ -54,11 +54,19 @@ class TestParserEntryTypes(unittest.TestCase):
         check_list(self, entries, [Transaction])
 
     @parsedoc
-    def test_entry_check(self, entries, _, __):
+    def test_entry_balance(self, entries, _, __):
         """
           2013-05-18 balance Assets:US:BestBank:Checking  200 USD
         """
         check_list(self, entries, [Balance])
+
+    @parsedoc
+    def test_entry_balance_with_cost(self, entries, errors, __):
+        """
+          2013-05-18 balance Assets:Investments  10 MSFT {45.30 USD}
+        """
+        check_list(self, entries, [])
+        check_list(self, errors, [parser.ParserSyntaxError])
 
     @parsedoc
     def test_entry_open_1(self, entries, _, __):
