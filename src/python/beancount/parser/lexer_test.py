@@ -5,6 +5,7 @@ import datetime
 import functools
 import textwrap
 import unittest
+import re
 
 from beancount.core.amount import D
 from beancount.parser import lexer
@@ -139,3 +140,27 @@ class TestLexer(unittest.TestCase):
             ('CURRENCY', 1, 'CAD.11', 'CAD.11'),
             ('EOL', 2, '\n', None),
             ], tokens)
+
+    @lex_tokens
+    def test_bad_date(self, tokens, errors):
+        """\
+          2013-12-98
+        """
+        self.assertEqual([
+            ('DATE', 1, '2013-12-98', datetime.date(1970, 1, 1)),
+            ('EOL', 2, '\n', None),
+        ], tokens)
+        self.assertTrue(errors)
+        self.assertTrue(re.search('out of range', errors[0].message))
+
+    @lex_tokens
+    def test_date_followed_by_number(self, tokens, errors):
+        """\
+          2013-12-228
+        """
+        # FIXME: Figure out how to parse word boundary properly in lexer.
+        # print()
+        # print()
+        # for tk in tokens: print(tk)
+        # print()
+        self.assertEqual([], tokens)

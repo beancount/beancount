@@ -48,7 +48,13 @@ class LexBuilder(object):
         Returns:
           A new datetime object.
         """
-        return datetime.date(year, month, day)
+        try:
+            return datetime.date(year, month, day)
+        except ValueError as exc:
+            self.errors.append(
+                LexerError(self.get_lexer_location(), str(exc), None))
+            return datetime.date(1970, 1, 1)
+
 
     def ACCOUNT(self, account_name):
         """Process an ACCOUNT token.
