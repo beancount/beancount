@@ -227,10 +227,6 @@ beancount: TODO
   using that report generation code too, and that each of its pages will
   basically be housing the HTML version of each report.
 
-  - Implement an index
-
-  - Integrate "print" version of holdings.
-
   - Add a test for --view option; remove --view option?
 
 
