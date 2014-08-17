@@ -13,8 +13,6 @@ beancount: TODO
     balancing transactions. Need to figure out how to do this properly without
     raising two errors.
 
-  - Add dateutil to list of depdendencies, it's too great to pass on, for scripts.
-
 ** Move Files to Final Location
 
   As I'm moving to a system with more plugins and less code in the core, and
@@ -251,6 +249,9 @@ beancount: TODO
 
 
 ** Documentation / Ongoing
+
+  - Beancount Install: Add dateutil to the list of dependencies.
+
 
   - Add to motivation doc: useful to make a will. Where's all the stuff?
 

@@ -20,6 +20,7 @@ def check_dependencies():
     return [
         check_python(),
         check_cdecimal(),
+        check_dateutil(),
         check_bottle(),
         check_wget(),
         ]
@@ -51,6 +52,22 @@ def check_cdecimal():
     except ImportError:
         version, sufficient = None, False
     return ('cdecimal', version, sufficient)
+
+
+def check_dateutil():
+    """Check that dateutil is installed.
+
+    Returns:
+      A triple of (package-name, version-number, sufficient) as per
+      check_dependencies().
+    """
+    try:
+        import dateutil
+        # Note: There is no method to obtain the version number.
+        version, sufficient = dateutil.__version__, True
+    except ImportError:
+        version, sufficient = None, False
+    return ('dateutil', version, sufficient)
 
 
 def check_bottle():
