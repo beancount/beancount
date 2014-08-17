@@ -219,17 +219,6 @@ beancount: TODO
     errors nicely.
 
 
-** Reconcile Web Interface vs. Upcoming Reports Stage
-
-  The various reports that can be generated will be unified through an
-  intermediate stage, that will eventually allow us to render all the reports
-  either to text, CSV or HTML formats. This means that the web interface will be
-  using that report generation code too, and that each of its pages will
-  basically be housing the HTML version of each report.
-
-  - Add a test for --view option; remove --view option?
-
-
 ** Cleanup Tasks
 
   Some amount of generic cleanup should be performed before calling the release.

@@ -235,30 +235,36 @@ def toc():
         return app.router.build(name, path='', **kw)
 
     viewboxes = []
+    if app.args.view:
+        # Render a single link to a view, the view selected from --view.
+        viewboxes.append(('selected', None,
+                          [('/', 'Selected View')]))
+    else:
+        # Render a menu of various views.
 
-    # Global views.
-    viewboxes.append(('global', None,
-                      [(view_url('all'), 'All Transactions')]))
+        # Global views.
+        viewboxes.append(('global', None,
+                          [(view_url('all'), 'All Transactions')]))
 
-    # By year views.
-    viewboxes.append(('year', 'By Year',
-                      [(view_url('year', year=year), 'Year {}'.format(year))
-                       for year in reversed(list(getters.get_active_years(app.entries)))]))
+        # By year views.
+        viewboxes.append(('year', 'By Year',
+                          [(view_url('year', year=year), 'Year {}'.format(year))
+                           for year in reversed(list(getters.get_active_years(app.entries)))]))
 
-    # By tag views.
-    viewboxes.append(('tag', 'Tags',
-                      [(view_url('tag', tag=tag), '#{}'.format(tag))
-                       for tag in getters.get_all_tags(app.entries)]))
+        # By tag views.
+        viewboxes.append(('tag', 'Tags',
+                          [(view_url('tag', tag=tag), '#{}'.format(tag))
+                           for tag in getters.get_all_tags(app.entries)]))
 
-    # By component.
-    components = getters.get_account_components(app.entries)
-    viewboxes.append(
-        ('component', 'Component',
-         [(view_url('component', component=component), '{}'.format(component))
-          for component in components]))
+        # By component.
+        components = getters.get_account_components(app.entries)
+        viewboxes.append(
+            ('component', 'Component',
+             [(view_url('component', component=component), '{}'.format(component))
+              for component in components]))
 
-    # Note: With the filtering language, payees will be added and much many more
-    # options. Don't worry.
+        # Note: With the filtering language, payees will be added and much many more
+        # options. Don't worry.
 
     oss = io.StringIO()
     oss.write('<div id="viewboxes">\n')
@@ -777,7 +783,10 @@ def url_restrict_generator(url_prefix):
     """
     # A list of URLs that should always be accepted, even when restricted.
     allowed = ['/web.css',
-               '/favicon.ico']
+               '/favicon.ico',
+               '/toc',
+               '/errors',
+               '/source']
 
     def url_restrict_handler(callback):
         def wrapper(*args, **kwargs):
@@ -918,17 +927,23 @@ def run_app(args, quiet=None):
     logging.basicConfig(level=logging.INFO,
                         format='%(levelname)-8s: %(message)s')
 
+    app_installs = []
+    view_installs = []
+
     # Hide the numbers in incognito mode. We do this on response text via a plug-in.
     if args.incognito:
         args.no_source = True
         app.install(incognito)
+        app_installs.append(incognito)
         viewapp.install(incognito)
+        view_installs.append(incognito)
 
     # Install code that will restrict all resources to a particular view.
     if args.view:
         view_url_prefix = '/view/{}/'.format(args.view)
         url_restrictor = url_restrict_generator(view_url_prefix)
         app.install(url_restrictor)
+        app_installs.append(url_restrictor)
 
     # Initialize to a small value in order to insure a reload on the first page.
     app.last_mtime = 0
@@ -946,6 +961,12 @@ def run_app(args, quiet=None):
     app.run(host='localhost', port=args.port,
             debug=args.debug, reloader=False,
             quiet=args.quiet if hasattr(args, 'quiet') else quiet)
+
+    # Uninstall applications.
+    for function in app_installs:
+        app.uninstall(function)
+    for function in view_installs:
+        viewapp.uninstall(function)
 
 
 # The global server instance.
@@ -972,6 +993,9 @@ def setup_monkey_patch_for_server_shutdown():
 setup_monkey_patch_for_server_shutdown()
 
 def wait_ready():
+    """Wait until the 'server' global has been set.
+    This tells us the server is running.
+    """
     while server is None:
         time.sleep(0.05)
 
