@@ -75,7 +75,7 @@ class TestParserEntryTypes(unittest.TestCase):
         check_list(self, entries, [Open])
 
     @parsedoc
-    def test_entry_open_3(self, entries, _, __):
+    def test_entry_open_3(self, entries, errors, __):
         """
           2013-05-18 open Assets:Cash   USD,CAD,EUR
         """
@@ -207,6 +207,23 @@ class TestUglyBugs(unittest.TestCase):
         "; comment"
         check_list(self, entries, [])
         check_list(self, errors, [])
+
+    @parsedoc
+    def test_no_empty_lines(self, entries, errors, _):
+        """
+          2013-05-01 open Assets:Cash   USD,CAD,EUR
+          2013-05-02 close Assets:US:BestBank:Checking
+          2013-05-03 pad Assets:US:BestBank:Checking  Equity:Opening-Balancess
+          2013-05-04 event "location" "New York, USA"
+          2013-05-05 * "Payee" "Narration"
+            Assets:US:BestBank:Checking   100.00 USD
+            Assets:Cash
+          2013-05-06 note Assets:US:BestBank:Checking  "Blah, di blah."
+          2013-05-07 price USD   1.0290 CAD
+        """
+        self.assertEqual(7, len(entries))
+        self.assertEqual([], errors)
+
 
 class TestMultipleLines(unittest.TestCase):
 
@@ -537,3 +554,16 @@ class TestBalance(unittest.TestCase):
             posting = entry.postings[0]
             self.assertEqual(Amount('200', 'USD'), posting.position.lot.cost)
             self.assertEqual(None, posting.price)
+
+
+class TestLexerErrors(unittest.TestCase):
+
+    @parsedoc
+    def test_bad_account(self, entries, errors, _):
+        """
+          2011-01-01 open Assets:A
+        """
+        self.assertEqual([], entries)
+        # FIXME: The lexer needs to eat up all the characters after the erroneous token.
+        # self.assertEqual([lexer.LexerError, parser.ParserSyntaxError],
+        #                  list(map(type, errors)))

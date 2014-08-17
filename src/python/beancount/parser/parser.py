@@ -26,7 +26,7 @@ __sanity_checks__ = False
 
 
 ParserError = collections.namedtuple('ParserError', 'source message entry')
-ParserSyntaxError = collections.namedtuple('ParserError', 'source message entry')
+ParserSyntaxError = collections.namedtuple('ParserSyntaxError', 'source message entry')
 
 
 def valid_account_regexp(options):

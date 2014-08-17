@@ -141,10 +141,9 @@ beancount: TODO
 
 ** Parser-Related Minor Bugs
 
-  - Inserting a cost of "0 somethings" results in DivisionByZero errors. Simply
-    disallow using a cost of 0, or a negative number, this should not be
-    allowed. -- Figure out from DC'es email how to reproduce this. Where did the
-    error occur exactly? {61581979e3d4}
+  - You need to make the default rule consume the entire token, like this:
+        [^ \t\n]+ {
+    instead of consuming a single char.
 
   - A date with an extra number also parses silently, what's up with that?
       2013-12-228 *
@@ -152,11 +151,14 @@ beancount: TODO
     We need to add word boundary constraints to our lexer!
     How do we do that? (I'm offline, need flex docs...)
 
-  - This parses silently! Needs detection:
+  - Because of the two errors above, we may end up writing our own hand-crafted
+    tokenizer instead of flex, which is not a big deal, really.
 
-          2011-01-01 open Assets:A
-          2011-02-01 open Assets:B
-          2011-03-01 open Assets:C
+
+  - Inserting a cost of "0 somethings" results in DivisionByZero errors. Simply
+    disallow using a cost of 0, or a negative number, this should not be
+    allowed. -- Figure out from DC'es email how to reproduce this. Where did the
+    error occur exactly? {61581979e3d4}
 
   - There have been some rare, but occurring few instances of really odd syntax
     making the parser ignore some transactions silently; this is not acceptable.
@@ -185,7 +187,7 @@ beancount: TODO
 
        2014-07-12 ...
 
-    Does this work?
+    Does this work? (It would be nice if it did. Make it so.)
 
   - This:
 
@@ -204,9 +206,6 @@ beancount: TODO
     erroneous token: k
     /home/blais/p/beancount/examples/basic/basic.beancount:438:  Lexer error;
     erroneous token: c
-
-  - Add parser tests with no empty lines between directives and make sure the
-    number of directives is correct.
 
   - 2014-05-42 causes an uncaught ValueError and crashes on Mac OS X. Surely we
     can do better: catch all exceptions from the top-level handler and report
