@@ -317,10 +317,24 @@ class TestValidateDocumentPaths(cmptest.TestCase):
 
 
 class TestValidateDataTypes(cmptest.TestCase):
-    pass ## FIXME: TODO
+
+    @parser.parsedoc
+    def test_validate_data_types(self, entries, errors, options_map):
+        """
+        2014-06-24 * "Narration"
+          Assets:Investments:Stock  1 GOOG {500 USD}
+          Assets:Investments:Cash
+        """
+        # Just a basic test that runs the sanitation code (that should already
+        # be well tested by itself).
+        entry = entries[0]
+        new_entry = entry._replace(narration=None)
+        valid_errors = validation.validate_data_types([new_entry], options_map)
+        self.assertEqual([validation.ValidationError], list(map(type, valid_errors)))
 
 
 class TestValidateCheckBalances(cmptest.TestCase):
+
     pass ## FIXME: TODO
 
 
