@@ -823,7 +823,6 @@ beancount: TODO
   - Does table.render_table support offsets for rendering regular tuples? It
     really should.
 
-  - (reports) Implement account rendering ordering properly.
 
   - Check out bitbucket CGI interface w.r.t. linking to source code, is the
     newer hg better?  We should be able to link to specific lines in versions.
@@ -2321,6 +2320,9 @@ Improve this bit:
 
 
 ** Tags as Key-Values / Metadata
+
+  - (reports) Implement account rendering ordering properly. Use meta-data on
+    Open directives (maybe).
 
   - One idea Ledger uses well is the ability to associate key-values meta-data
     to transaction objects, a-la-Common Lisp. See the --pivot feature. It seems
