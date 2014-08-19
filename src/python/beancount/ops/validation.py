@@ -383,6 +383,38 @@ def validate_check_balances(entries, options_map):
     return errors
 
 
+def validate_ambiguous_prices(entries, unused_options_map):
+    """Check that there is only a single price per day for a particular base/quote.
+
+    Args:
+      entries: A list of directives.
+      unused_options_map: An options map.
+    Returns:
+      A list of new errors, if any were found.
+    """
+    prices = collections.defaultdict(list)
+    for entry in entries:
+        if not isinstance(entry, data.Price):
+            continue
+        key = (entry.date, entry.currency, entry.amount.currency)
+        prices[key].append(entry)
+
+    errors = []
+    for price_entries in prices.values():
+        if len(price_entries) > 1:
+            number_map = {price_entry.amount.number: price_entry
+                          for price_entry in price_entries}
+            if len(number_map) > 1:
+                # Note: This should be a list of entries for better error
+                # reporting. (Later.)
+                error_entry = next(iter(number_map.values()))
+                errors.append(
+                    ValidationError(error_entry.source,
+                                    "Ambiguous price entry",
+                                    error_entry))
+    return errors
+
+
 def validate_duplicates(entries, options_map):
     """Check that the entries are unique, by computing hashes.
 

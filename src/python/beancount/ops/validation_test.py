@@ -2,10 +2,11 @@ import datetime
 import re
 
 from beancount.core import data
+from beancount.core import compare
 from beancount.parser import parser
 from beancount.parser import cmptest
+from beancount.parser import printer
 from beancount.ops import validation
-from beancount import loader
 
 
 class TestValidateInventoryBooking(cmptest.TestCase):
@@ -53,8 +54,8 @@ class TestValidateInventoryBooking(cmptest.TestCase):
 
         """, [e.entry for e in validation_errors])
 
-    @loader.loaddoc
-    def test_negative_lots(self, entries, errors, __):
+    @parser.parsedoc
+    def test_negative_lots(self, entries, errors, options_map):
         """
           2013-05-01 open Assets:Bank:Investing
           2013-05-01 open Equity:Opening-Balances
@@ -63,7 +64,8 @@ class TestValidateInventoryBooking(cmptest.TestCase):
             Assets:Bank:Investing                -1 GOOG {501 USD}
             Equity:Opening-Balances
         """
-        self.assertEqual([validation.ValidationError], list(map(type, errors)))
+        validation_errors = validation.validate_inventory_booking(entries, options_map)
+        self.assertEqual([validation.ValidationError], list(map(type, validation_errors)))
 
 
 class TestValidateOpenClose(cmptest.TestCase):
@@ -131,7 +133,7 @@ class TestValidateOpenClose(cmptest.TestCase):
                          [error.entry.account for error in errors])
 
 
-class TestValidateBalances(cmptest.TestCase):
+class TestValidateDuplicateBalances(cmptest.TestCase):
 
     @parser.parsedoc
     def test_validate_duplicate_balances(self, entries, _, options_map):
@@ -296,52 +298,7 @@ class TestValidateCurrencyConstraints(cmptest.TestCase):
                                 [error.entry for error in errors])
 
 
-class TestValidate(cmptest.TestCase):
-
-    @parser.parsedoc
-    def test_validate_currency_constraints(self, entries, _, options_map):
-        """
-        2014-01-01 open  Assets:Account1    USD
-        2014-01-01 open  Assets:Account2    GOOG
-        2014-01-01 open  Assets:Account3    USD,GOOG
-
-        2014-01-02 * "Entries without cost"
-          Assets:Account1            1 USD
-          Equity:Opening-Balances
-
-        2014-01-03 * "Entries without cost" #expected
-          Assets:Account1            1 CAD
-          Equity:Opening-Balances
-
-        2014-01-04 * "Entries with cost"
-          Assets:Account2            1 GOOG {500 USD}
-          Equity:Opening-Balances
-
-        2014-01-05 * "Entries with cost" #expected
-          Assets:Account2            1 AAPL {500 USD}
-          Equity:Opening-Balances
-
-        2014-01-02 * "Multiple currencies"
-          Assets:Account3            1 USD
-          Assets:Account3            1 GOOG {500 USD}
-          Equity:Opening-Balances
-
-        2014-01-05 * "Multiple currencies" #expected
-          Assets:Account3            1 CAD
-          Equity:Opening-Balances
-
-        2014-01-05 * "Multiple currencies" #expected
-          Assets:Account3            1 AAPL {500 USD}
-          Equity:Opening-Balances
-
-        """
-        errors = validation.validate_currency_constraints(entries, options_map)
-
-        self.assertEqualEntries([entry for entry in entries
-                                 if (isinstance(entry, data.Transaction) and
-                                     entry.tags and
-                                     'expected' in entry.tags)],
-                                [error.entry for error in errors])
+class TestValidateDocumentPaths(cmptest.TestCase):
 
     def test_validate_documents_paths(self):
         date = datetime.date(2014, 3, 3)
@@ -357,6 +314,139 @@ class TestValidate(cmptest.TestCase):
         errors = validation.validate_documents_paths(entries, {})
         self.assertEqual(3, len(errors))
         self.assertEqual({'Assets:Account2'}, set(error.entry.account for error in errors))
+
+
+class TestValidateDataTypes(cmptest.TestCase):
+    pass ## FIXME: TODO
+
+
+class TestValidateCheckBalances(cmptest.TestCase):
+    pass ## FIXME: TODO
+
+
+class TestValidateDuplicates(cmptest.TestCase):
+
+    def checkDuplicates(self, entries, errors, options_map):
+        self.assertEqual([], errors)
+        valid_errors = validation.validate_duplicates(entries, options_map)
+        self.assertEqual([compare.CompareError], list(map(type, valid_errors)))
+        self.assertTrue(re.search('Duplicate entry', valid_errors[0].message))
+
+    @parser.parsedoc
+    def test_validate_duplicates__open(self, entries, errors, options_map):
+        """
+        2000-01-01 open Assets:Checking
+        2000-01-01 open Assets:Checking
+        """
+        self.checkDuplicates(entries, errors, options_map)
+
+    @parser.parsedoc
+    def test_validate_duplicates__close(self, entries, errors, options_map):
+        """
+        2000-01-01 close Assets:Checking
+        2000-01-01 close Assets:Checking
+        """
+        self.checkDuplicates(entries, errors, options_map)
+
+    @parser.parsedoc
+    def test_validate_duplicates__pad(self, entries, errors, options_map):
+        """
+        2000-01-01 pad Assets:Checking Equity:Opening-Balances
+        2000-01-01 pad Assets:Checking Equity:Opening-Balances
+        """
+        self.checkDuplicates(entries, errors, options_map)
+
+    @parser.parsedoc
+    def test_validate_duplicates__balance(self, entries, errors, options_map):
+        """
+        2000-01-01 balance Assets:Checking 201.00 USD
+        2000-01-01 balance Assets:Checking 201.00 USD
+        """
+        self.checkDuplicates(entries, errors, options_map)
+
+    @parser.parsedoc
+    def test_validate_duplicates__balance(self, entries, errors, options_map):
+        """
+        2000-01-01 balance Assets:Checking 201.00 USD
+        2000-01-01 balance Assets:Checking 201.00 USD
+        """
+        self.checkDuplicates(entries, errors, options_map)
+
+    @parser.parsedoc
+    def test_validate_duplicates__transaction(self, entries, errors, options_map):
+        """
+        2014-06-24 * "Go negative from zero"
+          Assets:Investments:Stock   1 GOOG {500 USD}
+          Assets:Investments:Cash
+
+        2014-06-24 * "Go negative from zero"
+          Assets:Investments:Stock  1 GOOG {500 USD}
+          Assets:Investments:Cash
+        """
+        self.checkDuplicates(entries, errors, options_map)
+
+    @parser.parsedoc
+    def test_validate_duplicates__note(self, entries, errors, options_map):
+        """
+        2000-01-01 note Assets:Checking "Something about something"
+        2000-01-01 note Assets:Checking "Something about something"
+        """
+        self.checkDuplicates(entries, errors, options_map)
+
+    @parser.parsedoc
+    def test_validate_duplicates__event(self, entries, errors, options_map):
+        """
+        2000-01-01 event "location" "Somewhere, Earth"
+        2000-01-01 event "location" "Somewhere, Earth"
+        """
+        self.checkDuplicates(entries, errors, options_map)
+
+    @parser.parsedoc
+    def test_validate_duplicates__document(self, entries, errors, options_map):
+        """
+        2000-01-01 document Assets:Checking "/path/to/nowhere.pdf"
+        2000-01-01 document Assets:Checking "/path/to/nowhere.pdf"
+        """
+        self.checkDuplicates(entries, errors, options_map)
+
+    @parser.parsedoc
+    def test_validate_duplicates__price(self, entries, errors, options_map):
+        """
+        2000-01-01 price GOOG 500 USD
+        2000-01-01 price GOOG 500 USD
+        """
+        self.assertEqual([], errors)
+        valid_errors = validation.validate_duplicates(entries, options_map)
+        # Note! This is different. We allow exact duplicates of price directive
+        # on purpose. They may be common, and they won't hurt anything.
+        self.assertEqual([], list(map(type, valid_errors)))
+
+
+class TestValidateAmbiguousPrices(cmptest.TestCase):
+
+    @parser.parsedoc
+    def test_validate_ambiguous_prices__different(self, entries, errors, options_map):
+        """
+        2000-01-01 price GOOG 500.00 USD
+        2000-01-01 price GOOG 500.01 USD
+        """
+        self.assertEqual([], errors)
+        valid_errors = validation.validate_ambiguous_prices(entries, options_map)
+        self.assertEqual([validation.ValidationError], list(map(type, valid_errors)))
+        self.assertTrue(re.search('Ambiguous price', valid_errors[0].message))
+
+    @parser.parsedoc
+    def test_validate_ambiguous_prices__same(self, entries, errors, options_map):
+        """
+        2000-01-01 price GOOG 500.00 USD
+        2000-01-01 price GOOG 500.00 USD
+        """
+        self.assertEqual([], errors)
+        valid_errors = validation.validate_ambiguous_prices(entries, options_map)
+        self.assertEqual([], valid_errors)
+
+
+class TestValidate(cmptest.TestCase):
 
     @parser.parsedoc
     def test_validate(self, entries, _, options_map):
@@ -377,3 +467,7 @@ class TestValidate(cmptest.TestCase):
                             for error in errors))
         self.assertTrue(any(re.match('Invalid currency', error.message)
                             for error in errors))
+
+
+# FIXME: Some tests are missing.
+__incomplete__ = True

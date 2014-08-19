@@ -48,7 +48,7 @@ beancount: TODO
 
 
   - Should 'bean-query not be called bean-count or bean-report? Choose a final
-    name and live with it. I like 'bean-count' best.
+    name and live with it. I like 'bean-count' best. EMBRACE ONE.
 
 
 ** Fix Minor Nits & Bugs
@@ -84,9 +84,12 @@ beancount: TODO
 
     Also, deal with multiple implied price points added from different
     transactions on the same day... instead of just taking the later one, drop
-    the price points? But this breaks an assumptin in add_unrealized_gains()
+    the price points? But this breaks an assumption in add_unrealized_gains()
     which assumes that a price point will always be available if the unit is
     held at cost. Make a decision.
+
+    There are tests for all of these; you should make the checks at validation
+    time.
 
 
   - "Position with lots goes negative" should output an error message and be
@@ -289,6 +292,20 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - Enhance error reporting! Make all errors possibly hold on to a list of
+    entries, not just one. Many, many errors will benefit from this.
+
+
+  - Add a command that accepts a "filename:lineno" string and outputs the
+    transaction as parsed as well as the inventories before and after
+    processing the transaction. Add Emacs integration that calls this script
+    and prints out the output with the cursor as the location. (Note: You do
+    need both the filename and the lineno because of include files - thinking
+    ahead here - but allow a shorthand by specifying just the lineno and if
+    that's the case, assume the filename to be the top-level filename provided
+    as the ledger.
 
 
   - (parser) Is it possible to specify no flag on a transaction?, e.g. just the date?
