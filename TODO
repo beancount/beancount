@@ -61,37 +61,6 @@ beancount: TODO
     have had an open declaration... this is probably not what we want, in order
     to maximize the number of documents captured by this. {fa96aa05361d}
 
-  - Add a test for this (somewhere else): If something like this occurs, which
-    price should appear in the prices database? This should trigger a warning
-    that no price directive is inserted (this is what it should do: don't insert
-    a price in this case, because we don't know which):
-
-      2014-01-15 *
-        Income:Misc
-        Assets:Account1       1 HOUSE {100 USD}
-        Liabilities:Account1  1 HOUSE {101 USD}
-        Equity:Account1       1 HOUSE {102 USD}
-        Expenses:Account1     1 HOUSE {103 USD}
-        Income:Account1       1 HOUSE {104 USD}
-
-    You must ALLOW and test for this, however:
-
-      2004-11-29 * "Closed Cisco"
-        Assets:CA:RBC-Investing:RRSP:CSCO -18 CSCO {79.50 USD} @ 19.00 USD
-        Assets:CA:RBC-Investing:RRSP:CSCO -45 CSCO {30.50 USD} @ 19.00 USD
-        Assets:CA:RBC-Investing:RRSP:Cash 1372.07 CAD @ 0.87240446916 USD
-        Income:CA:RBC-Investing:RRSP:PnL ;; gains = 1372.07 - (2129.19 + 2122.12) = 2879.24 CAD ; loss
-
-    Also, deal with multiple implied price points added from different
-    transactions on the same day... instead of just taking the later one, drop
-    the price points? But this breaks an assumption in add_unrealized_gains()
-    which assumes that a price point will always be available if the unit is
-    held at cost. Make a decision.
-
-    There are tests for all of these; you should make the checks at validation
-    time.
-
-
   - "Position with lots goes negative" should output an error message and be
     caught, because if it is run by the web server, it serves no page. Needs to
     be integrated like all the other error messages:

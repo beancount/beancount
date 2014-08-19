@@ -410,7 +410,7 @@ def validate_ambiguous_prices(entries, unused_options_map):
                 error_entry = next(iter(number_map.values()))
                 errors.append(
                     ValidationError(error_entry.source,
-                                    "Ambiguous price entry",
+                                    "Ambiguous price entry.",
                                     error_entry))
     return errors
 
@@ -444,7 +444,8 @@ BASIC_VALIDATIONS = [validate_data_types,
 # by modifying the 'VALIDATIONS' attribute below.
 HARDCORE_VALIDATIONS = [validate_data_types,
                         validate_check_balances,
-                        validate_duplicates]
+                        validate_duplicates,
+                        validate_ambiguous_prices]
 
 # The list of validations to run.
 VALIDATIONS = BASIC_VALIDATIONS

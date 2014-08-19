@@ -7,6 +7,7 @@ from beancount.parser import parser
 from beancount.parser import cmptest
 from beancount.parser import printer
 from beancount.ops import validation
+from beancount.ops import implicit_prices
 
 
 class TestValidateInventoryBooking(cmptest.TestCase):
@@ -458,6 +459,21 @@ class TestValidateAmbiguousPrices(cmptest.TestCase):
         self.assertEqual([], errors)
         valid_errors = validation.validate_ambiguous_prices(entries, options_map)
         self.assertEqual([], valid_errors)
+
+    @parser.parsedoc
+    def test_validate_ambiguous_prices__from_costs(self, entries, errors, options_map):
+        """
+        2014-01-15 *
+          Income:Misc
+          Assets:Account1       1 HOUSE {100 USD}
+          Liabilities:Account1  1 HOUSE {101 USD}
+        """
+        self.assertEqual([], errors)
+        new_entries, errors = implicit_prices.add_implicit_prices(entries, options_map)
+        self.assertEqual([], errors)
+        valid_errors = validation.validate_ambiguous_prices(new_entries, options_map)
+        self.assertEqual([validation.ValidationError], list(map(type, valid_errors)))
+        self.assertTrue(re.search('Ambiguous price', valid_errors[0].message))
 
 
 class TestValidate(cmptest.TestCase):
