@@ -21,6 +21,7 @@ is great for sectioning large files with many transactions."
     ([(control c)(r)] . beancount-init-accounts)
     ([(control c)(l)] . beancount-check)
     ([(control c)(\;)] . beancount-align-transaction)
+    ([(control c)(p)] . beancount-test-align)
     )
   :group 'beancount
 
@@ -193,17 +194,58 @@ at which to align the beginning of the amount's currency."
          (when (and number rest)
            (insert (format number-format number rest))))))))
 
+
 (defun beancount-align-transaction ()
-  "Align postings under the point's paragraph."
+  "Align postings under the point's paragraph.
+This function looks for a posting in the previous transaction to
+determine the column at which to align the transaction, or otherwise
+the fill column, and align all the postings of this transaction to
+this column."
   (interactive)
   (let ((begin (save-excursion
-                 (forward-paragraph -1)
+                 (beancount-beginning-of-directive)
                  (point)))
         (end (save-excursion
                (forward-paragraph 1)
                (point)))
-        (beancount-align-currency-column fill-column))
-    (beancount-align-postings begin end beancount-align-currency-column)))
+        (currency-column (or (beancount-find-previous-alignment-column)
+                             fill-column)))
+    (beancount-align-postings begin end currency-column)))
+
+
+(defun beancount-beginning-of-directive ()
+  "Move point to the beginning of the enclosed or preceding directive."
+  (while (and (> (point) (point-min))
+              (not (looking-at
+                      "[0-9][0-9][0-9][0-9][\-/][0-9][0-9][\-/][0-9][0-9]")))
+    (forward-line -1)))
+
+
+(defun beancount-find-previous-alignment-column ()
+  "Find the preceding column to align amounts with.
+This is used to align transactions at the same column as that of
+the previous transaction in the file. This function merely finds
+what that column is and returns it (an integer)."
+  ;; Go hunting for the last column with a suitable posting.
+  (let (column)
+    (save-excursion
+      ;; Go to the beginning of the enclosing directive.
+      (beancount-beginning-of-directive)
+      (forward-line -1)
+
+      ;; Find the last posting with an amount and a currency on it.
+      (let ((posting-regexp (concat
+                             "\\s-+"
+                             beancount-account-regexp "\\s-+"
+                             "[-+]?[0-9\\.]+" "\\s-+"
+                             "\\([A-Z][A-Z-_'.]*\\)")))
+        (while (and (> (point) (point-min))
+                    (not (looking-at posting-regexp)))
+          (forward-line -1))
+        (when (looking-at posting-regexp)
+          (setq column (- (match-beginning 2) (point))))
+        ))
+    column))
 
 
 (defvar beancount-check-program "bean-check"
