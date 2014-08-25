@@ -359,9 +359,9 @@ def validate_data_types(entries, options_map):
     return errors
 
 
-def validate_check_balances(entries, options_map):
-    """Check again that all transactions balance, as users may have transformed
-    transactions.
+def validate_check_transaction_balances(entries, options_map):
+    """Check again that all transaction postings balance, as users may have
+    transformed transactions.
 
     Args:
       entries: A list of directives.
@@ -443,7 +443,7 @@ BASIC_VALIDATIONS = [validate_data_types,
 # we're not providing an option at this moment, this can be enabled
 # by modifying the 'VALIDATIONS' attribute below.
 HARDCORE_VALIDATIONS = [validate_data_types,
-                        validate_check_balances,
+                        validate_check_transaction_balances,
                         validate_duplicates,
                         validate_ambiguous_prices]
 

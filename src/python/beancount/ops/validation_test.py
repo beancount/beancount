@@ -334,9 +334,17 @@ class TestValidateDataTypes(cmptest.TestCase):
         self.assertEqual([validation.ValidationError], list(map(type, valid_errors)))
 
 
-class TestValidateCheckBalances(cmptest.TestCase):
+class TestValidateCheckTransactionBalances(cmptest.TestCase):
 
-    pass ## FIXME: TODO
+    @parser.parsedoc
+    def test_validate_check_transaction_balances(self, entries, errors, options_map):
+        """
+        2014-06-24 * "Narration"
+          Assets:Investments:Stock  1 USD
+          Assets:Investments:Cash   1 USD
+        """
+        valid_errors = validation.validate_check_transaction_balances(entries, options_map)
+        self.assertEqual([validation.ValidationError], list(map(type, valid_errors)))
 
 
 class TestValidateDuplicates(cmptest.TestCase):
@@ -497,7 +505,3 @@ class TestValidate(cmptest.TestCase):
                             for error in errors))
         self.assertTrue(any(re.match('Invalid currency', error.message)
                             for error in errors))
-
-
-# FIXME: Some tests are missing.
-__incomplete__ = True

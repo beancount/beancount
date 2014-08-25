@@ -317,12 +317,6 @@ beancount: TODO
 
 
 
-  - Idea: Emacs align function should automatically align the same as the
-    previous transaction found before the cursor! And use fill-column instead.
-    It should also work on balance directives!
-
-
-
   - Idea: a plugin that autopads all initial balance asserttions! Do it for
     demos, will be very useful for making demos easier, not having to be so
     strict.
@@ -426,16 +420,6 @@ beancount: TODO
     guide reporting that does not complexify the semantics.
 
 
-
-
-  - beancount-align-transaction does not appear to align the last posting
-    somehow:
-
-      2014-06-01 * "Transfer"
-        Income:US:Govt:PreTax                                            -500 HSAUSD
-        Assets:US:Govt:PreTax                                             500 HSAUSD
-        Assets:Health-Savings                                             500 USD
-          Assets:Checking
 
 
   - Register (with filter) should have "print" mode that also includes
