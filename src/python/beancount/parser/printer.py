@@ -130,6 +130,7 @@ def print_entries(entries, file=None, prefix=None):
       entries: A list of directives.
       file: An optional file object to write the entries to.
     """
+    assert isinstance(entries, list)
     output = file or sys.stdout
     if prefix:
         output.write(prefix)
