@@ -16,7 +16,7 @@ from beancount.core import complete
 from beancount.ops import prices
 
 
-def find_external_flow_dates(entries, related_regexp):
+def find_external_flows(entries, related_regexp):
     """Find the dates of external flow transactions.
 
     Args:
@@ -140,7 +140,7 @@ def main():
     entries, errors, options_map = loader.load(opts.filename)
 
     # Find and print the lis tof external entries.
-    external_entries, dates = find_external_flow_dates(entries, opts.related)
+    external_entries, dates = find_external_flows(entries, opts.related)
 
     # Create a predicate for the Assets accounts.
     acc_types = options.get_account_types(options_map)
@@ -148,6 +148,16 @@ def main():
     is_asset_account = lambda account_: (
         match(account_) and
         account_types.get_account_type(account_) == acc_types.assets)
+
+    # Verify that external flow entries only affect balance sheet accounts and
+    # not income or expenses accounts.
+    for entry in external_entries:
+        for posting in entry.postings:
+            if (match(posting.account) and
+                not account_types.get_account_type(posting.account) == acc_types.assets):
+
+                raise ValueError(
+                    "External flow may not affect non-asset accounts: {}".format(entry))
 
     # Build a price database.
     price_map = prices.build_price_map(entries)
@@ -206,15 +216,5 @@ def main():
     print('Total Return: {:.5f}'.format(total_return))
 
 
-
 if __name__ == '__main__':
     main()
-
-
-
-
-# FIXME: Create an example with expenses at the date of contribution, and a
-# withdrawal. When do we evaluate?
-#
-# To fix this, you could assert that there are no income or expenses legs for
-# transactions with external flows. This would be fair enough.
