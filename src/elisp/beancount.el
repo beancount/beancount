@@ -20,7 +20,8 @@ is great for sectioning large files with many transactions."
     ([(control c)(control g)] . beancount-transaction-set-flag)
     ([(control c)(r)] . beancount-init-accounts)
     ([(control c)(l)] . beancount-check)
-    ([(control c)(\;)] . beancount-align-transaction)
+    ([(control c)(\;)] . beancount-align-to-previous-number)
+    ([(control c)(\:)] . beancount-align-numbers)
     ([(control c)(p)] . beancount-test-align)
     )
   :group 'beancount
@@ -98,13 +99,22 @@ is great for sectioning large files with many transactions."
     ))
 
 
+(defvar beancount-date-regexp "[0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][0-9]"
+  "A regular expression to match dates.")
+
 (defvar beancount-account-regexp (concat (regexp-opt '("Assets"
                                                        "Liabilities"
                                                        "Equity"
                                                        "Income"
                                                        "Expenses"))
-                                         "\\(:[A-Z][A-Za-z0-9-_:]+\\)")
+                                         "\\(?::[A-Z][A-Za-z0-9-_:]+\\)")
   "A regular expression to match account names.")
+
+(defvar beancount-number-regexp "[-+]?[0-9\\.]+"
+  "A regular expression to match decimal numbers in beancount.")
+
+(defvar beancount-currency-regexp "[A-Z][A-Z-_'.]*"
+  "A regular expression to match currencies in beancount.")
 
 
 (defvar beancount-accounts nil
@@ -156,7 +166,6 @@ niceness)."
   `(save-excursion
      (let ((end-marker (set-marker (make-marker) ,end)))
        (goto-char ,begin)
-       (forward-line 1)
        (beginning-of-line)
        (while (< (point) end-marker)
          (progn ,@exprs)
@@ -164,57 +173,103 @@ niceness)."
          (beginning-of-line)
          ))))
 
-(defun beancount-align-postings (begin end &optional currency-column)
-  "Align all postings in the given region. CURRENCY-COLUMN is the character
-at which to align the beginning of the amount's currency."
+
+(defun beancount-max-accounts-width (begin end)
+  "Return the minimum widths of a list of account names on a list
+of lines. Initial whitespace is ignored."
+  (let* (widths)
+    (beancount-for-line-in-region
+     begin end
+     (let* ((line (thing-at-point 'line)))
+       (when (string-match
+              (concat "^[ \t]*\\(" beancount-account-regexp "\\)") line)
+         (push (length (match-string 1 line)) widths))))
+    (apply 'max widths)))
+
+
+(defun beancount-align-numbers (begin end &optional requested-currency-column)
+  "Align all numbers in the given region. CURRENCY-COLUMN is the character
+at which to align the beginning of the amount's currency. If not specified, use
+the smallest columns that will align all the numbers.  With a prefix argument,
+align with the fill-column."
   (interactive "r")
-  (beancount-for-line-in-region
-   begin end
-   (let* ((line (thing-at-point 'line))
-          (number-width 12)
-          (number-format (format "%%%ss %%s" number-width))
-          (account-format (format "  %%-%ss" (- currency-column 2 number-width 1))))
-     (when (string-match
-            (concat "^[ \t]+"
-                    "\\(?:\\(.\\)[ \t]+\\)?"
-                    "\\([A-Z][A-Za-z0-9_-]+:[A-Za-z0-9_:\\-]+\\)"
-                    "[ \t]+"
-                    "\\(?:\\([-+]?[0-9.]+\\)[ \t]+\\(.*\\)\\)")
-            line)
-       (delete-region (line-beginning-position) (line-end-position))
-       (let* ((flag (match-string 1 line))
-              (account (match-string 2 line))
-              (flag-account
-               (if flag
-                   (format "%s %s" flag account)
-                 (format "%s" account)))
-              (number (match-string 3 line))
-              (rest (match-string 4 line)) )
-         (insert (format account-format flag-account))
-         (when (and number rest)
-           (insert (format number-format number rest))))))))
+
+  ;; With a prefix argument, align with the fill-column.
+  (when current-prefix-arg
+    (setq requested-currency-column fill-column))
+
+  ;; Loop once in the region to find the length of the longest string before the
+  ;; number.
+  (let (prefix-widths
+        number-widths
+        (number-padding "  "))
+    (beancount-for-line-in-region
+     begin end
+     (let ((line (thing-at-point 'line)))
+       (when (string-match (concat "\\(.*?\\)"
+                                   "[ \t]+"
+                                   "\\(" beancount-number-regexp "\\)"
+                                   "[ \t]+"
+                                   beancount-currency-regexp) line)
+         (push (length (match-string 1 line)) prefix-widths)
+         (push (length (match-string 2 line)) number-widths)
+         )))
+
+    (when prefix-widths
+      ;; Loop again to make the adjustments to the numbers.
+      (let* ((number-width (apply 'max number-widths))
+             (number-format (format "%%%ss" number-width))
+             ;; Compute rightmost column of prefix.
+             (max-prefix-width (apply 'max prefix-widths))
+             (max-prefix-width
+              (if requested-currency-column
+                  (max (- requested-currency-column (length number-padding) number-width 1)
+                       max-prefix-width)
+                max-prefix-width))
+             (prefix-format (format "%%-%ss" max-prefix-width))
+             )
+
+        (beancount-for-line-in-region
+         begin end
+         (let ((line (thing-at-point 'line)))
+           (when (string-match (concat "\\(.*?\\)"
+                                       "[ \t]+"
+                                       "\\(" beancount-number-regexp "\\)"
+                                       "[ \t]+"
+                                       "\\(.*\\)$") line)
+             (delete-region (line-beginning-position) (line-end-position))
+             (let* ((prefix (match-string 1 line))
+                    (number (match-string 2 line))
+                    (rest (match-string 3 line)) )
+               (insert (format prefix-format prefix))
+               (insert number-padding)
+               (insert (format number-format number))
+               (insert " ")
+               (insert rest)))))))))
 
 
-(defun beancount-align-transaction ()
+(defun beancount-align-to-previous-number ()
   "Align postings under the point's paragraph.
 This function looks for a posting in the previous transaction to
 determine the column at which to align the transaction, or otherwise
 the fill column, and align all the postings of this transaction to
 this column."
   (interactive)
-  (let ((begin (save-excursion
-                 (beancount-beginning-of-directive)
-                 (point)))
-        (end (save-excursion
-               (forward-paragraph 1)
-               (point)))
-        (currency-column (or (beancount-find-previous-alignment-column)
-                             fill-column)))
-    (beancount-align-postings begin end currency-column)))
+  (let* ((begin (save-excursion
+                  (beancount-beginning-of-directive)
+                  (point)))
+         (end (save-excursion
+                (goto-char begin)
+                (forward-paragraph 1)
+                (point)))
+         (currency-column (or (beancount-find-previous-alignment-column)
+                              fill-column)))
+    (beancount-align-numbers begin end currency-column)))
 
 
 (defun beancount-beginning-of-directive ()
   "Move point to the beginning of the enclosed or preceding directive."
+  (beginning-of-line)
   (while (and (> (point) (point-min))
               (not (looking-at
                       "[0-9][0-9][0-9][0-9][\-/][0-9][0-9][\-/][0-9][0-9]")))
@@ -237,13 +292,21 @@ what that column is and returns it (an integer)."
       (let ((posting-regexp (concat
                              "\\s-+"
                              beancount-account-regexp "\\s-+"
-                             "[-+]?[0-9\\.]+" "\\s-+"
-                             "\\([A-Z][A-Z-_'.]*\\)")))
+                             beancount-number-regexp "\\s-+"
+                             "\\(" beancount-currency-regexp "\\)"))
+            (balance-regexp (concat
+                             beancount-date-regexp "\\s-+"
+                             "balance" "\\s-+"
+                             beancount-account-regexp "\\s-+"
+                             beancount-number-regexp "\\s-+"
+                             "\\(" beancount-currency-regexp "\\)")))
         (while (and (> (point) (point-min))
-                    (not (looking-at posting-regexp)))
+                    (not (or (looking-at posting-regexp)
+                             (looking-at balance-regexp))))
           (forward-line -1))
-        (when (looking-at posting-regexp)
-          (setq column (- (match-beginning 2) (point))))
+        (when (or (looking-at posting-regexp)
+                  (looking-at balance-regexp))
+          (setq column (- (match-beginning 1) (point))))
         ))
     column))
 
