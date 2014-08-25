@@ -232,14 +232,15 @@ determine the column at which to align the transaction, or otherwise
 the fill column, and align all the postings of this transaction to
 this column."
   (interactive)
-  (let ((begin (save-excursion
-                 (beancount-beginning-of-directive)
-                 (point)))
-        (end (save-excursion
-               (forward-paragraph 1)
-               (point)))
-        (currency-column (or (beancount-find-previous-alignment-column)
-                             fill-column)))
+  (let* ((begin (save-excursion
+                  (beancount-beginning-of-directive)
+                  (point)))
+         (end (save-excursion
+                (goto-char begin)
+                (forward-paragraph 1)
+                (point)))
+         (currency-column (or (beancount-find-previous-alignment-column)
+                              fill-column)))
     (beancount-align-postings begin end currency-column)))
 
 
@@ -303,7 +304,6 @@ what that column is and returns it (an integer)."
 
 ;; FIXME: beancount-align-to-current-line
 ;; FIXME: Support aligning balance and price directives
-;; FIXME: Bug: If the cursor is between transactions, both get aligned. Not good.
 
 
 ;; A sample file to test printing the context around a transaction with.
