@@ -21,6 +21,7 @@ is great for sectioning large files with many transactions."
     ([(control c)(r)] . beancount-init-accounts)
     ([(control c)(l)] . beancount-check)
     ([(control c)(\;)] . beancount-align-to-previous)
+    ([(control c)(\:)] . beancount-align-numbers)
     ([(control c)(p)] . beancount-test-align)
     )
   :group 'beancount
@@ -178,13 +179,13 @@ niceness)."
   "Return the minimum widths of a list of account names on a list
 of lines. Initial whitespace is ignored."
   (let* (widths)
-  (beancount-for-line-in-region
-   begin end
-   (let* ((line (thing-at-point 'line)))
-     (when (string-match
-            (concat "^[ \t]*\\(" beancount-account-regexp "\\)") line)
-       (push (length (match-string 1 line)) widths))))
-   (apply 'max widths)))
+    (beancount-for-line-in-region
+     begin end
+     (let* ((line (thing-at-point 'line)))
+       (when (string-match
+              (concat "^[ \t]*\\(" beancount-account-regexp "\\)") line)
+         (push (length (match-string 1 line)) widths))))
+    (apply 'max widths)))
 
 
 (defun beancount-align-postings (begin end &optional requested-currency-column)
@@ -223,6 +224,60 @@ at which to align the beginning of the amount's currency."
            (insert (format account-format flag-and-account))
            (when (and number rest)
              (insert (format number-format number rest)))))))))
+
+
+(defun beancount-align-numbers (begin end &optional requested-currency-column)
+  "Align all numbers in the given region. CURRENCY-COLUMN is the character
+at which to align the beginning of the amount's currency."
+  (interactive "r")
+
+  ;; Loop once in the region to find the length of the longest string before the
+  ;; number.
+  (let (prefix-widths
+        number-widths
+        (number-padding "  "))
+    (beancount-for-line-in-region
+     begin end
+     (let ((line (thing-at-point 'line)))
+       (when (string-match (concat "\\(.*?\\)"
+                                   "[ \t]+"
+                                   "\\(" beancount-number-regexp "\\)"
+                                   "[ \t]+"
+                                   beancount-currency-regexp) line)
+         (push (length (match-string 1 line)) prefix-widths)
+         (push (length (match-string 2 line)) number-widths)
+         )))
+
+    ;; Loop again to make the adjustments to the numbers.
+    (let* ((number-width (apply 'max number-widths))
+           (number-format (format "%%%ss" number-width))
+           ;; Compute rightmost column of prefix.
+           (max-prefix-width (apply 'max prefix-widths))
+           (max-prefix-width
+            (if requested-currency-column
+                (max (- requested-currency-column (length number-padding) number-width 1)
+                     max-prefix-width)
+                max-prefix-width))
+           (prefix-format (format "%%-%ss" max-prefix-width))
+           )
+
+      (beancount-for-line-in-region
+       begin end
+       (let ((line (thing-at-point 'line)))
+         (when (string-match (concat "\\(.*?\\)"
+                                     "[ \t]+"
+                                     "\\(" beancount-number-regexp "\\)"
+                                     "[ \t]+"
+                                     "\\(.*\\)$") line)
+           (delete-region (line-beginning-position) (line-end-position))
+           (let* ((prefix (match-string 1 line))
+                  (number (match-string 2 line))
+                  (rest (match-string 3 line)) )
+             (insert (format prefix-format prefix))
+             (insert number-padding)
+             (insert (format number-format number))
+             (insert " ")
+             (insert rest))))))))
 
 
 (defun beancount-align-to-previous ()
