@@ -5,6 +5,8 @@ import functools
 
 from beancount.core.amount import ZERO
 from beancount.core import account
+from beancount.core import amount
+from beancount.core import position
 from beancount.core import realization
 from beancount.core import account_types
 from beancount.core import data
@@ -340,3 +342,18 @@ def scale_holding(holding, scale_factor):
         holding.market_value * scale_factor if holding.market_value else None,
         holding.price_number,
         holding.price_date)
+
+
+def holding_to_position(holding):
+    """Convert the holding to a position.
+
+    Args:
+      holding: An instance of Holding.
+    Returns:
+      An instance of Position.
+    """
+    cost = (amount.Amount(holding.cost_number, holding.cost_currency)
+            if holding.cost_number
+            else None)
+    return position.Position(position.Lot(holding.currency, cost, None),
+                             holding.number)

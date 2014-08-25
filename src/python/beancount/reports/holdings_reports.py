@@ -101,12 +101,7 @@ def get_holdings_entries(entries, options_map):
                                  None, "", None, None, [])
 
         # Convert the holding to a position.
-        # (FIXME: Move this to a function.)
-        cost = (amount.Amount(holding.cost_number, holding.cost_currency)
-                if holding.cost_number
-                else None)
-        position_ = position.Position(position.Lot(holding.currency, cost, None),
-                                      holding.number)
+        position_ = holdings.holding_to_position(holding)
 
         entry.postings.append(
             data.Posting(entry, holding.account, position_, None, None))

@@ -263,6 +263,10 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Bring in all the generic functions from experiments/returns/returns.py into
+    core beancount. Bring in returns as a plugin.
+
+
   - Closing an account with a non-zero balance should trigger an error! Right
     now it does not. This is important.
 

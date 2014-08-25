@@ -3,6 +3,7 @@ import unittest
 import datetime
 
 from beancount.core.amount import D, ZERO
+from beancount.core import position
 from beancount.ops import holdings
 from beancount.ops import prices
 from beancount.parser import parsedoc
@@ -386,3 +387,18 @@ class TestHoldings(unittest.TestCase):
             'Assets:US:Checking', D('70.0'), 'MSFT', D('54.34'), 'USD',
             D('3803.80'), D('4200.00'), D('60'), datetime.date(2012, 5, 2))
         self.assertEqual(expected_holding, holdings.scale_holding(test_holding, D('0.7')))
+
+    def test_holding_to_position(self):
+        test_holding = holdings.Holding(
+            'Assets:US:Checking', D('100'), 'MSFT', D('54.34'), 'USD',
+            D('5434.00'), D('6000.00'), D('60'), datetime.date(2012, 5, 2))
+        actual_position = holdings.holding_to_position(test_holding)
+        expected_position = position.from_string('100 MSFT {54.34 USD}')
+        self.assertEqual(expected_position, actual_position)
+
+        test_holding = holdings.Holding(
+            'Assets:US:Checking', D('100'), 'USD', None, None,
+            None, None, None, datetime.date(2012, 5, 2))
+        actual_position = holdings.holding_to_position(test_holding)
+        expected_position = position.from_string('100.00 USD')
+        self.assertEqual(expected_position, actual_position)
