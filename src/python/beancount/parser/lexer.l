@@ -48,7 +48,7 @@ extern int yy_line_tokens; /* Number of tokens since the bol */
 
 
 /* Skip the rest of the input line. */
-void yy_skip_line(void);
+int yy_skip_line(void);
 
 
 /* Utility functions. */
@@ -183,10 +183,18 @@ option		{ return OPTION; }
     return LINK;
 }
 
- /* Default rule. This should never be reached.
-    Consume all the non-whitespace characters for the error token. */
+ /* Default rule. This should never be reached unless there is an error.
+    Important note: use a single character here because this should never match
+    more text than valid rules. See the "How the Input Is Matched" section in
+    the flex manual:  flex selects the rule that matches the most text. */
 .			{
-    yylval->pyobj = BUILD("ERROR", "s", yytext);
+    /* Consume the rest of the line and continue thereafter. */
+    int num_chars = yy_skip_line();
+
+    /* FIXME: return the entire skipped text here. I think we'll have to
+       accumulate ourselves since specifying a long matching rule would
+       supersede other stuff. */
+    yylval->pyobj = BUILD("ERROR", "s#", yytext, num_chars);
     return ERROR;
 }
 
@@ -202,20 +210,25 @@ int yycolumn = 1;
 
 #define LEXEOF 0
 
-void yy_skip_line()
+int yy_skip_line()
 {
+    int num_chars = 0;
     for ( ;; ) {
         int c = input();
+        num_chars++;
         if ( c == LEXEOF || c == -1 ) {
             break;
         }
         if ( c == '\n' ) {
             unput(c);
+            num_chars--;
             break;
         }
     }
+    return num_chars;
 }
 
+/* Convert an integer string to a number. */
 int strtonl(const char* buf, size_t nchars)
 {
     int result = 0;

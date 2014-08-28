@@ -28,7 +28,7 @@ extern int yy_line_tokens; /* Number of tokens since the bol */
 
 
 /* Skip the rest of the input line. */
-void yy_skip_line(void);
+int yy_skip_line(void);
 
 
 /* Utility functions. */
@@ -409,7 +409,8 @@ static void yy_fatal_error (yyconst char msg[]  );
  */
 #define YY_DO_BEFORE_ACTION \
 	(yytext_ptr) = yy_bp; \
-	yyleng = (yy_size_t) (yy_cp - yy_bp); \
+	(yytext_ptr) -= (yy_more_len); \
+	yyleng = (yy_size_t) (yy_cp - (yytext_ptr)); \
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
@@ -616,8 +617,10 @@ int yy_flex_debug = 0;
  * any uses of REJECT which flex missed.
  */
 #define REJECT reject_used_but_not_detected
-#define yymore() yymore_used_but_not_detected
-#define YY_MORE_ADJ 0
+static int yy_more_flag = 0;
+static int yy_more_len = 0;
+#define yymore() ((yy_more_flag) = 1)
+#define YY_MORE_ADJ (yy_more_len)
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
 #line 1 "src/python/beancount/parser/lexer.l"
@@ -634,7 +637,7 @@ char *yytext;
 
 /*--------------------------------------------------------------------------------------*/
 /* Rules */
-#line 638 "src/python/beancount/parser/lexer.c"
+#line 641 "src/python/beancount/parser/lexer.c"
 
 #define INITIAL 0
 
@@ -835,7 +838,7 @@ YY_DECL
 
 
  /* Newlines are output as explicit tokens, because lines matter in the syntax. */
-#line 839 "src/python/beancount/parser/lexer.c"
+#line 842 "src/python/beancount/parser/lexer.c"
 
     yylval = yylval_param;
 
@@ -869,6 +872,12 @@ YY_DECL
 
 	while ( 1 )		/* loops until end-of-file is reached */
 		{
+		(yy_more_len) = 0;
+		if ( (yy_more_flag) )
+			{
+			(yy_more_len) = (yy_c_buf_p) - (yytext_ptr);
+			(yy_more_flag) = 0;
+			}
 		yy_cp = (yy_c_buf_p);
 
 		/* Support of yytext. */
@@ -910,7 +919,7 @@ yy_find_action:
 		if ( yy_act != YY_END_OF_BUFFER && yy_rule_can_match_eol[yy_act] )
 			{
 			yy_size_t yyl;
-			for ( yyl = 0; yyl < yyleng; ++yyl )
+			for ( yyl = (yy_more_len); yyl < yyleng; ++yyl )
 				if ( yytext[yyl] == '\n' )
 					   
     yylineno++;
@@ -1166,21 +1175,30 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 /* Default rule. This should never be reached.
-    Consume all the non-whitespace characters for the error token. */
+    Important note: use a single character here because this should never match
+    more text than valid rules. See the "How the Input Is Matched" section in
+    the flex manual:  flex selects the rule that matches the most text. */
 case 33:
 YY_RULE_SETUP
-#line 188 "src/python/beancount/parser/lexer.l"
+#line 190 "src/python/beancount/parser/lexer.l"
 {
-    yylval->pyobj = BUILD("ERROR", "s", yytext);
+    /* Consume the rest of the line and continue thereafter. */
+    yymore();
+  yymore();
+  yymore();
+    int num_chars = yy_skip_line();
+
+    /* FIXME: return the entire skipped text here. */
+    yylval->pyobj = BUILD("ERROR", "s#", yytext, num_chars);
     return ERROR;
 }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 195 "src/python/beancount/parser/lexer.l"
+#line 204 "src/python/beancount/parser/lexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1184 "src/python/beancount/parser/lexer.c"
+#line 1202 "src/python/beancount/parser/lexer.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2186,7 +2204,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 195 "src/python/beancount/parser/lexer.l"
+#line 204 "src/python/beancount/parser/lexer.l"
 
 
 /*--------------------------------------------------------------------------------------*/
@@ -2198,20 +2216,25 @@ int yycolumn = 1;
 
 #define LEXEOF 0
 
-void yy_skip_line()
+int yy_skip_line()
 {
+    int num_chars = 0;
     for ( ;; ) {
         int c = input();
+        num_chars++;
         if ( c == LEXEOF || c == -1 ) {
             break;
         }
         if ( c == '\n' ) {
             unput(c);
+            num_chars--;
             break;
         }
     }
+    return num_chars;
 }
 
+/* Convert an integer string to a number. */
 int strtonl(const char* buf, size_t nchars)
 {
     int result = 0;

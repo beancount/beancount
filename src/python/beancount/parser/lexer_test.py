@@ -190,8 +190,23 @@ class TestLexer(unittest.TestCase):
         """\
           Assets:A
         """
-        # FIXME: This should return a single error. Fix the lexer for it.
-        # print()
-        # print()
-        # for tk in tokens: print(tk)
-        # print()
+        self.assertEqual([
+            ('ERROR', 1, 'A', None),
+            ('EOL', 2, '\n', None),
+        ], tokens)
+        self.assertTrue(errors)
+        self.assertTrue(re.search('erroneous token', errors[0].message))
+
+    @lex_tokens
+    def test_invalid_directive(self, tokens, errors):
+        """\
+          2008-03-01 check Assets:BestBank:Savings 2340.19 USD
+        """
+        for t in tokens:
+            print(t)
+        # self.assertEqual([
+        #     ('ERROR', 1, 'A', None),
+        #     ('EOL', 2, '\n', None),
+        # ], tokens)
+        # self.assertTrue(errors)
+        # self.assertTrue(re.search('erroneous token', errors[0].message))

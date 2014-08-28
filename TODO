@@ -13,6 +13,7 @@ beancount: TODO
     balancing transactions. Need to figure out how to do this properly without
     raising two errors.
 
+
 ** Move Files to Final Location
 
   As I'm moving to a system with more plugins and less code in the core, and
@@ -56,11 +57,6 @@ beancount: TODO
   A few minor bugs and improvements should be completed before marking this a
   complete release:
 
-  - (documents) documents found in parent directories don't end up creating a
-    directive because we skip them because we only restrict to accounts which
-    have had an open declaration... this is probably not what we want, in order
-    to maximize the number of documents captured by this. {fa96aa05361d}
-
   - "Position with lots goes negative" should output an error message and be
     caught, because if it is run by the web server, it serves no page. Needs to
     be integrated like all the other error messages:
@@ -88,7 +84,9 @@ beancount: TODO
 
   - Instead of ignoring diff_amount and parent and such for hashing purposes,
     just make ignorable fields start with _, e.g. posting._entry, balance._diff,
-    entry._fileloc, etc. Call those non-essential fields.
+    entry._fileloc, etc. Call those non-essential fields. This is important for
+    the release, because this will affect the API and we would rather not change
+    things too much after release.
 
 
 ** Parser-Related Minor Bugs
@@ -136,10 +134,6 @@ beancount: TODO
 
   The following issues would be dealt by fixing the lexer default rule.
   Should we hand-craft our own tokenizer? Seems reasonable to me.
-
-  - You need to make the default rule consume the entire token, like this:
-        [^ \t\n]+ {
-    instead of consuming a single char.
 
   - This:
 
@@ -261,6 +255,12 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - (documents) documents found in parent directories don't end up creating a
+    directive because we skip them because we only restrict to accounts which
+    have had an open declaration... this is probably not what we want, in order
+    to maximize the number of documents captured by this. {fa96aa05361d}
 
 
   - Bring in all the generic functions from experiments/returns/returns.py into
@@ -1361,6 +1361,14 @@ beancount: TODO
   - Remove support for legacy, PIPE, Not needed.
 
 
+** Refactoring: Holding to Position
+
+  - I think there's a way to simplify holdings: you can probably remove the
+    "Holding" type and replace that with a Posting, which really, is much like a
+    Holding, it has an account and a position, and a price.... That would
+    normalize Holding quite a bit, even if it means we end up adding a few
+    unused slots to Posting. I'm happy to do that! Simplify simplify simplify...
+    always.
 
 
 ** File Input as Environment Variable

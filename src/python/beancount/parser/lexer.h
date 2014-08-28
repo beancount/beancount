@@ -32,7 +32,7 @@ extern int yy_line_tokens; /* Number of tokens since the bol */
 
 
 /* Skip the rest of the input line. */
-void yy_skip_line(void);
+int yy_skip_line(void);
 
 
 /* Utility functions. */
@@ -361,7 +361,7 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-#line 195 "src/python/beancount/parser/lexer.l"
+#line 204 "src/python/beancount/parser/lexer.l"
 
 
 #line 368 "src/python/beancount/parser/lexer.h"
