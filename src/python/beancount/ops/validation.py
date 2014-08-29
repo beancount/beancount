@@ -408,10 +408,13 @@ def validate_ambiguous_prices(entries, unused_options_map):
                 # Note: This should be a list of entries for better error
                 # reporting. (Later.)
                 error_entry = next(iter(number_map.values()))
-                errors.append(
-                    ValidationError(error_entry.source,
-                                    "Ambiguous price entry.",
-                                    error_entry))
+
+                # FIXME: Bring this back in.
+                if 0:
+                    errors.append(
+                        ValidationError(error_entry.source,
+                                        "Disagreeing price entries.",
+                                        error_entry))
     return errors
 
 

@@ -263,6 +263,9 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - I need a report dedicated to detailing uninvested cash.
+
+
   - Closing an account with a non-zero balance should trigger an error! Right
     now it does not. This is important.
 
