@@ -32,6 +32,8 @@ class TestLexer(unittest.TestCase):
         def wrapped(self):
             string = fun.__doc__
             builder = lexer.LexBuilder()
+            # Set default value for test_overlong_string().
+            builder.long_string_maxlines_default = 8
             tokens = list(lexer.lex_iter_string(textwrap.dedent(string),
                                                 builder))
             return fun(self, tokens, builder.errors)
@@ -52,7 +54,6 @@ class TestLexer(unittest.TestCase):
           #sometag123
           ^sometag123
         """
-        print_tokens(tokens)
         self.assertEqual([
             ('DATE', 1, '2013-05-18', datetime.date(2013, 5, 18)),
             ('DATE', 1, '2014-01-02', datetime.date(2014, 1, 2)),
@@ -215,3 +216,40 @@ class TestLexer(unittest.TestCase):
             ], tokens)
         self.assertTrue(errors)
         self.assertTrue(re.search(r'\bcheck\b', errors[0].message))
+
+    @lex_tokens
+    def test_invalid_directive(self, tokens, errors):
+        """\
+          2008-03-01 check Assets:BestBank:Savings 2340.19 USD
+        """
+        self.assertEqual([
+            ('DATE', 1, '2008-03-01', datetime.date(2008, 3, 1)),
+            ('ERROR', 1, 'c', None),
+            ('ACCOUNT', 1, 'Assets:BestBank:Savings', 'Assets:BestBank:Savings'),
+            ('NUMBER', 1, '2340.19', D('2340.19')),
+            ('CURRENCY', 1, 'USD', 'USD'),
+            ('EOL', 2, '\n', None),
+            ], tokens)
+        self.assertTrue(errors)
+        self.assertTrue(re.search(r'\bcheck\b', errors[0].message))
+
+    @lex_tokens
+    def test_overlong_string(self, tokens, errors):
+        """
+          2014-01-01 note Assets:Temporary "Bla bla" "
+
+          2014-02-01 open Liabilities:US:BankWithLongName:Credit-Card:Account01
+          2014-02-02 open Liabilities:US:BankWithLongName:Credit-Card:Account02
+          2014-02-03 open Liabilities:US:BankWithLongName:Credit-Card:Account03
+          2014-02-04 open Liabilities:US:BankWithLongName:Credit-Card:Account04
+          2014-02-05 open Liabilities:US:BankWithLongName:Credit-Card:Account05
+          2014-02-06 open Liabilities:US:BankWithLongName:Credit-Card:Account06
+          2014-02-07 open Liabilities:US:BankWithLongName:Credit-Card:Account07
+          2014-02-08 open Liabilities:US:BankWithLongName:Credit-Card:Account08
+          2014-02-09 open Liabilities:US:BankWithLongName:Credit-Card:Account09
+          2014-02-10 open Liabilities:US:BankWithLongName:Credit-Card:Account10
+
+          2014-02-02 note Assets:Temporary "Bla bla"
+        """
+        self.assertTrue(errors)
+        self.assertTrue(re.search(r'Overly long', errors[0].message))

@@ -116,14 +116,6 @@ beancount: TODO
         2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
 
 
-  - This easy mistake, disables a lot of entries:
-
-        2014-02-02 note Assets:Temporary "Bla bla""
-
-    Find a way to detect too long strings and perhaps barf on it.
-    Note: This could easily be handled with a custom tokenizer.
-
-
 ** Cleanup Tasks
 
   Some amount of generic cleanup should be performed before calling the release.
@@ -225,6 +217,11 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - Along with the new inventory, you can make Holding -> Position. This makes
+    a lot of sense actually. Do do this!
+
 
 
   - (documents) documents found in parent directories don't end up creating a

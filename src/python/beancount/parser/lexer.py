@@ -28,6 +28,30 @@ class LexBuilder(object):
         # Errors that occurred during lexing and parsing.
         self.errors = []
 
+        # Default number of lines as threshold to warn over long strings.
+        self.long_string_maxlines_default = 64
+
+    def get_invalid_account(self):
+        """Return the name of an invalid account placeholder.
+
+        When an account name is not deemed a valid one, replace it by
+        this account name. This can be overridden by the parser to
+        take into account the options.
+
+        Returns:
+          A string, the name of the root/type for invalid account names.
+        """
+        return 'Equity:InvalidAccountName'
+
+    def get_long_string_maxlines(self):
+        """Number of lines for a string to trigger a warning.
+        This is meant to help users detecting dangling quotes in their source.
+
+        Returns:
+          An integer, the number of characters beyond which to warm about a string.
+        """
+        return self.long_string_maxlines_default
+
     def get_lexer_location(self):
         return data.Source(_parser.get_yyfilename(),
                            _parser.get_yylineno())
@@ -72,7 +96,7 @@ class LexBuilder(object):
                 LexerError(self.get_lexer_location(),
                            "Invalid account name: {}".format(account_name),
                            None))
-            return account.join(self.options['name_equity'], 'InvalidAccountName')
+            return account.join(self.get_invalid_account())
 
         # Create an account, reusing their strings as we go.
         try:
@@ -102,6 +126,15 @@ class LexBuilder(object):
           The string. Nothing to be done or cleaned up. Eventually we might
           do some decoding here.
         """
+        # If a multiline string, warm over a certain number of lines.
+        if '\n' in string:
+            num_lines = string.count('\n') + 1
+            if num_lines > self.get_long_string_maxlines():
+                self.errors.append(
+                    LexerError(
+                        self.get_lexer_location(),
+                        "Overly long string ({} lines); possible error.".format(num_lines),
+                        None))
         return string
 
     def NUMBER(self, number):

@@ -12,6 +12,7 @@ from os import path
 from beancount.parser import _parser
 from beancount.parser import lexer
 from beancount.parser import options
+from beancount.core import account
 from beancount.core import data
 from beancount.core.amount import ZERO, Decimal, Amount, amount_div
 from beancount.core.position import Lot, Position
@@ -73,6 +74,14 @@ class Builder(lexer.LexBuilder):
         # Make the account regexp more restrictive than the default: check
         # types.
         self.account_regexp = valid_account_regexp(self.options)
+
+    def get_invalid_account(self):
+        """See base class."""
+        return account.join(self.options['name_equity'], 'InvalidAccountName')
+
+    def get_long_string_maxlines(self):
+        """See base class."""
+        return self.options['long_string_maxlines']
 
     def store_result(self, entries):
         """Start rule stores the final result here.
