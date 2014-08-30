@@ -48,7 +48,6 @@ class LexBuilder(object):
         Returns:
           A new datetime object.
         """
-        print(year, month, day)
         try:
             return datetime.date(year, month, day)
         except ValueError as exc:

@@ -168,11 +168,11 @@ class TestLexer(unittest.TestCase):
         """\
           TEST-DA
         """
-        print_tokens(tokens)
-        self.assertEqual(1, len(errors))
-        # FIXME: Improve the tokenizer not to return 'TEST' here.
-        # self.assertEqual([('ERROR', 1, 'TEST-DA', None),
-        #                   ('EOL', 2, '\n', None)], tokens)
+        self.assertEqual([
+            ('CURRENCY', 1, 'TEST-DA', 'TEST-DA'),
+            ('EOL', 2, '\n', None),
+            ], tokens)
+        self.assertEqual(0, len(errors))
 
     @lex_tokens
     def test_bad_date(self, tokens, errors):
@@ -215,8 +215,7 @@ class TestLexer(unittest.TestCase):
           2008-03-01 check Assets:BestBank:Savings 2340.19 USD
         """
         # FIXME: Complete this, chomp until whitespace
-        for t in tokens:
-            print(t)
+        print_tokens(tokens)
         # self.assertEqual([
         #     ('ERROR', 1, 'A', None),
         #     ('EOL', 2, '\n', None),
