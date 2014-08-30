@@ -486,7 +486,7 @@ class TestTransactions(unittest.TestCase):
             Equity:Conversions         102 AUD @ 0 XFER
         """
         check_list(self, entries, [Transaction])
-        check_list(self, errors, [ParserError, ParserError, ParserError])
+        check_list(self, errors, [])
 
     @parsedoc
     def test_zero_units(self, entries, errors, _):
