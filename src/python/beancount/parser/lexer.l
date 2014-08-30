@@ -170,7 +170,7 @@ option		{ return OPTION; }
 
  /* Currencies. These are defined as uppercase only in order to disambiguate the
   * syntax. */
-[A-Z][A-Z0-9\'\.\_\-]{1,10}[A-Z0-9]	{
+[A-Z][A-Z0-9\'\.\_\-]{0,10}[A-Z0-9]	{
     yylval->pyobj = BUILD("CURRENCY", "s", yytext);
     return CURRENCY;
 }

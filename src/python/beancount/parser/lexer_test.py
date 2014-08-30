@@ -41,60 +41,51 @@ class TestLexer(unittest.TestCase):
     @lex_tokens
     def test_lex_iter(self, tokens, errors):
         """\
-          2013-05-18
-          2014-01-02
+          2013-05-18 2014-01-02 2014/01/02
           Assets:US:Bank:Checking
           Liabilities:US:Bank:CreditCard
           Other:Bank
-          USD
-          GOOG
-          TEST_3
+          USD GOOG TEST_D TEST_3 TEST-D TEST-3 NT
           "Nice dinner at Mermaid Inn"
           ""
-          123
-          123.45
-          123.456789
-          -123
-          -123.456789
+          123 123.45 123.456789 -123 -123.456789
           #sometag123
           ^sometag123
         """
+        print_tokens(tokens)
         self.assertEqual([
             ('DATE', 1, '2013-05-18', datetime.date(2013, 5, 18)),
+            ('DATE', 1, '2014-01-02', datetime.date(2014, 1, 2)),
+            ('DATE', 1, '2014/01/02', datetime.date(2014, 1, 2)),
             ('EOL', 2, '\n', None),
-            ('DATE', 2, '2014-01-02', datetime.date(2014, 1, 2)),
+            ('ACCOUNT', 2, 'Assets:US:Bank:Checking', 'Assets:US:Bank:Checking'),
             ('EOL', 3, '\n', None),
-            ('ACCOUNT', 3, 'Assets:US:Bank:Checking', 'Assets:US:Bank:Checking'),
+            ('ACCOUNT', 3, 'Liabilities:US:Bank:CreditCard', 'Liabilities:US:Bank:CreditCard'),
             ('EOL', 4, '\n', None),
-            ('ACCOUNT', 4, 'Liabilities:US:Bank:CreditCard',
-             'Liabilities:US:Bank:CreditCard'),
+            ('ACCOUNT', 4, 'Other:Bank', 'Other:Bank'),
             ('EOL', 5, '\n', None),
-            ('ACCOUNT', 5, 'Other:Bank', 'Other:Bank'),
+            ('CURRENCY', 5, 'USD', 'USD'),
+            ('CURRENCY', 5, 'GOOG', 'GOOG'),
+            ('CURRENCY', 5, 'TEST_D', 'TEST_D'),
+            ('CURRENCY', 5, 'TEST_3', 'TEST_3'),
+            ('CURRENCY', 5, 'TEST-D', 'TEST-D'),
+            ('CURRENCY', 5, 'TEST-3', 'TEST-3'),
+            ('CURRENCY', 5, 'NT', 'NT'),
             ('EOL', 6, '\n', None),
-            ('CURRENCY', 6, 'USD', 'USD'),
+            ('STRING', 6, '"Nice dinner at Mermaid Inn"', 'Nice dinner at Mermaid Inn'),
             ('EOL', 7, '\n', None),
-            ('CURRENCY', 7, 'GOOG', 'GOOG'),
+            ('STRING', 7, '""', ''),
             ('EOL', 8, '\n', None),
-            ('CURRENCY', 8, 'TEST_3', 'TEST_3'),
+            ('NUMBER', 8, '123', D('123')),
+            ('NUMBER', 8, '123.45', D('123.45')),
+            ('NUMBER', 8, '123.456789', D('123.456789')),
+            ('NUMBER', 8, '-123', D('-123')),
+            ('NUMBER', 8, '-123.456789', D('-123.456789')),
             ('EOL', 9, '\n', None),
-            ('STRING', 9, '"Nice dinner at Mermaid Inn"', 'Nice dinner at Mermaid Inn'),
+            ('TAG', 9, '#sometag123', 'sometag123'),
             ('EOL', 10, '\n', None),
-            ('STRING', 10, '""', ''),
+            ('LINK', 10, '^sometag123', 'sometag123'),
             ('EOL', 11, '\n', None),
-            ('NUMBER', 11, '123', D('123')),
-            ('EOL', 12, '\n', None),
-            ('NUMBER', 12, '123.45', D('123.45')),
-            ('EOL', 13, '\n', None),
-            ('NUMBER', 13, '123.456789', D('123.456789')),
-            ('EOL', 14, '\n', None),
-            ('NUMBER', 14, '-123', D('-123')),
-            ('EOL', 15, '\n', None),
-            ('NUMBER', 15, '-123.456789', D('-123.456789')),
-            ('EOL', 16, '\n', None),
-            ('TAG', 16, '#sometag123', 'sometag123'),
-            ('EOL', 17, '\n', None),
-            ('LINK', 17, '^sometag123', 'sometag123'),
-            ('EOL', 18, '\n', None),
             ], tokens)
 
     @lex_tokens
