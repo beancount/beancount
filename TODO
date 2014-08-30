@@ -266,6 +266,10 @@ beancount: TODO
   - Bring in all the generic functions from experiments/returns/returns.py into
     core beancount. Bring in returns as a plugin.
 
+  - (architecture) Seriously consider merging entries and errors; errors are
+    just a special type of entry, and they have dates, and they get rendered in
+    journals. This could make a lot of sense.
+
 
   - I need a report dedicated to detailing uninvested cash.
 
