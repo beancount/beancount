@@ -91,11 +91,6 @@ beancount: TODO
 
 ** Parser-Related Minor Bugs
 
-  - Inserting a cost of "0 somethings" results in DivisionByZero errors. Simply
-    disallow using a cost of 0, or a negative number, this should not be
-    allowed. -- Figure out from DC'es email how to reproduce this. Where did the
-    error occur exactly? {61581979e3d4}
-
   - There have been some rare, but occurring few instances of really odd syntax
     making the parser ignore some transactions silently; this is not acceptable.
     Attempt to reproduce this again (not obvious, problems have all been fixed I
@@ -1240,6 +1235,10 @@ beancount: TODO
 
   - (performance) Implement inventories in C and reinstall the
     validate_check_balances test.
+
+  - (performance) Don't pass in the FILE_LINE_ARGS on function calls, these
+    should be part of the context of the parser, should be gettable only on
+    demand.
 
   - Can I use Py_RETURN_NONE in order to incref and assign, in the lexer,
     instead of doing it in two steps?

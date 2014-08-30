@@ -164,10 +164,12 @@ class Builder(lexer.LexBuilder):
         assert isinstance(cost, Amount)
         return (cost, lot_date, istotal)
 
-    def position(self, amount, lot_cost_date):
+    def position(self, filename, lineno, amount, lot_cost_date):
         """Process a position grammar rule.
 
         Args:
+          filename: the current filename.
+          lineno: the current line number.
           amount: an instance of Amount for the position.
           lot_cost_date: a tuple of (cost, lot-date)
         Returns:
@@ -177,6 +179,14 @@ class Builder(lexer.LexBuilder):
         if istotal:
             cost = amount_div(cost, amount.number)
         lot = Lot(amount.currency, cost, lot_date)
+
+        # We don't allow a cost nor a price of zero. (Conversion entries may use
+        # a price of zero as the only special case, but never for costs.)
+        if cost is not None and cost.number <= ZERO:
+            source = Source(filename, lineno)
+            self.errors.append(
+                ParserError(source, "Cost is zero or negative: {}".format(cost), None))
+
         return Position(lot, amount.number)
 
     def handle_list(self, object_list, new_object):
@@ -334,10 +344,12 @@ class Builder(lexer.LexBuilder):
 
         return Document(source, date, account, document_filename)
 
-    def posting(self, account, position, price, istotal, flag):
+    def posting(self, filename, lineno, account, position, price, istotal, flag):
         """Process a posting grammar rule.
 
         Args:
+          filename: the current filename.
+          lineno: the current line number.
           account: A string, the account of the posting.
           position: An instance of Position from the grammar rule.
           price: Either None, or an instance of Amount that is the cost of the position.
@@ -353,6 +365,13 @@ class Builder(lexer.LexBuilder):
             price = Amount(ZERO
                            if position.number == ZERO
                            else price.number / position.number, price.currency)
+
+        # Note: Allow zero prices becuase we need them for round-trips.
+        # if price is not None and price.number == ZERO:
+        #     source = Source(filename, lineno)
+        #     self.errors.append(
+        #         ParserError(source, "Price is zero: {}".format(price), None))
+
         return Posting(None, account, position, price, chr(flag) if flag else None)
 
 

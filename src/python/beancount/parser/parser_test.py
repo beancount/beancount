@@ -486,7 +486,7 @@ class TestTransactions(unittest.TestCase):
             Equity:Conversions         102 AUD @ 0 XFER
         """
         check_list(self, entries, [Transaction])
-        check_list(self, errors, [])
+        check_list(self, errors, [ParserError, ParserError, ParserError])
 
     @parsedoc
     def test_zero_units(self, entries, errors, _):
@@ -507,8 +507,7 @@ class TestTransactions(unittest.TestCase):
             Assets:Cash
         """
         check_list(self, entries, [Transaction])
-        check_list(self, errors, [])
-        # FIXME: This should ideally raise a proper error. {61581979e3d4}
+        check_list(self, errors, [ParserError])
 
     @parsedoc
     def test_imbalance(self, entries, errors, _):
