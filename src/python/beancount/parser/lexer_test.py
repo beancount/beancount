@@ -11,6 +11,18 @@ from beancount.core.amount import D
 from beancount.parser import lexer
 
 
+def print_tokens(tokens):
+    """A function for printing a list of tokens, for testing.
+
+    Args:
+      tokens: A list of token tuples.
+    """
+    print()
+    print(',--------------------------------')
+    for t in tokens:
+        print('{},'.format(t))
+    print('`--------------------------------')
+
 
 class TestLexer(unittest.TestCase):
     """Test output of the lexer."""
@@ -156,6 +168,7 @@ class TestLexer(unittest.TestCase):
         """\
           TEST-DA
         """
+        print_tokens(tokens)
         self.assertEqual(1, len(errors))
         # FIXME: Improve the tokenizer not to return 'TEST' here.
         # self.assertEqual([('ERROR', 1, 'TEST-DA', None),
@@ -167,23 +180,22 @@ class TestLexer(unittest.TestCase):
           2013-12-98
         """
         self.assertEqual([
-            ('DATE', 1, '2013-12-98', datetime.date(1970, 1, 1)),
+            ('ERROR', 1, '2013-12-98', None),
             ('EOL', 2, '\n', None),
         ], tokens)
         self.assertTrue(errors)
-        self.assertTrue(re.search('out of range', errors[0].message))
+        self.assertTrue(re.search('out of range', errors[0].message) or
+                        re.search('month must be', errors[0].message))
 
     @lex_tokens
     def test_date_followed_by_number(self, tokens, errors):
         """\
           2013-12-228
         """
-        # FIXME: Figure out how to parse word boundary properly in lexer.
-        # print()
-        # print()
-        # for tk in tokens: print(tk)
-        # print()
-        # self.assertEqual([], tokens)
+        self.assertEqual([
+            ('ERROR', 1, '2013-12-228', None),
+            ('EOL', 2, '\n', None),
+            ], tokens)
 
     @lex_tokens
     def test_single_letter_account(self, tokens, errors):
@@ -202,6 +214,7 @@ class TestLexer(unittest.TestCase):
         """\
           2008-03-01 check Assets:BestBank:Savings 2340.19 USD
         """
+        # FIXME: Complete this, chomp until whitespace
         for t in tokens:
             print(t)
         # self.assertEqual([

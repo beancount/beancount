@@ -138,11 +138,24 @@ poptag		{ return POPTAG; }
 option		{ return OPTION; }
 
  /* Dates. */
-[0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][0-9]	{
-    int year = strtonl(yytext, 4);
-    int month = strtonl(yytext+5, 2);
-    int day = strtonl(yytext+8, 2);
+[0-9]{4,}[\-/][0-9]+[\-/][0-9]+	{
+    /* Parse the numbers. */
+    const char* year_str = yytext;
+    const char* month_str = strpbrk(year_str, "-/");
+    int year = strtonl(year_str, month_str - year_str);
+    month_str++;
+    const char* day_str = strpbrk(month_str, "-/");
+    int month = strtonl(month_str, day_str - month_str);
+    day_str++;
+    int day = strtonl(day_str, yytext + yyleng - day_str);
+
+    /* Attempt to create the date. */
     yylval->pyobj = BUILD("DATE", "iii", year, month, day);
+
+    /* Return error if we could not. An error has already been logged. */
+    if (yylval->pyobj == Py_None) {
+      return ERROR;
+    }
     return DATE;
 }
 
