@@ -35,7 +35,7 @@ class LexBuilder(object):
     def ERROR(self, string):
         self.errors.append(
             LexerError(self.get_lexer_location(),
-                       "Lexer error; erroneous token: {}".format(string),
+                       "Lexer error; erroneous token: '{}'".format(string),
                        None))
 
     def DATE(self, year, month, day):

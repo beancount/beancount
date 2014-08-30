@@ -214,11 +214,13 @@ class TestLexer(unittest.TestCase):
         """\
           2008-03-01 check Assets:BestBank:Savings 2340.19 USD
         """
-        # FIXME: Complete this, chomp until whitespace
-        print_tokens(tokens)
-        # self.assertEqual([
-        #     ('ERROR', 1, 'A', None),
-        #     ('EOL', 2, '\n', None),
-        # ], tokens)
-        # self.assertTrue(errors)
-        # self.assertTrue(re.search('erroneous token', errors[0].message))
+        self.assertEqual([
+            ('DATE', 1, '2008-03-01', datetime.date(2008, 3, 1)),
+            ('ERROR', 1, 'c', None),
+            ('ACCOUNT', 1, 'Assets:BestBank:Savings', 'Assets:BestBank:Savings'),
+            ('NUMBER', 1, '2340.19', D('2340.19')),
+            ('CURRENCY', 1, 'USD', 'USD'),
+            ('EOL', 2, '\n', None),
+            ], tokens)
+        self.assertTrue(errors)
+        self.assertTrue(re.search(r'\bcheck\b', errors[0].message))

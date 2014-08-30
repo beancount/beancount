@@ -124,30 +124,6 @@ beancount: TODO
     Note: This could easily be handled with a custom tokenizer.
 
 
-** Lexer: Default Rule to Chomp Remaining
-
-  The following issues would be dealt by fixing the lexer default rule.
-  Should we hand-craft our own tokenizer? Seems reasonable to me.
-
-  - This:
-
-      2008-03-01 check Assets:BestBank:Savings 2340.19 USD
-
-    Fails the lexer with errors that look like this:
-
-      /home/blais/p/beancount/examples/basic/basic.beancount:375:  syntax error,
-    unexpected ERROR /home/blais/p/beancount/examples/basic/basic.beancount:375:
-    Lexer error; erroneous token: h
-    /home/blais/p/beancount/examples/basic/basic.beancount:375:  Lexer error;
-    erroneous token: e
-    /home/blais/p/beancount/examples/basic/basic.beancount:375:  Lexer error;
-    erroneous token: c
-    /home/blais/p/beancount/examples/basic/basic.beancount:375:  Lexer error;
-    erroneous token: k
-    /home/blais/p/beancount/examples/basic/basic.beancount:438:  Lexer error;
-    erroneous token: c
-
-
 ** Cleanup Tasks
 
   Some amount of generic cleanup should be performed before calling the release.

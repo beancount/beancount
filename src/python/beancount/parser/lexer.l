@@ -6,7 +6,7 @@
 
 /* Options */
 %option noyywrap
-%option nodefault
+/* %option nodefault */
 %option yylineno
 %option never-interactive
 %option warn
@@ -55,6 +55,9 @@ int yy_skip_line(void);
 int strtonl(const char* buf, size_t nchars);
 
 }
+
+/* A start condition for chomping an invalid token. */
+%x INVALID
 
 
 /*--------------------------------------------------------------------------------------*/
@@ -196,26 +199,26 @@ option		{ return OPTION; }
     return LINK;
 }
 
- /* Default rule. This should never be reached unless there is an error.
-    Important note: use a single character here because this should never match
-    more text than valid rules. See the "How the Input Is Matched" section in
-    the flex manual:  flex selects the rule that matches the most text. */
+ /* Default rule. */
 .			{
-    /* Consume the rest of the line and continue thereafter. */
-    int num_chars = yy_skip_line();
-
-    /* FIXME: return the entire skipped text here. I think we'll have to
-       accumulate ourselves since specifying a long matching rule would
-       supersede other stuff. */
-    yylval->pyobj = BUILD("ERROR", "s#", yytext, num_chars);
-    return ERROR;
+  unput(*yytext);
+  BEGIN(INVALID);
+  return ERROR;
 }
 
+ /* Note: we use a subparser because if we set a default rule to
+    chomp this pattern, it would take precedence over valid rules
+    if the matched text is longer and thus break the parser. */
+<INVALID>[^ \t\n\r]+     {
+    yylval->pyobj = BUILD("ERROR", "s#", yytext, yyleng);
+    BEGIN(INITIAL);
+}
 
 
 %%
 /*--------------------------------------------------------------------------------------*/
 /* User Code */
+
 
 const char* yy_filename = 0;
 int yy_line_tokens = 0;
@@ -240,6 +243,28 @@ int yy_skip_line()
     }
     return num_chars;
 }
+
+/* FIXME: Remove */
+/* int yy_skip_until_whitespace(char* buffer, size_t bufsize) */
+/* { */
+/*     int num_chars = 0; */
+/*     for ( ;; ) { */
+/*         int c = input(); */
+/*         if (num_chars < bufsize) { */
+/*           *buffer++ = c; */
+/*         } */
+/*         num_chars++; */
+/*         if ( c == LEXEOF || c == -1 ) { */
+/*             break; */
+/*         } */
+/*         if ( c == ' ' || c == '\t' || c == '\r' || c == '\n' ) { */
+/*             unput(c); */
+/*             num_chars--; */
+/*             break; */
+/*         } */
+/*     } */
+/*     return num_chars; */
+/* } */
 
 /* Convert an integer string to a number. */
 int strtonl(const char* buf, size_t nchars)

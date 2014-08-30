@@ -248,6 +248,7 @@ extern char *yytext;
 
 #ifdef YY_HEADER_EXPORT_START_CONDITIONS
 #define INITIAL 0
+#define INVALID 1
 
 #endif
 
@@ -361,9 +362,9 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-#line 216 "src/python/beancount/parser/lexer.l"
+#line 218 "src/python/beancount/parser/lexer.l"
 
 
-#line 368 "src/python/beancount/parser/lexer.h"
+#line 369 "src/python/beancount/parser/lexer.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */
