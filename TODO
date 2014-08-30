@@ -267,6 +267,9 @@ beancount: TODO
     core beancount. Bring in returns as a plugin.
 
 
+  - I need a report dedicated to detailing uninvested cash.
+
+
   - Closing an account with a non-zero balance should trigger an error! Right
     now it does not. This is important.
 

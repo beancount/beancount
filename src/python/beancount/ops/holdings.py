@@ -32,6 +32,8 @@ from beancount.utils import misc_utils
 # Note: we could reserve an 'extra' member to hold values from derived fields,
 # such as fractional value of portfolio, instead of occasionally overloading the
 # value of market_value or others.
+#
+# FIXME: This really could be replaced by a Posting; to be done later on.
 Holding = collections.namedtuple('Holding',
                                  'account number currency cost_number cost_currency '
                                  'book_value market_value price_number price_date')
@@ -60,7 +62,6 @@ def get_final_holdings(entries, included_account_types=None, price_map=None, dat
         holdings. If left unspecified, we use the latest price information.
     Returns:
       A list of dicts, with the following fields:
-
     """
     # Remove the entries inserted by unrealized gains/losses. Those entries do
     # affect asset accounts, and we don't want them to appear in holdings.
