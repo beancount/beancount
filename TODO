@@ -89,28 +89,6 @@ beancount: TODO
     things too much after release.
 
 
-** Parser-Related Minor Bugs
-
-  - There have been some rare, but occurring few instances of really odd syntax
-    making the parser ignore some transactions silently; this is not acceptable.
-    Attempt to reproduce this again (not obvious, problems have all been fixed I
-    think) and implement better error checking if possible.
-
-    Reproduction hints: before eeea4b4d5605, a transaciton line with no strings
-    at all, e.g. a line starting with "YYYY-MM-DD * ", would entirely ignore a
-    transaction. Find a way to trigger an error on this.
-
-    Other examples that bring up this problem (pre eeea4b4d5605):
-
-      This parses wrong and silently--fix it:
-
-        2014-04-20 * "Money from CC" ^610fa7f17e7a #trip-montreal-april-2014
-
-      This works okay:
-
-        2014-04-20 * "Money from CC" #trip-montreal-april-2014 ^610fa7f17e7a
-
-
 ** Cleanup Tasks
 
   Some amount of generic cleanup should be performed before calling the release.
@@ -155,9 +133,6 @@ beancount: TODO
 
 
 ** Documentation / Ongoing
-
-  - Beancount Install: Add dateutil to the list of dependencies.
-
 
   - Add to motivation doc: useful to make a will. Where's all the stuff?
 
@@ -212,6 +187,12 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - (performance) Write your own lexer manually and compare performance with
+    flex one. I think we can do a much better job at error reporting by writing
+    our own, but I'm unsure how the performance compares.
+
 
 
   - Along with the new inventory, you can make Holding -> Position. This makes
