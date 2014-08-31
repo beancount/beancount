@@ -182,10 +182,16 @@ class Builder(lexer.LexBuilder):
 
         # We don't allow a cost nor a price of zero. (Conversion entries may use
         # a price of zero as the only special case, but never for costs.)
-        if cost is not None and cost.number <= ZERO:
-            source = Source(filename, lineno)
-            self.errors.append(
-                ParserError(source, "Cost is zero or negative: {}".format(cost), None))
+        if cost is not None:
+            if amount.number == ZERO:
+                source = Source(filename, lineno)
+                self.errors.append(
+                    ParserError(source, "Amount is zero or negative: {}".format(cost), None))
+
+            if cost.number <= ZERO:
+                source = Source(filename, lineno)
+                self.errors.append(
+                    ParserError(source, "Cost is zero or negative: {}".format(cost), None))
 
         return Position(lot, amount.number)
 
