@@ -33,6 +33,22 @@ TEST_INPUT = """
 
 class TestGetters(unittest.TestCase):
 
+    def test_get_accounts_use_map(self):
+        entries = parser.parse_string(TEST_INPUT)[0]
+        accounts_first, accounts_last = getters.get_accounts_use_map(entries)
+        self.assertEqual({'Expenses:Coffee': datetime.date(2012, 2, 1),
+                          'Expenses:Restaurant': datetime.date(2012, 2, 1),
+                          'Assets:US:Cash': datetime.date(2012, 2, 1),
+                          'Expenses:Grocery': datetime.date(2012, 2, 1),
+                          'Assets:US:Credit-Card': datetime.date(2012, 2, 1)},
+                         accounts_first)
+        self.assertEqual({'Expenses:Coffee': datetime.date(2013, 6, 22),
+                          'Expenses:Restaurant': datetime.date(2013, 6, 20),
+                          'Assets:US:Cash': datetime.date(2014, 2, 1),
+                          'Expenses:Grocery': datetime.date(2012, 5, 18),
+                          'Assets:US:Credit-Card': datetime.date(2014, 2, 1)},
+                         accounts_last)
+
     def test_get_accounts(self):
         entries = parser.parse_string(TEST_INPUT)[0]
         accounts = getters.get_accounts(entries)

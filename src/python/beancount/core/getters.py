@@ -10,20 +10,24 @@ from beancount.core import account
 class GetAccounts:
     """Accounts gatherer.
     """
-    def get_accounts(self, entries):
+    def get_accounts_use_map(self, entries):
         """Gather the list of accounts from the list of entries.
 
         Args:
           entries: A list of directive instances.
         Returns:
-          A list of account name strings.
+          A pair of dictionaries of account name to date, one for first date
+          used and one for last date used. The keys should be identical.
         """
-        accounts = set()
+        accounts_first = {}
+        accounts_last = {}
         for entry in entries:
             method = getattr(self, entry.__class__.__name__)
             for account in method(entry):
-                accounts.add(account)
-        return accounts
+                if account not in accounts_first:
+                    accounts_first[account] = entry.date
+                accounts_last[account] = entry.date
+        return accounts_first, accounts_last
 
     def get_entry_accounts(self, entry):
         """Gather all the accounts references by a single directive.
@@ -89,6 +93,18 @@ class GetAccounts:
 _GetAccounts = GetAccounts()
 
 
+def get_accounts_use_map(entries):
+    """Gather all the accounts references by a list of directives.
+
+    Args:
+      entries: A list of directive instances.
+    Returns:
+      A pair of dictionaries of account name to date, one for first date
+      used and one for last date used. The keys should be identical.
+    """
+    return _GetAccounts.get_accounts_use_map(entries)
+
+
 def get_accounts(entries):
     """Gather all the accounts references by a list of directives.
 
@@ -97,7 +113,8 @@ def get_accounts(entries):
     Returns:
       A set of account strings.
     """
-    return _GetAccounts.get_accounts(entries)
+    _, accounts_last = _GetAccounts.get_accounts_use_map(entries)
+    return accounts_last.keys()
 
 
 def get_entry_accounts(entry):
@@ -112,7 +129,6 @@ def get_entry_accounts(entry):
       A set of account strings.
     """
     return _GetAccounts.get_entry_accounts(entry)
-
 
 
 def get_account_components(entries):
