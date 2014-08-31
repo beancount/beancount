@@ -63,12 +63,6 @@ beancount: TODO
     that gets automatically inserted for it in addition to the error that gets
     generated.
 
-  - Instead of ignoring diff_amount and parent and such for hashing purposes,
-    just make ignorable fields start with _, e.g. posting._entry, balance._diff,
-    entry._fileloc, etc. Call those non-essential fields. This is important for
-    the release, because this will affect the API and we would rather not change
-    things too much after release.
-
 
 ** Cleanup Tasks
 

@@ -8,6 +8,9 @@ from .data import entry_sortkey, Price
 
 CompareError = collections.namedtuple('CompareError', 'source message entry')
 
+# A list of field names that are being ignored for persistence.
+IGNORED_FIELD_NAMES = {'source', 'entry', 'diff_amount'}
+
 
 def stable_hash_namedtuple(objtuple, ignore=frozenset()):
     """Hash the given namedtuple and its child fields.
@@ -50,7 +53,7 @@ def hash_entry(entry):
     Returns:
       A stable hexadecimal hash of this entry.
     """
-    return stable_hash_namedtuple(entry, {'source', 'entry', 'diff_amount'})
+    return stable_hash_namedtuple(entry, IGNORED_FIELD_NAMES)
 
 
 def hash_entries(entries):
