@@ -445,47 +445,6 @@ class TestValidateDuplicates(cmptest.TestCase):
         self.assertEqual([], list(map(type, valid_errors)))
 
 
-class TestValidateAmbiguousPrices(cmptest.TestCase):
-
-    @parser.parsedoc
-    def test_validate_ambiguous_prices__different(self, entries, errors, options_map):
-        """
-        2000-01-01 price GOOG 500.00 USD
-        2000-01-01 price GOOG 500.01 USD
-        """
-        self.assertEqual([], errors)
-        valid_errors = validation.validate_ambiguous_prices(entries, options_map)
-        # FIXME: Bring this back in.
-        # self.assertEqual([validation.ValidationError], list(map(type, valid_errors)))
-        # self.assertTrue(re.search('Ambiguous price', valid_errors[0].message))
-
-    @parser.parsedoc
-    def test_validate_ambiguous_prices__same(self, entries, errors, options_map):
-        """
-        2000-01-01 price GOOG 500.00 USD
-        2000-01-01 price GOOG 500.00 USD
-        """
-        self.assertEqual([], errors)
-        valid_errors = validation.validate_ambiguous_prices(entries, options_map)
-        self.assertEqual([], valid_errors)
-
-    @parser.parsedoc
-    def test_validate_ambiguous_prices__from_costs(self, entries, errors, options_map):
-        """
-        2014-01-15 *
-          Income:Misc
-          Assets:Account1       1 HOUSE {100 USD}
-          Liabilities:Account1  1 HOUSE {101 USD}
-        """
-        self.assertEqual([], errors)
-        new_entries, errors = implicit_prices.add_implicit_prices(entries, options_map)
-        self.assertEqual([], errors)
-        valid_errors = validation.validate_ambiguous_prices(new_entries, options_map)
-        # FIXME: Bring this back in.
-        # self.assertEqual([validation.ValidationError], list(map(type, valid_errors)))
-        # self.assertTrue(re.search('Ambiguous price', valid_errors[0].message))
-
-
 class TestValidate(cmptest.TestCase):
 
     @parser.parsedoc

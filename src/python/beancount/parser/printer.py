@@ -156,14 +156,17 @@ def format_error(error):
     """Given an error objects, return a formatted string for it.
 
     Args:
-      error: a namedtuple objects representing an error.
+      error: a namedtuple objects representing an error. It has to have an
+        'entry' attribute that may be either a single directive object or a
+        list of directive objects.
     Returns:
       A string, the errors rendered.
     """
     oss = io.StringIO()
     oss.write('{} {}\n'.format(render_source(error.source), error.message))
     if error.entry is not None:
-        error_string = format_entry(error.entry)
+        entries = error.entry if isinstance(error.entry, list) else [error.entry]
+        error_string = '\n'.join(format_entry(entry) for entry in entries)
         oss.write('\n')
         oss.write(textwrap.indent(error_string, '   '))
         oss.write('\n')
