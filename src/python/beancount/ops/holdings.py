@@ -33,7 +33,9 @@ from beancount.utils import misc_utils
 # such as fractional value of portfolio, instead of occasionally overloading the
 # value of market_value or others.
 #
-# FIXME: This really could be replaced by a Posting; to be done later on.
+# WARNING: This really could be replaced by a Posting; to be done later on, this
+# will eventually be replaced by a Posting type. All related code will have the
+# same logic.
 Holding = collections.namedtuple('Holding',
                                  'account number currency cost_number cost_currency '
                                  'book_value market_value price_number price_date')

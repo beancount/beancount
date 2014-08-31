@@ -72,9 +72,8 @@ def tree_table(oss, real_account, formatter, header=None, classes=None):
         write('</tr>')
         write('</thead>')
 
-    # FIXME: This needs to get replaced by a dedicated function. This'll work
-    # for now, but ideally this code renders to a temporary report object and
-    # then rendering occurs separately.
+    # Note: This code eventually should be reworked to be agnostic regarding
+    # text or HTML output rendering.
     lines = realization.dump(real_account)
 
     # Yield with a None for the final line.
