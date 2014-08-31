@@ -71,7 +71,7 @@ def pad(entries, options_map):
             if isinstance(entry, data.Posting):
                 # This is a transaction; update the running balance for this
                 # account.
-                pad_balance.add_position(entry.position, True)
+                pad_balance.add_position(entry.position)
 
             elif isinstance(entry, data.Pad):
                 if entry.account == account:
@@ -139,7 +139,10 @@ def pad(entries, options_map):
                         new_entries[active_pad].append(new_entry)
 
                         # Fixup the running balance.
-                        pad_balance.add_position(diff_position, False)
+                        position_, _ = pad_balance.add_position(diff_position)
+                        if position_.is_negative_at_cost():
+                            raise ValueError(
+                                "Position held at cost goes negative: {}".format(position_))
 
                         # Mark this lot as padded. Further checks should not pad this lot.
                         padded_lots.add(check_amount.currency)

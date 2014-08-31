@@ -226,6 +226,15 @@ class Position:
 
     __neg__ = get_negative
 
+    def is_negative_at_cost(self):
+        """Return true if the position is held at cost and negative.
+
+        Returns:
+          A boolean.
+        """
+        return (self.number < ZERO and
+                (self.lot.cost or self.lot.lot_date))
+
     @staticmethod
     def from_string(string):
         """Create a position from a string specification.

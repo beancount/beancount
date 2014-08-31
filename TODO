@@ -57,29 +57,6 @@ beancount: TODO
   A few minor bugs and improvements should be completed before marking this a
   complete release:
 
-  - "Position with lots goes negative" should output an error message and be
-    caught, because if it is run by the web server, it serves no page. Needs to
-    be integrated like all the other error messages:
-
-      127.0.0.1 - - [22/May/2014 21:51:14] "GET /view/year/2014/income HTTP/1.1"
-    500 762 Traceback (most recent call last):  File
-    "/usr/local/lib/python3.3/dist-packages/bottle.py", line 783, in _handle
-    return route.call(**args) ... File
-    "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 65,
-    in __init__ self.add_position(position) File
-    "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 260,
-    in add_position return self._add(new_position.number, new_position.lot,
-    allow_negative) File
-    "/home/blais/p/beancount/src/python/beancount/core/inventory.py", line 298,
-    in _add raise ValueError("Position with lots goes negative:
-    {}".format(self)) ValueError: Position with lots goes negative:
-    Inventory(-2.00 PUMP {20.00 USD})
-
-    * Inventory.add() -> Inventory.add_amount()
-    * Removed allow_negative, option, convert to a return parameter.
-
-
-
   - An invariant that we would like to maintain is that all accounts that are
     used in a list of entries should have an Open directive for them. In the
     check for this, add code to automatically insert missing Open directives. In

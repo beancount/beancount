@@ -66,7 +66,7 @@ class Inventory:
         if positions:
             assert isinstance(positions, list), positions
             for position in positions:
-                self.add_position(position, True)
+                self.add_position(position)
 
     def __str__(self):
         """Render as a human-readable string.
@@ -225,7 +225,7 @@ class Inventory:
             self.positions.append(found)
         return found
 
-    def add_amount(self, amount, cost=None, lot_date=None, allow_negative=False):
+    def add_amount(self, amount, cost=None, lot_date=None):
         """Add to this inventory using amount, cost and date. This adds with strict lot
         matching, that is, no partial matches are done on the arguments to the
         keys of the inventory.
@@ -236,9 +236,6 @@ class Inventory:
           cost: An instance of Amount or None, as a key to the inventory.
           lot_date: An instance of datetime.date or None, the lot-date to use in
             the key to the inventory.
-          allow_negative: A flag that indicates whether we should allow a
-            position to go negative. A ValueError will be raised if a negative
-            position is not allowed and if it occurs, as per _add().
         Returns:
           True if this position was booked against and reduced another.
         """
@@ -246,38 +243,31 @@ class Inventory:
         assert cost is None or isinstance(cost, Amount), repr(cost)
         assert lot_date is None or isinstance(lot_date, date)
         lot = Lot(amount.currency, cost, lot_date)
-        return self._add(amount.number, lot, allow_negative)
+        return self._add(amount.number, lot)
 
-    def add_position(self, new_position, allow_negative=False):
+    def add_position(self, new_position):
         """Add using a position (with strict lot matching).
         Return True if this position was booked against and reduced another.
 
         Args:
           new_position: The position to add to this inventory.
-          allow_negative: A flag that indicates whether we should allow a
-            position to go negative. A ValueError will be raised if a negative
-            position is not allowed and if it occurs, as per _add().
         Returns:
           True if this position was booked against and reduced another.
         """
         assert isinstance(new_position, Position), new_position
-        return self._add(new_position.number, new_position.lot, allow_negative)
+        return self._add(new_position.number, new_position.lot)
 
-    def _add(self, number, lot, allow_negative=False):
+    def _add(self, number, lot):
         """Return True if this position was booked against and reduced another.
 
         Args:
           number: The number of units to add the given lot by.
           lot: The lot that we want to add to.
-          allow_negative: A flag that decides whether we want to allow
-            negative positions with cost. If False, an addition to a position
-            with cost or lot-date that results in a negative number throws
-            a ValueError.
         Returns:
-          True if the addition reduces an existing position.
-        Raises:
-           ValueError: if the result is a position at cost with a negative
-             number. The inventory will have been updated correctly beforehand.
+          A pair of (position, reducing) where 'position' is the position that
+          that was modified, and where 'reducing' indicates whether this change
+          is a reduction of an existing position (vs. an increase or addition
+          of a new position).
         """
         # Find the position.
         position = self._get_create_position(lot)
@@ -289,19 +279,7 @@ class Inventory:
         if position.number == ZERO:
             self.positions.remove(position)
 
-        # If we don't allow negative positions at cost, and this is a negative
-        # position at cost, raise an exception.
-        elif (not allow_negative and
-              position.number < ZERO and
-              (position.lot.cost or position.lot.lot_date)):
-
-            # Note that at this point we have already modified the values, so
-            # there is a side-effect even if we raise an exception. This is on
-            # purpose, we can help the user, but we shouldn't fix this
-            # automatically by ignoring certain numbers (that's worse).
-            raise ValueError("Position held at cost goes negative: {}".format(self))
-
-        return reducing
+        return position, reducing
 
     def __add__(self, other):
         """Add another inventory to this one. This inventory is not modified.
@@ -324,7 +302,7 @@ class Inventory:
           This inventory, modified.
         """
         for position in other.positions:
-            self.add_position(position, True)
+            self.add_position(position)
         return self
 
     __iadd__ = update
@@ -342,7 +320,7 @@ class Inventory:
         new_inventory = Inventory()
         position_strs = string.split(',')
         for position_str in filter(None, position_strs):
-            new_inventory.add_position(position_from_string(position_str), True)
+            new_inventory.add_position(position_from_string(position_str))
         return new_inventory
 
 

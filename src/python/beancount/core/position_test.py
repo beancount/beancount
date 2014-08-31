@@ -108,3 +108,9 @@ class TestPosition(unittest.TestCase):
         negpos = pos.get_negative()
         self.assertEqual(Amount('-28372', 'USD'), negpos.get_amount())
         self.assertEqual(Amount('-283720', 'AUD'), negpos.get_cost())
+
+    def test_is_negative_at_cost(self):
+        pos1 = Position(Lot("USD", Amount('10', 'AUD'), None), D('1'))
+        pos2 = Position(Lot("USD", Amount('10', 'AUD'), None), D('-1'))
+        self.assertFalse(pos1.is_negative_at_cost())
+        self.assertTrue(pos2.is_negative_at_cost())

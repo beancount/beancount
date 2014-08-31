@@ -384,7 +384,7 @@ def balance_by_account(entries, date=None):
                 # zero is if all the entries are being summed together, no
                 # entries are filtered, at least for a particular account's
                 # postings.
-                account_balance.add_position(posting.position, True)
+                account_balance.add_position(posting.position)
     else:
         index = len(entries)
 

@@ -414,8 +414,8 @@ def iterate_with_balance(postings_or_entries):
                     # Compute the change due to this transaction and update the
                     # total balance at the same time.
                     for date_posting in date_postings:
-                        change.add_position(date_posting.position, True)
-                        running_balance.add_position(date_posting.position, True)
+                        change.add_position(date_posting.position)
+                        running_balance.add_position(date_posting.position)
                 yield date_entry, date_postings, change, running_balance
 
             date_entries.clear()
@@ -440,8 +440,8 @@ def iterate_with_balance(postings_or_entries):
         change = inventory.Inventory()
         if date_postings:
             for date_posting in date_postings:
-                change.add_position(date_posting.position, True)
-                running_balance.add_position(date_posting.position, True)
+                change.add_position(date_posting.position)
+                running_balance.add_position(date_posting.position)
         yield date_entry, date_postings, change, running_balance
     date_entries.clear()
 

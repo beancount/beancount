@@ -346,7 +346,8 @@ class TestPadding(cmptest.TestCase):
         pad_balance = Inventory()
         for posting in postings:
             if isinstance(posting, Posting):
-                pad_balance.add_position(posting.position, False)
+                position_, _ = pad_balance.add_position(posting.position)
+                self.assertFalse(position_.is_negative_at_cost())
             balances.append((type(posting), pad_balance.get_amount('USD')))
 
         self.assertEqual(balances, [(Open, Amount('0.00', 'USD')),

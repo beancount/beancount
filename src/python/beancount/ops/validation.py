@@ -57,13 +57,13 @@ def validate_inventory_booking(entries, unused_options_map):
             # without allowing booking to a negative position, and if an error
             # is encountered, catch it and return it.
             running_balance = balances[posting.account]
-            try:
-                running_balance.add_position(posting.position, allow_negative=False)
-            except ValueError as e:
+
+            position_, reducing = running_balance.add_position(posting.position)
+            if position_.is_negative_at_cost():
                 errors.append(
                     ValidationError(
                         posting.entry.source,
-                        str(e),
+                        "Position held at cost goes negative: {}".format(position_),
                         posting.entry))
 
     return errors

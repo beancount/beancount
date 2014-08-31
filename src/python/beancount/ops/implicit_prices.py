@@ -47,7 +47,7 @@ def add_implicit_prices(entries, unused_options_map):
             for posting in entry.postings:
                 # Check if the position is matching against an existing
                 # position.
-                reducing = balances[posting.account].add_position(posting.position, True)
+                _, reducing = balances[posting.account].add_position(posting.position)
 
                 # Add prices when they're explicitly specified on a posting. An
                 # explicitly specified price may occur in a conversion, e.g.

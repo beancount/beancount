@@ -66,7 +66,7 @@ def check(entries, options_map):
                 if real_account is not None:
                     # Note: Always allow negative lots for the purpose of balancing.
                     # This error should show up somewhere else than here.
-                    real_account.balance.add_position(posting.position, True)
+                    real_account.balance.add_position(posting.position)
 
         elif isinstance(entry, Balance):
             # Check the balance against the check entry.

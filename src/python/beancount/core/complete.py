@@ -234,7 +234,7 @@ def compute_postings_balance(postings):
     final_balance = Inventory()
     for posting in postings:
         if isinstance(posting, Posting):
-            final_balance.add_position(posting.position, True)
+            final_balance.add_position(posting.position)
     return final_balance
 
 
@@ -260,5 +260,5 @@ def compute_entries_balance(entries, prefix=None, date=None):
         if isinstance(entry, Transaction):
             for posting in entry.postings:
                 if prefix is None or posting.account.startswith(prefix):
-                    total_balance.add_position(posting.position, True)
+                    total_balance.add_position(posting.position)
     return total_balance

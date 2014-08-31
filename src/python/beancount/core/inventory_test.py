@@ -260,8 +260,8 @@ class TestInventory(unittest.TestCase):
         inv.add_amount(Amount('-40', 'GOOG'), Amount('700', 'USD'))
         self.checkAmount(inv, '10', 'GOOG')
 
-        with self.assertRaises(ValueError):
-            inv.add_amount(Amount('-12', 'GOOG'), Amount('700', 'USD'))
+        position_, _ = inv.add_amount(Amount('-12', 'GOOG'), Amount('700', 'USD'))
+        self.assertTrue(position_.is_negative_at_cost())
 
         # Testing the strict case where everything matches, a cost and a lot-date.
         inv = Inventory()
@@ -271,19 +271,21 @@ class TestInventory(unittest.TestCase):
         inv.add_amount(Amount('-40', 'GOOG'), Amount('700', 'USD'), date(2000, 1, 1))
         self.checkAmount(inv, '10', 'GOOG')
 
-        with self.assertRaises(ValueError):
-            inv.add_amount(Amount('-12', 'GOOG'), Amount('700', 'USD'), date(2000, 1, 1))
+        position_, _ = inv.add_amount(Amount('-12', 'GOOG'), Amount('700', 'USD'),
+                                      date(2000, 1, 1))
+        self.assertTrue(position_.is_negative_at_cost())
 
     def test_add_allow_negative(self):
 
         def check_allow_negative(inv):
-            inv.add_amount(Amount('-11', 'USD'), allow_negative=False)
-            with self.assertRaises(ValueError):
-                inv.add_amount(Amount('-11', 'USD'), Amount('1.10', 'CAD'), allow_negative=False)
-            with self.assertRaises(ValueError):
-                inv.add_amount(Amount('-11', 'USD'), None, date(2012, 1, 1), allow_negative=False)
-            inv.add_amount(Amount('-11', 'USD'), Amount('1.10', 'CAD'), allow_negative=True)
-            inv.add_amount(Amount('-11', 'USD'), None, date(2012, 1, 1), allow_negative=True)
+            position_, _ = inv.add_amount(Amount('-11', 'USD'))
+            self.assertFalse(position_.is_negative_at_cost())
+            position_, _ = inv.add_amount(Amount('-11', 'USD'), Amount('1.10', 'CAD'))
+            self.assertTrue(position_.is_negative_at_cost())
+            position_, _ = inv.add_amount(Amount('-11', 'USD'), None, date(2012, 1, 1))
+            self.assertTrue(position_.is_negative_at_cost())
+            inv.add_amount(Amount('-11', 'USD'), Amount('1.10', 'CAD'))
+            inv.add_amount(Amount('-11', 'USD'), None, date(2012, 1, 1))
 
         # Test adding to a position that does not exist.
         inv = Inventory()
