@@ -60,21 +60,20 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
 
     def render_account(self, account_name):
         """See base class."""
-        slashed_name = account_name.replace(account.sep, '/')
         if self.leaf_only:
             # Calculate the number of components to figure out the indent to
             # render at.
             components = account.split(account_name)
             indent = '{:.1f}'.format(len(components) * self.EMS_PER_COMPONENT)
             anchor = '<a href="{}" class="account">{}</a>'.format(
-                self.build_url('journal', slashed_account_name=slashed_name),
+                self.build_url('journal', account_name=account_name),
                 account.leaf(account_name))
 
             return '<span "account" style="padding-left: {}em">{}</span>'.format(
                 indent, anchor)
         else:
             anchor = '<a href="{}" class="account">{}</a>'.format(
-                self.build_url('journal', slashed_account_name=slashed_name),
+                self.build_url('journal', account_name=account_name),
                 account_name)
             return '<span "account">{}</span>'.format(anchor)
 
@@ -587,16 +586,16 @@ def networth():
 @viewapp.route('/journal', name='journal_root')
 def journal_root():
     "A list of all the entries in this realization."
-    bottle.redirect(request.app.get_url('journal', slashed_account_name=''))
+    bottle.redirect(request.app.get_url('journal', account_name=''))
 
 
-@viewapp.route('/journal/<slashed_account_name:re:[^:]*>', name='journal')
-def journal_(slashed_account_name=None):
+@viewapp.route('/journal/<account_name:re:.*>', name='journal')
+def journal_(account_name=None):
     "A list of all the entries for this account realization."
 
-    # Get the appropriate realization: if we're looking at the balance sheet, we
-    # want to include the net-income transferred from the exercise period.
-    account_name = slashed_account_name.strip('/').replace('/', account.sep)
+    # Ensure we support slashes and colons equally.
+    # Old style used to be slashes; now we're using colons, it works everywhere.
+    account_name = account_name.strip('/').replace('/', account.sep)
 
     # Figure out which account to render this from.
     real_accounts = request.view.real_accounts
