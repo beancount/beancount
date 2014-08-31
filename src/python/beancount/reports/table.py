@@ -255,7 +255,8 @@ def render_table(table_, output, output_format, css_id=None, css_class=None):
     Args:
       table_: An instance of Table.
       output: A file object you can write to.
-      output_format: A string, the format to write the table to, either 'csv', 'txt' or 'html'.
+      output_format: A string, the format to write the table to,
+        either 'csv', 'txt' or 'html'.
       css_id: A string, an optional CSS id for the table object (only used for HTML).
       css_class: A string, an optional CSS class for the table object (only used for HTML).
     """

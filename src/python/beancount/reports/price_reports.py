@@ -1,18 +1,13 @@
 """Miscellaneous report classes.
 """
 import datetime
-import re
 
 from beancount.reports import report
 from beancount.reports import table
 from beancount.reports import gviz
 from beancount.parser import printer
-from beancount.parser import options
 from beancount.core import data
-from beancount.core import realization
 from beancount.core import amount
-from beancount.core import getters
-from beancount.core import account_types
 from beancount.ops import prices
 
 

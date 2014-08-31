@@ -1,7 +1,6 @@
 """
 Tests for documents.
 """
-import re
 import datetime
 import textwrap
 from os import path

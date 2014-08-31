@@ -1,13 +1,11 @@
 """Generate reports no holdings.
 """
 import csv
-import io
 
 from beancount.core.amount import D
 from beancount.core import amount
 from beancount.core import account
 from beancount.core import data
-from beancount.core import position
 from beancount.core import flags
 from beancount.parser import options
 from beancount.parser import printer

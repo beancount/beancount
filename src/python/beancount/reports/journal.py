@@ -4,7 +4,6 @@ import collections
 from os import path
 
 from beancount.core.data import Open, Close, Balance, Transaction, Note, Document
-from beancount.core import account
 from beancount.core import complete
 from beancount.core import realization
 from beancount.core import flags

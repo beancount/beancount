@@ -1,5 +1,3 @@
-from beancount.core.amount import D
-from beancount.core import data
 from beancount.ops import auto_accounts
 from beancount.parser import parsedoc
 from beancount.parser import cmptest

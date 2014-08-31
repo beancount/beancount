@@ -94,7 +94,9 @@ def check(entries, options_map):
                                   "expected {} != accumulated {} ({} {})").format(
                                       entry.account, expected_amount, balance_amount,
                                       abs(diff_amount.number),
-                                      'too much' if diff_amount.number > 0 else 'too little'),
+                                      ('too much'
+                                       if diff_amount.number > 0
+                                       else 'too little')),
                                  entry))
 
                 # Substitute the entry by a failing entry, with the diff_amount

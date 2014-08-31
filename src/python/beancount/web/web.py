@@ -3,7 +3,6 @@ Web server for Beancount ledgers.
 This uses the Bottle single-file micro web framework (with no plugins).
 """
 import argparse
-import datetime
 from os import path
 import io
 import logging
@@ -14,17 +13,13 @@ import threading
 import bottle
 from bottle import response, request
 
-from beancount.core.data import Open, Close, Transaction
-from beancount.core.data import Document, Event
-from beancount.core import data
+from beancount.core.data import Open, Close
+from beancount.core.data import Document
 from beancount.core import getters
-from beancount.core import realization
-from beancount.core import complete
 from beancount.core import account
 from beancount.core import account_types
 from beancount.ops import basicops
 from beancount.ops import prices
-from beancount.ops import holdings
 from beancount.utils import misc_utils
 from beancount.utils.text_utils import replace_numbers
 from beancount.web.bottle_utils import AttrMapper, internal_redirect
@@ -33,15 +28,12 @@ from beancount.parser import printer
 from beancount import loader
 from beancount.web import views
 from beancount.reports import journal
-from beancount.reports import tree_table
-from beancount.reports import table
 from beancount.reports import html_formatter
 from beancount.reports import balance_reports
 from beancount.reports import journal_reports
 from beancount.reports import holdings_reports
 from beancount.reports import price_reports
 from beancount.reports import misc_reports
-from beancount.reports import report
 
 
 class HTMLFormatter(html_formatter.HTMLFormatter):
@@ -246,9 +238,10 @@ def toc():
                           [(view_url('all'), 'All Transactions')]))
 
         # By year views.
-        viewboxes.append(('year', 'By Year',
-                          [(view_url('year', year=year), 'Year {}'.format(year))
-                           for year in reversed(list(getters.get_active_years(app.entries)))]))
+        viewboxes.append(
+            ('year', 'By Year',
+             [(view_url('year', year=year), 'Year {}'.format(year))
+              for year in reversed(list(getters.get_active_years(app.entries)))]))
 
         # By tag views.
         viewboxes.append(('tag', 'Tags',
@@ -612,7 +605,8 @@ def journal_(account_name=None):
     except KeyError as e:
         raise bottle.HTTPError(404, '{}'.format(e))
 
-    return render_view(pagetitle='{}'.format(account_name or 'General Ledger (All Accounts)'),
+    return render_view(pagetitle='{}'.format(account_name or
+                                             'General Ledger (All Accounts)'),
                        contents=html_journal)
 
 

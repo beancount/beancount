@@ -1,7 +1,6 @@
 """Routines to render an HTML table with a tree of accounts.
 """
 import io
-import re
 
 from beancount.core.account_types import is_root_account
 from beancount.core.position import Lot

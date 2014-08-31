@@ -186,7 +186,8 @@ class Builder(lexer.LexBuilder):
             if amount.number == ZERO:
                 source = Source(filename, lineno)
                 self.errors.append(
-                    ParserError(source, "Amount is zero or negative: {}".format(cost), None))
+                    ParserError(source,
+                                "Amount is zero or negative: {}".format(cost), None))
 
             if cost.number <= ZERO:
                 source = Source(filename, lineno)

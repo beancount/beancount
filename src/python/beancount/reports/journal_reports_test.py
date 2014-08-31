@@ -1,8 +1,6 @@
-import argparse
 import unittest
 
 from beancount.reports import journal_reports
-from beancount.reports import report
 from beancount.reports import report_test
 from beancount.parser import options
 

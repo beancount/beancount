@@ -8,7 +8,6 @@ import urllib.request
 import lxml.html
 
 from beancount.web import web
-from beancount.core import realization
 from beancount.utils import test_utils
 
 
