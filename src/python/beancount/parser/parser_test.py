@@ -577,6 +577,5 @@ class TestLexerErrors(unittest.TestCase):
           2011-01-01 open Assets:A
         """
         self.assertEqual([], entries)
-        # FIXME: The lexer needs to eat up all the characters after the erroneous token.
-        # self.assertEqual([lexer.LexerError, parser.ParserSyntaxError],
-        #                  list(map(type, errors)))
+        self.assertEqual([parser.ParserSyntaxError, lexer.LexerError],
+                         list(map(type, errors)))

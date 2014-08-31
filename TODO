@@ -13,6 +13,18 @@ beancount: TODO
     balancing transactions. Need to figure out how to do this properly without
     raising two errors.
 
+  - Would it make sense for every plugin to provide a validation function? We
+    could then move all the validation routines in their plugin file. I very
+    much like this idea: it creates more isolation for routines and less
+    dependencies. Open/Close, Balance checks, do seem to be able to fit in this
+    category. Those functions should return only a single list of errors, no
+    entries, and the calling function should perform a simple hash check to
+    ensure that the mutable portion of the entries hasn't been modified by the
+    user-provided validation functions.
+
+    * In beancount.ops.documents, split up process_documents in a verification
+      stage and in a document finding and addition stage.
+
 
 ** Move Files to Final Location
 
@@ -35,20 +47,9 @@ beancount: TODO
   - Make various attempts to simplify depgraph, we want to ship with a really
     lean dependency graph.
 
-  - Would it make sense for every plugin to provide a validation function? We
-    could then move all the validation routines in their plugin file. I very
-    much like this idea: it creates more isolation for routines and less
-    dependencies. Open/Close, Balance checks, do seem to be able to fit in this
-    category. Those functions should return only a single list of errors, no
-    entries, and the calling function should perform a simple hash check to
-    ensure that the mutable portion of the entries hasn't been modified by the
-    user-provided validation functions.
-
-    * In beancount.ops.documents, split up process_documents in a verification
-      stage and in a document finding and addition stage.
-
   - Should 'bean-query not be called bean-count or bean-report? Choose a final
     name and live with it. I like 'bean-count' best. EMBRACE ONE.
+    bean-report
 
 
 ** Cleanup Tasks

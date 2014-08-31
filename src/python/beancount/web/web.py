@@ -843,14 +843,6 @@ def component(component=None, path=None):
                                'Component: {}'.format(component), component)
 
 
-# ## FIXME: We need to figure out how to better deal with id-ification for paths.
-# We need some sort of mapping from idified tag to "real" tag. Either of don't idify at all.
-# Is the syntax compatible?
-#     # Create views for all tags.
-#     for tagid, tag in utils.compute_unique_clean_ids(get_all_tags(entries)):
-
-
-
 #--------------------------------------------------------------------------------
 # Bootstrapping and main program.
 

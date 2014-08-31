@@ -118,8 +118,7 @@ def get_holdings_entries(entries, options_map):
                          for entry in open_entries
                          if entry.account in used_accounts]
 
-    # FIXME: Why doesn't this appear anywhere... did we forget to add it in?
-    # If so, why doesn't the validation routine warn about it? WTF?
+    # Add an entry for the equity account we're using.
     source = data.Source('report_holdings_print', -1)
     used_open_entries.insert(0, data.Open(source, latest_date, equity_account, None))
 
