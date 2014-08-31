@@ -96,8 +96,8 @@ def get_holdings_entries(entries, options_map):
     holdings_entries = []
 
     for index, holding in enumerate(holdings_list):
-        fileloc = data.Source('report_holdings_print', index)
-        entry = data.Transaction(fileloc, latest_date, flags.FLAG_SUMMARIZE,
+        source = data.Source('report_holdings_print', index)
+        entry = data.Transaction(source, latest_date, flags.FLAG_SUMMARIZE,
                                  None, "", None, None, [])
 
         # Convert the holding to a position.
@@ -120,9 +120,8 @@ def get_holdings_entries(entries, options_map):
 
     # FIXME: Why doesn't this appear anywhere... did we forget to add it in?
     # If so, why doesn't the validation routine warn about it? WTF?
-    fileloc = data.Source('report_holdings_print', -1)
-    used_open_entries.insert(0,
-                             data.Open(fileloc, latest_date, equity_account, None))
+    source = data.Source('report_holdings_print', -1)
+    used_open_entries.insert(0, data.Open(source, latest_date, equity_account, None))
 
     # Get the latest price entries.
     price_entries = prices.get_last_price_entries(entries, None)

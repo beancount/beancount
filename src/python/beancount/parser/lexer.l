@@ -249,28 +249,6 @@ int yy_skip_line()
     return num_chars;
 }
 
-/* FIXME: Remove */
-/* int yy_skip_until_whitespace(char* buffer, size_t bufsize) */
-/* { */
-/*     int num_chars = 0; */
-/*     for ( ;; ) { */
-/*         int c = input(); */
-/*         if (num_chars < bufsize) { */
-/*           *buffer++ = c; */
-/*         } */
-/*         num_chars++; */
-/*         if ( c == LEXEOF || c == -1 ) { */
-/*             break; */
-/*         } */
-/*         if ( c == ' ' || c == '\t' || c == '\r' || c == '\n' ) { */
-/*             unput(c); */
-/*             num_chars--; */
-/*             break; */
-/*         } */
-/*     } */
-/*     return num_chars; */
-/* } */
-
 /* Convert an integer string to a number. */
 int strtonl(const char* buf, size_t nchars)
 {
