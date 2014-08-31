@@ -11,6 +11,18 @@ from beancount.core.amount import D
 from beancount.parser import lexer
 
 
+def print_tokens(tokens):
+    """A function for printing a list of tokens, for testing.
+
+    Args:
+      tokens: A list of token tuples.
+    """
+    print()
+    print(',--------------------------------')
+    for t in tokens:
+        print('{},'.format(t))
+    print('`--------------------------------')
+
 
 class TestLexer(unittest.TestCase):
     """Test output of the lexer."""
@@ -20,6 +32,8 @@ class TestLexer(unittest.TestCase):
         def wrapped(self):
             string = fun.__doc__
             builder = lexer.LexBuilder()
+            # Set default value for test_overlong_string().
+            builder.long_string_maxlines_default = 8
             tokens = list(lexer.lex_iter_string(textwrap.dedent(string),
                                                 builder))
             return fun(self, tokens, builder.errors)
@@ -29,60 +43,50 @@ class TestLexer(unittest.TestCase):
     @lex_tokens
     def test_lex_iter(self, tokens, errors):
         """\
-          2013-05-18
-          2014-01-02
+          2013-05-18 2014-01-02 2014/01/02
           Assets:US:Bank:Checking
           Liabilities:US:Bank:CreditCard
           Other:Bank
-          USD
-          GOOG
-          TEST_3
+          USD GOOG TEST_D TEST_3 TEST-D TEST-3 NT
           "Nice dinner at Mermaid Inn"
           ""
-          123
-          123.45
-          123.456789
-          -123
-          -123.456789
+          123 123.45 123.456789 -123 -123.456789
           #sometag123
           ^sometag123
         """
         self.assertEqual([
             ('DATE', 1, '2013-05-18', datetime.date(2013, 5, 18)),
+            ('DATE', 1, '2014-01-02', datetime.date(2014, 1, 2)),
+            ('DATE', 1, '2014/01/02', datetime.date(2014, 1, 2)),
             ('EOL', 2, '\n', None),
-            ('DATE', 2, '2014-01-02', datetime.date(2014, 1, 2)),
+            ('ACCOUNT', 2, 'Assets:US:Bank:Checking', 'Assets:US:Bank:Checking'),
             ('EOL', 3, '\n', None),
-            ('ACCOUNT', 3, 'Assets:US:Bank:Checking', 'Assets:US:Bank:Checking'),
+            ('ACCOUNT', 3, 'Liabilities:US:Bank:CreditCard', 'Liabilities:US:Bank:CreditCard'),
             ('EOL', 4, '\n', None),
-            ('ACCOUNT', 4, 'Liabilities:US:Bank:CreditCard',
-             'Liabilities:US:Bank:CreditCard'),
+            ('ACCOUNT', 4, 'Other:Bank', 'Other:Bank'),
             ('EOL', 5, '\n', None),
-            ('ACCOUNT', 5, 'Other:Bank', 'Other:Bank'),
+            ('CURRENCY', 5, 'USD', 'USD'),
+            ('CURRENCY', 5, 'GOOG', 'GOOG'),
+            ('CURRENCY', 5, 'TEST_D', 'TEST_D'),
+            ('CURRENCY', 5, 'TEST_3', 'TEST_3'),
+            ('CURRENCY', 5, 'TEST-D', 'TEST-D'),
+            ('CURRENCY', 5, 'TEST-3', 'TEST-3'),
+            ('CURRENCY', 5, 'NT', 'NT'),
             ('EOL', 6, '\n', None),
-            ('CURRENCY', 6, 'USD', 'USD'),
+            ('STRING', 6, '"Nice dinner at Mermaid Inn"', 'Nice dinner at Mermaid Inn'),
             ('EOL', 7, '\n', None),
-            ('CURRENCY', 7, 'GOOG', 'GOOG'),
+            ('STRING', 7, '""', ''),
             ('EOL', 8, '\n', None),
-            ('CURRENCY', 8, 'TEST_3', 'TEST_3'),
+            ('NUMBER', 8, '123', D('123')),
+            ('NUMBER', 8, '123.45', D('123.45')),
+            ('NUMBER', 8, '123.456789', D('123.456789')),
+            ('NUMBER', 8, '-123', D('-123')),
+            ('NUMBER', 8, '-123.456789', D('-123.456789')),
             ('EOL', 9, '\n', None),
-            ('STRING', 9, '"Nice dinner at Mermaid Inn"', 'Nice dinner at Mermaid Inn'),
+            ('TAG', 9, '#sometag123', 'sometag123'),
             ('EOL', 10, '\n', None),
-            ('STRING', 10, '""', ''),
+            ('LINK', 10, '^sometag123', 'sometag123'),
             ('EOL', 11, '\n', None),
-            ('NUMBER', 11, '123', D('123')),
-            ('EOL', 12, '\n', None),
-            ('NUMBER', 12, '123.45', D('123.45')),
-            ('EOL', 13, '\n', None),
-            ('NUMBER', 13, '123.456789', D('123.456789')),
-            ('EOL', 14, '\n', None),
-            ('NUMBER', 14, '-123', D('-123')),
-            ('EOL', 15, '\n', None),
-            ('NUMBER', 15, '-123.456789', D('-123.456789')),
-            ('EOL', 16, '\n', None),
-            ('TAG', 16, '#sometag123', 'sometag123'),
-            ('EOL', 17, '\n', None),
-            ('LINK', 17, '^sometag123', 'sometag123'),
-            ('EOL', 18, '\n', None),
             ], tokens)
 
     @lex_tokens
@@ -156,10 +160,11 @@ class TestLexer(unittest.TestCase):
         """\
           TEST-DA
         """
-        self.assertEqual(1, len(errors))
-        # FIXME: Improve the tokenizer not to return 'TEST' here.
-        # self.assertEqual([('ERROR', 1, 'TEST-DA', None),
-        #                   ('EOL', 2, '\n', None)], tokens)
+        self.assertEqual([
+            ('CURRENCY', 1, 'TEST-DA', 'TEST-DA'),
+            ('EOL', 2, '\n', None),
+            ], tokens)
+        self.assertEqual(0, len(errors))
 
     @lex_tokens
     def test_bad_date(self, tokens, errors):
@@ -167,31 +172,84 @@ class TestLexer(unittest.TestCase):
           2013-12-98
         """
         self.assertEqual([
-            ('DATE', 1, '2013-12-98', datetime.date(1970, 1, 1)),
+            ('ERROR', 1, '2013-12-98', None),
             ('EOL', 2, '\n', None),
         ], tokens)
         self.assertTrue(errors)
-        self.assertTrue(re.search('out of range', errors[0].message))
+        self.assertTrue(re.search('out of range', errors[0].message) or
+                        re.search('month must be', errors[0].message))
 
     @lex_tokens
     def test_date_followed_by_number(self, tokens, errors):
         """\
           2013-12-228
         """
-        # FIXME: Figure out how to parse word boundary properly in lexer.
-        # print()
-        # print()
-        # for tk in tokens: print(tk)
-        # print()
-        # self.assertEqual([], tokens)
+        self.assertEqual([
+            ('ERROR', 1, '2013-12-228', None),
+            ('EOL', 2, '\n', None),
+            ], tokens)
 
     @lex_tokens
     def test_single_letter_account(self, tokens, errors):
         """\
           Assets:A
         """
-        # FIXME: This should return a single error. Fix the lexer for it.
-        # print()
-        # print()
-        # for tk in tokens: print(tk)
-        # print()
+        self.assertEqual([
+            ('ERROR', 1, 'A', None),
+            ('EOL', 2, '\n', None),
+        ], tokens)
+        self.assertTrue(errors)
+        self.assertTrue(re.search('erroneous token', errors[0].message))
+
+    @lex_tokens
+    def test_invalid_directive(self, tokens, errors):
+        """\
+          2008-03-01 check Assets:BestBank:Savings 2340.19 USD
+        """
+        self.assertEqual([
+            ('DATE', 1, '2008-03-01', datetime.date(2008, 3, 1)),
+            ('ERROR', 1, 'c', None),
+            ('ACCOUNT', 1, 'Assets:BestBank:Savings', 'Assets:BestBank:Savings'),
+            ('NUMBER', 1, '2340.19', D('2340.19')),
+            ('CURRENCY', 1, 'USD', 'USD'),
+            ('EOL', 2, '\n', None),
+            ], tokens)
+        self.assertTrue(errors)
+        self.assertTrue(re.search(r'\bcheck\b', errors[0].message))
+
+    @lex_tokens
+    def test_invalid_directive(self, tokens, errors):
+        """\
+          2008-03-01 check Assets:BestBank:Savings 2340.19 USD
+        """
+        self.assertEqual([
+            ('DATE', 1, '2008-03-01', datetime.date(2008, 3, 1)),
+            ('ERROR', 1, 'c', None),
+            ('ACCOUNT', 1, 'Assets:BestBank:Savings', 'Assets:BestBank:Savings'),
+            ('NUMBER', 1, '2340.19', D('2340.19')),
+            ('CURRENCY', 1, 'USD', 'USD'),
+            ('EOL', 2, '\n', None),
+            ], tokens)
+        self.assertTrue(errors)
+        self.assertTrue(re.search(r'\bcheck\b', errors[0].message))
+
+    @lex_tokens
+    def test_overlong_string(self, tokens, errors):
+        """
+          2014-01-01 note Assets:Temporary "Bla bla" "
+
+          2014-02-01 open Liabilities:US:BankWithLongName:Credit-Card:Account01
+          2014-02-02 open Liabilities:US:BankWithLongName:Credit-Card:Account02
+          2014-02-03 open Liabilities:US:BankWithLongName:Credit-Card:Account03
+          2014-02-04 open Liabilities:US:BankWithLongName:Credit-Card:Account04
+          2014-02-05 open Liabilities:US:BankWithLongName:Credit-Card:Account05
+          2014-02-06 open Liabilities:US:BankWithLongName:Credit-Card:Account06
+          2014-02-07 open Liabilities:US:BankWithLongName:Credit-Card:Account07
+          2014-02-08 open Liabilities:US:BankWithLongName:Credit-Card:Account08
+          2014-02-09 open Liabilities:US:BankWithLongName:Credit-Card:Account09
+          2014-02-10 open Liabilities:US:BankWithLongName:Credit-Card:Account10
+
+          2014-02-02 note Assets:Temporary "Bla bla"
+        """
+        self.assertTrue(errors)
+        self.assertTrue(re.search(r'Overly long', errors[0].message))

@@ -6,7 +6,7 @@
 
 /* Options */
 %option noyywrap
-%option nodefault
+/* %option nodefault */
 %option yylineno
 %option never-interactive
 %option warn
@@ -48,13 +48,16 @@ extern int yy_line_tokens; /* Number of tokens since the bol */
 
 
 /* Skip the rest of the input line. */
-void yy_skip_line(void);
+int yy_skip_line(void);
 
 
 /* Utility functions. */
 int strtonl(const char* buf, size_t nchars);
 
 }
+
+/* A start condition for chomping an invalid token. */
+%x INVALID
 
 
 /*--------------------------------------------------------------------------------------*/
@@ -138,11 +141,29 @@ poptag		{ return POPTAG; }
 option		{ return OPTION; }
 
  /* Dates. */
-[0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][0-9]	{
-    int year = strtonl(yytext, 4);
-    int month = strtonl(yytext+5, 2);
-    int day = strtonl(yytext+8, 2);
+[0-9]{4,}[\-/][0-9]+[\-/][0-9]+	{
+    const char* year_str;
+    const char* month_str;
+    const char* day_str;
+    int year, month, day;
+
+    /* Parse the numbers. */
+    year_str = yytext;
+    month_str = strpbrk(year_str, "-/");
+    year = strtonl(year_str, month_str - year_str);
+    month_str++;
+    day_str = strpbrk(month_str, "-/");
+    month = strtonl(month_str, day_str - month_str);
+    day_str++;
+    day = strtonl(day_str, yytext + yyleng - day_str);
+
+    /* Attempt to create the date. */
     yylval->pyobj = BUILD("DATE", "iii", year, month, day);
+
+    /* Return error if we could not. An error has already been logged. */
+    if (yylval->pyobj == Py_None) {
+      return ERROR;
+    }
     return DATE;
 }
 
@@ -154,7 +175,7 @@ option		{ return OPTION; }
 
  /* Currencies. These are defined as uppercase only in order to disambiguate the
   * syntax. */
-[A-Z][A-Z0-9\'\.\_]{1,10}	{
+[A-Z][A-Z0-9\'\.\_\-]{0,10}[A-Z0-9]	{
     yylval->pyobj = BUILD("CURRENCY", "s", yytext);
     return CURRENCY;
 }
@@ -183,18 +204,26 @@ option		{ return OPTION; }
     return LINK;
 }
 
- /* Default rule. This should never be reached.
-    Consume all the non-whitespace characters for the error token. */
+ /* Default rule. */
 .			{
-    yylval->pyobj = BUILD("ERROR", "s", yytext);
-    return ERROR;
+  unput(*yytext);
+  BEGIN(INVALID);
+  return ERROR;
 }
 
+ /* Note: we use a subparser because if we set a default rule to
+    chomp this pattern, it would take precedence over valid rules
+    if the matched text is longer and thus break the parser. */
+<INVALID>[^ \t\n\r]+     {
+    yylval->pyobj = BUILD("ERROR", "s#", yytext, yyleng);
+    BEGIN(INITIAL);
+}
 
 
 %%
 /*--------------------------------------------------------------------------------------*/
 /* User Code */
+
 
 const char* yy_filename = 0;
 int yy_line_tokens = 0;
@@ -202,20 +231,47 @@ int yycolumn = 1;
 
 #define LEXEOF 0
 
-void yy_skip_line()
+int yy_skip_line()
 {
+    int num_chars = 0;
     for ( ;; ) {
         int c = input();
+        num_chars++;
         if ( c == LEXEOF || c == -1 ) {
             break;
         }
         if ( c == '\n' ) {
             unput(c);
+            num_chars--;
             break;
         }
     }
+    return num_chars;
 }
 
+/* FIXME: Remove */
+/* int yy_skip_until_whitespace(char* buffer, size_t bufsize) */
+/* { */
+/*     int num_chars = 0; */
+/*     for ( ;; ) { */
+/*         int c = input(); */
+/*         if (num_chars < bufsize) { */
+/*           *buffer++ = c; */
+/*         } */
+/*         num_chars++; */
+/*         if ( c == LEXEOF || c == -1 ) { */
+/*             break; */
+/*         } */
+/*         if ( c == ' ' || c == '\t' || c == '\r' || c == '\n' ) { */
+/*             unput(c); */
+/*             num_chars--; */
+/*             break; */
+/*         } */
+/*     } */
+/*     return num_chars; */
+/* } */
+
+/* Convert an integer string to a number. */
 int strtonl(const char* buf, size_t nchars)
 {
     int result = 0;

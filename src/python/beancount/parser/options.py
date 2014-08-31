@@ -138,6 +138,13 @@ PUBLIC_OPTION_GROUPS = [
       output, they will be converted to strins by the loader and displayed as
       dictacted by the output medium.
     """, [OptDesc("plugin", [], "beancount.plugins.module_name:OPTION")]),
+
+    OptGroup("""
+      The number of lines beyond which a multi-line string will trigger a
+      overly long line warning. This warning is meant to help detect a dangling
+      quote by warning users of unexpectedly long strings.
+    """, [OptDesc("long_string_maxlines", 64, 64)]),
+
     ]
 
 

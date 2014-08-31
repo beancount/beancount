@@ -197,22 +197,22 @@ optflag : empty
 
 posting : INDENT optflag ACCOUNT position eol
         {
-            $$ = BUILD("posting", "OOOOb", $3, $4, Py_None, Py_False, $2);
+            $$ = BUILD("posting", "siOOOOb", FILE_LINE_ARGS, $3, $4, Py_None, Py_False, $2);
             DECREF2($3, $4);
         }
         | INDENT optflag ACCOUNT position AT amount eol
         {
-            $$ = BUILD("posting", "OOOOb", $3, $4, $6, Py_False, $2);
+            $$ = BUILD("posting", "siOOOOb", FILE_LINE_ARGS, $3, $4, $6, Py_False, $2);
             DECREF3($3, $4, $6);
         }
         | INDENT optflag ACCOUNT position ATAT amount eol
         {
-            $$ = BUILD("posting", "OOOOb", $3, $4, $6, Py_True, $2);
+            $$ = BUILD("posting", "siOOOOb", FILE_LINE_ARGS, $3, $4, $6, Py_True, $2);
             DECREF3($3, $4, $6);
         }
         | INDENT optflag ACCOUNT eol
         {
-            $$ = BUILD("posting", "OOOOb", $3, Py_None, Py_None, Py_False, $2);
+            $$ = BUILD("posting", "siOOOOb", FILE_LINE_ARGS, $3, Py_None, Py_None, Py_False, $2);
             DECREF1($3);
         }
 
@@ -287,15 +287,15 @@ amount : NUMBER CURRENCY
        }
 
 position : amount
-           {
-               $$ = BUILD("position", "OO", $1, Py_None);
-               DECREF1($1);
-           }
-           | amount lot_cost_date
-           {
-               $$ = BUILD("position", "OO", $1, $2);
-               DECREF2($1, $2);
-           }
+         {
+             $$ = BUILD("position", "siOO", FILE_LINE_ARGS, $1, Py_None);
+             DECREF1($1);
+         }
+         | amount lot_cost_date
+         {
+             $$ = BUILD("position", "siOO", FILE_LINE_ARGS, $1, $2);
+             DECREF2($1, $2);
+         }
 
 lot_cost_date : LCURL amount RCURL
          {
