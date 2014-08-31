@@ -13,19 +13,6 @@ beancount: TODO
     balancing transactions. Need to figure out how to do this properly without
     raising two errors.
 
-  - Would it make sense for every plugin to provide a validation function? We
-    could then move all the validation routines in their plugin file. I very
-    much like this idea: it creates more isolation for routines and less
-    dependencies. Open/Close, Balance checks, do seem to be able to fit in this
-    category. Those functions should return only a single list of errors, no
-    entries, and the calling function should perform a simple hash check to
-    ensure that the mutable portion of the entries hasn't been modified by the
-    user-provided validation functions.
-
-    * In beancount.ops.documents, split up process_documents in a verification
-      stage and in a document finding and addition stage.
-
-
 ** Move Files to Final Location
 
   As I'm moving to a system with more plugins and less code in the core, and
@@ -94,6 +81,8 @@ beancount: TODO
     version has some decent console reports, even if the revamp of reports
     comes later on.
 
+  - Implement text report for journal, income statement and balance sheet.
+
 
 ** Documentation / Ongoing
 
@@ -150,6 +139,18 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - Would it make sense for every plugin to provide a validation function? We
+    could then move all the validation routines in their plugin file. I very
+    much like this idea: it creates more isolation for routines and less
+    dependencies. Open/Close, Balance checks, do seem to be able to fit in this
+    category. Those functions should return only a single list of errors, no
+    entries, and the calling function should perform a simple hash check to
+    ensure that the mutable portion of the entries hasn't been modified by the
+    user-provided validation functions.
+    'beancount.ops.documents' could benefit from this split.
+
 
 
   (open directives)

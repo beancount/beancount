@@ -10,7 +10,7 @@ from beancount.core.data import Source, Document
 from beancount.core import data
 from beancount.core import getters
 
-__plugins__ = ('process_documents',)
+__plugins__ = ('process_documents', 'verify_document_files_exist')
 
 
 # An error from trying to find the documents.
@@ -31,9 +31,6 @@ def process_documents(entries, options_map):
     """
     filename = options_map["filename"]
 
-    # Check that the entries from the input file are okay.
-    entries, document_errors = verify_document_entries(entries)
-
     # Detect filenames that should convert into entries.
     autodoc_entries = []
     autodoc_errors = []
@@ -52,14 +49,15 @@ def process_documents(entries, options_map):
     entries.extend(autodoc_entries)
     entries.sort(key=data.entry_sortkey)
 
-    return (entries, document_errors + autodoc_errors)
+    return (entries, autodoc_errors)
 
 
-def verify_document_entries(entries):
+def verify_document_files_exist(entries, unused_options_map):
     """Verify that the document entries point to existing files.
 
     Args:
       entries: a list of directives whose documents need to be validated.
+      unused_options_map: A parser options dict. We're not using it.
     Returns:
       The same list of entries, and a list of new errors, if any were encountered.
     """

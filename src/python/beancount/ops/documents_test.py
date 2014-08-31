@@ -57,17 +57,16 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
                                  for entry in entries
                                  if isinstance(entry, documents.Document)])
 
-        self.assertEqual(1, len(errors))
-        self.assertTrue(re.search(r'does-not-exist\.pdf', errors[0].message))
+        self.assertEqual(0, len(errors))
 
-    def test_verify_document_entries(self):
-        entries, _, __ = parser.parse_string(textwrap.dedent("""
+    def test_verify_document_files_exist(self):
+        entries, _, options_map = parser.parse_string(textwrap.dedent("""
           2014-06-08 document Assets:US:Bank:Checking "ROOT/Assets/US/Bank/Checking/2014-06-08.bank-statement.pdf"
           2014-07-01 document Assets:US:Bank:Savings  "ROOT/Assets/US/Bank/Savings/2014-07-01.savings.pdf"
           2014-07-10 document Assets:US:Bank:Savings  "ROOT/Assets/US/Bank/Savings/2014-07-10.something-else.pdf"
         """).replace('ROOT', self.root))
 
-        _, errors = documents.verify_document_entries(entries)
+        _, errors = documents.verify_document_files_exist(entries, options_map)
         self.assertEqual(1, len(errors))
         document_error = errors[0]
         self.assertTrue(
