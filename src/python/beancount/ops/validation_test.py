@@ -228,6 +228,18 @@ class TestValidateActiveAccounts(cmptest.TestCase):
              re.search('unknown.*Equity:ImUnknown', error.message))
             for error in errors))
 
+    @parser.parsedoc
+    def test_validate_active_accounts__unopened(self, entries, _, options_map):
+        """
+        2014-02-01 *
+          Assets:US:Bank:Checking     100 USD
+          Assets:US:Bank:Savings     -100 USD
+        """
+        errors = validation.validate_active_accounts(entries, options_map)
+        self.assertEqual(2, len(errors))
+        self.assertEqual([validation.ValidationError, validation.ValidationError],
+                         list(map(type, errors)))
+
 
 class TestValidateUnusedAccounts(cmptest.TestCase):
 
