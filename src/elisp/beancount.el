@@ -20,6 +20,7 @@ is great for sectioning large files with many transactions."
     ([(control c)(control g)] . beancount-transaction-set-flag)
     ([(control c)(r)] . beancount-init-accounts)
     ([(control c)(l)] . beancount-check)
+    ([(control c)(q)] . beancount-query)
     ([(control c)(\;)] . beancount-align-to-previous-number)
     ([(control c)(\:)] . beancount-align-numbers)
     ([(control c)(p)] . beancount-test-align)
@@ -320,6 +321,17 @@ what that column is and returns it (an integer)."
   (let ((compilation-read-command nil)
         (compile-command
          (format "%s %s" beancount-check-program (buffer-file-name))))
+    (call-interactively 'compile)))
+
+
+(defvar beancount-query-program "bean-query"
+  "Program to run to run just the parser and validator on an
+  input file.")
+
+(defun beancount-query ()
+  (interactive)
+  (let ((compile-command
+         (format "%s %s " beancount-query-program (buffer-file-name))))
     (call-interactively 'compile)))
 
 
