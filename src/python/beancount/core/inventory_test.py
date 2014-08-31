@@ -105,9 +105,9 @@ class TestInventory(unittest.TestCase):
 
         inv = Inventory()
         self.assertEqual(0, len(inv))
-        inv.add(Amount('100', 'USD'))
+        inv.add_amount(Amount('100', 'USD'))
         self.assertEqual(1, len(inv))
-        inv.add(Amount('100', 'CAD'))
+        inv.add_amount(Amount('100', 'CAD'))
         self.assertEqual(2, len(inv))
 
     def test_str(self):
@@ -116,12 +116,12 @@ class TestInventory(unittest.TestCase):
 
     def test_copy(self):
         inv = Inventory()
-        inv.add(Amount('100.00', 'USD'))
+        inv.add_amount(Amount('100.00', 'USD'))
         self.checkAmount(inv, '100', 'USD')
 
         # Test copying.
         inv2 = copy.copy(inv)
-        inv2.add(Amount('50.00', 'USD'))
+        inv2.add_amount(Amount('50.00', 'USD'))
         self.checkAmount(inv2, '150', 'USD')
 
         # Check that the original object is not modified.
@@ -159,7 +159,7 @@ class TestInventory(unittest.TestCase):
 
     def test_op_neg(self):
         inv = Inventory()
-        inv.add(Amount('10', 'USD'))
+        inv.add_amount(Amount('10', 'USD'))
         ninv = -inv
         self.checkAmount(ninv, '-10', 'USD')
 
@@ -217,73 +217,73 @@ class TestInventory(unittest.TestCase):
 
     def test_add(self):
         inv = Inventory()
-        inv.add(Amount('100.00', 'USD'))
+        inv.add_amount(Amount('100.00', 'USD'))
         self.checkAmount(inv, '100', 'USD')
 
         # Add some amount
-        inv.add(Amount('25.01', 'USD'))
+        inv.add_amount(Amount('25.01', 'USD'))
         self.checkAmount(inv, '125.01', 'USD')
 
         # Subtract some amount.
-        inv.add(Amount('-12.73', 'USD'))
+        inv.add_amount(Amount('-12.73', 'USD'))
         self.checkAmount(inv, '112.28', 'USD')
 
         # Subtract some to be negative (should be allowed if no lot).
-        inv.add(Amount('-120', 'USD'))
+        inv.add_amount(Amount('-120', 'USD'))
         self.checkAmount(inv, '-7.72', 'USD')
 
         # Subtract some more.
-        inv.add(Amount('-1', 'USD'))
+        inv.add_amount(Amount('-1', 'USD'))
         self.checkAmount(inv, '-8.72', 'USD')
 
         # Add to above zero again
-        inv.add(Amount('18.72', 'USD'))
+        inv.add_amount(Amount('18.72', 'USD'))
         self.checkAmount(inv, '10', 'USD')
 
     def test_add_multi_currency(self):
         inv = Inventory()
-        inv.add(Amount('100', 'USD'))
-        inv.add(Amount('100', 'CAD'))
+        inv.add_amount(Amount('100', 'USD'))
+        inv.add_amount(Amount('100', 'CAD'))
         self.checkAmount(inv, '100', 'USD')
         self.checkAmount(inv, '100', 'CAD')
 
-        inv.add(Amount('25', 'USD'))
+        inv.add_amount(Amount('25', 'USD'))
         self.checkAmount(inv, '125', 'USD')
         self.checkAmount(inv, '100', 'CAD')
 
     def test_add_withlots(self):
         # Testing the strict case where everything matches, with only a cost.
         inv = Inventory()
-        inv.add(Amount('50', 'GOOG'), Amount('700', 'USD'))
+        inv.add_amount(Amount('50', 'GOOG'), Amount('700', 'USD'))
         self.checkAmount(inv, '50', 'GOOG')
 
-        inv.add(Amount('-40', 'GOOG'), Amount('700', 'USD'))
+        inv.add_amount(Amount('-40', 'GOOG'), Amount('700', 'USD'))
         self.checkAmount(inv, '10', 'GOOG')
 
         with self.assertRaises(ValueError):
-            inv.add(Amount('-12', 'GOOG'), Amount('700', 'USD'))
+            inv.add_amount(Amount('-12', 'GOOG'), Amount('700', 'USD'))
 
         # Testing the strict case where everything matches, a cost and a lot-date.
         inv = Inventory()
-        inv.add(Amount('50', 'GOOG'), Amount('700', 'USD'), date(2000, 1, 1))
+        inv.add_amount(Amount('50', 'GOOG'), Amount('700', 'USD'), date(2000, 1, 1))
         self.checkAmount(inv, '50', 'GOOG')
 
-        inv.add(Amount('-40', 'GOOG'), Amount('700', 'USD'), date(2000, 1, 1))
+        inv.add_amount(Amount('-40', 'GOOG'), Amount('700', 'USD'), date(2000, 1, 1))
         self.checkAmount(inv, '10', 'GOOG')
 
         with self.assertRaises(ValueError):
-            inv.add(Amount('-12', 'GOOG'), Amount('700', 'USD'), date(2000, 1, 1))
+            inv.add_amount(Amount('-12', 'GOOG'), Amount('700', 'USD'), date(2000, 1, 1))
 
     def test_add_allow_negative(self):
 
         def check_allow_negative(inv):
-            inv.add(Amount('-11', 'USD'), allow_negative=False)
+            inv.add_amount(Amount('-11', 'USD'), allow_negative=False)
             with self.assertRaises(ValueError):
-                inv.add(Amount('-11', 'USD'), Amount('1.10', 'CAD'), allow_negative=False)
+                inv.add_amount(Amount('-11', 'USD'), Amount('1.10', 'CAD'), allow_negative=False)
             with self.assertRaises(ValueError):
-                inv.add(Amount('-11', 'USD'), None, date(2012, 1, 1), allow_negative=False)
-            inv.add(Amount('-11', 'USD'), Amount('1.10', 'CAD'), allow_negative=True)
-            inv.add(Amount('-11', 'USD'), None, date(2012, 1, 1), allow_negative=True)
+                inv.add_amount(Amount('-11', 'USD'), None, date(2012, 1, 1), allow_negative=False)
+            inv.add_amount(Amount('-11', 'USD'), Amount('1.10', 'CAD'), allow_negative=True)
+            inv.add_amount(Amount('-11', 'USD'), None, date(2012, 1, 1), allow_negative=True)
 
         # Test adding to a position that does not exist.
         inv = Inventory()
@@ -318,10 +318,10 @@ class TestInventory(unittest.TestCase):
 
     def test_sum_inventories(self):
         inv1 = Inventory()
-        inv1.add(Amount('10', 'USD'))
+        inv1.add_amount(Amount('10', 'USD'))
 
         inv2 = Inventory()
-        inv2.add(Amount('20', 'CAD'))
-        inv2.add(Amount('55', 'GOOG'))
+        inv2.add_amount(Amount('20', 'CAD'))
+        inv2.add_amount(Amount('55', 'GOOG'))
 
         inv = inv1 + inv2

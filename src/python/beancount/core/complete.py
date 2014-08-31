@@ -77,7 +77,7 @@ def compute_residual(postings):
     """
     inventory = Inventory()
     for posting in postings:
-        inventory.add(get_balance_amount(posting))
+        inventory.add_amount(get_balance_amount(posting))
     return inventory
 
 
@@ -129,7 +129,7 @@ def get_incomplete_postings(entry):
 
             # Compute the amount to balance and update the inventory.
             balance_amount = get_balance_amount(posting)
-            inventory.add(balance_amount)
+            inventory.add_amount(balance_amount)
 
             has_regular_postings = True
             if balance_amount:

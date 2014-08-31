@@ -242,11 +242,11 @@ class TestComputeBalance(unittest.TestCase):
         computed_balance = complete.compute_postings_balance(postings)
 
         expected_balance = inventory.Inventory()
-        expected_balance.add(amount.Amount('333.97', 'USD'))
-        expected_balance.add(amount.Amount('17.23', 'CAD'))
-        expected_balance.add(amount.Amount('32', 'GOOG'),
-                             amount.Amount('45.203', 'USD'))
-        expected_balance.add(amount.Amount('12000', 'EUR'))
+        expected_balance.add_amount(amount.Amount('333.97', 'USD'))
+        expected_balance.add_amount(amount.Amount('17.23', 'CAD'))
+        expected_balance.add_amount(amount.Amount('32', 'GOOG'),
+                                    amount.Amount('45.203', 'USD'))
+        expected_balance.add_amount(amount.Amount('12000', 'EUR'))
         self.assertEqual(expected_balance, computed_balance)
 
     @parser.parsedoc
@@ -295,8 +295,8 @@ class TestComputeBalance(unittest.TestCase):
         """
         computed_balance = complete.compute_entries_balance(entries)
         expected_balance = inventory.Inventory()
-        expected_balance.add(amount.Amount('-400', 'USD'))
-        expected_balance.add(amount.Amount('10', 'GOOG'), amount.Amount('40', 'USD'))
+        expected_balance.add_amount(amount.Amount('-400', 'USD'))
+        expected_balance.add_amount(amount.Amount('10', 'GOOG'), amount.Amount('40', 'USD'))
         self.assertEqual(expected_balance, computed_balance)
 
     @parser.parsedoc
@@ -316,6 +316,6 @@ class TestComputeBalance(unittest.TestCase):
         """
         computed_balance = complete.compute_entries_balance(entries)
         expected_balance = inventory.Inventory()
-        expected_balance.add(amount.Amount('2000.00', 'EUR'))
-        expected_balance.add(amount.Amount('-3560.00', 'GBP'))
+        expected_balance.add_amount(amount.Amount('2000.00', 'EUR'))
+        expected_balance.add_amount(amount.Amount('-3560.00', 'GBP'))
         self.assertEqual(expected_balance, computed_balance)

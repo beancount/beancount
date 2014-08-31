@@ -75,6 +75,11 @@ beancount: TODO
     {}".format(self)) ValueError: Position with lots goes negative:
     Inventory(-2.00 PUMP {20.00 USD})
 
+    * Inventory.add() -> Inventory.add_amount()
+    * Removed allow_negative, option, convert to a return parameter.
+
+
+
   - An invariant that we would like to maintain is that all accounts that are
     used in a list of entries should have an Open directive for them. In the
     check for this, add code to automatically insert missing Open directives. In

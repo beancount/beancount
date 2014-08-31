@@ -171,7 +171,7 @@ class Inventory:
         """
         cost_inventory = Inventory()
         for position in self.positions:
-            cost_inventory.add(position.get_cost())
+            cost_inventory.add_amount(position.get_cost())
         return cost_inventory
 
     def get_positions(self):
@@ -225,7 +225,7 @@ class Inventory:
             self.positions.append(found)
         return found
 
-    def add(self, amount, cost=None, lot_date=None, allow_negative=False):
+    def add_amount(self, amount, cost=None, lot_date=None, allow_negative=False):
         """Add to this inventory using amount, cost and date. This adds with strict lot
         matching, that is, no partial matches are done on the arguments to the
         keys of the inventory.
