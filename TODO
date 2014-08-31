@@ -51,19 +51,6 @@ beancount: TODO
     name and live with it. I like 'bean-count' best. EMBRACE ONE.
 
 
-** Fix Minor Nits & Bugs
-
-  A few minor bugs and improvements should be completed before marking this a
-  complete release:
-
-  - An invariant that we would like to maintain is that all accounts that are
-    used in a list of entries should have an Open directive for them. In the
-    check for this, add code to automatically insert missing Open directives. In
-    the validation step, check that an account without an Open directive has one
-    that gets automatically inserted for it in addition to the error that gets
-    generated.
-
-
 ** Cleanup Tasks
 
   Some amount of generic cleanup should be performed before calling the release.
@@ -162,6 +149,23 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  (open directives)
+  - An invariant that we would love to have is to ensure that after parsing, all
+    accounts that are used in a list of entries should have a corresponding Open
+    directive for them. This would mean a variant of the validation routine that
+    automatically inserts missing directives. At the moment, when an Open
+    directive is missing, processing code that assumes they are always present
+    might fail. We cannot insert the missing directives in the validation code
+    simply because validation code is not allowed to modify the list of
+    entries. We could insert a "fixup" step after validation, that does these
+    kinds of automatic recoveries. Ponder this for a while.
+
+  - Do we need to insert Open entries for the equity accounts described in
+    options? I think we could safely plop that at the very beginning of the
+    entries list in the parser.
+
 
 
   - (performance) Write your own lexer manually and compare performance with
@@ -1017,9 +1021,6 @@ beancount: TODO
 
           return inventory
 
-  - Do we need to insert Open entries for the equity accounts described in
-    options? I think we could safely plop that at the very beginning of the
-    entries list in the parser.
 
   - Render the OFX / QBO files in a <pre> tag, or figure out why the mimetype
     is incorrect and they don't render properly. Right now the default
@@ -2438,11 +2439,11 @@ Improve this bit:
   - Implement a plugin with budget constraints, as an example.
 
 
-** Auto-Open, Auto-Remove, Auto-Pad
+** Auto-Remove, Auto-Pad
 
-  - Write a 'beancount.plugins.autoaccounts' plugin that automatically inserts
-    open directives for accounts not opened (at the date of the first entry) and
-    automatically removed open directives for unused accounts.
+  - Add a auto-remove-unused part of the auto_accounts plugin,
+    that automatically removes Open directives for unused accounts. This is
+    useful for demos and such.
 
   - Write a plugin that automatically inserts a padding directive for accounts
     with no open directive and with a balance check.
