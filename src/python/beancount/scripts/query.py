@@ -47,17 +47,12 @@ def get_list_report_string(only_report=None):
         parser = argparse.ArgumentParser()
         report_ = report_class
         report_class.add_args(parser)
-        args_str = parser.format_help()
 
         # Get the list of supported formats.
         formats = report_class.get_supported_formats()
 
-        oss.write('{}:\n'.format(','.join(report_.names)))
-        oss.write('  Formats: {}\n'.format(','.join(formats)))
-        #oss.write('  Arguments: {}\n'.format(args_str))
-        oss.write('  Description:\n')
-        oss.write(description)
-        oss.write('\n\n')
+        oss.write('{}:\n{}\n'.format(','.join(report_.names),
+                                     description))
         num_reports += 1
 
     if not num_reports:
@@ -149,10 +144,16 @@ def main():
 
     for report_class in report.get_all_reports():
         name, aliases = report_class.names[0], report_class.names[1:]
-        help = report_class.__doc__.splitlines()[0]
-        report_parser = subparsers.add_parser(name, aliases=aliases,
-                                              description=report_class.__doc__,
-                                              help=help)
+
+        oss = io.StringIO()
+        oss.write('  {} (aliases: {}; formats: {})'.format(
+            report_class.__doc__,
+            ','.join(report_class.names),
+            ','.join(report_class.get_supported_formats())))
+
+        report_parser = subparsers.add_parser(name,
+                                              aliases=aliases,
+                                              description=oss.getvalue())
         report_parser.set_defaults(report_class=report_class)
         report_class.add_args(report_parser)
 
