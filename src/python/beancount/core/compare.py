@@ -12,7 +12,7 @@ CompareError = collections.namedtuple('CompareError', 'source message entry')
 IGNORED_FIELD_NAMES = {'source', 'entry', 'diff_amount'}
 
 
-def stable_hash_namedtuple(objtuple, ignore=frozenset()):
+def stable_hash_namedtuple__recursive(objtuple, ignore=frozenset()):
     """Hash the given namedtuple and its child fields.
 
     The hash_obj is updated. This iterates over all the members of objtuple,
@@ -25,6 +25,7 @@ def stable_hash_namedtuple(objtuple, ignore=frozenset()):
         computing a stable hash. For instance, circular references to objects
         or irrelevant data.
     """
+    # Note: this routine is slow and would stand to be implemented in C.
     hashobj = hashlib.md5()
     for attr_name, attr_value in zip(objtuple._fields, objtuple):
         if attr_name in ignore:
@@ -43,6 +44,9 @@ def stable_hash_namedtuple(objtuple, ignore=frozenset()):
         else:
             hashobj.update(str(attr_value).encode())
     return hashobj.hexdigest()
+
+
+stable_hash_namedtuple = stable_hash_namedtuple__recursive
 
 
 def hash_entry(entry):
