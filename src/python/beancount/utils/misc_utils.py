@@ -8,13 +8,16 @@ from collections import defaultdict
 
 
 @contextlib.contextmanager
-def log_time(operation_name, log_timings):
+def log_time(operation_name, log_timings, indent=0):
     """A context manager that times the block and logs it to info level.
 
     Args:
       operation_name: A string, a label for the name of the operation.
       log_timings: A function to write log messages to. If left to None,
         no timings are written (this becomes a no-op).
+      indent: An integer, the indentation level for the format of the timing
+        line. This is useful if you're logging timing to a hierarchy of
+        operations.
     Yields:
       The start time of the operation.
     """
@@ -22,8 +25,8 @@ def log_time(operation_name, log_timings):
     yield t1
     t2 = time()
     if log_timings:
-        log_timings("Operation: {:48} Time: {:6.0f} ms".format(
-            "'{}'".format(operation_name), (t2 - t1)*1000))
+        log_timings("Operation: {:48} Time: {}{:6.0f} ms".format(
+            "'{}'".format(operation_name), '      '*indent, (t2 - t1)*1000))
 
 
 def groupby(keyfun, elements):

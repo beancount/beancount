@@ -438,7 +438,7 @@ def validate(entries, options_map, log_timings=None):
     errors = []
     for validation_function in VALIDATIONS:
         with misc_utils.log_time('function: {}'.format(validation_function.__name__),
-                                 log_timings):
+                                 log_timings, indent=2):
             new_errors = validation_function(entries, options_map)
         errors.extend(new_errors)
 
