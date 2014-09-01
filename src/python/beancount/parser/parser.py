@@ -126,7 +126,7 @@ class Builder(lexer.LexBuilder):
         elif key in options.READ_ONLY_OPTIONS:
             source = Source(filename, lineno)
             self.errors.append(
-                ParserError(source, "Option '{}' may not be set.".format(key), None))
+                ParserError(source, "Option '{}' may not be set".format(key), None))
         else:
             option = self.options[key]
             if isinstance(option, list):

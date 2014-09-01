@@ -181,7 +181,7 @@ def main():
     # Create the requested report and parse its arguments.
     chosen_report = args.report_class(args, parser)
     if chosen_report is None:
-        parser.error("Unknown report.")
+        parser.error("Unknown report")
     is_check = isinstance(chosen_report, misc_reports.ErrorReport)
 
     # Verify early that the format is supported, in order to avoid parsing the

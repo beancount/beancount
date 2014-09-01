@@ -376,7 +376,7 @@ def doc(filename=None):
         if entry.filename == filename:
             break
     else:
-        raise bottle.HTTPError(404, "Not found.")
+        raise bottle.HTTPError(404, "Not found")
 
     # Just serve the file ourselves.
     return bottle.static_file(path.basename(filename),

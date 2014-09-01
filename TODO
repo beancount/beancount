@@ -65,9 +65,6 @@ beancount: TODO
 
   - Add __author__ to all files?
 
-  - Make sure all exception messages do NOT end with a period, nor do any of the
-    logging.*() calls.
-
   - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
 
   - Split all multiple tests that run in the same function by putting the

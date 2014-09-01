@@ -7,4 +7,4 @@ drastically.
 # Check the version requirements.
 import sys
 if (sys.version_info.major, sys.version_info.minor) < (3, 3):
-    raise ImportError("Python 3.3 or above is required.")
+    raise ImportError("Python 3.3 or above is required")

@@ -143,7 +143,7 @@ def get_incomplete_postings(entry):
         if len(auto_postings_indices) > 1:
             balance_errors.append(
                 BalanceError(entry.source,
-                             "Too many auto-postings; cannot fill in.",
+                             "Too many auto-postings; cannot fill in",
                              entry))
             # Delete the redundant auto-postings.
             for index in auto_postings_indices[1:]:
@@ -166,7 +166,7 @@ def get_incomplete_postings(entry):
                                        not has_regular_postings):
             balance_errors.append(
                 BalanceError(entry.source,
-                             "Useless auto-posting: {}.".format(inventory), entry))
+                             "Useless auto-posting: {}".format(inventory), entry))
             for currency in currencies:
                 position = Position(Lot(currency, None, None), ZERO)
                 new_postings.append(
@@ -189,7 +189,7 @@ def get_incomplete_postings(entry):
         if not inventory.is_small(SMALL_EPSILON):
             balance_errors.append(
                 BalanceError(entry.source,
-                             "Transaction does not balance: {}.".format(inventory),
+                             "Transaction does not balance: {}".format(inventory),
                              entry))
 
     return (postings, has_inserted, balance_errors)

@@ -243,7 +243,7 @@ def compute_table_widths(rows):
             if cell_len > column_widths[i]:
                 column_widths[i] = cell_len
         if i+1 != num_columns:
-            raise IndexError("Invalid number of rows.")
+            raise IndexError("Invalid number of rows")
     return column_widths
 
 

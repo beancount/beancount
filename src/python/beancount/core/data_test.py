@@ -70,7 +70,7 @@ class TestData(unittest.TestCase):
 
     def test_entry_replace(self):
         entry = self.create_empty_transaction()
-        new_entry = data.entry_replace(entry, narration="Some new narration replaced.")
+        new_entry = data.entry_replace(entry, narration="Some new narration replaced")
         self.assertTrue(isinstance(new_entry, data.Transaction))
         self.assertTrue(all(posting.entry == new_entry
                             for posting in new_entry.postings))

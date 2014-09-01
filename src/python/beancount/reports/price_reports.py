@@ -38,7 +38,7 @@ class CommodityPricesReport(report.TableReport):
 
     def get_date_rates(self, entries):
         if not self.args.commodity:
-            self.parser.error("Commodity must be specified.")
+            self.parser.error("Commodity must be specified")
         price_map = prices.build_price_map(entries)
         try:
             date_rates = prices.get_all_prices(price_map, self.args.commodity)

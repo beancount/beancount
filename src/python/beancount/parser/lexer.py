@@ -133,7 +133,7 @@ class LexBuilder(object):
                 self.errors.append(
                     LexerError(
                         self.get_lexer_location(),
-                        "Overly long string ({} lines); possible error.".format(num_lines),
+                        "Overly long string ({} lines); possible error".format(num_lines),
                         None))
         return string
 

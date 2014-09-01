@@ -94,7 +94,7 @@ class TestPriceMap(unittest.TestCase):
         # Ensure that the forward exception includes the forward detail.
         try:
             prices._lookup_price_and_inverse(price_map, ('EUR', 'USD'))
-            self.fail("Exception not raised.")
+            self.fail("Exception not raised")
         except KeyError as exc:
             self.assertTrue(re.search("('EUR', 'USD')", str(exc)))
 

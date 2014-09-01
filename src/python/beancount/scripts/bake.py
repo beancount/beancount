@@ -91,7 +91,7 @@ def archive(command_template, directory, archive, quiet=False):
                          stderr=subprocess.PIPE if quiet else None)
     _, _ = p.communicate()
     if p.returncode != 0:
-        raise OSError("Archive failure.")
+        raise OSError("Archive failure")
 
 
 ARCHIVERS = {
@@ -149,7 +149,7 @@ def main():
     # Make sure that wget is installed.
     package, version, sufficient = checkdeps.check_wget()
     if not sufficient:
-        parser.error("Package {} is not installed or insufficient (version: {}).".format(
+        parser.error("Package {} is not installed or insufficient (version: {})".format(
             package, version or 'N/A'))
 
     baked = bake_to_directory(opts, output_directory, not opts.verbose, opts.quiet)

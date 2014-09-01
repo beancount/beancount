@@ -63,7 +63,7 @@ PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
     /* Open the file. */
     fp = fopen(filename, "r");
     if ( fp == NULL ) {
-        return PyErr_Format(PyExc_IOError, "Cannot open file '%s'.", filename);
+        return PyErr_Format(PyExc_IOError, "Cannot open file '%s'", filename);
     }
 
     /* Initialize the parser. */
@@ -90,7 +90,7 @@ PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
 
     /* Check for parsing errors. */
     if ( result != 0 ) {
-        return PyErr_Format(PyExc_RuntimeError, "Parsing error.");
+        return PyErr_Format(PyExc_RuntimeError, "Parsing error");
     }
 
     Py_RETURN_NONE;
@@ -124,7 +124,7 @@ PyObject* lexer_init(PyObject *self, PyObject *args)
     /* Open the file. */
     fp = fopen(filename, "r");
     if ( fp == NULL ) {
-        return PyErr_Format(PyExc_IOError, "Cannot open file '%s'.", filename);
+        return PyErr_Format(PyExc_IOError, "Cannot open file '%s'", filename);
     }
 
     /* Initialize the parser. */
@@ -179,7 +179,7 @@ static PyMethodDef module_functions[] = {
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
     "_beancount",                         /* m_name */
-    "Beancount parser extension module.", /* m_doc */
+    "Beancount parser extension module",  /* m_doc */
     -1,                                   /* m_size */
     module_functions,                     /* m_methods */
     NULL,                                 /* m_reload */

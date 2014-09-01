@@ -99,7 +99,7 @@ def validate_open_close(entries, unused_options_map):
                 errors.append(
                     ValidationError(
                         entry.source,
-                        "Duplicate open directive for {}.".format(entry.account),
+                        "Duplicate open directive for {}".format(entry.account),
                         entry))
             else:
                 open_map[entry.account] = entry
@@ -109,7 +109,7 @@ def validate_open_close(entries, unused_options_map):
                 errors.append(
                     ValidationError(
                         entry.source,
-                        "Duplicate close directive for {}.".format(entry.account),
+                        "Duplicate close directive for {}".format(entry.account),
                         entry))
             else:
                 try:
@@ -119,13 +119,13 @@ def validate_open_close(entries, unused_options_map):
                             ValidationError(
                                 entry.source,
                                 "Internal error: closing date for {} "
-                                "appears before opening date.".format(entry.account),
+                                "appears before opening date".format(entry.account),
                                 entry))
                 except KeyError:
                     errors.append(
                         ValidationError(
                             entry.source,
-                            "Unopened account {}is being closed.".format(entry.account),
+                            "Unopened account {} is being closed".format(entry.account),
                             entry))
 
                 close_map[entry.account] = entry
@@ -162,7 +162,7 @@ def validate_duplicate_balances(entries, unused_options_map):
                 errors.append(
                     ValidationError(
                         entry.source,
-                        "Duplicate balance assertion with different amounts.",
+                        "Duplicate balance assertion with different amounts",
                         entry))
         except KeyError:
             balance_entries[key] = entry
@@ -260,7 +260,7 @@ def validate_unused_accounts(entries, options_map):
     # Create a list of suitable errors, with the location of the Open directives
     # corresponding to the unused accounts.
     return [ValidationError(open_entry.source,
-                            "Unused account '{}'.".format(account),
+                            "Unused account '{}'".format(account),
                             open_entry)
             for account, open_entry in open_map.items()
             if account not in referenced_accounts]
@@ -307,7 +307,7 @@ def validate_currency_constraints(entries, options_map):
                 errors.append(
                     ValidationError(
                         entry.source,
-                        "Invalid currency {} for account '{}'.".format(
+                        "Invalid currency {} for account '{}'".format(
                             posting.position.lot.currency, posting.account),
                         entry))
 
@@ -327,7 +327,7 @@ def validate_documents_paths(entries, options_map):
     Returns:
       A list of new errors, if any were found.
     """
-    return [ValidationError(entry.source, "Invalid relative path for entry.", entry)
+    return [ValidationError(entry.source, "Invalid relative path for entry", entry)
             for entry in entries
             if (isinstance(entry, Document) and
                 not path.isabs(entry.filename))]
@@ -378,7 +378,7 @@ def validate_check_transaction_balances(entries, options_map):
             if not balance.is_small(complete.SMALL_EPSILON):
                 errors.append(
                     ValidationError(entry.source,
-                                    "Transaction does not balance: {}.".format(balance),
+                                    "Transaction does not balance: {}".format(balance),
                                     entry))
     return errors
 

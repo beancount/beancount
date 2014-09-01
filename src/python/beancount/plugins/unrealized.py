@@ -84,7 +84,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
             errors.append(
                 UnrealizedError(source,
                                 "A valid price for {h.currency}/{h.cost_currency} "
-                                "could not be found.".format(h=holding), None))
+                                "could not be found".format(h=holding), None))
             continue
 
         # Compute the PnL; if there is no profit or loss, we create a
@@ -96,7 +96,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
             errors.append(
                 UnrealizedError(source,
                                 "Number of units of {} in {} in holdings sum to zero "
-                                "for account {} and should not.".format(
+                                "for account {} and should not".format(
                                     currency, cost_currency, account_name),
                                 None))
             continue
