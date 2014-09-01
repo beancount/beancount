@@ -93,3 +93,6 @@ RedirectMatch /doc/proposal-pad$          /beancount/doc/proposal-padding
 
 RedirectMatch /doc/proposal-mirror$       https://docs.google.com/document/d/1dhz-_Of-hdubafHg-OESEMdMG_-fJqw4P4KcJsKPqk0/
 RedirectMatch /doc/mirror$      	  /beancount/doc/proposal-mirror
+
+RedirectMatch /doc/proposal-inter$        https://docs.google.com/document/d/12YyAqfGygzCGMZsbsO3ZpUK08j6rUCQvB2Je9c42oqc/
+RedirectMatch /doc/inter-account$      	  /beancount/doc/proposal-inter
