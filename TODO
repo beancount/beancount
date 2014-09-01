@@ -6,23 +6,6 @@ beancount: TODO
   - Complete and merge sampled_quantization
 
 
-** Complete 100% Coverage for Unit Tests
-
-  - Validation: A Balance failure currently triggers two errors, one from
-    complete and one from validation routine. We need to perform all balance
-    checks _after_ the plugins run to make sure that they produce only
-    balancing transactions. Need to figure out how to do this properly without
-    raising two errors.
-
-      grep -srn  'Transaction does not balance'  /Users/blais/p/beancount/src/python/beancount/
-
-        /Users/blais/p/beancount/src/python/beancount/core/complete.py:192:                             "Transaction does not balance: {}.".format(inventory),
-        /Users/blais/p/beancount/src/python/beancount/ops/validation.py:381:                                    "Transaction does not balance: {}.".format(balance),
-
-    This has to be figured out in relation to performance. Test on my own ledger.
-    This out the hashes trick if this is too slow.
-
-
 ** Move Files to Final Location
 
   As I'm moving to a system with more plugins and less code in the core, and

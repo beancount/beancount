@@ -11,6 +11,10 @@ from beancount.core import amount
 from beancount.parser import parser
 
 
+# True if errors are generated on residual by get_incomplete_postings().
+ERRORS_ON_RESIDUAL = False
+
+
 class TestBalance(unittest.TestCase):
 
     def test_get_balance_amount(self):
@@ -88,7 +92,7 @@ class TestBalance(unittest.TestCase):
         new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
         self.assertEqual(1, len(new_postings))
-        self.assertEqual(1, len(errors))
+        self.assertEqual(1 if ERRORS_ON_RESIDUAL else 0, len(errors))
 
         # Test with two legs that balance.
         entry = data.Transaction(source, None, None, None, None, None, None, [
@@ -108,7 +112,7 @@ class TestBalance(unittest.TestCase):
         new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
         self.assertEqual(2, len(new_postings))
-        self.assertEqual(1, len(errors))
+        self.assertEqual(1 if ERRORS_ON_RESIDUAL else 0, len(errors))
 
         # Test with only one auto-posting.
         entry = data.Transaction(source, None, None, None, None, None, None, [
@@ -171,7 +175,7 @@ class TestBalance(unittest.TestCase):
         new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
         self.assertEqual(3, len(new_postings))
-        self.assertEqual(1, len(errors))
+        self.assertEqual(1 if ERRORS_ON_RESIDUAL else 0, len(errors))
 
     def test_balance_with_zero_posting(self):
         source = data.Source(__file__, 0)

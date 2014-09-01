@@ -377,6 +377,16 @@ def validate_check_transaction_balances(entries, options_map):
     errors = []
     for entry in entries:
         if isinstance(entry, Transaction):
+            # IMPORTANT: This validation is _crucial_ and cannot be skipped.
+            # This is where we actually detect and warn on unbalancing
+            # transactions. This _must_ come after the user routines, because
+            # unbalancing input is legal, as those types of transactions may be
+            # "fixed up" by a user-plugin. In other words, we want to allow
+            # users to input unbalancing transactions as long as the final
+            # transactions objects that appear on the stream (after processing
+            # the plugins) are balanced. See {9e6c14b51a59}.
+            #
+            # Detect complete sets of postings that have residual balance;
             balance = complete.compute_residual(entry.postings)
             if not balance.is_small(complete.SMALL_EPSILON):
                 errors.append(
@@ -409,14 +419,14 @@ BASIC_VALIDATIONS = [validate_data_types,
                      validate_unused_accounts,
                      validate_currency_constraints,
                      validate_duplicate_balances,
-                     validate_documents_paths]
+                     validate_documents_paths,
+                     validate_check_transaction_balances]
 
 # These are slow, and thus only turned on in the check() routine.
 # We're hoping to optimize these and make them decently fast, so
 # we're not providing an option at this moment, this can be enabled
 # by modifying the 'VALIDATIONS' attribute below.
 HARDCORE_VALIDATIONS = [validate_data_types,
-                        validate_check_transaction_balances,
                         validate_duplicates]
 
 # The list of validations to run.

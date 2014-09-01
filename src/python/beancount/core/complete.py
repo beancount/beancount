@@ -189,13 +189,14 @@ def get_incomplete_postings(entry):
         postings[index:index+1] = new_postings
 
     else:
-        # Detect complete sets of postings that have residual balance;
-        # this is where we detect that the user has made a mistake.
-        if not inventory.is_small(SMALL_EPSILON):
-            balance_errors.append(
-                BalanceError(entry.source,
-                             "Transaction does not balance: {}".format(inventory),
-                             entry))
+        # Checking for unbalancing transactions has been moved to the validation
+        # stage, so although we already have the input transaction's residuals
+        # conveniently precomputed here, we are postponing the check to allow
+        # plugins to "fixup" unbalancing transactions. We want to allow users to
+        # be able to input unbalancing transactions as long as the final
+        # transactions objects that appear on the stream (after processing the
+        # plugins) are balanced. See {9e6c14b51a59}.
+        pass
 
     return (postings, has_inserted, balance_errors)
 

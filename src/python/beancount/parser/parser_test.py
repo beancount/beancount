@@ -10,6 +10,7 @@ from beancount.parser import lexer
 from beancount.core import data
 from beancount.core import amount
 from beancount.core import complete
+from beancount.core import complete_test
 
 
 def check_list(test, objlist, explist):
@@ -144,7 +145,7 @@ class TestParserComplete(unittest.TestCase):
             Expenses:Restaurant         100 USD
         """
         check_list(self, entries, [data.Transaction])
-        check_list(self, errors, 1)
+        check_list(self, errors, 1 if complete_test.ERRORS_ON_RESIDUAL else 0)
         entry = entries[0]
         self.assertEqual(1, len(entry.postings))
 
@@ -516,7 +517,8 @@ class TestTransactions(unittest.TestCase):
             Assets:Checking         -99 USD
         """
         check_list(self, entries, [data.Transaction])
-        check_list(self, errors, [complete.BalanceError])
+        check_list(self, errors,
+                   [complete.BalanceError] if complete_test.ERRORS_ON_RESIDUAL else [])
 
     @parsedoc
     def test_no_postings(self, entries, errors, _):
