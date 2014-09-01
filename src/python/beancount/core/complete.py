@@ -2,10 +2,15 @@
 """
 import collections
 
-from beancount.core.amount import D, amount_mult, ZERO
+from beancount.core.amount import D
+from beancount.core.amount import ZERO
+from beancount.core.amount import amount_mult
 from beancount.core.inventory import Inventory
-from beancount.core.position import Lot, Position
-from beancount.core.data import Posting, Transaction, reparent_posting
+from beancount.core.position import Lot
+from beancount.core.position import Position
+from beancount.core.data import Transaction
+from beancount.core.data import Posting
+from beancount.core.data import reparent_posting
 
 
 # An error from balancing the postings.

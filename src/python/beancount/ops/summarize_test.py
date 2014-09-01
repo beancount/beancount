@@ -7,7 +7,7 @@ import datetime
 import collections
 import re
 
-from beancount.core.inventory import Inventory
+from beancount.core import inventory
 from beancount.core import data
 from beancount.core import flags
 from beancount.core import complete
@@ -671,7 +671,7 @@ class TestEntriesFromBalance(cmptest.TestCase):
     SOURCE = data.Source('<test>', 0)
 
     def test_create_entries_from_balances__empty(self):
-        balances = collections.defaultdict(Inventory)
+        balances = collections.defaultdict(inventory.Inventory)
         balances['Assets:US:Bank:Empty']
         entries = summarize.create_entries_from_balances(balances, datetime.date.today(),
                                                          self.SOURCE_ACCOUNT, True,
@@ -679,9 +679,9 @@ class TestEntriesFromBalance(cmptest.TestCase):
         self.assertEqual([], entries)
 
     def setUp(self):
-        self.balances = collections.defaultdict(Inventory)
-        self.balances['Assets:US:Investment'] = Inventory.from_string('10 GOOG {500 USD}')
-        self.balances['Assets:US:Bank:Checking'] = Inventory.from_string('1823.23 USD')
+        self.balances = collections.defaultdict(inventory.Inventory)
+        self.balances['Assets:US:Investment'] = inventory.from_string('10 GOOG {500 USD}')
+        self.balances['Assets:US:Bank:Checking'] = inventory.from_string('1823.23 USD')
 
     def test_create_entries_from_balances__simple(self):
         entries = summarize.create_entries_from_balances(
@@ -735,9 +735,9 @@ class TestBalanceByAccount(cmptest.TestCase):
         balances, index = summarize.balance_by_account(self.entries)
         self.assertEqual(len(self.entries), index)
         self.assertEqual({
-            'Assets:AccountA': Inventory.from_string('11 USD'),
-            'Equity:Opening-Balances': Inventory.from_string('-23 USD'),
-            'Assets:AccountB': Inventory.from_string('12 USD')
+            'Assets:AccountA': inventory.from_string('11 USD'),
+            'Equity:Opening-Balances': inventory.from_string('-23 USD'),
+            'Assets:AccountB': inventory.from_string('12 USD')
             }, balances)
 
     def test_balance_by_account__first_date(self):
@@ -753,8 +753,8 @@ class TestBalanceByAccount(cmptest.TestCase):
                                                        datetime.date(2014, 2, 10))
         self.assertEqual(1, index)
         self.assertEqual({
-            'Assets:AccountA': Inventory.from_string('10 USD'),
-            'Equity:Opening-Balances': Inventory.from_string('-10 USD'),
+            'Assets:AccountA': inventory.from_string('10 USD'),
+            'Equity:Opening-Balances': inventory.from_string('-10 USD'),
             }, balances)
 
 

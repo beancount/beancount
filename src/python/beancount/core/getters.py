@@ -3,7 +3,9 @@ things that they reference, accounts, tags, links, currencies, etc.
 """
 from collections import defaultdict
 
-from beancount.core.data import Transaction, Open, Close
+from beancount.core.data import Transaction
+from beancount.core.data import Open
+from beancount.core.data import Close
 from beancount.core import account
 
 

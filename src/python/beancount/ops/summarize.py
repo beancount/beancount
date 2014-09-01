@@ -9,14 +9,15 @@ total amount of that account.
 import datetime
 import collections
 
+from beancount.core.data import Transaction
+from beancount.core.data import Open
+from beancount.core.data import Close
+from beancount.core.account_types import is_income_statement_account
 from beancount.core import amount
 from beancount.core import inventory
-from beancount.core.data import Transaction, Open, Close
-from beancount.core.data import Source, Posting
 from beancount.core import data
 from beancount.core import flags
 from beancount.core import complete
-from beancount.core.account_types import is_income_statement_account
 from beancount.ops import prices
 from beancount.ops import balance
 from beancount.utils import bisect_key
@@ -266,7 +267,7 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
         index = len(entries)
         last_date = entries[-1].date
 
-    source = Source('<conversions>', -1)
+    source = data.Source('<conversions>', -1)
     narration = 'Conversion for {}'.format(conversion_balance)
     conversion_entry = Transaction(source, last_date, flags.FLAG_CONVERSIONS,
                                    None, narration, None, None, [])
@@ -277,7 +278,7 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
         # Conversions.)
         price = amount.Amount(amount.ZERO, conversion_currency)
         conversion_entry.postings.append(
-            Posting(conversion_entry, conversion_account, -position, price, None))
+            data.Posting(conversion_entry, conversion_account, -position, price, None))
 
     # Make a copy of the list of entries and insert the new transaction into it.
     new_entries = list(entries)
@@ -345,9 +346,9 @@ def create_entries_from_balances(balances, date, source_account, direction,
             source, date, flag, None, narration, None, None, postings)
 
         for position in account_balance.get_positions():
-            postings.append(Posting(new_entry, account, position, None, None))
+            postings.append(data.Posting(new_entry, account, position, None, None))
             cost_position = position.at_cost()
-            postings.append(Posting(new_entry, source_account, -cost_position, None, None))
+            postings.append(data.Posting(new_entry, source_account, -cost_position, None, None))
 
         new_entries.append(new_entry)
 

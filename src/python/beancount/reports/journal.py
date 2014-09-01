@@ -3,7 +3,7 @@
 import collections
 from os import path
 
-from beancount.core.data import Open, Close, Balance, Transaction, Note, Document
+from beancount.core import data
 from beancount.core import complete
 from beancount.core import realization
 from beancount.core import flags
@@ -76,7 +76,7 @@ def iterate_render_postings(postings, formatter):
         extra_class = ''
         links = None
 
-        if isinstance(entry, Transaction):
+        if isinstance(entry, data.Transaction):
             rowtype = FLAG_ROWTYPES.get(entry.flag, 'Transaction')
             extra_class = 'warning' if entry.flag == flags.FLAG_WARNING else ''
             flag = entry.flag
@@ -90,7 +90,7 @@ def iterate_render_postings(postings, formatter):
             if entry.links and formatter:
                 links = [formatter.render_link(link) for link in entry.links]
 
-        elif isinstance(entry, Balance):
+        elif isinstance(entry, data.Balance):
             # Check the balance here and possibly change the rowtype
             if entry.diff_amount is None:
                 description = 'Balance {} has {}'.format(
@@ -107,17 +107,17 @@ def iterate_render_postings(postings, formatter):
 
             amount_str = str(entry.amount)
 
-        elif isinstance(entry, (Open, Close)):
+        elif isinstance(entry, (data.Open, data.Close)):
             description = '{} {}'.format(entry.__class__.__name__,
                                          formatter.render_account(entry.account))
             amount_str = ''
 
-        elif isinstance(entry, Note):
+        elif isinstance(entry, data.Note):
             description = '{} {}'.format(entry.__class__.__name__, entry.comment)
             amount_str = ''
             balance_str = ''
 
-        elif isinstance(entry, Document):
+        elif isinstance(entry, data.Document):
             assert path.isabs(entry.filename)
             description = 'Document for {}: {}'.format(
                 formatter.render_account(entry.account),
@@ -185,7 +185,7 @@ def entries_table_with_balance(oss, account_postings, formatter, render_postings
                    entry.date, row.flag, description,
                    row.amount_str, row.balance_str))
 
-        if render_postings and isinstance(entry, Transaction):
+        if render_postings and isinstance(entry, data.Transaction):
             for posting in entry.postings:
 
                 classes = ['Posting']
@@ -265,7 +265,7 @@ def entries_table(oss, account_postings, formatter, render_postings=True):
                    '{}:{}'.format(entry.source.filename, entry.source.lineno),
                    entry.date, row.flag, description))
 
-        if render_postings and isinstance(entry, Transaction):
+        if render_postings and isinstance(entry, data.Transaction):
             for posting in entry.postings:
 
                 classes = ['Posting']

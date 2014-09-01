@@ -2,10 +2,10 @@
 """
 import io
 
-from beancount.core.account_types import is_root_account
-from beancount.core.position import Lot
+from beancount.core import account_types
+from beancount.core import position
 from beancount.core import data
-from beancount.core.inventory import Inventory
+from beancount.core import inventory
 from beancount.core import realization
 
 
@@ -135,7 +135,7 @@ def table_of_balances(real_root, operating_currencies, formatter, classes=None):
     else:
         active_set = set()
 
-    balance_totals = Inventory()
+    balance_totals = inventory.Inventory()
     oss = io.StringIO()
     classes = list(classes) if classes else []
     classes.append('fullwidth')
@@ -149,7 +149,7 @@ def table_of_balances(real_root, operating_currencies, formatter, classes=None):
             # Check if this account has had activity; if not, skip rendering it.
             # pylint: disable=bad-continuation
             if (real_account.account not in active_set and
-                not is_root_account(real_account.account)):
+                not account_types.is_root_account(real_account.account)):
                 continue
 
             if real_account.account is None:
@@ -166,10 +166,10 @@ def table_of_balances(real_root, operating_currencies, formatter, classes=None):
         positions = list(line_balance.get_positions())
 
         for currency in operating_currencies:
-            position = line_balance.get_position(Lot(currency, None, None))
-            if position:
-                positions.remove(position)
-                cells.append('{:,.2f}'.format(position.number))
+            position_ = line_balance.get_position(position.Lot(currency, None, None))
+            if position_:
+                positions.remove(position_)
+                cells.append('{:,.2f}'.format(position_.number))
             else:
                 cells.append('')
 

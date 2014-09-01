@@ -9,18 +9,32 @@ import tempfile
 import re
 from os import path
 
+from beancount.core.amount import ZERO
+from beancount.core.amount import Decimal
+from beancount.core.amount import Amount
+from beancount.core.amount import amount_div
+from beancount.core.position import Lot
+from beancount.core.position import Position
+from beancount.core.data import Transaction
+from beancount.core.data import Balance
+from beancount.core.data import Open
+from beancount.core.data import Close
+from beancount.core.data import Pad
+from beancount.core.data import Event
+from beancount.core.data import Price
+from beancount.core.data import Note
+from beancount.core.data import Document
+from beancount.core.data import Source
+from beancount.core.data import Posting
+from beancount.core.complete import balance_incomplete_postings
+from beancount.core.complete import compute_residual
+from beancount.core.complete import SMALL_EPSILON
+
 from beancount.parser import _parser
 from beancount.parser import lexer
 from beancount.parser import options
 from beancount.core import account
 from beancount.core import data
-from beancount.core.amount import ZERO, Decimal, Amount, amount_div
-from beancount.core.position import Lot, Position
-from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price
-from beancount.core.data import Note, Document
-from beancount.core.data import Source, Posting
-from beancount.core.complete import balance_incomplete_postings
-from beancount.core.complete import compute_residual, SMALL_EPSILON
 
 
 __sanity_checks__ = False

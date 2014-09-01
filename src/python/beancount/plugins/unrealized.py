@@ -6,8 +6,7 @@ from beancount.core.amount import ZERO
 from beancount.core import data
 from beancount.core import account
 from beancount.core import getters
-from beancount.core.data import Transaction, Posting, Source
-from beancount.core.position import Lot, Position
+from beancount.core import position
 from beancount.core import flags
 from beancount.ops import holdings
 from beancount.ops import prices
@@ -40,7 +39,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
       at the end, and a list of errors. The new list of entries is still sorted.
     """
     errors = []
-    source = Source('<unrealized_gains>', 0)
+    source = data.Source('<unrealized_gains>', 0)
 
     account_types = options.get_account_types(options_map)
 
@@ -116,9 +115,9 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
                      "(price: {h.price_number:.4f} {h.cost_currency} as of {h.price_date}, "
                      "average cost: {h.cost_number:.4f} {h.cost_currency})").format(
                          gain_loss_str, h=holding)
-        entry = Transaction(source._replace(lineno=1000 + index),
-                            latest_date, flags.FLAG_UNREALIZED,
-                            None, narration, None, None, [])
+        entry = data.Transaction(source._replace(lineno=1000 + index),
+                                 latest_date, flags.FLAG_UNREALIZED,
+                                 None, narration, None, None, [])
 
         # Book this as income, converting the account name to be the same, but as income.
         # Note: this is a rather convenient but arbitraty choice--maybe it would be best to
@@ -127,14 +126,16 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
         #
         # Note: we never set a price because we don't want these to end up in Conversions.
         entry.postings.extend([
-            Posting(entry, asset_account,
-                    Position(Lot(holding.cost_currency, None, None), pnl),
-                    None,
-                    None),
-            Posting(entry, income_account,
-                    Position(Lot(holding.cost_currency, None, None), -pnl),
-                    None,
-                    None)
+            data.Posting(
+                entry, asset_account,
+                position.Position(position.Lot(holding.cost_currency, None, None), pnl),
+                None,
+                None),
+            data.Posting(
+                entry, income_account,
+                position.Position(position.Lot(holding.cost_currency, None, None), -pnl),
+                None,
+                None)
         ])
 
         new_entries.append(entry)

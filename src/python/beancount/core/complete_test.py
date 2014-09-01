@@ -1,7 +1,8 @@
 import unittest
 import copy
 
-from beancount.core.data import create_simple_posting, create_simple_posting_with_cost
+from beancount.core.data import create_simple_posting as P
+from beancount.core.data import create_simple_posting_with_cost as PCost
 from beancount.core import complete
 from beancount.core import data
 from beancount.core import inventory
@@ -15,7 +16,7 @@ class TestBalance(unittest.TestCase):
     def test_get_balance_amount(self):
 
         # Entry without cost, without price.
-        posting = create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD")
+        posting = P(None, "Assets:Bank:Checking", "105.50", "USD")
         self.assertEqual(amount.Amount("105.50", "USD"),
                          complete.get_balance_amount(posting))
 
@@ -25,8 +26,7 @@ class TestBalance(unittest.TestCase):
                          complete.get_balance_amount(posting))
 
         # Entry with cost, without price.
-        posting = create_simple_posting_with_cost(None, "Assets:Bank:Checking",
-                                                  "105.50", "USD", "0.80", "EUR")
+        posting = PCost(None, "Assets:Bank:Checking", "105.50", "USD", "0.80", "EUR")
         self.assertEqual(amount.Amount("84.40", "EUR"),
                          complete.get_balance_amount(posting))
 
@@ -38,7 +38,7 @@ class TestBalance(unittest.TestCase):
     def test_has_nontrivial_balance(self):
 
         # Entry without cost, without price.
-        posting = create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD")
+        posting = P(None, "Assets:Bank:Checking", "105.50", "USD")
         self.assertFalse(complete.has_nontrivial_balance(posting))
 
         # Entry without cost, with price.
@@ -46,8 +46,7 @@ class TestBalance(unittest.TestCase):
         self.assertTrue(complete.has_nontrivial_balance(posting))
 
         # Entry with cost, without price.
-        posting = create_simple_posting_with_cost(None, "Assets:Bank:Checking",
-                                                  "105.50", "USD", "0.80", "EUR")
+        posting = PCost(None, "Assets:Bank:Checking", "105.50", "USD", "0.80", "EUR")
         self.assertTrue(complete.has_nontrivial_balance(posting))
 
         # Entry with cost, and with price (the price should be ignored).
@@ -58,17 +57,17 @@ class TestBalance(unittest.TestCase):
 
         # Try with two accounts.
         residual = complete.compute_residual([
-            create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD"),
-            create_simple_posting(None, "Assets:Bank:Checking", "-194.50", "USD"),
+            P(None, "Assets:Bank:Checking", "105.50", "USD"),
+            P(None, "Assets:Bank:Checking", "-194.50", "USD"),
             ])
         self.assertEqual([amount.Amount("-89", "USD")], residual.get_amounts())
 
         # Try with more accounts.
         residual = complete.compute_residual([
-            create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD"),
-            create_simple_posting(None, "Assets:Bank:Checking", "-194.50", "USD"),
-            create_simple_posting(None, "Assets:Bank:Investing", "5", "AAPL"),
-            create_simple_posting(None, "Assets:Bank:Savings", "89.00", "USD"),
+            P(None, "Assets:Bank:Checking", "105.50", "USD"),
+            P(None, "Assets:Bank:Checking", "-194.50", "USD"),
+            P(None, "Assets:Bank:Investing", "5", "AAPL"),
+            P(None, "Assets:Bank:Savings", "89.00", "USD"),
             ])
         self.assertEqual([amount.Amount("5", "AAPL")], residual.get_amounts())
 
@@ -84,7 +83,7 @@ class TestBalance(unittest.TestCase):
 
         # Test with only a single leg (and check that it does not balance).
         entry = data.Transaction(source, None, None, None, None, None, None, [
-            create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD"),
+            P(None, "Assets:Bank:Checking", "105.50", "USD"),
             ])
         new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
@@ -93,8 +92,8 @@ class TestBalance(unittest.TestCase):
 
         # Test with two legs that balance.
         entry = data.Transaction(source, None, None, None, None, None, None, [
-            create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD"),
-            create_simple_posting(None, "Assets:Bank:Savings", "-105.50", "USD"),
+            P(None, "Assets:Bank:Checking", "105.50", "USD"),
+            P(None, "Assets:Bank:Savings", "-105.50", "USD"),
             ])
         new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
@@ -103,8 +102,8 @@ class TestBalance(unittest.TestCase):
 
         # Test with two legs that do not balance.
         entry = data.Transaction(source, None, None, None, None, None, None, [
-            create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD"),
-            create_simple_posting(None, "Assets:Bank:Savings", "-115.50", "USD"),
+            P(None, "Assets:Bank:Checking", "105.50", "USD"),
+            P(None, "Assets:Bank:Savings", "-115.50", "USD"),
             ])
         new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
@@ -113,7 +112,7 @@ class TestBalance(unittest.TestCase):
 
         # Test with only one auto-posting.
         entry = data.Transaction(source, None, None, None, None, None, None, [
-            create_simple_posting(None, "Assets:Bank:Checking", None, None),
+            P(None, "Assets:Bank:Checking", None, None),
             ])
         new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
@@ -122,9 +121,9 @@ class TestBalance(unittest.TestCase):
 
         # Test with an auto-posting where there is no residual.
         entry = data.Transaction(source, None, None, None, None, None, None, [
-            create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD"),
-            create_simple_posting(None, "Assets:Bank:Savings", "-105.50", "USD"),
-            create_simple_posting(None, "Assets:Bank:Balancing", None, None),
+            P(None, "Assets:Bank:Checking", "105.50", "USD"),
+            P(None, "Assets:Bank:Savings", "-105.50", "USD"),
+            P(None, "Assets:Bank:Balancing", None, None),
             ])
         new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
         self.assertTrue(has_inserted)
@@ -133,10 +132,10 @@ class TestBalance(unittest.TestCase):
 
         # Test with too many empty postings.
         entry = data.Transaction(source, None, None, None, None, None, None, [
-            create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD"),
-            create_simple_posting(None, "Assets:Bank:Savings", "-106.50", "USD"),
-            create_simple_posting(None, "Assets:Bank:BalancingA", None, None),
-            create_simple_posting(None, "Assets:Bank:BalancingB", None, None),
+            P(None, "Assets:Bank:Checking", "105.50", "USD"),
+            P(None, "Assets:Bank:Savings", "-106.50", "USD"),
+            P(None, "Assets:Bank:BalancingA", None, None),
+            P(None, "Assets:Bank:BalancingB", None, None),
             ])
         new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
         self.assertTrue(has_inserted)
@@ -148,9 +147,9 @@ class TestBalance(unittest.TestCase):
 
         # Test with a single auto-posting with a residual.
         entry = data.Transaction(source, None, None, None, None, None, None, [
-            create_simple_posting(None, "Assets:Bank:Checking", "105.50", "USD"),
-            create_simple_posting(None, "Assets:Bank:Savings", "-115.50", "USD"),
-            create_simple_posting(None, "Assets:Bank:Balancing", None, None),
+            P(None, "Assets:Bank:Checking", "105.50", "USD"),
+            P(None, "Assets:Bank:Savings", "-115.50", "USD"),
+            P(None, "Assets:Bank:Balancing", None, None),
             ])
         new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
         self.assertTrue(has_inserted)
@@ -162,11 +161,11 @@ class TestBalance(unittest.TestCase):
 
         # Test with a single auto-posting with a residual.
         entry = data.Transaction(source, None, None, None, None, None, None, [
-            create_simple_posting(None, "Income:US:Anthem:InsurancePayments",
+            P(None, "Income:US:Anthem:InsurancePayments",
                                   "-275.81", "USD"),
-            create_simple_posting(None, "Income:US:Anthem:InsurancePayments",
+            P(None, "Income:US:Anthem:InsurancePayments",
                                   "-23738.54", "USD"),
-            create_simple_posting(None, "Assets:Bank:Checking",
+            P(None, "Assets:Bank:Checking",
                                   "24014.45", "USD"),
             ])
         new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
@@ -177,8 +176,8 @@ class TestBalance(unittest.TestCase):
     def test_balance_with_zero_posting(self):
         source = data.Source(__file__, 0)
         entry = data.Transaction(source, None, None, None, None, None, None, [
-            create_simple_posting(None, "Income:US:Anthem:InsurancePayments", "0", "USD"),
-            create_simple_posting(None, "Income:US:Anthem:InsurancePayments", None, None),
+            P(None, "Income:US:Anthem:InsurancePayments", "0", "USD"),
+            P(None, "Income:US:Anthem:InsurancePayments", None, None),
             ])
         new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)

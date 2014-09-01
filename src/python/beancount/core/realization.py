@@ -20,12 +20,18 @@ import collections
 import operator
 import copy
 
+from beancount.core.data import Transaction
+from beancount.core.data import Posting
+from beancount.core.data import Balance
+from beancount.core.data import Open
+from beancount.core.data import Close
+from beancount.core.data import Pad
+from beancount.core.data import Note
+from beancount.core.data import Document
 from beancount.core import inventory
 from beancount.core import amount
 from beancount.core import data
 from beancount.core import account
-from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Document
-from beancount.core.data import Posting
 from beancount.core import account
 from beancount.core import complete
 from beancount.core import flags

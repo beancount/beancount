@@ -2,13 +2,14 @@
 """
 import collections
 
-from beancount.core.amount import D, amount_sub
+from beancount.core.amount import D
+from beancount.core import amount
 from beancount.core import inventory
 from beancount.core import data
 from beancount.core import position
-from beancount.utils import misc_utils
 from beancount.core import flags
 from beancount.core import realization
+from beancount.utils import misc_utils
 
 __plugins__ = ('pad',)
 
@@ -89,7 +90,7 @@ def pad(entries, options_map):
                 # total amount for a particular currency (which itself is
                 # distinct from the cost).
                 balance_amount = pad_balance.get_amount(check_amount.currency)
-                diff_amount = amount_sub(balance_amount, check_amount)
+                diff_amount = amount.amount_sub(balance_amount, check_amount)
                 if abs(diff_amount.number) > tolerance:
                     # The check fails; we need to pad.
 

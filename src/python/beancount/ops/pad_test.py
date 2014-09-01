@@ -1,8 +1,8 @@
 import re
 
-from beancount.core.inventory import Inventory
-from beancount.core.data import Open, Pad, Balance, Posting
-from beancount.core.amount import Amount
+from beancount.core import inventory
+from beancount.core import data
+from beancount.core import amount
 from beancount.core import realization
 from beancount.loader import loaddoc
 from beancount.ops import pad
@@ -343,21 +343,21 @@ class TestPadding(cmptest.TestCase):
         postings = post_map['Assets:Checking']
 
         balances = []
-        pad_balance = Inventory()
+        pad_balance = inventory.Inventory()
         for posting in postings:
-            if isinstance(posting, Posting):
+            if isinstance(posting, data.Posting):
                 position_, _ = pad_balance.add_position(posting.position)
                 self.assertFalse(position_.is_negative_at_cost())
             balances.append((type(posting), pad_balance.get_amount('USD')))
 
-        self.assertEqual(balances, [(Open, Amount('0.00', 'USD')),
-                                    (Pad, Amount('0.00', 'USD')),
-                                    (Posting, Amount('95.00', 'USD')),
-                                    (Posting, Amount('105.00', 'USD')),
-                                    (Balance, Amount('105.00', 'USD')),
-                                    (Posting, Amount('125.00', 'USD')),
-                                    (Posting, Amount('145.00', 'USD')),
-                                    (Balance, Amount('145.00', 'USD'))])
+        self.assertEqual(balances, [(data.Open, amount.from_string('0.00 USD')),
+                                    (data.Pad, amount.from_string('0.00 USD')),
+                                    (data.Posting, amount.from_string('95.00 USD')),
+                                    (data.Posting, amount.from_string('105.00 USD')),
+                                    (data.Balance, amount.from_string('105.00 USD')),
+                                    (data.Posting, amount.from_string('125.00 USD')),
+                                    (data.Posting, amount.from_string('145.00 USD')),
+                                    (data.Balance, amount.from_string('145.00 USD'))])
 
     # Note: You could try padding A into B and B into A to see if it works.
 

@@ -2,7 +2,8 @@ import unittest
 import re
 
 from beancount.plugins import unrealized
-from beancount.core.amount import D, ZERO
+from beancount.core.amount import D
+from beancount.core.amount import ZERO
 from beancount.core import data
 from beancount.parser import options
 from beancount.ops import validation

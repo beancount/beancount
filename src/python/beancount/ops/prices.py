@@ -9,8 +9,8 @@ live prices online and create entries on-the-fly).
 import collections
 
 from beancount.core.amount import ONE
-from beancount.core import amount
 from beancount.core.data import Price
+from beancount.core import amount
 from beancount.core import data
 from beancount.utils import misc_utils
 

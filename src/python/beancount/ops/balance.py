@@ -2,8 +2,10 @@
 """
 import collections
 
-from beancount.core.amount import D, amount_sub
-from beancount.core.data import Transaction, Balance
+from beancount.core.amount import D
+from beancount.core.data import Transaction
+from beancount.core.data import Balance
+from beancount.core import amount
 from beancount.core import inventory
 from beancount.core import realization
 from beancount.core import getters
@@ -86,7 +88,7 @@ def check(entries, options_map):
             balance_amount = subtree_balance.get_amount(expected_amount.currency)
 
             # Check if the amount is within bounds of the expected amount.
-            diff_amount = amount_sub(balance_amount, expected_amount)
+            diff_amount = amount.amount_sub(balance_amount, expected_amount)
             if abs(diff_amount.number) > tolerance:
                 check_errors.append(
                     BalanceError(entry.source,

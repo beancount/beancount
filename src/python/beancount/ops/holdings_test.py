@@ -2,7 +2,8 @@ import itertools
 import unittest
 import datetime
 
-from beancount.core.amount import D, ZERO
+from beancount.core.amount import D
+from beancount.core.amount import ZERO
 from beancount.core import position
 from beancount.ops import holdings
 from beancount.ops import prices

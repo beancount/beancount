@@ -16,10 +16,11 @@ beancount: TODO
 
       grep -srn  'Transaction does not balance'  /Users/blais/p/beancount/src/python/beancount/
 
-        /Users/blais/p/beancount/src/python/beancount//core/complete.py:192:                             "Transaction does not balance: {}.".format(inventory),
-        /Users/blais/p/beancount/src/python/beancount//ops/validation.py:381:                                    "Transaction does not balance: {}.".format(balance),
+        /Users/blais/p/beancount/src/python/beancount/core/complete.py:192:                             "Transaction does not balance: {}.".format(inventory),
+        /Users/blais/p/beancount/src/python/beancount/ops/validation.py:381:                                    "Transaction does not balance: {}.".format(balance),
 
     This has to be figured out in relation to performance. Test on my own ledger.
+    This out the hashes trick if this is too slow.
 
 
 ** Move Files to Final Location
@@ -60,6 +61,9 @@ beancount: TODO
     performance really, really matters (the parser)
 
       grep -srn  'from beancount\..*\..*import'  /Users/blais/p/beancount/src/python/beancount
+
+    Add a check for this in linter makefile
+
 
   - Remove all imports that import multiple things (makes it easier to grep if
     only one)

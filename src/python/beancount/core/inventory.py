@@ -41,8 +41,10 @@ pull to do this is that for positions which aren't booked, we simply leave the '
 import copy
 from datetime import date
 
-from beancount.core.amount import ZERO, Amount
-from beancount.core.position import Lot, Position
+from beancount.core.amount import ZERO
+from beancount.core.amount import Amount
+from beancount.core.position import Lot
+from beancount.core.position import Position
 from beancount.core.position import from_string as position_from_string
 
 

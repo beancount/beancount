@@ -10,8 +10,11 @@ trickled up to the user.
 from os import path
 import collections
 
-from beancount.core import data
-from beancount.core.data import Open, Close, Transaction, Document, Note
+from beancount.core.data import Open
+from beancount.core.data import Close
+from beancount.core.data import Transaction
+from beancount.core.data import Document
+from beancount.core.data import Note
 from beancount.core import data
 from beancount.core import getters
 from beancount.core import inventory

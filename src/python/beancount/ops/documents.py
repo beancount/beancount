@@ -5,8 +5,9 @@ import datetime
 from os import path
 from collections import namedtuple
 
+from beancount.core.data import Document
 from beancount.core import account
-from beancount.core.data import Source, Document
+from beancount.core import data
 from beancount.core import data
 from beancount.core import getters
 
@@ -103,7 +104,7 @@ def find_documents(directory, input_filename, accounts_only=None, strict=False):
 
     # If the directory does not exist, just generate an error and return.
     if not path.exists(directory):
-        source = Source(input_filename, 0)
+        source = data.Source(input_filename, 0)
         error = DocumentError(
             source, "Document root '{}' does not exist".format(directory), None)
         return ([], [error])
@@ -124,18 +125,18 @@ def find_documents(directory, input_filename, accounts_only=None, strict=False):
                 if strict:
                     if any(account_name.startswith(account) for account in accounts_only):
                         errors.append(DocumentError(
-                            Source(input_filename, 0),
+                            data.Source(input_filename, 0),
                             "Document '{}' found in child account {}".format(
                                 filename, account_name), None))
                     elif any(account.startswith(account_name) for account in accounts_only):
                         errors.append(DocumentError(
-                            Source(input_filename, 0),
+                            data.Source(input_filename, 0),
                             "Document '{}' found in parent account {}".format(
                                 filename, account_name), None))
                 continue
 
             # Create a new directive.
-            source = Source(input_filename, 0)
+            source = data.Source(input_filename, 0)
             date = datetime.date(*map(int, mo.group(1, 2, 3)))
             entry = Document(source, date, account_name, path.join(root, filename))
             entries.append(entry)
