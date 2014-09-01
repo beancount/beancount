@@ -85,7 +85,9 @@ beancount: TODO
     version has some decent console reports, even if the revamp of reports
     comes later on.
 
+
   - Implement text report for journal, income statement and balance sheet.
+    These should be present for a 1.0 release, even if in a rudimentary form.
 
 
 ** Documentation / Ongoing
