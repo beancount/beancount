@@ -13,16 +13,15 @@ import threading
 import bottle
 from bottle import response, request
 
-from beancount.core.data import Open, Close
-from beancount.core.data import Document
+from beancount.core import data
 from beancount.core import getters
 from beancount.core import account
 from beancount.core import account_types
 from beancount.ops import basicops
 from beancount.ops import prices
 from beancount.utils import misc_utils
-from beancount.utils.text_utils import replace_numbers
-from beancount.web.bottle_utils import AttrMapper, internal_redirect
+from beancount.utils import text_utils
+from beancount.web import bottle_utils
 from beancount.parser import options
 from beancount.parser import printer
 from beancount import loader
@@ -156,7 +155,7 @@ NOT_IMPLEMENTED = '''
 '''
 
 app = bottle.Bottle()
-A = AttrMapper(app.router.build)
+A = bottle_utils.AttrMapper(app.router.build)
 
 
 def render_overlay():
@@ -216,7 +215,7 @@ def root():
 @app.route('/toc', name='toc')
 def toc():
     entries_no_open_close = [entry for entry in app.entries
-                             if not isinstance(entry, (Open, Close))]
+                             if not isinstance(entry, (data.Open, data.Close))]
     if entries_no_open_close:
         mindate, maxdate = None, None
     else:
@@ -372,7 +371,7 @@ def doc(filename=None):
 
     # Check that there is a document directive that has this filename.
     # This is for security; we don't want to be able to serve just any file.
-    for entry in misc_utils.filter_type(app.entries, Document):
+    for entry in misc_utils.filter_type(app.entries, data.Document):
         if entry.filename == filename:
             break
     else:
@@ -387,7 +386,7 @@ def doc(filename=None):
 # View application pages.
 
 viewapp = bottle.Bottle()
-V = AttrMapper(lambda *args, **kw: request.app.get_url(*args, **kw))
+V = bottle_utils.AttrMapper(lambda *args, **kw: request.app.get_url(*args, **kw))
 
 
 def render_view(*args, **kw):
@@ -744,7 +743,7 @@ def handle_view(path_depth):
             # Save the view for the subrequest and redirect. populate_view()
             # picks this up and saves it in request.view.
             request.environ['VIEW'] = view
-            return internal_redirect(viewapp, path_depth)
+            return bottle_utils.internal_redirect(viewapp, path_depth)
         return wrapper
     return view_populator
 
@@ -902,7 +901,7 @@ def incognito(callback):
         # pylint: disable=bad-continuation
         if (response.content_type in ('text/html', '') and
             isinstance(contents, str)):
-            contents = replace_numbers(contents)
+            contents = text_utils.replace_numbers(contents)
         return contents
 
     return wrapper

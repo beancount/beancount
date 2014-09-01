@@ -59,18 +59,16 @@ beancount: TODO
   - Make all imports not import symbols directly, only packages, except where
     performance really, really matters (the parser)
 
-  - Configure and run a clean pylint on the entire codebase.
+      grep -srn  'from beancount\..*\..*import'  /Users/blais/p/beancount/src/python/beancount
 
-  - Add all docstrings with args Google-style.
+  - Remove all imports that import multiple things (makes it easier to grep if
+    only one)
+
+  - Configure and run a clean pylint on the entire codebase.
 
   - Add __author__ to all files?
 
   - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
-
-  - Split all multiple tests that run in the same function by putting the
-    docstring on the setUp() method instead; this works well:
-
-      @parser.parsedoc def setUp(self, entries, _, __):
 
 
 ** Unsure
@@ -97,6 +95,8 @@ beancount: TODO
 
   - Example file and document
 
+  - Clean up this TODO file, reorganize sections, remove what's redundant from
+    the proposal files.
 
 
 * Current / Misc / To Be Classified

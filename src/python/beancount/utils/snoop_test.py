@@ -2,7 +2,6 @@ import unittest
 import re
 
 from beancount.utils import snoop
-from beancount.utils.snoop import snooper
 
 
 class TestSnoop(unittest.TestCase):
@@ -23,8 +22,8 @@ class TestSnoop(unittest.TestCase):
 
     def test_snoop_regexp(self):
         MatchObject = type(re.match("a", "a"))
-        if snooper(re.match("bro", "brother")):
-            self.assertTrue(isinstance(snooper.value, MatchObject))
+        if snoop.snooper(re.match("bro", "brother")):
+            self.assertTrue(isinstance(snoop.snooper.value, MatchObject))
         else:
             self.assertFalse(True)
 
