@@ -19,12 +19,12 @@ from beancount.utils import test_utils
 
 
 def create_simple_account():
-    ra = RealAccount('')
-    ra['Assets'] = RealAccount('Assets')
-    ra['Assets']['US'] = RealAccount('Assets:US')
-    ra['Assets']['US']['Bank'] = RealAccount('Assets:US:Bank')
-    ra['Assets']['US']['Bank']['Checking'] = RealAccount('Assets:US:Bank:Checking')
-    return ra
+    ra0 = RealAccount('')
+    ra0['Assets'] = RealAccount('Assets')
+    ra0['Assets']['US'] = RealAccount('Assets:US')
+    ra0['Assets']['US']['Bank'] = RealAccount('Assets:US:Bank')
+    ra0['Assets']['US']['Bank']['Checking'] = RealAccount('Assets:US:Bank:Checking')
+    return ra0
 
 
 def create_real(account_value_pairs):
@@ -38,23 +38,23 @@ def create_real(account_value_pairs):
 class TestRealAccount(unittest.TestCase):
 
     def test_ctor(self):
-        ra = RealAccount('Assets:US:Bank:Checking')
-        self.assertEqual(0, len(ra))
-        ra = RealAccount('Equity')
-        ra = RealAccount('')
+        ra0 = RealAccount('Assets:US:Bank:Checking')
+        self.assertEqual(0, len(ra0))
+        ra0 = RealAccount('Equity')
+        ra0 = RealAccount('')
         with self.assertRaises(Exception):
-            ra = RealAccount(None)
+            ra0 = RealAccount(None)
 
     def test_str(self):
-        ra = RealAccount('Assets:US:Bank:Checking')
-        self.assertEqual('{}', str(ra))
-        #self.assertEqual('RealAccount()', str(ra))
+        ra0 = RealAccount('Assets:US:Bank:Checking')
+        self.assertEqual('{}', str(ra0))
+        #self.assertEqual('RealAccount()', str(ra0))
 
-        ra = create_simple_account()
-        ra_str = str(ra)
-        self.assertTrue(re.search('Assets', ra_str))
-        self.assertTrue(re.search('Bank', ra_str))
-        self.assertTrue(re.search('Checking', ra_str))
+        ra0 = create_simple_account()
+        ra0_str = str(ra0)
+        self.assertTrue(re.search('Assets', ra0_str))
+        self.assertTrue(re.search('Bank', ra0_str))
+        self.assertTrue(re.search('Checking', ra0_str))
 
     def test_equality(self):
         ra1 = RealAccount('Assets:US:Bank:Checking')
@@ -82,83 +82,83 @@ class TestRealAccount(unittest.TestCase):
         ra2.account = saved_account
 
     def test_getitem_setitem(self):
-        ra = create_simple_account()
-        self.assertTrue(isinstance(ra['Assets'], RealAccount))
-        self.assertTrue(isinstance(ra['Assets']['US'], RealAccount))
+        ra0 = create_simple_account()
+        self.assertTrue(isinstance(ra0['Assets'], RealAccount))
+        self.assertTrue(isinstance(ra0['Assets']['US'], RealAccount))
         with self.assertRaises(KeyError):
-            ra['Liabilities']
+            ra0['Liabilities']
 
     def test_setitem_constraints(self):
-        ra = RealAccount('')
-        ra['Assets'] = RealAccount('Assets')
+        ra0 = RealAccount('')
+        ra0['Assets'] = RealAccount('Assets')
         with self.assertRaises(KeyError):
-            ra['Assets'][42] = RealAccount('Assets:US')
+            ra0['Assets'][42] = RealAccount('Assets:US')
         with self.assertRaises(ValueError):
-            ra['Assets']['US'] = 42
+            ra0['Assets']['US'] = 42
         with self.assertRaises(ValueError):
-            ra['Assets']['US'] = RealAccount('Assets:US:Checking')
+            ra0['Assets']['US'] = RealAccount('Assets:US:Checking')
 
     def test_clone(self):
-        ra = RealAccount('')
-        ra_assets = ra['Assets'] = RealAccount('Assets')
-        ra.balance = 42
-        ra.postings.append('posting1')
-        ra.postings.append('posting2')
+        ra0 = RealAccount('')
+        ra0_assets = ra0['Assets'] = RealAccount('Assets')
+        ra0.balance = 42
+        ra0.postings.append('posting1')
+        ra0.postings.append('posting2')
 
-        ra_clone = copy.copy(ra)
-        self.assertEqual(42, ra_clone.balance)
-        self.assertEqual(['posting1', 'posting2'], ra_clone.postings)
-        self.assertEqual({'Assets'}, ra_clone.keys())
+        ra0_clone = copy.copy(ra0)
+        self.assertEqual(42, ra0_clone.balance)
+        self.assertEqual(['posting1', 'posting2'], ra0_clone.postings)
+        self.assertEqual({'Assets'}, ra0_clone.keys())
 
-        ra_clone = ra.copy()
-        self.assertEqual(42, ra_clone.balance)
-        self.assertEqual(['posting1', 'posting2'], ra_clone.postings)
-        self.assertEqual({'Assets'}, ra_clone.keys())
+        ra0_clone = ra0.copy()
+        self.assertEqual(42, ra0_clone.balance)
+        self.assertEqual(['posting1', 'posting2'], ra0_clone.postings)
+        self.assertEqual({'Assets'}, ra0_clone.keys())
 
 
 class TestRealGetters(unittest.TestCase):
 
     def test_get(self):
-        ra = create_simple_account()
+        ra0 = create_simple_account()
         self.assertEqual('Assets',
-                         realization.get(ra, 'Assets').account)
+                         realization.get(ra0, 'Assets').account)
         self.assertEqual('Assets:US:Bank',
-                         realization.get(ra, 'Assets:US:Bank').account)
+                         realization.get(ra0, 'Assets:US:Bank').account)
         self.assertEqual('Assets:US:Bank:Checking',
-                         realization.get(ra, 'Assets:US:Bank:Checking').account)
-        self.assertEqual(None, realization.get(ra, 'Assets:US:Bank:Savings'))
-        self.assertEqual(42, realization.get(ra, 'Assets:US:Bank:Savings', 42))
+                         realization.get(ra0, 'Assets:US:Bank:Checking').account)
+        self.assertEqual(None, realization.get(ra0, 'Assets:US:Bank:Savings'))
+        self.assertEqual(42, realization.get(ra0, 'Assets:US:Bank:Savings', 42))
         with self.assertRaises(ValueError):
-            self.assertEqual(42, realization.get(ra, None))
-        self.assertEqual(None, realization.get(ra, ''))
+            self.assertEqual(42, realization.get(ra0, None))
+        self.assertEqual(None, realization.get(ra0, ''))
 
     def test_get_or_create(self):
-        ra = RealAccount('')
-        ra_checking = realization.get_or_create(ra, 'Assets:US:Bank:Checking')
-        ra_savings = realization.get_or_create(ra, 'Assets:US:Bank:Savings')
-        self.assertEqual('Assets:US:Bank:Checking', ra_checking.account)
-        self.assertEqual({'Assets'}, ra.keys())
-        self.assertEqual({'Checking', 'Savings'}, ra['Assets']['US']['Bank'].keys())
+        ra0 = RealAccount('')
+        ra0_checking = realization.get_or_create(ra0, 'Assets:US:Bank:Checking')
+        ra0_savings = realization.get_or_create(ra0, 'Assets:US:Bank:Savings')
+        self.assertEqual('Assets:US:Bank:Checking', ra0_checking.account)
+        self.assertEqual({'Assets'}, ra0.keys())
+        self.assertEqual({'Checking', 'Savings'}, ra0['Assets']['US']['Bank'].keys())
 
-        ra_assets = ra['Assets']
-        ra_assets2 = realization.get_or_create(ra, 'Assets')
-        self.assertTrue(ra_assets2 is ra_assets)
+        ra0_assets = ra0['Assets']
+        ra0_assets2 = realization.get_or_create(ra0, 'Assets')
+        self.assertTrue(ra0_assets2 is ra0_assets)
 
     def test_contains(self):
-        ra = RealAccount('')
-        ra_checking = realization.get_or_create(ra, 'Assets:US:Bank:Checking')
-        ra_savings = realization.get_or_create(ra, 'Assets:US:Bank:Savings')
-        self.assertTrue(realization.contains(ra, 'Assets:US:Bank:Checking'))
-        self.assertTrue(realization.contains(ra, 'Assets:US:Bank:Savings'))
-        self.assertFalse(realization.contains(ra, 'Assets:US:Cash'))
+        ra0 = RealAccount('')
+        ra0_checking = realization.get_or_create(ra0, 'Assets:US:Bank:Checking')
+        ra0_savings = realization.get_or_create(ra0, 'Assets:US:Bank:Savings')
+        self.assertTrue(realization.contains(ra0, 'Assets:US:Bank:Checking'))
+        self.assertTrue(realization.contains(ra0, 'Assets:US:Bank:Savings'))
+        self.assertFalse(realization.contains(ra0, 'Assets:US:Cash'))
 
     def test_iter_children(self):
-        ra = RealAccount('')
+        ra0 = RealAccount('')
         for account_name in ['Assets:US:Bank:Checking',
                              'Assets:US:Bank:Savings',
                              'Assets:US:Cash',
                              'Assets:CA:Cash']:
-            realization.get_or_create(ra, account_name)
+            realization.get_or_create(ra0, account_name)
 
         # Test enumerating all accounts.
         self.assertEqual(['',
@@ -170,14 +170,14 @@ class TestRealGetters(unittest.TestCase):
                           'Assets:US:Bank:Checking',
                           'Assets:US:Bank:Savings',
                           'Assets:US:Cash'],
-                         [ra.account for ra in realization.iter_children(ra)])
+                         [ra0.account for ra0 in realization.iter_children(ra0)])
 
         # Test enumerating leaves only.
         self.assertEqual(['Assets:CA:Cash',
                           'Assets:US:Bank:Checking',
                           'Assets:US:Bank:Savings',
                           'Assets:US:Cash'],
-                         [ra.account for ra in realization.iter_children(ra, True)])
+                         [ra0.account for ra0 in realization.iter_children(ra0, True)])
 
 
 class TestRealization(unittest.TestCase):
@@ -309,11 +309,11 @@ class TestRealization(unittest.TestCase):
         2014-01-01 close Liabilities:CreditCard
         """
         real_account = realization.realize(entries)
-        ra_movie = realization.get(real_account, 'Expenses:Movie')
-        self.assertEqual('Expenses:Movie', ra_movie.account)
+        ra0_movie = realization.get(real_account, 'Expenses:Movie')
+        self.assertEqual('Expenses:Movie', ra0_movie.account)
         expected_balance = inventory.Inventory()
         expected_balance.add_amount(amount.Amount('20', 'CAD'))
-        self.assertEqual(expected_balance, ra_movie.balance)
+        self.assertEqual(expected_balance, ra0_movie.balance)
 
 
 class TestRealFilter(unittest.TestCase):
@@ -323,7 +323,7 @@ class TestRealFilter(unittest.TestCase):
         real_root = create_real([('Assets:US:Bank:Checking', '1 USD'),
                                  ('Assets:US:Bank:Savings', '2 USD'),
                                  ('Liabilities:Bank:CreditCard', '3 USD')])
-        real_copy = realization.filter(real_root, lambda ra: False)
+        real_copy = realization.filter(real_root, lambda ra0: False)
         self.assertTrue(real_copy is None)
 
     def test_filter_almost_all(self):
@@ -333,13 +333,13 @@ class TestRealFilter(unittest.TestCase):
                                  ('Liabilities:USBank:CreditCard', '3 USD'),
                                  ('Assets', '100 USD'),
                                  ('Liabilities:US:Bank', '101 USD')])
-        def ge100(ra):
-            return ra.balance.get_amount('USD').number >= 100
+        def ge100(ra0):
+            return ra0.balance.get_amount('USD').number >= 100
         real_copy = realization.filter(real_root, ge100)
         self.assertTrue(real_copy is not None)
         self.assertEqual({'Assets', 'Liabilities:US:Bank'},
-                         set(ra.account
-                             for ra in realization.iter_children(real_copy, True)))
+                         set(ra0.account
+                             for ra0 in realization.iter_children(real_copy, True)))
 
     def test_filter_with_leaves(self):
         # Test filtering that keeps some leaf nodes with some intermediate nodes
@@ -347,15 +347,15 @@ class TestRealFilter(unittest.TestCase):
         real_root = create_real([('Assets:US:Bank:Checking', '1 USD'),
                                  ('Assets:US:Bank:Savings', '2 USD'),
                                  ('Liabilities:USBank:CreditCard', '3 USD')])
-        def not_empty(ra):
-            return not ra.balance.is_empty()
+        def not_empty(ra0):
+            return not ra0.balance.is_empty()
         real_copy = realization.filter(real_root, not_empty)
         self.assertTrue(real_copy is not None)
         self.assertEqual({'Assets:US:Bank:Checking',
                           'Assets:US:Bank:Savings',
                           'Liabilities:USBank:CreditCard'},
-                         set(ra.account
-                             for ra in realization.iter_children(real_copy, True)))
+                         set(ra0.account
+                             for ra0 in realization.iter_children(real_copy, True)))
 
     def test_filter_no_leaves(self):
         # Test filtering that drops leaf nodes but that keeps intermediate
@@ -364,13 +364,13 @@ class TestRealFilter(unittest.TestCase):
                                  ('Assets:US:Bank:Savings', '2 USD'),
                                  ('Assets:US', '100 USD'),
                                  ('Assets', '100 USD')])
-        def ge100(ra):
-            return ra.balance.get_amount('USD').number >= 100
+        def ge100(ra0):
+            return ra0.balance.get_amount('USD').number >= 100
         real_copy = realization.filter(real_root, ge100)
         self.assertTrue(real_copy is not None)
         self.assertEqual({'Assets:US'},
-                         set(ra.account
-                             for ra in realization.iter_children(real_copy, True)))
+                         set(ra0.account
+                             for ra0 in realization.iter_children(real_copy, True)))
 
     def test_filter_misc(self):
         real_root = create_real([('Assets:US:Bank:Checking', '1 USD'),

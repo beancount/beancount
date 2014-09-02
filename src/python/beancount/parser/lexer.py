@@ -18,6 +18,8 @@ class LexBuilder(object):
     """A builder used only for getting the lexer to pass.
     The methods do nothing."""
 
+    # pylint: disable=invalid-name
+
     def __init__(self):
         # A mapping of all the accounts created.
         self.accounts = {}

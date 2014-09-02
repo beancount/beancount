@@ -91,9 +91,9 @@ class ListFormatsAction(argparse.Action):
         # Bulid a list of rows.
         rows = []
         for name, formats in matrix:
-            x = ['X' if fmt in formats else ''
-                 for fmt in all_formats]
-            rows.append([name] + x)
+            xes = ['X' if fmt in formats else ''
+                   for fmt in all_formats]
+            rows.append([name] + xes)
 
         # Build a description of the rows, a field specificaiton.
         header = ['Name'] + all_formats
@@ -209,8 +209,8 @@ def main():
     with misc_utils.log_time('report.render', logging.info):
         try:
             chosen_report.render(entries, errors, options_map, args.format, outfile)
-        except report.ReportError as e:
-            sys.stderr.write("Error: {}\n".format(e))
+        except report.ReportError as exc:
+            sys.stderr.write("Error: {}\n".format(exc))
             sys.exit(1)
 
 

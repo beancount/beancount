@@ -26,9 +26,9 @@ class TestToDecimal(unittest.TestCase):
         self.assertEqual(ZERO, Decimal('0'))
 
     def test_D(self):
-        d = Decimal('10.345')
-        self.assertEqual(d, D(d))
-        self.assertEqual(d, D('10.345'))
+        dec = Decimal('10.345')
+        self.assertEqual(dec, D(dec))
+        self.assertEqual(dec, D('10.345'))
         self.assertEqual(Decimal('10034.45'), D('10,034.45'))
         self.assertEqual(Decimal('-83434309.10'), D('-83,434,309.10'))
         self.assertEqual(Decimal(), D(''))

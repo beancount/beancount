@@ -21,12 +21,12 @@ def log_time(operation_name, log_timings, indent=0):
     Yields:
       The start time of the operation.
     """
-    t1 = time()
-    yield t1
-    t2 = time()
+    time1 = time()
+    yield time1
+    time2 = time()
     if log_timings:
         log_timings("Operation: {:48} Time: {}{:6.0f} ms".format(
-            "'{}'".format(operation_name), '      '*indent, (t2 - t1)*1000))
+            "'{}'".format(operation_name), '      '*indent, (time2 - time1) * 1000))
 
 
 def groupby(keyfun, elements):

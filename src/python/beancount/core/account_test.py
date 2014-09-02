@@ -109,6 +109,15 @@ class TestAccount(unittest.TestCase):
                          account.sans_root("Assets:US:BofA:Checking"))
         self.assertEqual("", account.sans_root("Assets"))
 
+    def test_root(self):
+        name = "Liabilities:US:Credit-Card:Blue"
+        self.assertEqual("", account.root(0, name))
+        self.assertEqual("Liabilities", account.root(1, name))
+        self.assertEqual("Liabilities:US", account.root(2, name))
+        self.assertEqual("Liabilities:US:Credit-Card", account.root(3, name))
+        self.assertEqual("Liabilities:US:Credit-Card:Blue", account.root(4, name))
+        self.assertEqual("Liabilities:US:Credit-Card:Blue", account.root(5, name))
+
     def test_has_component(self):
         self.assertTrue(account.has_component('Liabilities:US:Credit-Card', 'US'))
         self.assertFalse(account.has_component('Liabilities:US:Credit-Card', 'CA'))

@@ -45,6 +45,8 @@ class GetAccounts:
         method = getattr(self, entry.__class__.__name__)
         return set(method(entry))
 
+    # pylint: disable=invalid-name
+
     def Transaction(_, entry):
         """Process a Transaction directive.
 
@@ -92,6 +94,7 @@ class GetAccounts:
 
 
 # Global instance to share.
+# pylint: disable=invalid-name
 _GetAccounts = GetAccounts()
 
 
@@ -183,12 +186,12 @@ def get_all_payees(entries):
     return all_payees
 
 
-def get_leveln_parent_accounts(account_names, n, nrepeats=0):
+def get_leveln_parent_accounts(account_names, level, nrepeats=0):
     """Return a list of all the unique leaf names are level N in an account hierarchy.
 
     Args:
       account_names: A list of account names (strings)
-      n: The level to cross-cut. 0 is for root accounts.
+      level: The level to cross-cut. 0 is for root accounts.
       nrepeats: A minimum number of times a leaf is required to be present in the
         the list of unique account names in order to be returned by this function.
     Returns:
@@ -197,10 +200,10 @@ def get_leveln_parent_accounts(account_names, n, nrepeats=0):
     leveldict = defaultdict(int)
     for account_name in set(account_names):
         components = account.split(account_name)
-        if n < len(components):
-            leveldict[components[n]] += 1
-    levels = {level
-              for level, count in leveldict.items()
+        if level < len(components):
+            leveldict[components[level]] += 1
+    levels = {level_
+              for level_, count in leveldict.items()
               if count > nrepeats}
     return sorted(levels)
 

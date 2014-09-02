@@ -139,7 +139,7 @@ class TestScriptPositions(test_utils.TestCase):
         with test_utils.capture() as stdout:
             test_utils.run_with_args(query.main, [filename, 'accounts'])
 
-        r = self.assertLines("""
+        self.assertLines("""
             Assets:Cash          2013-01-01
             Expenses:Restaurant  2013-01-01
         """, stdout.getvalue())

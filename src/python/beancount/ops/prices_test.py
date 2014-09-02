@@ -123,7 +123,7 @@ class TestPriceMap(unittest.TestCase):
 
         # Test not found.
         with self.assertRaises(KeyError):
-            x = prices.get_all_prices(price_map, ('EWJ', 'JPY'))
+            prices.get_all_prices(price_map, ('EWJ', 'JPY'))
 
     @parsedoc
     def test_get_latest_price(self, entries, _, __):

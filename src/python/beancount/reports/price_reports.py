@@ -42,7 +42,7 @@ class CommodityPricesReport(report.TableReport):
         price_map = prices.build_price_map(entries)
         try:
             date_rates = prices.get_all_prices(price_map, self.args.commodity)
-        except KeyError as e:
+        except KeyError:
             raise KeyError("Invalid commodity: {}".format(self.args.commodity))
         return date_rates
 

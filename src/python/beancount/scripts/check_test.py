@@ -19,7 +19,7 @@ class TestScriptCheck(test_utils.TestCase):
         with test_utils.capture() as stdout:
             result = test_utils.run_with_args(check.main, [filename])
         self.assertEqual(0, result)
-        r = self.assertLines("", stdout.getvalue())
+        self.assertLines("", stdout.getvalue())
 
     @test_utils.docfile
     def test_fail(self, filename):

@@ -10,6 +10,7 @@ from os import path
 
 
 # Component separator for account names.
+# pylint: disable=invalid-name
 sep = ':'
 
 
@@ -90,6 +91,18 @@ def sans_root(account_name):
     assert isinstance(account_name, str)
     components = account_name.split(sep)[1:]
     return join(*components) if account_name else None
+
+
+def root(num_components, account_name):
+    """Return the first few components of an account's name.
+
+    Args:
+      num_components: An integer, the number of components to return.
+      account_name: A string, an account name.
+    Returns:
+      A string, the account root up to 'num_components' components.
+    """
+    return join(*(split(account_name)[:num_components]))
 
 
 def has_component(account_name, component):

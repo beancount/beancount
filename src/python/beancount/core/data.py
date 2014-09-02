@@ -270,7 +270,7 @@ def create_simple_posting_with_cost(entry, account,
     return posting
 
 
-NoneType = type(None)
+NoneType = type(None)  # pylint: disable=invalid-name
 
 def sanity_check_types(entry):
     """Check that the entry and its postings has all correct data types.

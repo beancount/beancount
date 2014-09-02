@@ -206,11 +206,6 @@ def load_from_csv(fileobj):
         yield holdings.Holding(**value_dict)
 
 
-
-def account_maxdepth(n, account_):
-    return account.join(*(account.split(account_)[:n]))
-
-
 class HoldingsReport(report.TableReport):
     """The full list of holdings for Asset and Liabilities accounts."""
 
@@ -222,7 +217,7 @@ class HoldingsReport(report.TableReport):
         'account': dict(aggregation_key=lambda holding: holding.account),
 
         'root-account': dict(
-            aggregation_key=lambda holding: account_maxdepth(3, holding.account),
+            aggregation_key=lambda holding: account.root(3, holding.account),
             sort_key=lambda holding: holding.market_value or amount.ZERO),
 
         'currency': dict(aggregation_key=lambda holding: holding.cost_currency),

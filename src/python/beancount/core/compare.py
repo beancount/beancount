@@ -46,6 +46,7 @@ def stable_hash_namedtuple__recursive(objtuple, ignore=frozenset()):
     return hashobj.hexdigest()
 
 
+# pylint: disable=invalid-name
 stable_hash_namedtuple = stable_hash_namedtuple__recursive
 
 

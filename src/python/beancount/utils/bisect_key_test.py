@@ -4,7 +4,7 @@ import unittest
 from beancount.utils import bisect_key
 
 
-class TestBisectWith_Key(unittest.TestCase):
+class TestBisectWithKey(unittest.TestCase):
 
     def test_bisect_left_with_key(self):
         second = lambda x: x[1]

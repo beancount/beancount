@@ -11,6 +11,8 @@ from beancount.core import complete
 class EntryPrinter:
     "Multi-method for printing an entry."
 
+    # pylint: disable=invalid-name
+
     @classmethod
     def __call__(cls, obj):
         oss = io.StringIO()

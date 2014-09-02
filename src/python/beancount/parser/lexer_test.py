@@ -19,8 +19,8 @@ def print_tokens(tokens):
     """
     print()
     print(',--------------------------------')
-    for t in tokens:
-        print('{},'.format(t))
+    for token in tokens:
+        print('{},'.format(token))
     print('`--------------------------------')
 
 

@@ -54,9 +54,9 @@ class TestPosition(unittest.TestCase):
 
     def test_compare_zero_to_none(self):
         pos1 = Position(Lot("CAD", None, None), ZERO)
-        posNone = None
-        self.assertEqual(pos1, posNone)
-        self.assertEqual(posNone, pos1)
+        pos_none = None
+        self.assertEqual(pos1, pos_none)
+        self.assertEqual(pos_none, pos1)
 
         pos2 = Position(Lot("USD", None, None), ZERO)
         self.assertNotEqual(pos1, pos2)

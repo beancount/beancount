@@ -277,5 +277,6 @@ class Position:
         return Position(Lot(amount.currency, cost_amount, None), amount.number)
 
 
+# pylint: disable=invalid-name
 from_string = Position.from_string
 from_amounts = Position.from_amounts

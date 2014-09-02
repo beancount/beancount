@@ -29,12 +29,15 @@ try:
     import cdecimal as decimal
 except ImportError:
     import decimal
+
+# pylint: disable=invalid-name
 Decimal = decimal.Decimal
 
 # Constants.
 ZERO = Decimal()
 ONE = Decimal('1')
 
+# pylint: disable=invalid-name
 def D(strord=None):
     """Convert a string, possibly with commas, into a Decimal object.
 

@@ -24,14 +24,14 @@ class TestSampleStack(unittest.TestCase):
     setUp = deleteSamples
 
     def test_sample(self):
-        N = 10
-        for i in range(N):
+        num = 10
+        for i in range(num):
             sample_stack.sample(self.filename)
 
-        with shelve.open(self.filename, 'r') as db:
-            items = list(db.items())
+        with shelve.open(self.filename, 'r') as database:
+            items = list(database.items())
         self.assertEqual(1, len(items))
-        self.assertEqual(N, items[0][1])
+        self.assertEqual(num, items[0][1])
 
     def test_print_samples(self):
         sample_stack.sample(self.filename)

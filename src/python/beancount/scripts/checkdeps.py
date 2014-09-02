@@ -102,6 +102,6 @@ def check_wget():
         match = re.search(r'\b(\d+\.\d[\d\.]*)', (stdout + stderr).decode())
         if match:
             version, sufficient = match.group(1), True
-    except FileNotFoundError as e:
+    except FileNotFoundError as exc:
         pass
     return ('wget', version, sufficient)

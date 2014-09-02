@@ -45,9 +45,9 @@ def scrape_urls(url_format, predicate, ignore_regexp=None):
 
 def find_links(html_text):
     root = lxml.html.fromstring(html_text)
-    for a in root.xpath('//a'):
-        assert 'href' in a.attrib
-        yield a.attrib['href']
+    for anchor in root.xpath('//a'):
+        assert 'href' in anchor.attrib
+        yield anchor.attrib['href']
 
 
 def scrape(filename, predicate, port, quiet=True, extra_args=None):

@@ -154,6 +154,7 @@ NOT_IMPLEMENTED = '''
 </p>
 '''
 
+# pylint: disable=invalid-name
 app = bottle.Bottle()
 A = bottle_utils.AttrMapper(app.router.build)
 

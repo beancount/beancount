@@ -14,7 +14,7 @@ import traceback
 
 from beancount.utils import test_utils
 
-repo_root = test_utils.find_repository_root(__file__)
+REPO_ROOT = test_utils.find_repository_root(__file__)
 
 def sample(filename, limit=5):
     """Store the current stack and increment a counter.
@@ -26,7 +26,7 @@ def sample(filename, limit=5):
     stack = traceback.extract_stack(limit=limit+1)
     for index, frame in enumerate(stack):
         frame_filename, _, _, _ = frame
-        if (frame_filename.startswith(repo_root) and
+        if (frame_filename.startswith(REPO_ROOT) and
             not frame_filename.endswith('_test.py')):
             break
     small_stack = stack[index:-1]

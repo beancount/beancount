@@ -44,16 +44,16 @@ def bake_to_directory(webargs, output, quiet_subproc=False, quiet_server=False):
                url,
                '--directory-prefix', output]
 
-    p = subprocess.Popen(command,
-                         shell=False,
-                         stdout=subprocess.PIPE if quiet_subproc else None,
-                         stderr=subprocess.PIPE if quiet_subproc else None)
-    _, _ = p.communicate()
+    pipe = subprocess.Popen(command,
+                            shell=False,
+                            stdout=subprocess.PIPE if quiet_subproc else None,
+                            stderr=subprocess.PIPE if quiet_subproc else None)
+    _, _ = pipe.communicate()
 
     # Shutdown the server thread.
     web.thread_server_shutdown(thread)
 
-    return (p.returncode == 0)
+    return pipe.returncode == 0
 
 
 def archive(command_template, directory, archive, quiet=False):
@@ -84,13 +84,13 @@ def archive(command_template, directory, archive, quiet=False):
                                       basename=path.basename(directory),
                                       archive=archive)
 
-    p = subprocess.Popen(shlex.split(command),
-                         shell=False,
-                         cwd=path.dirname(directory),
-                         stdout=subprocess.PIPE if quiet else None,
-                         stderr=subprocess.PIPE if quiet else None)
-    _, _ = p.communicate()
-    if p.returncode != 0:
+    pipe = subprocess.Popen(shlex.split(command),
+                            shell=False,
+                            cwd=path.dirname(directory),
+                            stdout=subprocess.PIPE if quiet else None,
+                            stderr=subprocess.PIPE if quiet else None)
+    _, _ = pipe.communicate()
+    if pipe.returncode != 0:
         raise OSError("Archive failure")
 
 

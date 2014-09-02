@@ -49,7 +49,7 @@ class Snoop:
 
 # A global instance of a Snoop, for convenience. In many cases you can just
 # import and use this.
-snooper = Snoop()
+snooper = Snoop()  # pylint: disable=invalid-name
 
 
 def snoopify(function):
