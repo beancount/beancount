@@ -14,7 +14,8 @@ from os import path
 
 
 # A port allocation global. All the tests should use this global in order to
-# avoid port collissions during testing.
+# avoid port collisions during testing.
+# pylint: disable=invalid-name
 get_test_port = itertools.count(9470).__next__
 
 

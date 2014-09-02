@@ -14,6 +14,7 @@ def bisect_left_with_key(sequence, value, key=None):
     Returns:
       Return the index. May return None.
     """
+    # pylint: disable=invalid-name
     if key is None:
         key = lambda x: x  # Identity.
 

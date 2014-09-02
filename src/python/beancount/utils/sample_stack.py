@@ -31,10 +31,10 @@ def sample(filename, limit=5):
             break
     small_stack = stack[index:-1]
     stack_str = ''.join(traceback.format_list(small_stack))
-    with shelve.open(filename, 'c') as db:
-        if stack_str not in db:
-            db[stack_str] = 0
-        db[stack_str] += 1
+    with shelve.open(filename, 'c') as database:
+        if stack_str not in database:
+            database[stack_str] = 0
+        database[stack_str] += 1
 
 def print_samples(filename, file=None):
     """Dump the contents of a sample stack.
@@ -43,13 +43,13 @@ def print_samples(filename, file=None):
       filename: The name of the database the stack samples are stored to.
       file: A file object, where to output the report. If None, sys.stdout.
     """
-    f = file or sys.stdout
-    print(file=f)
-    with shelve.open(filename, 'r') as db:
-        for stack, count in db.items():
-            print("Seen {} times:".format(count), file=f)
-            print(stack, file=f)
-            print(file=f)
+    outfile = file or sys.stdout
+    print(file=outfile)
+    with shelve.open(filename, 'r') as database:
+        for stack, count in database.items():
+            print("Seen {} times:".format(count), file=outfile)
+            print(stack, file=outfile)
+            print(file=outfile)
 
 
 def main():

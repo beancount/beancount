@@ -59,16 +59,16 @@ def uniquify_last(iterable, keyfunc=None):
     """
     if keyfunc is None:
         keyfunc = lambda x: x
-    UNSET = object()
-    prev_obj = UNSET
-    prev_key = UNSET
+    unset = object()
+    prev_obj = unset
+    prev_key = unset
     for obj in sorted(iterable, key=keyfunc):
         key = keyfunc(obj)
-        if key != prev_key and prev_obj is not UNSET:
+        if key != prev_key and prev_obj is not unset:
             yield prev_obj
         prev_obj = obj
         prev_key = key
-    if prev_obj is not UNSET:
+    if prev_obj is not unset:
         yield prev_obj
 
 
@@ -96,10 +96,10 @@ def longest(seq):
       The longest list from the sequence.
     """
     longest, length = None, -1
-    for x in seq:
-        lenx = len(x)
-        if lenx > length:
-            longest, length = x, lenx
+    for element in seq:
+        len_element = len(element)
+        if len_element > length:
+            longest, length = element, len_element
     return longest
 
 
@@ -191,11 +191,11 @@ def compute_unique_clean_ids(strings):
         idmap = {}
         mre = re.compile(regexp)
         for string in string_set:
-            id = mre.sub(replacement, string)
-            if id in seen:
+            id_ = mre.sub(replacement, string)
+            if id_ in seen:
                 break  # Collision.
-            seen.add(id)
-            idmap[id] = string
+            seen.add(id_)
+            idmap[id_] = string
         else:
             break
     else:
@@ -216,6 +216,7 @@ def bisect_right_with_key(a, x, key, lo=0, hi=None):
     Returns:
       As in bisect.bisect_right, an element from list 'a'.
     """
+    # pylint: disable=invalid-name
     if lo < 0:
         raise ValueError('lo must be non-negative')
     if hi is None:

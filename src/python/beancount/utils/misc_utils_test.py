@@ -49,6 +49,7 @@ class TestMiscUtils(unittest.TestCase):
                          list(unique_data))
 
     def test_filter_type(self):
+        # pylint: disable=invalid-name
         class A: pass
         class B: pass
         class C: pass
@@ -61,14 +62,16 @@ class TestMiscUtils(unittest.TestCase):
         self.assertEqual((2, 3, 4, 5), misc_utils.longest(data))
 
     def test_get_tuple_values(self):
+        # pylint: disable=invalid-name
         Something = namedtuple('Something', 'a b c d e')
         SomethingElse = namedtuple('SomethingElse', 'f g h')
         class A(str): pass
         ntuple = Something(1, 2, SomethingElse(A('a'), None, 2), [A('b'), 'c'], 5)
-        x = misc_utils.get_tuple_values(ntuple, lambda x: isinstance(x, A))
-        self.assertEqual([A('a'), A('b')], list(x))
+        values = misc_utils.get_tuple_values(ntuple, lambda x: isinstance(x, A))
+        self.assertEqual([A('a'), A('b')], list(values))
 
     def test_replace_tuple_values(self):
+        # pylint: disable=invalid-name
         Something = namedtuple('Something', 'a b c d e')
         SomethingElse = namedtuple('SomethingElse', 'f g')
 
@@ -96,6 +99,7 @@ class TestMiscUtils(unittest.TestCase):
                          misc_utils.compute_unique_clean_ids(['a b', 'a_b']))
 
     def test_map_namedtuple_attributes(self):
+        # pylint: disable=invalid-name
         Test = namedtuple('Test', 'a b c d')
         test = Test(None, None, 1, 2)
         new_test = misc_utils.map_namedtuple_attributes(
