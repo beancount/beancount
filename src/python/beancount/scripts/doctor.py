@@ -126,9 +126,10 @@ def get_commands():
     """
     commands = []
     for attr_name, attr_value in globals().items():
-        mo = re.match('do_(.*)', attr_name)
-        if mo:
-            commands.append((mo.group(1), misc_utils.first_paragraph(attr_value.__doc__)))
+        match = re.match('do_(.*)', attr_name)
+        if match:
+            commands.append((match.group(1),
+                             misc_utils.first_paragraph(attr_value.__doc__)))
     return commands
 
 

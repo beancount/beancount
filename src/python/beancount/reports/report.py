@@ -79,9 +79,9 @@ class Report:
         """
         formats = []
         for name in dir(cls):
-            mo = re.match('render_([a-z0-9]+)$', name)
-            if mo:
-                formats.append(mo.group(1))
+            match = re.match('render_([a-z0-9]+)$', name)
+            if match:
+                formats.append(match.group(1))
         return sorted(formats)
 
     def render(self, entries, errors, options_map, output_format=None, file=None):
@@ -200,13 +200,13 @@ class RealizationMeta(type):
         # Go through the methods of the new type and look for render_real() methods.
         new_methods = {}
         for attr, value in new_type.__dict__.items():
-            mo = re.match('render_real_(.*)', attr)
-            if not mo:
+            match = re.match('render_real_(.*)', attr)
+            if not match:
                 continue
 
             # Make sure that if an explicit version of render_*() has already
             # been declared, that we don't override it.
-            render_function_name = 'render_{}'.format(mo.group(1))
+            render_function_name = 'render_{}'.format(match.group(1))
             if render_function_name in new_type.__dict__:
                 continue
 

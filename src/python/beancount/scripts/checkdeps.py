@@ -99,9 +99,9 @@ def check_wget():
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         stdout, stderr = pipe.communicate()
-        mo = re.search(r'\b(\d+\.\d[\d\.]*)', (stdout + stderr).decode())
-        if mo:
-            version, sufficient = mo.group(1), True
+        match = re.search(r'\b(\d+\.\d[\d\.]*)', (stdout + stderr).decode())
+        if match:
+            version, sufficient = match.group(1), True
     except FileNotFoundError as e:
         pass
     return ('wget', version, sufficient)

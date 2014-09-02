@@ -31,7 +31,7 @@ class TestSnoop(unittest.TestCase):
         original_match = re.match
         re.match = snoop.snoopify(re.match)
         try:
-            mo = re.match("bro", "brother")
-            self.assertTrue(re.match.value is mo)
+            match = re.match("bro", "brother")
+            self.assertTrue(re.match.value is match)
         finally:
             re.match = original_match

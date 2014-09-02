@@ -115,8 +115,8 @@ def find_documents(directory, input_filename, accounts_only=None, strict=False):
 
         # Look for files that have a dated filename.
         for filename in files:
-            mo = re.match('(\d\d\d\d)-(\d\d)-(\d\d).(.*)', filename)
-            if not mo:
+            match = re.match('(\d\d\d\d)-(\d\d)-(\d\d).(.*)', filename)
+            if not match:
                 continue
 
             # If a restricting set of accounts was specified, skip document
@@ -137,7 +137,7 @@ def find_documents(directory, input_filename, accounts_only=None, strict=False):
 
             # Create a new directive.
             source = data.Source(input_filename, 0)
-            date = datetime.date(*map(int, mo.group(1, 2, 3)))
+            date = datetime.date(*map(int, match.group(1, 2, 3)))
             entry = Document(source, date, account_name, path.join(root, filename))
             entries.append(entry)
 

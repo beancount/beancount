@@ -140,9 +140,9 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
                                        options_map["plugin"]):
 
         # Parse out the option if one was specified.
-        mo = re.match('(.*):(.*)', plugin_name)
-        if mo:
-            plugin_name, plugin_option = mo.groups()
+        match = re.match('(.*):(.*)', plugin_name)
+        if match:
+            plugin_name, plugin_option = match.groups()
         else:
             plugin_option = None
 

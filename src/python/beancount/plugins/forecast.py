@@ -57,9 +57,9 @@ def forecast_plugin(entries, options_map):
     new_entries = []
     for entry in forecast_entries:
         # Parse the periodicity.
-        mo = re.search(r'(.*)\[MONTHLY\]', entry.narration)
-        if mo:
-            forecast_narration = mo.group(1).strip()
+        match = re.search(r'(.*)\[MONTHLY\]', entry.narration)
+        if match:
+            forecast_narration = match.group(1).strip()
             for month in range(date_today.month + 1, 13):
                 # Create a new entry at the given datė
                 forecast_date = date_today.replace(month=month)

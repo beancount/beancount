@@ -247,19 +247,19 @@ class Position:
         Returns:
           A new instance of Position.
         """
-        mo = re.match(r'\s*([-+]?[0-9.]+)\s+([A-Z][A-Z0-9\'._]+)'
+        match = re.match(r'\s*([-+]?[0-9.]+)\s+([A-Z][A-Z0-9\'._]+)'
                       '(\s+{([-+]?[0-9.]+)\s+([A-Z][A-Z0-9\'._]+)'
                       '(\s*/\s*(\d\d\d\d-\d\d-\d\d))?})?', string)
-        if not mo:
+        if not match:
             raise ValueError("Invalid string for position: '{}'".format(string))
-        number, currency = mo.group(1, 2)
-        if mo.group(3):
-            cost_number, cost_currency = mo.group(4, 5)
+        number, currency = match.group(1, 2)
+        if match.group(3):
+            cost_number, cost_currency = match.group(4, 5)
             cost = Amount(D(cost_number), cost_currency)
         else:
             cost = None
-        if mo.group(6):
-            lot_date = datetime.datetime.strptime(mo.group(7), '%Y-%m-%d').date()
+        if match.group(6):
+            lot_date = datetime.datetime.strptime(match.group(7), '%Y-%m-%d').date()
         else:
             lot_date = None
         return Position(Lot(currency, cost, lot_date), D(number))

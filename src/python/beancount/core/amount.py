@@ -160,10 +160,10 @@ class Amount:
         Returns:
           A new instance of Amount.
         """
-        mo = re.match(r'\s*([-+]?[0-9.]+)\s+([A-Z][A-Z0-9\'._]+)', string)
-        if not mo:
+        match = re.match(r'\s*([-+]?[0-9.]+)\s+([A-Z][A-Z0-9\'._]+)', string)
+        if not match:
             raise ValueError("Invalid string for amount: '{}'".format(string))
-        number, currency = mo.group(1, 2)
+        number, currency = match.group(1, 2)
         return Amount(D(number), currency)
 
 
