@@ -204,32 +204,6 @@ def compute_unique_clean_ids(strings):
     return idmap
 
 
-def bisect_right_with_key(a, x, key, lo=0, hi=None):
-    """Like bisect.bisect_right, but with a key lookup parameter.
-
-    Args:
-      a: The list to search in.
-      x: The element to search for.
-      key: A function, to extract the value from the list.
-      lo: The smallest index to search.
-      hi: The largest index to search.
-    Returns:
-      As in bisect.bisect_right, an element from list 'a'.
-    """
-    # pylint: disable=invalid-name
-    if lo < 0:
-        raise ValueError('lo must be non-negative')
-    if hi is None:
-        hi = len(a)
-    while lo < hi:
-        mid = (lo+hi)//2
-        if x < key(a[mid]):
-            hi = mid
-        else:
-            lo = mid+1
-    return lo
-
-
 def map_namedtuple_attributes(attributes, mapper, object_):
     """Map the value of the named attributes of object by mapper.
 

@@ -13,6 +13,7 @@ from beancount.core.data import Price
 from beancount.core import amount
 from beancount.core import data
 from beancount.utils import misc_utils
+from beancount.utils import bisect_key
 
 
 def get_last_price_entries(entries, date):
@@ -250,7 +251,7 @@ def get_price(price_map, base_quote, date=None):
 
     try:
         price_list = _lookup_price_and_inverse(price_map, base_quote)
-        index = misc_utils.bisect_right_with_key(price_list, date, key=lambda x: x[0])
+        index = bisect_key.bisect_right_with_key(price_list, date, key=lambda x: x[0])
         if index == 0:
             return None, None
         else:
