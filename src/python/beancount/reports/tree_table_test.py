@@ -52,10 +52,10 @@ class TestTables(unittest.TestCase):
     def test_tree_table(self):
         oss = io.StringIO()
         for real_node, cells, classes in tree_table.tree_table(oss,
-                                                            self.real_root,
-                                                            None,
-                                                            header=['Account', 'Balance'],
-                                                            classes=['5cdc3b134179']):
+                                                               self.real_root,
+                                                               None,
+                                                               header=['Account', 'Balance'],
+                                                               classes=['5cdc3b134179']):
             if real_node is tree_table.TOTALS_LINE:
                 cells.append('THE_TOTAL')
                 continue
@@ -69,7 +69,7 @@ class TestTables(unittest.TestCase):
 
     def test_table_of_balances(self):
         html = tree_table.table_of_balances(self.real_root, ['USD', 'CAD'], None,
-                                         classes=['586e8200b379'])
+                                            classes=['586e8200b379'])
         self.assertTrue(re.search('<table', html))
         self.assertTrue(re.search('USD', html))
         self.assertTrue(re.search('CAD', html))

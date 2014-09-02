@@ -428,25 +428,25 @@ class TestRealOther(test_utils.TestCase):
         postings = list(realization.get_postings(real_account))
 
         for (exp_type, exp_account, exp_number), entpost in zip([
-            (data.Open, 'Assets:Bank:Checking', None),
-            (data.Open, 'Expenses:Restaurant', None),
-            (data.Open, 'Expenses:Movie', None),
-            (data.Open, 'Liabilities:CreditCard', None),
-            (data.Open, 'Equity:Opening-Balances', None),
-            (data.Pad, 'Assets:Bank:Checking', None),
-            #(data.Posting, 'Assets:Bank:Checking', '621.66'),
-            (data.Pad, 'Assets:Bank:Checking', None),
-            #(data.Posting, 'Equity:Opening-Balances', '-621.66'),
-            (data.Posting, 'Assets:Bank:Checking', '-11.11'),
-            (data.Posting, 'Expenses:Restaurant', '11.11'),
-            (data.Posting, 'Assets:Bank:Checking', '-22.22'),
-            (data.Posting, 'Expenses:Movie', '22.22'),
-            (data.Posting, 'Assets:Bank:Checking', '-33.33'),
-            (data.Posting, 'Liabilities:CreditCard', '33.33'),
-            (data.Note, 'Assets:Bank:Checking', None),
-            (data.Balance, 'Assets:Bank:Checking', None),
-            (data.Close, 'Assets:Bank:Checking', None),
-            ], postings):
+                (data.Open, 'Assets:Bank:Checking', None),
+                (data.Open, 'Expenses:Restaurant', None),
+                (data.Open, 'Expenses:Movie', None),
+                (data.Open, 'Liabilities:CreditCard', None),
+                (data.Open, 'Equity:Opening-Balances', None),
+                (data.Pad, 'Assets:Bank:Checking', None),
+                #(data.Posting, 'Assets:Bank:Checking', '621.66'),
+                (data.Pad, 'Assets:Bank:Checking', None),
+                #(data.Posting, 'Equity:Opening-Balances', '-621.66'),
+                (data.Posting, 'Assets:Bank:Checking', '-11.11'),
+                (data.Posting, 'Expenses:Restaurant', '11.11'),
+                (data.Posting, 'Assets:Bank:Checking', '-22.22'),
+                (data.Posting, 'Expenses:Movie', '22.22'),
+                (data.Posting, 'Assets:Bank:Checking', '-33.33'),
+                (data.Posting, 'Liabilities:CreditCard', '33.33'),
+                (data.Note, 'Assets:Bank:Checking', None),
+                (data.Balance, 'Assets:Bank:Checking', None),
+                (data.Close, 'Assets:Bank:Checking', None),
+        ], postings):
 
             self.assertEqual(exp_type, type(entpost))
             if exp_account:

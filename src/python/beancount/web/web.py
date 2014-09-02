@@ -437,29 +437,29 @@ def index():
     oss = io.StringIO()
     oss.write('<ul>\n')
     for title, page in [
-        ("Balances", "trial"),
-        ("Balance Sheet", "balsheet"),
-        ("Opening Balances", "openbal"),
-        ("Income Statement", "income"),
-        ("General Journal", "journal_root"),
-        ("Conversions", "conversions"),
-        ("Documents", "documents"),
-        ("Holdings (Full Detail)", "holdings"),
-        ("Holdings by Account", "holdings_byaccount"),
-        ("Holdings by Root Account", "holdings_byrootaccount"),
-        ("Holdings by Commodity", "holdings_bycommodity"),
-        ("Holdings by Currency", "holdings_bycurrency"),
-        ("Net Worth", "networth"),
-        ("Commodities", "commodities"),
-        # FIXME: Add those.
-        #("Print", "print"),
-        #("Prices Database", "pricedb"),
-        #("Accounts", "accounts"),
-        ("Events", "event_index"),
-        ("Activity/Update", "activity"),
-        ("Statistics (Types)", "stats_types"),
-        ("Statistics (Postings)", "stats_postings"),
-        ]:
+            ("Balances", "trial"),
+            ("Balance Sheet", "balsheet"),
+            ("Opening Balances", "openbal"),
+            ("Income Statement", "income"),
+            ("General Journal", "journal_root"),
+            ("Conversions", "conversions"),
+            ("Documents", "documents"),
+            ("Holdings (Full Detail)", "holdings"),
+            ("Holdings by Account", "holdings_byaccount"),
+            ("Holdings by Root Account", "holdings_byrootaccount"),
+            ("Holdings by Commodity", "holdings_bycommodity"),
+            ("Holdings by Currency", "holdings_bycurrency"),
+            ("Net Worth", "networth"),
+            ("Commodities", "commodities"),
+            # FIXME: Add those.
+            #("Print", "print"),
+            #("Prices Database", "pricedb"),
+            #("Accounts", "accounts"),
+            ("Events", "event_index"),
+            ("Activity/Update", "activity"),
+            ("Statistics (Types)", "stats_types"),
+            ("Statistics (Postings)", "stats_postings"),
+    ]:
         oss.write('<li><a href={}>{}</a></li>\n'.format(
             request.app.get_url(page), title))
     oss.write('</ul>\n')

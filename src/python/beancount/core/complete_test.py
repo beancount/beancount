@@ -165,12 +165,9 @@ class TestBalance(unittest.TestCase):
 
         # Test with a single auto-posting with a residual.
         entry = data.Transaction(source, None, None, None, None, None, None, [
-            P(None, "Income:US:Anthem:InsurancePayments",
-                                  "-275.81", "USD"),
-            P(None, "Income:US:Anthem:InsurancePayments",
-                                  "-23738.54", "USD"),
-            P(None, "Assets:Bank:Checking",
-                                  "24014.45", "USD"),
+            P(None, "Income:US:Anthem:InsurancePayments", "-275.81", "USD"),
+            P(None, "Income:US:Anthem:InsurancePayments", "-23738.54", "USD"),
+            P(None, "Assets:Bank:Checking", "24014.45", "USD"),
             ])
         new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)

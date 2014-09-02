@@ -34,7 +34,7 @@ class TestHoldingsReports(unittest.TestCase):
 
     def test_get_assets_holdings(self):
         holdings_list, price_map = holdings_reports.get_assets_holdings(self.entries,
-                                                                 self.options_map)
+                                                                        self.options_map)
         self.assertTrue(isinstance(holdings_list, list))
         self.assertTrue(isinstance(price_map, dict))
 

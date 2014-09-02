@@ -624,8 +624,8 @@ def parsedoc(fun):
     @functools.wraps(fun)
     def newfun(self):
         entries, errors, options_map = parse_string(textwrap.dedent(fun.__doc__),
-                                                report_filename=filename,
-                                                report_firstline=lineno)
+                                                    report_filename=filename,
+                                                    report_firstline=lineno)
         return fun(self, entries, errors, options_map)
     newfun.__doc__ = None
     return newfun

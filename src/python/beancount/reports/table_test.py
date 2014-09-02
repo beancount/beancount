@@ -38,9 +38,9 @@ class TestTable(unittest.TestCase):
         table_object = table.create_table(tuples, [(0, 'Currency'), 1])
 
         self.assertEqual(table.Table(columns=[0, 1],
-                                           header=['Currency', 'Field 1'],
-                                           body=[['USD', '1111.00'],
-                                                 ['CAD', '1333.33']]),
+                                     header=['Currency', 'Field 1'],
+                                     body=[['USD', '1111.00'],
+                                           ['CAD', '1333.33']]),
                          table_object)
 
     def test_table_to_html(self):

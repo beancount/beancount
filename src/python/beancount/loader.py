@@ -157,7 +157,6 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
                 # Run each transformer function in the plugin.
                 for function_name in module.__plugins__:
                     callback = getattr(module, function_name)
-                    callback_name = '{}.{}'.format(plugin_name, function_name)
 
                     if plugin_option is not None:
                         entries, plugin_errors = callback(entries, options_map,

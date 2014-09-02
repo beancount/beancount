@@ -248,8 +248,8 @@ class Position:
           A new instance of Position.
         """
         match = re.match(r'\s*([-+]?[0-9.]+)\s+([A-Z][A-Z0-9\'._]+)'
-                      '(\s+{([-+]?[0-9.]+)\s+([A-Z][A-Z0-9\'._]+)'
-                      '(\s*/\s*(\d\d\d\d-\d\d-\d\d))?})?', string)
+                         '(\s+{([-+]?[0-9.]+)\s+([A-Z][A-Z0-9\'._]+)'
+                         '(\s*/\s*(\d\d\d\d-\d\d-\d\d))?})?', string)
         if not match:
             raise ValueError("Invalid string for position: '{}'".format(string))
         number, currency = match.group(1, 2)
