@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Test out portfolio returns calculation.
+
+http://furius.ca/beancount/doc/portfolio-returns
 """
 import argparse
 import copy
