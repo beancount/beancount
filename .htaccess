@@ -105,3 +105,10 @@ RedirectMatch /doc/mirror$      	  /beancount/doc/proposal-mirror
 
 RedirectMatch /doc/proposal-inter$        https://docs.google.com/document/d/12YyAqfGygzCGMZsbsO3ZpUK08j6rUCQvB2Je9c42oqc/
 RedirectMatch /doc/inter-account$      	  /beancount/doc/proposal-inter
+
+RedirectMatch /doc/proposal-funds$        https://docs.google.com/document/d/1nf_yCiLuewVCEjkXq9Kd9SqbZGWqcs0v0pT5xQnkyzs/ 
+RedirectMatch /doc/fund$	    	  /beancount/doc/proposal-funds
+RedirectMatch /doc/fund-accounting$    	  /beancount/doc/proposal-funds
+
+
+
