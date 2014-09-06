@@ -5,6 +5,10 @@ beancount: TODO
 
   - Complete and merge sampled_quantization
 
+** More tests
+
+  - Add an automated test for setup.py, you must test this. Use a tempdir.
+
 
 ** Move Files to Final Location
 
