@@ -32,7 +32,7 @@ bean-web
 
 setup(
     name="beancount",
-    version='2.0beta',
+    version='2.0beta2',
     description="Command-line Double-Entry Accounting",
 
     long_description="""
