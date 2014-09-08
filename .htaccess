@@ -12,6 +12,8 @@ RedirectMatch /doc/motivation$            https://docs.google.com/document/d/1e4
 RedirectMatch /doc/intro$                 /beancount/doc/motivation
 RedirectMatch /doc/context$               /beancount/doc/motivation
 
+RedirectMatch /doc/comparison$            https://docs.google.com/document/d/1dW2vIjaXVJAf9hr7GlZVe3fJOkM-MtlVjvCO1ZpNLmg/
+
 RedirectMatch /doc/history$               https://docs.google.com/document/d/17wTH7aKnN_7-6nCxsOad6zIQfHwQgJUdI02RjzQuNi8/
 RedirectMatch /doc/credits$               /beancount/doc/history
 
@@ -106,9 +108,6 @@ RedirectMatch /doc/mirror$      	  /beancount/doc/proposal-mirror
 RedirectMatch /doc/proposal-inter$        https://docs.google.com/document/d/12YyAqfGygzCGMZsbsO3ZpUK08j6rUCQvB2Je9c42oqc/
 RedirectMatch /doc/inter-account$      	  /beancount/doc/proposal-inter
 
-RedirectMatch /doc/proposal-funds$        https://docs.google.com/document/d/1nf_yCiLuewVCEjkXq9Kd9SqbZGWqcs0v0pT5xQnkyzs/ 
+RedirectMatch /doc/proposal-funds$        https://docs.google.com/document/d/1nf_yCiLuewVCEjkXq9Kd9SqbZGWqcs0v0pT5xQnkyzs/
 RedirectMatch /doc/fund$	    	  /beancount/doc/proposal-funds
 RedirectMatch /doc/fund-accounting$    	  /beancount/doc/proposal-funds
-
-
-
