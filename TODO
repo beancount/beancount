@@ -9,6 +9,8 @@ beancount: TODO
 
   - Add an automated test for setup.py, you must test this. Use a tempdir.
 
+  - Add more tests for intra-day trading, esp. w.r.t. ordering and inventory booking.
+
 
 ** Move Files to Final Location
 
