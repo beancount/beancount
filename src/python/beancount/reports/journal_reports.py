@@ -20,6 +20,9 @@ class JournalReport(report.HTMLReport,
                             action='store', default=None,
                             help="Account to render.")
 
+        parser.add_argument('-w', '--width', action='store', type=int, default=0,
+                            help="The number of characters wide to render the report to")
+
     def get_postings(self, real_root):
         """Return the postings corresponding to the account filter option.
 
@@ -39,9 +42,10 @@ class JournalReport(report.HTMLReport,
         # Get the postings for the account.
         return realization.get_postings(real_account)
 
-    def __render_real_text(self, real_root, options_map, file):
+    def render_real_text(self, real_root, options_map, file):
+        width = self.args.width or misc_utils.get_screen_width()
         postings = self.get_postings(real_root)
-        journal.text_entries_table(file, postings, 80, True)
+        journal.text_entries_table(file, postings, width, True)
 
     def render_real_htmldiv(self, real_root, options_map, file):
         postings = self.get_postings(real_root)

@@ -123,3 +123,8 @@ class TestMiscUtils(unittest.TestCase):
         """)
         self.assertEqual('Dump the lexer output for a Beancount syntax file. Bla di blah.',
                          misc_utils.first_paragraph(docstring))
+
+    def test_get_screen_width(self):
+        max_width = misc_utils.get_screen_width()
+        self.assertTrue(type(int), max_width)
+        self.assertLess(0, max_width)

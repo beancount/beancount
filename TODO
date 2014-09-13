@@ -102,6 +102,11 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - In misc_utils.get_screen_width(), find a way to get the screen width
+    without resetting the terminal with initscr(). There's a way that does not
+    make the tests flicker.
+
+
   - Would it make sense for every plugin to provide a validation function? We
     could then move all the validation routines in their plugin file. I very
     much like this idea: it creates more isolation for routines and less

@@ -252,3 +252,15 @@ def first_paragraph(docstring):
             break
         lines.append(line.rstrip())
     return ' '.join(lines)
+
+
+def get_screen_width():
+    """Return the width of the terminal that runs this program.
+
+    Returns:
+      An integer, the number of characters the screen is wide.
+    """
+    import curses
+    def get_width(win):
+        return win.getmaxyx()[1]
+    return curses.wrapper(get_width)
