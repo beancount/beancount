@@ -41,7 +41,7 @@ class JournalReport(report.HTMLReport,
 
     def __render_real_text(self, real_root, options_map, file):
         postings = self.get_postings(real_root)
-        print(len(postings))
+        journal.text_entries_table(file, postings, 80, True)
 
     def render_real_htmldiv(self, real_root, options_map, file):
         postings = self.get_postings(real_root)

@@ -1,6 +1,8 @@
 """HTML rendering routines for serving a lists of postings/entries.
 """
 import collections
+import datetime
+import itertools
 from os import path
 
 from beancount.core import data
@@ -54,7 +56,7 @@ Row = collections.namedtuple('Row',
 
 
 def iterate_html_postings(postings, formatter):
-    """Iterate through the list of transactions with rendered strings for each cell.
+    """Iterate through the list of transactions with rendered HTML strings for each cell.
 
     This pre-renders all the data for each row to HTML. This is reused by the entries
     table rendering routines.
@@ -304,3 +306,75 @@ def render_links(links):
     return '<span class="links">{}</span>'.format(
         ''.join('<a href="{}">^</a>'.format(link)
                 for link in links))
+
+
+def text_entries_table(oss, postings, width, render_balance):
+    """Render a table of postings or directives with an accumulated balance.
+
+    The output is written to the 'oss' file object.
+
+    Args:
+      oss: A file object to write the output to.
+      postings: A list of Posting or directive instances.
+      width: An integer, the width to render the table to.
+      render_balance: A boolean, if true, renders a running balance column.
+    """
+    fields =['{date:10}',
+             '{dirtype:8}',
+             '{description}',
+             '{change:>16}',
+             '{balance:>16}']
+
+    FORMAT = ' '.join(fields)
+    empty = FORMAT.format(date='_',
+                          dirtype='_', description='', change='_', balance='_')
+    description_width = width - len(empty)
+    FORMAT = FORMAT.replace('{description}',
+                            '{{description:{:d}}}'.format(description_width)) + '\n'
+
+    for entry_line in realization.iterate_with_balance(postings):
+        entry, leg_postings, change, balance = entry_line
+
+        date = entry.date.isoformat()
+        dirtype = type(entry).__name__.lower()[:8]
+
+        if isinstance(entry, data.Transaction):
+            dirtype = entry.flag
+            description = ' | '.join([field
+                                      for field in [entry.payee, entry.narration]
+                                      if field is not None])
+
+        elif isinstance(entry, data.Balance):
+            if entry.diff_amount is None:
+                description = 'Balance passes in {}'.format(entry.account)
+            else:
+                description = ('Balance fails in {}: '
+                               'expected = {}, balance = {}, difference = {}').format(
+                                   entry.account,
+                                   entry.amount,
+                                   entry_balance.get_amount(entry.amount.currency),
+                                   entry.diff_amount)
+
+        elif isinstance(entry, (data.Open, data.Close)):
+            description = entry.account
+
+        elif isinstance(entry, data.Note):
+            description = entry.comment
+
+        elif isinstance(entry, data.Document):
+            description = entry.filename
+
+        else:
+            description = '-'
+
+        for (change_pos, balance_pos) in itertools.zip_longest(change.get_positions(),
+                                                               balance.get_positions()):
+            oss.write(FORMAT.format(
+                date=date,
+                dirtype=dirtype,
+                description=description,
+                change=str(change_pos.get_cost()) if change_pos else '',
+                balance=str(balance_pos.get_cost()) if balance_pos else ''))
+            if date:
+                date = dirtype = description = ''
+        oss.write('\n')
