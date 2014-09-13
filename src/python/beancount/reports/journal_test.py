@@ -71,9 +71,9 @@ class TestJournalRender(unittest.TestCase):
         real_root = realization.realize(self.entries)
         self.real_account = realization.get(real_root, 'Assets:Checking')
 
-    def test_iterate_render_postings(self):
+    def test_iterate_html_postings(self):
         formatter = html_formatter.HTMLFormatter()
-        rows = list(journal.iterate_render_postings(self.real_account.postings,
+        rows = list(journal.iterate_html_postings(self.real_account.postings,
                                                     formatter))
 
         # Check (entry, leg_postings, rowtype, extra_class, flag).

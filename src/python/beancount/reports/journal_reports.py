@@ -12,6 +12,7 @@ class JournalReport(report.HTMLReport,
     """Print out an account register/journal."""
 
     names = ['journal', 'register', 'account']
+    default_format = 'text'
 
     @classmethod
     def add_args(cls, parser):
@@ -19,7 +20,14 @@ class JournalReport(report.HTMLReport,
                             action='store', default=None,
                             help="Account to render.")
 
-    def render_real_htmldiv(self, real_root, options_map, file):
+    def get_postings(self, real_root):
+        """Return the postings corresponding to the account filter option.
+
+        Args:
+          real_root: A RealAccount node for the root of all accounts.
+        Returns:
+          A list of posting or directive instances.
+        """
         if self.args.account:
             real_account = realization.get(real_root, self.args.account)
             if real_account is None:
@@ -28,11 +36,16 @@ class JournalReport(report.HTMLReport,
         else:
             real_account = real_root
 
-        # Get the postings of the account.
-        account_postings = realization.get_postings(real_account)
+        # Get the postings for the account.
+        return realization.get_postings(real_account)
 
-        # Render the page.
-        journal.html_entries_table_with_balance(file, account_postings, self.formatter)
+    def __render_real_text(self, real_root, options_map, file):
+        postings = self.get_postings(real_root)
+        print(len(postings))
+
+    def render_real_htmldiv(self, real_root, options_map, file):
+        postings = self.get_postings(real_root)
+        journal.html_entries_table_with_balance(file, postings, self.formatter)
 
 
 class ConversionsReport(report.HTMLReport):

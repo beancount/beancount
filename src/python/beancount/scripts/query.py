@@ -84,9 +84,15 @@ class ListFormatsAction(argparse.Action):
             matrix.append((report_class.names[0], formats))
 
         # Compute a list of unique output formats.
-        all_formats = list({format_
-                            for name, formats in matrix
-                            for format_ in formats})
+        FORMAT_ORDER = {'text': 1,
+                        'html': 2,
+                        'htmldiv': 3,
+                        'csv': 4,
+                        'beancount': 99}
+        all_formats = sorted({format_
+                              for name, formats in matrix
+                              for format_ in formats},
+                             key=lambda fmt: FORMAT_ORDER.get(fmt, 100))
 
         # Bulid a list of rows.
         rows = []
