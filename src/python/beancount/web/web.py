@@ -319,7 +319,7 @@ def link(link=None):
 
     oss = io.StringIO()
     formatter = HTMLFormatter(request.app.get_url, False)
-    journal.entries_table_with_balance(oss, linked_entries, formatter)
+    journal.html_entries_table_with_balance(oss, linked_entries, formatter)
     return render_global(
         pagetitle="Link: {}".format(link),
         contents=oss.getvalue())

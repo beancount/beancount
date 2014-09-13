@@ -19,7 +19,6 @@ def check_dependencies():
     """
     return [
         check_python(),
-        check_cdecimal(),
         check_dateutil(),
         check_bottle(),
         check_wget(),
@@ -36,22 +35,6 @@ def check_python():
     return ('python3',
             '.'.join(map(str, sys.version_info[:3])),
             sys.version_info[:2] >= (3, 3))
-
-
-def check_cdecimal():
-    """Check that cdecimal 2.3 or above is installed.
-
-    Returns:
-      A triple of (package-name, version-number, sufficient) as per
-      check_dependencies().
-    """
-    try:
-        import cdecimal
-        # Note: There is no method to obtain the version number.
-        version, sufficient = 'INSTALLED', True
-    except ImportError:
-        version, sufficient = None, False
-    return ('cdecimal', version, sufficient)
 
 
 def check_dateutil():

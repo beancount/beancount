@@ -23,7 +23,8 @@ class JournalReport(report.HTMLReport,
         if self.args.account:
             real_account = realization.get(real_root, self.args.account)
             if real_account is None:
-                raise KeyError("Invalid account name: {}".format(self.args.account))
+                raise report.ReportError(
+                    "Invalid account name: {}".format(self.args.account))
         else:
             real_account = real_root
 
@@ -31,7 +32,7 @@ class JournalReport(report.HTMLReport,
         account_postings = realization.get_postings(real_account)
 
         # Render the page.
-        journal.entries_table_with_balance(file, account_postings, self.formatter)
+        journal.html_entries_table_with_balance(file, account_postings, self.formatter)
 
 
 class ConversionsReport(report.HTMLReport):
@@ -45,7 +46,7 @@ class ConversionsReport(report.HTMLReport):
                               for entry in misc_utils.filter_type(entries, data.Transaction)
                               if data.transaction_has_conversion(entry)]
 
-        journal.entries_table(file, conversion_entries, self.formatter,
+        journal.html_entries_table(file, conversion_entries, self.formatter,
                               render_postings=True)
 
         # Note: Can we somehow add a balance at the bottom? Do we really need one?
@@ -60,7 +61,7 @@ class DocumentsReport(report.HTMLReport):
     def render_htmldiv(self, entries, errors, options_map, file):
         document_entries = list(misc_utils.filter_type(entries, data.Document))
         if document_entries:
-            journal.entries_table(file, document_entries, self.formatter)
+            journal.html_entries_table(file, document_entries, self.formatter)
         else:
             file.write("<p>(No documents.)</p>")
 

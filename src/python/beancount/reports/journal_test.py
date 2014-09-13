@@ -102,20 +102,20 @@ class TestJournalRender(unittest.TestCase):
         self.assertTrue(all(isinstance(row.amount_str, str) for row in rows))
         self.assertTrue(all(isinstance(row.balance_str, str) for row in rows))
 
-    def test_entries_table_with_balance(self):
+    def test_html_entries_table_with_balance(self):
         oss = io.StringIO()
         formatter = html_formatter.HTMLFormatter()
-        result = journal.entries_table_with_balance(oss, self.real_account.postings,
+        result = journal.html_entries_table_with_balance(oss, self.real_account.postings,
                                                     formatter, True)
         html = oss.getvalue()
         self.assertTrue(result is None)
         self.assertTrue(isinstance(html, str))
         self.assertTrue(re.search('<table', html))
 
-    def test_entries_table(self):
+    def test_html_entries_table(self):
         oss = io.StringIO()
         formatter = html_formatter.HTMLFormatter()
-        result = journal.entries_table_with_balance(oss, self.real_account.postings,
+        result = journal.html_entries_table_with_balance(oss, self.real_account.postings,
                                                     formatter, True)
         html = oss.getvalue()
         self.assertTrue(result is None)

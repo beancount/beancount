@@ -9,9 +9,8 @@ The module also contains the basic Decimal type import.
 
 About Decimal usage:
 
-- Do not import Decimal from 'decimal' or 'cdecimal' modules; always import your
-  Decimal class from beancount.core.amount.
-
+- Do not import Decimal from the 'decimal' or 'cdecimal' modules; always import
+  your Decimal class from beancount.core.amount.
 
 - Prefer to use D() to create new instances of Decimal objects, which
   handles more syntax, e.g., handles None, and numbers with commas.
@@ -20,15 +19,9 @@ About Decimal usage:
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
 import re
 
-# Attempt to import a fast Decimal implementation; if we can't, fall back on the
-# slower pure-Python Decimal object. Note that because of the small and
-# occasional discrepancies between these two modules, we may have to work with
-# the common denominator between these two. This is only a very minor compromise
-# though, they have 99% compatible.
-try:
-    import cdecimal as decimal
-except ImportError:
-    import decimal
+# Note: Python 3.3 guarantees a fast "C" decimal implementation. No need to
+# install cdecimal anymore.
+import decimal
 
 # pylint: disable=invalid-name
 Decimal = decimal.Decimal

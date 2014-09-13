@@ -135,7 +135,7 @@ def iterate_render_postings(postings, formatter):
                   flag, description, links, amount_str, balance_str)
 
 
-def entries_table_with_balance(oss, account_postings, formatter, render_postings=True):
+def html_entries_table_with_balance(oss, account_postings, formatter, render_postings=True):
     """Render a list of entries into an HTML table, with a running balance.
 
     (This function returns nothing, it write to oss as a side-effect.)
@@ -215,7 +215,7 @@ def entries_table_with_balance(oss, account_postings, formatter, render_postings
     write('</table>')
 
 
-def entries_table(oss, account_postings, formatter, render_postings=True):
+def html_entries_table(oss, account_postings, formatter, render_postings=True):
     """Render a list of entries into an HTML table, with no running balance.
 
     This is appropriate for rendering tables of entries for postings with
