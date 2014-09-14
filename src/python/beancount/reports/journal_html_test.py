@@ -7,17 +7,17 @@ from beancount.core import realization
 from beancount.core import inventory
 from beancount.core import data
 from beancount.reports import html_formatter
-from beancount.reports import journal
+from beancount.reports import journal_html
 
 
 class TestHTMLBalance(unittest.TestCase):
 
     def test_balance_html(self):
         balance = inventory.Inventory()
-        self.assertEqual('', journal.balance_html(balance))
+        self.assertEqual('', journal_html.balance_html(balance))
 
         balance = inventory.Inventory.from_string('111 USD, 222 CAD, 3 GOOG {400 USD}')
-        html_balance = journal.balance_html(balance)
+        html_balance = journal_html.balance_html(balance)
         self.assertTrue(re.search(r'\b111\b', html_balance))
         self.assertTrue(re.search(r'\bUSD\b', html_balance))
         self.assertTrue(re.search(r'\b222\b', html_balance))
@@ -73,7 +73,7 @@ class TestJournalRender(unittest.TestCase):
 
     def test_iterate_html_postings(self):
         formatter = html_formatter.HTMLFormatter()
-        rows = list(journal.iterate_html_postings(self.real_account.postings,
+        rows = list(journal_html.iterate_html_postings(self.real_account.postings,
                                                     formatter))
 
         # Check (entry, leg_postings, rowtype, extra_class, flag).
@@ -105,7 +105,7 @@ class TestJournalRender(unittest.TestCase):
     def test_html_entries_table_with_balance(self):
         oss = io.StringIO()
         formatter = html_formatter.HTMLFormatter()
-        result = journal.html_entries_table_with_balance(oss, self.real_account.postings,
+        result = journal_html.html_entries_table_with_balance(oss, self.real_account.postings,
                                                     formatter, True)
         html = oss.getvalue()
         self.assertTrue(result is None)
@@ -115,7 +115,7 @@ class TestJournalRender(unittest.TestCase):
     def test_html_entries_table(self):
         oss = io.StringIO()
         formatter = html_formatter.HTMLFormatter()
-        result = journal.html_entries_table_with_balance(oss, self.real_account.postings,
+        result = journal_html.html_entries_table_with_balance(oss, self.real_account.postings,
                                                     formatter, True)
         html = oss.getvalue()
         self.assertTrue(result is None)
@@ -123,6 +123,6 @@ class TestJournalRender(unittest.TestCase):
         self.assertTrue(re.search('<table', html))
 
     def test_render_links(self):
-        html = journal.render_links({'132333b32eab', '6e3ac126f337'})
+        html = journal_html.render_links({'132333b32eab', '6e3ac126f337'})
         self.assertTrue(re.search('132333b32eab', html))
         self.assertTrue(re.search('6e3ac126f337', html))
