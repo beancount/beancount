@@ -102,6 +102,9 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Journal rendering: add terminal colors (easy).
+
+
   - In misc_utils.get_screen_width(), find a way to get the screen width
     without resetting the terminal with initscr(). There's a way that does not
     make the tests flicker.

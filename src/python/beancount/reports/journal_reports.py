@@ -57,7 +57,7 @@ class JournalReport(report.HTMLReport,
 
         return realization.get_postings(real_account)
 
-    def render_real_text(self, real_root, options_map, file):
+    def _render_text_formats(self, real_root, options_map, file, output_format):
         width = self.args.width or misc_utils.get_screen_width()
         postings = self.get_postings(real_root)
         try:
@@ -65,9 +65,16 @@ class JournalReport(report.HTMLReport,
                                        self.args.at_cost,
                                        self.args.render_balance,
                                        self.args.precision,
-                                       self.args.verbosity)
+                                       self.args.verbosity,
+                                       output_format)
         except ValueError as exc:
             raise report.ReportError(exc)
+
+    def render_real_text(self, real_root, options_map, file):
+        self._render_text_formats(real_root, options_map, file, journal.FORMAT_TEXT)
+
+    def render_real_csv(self, real_root, options_map, file):
+        self._render_text_formats(real_root, options_map, file, journal.FORMAT_CSV)
 
     def render_real_htmldiv(self, real_root, options_map, file):
         postings = self.get_postings(real_root)

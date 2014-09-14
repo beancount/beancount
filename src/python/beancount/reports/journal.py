@@ -1,6 +1,7 @@
 """HTML rendering routines for serving a lists of postings/entries.
 """
 import collections
+import csv
 import datetime
 import itertools
 import math
@@ -392,9 +393,13 @@ class AmountColumnSizer:
 # Verbosity levels.
 COMPACT, NORMAL, VERBOSE = 1, 2, 3
 
+# Output formats.
+FORMAT_TEXT, FORMAT_CSV = object(), object()
+
 
 def text_entries_table(oss, postings,
-                       width, at_cost, render_balance, precision, verbosity):
+                       width, at_cost, render_balance, precision, verbosity,
+                       output_format):
     """Render a table of postings or directives with an accumulated balance.
 
     This function has three verbosity modes for rendering:
@@ -412,9 +417,15 @@ def text_entries_table(oss, postings,
       render_balance: A boolean, if true, renders a running balance column.
       precision: An integer, the number of digits to render after the period.
       verbosity: An integer, the verbosity level. See COMPACT, NORMAL, VERBOSE, etc.
+      output_format: A string, either 'text' or 'csv' for the chosen output format.
+        This routine's inner loop calculations are complex enough it gets reused by both
+        formats.
     Raises:
       ValueError: If the width is insufficient to render the description.
     """
+    assert output_format in (FORMAT_TEXT, FORMAT_CSV)
+    if output_format is FORMAT_CSV:
+        csv_writer = csv.writer(oss)
 
     # Render the changes and balances to lists of amounts and precompute sizes.
     entry_data, change_sizer, balance_sizer = size_and_render_amounts(postings,
@@ -483,11 +494,29 @@ def text_entries_table(oss, postings,
             if not description and verbosity >= VERBOSE and leg_postings:
                 description = '..'
 
-            oss.write(FORMAT.format(date=date,
-                                    dirtype=dirtype,
-                                    description=description,
-                                    change=change,
-                                    balance=balance))
+            if output_format is FORMAT_TEXT:
+                oss.write(FORMAT.format(date=date,
+                                        dirtype=dirtype,
+                                        description=description,
+                                        change=change,
+                                        balance=balance))
+            else:
+                change_number, change_currency = '', ''
+                if change:
+                    change_number, change_currency = change.split()
+
+                if render_balance:
+                    balance_number, balance_currency = '', ''
+                    if balance:
+                        balance_number, balance_currency = balance.split()
+
+                    row = (date, dirtype, description,
+                           change_number, change_currency,
+                           balance_number, balance_currency)
+                else:
+                    row = (date, dirtype, description,
+                           change_number, change_currency)
+                csv_writer.writerow(row)
 
             # Reset the date, directive type and description. Only the first
             # line renders these; the other lines render only the amounts.
@@ -499,11 +528,16 @@ def text_entries_table(oss, postings,
                 posting_str = render_posting(posting, change_format)
                 if len(posting_str) > description_width:
                     posting_str = posting_str[:description_width-3] + '...'
-                oss.write(FORMAT.format(date='',
-                                        dirtype='',
-                                        description=posting_str,
-                                        change='',
-                                        balance=''))
+
+                if output_format is FORMAT_TEXT:
+                    oss.write(FORMAT.format(date='',
+                                            dirtype='',
+                                            description=posting_str,
+                                            change='',
+                                            balance=''))
+                else:
+                    row = ('', '', posting_str)
+                    csv_writer.writerow(row)
 
         if verbosity >= NORMAL:
             oss.write('\n')
@@ -527,12 +561,13 @@ def render_posting(posting, number_format):
 
     if position.lot.cost:
         cost = position.get_cost()
-        strings.append('{{{}}}'.format(number_format.format(cost.number, cost.currency)))
+        strings.append('{{{}}}'.format(number_format.format(cost.number,
+                                                            cost.currency).strip()))
 
     price = posting.price
     if price:
         strings.append('@ {}'.format(number_format.format(price.number,
-                                                            price.currency)))
+                                                          price.currency).strip()))
 
     return ' '.join(strings)
 
@@ -614,12 +649,3 @@ def get_entry_text_description(entry):
     else:
         description = '-'
     return description
-
-
-
-# FIXME: Add terminal colors (optional)
-
-# FIXME: Render an arbitrary expression of accounts, not just one. Keep in
-# mind that filtering will be supported eventually.
-
-# FIXME: Support CSV mode
