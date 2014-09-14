@@ -26,7 +26,7 @@ from beancount.parser import options
 from beancount.parser import printer
 from beancount import loader
 from beancount.web import views
-from beancount.reports import journal
+from beancount.reports import journal_html
 from beancount.reports import html_formatter
 from beancount.reports import balance_reports
 from beancount.reports import journal_reports
@@ -319,7 +319,7 @@ def link(link=None):
 
     oss = io.StringIO()
     formatter = HTMLFormatter(request.app.get_url, False)
-    journal.html_entries_table_with_balance(oss, linked_entries, formatter)
+    journal_html.html_entries_table_with_balance(oss, linked_entries, formatter)
     return render_global(
         pagetitle="Link: {}".format(link),
         contents=oss.getvalue())

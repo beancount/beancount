@@ -1,7 +1,8 @@
 """Report classes for all reports that display ending journals of accounts.
 """
 from beancount.reports import report
-from beancount.reports import journal
+from beancount.reports import journal_html
+from beancount.reports import journal_text
 from beancount.core import data
 from beancount.core import realization
 from beancount.utils import misc_utils
@@ -33,10 +34,10 @@ class JournalReport(report.HTMLReport,
                             help="If true, render values at cost")
 
         parser.add_argument('-x', '--compact', dest='verbosity', action='store_const',
-                            const=journal.COMPACT, default=journal.NORMAL,
+                            const=journal_text.COMPACT, default=journal_text.NORMAL,
                             help="Rendering compactly")
         parser.add_argument('-X', '--verbose', dest='verbosity', action='store_const',
-                            const=journal.VERBOSE,
+                            const=journal_text.VERBOSE,
                             help="Rendering verbosely")
 
     def get_postings(self, real_root):
@@ -61,24 +62,24 @@ class JournalReport(report.HTMLReport,
         width = self.args.width or misc_utils.get_screen_width()
         postings = self.get_postings(real_root)
         try:
-            journal.text_entries_table(file, postings, width,
-                                       self.args.at_cost,
-                                       self.args.render_balance,
-                                       self.args.precision,
-                                       self.args.verbosity,
-                                       output_format)
+            journal_text.text_entries_table(file, postings, width,
+                                            self.args.at_cost,
+                                            self.args.render_balance,
+                                            self.args.precision,
+                                            self.args.verbosity,
+                                            output_format)
         except ValueError as exc:
             raise report.ReportError(exc)
 
     def render_real_text(self, real_root, options_map, file):
-        self._render_text_formats(real_root, options_map, file, journal.FORMAT_TEXT)
+        self._render_text_formats(real_root, options_map, file, journal_text.FORMAT_TEXT)
 
     def render_real_csv(self, real_root, options_map, file):
-        self._render_text_formats(real_root, options_map, file, journal.FORMAT_CSV)
+        self._render_text_formats(real_root, options_map, file, journal_text.FORMAT_CSV)
 
     def render_real_htmldiv(self, real_root, options_map, file):
         postings = self.get_postings(real_root)
-        journal.html_entries_table_with_balance(file, postings, self.formatter)
+        journal_html.html_entries_table_with_balance(file, postings, self.formatter)
 
 
 class ConversionsReport(report.HTMLReport):
@@ -92,7 +93,7 @@ class ConversionsReport(report.HTMLReport):
                               for entry in misc_utils.filter_type(entries, data.Transaction)
                               if data.transaction_has_conversion(entry)]
 
-        journal.html_entries_table(file, conversion_entries, self.formatter,
+        journal_html.html_entries_table(file, conversion_entries, self.formatter,
                               render_postings=True)
 
         # Note: Can we somehow add a balance at the bottom? Do we really need one?
@@ -107,7 +108,7 @@ class DocumentsReport(report.HTMLReport):
     def render_htmldiv(self, entries, errors, options_map, file):
         document_entries = list(misc_utils.filter_type(entries, data.Document))
         if document_entries:
-            journal.html_entries_table(file, document_entries, self.formatter)
+            journal_html.html_entries_table(file, document_entries, self.formatter)
         else:
             file.write("<p>(No documents.)</p>")
 
