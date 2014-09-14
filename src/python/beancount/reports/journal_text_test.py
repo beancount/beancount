@@ -1,12 +1,8 @@
-import re
 import io
 import unittest
 
 from beancount import loader
 from beancount.core import realization
-from beancount.core import inventory
-from beancount.core import data
-from beancount.reports import html_formatter
 from beancount.reports import journal_text
 
 

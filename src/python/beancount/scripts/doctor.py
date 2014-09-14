@@ -141,8 +141,10 @@ def do_checkdeps(*unused_args):
     """
     print("Dependencies:")
     for package, version, sufficient in checkdeps.check_dependencies():
-        print("  {:16}: {} {}".format(package, version or 'NOT INSTALLED',
-                                      "(INSUFFICIENT)" if version and not sufficient else ""))
+        print("  {:16}: {} {}".format(
+            package,
+            version or 'NOT INSTALLED',
+            "(INSUFFICIENT)" if version and not sufficient else ""))
 
 
 def main():

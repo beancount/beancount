@@ -105,8 +105,9 @@ class TestJournalRender(unittest.TestCase):
     def test_html_entries_table_with_balance(self):
         oss = io.StringIO()
         formatter = html_formatter.HTMLFormatter()
-        result = journal_html.html_entries_table_with_balance(oss, self.real_account.postings,
-                                                    formatter, True)
+        result = journal_html.html_entries_table_with_balance(oss,
+                                                              self.real_account.postings,
+                                                              formatter, True)
         html = oss.getvalue()
         self.assertTrue(result is None)
         self.assertTrue(isinstance(html, str))
@@ -115,8 +116,9 @@ class TestJournalRender(unittest.TestCase):
     def test_html_entries_table(self):
         oss = io.StringIO()
         formatter = html_formatter.HTMLFormatter()
-        result = journal_html.html_entries_table_with_balance(oss, self.real_account.postings,
-                                                    formatter, True)
+        result = journal_html.html_entries_table_with_balance(oss,
+                                                              self.real_account.postings,
+                                                              formatter, True)
         html = oss.getvalue()
         self.assertTrue(result is None)
         self.assertTrue(isinstance(html, str))

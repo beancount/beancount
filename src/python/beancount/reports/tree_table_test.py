@@ -51,11 +51,11 @@ class TestTables(unittest.TestCase):
 
     def test_tree_table(self):
         oss = io.StringIO()
-        for real_node, cells, classes in tree_table.tree_table(oss,
-                                                               self.real_root,
-                                                               None,
-                                                               header=['Account', 'Balance'],
-                                                               classes=['5cdc3b134179']):
+        for real_node, cells, classes in tree_table.tree_table(
+                oss, self.real_root, None,
+                header=['Account', 'Balance'],
+                classes=['5cdc3b134179']):
+
             if real_node is tree_table.TOTALS_LINE:
                 cells.append('THE_TOTAL')
                 continue

@@ -1,19 +1,13 @@
 """Text rendering routines for serving a lists of postings/entries.
 """
-import collections
 import csv
-import datetime
 import itertools
 import math
 import textwrap
-from os import path
 
 from beancount.core.amount import ZERO
 from beancount.core import data
-from beancount.core import complete
 from beancount.core import realization
-from beancount.core import flags
-from beancount.parser import printer
 
 
 # Name mappings for text rendering, no more than 5 characters to save space.
@@ -141,20 +135,22 @@ def text_entries_table(oss, postings,
         change_sizer.get_generic_format(precision))
     if render_balance:
         empty_format += '  {}'.format(balance_sizer.get_generic_format(precision))
-    empty_line = empty_format.format(date='', dirtype='', description='', change='', balance='')
+    empty_line = empty_format.format(date='', dirtype='', description='',
+                                     change='', balance='')
     description_width = width - len(empty_line)
     if description_width <= 0:
-        raise ValueError("Width not sufficient to render text report ({} chars)".format(width))
+        raise ValueError(
+            "Width not sufficient to render text report ({} chars)".format(width))
 
     # Establish a format string for the final format of all lines.
-    FORMAT = '{{date:10}} {{dirtype:5}} {{description:{:d}.{:d}}}  {}'.format(
+    line_format = '{{date:10}} {{dirtype:5}} {{description:{:d}.{:d}}}  {}'.format(
         description_width, description_width,
         change_sizer.get_generic_format(precision))
     change_format = change_sizer.get_format(precision)
     if render_balance:
-        FORMAT += '  {}'.format(balance_sizer.get_generic_format(precision))
+        line_format += '  {}'.format(balance_sizer.get_generic_format(precision))
         balance_format = balance_sizer.get_format(precision)
-    FORMAT += '\n'
+    line_format += '\n'
 
     # Iterate over all the pre-computed data.
     for (entry, leg_postings, change_amounts, balance_amounts) in entry_data:
@@ -198,11 +194,11 @@ def text_entries_table(oss, postings,
                 description = '..'
 
             if output_format is FORMAT_TEXT:
-                oss.write(FORMAT.format(date=date,
-                                        dirtype=dirtype,
-                                        description=description,
-                                        change=change,
-                                        balance=balance))
+                oss.write(line_format.format(date=date,
+                                             dirtype=dirtype,
+                                             description=description,
+                                             change=change,
+                                             balance=balance))
             else:
                 change_number, change_currency = '', ''
                 if change:
@@ -233,11 +229,11 @@ def text_entries_table(oss, postings,
                     posting_str = posting_str[:description_width-3] + '...'
 
                 if output_format is FORMAT_TEXT:
-                    oss.write(FORMAT.format(date='',
-                                            dirtype='',
-                                            description=posting_str,
-                                            change='',
-                                            balance=''))
+                    oss.write(line_format.format(date='',
+                                                 dirtype='',
+                                                 description=posting_str,
+                                                 change='',
+                                                 balance=''))
                 else:
                     row = ('', '', posting_str)
                     csv_writer.writerow(row)

@@ -76,6 +76,14 @@ class ListReportsAction(argparse.Action):
 class ListFormatsAction(argparse.Action):
     """An argparse action that prints all supported formats (for each report)."""
 
+    # Ordering of formats rendering.
+    format_order = {'text': 1,
+                    'html': 2,
+                    'htmldiv': 3,
+                    'csv': 4,
+                    'beancount': 99}
+    format_order_last = 100
+
     def __call__(self, parser, namespace, values, option_string=None):
         # Get all the report types and formats.
         matrix = []
@@ -84,15 +92,11 @@ class ListFormatsAction(argparse.Action):
             matrix.append((report_class.names[0], formats))
 
         # Compute a list of unique output formats.
-        FORMAT_ORDER = {'text': 1,
-                        'html': 2,
-                        'htmldiv': 3,
-                        'csv': 4,
-                        'beancount': 99}
         all_formats = sorted({format_
                               for name, formats in matrix
                               for format_ in formats},
-                             key=lambda fmt: FORMAT_ORDER.get(fmt, 100))
+                             key=lambda fmt: self.format_order.get(fmt,
+                                                                   self.format_order_last))
 
         # Bulid a list of rows.
         rows = []
