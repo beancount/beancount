@@ -56,8 +56,8 @@ class JournalReport(report.HTMLReport,
         postings = self.get_postings(real_root)
         try:
             journal.text_entries_table(file, postings, width,
-                                       self.args.render_balance,
                                        self.args.at_cost,
+                                       self.args.render_balance,
                                        self.args.precision)
         except ValueError as exc:
             raise report.ReportError(exc)

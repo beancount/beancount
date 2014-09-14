@@ -4,6 +4,7 @@ import collections
 import datetime
 import itertools
 import math
+import textwrap
 from os import path
 
 from beancount.core.amount import ZERO
@@ -347,6 +348,16 @@ class AmountColumnSizer:
         if currency_width > self.max_currency_width:
             self.max_currency_width = currency_width
 
+    def get_number_width(self):
+        """Return the width of the integer part of the max number.
+
+        Returns:
+          An integer, the number of digits required to render the integral part.
+        """
+        return ((math.floor(math.log10(self.max_number)) + 1)
+                if self.max_number > 0
+                else 1)
+
     def get_generic_format(self, precision):
         """Return a generic format string for rendering as wide as required.
         This can be used to render an empty string in-lieu of a number.
@@ -357,10 +368,9 @@ class AmountColumnSizer:
           A new-style Python format string, with PREFIX_number and PREFIX_currency named
           fields.
         """
-        int_number_width = math.floor(math.log10(self.max_number)) + 1
         return '{{{prefix}:<{width}}}'.format(
             prefix=self.prefix,
-            width=1 + int_number_width + 1 + precision + 1 + self.max_currency_width)
+            width=1 + self.get_number_width() + 1 + precision + 1 + self.max_currency_width)
 
     def get_format(self, precision):
         """Return a format string for the column of numbers.
@@ -371,15 +381,14 @@ class AmountColumnSizer:
           A new-style Python format string, with PREFIX_number and PREFIX_currency named
           fields.
         """
-        int_number_width = math.floor(math.log10(self.max_number)) + 1
         return ('{{0:>{width:d}.{precision:d}f}} {{1:<{currency_width}}}').format(
                     prefix=self.prefix,
-                    width=1 + int_number_width + 1 + precision,
+                    width=1 + self.get_number_width() + 1 + precision,
                     precision=precision,
                     currency_width=self.max_currency_width)
 
 
-def text_entries_table(oss, postings, width, render_balance, at_cost, precision):
+def text_entries_table(oss, postings, width, at_cost, render_balance, precision):
     """Render a table of postings or directives with an accumulated balance.
 
     The output is written to the 'oss' file object.
@@ -388,11 +397,97 @@ def text_entries_table(oss, postings, width, render_balance, at_cost, precision)
       oss: A file object to write the output to.
       postings: A list of Posting or directive instances.
       width: An integer, the width to render the table to.
-      render_balance: A boolean, if true, renders a running balance column.
       at_cost: A boolean, if true, render the cost value, not the actual.
+      render_balance: A boolean, if true, renders a running balance column.
       precision: An integer, the number of digits to render after the period.
     Raises:
       ValueError: If the width is insufficient to render the description.
+    """
+    # Render the changes and balances to lists of amounts and precompute sizes.
+    entry_data, change_sizer, balance_sizer = size_and_render_amounts(postings,
+                                                                      at_cost,
+                                                                      render_balance)
+
+    # Render an empty line and compute the width the description should be (the
+    # description is the only elastic field).
+    empty_format = '{{date:10}} {{dirtype:5}} {{description}}  {}'.format(
+        change_sizer.get_generic_format(precision))
+    if render_balance:
+        empty_format += '  {}'.format(balance_sizer.get_generic_format(precision))
+    empty_line = empty_format.format(date='', dirtype='', description='', change='', balance='')
+    description_width = width - len(empty_line)
+    if description_width <= 0:
+        raise ValueError("Width not sufficient to render text report ({} chars)".format(width))
+
+    # Establish a format string for the final format of all lines.
+    FORMAT = '{{date:10}} {{dirtype:5}} {{description:{:d}.{:d}}}  {}'.format(
+        description_width, description_width,
+        change_sizer.get_generic_format(precision))
+    change_format = change_sizer.get_format(precision)
+    if render_balance:
+        FORMAT += '  {}'.format(balance_sizer.get_generic_format(precision))
+        balance_format = balance_sizer.get_format(precision)
+    FORMAT += '\n'
+
+    # Iterate over all the pre-computed data.
+    for (entry, leg_postings, change_amounts, balance_amounts) in entry_data:
+
+        # Render the date.
+        date = entry.date.isoformat()
+
+        # Get the directive type name.
+        dirtype = TEXT_SHORT_NAME[type(entry)]
+        if isinstance(entry, data.Transaction) and entry.flag:
+            dirtype = entry.flag
+
+        # Get the description string and split the description line in multiple
+        # lines.
+        description = get_entry_text_description(entry)
+        description_lines = textwrap.wrap(description, width=description_width)
+
+        # Ensure at least one line is rendered (for zip_longuest).
+        if not description_lines:
+            description_lines.append('')
+
+        # Render all the amounts in the line.
+        for (description,
+             change_amount,
+             balance_amount) in itertools.zip_longest(description_lines,
+                                                      change_amounts,
+                                                      balance_amounts,
+                                                      fillvalue=''):
+
+            change = (change_format.format(change_amount.number,
+                                           change_amount.currency)
+                      if change_amount
+                      else '')
+
+            balance = (balance_format.format(balance_amount.number,
+                                             balance_amount.currency)
+                       if balance_amount
+                       else '')
+
+            oss.write(FORMAT.format(date=date,
+                                    dirtype=dirtype,
+                                    description=description,
+                                    change=change,
+                                    balance=balance))
+
+            # Reset the date, directive type and description. Only the first
+            # line renders these; the other lines render only the amounts.
+            if date:
+                date = dirtype = ''
+
+        oss.write('\n')
+
+
+def size_and_render_amounts(postings, at_cost, render_balance):
+    """Iterate through postings and compute sizers and render amounts.
+
+    Args:
+      postings: A list of Posting or directive instances.
+      at_cost: A boolean, if true, render the cost value, not the actual.
+      render_balance: A boolean, if true, renders a running balance column.
     """
 
     # Compute the maximum width required to render the change and balance
@@ -430,105 +525,56 @@ def text_entries_table(oss, postings, width, render_balance, at_cost, precision)
 
         entry_data.append((entry, leg_postings, change_amounts, balance_amounts))
 
-    # Render an empty line and compute the width the description should be (the
-    # description is the only elastic field).
-    empty_format = '{{date:10}} {{dirtype:5}} {{description}}  {}'.format(
-        change_sizer.get_generic_format(precision))
-    if render_balance:
-        empty_format += '  {}'.format(balance_sizer.get_generic_format(precision))
-    empty_line = empty_format.format(date='', dirtype='', description='', change='', balance='')
-    description_width = width - len(empty_line)
-    if description_width <= 0:
-        raise ValueError("Width not sufficient to render text report ({} chars)".format(width))
+    return (entry_data, change_sizer, balance_sizer)
 
-    # Establish a format string for the final format of all lines.
-    FORMAT = '{{date:10}} {{dirtype:5}} {{description:{:d}.{:d}}}  {}'.format(
-        description_width, description_width,
-        change_sizer.get_generic_format(precision))
-    change_format = change_sizer.get_format(precision)
-    if render_balance:
-        FORMAT += '  {}'.format(balance_sizer.get_generic_format(precision))
-        balance_format = balance_sizer.get_format(precision)
-    FORMAT += '\n'
 
-    # Iterate over all the pre-computed data.
-    for (entry, leg_postings, change_amounts, balance_amounts) in entry_data:
+def get_entry_text_description(entry):
+    """Return the text of a description.
 
-        # Render the date and directive type.
-        date = entry.date.isoformat()
-        dirtype = TEXT_SHORT_NAME[type(entry)]
-
-        # Get the description string.
-        if isinstance(entry, data.Transaction):
-            dirtype = '  {:1}  '.format(entry.flag) if entry.flag else dirtype[type(entry)]
-            description = ' | '.join([field
-                                      for field in [entry.payee, entry.narration]
-                                      if field is not None])
-        elif isinstance(entry, data.Balance):
-            if entry.diff_amount is None:
-                description = 'Balance PASS in {}'.format(entry.account)
-            else:
-                description = ('Balance FAIL in {}: '
-                               'expected = {}, balance = {}, difference = {}').format(
-                                   entry.account,
-                                   entry.amount,
-                                   entry_balance.get_amount(entry.amount.currency),
-                                   entry.diff_amount)
-        elif isinstance(entry, (data.Open, data.Close)):
-            description = entry.account
-        elif isinstance(entry, data.Note):
-            description = entry.comment
-        elif isinstance(entry, data.Document):
-            description = entry.filename
+    Args:
+      entry: A directive, of any type.
+    Returns:
+      A string to use for the filling the description field in text reports.
+    """
+    if isinstance(entry, data.Transaction):
+        description = ' | '.join([field
+                                  for field in [entry.payee, entry.narration]
+                                  if field is not None])
+    elif isinstance(entry, data.Balance):
+        if entry.diff_amount is None:
+            description = 'Balance - PASS - In {}'.format(entry.account)
         else:
-            description = '-'
-
-        # Ensure at least one line is rendered.
-        if not change_amounts and not balance_amounts:
-            change_amounts.append(None)
-
-        # Render all the amounts in the line.
-        for (change_amount, balance_amount) in itertools.zip_longest(change_amounts,
-                                                                     balance_amounts):
-
-            change = (change_format.format(change_amount.number,
-                                           change_amount.currency)
-                      if change_amount is not None
-                      else '')
-
-            balance = (balance_format.format(balance_amount.number,
-                                             balance_amount.currency)
-                       if balance_amount is not None
-                       else '')
-
-            oss.write(FORMAT.format(date=date,
-                                    dirtype=dirtype,
-                                    description=description,
-                                    change=change,
-                                    balance=balance))
-
-            # Reset the date, directive type and description. Only the first
-            # line renders these; the other lines render only the amounts.
-            if date:
-                date = dirtype = description = ''
-
-        oss.write('\n')
+            description = ('Balance - FAIL - In {}; '
+                           'expected = {}, difference = {}').format(
+                               entry.account,
+                               entry.amount,
+                               entry.diff_amount)
+    elif isinstance(entry, (data.Open, data.Close)):
+        description = entry.account
+    elif isinstance(entry, data.Note):
+        description = entry.comment
+    elif isinstance(entry, data.Document):
+        description = entry.filename
+    else:
+        description = '-'
+    return description
 
 
-    # FIXME: make rendering the balance optional.
-    # FIXME: make rendering the lots, including full detail, possible. (maybe... for debugging?)
 
-    ## FIXME(blais): implement this.
-    # This function has three modes for rendering:
-    # 1. compact: no separating line, no postings detail
-    # 2. normal: a separating line, no postings detail
-    # 3. verbose: renders all the postings in addition to normal.
+# FIXME: make rendering the lots, including full detail, possible. (maybe...
+# for debugging?)
 
-    # FIXME: Add terminal colors (optional)
+## FIXME(blais): implement this.
+# This function has three modes for rendering:
+# 1. compact: no separating line, no postings detail
+# 2. normal: a separating line, no postings detail
+# 3. verbose: renders all the postings in addition to normal.
+# 4. debug: renders the full entry itself, the lots before and after of all
+#    the affected accounts.
 
-    # FIXME: Render an arbitrary expression of accounts, not just one. Keep in
-    # mind that filtering will be supported eventually.
+# FIXME: Add terminal colors (optional)
 
-    # FIXME: Support CSV mode
+# FIXME: Render an arbitrary expression of accounts, not just one. Keep in
+# mind that filtering will be supported eventually.
 
-    # FIXME: Render description line on multiple lines
+# FIXME: Support CSV mode
