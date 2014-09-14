@@ -32,10 +32,10 @@ class JournalReport(report.HTMLReport,
         parser.add_argument('-c', '--at-cost', '--cost', action='store_true',
                             help="If true, render values at cost")
 
-        parser.add_argument('--compact', dest='verbosity', action='store_const',
+        parser.add_argument('-x', '--compact', dest='verbosity', action='store_const',
                             const=journal.COMPACT, default=journal.NORMAL,
                             help="Rendering compactly")
-        parser.add_argument('--verbose', dest='verbosity', action='store_const',
+        parser.add_argument('-X', '--verbose', dest='verbosity', action='store_const',
                             const=journal.VERBOSE,
                             help="Rendering verbosely")
 

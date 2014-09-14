@@ -480,6 +480,9 @@ def text_entries_table(oss, postings,
                        if balance_amount
                        else '')
 
+            if not description and verbosity >= VERBOSE and leg_postings:
+                description = '..'
+
             oss.write(FORMAT.format(date=date,
                                     dirtype=dirtype,
                                     description=description,
@@ -493,7 +496,9 @@ def text_entries_table(oss, postings,
 
         if verbosity >= VERBOSE:
             for posting in leg_postings:
-                posting_str = printer.format_entry(posting).rstrip()
+                posting_str = render_posting(posting, change_format)
+                if len(posting_str) > description_width:
+                    posting_str = posting_str[:description_width-3] + '...'
                 oss.write(FORMAT.format(date='',
                                         dirtype='',
                                         description=posting_str,
@@ -502,6 +507,34 @@ def text_entries_table(oss, postings,
 
         if verbosity >= NORMAL:
             oss.write('\n')
+
+
+def render_posting(posting, number_format):
+    """Render a posting compactly, for text report rendering.
+
+    Args:
+      posting: An instance of Posting.
+    Returns:
+      A string, the rendered posting.
+    """
+    position = posting.position
+    amount = position.get_amount()
+    strings = [
+        posting.flag if posting.flag else ' ',
+        '{:32}'.format(posting.account),
+        number_format.format(amount.number, amount.currency)
+        ]
+
+    if position.lot.cost:
+        cost = position.get_cost()
+        strings.append('{{{}}}'.format(number_format.format(cost.number, cost.currency)))
+
+    price = posting.price
+    if price:
+        strings.append('@ {}'.format(number_format.format(price.number,
+                                                            price.currency)))
+
+    return ' '.join(strings)
 
 
 def size_and_render_amounts(postings, at_cost, render_balance):
@@ -565,9 +598,9 @@ def get_entry_text_description(entry):
                                   if field is not None])
     elif isinstance(entry, data.Balance):
         if entry.diff_amount is None:
-            description = 'Balance - PASS - In {}'.format(entry.account)
+            description = 'PASS - In {}'.format(entry.account)
         else:
-            description = ('Balance - FAIL - In {}; '
+            description = ('FAIL - In {}; '
                            'expected = {}, difference = {}').format(
                                entry.account,
                                entry.amount,
