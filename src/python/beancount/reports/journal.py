@@ -12,6 +12,7 @@ from beancount.core import data
 from beancount.core import complete
 from beancount.core import realization
 from beancount.core import flags
+from beancount.parser import printer
 
 
 def balance_html(balance_inventory):
@@ -388,10 +389,20 @@ class AmountColumnSizer:
                     currency_width=self.max_currency_width)
 
 
-def text_entries_table(oss, postings, width, at_cost, render_balance, precision):
+# Verbosity levels.
+COMPACT, NORMAL, VERBOSE = 1, 2, 3
+
+
+def text_entries_table(oss, postings,
+                       width, at_cost, render_balance, precision, verbosity):
     """Render a table of postings or directives with an accumulated balance.
 
-    The output is written to the 'oss' file object.
+    This function has three verbosity modes for rendering:
+    1. COMPACT: no separating line, no postings
+    2. NORMAL: a separating line between entries, no postings
+    3. VERBOSE: renders all the postings in addition to normal.
+
+    The output is written to the 'oss' file object. Nothing is returned.
 
     Args:
       oss: A file object to write the output to.
@@ -400,9 +411,11 @@ def text_entries_table(oss, postings, width, at_cost, render_balance, precision)
       at_cost: A boolean, if true, render the cost value, not the actual.
       render_balance: A boolean, if true, renders a running balance column.
       precision: An integer, the number of digits to render after the period.
+      verbosity: An integer, the verbosity level. See COMPACT, NORMAL, VERBOSE, etc.
     Raises:
       ValueError: If the width is insufficient to render the description.
     """
+
     # Render the changes and balances to lists of amounts and precompute sizes.
     entry_data, change_sizer, balance_sizer = size_and_render_amounts(postings,
                                                                       at_cost,
@@ -478,7 +491,17 @@ def text_entries_table(oss, postings, width, at_cost, render_balance, precision)
             if date:
                 date = dirtype = ''
 
-        oss.write('\n')
+        if verbosity >= VERBOSE:
+            for posting in leg_postings:
+                posting_str = printer.format_entry(posting).rstrip()
+                oss.write(FORMAT.format(date='',
+                                        dirtype='',
+                                        description=posting_str,
+                                        change='',
+                                        balance=''))
+
+        if verbosity >= NORMAL:
+            oss.write('\n')
 
 
 def size_and_render_amounts(postings, at_cost, render_balance):
@@ -560,17 +583,6 @@ def get_entry_text_description(entry):
     return description
 
 
-
-# FIXME: make rendering the lots, including full detail, possible. (maybe...
-# for debugging?)
-
-## FIXME(blais): implement this.
-# This function has three modes for rendering:
-# 1. compact: no separating line, no postings detail
-# 2. normal: a separating line, no postings detail
-# 3. verbose: renders all the postings in addition to normal.
-# 4. debug: renders the full entry itself, the lots before and after of all
-#    the affected accounts.
 
 # FIXME: Add terminal colors (optional)
 

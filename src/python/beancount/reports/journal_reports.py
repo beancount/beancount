@@ -18,7 +18,7 @@ class JournalReport(report.HTMLReport,
     def add_args(cls, parser):
         parser.add_argument('-a', '--account',
                             action='store', default=None,
-                            help="Account to render.")
+                            help="Account to render")
 
         parser.add_argument('-w', '--width', action='store', type=int, default=0,
                             help="The number of characters wide to render the report to")
@@ -31,6 +31,13 @@ class JournalReport(report.HTMLReport,
 
         parser.add_argument('-c', '--at-cost', '--cost', action='store_true',
                             help="If true, render values at cost")
+
+        parser.add_argument('--compact', dest='verbosity', action='store_const',
+                            const=journal.COMPACT, default=journal.NORMAL,
+                            help="Rendering compactly")
+        parser.add_argument('--verbose', dest='verbosity', action='store_const',
+                            const=journal.VERBOSE,
+                            help="Rendering verbosely")
 
     def get_postings(self, real_root):
         """Return the postings corresponding to the account filter option.
@@ -48,7 +55,6 @@ class JournalReport(report.HTMLReport,
         else:
             real_account = real_root
 
-        # Get the postings for the account.
         return realization.get_postings(real_account)
 
     def render_real_text(self, real_root, options_map, file):
@@ -58,7 +64,8 @@ class JournalReport(report.HTMLReport,
             journal.text_entries_table(file, postings, width,
                                        self.args.at_cost,
                                        self.args.render_balance,
-                                       self.args.precision)
+                                       self.args.precision,
+                                       self.args.verbosity)
         except ValueError as exc:
             raise report.ReportError(exc)
 
