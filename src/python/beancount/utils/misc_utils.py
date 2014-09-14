@@ -261,6 +261,5 @@ def get_screen_width():
       An integer, the number of characters the screen is wide.
     """
     import curses
-    def get_width(win):
-        return win.getmaxyx()[1]
-    return curses.wrapper(get_width)
+    curses.setupterm()
+    return curses.tigetnum('cols')
