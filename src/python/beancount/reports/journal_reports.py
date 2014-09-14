@@ -23,6 +23,15 @@ class JournalReport(report.HTMLReport,
         parser.add_argument('-w', '--width', action='store', type=int, default=0,
                             help="The number of characters wide to render the report to")
 
+        parser.add_argument('-k', '--precision', action='store', type=int, default=2,
+                            help="The number of digits to render after the period")
+
+        parser.add_argument('-b', '--render-balance', '--balance', action='store_true',
+                            help="If true, render a running balance")
+
+        parser.add_argument('-c', '--at-cost', '--cost', action='store_true',
+                            help="If true, render values at cost")
+
     def get_postings(self, real_root):
         """Return the postings corresponding to the account filter option.
 
@@ -45,7 +54,13 @@ class JournalReport(report.HTMLReport,
     def render_real_text(self, real_root, options_map, file):
         width = self.args.width or misc_utils.get_screen_width()
         postings = self.get_postings(real_root)
-        journal.text_entries_table(file, postings, width, True)
+        try:
+            journal.text_entries_table(file, postings, width,
+                                       self.args.render_balance,
+                                       self.args.at_cost,
+                                       self.args.precision)
+        except ValueError as exc:
+            raise report.ReportError(exc)
 
     def render_real_htmldiv(self, real_root, options_map, file):
         postings = self.get_postings(real_root)
