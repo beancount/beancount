@@ -55,7 +55,10 @@ def join(holdings_list, features_map, keyfun):
             logging.debug("Key not found: %s, %s, %s",
                           holding.account, holding.currency, holding.cost_currency)
 
-        features = norm_features_map[key]
+        try:
+            features = norm_features_map[key]
+        except KeyError as exc:
+            raise KeyError("Key '{}' not found in map {}".format(key, norm_features_map))
         for label, fraction in features.items():
             if not holding.market_value:
                 continue
