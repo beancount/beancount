@@ -188,3 +188,40 @@ class TestData(unittest.TestCase):
         self.assertTrue(has_component(entry, 'Food'))
         self.assertTrue(has_component(entry, 'Expenses'))
         self.assertFalse(has_component(entry, 'Equity'))
+
+    def test_find_closest(self):
+        entry1 = data.Transaction(data.Source("/tmp/apples.beancount", 200),
+                                  datetime.date(2014, 9, 14), '*', None, "", None, None, [])
+
+        # Insert a decoy from another file (should fail).
+        entry2 = data.Transaction(data.Source("/tmp/bananas.beancount", 100),
+                                  datetime.date(2014, 9, 20), '*', None, "", None, None, [])
+
+        entry3 = data.Transaction(data.Source("/tmp/apples.beancount", 105),
+                                  datetime.date(2014, 10, 1), '*', None, "", None, None, [])
+
+        entries = [entry1, entry2, entry3]
+
+        # Try an exact match.
+        self.assertTrue(
+            data.find_closest(entries, "/tmp/apples.beancount", 105) is entry3)
+
+        # Try a bit after.
+        self.assertTrue(
+            data.find_closest(entries, "/tmp/apples.beancount", 107) is entry3)
+
+        # Try way closer to the next one.
+        self.assertTrue(
+            data.find_closest(entries, "/tmp/apples.beancount", 199) is entry3)
+
+        # Get the next one.
+        self.assertTrue(
+            data.find_closest(entries, "/tmp/apples.beancount", 201) is entry1)
+
+        # Get from the other file.
+        self.assertTrue(
+            data.find_closest(entries, "/tmp/bananas.beancount", 300) is entry2)
+
+        # Get none.
+        self.assertTrue(
+            data.find_closest(entries, "/tmp/apples.beancount", 99) is None)

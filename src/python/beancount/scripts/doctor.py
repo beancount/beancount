@@ -14,6 +14,9 @@ from beancount.parser import lexer
 from beancount.parser import options
 from beancount.parser import printer
 from beancount.core import compare
+from beancount.core import data
+from beancount.core import complete
+from beancount.core import getters
 from beancount import loader
 from beancount.utils import misc_utils
 from beancount.scripts import directories
@@ -147,6 +150,67 @@ def do_checkdeps(*unused_args):
             "(INSUFFICIENT)" if version and not sufficient else ""))
 
 
+def do_context(filename, args):
+    """Describe the context that a particular transaction is applied to.
+
+    Args:
+      filename: A string, which consists in the filename.
+      args: A tuple of the rest of arguments. We're expecting the first argument
+        to be an integer as a string.
+    """
+    # Parse the arguments, get the line number.
+    if len(args) != 1:
+        raise SystemExit("Missing line number argument.")
+    lineno = int(args[0])
+
+    # Load the input file.
+    entries, errors, options = loader.load(filename)
+
+    # Find the closest entry.
+    closest_entry = data.find_closest(entries, filename, lineno)
+    if closest_entry is None:
+        raise SystemExit("No entry could be found before {}:{}".format(filename, lineno))
+    source = closest_entry.source
+    print("{}:{}:".format(source.filename, source.lineno))
+
+    # Get the entry's accounts and accumulate the balances of these accounts up
+    # to the entry.
+    balance_before, balance_after = complete.compute_entry_context(entries, closest_entry)
+
+    # Get the list of account sorted by the order in which they appear in the
+    # closest entry.
+    accounts = sorted(balance_before.keys())
+    if isinstance(closest_entry, data.Transaction):
+        ordering = {posting.account: index
+                    for (index, posting) in enumerate(closest_entry.postings)}
+        accounts = sorted(accounts, key=ordering.get)
+
+    # Create a format line for printing the contents of account balances.
+    max_account_width = max(map(len, accounts)) if accounts else 1
+    position_line = '; {{:1}} {{:{width}}}  {{:>49}}'.format(width=max_account_width)
+
+    # Print the context before.
+    print()
+    before_hashes = set()
+    for account in accounts:
+        for position in balance_before[account].get_positions():
+            before_hashes.add((account, hash(position)))
+            print(position_line.format('', account, str(position)))
+        print()
+
+    # Print the entry itself.
+    print()
+    printer.print_entry(closest_entry)
+
+    # Print the context after.
+    print()
+    for account in accounts:
+        for position in balance_after[account].get_positions():
+            changed = (account, hash(position)) not in before_hashes
+            print(position_line.format('!' if changed else '', account, str(position)))
+        print()
+
+
 def main():
     commands_doc = ('Available Commands:\n' +
                     '\n'.join('  {:24}: {}'.format(*x) for x in get_commands()))
@@ -163,9 +227,10 @@ def main():
     try:
         command_name = "do_{}".format(opts.command.replace('-', '_'))
         function = globals()[command_name]
-        function(opts.filename, opts.rest)
     except KeyError:
         parser.error("Invalid command name: '{}'".format(opts.command))
+    else:
+        function(opts.filename, opts.rest)
 
 
 if __name__ == '__main__':

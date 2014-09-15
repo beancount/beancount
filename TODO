@@ -171,16 +171,6 @@ beancount: TODO
     entries, not just one. Many, many errors will benefit from this.
 
 
-  - Add a command that accepts a "filename:lineno" string and outputs the
-    transaction as parsed as well as the inventories before and after
-    processing the transaction. Add Emacs integration that calls this script
-    and prints out the output with the cursor as the location. (Note: You do
-    need both the filename and the lineno because of include files - thinking
-    ahead here - but allow a shorthand by specifying just the lineno and if
-    that's the case, assume the filename to be the top-level filename provided
-    as the ledger.
-
-
   - (parser) Is it possible to specify no flag on a transaction?, e.g. just the date?
 
        2014-07-12

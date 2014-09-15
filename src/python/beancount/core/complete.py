@@ -1,6 +1,7 @@
 """Code used to automatically complete postings without positions.
 """
 import collections
+import copy
 
 from beancount.core.amount import D
 from beancount.core.amount import ZERO
@@ -11,6 +12,8 @@ from beancount.core.position import Position
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
 from beancount.core.data import reparent_posting
+from beancount.core import getters
+from beancount.core import inventory
 
 
 # An error from balancing the postings.
@@ -268,3 +271,47 @@ def compute_entries_balance(entries, prefix=None, date=None):
                 if prefix is None or posting.account.startswith(prefix):
                     total_balance.add_position(posting.position)
     return total_balance
+
+
+def compute_entry_context(entries, context_entry):
+    """Compute the balances of all accounts referenced by entry up to entry.
+
+    This provides the inventory of the accounts to which the entry is to be
+    applied, before and after.
+
+    Args:
+      entries: A list of directives.
+      context_entry: The entry for which we want to obtain the before and after
+        context.
+    Returns:
+      Two dicts of account-name to Inventory instance, one which represents the
+      context before the entry is applied, and one that represents the context
+      after it has been applied.
+    """
+    assert context_entry is not None, "context_entry is missing."
+
+    # Get the set of accounts for which to compute the context.
+    context_accounts = getters.get_entry_accounts(context_entry)
+
+    # Iterate over the entries until we find the target one and accumulate the
+    # balance.
+    context_before = collections.defaultdict(inventory.Inventory)
+    for entry in entries:
+        if entry is context_entry:
+            break
+        if isinstance(entry, Transaction):
+            for posting in entry.postings:
+                if not any(posting.account == account
+                           for account in context_accounts):
+                    continue
+                balance = context_before[posting.account]
+                balance.add_position(posting.position)
+
+    # Compute the after context for the entry.
+    context_after = copy.deepcopy(context_before)
+    if isinstance(context_entry, Transaction):
+        for posting in entry.postings:
+            balance = context_after[posting.account]
+            balance.add_position(posting.position)
+
+    return context_before, context_after

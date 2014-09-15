@@ -319,3 +319,61 @@ class TestComputeBalance(unittest.TestCase):
         expected_balance.add_amount(amount.Amount('2000.00', 'EUR'))
         expected_balance.add_amount(amount.Amount('-3560.00', 'GBP'))
         self.assertEqual(expected_balance, computed_balance)
+
+    @parser.parsedoc
+    def test_compute_entry_context(self, entries, _, __):
+        """
+        2014-01-01 open Assets:Account1
+        2014-01-01 open Assets:Account2
+        2014-01-01 open Assets:Account3
+        2014-01-01 open Assets:Account4
+        2014-01-01 open Assets:Other
+
+        2014-02-10 *
+          Assets:Account1      100.00 USD
+          Assets:Other
+
+        2014-02-11 *
+          Assets:Account2       80.00 USD
+          Assets:Other
+
+        2014-02-12 *
+          Assets:Account3       60.00 USD
+          Assets:Account3       40.00 USD
+          Assets:Other
+
+        2014-02-20 * #context
+          Assets:Account1       5.00 USD
+          Assets:Account2      -5.00 USD
+
+        2014-02-21 balance  Assets:Account1   100.00 USD
+
+        2014-02-25 *
+          Assets:Account3       5.00 USD
+          Assets:Account4      -5.00 USD
+
+        """
+        for entry in entries:
+            if (isinstance(entry, data.Transaction) and
+                entry.tags and
+                'context' in entry.tags):
+                break
+        balance_before, balance_after = complete.compute_entry_context(entries, entry)
+
+        self.assertEqual(inventory.from_string('100.00 USD'),
+                         balance_before['Assets:Account1'])
+        self.assertEqual(inventory.from_string('80.00 USD'),
+                         balance_before['Assets:Account2'])
+
+        self.assertEqual(inventory.from_string('105.00 USD'),
+                         balance_after['Assets:Account1'])
+        self.assertEqual(inventory.from_string('75.00 USD'),
+                         balance_after['Assets:Account2'])
+
+        # Get the context for an entry that is not a Transaction and ensure that
+        # the before and after context is the same.
+        for entry in entries:
+            if isinstance(entry, data.Balance):
+                break
+        balance_before, balance_after = complete.compute_entry_context(entries, entry)
+        self.assertEqual(balance_before, balance_after)

@@ -21,6 +21,7 @@ is great for sectioning large files with many transactions."
     ([(control c)(r)] . beancount-init-accounts)
     ([(control c)(l)] . beancount-check)
     ([(control c)(q)] . beancount-query)
+    ([(control c)(x)] . beancount-context)
     ([(control c)(\;)] . beancount-align-to-previous-number)
     ([(control c)(\:)] . beancount-align-numbers)
     ([(control c)(p)] . beancount-test-align)
@@ -332,6 +333,19 @@ what that column is and returns it (an integer)."
   (interactive)
   (let ((compile-command
          (format "%s %s " beancount-query-program (buffer-file-name))))
+    (call-interactively 'compile)))
+
+
+(defvar beancount-doctor-program "bean-doctor"
+  "Program to run the doctor commands.")
+
+(defun beancount-context ()
+  (interactive)
+  (let ((compilation-read-command nil)
+        (compile-command
+         (format "%s %s %s %d"
+                 beancount-doctor-program "context"
+                 (buffer-file-name) (line-number-at-pos (point)))))
     (call-interactively 'compile)))
 
 

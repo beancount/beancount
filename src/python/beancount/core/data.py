@@ -2,6 +2,7 @@
 """
 import datetime
 from collections import namedtuple
+import sys
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
 from .amount import Amount, Decimal, D
@@ -432,3 +433,27 @@ def has_entry_account_component(entry, component):
     return (isinstance(entry, Transaction) and
             any(has_component(posting.account, component)
                 for posting in entry.postings))
+
+
+def find_closest(entries, filename, lineno):
+    """Find the closest entry from entries to (filename, lineno).
+
+    Args:
+      entries: A list of directives.
+      filename: A string, the name of the ledger file to look for.
+      lineno: An integer, the line number closest after the directive we're
+        looking for. This may be the exact/first line of the directive.
+    Returns:
+      The closest entry found in the given file for the given filename, or
+      None, if none could be found.
+    """
+    min_diffline = sys.maxsize
+    closest_entry = None
+    for entry in entries:
+        source = entry.source
+        if source.filename == filename and source.lineno > 0:
+            diffline = lineno - source.lineno
+            if diffline >= 0 and diffline < min_diffline:
+                min_diffline = diffline
+                closest_entry = entry
+    return closest_entry

@@ -52,7 +52,6 @@ class TestJournalTextRender(unittest.TestCase):
         self.postings = realization.get_postings(self.real_account)
 
     def test_combinations(self):
-
         for width in (80, 200):
             for at_cost in True, False:
                 for render_balance in True, False:
