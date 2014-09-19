@@ -23,6 +23,9 @@ RedirectMatch /doc/doubleentry$           /beancount/doc/double-entry
 RedirectMatch /doc/double$                /beancount/doc/double-entry
 RedirectMatch /doc/de-method$             /beancount/doc/double-entry
 
+RedirectMatch /doc/equity$                https://docs.google.com/document/d/1H6C4YNPSe8GvC9Pe4Mp84q7ErPwI2AlZrFfKuNq-TG4/
+RedirectMatch /doc/using-equity           /beancount/doc/equity
+
 RedirectMatch /doc/install$               https://docs.google.com/document/d/1FqyrTPwiHVLyncWTf3v5TcooCu9z5JRX8Nm41lVZi0U/
 
 RedirectMatch /doc/getting-started$       https://docs.google.com/document/d/1P5At-z1sP8rgwYLHso5sEy3u4rMnIUDDgob9Y_BYuWE/
