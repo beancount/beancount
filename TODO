@@ -66,6 +66,9 @@ beancount: TODO
 
 ** Unsure
 
+  - Implement unit tests for all the functions in beancount.reports.journal_text
+
+
   - Differentiate between the concept of "journal" and "register" report: a
     "journal" should include all the postings and no running balance. A
     "register" should by default only render just one account's postings and
@@ -88,7 +91,9 @@ beancount: TODO
   - Nice Health Care section is nearly complete... complete it with DEDUC and COPAY
     legs explanation
 
-  - Example file and document
+  - Write out the taxes section, you have all the details, no need to wait
+
+  - Example file and document, write a generator script
 
   - Clean up this TODO file, reorganize sections, remove what's redundant from
     the proposal files.
@@ -100,6 +105,11 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  (portfolio)
+  - Move portfolio code our of experiments
+  - Build a report dedicated to uninvested cash
 
 
   - Journal rendering: add terminal colors (easy).
