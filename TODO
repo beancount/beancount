@@ -11,6 +11,8 @@ beancount: TODO
 
   - Add more tests for intra-day trading, esp. w.r.t. ordering and inventory booking.
 
+  - Complete more thorough tests for journal_text_test.py
+
 
 ** Move Files to Final Location
 
