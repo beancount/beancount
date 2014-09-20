@@ -202,8 +202,7 @@ def main():
             args.format, chosen_report.names[0], ','.join(supported_formats)))
 
     # Force hardcore validations, just for check.
-    if is_check:
-        validation.VALIDATIONS.extend(validation.HARDCORE_VALIDATIONS)
+    extra_validations = (validation.HARDCORE_VALIDATIONS if is_check else None)
 
     if args.timings:
         logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
@@ -213,7 +212,8 @@ def main():
     with misc_utils.log_time('beancount.loader (total)', logging.info):
         entries, errors, options_map = loader.load(args.filename,
                                                    log_timings=logging.info,
-                                                   log_errors=errors_file)
+                                                   log_errors=errors_file,
+                                                   extra_validations=extra_validations)
 
     # Create holdings list.
     with misc_utils.log_time('report.render', logging.info):

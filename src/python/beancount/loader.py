@@ -27,7 +27,7 @@ DEFAULT_PLUGINS = [
     ]
 
 
-def load(filename, log_timings=None, log_errors=None):
+def load(filename, log_timings=None, log_errors=None, extra_validations=None):
     """Open a Beancount input file, parse it, run transformations and validate.
 
     Args:
@@ -36,6 +36,8 @@ def load(filename, log_timings=None, log_errors=None):
         or None, if it should remain quiet.
       log_errors: A file object or function to write errors to,
         or None, if it should remain quiet.
+      extra_validations: A list of extra validation functions to run after loading
+        this list of entries.
     Returns:
       A triple of:
         entries: A date-sorted list of entries from the file.
@@ -43,10 +45,10 @@ def load(filename, log_timings=None, log_errors=None):
           the file.
         options_map: A dict of the options parsed from the file.
     """
-    return _load(parser.parse, filename, log_timings, log_errors)
+    return _load(parser.parse, filename, log_timings, log_errors, extra_validations)
 
 
-def load_string(string, log_timings=None, log_errors=None):
+def load_string(string, log_timings=None, log_errors=None, extra_validations=None):
     """Open a Beancount input string, parse it, run transformations and validate.
 
     Args:
@@ -55,6 +57,8 @@ def load_string(string, log_timings=None, log_errors=None):
         or None, if it should remain quiet.
       log_errors: A file object or function to write errors to,
         or None, if it should remain quiet.
+      extra_validations: A list of extra validation functions to run after loading
+        this list of entries.
     Returns:
       A triple of:
         entries: A date-sorted list of entries from the file.
@@ -62,10 +66,11 @@ def load_string(string, log_timings=None, log_errors=None):
           the file.
         options_map: A dict of the options parsed from the file.
     """
-    return _load(parser.parse_string, string, log_timings, log_errors)
+    return _load(parser.parse_string, string, log_timings, log_errors, extra_validations)
 
 
-def _load(parse_function, file_or_string, log_timings, log_errors):
+def _load(parse_function, file_or_string, log_timings, log_errors,
+          extra_validations=None):
     """Parse Beancount input, run its transformations and validate it.
 
     (This is an internal method.)
@@ -82,6 +87,8 @@ def _load(parse_function, file_or_string, log_timings, log_errors):
         or None, if it should remain quiet.
       log_errors: A file object or function to write errors to,
         or None, if it should remain quiet.
+      extra_validations: A list of extra validation functions to run after loading
+        this list of entries.
     Returns:
       See load() or load_string().
     """
@@ -97,7 +104,8 @@ def _load(parse_function, file_or_string, log_timings, log_errors):
 
     # Validate the list of entries.
     with misc_utils.log_time('beancount.ops.validate', log_timings, indent=1):
-        valid_errors = validation.validate(entries, options_map, log_timings)
+        valid_errors = validation.validate(entries, options_map, log_timings,
+                                           extra_validations)
         errors.extend(valid_errors)
 
         # Note: We could go hardcode here and further verify that the entries

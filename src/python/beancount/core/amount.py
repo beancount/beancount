@@ -51,8 +51,10 @@ def D(strord=None):
         return Decimal(strord.replace(',', ''))
     elif isinstance(strord, Decimal):
         return strord
-    elif isinstance(strord, float):
+    elif isinstance(strord, (int, float)):
         return Decimal(strord)
+    else:
+        assert strord is None, "Invalid value to convert: {}".format(strord)
 
 
 # Number of digits to display all amounts if we can do so precisely.
