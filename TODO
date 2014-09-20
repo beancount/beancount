@@ -107,6 +107,11 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  (documentation)
+  - Write a worked and detailed example of generating automated transactions in
+    the Plugins document.
+
+
   (portfolio)
   - Move portfolio code our of experiments
   - Build a report dedicated to uninvested cash
