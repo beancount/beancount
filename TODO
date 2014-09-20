@@ -5,6 +5,16 @@ beancount: TODO
 
   - Complete and merge sampled_quantization
 
+** Bugs
+
+  - A transaction at the very end of a file with a single newline causes a
+    parser error.
+
+      /var/folders/00/1fbd0000h01000cxqpysvccm005sdm/T/tmp10bnlr40:1597:    syntax error, unexpected $end, expecting EOL or COMMENT or ATAT or AT
+
+    See failing-with-no-last-newline.beancount
+
+
 ** More tests
 
   - Add an automated test for setup.py, you must test this. Use a tempdir.
