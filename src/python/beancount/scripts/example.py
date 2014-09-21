@@ -112,7 +112,7 @@ retirement_limits = {2000: D('10500'),
                      2016: D('18000'),
                      None: D('18500')}
 
-file_preamble = """
+file_preamble = """\
 ;; -*- mode: org; mode: beancount; -*-
 ;; THIS FILE HAS BEEN AUTO-GENERATED.
 * Options
@@ -248,6 +248,26 @@ def postings_for(entries, accounts):
     for posting in merged_postings:
         balances[posting.account].add_position(posting.position)
         yield posting, balances
+
+
+def get_minimum_balance(entries, account, currency):
+    """Compute the minimum balance of the given account according to the entries history.
+
+    Args:
+      entries: A list of directives.
+      account: An account string.
+      currency: A currency string, for which we want to compute the minimum.
+    Returns:
+      A Decimal number, the minimum amount throughout the history of this account.
+    """
+    min_amount = ZERO
+    for posting, balances in postings_for(entries, [account]):
+        balance = balances[account]
+        current = balance.get_amount(currency).number
+        debug(balance, current)
+        if current < min_amount:
+            min_amount = current
+    return min_amount
 
 
 def generate_employment_income(employer,
@@ -560,34 +580,28 @@ def generate_clearing_entries(date_iter,
 
     # Iterate over all the postings of the account to clear.
     oss = io.StringIO()
-    for posting, balances in postings_for(entries, [account_clear, account_from]):
+    for posting, balances in postings_for(entries, [account_clear]):
         balance_clear = balances[account_clear]
-        balance_from = balances[account_from]
 
         # Check if we need to clear.
         if next_date <= posting.entry.date:
             balance_amount = balance_clear.get_amount('CCY')
-            diff = balance_from.get_amount('CCY').number + balance_amount.number
-            debug(diff, balance_from.get_amount('CCY').number, balance_amount.number)
-            if diff >= 0:
-                debug('PAY OFF', balance_amount)
-                oss.write(replace("""
-                  YYYY-MM-DD * "Payee" "Narration"
-                    Account:Clear    POS_AMOUNT
-                    Account:From     NEG_AMOUNT
-                """, {
-                    'YYYY-MM-DD': next_date,
-                    'Payee': payee,
-                    'Narration': narration,
-                    'Account:Clear': account_clear,
-                    'Account:From': account_from,
-                    'POS_AMOUNT': '{:.2f}'.format(-balance_amount),
-                    'NEG_AMOUNT': '{:.2f}'.format(balance_amount)
-                }))
-                balance_clear.add_amount(-balance_amount)
-                balance_from.add_amount(balance_amount)
-            else:
-                pass # Skip credit-card payment because not enough funds in checking account.
+            oss.write(replace("""
+
+              YYYY-MM-DD * "Payee" "Narration"
+                Account:Clear    POS_AMOUNT
+                Account:From     NEG_AMOUNT
+
+            """, {
+                'YYYY-MM-DD': next_date,
+                'Payee': payee,
+                'Narration': narration,
+                'Account:Clear': account_clear,
+                'Account:From': account_from,
+                'POS_AMOUNT': '{:.2f}'.format(-balance_amount),
+                'NEG_AMOUNT': '{:.2f}'.format(balance_amount)
+            }))
+            balance_clear.add_amount(-balance_amount)
 
             # Advance to the next date we're looking for.
             try:
@@ -668,17 +682,22 @@ def generate_expenses(date_birth):
     """, {'YYYY-MM-DD': date_birth}))
 
 
-def generate_equity(date_birth):
-    """Generate directives for equity accounts we're going to use.
+def generate_open_entries(date, accounts, currency=None):
+    """Generate a list of Open entries for the given accounts:
 
     Args:
-      date_birth: Birth date of the character.
+      date: A datetime.date instance for the open entries.
+      accounts: A list of account strings.
+      currency: An optional currency constraint.
     Returns:
-      A list of directives.
+      A list of Open directives.
     """
-    return parse(replace("""
-      YYYY-MM-DD open Equity:Opening-Balances
-    """, {'YYYY-MM-DD': date_birth}))
+    assert isinstance(accounts, (list, tuple))
+    return parse(''.join(
+        '{date} open {account} {currency}\n'.format(date=date,
+                                                    account=account,
+                                                    currency=currency or '')
+        for account in accounts))
 
 
 def check_non_negative(entries, account):
@@ -737,7 +756,10 @@ def main():
                                                 'Assets:CC:Retirement:Cash',
                                                 date_begin, date_end)
 
-    # Expenses via banking.
+
+
+
+    # Periodic banking expenses.
     rent_expenses = generate_periodic_expenses(
         delay_dates(rrule.rrule(rrule.MONTHLY, dtstart=date_begin, until=date_end), 2, 5),
         "RiverBank Properties", "Paying the rent",
@@ -756,17 +778,15 @@ def main():
         account_checking, 'Expenses:Home:Internet',
         lambda: random.normalvariate(80, 0.10))
 
-    banking_expenses = rent_expenses + electricity_expenses + internet_expenses
+    banking_expenses = sorted(rent_expenses + electricity_expenses + internet_expenses,
+                              key=data.entry_sortkey)
 
-    # Banking accounts.
-    banking_entries = generate_banking(date_begin, date_end, rent_amount * D('1.10'))
+
+
 
     # Expenses via credit card.
     account_credit1 = 'Liabilities:CC:CreditCard1'
-    credit_preamble = parse(replace("""
-      YYYY-MM-DD open ACCOUNT  CCY
-    """, {'YYYY-MM-DD': date_birth,
-          'ACCOUNT': account_credit1}))
+    credit_preamble = generate_open_entries(date_birth, [account_credit1], 'CCY')
 
     restaurant_expenses = generate_periodic_expenses(
         date_seq(date_begin, date_end, 1, 5),
@@ -788,28 +808,41 @@ def main():
         account_credit1, 'Expenses:Transport:Subway',
         lambda: D('120.00'))
 
-    credit_expenses = sorted(restaurant_expenses +
-                             groceries_expenses +
-                             subway_expenses,
+    credit_expenses = sorted(restaurant_expenses + groceries_expenses + subway_expenses,
                              key=data.entry_sortkey)
 
+    # Generate entries that will pay off the credit card (unconditionally).
     credit_payments = generate_clearing_entries(
         delay_dates(rrule.rrule(rrule.MONTHLY, dtstart=date_begin, until=date_end, bymonthday=7), 0, 4),
         "CreditCard1", "Paying off credit card",
-        income_entries + banking_entries + banking_expenses + credit_expenses,
+        credit_expenses,
         account_credit1, account_checking)
 
     credit_entries = sorted(credit_preamble + credit_expenses + credit_payments,
                             key=data.entry_sortkey)
 
-    # Book transfers to investment account.
-    banking_transfers = generate_outgoing_transfers(
-        sorted(income_entries + banking_entries + banking_expenses + credit_entries, key=data.entry_sortkey),
-        account_checking,
-        'Assets:CC:Investment:Cash',
-        rent_amount + D('100'),
-        D('4000'))
 
+
+
+
+    # Create banking accounts and gift the checking account with a balance that
+    # will ensure a positive balance throughout its lifetime.
+    minimum = get_minimum_balance(income_entries + banking_expenses, account_checking, 'CCY')
+    debug('minimum', minimum)
+    initial = -minimum if minimum < ZERO else ZERO
+
+
+    banking_entries = generate_banking(date_begin, date_end, initial)
+
+    # Book transfers to investment account.
+    if 0:
+        # FIXME: bring this back
+        banking_transfers = generate_outgoing_transfers(
+            sorted(income_entries + banking_entries + banking_expenses + credit_entries, key=data.entry_sortkey),
+            account_checking,
+            'Assets:CC:Investment:Cash',
+            rent_amount + D('100'),
+            D('4000'))
     banking_transfers = []
 
     # Tax accounts.
@@ -827,7 +860,7 @@ def main():
     expenses_entries = generate_expenses(date_birth)
 
     # Equity accounts.
-    equity_entries = generate_equity(date_birth)
+    equity_entries = generate_open_entries(date_birth, ['Equity:Opening-Balances'])
 
     # Format the results.
     output = io.StringIO()
@@ -874,6 +907,7 @@ def main():
 
 
 
+## TODO(blais) - remove debug(), use logging, this script should output what it does verbosely
 ## TODO(blais) - bean-format the entire output file after renamings
 ## TODO(blais) - Expenses in checking accounts.
 ## TODO(blais) - Credit card accounts, with lots of expenses (two times).
