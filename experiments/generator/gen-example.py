@@ -215,22 +215,7 @@ def generate_employment_income(employer,
     return preamble + '\n\n'.join(transactions) + '\n\n'
 
 
-
-
-
-
-
-
-def main():
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = argparse.ArgumentParser(description=__doc__.strip())
-    opts = parser.parse_args()
-
-    date_birth = datetime.date(1980, 1, 1)
-    date_begin = datetime.date(2012, 1, 1)
-    date_end = datetime.date(2016, 1, 1)
-
-    # Tax accounts.
+def generate_tax_accounts(date_begin, date_end, date_birth):
     tax_io = io.StringIO()
     tax_io.write(replace("""
       * Tax accounts
@@ -261,20 +246,39 @@ def main():
               'YYEAR': 'Y{}'.format(year),
               'LIMIT': retirement_limits[year]}))
 
-    # Banking accounts.
-    bank_string = replace("""
+    return tax_io.getvalue()
+
+
+
+def generate_retirement_investment(date_begin, date_end):
+    retirement_string = replace("""
+      * Investment accounts for retirement
+
+      YYYY-MM-DD open Assets:CC:Retirement:Cash    CCY
+    """, {'YYYY-MM-DD': date_begin})
+
+    return retirement_string
+
+
+def generate_banking(date_begin, date_end):
+    banking_string = replace("""
       * Banking Accounts
 
       YYYY-MM-DD open Assets:CC:Bank:Checking    CCY
       ;; YYYY-MM-DD open Assets:CC:Bank:Savings    CCY
     """, {'YYYY-MM-DD': date_begin})
 
-    # Investment accounts for retirement.
-    retirement_string = replace("""
-      * Investment accounts for retirement
+    return banking_string
 
-      YYYY-MM-DD open Assets:CC:Retirement:Cash    CCY
-    """, {'YYYY-MM-DD': date_begin})
+
+def main():
+    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    argparser = argparse.ArgumentParser(description=__doc__.strip())
+    opts = argparser.parse_args()
+
+    date_birth = datetime.date(1980, 1, 1)
+    date_begin = datetime.date(2012, 1, 1)
+    date_end = datetime.date(2016, 1, 1)
 
     # Income sources.
     employer, address = employers[0]
@@ -284,12 +288,26 @@ def main():
                                                'Assets:CC:Retirement:Cash',
                                                date_begin, date_end)
 
+    # Book transfers to investment account.
+    entries, _, _ = parser.parse_string(income_string)
+
+
+    # Tax accounts.
+    tax_string = generate_tax_accounts(date_begin, date_end, date_birth)
+
+    # Banking accounts.
+    banking_string = generate_banking(date_begin, date_end)
+
+    # Investment accounts for retirement.
+    retirement_string = generate_retirement_investment(date_begin, date_end)
+
+    # Format the results.
     first_line = ';; -*- mode: org; mode: beancount; -*-\n'
     contents = replace(''.join([first_line,
-                                bank_string,
+                                banking_string,
                                 retirement_string,
                                 income_string,
-                                tax_io.getvalue()]), {
+                                tax_string]), {
         'CC': country,
         'CCY': currency,
         'VACCCY': vacation_currency,
@@ -298,7 +316,10 @@ def main():
         'Retirement': 'Vanguard',
         })
 
+    # Output the results.
     sys.stdout.write(contents)
+
+    # Validate the results parse fine.
     loader.load_string(contents,
                        log_errors=sys.stderr,
                        extra_validations=validation.HARDCORE_VALIDATIONS)
