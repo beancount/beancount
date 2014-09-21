@@ -5,6 +5,7 @@ Generate a decently-sized example file, based on some hard-coded rules.
 import argparse
 import calendar
 import datetime
+import decimal
 import io
 import itertools
 import logging
@@ -22,7 +23,10 @@ from beancount.core.amount import D
 from beancount.core.amount import ZERO
 from beancount.core import data
 from beancount.core import flags
+from beancount.core import amount
+from beancount.core import inventory
 from beancount.core import account_types
+from beancount.core import realization
 from beancount.core.account import join
 from beancount.parser import parser
 from beancount.parser import printer
@@ -40,11 +44,6 @@ employers = [
     ('BayBook', "1501 Billow Rd, Benlo Park, CA"),
     ]
 
-country = 'US'
-currency = 'USD'
-taxdef_currency = 'IRAUSD'
-vacation_currency = 'VACHR'
-
 retirement_limits = {2005: D('15500'),
                      2006: D('15500'),
                      2007: D('15500'),
@@ -58,6 +57,10 @@ retirement_limits = {2005: D('15500'),
                      2015: D('18000'),
                      2016: D('18000'),
                      None: D('18500')}
+
+
+def debug(*args):
+    print(*args, file=sys.stderr)
 
 
 def parse(string):
@@ -104,14 +107,11 @@ def generate_employment_income(employer,
                                date_end):
     replacements = {
         'YYYY-MM-DD': date_begin,
-        'CC': country,
         'Employer': employer,
         'Address': address,
         }
 
     preamble = replace("""
-
-        * Employment Income: Employer
 
         YYYY-MM-DD event "Employer" "Address"
 
@@ -155,14 +155,14 @@ def generate_employment_income(employer,
 
     transactions = []
     for dt in skipiter(rrule.rrule(rrule.WEEKLY, byweekday=rrule.TH,
-                               dtstart=date_begin, until=date_end), 1):
+                                   dtstart=date_begin, until=date_end), 1):
         date = dt.date()
         replacements['YYYY-MM-DD'] = date
         replacements['Year'] = 'Y{}'.format(date.year)
 
         if not date_prev or date_prev.year != date.year:
             contrib_retirement = retirement_limits[date.year]
-            contrib_socsec = D('7250')
+            contrib_socsec = D('7000')
         date_prev = date
 
         gross = biweekly_pay
@@ -172,24 +172,19 @@ def generate_employment_income(employer,
         contrib_retirement -= retirement
 
         socsec_uncapped = gross * D('0.0610')
-        socsec = max(0, contrib_socsec - socsec_uncapped)
+        socsec = min(contrib_socsec, socsec_uncapped)
         contrib_socsec -= socsec
 
-        lifeinsurance = gross * D('0.0060')
-        medicare      = gross * D('0.0230')
-        federal       = gross * D('0.2300')
-        state         = gross * D('0.0790')
-        city          = gross * D('0.0380')
-        sdi           = D('1.20')
+        with decimal.localcontext() as ctx:
+            ctx.prec = 6
+            lifeinsurance = gross * D('0.0060')
+            medicare      = gross * D('0.0230')
+            federal       = gross * D('0.2300')
+            state         = gross * D('0.0790')
+            city          = gross * D('0.0380')
+            sdi           = D('1.20')
 
-        deposit = (gross -
-                   retirement -
-                   medicare -
-                   federal -
-                   state -
-                   city -
-                   sdi -
-                   socsec)
+        deposit = (gross - retirement - medicare - federal - state - city - sdi - socsec)
 
         txn = replace("""
 
@@ -212,63 +207,128 @@ def generate_employment_income(employer,
         txn = re.sub(r'({[0-9.]+})', replace_amount, txn)
         transactions.append(txn)
 
-    return preamble + '\n\n'.join(transactions) + '\n\n'
+    return parse(preamble + ''.join(transactions))
 
 
-def generate_tax_accounts(date_begin, date_end, date_birth):
-    tax_io = io.StringIO()
-    tax_io.write(replace("""
+def generate_tax_preamble(date_birth):
+    return parse(replace("""
       * Tax accounts
 
+      ;; Tax accounts not specific to a year.
       YYYY-MM-DD open Income:CC:Federal:PreTax401k     DEFCCY
       YYYY-MM-DD open Assets:CC:Federal:PreTax401k     DEFCCY
 
     """, {'YYYY-MM-DD': date_birth}))
 
-    for year in range(date_begin.year, date_end.year):
-        tax_io.write(replace("""
-          ** Tax Year YEAR
+def generate_tax_accounts(year):
+    return parse(replace("""
 
-          YYYY-MM-DD open Expenses:Taxes:YYEAR:US:Federal:PreTax401k   DEFCCY
-          YYYY-MM-DD open Expenses:Taxes:YYEAR:US:Medicare             CCY
-          YYYY-MM-DD open Expenses:Taxes:YYEAR:US:Federal              CCY
-          YYYY-MM-DD open Expenses:Taxes:YYEAR:US:CityNYC              CCY
-          YYYY-MM-DD open Expenses:Taxes:YYEAR:US:SDI                  CCY
-          YYYY-MM-DD open Expenses:Taxes:YYEAR:US:StateNY              CCY
-          YYYY-MM-DD open Expenses:Taxes:YYEAR:US:SocSec               CCY
+      ;; Open tax accounts for that year.
+      YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:Federal:PreTax401k   DEFCCY
+      YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:Medicare             CCY
+      YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:Federal              CCY
+      YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:CityNYC              CCY
+      YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:SDI                  CCY
+      YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:StateNY              CCY
+      YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:SocSec               CCY
 
-          YYYY-MM-DD * "Allowed contributions for one year"
-            Income:CC:Federal:PreTax401k    -LIMIT DEFCCY
-            Assets:CC:Federal:PreTax401k     LIMIT DEFCCY
+      ;; Check that the tax amounts have been fully used.
+      YYYY-MM-DD balance Assets:CC:Federal:PreTax401k  0 DEFCCY
 
-        """, {'YYYY-MM-DD': datetime.date(year, 1, 1),
-              'YEAR': year,
-              'YYEAR': 'Y{}'.format(year),
-              'LIMIT': retirement_limits[year]}))
+      YYYY-MM-DD * "Allowed contributions for one year"
+        Income:CC:Federal:PreTax401k    -LIMIT DEFCCY
+        Assets:CC:Federal:PreTax401k     LIMIT DEFCCY
 
-    return tax_io.getvalue()
-
+    """, {'YYYY-MM-DD': datetime.date(year, 1, 1),
+          'YEAR': year,
+          'YYEAR': 'Y{}'.format(year),
+          'LIMIT': retirement_limits[year]}))
 
 
 def generate_retirement_investment(date_begin, date_end):
     retirement_string = replace("""
-      * Investment accounts for retirement
-
       YYYY-MM-DD open Assets:CC:Retirement:Cash    CCY
     """, {'YYYY-MM-DD': date_begin})
 
-    return retirement_string
+    return parse(retirement_string)
 
 
 def generate_banking(date_begin, date_end):
-    banking_string = replace("""
-      * Banking Accounts
+    return parse(replace("""
+      YYYY-MM-DD open Assets:CC:Bank1:Checking    CCY
+      ;; YYYY-MM-DD open Assets:CC:Bank1:Savings    CCY
+    """, {'YYYY-MM-DD': date_begin}))
 
-      YYYY-MM-DD open Assets:CC:Bank:Checking    CCY
-      ;; YYYY-MM-DD open Assets:CC:Bank:Savings    CCY
-    """, {'YYYY-MM-DD': date_begin})
 
-    return banking_string
+def generate_taxable_investment(date_begin, date_end):
+    return parse(replace("""
+      YYYY-MM-DD open Assets:CC:Investment:Cash    CCY
+    """, {'YYYY-MM-DD': date_begin}))
+
+
+def generate_checking_expenses_rent(date_begin, date_end, account_checking, rent_amount):
+    oss = io.StringIO()
+    for dt in skipiter(rrule.rrule(rrule.MONTHLY, dtstart=date_begin, until=date_end), 1):
+        # Have the landlord cash the check a few days after.
+        date = dt.date()
+        date += datetime.timedelta(days=random.randint(2, 5))
+
+        oss.write(replace("""
+
+          YYYY-MM-DD * "Paying the rent"
+            CHECKING             -AMOUNT CCY
+            Expenses:Home:Rent    AMOUNT CCY
+
+        """, {
+            'YYYY-MM-DD': date,
+            'CHECKING': account_checking,
+            'AMOUNT': '{:.2f}'.format(rent_amount)
+        }))
+
+    return parse(oss.getvalue())
+
+
+def generate_checking_transfers(income_entries,
+                                account_checking,
+                                account_investment,
+                                transfer_minimum,
+                                transfer_threshold):
+    oss = io.StringIO()
+    real_root = realization.realize(income_entries)
+    real_account = realization.get(real_root, account_checking)
+    balance = inventory.Inventory()
+    for posting in real_account.postings:
+        if not isinstance(posting, data.Posting):
+            continue
+
+        balance.add_position(posting.position)
+
+        current_amount = balance.get_amount('CCY').number
+        if current_amount > (transfer_minimum + transfer_threshold):
+            transfer_amount = current_amount - transfer_minimum
+
+            oss.write(replace("""
+              YYYY-MM-DD * "Transfering accumulated savings to investment account"
+                CHECKING        -AMOUNT CCY
+                INVESTMENT       AMOUNT CCY
+            """, {
+                'YYYY-MM-DD': posting.entry.date + datetime.timedelta(days=1),
+                'CHECKING': account_checking,
+                'INVESTMENT': account_investment,
+                'AMOUNT': '{:.2f}'.format(transfer_amount)
+            }))
+
+            balance.add_amount(amount.Amount(-transfer_amount, 'CCY'))
+
+    return parse(oss.getvalue())
+
+
+def generate_expenses(date_birth):
+    return parse(replace("""
+
+      YYYY-MM-DD open Expenses:Home:Rent
+
+    """, {'YYYY-MM-DD': date_birth}))
 
 
 def main():
@@ -280,39 +340,92 @@ def main():
     date_begin = datetime.date(2012, 1, 1)
     date_end = datetime.date(2016, 1, 1)
 
+    # The following code entirely writes out the output to generic names, such
+    # as "Employer1", "Bank1", and "CCY" (for principal currency). Those names
+    # are purposely chosen to be unique, and only near the very end do we make
+    # renamings to more specific and realistic names.
+
     # Income sources.
+    annual_salary = D('120000')
+    rent_divisor = D('45')
     employer, address = employers[0]
-    income_string = generate_employment_income(employer, address,
-                                               D(120000),
-                                               'Assets:CC:Bank:Checking',
-                                               'Assets:CC:Retirement:Cash',
-                                               date_begin, date_end)
+    income_entries = generate_employment_income(employer, address,
+                                                annual_salary,
+                                                'Assets:CC:Bank1:Checking',
+                                                'Assets:CC:Retirement:Cash',
+                                                date_begin, date_end)
 
     # Book transfers to investment account.
-    entries, _, _ = parser.parse_string(income_string)
+    rent_amount = annual_salary / rent_divisor
+    banking_expenses = generate_checking_expenses_rent(
+        date_begin, date_end,
+        'Assets:CC:Bank1:Checking',
+        rent_amount)
+
+    banking_transfers = generate_checking_transfers(
+        sorted(income_entries + banking_expenses, key=data.entry_sortkey),
+        'Assets:CC:Bank1:Checking',
+        'Assets:CC:Investment:Cash',
+        rent_amount + D('100'),
+        D('4000'))
 
 
     # Tax accounts.
-    tax_string = generate_tax_accounts(date_begin, date_end, date_birth)
+    tax_preamble = generate_tax_preamble(date_birth)
+    taxes = [(year, generate_tax_accounts(year))
+             for year in range(date_begin.year, date_end.year)]
 
     # Banking accounts.
-    banking_string = generate_banking(date_begin, date_end)
+    banking_entries = generate_banking(date_begin, date_end)
+    # printer.print_entries(banking_entries)
 
     # Investment accounts for retirement.
-    retirement_string = generate_retirement_investment(date_begin, date_end)
+    retirement_entries = generate_retirement_investment(date_begin, date_end)
+
+    # Taxable savings / investment accounts.
+    investment_entries = generate_taxable_investment(date_begin, date_end)
+
+    # Expense accounts.
+    expenses_entries = generate_expenses(date_birth)
 
     # Format the results.
+    output = io.StringIO()
+
     first_line = ';; -*- mode: org; mode: beancount; -*-\n'
-    contents = replace(''.join([first_line,
-                                banking_string,
-                                retirement_string,
-                                income_string,
-                                tax_string]), {
-        'CC': country,
-        'CCY': currency,
-        'VACCCY': vacation_currency,
-        'DEFCCY': taxdef_currency,
-        'Bank': 'BofA',
+    output.write(first_line)
+
+    output.write('* Banking\n\n')
+    banking = sorted(banking_entries + banking_transfers + banking_expenses,
+                     key=data.entry_sortkey)
+    printer.print_entries(banking, file=output)
+
+    output.write('* Taxable Investments\n\n')
+    printer.print_entries(investment_entries, file=output)
+
+    output.write('* Retirement Investments\n\n')
+    printer.print_entries(retirement_entries, file=output)
+
+    output.write('* Sources of Income\n\n')
+    printer.print_entries(income_entries, file=output)
+
+    output.write('* Taxes\n\n')
+    printer.print_entries(tax_preamble, file=output)
+    for year, entries in taxes:
+        output.write('** Tax Year {}\n\n'.format(year))
+        printer.print_entries(entries, file=output)
+
+    output.write('* Expenses \n\n')
+    printer.print_entries(expenses_entries, file=output)
+
+    # Replace generic names by realistic names.
+    generic_contents = output.getvalue()
+
+    contents = replace(generic_contents, {
+        'CC': 'US',
+        'CCY': 'USD',
+        'VACCCY': 'VACHR',
+        'DEFCCY': 'IRAUSD',
+        'Bank1': 'BofA',
         'Retirement': 'Vanguard',
         })
 
@@ -323,6 +436,13 @@ def main():
     loader.load_string(contents,
                        log_errors=sys.stderr,
                        extra_validations=validation.HARDCORE_VALIDATIONS)
+
+
+## TODO(blais) - bean-format the entire output file after renamings
+## TODO(blais) - Start with some non-zero opening balances in some accounts.
+## TODO(blais) - Expenses in checking accounts.
+## TODO(blais) - Credit card accounts, with lots of expenses (two times).
+## TODO(blais) - Move this to a unit-tested location.
 
 
 if __name__ == '__main__':
