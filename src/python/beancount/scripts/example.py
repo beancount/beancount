@@ -66,6 +66,30 @@ employers = [
     ('Hoogle', "1600 Amphibious Parkway, River View, CA"),
     ]
 
+# Generic names of restaurants and grocery places to choose from.
+restaurant_names = ["Rose Flower",
+                    "Cafe Gomador",
+                    "Goba Goba",
+                    "Kin Soy",
+                    "Uncle Boons",
+                    "China Garden",
+                    "Jewel of Morroco",
+                    "Chichipotle"]
+
+restaurant_narrations = ["Eating out {}".format(party_name)
+                         for party_name in ["with Joe",
+                                            "with Natasha",
+                                            "with Bill",
+                                            "with Julie",
+                                            "with work buddies",
+                                            "after work",
+                                            "alone",
+                                            ""]]
+
+groceries_names = ["Onion Market",
+                   "Whole Moods Market",
+                   "Corner Deli"]
+
 # Limits on allowed retirement contributions.
 retirement_limits = {2000: D('10500'),
                      2001: D('10500'),
@@ -86,6 +110,14 @@ retirement_limits = {2000: D('10500'),
                      2016: D('18000'),
                      None: D('18500')}
 
+file_preamble = """
+;; -*- mode: org; mode: beancount; -*-
+;; THIS FILE HAS BEEN AUTO-GENERATED.
+* Options
+
+option "title" "Example Beancount file"
+option "operating_currency" "CCY"
+"""
 
 def debug(*args):
     """Debug print to stderr. Just a convenience funicton.
@@ -150,13 +182,40 @@ def skipiter(iterable, num_skip):
         for _ in range(num_skip-1):
             next(it)
 
+def date_seq(date_begin, date_end, days_min, days_max):
+    """Generate a sequence of dates with some random increase in days.
 
-# def random_date_sequence(date_begin, date_end, days_mu, days_sigma):
-#     date = date_begin
-#     while date < date_end:
-#         nb_days_forward = max(1, int(random.normalvariate(days_mu, days_sigma)))
-#         date += datetime.timedelta(days=nb_days_forward)
-#         yield date
+    Args:
+      date_begin: The start date.
+      date_end: The end date.
+      days_min: The minimum number of days to advance on each iteration.
+      days_max: The maximum number of days to advance on each iteration.
+    Yields:
+      Instances of datetime.date.
+    """
+    assert days_min > 0
+    assert days_min <= days_max
+    date = date_begin
+    while date < date_end:
+        nb_days_forward = random.randint(days_min, days_max)
+        date += datetime.timedelta(days=nb_days_forward)
+        yield date
+
+
+def delay_dates(date_iter, delay_days_min, delay_days_max):
+    """Delay the dates from the given iterator by some uniformly dranw number of days.
+
+    Args:
+      date_iter: An iterator of datetime.date instances.
+      delay_days_min: The minimum amount of advance days for the transaction.
+      delay_days_max: The maximum amount of advance days for the transaction.
+    Yields:
+      datetime.date instances.
+    """
+    for dt in date_iter:
+        date = dt.date() if isinstance(dt, datetime.datetime) else dt
+        date += datetime.timedelta(days=random.randint(delay_days_min, delay_days_max))
+        yield date
 
 
 def generate_employment_income(employer,
@@ -286,8 +345,8 @@ def generate_employment_income(employer,
               Expenses:Taxes:Year:CC:CityNYC                    {city:.2f} CCY
               Expenses:Taxes:Year:CC:SDI                        {sdi:.2f} CCY
               Expenses:Taxes:Year:CC:SocSec                     {socsec:.2f} CCY
-              Assets:CC:Employer1:Vacation                      {vacation_hrs} VACCCY
-              Income:CC:Employer1:Vacation                     -{vacation_hrs} VACCCY
+              Assets:CC:Employer1:Vacation                      {vacation_hrs:.2f} VACCCY
+              Income:CC:Employer1:Vacation                     -{vacation_hrs:.2f} VACCCY
         """
         if retirement == ZERO:
             # Remove retirement lines.
@@ -403,37 +462,28 @@ def generate_taxable_investment(date_begin, date_end):
     """, {'YYYY-MM-DD': date_begin}))
 
 
-def generate_periodic_expenses(frequency, date_begin, date_end,
+def generate_periodic_expenses(date_iter,
                                payee, narration,
                                account_from, account_to,
-                               amount_mu, amount_sigma=0,
-                               delay_days_min=0, delay_days_max=0):
+                               amount_generator):
     """Generate periodic expense transactions.
 
     Args:
-      frequency: A rrule frequency enum, such as rrule.MONTHLY.
-      date_begin: A date instance, the beginning date.
-      date_end: A date instance, the end date.
-      payee: A string, the payee name to use on the transactions.
+      date_iter: An iterator for dates or datetimes.
+      payee: A string, the payee name to use on the transactions, or a set of such strings
+        to randomly choose from
       narration: A string, the narration to use on the transactions.
       account_from: An account string the debited account.
       account_to: An account string the credited account.
-      amount_mu: The average amount.
-      amount_sigma: The standard deviation of the amount.
-      delay_days_min: The minimum amount of advance days for the transaction.
-      delay_days_max: The maximum amount of advance days for the transaction.
+      amount_generator: A callable object to generate variates.
     Returns:
       A list of directives.
     """
-
     oss = io.StringIO()
-    for dt in rrule.rrule(frequency, dtstart=date_begin, until=date_end):
-        date = dt.date()
+    for dt in date_iter:
+        date = dt.date() if isinstance(dt, datetime.datetime) else dt
 
-        # Apply delay to the transaction date.
-        date += datetime.timedelta(days=random.randint(delay_days_min, delay_days_max))
-
-        txn_amount = D(random.normalvariate(amount_mu, amount_sigma))
+        txn_amount = D(amount_generator())
 
         oss.write(replace("""
 
@@ -443,8 +493,12 @@ def generate_periodic_expenses(frequency, date_begin, date_end,
 
         """, {
             'YYYY-MM-DD': date,
-            'Payee': payee,
-            'Narration': narration,
+            'Payee': (payee
+                      if isinstance(payee, str)
+                      else random.choice(payee)),
+            'Narration': (narration
+                          if isinstance(narration, str)
+                          else random.choice(narration)),
             'Account:From': account_from,
             'Account:To': account_to,
             'AMOUNT': '{:.2f}'.format(txn_amount)
@@ -516,6 +570,11 @@ def generate_expenses(date_birth):
       A list of directives.
     """
     return parse(replace("""
+
+      YYYY-MM-DD open Expenses:Food:Restaurant
+      YYYY-MM-DD open Expenses:Food:Groceries
+
+      YYYY-MM-DD open Expenses:Transport:Subway
 
       YYYY-MM-DD open Expenses:Home:Rent
       YYYY-MM-DD open Expenses:Home:Electricity
@@ -599,31 +658,65 @@ def main():
 
     # Expenses via banking.
     rent_expenses = generate_periodic_expenses(
-        rrule.MONTHLY, date_begin, date_end,
+        delay_dates(rrule.rrule(rrule.MONTHLY, dtstart=date_begin, until=date_end), 2, 5),
         "RiverBank Properties", "Paying the rent",
         account_checking, 'Expenses:Home:Rent',
-        float(rent_amount), 0,
-        2, 5)
+        lambda: random.normalvariate(float(rent_amount), 0))
 
     electricity_expenses = generate_periodic_expenses(
-        rrule.MONTHLY, date_begin, date_end,
+        delay_dates(rrule.rrule(rrule.MONTHLY, dtstart=date_begin, until=date_end), 7, 8),
         "EDISON POWER", "",
         account_checking, 'Expenses:Home:Electricity',
-        65, 10,
-        7, 8)
+        lambda: random.normalvariate(65, 0))
 
     internet_expenses = generate_periodic_expenses(
-        rrule.MONTHLY, date_begin, date_end,
+        delay_dates(rrule.rrule(rrule.MONTHLY, dtstart=date_begin, until=date_end), 20, 22),
         "Wine-Tarner Cable", "",
         account_checking, 'Expenses:Home:Internet',
-        80, 0.10,
-        20, 22)
+        lambda: random.normalvariate(80, 0.10))
 
     banking_expenses = rent_expenses + electricity_expenses + internet_expenses
 
+    # Expenses via credit card.
+    credit_preamble = parse(replace("""
+      YYYY-MM-DD open Liabilities:US:CreditCard1  CCY
+    """, {'YYYY-MM-DD': date_birth}))
+
+    restaurant_expenses = generate_periodic_expenses(
+        date_seq(date_begin, date_end, 1, 5),
+        restaurant_names, restaurant_narrations,
+        'Liabilities:US:CreditCard1', 'Expenses:Food:Restaurant',
+        lambda: min(random.lognormvariate(math.log(30), math.log(1.5)),
+                    random.randint(200, 220)))
+
+    groceries_expenses = generate_periodic_expenses(
+        date_seq(date_begin, date_end, 5, 20),
+        groceries_names, "Buying groceries",
+        'Liabilities:US:CreditCard1', 'Expenses:Food:Groceries',
+        lambda: min(random.lognormvariate(math.log(80), math.log(1.3)),
+                    random.randint(250, 300)))
+
+    subway_expenses = generate_periodic_expenses(
+        date_seq(date_begin, date_end, 27, 33),
+        "Metro Transport", "Subway tickets",
+        'Liabilities:US:CreditCard1', 'Expenses:Transport:Subway',
+        lambda: D('120.00'))
+
+    # credit_payments = generate_clearing_entries(
+    #     delay_dates(rrule.rrule(rrule.MONTHLY, dtstart=date_begin, until=date_end, bymonthday=7), 0, 2),
+    #     "Metro Transport", "Subway tickets",
+    #     'Liabilities:US:CreditCard1', 'Expenses:Transport:Subway',
+    #     lambda: D('120.00'))
+
+    credit_entries = sorted(credit_preamble +
+                            restaurant_expenses +
+                            groceries_expenses +
+                            subway_expenses,
+                            key=data.entry_sortkey)
+
     # Book transfers to investment account.
     banking_transfers = generate_outgoing_transfers(
-        sorted(income_entries + banking_expenses, key=data.entry_sortkey),
+        sorted(income_entries + banking_expenses + credit_entries, key=data.entry_sortkey),
         account_checking,
         'Assets:CC:Investment:Cash',
         rent_amount + D('100'),
@@ -651,57 +744,36 @@ def main():
 
     # Format the results.
     output = io.StringIO()
+    def output_section(title, entries):
+        output.write('{}\n\n'.format(title))
+        printer.print_entries(sorted(entries, key=data.entry_sortkey), file=output)
 
-    # Preambule and options.
-    output.write(dedent("""\
-      ;; -*- mode: org; mode: beancount; -*-
-      ;; THIS FILE HAS BEEN AUTO-GENERATED.
-      * Options
-
-      option "title" "Example Beancount file"
-      option "operating_currency" "CCY"
-
-    """))
-
-    output.write('* Equity Accounts\n\n')
-    printer.print_entries(equity_entries, file=output)
-
-    output.write('* Banking\n\n')
-    banking = sorted(banking_entries + banking_transfers + banking_expenses,
-                     key=data.entry_sortkey)
-    printer.print_entries(banking, file=output)
-
-    output.write('* Taxable Investments\n\n')
-    printer.print_entries(investment_entries, file=output)
-
-    output.write('* Retirement Investments\n\n')
-    printer.print_entries(retirement_entries, file=output)
-
-    output.write('* Sources of Income\n\n')
-    printer.print_entries(income_entries, file=output)
-
-    output.write('* Taxes\n\n')
-    printer.print_entries(tax_preamble, file=output)
+    output.write(file_preamble)
+    output_section('* Equity Accounts', equity_entries)
+    output_section('* Banking', banking_entries + banking_transfers + banking_expenses)
+    output_section('* Credit-Cards', credit_entries)
+    output_section('* Taxable Investments', investment_entries)
+    output_section('* Retirement Investments', retirement_entries)
+    output_section('* Sources of Income', income_entries)
+    output_section('* Taxes', tax_preamble)
     for year, entries in taxes:
-        output.write('** Tax Year {}\n\n'.format(year))
-        printer.print_entries(entries, file=output)
-
-    output.write('* Expenses \n\n')
-    printer.print_entries(expenses_entries, file=output)
+        output_section('** Tax Year {}'.format(year), entries)
+    output_section('* Expenses', expenses_entries)
+    output_section('* Cash', [])  # FIXME TODO(blais): cash entries
 
     # Replace generic names by realistic names.
     generic_contents = output.getvalue()
-
     replacements = {
         'CC': 'US',
         'CCY': 'USD',
         'VACCCY': 'VACHR',
         'DEFCCY': 'IRAUSD',
         'Bank1': 'BofA',
+        'CreditCard1': 'Chase:Slate',
+        'CreditCard2': 'Amex:BlueCash',
         'Employer1': employer,
         'Retirement': 'Vanguard',
         }
-
     contents = replace(generic_contents, replacements)
 
     # Output the results.
