@@ -144,8 +144,16 @@ class Amount:
     def __hash__(self):
         """A hashing function for amounts. The hash includes the currency.
         Returns:
-          An integer, the hash for this amount."""
+          An integer, the hash for this amount.
+        """
         return hash((self.number, self.currency))
+
+    def __neg__(self):
+        """Return the negative of this amount.
+        Returns:
+          A new instance of Amount, with the negative number of units.
+        """
+        return Amount(-self.number, self.currency)
 
     @staticmethod
     def from_string(string):

@@ -108,6 +108,16 @@ class TestAmount(unittest.TestCase):
             Amount('3', 'USD'),
         ], amounts)
 
+    def test_neg(self):
+        amount_ = Amount('100', 'CAD')
+        self.assertEqual(Amount('-100', 'CAD'), -amount_)
+
+        amount_ = Amount('-100', 'CAD')
+        self.assertEqual(Amount('100', 'CAD'), -amount_)
+
+        amount_ = Amount('0', 'CAD')
+        self.assertEqual(Amount('0', 'CAD'), -amount_)
+
     def test_mult(self):
         amount_ = Amount('100', 'CAD')
         self.assertEqual(Amount('102.1', 'CAD'),
