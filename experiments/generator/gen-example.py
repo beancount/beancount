@@ -120,18 +120,18 @@ def generate_employment_income(employer,
 
     preamble = replace("""
 
-        YYYY-MM-DD event "Employer" "Address"
+        YYYY-MM-DD event "employer" "Employer, Address"
 
-        YYYY-MM-DD open Income:CC:Employer:Salary           CCY
-        ;YYYY-MM-DD open Income:CC:Employer:SignOnBonus      CCY
-        ;YYYY-MM-DD open Income:CC:Employer:AnnualBonus      CCY
-        ;YYYY-MM-DD open Income:CC:Employer:Match401k        CCY
-        YYYY-MM-DD open Income:CC:Employer:GroupTermLife    CCY
-        ;YYYY-MM-DD open Income:CC:Employer:HolidayGift      CCY
-        ;YYYY-MM-DD open Income:CC:Employer:GymReimbursement CCY
+        YYYY-MM-DD open Income:CC:Employer1:Salary           CCY
+        ;YYYY-MM-DD open Income:CC:Employer1:SignOnBonus      CCY
+        ;YYYY-MM-DD open Income:CC:Employer1:AnnualBonus      CCY
+        ;YYYY-MM-DD open Income:CC:Employer1:Match401k        CCY
+        YYYY-MM-DD open Income:CC:Employer1:GroupTermLife    CCY
+        ;YYYY-MM-DD open Income:CC:Employer1:HolidayGift      CCY
+        ;YYYY-MM-DD open Income:CC:Employer1:GymReimbursement CCY
 
-        ;YYYY-MM-DD open Income:CC:Employer:Vacation         VACCCY
-        ;YYYY-MM-DD open Assets:CC:Employer:Vacation         VACCCY
+        ;YYYY-MM-DD open Income:CC:Employer1:Vacation         VACCCY
+        ;YYYY-MM-DD open Assets:CC:Employer1:Vacation         VACCCY
 
         YYYY-MM-DD open Expenses:Health:Life:GroupTermLife
         ;YYYY-MM-DD open Expenses:Health:Medical:Insurance
@@ -200,8 +200,8 @@ def generate_employment_income(employer,
               Retirement                                        {retirement:.2f} CCY
               Assets:CC:Federal:PreTax401k                     -{retirement:.2f} DEFCCY
               Expenses:Taxes:Year:CC:Federal:PreTax401k         {retirement:.2f} DEFCCY
-              Income:CC:Employer:Salary                        -{gross:.2f} CCY
-              Income:CC:Employer:GroupTermLife                 -{lifeinsurance:.2f} CCY
+              Income:CC:Employer1:Salary                       -{gross:.2f} CCY
+              Income:CC:Employer1:GroupTermLife                -{lifeinsurance:.2f} CCY
               Expenses:Health:Life:GroupTermLife                {lifeinsurance:.2f} CCY
               Expenses:Taxes:Year:CC:Medicare                   {medicare:.2f} CCY
               Expenses:Taxes:Year:CC:Federal                    {federal:.2f} CCY
@@ -260,11 +260,17 @@ def generate_retirement_investment(date_begin, date_end):
     return parse(retirement_string)
 
 
-def generate_banking(date_begin, date_end):
+def generate_banking(date_begin, date_end, initial_amount):
     return parse(replace("""
       YYYY-MM-DD open Assets:CC:Bank1:Checking    CCY
       ;; YYYY-MM-DD open Assets:CC:Bank1:Savings    CCY
-    """, {'YYYY-MM-DD': date_begin}))
+
+      YYYY-MM-DD pad Assets:CC:Bank1:Checking  Equity:Opening-Balances
+      YYYY-MM-EE balance Assets:CC:Bank1:Checking   INIT CCY
+
+    """, {'YYYY-MM-EE': date_begin + datetime.timedelta(days=1),
+          'YYYY-MM-DD': date_begin,
+          'INIT': initial_amount}))
 
 
 def generate_taxable_investment(date_begin, date_end):
@@ -273,9 +279,9 @@ def generate_taxable_investment(date_begin, date_end):
     """, {'YYYY-MM-DD': date_begin}))
 
 
-def generate_checking_expenses_rent(date_begin, date_end, account_checking, rent_amount):
+def generate_checking_expenses_rent(date_begin, date_end, account, rent_amount):
     oss = io.StringIO()
-    for dt in skipiter(rrule.rrule(rrule.MONTHLY, dtstart=date_begin, until=date_end), 1):
+    for dt in rrule.rrule(rrule.MONTHLY, dtstart=date_begin, until=date_end):
         # Have the landlord cash the check a few days after.
         date = dt.date()
         date += datetime.timedelta(days=random.randint(2, 5))
@@ -283,13 +289,45 @@ def generate_checking_expenses_rent(date_begin, date_end, account_checking, rent
         oss.write(replace("""
 
           YYYY-MM-DD * "Paying the rent"
-            CHECKING             -AMOUNT CCY
+            ACCOUNT              -AMOUNT CCY
             Expenses:Home:Rent    AMOUNT CCY
 
         """, {
             'YYYY-MM-DD': date,
-            'CHECKING': account_checking,
+            'ACCOUNT': account,
             'AMOUNT': '{:.2f}'.format(rent_amount)
+        }))
+
+    return parse(oss.getvalue())
+
+
+def generate_periodic_expenses(frequency, date_begin, date_end,
+                               payee, narration,
+                               account_from, account_to,
+                               amount_mu, amount_sigma=0,
+                               delay_days_min=0, delay_days_max=0):
+    oss = io.StringIO()
+    for dt in rrule.rrule(frequency, dtstart=date_begin, until=date_end):
+        date = dt.date()
+
+        # Apply delay to the transaction date.
+        date += datetime.timedelta(days=random.randint(delay_days_min, delay_days_max))
+
+        txn_amount = D(random.normalvariate(amount_mu, amount_sigma))
+
+        oss.write(replace("""
+
+          YYYY-MM-DD * "Payee" "Narration"
+            Account:From    -AMOUNT CCY
+            Account:To       AMOUNT CCY
+
+        """, {
+            'YYYY-MM-DD': date,
+            'Payee': payee,
+            'Narration': narration,
+            'Account:From': account_from,
+            'Account:To': account_to,
+            'AMOUNT': '{:.2f}'.format(txn_amount)
         }))
 
     return parse(oss.getvalue())
@@ -315,9 +353,11 @@ def generate_checking_transfers(income_entries,
             transfer_amount = current_amount - transfer_minimum
 
             oss.write(replace("""
+
               YYYY-MM-DD * "Transfering accumulated savings to investment account"
                 CHECKING        -AMOUNT CCY
                 INVESTMENT       AMOUNT CCY
+
             """, {
                 'YYYY-MM-DD': posting.entry.date + datetime.timedelta(days=1),
                 'CHECKING': account_checking,
@@ -334,8 +374,26 @@ def generate_expenses(date_birth):
     return parse(replace("""
 
       YYYY-MM-DD open Expenses:Home:Rent
+      YYYY-MM-DD open Expenses:Home:Electricity
+      YYYY-MM-DD open Expenses:Home:Internet
 
     """, {'YYYY-MM-DD': date_birth}))
+
+
+def generate_equity(date_birth):
+    return parse(replace("""
+      YYYY-MM-DD open Equity:Opening-Balances
+    """, {'YYYY-MM-DD': date_birth}))
+
+
+def check_non_negative(entries, account):
+    real_root = realization.realize(entries)
+    real_account = realization.get(real_root, account)
+    balance = inventory.Inventory()
+    for posting in real_account.postings:
+        if isinstance(posting, data.Posting):
+            balance.add_position(posting.position)
+            assert all(amt.number > ZERO for amt in balance.get_amounts())
 
 
 def main():
@@ -352,30 +410,50 @@ def main():
     # are purposely chosen to be unique, and only near the very end do we make
     # renamings to more specific and realistic names.
 
-    # Income sources.
+    account_checking = 'Assets:CC:Bank1:Checking'
     annual_salary = D('120000')
-    rent_divisor = D('45')
+    rent_divisor = D('50')
+    rent_amount = annual_salary / rent_divisor
     employer, address = employers[0]
+
+    # Income sources.
     income_entries = generate_employment_income(employer, address,
                                                 annual_salary,
-                                                'Assets:CC:Bank1:Checking',
+                                                account_checking,
                                                 'Assets:CC:Retirement:Cash',
                                                 date_begin, date_end)
 
-    # Book transfers to investment account.
-    rent_amount = annual_salary / rent_divisor
-    banking_expenses = generate_checking_expenses_rent(
-        date_begin, date_end,
-        'Assets:CC:Bank1:Checking',
-        rent_amount)
+    # Expenses via banking.
+    rent_expenses = generate_periodic_expenses(
+        rrule.MONTHLY, date_begin, date_end,
+        "RiverBank Properties", "Paying the rent",
+        account_checking, 'Expenses:Home:Rent',
+        float(rent_amount), 0,
+        2, 5)
 
+    electricity_expenses = generate_periodic_expenses(
+        rrule.MONTHLY, date_begin, date_end,
+        "EDISON POWER", "",
+        account_checking, 'Expenses:Home:Electricity',
+        65, 10,
+        7, 8)
+
+    internet_expenses = generate_periodic_expenses(
+        rrule.MONTHLY, date_begin, date_end,
+        "Wine-Tarner Cable", "",
+        account_checking, 'Expenses:Home:Internet',
+        80, 0.10,
+        20, 22)
+
+    banking_expenses = rent_expenses + electricity_expenses + internet_expenses
+
+    # Book transfers to investment account.
     banking_transfers = generate_checking_transfers(
         sorted(income_entries + banking_expenses, key=data.entry_sortkey),
-        'Assets:CC:Bank1:Checking',
+        account_checking,
         'Assets:CC:Investment:Cash',
         rent_amount + D('100'),
         D('4000'))
-
 
     # Tax accounts.
     tax_preamble = generate_tax_preamble(date_birth)
@@ -383,8 +461,7 @@ def main():
              for year in range(date_begin.year, date_end.year)]
 
     # Banking accounts.
-    banking_entries = generate_banking(date_begin, date_end)
-    # printer.print_entries(banking_entries)
+    banking_entries = generate_banking(date_begin, date_end, rent_amount * D('1.10'))
 
     # Investment accounts for retirement.
     retirement_entries = generate_retirement_investment(date_begin, date_end)
@@ -395,11 +472,25 @@ def main():
     # Expense accounts.
     expenses_entries = generate_expenses(date_birth)
 
+    # Equity accounts.
+    equity_entries = generate_equity(date_birth)
+
     # Format the results.
     output = io.StringIO()
 
-    first_line = ';; -*- mode: org; mode: beancount; -*-\n'
-    output.write(first_line)
+    # Preambule and options.
+    output.write(dedent("""\
+      ;; -*- mode: org; mode: beancount; -*-
+      ;; THIS FILE HAS BEEN AUTO-GENERATED.
+      * Options
+
+      option "title" "Example Beancount file"
+      option "operating_currency" "CCY"
+
+    """))
+
+    output.write('* Equity Accounts\n\n')
+    printer.print_entries(equity_entries, file=output)
 
     output.write('* Banking\n\n')
     banking = sorted(banking_entries + banking_transfers + banking_expenses,
@@ -427,26 +518,33 @@ def main():
     # Replace generic names by realistic names.
     generic_contents = output.getvalue()
 
-    contents = replace(generic_contents, {
+    replacements = {
         'CC': 'US',
         'CCY': 'USD',
         'VACCCY': 'VACHR',
         'DEFCCY': 'IRAUSD',
         'Bank1': 'BofA',
+        'Employer1': employer,
         'Retirement': 'Vanguard',
-        })
+        }
+
+    contents = replace(generic_contents, replacements)
 
     # Output the results.
     sys.stdout.write(contents)
 
     # Validate the results parse fine.
-    loader.load_string(contents,
-                       log_errors=sys.stderr,
-                       extra_validations=validation.HARDCORE_VALIDATIONS)
+    loaded_entries, _, _ = loader.load_string(
+        contents,
+        log_errors=sys.stderr,
+        extra_validations=validation.HARDCORE_VALIDATIONS)
+
+    # Sanity checks: Check that the checking balance never goes below zero.
+    check_non_negative(loaded_entries,
+                       replace(account_checking, replacements))
 
 
 ## TODO(blais) - bean-format the entire output file after renamings
-## TODO(blais) - Start with some non-zero opening balances in some accounts.
 ## TODO(blais) - Expenses in checking accounts.
 ## TODO(blais) - Credit card accounts, with lots of expenses (two times).
 ## TODO(blais) - Move this to a unit-tested location.
