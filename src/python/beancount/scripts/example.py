@@ -7,6 +7,8 @@ evaluation.
 """
 import argparse
 import calendar
+import copy
+import collections
 import datetime
 import decimal
 import io
@@ -216,6 +218,36 @@ def delay_dates(date_iter, delay_days_min, delay_days_max):
         date = dt.date() if isinstance(dt, datetime.datetime) else dt
         date += datetime.timedelta(days=random.randint(delay_days_min, delay_days_max))
         yield date
+
+
+def postings_for(entries, accounts):
+    """Realize the entries and get the list of postings for the given accounts.
+
+    All the non-Posting directives are already filtered out.
+
+    Args:
+      entries: A list of directives.
+      accounts: A list of account strings to get the balances for.
+    Yields:
+      Tuples of:
+        posting: An instance of Posting
+        balances: A dict of Inventory balances for the given accounts _after_
+          applying the posting. These inventory objects can be mutated to adjust
+          the balance due to generated transactions to be applied later.
+    """
+    real_root = realization.realize(entries)
+    merged_postings = []
+    for account in accounts:
+        real_account = realization.get(real_root, account)
+        merged_postings.extend(posting
+                               for posting in real_account.postings
+                               if isinstance(posting, data.Posting))
+    merged_postings.sort(key=lambda posting: posting.entry.date)
+
+    balances = collections.defaultdict(inventory.Inventory)
+    for posting in merged_postings:
+        balances[posting.account].add_position(posting.position)
+        yield posting, balances
 
 
 def generate_employment_income(employer,
@@ -440,7 +472,10 @@ def generate_banking(date_begin, date_end, initial_amount):
       YYYY-MM-DD open Assets:CC:Bank1:Checking    CCY
       ;; YYYY-MM-DD open Assets:CC:Bank1:Savings    CCY
 
-      YYYY-MM-DD pad Assets:CC:Bank1:Checking  Equity:Opening-Balances
+      YYYY-MM-DD * "Opening Balance for checking account"
+        Assets:CC:Bank1:Checking   INIT CCY
+        Equity:Opening-Balances
+
       YYYY-MM-EE balance Assets:CC:Bank1:Checking   INIT CCY
 
     """, {'YYYY-MM-EE': date_begin + datetime.timedelta(days=1),
@@ -482,9 +517,7 @@ def generate_periodic_expenses(date_iter,
     oss = io.StringIO()
     for dt in date_iter:
         date = dt.date() if isinstance(dt, datetime.datetime) else dt
-
         txn_amount = D(amount_generator())
-
         oss.write(replace("""
 
           YYYY-MM-DD * "Payee" "Narration"
@@ -503,6 +536,64 @@ def generate_periodic_expenses(date_iter,
             'Account:To': account_to,
             'AMOUNT': '{:.2f}'.format(txn_amount)
         }))
+
+    return parse(oss.getvalue())
+
+
+def generate_clearing_entries(date_iter,
+                              payee, narration,
+                              entries, account_clear, account_from):
+    """Generate entries to clear the value of an account.
+
+    Args:
+      date_iter: An iterator of datetime.date instances.
+      payee: A string, the payee name to use on the transactions.
+      narration: A string, the narration to use on the transactions.
+      postings_iter: Iterator for postings and balances, as per postings_for().
+      account_clear: The account to clear.
+      account_from: The source account to clear 'account_clear' from.
+    Returns:
+      A list of directives.
+    """
+    # The next date we're looking for.
+    next_date = next(iter(date_iter))
+
+    # Iterate over all the postings of the account to clear.
+    oss = io.StringIO()
+    for posting, balances in postings_for(entries, [account_clear, account_from]):
+        balance_clear = balances[account_clear]
+        balance_from = balances[account_from]
+
+        # Check if we need to clear.
+        if next_date <= posting.entry.date:
+            balance_amount = balance_clear.get_amount('CCY')
+            diff = balance_from.get_amount('CCY').number + balance_amount.number
+            debug(diff, balance_from.get_amount('CCY').number, balance_amount.number)
+            if diff >= 0:
+                debug('PAY OFF', balance_amount)
+                oss.write(replace("""
+                  YYYY-MM-DD * "Payee" "Narration"
+                    Account:Clear    POS_AMOUNT
+                    Account:From     NEG_AMOUNT
+                """, {
+                    'YYYY-MM-DD': next_date,
+                    'Payee': payee,
+                    'Narration': narration,
+                    'Account:Clear': account_clear,
+                    'Account:From': account_from,
+                    'POS_AMOUNT': '{:.2f}'.format(-balance_amount),
+                    'NEG_AMOUNT': '{:.2f}'.format(balance_amount)
+                }))
+                balance_clear.add_amount(-balance_amount)
+                balance_from.add_amount(balance_amount)
+            else:
+                pass # Skip credit-card payment because not enough funds in checking account.
+
+            # Advance to the next date we're looking for.
+            try:
+                next_date = next(iter(date_iter))
+            except StopIteration:
+                break
 
     return parse(oss.getvalue())
 
@@ -530,14 +621,8 @@ def generate_outgoing_transfers(entries,
       A list of new directives, the transfers to add to the given account.
     """
     oss = io.StringIO()
-    real_root = realization.realize(entries)
-    real_account = realization.get(real_root, account)
-    balance = inventory.Inventory()
-    for posting in real_account.postings:
-        if not isinstance(posting, data.Posting):
-            continue
-
-        balance.add_position(posting.position)
+    for posting, balances in postings_for(entries, [account]):
+        balance = balances[account]
 
         current_amount = balance.get_amount('CCY').number
         if current_amount > (transfer_minimum + transfer_threshold):
@@ -605,13 +690,9 @@ def check_non_negative(entries, account):
     Raises:
       AssertionError: if the balance goes negative.
     """
-    real_root = realization.realize(entries)
-    real_account = realization.get(real_root, account)
-    balance = inventory.Inventory()
-    for posting in real_account.postings:
-        if isinstance(posting, data.Posting):
-            balance.add_position(posting.position)
-            assert all(amt.number > ZERO for amt in balance.get_amounts())
+    for posting, balances in postings_for(entries, [account]):
+        balance = balances[account]
+        assert all(amt.number >= ZERO for amt in balance.get_amounts())
 
 
 def validate_output(contents, positive_accounts):
@@ -677,58 +758,64 @@ def main():
 
     banking_expenses = rent_expenses + electricity_expenses + internet_expenses
 
+    # Banking accounts.
+    banking_entries = generate_banking(date_begin, date_end, rent_amount * D('1.10'))
+
     # Expenses via credit card.
+    account_credit1 = 'Liabilities:CC:CreditCard1'
     credit_preamble = parse(replace("""
-      YYYY-MM-DD open Liabilities:US:CreditCard1  CCY
-    """, {'YYYY-MM-DD': date_birth}))
+      YYYY-MM-DD open ACCOUNT  CCY
+    """, {'YYYY-MM-DD': date_birth,
+          'ACCOUNT': account_credit1}))
 
     restaurant_expenses = generate_periodic_expenses(
         date_seq(date_begin, date_end, 1, 5),
         restaurant_names, restaurant_narrations,
-        'Liabilities:US:CreditCard1', 'Expenses:Food:Restaurant',
+        account_credit1, 'Expenses:Food:Restaurant',
         lambda: min(random.lognormvariate(math.log(30), math.log(1.5)),
                     random.randint(200, 220)))
 
     groceries_expenses = generate_periodic_expenses(
         date_seq(date_begin, date_end, 5, 20),
         groceries_names, "Buying groceries",
-        'Liabilities:US:CreditCard1', 'Expenses:Food:Groceries',
+        account_credit1, 'Expenses:Food:Groceries',
         lambda: min(random.lognormvariate(math.log(80), math.log(1.3)),
                     random.randint(250, 300)))
 
     subway_expenses = generate_periodic_expenses(
         date_seq(date_begin, date_end, 27, 33),
         "Metro Transport", "Subway tickets",
-        'Liabilities:US:CreditCard1', 'Expenses:Transport:Subway',
+        account_credit1, 'Expenses:Transport:Subway',
         lambda: D('120.00'))
 
-    # credit_payments = generate_clearing_entries(
-    #     delay_dates(rrule.rrule(rrule.MONTHLY, dtstart=date_begin, until=date_end, bymonthday=7), 0, 2),
-    #     "Metro Transport", "Subway tickets",
-    #     'Liabilities:US:CreditCard1', 'Expenses:Transport:Subway',
-    #     lambda: D('120.00'))
+    credit_expenses = sorted(restaurant_expenses +
+                             groceries_expenses +
+                             subway_expenses,
+                             key=data.entry_sortkey)
 
-    credit_entries = sorted(credit_preamble +
-                            restaurant_expenses +
-                            groceries_expenses +
-                            subway_expenses,
+    credit_payments = generate_clearing_entries(
+        delay_dates(rrule.rrule(rrule.MONTHLY, dtstart=date_begin, until=date_end, bymonthday=7), 0, 4),
+        "CreditCard1", "Paying off credit card",
+        income_entries + banking_entries + banking_expenses + credit_expenses,
+        account_credit1, account_checking)
+
+    credit_entries = sorted(credit_preamble + credit_expenses + credit_payments,
                             key=data.entry_sortkey)
 
     # Book transfers to investment account.
     banking_transfers = generate_outgoing_transfers(
-        sorted(income_entries + banking_expenses + credit_entries, key=data.entry_sortkey),
+        sorted(income_entries + banking_entries + banking_expenses + credit_entries, key=data.entry_sortkey),
         account_checking,
         'Assets:CC:Investment:Cash',
         rent_amount + D('100'),
         D('4000'))
 
+    banking_transfers = []
+
     # Tax accounts.
     tax_preamble = generate_tax_preamble(date_birth)
     taxes = [(year, generate_tax_accounts(year))
              for year in range(date_begin.year, date_end.year)]
-
-    # Banking accounts.
-    banking_entries = generate_banking(date_begin, date_end, rent_amount * D('1.10'))
 
     # Investment accounts for retirement.
     retirement_entries = generate_retirement_investment(date_begin, date_end)
@@ -750,7 +837,7 @@ def main():
 
     output.write(file_preamble)
     output_section('* Equity Accounts', equity_entries)
-    output_section('* Banking', banking_entries + banking_transfers + banking_expenses)
+    output_section('* Banking', banking_entries + banking_expenses + banking_transfers)
     output_section('* Credit-Cards', credit_entries)
     output_section('* Taxable Investments', investment_entries)
     output_section('* Retirement Investments', retirement_entries)
@@ -791,3 +878,5 @@ def main():
 ## TODO(blais) - Expenses in checking accounts.
 ## TODO(blais) - Credit card accounts, with lots of expenses (two times).
 ## TODO(blais) - Move this to a unit-tested location.
+## TODO(blais) - Change the transfer account to look at the future and be "perfect" instead of guestiating a minimum amount.
+## TODO(blais) - Generate some minimum amount of realistic-ish cash entries.
