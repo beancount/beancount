@@ -27,6 +27,7 @@ bean-check
 bean-doctor
 bean-query
 bean-web
+bean-example
 """.splitlines() if x and not x.startswith('#')]
 
 

@@ -1,6 +1,9 @@
-#!/usr/bin/env python3
-"""
-Generate a decently-sized example file, based on some hard-coded rules.
+"""Generate a decently-sized example history, based on some rules.
+
+This script is used to generate some meaningful input to Beancount, input that
+looks as realistic as possible for a moderately complex mock individual. This
+can also be used as an input generator for a stress test for performance
+evaluation.
 """
 import argparse
 import calendar
@@ -34,11 +37,7 @@ from beancount.ops import validation
 from beancount import loader
 
 
-A = account_types.DEFAULT_ACCOUNT_TYPES
-
-source_filename = 'script://gen-example'
-source = data.Source(source_filename, 0)
-
+# A list of mock employers.
 employers = [
     ('Hooli', "1 Carloston Rd, Mountain Beer, CA"),
     ('BayBook', "1501 Billow Rd, Benlo Park, CA"),
@@ -46,6 +45,7 @@ employers = [
     ('Hoogle', "1600 Amphibious Parkway, River View, CA"),
     ]
 
+# Limits on allowed retirement contributions.
 retirement_limits = {2000: D('10500'),
                      2001: D('10500'),
                      2002: D('11000'),
