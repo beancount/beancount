@@ -37,6 +37,27 @@ from beancount.ops import validation
 from beancount import loader
 
 
+# Date of birth of our fictional character.
+date_birth = datetime.date(1980, 1, 1)
+
+# Default begin and end dates for the generation of data.
+date_begin = datetime.date(2012, 1, 1)
+date_end = datetime.date(2016, 1, 1)
+
+# Name of the checking account.
+account_checking = 'Assets:CC:Bank1:Checking'
+
+# Annual salary.
+annual_salary = D('120000')
+
+# Annual vacation days.
+annual_vacation_days = D('15')
+
+# Divisor of the annual salary to estimate the rent.
+rent_divisor = D('50')
+rent_increment = D('25')
+
+
 # A list of mock employers.
 employers = [
     ('Hooli', "1 Carloston Rd, Mountain Beer, CA"),
@@ -67,10 +88,22 @@ retirement_limits = {2000: D('10500'),
 
 
 def debug(*args):
+    """Debug print to stderr. Just a convenience funicton.
+
+    Args:
+      *args: Arguments to be printed out.
+    """
     print(*args, file=sys.stderr)
 
 
 def parse(string):
+    """Parse some input string and assert no errors.
+
+    Args:
+      string: Beancount input text.
+    Returns:
+      A list of directive objects.
+    """
     entries, errors, unused_options = parser.parse_string(string)
     if errors:
         printer.print_errors(errors, file=sys.stderr)
@@ -78,7 +111,17 @@ def parse(string):
     return entries
 
 
+# FIXME: This is generic; move to utils.
 def replace(string, replacements, strip=False):
+    """Apply word-boundaried regular expression replacements to an indented string.
+
+    Args:
+      string: Some input template string.
+      replacements: A dict of regexp to replacement value.
+      strip: A boolean, true if we should strip the input.
+    Returns:
+      The input string with the replacements applied to it, with the indentation removed.
+    """
     output = dedent(string)
     if strip:
         output = output.strip()
@@ -88,30 +131,55 @@ def replace(string, replacements, strip=False):
         output = re.sub(r'\b{}\b'.format(from_), to_, output)
     return output
 
+# FIXME: This is generic; move to utils.
 def skipiter(iterable, num_skip):
+    """Skip some elements from an iterator.
+
+    Args:
+      iterable: An iterator.
+      num_skip: The number of elements in the period.
+    Yields:
+      Elemnets from the iterable, with num_skip elements skipped.
+      For example, skipiter(range(10), 3) yields [0, 3, 6, 9].
+    """
+    assert num_skip > 0
     it = iter(iterable)
     while 1:
         value = next(it)
         yield value
-        for _ in range(num_skip):
+        for _ in range(num_skip-1):
             next(it)
 
 
-def random_date_sequence(date_begin, date_end, days_mu, days_sigma):
-    date = date_begin
-    while date < date_end:
-        nb_days_forward = max(1, int(random.normalvariate(days_mu, days_sigma)))
-        date += datetime.timedelta(days=nb_days_forward)
-        yield date
+# def random_date_sequence(date_begin, date_end, days_mu, days_sigma):
+#     date = date_begin
+#     while date < date_end:
+#         nb_days_forward = max(1, int(random.normalvariate(days_mu, days_sigma)))
+#         date += datetime.timedelta(days=nb_days_forward)
+#         yield date
 
 
 def generate_employment_income(employer,
                                address,
                                annual_salary,
-                               account_checking,
+                               account_deposit,
                                account_retirement,
                                date_begin,
                                date_end):
+    """Generate bi-weekly entries for payroll salary income.
+
+    Args:
+      employer: A string, the human-readable name of the employer.
+      address: A string, the address of the employer.
+      annual_salary: A Decimal, the annual salary of the employee.
+      account_deposit: An account string, the account to deposit the salary to.
+      account_retirement: An account string, the account to deposit retirement
+        contributions to.
+      date_begin: The start date.
+      date_end: The end date.
+    Returns:
+      A list of directives, including open directives for the account.
+    """
     replacements = {
         'YYYY-MM-DD': date_begin,
         'Employer': employer,
@@ -123,27 +191,22 @@ def generate_employment_income(employer,
         YYYY-MM-DD event "employer" "Employer, Address"
 
         YYYY-MM-DD open Income:CC:Employer1:Salary           CCY
-        ;YYYY-MM-DD open Income:CC:Employer1:SignOnBonus      CCY
         ;YYYY-MM-DD open Income:CC:Employer1:AnnualBonus      CCY
-        ;YYYY-MM-DD open Income:CC:Employer1:Match401k        CCY
         YYYY-MM-DD open Income:CC:Employer1:GroupTermLife    CCY
-        ;YYYY-MM-DD open Income:CC:Employer1:HolidayGift      CCY
-        ;YYYY-MM-DD open Income:CC:Employer1:GymReimbursement CCY
 
-        ;YYYY-MM-DD open Income:CC:Employer1:Vacation         VACCCY
-        ;YYYY-MM-DD open Assets:CC:Employer1:Vacation         VACCCY
+        YYYY-MM-DD open Income:CC:Employer1:Vacation         VACCCY
+        YYYY-MM-DD open Assets:CC:Employer1:Vacation         VACCCY
 
         YYYY-MM-DD open Expenses:Health:Life:GroupTermLife
-        ;YYYY-MM-DD open Expenses:Health:Medical:Insurance
-        ;YYYY-MM-DD open Expenses:Health:Dental:Insurance
-        ;YYYY-MM-DD open Expenses:Health:Vision:Insurance
-        ;YYYY-MM-DD open Expenses:Communications:Internet:Reimbursement
-        ;YYYY-MM-DD open Expenses:Transportation:PublicTrans:TransitPreTax
+        YYYY-MM-DD open Expenses:Health:Medical:Insurance
+        YYYY-MM-DD open Expenses:Health:Dental:Insurance
+        YYYY-MM-DD open Expenses:Health:Vision:Insurance
+
         ;YYYY-MM-DD open Expenses:Vacation:Employer
 
     """, replacements)
 
-    replacements['Checking'] = account_checking
+    replacements['Deposit'] = account_deposit
     replacements['Retirement'] = account_retirement
 
     biweekly_pay = annual_salary / 26
@@ -160,9 +223,30 @@ def generate_employment_income(employer,
 
     retirement_per_pay = D('2000')
 
+    gross = biweekly_pay
+
+    medicare      = gross * D('0.0231')
+    federal       = gross * D('0.2303')
+    state         = gross * D('0.0791')
+    city          = gross * D('0.0379')
+    sdi           = D('1.12')
+
+    lifeinsurance = D('24.32')
+    dental        = D('2.90')
+    medical       = D('27.38')
+    vision        = D('42.30')
+
+    fixed = (medicare + federal + state + city + sdi +
+             dental + medical + vision)
+
+    # Calculate vacation hours per-pay.
+    with decimal.localcontext() as ctx:
+        ctx.prec = 4
+        vacation_hrs = (annual_vacation_days * D('8')) / D('26')
+
     transactions = []
     for dt in skipiter(rrule.rrule(rrule.WEEKLY, byweekday=rrule.TH,
-                                   dtstart=date_begin, until=date_end), 1):
+                                   dtstart=date_begin, until=date_end), 2):
         date = dt.date()
         replacements['YYYY-MM-DD'] = date
         replacements['Year'] = 'Y{}'.format(date.year)
@@ -171,8 +255,6 @@ def generate_employment_income(employer,
             contrib_retirement = retirement_limits[date.year]
             contrib_socsec = D('7000')
         date_prev = date
-
-        gross = biweekly_pay
 
         retirement_uncapped = math.ceil((gross * D('0.25')) / 100) * 100
         retirement = min(contrib_retirement, retirement_uncapped)
@@ -184,33 +266,36 @@ def generate_employment_income(employer,
 
         with decimal.localcontext() as ctx:
             ctx.prec = 6
-            lifeinsurance = gross * D('0.0060')
-            medicare      = gross * D('0.0230')
-            federal       = gross * D('0.2300')
-            state         = gross * D('0.0790')
-            city          = gross * D('0.0380')
-            sdi           = D('1.20')
+            deposit = (gross - retirement - fixed - socsec)
 
-        deposit = (gross - retirement - medicare - federal - state - city - sdi - socsec)
-
-        txn = replace("""
-
+        template = """
             YYYY-MM-DD * "Employer" | "Payroll"
-              Checking                                          {deposit:.2f} CCY
+              Deposit                                           {deposit:.2f} CCY
               Retirement                                        {retirement:.2f} CCY
               Assets:CC:Federal:PreTax401k                     -{retirement:.2f} DEFCCY
               Expenses:Taxes:Year:CC:Federal:PreTax401k         {retirement:.2f} DEFCCY
               Income:CC:Employer1:Salary                       -{gross:.2f} CCY
               Income:CC:Employer1:GroupTermLife                -{lifeinsurance:.2f} CCY
               Expenses:Health:Life:GroupTermLife                {lifeinsurance:.2f} CCY
+              Expenses:Health:Dental:Insurance                  {dental} CCY
+              Expenses:Health:Medical:Insurance                 {medical} CCY
+              Expenses:Health:Vision:Insurance                  {vision} CCY
               Expenses:Taxes:Year:CC:Medicare                   {medicare:.2f} CCY
               Expenses:Taxes:Year:CC:Federal                    {federal:.2f} CCY
+              Expenses:Taxes:Year:CC:StateNY                    {state:.2f} CCY
               Expenses:Taxes:Year:CC:CityNYC                    {city:.2f} CCY
               Expenses:Taxes:Year:CC:SDI                        {sdi:.2f} CCY
-              Expenses:Taxes:Year:CC:StateNY                    {state:.2f} CCY
               Expenses:Taxes:Year:CC:SocSec                     {socsec:.2f} CCY
+              Assets:CC:Employer1:Vacation                      {vacation_hrs} VACCCY
+              Income:CC:Employer1:Vacation                     -{vacation_hrs} VACCCY
+        """
+        if retirement == ZERO:
+            # Remove retirement lines.
+            template = '\n'.join(line
+                                 for line in template.splitlines()
+                                 if not re.search(r'\bretirement\b', line))
 
-        """.format(**vars()), replacements)
+        txn = replace(template.format(**vars()), replacements)
         txn = re.sub(r'({[0-9.]+})', replace_amount, txn)
         transactions.append(txn)
 
@@ -218,6 +303,13 @@ def generate_employment_income(employer,
 
 
 def generate_tax_preamble(date_birth):
+    """Generate tax declarations not specific to any particular year.
+
+    Args:
+      date_birth: A date instance, the birth date of the character.
+    Returns:
+      A list of directives.
+    """
     return parse(replace("""
       * Tax accounts
 
@@ -228,6 +320,13 @@ def generate_tax_preamble(date_birth):
     """, {'YYYY-MM-DD': date_birth}))
 
 def generate_tax_accounts(year):
+    """Generate accounts and contributino directives for a particular tax year.
+
+    Args:
+      year: An integer, the year we're to generate this for.
+    Returns:
+      A list of directives.
+    """
     return parse(replace("""
 
       ;; Open tax accounts for that year.
@@ -253,6 +352,14 @@ def generate_tax_accounts(year):
 
 
 def generate_retirement_investment(date_begin, date_end):
+    """Generate transactions for retirement investments.
+
+    Args:
+      date_begin: A date instance, when to beginning applying this.
+      date_end: A date instance, when to end applying this.
+    Returns:
+      A list of directives.
+    """
     retirement_string = replace("""
       YYYY-MM-DD open Assets:CC:Retirement:Cash    CCY
     """, {'YYYY-MM-DD': date_begin})
@@ -261,6 +368,15 @@ def generate_retirement_investment(date_begin, date_end):
 
 
 def generate_banking(date_begin, date_end, initial_amount):
+    """Generate a checking account opening.
+
+    Args:
+      date_begin: A date instance, the beginning date.
+      date_end: A date instance, the end date.
+      initial_amount: A Decimal instance, the amount to initialize the checking account with.
+    Returns:
+      A list of directives.
+    """
     return parse(replace("""
       YYYY-MM-DD open Assets:CC:Bank1:Checking    CCY
       ;; YYYY-MM-DD open Assets:CC:Bank1:Savings    CCY
@@ -274,31 +390,17 @@ def generate_banking(date_begin, date_end, initial_amount):
 
 
 def generate_taxable_investment(date_begin, date_end):
+    """Generate opening directives and transactions for an investment account.
+
+    Args:
+      date_begin: A date instance, the beginning date.
+      date_end: A date instance, the end date.
+    Returns:
+      A list of directives.
+    """
     return parse(replace("""
       YYYY-MM-DD open Assets:CC:Investment:Cash    CCY
     """, {'YYYY-MM-DD': date_begin}))
-
-
-def generate_checking_expenses_rent(date_begin, date_end, account, rent_amount):
-    oss = io.StringIO()
-    for dt in rrule.rrule(rrule.MONTHLY, dtstart=date_begin, until=date_end):
-        # Have the landlord cash the check a few days after.
-        date = dt.date()
-        date += datetime.timedelta(days=random.randint(2, 5))
-
-        oss.write(replace("""
-
-          YYYY-MM-DD * "Paying the rent"
-            ACCOUNT              -AMOUNT CCY
-            Expenses:Home:Rent    AMOUNT CCY
-
-        """, {
-            'YYYY-MM-DD': date,
-            'ACCOUNT': account,
-            'AMOUNT': '{:.2f}'.format(rent_amount)
-        }))
-
-    return parse(oss.getvalue())
 
 
 def generate_periodic_expenses(frequency, date_begin, date_end,
@@ -306,6 +408,24 @@ def generate_periodic_expenses(frequency, date_begin, date_end,
                                account_from, account_to,
                                amount_mu, amount_sigma=0,
                                delay_days_min=0, delay_days_max=0):
+    """Generate periodic expense transactions.
+
+    Args:
+      frequency: A rrule frequency enum, such as rrule.MONTHLY.
+      date_begin: A date instance, the beginning date.
+      date_end: A date instance, the end date.
+      payee: A string, the payee name to use on the transactions.
+      narration: A string, the narration to use on the transactions.
+      account_from: An account string the debited account.
+      account_to: An account string the credited account.
+      amount_mu: The average amount.
+      amount_sigma: The standard deviation of the amount.
+      delay_days_min: The minimum amount of advance days for the transaction.
+      delay_days_max: The maximum amount of advance days for the transaction.
+    Returns:
+      A list of directives.
+    """
+
     oss = io.StringIO()
     for dt in rrule.rrule(frequency, dtstart=date_begin, until=date_end):
         date = dt.date()
@@ -333,14 +453,31 @@ def generate_periodic_expenses(frequency, date_begin, date_end,
     return parse(oss.getvalue())
 
 
-def generate_checking_transfers(income_entries,
-                                account_checking,
-                                account_investment,
+def generate_outgoing_transfers(entries,
+                                account,
+                                account_out,
                                 transfer_minimum,
                                 transfer_threshold):
+    """Generate transfers of accumulated funds out of an account.
+
+    This monitors the balance of an account and when it is beyond a threshold,
+    generate out transfers form that account to another account.
+
+    Args:
+      entries: A list of existing entries that affect this account so far.
+        The generated entries will also affect this account.
+      account: An account string, the account to monitor.
+      account_out: An account string, the savings account to make transfers to.
+      transfer_minimum: The minimum amount of funds to always leave in this account
+        after a transfer.
+      transfer_threshold: The minimum amount of funds to be able to transfer out without
+        breaking the minimum.
+    Returns:
+      A list of new directives, the transfers to add to the given account.
+    """
     oss = io.StringIO()
-    real_root = realization.realize(income_entries)
-    real_account = realization.get(real_root, account_checking)
+    real_root = realization.realize(entries)
+    real_account = realization.get(real_root, account)
     balance = inventory.Inventory()
     for posting in real_account.postings:
         if not isinstance(posting, data.Posting):
@@ -354,14 +491,14 @@ def generate_checking_transfers(income_entries,
 
             oss.write(replace("""
 
-              YYYY-MM-DD * "Transfering accumulated savings to investment account"
-                CHECKING        -AMOUNT CCY
-                INVESTMENT       AMOUNT CCY
+              YYYY-MM-DD * "Transfering accumulated savings to other account"
+                ACCOUNT         -AMOUNT CCY
+                ACCOUNT_OUT      AMOUNT CCY
 
             """, {
                 'YYYY-MM-DD': posting.entry.date + datetime.timedelta(days=1),
-                'CHECKING': account_checking,
-                'INVESTMENT': account_investment,
+                'ACCOUNT': account,
+                'ACCOUNT_OUT': account_out,
                 'AMOUNT': '{:.2f}'.format(transfer_amount)
             }))
 
@@ -371,6 +508,13 @@ def generate_checking_transfers(income_entries,
 
 
 def generate_expenses(date_birth):
+    """Generate directives for expense accounts.
+
+    Args:
+      date_birth: Birth date of the character.
+    Returns:
+      A list of directives.
+    """
     return parse(replace("""
 
       YYYY-MM-DD open Expenses:Home:Rent
@@ -381,12 +525,27 @@ def generate_expenses(date_birth):
 
 
 def generate_equity(date_birth):
+    """Generate directives for equity accounts we're going to use.
+
+    Args:
+      date_birth: Birth date of the character.
+    Returns:
+      A list of directives.
+    """
     return parse(replace("""
       YYYY-MM-DD open Equity:Opening-Balances
     """, {'YYYY-MM-DD': date_birth}))
 
 
 def check_non_negative(entries, account):
+    """Check that the balance of the given account never goes negative.
+
+    Args:
+      entries: A list of directives.
+      account: An account string, the account to check the balance for.
+    Raises:
+      AssertionError: if the balance goes negative.
+    """
     real_root = realization.realize(entries)
     real_account = realization.get(real_root, account)
     balance = inventory.Inventory()
@@ -396,25 +555,40 @@ def check_non_negative(entries, account):
             assert all(amt.number > ZERO for amt in balance.get_amounts())
 
 
+def validate_output(contents, positive_accounts):
+    """Check that the output file validates.
+
+    Args:
+      contents: A string, the output file.
+      positive_accounts: A list of strings, account names to check for
+        non-negative balances.
+    Raises:
+      AssertionError: If the output does not validate.
+    """
+    loaded_entries, _, _ = loader.load_string(
+        contents,
+        log_errors=sys.stderr,
+        extra_validations=validation.HARDCORE_VALIDATIONS)
+
+    # Sanity checks: Check that the checking balance never goes below zero.
+    for account in positive_accounts:
+        check_non_negative(loaded_entries, account)
+
+
 def main():
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     argparser = argparse.ArgumentParser(description=__doc__.strip())
     opts = argparser.parse_args()
-
-    date_birth = datetime.date(1980, 1, 1)
-    date_begin = datetime.date(2012, 1, 1)
-    date_end = datetime.date(2016, 1, 1)
 
     # The following code entirely writes out the output to generic names, such
     # as "Employer1", "Bank1", and "CCY" (for principal currency). Those names
     # are purposely chosen to be unique, and only near the very end do we make
     # renamings to more specific and realistic names.
 
-    account_checking = 'Assets:CC:Bank1:Checking'
-    annual_salary = D('120000')
-    rent_divisor = D('50')
-    rent_amount = annual_salary / rent_divisor
-    employer, address = employers[0]
+    # Estimate the rent.
+    rent_amount = (int(annual_salary / rent_divisor) / rent_increment) * rent_increment
+
+    # Get a random employer.
+    employer, address = random.choice(employers)
 
     # Income sources.
     income_entries = generate_employment_income(employer, address,
@@ -448,7 +622,7 @@ def main():
     banking_expenses = rent_expenses + electricity_expenses + internet_expenses
 
     # Book transfers to investment account.
-    banking_transfers = generate_checking_transfers(
+    banking_transfers = generate_outgoing_transfers(
         sorted(income_entries + banking_expenses, key=data.entry_sortkey),
         account_checking,
         'Assets:CC:Investment:Cash',
@@ -534,21 +708,14 @@ def main():
     sys.stdout.write(contents)
 
     # Validate the results parse fine.
-    loaded_entries, _, _ = loader.load_string(
-        contents,
-        log_errors=sys.stderr,
-        extra_validations=validation.HARDCORE_VALIDATIONS)
+    validate_output(contents, [replace(account, replacements)
+                               for account in [account_checking]])
 
-    # Sanity checks: Check that the checking balance never goes below zero.
-    check_non_negative(loaded_entries,
-                       replace(account_checking, replacements))
+    return 0
+
 
 
 ## TODO(blais) - bean-format the entire output file after renamings
 ## TODO(blais) - Expenses in checking accounts.
 ## TODO(blais) - Credit card accounts, with lots of expenses (two times).
 ## TODO(blais) - Move this to a unit-tested location.
-
-
-if __name__ == '__main__':
-    main()
