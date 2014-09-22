@@ -41,6 +41,9 @@ from beancount.ops import validation
 from beancount import loader
 
 
+# Constants.
+ONE_DAY = datetime.timedelta(days=1)
+
 # Date of birth of our fictional character.
 date_birth = datetime.date(1980, 1, 1)
 
@@ -511,20 +514,44 @@ def generate_tax_accounts(year):
           'LIMIT': retirement_limits[year]}))
 
 
-def generate_retirement_investment(date_begin, date_end):
-    """Generate transactions for retirement investments.
+def generate_retirement_investments(entries, account, commodities_map):
+    """Invest money deposited to the given retirement account.
 
     Args:
-      date_begin: A date instance, when to beginning applying this.
-      date_end: A date instance, when to end applying this.
+      entries: A list of directives
+      account: The checking account to generate expenses to.
+      commodities_map: A dict of commodity/currency to a fraction to be invested in.
     Returns:
-      A list of directives.
+      A list of new directives for the given investments. This also generates account
+      opening directives for the desired investment commodities.
     """
-    retirement_string = replace("""
-      YYYY-MM-DD open Assets:CC:Retirement:Cash    CCY
-    """, {'YYYY-MM-DD': date_begin})
+    oss = io.StringIO()
+    account_cash = join(account, 'Cash')
+    oss.write("{0} open {1} CCY\n".format(entries[0].date, account_cash))
+    for currency in commodities_map.keys():
+        oss.write("{0} open {1} {2}\n".format(entries[0].date,
+                                              join(account, currency),
+                                              currency))
+    open_entries = parse(oss.getvalue())
 
-    return parse(retirement_string)
+    oss = io.StringIO()
+    for posting, balances in postings_for(entries, [account_cash]):
+        balance = balances[account]
+        next_date = posting.entry.date + ONE_DAY
+
+        # oss.write(replace("""
+
+        #   YYYY-MM-DD * "Investing cash"
+        #     ACCOUNT:COMM    UNITS COMM {COST CCY}
+        #     ACCOUNT:Cash    CASH_AMOUNT CCY
+
+        # """, {'YYYY-MM-DD': date_begin,
+        #       'COMM': 'RETINV1',
+        #       'UNITS': '{:.2f}'.format(D('1')),
+        #       'COST': '{:.2f}'.format(D('1')),
+        #   }))
+
+    return open_entries
 
 
 def generate_banking(date_begin, date_end, initial_amount):
@@ -917,7 +944,7 @@ def main():
                         help="Fix the random seed for debugging.")
     opts = argparser.parse_args()
 
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
     if opts.seed:
         random.seed(opts.seed)
 
@@ -931,7 +958,7 @@ def main():
     account_payable = 'Liabilities:AccountsPayable'
     account_checking = 'Assets:CC:Bank1:Checking'
     account_credit = 'Liabilities:CC:CreditCard1'
-    account_retirement = 'Assets:CC:Retirement:Cash'
+    account_retirement = 'Assets:CC:Retirement'
     account_investing = 'Assets:CC:Investment:Cash'
 
     # Estimate the rent.
@@ -944,7 +971,7 @@ def main():
     income_entries = generate_employment_income(employer, address,
                                                 annual_salary,
                                                 account_checking,
-                                                account_retirement,
+                                                join(account_retirement, 'Cash'),
                                                 date_begin, date_end)
 
     # Periodic expenses from banking accounts.
@@ -988,7 +1015,9 @@ def main():
         transfer_increment=D('500'))
 
     # Investment accounts for retirement.
-    retirement_entries = generate_retirement_investment(date_begin, date_end)
+    retirement_entries = generate_retirement_investments(
+        income_entries, account_retirement, {'RETINV1': 0.40,
+                                             'RETINV2': 0.60})
 
     # Taxable savings / investment accounts.
     investment_entries = generate_taxable_investment(date_begin, date_end)
@@ -1036,7 +1065,8 @@ def main():
 
 
 ## TODO(blais) - bean-format the entire output file after renamings
-## TODO(blais) - Generate some minimum amount of realistic-ish cash entries.
+## TODO(blais) - Generate random price series for commodities that we use; use those as input for costs.
 ## TODO(blais) - Create investments in retirement.
 ## TODO(blais) - Create investments in taxable account (along with sales).
-## TODO(blais) - Add employer match for 401k.
+## TODO(blais) - Add employer match amount for 401k.
+## TODO(blais) - Generate some minimum amount of realistic-ish cash entries.
