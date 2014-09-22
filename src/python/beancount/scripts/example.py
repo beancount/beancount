@@ -11,9 +11,11 @@ import copy
 import collections
 import datetime
 import decimal
+import functools
 import io
 import itertools
 import logging
+import operator
 import math
 import random
 import re
@@ -67,7 +69,7 @@ employers = [
 
 # Generic names of restaurants and grocery places to choose from.
 restaurant_names = ["Rose Flower",
-                    "Cafe Gomador",
+                    "Cafe Modagor",
                     "Goba Goba",
                     "Kin Soy",
                     "Uncle Boons",
@@ -86,8 +88,9 @@ restaurant_narrations = ["Eating out {}".format(party_name)
                                             ""]]
 
 groceries_names = ["Onion Market",
-                   "Whole Moods Market",
-                   "Corner Deli"]
+                   "Good Moods Market",
+                   "Corner Deli",
+                   "Farmer Fresh"]
 
 # Limits on allowed retirement contributions.
 retirement_limits = {2000: D('10500'),
@@ -412,7 +415,7 @@ def generate_employment_income(employer,
               Expenses:Health:Vision:Insurance                  {vision} CCY
               Expenses:Taxes:Year:CC:Medicare                   {medicare:.2f} CCY
               Expenses:Taxes:Year:CC:Federal                    {federal:.2f} CCY
-              Expenses:Taxes:Year:CC:StateNY                    {state:.2f} CCY
+              Expenses:Taxes:Year:CC:State                      {state:.2f} CCY
               Expenses:Taxes:Year:CC:CityNYC                    {city:.2f} CCY
               Expenses:Taxes:Year:CC:SDI                        {sdi:.2f} CCY
               Expenses:Taxes:Year:CC:SocSec                     {socsec:.2f} CCY
@@ -457,6 +460,15 @@ def generate_tax_accounts(year):
     Returns:
       A list of directives.
     """
+    date_filing = (datetime.date(year, 3, 20) +
+                   datetime.timedelta(days=random.randint(0, 5)))
+
+    date_federal = (date_filing + datetime.timedelta(days=random.randint(0, 4)))
+    date_state = (date_filing + datetime.timedelta(days=random.randint(0, 4)))
+
+    amount_federal = D(max(random.normalvariate(500, 120), 12))
+    amount_state = D(max(random.normalvariate(300, 100), 10))
+
     return parse(replace("""
 
       ;; Open tax accounts for that year.
@@ -465,7 +477,7 @@ def generate_tax_accounts(year):
       YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:Federal              CCY
       YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:CityNYC              CCY
       YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:SDI                  CCY
-      YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:StateNY              CCY
+      YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:State                CCY
       YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:SocSec               CCY
 
       ;; Check that the tax amounts have been fully used.
@@ -475,7 +487,25 @@ def generate_tax_accounts(year):
         Income:CC:Federal:PreTax401k    -LIMIT DEFCCY
         Assets:CC:Federal:PreTax401k     LIMIT DEFCCY
 
+      YYYY-MM-EE * "Filing taxes for YEAR"
+        Expenses:Taxes:YYEAR:CC:Federal      FEDERAL_AMT CCY
+        Expenses:Taxes:YYEAR:CC:State        STATE_AMT CCY
+        Liabilities:AccountsPayable
+
+      YYYY-MM-FF * "FEDERAL TAXPYMT"
+        Assets:CC:Bank1:Checking      -FEDERAL_AMT CCY
+        Liabilities:AccountsPayable
+
+      YYYY-MM-GG * "STATE TAX & FINANC PYMT"
+        Assets:CC:Bank1:Checking      -STATE_AMT CCY
+        Liabilities:AccountsPayable
+
     """, {'YYYY-MM-DD': datetime.date(year, 1, 1),
+          'YYYY-MM-EE': date_filing,
+          'YYYY-MM-FF': date_federal,
+          'YYYY-MM-GG': date_state,
+          'FEDERAL_AMT': '{:.2f}'.format(amount_federal),
+          'STATE_AMT': '{:.2f}'.format(amount_state),
           'YEAR': year,
           'YYEAR': 'Y{}'.format(year),
           'LIMIT': retirement_limits[year]}))
@@ -675,7 +705,7 @@ def generate_outgoing_transfers(entries,
     oss = io.StringIO()
     offset_amount = ZERO
     for current_amount, (_, posting) in zip(capped_amounts, amounts):
-        if posting.entry.date > last_date:
+        if posting.entry.date >= last_date:
             break
 
         adjusted_amount = current_amount - offset_amount
@@ -754,7 +784,7 @@ def check_non_negative(entries, account, currency):
     for posting, balances in postings_for(sorted_entries(entries), [account]):
         balance = balances[account]
         assert all(amt.number >= ZERO
-                   for amt in balance.get_amounts())
+                   for amt in balance.get_amounts()), "Negative balance: {}".format(balance)
 
 
 def validate_output(contents, positive_accounts, currency):
@@ -859,6 +889,28 @@ def generate_credit_expenses(date_begin, date_end, account_credit, account_check
     return sorted_entries(credit_preamble + credit_expenses + credit_payments)
 
 
+def contextualize_file(contents, employer):
+    """Replace generic strings in the generated file with realistic strings.
+
+    Args:
+      contents: A string, the generic file contents.
+    Returns:
+      A string, the contextualized version.
+    """
+    replacements = {
+        'CC': 'US',
+        'CCY': 'USD',
+        'VACCCY': 'VACHR',
+        'DEFCCY': 'IRAUSD',
+        'Bank1': 'BofA',
+        'CreditCard1': 'Chase:Slate',
+        'CreditCard2': 'Amex:BlueCash',
+        'Employer1': employer,
+        'Retirement': 'Vanguard',
+        }
+    return replace(contents, replacements), replacements
+
+
 def main():
     argparser = argparse.ArgumentParser(description=__doc__.strip())
     argparser.add_argument('-s', '--seed', action='store', type=int,
@@ -875,6 +927,8 @@ def main():
     # renamings to more specific and realistic names.
 
     # Name of the checking account.
+    account_opening = 'Equity:Opening-Balances'
+    account_payable = 'Liabilities:AccountsPayable'
     account_checking = 'Assets:CC:Bank1:Checking'
     account_credit = 'Liabilities:CC:CreditCard1'
     account_retirement = 'Assets:CC:Retirement:Cash'
@@ -902,11 +956,21 @@ def main():
                                               account_credit,
                                               account_checking)
 
+    # Tax accounts.
+    tax_preamble = generate_tax_preamble(date_birth)
+    taxes = [(year, generate_tax_accounts(year))
+             for year in range(date_begin.year, date_end.year)]
+    tax_entries = tax_preamble + functools.reduce(operator.add,
+                                                  (entries for _, entries in taxes))
+
     # Open banking accounts and gift the checking account with a balance that
     # will offset all the amounts to ensure a positive balance throughout its
     # lifetime.
     minimum = get_minimum_balance(
-        sorted_entries(income_entries + banking_expenses + credit_entries),
+        sorted_entries(income_entries +
+                       banking_expenses +
+                       credit_entries +
+                       tax_entries),
         account_checking, 'CCY')
     banking_entries = generate_banking(date_begin, date_end, max(-minimum, ZERO))
 
@@ -915,17 +979,13 @@ def main():
         sorted_entries(income_entries +
                        banking_entries +
                        banking_expenses +
-                       credit_entries),
+                       credit_entries +
+                       tax_entries),
         account_checking,
         account_investing,
         transfer_minimum=D('200'),
         transfer_threshold=D('3000'),
         transfer_increment=D('500'))
-
-    # Tax accounts.
-    tax_preamble = generate_tax_preamble(date_birth)
-    taxes = [(year, generate_tax_accounts(year))
-             for year in range(date_begin.year, date_end.year)]
 
     # Investment accounts for retirement.
     retirement_entries = generate_retirement_investment(date_begin, date_end)
@@ -937,7 +997,8 @@ def main():
     expense_accounts_entries = generate_expense_accounts(date_birth)
 
     # Equity accounts.
-    equity_entries = generate_open_entries(date_birth, ['Equity:Opening-Balances'])
+    equity_entries = generate_open_entries(date_birth, [account_opening,
+                                                        account_payable])
 
     # Format the results.
     output = io.StringIO()
@@ -960,22 +1021,8 @@ def main():
     output_section('* Expenses', expense_accounts_entries)
     output_section('* Cash', [])  # FIXME TODO(blais): cash entries
 
-    # Replace generic names by realistic names.
-    generic_contents = output.getvalue()
-    replacements = {
-        'CC': 'US',
-        'CCY': 'USD',
-        'VACCCY': 'VACHR',
-        'DEFCCY': 'IRAUSD',
-        'Bank1': 'BofA',
-        'CreditCard1': 'Chase:Slate',
-        'CreditCard2': 'Amex:BlueCash',
-        'Employer1': employer,
-        'Retirement': 'Vanguard',
-        }
-    contents = replace(generic_contents, replacements)
-
-    # Output the results.
+    # Replace generic names by realistic names and output results.
+    contents, replacements = contextualize_file(output.getvalue(), employer)
     sys.stdout.write(contents)
 
     # Validate the results parse fine.
@@ -990,7 +1037,6 @@ def main():
 
 ## TODO(blais) - bean-format the entire output file after renamings
 ## TODO(blais) - Generate some minimum amount of realistic-ish cash entries.
-## TODO(blais) - Book tax payment accounts.
 ## TODO(blais) - Create investments in retirement.
 ## TODO(blais) - Create investments in taxable account (along with sales).
 ## TODO(blais) - Add employer match for 401k.
