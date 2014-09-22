@@ -46,9 +46,6 @@ date_birth = datetime.date(1980, 1, 1)
 date_begin = datetime.date(2012, 1, 1)
 date_end = datetime.date(2016, 1, 1)
 
-# Name of the checking account.
-account_checking = 'Assets:CC:Bank1:Checking'
-
 # Annual salary.
 annual_salary = D('120000')
 
@@ -121,14 +118,6 @@ option "title" "Example Beancount file"
 option "operating_currency" "CCY"
 """
 
-def debug(*args):
-    """Debug print to stderr. Just a convenience funicton.
-
-    Args:
-      *args: Arguments to be printed out.
-    """
-    print(*args, file=sys.stderr)
-
 
 def parse(string):
     """Parse some input string and assert no errors.
@@ -143,6 +132,30 @@ def parse(string):
         printer.print_errors(errors, file=sys.stderr)
         raise ValueError("Parsed text has errors")
     return entries
+
+
+def sorted_entries(entries):
+    """Sort the entries using the entry-specific ordering.
+
+    Args:
+      entries: An unsorted list of directives.
+    Returns:
+      A new list of entries, sorted accoriding to date and source.
+    """
+    return sorted(entries, key=data.entry_sortkey)
+
+
+# FIXME: This is generic; move to utils.
+def round_to(number, increment):
+    """Round a number down to a particular increment.
+
+    Args:
+      number: A Decimal, the number to be rounded.
+      increment: A Decimal, the size of the increment.
+    Returns:
+      A Decimal, the rounded number.
+    """
+    return int((number / increment)) * increment
 
 
 # FIXME: This is generic; move to utils.
@@ -201,6 +214,8 @@ def date_seq(date_begin, date_end, days_min, days_max):
     while date < date_end:
         nb_days_forward = random.randint(days_min, days_max)
         date += datetime.timedelta(days=nb_days_forward)
+        if date >= date_end:
+            break
         yield date
 
 
@@ -214,9 +229,14 @@ def delay_dates(date_iter, delay_days_min, delay_days_max):
     Yields:
       datetime.date instances.
     """
-    for dt in date_iter:
+    dates = list(date_iter)
+    last_date = dates[-1]
+    last_date = last_date.date() if isinstance(last_date, datetime.datetime) else last_date
+    for dt in dates:
         date = dt.date() if isinstance(dt, datetime.datetime) else dt
         date += datetime.timedelta(days=random.randint(delay_days_min, delay_days_max))
+        if date >= last_date:
+            break
         yield date
 
 
@@ -261,10 +281,9 @@ def get_minimum_balance(entries, account, currency):
       A Decimal number, the minimum amount throughout the history of this account.
     """
     min_amount = ZERO
-    for posting, balances in postings_for(entries, [account]):
+    for posting, balances in postings_for(sorted_entries(entries), [account]):
         balance = balances[account]
         current = balance.get_amount(currency).number
-        debug(balance, current)
         if current < min_amount:
             min_amount = current
     return min_amount
@@ -616,7 +635,8 @@ def generate_outgoing_transfers(entries,
                                 account,
                                 account_out,
                                 transfer_minimum,
-                                transfer_threshold):
+                                transfer_threshold,
+                                transfer_increment):
     """Generate transfers of accumulated funds out of an account.
 
     This monitors the balance of an account and when it is beyond a threshold,
@@ -631,16 +651,37 @@ def generate_outgoing_transfers(entries,
         after a transfer.
       transfer_threshold: The minimum amount of funds to be able to transfer out without
         breaking the minimum.
+      transfer_increment: A Decimal, the increment to round transfers to.
     Returns:
       A list of new directives, the transfers to add to the given account.
     """
-    oss = io.StringIO()
-    for posting, balances in postings_for(entries, [account]):
-        balance = balances[account]
+    last_date = entries[-1].date
 
-        current_amount = balance.get_amount('CCY').number
-        if current_amount > (transfer_minimum + transfer_threshold):
-            transfer_amount = current_amount - transfer_minimum
+    # Reverse the balance amounts taking into account the minimum balance for
+    # all time in the future.
+    amounts = [(balances[account].get_amount('CCY').number, posting)
+               for posting, balances in postings_for(entries, [account])]
+    reversed_amounts = []
+    last_amount, _ = amounts[-1]
+    for current_amount, _ in reversed(amounts):
+        if current_amount < last_amount:
+            reversed_amounts.append(current_amount)
+            last_amount = current_amount
+        else:
+            reversed_amounts.append(last_amount)
+    capped_amounts = reversed(reversed_amounts)
+
+    # Create transfers outward where the future allows it.
+    oss = io.StringIO()
+    offset_amount = ZERO
+    for current_amount, (_, posting) in zip(capped_amounts, amounts):
+        if posting.entry.date > last_date:
+            break
+
+        adjusted_amount = current_amount - offset_amount
+        if adjusted_amount > (transfer_minimum + transfer_threshold):
+            transfer_amount = round_to(adjusted_amount - transfer_minimum,
+                                       transfer_increment)
 
             oss.write(replace("""
 
@@ -655,12 +696,12 @@ def generate_outgoing_transfers(entries,
                 'AMOUNT': '{:.2f}'.format(transfer_amount)
             }))
 
-            balance.add_amount(amount.Amount(-transfer_amount, 'CCY'))
+            offset_amount += transfer_amount
 
     return parse(oss.getvalue())
 
 
-def generate_expenses(date_birth):
+def generate_expense_accounts(date_birth):
     """Generate directives for expense accounts.
 
     Args:
@@ -700,27 +741,30 @@ def generate_open_entries(date, accounts, currency=None):
         for account in accounts))
 
 
-def check_non_negative(entries, account):
+def check_non_negative(entries, account, currency):
     """Check that the balance of the given account never goes negative.
 
     Args:
       entries: A list of directives.
       account: An account string, the account to check the balance for.
+      currency: A string, the currency to check minimums for.
     Raises:
       AssertionError: if the balance goes negative.
     """
-    for posting, balances in postings_for(entries, [account]):
+    for posting, balances in postings_for(sorted_entries(entries), [account]):
         balance = balances[account]
-        assert all(amt.number >= ZERO for amt in balance.get_amounts())
+        assert all(amt.number >= ZERO
+                   for amt in balance.get_amounts())
 
 
-def validate_output(contents, positive_accounts):
+def validate_output(contents, positive_accounts, currency):
     """Check that the output file validates.
 
     Args:
       contents: A string, the output file.
       positive_accounts: A list of strings, account names to check for
         non-negative balances.
+      currency: A string, the currency to check minimums for.
     Raises:
       AssertionError: If the output does not validate.
     """
@@ -731,119 +775,152 @@ def validate_output(contents, positive_accounts):
 
     # Sanity checks: Check that the checking balance never goes below zero.
     for account in positive_accounts:
-        check_non_negative(loaded_entries, account)
+        check_non_negative(loaded_entries, account, currency)
 
 
-def main():
-    argparser = argparse.ArgumentParser(description=__doc__.strip())
-    opts = argparser.parse_args()
+def generate_banking_expenses(date_begin, date_end, account, rent_amount):
+    """Generate expenses paid out of a checking account, typically living expenses.
 
-    # The following code entirely writes out the output to generic names, such
-    # as "Employer1", "Bank1", and "CCY" (for principal currency). Those names
-    # are purposely chosen to be unique, and only near the very end do we make
-    # renamings to more specific and realistic names.
-
-    # Estimate the rent.
-    rent_amount = (int(annual_salary / rent_divisor) / rent_increment) * rent_increment
-
-    # Get a random employer.
-    employer, address = random.choice(employers)
-
-    # Income sources.
-    income_entries = generate_employment_income(employer, address,
-                                                annual_salary,
-                                                account_checking,
-                                                'Assets:CC:Retirement:Cash',
-                                                date_begin, date_end)
-
-
-
-
-    # Periodic banking expenses.
+    Args:
+      date_begin: The start date.
+      date_end: The end date.
+      account: The checking account to generate expenses to.
+      rent_amount: The amount of rent.
+    Returns:
+      A list of directives.
+    """
     rent_expenses = generate_periodic_expenses(
         delay_dates(rrule.rrule(rrule.MONTHLY, dtstart=date_begin, until=date_end), 2, 5),
         "RiverBank Properties", "Paying the rent",
-        account_checking, 'Expenses:Home:Rent',
+        account, 'Expenses:Home:Rent',
         lambda: random.normalvariate(float(rent_amount), 0))
 
     electricity_expenses = generate_periodic_expenses(
         delay_dates(rrule.rrule(rrule.MONTHLY, dtstart=date_begin, until=date_end), 7, 8),
         "EDISON POWER", "",
-        account_checking, 'Expenses:Home:Electricity',
+        account, 'Expenses:Home:Electricity',
         lambda: random.normalvariate(65, 0))
 
     internet_expenses = generate_periodic_expenses(
         delay_dates(rrule.rrule(rrule.MONTHLY, dtstart=date_begin, until=date_end), 20, 22),
         "Wine-Tarner Cable", "",
-        account_checking, 'Expenses:Home:Internet',
+        account, 'Expenses:Home:Internet',
         lambda: random.normalvariate(80, 0.10))
 
-    banking_expenses = sorted(rent_expenses + electricity_expenses + internet_expenses,
-                              key=data.entry_sortkey)
+    return sorted_entries(rent_expenses + electricity_expenses + internet_expenses)
 
 
+def generate_credit_expenses(date_begin, date_end, account_credit, account_checking):
+    """Generate expenses paid out of a credit card account, including payments to the
+    credit card.
 
-
-    # Expenses via credit card.
-    account_credit1 = 'Liabilities:CC:CreditCard1'
-    credit_preamble = generate_open_entries(date_birth, [account_credit1], 'CCY')
-
+    Args:
+      date_begin: The start date.
+      date_end: The end date.
+      account: The checking account to generate expenses to.
+    Returns:
+      A list of directives.
+    """
     restaurant_expenses = generate_periodic_expenses(
         date_seq(date_begin, date_end, 1, 5),
         restaurant_names, restaurant_narrations,
-        account_credit1, 'Expenses:Food:Restaurant',
+        account_credit, 'Expenses:Food:Restaurant',
         lambda: min(random.lognormvariate(math.log(30), math.log(1.5)),
                     random.randint(200, 220)))
 
     groceries_expenses = generate_periodic_expenses(
         date_seq(date_begin, date_end, 5, 20),
         groceries_names, "Buying groceries",
-        account_credit1, 'Expenses:Food:Groceries',
+        account_credit, 'Expenses:Food:Groceries',
         lambda: min(random.lognormvariate(math.log(80), math.log(1.3)),
                     random.randint(250, 300)))
 
     subway_expenses = generate_periodic_expenses(
         date_seq(date_begin, date_end, 27, 33),
         "Metro Transport", "Subway tickets",
-        account_credit1, 'Expenses:Transport:Subway',
+        account_credit, 'Expenses:Transport:Subway',
         lambda: D('120.00'))
 
-    credit_expenses = sorted(restaurant_expenses + groceries_expenses + subway_expenses,
-                             key=data.entry_sortkey)
+    credit_expenses = sorted_entries(restaurant_expenses +
+                                     groceries_expenses +
+                                     subway_expenses)
 
     # Generate entries that will pay off the credit card (unconditionally).
     credit_payments = generate_clearing_entries(
-        delay_dates(rrule.rrule(rrule.MONTHLY, dtstart=date_begin, until=date_end, bymonthday=7), 0, 4),
+        delay_dates(rrule.rrule(rrule.MONTHLY,
+                                dtstart=date_begin, until=date_end, bymonthday=7), 0, 4),
         "CreditCard1", "Paying off credit card",
         credit_expenses,
-        account_credit1, account_checking)
+        account_credit, account_checking)
 
-    credit_entries = sorted(credit_preamble + credit_expenses + credit_payments,
-                            key=data.entry_sortkey)
+    # Entries to open accounts.
+    credit_preamble = generate_open_entries(date_birth, [account_credit], 'CCY')
 
-
-
-
-
-    # Create banking accounts and gift the checking account with a balance that
-    # will ensure a positive balance throughout its lifetime.
-    minimum = get_minimum_balance(income_entries + banking_expenses, account_checking, 'CCY')
-    debug('minimum', minimum)
-    initial = -minimum if minimum < ZERO else ZERO
+    return sorted_entries(credit_preamble + credit_expenses + credit_payments)
 
 
-    banking_entries = generate_banking(date_begin, date_end, initial)
+def main():
+    argparser = argparse.ArgumentParser(description=__doc__.strip())
+    argparser.add_argument('-s', '--seed', action='store', type=int,
+                        help="Fix the random seed for debugging.")
+    opts = argparser.parse_args()
+
+    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    if opts.seed:
+        random.seed(opts.seed)
+
+    # The following code entirely writes out the output to generic names, such
+    # as "Employer1", "Bank1", and "CCY" (for principal currency). Those names
+    # are purposely chosen to be unique, and only near the very end do we make
+    # renamings to more specific and realistic names.
+
+    # Name of the checking account.
+    account_checking = 'Assets:CC:Bank1:Checking'
+    account_credit = 'Liabilities:CC:CreditCard1'
+    account_retirement = 'Assets:CC:Retirement:Cash'
+    account_investing = 'Assets:CC:Investment:Cash'
+
+    # Estimate the rent.
+    rent_amount = round_to(annual_salary / rent_divisor, rent_increment)
+
+    # Get a random employer.
+    employer, address = random.choice(employers)
+
+    # Salary income payments.
+    income_entries = generate_employment_income(employer, address,
+                                                annual_salary,
+                                                account_checking,
+                                                account_retirement,
+                                                date_begin, date_end)
+
+    # Periodic expenses from banking accounts.
+    banking_expenses = generate_banking_expenses(date_begin, date_end,
+                                                 account_checking, rent_amount)
+
+    # Expenses via credit card.
+    credit_entries = generate_credit_expenses(date_begin, date_end,
+                                              account_credit,
+                                              account_checking)
+
+    # Open banking accounts and gift the checking account with a balance that
+    # will offset all the amounts to ensure a positive balance throughout its
+    # lifetime.
+    minimum = get_minimum_balance(
+        sorted_entries(income_entries + banking_expenses + credit_entries),
+        account_checking, 'CCY')
+    banking_entries = generate_banking(date_begin, date_end, max(-minimum, ZERO))
 
     # Book transfers to investment account.
-    if 0:
-        # FIXME: bring this back
-        banking_transfers = generate_outgoing_transfers(
-            sorted(income_entries + banking_entries + banking_expenses + credit_entries, key=data.entry_sortkey),
-            account_checking,
-            'Assets:CC:Investment:Cash',
-            rent_amount + D('100'),
-            D('4000'))
-    banking_transfers = []
+    banking_transfers = generate_outgoing_transfers(
+        sorted_entries(income_entries +
+                       banking_entries +
+                       banking_expenses +
+                       credit_entries),
+        account_checking,
+        account_investing,
+        transfer_minimum=D('200'),
+        transfer_threshold=D('3000'),
+        transfer_increment=D('500'))
 
     # Tax accounts.
     tax_preamble = generate_tax_preamble(date_birth)
@@ -857,7 +934,7 @@ def main():
     investment_entries = generate_taxable_investment(date_begin, date_end)
 
     # Expense accounts.
-    expenses_entries = generate_expenses(date_birth)
+    expense_accounts_entries = generate_expense_accounts(date_birth)
 
     # Equity accounts.
     equity_entries = generate_open_entries(date_birth, ['Equity:Opening-Balances'])
@@ -866,11 +943,13 @@ def main():
     output = io.StringIO()
     def output_section(title, entries):
         output.write('{}\n\n'.format(title))
-        printer.print_entries(sorted(entries, key=data.entry_sortkey), file=output)
+        printer.print_entries(sorted_entries(entries), file=output)
 
     output.write(file_preamble)
     output_section('* Equity Accounts', equity_entries)
-    output_section('* Banking', banking_entries + banking_expenses + banking_transfers)
+    output_section('* Banking', sorted_entries(banking_entries +
+                                               banking_expenses +
+                                               banking_transfers))
     output_section('* Credit-Cards', credit_entries)
     output_section('* Taxable Investments', investment_entries)
     output_section('* Retirement Investments', retirement_entries)
@@ -878,7 +957,7 @@ def main():
     output_section('* Taxes', tax_preamble)
     for year, entries in taxes:
         output_section('** Tax Year {}'.format(year), entries)
-    output_section('* Expenses', expenses_entries)
+    output_section('* Expenses', expense_accounts_entries)
     output_section('* Cash', [])  # FIXME TODO(blais): cash entries
 
     # Replace generic names by realistic names.
@@ -900,17 +979,18 @@ def main():
     sys.stdout.write(contents)
 
     # Validate the results parse fine.
-    validate_output(contents, [replace(account, replacements)
-                               for account in [account_checking]])
+    validate_output(contents,
+                    [replace(account, replacements)
+                     for account in [account_checking]],
+                    replace('CCY', replacements))
 
     return 0
 
 
 
-## TODO(blais) - remove debug(), use logging, this script should output what it does verbosely
 ## TODO(blais) - bean-format the entire output file after renamings
-## TODO(blais) - Expenses in checking accounts.
-## TODO(blais) - Credit card accounts, with lots of expenses (two times).
-## TODO(blais) - Move this to a unit-tested location.
-## TODO(blais) - Change the transfer account to look at the future and be "perfect" instead of guestiating a minimum amount.
 ## TODO(blais) - Generate some minimum amount of realistic-ish cash entries.
+## TODO(blais) - Book tax payment accounts.
+## TODO(blais) - Create investments in retirement.
+## TODO(blais) - Create investments in taxable account (along with sales).
+## TODO(blais) - Add employer match for 401k.
