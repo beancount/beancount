@@ -38,6 +38,7 @@ from beancount.core.account import join
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.ops import validation
+from beancount.scripts import format
 from beancount import loader
 
 
@@ -122,6 +123,7 @@ file_preamble = """\
 
 option "title" "Example Beancount file"
 option "operating_currency" "CCY"
+
 """
 
 
@@ -935,7 +937,8 @@ def contextualize_file(contents, employer):
         'Employer1': employer,
         'Retirement': 'Vanguard',
         }
-    return replace(contents, replacements), replacements
+    new_contents = replace(contents, replacements)
+    return format.align_beancount(new_contents), replacements
 
 
 def main():
