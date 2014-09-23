@@ -174,7 +174,7 @@ option		{ return OPTION; }
 }
 
  /* Currencies. These are defined as uppercase only in order to disambiguate the
-  * syntax. */
+  * syntax. This is kept in sync with beancount.core.amount.CURRENCY_RE. */
 [A-Z][A-Z0-9\'\.\_\-]{0,10}[A-Z0-9]	{
     yylval->pyobj = BUILD("CURRENCY", "s", yytext);
     return CURRENCY;

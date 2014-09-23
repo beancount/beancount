@@ -21,7 +21,13 @@ from collections import namedtuple
 import re
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
-from .amount import ZERO, Decimal, D, Amount, amount_mult, MAXDIGITS_PRINTER
+from .amount import ZERO
+from .amount import Decimal
+from .amount import D
+from .amount import Amount
+from .amount import amount_mult
+from .amount import MAXDIGITS_PRINTER
+from .amount import CURRENCY_RE
 
 
 # Lots are a representations of a commodity with an optional associated cost and
@@ -247,9 +253,11 @@ class Position:
         Returns:
           A new instance of Position.
         """
-        match = re.match(r'\s*([-+]?[0-9.]+)\s+([A-Z][A-Z0-9\'._]+)'
-                         '(\s+{([-+]?[0-9.]+)\s+([A-Z][A-Z0-9\'._]+)'
-                         '(\s*/\s*(\d\d\d\d-\d\d-\d\d))?})?', string)
+        match = re.match(
+            (r'\s*([-+]?[0-9.]+)\s+({currency})'
+             '(\s+{{([-+]?[0-9.]+)\s+({currency})'
+             '(\s*/\s*(\d\d\d\d-\d\d-\d\d))?}})?').format(currency=CURRENCY_RE),
+            string)
         if not match:
             raise ValueError("Invalid string for position: '{}'".format(string))
         number, currency = match.group(1, 2)

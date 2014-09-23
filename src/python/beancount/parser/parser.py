@@ -45,7 +45,13 @@ ParserSyntaxError = collections.namedtuple('ParserSyntaxError', 'source message 
 
 
 def valid_account_regexp(options):
-    """Build a regexp to validate account names from the options."""
+    """Build a regexp to validate account names from the options.
+
+    Args:
+      options: A dict of options, as per beancount.parser.options.
+    Returns:
+      A string, a regular expression that will match all account names.
+    """
     names = map(options.__getitem__, ('name_assets',
                                       'name_liabilities',
                                       'name_equity',

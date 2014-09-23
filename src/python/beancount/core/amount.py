@@ -30,6 +30,10 @@ Decimal = decimal.Decimal
 ZERO = Decimal()
 ONE = Decimal('1')
 
+# A regular expression to match the name of a currency.
+# Note: This is kept in sync with "beancount/parser/lexer.l".
+CURRENCY_RE = '[A-Z][A-Z0-9\'\.\_\-]{0,10}[A-Z0-9]'
+
 # pylint: disable=invalid-name
 def D(strord=None):
     """Convert a string, possibly with commas, into a Decimal object.
@@ -166,7 +170,8 @@ class Amount:
         Returns:
           A new instance of Amount.
         """
-        match = re.match(r'\s*([-+]?[0-9.]+)\s+([A-Z][A-Z0-9\'._]+)', string)
+        match = re.match(r'\s*([-+]?[0-9.]+)\s+({currency})'.format(currency=CURRENCY_RE),
+                         string)
         if not match:
             raise ValueError("Invalid string for amount: '{}'".format(string))
         number, currency = match.group(1, 2)

@@ -239,6 +239,8 @@ def compute_table_widths(rows):
     column_widths = [len(cell) for cell in first_row]
     for row in row_iter:
         for i, cell in enumerate(row):
+            if not isinstance(cell, str):
+                cell = str(cell)
             cell_len = len(cell)
             if cell_len > column_widths[i]:
                 column_widths[i] = cell_len
