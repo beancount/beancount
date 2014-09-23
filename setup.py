@@ -28,6 +28,7 @@ bean-doctor
 bean-query
 bean-web
 bean-example
+bean-format
 """.splitlines() if x and not x.startswith('#')]
 
 

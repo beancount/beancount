@@ -87,6 +87,8 @@ def main():
     outfile = open(opts.output, 'w') if opts.output else sys.stdout
     outfile.write(formatted_contents)
 
+    return 0
+
 
 if __name__ == '__main__':
     main()
