@@ -25,6 +25,7 @@ from textwrap import dedent
 
 import dateutil
 from dateutil import rrule
+from dateutil.parser import parse as parse_datetime
 
 from beancount.core.amount import D
 from beancount.core.amount import ZERO
@@ -39,18 +40,12 @@ from beancount.parser import parser
 from beancount.parser import printer
 from beancount.ops import validation
 from beancount.scripts import format
+from beancount.core import getters
 from beancount import loader
 
 
 # Constants.
 ONE_DAY = datetime.timedelta(days=1)
-
-# Date of birth of our fictional character.
-date_birth = datetime.date(1980, 1, 1)
-
-# Default begin and end dates for the generation of data.
-date_begin = datetime.date(2012, 1, 1)
-date_end = datetime.date(2016, 1, 1)
 
 # Annual salary.
 annual_salary = D('120000')
@@ -390,7 +385,7 @@ def generate_employment_income(employer,
         replacements['Year'] = 'Y{}'.format(date.year)
 
         if not date_prev or date_prev.year != date.year:
-            contrib_retirement = retirement_limits[date.year]
+            contrib_retirement = retirement_limits.get(date.year, retirement_limits[None])
             contrib_socsec = D('7000')
         date_prev = date
 
@@ -513,7 +508,7 @@ def generate_tax_accounts(year):
           'STATE_AMT': '{:.2f}'.format(amount_state),
           'YEAR': year,
           'YYEAR': 'Y{}'.format(year),
-          'LIMIT': retirement_limits[year]}))
+          'LIMIT': retirement_limits.get(year, retirement_limits[None])}))
 
 
 def generate_retirement_investments(entries, account, commodities_map):
@@ -869,7 +864,7 @@ def generate_banking_expenses(date_begin, date_end, account, rent_amount):
     return sorted_entries(rent_expenses + electricity_expenses + internet_expenses)
 
 
-def generate_credit_expenses(date_begin, date_end, account_credit, account_checking):
+def generate_credit_expenses(date_birth, date_begin, date_end, account_credit, account_checking):
     """Generate expenses paid out of a credit card account, including payments to the
     credit card.
 
@@ -936,20 +931,43 @@ def contextualize_file(contents, employer):
         'CreditCard2': 'Amex:BlueCash',
         'Employer1': employer,
         'Retirement': 'Vanguard',
+        'RETINV1': 'VBMPX',
+        'RETINV2': 'RGAGX',
         }
     new_contents = replace(contents, replacements)
     return format.align_beancount(new_contents), replacements
 
 
 def main():
+    parse_date = lambda s: parse_datetime(s).date()
+    today = datetime.date.today()
+
     argparser = argparse.ArgumentParser(description=__doc__.strip())
+
+    argparser.add_argument('--date-begin', '--begin-date', action='store', type=parse_date,
+                           default=datetime.date(today.year - 3, 1, 1),
+                           help="Beginning date")
+
+    argparser.add_argument('--date-end', '--end-date', action='store', type=parse_date,
+                           default=today,
+                           help="End date.")
+
+    argparser.add_argument('--date-birth', '--birth-date', action='store', type=parse_date,
+                           default=datetime.date(1980, 5, 12),
+                           help="Date of birth of our fictional character.")
+
     argparser.add_argument('-s', '--seed', action='store', type=int,
                         help="Fix the random seed for debugging.")
+
     opts = argparser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
     if opts.seed:
         random.seed(opts.seed)
+
+    date_birth = opts.date_birth
+    date_begin = opts.date_begin
+    date_end = opts.date_end
 
     # The following code entirely writes out the output to generic names, such
     # as "Employer1", "Bank1", and "CCY" (for principal currency). Those names
@@ -982,14 +1000,21 @@ def main():
                                                  account_checking, rent_amount)
 
     # Expenses via credit card.
-    credit_entries = generate_credit_expenses(date_begin, date_end,
+    credit_entries = generate_credit_expenses(date_birth, date_begin, date_end,
                                               account_credit,
                                               account_checking)
 
     # Tax accounts.
     tax_preamble = generate_tax_preamble(date_birth)
-    taxes = [(year, generate_tax_accounts(year))
-             for year in range(date_begin.year, date_end.year)]
+
+    # Figure out all the years we need tax accounts for.
+    years = set()
+    for account_name in getters.get_accounts(income_entries):
+        match = re.match('Expenses:Taxes:Y(\d\d\d\d)', account_name)
+        if match:
+            years.add(int(match.group(1)))
+
+    taxes = [(year, generate_tax_accounts(year)) for year in sorted(years)]
     tax_entries = tax_preamble + functools.reduce(operator.add,
                                                   (entries for _, entries in taxes))
 
@@ -1067,11 +1092,10 @@ def main():
 
 
 
-## TODO(blais) - Use year-1 as last year (default years)
-## TODO(blais) - bean-format the entire output file after renamings
 ## TODO(blais) - Generate random price series for commodities that we use; use those as input for costs.
 ## TODO(blais) - Create investments in retirement.
 ## TODO(blais) - Create investments in taxable account (along with sales).
 ## TODO(blais) - Add employer match amount for 401k.
 ## TODO(blais) - Generate some minimum amount of realistic-ish cash entries.
 ## TODO(blais) - Tags (a trip), links
+## TODO(blais) - Bank fees.
