@@ -7,6 +7,9 @@ beancount: TODO
 
 ** Bugs
 
+  - bean-example: wrong payment date for taxes
+
+
   - A transaction at the very end of a file with a single newline causes a
     parser error.
 
@@ -117,6 +120,22 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  (bug)
+  - Unrealized gain for closed years does not appear.
+  - Link to source seems to have disappeared
+  - Rendering links now fails somehow
+
+  (avg cost idea)
+  - PROBLEM: You need be able to provide the cost with both and addition and a
+    reduction, e.g.
+       -2 GOOG {* 650 USD} ;; Should be possible even if current avg cost if 600 USD
+        2 GOOG {* 650 USD} ;; Means "add at this cost and then convert to avg
+    cost"
+
+    This is nice! The "*" now always means "after applying this operation,
+    convert to avg cost.".
 
 
   (documentation)
