@@ -39,6 +39,7 @@ from beancount.core.account import join
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.ops import validation
+from beancount.ops import prices
 from beancount.scripts import format
 from beancount.core import getters
 from beancount import loader
@@ -113,6 +114,8 @@ retirement_limits = {2000: D('10500'),
 
 file_preamble = """\
 ;; -*- mode: org; mode: beancount; -*-
+;; Birth: {date_birth}
+;; Dates: {date_begin} - {date_end}
 ;; THIS FILE HAS BEEN AUTO-GENERATED.
 * Options
 
@@ -452,11 +455,12 @@ def generate_tax_preamble(date_birth):
 
     """, {'YYYY-MM-DD': date_birth}))
 
-def generate_tax_accounts(year):
+def generate_tax_accounts(year, date_max):
     """Generate accounts and contributino directives for a particular tax year.
 
     Args:
       year: An integer, the year we're to generate this for.
+      date_max: The maximum date to produce an entry for.
     Returns:
       A list of directives.
     """
@@ -469,7 +473,7 @@ def generate_tax_accounts(year):
     amount_federal = D(max(random.normalvariate(500, 120), 12))
     amount_state = D(max(random.normalvariate(300, 100), 10))
 
-    return parse(replace("""
+    entries = parse(replace("""
 
       ;; Open tax accounts for that year.
       YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:Federal:PreTax401k   DEFCCY
@@ -510,14 +514,17 @@ def generate_tax_accounts(year):
           'YYEAR': 'Y{}'.format(year),
           'LIMIT': retirement_limits.get(year, retirement_limits[None])}))
 
+    return [entry for entry in entries if entry.date < date_max]
 
-def generate_retirement_investments(entries, account, commodities_map):
+
+def generate_retirement_investments(entries, account, commodities_map, price_map):
     """Invest money deposited to the given retirement account.
 
     Args:
       entries: A list of directives
       account: The checking account to generate expenses to.
       commodities_map: A dict of commodity/currency to a fraction to be invested in.
+      price_map: A dict of prices, as per beancount.ops.prices.build_price_map().
     Returns:
       A list of new directives for the given investments. This also generates account
       opening directives for the desired investment commodities.
@@ -533,22 +540,44 @@ def generate_retirement_investments(entries, account, commodities_map):
 
     oss = io.StringIO()
     for posting, balances in postings_for(entries, [account_cash]):
-        balance = balances[account]
-        next_date = posting.entry.date + ONE_DAY
+        balance = balances[account_cash]
+        amount_to_invest = balance.get_amount('CCY').number
 
-        # oss.write(replace("""
+        # Find the date the following Monday, the date to invest.
+        txn_date = posting.entry.date
+        while txn_date.weekday() != calendar.MONDAY:
+            txn_date += ONE_DAY
 
-        #   YYYY-MM-DD * "Investing cash"
-        #     ACCOUNT:COMM    UNITS COMM {COST CCY}
-        #     ACCOUNT:Cash    CASH_AMOUNT CCY
+        amount_invested = ZERO
+        for commodity, fraction in commodities_map.items():
+            amount_fraction = amount_to_invest * D(fraction)
 
-        # """, {'YYYY-MM-DD': date_begin,
-        #       'COMM': 'RETINV1',
-        #       'UNITS': '{:.2f}'.format(D('1')),
-        #       'COST': '{:.2f}'.format(D('1')),
-        #   }))
+            # Find the price at that date.
+            _, price = prices.get_price(price_map, (commodity, 'CCY'), txn_date)
 
-    return open_entries
+            units = (amount_fraction / price).quantize(D('0.001'))
+
+            amount_cash = (units * price).quantize(D('0.01'))
+
+            oss.write(replace("""
+
+              YYYY-MM-DD * "Investing FRACTION of cash in COMM"
+                ACCOUNT:COMM    UNITS COMM {COST CCY}
+                ACCOUNT:Cash    CASH CCY
+
+            """, {'YYYY-MM-DD': txn_date,
+                  'ACCOUNT': account,
+                  'COMM': commodity,
+                  'FRACTION': '{:.0%}'.format(fraction),
+                  'UNITS': '{:.3f}'.format(units),
+                  'CASH': '{:.2f}'.format(-amount_cash),
+                  'COST': '{:.2f}'.format(price),
+                  'PRICE': '{:.2f}'.format(price),
+              }))
+
+            balance.add_amount(amount.Amount(-amount_cash, 'CCY'))
+
+    return open_entries + parse(oss.getvalue())
 
 
 def generate_banking(date_begin, date_end, initial_amount):
@@ -913,6 +942,53 @@ def generate_credit_expenses(date_birth, date_begin, date_end, account_credit, a
     return sorted_entries(credit_preamble + credit_expenses + credit_payments)
 
 
+def price_series(start, mu, sigma):
+    """Generate a price series based on a simple stochastic model.
+
+    Args:
+      start: The beginning value.
+      mu: The per-step drift, in units of value.
+      sigma: Volatility of the changes.
+    Yields:
+      Floats, at each step.
+    """
+    value = start
+    while 1:
+        yield value
+        value += random.normalvariate(mu, sigma) * value
+
+
+def generate_prices(date_begin, date_end, currencies, cost_currency):
+    """Generate weekly or monthyl price entries for the given currencies.
+
+    Args:
+      date_begin: The start date.
+      date_end: The end date.
+      currencies: A list of currency strings to generate prices for.
+      cost_currency: A string, the cost currency.
+    Returns:
+      A list of Price directives.
+    """
+    digits = D('0.01')
+    entries = []
+    counter = itertools.count()
+    for currency in currencies:
+        start_price = random.uniform(30, 200)
+        growth = random.uniform(0.02, 0.13) # %/year
+        mu = growth * (7 / 365)
+        sigma = random.uniform(0.005, 0.02) # Vol
+
+        for dt, price_float in zip(rrule.rrule(rrule.WEEKLY, byweekday=rrule.FR,
+                                               dtstart=date_begin, until=date_end),
+                             price_series(start_price, mu, sigma)):
+            price = D(price_float).quantize(digits)
+            source = data.Source(generate_prices.__name__, next(counter))
+            entry = data.Price(source, dt.date(), currency,
+                               amount.Amount(price, cost_currency))
+            entries.append(entry)
+    return entries
+
+
 def contextualize_file(contents, employer):
     """Replace generic strings in the generated file with realistic strings.
 
@@ -944,8 +1020,9 @@ def main():
 
     argparser = argparse.ArgumentParser(description=__doc__.strip())
 
+    default_years = 2
     argparser.add_argument('--date-begin', '--begin-date', action='store', type=parse_date,
-                           default=datetime.date(today.year - 3, 1, 1),
+                           default=datetime.date(today.year - default_years, 1, 1),
                            help="Beginning date")
 
     argparser.add_argument('--date-end', '--end-date', action='store', type=parse_date,
@@ -1014,9 +1091,10 @@ def main():
         if match:
             years.add(int(match.group(1)))
 
-    taxes = [(year, generate_tax_accounts(year)) for year in sorted(years)]
+    taxes = [(year, generate_tax_accounts(year, date_end)) for year in sorted(years)]
     tax_entries = tax_preamble + functools.reduce(operator.add,
-                                                  (entries for _, entries in taxes))
+                                                  (entries
+                                                   for _, entries in taxes))
 
     # Open banking accounts and gift the checking account with a balance that
     # will offset all the amounts to ensure a positive balance throughout its
@@ -1042,10 +1120,15 @@ def main():
         transfer_threshold=D('3000'),
         transfer_increment=D('500'))
 
+    # Generate price entries for investment currencies and create a price map to
+    # use for later for generating investment transactions.
+    price_entries = generate_prices(date_begin, date_end, ['RETINV1', 'RETINV2'], 'CCY')
+    price_map = prices.build_price_map(price_entries)
+
     # Investment accounts for retirement.
     retirement_entries = generate_retirement_investments(
         income_entries, account_retirement, {'RETINV1': 0.40,
-                                             'RETINV2': 0.60})
+                                             'RETINV2': 0.60}, price_map)
 
     # Taxable savings / investment accounts.
     investment_entries = generate_taxable_investment(date_begin, date_end)
@@ -1063,7 +1146,7 @@ def main():
         output.write('{}\n\n'.format(title))
         printer.print_entries(sorted_entries(entries), file=output)
 
-    output.write(file_preamble)
+    output.write(file_preamble.format(**vars()))
     output_section('* Equity Accounts', equity_entries)
     output_section('* Banking', sorted_entries(banking_entries +
                                                banking_expenses +
@@ -1076,6 +1159,7 @@ def main():
     for year, entries in taxes:
         output_section('** Tax Year {}'.format(year), entries)
     output_section('* Expenses', expense_accounts_entries)
+    output_section('* Prices', price_entries)
     output_section('* Cash', [])  # FIXME TODO(blais): cash entries
 
     # Replace generic names by realistic names and output results.
@@ -1092,10 +1176,10 @@ def main():
 
 
 
-## TODO(blais) - Generate random price series for commodities that we use; use those as input for costs.
 ## TODO(blais) - Create investments in retirement.
 ## TODO(blais) - Create investments in taxable account (along with sales).
-## TODO(blais) - Add employer match amount for 401k.
+## TODO(blais) - Add employer match contribution for 401k.
 ## TODO(blais) - Generate some minimum amount of realistic-ish cash entries.
 ## TODO(blais) - Tags (a trip), links
 ## TODO(blais) - Bank fees.
+## TODO(blais) - Balance entries.

@@ -14,6 +14,14 @@ beancount: TODO
 
     See failing-with-no-last-newline.beancount
 
+  - Fix rendering of balances for HTML journals, esp. w.r.t. example file,
+    rendering lots is just _not_ the ticket.
+
+  (bug)
+  - Unrealized gain for closed years does not appear.
+  - Link to source seems to have disappeared
+
+  - Rendering links now fails somehow, generates an error.
 
 ** More tests
 
@@ -119,10 +127,6 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
-  (bug)
-  - Unrealized gain for closed years does not appear.
-  - Link to source seems to have disappeared
-  - Rendering links now fails somehow
 
   (avg cost idea)
   - PROBLEM: You need be able to provide the cost with both and addition and a
