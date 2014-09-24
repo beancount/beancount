@@ -7,9 +7,6 @@ beancount: TODO
 
 ** Bugs
 
-  - bean-example: wrong payment date for taxes
-
-
   - A transaction at the very end of a file with a single newline causes a
     parser error.
 

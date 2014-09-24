@@ -465,7 +465,7 @@ def generate_tax_accounts(year):
     Returns:
       A list of directives.
     """
-    date_filing = (datetime.date(year, 3, 20) +
+    date_filing = (datetime.date(year + 1, 3, 20) +
                    datetime.timedelta(days=random.randint(0, 5)))
 
     date_federal = (date_filing + datetime.timedelta(days=random.randint(0, 4)))
@@ -1067,9 +1067,11 @@ def main():
 
 
 
+## TODO(blais) - Use year-1 as last year (default years)
 ## TODO(blais) - bean-format the entire output file after renamings
 ## TODO(blais) - Generate random price series for commodities that we use; use those as input for costs.
 ## TODO(blais) - Create investments in retirement.
 ## TODO(blais) - Create investments in taxable account (along with sales).
 ## TODO(blais) - Add employer match amount for 401k.
 ## TODO(blais) - Generate some minimum amount of realistic-ish cash entries.
+## TODO(blais) - Tags (a trip), links
