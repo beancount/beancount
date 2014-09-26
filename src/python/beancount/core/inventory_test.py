@@ -185,10 +185,14 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(inv.get_amounts(), [])
 
         inv = Inventory.from_string('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
-        self.assertEqual(inv.get_amounts(), [
+        self.assertEqual(set(inv.get_amounts()), set([
             A('40.50 JPY'),
             A('40.51 USD'),
-            A('40.52 CAD')])
+            A('40.52 CAD')]))
+
+        # Check that the same units coalesce.
+        inv = Inventory.from_string('2 GOOG {400 USD}, 3 GOOG {410 USD}')
+        self.assertEqual(inv.get_amounts(), [A('5 GOOG')])
 
     POSITIONS_ALL_KINDS = [
         position.from_string('40.50 USD'),

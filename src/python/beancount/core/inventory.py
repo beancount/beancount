@@ -39,8 +39,10 @@ pull to do this is that for positions which aren't booked, we simply leave the '
 
 """
 import copy
+import collections
 from datetime import date
 
+from beancount.core.amount import D
 from beancount.core.amount import ZERO
 from beancount.core.amount import Amount
 from beancount.core.position import Lot
@@ -162,7 +164,11 @@ class Inventory:
         Returns:
           A list of all the amounts for the inventory's positions.
         """
-        return [position.get_amount() for position in self.positions]
+        amounts_dict = collections.defaultdict(D)
+        for position in self.positions:
+            amounts_dict[position.lot.currency] += position.number
+        return [Amount(number, currency)
+                for currency, number in amounts_dict.items()]
 
     def get_cost(self):
         """Return an inventory of Amounts that represent book values for all positions

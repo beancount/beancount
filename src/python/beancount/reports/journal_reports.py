@@ -28,10 +28,10 @@ class JournalReport(report.HTMLReport,
                             help="The number of digits to render after the period")
 
         parser.add_argument('-b', '--render-balance', '--balance', action='store_true',
-                            help="If true, render a running balance")
+                            help="Render a running balance, not just changes")
 
         parser.add_argument('-c', '--at-cost', '--cost', action='store_true',
-                            help="If true, render values at cost")
+                            help="Render values at cost, convert the units to cost value")
 
         parser.add_argument('-x', '--compact', dest='verbosity', action='store_const',
                             const=journal_text.COMPACT, default=journal_text.NORMAL,

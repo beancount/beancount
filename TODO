@@ -127,6 +127,16 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - 'sum' ('balances'): Find some way to aggregate all inventories for a set of
+    unrelated accounts, e.g., Assets.*Vanguard.*RGAGX, to obtain the total
+    amounts of RGAGX'es. This should be a new kind of report, e.g., 'sum'.
+
+
+  - Implement csv output for 'balances' report.
+
+
+  - balances report: support rendering the values not-at-cost for HTML reports too.
+
 
   (avg cost idea)
   - PROBLEM: You need be able to provide the cost with both and addition and a

@@ -16,18 +16,21 @@ class BalancesReport(report.HTMLReport,
 
     @classmethod
     def add_args(cls, parser):
-        parser.add_argument('-e', '--expression', '--regexp',
+        parser.add_argument('-e', '--filter-expression', '--expression', '--regexp',
                             action='store', default=None,
                             help="Filter expression for which account balances to display.")
 
+        parser.add_argument('-c', '--at-cost', '--cost', action='store_true',
+                            help="Render values at cost, convert the units to cost value")
+
     def render_real_text(self, real_root, options_map, file):
-        if self.args.expression:
-            regexp = re.compile(self.args.expression)
+        if self.args.filter_expression:
+            regexp = re.compile(self.args.filter_expression)
             real_root = realization.filter(
                 real_root,
                 lambda real_account: regexp.search(real_account.account))
         if real_root:
-            realization.dump_balances(real_root, file=file)
+            realization.dump_balances(real_root, self.args.at_cost, file=file)
 
     def render_real_htmldiv(self, real_root, options_map, file):
         text = tree_table.table_of_balances(real_root,
