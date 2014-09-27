@@ -127,6 +127,12 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - (docs) Write a script to download and bake all my PDFs docs in a printable
+    and mobile-friendly formats.
+
+  - (docs) I'd like the documentation links to open in "View" mode by default,
+    YET still allowing the user to switch to "Suggestion" mode if they want to.
+
   - 'sum' ('balances'): Find some way to aggregate all inventories for a set of
     unrelated accounts, e.g., Assets.*Vanguard.*RGAGX, to obtain the total
     amounts of RGAGX'es. This should be a new kind of report, e.g., 'sum'.
