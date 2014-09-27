@@ -299,15 +299,13 @@ def size_and_render_amounts(postings, at_cost, render_balance):
                 balance = balance.get_cost()
 
         # Compute the amounts and maximum widths for the change column.
-        change_amounts = [position.get_amount()
-                          for position in change.get_positions()]
+        change_amounts = change.get_amounts()
         for amount in change_amounts:
             change_sizer.update(amount.number, amount.currency)
 
         # Compute the amounts and maximum widths for the balance column.
         if render_balance:
-            balance_amounts = [position.get_amount()
-                               for position in balance.get_positions()]
+            balance_amounts = balance.get_amounts()
             for amount in balance_amounts:
                 balance_sizer.update(amount.number, amount.currency)
         else:

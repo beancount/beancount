@@ -97,7 +97,7 @@ class BalanceSheetReport(report.HTMLReport,
 
 class IncomeStatementReport(report.HTMLReport,
                             metaclass=report.RealizationMeta):
-    """Print out a balance sheet."""
+    """Print out an income statement."""
 
     names = ['income']
     default_format = 'html'
