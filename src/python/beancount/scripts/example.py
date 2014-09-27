@@ -1183,3 +1183,6 @@ def main():
 ## TODO(blais) - Tags (a trip), links
 ## TODO(blais) - Bank fees.
 ## TODO(blais) - Balance entries.
+
+## TODO(blais) - Build a script that will output all the reports I'm interested
+## in to files, and link to them from my document.

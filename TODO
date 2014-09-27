@@ -127,6 +127,24 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Make options to render *all* reports with
+      --units
+      --cost
+      --market
+      --lots
+
+  - (query syntax) It *would* make sense to use full SQL for this, even if the
+    aggregation method is an inventory.
+
+      targets: units, cost, market, lots
+      data-source: balances, journal, holdings
+      restricts: ... all the conditions that match transactions, with = ...
+      aggregations: by currency, by day, by month, by account (regexp), etc.
+      other: filter display, pivot table (for by-month reports), max depth
+
+    You would render these as a table.
+
+
   - (docs) Write a script to download and bake all my PDFs docs in a printable
     and mobile-friendly formats.
 
