@@ -1,0 +1,255 @@
+#!/usr/bin/env python3
+"""Identify a column of text that contains hierarchical id and treeify that column.
+
+This script will inspect a text file and attempt to find a vertically
+left-aligned column of text that contains identifiers with multiple components,
+such as "Assets:US:Bank:Checking", and replace those by a tree-like structure rendered
+in ASCII, inserting new empty lines where necessary to create the tree.
+"""
+import argparse
+import collections
+import re
+import sys
+from pprint import pprint
+
+
+def find_column(lines, pattern):
+    """Find a valid column with hierarchical data in the text lines.
+
+    Args:
+      lines: A list of strings, the contents of the input.
+      pattern: A regular expression for the hierarchical entries.
+    Returns:
+      A tuple of
+        matches: A list of (line-number, name) tuples where 'name' is the
+          hierarchical string to treeify and line-number is an integer, the
+          line number where this applies.
+        left: An integer, the leftmost column.
+        right: An integer, the rightmost column.
+      Note that not all line numbers may be present, so you may need to
+      skip some. However, they are in guaranteed in sorted order.
+    """
+    # A mapping of the line beginning position to its match object.
+    beginnings = collections.defaultdict(list)
+    pattern_and_whitespace = "({})\s*(?P<ws>.|$)".format(pattern)
+    for no, line in enumerate(lines):
+        for match in re.finditer(pattern_and_whitespace, line):
+            beginnings[match.start()].append((no, line, match))
+
+    # Check if each column found is valid, that is, if the maximum of the
+    # following text overlaps with one of the column's text. This is important:
+    # We assume that a column will have been formatted to full width and that no
+    # text following the line overlap with the column, even in its trailing
+    # whitespace. In other words, this is a violation because "10,990.74"
+    # overlaps with the end of "Insurance" and not to be recognized as a valid
+    # column:
+    #
+    # Expenses:Food:Restaurant     10,990.74 USD
+    # Expenses:Health:Dental:Insurance   208.80 USD
+    #
+    for leftmost_column, column_matches in beginnings.items():
+        rightmost_column = max(match.end(1) for _, _, match in column_matches)
+        following_column = min(match.end() if match.group('ws') else 10000
+                               for _, _, match in column_matches) - 1
+        if rightmost_column < following_column:
+            # We process only the very first match.
+            return_matches = [(no, match.group(1))
+                              for no, _, match in column_matches]
+            return return_matches, leftmost_column, rightmost_column
+
+
+class Node(list):
+    """A node with a name attribute, a list of line numbers and a list of children
+    (from its parent class).
+    """
+    def __init__(self, name):
+        self.name = name
+        self.nos = []
+
+    def __str__(self):
+        return '<Node {} {}>'.format(self.name, [node.name for node in self])
+
+    __repr__ = __str__
+
+
+def create_tree(column_matches, regexp_split):
+    """Build up a tree from a list of matches.
+
+    Args:
+      column_matches: A list of (line-number, name) pairs.
+      regexp_split: A regular expression string, to use for splitting the names
+        of components.
+    Returns:
+      An instance of Node, the root node of the created tree.
+    """
+    root = Node('')
+    for no, name in column_matches:
+        parts = re.split(regexp_split, name)
+        node = root
+        for part in parts:
+            last_node = node[-1] if node else None
+            if last_node is None or last_node.name != part:
+                last_node = Node(part)
+                node.append(last_node)
+            node = last_node
+        node.nos.append(no)
+    return root
+
+
+PREFIX_CHILD_1 = '|-- '
+PREFIX_CHILD_C = '|   '
+PREFIX_LEAF_1 = '`-- '
+PREFIX_LEAF_C = '    '
+
+def render_tree(root):
+    """Render a tree of nodes.
+
+    Returns:
+      A list of tuples of (first_line, continuation_line, node) where
+        first_line: A string, the first line to render, which includes the
+          account name.
+        continuation_line: A string, further line to render if necessary.
+        node: The Node instance which corresponds to this line.
+    """
+
+    # Compute all the lines ahead of time in order to calculate the width.
+    lines = []
+
+    # Start with the root node. We push the constant prefix before this node,
+    # the account name, and the RealAccount instance. We will maintain a stack
+    # of children nodes to render.
+    stack = [('', root.name, root, True)]
+    while stack:
+        prefix, name, node, is_last = stack.pop(-1)
+
+        if node is root:
+            # For the root node, we don't want to render any prefix.
+            first = cont = ''
+        else:
+            # Compute the string that precedes the name directly and the one belwo
+            # that for the continuation lines.
+            #  |
+            #  @@@ Bank1    <----------------
+            #  @@@ |
+            #  |   |-- Checking
+            if is_last:
+                first = prefix + PREFIX_LEAF_1
+                cont = prefix + PREFIX_LEAF_C
+            else:
+                first = prefix + PREFIX_CHILD_1
+                cont = prefix + PREFIX_CHILD_C
+
+        # Compute the name to render for continuation lines.
+        #  |
+        #  |-- Bank1
+        #  |   @@@       <----------------
+        #  |   |-- Checking
+        if len(node) > 0:
+            cont_name = PREFIX_CHILD_C
+        else:
+            cont_name = PREFIX_LEAF_C
+
+        # Add a line for this account.
+        if not (node is root and not name):
+            lines.append((first + name,
+                          cont + cont_name,
+                          node))
+
+        # Push the children onto the stack, being careful with ordering and
+        # marking the last node as such.
+        if node:
+            child_items = reversed(node)
+            child_iter = iter(child_items)
+            child_node = next(child_iter)
+            stack.append((cont, child_node.name, child_node, True))
+            for child_node in child_iter:
+                stack.append((cont, child_node.name, child_node, False))
+
+    if not lines:
+        return lines
+
+    # Compute the maximum width of the lines and convert all of them to the same
+    # maximal width. This makes it easy on the client.
+    max_width = max(len(first_line) for first_line, _, __ in lines)
+    line_format = '{{:{width}}}'.format(width=max_width)
+    return [(line_format.format(first_line),
+             line_format.format(cont_line),
+             node)
+            for (first_line, cont_line, node) in lines]
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.strip())
+
+    parser.add_argument('input', nargs='?', action='store',
+                        help='Name of the file to process (default: stdin)')
+
+    parser.add_argument('-o', '--output', action='store',
+                        help='Name of the file to write (default: stdout)')
+
+    parser.add_argument('-r', '--pattern', action='store',
+                        default=(r"\b(Assets|Liabilities|Equity|Income|Expenses)"
+                                 r"(:[A-Z][A-Za-z0-9-_']+)*\b"),
+                        help="Pattern for repeatable components")
+
+    parser.add_argument('-s', '--split', action='store',
+                        default=":",
+                        help="Pattern splitting into components")
+
+    parser.add_argument('--files', action='store',
+                        default=(r"\b(.*)(/.*)+"
+                                 r"(:[A-Z][A-Za-z0-9-_']+)*\b"),
+                        help="Pattern for repeatable components")
+
+    parser.add_argument('--filler', action='store',
+                        default=' ',
+                        help="Filler string for new lines inserted for formatting")
+
+    args = parser.parse_args()
+
+    # Open input and output files.
+    input_file = open(args.input, 'r') if args.input else sys.stdin
+    output_file = open(args.output,'w') if args.output else sys.stdout
+    lines = list(input_file)
+
+    # Find a column in the file. If not found, this will return None.
+    result = find_column(lines, args.pattern)
+    if result is None:
+        print("Warning: Could not find any valid column", file=sys.stderr)
+        for line in lines:
+            output_file.write(line)
+        return -1
+    column_matches, left, right = result
+
+    # Process the input lines again, this time with the column.
+    root = create_tree(column_matches, args.split)
+
+    # Render the tree we just inferred from the list of names.
+    tree_lines = render_tree(root)
+    input_lines = enumerate(lines)
+    for first_line, cont_line, node in tree_lines:
+        if node.nos:
+            # Render actual input lines, replacing the column with the tree
+            # portion.
+            line = first_line
+            for no in node.nos:
+                input_no, input_line = next(input_lines)
+                prefix = input_line[:left]
+                suffix = input_line[right:].rstrip('\r\n')
+                assert no == input_no, (
+                    "Invalid order for lines ({}, {})".format(no, input_no))
+                output_file.write(prefix)
+                output_file.write(line)
+                output_file.write(suffix)
+                output_file.write('\n')
+                line = cont_line
+        else:
+            # Render new lines, inserted just for the hierarchy.
+            prefix_string = args.filler * (left//len(args.filler)+1)
+            output_file.write(prefix_string[:left])
+            output_file.write(first_line)
+            output_file.write('\n')
+
+
+if __name__ == '__main__':
+    main()
