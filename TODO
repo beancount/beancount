@@ -1,5 +1,27 @@
 -*- mode: org -*-
 beancount: TODO
+* Current
+
+  - Implement input from stdin from flex, to be used for command-line parsing
+    but also to support bean-check accepting input from stdin.
+
+  - Rename compute_balance_amount() -> compute_weight() and provide functions to
+    compute units, weight, etc. from Position objects, using consistent
+    terminology.
+
+  - Finish testing "treeify" text utility with corner cases, that accepts some
+    text input, detects "columns" that contain account names, and converts these
+    columns into trees of accounts. This could be done entirely separately from
+    the Beancount codebase.
+
+  - Complete example generator
+
+  - Complete converter script
+
+  - Complete presentation
+
+
+
 * Requirements for Shipping 1.0
 ** Branches
 
@@ -88,7 +110,6 @@ beancount: TODO
 
   - Implement unit tests for all the functions in beancount.reports.journal_text
 
-
   - Differentiate between the concept of "journal" and "register" report: a
     "journal" should include all the postings and no running balance. A
     "register" should by default only render just one account's postings and
@@ -106,7 +127,25 @@ beancount: TODO
     These should be present for a 1.0 release, even if in a rudimentary form.
 
 
+** Reports
+
+  - Reconcile the rendering of units, cost, lots between text and HTML reports,
+    the set of options for all of these should be the same.
+
+
 ** Documentation / Ongoing
+
+  - To Query Language proposal: add open:DATE and close:DATE
+  - Send email about doc.
+
+
+  - Is there a script somewhere that can accept a CSV file and render a CSV
+
+    pivot table from it?  The reason we need support is in order to carry out
+    operations on columns of inventories. Maybe we should impleemnted some sort
+    of swiss-knife tool that is able to parse inventories from columns and
+    perform various operations on them, aggregations, etc. using Beancount's
+    Inventory() class. This could be a powerful tool!
 
   - Nice Health Care section is nearly complete... complete it with DEDUC and COPAY
     legs explanation
@@ -127,11 +166,14 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+
   - Make options to render *all* reports with
+      --lots (default)
       --units
       --cost
+      --weight
       --market
-      --lots
+    See Query & Filtering language doc for details.
 
   - (query syntax) It *would* make sense to use full SQL for this, even if the
     aggregation method is an inventory.
@@ -1895,29 +1937,7 @@ Improve this bit:
 
 
 ** Language
-
-  - Example: Simple a-la-Google syntax:
-
-      type:Open, type:Price, etc.
-      year:2014
-      date:2014-05-20
-      component:US
-      payee:MetroCard  # should be a regexp, not exact
-      tag:trip-israel
-      amount:>400.00
-      currency:USD
-      link:7e4116fadbb4
-      narration:Deposit
-      event:location:New York  <- like dates, but from events!
-      attr:name=value <- any attribute on an entry
-
-      -component:US <- not component
-      !component:US <- not component
-
-  - You could also provide an SQL-like syntax, not sure it's useful though:
-    you should have a SQL database export as a report type.
-    What are the targets? What are the columns allowed for group-by aggregators?
-
+https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
 * Operations
 ** Validation
