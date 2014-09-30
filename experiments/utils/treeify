@@ -196,16 +196,20 @@ def main():
                         default=":",
                         help="Pattern splitting into components")
 
-    parser.add_argument('--files', action='store',
-                        default=(r"\b(.*)(/.*)+"
-                                 r"(:[A-Z][A-Za-z0-9-_']+)*\b"),
-                        help="Pattern for repeatable components")
+    parser.add_argument('-F', '--filenames', action='store_true',
+                        help="Use pattern and split suitable for filenames")
 
     parser.add_argument('--filler', action='store',
                         default=' ',
                         help="Filler string for new lines inserted for formatting")
 
     args = parser.parse_args()
+
+    if args.filenames:
+        # Note: you could spit an error if the other options are set: "you may
+        # not use --filenames and specify a pattern or split" or somesuch.
+        args.pattern = r"\b([^ \t]*)(/[^ \t]*)+\b"
+        args.split = r"/"
 
     # Open input and output files.
     input_file = open(args.input, 'r') if args.input else sys.stdin
@@ -215,9 +219,11 @@ def main():
     # Find a column in the file. If not found, this will return None.
     result = find_column(lines, args.pattern)
     if result is None:
-        print("Warning: Could not find any valid column", file=sys.stderr)
+        print("WARNING: Could not find any valid column in input",
+              file=sys.stderr)
         for line in lines:
             output_file.write(line)
+        output_file.close()
         return -1
     column_matches, left, right = result
 
@@ -238,16 +244,15 @@ def main():
                 suffix = input_line[right:].rstrip('\r\n')
                 assert no == input_no, (
                     "Invalid order for lines ({}, {})".format(no, input_no))
-                output_file.write(prefix)
-                output_file.write(line)
-                output_file.write(suffix)
+                line = prefix + line + suffix
+                output_file.write(line.rstrip())
                 output_file.write('\n')
                 line = cont_line
         else:
             # Render new lines, inserted just for the hierarchy.
             prefix_string = args.filler * (left//len(args.filler)+1)
             output_file.write(prefix_string[:left])
-            output_file.write(first_line)
+            output_file.write(first_line.rstrip())
             output_file.write('\n')
 
 
