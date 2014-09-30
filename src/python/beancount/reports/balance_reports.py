@@ -23,6 +23,9 @@ class BalancesReport(report.HTMLReport,
         parser.add_argument('-c', '--at-cost', '--cost', action='store_true',
                             help="Render values at cost, convert the units to cost value")
 
+        parser.add_argument('--fullnames', action='store_true',
+                            help="Output full account names.")
+
     def render_real_text(self, real_root, options_map, file):
         if self.args.filter_expression:
             regexp = re.compile(self.args.filter_expression)
@@ -30,7 +33,8 @@ class BalancesReport(report.HTMLReport,
                 real_root,
                 lambda real_account: regexp.search(real_account.account))
         if real_root:
-            realization.dump_balances(real_root, self.args.at_cost, file=file)
+            realization.dump_balances(real_root,
+                                      self.args.at_cost, self.args.fullnames, file=file)
 
     def render_real_htmldiv(self, real_root, options_map, file):
         text = tree_table.table_of_balances(real_root,

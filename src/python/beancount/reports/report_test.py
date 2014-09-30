@@ -145,7 +145,7 @@ class TestRealizationMeta(unittest.TestCase):
             default_format = 'html'
 
             def render_real_text(self, real_account, options_map, file):
-                realization.dump_balances(real_account, file)
+                realization.dump_balances(real_account, file=file)
 
             def render_real_html(self, real_account, options_map, file):
                 self.render_real_text(real_account, options_map, file)

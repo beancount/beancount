@@ -524,7 +524,7 @@ def dump(root_account):
         first_line: A string, the first line to render, which includes the
           account name.
         continuation_line: A string, further line to render if necessary.
-        real_account: The rRealAccount instance which corresponds to this
+        real_account: The RealAccount instance which corresponds to this
           line.
     """
     # Compute all the lines ahead of time in order to calculate the width.
@@ -599,17 +599,28 @@ PREFIX_LEAF_1 = '`-- '
 PREFIX_LEAF_C = '    '
 
 
-def dump_balances(real_account, at_cost=False, file=None):
+def dump_balances(real_account, at_cost=False, fullnames=False, file=None):
     """Dump a realization tree with balances.
 
     Args:
       real_account: An instance of RealAccount.
       at_cost: A boolean, if true, render the values at cost.
+      fullnames: A boolean, if true, don't render a tree of accounts and
+        render the full account names.
       file: A file object to dump the output to. If not specified, we
         return the output as a string.
     Returns:
       A string, the rendered tree, or nothing, if 'file' was provided.
     """
+
+    if fullnames:
+        # Compute the maximum account name length;
+        maxlen = max(len(real_child.account)
+                     for real_child in iter_children(real_account, leaf_only=True))
+        line_format = '{{:{width}}} {{}}\n'.format(width=maxlen)
+    else:
+        line_format = '{}       {}\n'
+
     output = file or io.StringIO()
     for first_line, cont_line, real_account in dump(real_account):
         if not real_account.balance.is_empty():
@@ -622,9 +633,16 @@ def dump_balances(real_account, at_cost=False, file=None):
         else:
             positions = ['']
 
-        line = first_line
-        for position in positions:
-            output.write('{}       {}\n'.format(line, position))
-            line = cont_line
+        if fullnames:
+            for position in positions:
+                if not position and len(real_account) > 0:
+                    continue  # Skip parent accounts with no position to render.
+                output.write(line_format.format(real_account.account, position))
+        else:
+            line = first_line
+            for position in positions:
+                output.write(line_format.format(line, position))
+                line = cont_line
+
     if file is None:
         return output.getvalue()
