@@ -53,7 +53,7 @@ def find_column(lines, pattern):
                                for _, _, match in column_matches) - 1
         if rightmost_column < following_column:
             # We process only the very first match.
-            return_matches = [(no, match.group(1))
+            return_matches = [(no, match.group(1).rstrip())
                               for no, _, match in column_matches]
             return return_matches, leftmost_column, rightmost_column
 
@@ -70,6 +70,21 @@ class Node(list):
         return '<Node {} {}>'.format(self.name, [node.name for node in self])
 
     __repr__ = __str__
+
+
+def dump_tree(node, file=sys.stdout, prefix=''):
+    """Render a tree as a tree.
+
+    Args:
+      node: An instance of Node.
+      file: A file object to write to.
+      prefix: A prefix string for each of the lines of the children.
+    """
+    file.write(prefix)
+    file.write(node.name)
+    file.write('\n')
+    for child in node:
+        dump_tree(child, file, prefix + '... ')
 
 
 def create_tree(column_matches, regexp_split):

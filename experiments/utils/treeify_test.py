@@ -390,7 +390,18 @@ class TestTreeify(TestTreeifyBase):
           -rw-r--r--    1 blais   5000   1130 Aug 17 13:06             |-- file_utils_test.py
           -rw-r--r--    1 blais   5000   8377 Sep 15 06:53             |-- misc_utils.py
           -rw-r--r--    1 blais   5000   4783 Sep 13 15:17             `-- misc_utils_test.py
+        """, False, options=['--pattern=([^ ]+)(/[^ ]+)+', '--split=/'])
 
+    def test_filenames_tree(self):
+        self.treeify_equal("""\
+          -rwxr-xr-x    1 blais   5000  44708 Sep 27 13:54 ./beancount
+          -rw-r--r--    1 blais   5000    678 Sep 21 12:11 ./beancount/scripts
+          -rwxr-xr-x    1 blais   5000   3321 Sep 23 14:30 ./beancount/scripts/format.py
+        """, """\
+                                                           `-- .
+          -rwxr-xr-x    1 blais   5000  44708 Sep 27 13:54     `-- beancount
+          -rw-r--r--    1 blais   5000    678 Sep 21 12:11         `-- scripts
+          -rwxr-xr-x    1 blais   5000   3321 Sep 23 14:30             `-- format.py
         """, False, options=['--pattern=([^ ]+)(/[^ ]+)+', '--split=/'])
 
 
