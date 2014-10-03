@@ -6,6 +6,9 @@ left-aligned column of text that contains identifiers with multiple components,
 such as "Assets:US:Bank:Checking", and replace those by a tree-like structure rendered
 in ASCII, inserting new empty lines where necessary to create the tree.
 """
+__author__ = 'Martin Blais <blais@furius.ca>'
+__license__ = 'GNU GPL v2'
+
 import argparse
 import collections
 import re
