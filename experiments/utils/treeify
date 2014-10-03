@@ -193,6 +193,29 @@ def render_tree(root):
             for (first_line, cont_line, node) in lines]
 
 
+def enum_tree_by_input_line_num(tree_lines):
+    """Accumulate the lines of a tree until a lien number is found.
+
+    Args:
+      tree_lines: A list of lines as returned by render_tree.
+    Yields:
+      Pairs of (line number, list of (line, node)).
+    """
+    pending = []
+    for first_line, cont_line, node in tree_lines:
+        if not node.nos:
+            pending.append((first_line, node))
+        else:
+            line = first_line
+            for no in node.nos:
+                pending.append((line, node))
+                line = cont_line
+                yield (no, pending)
+                pending = []
+    if pending:
+        yield (None, pending)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.strip())
 
@@ -247,28 +270,47 @@ def main():
 
     # Render the tree we just inferred from the list of names.
     tree_lines = render_tree(root)
-    input_lines = enumerate(lines)
-    for first_line, cont_line, node in tree_lines:
-        if node.nos:
-            # Render actual input lines, replacing the column with the tree
-            # portion.
-            line = first_line
-            for no in node.nos:
-                input_no, input_line = next(input_lines)
-                prefix = input_line[:left]
-                suffix = input_line[right:].rstrip('\r\n')
-                assert no == input_no, (
-                    "Invalid order for lines ({}, {})".format(no, input_no))
-                line = prefix + line + suffix
-                output_file.write(line.rstrip())
-                output_file.write('\n')
-                line = cont_line
+
+    # Iterate the tree by input line number. This is done so that we can can
+    # render the new hierarchy lines as closely as possible to real input
+    # lines... we delay rendering those until we have a match with a real line
+    # to render.
+    tree_iter = enum_tree_by_input_line_num(tree_lines)
+    no, next_tree_lines = next(tree_iter)
+
+    # Iterate over the input lines, rendering the tree lines only when
+    # necessary.
+    input_lines_iter = iter(enumerate(lines))
+    for input_no, input_line in input_lines_iter:
+        if input_no < no:
+            # Catch up to the next line we need to render for the tree by
+            # forwarding just the input line.
+            output_file.write(input_line)
         else:
-            # Render new lines, inserted just for the hierarchy.
-            prefix_string = args.filler * (left//len(args.filler)+1)
-            output_file.write(prefix_string[:left])
-            output_file.write(first_line.rstrip())
-            output_file.write('\n')
+            assert input_no == no, (input_no, no)
+            for line, node in next_tree_lines:
+                if not node.nos:
+                    # Render new lines, inserted just for the hierarchy.
+                    prefix_string = args.filler * (left//len(args.filler)+1)
+                    output_file.write(prefix_string[:left])
+                    output_file.write(line.rstrip())
+                    output_file.write('\n')
+                else:
+                    # Render lines that replace previous lines, with prefix and
+                    # suffix.
+                    prefix = input_line[:left]
+                    suffix = input_line[right:].rstrip('\r\n')
+                    out_line = prefix + line + suffix
+                    output_file.write(out_line.rstrip())
+                    output_file.write('\n')
+            try:
+                no, next_tree_lines = next(tree_iter)
+            except StopIteration:
+                break
+
+    # Render the rest of the input lines after the tree is done rendering.
+    for _, input_line in input_lines_iter:
+        output_file.write(input_line)
 
 
 if __name__ == '__main__':

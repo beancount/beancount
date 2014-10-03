@@ -330,30 +330,96 @@ class TestTreeify(TestTreeifyBase):
 
     def test_noise_before(self):
         self.treeify_equal("""\
+          Account                         Balance
+          ---------------------------------------------
           Assets:US:Vanguard:VBMPX     100.00 USD
-          Equity:Opening-Balances      101.00 USD
+          Assets:US:Vanguard:VBMPX     101.00 USD
+          Expenses:Food:Groceries      102.00 USD
+        """, """\
+          Account                         Balance
+          ---------------------------------------------
+          |-- Assets
+          |   `-- US
+          |       `-- Vanguard
+          |           `-- VBMPX     100.00 USD
+          |                         101.00 USD
+          `-- Expenses
+              `-- Food
+                  `-- Groceries     102.00 USD
+        """, False)
+
+    def test_noise_after(self):
+        self.treeify_equal("""\
+          Assets:US:Vanguard:VBMPX     100.00 USD
+          Assets:US:Vanguard:VBMPX     101.00 USD
+          Expenses:Food:Groceries      102.00 USD
+          >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+          Not matching: yep, not matching.
+        """, """\
+          |-- Assets
+          |   `-- US
+          |       `-- Vanguard
+          |           `-- VBMPX     100.00 USD
+          |                         101.00 USD
+          `-- Expenses
+              `-- Food
+                  `-- Groceries     102.00 USD
+          >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+          Not matching: yep, not matching.
+        """, False)
+
+    def test_noise_middle_between_nodes(self):
+        self.treeify_equal("""\
+          Assets:US:Vanguard:VBMPX     100.00 USD
+          Assets:US:Vanguard:VBMPX     101.00 USD
+          >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
           Expenses:Food:Groceries      102.00 USD
         """, """\
           |-- Assets
           |   `-- US
           |       `-- Vanguard
-          |           `-- VBMPX        100.00 USD
-          |-- Equity
-          |   `-- Opening-Balances     101.00 USD
+          |           `-- VBMPX     100.00 USD
+          |                         101.00 USD
+          >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
           `-- Expenses
               `-- Food
-                  `-- Groceries        102.00 USD
+                  `-- Groceries     102.00 USD
         """, False)
 
+    def test_noise_middle_same_node(self):
+        self.treeify_equal("""\
+          Assets:US:Vanguard:VBMPX     100.00 USD
+          >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+          Assets:US:Vanguard:VBMPX     101.00 USD
+          Expenses:Food:Groceries      102.00 USD
+        """, """\
+          |-- Assets
+          |   `-- US
+          |       `-- Vanguard
+          |           `-- VBMPX     100.00 USD
+          >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+          |                         101.00 USD
+          `-- Expenses
+              `-- Food
+                  `-- Groceries     102.00 USD
+        """, False)
 
-    def test_noise_after(self):
-        pass
-
-
-    def test_noise_middle(self):
-        pass
-
-
+    def test_noise_middle_parent_child(self):
+        self.treeify_equal("""\
+          Assets:US:Vanguard           100.00 USD
+          >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+          Assets:US:Vanguard:VBMPX     101.00 USD
+          Expenses:Food:Groceries      102.00 USD
+        """, """\
+          |-- Assets
+          |   `-- US
+          |       `-- Vanguard      100.00 USD
+          >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+          |           `-- VBMPX     101.00 USD
+          `-- Expenses
+              `-- Food
+                  `-- Groceries     102.00 USD
+        """, False)
 
 
     def test_filenames(self):
