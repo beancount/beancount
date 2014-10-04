@@ -1014,6 +1014,22 @@ def contextualize_file(contents, employer):
     return format.align_beancount(new_contents), replacements
 
 
+def write_tutorial_examples(directory):
+    """Write example snippets for the tutorial steps.
+
+    Args:
+      directory: A string, the name of the directory to which
+        we output the files.
+    """
+
+
+
+
+
+
+
+
+
 def main():
     parse_date = lambda s: parse_datetime(s).date()
     today = datetime.date.today()
@@ -1036,16 +1052,35 @@ def main():
     argparser.add_argument('-s', '--seed', action='store', type=int,
                         help="Fix the random seed for debugging.")
 
+    argparser.add_argument('--write-tutorial', action='store',
+                           help="Generate and write out files for the tutorials")
+
     opts = argparser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
     if opts.seed:
         random.seed(opts.seed)
 
-    date_birth = opts.date_birth
-    date_begin = opts.date_begin
-    date_end = opts.date_end
+    write_example_file(opts.date_birth,
+                       opts.date_begin,
+                       opts.date_end,
+                       sys.stdout)
 
+    return 0
+
+
+
+def write_example_file(date_birth, date_begin, date_end, file):
+    """Generate the example file.
+
+    Args:
+      date_birth: A datetime.date instance, the birth date of our character.
+      date_begin: A datetime.date instance, the beginning date at which to generate
+        transactions.
+      date_end: A datetime.date instance, the end date at which to generate
+        transactions.
+      file: A file object, where to write out the output.
+    """
     # The following code entirely writes out the output to generic names, such
     # as "Employer1", "Bank1", and "CCY" (for principal currency). Those names
     # are purposely chosen to be unique, and only near the very end do we make
@@ -1164,15 +1199,13 @@ def main():
 
     # Replace generic names by realistic names and output results.
     contents, replacements = contextualize_file(output.getvalue(), employer)
-    sys.stdout.write(contents)
+    file.write(contents)
 
     # Validate the results parse fine.
     validate_output(contents,
                     [replace(account, replacements)
                      for account in [account_checking]],
                     replace('CCY', replacements))
-
-    return 0
 
 
 
