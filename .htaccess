@@ -91,6 +91,7 @@ RedirectMatch /doc/proposal-filtering$    https://docs.google.com/document/d/1d8
 RedirectMatch /doc/proposal-filter$       /beancount/doc/proposal-filtering
 RedirectMatch /doc/proposal-filters$      /beancount/doc/proposal-filtering
 RedirectMatch /doc/proposal-views$        /beancount/doc/proposal-filtering
+RedirectMatch /doc/proposal-query$        /beancount/doc/proposal-filtering
 
 RedirectMatch /doc/proposal-dates$        https://docs.google.com/document/d/1x0qqWGRHi02ef-FtUW172SHkdJ8quOZD-Xli7r4Nl_k/
 RedirectMatch /doc/proposal-dates$        /beancount/doc/proposal-settlement
