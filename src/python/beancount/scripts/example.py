@@ -29,6 +29,7 @@ from dateutil.parser import parse as parse_datetime
 
 from beancount.core.amount import D
 from beancount.core.amount import ZERO
+from beancount.core.amount import ONE
 from beancount.core import data
 from beancount.core import flags
 from beancount.core import amount
@@ -153,7 +154,7 @@ def sorted_entries(entries):
 
 # FIXME: This is generic; move to utils.
 def round_to(number, increment):
-    """Round a number down to a particular increment.
+    """Round a number *down* to a particular increment.
 
     Args:
       number: A Decimal, the number to be rounded.
@@ -203,7 +204,25 @@ def skipiter(iterable, num_skip):
         for _ in range(num_skip-1):
             next(it)
 
-def date_seq(date_begin, date_end, days_min, days_max):
+
+def date_iter(date_begin, date_end):
+    """Generate a sequence of dates.
+
+    Args:
+      date_begin: The start date.
+      date_end: The end date.
+    Yields:
+      Instances of datetime.date.
+    """
+    assert date_begin <= date_end
+    date = date_begin
+    ONE_DAY =  datetime.timedelta(days=1)
+    while date < date_end:
+        date += ONE_DAY
+        yield date
+
+
+def date_random_seq(date_begin, date_end, days_min, days_max):
     """Generate a sequence of dates with some random increase in days.
 
     Args:
@@ -246,6 +265,26 @@ def delay_dates(date_iter, delay_days_min, delay_days_max):
         yield date
 
 
+def merge_postings(entries, accounts):
+    """Merge all the postings from the given account names.
+
+    Args:
+      entries: A list of directives.
+      accounts: A list of account strings to get the balances for.
+    Yields:
+      A list of postings for all the accounts, in sorted order.
+    """
+    real_root = realization.realize(entries)
+    merged_postings = []
+    for account in accounts:
+        real_account = realization.get(real_root, account)
+        merged_postings.extend(posting
+                               for posting in real_account.postings
+                               if isinstance(posting, data.Posting))
+    merged_postings.sort(key=lambda posting: posting.entry.date)
+    return merged_postings
+
+
 def postings_for(entries, accounts):
     """Realize the entries and get the list of postings for the given accounts.
 
@@ -261,19 +300,35 @@ def postings_for(entries, accounts):
           applying the posting. These inventory objects can be mutated to adjust
           the balance due to generated transactions to be applied later.
     """
-    real_root = realization.realize(entries)
-    merged_postings = []
-    for account in accounts:
-        real_account = realization.get(real_root, account)
-        merged_postings.extend(posting
-                               for posting in real_account.postings
-                               if isinstance(posting, data.Posting))
-    merged_postings.sort(key=lambda posting: posting.entry.date)
-
+    merged_postings = merge_postings(entries, accounts)
     balances = collections.defaultdict(inventory.Inventory)
     for posting in merged_postings:
         balances[posting.account].add_position(posting.position)
         yield posting, balances
+
+
+def iter_dates_with_balance(date_begin, date_end, entries, accounts):
+    """Iterate over dates, including the balances of the postings iterator.
+
+    Args:
+      postings_iter: An iterator of postings as per postings_for().
+      date_begin: The start date.
+      date_end: The end date.
+    Yields:
+      Pairs of (data, balances) objects, with
+        date: A datetime.date instance
+        balances: An Inventory object, representing the current balance.
+          You can modify the inventory object to feed back changes in the
+          balance.
+    """
+    balances = collections.defaultdict(inventory.Inventory)
+    merged_postings = iter(merge_postings(entries, accounts))
+    posting = next(merged_postings, None)
+    for date in date_iter(date_begin, date_end):
+        while posting and posting.entry.date == date:
+            balances[posting.account].add_position(posting.position)
+            posting = next(merged_postings, None)
+        yield date, balances
 
 
 def get_minimum_balance(entries, account, currency):
@@ -554,11 +609,8 @@ def generate_retirement_investments(entries, account, commodities_map, price_map
 
             # Find the price at that date.
             _, price = prices.get_price(price_map, (commodity, 'CCY'), txn_date)
-
             units = (amount_fraction / price).quantize(D('0.001'))
-
             amount_cash = (units * price).quantize(D('0.01'))
-
             oss.write(replace("""
 
               YYYY-MM-DD * "Investing FRACTION of cash in COMM"
@@ -605,18 +657,139 @@ def generate_banking(date_begin, date_end, initial_amount):
           'INIT': initial_amount}))
 
 
-def generate_taxable_investment(date_begin, date_end):
+def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks):
     """Generate opening directives and transactions for an investment account.
 
     Args:
       date_begin: A date instance, the beginning date.
       date_end: A date instance, the end date.
+      entries: A list of entries that contains at least the transfers to the investment
+        account's cash account.
+      price_map: A dict of prices, as per beancount.ops.prices.build_price_map().
+      stocks: A set of strings, the list of commodities to invest in.
     Returns:
       A list of directives.
     """
-    return parse(replace("""
-      YYYY-MM-DD open Assets:CC:Investment:Cash    CCY
-    """, {'YYYY-MM-DD': date_begin}))
+    account = 'Assets:CC:Investment'
+    account_cash = join(account, 'Cash')
+    account_gains = 'Income:CC:Investment:Gains'
+
+    oss = io.StringIO()
+    oss.write(replace("""
+      YYYY-MM-DD open Account:Cash    CCY
+      YYYY-MM-DD open Gains    CCY
+      YYYY-MM-DD open Expenses:Financial:Commissions  CCY
+    """, {'YYYY-MM-DD': date_begin,
+          'Account': account,
+          'Gains': account_gains}))
+    for stock in stocks:
+        oss.write(replace("""
+          YYYY-MM-DD open Account:STOCK    STOCK
+        """, {'YYYY-MM-DD': date_begin,
+              'Account': account,
+              'STOCK': stock}))
+    open_entries = parse(oss.getvalue())
+
+    # Iterate over all the dates, but merging in the postings for the cash
+    # account.
+    MIN_AMOUNT = D('1000.00')
+    ROUND_AMOUNT = D('100.00')
+    COMMISSION = D('8.95')
+    ROUND_UNITS = D('1')
+    FRAC_INVEST = D('1.00')
+    P_DAILY_BUY = 1./15  # days
+    P_DAILY_SELL = 1./90  # days
+    stocks_inventory = inventory.Inventory()
+    new_entries = []
+    for date, balances in iter_dates_with_balance(date_begin, date_end,
+                                                  entries, [account_cash]):
+        # If the balance is high, buy with high probability.
+        balance = balances[account_cash]
+        total_cash = balance.get_amount('CCY').number * FRAC_INVEST
+        assert total_cash >= ZERO, 'Cash balance is negative: {}'.format(total_cash)
+        if total_cash > MIN_AMOUNT:
+            if random.random() < P_DAILY_BUY:
+                commodities = random.sample(stocks, random.randint(1, len(stocks)))
+                lot_amount = round_to(total_cash / len(commodities), ROUND_AMOUNT)
+
+                invested_amount = ZERO
+                for commodity in commodities:
+                    # Find the price at that date.
+                    _, price = prices.get_price(price_map, (commodity, 'CCY'), date)
+
+                    units = round_to((lot_amount / price), ROUND_UNITS)
+                    if units <= ZERO:
+                        continue
+                    cash_amount = units * price + COMMISSION
+                    logging.info('Buying %s %s @ %s CCY = %s CCY', units, commodity, price, units * price)
+
+                    buy = parse(replace("""
+                      YYYY-MM-DD * "Buy shares of STOCK"
+                        Account:Cash                     CASH_AMOUNT CCY
+                        Account:STOCK                    STOCK_AMOUNT STOCK {PRICE_AMOUNT CCY}
+                        Expenses:Financial:Commissions   COMMISSION CCY
+                    """, {
+                        'YYYY-MM-DD': date,
+                        'Account': account,
+                        'STOCK': commodity,
+                        'CASH_AMOUNT': '{:.2f}'.format(-cash_amount),
+                        'STOCK_AMOUNT': '{:.0f}'.format(units),
+                        'PRICE_AMOUNT': '{:.2f}'.format(price),
+                        'COMMISSION': '{:.2f}'.format(COMMISSION),
+                        }))[0]
+                    new_entries.append(buy)
+
+                    balances[account_cash].add_position(buy.postings[0].position)
+                    stocks_inventory.add_position(buy.postings[1].position)
+
+                # Don't sell on days you buy.
+                continue
+
+        # Otherwise, sell with low probability.
+        if not stocks_inventory.is_empty() and random.random() < P_DAILY_SELL:
+            # Choose the lot with the highest gain or highest loss.
+            gains = []
+            for position in stocks_inventory.positions:
+                base_quote = (position.lot.currency, position.lot.cost.currency)
+                _, price = prices.get_price(price_map, base_quote, date)
+                if price == position.lot.cost.number:
+                    continue # Skip lots without movement.
+                market_value = position.number * price
+                book_value = position.get_cost().number
+                gain = market_value - book_value
+                gains.append((gain, market_value, price, position))
+            if not gains:
+                continue
+
+            # Sell either biggest winner or biggest loser.
+            biggest = bool(random.random() < 0.5)
+            lot_tuple = sorted(gains)[0 if biggest else -1]
+            gain, market_value, price, sell_position = lot_tuple
+            logging.info('Selling {} for {}'.format(sell_position, market_value))
+
+            sell = parse(replace("""
+              YYYY-MM-DD * "Sell shares of STOCK"
+                Account:STOCK                    POSITION @ PRICE CCY
+                Account:Cash                     CASH_AMOUNT CCY
+                Expenses:Financial:Commissions   COMMISSION CCY
+                Gains
+            """, {
+                'YYYY-MM-DD': date,
+                'Account': account,
+                'Gains': account_gains,
+                'STOCK': sell_position.lot.currency,
+                'POSITION': -sell_position,
+                'CASH_AMOUNT': '{:.2f}'.format(market_value - COMMISSION),
+                'PRICE': '{:.2f}'.format(price),
+                'COMMISSION': '{:.2f}'.format(COMMISSION),
+                }))[0]
+            new_entries.append(sell)
+
+            balances[account_cash].add_position(sell.postings[1].position)
+            stocks_inventory.add_position(sell.postings[0].position)
+            continue
+
+    return open_entries + new_entries
 
 
 def generate_periodic_expenses(date_iter,
@@ -905,21 +1078,21 @@ def generate_credit_expenses(date_birth, date_begin, date_end, account_credit, a
       A list of directives.
     """
     restaurant_expenses = generate_periodic_expenses(
-        date_seq(date_begin, date_end, 1, 5),
+        date_random_seq(date_begin, date_end, 1, 5),
         restaurant_names, restaurant_narrations,
         account_credit, 'Expenses:Food:Restaurant',
         lambda: min(random.lognormvariate(math.log(30), math.log(1.5)),
                     random.randint(200, 220)))
 
     groceries_expenses = generate_periodic_expenses(
-        date_seq(date_begin, date_end, 5, 20),
+        date_random_seq(date_begin, date_end, 5, 20),
         groceries_names, "Buying groceries",
         account_credit, 'Expenses:Food:Groceries',
         lambda: min(random.lognormvariate(math.log(80), math.log(1.3)),
                     random.randint(250, 300)))
 
     subway_expenses = generate_periodic_expenses(
-        date_seq(date_begin, date_end, 27, 33),
+        date_random_seq(date_begin, date_end, 27, 33),
         "Metro Transport", "Subway tickets",
         account_credit, 'Expenses:Transport:Subway',
         lambda: D('120.00'))
@@ -1007,67 +1180,11 @@ def contextualize_file(contents, employer):
         'CreditCard2': 'Amex:BlueCash',
         'Employer1': employer,
         'Retirement': 'Vanguard',
-        'RETINV1': 'VBMPX',
-        'RETINV2': 'RGAGX',
+        'FUND1': 'VBMPX',
+        'FUND2': 'RGAGX',
         }
     new_contents = replace(contents, replacements)
     return format.align_beancount(new_contents), replacements
-
-
-def write_tutorial_examples(directory):
-    """Write example snippets for the tutorial steps.
-
-    Args:
-      directory: A string, the name of the directory to which
-        we output the files.
-    """
-
-
-
-
-
-
-
-
-
-def main():
-    parse_date = lambda s: parse_datetime(s).date()
-    today = datetime.date.today()
-
-    argparser = argparse.ArgumentParser(description=__doc__.strip())
-
-    default_years = 2
-    argparser.add_argument('--date-begin', '--begin-date', action='store', type=parse_date,
-                           default=datetime.date(today.year - default_years, 1, 1),
-                           help="Beginning date")
-
-    argparser.add_argument('--date-end', '--end-date', action='store', type=parse_date,
-                           default=today,
-                           help="End date.")
-
-    argparser.add_argument('--date-birth', '--birth-date', action='store', type=parse_date,
-                           default=datetime.date(1980, 5, 12),
-                           help="Date of birth of our fictional character.")
-
-    argparser.add_argument('-s', '--seed', action='store', type=int,
-                        help="Fix the random seed for debugging.")
-
-    argparser.add_argument('--write-tutorial', action='store',
-                           help="Generate and write out files for the tutorials")
-
-    opts = argparser.parse_args()
-
-    logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
-    if opts.seed:
-        random.seed(opts.seed)
-
-    write_example_file(opts.date_birth,
-                       opts.date_begin,
-                       opts.date_end,
-                       sys.stdout)
-
-    return 0
-
 
 
 def write_example_file(date_birth, date_begin, date_end, file):
@@ -1157,16 +1274,20 @@ def write_example_file(date_birth, date_begin, date_end, file):
 
     # Generate price entries for investment currencies and create a price map to
     # use for later for generating investment transactions.
-    price_entries = generate_prices(date_begin, date_end, ['RETINV1', 'RETINV2'], 'CCY')
+    funds_allocation = {'FUND1': 0.40, 'FUND2': 0.60}
+    stocks = {'STK1', 'STK2', 'STK3', 'STK4'}
+    price_entries = generate_prices(date_begin, date_end,
+                                    list(funds_allocation.keys()) + list(stocks), 'CCY')
     price_map = prices.build_price_map(price_entries)
 
     # Investment accounts for retirement.
     retirement_entries = generate_retirement_investments(
-        income_entries, account_retirement, {'RETINV1': 0.40,
-                                             'RETINV2': 0.60}, price_map)
+        income_entries, account_retirement, funds_allocation, price_map)
 
     # Taxable savings / investment accounts.
-    investment_entries = generate_taxable_investment(date_begin, date_end)
+    investment_entries = generate_taxable_investment(date_begin, date_end,
+                                                     banking_transfers, price_map,
+                                                     stocks)
 
     # Expense accounts.
     expense_accounts_entries = generate_expense_accounts(date_birth)
@@ -1208,14 +1329,51 @@ def write_example_file(date_birth, date_begin, date_end, file):
                     replace('CCY', replacements))
 
 
+def main():
+    parse_date = lambda s: parse_datetime(s).date()
+    today = datetime.date.today()
 
-## TODO(blais) - Create investments in retirement.
-## TODO(blais) - Create investments in taxable account (along with sales).
+    argparser = argparse.ArgumentParser(description=__doc__.strip())
+
+    default_years = 2
+    argparser.add_argument('--date-begin', '--begin-date', action='store', type=parse_date,
+                           default=datetime.date(today.year - default_years, 1, 1),
+                           help="Beginning date")
+
+    argparser.add_argument('--date-end', '--end-date', action='store', type=parse_date,
+                           default=today,
+                           help="End date.")
+
+    argparser.add_argument('--date-birth', '--birth-date', action='store', type=parse_date,
+                           default=datetime.date(1980, 5, 12),
+                           help="Date of birth of our fictional character.")
+
+    argparser.add_argument('-s', '--seed', action='store', type=int,
+                           help="Fix the random seed for debugging.")
+
+    argparser.add_argument('-o', '--output', action='store',
+                           help="Output filename (default stdout)")
+
+    opts = argparser.parse_args()
+
+    logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
+    if opts.seed is not None:
+        random.seed(opts.seed)
+
+    output_file = open(opts.output, 'w') if opts.output else sys.stdout
+    return write_example_file(opts.date_birth,
+                              opts.date_begin,
+                              opts.date_end,
+                              file=output_file)
+
+
 ## TODO(blais) - Add employer match contribution for 401k.
 ## TODO(blais) - Generate some minimum amount of realistic-ish cash entries.
 ## TODO(blais) - Tags (a trip), links
+## TODO(blais) - Events.
 ## TODO(blais) - Bank fees.
 ## TODO(blais) - Balance entries.
+## TODO(blais) - Reformat using format instead of replace(). We don't need this really.
 
 ## TODO(blais) - Build a script that will output all the reports I'm interested
 ## in to files, and link to them from my document.

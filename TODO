@@ -20,6 +20,9 @@ beancount: TODO
 
   - Complete presentation
 
+  - Rename Inventory.update() -> Inventory.add_inventory(). Idiomatic Python
+    update semantics is to _replace_ the previous values, and that's obviously
+    not what we do.
 
 
 * Requirements for Shipping 1.0
