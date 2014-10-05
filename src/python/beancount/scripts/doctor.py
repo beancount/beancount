@@ -57,7 +57,7 @@ def do_roundtrip(filename, unused_args):
     logging.info("Read the entries from that file")
     # Note that we don't want to run any of the auto-generation here...
     # parse-only, not load.
-    entries_roundtrip, errors, options = parser.parse(round1_filename)
+    entries_roundtrip, errors, options = parser.parse_file(round1_filename)
 
     # Print out the list of errors from parsing the results.
     if errors:

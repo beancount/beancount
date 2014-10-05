@@ -35,7 +35,7 @@ class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
           2014-07-10 document Liabilities:US:Bank  "does-not-exist.pdf"
 
         """).replace('ROOT', self.root))
-        entries, _, options_map = parser.parse(input_filename)
+        entries, _, options_map = parser.parse_file(input_filename)
 
         # In this test we set the root to the directory root, but only the
         # checking account is declared, and so only that entry should get

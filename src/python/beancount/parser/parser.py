@@ -582,7 +582,7 @@ class Builder(lexer.LexBuilder):
         return entry
 
 
-def parse(filename, **kw):
+def parse_file(filename, **kw):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts.
 
@@ -596,12 +596,15 @@ def parse(filename, **kw):
         a dict of the option values that were parsed from the file.)
     """
     builder = Builder()
-    abs_filename = path.abspath(filename)
-    builder.options["filename"] = abs_filename
-    _parser.parse(abs_filename, builder, **kw)
+    if filename:
+        abs_filename = path.abspath(filename)
+        builder.options["filename"] = abs_filename
+    _parser.parse_file(filename, builder, **kw)
     entries = sorted(builder.entries, key=data.entry_sortkey)
     return (entries, builder.errors, builder.options)
 
+# Alias, for compatibility.
+parse = parse_file
 
 def parse_string(string, **kw):
     """Parse a beancount input file and return Ledger with the list of
@@ -610,12 +613,13 @@ def parse_string(string, **kw):
     Args:
       string: a str, the contents to be parsed instead of a file's.
     Return:
-      Same as the output of parse().
+      Same as the output of parse_file().
     """
-    with tempfile.NamedTemporaryFile('w') as tmp_file:
-        tmp_file.write(string)
-        tmp_file.flush()
-        return parse(tmp_file.name, **kw)
+    builder = Builder()
+    builder.options["filename"] = "<string>"
+    _parser.parse_string(string, builder, **kw)
+    entries = sorted(builder.entries, key=data.entry_sortkey)
+    return (entries, builder.errors, builder.options)
 
 
 def parsedoc(fun):

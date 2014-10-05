@@ -45,7 +45,7 @@ def load(filename, log_timings=None, log_errors=None, extra_validations=None):
           the file.
         options_map: A dict of the options parsed from the file.
     """
-    return _load(parser.parse, filename, log_timings, log_errors, extra_validations)
+    return _load(parser.parse_file, filename, log_timings, log_errors, extra_validations)
 
 
 def load_string(string, log_timings=None, log_errors=None, extra_validations=None):
@@ -80,7 +80,7 @@ def _load(parse_function, file_or_string, log_timings, log_errors, extra_validat
 
     Args:
       parse_function: A function used to parse file_or_string. Either
-        parser.parse() or parser.parse_string().
+        parser.parse_file() or parser.parse_string().
       file_or_string: The name of the file to be parsed, or an input string.
       log_timings: A file object or function to write timings to,
         or None, if it should remain quiet.

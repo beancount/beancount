@@ -3,6 +3,9 @@ Tests for parser.
 """
 import unittest
 import inspect
+import tempfile
+import sys
+import subprocess
 
 from beancount.parser.parser import parsedoc
 from beancount.parser import parser
@@ -31,6 +34,42 @@ def check_list(test, objlist, explist):
         test.assertEqual(len(explist), len(objlist))
         for obj, exp in zip(objlist, explist):
             test.assertTrue(isinstance(type(obj), type(exp)))
+
+
+class TestParserInputs(unittest.TestCase):
+    """Try difference sources for the parser's input."""
+
+    INPUT = """
+      2013-05-18 * "Nice dinner at Mermaid Inn"
+        Expenses:Restaurant         100 USD
+        Assets:US:Cash
+    """
+
+    def test_parse_string(self):
+        entries, errors, _ = parser.parse_string(self.INPUT)
+        self.assertEqual(1, len(entries))
+        self.assertEqual(0, len(errors))
+
+    def test_parse_file(self):
+        with tempfile.NamedTemporaryFile('w', suffix='.beancount') as file:
+            file.write(self.INPUT)
+            file.flush()
+            entries, errors, _ = parser.parse_file(file.name)
+            self.assertEqual(1, len(entries))
+            self.assertEqual(0, len(errors))
+
+    @classmethod
+    def parse_stdin(cls):
+        entries, errors, _ = parser.parse_file("-")
+        assert entries
+        assert not errors
+
+    def test_parse_stdin(self):
+        code = ('import beancount.parser.parser_test as p; '
+                'p.TestParserInputs.parse_stdin()')
+        pipe = subprocess.Popen([sys.executable, '-c', code, __file__],
+                                stdin=subprocess.PIPE)
+        output, errors = pipe.communicate(self.INPUT.encode('utf-8'))
 
 
 class TestParserEntryTypes(unittest.TestCase):

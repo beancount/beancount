@@ -577,7 +577,7 @@ def generate_retirement_investments(entries, account, commodities_map, price_map
 
     Args:
       entries: A list of directives
-      account: The checking account to generate expenses to.
+      account: The root account for all retirement investment sub-accounts.
       commodities_map: A dict of commodity/currency to a fraction to be invested in.
       price_map: A dict of prices, as per beancount.ops.prices.build_price_map().
     Returns:
@@ -1361,10 +1361,12 @@ def main():
         random.seed(opts.seed)
 
     output_file = open(opts.output, 'w') if opts.output else sys.stdout
-    return write_example_file(opts.date_birth,
-                              opts.date_begin,
-                              opts.date_end,
-                              file=output_file)
+    write_example_file(opts.date_birth,
+                       opts.date_begin,
+                       opts.date_end,
+                       file=output_file)
+
+    return 0
 
 
 ## TODO(blais) - Add employer match contribution for 401k.
