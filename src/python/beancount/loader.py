@@ -69,8 +69,7 @@ def load_string(string, log_timings=None, log_errors=None, extra_validations=Non
     return _load(parser.parse_string, string, log_timings, log_errors, extra_validations)
 
 
-def _load(parse_function, file_or_string, log_timings, log_errors,
-          extra_validations=None):
+def _load(parse_function, file_or_string, log_timings, log_errors, extra_validations):
     """Parse Beancount input, run its transformations and validate it.
 
     (This is an internal method.)
@@ -144,9 +143,15 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
     entries.sort(key=data.entry_sortkey)
 
     # Process the plugins.
-    for plugin_name in itertools.chain(DEFAULT_PLUGINS,
-                                       options_map["plugin"]):
+    if options_map['plugin_processing_mode'] == 'raw':
+        plugins_iter = options_map["plugin"]
+    elif options_map['plugin_processing_mode'] == 'default':
+        plugins_iter = itertools.chain(DEFAULT_PLUGINS, options_map["plugin"])
+    else:
+        assert "Invalid value for plugin_processing_mode: {}".format(
+            options_map['plugin_processing_mode'])
 
+    for plugin_name in plugins_iter:
         # Parse out the option if one was specified.
         match = re.match('(.*):(.*)', plugin_name)
         if match:

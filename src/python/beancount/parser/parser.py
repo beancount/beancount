@@ -150,8 +150,19 @@ class Builder(lexer.LexBuilder):
         else:
             option = self.options[key]
             if isinstance(option, list):
+                # Append to a list of values.
                 option.append(value)
             else:
+                # Validate some option values.
+                if key == 'plugin_processing_mode':
+                    if value not in ('raw', 'default'):
+                        source = Source(filename, lineno)
+                        self.errors.append(
+                            ParserError(source,
+                                        ("Invalid value for '{}': '{}'").format(key, value),
+                                        None))
+                        return
+                # Set the value.
                 self.options[key] = value
 
             # Refresh the list of valid account regexps as we go.

@@ -36,6 +36,7 @@ class TestOptions(unittest.TestCase):
         options_doc = options.list_options()
         self.assertTrue(isinstance(options_doc, str))
 
+
 class TestAccountTypeOptions(unittest.TestCase):
 
     @parsedoc
@@ -86,3 +87,13 @@ class TestAccountTypeOptions(unittest.TestCase):
         """
         self.assertTrue(errors)
         self.assertEqual(1, len(entries))
+
+
+class TestValidateOptions(unittest.TestCase):
+
+    @parsedoc
+    def test_validate__plugin_processing_mode__invalid(self, entries, errors, options_map):
+        """
+          option "plugin_processing_mode" "i-dont-exist"
+        """
+        self.assertTrue(errors)

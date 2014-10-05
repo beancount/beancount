@@ -469,11 +469,8 @@ beancount: TODO
 
 
 
-  - Idea: In order to give the user more control over what plugins get run, add
-    an option to disable the processing of the built-in plugins:
+  - Idea: Add an option for triggering strict validation?
 
-      option "processing" "raw" ; No plugins are run beyond the parser and interpolation.
-      option "processing" "default" ; The default list of plugins is run
       option "processing" "strict" ; Plugins including the hardcore validation are run.
 
     Somehow making the hardcore validation into a plugin might be a good way to

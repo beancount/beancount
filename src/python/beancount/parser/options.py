@@ -125,6 +125,15 @@ PUBLIC_OPTION_GROUPS = [
     """, [OptDesc("operating_currency", [], "USD")]),
 
     OptGroup("""
+      A string that defines which set of plugins is to be run by the loader: if
+      the mode is "default", a preset list of plugins are automatically run
+      before any user plugin. If the mode is "raw", no preset plugins are run at
+      all, only user plugins are run (the user should explicitly load the
+      desired list of plugins by using the 'plugin' option. This is useful in case the
+      user wants full control over the ordering in which the plugins are run).
+    """, [OptDesc("plugin_processing_mode", "default", "raw")]),
+
+    OptGroup("""
       A list of Python modules containing transformation functions to run the
       entries through after parsing. The parser reads the entries as they are,
       transforms them through a list of standard functions, such as balance
