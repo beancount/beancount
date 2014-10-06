@@ -93,6 +93,51 @@ groceries_names = ["Onion Market",
                    "Corner Deli",
                    "Farmer Fresh"]
 
+home_name = "New Metropolis"
+
+
+trip_destinations = {
+    "los-angeles": [
+        ("Mr. Marcel", "Expenses:Food:Restaurant", (40, 25)),
+        ("Banana Leaf", "Expenses:Food:Restaurant", (25, 10)),
+        ("Dupar's", "Expenses:Food:Restaurant", (30, 12)),
+        ("Pampas Grill", "Expenses:Food:Restaurant", (25, 10)),
+        ("Chipotle", "Expenses:Food:Restaurant", (16, 5)),
+        ("Starbucks", "Expenses:Food:Coffee", (6, 2)),
+        ("E.B.'s Beer and Wine", "Expenses:Food:Alcohol", (9, 5)),
+        ],
+    "chicago": [
+        ("Star of Siam", "Expenses:Food:Restaurant", (25, 10)),
+        ("Mercadito", "Expenses:Food:Restaurant", (40, 15)),
+        ("25 Degrees Burger Bar", "Expenses:Food:Restaurant", (22, 7)),
+        ("Eataly Chicago", "Expenses:Food:Restaurant", (40, 25)),
+        ("Another Sports Pub", "Expenses:Food:Alcohol", (12, 7)),
+        ("Argo Tea", "Expenses:Food:Coffee", (6, 2)),
+    ],
+    "boston": [
+        ("Giacomo's Restaurant", "Expenses:Food:Restaurant", (40, 12)),
+        ("Legal Seafood", "Expenses:Food:Restaurant", (35, 15)),
+        ("Franklin Cafe", "Expenses:Food:Restaurant", (30, 12)),
+        ("Starbucks", "Expenses:Food:Coffee", (6, 2)),
+    ],
+    "new-york": [
+        ("Uncle Boons", "Expenses:Food:Restaurant", (40, 15)),
+        ("Cafe Select", "Expenses:Food:Restaurant", (30, 12)),
+        ("Takahachi", "Expenses:Food:Restaurant", (50, 15)),
+        ("Laut", "Expenses:Food:Restaurant", (32, 10)),
+        ("La Colombe", "Expenses:Food:Coffee", (6, 3)),
+        ("Gimme! Coffee", "Expenses:Food:Coffee", (7, 4)),
+    ],
+    "san-francisco": [
+        ("Bar Crudo", "Expenses:Food:Restaurant", (70, 20)),
+        ("Pizza Delfina", "Expenses:Food:Restaurant", (20, 6)),
+        ("Waterbar", "Expenses:Food:Restaurant", (50, 20)),
+        ("Mission Chinese Food", "Expenses:Food:Restaurant", (27, 12)),
+        ("Starbucks", "Expenses:Food:Coffee", (6, 2)),
+    ],
+    }
+
+
 # Limits on allowed retirement contributions.
 retirement_limits = {2000: D('10500'),
                      2001: D('10500'),
@@ -278,6 +323,8 @@ def merge_postings(entries, accounts):
     merged_postings = []
     for account in accounts:
         real_account = realization.get(real_root, account)
+        if real_account is None:
+            continue
         merged_postings.extend(posting
                                for posting in real_account.postings
                                if isinstance(posting, data.Posting))
@@ -1004,8 +1051,10 @@ def generate_expense_accounts(date_birth):
     """
     return parse(replace("""
 
-      YYYY-MM-DD open Expenses:Food:Restaurant
       YYYY-MM-DD open Expenses:Food:Groceries
+      YYYY-MM-DD open Expenses:Food:Restaurant
+      YYYY-MM-DD open Expenses:Food:Coffee
+      YYYY-MM-DD open Expenses:Food:Alcohol
 
       YYYY-MM-DD open Expenses:Transport:Subway
 
@@ -1103,14 +1152,18 @@ def generate_banking_expenses(date_begin, date_end, account, rent_amount):
     return sorted_entries(rent_expenses + electricity_expenses + internet_expenses)
 
 
-def generate_credit_expenses(date_birth, date_begin, date_end, account_credit, account_checking):
+def generate_regular_credit_expenses(date_birth, date_begin, date_end,
+                                     account_credit,
+                                     account_checking):
     """Generate expenses paid out of a credit card account, including payments to the
     credit card.
 
     Args:
+      date_birth: The user's birth date.
       date_begin: The start date.
       date_end: The end date.
-      account: The checking account to generate expenses to.
+      account_credit: The credit card account to generate expenses against.
+      account_checking: The checking account to generate payments from.
     Returns:
       A list of directives.
     """
@@ -1138,18 +1191,94 @@ def generate_credit_expenses(date_birth, date_begin, date_end, account_credit, a
                                      groceries_expenses +
                                      subway_expenses)
 
-    # Generate entries that will pay off the credit card (unconditionally).
-    credit_payments = generate_clearing_entries(
-        delay_dates(rrule.rrule(rrule.MONTHLY,
-                                dtstart=date_begin, until=date_end, bymonthday=7), 0, 4),
-        "CreditCard1", "Paying off credit card",
-        credit_expenses,
-        account_credit, account_checking)
-
     # Entries to open accounts.
     credit_preamble = generate_open_entries(date_birth, [account_credit], 'CCY')
 
-    return sorted_entries(credit_preamble + credit_expenses + credit_payments)
+    return sorted_entries(credit_preamble + credit_expenses)
+
+
+def compute_trip_dates(date_begin, date_end):
+    """Generate dates at reasonable intervals for trips during the given time period.
+
+    Args:
+      date_begin: The start date.
+      date_end: The end date.
+    Yields:
+      Pairs of dates for the trips within the period.
+    """
+    # Min and max number of days remaining at home.
+    DAYS_AT_HOME = (4*30, 13*30)
+
+    # Length of trip.
+    DAYS_TRIP = (8, 22)
+
+    # Number of days to ensure no trip at the beginning and the ned.
+    DAYS_BUFFER = 21
+
+    date_begin += datetime.timedelta(days=DAYS_BUFFER)
+    date_end -= datetime.timedelta(days=DAYS_BUFFER)
+
+    date = date_begin
+    while 1:
+        duration_at_home = datetime.timedelta(days=random.randint(*DAYS_AT_HOME))
+        duration_trip = datetime.timedelta(days=random.randint(*DAYS_TRIP))
+        date_trip_begin = date + duration_at_home
+        date_trip_end = date_trip_begin + duration_trip
+        if date_trip_end >= date_end:
+            break
+        yield (date_trip_begin, date_trip_end)
+        date = date_trip_end
+
+
+def generate_trip_entries(date_begin, date_end,
+                          tag, config,
+                          trip_city, home_city,
+                          account_credit):
+    """Generate more dense expenses for a trip.
+
+    Args:
+      date_begin: A datetime.date instance, the beginning of the trip.
+      date_end: A datetime.date instance, the end of the trip.
+      tag: A string, the name of the tag.
+      config: A list of (payee name, account name, (mu, 3sigma)), where
+        mu is the mean of the prices to generate and 3sigma is 3 times
+        the standard deviation.
+      trip_city: A string, the capitalized name of the destination city.
+      home_city: A string, the name of the home city.
+      account_credit: A string, the name of the credit card account to pay
+        the expenses from.
+    Returns:
+      A list of entries for the trip, all tagged with the given tag.
+    """
+    P_DAY_GENERATE = 0.3
+    oss = io.StringIO()
+    for date in date_iter(date_begin, date_end):
+        for payee, account, (mu, sigma3) in config:
+            if random.random() < P_DAY_GENERATE:
+                amount = random.normalvariate(mu, sigma3 / 3.)
+                oss.write(replace("""
+                  YYYY-MM-DD * "Payee" "" #TAG
+                    Account:Credit     NEG_AMOUNT CCY
+                    Account:Expense    POS_AMOUNT CCY
+                """, {
+                    'YYYY-MM-DD': date,
+                    'Payee': payee,
+                    'Account:Credit': account_credit,
+                    'Account:Expense': account,
+                    'TAG': tag,
+                    'POS_AMOUNT': '{:.2f}'.format(amount),
+                    'NEG_AMOUNT': '{:.2f}'.format(-amount)
+                }))
+
+    # Generate events for the trip.
+    oss.write(replace("""
+      YYYY-MM-DD event "location" "Location"
+      YYYY-MM-EE event "location" "Home"
+    """, {'YYYY-MM-DD': date_begin,
+          "Location": trip_city,
+          'YYYY-MM-EE': date_end,
+          "Home": home_city}))
+    return parse(oss.getvalue())
 
 
 def price_series(start, mu, sigma):
@@ -1252,10 +1381,10 @@ def write_example_file(date_birth, date_begin, date_end, file):
     rent_amount = round_to(annual_salary / rent_divisor, rent_increment)
 
     # Get a random employer.
-    employer, address = random.choice(employers)
+    employer_name, employer_address = random.choice(employers)
 
     # Salary income payments.
-    income_entries = generate_employment_income(employer, address,
+    income_entries = generate_employment_income(employer_name, employer_address,
                                                 annual_salary,
                                                 account_checking,
                                                 join(account_retirement, 'Cash'),
@@ -1265,10 +1394,45 @@ def write_example_file(date_birth, date_begin, date_end, file):
     banking_expenses = generate_banking_expenses(date_begin, date_end,
                                                  account_checking, rent_amount)
 
-    # Expenses via credit card.
-    credit_entries = generate_credit_expenses(date_birth, date_begin, date_end,
-                                              account_credit,
-                                              account_checking)
+    # Regular expenses via credit card.
+    credit_regular_entries = generate_regular_credit_expenses(
+        date_birth, date_begin, date_end, account_credit, account_checking)
+
+    # Generate credit card expenses for trips.
+    destinations = list(trip_destinations.items())
+    destinations.extend(destinations)
+    random.shuffle(destinations)
+    for (date_trip_begin, date_trip_end), (destination_name, config) in zip(
+        compute_trip_dates(date_begin, date_end), destinations):
+
+        # Compute a suitable tag.
+        tag = 'trip-{}-{}'.format(destination_name.lower().replace(' ', '-'),
+                                  date_trip_begin.year)
+        logging.info("%s -- %s %s", tag, date_trip_begin, date_trip_end)
+
+        # Remove regular entries during this trip.
+        credit_regular_entries = [entry
+                                  for entry in credit_regular_entries
+                                  if not(date_trip_begin <= entry.date < date_trip_end)]
+
+        # Generate entries for the trip.
+        trip_entries = generate_trip_entries(
+            date_trip_begin, date_trip_end,
+            tag, config,
+            destination_name.replace('-', ' ').title(), home_name,
+            account_credit)
+
+        credit_regular_entries.extend(trip_entries)
+
+    # Generate entries that will pay off the credit card (unconditionally).
+    credit_payments = generate_clearing_entries(
+        delay_dates(rrule.rrule(rrule.MONTHLY,
+                                dtstart=date_begin, until=date_end, bymonthday=7), 0, 4),
+        "CreditCard1", "Paying off credit card",
+        credit_regular_entries,
+        account_credit, account_checking)
+
+    credit_entries = credit_regular_entries + credit_payments
 
     # Tax accounts.
     tax_preamble = generate_tax_preamble(date_birth)
@@ -1363,7 +1527,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
     output_section('* Cash', [])  # FIXME TODO(blais): cash entries
 
     # Replace generic names by realistic names and output results.
-    contents, replacements = contextualize_file(output.getvalue(), employer)
+    contents, replacements = contextualize_file(output.getvalue(), employer_name)
     file.write(contents)
 
     # Validate the results parse fine.
@@ -1414,8 +1578,7 @@ def main():
 
 
 ## TODO(blais) - Generate some minimum amount of realistic-ish cash entries.
-## TODO(blais) - Tags (a trip), links
-## TODO(blais) - Events.
+## TODO(blais) - Links.
 ## TODO(blais) - Bank fees.
 ## TODO(blais) - Balance entries.
 ## TODO(blais) - Reformat using format instead of replace(). We don't need this really.
