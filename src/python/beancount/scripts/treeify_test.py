@@ -3,9 +3,10 @@ import unittest
 import textwrap
 from os import path
 
+from beancount.utils import test_utils
 
-PROGRAM = path.join(path.dirname(__file__), 'treeify')
 
+PROGRAM = path.join(test_utils.find_repository_root(__file__), 'bin', 'treeify')
 
 
 def treeify(string, options=None):

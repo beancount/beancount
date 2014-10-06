@@ -15,13 +15,14 @@ beancount: TODO
     update semantics is to _replace_ the previous values, and that's obviously
     not what we do.
 
-  - Move treeify to bin & add setup.py install; move treeify_test.py under
-    scripts.
   - Make treeify occopy the same minimum width same as the original column, so
     that the other columns aren't out of whack.
 
   - Revise beancount.loader.load() to beancount.loader.load_file() + alias, as
     for the parser.
+
+  - Complete tutorial examples generation
+    * Write an automated test that runs it
 
   - Complete converter script
 
