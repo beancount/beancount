@@ -300,6 +300,7 @@ def postings_for(entries, accounts):
           applying the posting. These inventory objects can be mutated to adjust
           the balance due to generated transactions to be applied later.
     """
+    assert isinstance(accounts, list)
     merged_postings = merge_postings(entries, accounts)
     balances = collections.defaultdict(inventory.Inventory)
     for posting in merged_postings:
@@ -350,8 +351,8 @@ def get_minimum_balance(entries, account, currency):
     return min_amount
 
 
-def generate_employment_income(employer,
-                               address,
+def generate_employment_income(employer_name,
+                               employer_address,
                                annual_salary,
                                account_deposit,
                                account_retirement,
@@ -360,8 +361,8 @@ def generate_employment_income(employer,
     """Generate bi-weekly entries for payroll salary income.
 
     Args:
-      employer: A string, the human-readable name of the employer.
-      address: A string, the address of the employer.
+      employer_name: A string, the human-readable name of the employer.
+      employer_address: A string, the address of the employer.
       annual_salary: A Decimal, the annual salary of the employee.
       account_deposit: An account string, the account to deposit the salary to.
       account_retirement: An account string, the account to deposit retirement
@@ -373,8 +374,8 @@ def generate_employment_income(employer,
     """
     replacements = {
         'YYYY-MM-DD': date_begin,
-        'Employer': employer,
-        'Address': address,
+        'Employer': employer_name,
+        'Address': employer_address,
         }
 
     preamble = replace("""
@@ -570,6 +571,42 @@ def generate_tax_accounts(year, date_max):
           'LIMIT': retirement_limits.get(year, retirement_limits[None])}))
 
     return [entry for entry in entries if entry.date < date_max]
+
+
+def generate_retirement_employer_match(entries, account_invest, account_income):
+    """Generate employer matching contributions into a retirement account.
+
+    Args:
+      entries: A list of directives that cover the retirement account.
+      account_invest: The name of the retirement cash account.
+      account_income: The name of the income account.
+    Returns:
+      A list of new entries generated for employer contributions.
+    """
+    MATCH_FRAC = D('0.50')
+
+    new_entries = parse(replace("""
+      YYYY-MM-DD open Account:Income   CCY
+    """, {
+        'YYYY-MM-DD': entries[0].date,
+        'Account:Income': account_income,
+        }))
+
+    for posting, balances in postings_for(entries, [account_invest]):
+        amount = posting.position.number * MATCH_FRAC
+        match_entry = parse(replace("""
+          YYYY-MM-DD * "Employer match for contribution"
+            Account:Invest         AMOUNT CCY
+            Account:Income        -AMOUNT CCY
+        """, {
+            'YYYY-MM-DD': posting.entry.date + ONE_DAY,
+            'Account:Invest': account_invest,
+            'Account:Income': account_income,
+            'AMOUNT': '{:.2f}'.format(amount),
+            }))[0]
+        new_entries.append(match_entry)
+
+    return new_entries
 
 
 def generate_retirement_investments(entries, account, commodities_map, price_map):
@@ -1280,9 +1317,15 @@ def write_example_file(date_birth, date_begin, date_end, file):
                                     list(funds_allocation.keys()) + list(stocks), 'CCY')
     price_map = prices.build_price_map(price_entries)
 
+    # Generate employer contributions.
+    account_match = 'Income:US:Employer1:Match401k'
+    retirement_match = generate_retirement_employer_match(income_entries,
+                                                          join(account_retirement, 'Cash'),
+                                                          account_match)
+
     # Investment accounts for retirement.
     retirement_entries = generate_retirement_investments(
-        income_entries, account_retirement, funds_allocation, price_map)
+        income_entries + retirement_match, account_retirement, funds_allocation, price_map)
 
     # Taxable savings / investment accounts.
     investment_entries = generate_taxable_investment(date_begin, date_end,
@@ -1309,7 +1352,8 @@ def write_example_file(date_birth, date_begin, date_end, file):
                                                banking_transfers))
     output_section('* Credit-Cards', credit_entries)
     output_section('* Taxable Investments', investment_entries)
-    output_section('* Retirement Investments', retirement_entries)
+    output_section('* Retirement Investments', sorted_entries(retirement_entries +
+                                                              retirement_match))
     output_section('* Sources of Income', income_entries)
     output_section('* Taxes', tax_preamble)
     for year, entries in taxes:
@@ -1369,7 +1413,6 @@ def main():
     return 0
 
 
-## TODO(blais) - Add employer match contribution for 401k.
 ## TODO(blais) - Generate some minimum amount of realistic-ish cash entries.
 ## TODO(blais) - Tags (a trip), links
 ## TODO(blais) - Events.
