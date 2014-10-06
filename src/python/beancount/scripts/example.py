@@ -187,6 +187,7 @@ def parse(string):
     return entries
 
 
+# FIXME: This is generic; move to data.
 def sorted_entries(entries):
     """Sort the entries using the entry-specific ordering.
 
@@ -198,7 +199,7 @@ def sorted_entries(entries):
     return sorted(entries, key=data.entry_sortkey)
 
 
-# FIXME: This is generic; move to utils.
+# FIXME: This is generic; move to amount.
 def round_to(number, increment):
     """Round a number *down* to a particular increment.
 
@@ -768,7 +769,6 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
     oss.write(replace("""
       YYYY-MM-DD open Account:Cash    CCY
       YYYY-MM-DD open Gains    CCY
-      YYYY-MM-DD open Expenses:Financial:Commissions  CCY
     """, {'YYYY-MM-DD': date_begin,
           'Account': account,
           'Gains': account_gains}))
@@ -1069,6 +1069,9 @@ def generate_expense_accounts(date_birth):
       YYYY-MM-DD open Expenses:Home:Electricity
       YYYY-MM-DD open Expenses:Home:Internet
 
+      YYYY-MM-DD open Expenses:Financial:Fees
+      YYYY-MM-DD open Expenses:Financial:Commissions
+
     """, {'YYYY-MM-DD': date_birth}))
 
 
@@ -1167,6 +1170,12 @@ def generate_banking_expenses(date_begin, date_end, account, rent_amount):
     Returns:
       A list of directives.
     """
+    fee_expenses = generate_periodic_expenses(
+        rrule.rrule(rrule.MONTHLY, bymonthday=4, dtstart=date_begin, until=date_end),
+        "BANK FEES", "Monthly bank fee",
+        account, 'Expenses:Financial:Fees',
+        lambda: D('4.00'))
+
     rent_expenses = generate_periodic_expenses(
         delay_dates(rrule.rrule(rrule.MONTHLY, dtstart=date_begin, until=date_end), 2, 5),
         "RiverBank Properties", "Paying the rent",
@@ -1185,7 +1194,10 @@ def generate_banking_expenses(date_begin, date_end, account, rent_amount):
         account, 'Expenses:Home:Internet',
         lambda: random.normalvariate(80, 0.10))
 
-    return sorted_entries(rent_expenses + electricity_expenses + internet_expenses)
+    return sorted_entries(fee_expenses +
+                          rent_expenses +
+                          electricity_expenses +
+                          internet_expenses)
 
 
 def generate_regular_credit_expenses(date_birth, date_begin, date_end,
@@ -1630,8 +1642,5 @@ def main():
     return 0
 
 
-## TODO(blais) - Generate some minimum amount of realistic-ish cash entries.
-## TODO(blais) - Links.
-## TODO(blais) - Bank fees.
 ## TODO(blais) - Reformat using format instead of replace(). We don't need this really.
 ## TODO(blais) - Add full logging of generated steps.
