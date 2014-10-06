@@ -30,19 +30,20 @@ from dateutil.parser import parse as parse_datetime
 from beancount.core.amount import D
 from beancount.core.amount import ZERO
 from beancount.core.amount import ONE
+from beancount.core.account import join
 from beancount.core import data
 from beancount.core import flags
 from beancount.core import amount
 from beancount.core import inventory
 from beancount.core import account_types
 from beancount.core import realization
-from beancount.core.account import join
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.ops import validation
 from beancount.ops import prices
 from beancount.scripts import format
 from beancount.core import getters
+from beancount.utils import misc_utils
 from beancount import loader
 
 
@@ -332,7 +333,7 @@ def merge_postings(entries, accounts):
     return merged_postings
 
 
-def postings_for(entries, accounts):
+def postings_for(entries, accounts, before=False):
     """Realize the entries and get the list of postings for the given accounts.
 
     All the non-Posting directives are already filtered out.
@@ -340,6 +341,8 @@ def postings_for(entries, accounts):
     Args:
       entries: A list of directives.
       accounts: A list of account strings to get the balances for.
+      before: A boolean, if true, yield the balance before the position is applied.
+        The default is to yield the balance after applying the position.
     Yields:
       Tuples of:
         posting: An instance of Posting
@@ -351,8 +354,11 @@ def postings_for(entries, accounts):
     merged_postings = merge_postings(entries, accounts)
     balances = collections.defaultdict(inventory.Inventory)
     for posting in merged_postings:
+        if before:
+            yield posting, balances
         balances[posting.account].add_position(posting.position)
-        yield posting, balances
+        if not before:
+            yield posting, balances
 
 
 def iter_dates_with_balance(date_begin, date_end, entries, accounts):
@@ -789,12 +795,13 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
                                                   entries, [account_cash]):
         # If the balance is high, buy with high probability.
         balance = balances[account_cash]
-        total_cash = balance.get_amount('CCY').number * FRAC_INVEST
-        assert total_cash >= ZERO, 'Cash balance is negative: {}'.format(total_cash)
-        if total_cash > MIN_AMOUNT:
+        total_cash = balance.get_amount('CCY').number
+        assert total_cash >= ZERO, ('Cash balance is negative: {}'.format(total_cash))
+        invest_cash = total_cash * FRAC_INVEST - COMMISSION
+        if invest_cash > MIN_AMOUNT:
             if random.random() < P_DAILY_BUY:
                 commodities = random.sample(stocks, random.randint(1, len(stocks)))
-                lot_amount = round_to(total_cash / len(commodities), ROUND_AMOUNT)
+                lot_amount = round_to(invest_cash / len(commodities), ROUND_AMOUNT)
 
                 invested_amount = ZERO
                 for commodity in commodities:
@@ -805,7 +812,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
                     if units <= ZERO:
                         continue
                     cash_amount = units * price + COMMISSION
-                    logging.info('Buying %s %s @ %s CCY = %s CCY', units, commodity, price, units * price)
+                    #logging.info('Buying %s %s @ %s CCY = %s CCY', units, commodity, price, units * price)
 
                     buy = parse(replace("""
                       YYYY-MM-DD * "Buy shares of STOCK"
@@ -849,7 +856,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
             biggest = bool(random.random() < 0.5)
             lot_tuple = sorted(gains)[0 if biggest else -1]
             gain, market_value, price, sell_position = lot_tuple
-            logging.info('Selling {} for {}'.format(sell_position, market_value))
+            #logging.info('Selling {} for {}'.format(sell_position, market_value))
 
             sell = parse(replace("""
               YYYY-MM-DD * "Sell shares of STOCK"
@@ -1081,6 +1088,35 @@ def generate_open_entries(date, accounts, currency=None):
                                                     account=account,
                                                     currency=currency or '')
         for account in accounts))
+
+
+def generate_balance_checks(entries, account, date_iter):
+    """Generate balance check entries to the given frequency.
+
+    Args:
+      entries: A list of directives that contain all the transactions for the
+        accounts.
+      account: The name of the account for which to generate.
+      date_iter: Iterator of dates. We generate balance checks at these dates.
+    Returns:
+      A list of balance check entries.
+    """
+    balance_checks = []
+    date_iter = iter(date_iter)
+    next_date = next(date_iter)
+    with misc_utils.swallow(StopIteration):
+        for posting, balance in postings_for(entries, [account], before=True):
+            while posting.entry.date >= next_date:
+                balance_checks.extend(parse(replace("""
+
+                  YYYY-MM-DD balance ACCOUNT AMOUNT CCY
+
+                """, {'YYYY-MM-DD': next_date,
+                      'ACCOUNT': account,
+                      'AMOUNT': balance[account].get_amount('CCY').number})))
+                next_date = next(date_iter)
+
+    return balance_checks
 
 
 def check_non_negative(entries, account, currency):
@@ -1399,7 +1435,8 @@ def write_example_file(date_birth, date_begin, date_end, file):
         date_birth, date_begin, date_end, account_credit, account_checking)
 
     # Generate credit card expenses for trips.
-    destinations = list(trip_destinations.items())
+    trip_entries = []
+    destinations = sorted(trip_destinations.items())
     destinations.extend(destinations)
     random.shuffle(destinations)
     for (date_trip_begin, date_trip_end), (destination_name, config) in zip(
@@ -1408,7 +1445,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
         # Compute a suitable tag.
         tag = 'trip-{}-{}'.format(destination_name.lower().replace(' ', '-'),
                                   date_trip_begin.year)
-        logging.info("%s -- %s %s", tag, date_trip_begin, date_trip_end)
+        #logging.info("%s -- %s %s", tag, date_trip_begin, date_trip_end)
 
         # Remove regular entries during this trip.
         credit_regular_entries = [entry
@@ -1416,13 +1453,13 @@ def write_example_file(date_birth, date_begin, date_end, file):
                                   if not(date_trip_begin <= entry.date < date_trip_end)]
 
         # Generate entries for the trip.
-        trip_entries = generate_trip_entries(
+        this_trip_entries = generate_trip_entries(
             date_trip_begin, date_trip_end,
             tag, config,
             destination_name.replace('-', ' ').title(), home_name,
             account_credit)
 
-        credit_regular_entries.extend(trip_entries)
+        trip_entries.extend(this_trip_entries)
 
     # Generate entries that will pay off the credit card (unconditionally).
     credit_payments = generate_clearing_entries(
@@ -1432,7 +1469,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
         credit_regular_entries,
         account_credit, account_checking)
 
-    credit_entries = credit_regular_entries + credit_payments
+    credit_entries = credit_regular_entries + trip_entries + credit_payments
 
     # Tax accounts.
     tax_preamble = generate_tax_preamble(date_birth)
@@ -1503,6 +1540,19 @@ def write_example_file(date_birth, date_begin, date_end, file):
     equity_entries = generate_open_entries(date_birth, [account_opening,
                                                         account_payable])
 
+    # Generate balance checks for a few accounts.
+    credit_checks = generate_balance_checks(credit_entries, account_credit,
+                                            date_random_seq(date_begin, date_end, 20, 30))
+
+    banking_checks = generate_balance_checks(sorted_entries(income_entries +
+                                                            banking_entries +
+                                                            banking_expenses +
+                                                            banking_transfers +
+                                                            credit_entries +
+                                                            tax_entries),
+                                             account_checking,
+                                             date_random_seq(date_begin, date_end, 20, 30))
+
     # Format the results.
     output = io.StringIO()
     def output_section(title, entries):
@@ -1513,8 +1563,10 @@ def write_example_file(date_birth, date_begin, date_end, file):
     output_section('* Equity Accounts', equity_entries)
     output_section('* Banking', sorted_entries(banking_entries +
                                                banking_expenses +
-                                               banking_transfers))
-    output_section('* Credit-Cards', credit_entries)
+                                               banking_transfers +
+                                               banking_checks))
+    output_section('* Credit-Cards', sorted_entries(credit_entries +
+                                                    credit_checks))
     output_section('* Taxable Investments', investment_entries)
     output_section('* Retirement Investments', sorted_entries(retirement_entries +
                                                               retirement_match))
@@ -1566,6 +1618,7 @@ def main():
 
     logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
     if opts.seed is not None:
+        logging.info("Seed = %s", opts.seed)
         random.seed(opts.seed)
 
     output_file = open(opts.output, 'w') if opts.output else sys.stdout
@@ -1580,8 +1633,5 @@ def main():
 ## TODO(blais) - Generate some minimum amount of realistic-ish cash entries.
 ## TODO(blais) - Links.
 ## TODO(blais) - Bank fees.
-## TODO(blais) - Balance entries.
 ## TODO(blais) - Reformat using format instead of replace(). We don't need this really.
-
-## TODO(blais) - Build a script that will output all the reports I'm interested
-## in to files, and link to them from my document.
+## TODO(blais) - Add full logging of generated steps.
