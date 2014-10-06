@@ -26,6 +26,17 @@ class TestMiscUtils(unittest.TestCase):
         self.assertTrue(re.search("Operation", stdout.getvalue()))
         self.assertTrue(re.search("Time", stdout.getvalue()))
 
+    def test_swallow(self):
+        with misc_utils.swallow(ValueError):
+            pass
+
+        with misc_utils.swallow(ValueError):
+            raise ValueError("Should not trickle out")
+
+        with self.assertRaises(ValueError):
+            with misc_utils.swallow(IOError):
+                raise ValueError("Should not trickle out")
+
     def test_groupby(self):
         data = [('a', 1), ('b', 2), ('c', 3), ('d', 4)]
         grouped = misc_utils.groupby(lambda x: x[0], data)

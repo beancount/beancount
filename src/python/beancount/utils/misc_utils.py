@@ -29,6 +29,22 @@ def log_time(operation_name, log_timings, indent=0):
             "'{}'".format(operation_name), '      '*indent, (time2 - time1) * 1000))
 
 
+@contextlib.contextmanager
+def swallow(*exception_types):
+    """Catch and ignore certain exceptions.
+
+    Args:
+      exception_types: A tuple of exception classes to ignore.
+    Yields:
+      None.
+    """
+    try:
+        yield
+    except Exception as exc:
+        if not isinstance(exc, exception_types):
+            raise
+
+
 def groupby(keyfun, elements):
     """Group the elements as a dict of lists, where the key is computed using the
     function 'keyfun'.
