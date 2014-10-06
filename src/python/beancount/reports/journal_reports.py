@@ -15,6 +15,10 @@ class JournalReport(report.HTMLReport,
     names = ['journal', 'register', 'account']
     default_format = 'text'
 
+    # For the tests we specify the width to render to to avoid having to invoke
+    # the terminal functions which fail under nose without capture mode.
+    test_args = ['--width=80']
+
     @classmethod
     def add_args(cls, parser):
         parser.add_argument('-a', '--account',

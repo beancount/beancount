@@ -1,6 +1,7 @@
 """
 Generic utility packages and functions.
 """
+import io
 import re
 from time import time
 import contextlib
@@ -275,7 +276,11 @@ def get_screen_width():
 
     Returns:
       An integer, the number of characters the screen is wide.
+      Return 0 if the terminal cannot be initialized.
     """
     import curses
-    curses.setupterm()
+    try:
+        curses.setupterm()
+    except io.UnsupportedOperation:
+        return 0
     return curses.tigetnum('cols')

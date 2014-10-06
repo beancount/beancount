@@ -22,7 +22,8 @@ def iter_reports(report_classes):
     """
     for report_class in report_classes:
         assert issubclass(report_class, report.Report), report_class
-        report_ = report_class.from_args()
+        argv = getattr(report_class, 'test_args', [])
+        report_ = report_class.from_args(argv)
         for format_ in report_class.get_supported_formats():
             yield (report_, format_)
 
