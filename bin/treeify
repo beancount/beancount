@@ -128,8 +128,8 @@ def render_tree(root):
           account name.
         continuation_line: A string, further line to render if necessary.
         node: The Node instance which corresponds to this line.
+      and an integer, the width of the new columns.
     """
-
     # Compute all the lines ahead of time in order to calculate the width.
     lines = []
 
@@ -193,7 +193,7 @@ def render_tree(root):
     return [(line_format.format(first_line),
              line_format.format(cont_line),
              node)
-            for (first_line, cont_line, node) in lines]
+            for (first_line, cont_line, node) in lines], max_width
 
 
 def enum_tree_by_input_line_num(tree_lines):
@@ -229,8 +229,8 @@ def main():
                         help='Name of the file to write (default: stdout)')
 
     parser.add_argument('-r', '--pattern', action='store',
-                        default=(r"\b(Assets|Liabilities|Equity|Income|Expenses)"
-                                 r"(:[A-Z][A-Za-z0-9-_']+)*\b"),
+                        default=(r"\b([A-Z][A-Za-z0-9-_']*)"
+                                 r"(:[A-Z][A-Za-z0-9-_']*)+\b"),
                         help="Pattern for repeatable components")
 
     parser.add_argument('-s', '--split', action='store',
@@ -272,7 +272,12 @@ def main():
     root = create_tree(column_matches, args.split)
 
     # Render the tree we just inferred from the list of names.
-    tree_lines = render_tree(root)
+    tree_lines, new_column_width = render_tree(root)
+
+    # Compute minimum width of the resulting tree. It should not be less than
+    # the original width of the column.
+    old_column_width = right - left
+    line_format = "{{:{}}}".format(max(old_column_width, new_column_width))
 
     # Iterate the tree by input line number. This is done so that we can can
     # render the new hierarchy lines as closely as possible to real input
@@ -303,7 +308,7 @@ def main():
                     # suffix.
                     prefix = input_line[:left]
                     suffix = input_line[right:].rstrip('\r\n')
-                    out_line = prefix + line + suffix
+                    out_line = prefix + line_format.format(line) + suffix
                     output_file.write(out_line.rstrip())
                     output_file.write('\n')
             try:

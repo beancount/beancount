@@ -7,6 +7,7 @@ from beancount.utils import test_utils
 
 
 PROGRAM = path.join(test_utils.find_repository_root(__file__), 'bin', 'treeify')
+DEBUG = 0
 
 
 def treeify(string, options=None):
@@ -68,7 +69,7 @@ class TestTreeifyBase(unittest.TestCase):
         input_ = textwrap.dedent(string)
         output = self.treeify(input_, expect_errors, options)
         expected = textwrap.dedent(expected)
-        if debug:
+        if DEBUG:
             print('-(input)----------------------------------')
             print(input_)
             print('-(output)---------------------------------')
@@ -104,35 +105,35 @@ class TestTreeify(TestTreeifyBase):
                      |-- Assets
                      |   `-- US
                      |       |-- BofA
-          2014-12-25 |       |   `-- Checking                  5,545.01 USD
+          2014-12-25 |       |   `-- Checking                       5,545.01 USD
                      |       |-- Federal
           2014-11-11 |       |   `-- PreTax401k
                      |       |-- Hooli
-          2014-10-04 |       |   `-- Vacation                    332.64 VACHR
+          2014-10-04 |       |   `-- Vacation                         332.64 VACHR
                      |       |-- Investment
-          2014-11-07 |       |   `-- Cash                     26,500.00 USD
+          2014-11-07 |       |   `-- Cash                          26,500.00 USD
                      |       `-- Vanguard
-          2014-12-15 |           |-- Cash                         -0.07 USD
-          2014-12-10 |           |-- RGAGX                       174.22 RGAGX
-          2014-10-19 |           `-- VBMPX                       189.03 VBMPX
+          2014-12-15 |           |-- Cash                              -0.07 USD
+          2014-12-10 |           |-- RGAGX                            174.22 RGAGX
+          2014-10-19 |           `-- VBMPX                            189.03 VBMPX
                      |-- Equity
-          2014-10-17 |   `-- Opening-Balances                 -3,188.28 USD
+          2014-10-17 |   `-- Opening-Balances                      -3,188.28 USD
                      `-- Expenses
                          |-- Food
-          2014-12-12     |   |-- Groceries                     6,483.71 USD
-          2014-12-06     |   `-- Restaurant                   10,990.74 USD
+          2014-12-12     |   |-- Groceries                          6,483.71 USD
+          2014-12-06     |   `-- Restaurant                        10,990.74 USD
                          |-- Health
                          |   |-- Dental
-          2014-11-30     |   |   `-- Insurance                   208.80 USD
+          2014-11-30     |   |   `-- Insurance                        208.80 USD
                          |   |-- Life
-          2014-11-09     |   |   `-- GroupTermLife             1,751.04 USD
+          2014-11-09     |   |   `-- GroupTermLife                  1,751.04 USD
                          |   |-- Medical
-          2014-12-07     |   |   `-- Insurance                 1,971.36 USD
+          2014-12-07     |   |   `-- Insurance                      1,971.36 USD
                          |   `-- Vision
-          2014-10-12     |       `-- Insurance                 3,045.60 USD
+          2014-10-12     |       `-- Insurance                      3,045.60 USD
                          `-- Home
-          2014-12-28         |-- Electricity                   2,080.00 USD
-          2014-10-22         `-- Internet                      2,560.22 USD
+          2014-12-28         |-- Electricity                        2,080.00 USD
+          2014-10-22         `-- Internet                           2,560.22 USD
         """)
 
     def test_empty_string(self):
@@ -177,20 +178,20 @@ class TestTreeify(TestTreeifyBase):
           |-- Assets
           |   `-- US
           |       `-- Vanguard
-          |           |-- Cash                         -0.07 USD
-          |           |-- RGAGX                       174.22 RGAGX
-          |           `-- VBMPX                       189.03 VBMPX
+          |           |-- Cash                              -0.07 USD
+          |           |-- RGAGX                            174.22 RGAGX
+          |           `-- VBMPX                            189.03 VBMPX
           |-- Equity
-          |   `-- Opening-Balances                 -3,188.28 USD
+          |   `-- Opening-Balances                      -3,188.28 USD
           `-- Expenses
               |-- Food
-              |   |-- Groceries                     6,483.71 USD
-              |   `-- Restaurant                   10,990.74 USD
+              |   |-- Groceries                          6,483.71 USD
+              |   `-- Restaurant                        10,990.74 USD
               `-- Health
                   |-- Dental
-                  |   `-- Insurance                   208.80 USD
+                  |   `-- Insurance                        208.80 USD
                   `-- Life
-                      `-- GroupTermLife             1,751.04 USD
+                      `-- GroupTermLife                  1,751.04 USD
         """, False)
 
     def test_flush_right(self):
@@ -237,20 +238,20 @@ class TestTreeify(TestTreeifyBase):
                                                             |-- Assets
                                                             |   `-- US
                                                             |       `-- Vanguard
-          2014-01-01 Assets:US:Vanguard:Cash              | |           |-- Cash          XX
-          2014-01-01 Assets:US:Vanguard:RGAGX             | |           |-- RGAGX         XX
-          2014-01-01 Assets:US:Vanguard:VBMPX             | |           `-- VBMPX         XX
+          2014-01-01 Assets:US:Vanguard:Cash              | |           |-- Cash               XX
+          2014-01-01 Assets:US:Vanguard:RGAGX             | |           |-- RGAGX              XX
+          2014-01-01 Assets:US:Vanguard:VBMPX             | |           `-- VBMPX              XX
                                                             |-- Equity
-          2014-01-01 Equity:Opening-Balances              | |   `-- Opening-Balances      XX
+          2014-01-01 Equity:Opening-Balances              | |   `-- Opening-Balances           XX
                                                             `-- Expenses
                                                                 |-- Food
-          2014-01-01 Expenses:Food:Groceries              |     |   |-- Groceries         XX
-          2014-01-01 Expenses:Food:Restaurant             |     |   `-- Restaurant        XX
+          2014-01-01 Expenses:Food:Groceries              |     |   |-- Groceries              XX
+          2014-01-01 Expenses:Food:Restaurant             |     |   `-- Restaurant             XX
                                                                 `-- Health
                                                                     |-- Dental
-          2014-01-01 Expenses:Health:Dental:Insurance     |         |   `-- Insurance     XX
+          2014-01-01 Expenses:Health:Dental:Insurance     |         |   `-- Insurance          XX
                                                                     `-- Life
-          2014-01-01 Expenses:Health:Life:GroupTermLife   |             `-- GroupTermLife XX
+          2014-01-01 Expenses:Health:Life:GroupTermLife   |             `-- GroupTermLife      XX
         """, False)
 
     def test_overlapping_column(self):
@@ -281,9 +282,9 @@ class TestTreeify(TestTreeifyBase):
           Assets:US:Vanguard:VBMPX           102.00 USD
         """, """\
           `-- Assets
-              `-- US                      100.00 USD
-                  `-- Vanguard            101.00 USD
-                      `-- VBMPX           102.00 USD
+              `-- US                         100.00 USD
+                  `-- Vanguard               101.00 USD
+                      `-- VBMPX              102.00 USD
         """, False)
 
     def test_unsorted(self):
@@ -323,10 +324,10 @@ class TestTreeify(TestTreeifyBase):
           `-- Assets
               `-- US
                   `-- Vanguard
-                      `-- VBMPX           100.00 USD
-                                          100.00 USD
-                                          102.00 USD
-                                          104.00 USD
+                      `-- VBMPX              100.00 USD
+                                             100.00 USD
+                                             102.00 USD
+                                             104.00 USD
         """, False)
 
     def test_noise_before(self):
@@ -342,11 +343,11 @@ class TestTreeify(TestTreeifyBase):
           |-- Assets
           |   `-- US
           |       `-- Vanguard
-          |           `-- VBMPX     100.00 USD
-          |                         101.00 USD
+          |           `-- VBMPX        100.00 USD
+          |                            101.00 USD
           `-- Expenses
               `-- Food
-                  `-- Groceries     102.00 USD
+                  `-- Groceries        102.00 USD
         """, False)
 
     def test_noise_after(self):
@@ -360,11 +361,11 @@ class TestTreeify(TestTreeifyBase):
           |-- Assets
           |   `-- US
           |       `-- Vanguard
-          |           `-- VBMPX     100.00 USD
-          |                         101.00 USD
+          |           `-- VBMPX        100.00 USD
+          |                            101.00 USD
           `-- Expenses
               `-- Food
-                  `-- Groceries     102.00 USD
+                  `-- Groceries        102.00 USD
           >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
           Not matching: yep, not matching.
         """, False)
@@ -379,12 +380,12 @@ class TestTreeify(TestTreeifyBase):
           |-- Assets
           |   `-- US
           |       `-- Vanguard
-          |           `-- VBMPX     100.00 USD
-          |                         101.00 USD
+          |           `-- VBMPX        100.00 USD
+          |                            101.00 USD
           >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
           `-- Expenses
               `-- Food
-                  `-- Groceries     102.00 USD
+                  `-- Groceries        102.00 USD
         """, False)
 
     def test_noise_middle_same_node(self):
@@ -397,12 +398,12 @@ class TestTreeify(TestTreeifyBase):
           |-- Assets
           |   `-- US
           |       `-- Vanguard
-          |           `-- VBMPX     100.00 USD
+          |           `-- VBMPX        100.00 USD
           >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-          |                         101.00 USD
+          |                            101.00 USD
           `-- Expenses
               `-- Food
-                  `-- Groceries     102.00 USD
+                  `-- Groceries        102.00 USD
         """, False)
 
     def test_noise_middle_parent_child(self):
@@ -414,12 +415,12 @@ class TestTreeify(TestTreeifyBase):
         """, """\
           |-- Assets
           |   `-- US
-          |       `-- Vanguard      100.00 USD
+          |       `-- Vanguard         100.00 USD
           >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-          |           `-- VBMPX     101.00 USD
+          |           `-- VBMPX        101.00 USD
           `-- Expenses
               `-- Food
-                  `-- Groceries     102.00 USD
+                  `-- Groceries        102.00 USD
         """, False)
 
 
@@ -471,8 +472,29 @@ class TestTreeify(TestTreeifyBase):
           -rwxr-xr-x    1 blais   5000   3321 Sep 23 14:30             `-- format.py
         """, False, options=['--pattern=([^ ]+)(/[^ ]+)+', '--split=/'])
 
+    def test_width_wider(self):
+        # The treeified column should be wider as it needs to.
+        self.treeify_equal("""\
+          A:B       100.00 USD
+          A:B:C     101.00 USD
+          A:B:C:D   102.00 USD
+        """, """\
+          `-- A
+              `-- B           100.00 USD
+                  `-- C       101.00 USD
+                      `-- D   102.00 USD
+        """, False)
 
-
-# TODO(blais) - add an option to automatically select patterns for filenames
-
-debug = 0
+    def test_width_narrower(self):
+        # The treeified column should be of the same width even though it does
+        # not need to.
+        self.treeify_equal("""\
+          Abcdef:Bcdefg                100.00 USD
+          Abcdef:Bcdefg:Cdefgh         101.00 USD
+          Abcdef:Bcdefg:Cdefgh:Defghij 102.00 USD
+        """, """\
+          `-- Abcdef
+              `-- Bcdefg               100.00 USD
+                  `-- Cdefgh           101.00 USD
+                      `-- Defghij      102.00 USD
+        """, False)
