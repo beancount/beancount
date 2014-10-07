@@ -27,6 +27,9 @@ beancount: TODO
 
   - Complete presentation
 
+  - Maybe beancount.core.complete should be called beancount.core.interpolate.
+    That's the term I've been using for a while now isn't it.
+
 ** Announcement
 
 Hi,
@@ -64,6 +67,32 @@ I'll be using this script:
   - Link to source seems to have disappeared
 
   - Rendering links now fails somehow, generates an error.
+
+** Rounding
+
+  - Make (SMALL_EPSILON) balance tolerance user-configurable before release.
+
+  - Maybe provide a way to make thhis tolerance settable by commodity.
+    (See thread w/ Nathan on the mailing-list)
+
+  - This needs to be documented; write a dedicated doc on how rounding is handled.
+
+https://groups.google.com/d/msg/ledger-cli/m-TgILbfrwA/YjkmOM3LHXIJ
+
+Alright, so here's what I propose:
+
+- I could add an option for the user to insert the name of a rounding account.
+- This option would be empty by default, and the current behaviour would not
+  change.
+- However, if you set an account for it, all transactions with an inexact
+  balance will receive the balance amount (and perhaps have a new leg inserted
+  on them automatically).
+
+Would that be a reasonable compromise? With no account, you get 0.005 looseness
+(or whatever this becomes if inference is implemented). With an account, you get
+precise balances throughout, but no manual input is required.
+
+
 
 ** More tests
 
