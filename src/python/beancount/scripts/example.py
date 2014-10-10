@@ -858,30 +858,23 @@ def generate_periodic_expenses(date_iter,
     Returns:
       A list of directives.
     """
-    oss = io.StringIO()
+    new_entries = []
     for dt in date_iter:
         date = dt.date() if isinstance(dt, datetime.datetime) else dt
-        txn_amount = D(amount_generator())
-        oss.write(replace("""
+        amount = D(amount_generator())
+        txn_payee = (payee
+                     if isinstance(payee, str)
+                     else random.choice(payee))
+        txn_narration = (narration
+                         if isinstance(narration, str)
+                         else random.choice(narration))
+        new_entries.extend(parse("""
+          {date} * "{txn_payee}" "{txn_narration}"
+            {account_from}   -{amount:.2f} CCY
+            {account_to}      {amount:.2f} CCY
+        """, **vars()))
 
-          YYYY-MM-DD * "Payee" "Narration"
-            Account:From    -AMOUNT CCY
-            Account:To       AMOUNT CCY
-
-        """, {
-            'YYYY-MM-DD': date,
-            'Payee': (payee
-                      if isinstance(payee, str)
-                      else random.choice(payee)),
-            'Narration': (narration
-                          if isinstance(narration, str)
-                          else random.choice(narration)),
-            'Account:From': account_from,
-            'Account:To': account_to,
-            'AMOUNT': '{:.2f}'.format(txn_amount)
-        }))
-
-    return parse(oss.getvalue())
+    return new_entries
 
 
 def generate_clearing_entries(date_iter,
@@ -903,29 +896,20 @@ def generate_clearing_entries(date_iter,
     next_date = next(iter(date_iter))
 
     # Iterate over all the postings of the account to clear.
-    oss = io.StringIO()
+    new_entries = []
     for posting, balances in postings_for(entries, [account_clear]):
         balance_clear = balances[account_clear]
 
         # Check if we need to clear.
         if next_date <= posting.entry.date:
-            balance_amount = balance_clear.get_amount('CCY')
-            oss.write(replace("""
-
-              YYYY-MM-DD * "Payee" "Narration"
-                Account:Clear    POS_AMOUNT
-                Account:From     NEG_AMOUNT
-
-            """, {
-                'YYYY-MM-DD': next_date,
-                'Payee': payee,
-                'Narration': narration,
-                'Account:Clear': account_clear,
-                'Account:From': account_from,
-                'POS_AMOUNT': '{:.2f}'.format(-balance_amount),
-                'NEG_AMOUNT': '{:.2f}'.format(balance_amount)
-            }))
-            balance_clear.add_amount(-balance_amount)
+            pos_amount = balance_clear.get_amount('CCY')
+            neg_amount = -pos_amount
+            new_entries.extend(parse("""
+              {next_date} * "{payee}" "{narration}"
+                {account_clear}     {neg_amount:.2f}
+                {account_from}      {pos_amount:.2f}
+            """, **vars()))
+            balance_clear.add_amount(neg_amount)
 
             # Advance to the next date we're looking for.
             try:
@@ -933,7 +917,7 @@ def generate_clearing_entries(date_iter,
             except StopIteration:
                 break
 
-    return parse(oss.getvalue())
+    return new_entries
 
 
 def generate_outgoing_transfers(entries,
@@ -977,7 +961,7 @@ def generate_outgoing_transfers(entries,
     capped_amounts = reversed(reversed_amounts)
 
     # Create transfers outward where the future allows it.
-    oss = io.StringIO()
+    new_entries = []
     offset_amount = ZERO
     for current_amount, (_, posting) in zip(capped_amounts, amounts):
         if posting.entry.date >= last_date:
@@ -985,25 +969,19 @@ def generate_outgoing_transfers(entries,
 
         adjusted_amount = current_amount - offset_amount
         if adjusted_amount > (transfer_minimum + transfer_threshold):
-            transfer_amount = round_to(adjusted_amount - transfer_minimum,
+            amount_transfer = round_to(adjusted_amount - transfer_minimum,
                                        transfer_increment)
 
-            oss.write(replace("""
+            date = posting.entry.date + datetime.timedelta(days=1)
+            new_entries.extend(parse("""
+              {date} * "Transfering accumulated savings to other account"
+                {account}         -{amount_transfer:2f} CCY
+                {account_out}      {amount_transfer:2f} CCY
+            """, **vars()))
 
-              YYYY-MM-DD * "Transfering accumulated savings to other account"
-                ACCOUNT         -AMOUNT CCY
-                ACCOUNT_OUT      AMOUNT CCY
+            offset_amount += amount_transfer
 
-            """, {
-                'YYYY-MM-DD': posting.entry.date + datetime.timedelta(days=1),
-                'ACCOUNT': account,
-                'ACCOUNT_OUT': account_out,
-                'AMOUNT': '{:.2f}'.format(transfer_amount)
-            }))
-
-            offset_amount += transfer_amount
-
-    return parse(oss.getvalue())
+    return new_entries
 
 
 def generate_expense_accounts(date_birth):
@@ -1014,23 +992,23 @@ def generate_expense_accounts(date_birth):
     Returns:
       A list of directives.
     """
-    return parse(replace("""
+    return parse("""
 
-      YYYY-MM-DD open Expenses:Food:Groceries
-      YYYY-MM-DD open Expenses:Food:Restaurant
-      YYYY-MM-DD open Expenses:Food:Coffee
-      YYYY-MM-DD open Expenses:Food:Alcohol
+      {date_birth} open Expenses:Food:Groceries
+      {date_birth} open Expenses:Food:Restaurant
+      {date_birth} open Expenses:Food:Coffee
+      {date_birth} open Expenses:Food:Alcohol
 
-      YYYY-MM-DD open Expenses:Transport:Subway
+      {date_birth} open Expenses:Transport:Subway
 
-      YYYY-MM-DD open Expenses:Home:Rent
-      YYYY-MM-DD open Expenses:Home:Electricity
-      YYYY-MM-DD open Expenses:Home:Internet
+      {date_birth} open Expenses:Home:Rent
+      {date_birth} open Expenses:Home:Electricity
+      {date_birth} open Expenses:Home:Internet
 
-      YYYY-MM-DD open Expenses:Financial:Fees
-      YYYY-MM-DD open Expenses:Financial:Commissions
+      {date_birth} open Expenses:Financial:Fees
+      {date_birth} open Expenses:Financial:Commissions
 
-    """, {'YYYY-MM-DD': date_birth}))
+    """, **vars())
 
 
 def generate_open_entries(date, accounts, currency=None):
