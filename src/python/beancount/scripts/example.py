@@ -7,17 +7,18 @@ evaluation.
 """
 import argparse
 import calendar
-import copy
 import collections
+import copy
 import datetime
 import decimal
 import functools
 import io
 import itertools
 import logging
-import operator
 import math
+import operator
 import random
+import re
 import re
 import sys
 import textwrap
@@ -172,19 +173,32 @@ option "operating_currency" "CCY"
 """
 
 
-def parse(string):
+def parse(input_string, **replacements):
     """Parse some input string and assert no errors.
 
     Args:
-      string: Beancount input text.
+      input_string: Beancount input text.
+      **replacements: A dict of keywords to replace to their values.
     Returns:
       A list of directive objects.
     """
-    entries, errors, unused_options = parser.parse_string(string)
+
+    if replacements:
+        import string
+        class IgnoreFormatter(string.Formatter):
+            def check_unused_args(self, used_args, args, kwargs):
+                pass
+        formatter = IgnoreFormatter()
+        formatted_string = formatter.format(input_string, **replacements)
+    else:
+        formatted_string = input_string
+
+    entries, errors, unused_options = parser.parse_string(formatted_string)
     if errors:
         printer.print_errors(errors, file=sys.stderr)
         raise ValueError("Parsed text has errors")
-    return entries
+
+    return sorted_entries(entries)
 
 
 # FIXME: This is generic; move to data.
@@ -211,26 +225,6 @@ def round_to(number, increment):
     """
     return int((number / increment)) * increment
 
-
-# FIXME: This is generic; move to utils.
-def replace(string, replacements, strip=False):
-    """Apply word-boundaried regular expression replacements to an indented string.
-
-    Args:
-      string: Some input template string.
-      replacements: A dict of regexp to replacement value.
-      strip: A boolean, true if we should strip the input.
-    Returns:
-      The input string with the replacements applied to it, with the indentation removed.
-    """
-    output = dedent(string)
-    if strip:
-        output = output.strip()
-    for from_, to_ in replacements.items():
-        if not isinstance(to_, str) and not callable(to_):
-            to_ = str(to_)
-        output = re.sub(r'\b{}\b'.format(from_), to_, output)
-    return output
 
 # FIXME: This is generic; move to utils.
 def skipiter(iterable, num_skip):
@@ -426,41 +420,25 @@ def generate_employment_income(employer_name,
     Returns:
       A list of directives, including open directives for the account.
     """
-    replacements = {
-        'YYYY-MM-DD': date_begin,
-        'Employer': employer_name,
-        'Address': employer_address,
-        }
+    preamble = parse("""
 
-    preamble = replace("""
+        {date_begin} event "employer" "{employer_name}, {employer_address}"
 
-        YYYY-MM-DD event "employer" "Employer, Address"
+        {date_begin} open Income:CC:Employer1:Salary           CCY
+        ;{date_begin} open Income:CC:Employer1:AnnualBonus     CCY
+        {date_begin} open Income:CC:Employer1:GroupTermLife    CCY
 
-        YYYY-MM-DD open Income:CC:Employer1:Salary           CCY
-        ;YYYY-MM-DD open Income:CC:Employer1:AnnualBonus      CCY
-        YYYY-MM-DD open Income:CC:Employer1:GroupTermLife    CCY
+        {date_begin} open Income:CC:Employer1:Vacation         VACCCY
+        {date_begin} open Assets:CC:Employer1:Vacation         VACCCY
 
-        YYYY-MM-DD open Income:CC:Employer1:Vacation         VACCCY
-        YYYY-MM-DD open Assets:CC:Employer1:Vacation         VACCCY
+        {date_begin} open Expenses:Health:Life:GroupTermLife
+        {date_begin} open Expenses:Health:Medical:Insurance
+        {date_begin} open Expenses:Health:Dental:Insurance
+        {date_begin} open Expenses:Health:Vision:Insurance
 
-        YYYY-MM-DD open Expenses:Health:Life:GroupTermLife
-        YYYY-MM-DD open Expenses:Health:Medical:Insurance
-        YYYY-MM-DD open Expenses:Health:Dental:Insurance
-        YYYY-MM-DD open Expenses:Health:Vision:Insurance
+        ;{date_begin} open Expenses:Vacation:Employer
 
-        ;YYYY-MM-DD open Expenses:Vacation:Employer
-
-    """, replacements)
-
-    replacements['Deposit'] = account_deposit
-    replacements['Retirement'] = account_retirement
-
-    biweekly_pay = annual_salary / 26
-    def replace_amount(match):
-        fraction = D(match.group(1)[1:-1]) / D(100)
-        return '{:.2f}'.format(biweekly_pay * fraction)
-
-    replacements[r'({[0-9.]+})'] = replace_amount
+    """, **vars())
 
     date_prev = None
 
@@ -469,6 +447,7 @@ def generate_employment_income(employer_name,
 
     retirement_per_pay = D('2000')
 
+    biweekly_pay = annual_salary / 26
     gross = biweekly_pay
 
     medicare      = gross * D('0.0231')
@@ -494,8 +473,7 @@ def generate_employment_income(employer_name,
     for dt in skipiter(rrule.rrule(rrule.WEEKLY, byweekday=rrule.TH,
                                    dtstart=date_begin, until=date_end), 2):
         date = dt.date()
-        replacements['YYYY-MM-DD'] = date
-        replacements['Year'] = 'Y{}'.format(date.year)
+        year = date.year
 
         if not date_prev or date_prev.year != date.year:
             contrib_retirement = retirement_limits.get(date.year, retirement_limits[None])
@@ -515,23 +493,23 @@ def generate_employment_income(employer_name,
             deposit = (gross - retirement - fixed - socsec)
 
         template = """
-            YYYY-MM-DD * "Employer" | "Payroll"
-              Deposit                                           {deposit:.2f} CCY
-              Retirement                                        {retirement:.2f} CCY
+            {date} * "{employer_name}" | "Payroll"
+              {account_deposit}                                 {deposit:.2f} CCY
+              {account_retirement}                              {retirement:.2f} CCY
               Assets:CC:Federal:PreTax401k                     -{retirement:.2f} DEFCCY
-              Expenses:Taxes:Year:CC:Federal:PreTax401k         {retirement:.2f} DEFCCY
+              Expenses:Taxes:Y{year}:CC:Federal:PreTax401k      {retirement:.2f} DEFCCY
               Income:CC:Employer1:Salary                       -{gross:.2f} CCY
               Income:CC:Employer1:GroupTermLife                -{lifeinsurance:.2f} CCY
               Expenses:Health:Life:GroupTermLife                {lifeinsurance:.2f} CCY
               Expenses:Health:Dental:Insurance                  {dental} CCY
               Expenses:Health:Medical:Insurance                 {medical} CCY
               Expenses:Health:Vision:Insurance                  {vision} CCY
-              Expenses:Taxes:Year:CC:Medicare                   {medicare:.2f} CCY
-              Expenses:Taxes:Year:CC:Federal                    {federal:.2f} CCY
-              Expenses:Taxes:Year:CC:State                      {state:.2f} CCY
-              Expenses:Taxes:Year:CC:CityNYC                    {city:.2f} CCY
-              Expenses:Taxes:Year:CC:SDI                        {sdi:.2f} CCY
-              Expenses:Taxes:Year:CC:SocSec                     {socsec:.2f} CCY
+              Expenses:Taxes:Y{year}:CC:Medicare                {medicare:.2f} CCY
+              Expenses:Taxes:Y{year}:CC:Federal                 {federal:.2f} CCY
+              Expenses:Taxes:Y{year}:CC:State                   {state:.2f} CCY
+              Expenses:Taxes:Y{year}:CC:CityNYC                 {city:.2f} CCY
+              Expenses:Taxes:Y{year}:CC:SDI                     {sdi:.2f} CCY
+              Expenses:Taxes:Y{year}:CC:SocSec                  {socsec:.2f} CCY
               Assets:CC:Employer1:Vacation                      {vacation_hrs:.2f} VACCCY
               Income:CC:Employer1:Vacation                     -{vacation_hrs:.2f} VACCCY
         """
@@ -541,11 +519,9 @@ def generate_employment_income(employer_name,
                                  for line in template.splitlines()
                                  if not re.search(r'\bretirement\b', line))
 
-        txn = replace(template.format(**vars()), replacements)
-        txn = re.sub(r'({[0-9.]+})', replace_amount, txn)
-        transactions.append(txn)
+        transactions.extend(parse(template, **vars()))
 
-    return parse(preamble + ''.join(transactions))
+    return preamble + transactions
 
 
 def generate_tax_preamble(date_birth):
@@ -556,14 +532,12 @@ def generate_tax_preamble(date_birth):
     Returns:
       A list of directives.
     """
-    return parse(replace("""
-      * Tax accounts
-
+    return parse("""
       ;; Tax accounts not specific to a year.
-      YYYY-MM-DD open Income:CC:Federal:PreTax401k     DEFCCY
-      YYYY-MM-DD open Assets:CC:Federal:PreTax401k     DEFCCY
+      {date_birth} open Income:CC:Federal:PreTax401k     DEFCCY
+      {date_birth} open Assets:CC:Federal:PreTax401k     DEFCCY
 
-    """, {'YYYY-MM-DD': date_birth}))
+    """, **vars())
 
 def generate_tax_accounts(year, date_max):
     """Generate accounts and contributino directives for a particular tax year.
@@ -574,6 +548,7 @@ def generate_tax_accounts(year, date_max):
     Returns:
       A list of directives.
     """
+    date_year = datetime.date(year, 1, 1)
     date_filing = (datetime.date(year + 1, 3, 20) +
                    datetime.timedelta(days=random.randint(0, 5)))
 
@@ -583,46 +558,40 @@ def generate_tax_accounts(year, date_max):
     amount_federal = D(max(random.normalvariate(500, 120), 12))
     amount_state = D(max(random.normalvariate(300, 100), 10))
 
-    entries = parse(replace("""
+    amount_limit = retirement_limits.get(year, retirement_limits[None])
+
+    entries = parse("""
 
       ;; Open tax accounts for that year.
-      YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:Federal:PreTax401k   DEFCCY
-      YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:Medicare             CCY
-      YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:Federal              CCY
-      YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:CityNYC              CCY
-      YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:SDI                  CCY
-      YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:State                CCY
-      YYYY-MM-DD open Expenses:Taxes:YYEAR:CC:SocSec               CCY
+      {date_year} open Expenses:Taxes:Y{year}:CC:Federal:PreTax401k   DEFCCY
+      {date_year} open Expenses:Taxes:Y{year}:CC:Medicare             CCY
+      {date_year} open Expenses:Taxes:Y{year}:CC:Federal              CCY
+      {date_year} open Expenses:Taxes:Y{year}:CC:CityNYC              CCY
+      {date_year} open Expenses:Taxes:Y{year}:CC:SDI                  CCY
+      {date_year} open Expenses:Taxes:Y{year}:CC:State                CCY
+      {date_year} open Expenses:Taxes:Y{year}:CC:SocSec               CCY
 
       ;; Check that the tax amounts have been fully used.
-      YYYY-MM-DD balance Assets:CC:Federal:PreTax401k  0 DEFCCY
+      {date_year} balance Assets:CC:Federal:PreTax401k  0 DEFCCY
 
-      YYYY-MM-DD * "Allowed contributions for one year"
-        Income:CC:Federal:PreTax401k    -LIMIT DEFCCY
-        Assets:CC:Federal:PreTax401k     LIMIT DEFCCY
+      {date_year} * "Allowed contributions for one year"
+        Income:CC:Federal:PreTax401k    -{amount_limit} DEFCCY
+        Assets:CC:Federal:PreTax401k     {amount_limit} DEFCCY
 
-      YYYY-MM-EE * "Filing taxes for YEAR"
-        Expenses:Taxes:YYEAR:CC:Federal      FEDERAL_AMT CCY
-        Expenses:Taxes:YYEAR:CC:State        STATE_AMT CCY
+      {date_filing} * "Filing taxes for {year}"
+        Expenses:Taxes:Y{year}:CC:Federal      {amount_federal:.2f} CCY
+        Expenses:Taxes:Y{year}:CC:State        {amount_state:.2f} CCY
         Liabilities:AccountsPayable
 
-      YYYY-MM-FF * "FEDERAL TAXPYMT"
-        Assets:CC:Bank1:Checking      -FEDERAL_AMT CCY
+      {date_federal} * "FEDERAL TAXPYMT"
+        Assets:CC:Bank1:Checking      -{amount_federal:.2f} CCY
         Liabilities:AccountsPayable
 
-      YYYY-MM-GG * "STATE TAX & FINANC PYMT"
-        Assets:CC:Bank1:Checking      -STATE_AMT CCY
+      {date_state} * "STATE TAX & FINANC PYMT"
+        Assets:CC:Bank1:Checking      -{amount_state:.2f} CCY
         Liabilities:AccountsPayable
 
-    """, {'YYYY-MM-DD': datetime.date(year, 1, 1),
-          'YYYY-MM-EE': date_filing,
-          'YYYY-MM-FF': date_federal,
-          'YYYY-MM-GG': date_state,
-          'FEDERAL_AMT': '{:.2f}'.format(amount_federal),
-          'STATE_AMT': '{:.2f}'.format(amount_state),
-          'YEAR': year,
-          'YYEAR': 'Y{}'.format(year),
-          'LIMIT': retirement_limits.get(year, retirement_limits[None])}))
+    """, **vars())
 
     return [entry for entry in entries if entry.date < date_max]
 
@@ -639,52 +608,50 @@ def generate_retirement_employer_match(entries, account_invest, account_income):
     """
     MATCH_FRAC = D('0.50')
 
-    new_entries = parse(replace("""
-      YYYY-MM-DD open Account:Income   CCY
-    """, {
-        'YYYY-MM-DD': entries[0].date,
-        'Account:Income': account_income,
-        }))
+    new_entries = parse("""
+
+      {date} open {account_income}   CCY
+
+    """, date=entries[0].date, account_income=account_income)
 
     for posting, balances in postings_for(entries, [account_invest]):
         amount = posting.position.number * MATCH_FRAC
-        match_entry = parse(replace("""
-          YYYY-MM-DD * "Employer match for contribution"
-            Account:Invest         AMOUNT CCY
-            Account:Income        -AMOUNT CCY
-        """, {
-            'YYYY-MM-DD': posting.entry.date + ONE_DAY,
-            'Account:Invest': account_invest,
-            'Account:Income': account_income,
-            'AMOUNT': '{:.2f}'.format(amount),
-            }))[0]
-        new_entries.append(match_entry)
+        date = posting.entry.date + ONE_DAY
+        new_entries.extend(parse("""
+
+          {date} * "Employer match for contribution"
+            {account_invest}         {amount:.2f} CCY
+            {account_income}        -{amount:.2f} CCY
+
+        """, **vars()))
 
     return new_entries
 
 
-def generate_retirement_investments(entries, account, commodities_map, price_map):
+def generate_retirement_investments(entries, account, commodities_items, price_map):
     """Invest money deposited to the given retirement account.
 
     Args:
       entries: A list of directives
       account: The root account for all retirement investment sub-accounts.
-      commodities_map: A dict of commodity/currency to a fraction to be invested in.
+      commodities_items: A list of (commodity, fraction to be invested in) items.
       price_map: A dict of prices, as per beancount.ops.prices.build_price_map().
     Returns:
       A list of new directives for the given investments. This also generates account
       opening directives for the desired investment commodities.
     """
-    oss = io.StringIO()
+    open_entries = []
     account_cash = join(account, 'Cash')
-    oss.write("{0} open {1} CCY\n".format(entries[0].date, account_cash))
-    for currency in commodities_map.keys():
-        oss.write("{0} open {1} {2}\n".format(entries[0].date,
-                                              join(account, currency),
-                                              currency))
-    open_entries = parse(oss.getvalue())
+    date_origin = entries[0].date
+    open_entries.extend(parse("""
+      {date_origin} open {account_cash} CCY
+    """, **vars()))
+    for currency, _ in commodities_items:
+        open_entries.extend(parse("""
+          {date_origin} open {account}:{currency} {currency}
+        """, **vars()))
 
-    oss = io.StringIO()
+    new_entries = []
     for posting, balances in postings_for(entries, [account_cash]):
         balance = balances[account_cash]
         amount_to_invest = balance.get_amount('CCY').number
@@ -695,57 +662,49 @@ def generate_retirement_investments(entries, account, commodities_map, price_map
             txn_date += ONE_DAY
 
         amount_invested = ZERO
-        for commodity, fraction in commodities_map.items():
+        for commodity, fraction in commodities_items:
             amount_fraction = amount_to_invest * D(fraction)
 
             # Find the price at that date.
             _, price = prices.get_price(price_map, (commodity, 'CCY'), txn_date)
             units = (amount_fraction / price).quantize(D('0.001'))
             amount_cash = (units * price).quantize(D('0.01'))
-            oss.write(replace("""
+            new_entries.extend(parse("""
 
-              YYYY-MM-DD * "Investing FRACTION of cash in COMM"
-                ACCOUNT:COMM    UNITS COMM {COST CCY}
-                ACCOUNT:Cash    CASH CCY
+              {txn_date} * "Investing {fraction:.0%} of cash in {commodity}"
+                {account}:{commodity}  {units:.3f} {commodity} {{{price:.2f} CCY}}
+                {account}:Cash         -{amount_cash:.2f} CCY
 
-            """, {'YYYY-MM-DD': txn_date,
-                  'ACCOUNT': account,
-                  'COMM': commodity,
-                  'FRACTION': '{:.0%}'.format(fraction),
-                  'UNITS': '{:.3f}'.format(units),
-                  'CASH': '{:.2f}'.format(-amount_cash),
-                  'COST': '{:.2f}'.format(price),
-                  'PRICE': '{:.2f}'.format(price),
-              }))
+            """, **vars()))
 
             balance.add_amount(amount.Amount(-amount_cash, 'CCY'))
 
-    return open_entries + parse(oss.getvalue())
+    return sorted_entries(open_entries + new_entries)
 
 
-def generate_banking(date_begin, date_end, initial_amount):
+def generate_banking(date_begin, date_end, amount_initial):
     """Generate a checking account opening.
 
     Args:
       date_begin: A date instance, the beginning date.
       date_end: A date instance, the end date.
-      initial_amount: A Decimal instance, the amount to initialize the checking account with.
+      amount_initial: A Decimal instance, the amount to initialize the checking account with.
     Returns:
       A list of directives.
     """
-    return parse(replace("""
-      YYYY-MM-DD open Assets:CC:Bank1:Checking    CCY
-      ;; YYYY-MM-DD open Assets:CC:Bank1:Savings    CCY
+    date_balance = date_begin + datetime.timedelta(days=1)
+    return parse("""
 
-      YYYY-MM-DD * "Opening Balance for checking account"
-        Assets:CC:Bank1:Checking   INIT CCY
+      {date_begin} open Assets:CC:Bank1:Checking    CCY
+      ;; {date_begin} open Assets:CC:Bank1:Savings    CCY
+
+      {date_begin} * "Opening Balance for checking account"
+        Assets:CC:Bank1:Checking   {amount_initial} CCY
         Equity:Opening-Balances
 
-      YYYY-MM-EE balance Assets:CC:Bank1:Checking   INIT CCY
+      {date_balance} balance Assets:CC:Bank1:Checking   {amount_initial} CCY
 
-    """, {'YYYY-MM-EE': date_begin + datetime.timedelta(days=1),
-          'YYYY-MM-DD': date_begin,
-          'INIT': initial_amount}))
+    """, **vars())
 
 
 def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks):
@@ -757,7 +716,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
       entries: A list of entries that contains at least the transfers to the investment
         account's cash account.
       price_map: A dict of prices, as per beancount.ops.prices.build_price_map().
-      stocks: A set of strings, the list of commodities to invest in.
+      stocks: A list of strings, the list of commodities to invest in.
     Returns:
       A list of directives.
     """
@@ -765,20 +724,14 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
     account_cash = join(account, 'Cash')
     account_gains = 'Income:CC:Investment:Gains'
 
-    oss = io.StringIO()
-    oss.write(replace("""
-      YYYY-MM-DD open Account:Cash    CCY
-      YYYY-MM-DD open Gains    CCY
-    """, {'YYYY-MM-DD': date_begin,
-          'Account': account,
-          'Gains': account_gains}))
+    open_entries = parse("""
+      {date_begin} open {account}:Cash    CCY
+      {date_begin} open {account_gains}    CCY
+    """, **vars())
     for stock in stocks:
-        oss.write(replace("""
-          YYYY-MM-DD open Account:STOCK    STOCK
-        """, {'YYYY-MM-DD': date_begin,
-              'Account': account,
-              'STOCK': stock}))
-    open_entries = parse(oss.getvalue())
+        open_entries.extend(parse("""
+          {date_begin} open {account}:{stock} {stock}
+        """, **vars()))
 
     # Iterate over all the dates, but merging in the postings for the cash
     # account.
@@ -804,30 +757,22 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
                 lot_amount = round_to(invest_cash / len(commodities), ROUND_AMOUNT)
 
                 invested_amount = ZERO
-                for commodity in commodities:
+                for stock in commodities:
                     # Find the price at that date.
-                    _, price = prices.get_price(price_map, (commodity, 'CCY'), date)
+                    _, price = prices.get_price(price_map, (stock, 'CCY'), date)
 
                     units = round_to((lot_amount / price), ROUND_UNITS)
                     if units <= ZERO:
                         continue
-                    cash_amount = units * price + COMMISSION
-                    #logging.info('Buying %s %s @ %s CCY = %s CCY', units, commodity, price, units * price)
+                    amount_cash = units * price + COMMISSION
+                    #logging.info('Buying %s %s @ %s CCY = %s CCY', units, stock, price, units * price)
 
-                    buy = parse(replace("""
-                      YYYY-MM-DD * "Buy shares of STOCK"
-                        Account:Cash                     CASH_AMOUNT CCY
-                        Account:STOCK                    STOCK_AMOUNT STOCK {PRICE_AMOUNT CCY}
-                        Expenses:Financial:Commissions   COMMISSION CCY
-                    """, {
-                        'YYYY-MM-DD': date,
-                        'Account': account,
-                        'STOCK': commodity,
-                        'CASH_AMOUNT': '{:.2f}'.format(-cash_amount),
-                        'STOCK_AMOUNT': '{:.0f}'.format(units),
-                        'PRICE_AMOUNT': '{:.2f}'.format(price),
-                        'COMMISSION': '{:.2f}'.format(COMMISSION),
-                        }))[0]
+                    buy = parse("""
+                      {date} * "Buy shares of {stock}"
+                        {account}:Cash       -{amount_cash:.2f} CCY
+                        {account}:{stock}     {units:.0f} {stock} {{{price:.2f} CCY}}
+                        Expenses:Financial:Commissions   {COMMISSION:.2f} CCY
+                    """, **vars())[0]
                     new_entries.append(buy)
 
                     balances[account_cash].add_position(buy.postings[0].position)
@@ -858,22 +803,15 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
             gain, market_value, price, sell_position = lot_tuple
             #logging.info('Selling {} for {}'.format(sell_position, market_value))
 
-            sell = parse(replace("""
-              YYYY-MM-DD * "Sell shares of STOCK"
-                Account:STOCK                    POSITION @ PRICE CCY
-                Account:Cash                     CASH_AMOUNT CCY
-                Expenses:Financial:Commissions   COMMISSION CCY
-                Gains
-            """, {
-                'YYYY-MM-DD': date,
-                'Account': account,
-                'Gains': account_gains,
-                'STOCK': sell_position.lot.currency,
-                'POSITION': -sell_position,
-                'CASH_AMOUNT': '{:.2f}'.format(market_value - COMMISSION),
-                'PRICE': '{:.2f}'.format(price),
-                'COMMISSION': '{:.2f}'.format(COMMISSION),
-                }))[0]
+            stock = sell_position.lot.currency
+            amount_cash = market_value - COMMISSION
+            sell = parse("""
+              {date} * "Sell shares of {stock}"
+                {account}:{stock}              -{sell_position} @ {price:.2f} CCY
+                {account}:Cash                  {amount_cash:.2f} CCY
+                Expenses:Financial:Commissions  {COMMISSION:.2f} CCY
+                {account_gains}
+            """, **vars())[0]
             new_entries.append(sell)
 
             balances[account_cash].add_position(sell.postings[1].position)
@@ -900,30 +838,23 @@ def generate_periodic_expenses(date_iter,
     Returns:
       A list of directives.
     """
-    oss = io.StringIO()
+    new_entries = []
     for dt in date_iter:
         date = dt.date() if isinstance(dt, datetime.datetime) else dt
-        txn_amount = D(amount_generator())
-        oss.write(replace("""
+        amount = D(amount_generator())
+        txn_payee = (payee
+                     if isinstance(payee, str)
+                     else random.choice(payee))
+        txn_narration = (narration
+                         if isinstance(narration, str)
+                         else random.choice(narration))
+        new_entries.extend(parse("""
+          {date} * "{txn_payee}" "{txn_narration}"
+            {account_from}   -{amount:.2f} CCY
+            {account_to}      {amount:.2f} CCY
+        """, **vars()))
 
-          YYYY-MM-DD * "Payee" "Narration"
-            Account:From    -AMOUNT CCY
-            Account:To       AMOUNT CCY
-
-        """, {
-            'YYYY-MM-DD': date,
-            'Payee': (payee
-                      if isinstance(payee, str)
-                      else random.choice(payee)),
-            'Narration': (narration
-                          if isinstance(narration, str)
-                          else random.choice(narration)),
-            'Account:From': account_from,
-            'Account:To': account_to,
-            'AMOUNT': '{:.2f}'.format(txn_amount)
-        }))
-
-    return parse(oss.getvalue())
+    return new_entries
 
 
 def generate_clearing_entries(date_iter,
@@ -945,29 +876,20 @@ def generate_clearing_entries(date_iter,
     next_date = next(iter(date_iter))
 
     # Iterate over all the postings of the account to clear.
-    oss = io.StringIO()
+    new_entries = []
     for posting, balances in postings_for(entries, [account_clear]):
         balance_clear = balances[account_clear]
 
         # Check if we need to clear.
         if next_date <= posting.entry.date:
-            balance_amount = balance_clear.get_amount('CCY')
-            oss.write(replace("""
-
-              YYYY-MM-DD * "Payee" "Narration"
-                Account:Clear    POS_AMOUNT
-                Account:From     NEG_AMOUNT
-
-            """, {
-                'YYYY-MM-DD': next_date,
-                'Payee': payee,
-                'Narration': narration,
-                'Account:Clear': account_clear,
-                'Account:From': account_from,
-                'POS_AMOUNT': '{:.2f}'.format(-balance_amount),
-                'NEG_AMOUNT': '{:.2f}'.format(balance_amount)
-            }))
-            balance_clear.add_amount(-balance_amount)
+            pos_amount = balance_clear.get_amount('CCY')
+            neg_amount = -pos_amount
+            new_entries.extend(parse("""
+              {next_date} * "{payee}" "{narration}"
+                {account_clear}     {neg_amount:.2f}
+                {account_from}      {pos_amount:.2f}
+            """, **vars()))
+            balance_clear.add_amount(neg_amount)
 
             # Advance to the next date we're looking for.
             try:
@@ -975,7 +897,7 @@ def generate_clearing_entries(date_iter,
             except StopIteration:
                 break
 
-    return parse(oss.getvalue())
+    return new_entries
 
 
 def generate_outgoing_transfers(entries,
@@ -1019,7 +941,7 @@ def generate_outgoing_transfers(entries,
     capped_amounts = reversed(reversed_amounts)
 
     # Create transfers outward where the future allows it.
-    oss = io.StringIO()
+    new_entries = []
     offset_amount = ZERO
     for current_amount, (_, posting) in zip(capped_amounts, amounts):
         if posting.entry.date >= last_date:
@@ -1027,25 +949,19 @@ def generate_outgoing_transfers(entries,
 
         adjusted_amount = current_amount - offset_amount
         if adjusted_amount > (transfer_minimum + transfer_threshold):
-            transfer_amount = round_to(adjusted_amount - transfer_minimum,
+            amount_transfer = round_to(adjusted_amount - transfer_minimum,
                                        transfer_increment)
 
-            oss.write(replace("""
+            date = posting.entry.date + datetime.timedelta(days=1)
+            new_entries.extend(parse("""
+              {date} * "Transfering accumulated savings to other account"
+                {account}         -{amount_transfer:2f} CCY
+                {account_out}      {amount_transfer:2f} CCY
+            """, **vars()))
 
-              YYYY-MM-DD * "Transfering accumulated savings to other account"
-                ACCOUNT         -AMOUNT CCY
-                ACCOUNT_OUT      AMOUNT CCY
+            offset_amount += amount_transfer
 
-            """, {
-                'YYYY-MM-DD': posting.entry.date + datetime.timedelta(days=1),
-                'ACCOUNT': account,
-                'ACCOUNT_OUT': account_out,
-                'AMOUNT': '{:.2f}'.format(transfer_amount)
-            }))
-
-            offset_amount += transfer_amount
-
-    return parse(oss.getvalue())
+    return new_entries
 
 
 def generate_expense_accounts(date_birth):
@@ -1056,23 +972,23 @@ def generate_expense_accounts(date_birth):
     Returns:
       A list of directives.
     """
-    return parse(replace("""
+    return parse("""
 
-      YYYY-MM-DD open Expenses:Food:Groceries
-      YYYY-MM-DD open Expenses:Food:Restaurant
-      YYYY-MM-DD open Expenses:Food:Coffee
-      YYYY-MM-DD open Expenses:Food:Alcohol
+      {date_birth} open Expenses:Food:Groceries
+      {date_birth} open Expenses:Food:Restaurant
+      {date_birth} open Expenses:Food:Coffee
+      {date_birth} open Expenses:Food:Alcohol
 
-      YYYY-MM-DD open Expenses:Transport:Subway
+      {date_birth} open Expenses:Transport:Subway
 
-      YYYY-MM-DD open Expenses:Home:Rent
-      YYYY-MM-DD open Expenses:Home:Electricity
-      YYYY-MM-DD open Expenses:Home:Internet
+      {date_birth} open Expenses:Home:Rent
+      {date_birth} open Expenses:Home:Electricity
+      {date_birth} open Expenses:Home:Internet
 
-      YYYY-MM-DD open Expenses:Financial:Fees
-      YYYY-MM-DD open Expenses:Financial:Commissions
+      {date_birth} open Expenses:Financial:Fees
+      {date_birth} open Expenses:Financial:Commissions
 
-    """, {'YYYY-MM-DD': date_birth}))
+    """, **vars())
 
 
 def generate_open_entries(date, accounts, currency=None):
@@ -1110,13 +1026,10 @@ def generate_balance_checks(entries, account, date_iter):
     with misc_utils.swallow(StopIteration):
         for posting, balance in postings_for(entries, [account], before=True):
             while posting.entry.date >= next_date:
-                balance_checks.extend(parse(replace("""
-
-                  YYYY-MM-DD balance ACCOUNT AMOUNT CCY
-
-                """, {'YYYY-MM-DD': next_date,
-                      'ACCOUNT': account,
-                      'AMOUNT': balance[account].get_amount('CCY').number})))
+                amount = balance[account].get_amount('CCY').number
+                balance_checks.extend(parse("""
+                  {next_date} balance {account} {amount} CCY
+                """, **vars()))
                 next_date = next(date_iter)
 
     return balance_checks
@@ -1132,10 +1045,14 @@ def check_non_negative(entries, account, currency):
     Raises:
       AssertionError: if the balance goes negative.
     """
-    for posting, balances in postings_for(sorted_entries(entries), [account]):
+    previous_date = None
+    for posting, balances in postings_for(sorted_entries(entries), [account], before=True):
         balance = balances[account]
-        assert all(amt.number >= ZERO
-                   for amt in balance.get_amounts()), "Negative balance: {}".format(balance)
+        date = posting.entry.date
+        if date != previous_date:
+            assert all(amt.number >= ZERO for amt in balance.get_amounts()), (
+                "Negative balance: {} at: {}".format(balance, posting.entry.date))
+        previous_date = date
 
 
 def validate_output(contents, positive_accounts, currency):
@@ -1299,34 +1216,25 @@ def generate_trip_entries(date_begin, date_end,
       A list of entries for the trip, all tagged with the given tag.
     """
     P_DAY_GENERATE = 0.3
-    oss = io.StringIO()
+    new_entries = []
     for date in date_iter(date_begin, date_end):
-        for payee, account, (mu, sigma3) in config:
+        for payee, account_expense, (mu, sigma3) in config:
             if random.random() < P_DAY_GENERATE:
                 amount = random.normalvariate(mu, sigma3 / 3.)
-                oss.write(replace("""
-                  YYYY-MM-DD * "Payee" "" #TAG
-                    Account:Credit     NEG_AMOUNT CCY
-                    Account:Expense    POS_AMOUNT CCY
-                """, {
-                    'YYYY-MM-DD': date,
-                    'Payee': payee,
-                    'Account:Credit': account_credit,
-                    'Account:Expense': account,
-                    'TAG': tag,
-                    'POS_AMOUNT': '{:.2f}'.format(amount),
-                    'NEG_AMOUNT': '{:.2f}'.format(-amount)
-                }))
+                neg_amount = -amount
+                new_entries.extend(parse("""
+                  {date} * "{payee}" "" #{tag}
+                    {account_credit}     {neg_amount} CCY
+                    {account_expense}    {amount} CCY
+                """, **vars()))
 
     # Generate events for the trip.
-    oss.write(replace("""
-      YYYY-MM-DD event "location" "Location"
-      YYYY-MM-EE event "location" "Home"
-    """, {'YYYY-MM-DD': date_begin,
-          "Location": trip_city,
-          'YYYY-MM-EE': date_end,
-          "Home": home_city}))
-    return parse(oss.getvalue())
+    new_entries.extend(parse("""
+      {date_begin} event "location" "{trip_city}"
+      {date_end}   event "location" "{home_city}"
+    """, **vars()))
+
+    return new_entries
 
 
 def price_series(start, mu, sigma):
@@ -1374,6 +1282,26 @@ def generate_prices(date_begin, date_end, currencies, cost_currency):
                                amount.Amount(price, cost_currency))
             entries.append(entry)
     return entries
+
+
+def replace(string, replacements, strip=False):
+    """Apply word-boundaried regular expression replacements to an indented string.
+
+    Args:
+      string: Some input template string.
+      replacements: A dict of regexp to replacement value.
+      strip: A boolean, true if we should strip the input.
+    Returns:
+      The input string with the replacements applied to it, with the indentation removed.
+    """
+    output = dedent(string)
+    if strip:
+        output = output.strip()
+    for from_, to_ in replacements.items():
+        if not isinstance(to_, str) and not callable(to_):
+            to_ = str(to_)
+        output = re.sub(r'\b{}\b'.format(from_), to_, output)
+    return output
 
 
 def contextualize_file(contents, employer):
@@ -1431,22 +1359,22 @@ def write_example_file(date_birth, date_begin, date_end, file):
     # Get a random employer.
     employer_name, employer_address = random.choice(employers)
 
-    # Salary income payments.
+    logging.info("Generating Salary Employment Income")
     income_entries = generate_employment_income(employer_name, employer_address,
                                                 annual_salary,
                                                 account_checking,
                                                 join(account_retirement, 'Cash'),
                                                 date_begin, date_end)
 
-    # Periodic expenses from banking accounts.
+    logging.info("Generating Expenses from Banking Accounts")
     banking_expenses = generate_banking_expenses(date_begin, date_end,
                                                  account_checking, rent_amount)
 
-    # Regular expenses via credit card.
+    logging.info("Generating Regular Expenses via Credit Card")
     credit_regular_entries = generate_regular_credit_expenses(
         date_birth, date_begin, date_end, account_credit, account_checking)
 
-    # Generate credit card expenses for trips.
+    logging.info("Generating Credit Card Expenses for Trips")
     trip_entries = []
     destinations = sorted(trip_destinations.items())
     destinations.extend(destinations)
@@ -1473,7 +1401,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
 
         trip_entries.extend(this_trip_entries)
 
-    # Generate entries that will pay off the credit card (unconditionally).
+    logging.info("Generating Credit Card Payment Entries")
     credit_payments = generate_clearing_entries(
         delay_dates(rrule.rrule(rrule.MONTHLY,
                                 dtstart=date_begin, until=date_end, bymonthday=7), 0, 4),
@@ -1483,7 +1411,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
 
     credit_entries = credit_regular_entries + trip_entries + credit_payments
 
-    # Tax accounts.
+    logging.info("Generating Tax Filings and Payments")
     tax_preamble = generate_tax_preamble(date_birth)
 
     # Figure out all the years we need tax accounts for.
@@ -1498,6 +1426,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
                                                   (entries
                                                    for _, entries in taxes))
 
+    logging.info("Generating Opening of Banking Accounts")
     # Open banking accounts and gift the checking account with a balance that
     # will offset all the amounts to ensure a positive balance throughout its
     # lifetime.
@@ -1509,7 +1438,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
         account_checking, 'CCY')
     banking_entries = generate_banking(date_begin, date_end, max(-minimum, ZERO))
 
-    # Book transfers to investment account.
+    logging.info("Generating Transfers to Investment Account")
     banking_transfers = generate_outgoing_transfers(
         sorted_entries(income_entries +
                        banking_entries +
@@ -1522,37 +1451,40 @@ def write_example_file(date_birth, date_begin, date_end, file):
         transfer_threshold=D('3000'),
         transfer_increment=D('500'))
 
+    logging.info("Generating Prices")
     # Generate price entries for investment currencies and create a price map to
     # use for later for generating investment transactions.
     funds_allocation = {'FUND1': 0.40, 'FUND2': 0.60}
-    stocks = {'STK1', 'STK2', 'STK3', 'STK4'}
+    stocks = ['STK1', 'STK2', 'STK3', 'STK4']
     price_entries = generate_prices(date_begin, date_end,
-                                    list(funds_allocation.keys()) + list(stocks), 'CCY')
+                                    sorted(funds_allocation.keys()) + stocks, 'CCY')
     price_map = prices.build_price_map(price_entries)
 
-    # Generate employer contributions.
+    logging.info("Generating Employer Match Contribution")
     account_match = 'Income:US:Employer1:Match401k'
     retirement_match = generate_retirement_employer_match(income_entries,
                                                           join(account_retirement, 'Cash'),
                                                           account_match)
 
-    # Investment accounts for retirement.
+    logging.info("Generating Retirement Investments")
     retirement_entries = generate_retirement_investments(
-        income_entries + retirement_match, account_retirement, funds_allocation, price_map)
+        income_entries + retirement_match, account_retirement,
+        sorted(funds_allocation.items()),
+        price_map)
 
-    # Taxable savings / investment accounts.
+    logging.info("Generating Taxes Investments")
     investment_entries = generate_taxable_investment(date_begin, date_end,
                                                      banking_transfers, price_map,
                                                      stocks)
 
-    # Expense accounts.
+    logging.info("Generating Expense Accounts")
     expense_accounts_entries = generate_expense_accounts(date_birth)
 
-    # Equity accounts.
+    logging.info("Generating Equity Accounts")
     equity_entries = generate_open_entries(date_birth, [account_opening,
                                                         account_payable])
 
-    # Generate balance checks for a few accounts.
+    logging.info("Generating Balance Checks")
     credit_checks = generate_balance_checks(credit_entries, account_credit,
                                             date_random_seq(date_begin, date_end, 20, 30))
 
@@ -1565,7 +1497,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
                                              account_checking,
                                              date_random_seq(date_begin, date_end, 20, 30))
 
-    # Format the results.
+    logging.info("Outputting and Formatting Entries")
     output = io.StringIO()
     def output_section(title, entries):
         output.write('{}\n\n'.format(title))
@@ -1590,11 +1522,11 @@ def write_example_file(date_birth, date_begin, date_end, file):
     output_section('* Prices', price_entries)
     output_section('* Cash', [])  # FIXME TODO(blais): cash entries
 
-    # Replace generic names by realistic names and output results.
+    logging.info("Contextualizing to Realistic Names")
     contents, replacements = contextualize_file(output.getvalue(), employer_name)
     file.write(contents)
 
-    # Validate the results parse fine.
+    logging.info("Validating Results")
     validate_output(contents,
                     [replace(account, replacements)
                      for account in [account_checking]],
@@ -1640,7 +1572,3 @@ def main():
                        file=output_file)
 
     return 0
-
-
-## TODO(blais) - Reformat using format instead of replace(). We don't need this really.
-## TODO(blais) - Add full logging of generated steps.
