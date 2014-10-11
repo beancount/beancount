@@ -1186,7 +1186,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 /* Currencies. These are defined as uppercase only in order to disambiguate the
-  * syntax. */
+  * syntax. This is kept in sync with beancount.core.amount.CURRENCY_RE. */
 case 28:
 YY_RULE_SETUP
 #line 178 "src/python/beancount/parser/lexer.l"
