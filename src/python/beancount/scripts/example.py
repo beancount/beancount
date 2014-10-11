@@ -227,26 +227,6 @@ def round_to(number, increment):
 
 
 # FIXME: This is generic; move to utils.
-def replace(string, replacements, strip=False):
-    """Apply word-boundaried regular expression replacements to an indented string.
-
-    Args:
-      string: Some input template string.
-      replacements: A dict of regexp to replacement value.
-      strip: A boolean, true if we should strip the input.
-    Returns:
-      The input string with the replacements applied to it, with the indentation removed.
-    """
-    output = dedent(string)
-    if strip:
-        output = output.strip()
-    for from_, to_ in replacements.items():
-        if not isinstance(to_, str) and not callable(to_):
-            to_ = str(to_)
-        output = re.sub(r'\b{}\b'.format(from_), to_, output)
-    return output
-
-# FIXME: This is generic; move to utils.
 def skipiter(iterable, num_skip):
     """Skip some elements from an iterator.
 
@@ -1046,13 +1026,10 @@ def generate_balance_checks(entries, account, date_iter):
     with misc_utils.swallow(StopIteration):
         for posting, balance in postings_for(entries, [account], before=True):
             while posting.entry.date >= next_date:
-                balance_checks.extend(parse(replace("""
-
-                  YYYY-MM-DD balance ACCOUNT AMOUNT CCY
-
-                """, {'YYYY-MM-DD': next_date,
-                      'ACCOUNT': account,
-                      'AMOUNT': balance[account].get_amount('CCY').number})))
+                amount = balance[account].get_amount('CCY').number
+                balance_checks.extend(parse("""
+                  {next_date} balance {account} {amount} CCY
+                """, **vars()))
                 next_date = next(date_iter)
 
     return balance_checks
@@ -1239,34 +1216,25 @@ def generate_trip_entries(date_begin, date_end,
       A list of entries for the trip, all tagged with the given tag.
     """
     P_DAY_GENERATE = 0.3
-    oss = io.StringIO()
+    new_entries = []
     for date in date_iter(date_begin, date_end):
-        for payee, account, (mu, sigma3) in config:
+        for payee, account_expense, (mu, sigma3) in config:
             if random.random() < P_DAY_GENERATE:
                 amount = random.normalvariate(mu, sigma3 / 3.)
-                oss.write(replace("""
-                  YYYY-MM-DD * "Payee" "" #TAG
-                    Account:Credit     NEG_AMOUNT CCY
-                    Account:Expense    POS_AMOUNT CCY
-                """, {
-                    'YYYY-MM-DD': date,
-                    'Payee': payee,
-                    'Account:Credit': account_credit,
-                    'Account:Expense': account,
-                    'TAG': tag,
-                    'POS_AMOUNT': '{:.2f}'.format(amount),
-                    'NEG_AMOUNT': '{:.2f}'.format(-amount)
-                }))
+                neg_amount = -amount
+                new_entries.extend(parse("""
+                  {date} * "{payee}" "" #{tag}
+                    {account_credit}     {neg_amount} CCY
+                    {account_expense}    {amount} CCY
+                """, **vars()))
 
     # Generate events for the trip.
-    oss.write(replace("""
-      YYYY-MM-DD event "location" "Location"
-      YYYY-MM-EE event "location" "Home"
-    """, {'YYYY-MM-DD': date_begin,
-          "Location": trip_city,
-          'YYYY-MM-EE': date_end,
-          "Home": home_city}))
-    return parse(oss.getvalue())
+    new_entries.extend(parse("""
+      {date_begin} event "location" "{trip_city}"
+      {date_end}   event "location" "{home_city}"
+    """, **vars()))
+
+    return new_entries
 
 
 def price_series(start, mu, sigma):
@@ -1314,6 +1282,26 @@ def generate_prices(date_begin, date_end, currencies, cost_currency):
                                amount.Amount(price, cost_currency))
             entries.append(entry)
     return entries
+
+
+def replace(string, replacements, strip=False):
+    """Apply word-boundaried regular expression replacements to an indented string.
+
+    Args:
+      string: Some input template string.
+      replacements: A dict of regexp to replacement value.
+      strip: A boolean, true if we should strip the input.
+    Returns:
+      The input string with the replacements applied to it, with the indentation removed.
+    """
+    output = dedent(string)
+    if strip:
+        output = output.strip()
+    for from_, to_ in replacements.items():
+        if not isinstance(to_, str) and not callable(to_):
+            to_ = str(to_)
+        output = re.sub(r'\b{}\b'.format(from_), to_, output)
+    return output
 
 
 def contextualize_file(contents, employer):
@@ -1584,5 +1572,4 @@ def main():
     return 0
 
 
-## TODO(blais) - Reformat using format instead of replace(). We don't need this really.
 ## TODO(blais) - Add full logging of generated steps.
