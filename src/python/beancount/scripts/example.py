@@ -1359,22 +1359,22 @@ def write_example_file(date_birth, date_begin, date_end, file):
     # Get a random employer.
     employer_name, employer_address = random.choice(employers)
 
-    # Salary income payments.
+    logging.info("Generating Salary Employment Income")
     income_entries = generate_employment_income(employer_name, employer_address,
                                                 annual_salary,
                                                 account_checking,
                                                 join(account_retirement, 'Cash'),
                                                 date_begin, date_end)
 
-    # Periodic expenses from banking accounts.
+    logging.info("Generating Expenses from Banking Accounts")
     banking_expenses = generate_banking_expenses(date_begin, date_end,
                                                  account_checking, rent_amount)
 
-    # Regular expenses via credit card.
+    logging.info("Generating Regular Expenses via Credit Card")
     credit_regular_entries = generate_regular_credit_expenses(
         date_birth, date_begin, date_end, account_credit, account_checking)
 
-    # Generate credit card expenses for trips.
+    logging.info("Generating Credit Card Expenses for Trips")
     trip_entries = []
     destinations = sorted(trip_destinations.items())
     destinations.extend(destinations)
@@ -1401,7 +1401,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
 
         trip_entries.extend(this_trip_entries)
 
-    # Generate entries that will pay off the credit card (unconditionally).
+    logging.info("Generating Credit Card Payment Entries")
     credit_payments = generate_clearing_entries(
         delay_dates(rrule.rrule(rrule.MONTHLY,
                                 dtstart=date_begin, until=date_end, bymonthday=7), 0, 4),
@@ -1411,7 +1411,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
 
     credit_entries = credit_regular_entries + trip_entries + credit_payments
 
-    # Tax accounts.
+    logging.info("Generating Tax Filings and Payments")
     tax_preamble = generate_tax_preamble(date_birth)
 
     # Figure out all the years we need tax accounts for.
@@ -1426,6 +1426,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
                                                   (entries
                                                    for _, entries in taxes))
 
+    logging.info("Generating Opening of Banking Accounts")
     # Open banking accounts and gift the checking account with a balance that
     # will offset all the amounts to ensure a positive balance throughout its
     # lifetime.
@@ -1437,7 +1438,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
         account_checking, 'CCY')
     banking_entries = generate_banking(date_begin, date_end, max(-minimum, ZERO))
 
-    # Book transfers to investment account.
+    logging.info("Generating Transfers to Investment Account")
     banking_transfers = generate_outgoing_transfers(
         sorted_entries(income_entries +
                        banking_entries +
@@ -1450,6 +1451,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
         transfer_threshold=D('3000'),
         transfer_increment=D('500'))
 
+    logging.info("Generating Prices")
     # Generate price entries for investment currencies and create a price map to
     # use for later for generating investment transactions.
     funds_allocation = {'FUND1': 0.40, 'FUND2': 0.60}
@@ -1458,31 +1460,31 @@ def write_example_file(date_birth, date_begin, date_end, file):
                                     sorted(funds_allocation.keys()) + stocks, 'CCY')
     price_map = prices.build_price_map(price_entries)
 
-    # Generate employer contributions.
+    logging.info("Generating Employer Match Contribution")
     account_match = 'Income:US:Employer1:Match401k'
     retirement_match = generate_retirement_employer_match(income_entries,
                                                           join(account_retirement, 'Cash'),
                                                           account_match)
 
-    # Investment accounts for retirement.
+    logging.info("Generating Retirement Investments")
     retirement_entries = generate_retirement_investments(
         income_entries + retirement_match, account_retirement,
         sorted(funds_allocation.items()),
         price_map)
 
-    # Taxable savings / investment accounts.
+    logging.info("Generating Taxes Investments")
     investment_entries = generate_taxable_investment(date_begin, date_end,
                                                      banking_transfers, price_map,
                                                      stocks)
 
-    # Expense accounts.
+    logging.info("Generating Expense Accounts")
     expense_accounts_entries = generate_expense_accounts(date_birth)
 
-    # Equity accounts.
+    logging.info("Generating Equity Accounts")
     equity_entries = generate_open_entries(date_birth, [account_opening,
                                                         account_payable])
 
-    # Generate balance checks for a few accounts.
+    logging.info("Generating Balance Checks")
     credit_checks = generate_balance_checks(credit_entries, account_credit,
                                             date_random_seq(date_begin, date_end, 20, 30))
 
@@ -1495,7 +1497,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
                                              account_checking,
                                              date_random_seq(date_begin, date_end, 20, 30))
 
-    # Format the results.
+    logging.info("Outputting and Formatting Entries")
     output = io.StringIO()
     def output_section(title, entries):
         output.write('{}\n\n'.format(title))
@@ -1520,11 +1522,11 @@ def write_example_file(date_birth, date_begin, date_end, file):
     output_section('* Prices', price_entries)
     output_section('* Cash', [])  # FIXME TODO(blais): cash entries
 
-    # Replace generic names by realistic names and output results.
+    logging.info("Contextualizing to Realistic Names")
     contents, replacements = contextualize_file(output.getvalue(), employer_name)
     file.write(contents)
 
-    # Validate the results parse fine.
+    logging.info("Validating Results")
     validate_output(contents,
                     [replace(account, replacements)
                      for account in [account_checking]],
@@ -1570,6 +1572,3 @@ def main():
                        file=output_file)
 
     return 0
-
-
-## TODO(blais) - Add full logging of generated steps.
