@@ -1,9 +1,9 @@
 -*- mode: org -*-
 beancount: TODO
-* Current
+* Requirements for Shipping 1.0
+** Current
 
-  - Make the test that runs ledger contingent on having ledger installed
-
+  - Integrate patch from Nathan Grigg for parsing commas
   - Implement experimental precision check suggested by Nathan Grigg
   - Implement Equity:Rounding accumulation suggested by Nathan Grigg
 
@@ -45,6 +45,9 @@ beancount: TODO
     mode balance sheet and income statement). The equivalent UNIX tool does not
     exist. Select columns by regexp.
 
+  - Complete testing conversion to Ledger by converting my own file (still
+    having some errors, though example file compiles well already).
+
 
 ** Announcement
 
@@ -61,7 +64,6 @@ I'll be using this script:
 - For stress testing.
 
 
-* Requirements for Shipping 1.0
 ** Branches
 
   - Complete and merge sampled_quantization
