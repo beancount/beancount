@@ -70,6 +70,7 @@ setup(
                           '*.html',
                           '*.css',
                           'third_party/*.js'],
+        'beancount.reports': ['*.html'],
         },
 
     scripts=install_scripts,
