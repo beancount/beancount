@@ -198,19 +198,7 @@ def parse(input_string, **replacements):
         printer.print_errors(errors, file=sys.stderr)
         raise ValueError("Parsed text has errors")
 
-    return sorted_entries(entries)
-
-
-# FIXME: This is generic; move to data.
-def sorted_entries(entries):
-    """Sort the entries using the entry-specific ordering.
-
-    Args:
-      entries: An unsorted list of directives.
-    Returns:
-      A new list of entries, sorted accoriding to date and source.
-    """
-    return sorted(entries, key=data.entry_sortkey)
+    return data.sort(entries)
 
 
 # FIXME: This is generic; move to amount.
@@ -391,7 +379,7 @@ def get_minimum_balance(entries, account, currency):
       A Decimal number, the minimum amount throughout the history of this account.
     """
     min_amount = ZERO
-    for posting, balances in postings_for(sorted_entries(entries), [account]):
+    for posting, balances in postings_for(data.sort(entries), [account]):
         balance = balances[account]
         current = balance.get_amount(currency).number
         if current < min_amount:
@@ -679,7 +667,7 @@ def generate_retirement_investments(entries, account, commodities_items, price_m
 
             balance.add_amount(amount.Amount(-amount_cash, 'CCY'))
 
-    return sorted_entries(open_entries + new_entries)
+    return data.sort(open_entries + new_entries)
 
 
 def generate_banking(date_begin, date_end, amount_initial):
@@ -1046,7 +1034,7 @@ def check_non_negative(entries, account, currency):
       AssertionError: if the balance goes negative.
     """
     previous_date = None
-    for posting, balances in postings_for(sorted_entries(entries), [account], before=True):
+    for posting, balances in postings_for(data.sort(entries), [account], before=True):
         balance = balances[account]
         date = posting.entry.date
         if date != previous_date:
@@ -1111,7 +1099,7 @@ def generate_banking_expenses(date_begin, date_end, account, rent_amount):
         account, 'Expenses:Home:Internet',
         lambda: random.normalvariate(80, 0.10))
 
-    return sorted_entries(fee_expenses +
+    return data.sort(fee_expenses +
                           rent_expenses +
                           electricity_expenses +
                           internet_expenses)
@@ -1152,14 +1140,14 @@ def generate_regular_credit_expenses(date_birth, date_begin, date_end,
         account_credit, 'Expenses:Transport:Subway',
         lambda: D('120.00'))
 
-    credit_expenses = sorted_entries(restaurant_expenses +
+    credit_expenses = data.sort(restaurant_expenses +
                                      groceries_expenses +
                                      subway_expenses)
 
     # Entries to open accounts.
     credit_preamble = generate_open_entries(date_birth, [account_credit], 'CCY')
 
-    return sorted_entries(credit_preamble + credit_expenses)
+    return data.sort(credit_preamble + credit_expenses)
 
 
 def compute_trip_dates(date_begin, date_end):
@@ -1435,7 +1423,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
     # will offset all the amounts to ensure a positive balance throughout its
     # lifetime.
     minimum = get_minimum_balance(
-        sorted_entries(income_entries +
+        data.sort(income_entries +
                        banking_expenses +
                        credit_entries +
                        tax_entries),
@@ -1444,7 +1432,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
 
     logging.info("Generating Transfers to Investment Account")
     banking_transfers = generate_outgoing_transfers(
-        sorted_entries(income_entries +
+        data.sort(income_entries +
                        banking_entries +
                        banking_expenses +
                        credit_entries +
@@ -1492,7 +1480,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
     credit_checks = generate_balance_checks(credit_entries, account_credit,
                                             date_random_seq(date_begin, date_end, 20, 30))
 
-    banking_checks = generate_balance_checks(sorted_entries(income_entries +
+    banking_checks = generate_balance_checks(data.sort(income_entries +
                                                             banking_entries +
                                                             banking_expenses +
                                                             banking_transfers +
@@ -1505,18 +1493,18 @@ def write_example_file(date_birth, date_begin, date_end, file):
     output = io.StringIO()
     def output_section(title, entries):
         output.write('{}\n\n'.format(title))
-        printer.print_entries(sorted_entries(entries), file=output)
+        printer.print_entries(data.sort(entries), file=output)
 
     output.write(file_preamble.format(**vars()))
     output_section('* Equity Accounts', equity_entries)
-    output_section('* Banking', sorted_entries(banking_entries +
+    output_section('* Banking', data.sort(banking_entries +
                                                banking_expenses +
                                                banking_transfers +
                                                banking_checks))
-    output_section('* Credit-Cards', sorted_entries(credit_entries +
+    output_section('* Credit-Cards', data.sort(credit_entries +
                                                     credit_checks))
     output_section('* Taxable Investments', investment_entries)
-    output_section('* Retirement Investments', sorted_entries(retirement_entries +
+    output_section('* Retirement Investments', data.sort(retirement_entries +
                                                               retirement_match))
     output_section('* Sources of Income', income_entries)
     output_section('* Taxes', tax_preamble)
@@ -1574,3 +1562,5 @@ def main():
                        opts.date_begin,
                        opts.date_end,
                        file=output_file)
+
+    return 0

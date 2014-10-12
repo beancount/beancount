@@ -135,20 +135,28 @@ class TestData(unittest.TestCase):
 
         return entries
 
-    def test_entry_sortkey(self):
-        entries = self.create_sort_data()
-        sorted_entries = sorted(entries, key=data.entry_sortkey)
+    def check_sorted(self, entries):
         self.assertEqual([data.Transaction,
                           data.Open,
                           data.Balance,
                           data.Transaction,
                           data.Transaction,
                           data.Close,
-                          data.Transaction], list(map(type, sorted_entries)))
+                          data.Transaction], list(map(type, entries)))
 
         self.assertEqual([900, 1002, 1001, 1008, 1009, 1000, 1100],
                          [entry.source.lineno
-                          for entry in sorted_entries])
+                          for entry in entries])
+
+    def test_entry_sortkey(self):
+        entries = self.create_sort_data()
+        sorted_entries = sorted(entries, key=data.entry_sortkey)
+        self.check_sorted(sorted_entries)
+
+    def test_sort(self):
+        entries = self.create_sort_data()
+        sorted_entries = data.sort(entries)
+        self.check_sorted(sorted_entries)
 
     def test_posting_sortkey(self):
         entries = self.create_sort_data()

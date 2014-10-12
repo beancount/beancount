@@ -403,6 +403,17 @@ def entry_sortkey(entry):
     return (entry.date, SORT_ORDER.get(type(entry), 0), entry.source.lineno)
 
 
+def sort(entries):
+    """A convenience to sort a list of entries, using entry_sortkey().
+
+    Args:
+      entries: A list of directives.
+    Returns:
+      A sorted list of directives.
+    """
+    return sorted(entries, key=entry_sortkey)
+
+
 def posting_sortkey(entry):
     """Sort-key for entries or postings. We sort by date, except that checks
     should be placed in front of every list of entries of that same day,

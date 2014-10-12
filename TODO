@@ -36,8 +36,6 @@ beancount: TODO
   - Maybe beancount.core.complete should be called beancount.core.interpolate.
     That's the term I've been using for a while now isn't it.
 
-  - Move sorted_entries() -> beancount.core.data.sort()
-
   - Create a new command that spits out missing open directives (for doing
     demos without disabling the requirement of needing open directives).
 
