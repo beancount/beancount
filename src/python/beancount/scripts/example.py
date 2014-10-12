@@ -1574,6 +1574,3 @@ def main():
                        opts.date_begin,
                        opts.date_end,
                        file=output_file)
-
-
-# FIXME TODO(blais): create some cash entries
