@@ -1,0 +1,16 @@
+usage: bean-query FILENAME.beancount balances [-h] [-e FILTER_EXPRESSION] [-c] [--fullnames]
+                                              [filters [filters ...]]
+
+Print out the trial balance of accounts matching an expression. (aliases: balances,bal,trial;
+formats: html,htmldiv,text)
+
+positional arguments:
+  filters               Filter expression(s) to select the subset of transactions.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -e FILTER_EXPRESSION, --filter-expression FILTER_EXPRESSION, --expression FILTER_EXPRESSION, --regexp FILTER_EXPRESSION
+                        Filter expression for which account balances to display.
+  -c, --at-cost, --cost
+                        Render values at cost, convert the units to cost value
+  --fullnames           Output full account names.

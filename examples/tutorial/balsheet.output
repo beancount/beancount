@@ -1,0 +1,204 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+  <head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+    <title></title>
+  </head>
+
+  <body>
+
+
+               <div class="halfleft">
+
+                 <div id="assets">
+                  <h3>Assets</h3>
+                  <table class="fullwidth tree-table">
+<thead>
+</tr>
+<th class="first">Account</th>
+<th>USD</th>
+<th>Other</th>
+</tr>
+</thead>
+<tr class="">
+<td class="tree-node-name">Assets</td>
+<td class="num"></td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Assets:US</td>
+<td class="num"></td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Assets:US:BofA</td>
+<td class="num"></td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Assets:US:BofA:Checking</td>
+<td class="num">596.05</td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Assets:US:ETrade</td>
+<td class="num"></td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Assets:US:ETrade:Cash</td>
+<td class="num">5,120.50</td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Assets:US:ETrade:GLD</td>
+<td class="num">6,063.62</td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Assets:US:ETrade:ITOT</td>
+<td class="num">2,552.12</td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Assets:US:ETrade:VEA</td>
+<td class="num">4,193.58</td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Assets:US:ETrade:VHT</td>
+<td class="num">13,603.42</td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Assets:US:Federal</td>
+<td class="num"></td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Assets:US:Federal:PreTax401k</td>
+<td class="num"></td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Assets:US:Hoogle</td>
+<td class="num"></td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Assets:US:Hoogle:Vacation</td>
+<td class="num"></td>
+<td class="num">337.26 VACHR</td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Assets:US:Vanguard</td>
+<td class="num"></td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Assets:US:Vanguard:Cash</td>
+<td class="num">-0.02</td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Assets:US:Vanguard:RGAGX</td>
+<td class="num">46,799.64</td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Assets:US:Vanguard:VBMPX</td>
+<td class="num">31,200.42</td>
+<td class="num"></td>
+</tr>
+<tr class="totals">
+<td class="tree-node-name"><span class="totals-label"></span></td>
+<td class="num">110,129.33</td>
+<td class="num">337.26 VACHR</td>
+</tr>
+</table>
+
+                 </div>
+
+               </div>
+               <div class="halfright">
+
+                 <div id="liabilities">
+                  <h3>Liabilities</h3>
+                  <table class="fullwidth tree-table">
+<thead>
+</tr>
+<th class="first">Account</th>
+<th>USD</th>
+<th>Other</th>
+</tr>
+</thead>
+<tr class="">
+<td class="tree-node-name">Liabilities</td>
+<td class="num"></td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Liabilities:AccountsPayable</td>
+<td class="num"></td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Liabilities:US</td>
+<td class="num"></td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Liabilities:US:Chase</td>
+<td class="num"></td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Liabilities:US:Chase:Slate</td>
+<td class="num">-2,891.85</td>
+<td class="num"></td>
+</tr>
+<tr class="totals">
+<td class="tree-node-name"><span class="totals-label"></span></td>
+<td class="num">-2,891.85</td>
+<td class="num"></td>
+</tr>
+</table>
+
+                 </div>
+                 <div class="spacer">
+                 </div>
+                 <div id="equity">
+                  <h3>Equity</h3>
+                  <table class="fullwidth tree-table">
+<thead>
+</tr>
+<th class="first">Account</th>
+<th>USD</th>
+<th>Other</th>
+</tr>
+</thead>
+<tr class="">
+<td class="tree-node-name">Equity</td>
+<td class="num"></td>
+<td class="num"></td>
+</tr>
+<tr class="">
+<td class="tree-node-name">Equity:Opening-Balances</td>
+<td class="num">-3,077.70</td>
+<td class="num"></td>
+</tr>
+<tr class="totals">
+<td class="tree-node-name"><span class="totals-label"></span></td>
+<td class="num">-3,077.70</td>
+<td class="num"></td>
+</tr>
+</table>
+
+                 </div>
+
+               </div>
+            
+
+  </body>
+</html>

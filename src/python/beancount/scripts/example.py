@@ -967,7 +967,7 @@ def generate_expense_accounts(date_birth):
       {date_birth} open Expenses:Food:Coffee
       {date_birth} open Expenses:Food:Alcohol
 
-      {date_birth} open Expenses:Transport:Subway
+      {date_birth} open Expenses:Transport:Tram
 
       {date_birth} open Expenses:Home:Rent
       {date_birth} open Expenses:Home:Electricity
@@ -1099,6 +1099,12 @@ def generate_banking_expenses(date_begin, date_end, account, rent_amount):
         account, 'Expenses:Home:Internet',
         lambda: random.normalvariate(80, 0.10))
 
+    phone_expenses = generate_periodic_expenses(
+        delay_dates(rrule.rrule(rrule.MONTHLY, dtstart=date_begin, until=date_end), 17, 19),
+        "Verizon Wireless", "",
+        account, 'Expenses:Home:Phone',
+        lambda: random.normalvariate(60, 10))
+
     return data.sort(fee_expenses +
                           rent_expenses +
                           electricity_expenses +
@@ -1136,8 +1142,8 @@ def generate_regular_credit_expenses(date_birth, date_begin, date_end,
 
     subway_expenses = generate_periodic_expenses(
         date_random_seq(date_begin, date_end, 27, 33),
-        "Metro Transport", "Subway tickets",
-        account_credit, 'Expenses:Transport:Subway',
+        "Metro Transport Authority", "Tram tickets",
+        account_credit, 'Expenses:Transport:Tram',
         lambda: D('120.00'))
 
     credit_expenses = data.sort(restaurant_expenses +
@@ -1310,6 +1316,7 @@ def contextualize_file(contents, employer):
         'CreditCard2': 'Amex:BlueCash',
         'Employer1': employer,
         'Retirement': 'Vanguard',
+        'Investment': 'ETrade',
         'FUND1': 'VBMPX',
         'FUND2': 'RGAGX',
         'STK1': 'ITOT',
