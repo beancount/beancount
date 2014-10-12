@@ -37,6 +37,29 @@ class LedgerReport(report.Report):
             file.write('\n')
 
 
+def quote(match):
+    """Add quotes around a re.MatchObject.
+
+    Args:
+      match: A MatchObject from the re module.
+    Returns:
+      A quoted string of the match contents.
+    """
+    currency = match.group(1)
+    return '"{}"'.format(currency) if re.search(r'[0-9\.]', currency) else currency
+
+
+def quote_currency(string):
+    """Quote all the currencies with numbers from the given string.
+
+    Args:
+      string: A string of text.
+    Returns:
+      A string of text, with the commodity expressions surrounded with quotes.
+    """
+    return re.sub(r'\b([A-Z][A-Z0-9\'\.\_\-]{0,10}[A-Z0-9])\b', quote, string)
+
+
 class LedgerPrinter:
     "Multi-method for printing directives in Ledger format."
 
@@ -86,8 +109,11 @@ class LedgerPrinter:
                      if posting.price is not None
                      else '')
 
-        oss.write('  {:64} {:>16} {:>16} {:>16}'.format(
-            flag_posting, amount_str, cost_str, price_str).rstrip())
+        posting_str = '  {:64} {:>16} {:>16} {:>16}'.format(flag_posting,
+                                                            quote_currency(amount_str),
+                                                            quote_currency(cost_str),
+                                                            quote_currency(price_str))
+        oss.write(posting_str.rstrip())
 
         oss.write('\n')
 
@@ -116,15 +142,16 @@ class LedgerPrinter:
     def Open(_, entry, oss):
         oss.write('account {e.account:47}\n'.format(e=entry))
         if entry.currencies:
-            oss.write('  assert {}\n'.format(' | '.join('commodity = "{}"'.format(currency)
+            oss.write('  assert {}\n'.format(' | '.join('commodity == "{}"'.format(currency)
                                                         for currency in entry.currencies)))
 
     def Close(_, entry, oss):
         oss.write(';; Close: {e.date:%Y/%m/%d} close {e.account}\n'.format(e=entry))
 
     def Price(_, entry, oss):
-        oss.write('P {e.date:%Y/%m/%d} 00:00:00 {e.currency:<16} {amount:>16}\n'.format(
-            e=entry, amount=str(entry.amount)))
+        price_directive = 'P {e.date:%Y/%m/%d} 00:00:00 {e.currency:<16} {amount:>16}\n'.format(
+            e=entry, amount=str(entry.amount))
+        oss.write(quote_currency(price_directive))
 
     def Event(_, entry, oss):
         oss.write(
