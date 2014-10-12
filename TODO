@@ -5,7 +5,6 @@ beancount: TODO
   - Complete tutorial doc
   - Share on mailing-list, including Ledger conversion script
   - Add auto tests for example generation script
-  - Add auto tests for ledger conversion script
   - Add auto tests for setup.py
 
   - Rename compute_balance_amount() -> compute_weight() and provide functions to
