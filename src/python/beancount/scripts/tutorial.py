@@ -8,11 +8,19 @@ from os import path
 
 
 COMMANDS = [
-    ('balances'             , "bean-query {} balances"),
-    ('journal'              , "bean-query {} journal -a Assets:US:BofA:Checking"),
-    ('journal-with-balance' , "bean-query {} journal -a Assets:US:BofA:Checking -b"),
-    ('invest'               , "bean-query {} journal -a Assets:US:Vanguard:VBMPX -b"),
-    ('invest-with-cost'     , "bean-query {} journal -a Assets:US:Vanguard:VBMPX -b -c"),
+    ('balances'               , "bean-query {} balances"),
+    ('help-reports'           , "bean-query --help-reports"),
+    ('help-subcmd'            , "bean-query {} balances --help"),
+    ('help-global'            , "bean-query --help"),
+    ('help-formats'           , "bean-query --help-formats"),
+    ('balances-restrict'      , "bean-query {} balances -e ETrade"),
+    ('balances-restrict-cost' , "bean-query {} balances -e ETrade -c"),
+    ('balsheet'               , "bean-query {} balsheet"),
+
+    # ('journal'              , "bean-query {} journal -a Assets:US:BofA:Checking"),
+    # ('journal-with-balance' , "bean-query {} journal -a Assets:US:BofA:Checking -b"),
+    # ('invest'               , "bean-query {} journal -a Assets:US:Vanguard:VBMPX -b"),
+    # ('invest-with-cost'     , "bean-query {} journal -a Assets:US:Vanguard:VBMPX -b -c"),
     ]
 
 

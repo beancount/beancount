@@ -1,0 +1,12 @@
+|-- Assets                  
+|   `-- US                  
+|       `-- ETrade          
+|           |-- Cash            5,120.50 USD
+|           |-- GLD                70.00 GLD
+|           |-- ITOT               17.00 ITOT
+|           |-- VEA                36.00 VEA
+|           `-- VHT               294.00 VHT
+`-- Income                  
+    `-- US                  
+        `-- ETrade          
+            `-- Gains            -373.34 USD

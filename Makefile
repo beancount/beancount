@@ -142,10 +142,12 @@ demo:
 
 
 # Generate the tutorial files from the example file.
-EXAMPLE=examples/generated/example.beancount
-TUTORIAL=examples/generated
-tutorial:
-	./bin/bean-example -o $(EXAMPLE)
+EXAMPLE=examples/tutorial/example.beancount
+$(EXAMPLE):
+	./bin/bean-example -s 0 -o $(EXAMPLE)
+
+TUTORIAL=examples/tutorial
+tutorial: $(EXAMPLE)
 	python3 src/python/beancount/scripts/tutorial.py $(EXAMPLE) $(TUTORIAL)
 
 
