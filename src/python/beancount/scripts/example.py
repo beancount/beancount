@@ -1224,8 +1224,8 @@ def generate_trip_entries(date_begin, date_end,
                 neg_amount = -amount
                 new_entries.extend(parse("""
                   {date} * "{payee}" "" #{tag}
-                    {account_credit}     {neg_amount} CCY
-                    {account_expense}    {amount} CCY
+                    {account_credit}     {neg_amount:.2f} CCY
+                    {account_expense}    {amount:.2f} CCY
                 """, **vars()))
 
     # Generate events for the trip.
@@ -1324,6 +1324,10 @@ def contextualize_file(contents, employer):
         'Retirement': 'Vanguard',
         'FUND1': 'VBMPX',
         'FUND2': 'RGAGX',
+        'STK1': 'ITOT',
+        'STK2': 'VEA',
+        'STK3': 'VHT',
+        'STK4': 'GLD',
         }
     new_contents = replace(contents, replacements)
     return format.align_beancount(new_contents), replacements
@@ -1520,7 +1524,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
         output_section('** Tax Year {}'.format(year), entries)
     output_section('* Expenses', expense_accounts_entries)
     output_section('* Prices', price_entries)
-    output_section('* Cash', [])  # FIXME TODO(blais): cash entries
+    output_section('* Cash', [])
 
     logging.info("Contextualizing to Realistic Names")
     contents, replacements = contextualize_file(output.getvalue(), employer_name)
@@ -1572,3 +1576,6 @@ def main():
                        file=output_file)
 
     return 0
+
+
+# FIXME TODO(blais): create some cash entries
