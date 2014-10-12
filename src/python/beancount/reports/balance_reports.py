@@ -11,7 +11,7 @@ class BalancesReport(report.HTMLReport,
                      metaclass=report.RealizationMeta):
     """Print out the trial balance of accounts matching an expression."""
 
-    names = ['balances', 'bal', 'trial', 'ledger']
+    names = ['balances', 'bal', 'trial']
     default_format = 'text'
 
     @classmethod

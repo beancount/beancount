@@ -254,13 +254,15 @@ def get_all_reports():
     from beancount.reports import holdings_reports
     from beancount.reports import price_reports
     from beancount.reports import misc_reports
+    from beancount.reports import convert_reports
     return functools.reduce(operator.add,
                             map(lambda module: module.__reports__,
                                 [balance_reports,
                                  journal_reports,
                                  holdings_reports,
                                  price_reports,
-                                 misc_reports]))
+                                 misc_reports,
+                                 convert_reports]))
 
 
 def get_html_template():
