@@ -52,7 +52,7 @@ setup(
     url="http://furius.ca/beancount",
 
     # See note about about setuptools; uncomment if fixed.
-    ##install_requires = ['python-dateutil', 'BeautifulSoup4', 'lxml'],
+    ##install_requires = ['python-dateutil'],
 
     package_dir = {'': 'src/python'},
     packages = ['beancount',

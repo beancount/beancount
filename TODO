@@ -2,9 +2,6 @@
 beancount: TODO
 * Current
 
-  - Fix missing template.html, add test that actually runs a few basic commands
-    with the installed environment
-
   - Make the test that runs ledger contingent on having ledger installed
 
   - Implement experimental precision check suggested by Nathan Grigg
