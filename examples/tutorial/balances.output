@@ -1,88 +1,55 @@
-|-- Assets                               
-|   `-- US                               
-|       |-- BofA                         
-|       |   `-- Checking                       596.05 USD
-|       |-- ETrade                       
-|       |   |-- Cash                         5,120.50 USD
-|       |   |-- GLD                             70.00 GLD
-|       |   |-- ITOT                            17.00 ITOT
-|       |   |-- VEA                             36.00 VEA
-|       |   `-- VHT                            294.00 VHT
-|       |-- Federal                      
-|       |   `-- PreTax401k               
-|       |-- Hoogle                       
-|       |   `-- Vacation                       337.26 VACHR
-|       `-- Vanguard                     
-|           |-- Cash                            -0.02 USD
-|           |-- RGAGX                          489.96 RGAGX
-|           `-- VBMPX                          309.95 VBMPX
-|-- Equity                               
-|   `-- Opening-Balances                    -3,077.70 USD
-|-- Expenses                             
-|   |-- Financial                        
-|   |   |-- Commissions                        340.10 USD
-|   |   `-- Fees                               136.00 USD
-|   |-- Food                             
-|   |   |-- Alcohol                             22.35 USD
-|   |   |-- Coffee                              83.72 USD
-|   |   |-- Groceries                        6,014.38 USD
-|   |   `-- Restaurant                      12,968.53 USD
-|   |-- Health                           
-|   |   |-- Dental                       
-|   |   |   `-- Insurance                      211.70 USD
-|   |   |-- Life                         
-|   |   |   `-- GroupTermLife                1,775.36 USD
-|   |   |-- Medical                      
-|   |   |   `-- Insurance                    1,998.74 USD
-|   |   `-- Vision                       
-|   |       `-- Insurance                    3,087.90 USD
-|   |-- Home                             
-|   |   |-- Electricity                      2,145.00 USD
-|   |   |-- Internet                         2,640.80 USD
-|   |   `-- Rent                            79,200.00 USD
-|   |-- Taxes                            
-|   |   |-- Y2012                        
-|   |   |   `-- US                       
-|   |   |       |-- CityNYC                  4,547.92 USD
-|   |   |       |-- Federal                 28,216.87 USD
-|   |   |       |   `-- PreTax401k          17,000.00 IRAUSD
-|   |   |       |-- Medicare                 2,772.12 USD
-|   |   |       |-- SDI                         29.12 USD
-|   |   |       |-- SocSec                   7,000.04 USD
-|   |   |       `-- State                    9,828.56 USD
-|   |   |-- Y2013                        
-|   |   |   `-- US                       
-|   |   |       |-- CityNYC                  4,547.92 USD
-|   |   |       |-- Federal                 28,177.81 USD
-|   |   |       |   `-- PreTax401k          17,500.00 IRAUSD
-|   |   |       |-- Medicare                 2,772.12 USD
-|   |   |       |-- SDI                         29.12 USD
-|   |   |       |-- SocSec                   7,000.04 USD
-|   |   |       `-- State                    9,809.28 USD
-|   |   `-- Y2014                        
-|   |       `-- US                       
-|   |           |-- CityNYC                  3,673.32 USD
-|   |           |-- Federal                 22,321.32 USD
-|   |           |   `-- PreTax401k          17,500.00 IRAUSD
-|   |           |-- Medicare                 2,239.02 USD
-|   |           |-- SDI                         23.52 USD
-|   |           |-- SocSec                   5,912.34 USD
-|   |           `-- State                    7,666.68 USD
-|   `-- Transport                        
-|       `-- Tram                             3,720.00 USD
-|-- Income                               
-|   `-- US                               
-|       |-- ETrade                       
-|       |   `-- Gains                         -373.34 USD
-|       |-- Federal                      
-|       |   `-- PreTax401k                 -52,000.00 IRAUSD
-|       `-- Hoogle                       
-|           |-- GroupTermLife               -1,775.36 USD
-|           |-- Match401k                  -26,000.00 USD
-|           |-- Salary                    -336,922.74 USD
-|           `-- Vacation                      -337.26 VACHR
-`-- Liabilities                          
-    |-- AccountsPayable                  
-    `-- US                               
-        `-- Chase                        
-            `-- Slate                       -2,891.85 USD
+Assets:US:BofA:Checking                          596.05 USD
+Assets:US:ETrade:Cash                          5,120.50 USD
+Assets:US:ETrade:GLD                              70.00 GLD
+Assets:US:ETrade:ITOT                             17.00 ITOT
+Assets:US:ETrade:VEA                              36.00 VEA
+Assets:US:ETrade:VHT                             294.00 VHT
+Assets:US:Federal:PreTax401k               
+Assets:US:Hoogle:Vacation                        337.26 VACHR
+Assets:US:Vanguard:Cash                           -0.02 USD
+Assets:US:Vanguard:RGAGX                         489.96 RGAGX
+Assets:US:Vanguard:VBMPX                         309.95 VBMPX
+Equity:Opening-Balances                       -3,077.70 USD
+Expenses:Financial:Commissions                   340.10 USD
+Expenses:Financial:Fees                          136.00 USD
+Expenses:Food:Alcohol                             22.35 USD
+Expenses:Food:Coffee                              83.72 USD
+Expenses:Food:Groceries                        6,014.38 USD
+Expenses:Food:Restaurant                      12,968.53 USD
+Expenses:Health:Dental:Insurance                 211.70 USD
+Expenses:Health:Life:GroupTermLife             1,775.36 USD
+Expenses:Health:Medical:Insurance              1,998.74 USD
+Expenses:Health:Vision:Insurance               3,087.90 USD
+Expenses:Home:Electricity                      2,145.00 USD
+Expenses:Home:Internet                         2,640.80 USD
+Expenses:Home:Rent                            79,200.00 USD
+Expenses:Taxes:Y2012:US:CityNYC                4,547.92 USD
+Expenses:Taxes:Y2012:US:Federal               28,216.87 USD
+Expenses:Taxes:Y2012:US:Federal:PreTax401k    17,000.00 IRAUSD
+Expenses:Taxes:Y2012:US:Medicare               2,772.12 USD
+Expenses:Taxes:Y2012:US:SDI                       29.12 USD
+Expenses:Taxes:Y2012:US:SocSec                 7,000.04 USD
+Expenses:Taxes:Y2012:US:State                  9,828.56 USD
+Expenses:Taxes:Y2013:US:CityNYC                4,547.92 USD
+Expenses:Taxes:Y2013:US:Federal               28,177.81 USD
+Expenses:Taxes:Y2013:US:Federal:PreTax401k    17,500.00 IRAUSD
+Expenses:Taxes:Y2013:US:Medicare               2,772.12 USD
+Expenses:Taxes:Y2013:US:SDI                       29.12 USD
+Expenses:Taxes:Y2013:US:SocSec                 7,000.04 USD
+Expenses:Taxes:Y2013:US:State                  9,809.28 USD
+Expenses:Taxes:Y2014:US:CityNYC                3,673.32 USD
+Expenses:Taxes:Y2014:US:Federal               22,321.32 USD
+Expenses:Taxes:Y2014:US:Federal:PreTax401k    17,500.00 IRAUSD
+Expenses:Taxes:Y2014:US:Medicare               2,239.02 USD
+Expenses:Taxes:Y2014:US:SDI                       23.52 USD
+Expenses:Taxes:Y2014:US:SocSec                 5,912.34 USD
+Expenses:Taxes:Y2014:US:State                  7,666.68 USD
+Expenses:Transport:Tram                        3,720.00 USD
+Income:US:ETrade:Gains                          -373.34 USD
+Income:US:Federal:PreTax401k                 -52,000.00 IRAUSD
+Income:US:Hoogle:GroupTermLife                -1,775.36 USD
+Income:US:Hoogle:Match401k                   -26,000.00 USD
+Income:US:Hoogle:Salary                     -336,922.74 USD
+Income:US:Hoogle:Vacation                       -337.26 VACHR
+Liabilities:AccountsPayable                
+Liabilities:US:Chase:Slate                    -2,891.85 USD

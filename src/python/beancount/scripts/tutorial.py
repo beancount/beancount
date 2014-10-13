@@ -15,6 +15,7 @@ COMMANDS = [
     ('help-formats'             , "bean-query --help-formats"),
     ('balances-restrict'        , "bean-query {} balances -e ETrade"),
     ('balances-restrict-cost'   , "bean-query {} balances -e ETrade -c"),
+    ('balances-tree'            , "bean-query {} balances | treeify"),
     ('balsheet'                 , "bean-query {} balsheet"),
     ('journal'                  , "bean-query {} journal -w 120 -a Assets:US:BofA:Checking"),
     ('journal-with-balance'     , "bean-query {} journal -w 120 -a Assets:US:BofA:Checking -b"),

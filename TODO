@@ -3,9 +3,6 @@ beancount: TODO
 * Requirements for Shipping 1.0
 ** Current
 
-  - Make balances rendering as --fullnames by default and compell the user to
-    use treeify, remove --fullnames option.
-
   - Integrate patch from Nathan Grigg for parsing commas
   - Implement experimental precision check suggested by Nathan Grigg
   - Implement Equity:Rounding accumulation suggested by Nathan Grigg
@@ -16,18 +13,6 @@ beancount: TODO
   - Rename compute_balance_amount() -> compute_weight() and provide functions to
     compute units, weight, etc. from Position objects, using consistent
     terminology.
-
-  - Beef up example generator even more:
-    * Documents, and generate example files as well (with an option).
-    * Generate some minimum amount of realistic-ish cash entries.
-    * Add examples for links.
-    * Add more expenses: car, gas, remove subway/tram
-    * Add expenses for charity/donations.
-    * Add student loan
-    * Add a second credit card
-    * Add travel expenses for the trips, so they look more realistic.
-    * Convert retirement account to Average cost
-    * Health care expenses.
 
   - Rename Inventory.update() -> Inventory.add_inventory(). Idiomatic Python
     update semantics is to _replace_ the previous values, and that's obviously
@@ -46,6 +31,8 @@ beancount: TODO
   - Maybe beancount.core.complete should be called beancount.core.interpolate.
     That's the term I've been using for a while now isn't it.
 
+  - Rename all "balance amounts" to "weight".
+
   - Create a new command that spits out missing open directives (for doing
     demos without disabling the requirement of needing open directives).
 
@@ -55,20 +42,6 @@ beancount: TODO
 
   - Complete testing conversion to Ledger by converting my own file (still
     having some errors, though example file compiles well already).
-
-** Announcement
-
-Hi,
-
-I've implemented an eaxmple generator script. This script can be used to
-generate several years of a realistic person's financial transaction history.
-
-I'll be using this script:
-- In examples, to make queries upon
-- As a basis for a converter to Ledger syntax, so that we can compare report
-  outputs
-- As the example file for Beancount's tutorial
-- For stress testing.
 
 
 ** Branches
