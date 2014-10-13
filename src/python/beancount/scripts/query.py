@@ -16,6 +16,7 @@ from beancount.reports import misc_reports
 from beancount.reports import table
 from beancount.utils import file_utils
 from beancount.utils import misc_utils
+from beancount.query import shell
 
 
 def get_list_report_string(only_report=None):
@@ -181,7 +182,8 @@ def main():
 
     # Handle special commands.
     if args.help_reports or not hasattr(args, 'report_class'):
-        print(get_list_report_string())
+        # Invoke the interactive shell interpreter by default.
+        shell.run_noargs()
         return
 
     # Open output file and guess file format.
