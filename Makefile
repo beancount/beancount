@@ -30,9 +30,14 @@ $(CROOT)/grammar.c $(CROOT)/grammar.h: $(CROOT)/grammar.y
 
 $(CROOT)/lexer.c $(CROOT)/lexer.h: $(CROOT)/lexer.l $(CROOT)/grammar.h
 	$(LEX) --outfile=$(CROOT)/lexer.c --header-file=$(CROOT)/lexer.h $<
-# cd $(CROOT) && flex $(notdir $<)
 
-compile: $(CROOT)/grammar.c $(CROOT)/grammar.h $(CROOT)/lexer.c $(CROOT)/lexer.h
+SOURCES =					\
+	$(CROOT)/lexer.c			\
+	$(CROOT)/lexer.h			\
+	$(CROOT)/grammar.c			\
+	$(CROOT)/grammar.h
+
+compile: $(SOURCES)
 	python3 setup.py build_ext -i
 
 .PHONY: build

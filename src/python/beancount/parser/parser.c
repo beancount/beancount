@@ -7,7 +7,6 @@
 
 #include "parser.h"
 #include "lexer.h"
-#include "parser.h"
 
 
 /* The bison header file does not contain this... silly. */
@@ -237,7 +236,7 @@ static PyMethodDef module_functions[] = {
 
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
-    "_beancount",                         /* m_name */
+    "_parser",                            /* m_name */
     "Beancount parser extension module",  /* m_doc */
     -1,                                   /* m_size */
     module_functions,                     /* m_methods */
