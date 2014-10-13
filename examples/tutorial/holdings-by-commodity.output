@@ -1,0 +1,11 @@
+Account                       Units  Currency  Cost Currency  Average Cost   Price  Book Value  Market Value
+-------------------------  --------  --------  -------------  ------------  ------  ----------  ------------
+                           2,824.68       USD            USD          1.00    1.00    2,824.68      2,824.68
+Assets:US:ETrade:GLD          70.00       GLD            USD         86.62   97.00    6,063.62      6,790.00
+Assets:US:ETrade:ITOT         17.00      ITOT            USD        150.12  155.42    2,552.12      2,642.14
+Assets:US:ETrade:VEA          36.00       VEA            USD        116.49  122.33    4,193.58      4,403.88
+Assets:US:ETrade:VHT         294.00       VHT            USD         46.27   50.10   13,603.42     14,729.40
+Assets:US:Hoogle:Vacation    337.26     VACHR          VACHR          1.00    1.00      337.26        337.26
+Assets:US:Vanguard:RGAGX     489.96     RGAGX            USD         95.52   82.09   46,799.64     40,220.57
+Assets:US:Vanguard:VBMPX     309.95     VBMPX            USD        100.66  115.51   31,200.42     35,802.32
+-------------------------  --------  --------  -------------  ------------  ------  ----------  ------------

@@ -1,0 +1,8 @@
+Account                         Units  Currency  Cost Currency  Average Cost  Price  Book Value  Market Value
+--------------------------  ---------  --------  -------------  ------------  -----  ----------  ------------
+Assets:US:Vanguard               0.00         *            USD         97.51  95.04   78,000.04     76,022.87
+Assets:US:ETrade                 0.00         *            USD          5.69   6.08   31,533.24     33,685.92
+Assets:US:BofA:Checking        596.05       USD            USD          1.00   1.00      596.05        596.05
+Assets:US:Hoogle:Vacation      337.26     VACHR          VACHR          1.00   1.00      337.26        337.26
+Liabilities:US:Chase:Slate  -2,891.85       USD            USD          1.00   1.00   -2,891.85     -2,891.85
+--------------------------  ---------  --------  -------------  ------------  -----  ----------  ------------
