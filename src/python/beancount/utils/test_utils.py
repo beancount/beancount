@@ -75,12 +75,13 @@ def capture(attribute='stdout'):
     Yields:
       A StringIO string accumulator.
     """
-    sys.__capture__ = getattr(sys, attribute)
+    capture_attr = '__capture_{}__'.format(attribute)
+    setattr(sys, capture_attr, getattr(sys, attribute))
     oss = io.StringIO()
     setattr(sys, attribute, oss)
     yield oss
-    setattr(sys, attribute, sys.__capture__)
-    del sys.__capture__
+    setattr(sys, attribute, getattr(sys, capture_attr))
+    delattr(sys, capture_attr)
 
 
 def docfile(function):
