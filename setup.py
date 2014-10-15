@@ -29,6 +29,7 @@ bean-query
 bean-web
 bean-example
 bean-format
+bean-sql
 treeify
 """.splitlines() if x and not x.startswith('#')]
 
