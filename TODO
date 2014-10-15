@@ -1421,6 +1421,12 @@ precise balances throughout, but no manual input is required.
   - Require Python 3.4 and introduce Enum's where relevant.
 
 
+
+  - Support in test_utils.capture('stdout', 'stderr') as (stdout, stderr).
+    Replace all nested code that is inconvenient.
+
+
+
 ** Refactoring: Holding to Position
 
   - I think there's a way to simplify holdings: you can probably remove the
