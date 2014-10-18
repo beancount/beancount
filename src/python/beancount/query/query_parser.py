@@ -12,13 +12,22 @@ from beancount.core import position
 
 class Comparable:
     __slots__ = ()
+
     def __eq__(self, other):
         if not isinstance(other, type(self)):
             return False
         return all(getattr(self, attribute) == getattr(other, attribute)
                    for attribute in self.__slots__)
 
+    def __str__(self):
+        return "{}({})".format(type(self).__name__,
+                               ', '.join(repr(getattr(self, child))
+                                         for child in self.__slots__))
+    __repr__ = __str__
+
+
 class Column(Comparable):
+    __slots__ = ('name',)
     def __init__(self, name):
         self.name = name
 
@@ -460,7 +469,7 @@ class Parser(Lexer):
         """
     def p_error(self, token):
         if token is None:
-            raise ParseError("ERROR: unterminated statement")
+            raise ParseError("ERROR: unterminated statement. Missing a semicolon?")
         else:
             oss = io.StringIO()
             oss.write("ERROR: Syntax error near '{}' (at {})\n".format(token.value,
@@ -477,6 +486,9 @@ class Parser(Lexer):
 # - Create a constant holder object and instantiate it
 # - Test the AST tree separately, for comparisons and such
 # - Create a RowContext object that provides all the rows, so that we can
+# Compilation:
+# - Identify functions
+# - Check data types
 #   actually evaluate the SQL against generic rows of datasets.
 # - Move all the functions to another module, make this as generic SQL as can possibly be
 # - begin implementing unit tests
@@ -499,3 +511,4 @@ class Parser(Lexer):
 # - implement limit
 # - implement distinct
 # - support simple boolean expressions in filter expressions, not just equalities and inequalities
+# - support simple mathematical operations, +, - , /.

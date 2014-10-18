@@ -30,11 +30,14 @@ class QueryParserTestBase(unittest.TestCase):
           AssertionError: If the actual AST does not match the expected one.
         """
         actual = self.parse(query)
-        self.assertEqual(expected, actual)
-
+        try:
+            self.assertEqual(expected, actual)
+        except AssertionError:
+            #print()
+            #print(actual)
+            raise
 
 class TestQueryParserSelect(QueryParserTestBase):
-
 
     def test_unterminated(self):
         with self.assertRaises(q.ParseError):
@@ -49,7 +52,7 @@ class TestQueryParserSelect(QueryParserTestBase):
             self.parse("SELECT invalid;")
 
     def test_columns_one(self):
-        self.assertParse(q.Query([q.AccountColumn('date')],
+        self.assertParse(q.Query([q.DateColumn('date')],
                                  q.Constant(True),
                                  q.Constant(True)),
                          "SELECT date;")
