@@ -245,28 +245,59 @@ class TestSelectFromWhere(QueryParserTestBase):
                                 q.Function('max', [q.Column('e')]),
                                 q.Constant(17)))
 
+    def test_from_empty(self):
+        with self.assertRaises(q.ParseError):
+            self.parse("SELECT a, b FROM;")
+
     def test_from(self):
-        self.assertParse(qSelect(self.targets, q.From(self.expr, False)),
+        self.assertParse(qSelect(self.targets, q.FromFilter(self.expr, False)),
                          "SELECT a, b FROM d = (max(e) and 17);")
 
     def test_from_close_default(self):
-        self.assertParse(qSelect(self.targets, q.From(self.expr, True)),
+        self.assertParse(qSelect(self.targets, q.FromFilter(self.expr, True)),
                          "SELECT a, b FROM d = (max(e) and 17) CLOSE;")
 
     def test_from_close_dated(self):
         self.assertParse(qSelect(self.targets,
-                                 q.From(self.expr, datetime.date(2014, 10, 18))),
+                                 q.FromFilter(self.expr, datetime.date(2014, 10, 18))),
                          "SELECT a, b FROM d = (max(e) and 17) CLOSE ON 2014-10-18;")
+
+    def test_where_empty(self):
+        with self.assertRaises(q.ParseError):
+            self.parse("SELECT a, b WHERE;")
 
     def test_where(self):
         self.assertParse(qSelect(self.targets, None, self.expr),
                          "SELECT a, b WHERE d = (max(e) and 17);")
 
     def test_both(self):
-        self.assertParse(qSelect(self.targets, q.From(self.expr, False), self.expr), """
+        self.assertParse(qSelect(self.targets,
+                                 q.FromFilter(self.expr, False),
+                                 self.expr), """
           SELECT a, b
           FROM d = (max(e) and 17)
           WHERE d = (max(e) and 17);
+        """)
+
+
+class TestSelectFromSelect(QueryParserTestBase):
+
+    def test_from_select(self):
+        subselect = qSelect(
+            q.Wildcard(),
+            q.FromFilter(q.Equal(q.Column('date'),
+                                 q.Constant(datetime.date(2014, 5, 2))), close=False))
+
+        expected = qSelect([q.Target(q.Column('a'), None),
+                            q.Target(q.Column('b'), None)],
+                           subselect,
+                           q.Equal(q.Column('c'), q.Constant(5)),
+                           limit=100)
+
+        self.assertParse(expected, """
+           SELECT a, b FROM (
+              SELECT * FROM date = 2014-05-02
+           ) WHERE c = 5 LIMIT 100;
         """)
 
 
@@ -338,7 +369,7 @@ class TestSelectPivotBy(QueryParserTestBase):
                          "SELECT * PIVOT BY a, b , c;")
 
 
-class TestSelectLimit(QueryParserTestBase):
+class TestSelectOptions(QueryParserTestBase):
 
     def test_limit_empty(self):
         with self.assertRaises(q.ParseError):
@@ -347,3 +378,11 @@ class TestSelectLimit(QueryParserTestBase):
     def test_limit_present(self):
         self.assertParse(qSelect(q.Wildcard(), limit=45),
                          "SELECT * LIMIT 45;")
+
+    def test_flatten(self):
+        self.assertParse(qSelect(q.Wildcard(), flatten=True),
+                         "SELECT * FLATTEN;")
+
+    def test_limit_and_flatten(self):
+        self.assertParse(qSelect(q.Wildcard(), limit=100, flatten=True),
+                         "SELECT * LIMIT 100 FLATTEN;")

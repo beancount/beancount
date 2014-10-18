@@ -23,7 +23,7 @@ Select = collections.namedtuple(
 Wildcard = collections.namedtuple('Wildcard', '')
 
 # A node for ordering.
-From = collections.namedtuple('From', 'expression close')
+FromFilter = collections.namedtuple('From', 'expression close')
 GroupBy = collections.namedtuple('GroupBy', 'columns having')
 OrderBy = collections.namedtuple('OrderBy', 'columns ordering')
 PivotBy = collections.namedtuple('PivotBy', 'columns')
@@ -253,10 +253,12 @@ class Parser(Lexer):
         """
         from : empty
              | FROM expression close
+             | FROM LPAREN select_statement RPAREN
         """
-        if len(p) != 2:
-            assert p[2], "Empty FROM clause is not allowed"
-            p[0] = From(p[2], p[3])
+        if len(p) == 4:
+            p[0] = FromFilter(p[2], p[3])
+        elif len(p) == 5:
+            p[0] = p[3]
 
     def p_close(self, p):
         """
@@ -323,7 +325,7 @@ class Parser(Lexer):
         flatten : empty
                 | FLATTEN
         """
-        p[0] = p[1]
+        p[0] = True if p[1] == 'FLATTEN' else None
 
 
     precedence = [

@@ -57,8 +57,8 @@ class BQLShell(cmd.Cmd):
     def do_select(self, line_rest):
         line = 'SELECT ' + line_rest
         try:
-            select = self.parser.parse(line)
-            process_select(self.entries, select)
+            statement = self.parser.parse(line)
+            run_statement(self.entries, statement)
         except query_parser.ParseError as exc:
             print(exc)
         except Exception as exc:
@@ -117,8 +117,8 @@ def run_noargs(entries):
         pass ## FIXME: TODO - shell.process_command(script)
 
 
-def process_select(entries, query):
-    """Process a select query.
+def run_statement(entries, query):
+    """Process some query statements.
 
     Args:
       entries: A list of directives.
