@@ -34,7 +34,7 @@ class TestCase(unittest.TestCase):
             assert expected_missing or actual_missing
             oss = io.StringIO()
             if expected_missing:
-                oss.write("Missing from from first/expected set:\n\n")
+                oss.write("Missing from from expected set:\n\n")
                 for entry in expected_missing:
                     oss.write(printer.format_entry(entry))
                     oss.write('\n')
@@ -66,7 +66,7 @@ class TestCase(unittest.TestCase):
             assert missing
             oss = io.StringIO()
             if missing:
-                oss.write("Missing from from first/expected set:\n\n")
+                oss.write("Missing from from expected set:\n\n")
                 for entry in missing:
                     oss.write(printer.format_entry(entry))
                     oss.write('\n')
