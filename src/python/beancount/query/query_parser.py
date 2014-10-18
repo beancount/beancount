@@ -2,6 +2,7 @@
 """
 import collections
 import itertools
+import io
 
 import ply.lex
 import ply.yacc
@@ -178,6 +179,12 @@ Query = collections.namedtuple('Query',
 
 
 class Expr:
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
+        return all(getattr(self, attribute) == getattr(other, attribtue)
+                   for attributes in __slots__)
+
     def __call__(self, context):
         raise NotImplementedError
 
@@ -185,44 +192,42 @@ class Tauto(Expr):
     def __call__(self, _):
         return True
 
-class Op(Expr):
-    def __init__(self, child):
-        self.child = child
+class UnaryOp(Expr):
+    __slots__ = ('operand',)
+    def __init__(self, operand):
+        self.operand = operand
 
-class Not(Op):
-    def __call__(self, context):
-        return not self.child(context)
-
-class Eq(Op):
-    def __init__(self, child, value):
-        super().__init__(child)
-        self.value = value
-
-    def __call__(self, context):
-        return self.child(context) == self.value
-
-class Ne(Op):
-    def __init__(self, child, value):
-        super().__init__(child)
-        self.value = value
-
-    def __call__(self, context):
-        return self.child(context) != self.value
-
-class BinOp(Expr):
+class BinaryOp(Expr):
+    __slots__ = ('left', 'right')
     def __init__(self, left, right):
         self.left = left
         self.right = right
 
-class And(BinOp):
+class Constant(UnaryOp):
     def __call__(self, context):
-        return (self.left(context) and
-                self.right(context))
+        return self.operand
 
-class Or(BinOp):
+class Not(UnaryOp):
     def __call__(self, context):
-        return (self.left(context) or
-                self.right(context))
+        return not self.operand(context)
+
+class Eq(BinaryOp):
+    def __call__(self, context):
+        return self.left(context) == self.right(context)
+
+class Ne(BinaryOp):
+    def __call__(self, context):
+        return self.left(context) != self.right(context)
+
+class And(BinaryOp):
+    def __call__(self, context):
+        return (self.left(context) and self.right(context))
+
+class Or(BinaryOp):
+    def __call__(self, context):
+        return (self.left(context) or self.right(context))
+
+
 
 
 
@@ -298,6 +303,7 @@ class Parser(Lexer):
         self.ply_parser = ply.yacc.yacc(module=self,
                                         optimize=False,
                                         write_tables=False,
+                                        debugfile=None,
                                         debug=False,
                                         **options)
 
@@ -310,9 +316,13 @@ class Parser(Lexer):
             print(tok)
 
     def parse(self, line, debug=False):
-        return self.ply_parser.parse(line,
-                                     lexer=self.ply_lexer,
-                                     debug=debug)
+        try:
+            self._input = line
+            return self.ply_parser.parse(line,
+                                         lexer=self.ply_lexer,
+                                         debug=debug)
+        finally:
+            self._input = None
 
     def p_select_statement(self, p):
         """
@@ -344,7 +354,7 @@ class Parser(Lexer):
                 cls = POSTING_COLUMNS[identifier]
                 p[0] = cls(name=identifier)
             except KeyError:
-                raise ParseError("Invalid column name: '{}'".format(identifer))
+                raise ParseError("Invalid column name: '{}'".format(identifier))
         else:
             p[0] = p[1]
 
@@ -414,9 +424,9 @@ class Parser(Lexer):
                   | entry_target NE value
         """
         if p[2] == '=':
-            p[0] = Eq(p[1], p[3])
+            p[0] = Eq(p[1], Constant(p[3]))
         elif p[2] == '!=':
-            p[0] = Ne(p[1], p[3])
+            p[0] = Ne(p[1], Constant(p[3]))
         else:
             assert False, "Internal error"
 
@@ -446,12 +456,27 @@ class Parser(Lexer):
         """
         empty :
         """
-    def p_error(self, context):
-        raise ParseError("Syntax error: {}".format(context))
+    def p_error(self, token):
+        if token is None:
+            raise ParseError("ERROR: unterminated statement")
+        else:
+            oss = io.StringIO()
+            oss.write("ERROR: Syntax error near '{}' (at {})\n".format(token.value,
+                                                                       token.lexpos))
+            oss.write("  ")
+            oss.write(self._input)
+            oss.write("\n")
+            oss.write("  {}^".format(' ' * token.lexpos))
+            raise ParseError(oss.getvalue())
 
 
 
 # FIXME:
+# - Create a constant holder object and instantiate it
+# - Test the AST tree separately, for comparisons and such
+# - Create a RowContext object that provides all the rows, so that we can
+#   actually evaluate the SQL against generic rows of datasets.
+# - Move all the functions to another module, make this as generic SQL as can possibly be
 # - begin implementing unit tests
 # - tokenize and parse all data types, including dates
 # - differentiate clearly between entry and posting columns
