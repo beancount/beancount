@@ -195,8 +195,10 @@ ENTRY_COLUMNS = {
 
 
 
-Query = collections.namedtuple('Query',
-                               'columns entry_filter posting_filter')
+Select = collections.namedtuple('Select',
+                                'columns entry_filter posting_filter')
+Wildcard = collections.namedtuple('Wildcard', '')
+
 
 
 class Expr(Comparable):
@@ -262,10 +264,11 @@ class Lexer:
     # List of valid tokens from the lexer.
     tokens = [
         'ID', 'INTEGER', 'STRING',
-        'COMMA', 'SEMI', 'LPAREN', 'RPAREN', 'EQ', 'NE'
+        'WILDCARD', 'COMMA', 'SEMI', 'LPAREN', 'RPAREN',
+        'EQ', 'NE',
     ] + list(keywords)
 
-    # An identifier, for a target or a dimension or whatever.
+    # An identifier, for a column or a dimension or whatever.
     def t_ID(self, token):
         "[a-zA-Z][a-zA-Z_]*"
         utoken = token.value.upper()
@@ -280,6 +283,7 @@ class Lexer:
         return token
 
     # Constant tokens.
+    t_WILDCARD  = r"\*"
     t_COMMA  = r","
     t_SEMI   = r";"
     t_LPAREN = r"\("
@@ -337,16 +341,23 @@ class Parser(Lexer):
 
     def p_select_statement(self, p):
         """
-        select_statement : SELECT target_list opt_from opt_where SEMI
+        select_statement : SELECT column_spec opt_from opt_where SEMI
         """
-        p[0] = Query(p[2],
-                     p[3] or Constant(True),
-                     p[4] or Constant(True))
+        p[0] = Select(p[2],
+                      p[3] or Constant(True),
+                      p[4] or Constant(True))
 
-    def p_target_list(self, p):
+    def p_column_spec(self, p):
         """
-        target_list : target
-                    | target_list COMMA target
+        column_spec : WILDCARD
+                    | column_list
+        """
+        p[0] = Wildcard() if p[1] == '*' else p[1]
+
+    def p_column_list(self, p):
+        """
+        column_list : column
+                    | column_list COMMA column
         """
         if len(p) == 2:
             p[0] = [p[1]]
@@ -354,9 +365,9 @@ class Parser(Lexer):
             p[0] = p[1]
             p[0].append(p[3])
 
-    def p_target(self, p):
+    def p_column(self, p):
         """
-        target : funcall
+        column : funcall
                | ID
         """
         if isinstance(p[1], str):
@@ -371,7 +382,7 @@ class Parser(Lexer):
 
     def p_function(self, p):
         """
-        funcall : ID LPAREN target RPAREN
+        funcall : ID LPAREN column RPAREN
         """
         function_name = p[1]
         try:
@@ -486,6 +497,7 @@ class Parser(Lexer):
 # - Create a constant holder object and instantiate it
 # - Test the AST tree separately, for comparisons and such
 # - Create a RowContext object that provides all the rows, so that we can
+# - Make column a list of the same type as the postings filter expression
 # Compilation:
 # - Identify functions
 # - Check data types

@@ -39,9 +39,13 @@ class QueryParserTestBase(unittest.TestCase):
 
 class TestQueryParserSelect(QueryParserTestBase):
 
-    def test_unterminated(self):
+    def test_unterminated__empty(self):
         with self.assertRaises(q.ParseError):
             self.parse("SELECT")
+
+    def test_unterminated__non_empty(self):
+        with self.assertRaises(q.ParseError):
+            self.parse("SELECT date, account")
 
     def test_empty(self):
         with self.assertRaises(q.ParseError):
@@ -52,10 +56,27 @@ class TestQueryParserSelect(QueryParserTestBase):
             self.parse("SELECT invalid;")
 
     def test_columns_one(self):
-        self.assertParse(q.Query([q.DateColumn('date')],
+        self.assertParse(q.Select([q.DateColumn('date')],
                                  q.Constant(True),
                                  q.Constant(True)),
                          "SELECT date;")
+
+    def test_columns_multiple(self):
+        self.assertParse(q.Select([q.DateColumn('date'),
+                                  q.AccountColumn('account'),
+                                  q.ChangeColumn('change')],
+                                 q.Constant(True),
+                                 q.Constant(True)),
+                         "SELECT date, account, change;")
+
+    def test_columns_wildcard(self):
+        self.assertParse(q.Select(q.Wildcard(),
+                                 q.Constant(True),
+                                 q.Constant(True)),
+                         "SELECT *;")
+
+# Test out AS
+
 
 
 # FIXME: Move function resolution and checking outside the parser. This will
