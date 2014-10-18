@@ -16,10 +16,17 @@ from beancount.core import position
 
 # A 'select' query action.
 Select = collections.namedtuple(
-    'Select', 'target_spec entry_filter posting_filter')
+    'Select', 'target_spec from_clause where_clause group_by order_by pivot_by limit')
 
 # A wildcard node, to appear in Select.columns.
 Wildcard = collections.namedtuple('Wildcard', '')
+
+# A node for ordering.
+GroupBy = collections.namedtuple('GroupBy', 'columns')
+OrderBy = collections.namedtuple('OrderBy', 'columns ordering')
+PivotBy = collections.namedtuple('PivotBy', 'columns')
+
+
 
 
 class Comparable:
@@ -99,7 +106,7 @@ class Lexer:
     # List of reserved keywords.
     keywords = {
         'SELECT', 'FROM', 'WHERE', 'AS',
-        #'GROUP', 'BY', # 'ORDER', 'BY', 'LIMIT', 'DESC', 'ASC',
+        'GROUP', 'BY', 'ORDER', 'PIVOT', 'LIMIT', 'DESC', 'ASC',
         'AND', 'OR', 'NOT', 'TRUE', 'FALSE',
         'NULL',
     }
@@ -197,13 +204,22 @@ class Parser(Lexer):
         finally:
             self._input = None
 
+    def handle_comma_separated_list(self, p):
+        """Handle a list of 0, 1 or more comma-separated values.
+        Args:
+          p: A gramar object.
+        """
+        if len(p) == 2:
+            return [] if p[1] is None else [p[1]]
+        else:
+            return p[1] + [p[3]]
+
     def p_select_statement(self, p):
         """
-        select_statement : SELECT target_spec opt_from opt_where SEMI
+        select_statement : SELECT target_spec opt_from opt_where \
+                           group_by order_by pivot_by limit SEMI
         """
-        p[0] = Select(p[2],
-                      p[3],
-                      p[4])
+        p[0] = Select(p[2], p[3], p[4], p[5], p[6], p[7], p[8])
 
     def p_target_spec(self, p):
         """
@@ -217,11 +233,7 @@ class Parser(Lexer):
         target_list : target
                     | target_list COMMA target
         """
-        if len(p) == 2:
-            p[0] = [p[1]]
-        else:
-            p[0] = p[1]
-            p[0].append(p[3])
+        p[0] = self.handle_comma_separated_list(p)
 
     def p_target(self, p):
         """
@@ -247,6 +259,43 @@ class Parser(Lexer):
         if len(p) == 3:
             assert p[2], "Empty WHERE clause is not allowed"
             p[0] = p[2]
+
+    def p_group_by(self, p):
+        """
+        group_by : empty
+                 | GROUP BY column_list
+        """
+        p[0] = GroupBy(p[3]) if len(p) == 4 else None
+
+    def p_order_by(self, p):
+        """
+        order_by : empty
+                 | ORDER BY column_list ordering
+        """
+        p[0] = None if len(p) == 2 else OrderBy(p[3], p[4])
+
+    def p_ordering(self, p):
+        """
+        ordering : empty
+                 | ASC
+                 | DESC
+        """
+        p[0] = p[1]
+
+    def p_pivot_by(self, p):
+        """
+        pivot_by : empty
+                 | PIVOT BY column_list
+        """
+        p[0] = PivotBy(p[3]) if len(p) == 4 else None
+
+    def p_limit(self, p):
+        """
+        limit : empty
+              | LIMIT INTEGER
+        """
+        p[0] = p[2] if len(p) == 3 else None
+
 
     precedence = [
         ('left', 'EQ', 'NE'),
@@ -297,17 +346,20 @@ class Parser(Lexer):
                         | expression
                         | expression_list COMMA expression
         """
-        if len(p) == 2:
-            p[0] = [] if p[1] is None else [p[1]]
-        else:
-            p[0] = p[1]
-            p[0].append(p[3])
+        p[0] = self.handle_comma_separated_list(p)
 
     def p_column(self, p):
         """
         column : ID
         """
         p[0] = Column(p[1])
+
+    def p_column_list(self, p):
+        """
+        column_list : column
+                    | column_list COMMA column
+        """
+        p[0] = self.handle_comma_separated_list(p)
 
     def p_constant(self, p):
         """
