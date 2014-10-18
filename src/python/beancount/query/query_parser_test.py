@@ -7,11 +7,13 @@ from beancount.query import query_parser as q
 
 def qSelect(target_spec=None,
             from_clause=None, where_clause=None,
-            group_by=None, order_by=None, pivot_by=None, limit=None):
+            group_by=None, order_by=None, pivot_by=None,
+            limit=None, flatten=None):
     "A convenience constructor for writing tests without having to provide all arguments."
     return q.Select(target_spec,
                     from_clause, where_clause,
-                    group_by, order_by, pivot_by, limit)
+                    group_by, order_by, pivot_by,
+                    limit, flatten)
 
 
 class QueryParserTestBase(unittest.TestCase):
@@ -205,7 +207,6 @@ class TestSelectExpression(QueryParserTestBase):
                                                   q.Column('d'),
                                                   q.Column('e')]))]),
             "SELECT min(a, b, c, d, e);")
-
 
 
 class TestSelectPrecedence(QueryParserTestBase):

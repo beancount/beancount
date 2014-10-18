@@ -16,7 +16,8 @@ from beancount.core import position
 
 # A 'select' query action.
 Select = collections.namedtuple(
-    'Select', 'target_spec from_clause where_clause group_by order_by pivot_by limit')
+    'Select', ('target_spec from_clause where_clause '
+               'group_by order_by pivot_by limit flatten'))
 
 # A wildcard node, to appear in Select.columns.
 Wildcard = collections.namedtuple('Wildcard', '')
@@ -106,7 +107,8 @@ class Lexer:
     # List of reserved keywords.
     keywords = {
         'SELECT', 'FROM', 'WHERE', 'AS',
-        'GROUP', 'BY', 'ORDER', 'PIVOT', 'LIMIT', 'DESC', 'ASC', 'HAVING',
+        'GROUP', 'BY', 'HAVING', 'ORDER', 'DESC', 'ASC', 'PIVOT',
+        'LIMIT', 'FLATTEN',
         'AND', 'OR', 'NOT', 'TRUE', 'FALSE',
         'NULL',
     }
@@ -175,7 +177,7 @@ class Parser(Lexer):
     """
 
     # Starting rule.
-    start = 'select_statement'
+    start = 'statement'
 
     def __init__(self, **options):
         self.ply_lexer = ply.lex.lex(module=self,
@@ -214,12 +216,18 @@ class Parser(Lexer):
         else:
             return p[1] + [p[3]]
 
+    def p_statement(self, p):
+        """
+        statement : select_statement SEMI
+        """
+        p[0] = p[1]
+
     def p_select_statement(self, p):
         """
-        select_statement : SELECT target_spec opt_from opt_where \
-                           group_by order_by pivot_by limit SEMI
+        select_statement : SELECT target_spec from where \
+                           group_by order_by pivot_by limit flatten
         """
-        p[0] = Select(p[2], p[3], p[4], p[5], p[6], p[7], p[8])
+        p[0] = Select(p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9])
 
     def p_target_spec(self, p):
         """
@@ -242,19 +250,19 @@ class Parser(Lexer):
         """
         p[0] = Target(p[1], p[3] if len(p) == 4 else None)
 
-    def p_opt_from(self, p):
+    def p_from(self, p):
         """
-        opt_from : empty
-                 | FROM expression
+        from : empty
+             | FROM expression
         """
         if len(p) == 3:
             assert p[2], "Empty FROM clause is not allowed"
             p[0] = p[2]
 
-    def p_opt_where(self, p):
+    def p_where(self, p):
         """
-        opt_where : empty
-                  | WHERE expression
+        where : empty
+              | WHERE expression
         """
         if len(p) == 3:
             assert p[2], "Empty WHERE clause is not allowed"
@@ -302,6 +310,13 @@ class Parser(Lexer):
               | LIMIT INTEGER
         """
         p[0] = p[2] if len(p) == 3 else None
+
+    def p_flatten(self, p):
+        """
+        flatten : empty
+                | FLATTEN
+        """
+        p[0] = p[1]
 
 
     precedence = [
