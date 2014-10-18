@@ -51,7 +51,9 @@ class QueryParserTestBase(unittest.TestCase):
         actual = self.parse(query)
         if debug:
             print()
+            print()
             print(actual)
+            print()
         try:
             self.assertEqual(expected, actual)
             return actual
@@ -238,6 +240,7 @@ class TestSelectFromWhere(QueryParserTestBase):
           WHERE d = (max(e) and 17);
         """)
 
+
 class TestSelectGroupBy(QueryParserTestBase):
 
     def test_groupby_empty(self):
@@ -245,14 +248,24 @@ class TestSelectGroupBy(QueryParserTestBase):
             self.parse("SELECT * GROUP BY;")
 
     def test_groupby_one(self):
-        self.assertParse(qSelect(q.Wildcard(), group_by=q.GroupBy([q.Column('a')])),
+        self.assertParse(qSelect(q.Wildcard(), group_by=q.GroupBy([q.Column('a')], None)),
                          "SELECT * GROUP BY a;")
 
     def test_groupby_many(self):
         self.assertParse(qSelect(q.Wildcard(), group_by=q.GroupBy([q.Column('a'),
                                                                    q.Column('b'),
-                                                                   q.Column('c')])),
-                         "SELECT * GROUP BY a, b , c;")
+                                                                   q.Column('c')], None)),
+                         "SELECT * GROUP BY a, b, c;")
+
+    def test_groupby_having(self):
+        self.assertParse(
+            qSelect(q.Wildcard(),
+                    group_by=q.GroupBy([q.Column('a')],
+                                       q.Equal(
+                                           q.Function('sum', [q.Column('change')]),
+                                           q.Constant(0)))),
+            "SELECT * GROUP BY a HAVING sum(change) = 0;")
+
 
 class TestSelectOrderBy(QueryParserTestBase):
 
@@ -278,6 +291,7 @@ class TestSelectOrderBy(QueryParserTestBase):
         self.assertParse(qSelect(q.Wildcard(), order_by=q.OrderBy([q.Column('a')], 'DESC')),
                          "SELECT * ORDER BY a DESC;")
 
+
 class TestSelectPivotBy(QueryParserTestBase):
 
     def test_pivotby_empty(self):
@@ -293,6 +307,7 @@ class TestSelectPivotBy(QueryParserTestBase):
                                                                    q.Column('b'),
                                                                    q.Column('c')])),
                          "SELECT * PIVOT BY a, b , c;")
+
 
 class TestSelectLimit(QueryParserTestBase):
 

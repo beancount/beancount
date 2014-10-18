@@ -22,7 +22,7 @@ Select = collections.namedtuple(
 Wildcard = collections.namedtuple('Wildcard', '')
 
 # A node for ordering.
-GroupBy = collections.namedtuple('GroupBy', 'columns')
+GroupBy = collections.namedtuple('GroupBy', 'columns having')
 OrderBy = collections.namedtuple('OrderBy', 'columns ordering')
 PivotBy = collections.namedtuple('PivotBy', 'columns')
 
@@ -106,7 +106,7 @@ class Lexer:
     # List of reserved keywords.
     keywords = {
         'SELECT', 'FROM', 'WHERE', 'AS',
-        'GROUP', 'BY', 'ORDER', 'PIVOT', 'LIMIT', 'DESC', 'ASC',
+        'GROUP', 'BY', 'ORDER', 'PIVOT', 'LIMIT', 'DESC', 'ASC', 'HAVING',
         'AND', 'OR', 'NOT', 'TRUE', 'FALSE',
         'NULL',
     }
@@ -263,9 +263,16 @@ class Parser(Lexer):
     def p_group_by(self, p):
         """
         group_by : empty
-                 | GROUP BY column_list
+                 | GROUP BY column_list having
         """
-        p[0] = GroupBy(p[3]) if len(p) == 4 else None
+        p[0] = GroupBy(p[3], p[4]) if len(p) != 2 else None
+
+    def p_having(self, p):
+        """
+        having : empty
+               | HAVING expression
+        """
+        p[0] = p[2] if len(p) == 3 else None
 
     def p_order_by(self, p):
         """
