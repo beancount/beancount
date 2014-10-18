@@ -87,13 +87,11 @@ class TestScriptPositions(test_utils.TestCase):
             test_utils.run_with_args(query.main, [filename, 'trial'])
         output = stdout.getvalue()
         self.assertLines("""
-            |-- Assets
-            |   `-- Cash                   -50.02 USD
-            |-- Equity
-            |-- Expenses
-            |   `-- Restaurant              50.02 USD
-            |-- Income
-            `-- Liabilities
+            Assets:Cash               -50.02 USD
+            Equity
+            Expenses:Restaurant        50.02 USD
+            Income
+            Liabilities
         """, output)
 
     @test_utils.docfile
