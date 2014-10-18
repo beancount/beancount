@@ -4,6 +4,7 @@ import collections
 import datetime
 import itertools
 import io
+import re
 
 import dateutil.parser
 
@@ -86,6 +87,10 @@ class Equal(BinaryOp):
     def __call__(self, context):
         return self.left(context) == self.right(context)
 
+class ReMatch(BinaryOp):
+    def __call__(self, context):
+        return re.match(self.right(context), self.left(context))
+
 class And(BinaryOp):
     def __call__(self, context):
         return (self.left(context) and self.right(context))
@@ -115,7 +120,7 @@ class Lexer:
     # List of valid tokens from the lexer.
     tokens = [
         'ID', 'INTEGER', 'DECIMAL', 'STRING', 'DATE',
-        'WILDCARD', 'COMMA', 'SEMI', 'LPAREN', 'RPAREN',
+        'WILDCARD', 'COMMA', 'SEMI', 'LPAREN', 'RPAREN', 'TILDE',
         'EQ', 'NE',
     ] + list(keywords)
 
@@ -151,6 +156,7 @@ class Lexer:
     t_RPAREN = r"\)"
     t_NE     = r"!="
     t_EQ     = r"="
+    t_TILDE  = r"~"
 
     # Numbers.
     def t_DECIMAL(self, token):
@@ -332,7 +338,7 @@ class Parser(Lexer):
         ('left', 'OR'),
         ('left', 'AND'),
         ('left', 'NOT'),
-        ('left', 'EQ', 'NE'),
+        ('left', 'EQ', 'NE', 'TILDE'),
         ]
 
     def p_expression_and(self, p):
@@ -358,6 +364,10 @@ class Parser(Lexer):
     def p_expression_ne(self, p):
         "expression : expression NE expression"
         p[0] = Not(Equal(p[1], p[3]))
+
+    def p_expression_match(self, p):
+        "expression : expression TILDE expression"
+        p[0] = ReMatch(p[1], p[3])
 
     def p_expression_column(self, p):
         "expression : column"

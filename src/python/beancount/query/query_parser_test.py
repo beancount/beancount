@@ -148,6 +148,11 @@ class TestSelectExpression(QueryParserTestBase):
             qSelect([q.Target(q.Not(q.Equal(q.Column('a'), q.Constant(42))))]),
             "SELECT a != 42;")
 
+    def test_expr_match(self):
+        self.assertParse(
+            qSelect([q.Target(q.ReMatch(q.Column('a'), q.Constant('Assets:.*:Checking')))]),
+            "SELECT a ~ 'Assets:.*:Checking';")
+
     def test_expr_paren_single(self):
         self.assertParse(
             qSelect([q.Target(q.Not(q.Equal(q.Column('a'), q.Constant(42))))]),
