@@ -7,7 +7,16 @@ import io
 import ply.lex
 import ply.yacc
 
+from beancount.core.amount import D
 from beancount.core import position
+
+
+# A 'select' query action.
+Select = collections.namedtuple(
+    'Select', 'target_spec entry_filter posting_filter')
+
+# A wildcard node, to appear in Select.columns.
+Wildcard = collections.namedtuple('Wildcard', '')
 
 
 class Comparable:
@@ -25,192 +34,31 @@ class Comparable:
                                          for child in self.__slots__))
     __repr__ = __str__
 
+class Target(Comparable):
+    __slots__ = ('expression', 'name')
+    def __init__(self, expression, name=None):
+        self.expression = expression
+        self.name = name
+    def __call__(self, context):
+        return self.expression(context)
 
 class Column(Comparable):
     __slots__ = ('name',)
     def __init__(self, name):
         self.name = name
 
+class Function(Comparable):
+    __slots__ = ('fname', 'operands')
+    def __init__(self, fname, operands):
+        self.fname = fname
+        self.operands = operands or []
 
-
-
-
-class TypeColumn(Column):
-    def __call__(self, posting):
-        return type(posting.entry)
-
-class FilenameColumn(Column):
-    def __call__(self, posting):
-        return posting.entry.source.filename
-
-class LineNoColumn(Column):
-    def __call__(self, posting):
-        return posting.entry.source.lineno
-
-class DateColumn(Column):
-    def __call__(self, posting):
-        return posting.entry.date
-
-class YearColumn(Column):
-    def __call__(self, posting):
-        return posting.entry.date.year
-
-class FlagColumn(Column):
-    def __call__(self, posting):
-        return posting.entry.flag
-
-class PayeeColumn(Column):
-    def __call__(self, posting):
-        return posting.entry.payee
-
-class NarrationColumn(Column):
-    def __call__(self, posting):
-        return posting.entry.narration
-
-class TagsColumn(Column):
-    def __call__(self, posting):
-        return posting.entry.tags
-
-class LinksColumn(Column):
-    def __call__(self, posting):
-        return posting.entry.links
-
-class AccountColumn(Column):
-    def __call__(self, posting):
-        return posting.account
-
-class NumberColumn(Column):
-    def __call__(self, posting):
-        return posting.position.number
-
-class CurrencyColumn(Column):
-    def __call__(self, posting):
-        return posting.position.lot.currency
-
-class ChangeColumn(Column):
-    def __call__(self, posting):
-        return posting.position
-
-
-POSTING_COLUMNS = {
-    'type'      : TypeColumn,
-    'filename'  : FilenameColumn,
-    'lineno'    : LineNoColumn,
-    'date'      : DateColumn,
-    'year'      : YearColumn,
-    'flag'      : FlagColumn,
-    'payee'     : PayeeColumn,
-    'narration' : NarrationColumn,
-    'tags'      : TagsColumn,
-    'links'     : LinksColumn,
-    'account'   : AccountColumn,
-    'number'    : NumberColumn,
-    'currency'  : CurrencyColumn,
-    'change'    : ChangeColumn,
-    }
-
-
-
-class Function(Column):
-    def __init__(self, child, **kwds):
-        super().__init__(**kwds)
-        self.child = child
-
-class Length(Function):
-    def __call__(self, posting):
-        child_value = self.child(posting)
-        return len(child_value)
-
-class Units(Function):
-    def __call__(self, posting):
-        position_ = self.child(posting)
-        assert isinstance(position_, position.Position)
-        return position_.get_amount()
-
-class Cost(Function):
-    def __call__(self, posting):
-        position_ = self.child(posting)
-        assert isinstance(position_, position.Position)
-        return position_.get_cost()
-
-
-class Aggregator(Function):
-    def __init__(self, **kwds):
-        super().__init__(**kwds)
-        self.agg_value = None
-
-class Sum(Aggregator):
-    def __call__(self, posting):
-        child_value = self.child(posting)
-        if self.agg_value is None:
-            self.agg_value = child_value
-        else:
-            self.agg_value += child_value
-
-class First(Aggregator):
-    def __call__(self, posting):
-        if self.agg_value is None:
-            self.agg_value = self.child(posting)
-
-class Last(Aggregator):
-    def __call__(self, posting):
-        self.agg_value = self.child(posting)
-
-
-FUNCTIONS = {
-    'length': Length,
-    'units': Units,
-    'cost': Cost,
-    'sum': Sum,
-    'first': First,
-    'last': Last,
-    }
-
-
-
-class DateEntryColumn(Column):
-    def __call__(self, entry):
-        return entry.date
-
-class FlagEntryColumn(Column):
-    def __call__(self, entry):
-        return entry.flag
-
-# FIXME: These ought to be functions, as in YEAR(date) or MONTH(date), that work
-# on both types of entries (they would work on dates, really).
-class YearEntryColumn(Column):
-    def __call__(self, entry):
-        return entry.date.year
-
-class MonthEntryColumn(Column):
-    def __call__(self, entry):
-        return entry.date.month
-
-ENTRY_COLUMNS = {
-    'date'  : DateEntryColumn,
-    'flag'  : FlagEntryColumn,
-    'year'  : YearEntryColumn,
-    'month' : MonthEntryColumn,
-    }
-
-
-
-Select = collections.namedtuple('Select',
-                                'columns entry_filter posting_filter')
-Wildcard = collections.namedtuple('Wildcard', '')
-
-
-
-class Expr(Comparable):
-    def __call__(self, context):
-        raise NotImplementedError
-
-class UnaryOp(Expr):
+class UnaryOp(Comparable):
     __slots__ = ('operand',)
     def __init__(self, operand):
         self.operand = operand
 
-class BinaryOp(Expr):
+class BinaryOp(Comparable):
     __slots__ = ('left', 'right')
     def __init__(self, left, right):
         self.left = left
@@ -224,13 +72,9 @@ class Not(UnaryOp):
     def __call__(self, context):
         return not self.operand(context)
 
-class Eq(BinaryOp):
+class Equal(BinaryOp):
     def __call__(self, context):
         return self.left(context) == self.right(context)
-
-class Ne(BinaryOp):
-    def __call__(self, context):
-        return self.left(context) != self.right(context)
 
 class And(BinaryOp):
     def __call__(self, context):
@@ -239,10 +83,6 @@ class And(BinaryOp):
 class Or(BinaryOp):
     def __call__(self, context):
         return (self.left(context) or self.right(context))
-
-
-
-
 
 
 class ParseError(Exception):
@@ -255,7 +95,7 @@ class Lexer:
 
     # List of reserved keywords.
     keywords = {
-        'SELECT', 'FROM', 'WHERE',
+        'SELECT', 'FROM', 'WHERE', 'AS',
         # 'GROUP', 'ORDER', 'BY', 'LIMIT', 'DESC', 'ASC',
         'AND', 'OR', 'NOT',
         'NULL',
@@ -263,7 +103,7 @@ class Lexer:
 
     # List of valid tokens from the lexer.
     tokens = [
-        'ID', 'INTEGER', 'STRING',
+        'ID', 'INTEGER', 'DECIMAL', 'STRING',
         'WILDCARD', 'COMMA', 'SEMI', 'LPAREN', 'RPAREN',
         'EQ', 'NE',
     ] + list(keywords)
@@ -274,7 +114,9 @@ class Lexer:
         utoken = token.value.upper()
         if utoken in self.keywords:
             token.type = utoken
-        token.value = token.value.lower()
+            token.value = token.value.upper()
+        else:
+            token.value = token.value.lower()
         return token
 
     def t_STRING(self, token):
@@ -292,6 +134,11 @@ class Lexer:
     t_EQ     = r"="
 
     # Numbers.
+    def t_DECIMAL(self, token):
+        r"[0-9]*\.[0-9]*"
+        token.value = D(token.value)
+        return token
+
     def t_INTEGER(self, token):
         r"[0-9]+"
         token.value = int(token.value)
@@ -341,23 +188,23 @@ class Parser(Lexer):
 
     def p_select_statement(self, p):
         """
-        select_statement : SELECT column_spec opt_from opt_where SEMI
+        select_statement : SELECT target_spec opt_from opt_where SEMI
         """
         p[0] = Select(p[2],
                       p[3] or Constant(True),
                       p[4] or Constant(True))
 
-    def p_column_spec(self, p):
+    def p_target_spec(self, p):
         """
-        column_spec : WILDCARD
-                    | column_list
+        target_spec : WILDCARD
+                    | target_list
         """
         p[0] = Wildcard() if p[1] == '*' else p[1]
 
-    def p_column_list(self, p):
+    def p_target_list(self, p):
         """
-        column_list : column
-                    | column_list COMMA column
+        target_list : target
+                    | target_list COMMA target
         """
         if len(p) == 2:
             p[0] = [p[1]]
@@ -365,33 +212,13 @@ class Parser(Lexer):
             p[0] = p[1]
             p[0].append(p[3])
 
-    def p_column(self, p):
+    def p_target(self, p):
         """
-        column : funcall
-               | ID
+        target : expression AS ID
+               | expression
         """
-        if isinstance(p[1], str):
-            identifier = p[1]
-            try:
-                cls = POSTING_COLUMNS[identifier]
-                p[0] = cls(name=identifier)
-            except KeyError:
-                raise ParseError("Invalid column name: '{}'".format(identifier))
-        else:
-            p[0] = p[1]
+        p[0] = Target(p[1], p[3] if len(p) == 4 else None)
 
-    def p_function(self, p):
-        """
-        funcall : ID LPAREN column RPAREN
-        """
-        function_name = p[1]
-        try:
-            FunctionType = FUNCTIONS[function_name]
-            p[0] = FunctionType(child=p[3], name=function_name)
-        except KeyError:
-            raise ParseError("Invalid function name: '{}'".format(function_name))
-
-    # FIXME: Differentiate between entry expresssions and posting expressions
     def p_opt_from(self, p):
         """
         opt_from : empty
@@ -417,67 +244,96 @@ class Parser(Lexer):
         ('left', 'NOT'),
         ]
 
-    def p_expression(self, p):
+    # def p_function(self, p):
+    #     """
+    #     funcall : ID LPAREN column RPAREN
+    #     """
+    #     function_name = p[1]
+    #     try:
+    #         FunctionType = FUNCTIONS[function_name]
+    #         p[0] = FunctionType(child=p[3], name=function_name)
+    #     except KeyError:
+    #         raise ParseError("Invalid function name: '{}'".format(function_name))
+
+    # def p_entry_target(self, p):
+    #     """
+    #     entry_target : ID
+    #     """
+    #     identifier = p[1]
+    #     try:
+    #         cls = ENTRY_COLUMNS[identifier]
+    #         p[0] = cls(name=identifier)
+    #     except KeyError:
+    #         raise ParseError("Invalid entry column name: '{}'".format(identifier))
+
+    def p_expression_and(self, p):
+        "expression : expression AND expression"
+        p[0] = And(p[1], p[3])
+
+    def p_expression_or(self, p):
+        "expression : expression OR expression"
+        p[0] = Or(p[1], p[3])
+
+    def p_expression_not(self, p):
+        "expression : NOT expression"
+        p[0] = Not(p[2])
+
+    def p_expression_paren(self, p):
+        "expression : LPAREN expression RPAREN"
+        p[0] = p[2]
+
+    def p_expression_eq(self, p):
+        "expression : expression EQ expression"
+        p[0] = Equal(p[1], p[3])
+
+    def p_expression_ne(self, p):
+        "expression : expression NE expression"
+        p[0] = Not(Equal(p[1], p[3]))
+
+    def p_expression_column(self, p):
+        "expression : column"
+        p[0] = p[1]
+
+    def p_expression_constant(self, p):
+        "expression : constant"
+        p[0] = p[1]
+
+    def p_expression_function(self, p):
+        "expression : ID LPAREN expression_list RPAREN"
+        p[0] = Function(p[1], p[3])
+
+    def p_expression_list(self, p):
         """
-        expression : expression AND expression
-                   | expression OR expression
-                   | NOT expression
-                   | LPAREN expression RPAREN
-                   | predicate
+        expression_list : empty
+                        | expression
+                        | expression_list COMMA expression
         """
         if len(p) == 2:
-            # predicate
-            p[0] = p[1]
-        elif len(p) == 3:
-            # NOT expression
-            p[0] = Not(p[2])
-        elif p[1] == '(':
-            p[0] = p[2]
-        elif p[2].upper() == 'AND':
-            p[0] = And(p[1], p[3])
-        elif p[2].upper() == 'OR':
-            p[0] = Or(p[1], p[3])
-        else:
-            assert False, "Internal error"
-
-    def p_predicate(self, p):
-        """
-        predicate : entry_target EQ value
-                  | entry_target NE value
-        """
-        if p[2] == '=':
-            p[0] = Eq(p[1], Constant(p[3]))
-        elif p[2] == '!=':
-            p[0] = Ne(p[1], Constant(p[3]))
-        else:
-            assert False, "Internal error"
-
-    def p_value(self, p):
-        """
-        value : NULL
-              | INTEGER
-              | STRING
-        """
-        if p[1] == 'NULL':
-            p[0] = None
+            p[0] = [] if p[1] is None else [p[1]]
         else:
             p[0] = p[1]
+            p[0].append(p[3])
 
-    def p_entry_target(self, p):
+    def p_column(self, p):
         """
-        entry_target : ID
+        column : ID
         """
-        identifier = p[1]
-        try:
-            cls = ENTRY_COLUMNS[identifier]
-            p[0] = cls(name=identifier)
-        except KeyError:
-            raise ParseError("Invalid entry column name: '{}'".format(identifier))
+        p[0] = Column(p[1])
+
+    def p_constant(self, p):
+        """
+        constant : NULL
+                 | INTEGER
+                 | DECIMAL
+                 | STRING
+        """
+        p[0] = Constant(p[1] if p[1] != 'NULL' else None)
 
     def p_empty(self, _):
         """
         empty :
         """
+
     def p_error(self, token):
         if token is None:
             raise ParseError("ERROR: unterminated statement. Missing a semicolon?")
@@ -494,7 +350,6 @@ class Parser(Lexer):
 
 
 # FIXME:
-# - Create a constant holder object and instantiate it
 # - Test the AST tree separately, for comparisons and such
 # - Create a RowContext object that provides all the rows, so that we can
 # - Make column a list of the same type as the postings filter expression
