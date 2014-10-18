@@ -119,7 +119,8 @@ class Position:
         Returns:
           A string, a printable representation of the position.
         """
-        return ''.join(self.strs())
+        amount_str, cost_str = self.strs()
+        return ' '.join(self.strs()) if cost_str else amount_str
 
     __repr__ = __str__
 
