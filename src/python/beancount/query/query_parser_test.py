@@ -214,24 +214,24 @@ class TestSelectPrecedence(QueryParserTestBase):
     def test_expr_function__and_or(self):
         self.assertParse(
             qSelect(q.Wildcard(),
-                    q.Or(q.And(q.Column('a'), q.Column('b')),
-                         q.And(q.Column('c'), q.Column('d')))),
-            "SELECT * FROM a AND b OR c AND d;")
+                    where_clause=q.Or(q.And(q.Column('a'), q.Column('b')),
+                                      q.And(q.Column('c'), q.Column('d')))),
+            "SELECT * WHERE a AND b OR c AND d;")
 
     def test_expr_function__and_eq(self):
         self.assertParse(
             qSelect(q.Wildcard(),
-                    q.And(
+                    where_clause=q.And(
                         q.Equal(q.Column('a'), q.Constant(2)),
                         q.Not(q.Equal(q.Column('b'), q.Constant(3))))),
-            "SELECT * FROM a = 2 AND b != 3;")
+            "SELECT * WHERE a = 2 AND b != 3;")
 
     def test_expr_function__and_not(self):
         self.assertParse(
             qSelect(q.Wildcard(),
-                    q.And(q.Not(q.Column('a')),
-                          q.Column('b'))),
-            "SELECT * FROM not a AND b;")
+                    where_clause=q.And(
+                        q.Not(q.Column('a')), q.Column('b'))),
+            "SELECT * WHERE not a AND b;")
 
 
 class TestSelectFromWhere(QueryParserTestBase):
@@ -246,15 +246,24 @@ class TestSelectFromWhere(QueryParserTestBase):
                                 q.Constant(17)))
 
     def test_from(self):
-        self.assertParse(qSelect(self.targets, self.expr, None, None),
+        self.assertParse(qSelect(self.targets, q.From(self.expr, False)),
                          "SELECT a, b FROM d = (max(e) and 17);")
 
+    def test_from_close_default(self):
+        self.assertParse(qSelect(self.targets, q.From(self.expr, True)),
+                         "SELECT a, b FROM d = (max(e) and 17) CLOSE;")
+
+    def test_from_close_dated(self):
+        self.assertParse(qSelect(self.targets,
+                                 q.From(self.expr, datetime.date(2014, 10, 18))),
+                         "SELECT a, b FROM d = (max(e) and 17) CLOSE ON 2014-10-18;")
+
     def test_where(self):
-        self.assertParse(qSelect(self.targets, None, self.expr, None),
+        self.assertParse(qSelect(self.targets, None, self.expr),
                          "SELECT a, b WHERE d = (max(e) and 17);")
 
     def test_both(self):
-        self.assertParse(qSelect(self.targets, self.expr, self.expr, None), """
+        self.assertParse(qSelect(self.targets, q.From(self.expr, False), self.expr), """
           SELECT a, b
           FROM d = (max(e) and 17)
           WHERE d = (max(e) and 17);

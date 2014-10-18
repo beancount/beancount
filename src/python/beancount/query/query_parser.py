@@ -23,11 +23,10 @@ Select = collections.namedtuple(
 Wildcard = collections.namedtuple('Wildcard', '')
 
 # A node for ordering.
+From = collections.namedtuple('From', 'expression close')
 GroupBy = collections.namedtuple('GroupBy', 'columns having')
 OrderBy = collections.namedtuple('OrderBy', 'columns ordering')
 PivotBy = collections.namedtuple('PivotBy', 'columns')
-
-
 
 
 class Comparable:
@@ -106,7 +105,7 @@ class Lexer:
 
     # List of reserved keywords.
     keywords = {
-        'SELECT', 'FROM', 'WHERE', 'AS',
+        'SELECT', 'AS', 'FROM', 'WHERE', 'CLOSE', 'ON',
         'GROUP', 'BY', 'HAVING', 'ORDER', 'DESC', 'ASC', 'PIVOT',
         'LIMIT', 'FLATTEN',
         'AND', 'OR', 'NOT', 'TRUE', 'FALSE',
@@ -253,11 +252,19 @@ class Parser(Lexer):
     def p_from(self, p):
         """
         from : empty
-             | FROM expression
+             | FROM expression close
         """
-        if len(p) == 3:
+        if len(p) != 2:
             assert p[2], "Empty FROM clause is not allowed"
-            p[0] = p[2]
+            p[0] = From(p[2], p[3])
+
+    def p_close(self, p):
+        """
+        close : empty
+              | CLOSE
+              | CLOSE ON DATE
+        """
+        p[0] = p[3] if len(p) == 4 else (p[1] == 'CLOSE')
 
     def p_where(self, p):
         """
