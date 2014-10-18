@@ -97,7 +97,7 @@ class Lexer:
     keywords = {
         'SELECT', 'FROM', 'WHERE', 'AS',
         # 'GROUP', 'ORDER', 'BY', 'LIMIT', 'DESC', 'ASC',
-        'AND', 'OR', 'NOT',
+        'AND', 'OR', 'NOT', 'TRUE', 'FALSE',
         'NULL',
     }
 
@@ -301,11 +301,19 @@ class Parser(Lexer):
     def p_constant(self, p):
         """
         constant : NULL
+                 | boolean
                  | INTEGER
                  | DECIMAL
                  | STRING
         """
         p[0] = Constant(p[1] if p[1] != 'NULL' else None)
+
+    def p_boolean(self, p):
+        """
+        boolean : TRUE
+                | FALSE
+        """
+        p[0] = (p[1] == 'TRUE')
 
     def p_empty(self, _):
         """

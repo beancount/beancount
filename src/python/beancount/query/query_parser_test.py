@@ -93,6 +93,15 @@ class TestSelectExpression(QueryParserTestBase):
                                   None, None),
                          "SELECT NULL;")
 
+    def test_expr_constant_boolean(self):
+        self.assertParse(q.Select([q.Target(q.Constant(True))],
+                                  None, None),
+                         "SELECT TRUE;")
+
+        self.assertParse(q.Select([q.Target(q.Constant(False))],
+                                  None, None),
+                         "SELECT FALSE;")
+
     def test_expr_constant_integer(self):
         self.assertParse(q.Select([q.Target(q.Constant(17))],
                                   None, None),
