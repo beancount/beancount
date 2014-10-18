@@ -24,19 +24,6 @@ from beancount.core import amount
 from beancount.utils import misc_utils
 
 
-class LedgerReport(report.Report):
-    """Print out the entries in a format that can be parsed by Ledger."""
-
-    names = ['ledger']
-    default_format = 'ledger'
-
-    def render_ledger(self, entries, errors, options_map, file):
-        ledger_printer = LedgerPrinter()
-        for entry in entries:
-            file.write(ledger_printer(entry))
-            file.write('\n')
-
-
 def quote(match):
     """Add quotes around a re.MatchObject.
 
@@ -58,6 +45,19 @@ def quote_currency(string):
       A string of text, with the commodity expressions surrounded with quotes.
     """
     return re.sub(r'\b([A-Z][A-Z0-9\'\.\_\-]{0,10}[A-Z0-9])\b', quote, string)
+
+
+class LedgerReport(report.Report):
+    """Print out the entries in a format that can be parsed by Ledger."""
+
+    names = ['ledger']
+    default_format = 'ledger'
+
+    def render_ledger(self, entries, errors, options_map, file):
+        ledger_printer = LedgerPrinter()
+        for entry in entries:
+            file.write(ledger_printer(entry))
+            file.write('\n')
 
 
 class LedgerPrinter:
@@ -158,6 +158,61 @@ class LedgerPrinter:
             ';; Event: {e.date:%Y/%m/%d} "{e.type}" "{e.description}"\n'.format(e=entry))
 
 
+class HLedgerReport(report.Report):
+    """Print out the entries in a format that can be parsed by HLedger."""
+
+    names = ['hledger']
+    default_format = 'hledger'
+
+    def render_hledger(self, entries, errors, options_map, file):
+        hledger_printer = HLedgerPrinter()
+        for entry in entries:
+            file.write(hledger_printer(entry))
+            file.write('\n')
+
+
+class HLedgerPrinter(LedgerPrinter):
+    "Multi-method for printing directives in HLedger format."
+
+    # pylint: disable=invalid-name
+
+    @classmethod
+    def __call__(cls, obj):
+        oss = io.StringIO()
+        getattr(cls, obj.__class__.__name__)(cls, obj, oss)
+        return oss.getvalue()
+
+    def Posting(_, posting, oss):
+        flag = '{} '.format(posting.flag) if posting.flag else ''
+        assert posting.account is not None
+
+        flag_posting = '{:}{:62}'.format(flag, posting.account)
+
+        if posting.position:
+            amount_str, cost_str = posting.position.strs()
+            if cost_str:
+                # Convert the cost as a price entry, that's what HLedger appears to want.
+                cost_str = '@ {}'.format(cost_str.lstrip('{').rstrip('}'))
+        else:
+            amount_str, cost_str = '', ''
+
+        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
+                     if posting.price is not None
+                     else '')
+
+        posting_str = '  {:64} {:>16} {:>16}'.format(flag_posting,
+                                                     quote_currency(amount_str),
+                                                     quote_currency(cost_str))
+        oss.write(posting_str.rstrip())
+
+        oss.write('\n')
+
+    def Open(_, entry, oss):
+        # Not supported by HLedger AFAIK.
+        oss.write(';; Open: {e.date:%Y/%m/%d} close {e.account}\n'.format(e=entry))
+
+
 __reports__ = [
     LedgerReport,
+    HLedgerReport,
     ]
