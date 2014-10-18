@@ -6,19 +6,12 @@ from beancount.query import query_parser as q
 
 
 def qSelect(target_spec=None,
-            from_clause=None,
-            where_clause=None,
-            group_by=None,
-            order_by=None,
-            pivot_by=None,
-            limit=None):
+            from_clause=None, where_clause=None,
+            group_by=None, order_by=None, pivot_by=None, limit=None):
+    "A convenience constructor for writing tests without having to provide all arguments."
     return q.Select(target_spec,
-                    from_clause,
-                    where_clause,
-                    group_by,
-                    order_by,
-                    pivot_by,
-                    limit)
+                    from_clause, where_clause,
+                    group_by, order_by, pivot_by, limit)
 
 
 class QueryParserTestBase(unittest.TestCase):
@@ -212,6 +205,32 @@ class TestSelectExpression(QueryParserTestBase):
                                                   q.Column('d'),
                                                   q.Column('e')]))]),
             "SELECT min(a, b, c, d, e);")
+
+
+
+class TestSelectPrecedence(QueryParserTestBase):
+
+    def test_expr_function__and_or(self):
+        self.assertParse(
+            qSelect(q.Wildcard(),
+                    q.Or(q.And(q.Column('a'), q.Column('b')),
+                         q.And(q.Column('c'), q.Column('d')))),
+            "SELECT * FROM a AND b OR c AND d;")
+
+    def test_expr_function__and_eq(self):
+        self.assertParse(
+            qSelect(q.Wildcard(),
+                    q.And(
+                        q.Equal(q.Column('a'), q.Constant(2)),
+                        q.Not(q.Equal(q.Column('b'), q.Constant(3))))),
+            "SELECT * FROM a = 2 AND b != 3;")
+
+    def test_expr_function__and_not(self):
+        self.assertParse(
+            qSelect(q.Wildcard(),
+                    q.And(q.Not(q.Column('a')),
+                          q.Column('b'))),
+            "SELECT * FROM not a AND b;")
 
 
 class TestSelectFromWhere(QueryParserTestBase):

@@ -305,10 +305,10 @@ class Parser(Lexer):
 
 
     precedence = [
-        ('left', 'EQ', 'NE'),
         ('left', 'OR'),
         ('left', 'AND'),
         ('left', 'NOT'),
+        ('left', 'EQ', 'NE'),
         ]
 
     def p_expression_and(self, p):
