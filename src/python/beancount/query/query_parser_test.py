@@ -1,3 +1,4 @@
+import datetime
 import unittest
 
 from beancount.core.amount import D
@@ -124,6 +125,15 @@ class TestSelectExpression(QueryParserTestBase):
         self.assertParse(q.Select([q.Target(q.Constant('rainy-day'))],
                                   None, None),
                          "SELECT 'rainy-day';")
+
+    def test_expr_constant_date(self):
+        self.assertParse(q.Select([q.Target(q.Constant(datetime.date(1972, 5, 28)))],
+                                  None, None),
+                         "SELECT 1972-05-28;")
+
+        self.assertParse(q.Select([q.Target(q.Constant(datetime.date(1972, 5, 28)))],
+                                  None, None),
+                         "SELECT #'May 28, 1972';")
 
     def test_expr_column(self):
         self.assertParse(

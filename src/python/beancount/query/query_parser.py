@@ -1,8 +1,11 @@
 """Parser for Beancount Query Language.
 """
 import collections
+import datetime
 import itertools
 import io
+
+import dateutil.parser
 
 import ply.lex
 import ply.yacc
@@ -96,14 +99,14 @@ class Lexer:
     # List of reserved keywords.
     keywords = {
         'SELECT', 'FROM', 'WHERE', 'AS',
-        # 'GROUP', 'ORDER', 'BY', 'LIMIT', 'DESC', 'ASC',
+        #'GROUP', 'BY', # 'ORDER', 'BY', 'LIMIT', 'DESC', 'ASC',
         'AND', 'OR', 'NOT', 'TRUE', 'FALSE',
         'NULL',
     }
 
     # List of valid tokens from the lexer.
     tokens = [
-        'ID', 'INTEGER', 'DECIMAL', 'STRING',
+        'ID', 'INTEGER', 'DECIMAL', 'STRING', 'DATE',
         'WILDCARD', 'COMMA', 'SEMI', 'LPAREN', 'RPAREN',
         'EQ', 'NE',
     ] + list(keywords)
@@ -122,6 +125,14 @@ class Lexer:
     def t_STRING(self, token):
         "(\"[^\"]*\"|\'[^\']*\')"
         token.value = token.value[1:-1]
+        return token
+
+    def t_DATE(self, token):
+        r"(\#(\"[^\"]*\"|\'[^\']*\')|\d\d\d\d-\d\d-\d\d)"
+        if token.value[0] == '#':
+            token.value = dateutil.parser.parse(token.value[2:-1]).date()
+        else:
+            token.value = datetime.datetime.strptime(token.value, '%Y-%m-%d').date()
         return token
 
     # Constant tokens.
@@ -305,6 +316,7 @@ class Parser(Lexer):
                  | INTEGER
                  | DECIMAL
                  | STRING
+                 | DATE
         """
         p[0] = Constant(p[1] if p[1] != 'NULL' else None)
 
@@ -336,10 +348,12 @@ class Parser(Lexer):
 
 
 # FIXME:
+# - Add date data type as literal
 # - Create a RowContext object that provides all the rows, so that we can
 # - Make column a list of the same type as the postings filter expression
 # Compilation:
 # - Identify functions
+# - Add date() function to create dates from a string
 # - Check data types
 #   actually evaluate the SQL against generic rows of datasets.
 # - Move all the functions to another module, make this as generic SQL as can possibly be
