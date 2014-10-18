@@ -3,6 +3,8 @@ beancount: TODO
 * Requirements for Shipping 1.0
 ** Current
 
+  - Make unused accounts and duplicates checking into optional plugins.
+
   - Integrate patch from Nathan Grigg for parsing commas
   - Implement experimental precision check suggested by Nathan Grigg
   - Implement Equity:Rounding accumulation suggested by Nathan Grigg

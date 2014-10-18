@@ -230,45 +230,6 @@ def validate_active_accounts(entries, unused_options_map):
     return errors
 
 
-def validate_unused_accounts(entries, options_map):
-    """Check that all accounts declared open are actually used.
-
-    We check that all of the accounts that are open are at least referred to by
-    another directive. These are probably unused, so issue a warning (we like to
-    be pedantic). Note that an account that is open and then closed is
-    considered used--this is a valid use case that may occur in reality. If you
-    have a use case for an account to be open but never used, you can quiet that
-    warning by initializing the account with a balance asserts or a pad
-    directive, or even use a note will be sufficient.
-
-    (This is probably a good candidate for optional inclusion as a "pedantic"
-    plugin.)
-
-    Args:
-      entries: A list of directives.
-      unused_options_map: An options map.
-    Returns:
-      A list of new errors, if any were found.
-    """
-    # Find all the accounts referenced by entries which are not Open, and the
-    # open directives for error reporting below.
-    open_map = {}
-    referenced_accounts = set()
-    for entry in entries:
-        if isinstance(entry, Open):
-            open_map[entry.account] = entry
-            continue
-        referenced_accounts.update(getters.get_entry_accounts(entry))
-
-    # Create a list of suitable errors, with the location of the Open directives
-    # corresponding to the unused accounts.
-    return [ValidationError(open_entry.source,
-                            "Unused account '{}'".format(account),
-                            open_entry)
-            for account, open_entry in open_map.items()
-            if account not in referenced_accounts]
-
-
 def validate_currency_constraints(entries, options_map):
     """Check the currency constraints from account open declarations.
 
@@ -416,7 +377,6 @@ BASIC_VALIDATIONS = [validate_data_types,
                      validate_inventory_booking,
                      validate_open_close,
                      validate_active_accounts,
-                     validate_unused_accounts,
                      validate_currency_constraints,
                      validate_duplicate_balances,
                      validate_documents_paths,
