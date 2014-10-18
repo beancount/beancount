@@ -357,24 +357,8 @@ def validate_check_transaction_balances(entries, options_map):
     return errors
 
 
-
-
-def validate_duplicates(entries, options_map):
-    """Check that the entries are unique, by computing hashes.
-
-    Args:
-      entries: A list of directives.
-      unused_options_map: An options map.
-    Returns:
-      A list of new errors, if any were found.
-    """
-    unused_hashes, errors = compare.hash_entries(entries)
-    return errors
-
-
 # A list of reasonably fast validations to always run by default.
-BASIC_VALIDATIONS = [validate_data_types,
-                     validate_inventory_booking,
+BASIC_VALIDATIONS = [validate_inventory_booking,
                      validate_open_close,
                      validate_active_accounts,
                      validate_currency_constraints,
@@ -386,8 +370,7 @@ BASIC_VALIDATIONS = [validate_data_types,
 # We're hoping to optimize these and make them decently fast, so
 # we're not providing an option at this moment, this can be enabled
 # by modifying the 'VALIDATIONS' attribute below.
-HARDCORE_VALIDATIONS = [validate_data_types,
-                        validate_duplicates]
+HARDCORE_VALIDATIONS = [validate_data_types]
 
 # The list of validations to run.
 VALIDATIONS = BASIC_VALIDATIONS

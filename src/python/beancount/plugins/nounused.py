@@ -1,7 +1,6 @@
 """This plugin validates that there are no unused accounts.
 """
 import collections
-import collections
 
 from beancount.core import data
 from beancount.core import getters
