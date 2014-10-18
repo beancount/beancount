@@ -3,7 +3,8 @@
 import collections
 import hashlib
 
-from .data import entry_sortkey, Price
+from .data import Price
+from . import data
 
 
 CompareError = collections.namedtuple('CompareError', 'source message entry')

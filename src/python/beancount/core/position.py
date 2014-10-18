@@ -101,7 +101,7 @@ class Position:
         # Optionally render the cost and lot-date.
         if lot.cost or lot.lot_date:
             cost_str_list = []
-            cost_str_list.append(' {')
+            cost_str_list.append('{')
             if lot.cost:
                 cost_str_list.append(
                     Amount(lot.cost.number, lot.cost.currency).str(MAXDIGITS_PRINTER))
@@ -119,7 +119,8 @@ class Position:
         Returns:
           A string, a printable representation of the position.
         """
-        return ''.join(self.strs())
+        amount_str, cost_str = self.strs()
+        return ' '.join(self.strs()) if cost_str else amount_str
 
     __repr__ = __str__
 

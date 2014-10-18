@@ -3,6 +3,8 @@ beancount: TODO
 * Requirements for Shipping 1.0
 ** Current
 
+  - Make unused accounts and duplicates checking into optional plugins.
+
   - Integrate patch from Nathan Grigg for parsing commas
   - Implement experimental precision check suggested by Nathan Grigg
   - Implement Equity:Rounding accumulation suggested by Nathan Grigg
@@ -1419,6 +1421,12 @@ precise balances throughout, but no manual input is required.
   - Remove support for legacy, PIPE, Not needed.
 
   - Require Python 3.4 and introduce Enum's where relevant.
+
+
+
+  - Support in test_utils.capture('stdout', 'stderr') as (stdout, stderr).
+    Replace all nested code that is inconvenient.
+
 
 
 ** Refactoring: Holding to Position
@@ -2933,11 +2941,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
   - In Journal view, pressing 'C' should toggle displaying the checks on and off.
 
-** Search
-
-  - IDEA: Render the transactions into an in-memory SQL database, and provide
-    an interface to query it and report results in a table, in the web UI.
-
 ** Trial Balance
 
   - We should have a nicer way to tell what accounts need to be updated.
@@ -2983,37 +2986,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
   - Export the compatible subset to Ledger format, so you can compare the
     reports. This should be done from a tool called "bean-convert".
-
-
-** SQL Export
-
-  - Write a script to load the data into an SQL database.
-    This is probably just another type of report.
-    Report names:
-
-      'postgresql'
-      'sqlite'
-
-    This would output SQL code to create tables and fill in a database with all
-    the contents of a filtered view (or of the entire DB).
-
-  - The data structure we hold in memory is not linear, we need to linearize it.
-    This this extent, we will output several structured tables:
-
-      transactions (key: hex MD5 hash of transaction)
-      - The balance amount should be output as a column
-      postings (hex MD5 hash of posting, join key hex MD5 hash of transaction)
-      prices
-      notes
-      balances (for each of an inventory)
-      entries: hash, type, fileloc, date
-      holdings (for each of an inventory)
-
-    We leave it up to the user to use this data in any way they like.
-
-  - We could, as an option, implement an in-memory sqlite database, or even a
-    SQL parser and matching by ourselves, but that's probably not a great idea.
-    Better to leverage the features already present in SQL databases.
 
 
 ** Visualizations

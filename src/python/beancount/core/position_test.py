@@ -31,6 +31,14 @@ class TestPosition(unittest.TestCase):
         lot_date = datetime.date(2014, 6, 15)
         self.assertEqual(Position(Lot("GOOG", cost, lot_date), D('2.2')), pos)
 
+    def test_strs(self):
+        pos = from_string('2.2 GOOG {532.43 USD / 2014-06-15}')
+        self.assertEqual(('2.20 GOOG', '{532.43 USD / 2014-06-15}'), pos.strs())
+
+    def test_str(self):
+        pos = from_string('2.2 GOOG {532.43 USD / 2014-06-15}')
+        self.assertEqual(('2.20 GOOG {532.43 USD / 2014-06-15}'), str(pos))
+
     def test_from_amounts(self):
         pos = from_amounts(Amount(D('10.00'), 'USD'))
         self.assertEqual(Position(Lot("USD", None, None), D('10')), pos)
