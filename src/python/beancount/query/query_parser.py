@@ -10,9 +10,21 @@ import ply.yacc
 from beancount.core import position
 
 
-class Column:
+class Comparable:
+    __slots__ = ()
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
+        return all(getattr(self, attribute) == getattr(other, attribute)
+                   for attribute in self.__slots__)
+
+class Column(Comparable):
     def __init__(self, name):
         self.name = name
+
+
+
+
 
 class TypeColumn(Column):
     def __call__(self, posting):
@@ -175,22 +187,12 @@ ENTRY_COLUMNS = {
 
 
 Query = collections.namedtuple('Query',
-                               'entry_filter posting_filter targets')
+                               'columns entry_filter posting_filter')
 
 
-class Expr:
-    def __eq__(self, other):
-        if not isinstance(other, type(self)):
-            return False
-        return all(getattr(self, attribute) == getattr(other, attribtue)
-                   for attributes in __slots__)
-
+class Expr(Comparable):
     def __call__(self, context):
         raise NotImplementedError
-
-class Tauto(Expr):
-    def __call__(self, _):
-        return True
 
 class UnaryOp(Expr):
     __slots__ = ('operand',)
@@ -328,9 +330,9 @@ class Parser(Lexer):
         """
         select_statement : SELECT target_list opt_from opt_where SEMI
         """
-        p[0] = Query(p[3] or Tauto(),
-                     p[4] or Tauto(),
-                     p[2])
+        p[0] = Query(p[2],
+                     p[3] or Constant(True),
+                     p[4] or Constant(True))
 
     def p_target_list(self, p):
         """
