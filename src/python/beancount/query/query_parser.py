@@ -191,8 +191,8 @@ class Parser(Lexer):
         select_statement : SELECT target_spec opt_from opt_where SEMI
         """
         p[0] = Select(p[2],
-                      p[3] or Constant(True),
-                      p[4] or Constant(True))
+                      p[3],
+                      p[4])
 
     def p_target_spec(self, p):
         """
@@ -243,28 +243,6 @@ class Parser(Lexer):
         ('left', 'AND'),
         ('left', 'NOT'),
         ]
-
-    # def p_function(self, p):
-    #     """
-    #     funcall : ID LPAREN column RPAREN
-    #     """
-    #     function_name = p[1]
-    #     try:
-    #         FunctionType = FUNCTIONS[function_name]
-    #         p[0] = FunctionType(child=p[3], name=function_name)
-    #     except KeyError:
-    #         raise ParseError("Invalid function name: '{}'".format(function_name))
-
-    # def p_entry_target(self, p):
-    #     """
-    #     entry_target : ID
-    #     """
-    #     identifier = p[1]
-    #     try:
-    #         cls = ENTRY_COLUMNS[identifier]
-    #         p[0] = cls(name=identifier)
-    #     except KeyError:
-    #         raise ParseError("Invalid entry column name: '{}'".format(identifier))
 
     def p_expression_and(self, p):
         "expression : expression AND expression"
@@ -350,7 +328,6 @@ class Parser(Lexer):
 
 
 # FIXME:
-# - Test the AST tree separately, for comparisons and such
 # - Create a RowContext object that provides all the rows, so that we can
 # - Make column a list of the same type as the postings filter expression
 # Compilation:
