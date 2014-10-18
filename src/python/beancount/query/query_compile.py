@@ -1,4 +1,8 @@
 """Compilation/translation for the query language AST.
+
+This code accepts the abstract syntax tree produced by the query parser and
+resolves the column and function names, and prepares execution state to be run
+against a list of entries.
 """
 import collections
 import itertools
@@ -163,3 +167,16 @@ ENTRY_COLUMNS = {
     'year'  : YearEntryColumn,
     'month' : MonthEntryColumn,
     }
+
+
+
+def compile_query(select):
+    """Prepare an AST for a Select statement into an execution tree.
+    The execution tree mostly looks like an AST, but with some nodes
+    replaced with the knowledge of an execution context.
+
+    Args:
+      select: An instance of query_parser.Select.
+    Returns:
+      A modified instance of Select with some nodes replaced.
+    """
