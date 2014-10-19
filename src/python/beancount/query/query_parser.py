@@ -20,11 +20,15 @@ Select = collections.namedtuple(
     'Select', ('targets from_clause where_clause '
                'group_by order_by pivot_by limit distinct flatten'))
 
+Balance = collections.namedtuple('Balance', 'from_clause')
+Journal = collections.namedtuple('Journal', 'account from_clause')
+
+
 # A wildcard node, to appear in Select.columns.
 Wildcard = collections.namedtuple('Wildcard', '')
 
 # A node for ordering.
-FromFilter = collections.namedtuple('From', 'expression close')
+From = collections.namedtuple('From', 'expression close')
 GroupBy = collections.namedtuple('GroupBy', 'columns having')
 OrderBy = collections.namedtuple('OrderBy', 'columns ordering')
 PivotBy = collections.namedtuple('PivotBy', 'columns')
@@ -133,6 +137,7 @@ class Lexer:
     # List of reserved keywords.
     keywords = {
         'SELECT', 'AS', 'FROM', 'WHERE', 'CLOSE', 'ON',
+        'BALANCE', 'JOURNAL',
         'GROUP', 'BY', 'HAVING', 'ORDER', 'DESC', 'ASC', 'PIVOT',
         'LIMIT', 'FLATTEN', 'DISTINCT',
         'AND', 'OR', 'NOT', 'TRUE', 'FALSE',
@@ -246,12 +251,33 @@ class Parser(Lexer):
     def p_statement(self, p):
         """
         statement : select_statement SEMI
+                  | balance_statement SEMI
+                  | journal_statement SEMI
+        """
+        p[0] = p[1]
+
+    def p_balance_statement(self, p):
+        """
+        balance_statement : BALANCE from
+        """
+        p[0] = Balance(p[2])
+
+    def p_journal_statement(self, p):
+        """
+        journal_statement : JOURNAL from
+                          | JOURNAL account from
+        """
+        p[0] = Journal(p[2], p[3]) if len(p) == 4 else Journal(None, p[2])
+
+    def p_account(self, p):
+        """
+        account : STRING
         """
         p[0] = p[1]
 
     def p_select_statement(self, p):
         """
-        select_statement : SELECT distinct target_spec from where \
+        select_statement : SELECT distinct target_spec from_with_sub where \
                            group_by order_by pivot_by limit flatten
         """
         p[0] = Select(p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[2], p[10])
@@ -288,10 +314,20 @@ class Parser(Lexer):
         """
         from : empty
              | FROM expression close
-             | FROM LPAREN select_statement RPAREN
         """
         if len(p) == 4:
-            p[0] = FromFilter(p[2], p[3])
+            p[0] = From(p[2], p[3])
+        elif len(p) == 5:
+            p[0] = p[3]
+
+    def p_from_with_sub(self, p):
+        """
+        from_with_sub : empty
+                      | FROM expression close
+                      | FROM LPAREN select_statement RPAREN
+        """
+        if len(p) == 4:
+            p[0] = From(p[2], p[3])
         elif len(p) == 5:
             p[0] = p[3]
 

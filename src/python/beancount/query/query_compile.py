@@ -387,14 +387,14 @@ def compile_select(select):
         xcontext_target = ResultSetContext()
         xcontext_where = ResultSetContext()
 
-    elif from_clause is None or isinstance(from_clause, query_parser.FromFilter):
+    elif from_clause is None or isinstance(from_clause, query_parser.From):
         # Bind the from clause contents.
         xcontext_entries = FilterEntriesContext()
         if from_clause is not None:
             c_expression = (compile_expression(from_clause.expression, xcontext_entries)
                             if from_clause.expression is not None
                             else None)
-            c_from = query_parser.FromFilter(c_expression, from_clause.close)
+            c_from = query_parser.From(c_expression, from_clause.close)
         else:
             c_from = None
         xcontext_target = TargetsContext()
