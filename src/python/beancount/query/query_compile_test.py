@@ -6,7 +6,7 @@ from beancount.query import query_parser as q
 from beancount.query import query_compile as c
 
 
-class QueryParserTestBase(unittest.TestCase):
+class QueryCompilerTestBase(unittest.TestCase):
 
     maxDiff = 8192
 
@@ -47,6 +47,48 @@ class QueryParserTestBase(unittest.TestCase):
             raise
 
 
-class TestCompile(QueryParserTestBase):
+class TestCompileExpression(unittest.TestCase):
 
-    pass
+    def test_expr_invalid(self):
+        with self.assertRaises(c.CompilationError):
+            c.compile_expression(q.Column('invalid'), c.TargetsContext())
+
+    def test_expr_column(self):
+        self.assertEqual(c.FilenameColumn(),
+                         c.compile_expression(q.Column('filename'), c.TargetsContext()))
+
+    def test_expr_function(self):
+        self.assertEqual(c.Sum([c.ChangeColumn()]),
+                         c.compile_expression(q.Function('sum', [q.Column('change')]),
+                                              c.TargetsContext()))
+
+    def test_expr_unaryop(self):
+        self.assertEqual(q.Not(c.AccountColumn()),
+                         c.compile_expression(q.Not(q.Column('account')),
+                                              c.TargetsContext()))
+
+    def test_expr_binaryop(self):
+        self.assertEqual(q.Equal(c.DateColumn(),
+                                 q.Constant(datetime.date(2014, 1, 1))),
+                         c.compile_expression(
+                             q.Equal(q.Column('date'),
+                                     q.Constant(datetime.date(2014, 1, 1))),
+                             c.TargetsContext()))
+
+    def test_expr_constant(self):
+        self.assertEqual(q.Constant(D(17)),
+                         c.compile_expression(q.Constant(D(17)), c.TargetsContext()))
+
+
+
+# class TestCompile(QueryParserTestBase):
+
+#     def test_wildcard(self):
+#         self.assertCompile(None, """
+#           SELECT * ;
+#         """)
+
+#     def test_simple(self):
+#         self.assertCompile(None, """
+#           SELECT length(a) ;
+#         """)

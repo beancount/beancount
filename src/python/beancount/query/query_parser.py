@@ -17,7 +17,7 @@ from beancount.core import position
 
 # A 'select' query action.
 Select = collections.namedtuple(
-    'Select', ('target_spec from_clause where_clause '
+    'Select', ('targets from_clause where_clause '
                'group_by order_by pivot_by limit flatten'))
 
 # A wildcard node, to appear in Select.columns.
@@ -45,13 +45,23 @@ class Comparable:
                                          for child in self.__slots__))
     __repr__ = __str__
 
+    def reset(self):
+        """Reset the state of the aggregator functions."""
+        raise NotImplementedError
+
+
 class Target(Comparable):
     __slots__ = ('expression', 'name')
     def __init__(self, expression, name=None):
         self.expression = expression
         self.name = name
+
     def __call__(self, context):
         return self.expression(context)
+
+    def reset(self):
+        self.expression.reset()
+
 
 class Column(Comparable):
     __slots__ = ('name',)
@@ -69,14 +79,26 @@ class UnaryOp(Comparable):
     def __init__(self, operand):
         self.operand = operand
 
+    def reset(self):
+        self.operand.reset()
+
+
 class BinaryOp(Comparable):
     __slots__ = ('left', 'right')
     def __init__(self, left, right):
         self.left = left
         self.right = right
 
-class Constant(UnaryOp):
-    def __call__(self, context):
+    def reset(self):
+        self.left.reset()
+        self.right.reset()
+
+
+class Constant(Comparable):
+    __slots__ = ('constant',)
+    def __init__(self, constant):
+        self.constant = constant
+    def __call__(self, _):
         return self.operand
 
 class Not(UnaryOp):
@@ -471,3 +493,4 @@ class Parser(Lexer):
 # - implement distinct
 # - support simple boolean expressions in filter expressions, not just equalities and inequalities
 # - support simple mathematical operations, +, - , /.
+# - implement set operations, "in" for sets
