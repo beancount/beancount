@@ -1,6 +1,7 @@
 """
 Generic utility packages and functions.
 """
+import collections
 import io
 import re
 from time import time
@@ -284,3 +285,30 @@ def get_screen_width():
     except io.UnsupportedOperation:
         return 0
     return curses.tigetnum('cols')
+
+
+class TypeComparable:
+    """A base class whose equality comparison includes comparing the
+    type of the instance itself.
+    """
+    def __eq__(self, other):
+        return isinstance(other, type(self)) and super().__eq__(other)
+
+def cmptuple(name, attributes):
+    """Manufacture a comparable namedtuple class, similar to collections.namedtuple.
+
+    A comparable named tuple is a tuple which compares to False if contents are
+    equal but the data types are different. We define this to supplement
+    collections.namedtuple because by default a namedtuple disregards the type
+    and we want to make precise comparisons for tests.
+
+    Args:
+      name: The given name of the class.
+      attributes: A string or tuple of strings, with the names of the
+        attributes.
+    Returns:
+      A new namedtuple-derived type that compares False with other
+      tuples with same contents.
+    """
+    base = collections.namedtuple('_{}'.format(name), attributes)
+    return type(name, (TypeComparable, base,), {})

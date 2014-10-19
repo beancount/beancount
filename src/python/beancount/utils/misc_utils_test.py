@@ -141,3 +141,12 @@ class TestMiscUtils(unittest.TestCase):
         # Note: Allow zero because the console function fails in nose when
         # capture is disabled.
         self.assertLess(-1, max_width)
+
+    def test_cmptuple(self):
+        One = misc_utils.cmptuple('Bla', 'a b c')
+        Two = misc_utils.cmptuple('Bli', 'd e f')
+
+        args = (1, 2, 3)
+        one = One(*args)
+        two = Two(*args)
+        self.assertFalse(one == two)
