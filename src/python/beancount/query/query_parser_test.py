@@ -75,7 +75,7 @@ class TestSelectTarget(QueryParserTestBase):
                          "SELECT *;")
 
     def test_target_one(self):
-        self.assertParse(qSelect([q.Target(q.Column('date'))]),
+        self.assertParse(qSelect([q.Target(q.Column('date'), None)]),
                          "SELECT date;")
 
     def test_target_one_as(self):
@@ -83,14 +83,14 @@ class TestSelectTarget(QueryParserTestBase):
                          "SELECT date as xdate;")
 
     def test_target_multiple(self):
-        self.assertParse(qSelect([q.Target(q.Column('date')),
-                                   q.Target(q.Column('account')),
-                                   q.Target(q.Column('change'))]),
+        self.assertParse(qSelect([q.Target(q.Column('date'), None),
+                                   q.Target(q.Column('account'), None),
+                                   q.Target(q.Column('change'), None)]),
                          "SELECT date, account, change;")
 
     def test_target_multiple_as(self):
         self.assertParse(qSelect([q.Target(q.Column('date'), 'xdate'),
-                                   q.Target(q.Column('account')),
+                                   q.Target(q.Column('account'), None),
                                    q.Target(q.Column('change'), 'xchange')]),
                          "SELECT date as xdate, account, change as xchange;")
 
@@ -98,84 +98,92 @@ class TestSelectTarget(QueryParserTestBase):
 class TestSelectExpression(QueryParserTestBase):
 
     def test_expr_constant_null(self):
-        self.assertParse(qSelect([q.Target(q.Constant(None))]),
+        self.assertParse(qSelect([q.Target(q.Constant(None), None)]),
                          "SELECT NULL;")
 
     def test_expr_constant_boolean(self):
-        self.assertParse(qSelect([q.Target(q.Constant(True))]),
+        self.assertParse(qSelect([q.Target(q.Constant(True), None)]),
                          "SELECT TRUE;")
 
-        self.assertParse(qSelect([q.Target(q.Constant(False))]),
+        self.assertParse(qSelect([q.Target(q.Constant(False), None)]),
                          "SELECT FALSE;")
 
     def test_expr_constant_integer(self):
-        self.assertParse(qSelect([q.Target(q.Constant(17))]),
+        self.assertParse(qSelect([q.Target(q.Constant(17), None)]),
                          "SELECT 17;")
 
     def test_expr_constant_decimal(self):
-        self.assertParse(qSelect([q.Target(q.Constant(D('17.345')))]),
+        self.assertParse(qSelect([q.Target(q.Constant(D('17.345')), None)]),
                          "SELECT 17.345;")
 
-        self.assertParse(qSelect([q.Target(q.Constant(D('.345')))]),
+        self.assertParse(qSelect([q.Target(q.Constant(D('.345')), None)]),
                          "SELECT .345;")
 
-        self.assertParse(qSelect([q.Target(q.Constant(D('17.')))]),
+        self.assertParse(qSelect([q.Target(q.Constant(D('17.')), None)]),
                          "SELECT 17.;")
 
     def test_expr_constant_string(self):
-        self.assertParse(qSelect([q.Target(q.Constant('rainy-day'))]),
+        self.assertParse(qSelect([q.Target(q.Constant('rainy-day'), None)]),
                          "SELECT 'rainy-day';")
 
     def test_expr_constant_date(self):
-        self.assertParse(qSelect([q.Target(q.Constant(datetime.date(1972, 5, 28)))]),
+        self.assertParse(qSelect([q.Target(q.Constant(datetime.date(1972, 5, 28)), None)]),
                          "SELECT 1972-05-28;")
 
-        self.assertParse(qSelect([q.Target(q.Constant(datetime.date(1972, 5, 28)))]),
+        self.assertParse(qSelect([q.Target(q.Constant(datetime.date(1972, 5, 28)), None)]),
                          "SELECT #'May 28, 1972';")
 
     def test_expr_column(self):
         self.assertParse(
-            qSelect([q.Target(q.Column('date'))]),
+            qSelect([q.Target(q.Column('date'), None)]),
             "SELECT date;")
 
     def test_expr_eq(self):
         self.assertParse(
-            qSelect([q.Target(q.Equal(q.Column('a'), q.Constant(42)))]),
+            qSelect([q.Target(q.Equal(q.Column('a'), q.Constant(42)), None)]),
             "SELECT a = 42;")
 
     def test_expr_ne(self):
         self.assertParse(
-            qSelect([q.Target(q.Not(q.Equal(q.Column('a'), q.Constant(42))))]),
+            qSelect([
+                q.Target(q.Not(q.Equal(q.Column('a'), q.Constant(42))),
+                         None)]),
             "SELECT a != 42;")
 
     def test_expr_match(self):
         self.assertParse(
-            qSelect([q.Target(q.ReMatch(q.Column('a'), q.Constant('Assets:.*:Checking')))]),
+            qSelect([q.Target(
+                q.Match(q.Column('a'), q.Constant('Assets:.*:Checking')),
+                None)]),
             "SELECT a ~ 'Assets:.*:Checking';")
 
     def test_expr_paren_single(self):
         self.assertParse(
-            qSelect([q.Target(q.Not(q.Equal(q.Column('a'), q.Constant(42))))]),
+            qSelect([
+                q.Target(q.Not(q.Equal(q.Column('a'), q.Constant(42))),
+                         None)]),
             "SELECT a != (42);")
 
     def test_expr_paren_multi(self):
         self.assertParse(
-            qSelect([q.Target(q.Not(q.Equal(q.Column('a'), q.Constant(42))))]),
+            qSelect([
+                q.Target(q.Not(q.Equal(q.Column('a'), q.Constant(42))),
+                         None)]),
             "SELECT not (a = 42);")
 
     def test_expr_and(self):
         self.assertParse(
-            qSelect([q.Target(q.And(q.Column('a'), q.Column('b')))]),
+            qSelect([q.Target(q.And(q.Column('a'), q.Column('b')), None)]),
             "SELECT a AND b;")
 
     def test_expr_or(self):
         self.assertParse(
-            qSelect([q.Target(q.Or(q.Column('a'), q.Column('b')))]),
+            qSelect([q.Target(q.Or(q.Column('a'), q.Column('b')), None)]),
             "SELECT a OR b;")
 
     def test_expr_not(self):
         self.assertParse(
-            qSelect([q.Target(q.Not(q.Column('a')))]),
+            qSelect([q.Target(q.Not(q.Column('a')), None)]),
             "SELECT NOT a;")
 
     def test_expr_paren_multi2(self):
@@ -186,22 +194,23 @@ class TestSelectExpression(QueryParserTestBase):
                     q.Not(q.Equal(
                         q.Column('b'),
                         q.And(q.Constant(42),
-                              q.Constant(17)))))))]),
+                              q.Constant(17)))))),
+                None)]),
             "SELECT a != (b != (42 AND 17));")
 
     def test_expr_function__zero_args(self):
         self.assertParse(
-            qSelect([q.Target(q.Function('random', None))]),
+            qSelect([q.Target(q.Function('random', []), None)]),
             "SELECT random();")
 
     def test_expr_function__one_args(self):
         self.assertParse(
-            qSelect([q.Target(q.Function('min', [q.Column('a')]))]),
+            qSelect([q.Target(q.Function('min', [q.Column('a')]), None)]),
             "SELECT min(a);")
 
     def test_expr_function__two_args(self):
         self.assertParse(
-            qSelect([q.Target(q.Function('min', [q.Column('a'), q.Column('b')]))]),
+            qSelect([q.Target(q.Function('min', [q.Column('a'), q.Column('b')]), None)]),
             "SELECT min(a, b);")
 
     def test_expr_function__five_args(self):
@@ -210,7 +219,7 @@ class TestSelectExpression(QueryParserTestBase):
                                                   q.Column('b'),
                                                   q.Column('c'),
                                                   q.Column('d'),
-                                                  q.Column('e')]))]),
+                                                  q.Column('e')]), None)]),
             "SELECT min(a, b, c, d, e);")
 
 
@@ -243,8 +252,8 @@ class TestSelectFromWhere(QueryParserTestBase):
 
     def setUp(self):
         super().setUp()
-        self.targets = [q.Target(q.Column('a')),
-                        q.Target(q.Column('b'))]
+        self.targets = [q.Target(q.Column('a'), None),
+                        q.Target(q.Column('b'), None)]
         self.expr = q.Equal(q.Column('d'),
                             q.And(
                                 q.Function('max', [q.Column('e')]),

@@ -13,7 +13,6 @@ import re
 import ply.lex
 import ply.yacc
 
-from beancount.query.query_parser import Comparable
 from beancount.core import position
 from beancount.core import data
 from beancount.query import query_parser
@@ -25,7 +24,81 @@ class CompilationError(Exception):
 
 
 
-class EvalFunction(Comparable):
+class EvalNode:
+    __slots__ = ()
+
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
+        return all(getattr(self, attribute) == getattr(other, attribute)
+                   for attribute in self.__slots__)
+
+    def __str__(self):
+        return "{}({})".format(type(self).__name__,
+                               ', '.join(repr(getattr(self, child))
+                                         for child in self.__slots__))
+    __repr__ = __str__
+
+    def reset(self):
+        """Reset the state of the aggregator functions."""
+        raise NotImplementedError
+
+
+class EvalUnaryOp(EvalNode):
+    __slots__ = ('operand',)
+
+    def __init__(self, operand):
+        self.operand = operand
+
+    def reset(self):
+        self.operand.reset()
+
+class EvalBinaryOp(EvalNode):
+    __slots__ = ('left', 'right')
+
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
+
+    def reset(self):
+        self.left.reset()
+        self.right.reset()
+
+class EvalConstant(EvalNode):
+    __slots__ = ('value',)
+
+    def __init__(self, value):
+        self.value = value
+
+    def __call__(self, _):
+        return self.value
+
+class EvalNot(EvalUnaryOp):
+
+    def __call__(self, context):
+        return not self.operand(context)
+
+class EvalEqual(EvalBinaryOp):
+
+    def __call__(self, context):
+        return self.left(context) == self.right(context)
+
+class EvalMatch(EvalBinaryOp):
+
+    def __call__(self, context):
+        return re.search(self.right(context), self.left(context))
+
+class EvalAnd(EvalBinaryOp):
+
+    def __call__(self, context):
+        return (self.left(context) and self.right(context))
+
+class EvalOr(EvalBinaryOp):
+
+    def __call__(self, context):
+        return (self.left(context) or self.right(context))
+
+class EvalFunction(EvalNode):
     __slots__ = ('operands',)
     def __init__(self, operands):
         self.operands = operands or []
@@ -37,6 +110,16 @@ class EvalFunction(Comparable):
     def eval_args(self, context):
         return [operand(context)
                 for operand in self.operands]
+
+# Interpreter nodes.
+OPERATORS = {
+    query_parser.Constant: EvalConstant,
+    query_parser.Not: EvalNot,
+    query_parser.Equal: EvalEqual,
+    query_parser.Match: EvalMatch,
+    query_parser.And: EvalAnd,
+    query_parser.Or: EvalOr,
+    }
 
 
 
@@ -160,39 +243,39 @@ class CompilationContext:
 
 # Column accessors for entries.
 
-class TypeEntryColumn(Comparable):
+class TypeEntryColumn(EvalNode):
     def __call__(self, entry):
         return type(entry).__name__
 
-class FilenameEntryColumn(Comparable):
+class FilenameEntryColumn(EvalNode):
     def __call__(self, entry):
         return entry.source.filename
 
-class LineNoEntryColumn(Comparable):
+class LineNoEntryColumn(EvalNode):
     def __call__(self, entry):
         return entry.source.lineno
 
-class DateEntryColumn(Comparable):
+class DateEntryColumn(EvalNode):
     def __call__(self, entry):
         return entry.date
 
-class FlagEntryColumn(Comparable):
+class FlagEntryColumn(EvalNode):
     def __call__(self, entry):
         return entry.flag
 
-class PayeeEntryColumn(Comparable):
+class PayeeEntryColumn(EvalNode):
     def __call__(self, entry):
         return entry.payee or ''
 
-class NarrationEntryColumn(Comparable):
+class NarrationEntryColumn(EvalNode):
     def __call__(self, entry):
         return entry.narration
 
-class TagsEntryColumn(Comparable):
+class TagsEntryColumn(EvalNode):
     def __call__(self, entry):
         return entry.tags
 
-class LinksEntryColumn(Comparable):
+class LinksEntryColumn(EvalNode):
     def __call__(self, entry):
         return entry.links
 
@@ -218,55 +301,55 @@ class FilterEntriesContext(CompilationContext):
 
 # Column accessors for postings.
 
-class TypeColumn(Comparable):
+class TypeColumn(EvalNode):
     def __call__(self, posting):
         return type(posting.entry).__name__
 
-class FilenameColumn(Comparable):
+class FilenameColumn(EvalNode):
     def __call__(self, posting):
         return posting.entry.source.filename
 
-class LineNoColumn(Comparable):
+class LineNoColumn(EvalNode):
     def __call__(self, posting):
         return posting.entry.source.lineno
 
-class DateColumn(Comparable):
+class DateColumn(EvalNode):
     def __call__(self, posting):
         return posting.entry.date
 
-class FlagColumn(Comparable):
+class FlagColumn(EvalNode):
     def __call__(self, posting):
         return posting.entry.flag
 
-class PayeeColumn(Comparable):
+class PayeeColumn(EvalNode):
     def __call__(self, posting):
         return posting.entry.payee or ''
 
-class NarrationColumn(Comparable):
+class NarrationColumn(EvalNode):
     def __call__(self, posting):
         return posting.entry.narration
 
-class TagsColumn(Comparable):
+class TagsColumn(EvalNode):
     def __call__(self, posting):
         return posting.entry.tags
 
-class LinksColumn(Comparable):
+class LinksColumn(EvalNode):
     def __call__(self, posting):
         return posting.entry.links
 
-class AccountColumn(Comparable):
+class AccountColumn(EvalNode):
     def __call__(self, posting):
         return posting.account
 
-class NumberColumn(Comparable):
+class NumberColumn(EvalNode):
     def __call__(self, posting):
         return posting.position.number
 
-class CurrencyColumn(Comparable):
+class CurrencyColumn(EvalNode):
     def __call__(self, posting):
         return posting.position.lot.currency
 
-class ChangeColumn(Comparable):
+class ChangeColumn(EvalNode):
     def __call__(self, posting):
         return posting.position
 
@@ -336,14 +419,16 @@ def compile_expression(expr, xcontext):
         c_expr = xcontext.get_function(expr.fname, c_operands)
 
     elif isinstance(expr, query_parser.UnaryOp):
-        c_expr = type(expr)(compile_expression(expr.operand, xcontext))
+        eval_type = OPERATORS[type(expr)]
+        c_expr = eval_type(compile_expression(expr.operand, xcontext))
 
     elif isinstance(expr, query_parser.BinaryOp):
-        c_expr = type(expr)(compile_expression(expr.left, xcontext),
-                            compile_expression(expr.right, xcontext))
+        eval_type = OPERATORS[type(expr)]
+        c_expr = eval_type(compile_expression(expr.left, xcontext),
+                           compile_expression(expr.right, xcontext))
 
     elif isinstance(expr, query_parser.Constant):
-        c_expr = expr
+        c_expr = EvalConstant(expr.value)
 
     else:
         assert False, "Invalid expression to compile: {}".format(expr)
@@ -479,7 +564,8 @@ def interpret_select(entries, c_select):
             if isinstance(entry, data.Transaction):
                 for posting in entry.postings:
                     if expression is None or expression(posting):
-                        row = Tuple(*[target(posting) for target in c_select.targets])
+                        row = Tuple(*[target.expression(posting)
+                                      for target in c_select.targets])
                         rows.append(row)
                         if c_select.limit and len(rows) == c_select.limit:
                             raise StopIteration

@@ -13,117 +13,71 @@ import ply.yacc
 
 from beancount.core.amount import D
 from beancount.core import position
+from beancount.utils.misc_utils import cmptuple
 
 
 # A 'select' query action.
+#
+# Attributes:
+#   targets: Either a single 'Wildcard' instance of a list of 'Target'
+#     instances.
+#   from_clause: An instance of 'From', or None if absent.
+#   where_clause: A root expression node, or None if absent.
+#   group_by: An instance of 'GroupBy', or None if absent.
+#   order_by: An instance of 'OrderBy', or None if absent.
+#   pivot_by: An instance of 'PivotBy', or None if absent.
+#   limit: An integer, or None is absent.
+#   distinct: A boolean value (True), or None if absent.
+#   flatten: A boolean value (True), or None if absent.
 Select = collections.namedtuple(
     'Select', ('targets from_clause where_clause '
                'group_by order_by pivot_by limit distinct flatten'))
 
+# A select query that produces final balances for accounts.
+# This is equivalent to
+#
+#   SELECT account, sum(change) FROM <from_clause>
+#   GROUP BY account
+#
+# Attributes:
+#   from_clause: An instance of 'From', or None if absent.
 Balance = collections.namedtuple('Balance', 'from_clause')
+
+
+# A select query that produces a journal of postings.
+# This is equivalent to
+#
+#   SELECT date, flag, payee, narration, ...  FROM <from_clause>
+#   WHERE account = <account>
+#
+# Attributes:
+#   account: A string, the name of the account to restrict to.
+#   from_clause: An instance of 'From', or None if absent.
 Journal = collections.namedtuple('Journal', 'account from_clause')
 
 
-# A wildcard node, to appear in Select.columns.
-Wildcard = collections.namedtuple('Wildcard', '')
+# AST nodes for the top-level clauses.
+Target = cmptuple('Target', 'expression name')
+Wildcard = cmptuple('Wildcard', '')
+From = cmptuple('From', 'expression close')
+GroupBy = cmptuple('GroupBy', 'columns having')
+OrderBy = cmptuple('OrderBy', 'columns ordering')
+PivotBy = cmptuple('PivotBy', 'columns')
 
-# A node for ordering.
-From = collections.namedtuple('From', 'expression close')
-GroupBy = collections.namedtuple('GroupBy', 'columns having')
-OrderBy = collections.namedtuple('OrderBy', 'columns ordering')
-PivotBy = collections.namedtuple('PivotBy', 'columns')
+# Nodes used in expressions. The meaning should be self-explanatory. This is
+# your run-of-the-mill hierarchical logical expression nodes. Any of these nodes
+# equivalent form "an expression."
+Column = cmptuple('Column', 'name')
+Function = cmptuple('Function', 'fname operands')
+Constant = cmptuple('Constant', 'value')
+UnaryOp = cmptuple('UnaryOp', 'operand')
+class Not(UnaryOp): pass
+BinaryOp = cmptuple('BinaryOp', 'left right')
+class Equal(BinaryOp): pass
+class Match(BinaryOp): pass
+class And(BinaryOp): pass
+class Or(BinaryOp): pass
 
-
-class Comparable:
-    __slots__ = ()
-
-    def __eq__(self, other):
-        if not isinstance(other, type(self)):
-            return False
-        return all(getattr(self, attribute) == getattr(other, attribute)
-                   for attribute in self.__slots__)
-
-    def __str__(self):
-        return "{}({})".format(type(self).__name__,
-                               ', '.join(repr(getattr(self, child))
-                                         for child in self.__slots__))
-    __repr__ = __str__
-
-    def reset(self):
-        """Reset the state of the aggregator functions."""
-        raise NotImplementedError
-
-
-class Target(Comparable):
-    __slots__ = ('expression', 'name')
-    def __init__(self, expression, name=None):
-        self.expression = expression
-        self.name = name
-
-    def __call__(self, context):
-        return self.expression(context)
-
-    def reset(self):
-        self.expression.reset()
-
-
-class Column(Comparable):
-    __slots__ = ('name',)
-    def __init__(self, name):
-        self.name = name
-
-class Function(Comparable):
-    __slots__ = ('fname', 'operands')
-    def __init__(self, fname, operands):
-        self.fname = fname
-        self.operands = operands or []
-
-class UnaryOp(Comparable):
-    __slots__ = ('operand',)
-    def __init__(self, operand):
-        self.operand = operand
-
-    def reset(self):
-        self.operand.reset()
-
-
-class BinaryOp(Comparable):
-    __slots__ = ('left', 'right')
-    def __init__(self, left, right):
-        self.left = left
-        self.right = right
-
-    def reset(self):
-        self.left.reset()
-        self.right.reset()
-
-
-class Constant(Comparable):
-    __slots__ = ('value',)
-    def __init__(self, value):
-        self.value = value
-    def __call__(self, _):
-        return self.value
-
-class Not(UnaryOp):
-    def __call__(self, context):
-        return not self.operand(context)
-
-class Equal(BinaryOp):
-    def __call__(self, context):
-        return self.left(context) == self.right(context)
-
-class ReMatch(BinaryOp):
-    def __call__(self, context):
-        return re.search(self.right(context), self.left(context))
-
-class And(BinaryOp):
-    def __call__(self, context):
-        return (self.left(context) and self.right(context))
-
-class Or(BinaryOp):
-    def __call__(self, context):
-        return (self.left(context) or self.right(context))
 
 
 class ParseError(Exception):
@@ -432,7 +386,7 @@ class Parser(Lexer):
 
     def p_expression_match(self, p):
         "expression : expression TILDE expression"
-        p[0] = ReMatch(p[1], p[3])
+        p[0] = Match(p[1], p[3])
 
     def p_expression_column(self, p):
         "expression : column"
@@ -530,3 +484,4 @@ class Parser(Lexer):
 # - implement set operations, "in" for sets
 # - implement globbing matches
 # - case-sensitivity of regexps?
+# - make KeyboardInterrupt not exit the shell, just interrupt the current processing of a query.

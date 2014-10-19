@@ -63,21 +63,25 @@ class TestCompileExpression(unittest.TestCase):
                                               c.TargetsContext()))
 
     def test_expr_unaryop(self):
-        self.assertEqual(q.Not(c.AccountColumn()),
+        self.assertEqual(c.EvalNot(c.AccountColumn()),
                          c.compile_expression(q.Not(q.Column('account')),
                                               c.TargetsContext()))
 
     def test_expr_binaryop(self):
-        self.assertEqual(q.Equal(c.DateColumn(),
-                                 q.Constant(datetime.date(2014, 1, 1))),
+        self.assertEqual(c.EvalEqual(c.DateColumn(),
+                                     c.EvalConstant(datetime.date(2014, 1, 1))),
                          c.compile_expression(
                              q.Equal(q.Column('date'),
                                      q.Constant(datetime.date(2014, 1, 1))),
                              c.TargetsContext()))
 
     def test_expr_constant(self):
-        self.assertEqual(q.Constant(D(17)),
+        self.assertEqual(c.EvalConstant(D(17)),
                          c.compile_expression(q.Constant(D(17)), c.TargetsContext()))
+
+
+
+
 
 
 
