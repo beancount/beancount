@@ -8,12 +8,14 @@ import collections
 import copy
 import itertools
 import io
+import re
 
 import ply.lex
 import ply.yacc
 
 from beancount.query.query_parser import Comparable
 from beancount.core import position
+from beancount.core import data
 from beancount.query import query_parser
 
 
@@ -33,8 +35,8 @@ class EvalFunction(Comparable):
             operand.reset()
 
     def eval_args(self, context):
-        args = [operand(context)
-                for operand in self.operands()]
+        return [operand(context)
+                for operand in self.operands]
 
 
 
@@ -45,6 +47,21 @@ class Length(EvalFunction):
     def __call__(self, posting):
         args = self.eval_args(posting)
         return len(args[0])
+
+class Year(EvalFunction):
+    def __call__(self, posting):
+        args = self.eval_args(posting)
+        return args[0].year
+
+class Month(EvalFunction):
+    def __call__(self, posting):
+        args = self.eval_args(posting)
+        return args[0].month
+
+class Day(EvalFunction):
+    def __call__(self, posting):
+        args = self.eval_args(posting)
+        return args[0].day
 
 class Units(EvalFunction):
     def __call__(self, posting):
@@ -60,6 +77,9 @@ SIMPLE_FUNCTIONS = {
     'length': Length,
     'units': Units,
     'cost': Cost,
+    'year': Year,
+    'month': Month,
+    'day': Day,
     }
 
 
@@ -181,7 +201,7 @@ class FilterEntriesContext(CompilationContext):
     """An execution context that provides access to attributes on Transactions
     and other entry types.
     """
-    context_name = 'from clause'
+    context_name = 'FROM clause'
     columns = {
         'type' : TypeEntryColumn,
         'filename' : FilenameEntryColumn,
@@ -259,7 +279,7 @@ class ChangeColumn(Comparable):
 class FilterPostingsContext(CompilationContext):
     """An execution context that provides access to attributes on Postings.
     """
-    context_name = 'where clause'
+    context_name = 'WHERE clause'
     columns = {
         'type'      : TypeColumn,
         'filename'  : FilenameColumn,
@@ -347,7 +367,7 @@ def compile_expression(expr, xcontext):
 
 
 
-def compile_query(select):
+def compile_select(select):
     """Prepare an AST for a Select statement into a very rudimentary execution tree.
     The execution tree mostly looks much like an AST, but with some nodes
     replaced with knowledge specific to an execution context and eventually some
@@ -362,15 +382,21 @@ def compile_query(select):
     # Process the FROM clause and figure out the execution context for the
     # targets and the where clause.
     from_clause = select.from_clause
-    if isinstance(from_clause, (query_parser.Select, type(None))):
-        c_from = compile_query(from_clause) if from_clause is not None else None
+    if isinstance(from_clause, query_parser.Select):
+        c_from = compile_select(from_clause) if from_clause is not None else None
         xcontext_target = ResultSetContext()
         xcontext_where = ResultSetContext()
 
-    elif isinstance(from_clause, query_parser.FromFilter):
+    elif from_clause is None or isinstance(from_clause, query_parser.FromFilter):
         # Bind the from clause contents.
-        c_expression = compile_expression(from_clause.expression, FilterEntriesContext)
-        c_from = query_parser.FromFilter(c_expression, from_clause.close)
+        xcontext_entries = FilterEntriesContext()
+        if from_clause is not None:
+            c_expression = (compile_expression(from_clause.expression, xcontext_entries)
+                            if from_clause.expression is not None
+                            else None)
+            c_from = query_parser.FromFilter(c_expression, from_clause.close)
+        else:
+            c_from = None
         xcontext_target = TargetsContext()
         xcontext_where = FilterPostingsContext()
 
@@ -381,17 +407,26 @@ def compile_query(select):
     targets = select.targets
     if isinstance(targets, query_parser.Wildcard):
         # Insert the full list of available columns.
-        targets = [q.Target(q.Column(name), None)
+        targets = [query_parser.Target(query_parser.Column(name), None)
                    for name in TargetsContext.columns]
 
+    # Compile targets.
+    c_targets = []
     for target in targets:
-        c_target = compile_expression(target.expression, xcontext_target)
+        c_expr = compile_expression(target.expression, xcontext_target)
+        # FIXME: Find a better way to come up with a decent name.
+        target_name = target.name or re.sub('[^a-z]+', '_',
+                                            str(target.expression).lower()).strip('_')
+        c_targets.append(query_parser.Target(c_expr, target_name))
 
     # Bind the WHERE expression to the execution context.
-    # Note: aggregates are disallowed.
+    # Note: Aggregates are disallowed in this clause.
+    # FIXME: check for this!
+    c_where = (compile_expression(select.where_clause, xcontext_where)
+               if select.where_clause is not None
+               else None)
 
-
-    # Is this a an aggregated query or not?
+    # Is this an aggregated query or not?
 
 
 
@@ -401,20 +436,57 @@ def compile_query(select):
 
 
 
-    print()
-    print()
-    print(select)
-    print()
+    # print()
+    # print()
+    # print(select)
+    # print()
+
+    return query_parser.Select(c_targets,
+                               c_from,
+                               c_where,
+                               select.group_by,
+                               select.order_by,
+                               select.pivot_by,
+                               select.limit,
+                               select.distinct,
+                               select.flatten)
 
 
-
-
-
-def execute_query(select):
+def interpret_select(entries, c_select):
     """Given a compiled select statement, execute the query.
 
     Args:
-      select: An instance of query_parser.Select.
+      entries: A list of directives.
+      c_select: An instance of a compiled Select query, from the parser.
     """
+    # Create a class for the row.
+    Tuple = collections.namedtuple('Tuple',
+                                   [target.name for target in c_select.targets])
+
+    # Filter the entries.
+    if c_select.from_clause:
+        expression = c_select.from_clause.expression
+        filtered_entries = []
+        for entry in entries:
+            if isinstance(entry, data.Transaction):
+                if expression(entry):
+                    filtered_entries.append(entry)
+            else:
+                filtered_entries.append(entry)
+    else:
+        filtered_entries = entries
+
+    # Process all the postings.
+    rows = []
+    expression = c_select.where_clause
+    for entry in filtered_entries:
+        if isinstance(entry, data.Transaction):
+            for posting in entry.postings:
+                if expression is None or expression(posting):
+                    row = Tuple(*[target(posting) for target in c_select.targets])
+                    rows.append(row)
 
     # Flatten if required.
+
+
+    return rows

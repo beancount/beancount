@@ -10,6 +10,7 @@ import traceback
 from os import path
 
 from beancount.query import query_parser
+from beancount.query import query_compile
 from beancount.core import data
 from beancount.reports import table
 
@@ -58,8 +59,19 @@ class BQLShell(cmd.Cmd):
         line = 'SELECT ' + line_rest
         try:
             statement = self.parser.parse(line)
-            run_statement(self.entries, statement)
-        except query_parser.ParseError as exc:
+
+            # FIXME: Make this eventually do more than just select.
+            select = statement
+            c_select = query_compile.compile_select(select)
+            rows = query_compile.interpret_select(self.entries, c_select)
+            if not rows:
+                print("(empty)")
+            else:
+                table_ = table.create_table(rows)
+                table.render_table(table_, sys.stdout, 'text')
+
+        except (query_parser.ParseError,
+                query_compile.CompilationError) as exc:
             print(exc)
         except Exception as exc:
             traceback.print_exc()
@@ -76,13 +88,29 @@ class BQLShell(cmd.Cmd):
         """Debug parser."""
         print("INPUT: {}".format(repr(line)))
         try:
-            result = self.parser.parse(line, True)
-            print(result)
-        except query_parser.ParseError as exc:
+            statement = self.parser.parse(line, True)
+            print(statement)
+        except (query_parser.ParseError,
+                query_compile.CompilationError) as exc:
             print(exc)
         except Exception as exc:
             traceback.print_exc()
-    do_explain = do_parse
+
+    def do_explain(self, line):
+        """Debug compilation."""
+        try:
+            statement = self.parser.parse(line)
+            print(statement)
+
+            # FIXME: Generalize this too.
+            c_select = query_compile.compile_select(statement)
+            print(c_select)
+
+        except (query_parser.ParseError,
+                query_compile.CompilationError) as exc:
+            print(exc)
+        except Exception as exc:
+            traceback.print_exc()
 
     def emptyline(self):
         # Do nothing on an empty line.
@@ -110,50 +138,11 @@ def run_noargs(entries):
     if os.isatty(sys.stdin.fileno()):
         # If we're a TTY, run interactively.
         print("Ready with {} entries.".format(len(entries)))
-        shell.cmdloop()
+        try:
+            shell.cmdloop()
+        except KeyboardInterrupt:
+            print('\nExit')
     else:
         # If we're not a TTY, read the BQL command from standard input.
         script = sys.stdin.read()
         pass ## FIXME: TODO - shell.process_command(script)
-
-
-def run_statement(entries, query):
-    """Process some query statements.
-
-    Args:
-      entries: A list of directives.
-      query: An instance of Query.
-    """
-
-    # Create a class for the row.
-    Tuple = collections.namedtuple('Tuple',
-                                   [target.name for target in query.targets])
-
-    # Filter the entries.
-    if query.entry_filter:
-        expression = query.entry_filter
-        filtered_entries = []
-        for entry in entries:
-            if isinstance(entry, data.Transaction):
-                if expression(entry):
-                    filtered_entries.append(entry)
-            else:
-                filtered_entries.append(entry)
-    else:
-        filtered_entries = entries
-
-    # Process all the postings.
-    rows = []
-    expression = query.posting_filter
-    for entry in filtered_entries:
-        if isinstance(entry, data.Transaction):
-            for posting in entry.postings:
-                if expression(posting):
-                    row = Tuple(*[target(posting) for target in query.targets])
-                    rows.append(row)
-
-    if not rows:
-        print("(empty)")
-    else:
-        table_ = table.create_table(rows)
-        table.render_table(table_, sys.stdout, 'text')

@@ -95,11 +95,11 @@ class BinaryOp(Comparable):
 
 
 class Constant(Comparable):
-    __slots__ = ('constant',)
-    def __init__(self, constant):
-        self.constant = constant
+    __slots__ = ('value',)
+    def __init__(self, value):
+        self.value = value
     def __call__(self, _):
-        return self.operand
+        return self.value
 
 class Not(UnaryOp):
     def __call__(self, context):
@@ -111,7 +111,7 @@ class Equal(BinaryOp):
 
 class ReMatch(BinaryOp):
     def __call__(self, context):
-        return re.match(self.right(context), self.left(context))
+        return re.search(self.right(context), self.left(context))
 
 class And(BinaryOp):
     def __call__(self, context):
@@ -501,3 +501,5 @@ class Parser(Lexer):
 # - support simple boolean expressions in filter expressions, not just equalities and inequalities
 # - support simple mathematical operations, +, - , /.
 # - implement set operations, "in" for sets
+# - implement globbing matches
+# - pipe through a pager

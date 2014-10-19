@@ -22,7 +22,7 @@ class QueryCompilerTestBase(unittest.TestCase):
           The AST.
         """
         statement = self.parser.parse(query.strip())
-        return c.compile_query(statement)
+        return c.compile_select(statement)
 
     def assertCompile(self, expected, query, debug=False):
         """Assert parsed and compiled contents from 'query' is 'expected'.
