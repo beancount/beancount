@@ -97,20 +97,23 @@ class Aggregator(EvalFunction):
 
 class Sum(Aggregator):
     def __call__(self, posting):
-        child_value = self.child(posting)
+        args = self.eval_args(posting)
+        value = args[0]
         if self.state is None:
-            self.state = child_value
+            self.state = value
         else:
-            self.state += child_value
+            self.state += value
 
 class First(Aggregator):
     def __call__(self, posting):
         if self.state is None:
-            self.state = self.child(posting)
+            args = self.eval_args(posting)
+            self.state = args[0]
 
 class Last(Aggregator):
     def __call__(self, posting):
-        self.state = self.child(posting)
+        args = self.eval_args(posting)
+        self.state = args[0]
 
 AGGREGATOR_FUNCTIONS = {
     'sum': Sum,
@@ -173,17 +176,13 @@ class DateEntryColumn(Comparable):
     def __call__(self, entry):
         return entry.date
 
-class YearEntryColumn(Comparable):
-    def __call__(self, entry):
-        return entry.date.year
-
 class FlagEntryColumn(Comparable):
     def __call__(self, entry):
         return entry.flag
 
 class PayeeEntryColumn(Comparable):
     def __call__(self, entry):
-        return entry.payee
+        return entry.payee or ''
 
 class NarrationEntryColumn(Comparable):
     def __call__(self, entry):
@@ -207,7 +206,6 @@ class FilterEntriesContext(CompilationContext):
         'filename' : FilenameEntryColumn,
         'lineno' : LineNoEntryColumn,
         'date' : DateEntryColumn,
-        'year' : YearEntryColumn,
         'flag' : FlagEntryColumn,
         'payee' : PayeeEntryColumn,
         'narration' : NarrationEntryColumn,
@@ -236,17 +234,13 @@ class DateColumn(Comparable):
     def __call__(self, posting):
         return posting.entry.date
 
-class YearColumn(Comparable):
-    def __call__(self, posting):
-        return posting.entry.date.year
-
 class FlagColumn(Comparable):
     def __call__(self, posting):
         return posting.entry.flag
 
 class PayeeColumn(Comparable):
     def __call__(self, posting):
-        return posting.entry.payee
+        return posting.entry.payee or ''
 
 class NarrationColumn(Comparable):
     def __call__(self, posting):
@@ -285,7 +279,6 @@ class FilterPostingsContext(CompilationContext):
         'filename'  : FilenameColumn,
         'lineno'    : LineNoColumn,
         'date'      : DateColumn,
-        'year'      : YearColumn,
         'flag'      : FlagColumn,
         'payee'     : PayeeColumn,
         'narration' : NarrationColumn,
@@ -302,7 +295,7 @@ class TargetsContext(FilterPostingsContext):
     """An execution context that provides access to attributes on Postings.
     """
     context_name = 'targets/column'
-    functions = copy.copy(FilterPostingsContext.columns)
+    functions = copy.copy(FilterPostingsContext.functions)
     functions.update(AGGREGATOR_FUNCTIONS)
 
 
@@ -415,8 +408,10 @@ def compile_select(select):
     for target in targets:
         c_expr = compile_expression(target.expression, xcontext_target)
         # FIXME: Find a better way to come up with a decent name.
-        target_name = target.name or re.sub('[^a-z]+', '_',
-                                            str(target.expression).lower()).strip('_')
+        target_name = target.name
+        if target_name is None:
+            sub_name = re.sub('[^a-z]+', '_',str(target.expression).lower())
+            target_name = re.sub('column', '', sub_name).strip('_')
         c_targets.append(query_parser.Target(c_expr, target_name))
 
     # Bind the WHERE expression to the execution context.
@@ -479,12 +474,17 @@ def interpret_select(entries, c_select):
     # Process all the postings.
     rows = []
     expression = c_select.where_clause
-    for entry in filtered_entries:
-        if isinstance(entry, data.Transaction):
-            for posting in entry.postings:
-                if expression is None or expression(posting):
-                    row = Tuple(*[target(posting) for target in c_select.targets])
-                    rows.append(row)
+    try:
+        for entry in filtered_entries:
+            if isinstance(entry, data.Transaction):
+                for posting in entry.postings:
+                    if expression is None or expression(posting):
+                        row = Tuple(*[target(posting) for target in c_select.targets])
+                        rows.append(row)
+                        if c_select.limit and len(rows) == c_select.limit:
+                            raise StopIteration
+    except StopIteration:
+        pass
 
     # Flatten if required.
 

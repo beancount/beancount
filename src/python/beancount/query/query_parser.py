@@ -506,31 +506,22 @@ class Parser(Lexer):
 
 
 # FIXME:
-# - Add date data type as literal
 # - Create a RowContext object that provides all the rows, so that we can
-# - Make column a list of the same type as the postings filter expression
-# Compilation:
-# - Identify functions
+# - Add year month date as columns, but should not be included in * default
 # - Add date() function to create dates from a string
-# - Check data types
-#   actually evaluate the SQL against generic rows of datasets.
-# - Move all the functions to another module, make this as generic SQL as can possibly be
-# - begin implementing unit tests
-# - tokenize and parse all data types, including dates
-# - differentiate clearly between entry and posting columns
-# - differentiate clearly between entry and posting functions
-# - implement inequalities and regexp matching
-# - implement aggregation
-# - render with custom routine, not beancount.reports.table
-# - deal with rendering on multiple lines, e.g., for inventories with multiple positions
-# - make it possible to run from the command-line (batch)
-# - check data types for functions
-# - invoke a pager when long output
-# - implement set variables for format and verbosity and display precision and what-not
-# - implement JOURNAL account FROM
-# - implement BALANCES FROM
-# - find a way to pipe into treeify
-# - find a way to trigger a close in the FROM clause
+# - Check data types for functions
+# - Actually allow evaluating the SQL against generic rows of datasets.
+# - Implement aggregation
+# - Render with custom routine, not beancount.reports.table
+# - Deal with rendering on multiple lines, e.g., for inventories with multiple positions
+# - Make it possible to run from the command-line (batch)
+# - Invoke a pager when long output
+# - Implement set variables for format and verbosity and display precision and what-not
+# - Implement JOURNAL account FROM
+# - Implement BALANCES FROM
+# - pipe through a pager
+# - Find a way to pipe into treeify
+# - Find a way to trigger a close in the FROM clause
 # - implement order by
 # - implement limit
 # - implement distinct
@@ -538,4 +529,4 @@ class Parser(Lexer):
 # - support simple mathematical operations, +, - , /.
 # - implement set operations, "in" for sets
 # - implement globbing matches
-# - pipe through a pager
+# - case-sensitivity of regexps?
