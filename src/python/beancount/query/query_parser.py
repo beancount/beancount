@@ -18,7 +18,7 @@ from beancount.core import position
 # A 'select' query action.
 Select = collections.namedtuple(
     'Select', ('targets from_clause where_clause '
-               'group_by order_by pivot_by limit flatten'))
+               'group_by order_by pivot_by limit distinct flatten'))
 
 # A wildcard node, to appear in Select.columns.
 Wildcard = collections.namedtuple('Wildcard', '')
@@ -134,7 +134,7 @@ class Lexer:
     keywords = {
         'SELECT', 'AS', 'FROM', 'WHERE', 'CLOSE', 'ON',
         'GROUP', 'BY', 'HAVING', 'ORDER', 'DESC', 'ASC', 'PIVOT',
-        'LIMIT', 'FLATTEN',
+        'LIMIT', 'FLATTEN', 'DISTINCT',
         'AND', 'OR', 'NOT', 'TRUE', 'FALSE',
         'NULL',
     }
@@ -251,10 +251,17 @@ class Parser(Lexer):
 
     def p_select_statement(self, p):
         """
-        select_statement : SELECT target_spec from where \
+        select_statement : SELECT distinct target_spec from where \
                            group_by order_by pivot_by limit flatten
         """
-        p[0] = Select(p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9])
+        p[0] = Select(p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[2], p[10])
+
+    def p_distinct(self, p):
+        """
+        distinct : empty
+                 | DISTINCT
+        """
+        p[0] = True if p[1] == 'DISTINCT' else None
 
     def p_target_spec(self, p):
         """
