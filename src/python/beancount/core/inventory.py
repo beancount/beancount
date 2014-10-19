@@ -305,12 +305,17 @@ class Inventory:
         """Add all the positions of another Inventory instance to this one.
 
         Args:
-          other: An instance of Inventory to add to this one.
+          other: An instance of Inventory to add to this one, or an instance of
+            Position.
         Returns:
           This inventory, modified.
+
         """
-        for position in other.positions:
-            self.add_position(position)
+        if isinstance(other, Inventory):
+            for position in other.positions:
+                self.add_position(position)
+        else:
+            self.add_position(other)
         return self
 
     __iadd__ = update

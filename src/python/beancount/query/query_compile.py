@@ -6,6 +6,7 @@ against a list of entries.
 """
 import collections
 import copy
+import datetime
 import itertools
 import io
 import re
@@ -14,6 +15,7 @@ import ply.lex
 import ply.yacc
 
 from beancount.core import position
+from beancount.core import inventory
 from beancount.core import data
 from beancount.query import query_parser
 
@@ -28,10 +30,13 @@ class EvalNode:
     __slots__ = ()
 
     def __eq__(self, other):
-        if not isinstance(other, type(self)):
-            return False
-        return all(getattr(self, attribute) == getattr(other, attribute)
-                   for attribute in self.__slots__)
+        """Override the equality operator to compare the data type and a all attributes
+        of this node. This is used by tests for comparing nodes.
+        """
+        return (isinstance(other, type(self))
+                and all(
+                    getattr(self, attribute) == getattr(other, attribute)
+                    for attribute in self.__slots__))
 
     def __str__(self):
         return "{}({})".format(type(self).__name__,
@@ -42,6 +47,20 @@ class EvalNode:
     def reset(self):
         """Reset the state of the aggregator functions."""
         raise NotImplementedError
+
+    def visit(self, visitor):
+        """In-order visitor.
+        Args:
+          visitor: A callable that will get invoked with this instance.
+        """
+        try:
+            visitor(self)
+            for attr in self.__slots__:
+                child = getattr(self, attr)
+                if isinstance(child, EvalNode):
+                    child.visit(visitor)
+        except StopIteration:
+            pass
 
 
 class EvalUnaryOp(EvalNode):
@@ -98,19 +117,6 @@ class EvalOr(EvalBinaryOp):
     def __call__(self, context):
         return (self.left(context) or self.right(context))
 
-class EvalFunction(EvalNode):
-    __slots__ = ('operands',)
-    def __init__(self, operands):
-        self.operands = operands or []
-
-    def reset(self):
-        for operand in self.operands:
-            operand.reset()
-
-    def eval_args(self, context):
-        return [operand(context)
-                for operand in self.operands]
-
 # Interpreter nodes.
 OPERATORS = {
     query_parser.Constant: EvalConstant,
@@ -123,35 +129,74 @@ OPERATORS = {
 
 
 
+ANY = object()
+
+class EvalFunction(EvalNode):
+    """Base class for all function objects."""
+    __slots__ = ('operands',)
+
+    # The types of the input and output arguments of the function.
+    # This may be 'ANY'.
+    __inargs__ = ()
+    __outarg__ = ()
+
+    def __init__(self, operands):
+        self.operands = operands or []
+
+    def reset(self):
+        for operand in self.operands:
+            operand.reset()
+
+    def eval_args(self, context):
+        return [operand(context)
+                for operand in self.operands]
+
+
 # Simple (i.e., not aggregating) function objects. These functionals maintain no
 # state.
 
 class Length(EvalFunction):
+    __inargs__ = (list, set,)
+    __outarg__ = int
     def __call__(self, posting):
         args = self.eval_args(posting)
         return len(args[0])
 
+# Operations on dates.
+
 class Year(EvalFunction):
+    __inargs__ = (datetime.date,)
+    __outarg__ = int
     def __call__(self, posting):
         args = self.eval_args(posting)
         return args[0].year
 
 class Month(EvalFunction):
+    __inargs__ = (datetime.date,)
+    __outarg__ = int
     def __call__(self, posting):
         args = self.eval_args(posting)
         return args[0].month
 
 class Day(EvalFunction):
+    __inargs__ = (datetime.date,)
+    __outarg__ = int
     def __call__(self, posting):
         args = self.eval_args(posting)
         return args[0].day
 
+# Operation on inventories.
+
 class Units(EvalFunction):
+    __inargs__ = (inventory.Inventory,)
+    __outarg__ = position.Position
     def __call__(self, posting):
         args = self.eval_args(posting)
         return args[0].get_amount()
 
 class Cost(EvalFunction):
+    __inargs__ = (inventory.Inventory,)
+    __outarg__ = position.Position
     def __call__(self, posting):
         args = self.eval_args(posting)
         return args[0].get_cost()
@@ -170,7 +215,7 @@ SIMPLE_FUNCTIONS = {
 # Aggregating functions. These instances themselves both make the computation
 # and manage state for a single iteration.
 
-class Aggregator(EvalFunction):
+class EvalAggregator(EvalFunction):
     def __init__(self, operands):
         super().__init__(operands)
         self.reset()
@@ -178,22 +223,30 @@ class Aggregator(EvalFunction):
     def reset(self):
         self.state = None
 
-class Sum(Aggregator):
+class Sum(EvalAggregator):
+    __inargs__ = (ANY,)
+    __outarg__ = ANY
     def __call__(self, posting):
         args = self.eval_args(posting)
         value = args[0]
         if self.state is None:
-            self.state = value
-        else:
-            self.state += value
+            if isinstance(value, position.Position):
+                self.state = inventory.Inventory()
+            else:
+                self.state = type(value)()
+        self.state += value
 
-class First(Aggregator):
+class First(EvalAggregator):
+    __inargs__ = (ANY,)
+    __outarg__ = ANY
     def __call__(self, posting):
         if self.state is None:
             args = self.eval_args(posting)
             self.state = args[0]
 
-class Last(Aggregator):
+class Last(EvalAggregator):
+    __inargs__ = (ANY,)
+    __outarg__ = ANY
     def __call__(self, posting):
         args = self.eval_args(posting)
         self.state = args[0]
@@ -417,6 +470,10 @@ def compile_expression(expr, xcontext):
         c_operands = [compile_expression(operand, xcontext)
                       for operand in expr.operands]
         c_expr = xcontext.get_function(expr.fname, c_operands)
+        if len(c_operands) != len(c_expr.__inargs__):
+            raise CompilationError(
+                "Invalid number of arguments for {}: {} expected {}".format(
+                    expr.fname, len(c_operands), len(c_expr.__inargs__)))
 
     elif isinstance(expr, query_parser.UnaryOp):
         eval_type = OPERATORS[type(expr)]
@@ -433,16 +490,24 @@ def compile_expression(expr, xcontext):
     else:
         assert False, "Invalid expression to compile: {}".format(expr)
 
-    # Check data types.
-    # FIXME: TODO
-
-    # Check arity of functions.
-    # FIXME: TODO
-
-    # Establish whether this is an operation that operates on aggregates.
-
     return c_expr
 
+
+def is_aggregate(node):
+    """Return true if the given node is derived from an aggregate.
+
+    Args:
+      node: An instance of EvalNode.
+    Returns:
+      A boolean.
+    """
+    sentinel = []
+    def visitor(node):
+        if isinstance(node, EvalAggregator):
+            sentinel.append(True)
+            raise StopIteration
+    node.visit(visitor)
+    return bool(sentinel)
 
 
 def compile_select(select):
@@ -507,19 +572,16 @@ def compile_select(select):
                else None)
 
     # Is this an aggregated query or not?
+    is_query_aggregate = any(is_aggregate(c_target.expression)
+                             for c_target in c_targets)
 
-
+    print('is_query_aggregate', is_query_aggregate)
+    # FIXME: Also check for the presence of a gruup-by clause
 
     # Check that the group-by column references are valid w.r.t. aggregates.
     # Check that the pivot-by column references are valid.
     # Check that the order-by column references are valid.
 
-
-
-    # print()
-    # print()
-    # print(select)
-    # print()
 
     return query_parser.Select(c_targets,
                                c_from,
@@ -576,3 +638,7 @@ def interpret_select(entries, c_select):
 
 
     return rows
+
+
+# FIXME: Add checking of datatypes. Something simple is better than nothing, but
+# something, please, will avoid many types of user mistakes.

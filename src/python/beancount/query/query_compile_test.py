@@ -80,6 +80,47 @@ class TestCompileExpression(unittest.TestCase):
                          c.compile_expression(q.Constant(D(17)), c.TargetsContext()))
 
 
+class TestCompileExpressionDataTypes(unittest.TestCase):
+
+    def test_expr_function_arity(self):
+        # Compile with the correct number of arguments.
+        c.compile_expression(q.Function('sum', [q.Column('date')]),
+                             c.TargetsContext())
+
+        # Compile with an incorrect number of arguments.
+        with self.assertRaises(c.CompilationError):
+            c.compile_expression(q.Function('sum', [q.Column('date'),
+                                                    q.Column('account')]),
+                                 c.TargetsContext())
+
+
+class TestCompileIsAggregate(unittest.TestCase):
+
+    def test_aggr_simple(self):
+        self.assertFalse(c.is_aggregate(
+            c.ChangeColumn()))
+        self.assertFalse(c.is_aggregate(
+            c.Length(c.AccountColumn())))
+        self.assertTrue(c.is_aggregate(
+            c.Sum(c.ChangeColumn())))
+
+    def test_aggr_derived(self):
+        self.assertFalse(c.is_aggregate(
+            c.EvalAnd(
+                c.EvalEqual(c.ChangeColumn(), c.EvalConstant(42)),
+                c.EvalOr(
+                    c.EvalNot(c.EvalEqual(c.DateColumn(),
+                                          c.EvalConstant(datetime.date(2014, 1, 1)))),
+                    c.EvalConstant(False)))))
+
+        self.assertTrue(c.is_aggregate(
+            c.EvalAnd(
+                c.EvalEqual(c.ChangeColumn(), c.EvalConstant(42)),
+                c.EvalOr(
+                    c.EvalNot(c.EvalEqual(c.DateColumn(),
+                                          c.EvalConstant(datetime.date(2014, 1, 1)))),
+                    # Aggregation node deep in the tree.
+                    c.Sum(c.EvalConstant(1))))))
 
 
 
