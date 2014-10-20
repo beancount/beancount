@@ -2,6 +2,9 @@ import datetime
 import unittest
 
 from beancount.core.amount import D
+from beancount.core.amount import Decimal
+from beancount.core import inventory
+from beancount.core import position
 from beancount.query import query_parser as q
 from beancount.query import query_compile as c
 
@@ -84,7 +87,7 @@ class TestCompileExpressionDataTypes(unittest.TestCase):
 
     def test_expr_function_arity(self):
         # Compile with the correct number of arguments.
-        c.compile_expression(q.Function('sum', [q.Column('date')]),
+        c.compile_expression(q.Function('sum', [q.Column('number')]),
                              c.TargetsContext())
 
         # Compile with an incorrect number of arguments.
@@ -100,9 +103,9 @@ class TestCompileIsAggregate(unittest.TestCase):
         self.assertFalse(c.is_aggregate(
             c.ChangeColumn()))
         self.assertFalse(c.is_aggregate(
-            c.Length(c.AccountColumn())))
+            c.Length([c.AccountColumn()])))
         self.assertTrue(c.is_aggregate(
-            c.Sum(c.ChangeColumn())))
+            c.Sum([c.ChangeColumn()])))
 
     def test_aggr_derived(self):
         self.assertFalse(c.is_aggregate(
@@ -120,20 +123,130 @@ class TestCompileIsAggregate(unittest.TestCase):
                     c.EvalNot(c.EvalEqual(c.DateColumn(),
                                           c.EvalConstant(datetime.date(2014, 1, 1)))),
                     # Aggregation node deep in the tree.
-                    c.Sum(c.EvalConstant(1))))))
+                    c.Sum([c.EvalConstant(1)])))))
 
 
+class TestCompileDataTypes(unittest.TestCase):
 
+    def test_compile_EvalConstant(self):
+        c_int = c.EvalConstant(17)
+        self.assertEqual(int, c_int.dtype)
 
+        c_decimal = c.EvalConstant(D('7364.35'))
+        self.assertEqual(Decimal, c_decimal.dtype)
 
-# class TestCompile(QueryParserTestBase):
+        c_str = c.EvalConstant("Assets:Checking")
+        self.assertEqual(str, c_str.dtype)
 
-#     def test_wildcard(self):
-#         self.assertCompile(None, """
-#           SELECT * ;
-#         """)
+    def test_compile_EvalNot(self):
+        c_not = c.EvalNot(c.EvalConstant(17))
+        self.assertEqual(bool, c_not.dtype)
 
-#     def test_simple(self):
-#         self.assertCompile(None, """
-#           SELECT length(a) ;
-#         """)
+    def test_compile_EvalEqual(self):
+        c_equal = c.EvalEqual(c.EvalConstant(17), c.EvalConstant(18))
+        self.assertEqual(bool, c_equal.dtype)
+
+    def test_compile_EvalMatch(self):
+        with self.assertRaises(c.CompilationError):
+            c.EvalMatch(c.EvalConstant('testing'), c.EvalConstant(18))
+        c_equal = c.EvalMatch(c.EvalConstant('testing'), c.EvalConstant('test.*'))
+        self.assertEqual(bool, c_equal.dtype)
+
+    def test_compile_EvalAnd(self):
+        c_and = c.EvalAnd(c.EvalConstant(17), c.EvalConstant(18))
+        self.assertEqual(bool, c_and.dtype)
+
+    def test_compile_EvalOr(self):
+        c_or = c.EvalOr(c.EvalConstant(17), c.EvalConstant(18))
+        self.assertEqual(bool, c_or.dtype)
+
+    def test_compile_EvalLength(self):
+        with self.assertRaises(c.CompilationError):
+            c.Length([c.EvalConstant(17)])
+        c_length = c.Length([c.EvalConstant('testing')])
+        self.assertEqual(int, c_length.dtype)
+
+    def test_compile_EvalYear(self):
+        with self.assertRaises(c.CompilationError):
+            c.Year([c.EvalConstant(17)])
+        c_year = c.Year([c.EvalConstant(datetime.date.today())])
+        self.assertEqual(int, c_year.dtype)
+
+    def test_compile_EvalMonth(self):
+        with self.assertRaises(c.CompilationError):
+            c.Month([c.EvalConstant(17)])
+        c_month = c.Month([c.EvalConstant(datetime.date.today())])
+        self.assertEqual(int, c_month.dtype)
+
+    def test_compile_EvalDay(self):
+        with self.assertRaises(c.CompilationError):
+            c.Day([c.EvalConstant(17)])
+        c_day = c.Day([c.EvalConstant(datetime.date.today())])
+        self.assertEqual(int, c_day.dtype)
+
+    def test_compile_EvalUnits(self):
+        with self.assertRaises(c.CompilationError):
+            c.Units([c.EvalConstant(17)])
+        c_units = c.Units([c.EvalConstant(inventory.Inventory())])
+        self.assertEqual(inventory.Inventory, c_units.dtype)
+        c_units = c.Units([c.EvalConstant(position.Position.from_string('100 USD'))])
+        self.assertEqual(inventory.Inventory, c_units.dtype)
+
+    def test_compile_EvalCost(self):
+        with self.assertRaises(c.CompilationError):
+            c.Cost([c.EvalConstant(17)])
+        c_cost = c.Cost([c.EvalConstant(inventory.Inventory())])
+        self.assertEqual(inventory.Inventory, c_cost.dtype)
+        c_cost = c.Cost([c.EvalConstant(position.Position.from_string('100 USD'))])
+        self.assertEqual(inventory.Inventory, c_cost.dtype)
+
+    def test_compile_EvalSum(self):
+        with self.assertRaises(c.CompilationError):
+            c.Sum([c.EvalConstant('testing')])
+        c_sum = c.Sum([c.EvalConstant(17)])
+        self.assertEqual(int, c_sum.dtype)
+        c_sum = c.Sum([c.EvalConstant(D('17.'))])
+        self.assertEqual(Decimal, c_sum.dtype)
+
+    def test_compile_EvalCount(self):
+        c_count = c.Count([c.EvalConstant(17)])
+        self.assertEqual(int, c_count.dtype)
+
+    def test_compile_EvalFirst(self):
+        c_first = c.First([c.EvalConstant(17.)])
+        self.assertEqual(float, c_first.dtype)
+
+    def test_compile_EvalLast(self):
+        c_last = c.Last([c.EvalConstant(17.)])
+        self.assertEqual(float, c_last.dtype)
+
+    def test_compile_columns(self):
+        class_types = [
+            # Postings accessors.
+            (c.TypeColumn, str),
+            (c.FilenameColumn, str),
+            (c.LineNoColumn, int),
+            (c.DateColumn, datetime.date),
+            (c.FlagColumn, str),
+            (c.PayeeColumn, str),
+            (c.NarrationColumn, str),
+            (c.TagsColumn, set),
+            (c.LinksColumn, set),
+            (c.AccountColumn, str),
+            (c.NumberColumn, Decimal),
+            (c.CurrencyColumn, str),
+            (c.ChangeColumn, position.Position),
+            # Entries accessors.
+            (c.TypeEntryColumn, str),
+            (c.FilenameEntryColumn, str),
+            (c.LineNoEntryColumn, int),
+            (c.DateEntryColumn, datetime.date),
+            (c.FlagEntryColumn, str),
+            (c.PayeeEntryColumn, str),
+            (c.NarrationEntryColumn, str),
+            (c.TagsEntryColumn, set),
+            (c.LinksEntryColumn, set),
+            ]
+        for cls, dtype in class_types:
+            instance = cls()
+            self.assertEqual(dtype, instance.dtype)

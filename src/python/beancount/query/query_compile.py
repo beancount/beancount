@@ -1,8 +1,8 @@
-"""Compilation/translation for the query language AST.
+"""Interpreter for the query language's AST.
 
-This code accepts the abstract syntax tree produced by the query parser and
-resolves the column and function names, and prepares execution state to be run
-against a list of entries.
+This code accepts the abstract syntax tree produced by the query parser,
+resolves the column and function names, compiles and interpreter and prepares a
+query to be run against a list of entries.
 """
 import collections
 import copy
@@ -14,6 +14,7 @@ import re
 import ply.lex
 import ply.yacc
 
+from beancount.core.amount import Decimal
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import data
@@ -27,7 +28,13 @@ class CompilationError(Exception):
 
 
 class EvalNode:
-    __slots__ = ()
+    __slots__ = ('dtype',)
+
+    def __init__(self, dtype):
+        # The output data type produce by this node. This is intended to be
+        # inferred by the nodes on construction.
+        assert dtype is not None, "Internal erro: Invalid dtype, must be deduced."
+        self.dtype = dtype
 
     def __eq__(self, other):
         """Override the equality operator to compare the data type and a all attributes
@@ -44,10 +51,6 @@ class EvalNode:
                                          for child in self.__slots__))
     __repr__ = __str__
 
-    def reset(self):
-        """Reset the state of the aggregator functions."""
-        raise NotImplementedError
-
     def visit(self, visitor):
         """In-order visitor.
         Args:
@@ -63,30 +66,27 @@ class EvalNode:
             pass
 
 
+
 class EvalUnaryOp(EvalNode):
     __slots__ = ('operand',)
 
-    def __init__(self, operand):
+    def __init__(self, operand, dtype):
+        super().__init__(dtype)
         self.operand = operand
-
-    def reset(self):
-        self.operand.reset()
 
 class EvalBinaryOp(EvalNode):
     __slots__ = ('left', 'right')
 
-    def __init__(self, left, right):
+    def __init__(self, left, right, dtype):
+        super().__init__(dtype)
         self.left = left
         self.right = right
-
-    def reset(self):
-        self.left.reset()
-        self.right.reset()
 
 class EvalConstant(EvalNode):
     __slots__ = ('value',)
 
     def __init__(self, value):
+        super().__init__(type(value))
         self.value = value
 
     def __call__(self, _):
@@ -94,25 +94,44 @@ class EvalConstant(EvalNode):
 
 class EvalNot(EvalUnaryOp):
 
+    def __init__(self, operand):
+        super().__init__(operand, bool)
+
     def __call__(self, context):
         return not self.operand(context)
 
 class EvalEqual(EvalBinaryOp):
+
+    def __init__(self, left, right):
+        super().__init__(left, right, bool)
 
     def __call__(self, context):
         return self.left(context) == self.right(context)
 
 class EvalMatch(EvalBinaryOp):
 
+    def __init__(self, left, right):
+        super().__init__(left, right, bool)
+        if right.dtype != str:
+            raise CompilationError(
+                "Invalid data type for RHS of match: '{}'; must be a string".format(
+                    right.dtype))
+
     def __call__(self, context):
         return re.search(self.right(context), self.left(context))
 
 class EvalAnd(EvalBinaryOp):
 
+    def __init__(self, left, right):
+        super().__init__(left, right, bool)
+
     def __call__(self, context):
         return (self.left(context) and self.right(context))
 
 class EvalOr(EvalBinaryOp):
+
+    def __init__(self, left, right):
+        super().__init__(left, right, bool)
 
     def __call__(self, context):
         return (self.left(context) or self.right(context))
@@ -135,17 +154,26 @@ class EvalFunction(EvalNode):
     """Base class for all function objects."""
     __slots__ = ('operands',)
 
-    # The types of the input and output arguments of the function.
-    # This may be 'ANY'.
-    __inargs__ = ()
-    __outarg__ = ()
+    # Type constraints on the input arguments.
+    __intypes__ = []
 
-    def __init__(self, operands):
-        self.operands = operands or []
+    def __init__(self, operands, dtype):
+        super().__init__(dtype)
+        assert isinstance(operands, list), "Internal error: invalid type for operands."
+        self.operands = operands
 
-    def reset(self):
-        for operand in self.operands:
-            operand.reset()
+        # Check the data types
+        if len(operands) != len(self.__intypes__):
+            raise CompilationError(
+                "Invalid number of arguments for {}: found {} expected {}".format(
+                    type(self).__name__, len(operands), len(self.__intypes__)))
+
+        # Check each of the types.
+        for index, (operand, intype) in enumerate(zip(operands, self.__intypes__)):
+            if not issubclass(operand.dtype, intype):
+                raise CompilationError(
+                    "Invalid type for argument {} of {}: found {} expected {}".format(
+                        index, type(self).__name__, operand.dtype, intype))
 
     def eval_args(self, context):
         return [operand(context)
@@ -156,8 +184,11 @@ class EvalFunction(EvalNode):
 # state.
 
 class Length(EvalFunction):
-    __inargs__ = (list, set,)
-    __outarg__ = int
+    __intypes__ = [(list, set, str)]
+
+    def __init__(self, operands):
+        super().__init__(operands, int)
+
     def __call__(self, posting):
         args = self.eval_args(posting)
         return len(args[0])
@@ -165,22 +196,31 @@ class Length(EvalFunction):
 # Operations on dates.
 
 class Year(EvalFunction):
-    __inargs__ = (datetime.date,)
-    __outarg__ = int
+    __intypes__ = [datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, int)
+
     def __call__(self, posting):
         args = self.eval_args(posting)
         return args[0].year
 
 class Month(EvalFunction):
-    __inargs__ = (datetime.date,)
-    __outarg__ = int
+    __intypes__ = [datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, int)
+
     def __call__(self, posting):
         args = self.eval_args(posting)
         return args[0].month
 
 class Day(EvalFunction):
-    __inargs__ = (datetime.date,)
-    __outarg__ = int
+    __intypes__ = [datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, int)
+
     def __call__(self, posting):
         args = self.eval_args(posting)
         return args[0].day
@@ -188,15 +228,21 @@ class Day(EvalFunction):
 # Operation on inventories.
 
 class Units(EvalFunction):
-    __inargs__ = (inventory.Inventory,)
-    __outarg__ = position.Position
+    __intypes__ = [(position.Position, inventory.Inventory)]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
     def __call__(self, posting):
         args = self.eval_args(posting)
         return args[0].get_amount()
 
 class Cost(EvalFunction):
-    __inargs__ = (inventory.Inventory,)
-    __outarg__ = position.Position
+    __intypes__ = [(position.Position, inventory.Inventory)]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
     def __call__(self, posting):
         args = self.eval_args(posting)
         return args[0].get_cost()
@@ -216,16 +262,16 @@ SIMPLE_FUNCTIONS = {
 # and manage state for a single iteration.
 
 class EvalAggregator(EvalFunction):
-    def __init__(self, operands):
-        super().__init__(operands)
-        self.reset()
+    "Base class for all aggregator evaluator types."
 
-    def reset(self):
-        self.state = None
 
 class Sum(EvalAggregator):
-    __inargs__ = (ANY,)
-    __outarg__ = ANY
+    # FIXME: Not sure we should accept a position.
+    __intypes__ = [(int, float, Decimal, position.Position, inventory.Inventory)]
+
+    def __init__(self, operands):
+        super().__init__(operands, operands[0].dtype)
+
     def __call__(self, posting):
         args = self.eval_args(posting)
         value = args[0]
@@ -236,23 +282,41 @@ class Sum(EvalAggregator):
                 self.state = type(value)()
         self.state += value
 
+class Count(EvalAggregator):
+    __intypes__ = [object]
+
+    def __init__(self, operands):
+        super().__init__(operands, int)
+
+    def __call__(self, posting):
+        if self.state is None:
+            self.state = 0
+        self.state += 1
+
 class First(EvalAggregator):
-    __inargs__ = (ANY,)
-    __outarg__ = ANY
+    __intypes__ = [object]
+
+    def __init__(self, operands):
+        super().__init__(operands, operands[0].dtype)
+
     def __call__(self, posting):
         if self.state is None:
             args = self.eval_args(posting)
             self.state = args[0]
 
 class Last(EvalAggregator):
-    __inargs__ = (ANY,)
-    __outarg__ = ANY
+    __intypes__ = [object]
+
+    def __init__(self, operands):
+        super().__init__(operands, operands[0].dtype)
+
     def __call__(self, posting):
         args = self.eval_args(posting)
         self.state = args[0]
 
 AGGREGATOR_FUNCTIONS = {
     'sum': Sum,
+    'count': Count,
     'first': First,
     'last': Last,
     }
@@ -297,38 +361,65 @@ class CompilationContext:
 # Column accessors for entries.
 
 class TypeEntryColumn(EvalNode):
+    def __init__(self):
+        super().__init__(str)
+
     def __call__(self, entry):
         return type(entry).__name__
 
 class FilenameEntryColumn(EvalNode):
+    def __init__(self):
+        super().__init__(str)
+
     def __call__(self, entry):
         return entry.source.filename
 
 class LineNoEntryColumn(EvalNode):
+    def __init__(self):
+        super().__init__(int)
+
     def __call__(self, entry):
         return entry.source.lineno
 
 class DateEntryColumn(EvalNode):
+    def __init__(self):
+        super().__init__(datetime.date)
+
     def __call__(self, entry):
         return entry.date
 
 class FlagEntryColumn(EvalNode):
+    def __init__(self):
+        super().__init__(str)
+
     def __call__(self, entry):
         return entry.flag
 
 class PayeeEntryColumn(EvalNode):
+    def __init__(self):
+        super().__init__(str)
+
     def __call__(self, entry):
         return entry.payee or ''
 
 class NarrationEntryColumn(EvalNode):
+    def __init__(self):
+        super().__init__(str)
+
     def __call__(self, entry):
         return entry.narration
 
 class TagsEntryColumn(EvalNode):
+    def __init__(self):
+        super().__init__(set)
+
     def __call__(self, entry):
         return entry.tags
 
 class LinksEntryColumn(EvalNode):
+    def __init__(self):
+        super().__init__(set)
+
     def __call__(self, entry):
         return entry.links
 
@@ -355,54 +446,93 @@ class FilterEntriesContext(CompilationContext):
 # Column accessors for postings.
 
 class TypeColumn(EvalNode):
+    def __init__(self):
+        super().__init__(str)
+
     def __call__(self, posting):
         return type(posting.entry).__name__
 
 class FilenameColumn(EvalNode):
+    def __init__(self):
+        super().__init__(str)
+
     def __call__(self, posting):
         return posting.entry.source.filename
 
 class LineNoColumn(EvalNode):
+    def __init__(self):
+        super().__init__(int)
+
     def __call__(self, posting):
         return posting.entry.source.lineno
 
 class DateColumn(EvalNode):
+    def __init__(self):
+        super().__init__(datetime.date)
+
     def __call__(self, posting):
         return posting.entry.date
 
 class FlagColumn(EvalNode):
+    def __init__(self):
+        super().__init__(str)
+
     def __call__(self, posting):
         return posting.entry.flag
 
 class PayeeColumn(EvalNode):
+    def __init__(self):
+        super().__init__(str)
+
     def __call__(self, posting):
         return posting.entry.payee or ''
 
 class NarrationColumn(EvalNode):
+    def __init__(self):
+        super().__init__(str)
+
     def __call__(self, posting):
         return posting.entry.narration
 
 class TagsColumn(EvalNode):
+    def __init__(self):
+        super().__init__(set)
+
     def __call__(self, posting):
         return posting.entry.tags
 
 class LinksColumn(EvalNode):
+    def __init__(self):
+        super().__init__(set)
+
     def __call__(self, posting):
         return posting.entry.links
 
 class AccountColumn(EvalNode):
+    def __init__(self):
+        super().__init__(str)
+
     def __call__(self, posting):
         return posting.account
 
 class NumberColumn(EvalNode):
+    def __init__(self):
+        super().__init__(Decimal)
+
     def __call__(self, posting):
         return posting.position.number
 
 class CurrencyColumn(EvalNode):
+    def __init__(self):
+        super().__init__(str)
+
     def __call__(self, posting):
         return posting.position.lot.currency
 
 class ChangeColumn(EvalNode):
+    def __init__(self):
+        super().__init__(position.Position)
+
     def __call__(self, posting):
         return posting.position
 
@@ -436,7 +566,7 @@ class TargetsContext(FilterPostingsContext):
 
 
 
-class AttributeColumn(query_parser.Column):
+class AttributeColumn(EvalNode):
     def __call__(self, row):
         return getattr(row, self.name)
 
@@ -448,6 +578,7 @@ class ResultSetContext(CompilationContext):
     def get_column(self, name):
         """Override the column getter to provide a single attribute getter.
         """
+        # FIXME: How do we figure out the data type here? We need the context.
         return AttributeColumn(name)
 
 
@@ -470,18 +601,18 @@ def compile_expression(expr, xcontext):
         c_operands = [compile_expression(operand, xcontext)
                       for operand in expr.operands]
         c_expr = xcontext.get_function(expr.fname, c_operands)
-        if len(c_operands) != len(c_expr.__inargs__):
-            raise CompilationError(
-                "Invalid number of arguments for {}: {} expected {}".format(
-                    expr.fname, len(c_operands), len(c_expr.__inargs__)))
+        # if len(c_operands) != len(c_expr.__intypes__):
+        #     raise CompilationError(
+        #         "Invalid number of arguments for {}: {} expected {}".format(
+        #             expr.fname, len(c_operands), len(c_expr.__intypes__)))
 
     elif isinstance(expr, query_parser.UnaryOp):
-        eval_type = OPERATORS[type(expr)]
-        c_expr = eval_type(compile_expression(expr.operand, xcontext))
+        node_type = OPERATORS[type(expr)]
+        c_expr = node_type(compile_expression(expr.operand, xcontext))
 
     elif isinstance(expr, query_parser.BinaryOp):
-        eval_type = OPERATORS[type(expr)]
-        c_expr = eval_type(compile_expression(expr.left, xcontext),
+        node_type = OPERATORS[type(expr)]
+        c_expr = node_type(compile_expression(expr.left, xcontext),
                            compile_expression(expr.right, xcontext))
 
     elif isinstance(expr, query_parser.Constant):
@@ -508,6 +639,35 @@ def is_aggregate(node):
             raise StopIteration
     node.visit(visitor)
     return bool(sentinel)
+
+
+
+
+
+
+def infer_types(node):
+    """Infer and verify the data types for the given expression.
+
+    Args:
+      node: An instance of EvalNode.
+    Returns:
+      A pair of
+        datatype: The Python type for the data returned by the column.
+        is_aggregate: A boolean, true if this expression contains an aggregate.
+    """
+
+
+
+# def infer_node_types(node):
+
+
+
+
+
+
+
+
+
 
 
 def compile_select(select):
@@ -571,16 +731,30 @@ def compile_select(select):
                if select.where_clause is not None
                else None)
 
-    # Is this an aggregated query or not?
-    is_query_aggregate = any(is_aggregate(c_target.expression)
-                             for c_target in c_targets)
+    # Check that aggregations of aggregations are not possible.
 
-    print('is_query_aggregate', is_query_aggregate)
+
+
+    # Is this an aggregated query or not?
+
+    ##is_query_aggregate = any(is_aggregate(c_target.expression)
+    ##                         for c_target in c_targets)
+    ##print('is_query_aggregate', is_query_aggregate)
+
+    # for c_target in c_targets:
+    #     print(c_target)
+    #     print('is_query_aggregate', is_aggregate(c_target.expression))
+    #     x = infer_types(c_target)
+    #     print(x)
+    #     print()
+
     # FIXME: Also check for the presence of a gruup-by clause
 
     # Check that the group-by column references are valid w.r.t. aggregates.
     # Check that the pivot-by column references are valid.
     # Check that the order-by column references are valid.
+
+
 
 
     return query_parser.Select(c_targets,
