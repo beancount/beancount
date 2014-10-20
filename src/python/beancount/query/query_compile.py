@@ -51,19 +51,34 @@ class EvalNode:
                                          for child in self.__slots__))
     __repr__ = __str__
 
-    def visit(self, visitor):
-        """In-order visitor.
-        Args:
-          visitor: A callable that will get invoked with this instance.
+    def childnodes(self):
+        """Returns the child nodes of this node.
+        Yields:
+          A list of EvalNode instances.
         """
-        try:
-            visitor(self)
-            for attr in self.__slots__:
-                child = getattr(self, attr)
-                if isinstance(child, EvalNode):
-                    child.visit(visitor)
-        except StopIteration:
-            pass
+        for attr in self.__slots__:
+            child = getattr(self, attr)
+            if isinstance(child, EvalNode):
+                yield child
+            elif isinstance(child, list):
+                for element in child:
+                    if isinstance(element, EvalNode):
+                        yield element
+
+    ## FIXME: remove
+    # def visit(self, visitor):
+    #     """In-order visitor.
+    #     Args:
+    #       visitor: A callable that will get invoked with this instance.
+    #     """
+    #     try:
+    #         visitor(self)
+    #         for attr in self.__slots__:
+    #             child = getattr(self, attr)
+    #             if isinstance(child, EvalNode):
+    #                 child.visit(visitor)
+    #     except StopIteration:
+    #         pass
 
 
 
@@ -632,42 +647,38 @@ def is_aggregate(node):
     Returns:
       A boolean.
     """
-    sentinel = []
-    def visitor(node):
-        if isinstance(node, EvalAggregator):
-            sentinel.append(True)
-            raise StopIteration
-    node.visit(visitor)
-    return bool(sentinel)
+    if isinstance(node, EvalAggregator):
+        return True
+
+    for child in node.childnodes():
+        if is_aggregate(child):
+            return True
+
+    return False
 
 
+def has_nested_aggregates(node, under_aggregate=False):
+    """Check if the expression contains nested aggregates.
 
-
-
-
-def infer_types(node):
-    """Infer and verify the data types for the given expression.
+    Nested aggregates - aggregates of aggregates - should be disallowed. This
+    function checks for their presence under the given evaluator node.
 
     Args:
       node: An instance of EvalNode.
+      under_aggregate: A boolean, True if one of the parent nodes of this node
+        is an aggregate evaluator.
     Returns:
-      A pair of
-        datatype: The Python type for the data returned by the column.
-        is_aggregate: A boolean, true if this expression contains an aggregate.
+      A boolean, true if the the expression contains a nested aggregate.
     """
+    is_aggregate = isinstance(node, EvalAggregator)
+    if under_aggregate and is_aggregate:
+        return True
 
+    for child in node.childnodes():
+        if has_nested_aggregates(child, under_aggregate|is_aggregate):
+            return True
 
-
-# def infer_node_types(node):
-
-
-
-
-
-
-
-
-
+    return False
 
 
 def compile_select(select):

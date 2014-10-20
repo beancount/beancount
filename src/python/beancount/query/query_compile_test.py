@@ -97,9 +97,9 @@ class TestCompileExpressionDataTypes(unittest.TestCase):
                                  c.TargetsContext())
 
 
-class TestCompileIsAggregate(unittest.TestCase):
+class TestCompileAggregateChecks(unittest.TestCase):
 
-    def test_aggr_simple(self):
+    def test_is_aggregrate_simple(self):
         self.assertFalse(c.is_aggregate(
             c.ChangeColumn()))
         self.assertFalse(c.is_aggregate(
@@ -107,7 +107,7 @@ class TestCompileIsAggregate(unittest.TestCase):
         self.assertTrue(c.is_aggregate(
             c.Sum([c.ChangeColumn()])))
 
-    def test_aggr_derived(self):
+    def test_is_aggregrate_derived(self):
         self.assertFalse(c.is_aggregate(
             c.EvalAnd(
                 c.EvalEqual(c.ChangeColumn(), c.EvalConstant(42)),
@@ -124,6 +124,27 @@ class TestCompileIsAggregate(unittest.TestCase):
                                           c.EvalConstant(datetime.date(2014, 1, 1)))),
                     # Aggregation node deep in the tree.
                     c.Sum([c.EvalConstant(1)])))))
+
+    def test_has_nested_aggregrates(self):
+        self.assertFalse(c.has_nested_aggregates(
+            c.ChangeColumn()))
+
+        self.assertFalse(c.has_nested_aggregates(
+            c.Sum([c.ChangeColumn()])))
+
+        self.assertFalse(c.has_nested_aggregates(
+            c.EvalEqual(c.Sum([c.ChangeColumn()]), c.EvalConstant(1))))
+
+        self.assertTrue(c.has_nested_aggregates(
+            c.First([c.Sum([c.ChangeColumn()])])))
+
+        self.assertTrue(c.has_nested_aggregates(
+            c.First([c.EvalEqual(c.Sum([c.ChangeColumn()]), c.EvalConstant(1))])))
+
+        self.assertTrue(c.has_nested_aggregates(
+            c.EvalOr(c.First([c.EvalEqual(c.Sum([c.ChangeColumn()]), c.EvalConstant(1))]),
+                     c.EvalConstant(False))))
+
 
 
 class TestCompileDataTypes(unittest.TestCase):
