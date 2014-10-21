@@ -991,6 +991,13 @@ def compile_order_by(order_by, c_targets, xcontext):
             order_indexes)
 
 
+# Compiled query.
+EvalQuery = collections.namedtuple(
+    'EvalQuery', ('c_targets c_from c_where '
+                  'simple_indexes aggregate_indexes group_indexes order_indexes '
+                  'limit distinct flatten'))
+
+
 def compile_select(select):
     """Prepare an AST for a Select statement into a very rudimentary execution tree.
     The execution tree mostly looks much like an AST, but with some nodes
@@ -1074,20 +1081,23 @@ def compile_select(select):
         c_targets.extend(new_targets)
         simple_indexes.extend(new_simple_indexes)
         aggregate_indexes.extend(new_aggregate_indexes)
+    else:
+        order_indexes = None
 
     # Check that PIVOT-BY is not supported yet.
     if select.pivot_by is not None:
         raise CompilationError("The PIVOT BY clause is not supported yet")
 
-    return query_parser.Select(c_targets,
-                               c_from,
-                               c_where,
-                               group_indexes,
-                               select.order_by,
-                               select.pivot_by,
-                               select.limit,
-                               select.distinct,
-                               select.flatten)
+    return EvalQuery(c_targets,
+                     c_from,
+                     c_where,
+                     simple_indexes,
+                     aggregate_indexes,
+                     group_indexes,
+                     order_indexes,
+                     select.limit,
+                     select.distinct,
+                     select.flatten)
 
 
 

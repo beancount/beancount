@@ -332,35 +332,35 @@ class TestCompileSelect(CompileSelectBase):
 
     def test_compile_from(self):
         # Test the compilation of from.
-        select = self.compile("SELECT account;")
-        self.assertEqual(None, select.from_clause)
+        query = self.compile("SELECT account;")
+        self.assertEqual(None, query.c_from)
 
-        select = self.compile("SELECT account FROM CLOSE;")
-        self.assertEqual(q.From(None, True), select.from_clause)
+        query = self.compile("SELECT account FROM CLOSE;")
+        self.assertEqual(q.From(None, True), query.c_from)
 
-        select = self.compile("SELECT account FROM length(payee) != 0;")
-        self.assertTrue(isinstance(select.from_clause, q.From))
-        self.assertTrue(isinstance(select.from_clause.expression, c.EvalNode))
+        query = self.compile("SELECT account FROM length(payee) != 0;")
+        self.assertTrue(isinstance(query.c_from, q.From))
+        self.assertTrue(isinstance(query.c_from.expression, c.EvalNode))
 
         with self.assertRaises(c.CompilationError):
-            select = self.compile("SELECT account FROM sum(payee) != 0;")
+            query = self.compile("SELECT account FROM sum(payee) != 0;")
 
     def test_compile_targets_wildcard(self):
         # Test the wildcard expandion.
-        select = self.compile("SELECT *;")
-        self.assertTrue(list, type(select.targets))
-        self.assertGreater(len(select.targets), 3)
+        query = self.compile("SELECT *;")
+        self.assertTrue(list, type(query.c_targets))
+        self.assertGreater(len(query.c_targets), 3)
         self.assertTrue(all(isinstance(target.expression, c.EvalColumn)
-                            for target in select.targets))
+                            for target in query.c_targets))
 
     def test_compile_targets_named(self):
         # Test the wildcard expandion.
-        select = self.compile("SELECT length(account), account as a, date;")
+        query = self.compile("SELECT length(account), account as a, date;")
         self.assertEqual(
             [q.Target(c.Length([c.AccountColumn()]), 'length_account'),
              q.Target(c.AccountColumn(), 'a'),
              q.Target(c.DateColumn(), 'date')],
-            select.targets)
+            query.c_targets)
 
     def test_compile_mixed_aggregates(self):
         # Check mixed aggregates and non-aggregates in a target.
