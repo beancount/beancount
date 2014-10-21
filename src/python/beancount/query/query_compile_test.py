@@ -1,4 +1,5 @@
 import datetime
+import re
 import unittest
 
 from beancount.core.amount import D
@@ -7,47 +8,6 @@ from beancount.core import inventory
 from beancount.core import position
 from beancount.query import query_parser as q
 from beancount.query import query_compile as c
-
-
-class QueryCompilerTestBase(unittest.TestCase):
-
-    maxDiff = 8192
-
-    def setUp(self):
-        self.parser = q.Parser()
-
-    def compile(self, query):
-        """Parse one query and compile it.
-
-        Args:
-          query: An SQL query to be parsed.
-        Returns:
-          The AST.
-        """
-        statement = self.parser.parse(query.strip())
-        return c.compile_select(statement)
-
-    def assertCompile(self, expected, query, debug=False):
-        """Assert parsed and compiled contents from 'query' is 'expected'.
-
-        Args:
-          expected: An expected AST to compare against the parsed value.
-          query: An SQL query to be parsed.
-          debug: A boolean, if true, print extra debugging information on the console.
-        Raises:
-          AssertionError: If the actual AST does not match the expected one.
-        """
-        actual = self.compile(query)
-        if debug:
-            print()
-            print()
-            print(actual)
-            print()
-        try:
-            self.assertEqual(expected, actual)
-            return actual
-        except AssertionError:
-            raise
 
 
 class TestCompileExpression(unittest.TestCase):
@@ -125,25 +85,25 @@ class TestCompileAggregateChecks(unittest.TestCase):
                     # Aggregation node deep in the tree.
                     c.Sum([c.EvalConstant(1)])))))
 
-    def test_has_nested_aggregrates(self):
-        self.assertFalse(c.has_nested_aggregates(
-            c.ChangeColumn()))
+    # def test_has_nested_aggregrates(self):
+    #     self.assertFalse(c.has_nested_aggregates(
+    #         c.ChangeColumn()))
 
-        self.assertFalse(c.has_nested_aggregates(
-            c.Sum([c.ChangeColumn()])))
+    #     self.assertFalse(c.has_nested_aggregates(
+    #         c.Sum([c.ChangeColumn()])))
 
-        self.assertFalse(c.has_nested_aggregates(
-            c.EvalEqual(c.Sum([c.ChangeColumn()]), c.EvalConstant(1))))
+    #     self.assertFalse(c.has_nested_aggregates(
+    #         c.EvalEqual(c.Sum([c.ChangeColumn()]), c.EvalConstant(1))))
 
-        self.assertTrue(c.has_nested_aggregates(
-            c.First([c.Sum([c.ChangeColumn()])])))
+    #     self.assertTrue(c.has_nested_aggregates(
+    #         c.First([c.Sum([c.ChangeColumn()])])))
 
-        self.assertTrue(c.has_nested_aggregates(
-            c.First([c.EvalEqual(c.Sum([c.ChangeColumn()]), c.EvalConstant(1))])))
+    #     self.assertTrue(c.has_nested_aggregates(
+    #         c.First([c.EvalEqual(c.Sum([c.ChangeColumn()]), c.EvalConstant(1))])))
 
-        self.assertTrue(c.has_nested_aggregates(
-            c.EvalOr(c.First([c.EvalEqual(c.Sum([c.ChangeColumn()]), c.EvalConstant(1))]),
-                     c.EvalConstant(False))))
+    #     self.assertTrue(c.has_nested_aggregates(
+    #         c.EvalOr(c.First([c.EvalEqual(c.Sum([c.ChangeColumn()]), c.EvalConstant(1))]),
+    #                  c.EvalConstant(False))))
 
     def test_get_columns_and_aggregates(self):
         # Simple column.
@@ -195,6 +155,22 @@ class TestCompileDataTypes(unittest.TestCase):
     def test_compile_EvalEqual(self):
         c_equal = c.EvalEqual(c.EvalConstant(17), c.EvalConstant(18))
         self.assertEqual(bool, c_equal.dtype)
+
+    def test_compile_EvalGreater(self):
+        c_gt = c.EvalGreater(c.EvalConstant(17), c.EvalConstant(18))
+        self.assertEqual(bool, c_gt.dtype)
+
+    def test_compile_EvalGreaterEq(self):
+        c_ge = c.EvalGreaterEq(c.EvalConstant(17), c.EvalConstant(18))
+        self.assertEqual(bool, c_ge.dtype)
+
+    def test_compile_EvalLess(self):
+        c_lt = c.EvalLess(c.EvalConstant(17), c.EvalConstant(18))
+        self.assertEqual(bool, c_lt.dtype)
+
+    def test_compile_EvalLessEq(self):
+        c_le = c.EvalLessEq(c.EvalConstant(17), c.EvalConstant(18))
+        self.assertEqual(bool, c_le.dtype)
 
     def test_compile_EvalMatch(self):
         with self.assertRaises(c.CompilationError):
@@ -300,3 +276,217 @@ class TestCompileDataTypes(unittest.TestCase):
         for cls, dtype in class_types:
             instance = cls()
             self.assertEqual(dtype, instance.dtype)
+
+
+class TestCompileMisc(unittest.TestCase):
+
+    def test_find_unique_names(self):
+        self.assertEqual('date', c.find_unique_name('date', {}))
+        self.assertEqual('date', c.find_unique_name('date', {'account', 'number'}))
+        self.assertEqual('date_1', c.find_unique_name('date', {'date', 'number'}))
+        self.assertEqual('date_2', c.find_unique_name('date', {'date', 'date_1', 'date_3'}))
+
+
+class TestCompileSelect(unittest.TestCase):
+
+    maxDiff = 8192
+
+    def setUp(self):
+        self.parser = q.Parser()
+
+    def compile(self, query):
+        """Parse one query and compile it.
+
+        Args:
+          query: An SQL query to be parsed.
+        Returns:
+          The AST.
+        """
+        statement = self.parser.parse(query.strip())
+        return c.compile_select(statement)
+
+    def assertCompile(self, expected, query, debug=False):
+        """Assert parsed and compiled contents from 'query' is 'expected'.
+
+        Args:
+          expected: An expected AST to compare against the parsed value.
+          query: An SQL query to be parsed.
+          debug: A boolean, if true, print extra debugging information on the console.
+        Raises:
+          AssertionError: If the actual AST does not match the expected one.
+        """
+        actual = self.compile(query)
+        if debug:
+            print()
+            print()
+            print(actual)
+            print()
+        try:
+            self.assertEqual(expected, actual)
+            return actual
+        except AssertionError:
+            raise
+
+    def test_compile_from(self):
+        # Test the compilation of from.
+        select = self.compile("SELECT account;")
+        self.assertEqual(None, select.from_clause)
+
+        select = self.compile("SELECT account FROM CLOSE;")
+        self.assertEqual(q.From(None, True), select.from_clause)
+
+        select = self.compile("SELECT account FROM length(payee) != 0;")
+        self.assertTrue(isinstance(select.from_clause, q.From))
+        self.assertTrue(isinstance(select.from_clause.expression, c.EvalNode))
+
+        with self.assertRaises(c.CompilationError):
+            select = self.compile("SELECT account FROM sum(payee) != 0;")
+
+    def test_compile_targets_wildcard(self):
+        # Test the wildcard expandion.
+        select = self.compile("SELECT *;")
+        self.assertTrue(list, type(select.targets))
+        self.assertGreater(len(select.targets), 3)
+        self.assertTrue(all(isinstance(target.expression, c.EvalColumn)
+                            for target in select.targets))
+
+    def test_compile_targets_named(self):
+        # Test the wildcard expandion.
+        select = self.compile("SELECT length(account), account as a, date;")
+        self.assertEqual(
+            [q.Target(c.Length([c.AccountColumn()]), 'length_account'),
+             q.Target(c.AccountColumn(), 'a'),
+             q.Target(c.DateColumn(), 'date')],
+            select.targets)
+
+    def test_compile_mixed_aggregates(self):
+        # Check mixed aggregates and non-aggregates in a target.
+        with self.assertRaises(c.CompilationError) as assertion:
+            self.compile("""
+              SELECT length(account) and sum(length(account));
+            """)
+        self.assertTrue(re.search('Mixed aggregates and non-aggregates',
+                                  str(assertion.exception)))
+
+    def test_compile_aggregates_of_aggregates(self):
+        # Check mixed aggregates and non-aggregates in a target.
+        with self.assertRaises(c.CompilationError) as assertion:
+            self.compile("""
+              SELECT sum(sum(length(account)));
+            """)
+        self.assertTrue(re.search('Aggregates of aggregates',
+                                  str(assertion.exception)))
+
+
+    def test_compile_group_by_non_aggregates(self):
+        self.compile("""
+          SELECT payee GROUP BY payee, length(account);
+        """)
+
+        with self.assertRaises(c.CompilationError) as assertion:
+            self.compile("""
+              SELECT payee GROUP BY payee, last(account);
+            """)
+        self.assertTrue(re.search('may not be aggregates',
+                                  str(assertion.exception)))
+
+    def test_compile_group_by_reference_by_name(self):
+        # Valid references to target names.
+        self.compile("""
+          SELECT payee, last(account) GROUP BY payee;
+        """)
+        self.compile("""
+          SELECT payee as a, last(account) as len GROUP BY a;
+        """)
+
+        # References to non-targets have to be valid.
+        self.compile("""
+          SELECT payee, last(account) as len GROUP BY payee, date;
+        """)
+
+        with self.assertRaises(c.CompilationError):
+            self.compile("""
+              SELECT payee, last(account) as len GROUP BY something;
+            """)
+
+    def test_compile_group_by_reference_by_number(self):
+        self.compile("""
+          SELECT date, payee, narration GROUP BY 1, 2;
+        """)
+
+        with self.assertRaises(c.CompilationError):
+            self.compile("""
+              SELECT date, payee, narration GROUP BY 4;
+            """)
+
+    def test_compile_group_by_reference_an_aggregate(self):
+        # By name.
+        with self.assertRaises(c.CompilationError):
+            self.compile("""
+              SELECT payee, last(account) as last GROUP BY last;
+            """)
+        with self.assertRaises(c.CompilationError):
+            self.compile("""
+              SELECT account, sum(number) as sum_num GROUP BY account, sum_num;
+            """)
+
+        # By number.
+        with self.assertRaises(c.CompilationError):
+            self.compile("""
+              SELECT payee, last(account) as last GROUP BY 2;
+            """)
+
+        # Explicit aggregate in group-by clause.
+        with self.assertRaises(c.CompilationError):
+            self.compile("""
+              SELECT account, sum(number) GROUP BY account, sum(number);
+            """)
+
+    def test_compile_group_by_implicit(self):
+        with self.assertRaises(c.CompilationError):
+            self.compile("""
+              SELECT payee, last(account);
+            """)
+
+        self.compile("""
+          SELECT first(account), last(account);
+        """)
+
+    def test_compile_group_by_coverage(self):
+        # Non-aggregates.
+        self.compile("SELECT account, length(account);")
+
+        # Aggregates only.
+        self.compile("SELECT first(account), last(account);")
+
+        # Mixed with non-aggregates in group-by clause.
+        self.compile("SELECT account, sum(number) GROUP BY account;")
+
+        # Mixed with non-aggregates in group-by clause with non-aggregates a
+        # strict subset of the group-by columns. 'account' is a subset of
+        # {'account', 'flag'}.
+        self.compile("""
+          SELECT account, sum(number) GROUP BY account, flag;
+        """)
+
+        # Non-aggregates not covered by group-by clause.
+        with self.assertRaises(c.CompilationError):
+            self.compile("""
+              SELECT account, date, sum(number) GROUP BY account;
+            """)
+        with self.assertRaises(c.CompilationError):
+            self.compile("""
+              SELECT payee, last(account) as len GROUP BY date;
+            """)
+
+    def test_compile_having(self):
+        with self.assertRaises(c.CompilationError):
+            self.compile("""
+              SELECT account, sum(number) GROUP BY account HAVING sum(number) > 0;
+            """)
+
+    def test_compile_order_by(self):
+        with self.assertRaises(c.CompilationError):
+            self.compile("""
+              SELECT account, sum(number) ORDER BY account;
+            """)

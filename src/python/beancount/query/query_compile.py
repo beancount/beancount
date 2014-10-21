@@ -10,6 +10,7 @@ import datetime
 import itertools
 import io
 import re
+import operator
 
 import ply.lex
 import ply.yacc
@@ -82,21 +83,6 @@ class EvalNode:
 
 
 
-class EvalUnaryOp(EvalNode):
-    __slots__ = ('operand',)
-
-    def __init__(self, operand, dtype):
-        super().__init__(dtype)
-        self.operand = operand
-
-class EvalBinaryOp(EvalNode):
-    __slots__ = ('left', 'right')
-
-    def __init__(self, left, right, dtype):
-        super().__init__(dtype)
-        self.left = left
-        self.right = right
-
 class EvalConstant(EvalNode):
     __slots__ = ('value',)
 
@@ -107,49 +93,80 @@ class EvalConstant(EvalNode):
     def __call__(self, _):
         return self.value
 
+
+class EvalUnaryOp(EvalNode):
+    __slots__ = ('operand', 'operator')
+
+    def __init__(self, operator, operand, dtype):
+        super().__init__(dtype)
+        self.operand = operand
+        self.operator = operator
+
+    def __call__(self, context):
+        return self.operator(self.operand(context))
+
 class EvalNot(EvalUnaryOp):
 
     def __init__(self, operand):
-        super().__init__(operand, bool)
+        super().__init__(operator.not_, operand, bool)
+
+
+class EvalBinaryOp(EvalNode):
+    __slots__ = ('left', 'right', 'operator')
+
+    def __init__(self, operator, left, right, dtype):
+        super().__init__(dtype)
+        self.operator = operator
+        self.left = left
+        self.right = right
 
     def __call__(self, context):
-        return not self.operand(context)
+        return self.operator(self.left(context) and self.right(context))
 
 class EvalEqual(EvalBinaryOp):
 
     def __init__(self, left, right):
-        super().__init__(left, right, bool)
+        super().__init__(operator.eq, left, right, bool)
 
-    def __call__(self, context):
-        return self.left(context) == self.right(context)
+class EvalAnd(EvalBinaryOp):
+
+    def __init__(self, left, right):
+        super().__init__(operator.and_, left, right, bool)
+
+class EvalOr(EvalBinaryOp):
+
+    def __init__(self, left, right):
+        super().__init__(operator.or_, left, right, bool)
+
+class EvalGreater(EvalBinaryOp):
+
+    def __init__(self, left, right):
+        super().__init__(operator.gt, left, right, bool)
+
+class EvalGreaterEq(EvalBinaryOp):
+
+    def __init__(self, left, right):
+        super().__init__(operator.ge, left, right, bool)
+
+class EvalLess(EvalBinaryOp):
+
+    def __init__(self, left, right):
+        super().__init__(operator.lt, left, right, bool)
+
+class EvalLessEq(EvalBinaryOp):
+
+    def __init__(self, left, right):
+        super().__init__(operator.le, left, right, bool)
 
 class EvalMatch(EvalBinaryOp):
 
     def __init__(self, left, right):
-        super().__init__(left, right, bool)
+        super().__init__(re.search, left, right, bool)
         if right.dtype != str:
             raise CompilationError(
                 "Invalid data type for RHS of match: '{}'; must be a string".format(
                     right.dtype))
 
-    def __call__(self, context):
-        return re.search(self.right(context), self.left(context))
-
-class EvalAnd(EvalBinaryOp):
-
-    def __init__(self, left, right):
-        super().__init__(left, right, bool)
-
-    def __call__(self, context):
-        return (self.left(context) and self.right(context))
-
-class EvalOr(EvalBinaryOp):
-
-    def __init__(self, left, right):
-        super().__init__(left, right, bool)
-
-    def __call__(self, context):
-        return (self.left(context) or self.right(context))
 
 # Interpreter nodes.
 OPERATORS = {
@@ -159,6 +176,10 @@ OPERATORS = {
     query_parser.Match: EvalMatch,
     query_parser.And: EvalAnd,
     query_parser.Or: EvalOr,
+    query_parser.Greater: EvalGreater,
+    query_parser.GreaterEq: EvalGreaterEq,
+    query_parser.Less: EvalLess,
+    query_parser.LessEq: EvalLessEq,
     }
 
 
@@ -281,7 +302,7 @@ class EvalAggregator(EvalFunction):
 
 
 class Sum(EvalAggregator):
-    # FIXME: Not sure we should accept a position.
+    # FIXME: Not sure we should accept a position. Compile a special node for Sum(position) and Sum(inventory).
     __intypes__ = [(int, float, Decimal, position.Position, inventory.Inventory)]
 
     def __init__(self, operands):
@@ -660,28 +681,28 @@ def is_aggregate(node):
     return False
 
 
-def has_nested_aggregates(node, under_aggregate=False):
-    """Check if the expression contains nested aggregates.
+# def has_nested_aggregates(node, under_aggregate=False):
+#     """Check if the expression contains nested aggregates.
 
-    Nested aggregates - aggregates of aggregates - should be disallowed. This
-    function checks for their presence under the given evaluator node.
+#     Nested aggregates - aggregates of aggregates - should be disallowed. This
+#     function checks for their presence under the given evaluator node.
 
-    Args:
-      node: An instance of EvalNode.
-      under_aggregate: A boolean, True if one of the parent nodes of this node
-        is an aggregate evaluator.
-    Returns:
-      A boolean, true if the the expression contains a nested aggregate.
-    """
-    is_aggregate = isinstance(node, EvalAggregator)
-    if under_aggregate and is_aggregate:
-        return True
+#     Args:
+#       node: An instance of EvalNode.
+#       under_aggregate: A boolean, True if one of the parent nodes of this node
+#         is an aggregate evaluator.
+#     Returns:
+#       A boolean, true if the the expression contains a nested aggregate.
+#     """
+#     is_aggregate = isinstance(node, EvalAggregator)
+#     if under_aggregate and is_aggregate:
+#         return True
 
-    for child in node.childnodes():
-        if has_nested_aggregates(child, under_aggregate|is_aggregate):
-            return True
+#     for child in node.childnodes():
+#         if has_nested_aggregates(child, under_aggregate|is_aggregate):
+#             return True
 
-    return False
+#     return False
 
 
 def get_columns_and_aggregates(node):
@@ -701,7 +722,6 @@ def get_columns_and_aggregates(node):
     _get_columns_and_aggregates(node, columns, aggregates)
     return columns, aggregates
 
-
 def _get_columns_and_aggregates(node, columns, aggregates):
     """Walk down a tree of nodes and fetch the column accessors and aggregates.
 
@@ -719,6 +739,169 @@ def _get_columns_and_aggregates(node, columns, aggregates):
     else:
         for child in node.childnodes():
             _get_columns_and_aggregates(child, columns, aggregates)
+
+
+def find_unique_name(name, allocated_set):
+    """Come up with a unique name for 'name' amongst 'allocated_set'.
+
+    Args:
+      name: A string, the prefix of the name to find a unique for.
+      allocated_set: A set of string, the set of already allocated names.
+    Returns:
+      A unique name. 'allocated_set' is unmodified.
+    """
+    # Make sure the name is unique.
+    prefix = name
+    i = 1
+    while name in allocated_set:
+        name = '{}_{}'.format(prefix, i)
+        i += 1
+    return name
+
+
+
+
+def compile_targets(targets, xcontext):
+    """Compile the targets and check for their validity. Process wildcard.
+
+    Args:
+      targets: A list of target expressions from the parser.
+      xcontext: A compilation context for the targets.
+    Returns:
+      A tuple of
+        c_targets: A list of compiled target expressions with resolved names.
+        simple_indexes: A list of integer indexes for the non-aggregate targetsr.
+        aggregate_indexes: A list of integer indexes for the aggregate targetsr.
+    """
+    # Bind the targets expressions to the execution context.
+    if isinstance(targets, query_parser.Wildcard):
+        # Insert the full list of available columns.
+        targets = [query_parser.Target(query_parser.Column(name), None)
+                   for name in TargetsContext.columns]
+
+    # Compile targets.
+    c_targets = []
+    target_names = set()
+    for target in targets:
+        c_expr = compile_expression(target.expression, xcontext)
+        target_name = find_unique_name(
+            target.name or query_parser.get_expression_name(target.expression),
+            target_names)
+        target_names.add(target_name)
+        c_targets.append(query_parser.Target(c_expr, target_name))
+
+    # Figure out if this query is an aggregate query and check validity of each
+    # target's aggregation type.
+    simple_indexes = []
+    aggregate_indexes = []
+    for index, c_target in enumerate(c_targets):
+        columns, aggregates = get_columns_and_aggregates(c_target.expression)
+
+        # Check for mixed aggregates and non-aggregates.
+        if columns and aggregates:
+            raise CompilationError(
+                "Mixed aggregates and non-aggregates are not allowed")
+
+        if not aggregates:
+            simple_indexes.append(index)
+        else:
+            aggregate_indexes.append(index)
+
+            # Check for aggregates of aggregates.
+            for aggregate in aggregates:
+                for child in aggregate.childnodes():
+                    _, sub_aggregates = get_columns_and_aggregates(child)
+                    if sub_aggregates:
+                        raise CompilationError(
+                            "Aggregates of aggregates are not allowed")
+
+    return c_targets, simple_indexes, aggregate_indexes
+
+
+def compile_group_by(group_by, c_targets, xcontext, simple_indexes, aggregate_indexes):
+    if group_by:
+        # Check that HAVING is not supported yet.
+        if group_by and group_by.having is not None:
+            raise CompilationError("The HAVING clause is not supported yet")
+
+        assert group_by.columns, "Internal error with GROUP-BY parsing"
+
+        # Compile group-by expressions and resolve them to their targets if
+        # possible. A GROUP-BY column may be one of the following:
+        #
+        # * A reference to a target by name.
+        # * A reference to a target by index (starting at one).
+        # * A new, non-aggregate expression.
+        #
+        # References by name are converted to indexes. New expressions are
+        # inserted into the list of targets as invisible targets.
+        targets_name_map = {target.name: index
+                            for index, target in enumerate(c_targets)}
+        group_indexes = []
+        for column in group_by.columns:
+            index = None
+
+            # Process target references by index.
+            if isinstance(column, int):
+                index = column - 1
+                if not (0 <= index < len(c_targets)):
+                    raise CompilationError(
+                        "Invalid GROUP-BY column index {}".format(column))
+
+            else:
+                # Process target references by name. These will be parsed as
+                # simple Column expressions. If they refer to a target name, we
+                # resolve them.
+                if isinstance(column, query_parser.Column):
+                    name = column.name
+                    index = targets_name_map.get(name, None)
+
+                # Otherwise we compile the expression and add it to the list of
+                # targets to evaluate and index into that new target.
+                if index is None:
+                    c_expr = compile_expression(column, xcontext)
+
+                    # Check if the new expression is an aggregate.
+                    _, aggregates = get_columns_and_aggregates(c_expr)
+                    if aggregates:
+                        raise CompilationError(
+                            "GROUP-BY expressions may not be aggregates: '{}'".format(
+                                column))
+
+                    # Add the new target. 'None' for the target name implies it
+                    # should be invisible, not to be rendered.
+                    index = len(c_targets)
+                    c_targets.append(query_parser.Target(c_expr, None))
+                    simple_indexes.append(index)
+
+            assert index is not None, "Internal error, could not index group-by reference."
+            group_indexes.append(index)
+
+            # Check that the group-by column references a non-aggregate.
+            c_expr = c_targets[index].expression
+            _, aggregates = get_columns_and_aggregates(c_expr)
+            if aggregates:
+                raise CompilationError(
+                    "GROUP-BY expressions may not reference aggregates: '{}'".format(
+                        column))
+
+    else:
+        # If it does not have a GROUP-BY clause...
+        if aggregate_indexes:
+            # If the query is an aggregate query, check that all the targets are
+            # aggregates.
+            if simple_indexes:
+                raise CompilationError(
+                    "Aggregate query without a GROUP-BY should have only aggregates")
+
+            # Set the group-by indexes implicitly to be the list of all targets.
+            group_indexes = []
+        else:
+            # This is not an aggregate query; don't set group_indexes to
+            # anything useful, we won't need it.
+            group_indexes = None
+
+    return group_indexes
 
 
 def compile_select(select):
@@ -757,23 +940,30 @@ def compile_select(select):
     else:
         raise CompilationError("Unexpected from clause in AST: {}".format(from_clause))
 
-    # Bind the targets expressions to the execution context.
-    targets = select.targets
-    if isinstance(targets, query_parser.Wildcard):
-        # Insert the full list of available columns.
-        targets = [query_parser.Target(query_parser.Column(name), None)
-                   for name in TargetsContext.columns]
+    # Check that the from clause does not contain aggregates.
+    if c_from and c_from.expression:
+        _, aggregates = get_columns_and_aggregates(c_from.expression)
+        if aggregates:
+            raise CompilationError(
+                "Aggregates are not allowed in from clause")
 
-    # Compile targets.
-    c_targets = []
-    for target in targets:
-        c_expr = compile_expression(target.expression, xcontext_target)
-        # FIXME: Find a better way to come up with a decent name.
-        target_name = target.name
-        if target_name is None:
-            sub_name = re.sub('[^a-z]+', '_',str(target.expression).lower())
-            target_name = re.sub('column', '', sub_name).strip('_')
-        c_targets.append(query_parser.Target(c_expr, target_name))
+    # Compile the targets.
+    c_targets, simple_indexes, aggregate_indexes = compile_targets(select.targets, xcontext_target)
+
+    # Process the group-by clause.
+    group_indexes = compile_group_by(select.group_by,
+                                     c_targets, xcontext_target,
+                                     simple_indexes, aggregate_indexes)
+
+    # If this is an aggregate query (it has some aggregates), check that the set
+    # of non-aggregates match exactly the group indexes. This should always be
+    # the case at this point, because we have added all the necessary targets to
+    # the list of group-by expressions and should have resolved all the indexes.
+    if aggregate_indexes:
+        if set(simple_indexes) != set(group_indexes):
+            raise CompilationError(
+                "Non-aggregates must be covered by GROUP-BY clause in aggregate query")
+
 
     # Bind the WHERE expression to the execution context.
     # Note: Aggregates are disallowed in this clause.
@@ -782,41 +972,28 @@ def compile_select(select):
                if select.where_clause is not None
                else None)
 
-    # Check that aggregations of aggregations are not possible.
+    # Check that ORDER-BY is not supported yet.
+    if select.order_by is not None:
+        # FIXME: Compile the order clause and apply it.
+        raise CompilationError("The ORDER BY clause is not supported yet")
 
-
-
-    # Is this an aggregated query or not?
-
-    ##is_query_aggregate = any(is_aggregate(c_target.expression)
-    ##                         for c_target in c_targets)
-    ##print('is_query_aggregate', is_query_aggregate)
-
-    # for c_target in c_targets:
-    #     print(c_target)
-    #     print('is_query_aggregate', is_aggregate(c_target.expression))
-    #     x = infer_types(c_target)
-    #     print(x)
-    #     print()
-
-    # FIXME: Also check for the presence of a gruup-by clause
-
-    # Check that the group-by column references are valid w.r.t. aggregates.
-    # Check that the pivot-by column references are valid.
-    # Check that the order-by column references are valid.
-
-
-
+    # Check that PIVOT-BY is not supported yet.
+    if select.pivot_by is not None:
+        raise CompilationError("The PIVOT BY clause is not supported yet")
 
     return query_parser.Select(c_targets,
                                c_from,
                                c_where,
-                               select.group_by,
+                               group_indexes,
                                select.order_by,
                                select.pivot_by,
                                select.limit,
                                select.distinct,
                                select.flatten)
+
+
+
+
 
 
 def interpret_select(entries, c_select):
@@ -867,3 +1044,7 @@ def interpret_select(entries, c_select):
 
 # FIXME: Add checking of datatypes. Something simple is better than nothing, but
 # something, please, will avoid many types of user mistakes.
+
+# Build a routine to assign an appropriate column name to trees.
+
+# Deal with sum of inventory, compile special nodes SumPosition(), SumInventory().
