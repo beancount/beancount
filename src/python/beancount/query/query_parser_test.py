@@ -150,6 +150,26 @@ class TestSelectExpression(QueryParserTestBase):
                          None)]),
             "SELECT a != 42;")
 
+    def test_expr_gt(self):
+        self.assertParse(
+            qSelect([q.Target(q.Greater(q.Column('a'), q.Constant(42)), None)]),
+            "SELECT a > 42;")
+
+    def test_expr_gte(self):
+        self.assertParse(
+            qSelect([q.Target(q.GreaterEq(q.Column('a'), q.Constant(42)), None)]),
+            "SELECT a >= 42;")
+
+    def test_expr_lte(self):
+        self.assertParse(
+            qSelect([q.Target(q.Less(q.Column('a'), q.Constant(42)), None)]),
+            "SELECT a < 42;")
+
+    def test_expr_lte(self):
+        self.assertParse(
+            qSelect([q.Target(q.LessEq(q.Column('a'), q.Constant(42)), None)]),
+            "SELECT a <= 42;")
+
     def test_expr_match(self):
         self.assertParse(
             qSelect([q.Target(

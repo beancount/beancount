@@ -77,6 +77,10 @@ class Equal(BinaryOp): pass
 class Match(BinaryOp): pass
 class And(BinaryOp): pass
 class Or(BinaryOp): pass
+class Greater(BinaryOp): pass
+class GreaterEq(BinaryOp): pass
+class Less(BinaryOp): pass
+class LessEq(BinaryOp): pass
 
 
 
@@ -94,8 +98,8 @@ class Lexer:
         'BALANCE', 'JOURNAL',
         'GROUP', 'BY', 'HAVING', 'ORDER', 'DESC', 'ASC', 'PIVOT',
         'LIMIT', 'FLATTEN', 'DISTINCT',
-        'AND', 'OR', 'NOT', 'TRUE', 'FALSE',
-        'NULL',
+        'AND', 'OR', 'NOT', 'GT', 'GTE', 'LT', 'LTE',
+        'TRUE', 'FALSE', 'NULL',
     }
 
     # List of valid tokens from the lexer.
@@ -137,6 +141,10 @@ class Lexer:
     t_RPAREN = r"\)"
     t_NE     = r"!="
     t_EQ     = r"="
+    t_GTE  = r">="
+    t_GT  = r">"
+    t_LTE  = r"<="
+    t_LT  = r"<"
     t_TILDE  = r"~"
 
     # Numbers.
@@ -357,7 +365,7 @@ class Parser(Lexer):
         ('left', 'OR'),
         ('left', 'AND'),
         ('left', 'NOT'),
-        ('left', 'EQ', 'NE', 'TILDE'),
+        ('left', 'EQ', 'NE', 'GT', 'GTE', 'LT', 'LTE', 'TILDE'),
         ]
 
     def p_expression_and(self, p):
@@ -383,6 +391,22 @@ class Parser(Lexer):
     def p_expression_ne(self, p):
         "expression : expression NE expression"
         p[0] = Not(Equal(p[1], p[3]))
+
+    def p_expression_gt(self, p):
+        "expression : expression GT expression"
+        p[0] = Greater(p[1], p[3])
+
+    def p_expression_gte(self, p):
+        "expression : expression GTE expression"
+        p[0] = GreaterEq(p[1], p[3])
+
+    def p_expression_lt(self, p):
+        "expression : expression LT expression"
+        p[0] = Less(p[1], p[3])
+
+    def p_expression_lte(self, p):
+        "expression : expression LTE expression"
+        p[0] = LessEq(p[1], p[3])
 
     def p_expression_match(self, p):
         "expression : expression TILDE expression"
