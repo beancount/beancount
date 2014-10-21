@@ -654,11 +654,17 @@ def compile_select(select, targets_xcontext, postings_xcontext, entries_xcontext
                 "Non-aggregates must be covered by GROUP-BY clause in aggregate query")
 
     # Bind the WHERE expression to the execution context.
-    # Note: Aggregates are disallowed in this clause.
-    # FIXME: check for this!
-    c_where = (compile_expression(select.where_clause, xcontext_where)
-               if select.where_clause is not None
-               else None)
+    if select.where_clause is not None:
+        c_where = compile_expression(select.where_clause, xcontext_where)
+
+        # Aggregates are disallowed in this clause. Check for this.
+        # NOTE: This should never trigger if the compilation context does not
+        # contain any aggregate. Just being manic and safe here.
+        _, aggregates = get_columns_and_aggregates(c_where)
+        if aggregates:
+            raise CompilationError("Aggregates are disallowed in WHERE clause.")
+    else:
+        c_where = None
 
     # Check that ORDER-BY is not supported yet.
     if select.order_by is not None:
@@ -688,38 +694,3 @@ def compile_select(select, targets_xcontext, postings_xcontext, entries_xcontext
                      select.limit,
                      select.distinct,
                      select.flatten)
-
-
-
-
-
-
-
-
-# FIXME: Deal with sum of inventory, compile special nodes SumPosition(), SumInventory().
-# FIXME:
-# - Create a RowContext object that provides all the rows, so that we can
-# - Add year month date as columns, but should not be included in * default
-# - Add date() function to create dates from a string
-# - Check data types for functions
-# - Actually allow evaluating the SQL against generic rows of datasets.
-# - Implement aggregation
-# - Render with custom routine, not beancount.reports.table
-# - Deal with rendering on multiple lines, e.g., for inventories with multiple positions
-# - Make it possible to run from the command-line (batch)
-# - Invoke a pager when long output
-# - Implement set variables for format and verbosity and display precision and what-not
-# - Implement JOURNAL account FROM
-# - Implement BALANCES FROM
-# - pipe through a pager
-# - Find a way to pipe into treeify
-# - Find a way to trigger a close in the FROM clause
-# - implement order by
-# - implement limit
-# - implement distinct
-# - support simple boolean expressions in filter expressions, not just equalities and inequalities
-# - support simple mathematical operations, +, - , /.
-# - implement set operations, "in" for sets
-# - implement globbing matches
-# - case-sensitivity of regexps?
-# - make KeyboardInterrupt not exit the shell, just interrupt the current processing of a query.

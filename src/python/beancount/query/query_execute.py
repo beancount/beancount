@@ -1,13 +1,14 @@
 """Execution of interpreter on data rows.
 """
+from beancount.query import query_compile
 
 
-def interpret_select(entries, c_select):
+def execute_query(query, entries):
     """Given a compiled select statement, execute the query.
 
     Args:
+      query: An instance of a query_compile.Query
       entries: A list of directives.
-      c_select: An instance of a compiled Select query, from the parser.
     """
     # Create a class for the row.
     Tuple = collections.namedtuple('Tuple',
