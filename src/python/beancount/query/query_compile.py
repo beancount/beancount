@@ -375,63 +375,66 @@ class CompilationContext:
 
 # Column accessors for entries.
 
-class TypeEntryColumn(EvalNode):
+class EvalColumn(EvalNode):
+    "Base class for all column accessors."
+
+class TypeEntryColumn(EvalColumn):
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, entry):
         return type(entry).__name__
 
-class FilenameEntryColumn(EvalNode):
+class FilenameEntryColumn(EvalColumn):
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, entry):
         return entry.source.filename
 
-class LineNoEntryColumn(EvalNode):
+class LineNoEntryColumn(EvalColumn):
     def __init__(self):
         super().__init__(int)
 
     def __call__(self, entry):
         return entry.source.lineno
 
-class DateEntryColumn(EvalNode):
+class DateEntryColumn(EvalColumn):
     def __init__(self):
         super().__init__(datetime.date)
 
     def __call__(self, entry):
         return entry.date
 
-class FlagEntryColumn(EvalNode):
+class FlagEntryColumn(EvalColumn):
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, entry):
         return entry.flag
 
-class PayeeEntryColumn(EvalNode):
+class PayeeEntryColumn(EvalColumn):
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, entry):
         return entry.payee or ''
 
-class NarrationEntryColumn(EvalNode):
+class NarrationEntryColumn(EvalColumn):
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, entry):
         return entry.narration
 
-class TagsEntryColumn(EvalNode):
+class TagsEntryColumn(EvalColumn):
     def __init__(self):
         super().__init__(set)
 
     def __call__(self, entry):
         return entry.tags
 
-class LinksEntryColumn(EvalNode):
+class LinksEntryColumn(EvalColumn):
     def __init__(self):
         super().__init__(set)
 
@@ -460,91 +463,91 @@ class FilterEntriesContext(CompilationContext):
 
 # Column accessors for postings.
 
-class TypeColumn(EvalNode):
+class TypeColumn(EvalColumn):
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, posting):
         return type(posting.entry).__name__
 
-class FilenameColumn(EvalNode):
+class FilenameColumn(EvalColumn):
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, posting):
         return posting.entry.source.filename
 
-class LineNoColumn(EvalNode):
+class LineNoColumn(EvalColumn):
     def __init__(self):
         super().__init__(int)
 
     def __call__(self, posting):
         return posting.entry.source.lineno
 
-class DateColumn(EvalNode):
+class DateColumn(EvalColumn):
     def __init__(self):
         super().__init__(datetime.date)
 
     def __call__(self, posting):
         return posting.entry.date
 
-class FlagColumn(EvalNode):
+class FlagColumn(EvalColumn):
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, posting):
         return posting.entry.flag
 
-class PayeeColumn(EvalNode):
+class PayeeColumn(EvalColumn):
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, posting):
         return posting.entry.payee or ''
 
-class NarrationColumn(EvalNode):
+class NarrationColumn(EvalColumn):
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, posting):
         return posting.entry.narration
 
-class TagsColumn(EvalNode):
+class TagsColumn(EvalColumn):
     def __init__(self):
         super().__init__(set)
 
     def __call__(self, posting):
         return posting.entry.tags
 
-class LinksColumn(EvalNode):
+class LinksColumn(EvalColumn):
     def __init__(self):
         super().__init__(set)
 
     def __call__(self, posting):
         return posting.entry.links
 
-class AccountColumn(EvalNode):
+class AccountColumn(EvalColumn):
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, posting):
         return posting.account
 
-class NumberColumn(EvalNode):
+class NumberColumn(EvalColumn):
     def __init__(self):
         super().__init__(Decimal)
 
     def __call__(self, posting):
         return posting.position.number
 
-class CurrencyColumn(EvalNode):
+class CurrencyColumn(EvalColumn):
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, posting):
         return posting.position.lot.currency
 
-class ChangeColumn(EvalNode):
+class ChangeColumn(EvalColumn):
     def __init__(self):
         super().__init__(position.Position)
 
@@ -581,7 +584,7 @@ class TargetsContext(FilterPostingsContext):
 
 
 
-class AttributeColumn(EvalNode):
+class AttributeColumn(EvalColumn):
     def __call__(self, row):
         return getattr(row, self.name)
 
@@ -679,6 +682,43 @@ def has_nested_aggregates(node, under_aggregate=False):
             return True
 
     return False
+
+
+def get_columns_and_aggregates(node):
+    """Find the columns and aggregate nodes below this tree.
+
+    All nodes under aggregate nodes are ignored.
+
+    Args:
+      node: An instance of EvalNode.
+    Returns:
+      A pair of (columns, aggregates), both of which are lists of EvalNode instances.
+        columns: The list of all columns accessed not under an aggregate node.
+        aggregates: The lis tof all aggregate nodes.
+    """
+    columns = []
+    aggregates = []
+    _get_columns_and_aggregates(node, columns, aggregates)
+    return columns, aggregates
+
+
+def _get_columns_and_aggregates(node, columns, aggregates):
+    """Walk down a tree of nodes and fetch the column accessors and aggregates.
+
+    This function ignores all nodes under aggregate nodes.
+
+    Args:
+      node: An instance of EvalNode.
+      columns: An accumulator for columns found so far.
+      aggregate: An accumulator for aggregate notes found so far.
+    """
+    if isinstance(node, EvalAggregator):
+        aggregates.append(node)
+    elif isinstance(node, EvalColumn):
+        columns.append(node)
+    else:
+        for child in node.childnodes():
+            _get_columns_and_aggregates(child, columns, aggregates)
 
 
 def compile_select(select):

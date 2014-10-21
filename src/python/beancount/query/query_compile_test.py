@@ -145,6 +145,35 @@ class TestCompileAggregateChecks(unittest.TestCase):
             c.EvalOr(c.First([c.EvalEqual(c.Sum([c.ChangeColumn()]), c.EvalConstant(1))]),
                      c.EvalConstant(False))))
 
+    def test_get_columns_and_aggregates(self):
+        # Simple column.
+        columns, aggregates = c.get_columns_and_aggregates(c.ChangeColumn())
+        self.assertEqual((1, 0), (len(columns), len(aggregates)))
+
+        # Multiple columns.
+        columns, aggregates = c.get_columns_and_aggregates(
+            c.EvalAnd(c.ChangeColumn(), c.DateColumn()))
+        self.assertEqual((2, 0), (len(columns), len(aggregates)))
+
+        # Simple aggregate.
+        columns, aggregates = c.get_columns_and_aggregates(
+            c.Sum([c.ChangeColumn()]))
+        self.assertEqual((0, 1), (len(columns), len(aggregates)))
+
+        # Multiple agreggates.
+        columns, aggregates = c.get_columns_and_aggregates(
+            c.EvalAnd(c.First([c.AccountColumn()]), c.Last([c.AccountColumn()])))
+        self.assertEqual((0, 2), (len(columns), len(aggregates)))
+
+        # Simple non-aggregate function.
+        columns, aggregates = c.get_columns_and_aggregates(
+            c.Length([c.AccountColumn()]))
+        self.assertEqual((1, 0), (len(columns), len(aggregates)))
+
+        # Mix of column and aggregates (this is used to detect this illegal case).
+        columns, aggregates = c.get_columns_and_aggregates(
+            c.EvalAnd(c.Length([c.AccountColumn()]), c.Sum([c.ChangeColumn()])))
+        self.assertEqual((1, 1), (len(columns), len(aggregates)))
 
 
 class TestCompileDataTypes(unittest.TestCase):
