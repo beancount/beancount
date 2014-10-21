@@ -359,6 +359,14 @@ class TestSelectGroupBy(QueryParserTestBase):
                                                                    q.Column('c')], None)),
                          "SELECT * GROUP BY a, b, c;")
 
+    def test_groupby_expr(self):
+        self.assertParse(
+            qSelect(q.Wildcard(),
+                    group_by=q.GroupBy([
+                        q.Greater(q.Function('length', [q.Column('a')]), q.Constant(0)),
+                        q.Column('b')], None)),
+            "SELECT * GROUP BY length(a) > 0, b;")
+
     def test_groupby_having(self):
         self.assertParse(
             qSelect(q.Wildcard(),
@@ -367,6 +375,13 @@ class TestSelectGroupBy(QueryParserTestBase):
                                            q.Function('sum', [q.Column('change')]),
                                            q.Constant(0)))),
             "SELECT * GROUP BY a HAVING sum(change) = 0;")
+
+    def test_groupby_numbers(self):
+        self.assertParse(qSelect(q.Wildcard(), group_by=q.GroupBy([1], None)),
+                         "SELECT * GROUP BY 1;")
+
+        self.assertParse(qSelect(q.Wildcard(), group_by=q.GroupBy([2, 4, 5], None)),
+                         "SELECT * GROUP BY 2, 4, 5;")
 
 
 class TestSelectOrderBy(QueryParserTestBase):
@@ -460,3 +475,27 @@ class TestJournal(QueryParserTestBase):
             q.Journal(None, q.From(q.Equal(q.Column('date'),
                                            q.Constant(datetime.date(2014, 1, 1))), True)),
             "JOURNAL FROM date = 2014-01-01 CLOSE;")
+
+class TestExpressionName(QueryParserTestBase):
+
+    def test_column(self):
+        self.assertEqual('date', q.get_expression_name(
+            q.Column('date')))
+
+    def test_function(self):
+        self.assertEqual('length_date', q.get_expression_name(
+            q.Function('length', [q.Column('date')])))
+
+    def test_constant(self):
+        self.assertEqual('c17', q.get_expression_name(
+            q.Constant(17)))
+        self.assertEqual('c2014_01_01', q.get_expression_name(
+            q.Constant(datetime.date(2014, 1, 1))))
+
+    def test_unary(self):
+        self.assertEqual('not_account', q.get_expression_name(
+            q.Not(q.Column('account'))))
+
+    def test_binary(self):
+        self.assertEqual('and_account_date', q.get_expression_name(
+            q.And(q.Column('account'), q.Column('date'))))

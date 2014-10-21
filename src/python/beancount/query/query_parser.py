@@ -317,9 +317,23 @@ class Parser(Lexer):
     def p_group_by(self, p):
         """
         group_by : empty
-                 | GROUP BY column_list having
+                 | GROUP BY group_by_expr_list having
         """
         p[0] = GroupBy(p[3], p[4]) if len(p) != 2 else None
+
+    def p_group_by_expr_list(self, p):
+        """
+        group_by_expr_list : group_by_expr
+                           | group_by_expr_list COMMA group_by_expr
+        """
+        p[0] = self.handle_comma_separated_list(p)
+
+    def p_group_by_expr(self, p):
+        """
+        group_by_expr : expression
+                      | INTEGER
+        """
+        p[0] = p[1]
 
     def p_having(self, p):
         """
@@ -425,13 +439,20 @@ class Parser(Lexer):
         p[0] = p[1]
 
     def p_expression_function(self, p):
-        "expression : ID LPAREN expression_list RPAREN"
+        "expression : ID LPAREN expression_list_opt RPAREN"
         p[0] = Function(p[1], p[3])
+
+    def p_expression_list_opt(self, p):
+        """
+        expression_list_opt : empty
+                            | expression
+                            | expression_list COMMA expression
+        """
+        p[0] = self.handle_comma_separated_list(p)
 
     def p_expression_list(self, p):
         """
-        expression_list : empty
-                        | expression
+        expression_list : expression
                         | expression_list COMMA expression
         """
         p[0] = self.handle_comma_separated_list(p)
@@ -485,6 +506,36 @@ class Parser(Lexer):
             oss.write("  {}^".format(' ' * token.lexpos))
             raise ParseError(oss.getvalue())
 
+
+def get_expression_name(expr):
+    """Come up with a reasonable identifier for an expression.
+
+    Args:
+      expr: An expression node.
+    """
+    if isinstance(expr, Column):
+        return expr.name.lower()
+
+    elif isinstance(expr, Function):
+        names = [expr.fname.lower()]
+        for operand in expr.operands:
+            names.append(get_expression_name(operand))
+        return '_'.join(names)
+
+    elif isinstance(expr, Constant):
+        return 'c{}'.format(re.sub('[^a-z0-9]+', '_', str(expr.value)))
+
+    elif isinstance(expr, UnaryOp):
+        return '_'.join([type(expr).__name__.lower(),
+                         get_expression_name(expr.operand)])
+
+    elif isinstance(expr, BinaryOp):
+        return '_'.join([type(expr).__name__.lower(),
+                         get_expression_name(expr.left),
+                         get_expression_name(expr.right)])
+
+    else:
+        assert False, "Unknown expression type."
 
 
 # FIXME:
