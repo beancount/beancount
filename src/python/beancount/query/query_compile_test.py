@@ -8,39 +8,40 @@ from beancount.core import inventory
 from beancount.core import position
 from beancount.query import query_parser as q
 from beancount.query import query_compile as c
+from beancount.query import query_contexts as cc
 
 
 class TestCompileExpression(unittest.TestCase):
 
     def test_expr_invalid(self):
         with self.assertRaises(c.CompilationError):
-            c.compile_expression(q.Column('invalid'), c.TargetsContext())
+            c.compile_expression(q.Column('invalid'), cc.TargetsContext())
 
     def test_expr_column(self):
-        self.assertEqual(c.FilenameColumn(),
-                         c.compile_expression(q.Column('filename'), c.TargetsContext()))
+        self.assertEqual(cc.FilenameColumn(),
+                         c.compile_expression(q.Column('filename'), cc.TargetsContext()))
 
     def test_expr_function(self):
-        self.assertEqual(c.Sum([c.ChangeColumn()]),
+        self.assertEqual(cc.Sum([cc.ChangeColumn()]),
                          c.compile_expression(q.Function('sum', [q.Column('change')]),
-                                              c.TargetsContext()))
+                                              cc.TargetsContext()))
 
     def test_expr_unaryop(self):
-        self.assertEqual(c.EvalNot(c.AccountColumn()),
+        self.assertEqual(c.EvalNot(cc.AccountColumn()),
                          c.compile_expression(q.Not(q.Column('account')),
-                                              c.TargetsContext()))
+                                              cc.TargetsContext()))
 
     def test_expr_binaryop(self):
-        self.assertEqual(c.EvalEqual(c.DateColumn(),
+        self.assertEqual(c.EvalEqual(cc.DateColumn(),
                                      c.EvalConstant(datetime.date(2014, 1, 1))),
                          c.compile_expression(
                              q.Equal(q.Column('date'),
                                      q.Constant(datetime.date(2014, 1, 1))),
-                             c.TargetsContext()))
+                             cc.TargetsContext()))
 
     def test_expr_constant(self):
         self.assertEqual(c.EvalConstant(D(17)),
-                         c.compile_expression(q.Constant(D(17)), c.TargetsContext()))
+                         c.compile_expression(q.Constant(D(17)), cc.TargetsContext()))
 
 
 class TestCompileExpressionDataTypes(unittest.TestCase):
@@ -48,13 +49,13 @@ class TestCompileExpressionDataTypes(unittest.TestCase):
     def test_expr_function_arity(self):
         # Compile with the correct number of arguments.
         c.compile_expression(q.Function('sum', [q.Column('number')]),
-                             c.TargetsContext())
+                             cc.TargetsContext())
 
         # Compile with an incorrect number of arguments.
         with self.assertRaises(c.CompilationError):
             c.compile_expression(q.Function('sum', [q.Column('date'),
                                                     q.Column('account')]),
-                                 c.TargetsContext())
+                                 cc.TargetsContext())
 
 
 class TestCompileAggregateChecks(unittest.TestCase):
@@ -62,51 +63,51 @@ class TestCompileAggregateChecks(unittest.TestCase):
     def test_is_aggregrate_derived(self):
         columns, aggregates = c.get_columns_and_aggregates(
             c.EvalAnd(
-                c.EvalEqual(c.ChangeColumn(), c.EvalConstant(42)),
+                c.EvalEqual(cc.ChangeColumn(), c.EvalConstant(42)),
                 c.EvalOr(
-                    c.EvalNot(c.EvalEqual(c.DateColumn(),
+                    c.EvalNot(c.EvalEqual(cc.DateColumn(),
                                           c.EvalConstant(datetime.date(2014, 1, 1)))),
                     c.EvalConstant(False))))
         self.assertEqual((2, 0), (len(columns), len(aggregates)))
 
         columns, aggregates = c.get_columns_and_aggregates(
             c.EvalAnd(
-                c.EvalEqual(c.ChangeColumn(), c.EvalConstant(42)),
+                c.EvalEqual(cc.ChangeColumn(), c.EvalConstant(42)),
                 c.EvalOr(
-                    c.EvalNot(c.EvalEqual(c.DateColumn(),
+                    c.EvalNot(c.EvalEqual(cc.DateColumn(),
                                           c.EvalConstant(datetime.date(2014, 1, 1)))),
                     # Aggregation node deep in the tree.
-                    c.Sum([c.EvalConstant(1)]))))
+                    cc.Sum([c.EvalConstant(1)]))))
         self.assertEqual((2, 1), (len(columns), len(aggregates)))
 
     def test_get_columns_and_aggregates(self):
         # Simple column.
-        columns, aggregates = c.get_columns_and_aggregates(c.ChangeColumn())
+        columns, aggregates = c.get_columns_and_aggregates(cc.ChangeColumn())
         self.assertEqual((1, 0), (len(columns), len(aggregates)))
 
         # Multiple columns.
         columns, aggregates = c.get_columns_and_aggregates(
-            c.EvalAnd(c.ChangeColumn(), c.DateColumn()))
+            c.EvalAnd(cc.ChangeColumn(), cc.DateColumn()))
         self.assertEqual((2, 0), (len(columns), len(aggregates)))
 
         # Simple aggregate.
         columns, aggregates = c.get_columns_and_aggregates(
-            c.Sum([c.ChangeColumn()]))
+            cc.Sum([cc.ChangeColumn()]))
         self.assertEqual((0, 1), (len(columns), len(aggregates)))
 
         # Multiple agreggates.
         columns, aggregates = c.get_columns_and_aggregates(
-            c.EvalAnd(c.First([c.AccountColumn()]), c.Last([c.AccountColumn()])))
+            c.EvalAnd(cc.First([cc.AccountColumn()]), cc.Last([cc.AccountColumn()])))
         self.assertEqual((0, 2), (len(columns), len(aggregates)))
 
         # Simple non-aggregate function.
         columns, aggregates = c.get_columns_and_aggregates(
-            c.Length([c.AccountColumn()]))
+            cc.Length([cc.AccountColumn()]))
         self.assertEqual((1, 0), (len(columns), len(aggregates)))
 
         # Mix of column and aggregates (this is used to detect this illegal case).
         columns, aggregates = c.get_columns_and_aggregates(
-            c.EvalAnd(c.Length([c.AccountColumn()]), c.Sum([c.ChangeColumn()])))
+            c.EvalAnd(cc.Length([cc.AccountColumn()]), cc.Sum([cc.ChangeColumn()])))
         self.assertEqual((1, 1), (len(columns), len(aggregates)))
 
 
@@ -160,97 +161,6 @@ class TestCompileDataTypes(unittest.TestCase):
         c_or = c.EvalOr(c.EvalConstant(17), c.EvalConstant(18))
         self.assertEqual(bool, c_or.dtype)
 
-    def test_compile_EvalLength(self):
-        with self.assertRaises(c.CompilationError):
-            c.Length([c.EvalConstant(17)])
-        c_length = c.Length([c.EvalConstant('testing')])
-        self.assertEqual(int, c_length.dtype)
-
-    def test_compile_EvalYear(self):
-        with self.assertRaises(c.CompilationError):
-            c.Year([c.EvalConstant(17)])
-        c_year = c.Year([c.EvalConstant(datetime.date.today())])
-        self.assertEqual(int, c_year.dtype)
-
-    def test_compile_EvalMonth(self):
-        with self.assertRaises(c.CompilationError):
-            c.Month([c.EvalConstant(17)])
-        c_month = c.Month([c.EvalConstant(datetime.date.today())])
-        self.assertEqual(int, c_month.dtype)
-
-    def test_compile_EvalDay(self):
-        with self.assertRaises(c.CompilationError):
-            c.Day([c.EvalConstant(17)])
-        c_day = c.Day([c.EvalConstant(datetime.date.today())])
-        self.assertEqual(int, c_day.dtype)
-
-    def test_compile_EvalUnits(self):
-        with self.assertRaises(c.CompilationError):
-            c.Units([c.EvalConstant(17)])
-        c_units = c.Units([c.EvalConstant(inventory.Inventory())])
-        self.assertEqual(inventory.Inventory, c_units.dtype)
-        c_units = c.Units([c.EvalConstant(position.Position.from_string('100 USD'))])
-        self.assertEqual(inventory.Inventory, c_units.dtype)
-
-    def test_compile_EvalCost(self):
-        with self.assertRaises(c.CompilationError):
-            c.Cost([c.EvalConstant(17)])
-        c_cost = c.Cost([c.EvalConstant(inventory.Inventory())])
-        self.assertEqual(inventory.Inventory, c_cost.dtype)
-        c_cost = c.Cost([c.EvalConstant(position.Position.from_string('100 USD'))])
-        self.assertEqual(inventory.Inventory, c_cost.dtype)
-
-    def test_compile_EvalSum(self):
-        with self.assertRaises(c.CompilationError):
-            c.Sum([c.EvalConstant('testing')])
-        c_sum = c.Sum([c.EvalConstant(17)])
-        self.assertEqual(int, c_sum.dtype)
-        c_sum = c.Sum([c.EvalConstant(D('17.'))])
-        self.assertEqual(Decimal, c_sum.dtype)
-
-    def test_compile_EvalCount(self):
-        c_count = c.Count([c.EvalConstant(17)])
-        self.assertEqual(int, c_count.dtype)
-
-    def test_compile_EvalFirst(self):
-        c_first = c.First([c.EvalConstant(17.)])
-        self.assertEqual(float, c_first.dtype)
-
-    def test_compile_EvalLast(self):
-        c_last = c.Last([c.EvalConstant(17.)])
-        self.assertEqual(float, c_last.dtype)
-
-    def test_compile_columns(self):
-        class_types = [
-            # Postings accessors.
-            (c.TypeColumn, str),
-            (c.FilenameColumn, str),
-            (c.LineNoColumn, int),
-            (c.DateColumn, datetime.date),
-            (c.FlagColumn, str),
-            (c.PayeeColumn, str),
-            (c.NarrationColumn, str),
-            (c.TagsColumn, set),
-            (c.LinksColumn, set),
-            (c.AccountColumn, str),
-            (c.NumberColumn, Decimal),
-            (c.CurrencyColumn, str),
-            (c.ChangeColumn, position.Position),
-            # Entries accessors.
-            (c.TypeEntryColumn, str),
-            (c.FilenameEntryColumn, str),
-            (c.LineNoEntryColumn, int),
-            (c.DateEntryColumn, datetime.date),
-            (c.FlagEntryColumn, str),
-            (c.PayeeEntryColumn, str),
-            (c.NarrationEntryColumn, str),
-            (c.TagsEntryColumn, set),
-            (c.LinksEntryColumn, set),
-            ]
-        for cls, dtype in class_types:
-            instance = cls()
-            self.assertEqual(dtype, instance.dtype)
-
 
 class TestCompileMisc(unittest.TestCase):
 
@@ -265,6 +175,11 @@ class CompileSelectBase(unittest.TestCase):
 
     maxDiff = 8192
 
+    # Default execution contexts.
+    xcontext_entries = cc.FilterEntriesContext()
+    xcontext_targets = cc.TargetsContext()
+    xcontext_postings = cc.FilterPostingsContext()
+
     def setUp(self):
         self.parser = q.Parser()
 
@@ -276,8 +191,11 @@ class CompileSelectBase(unittest.TestCase):
         Returns:
           The AST.
         """
-        statement = self.parser.parse(query.strip())
-        return c.compile_select(statement)
+        select = self.parser.parse(query.strip())
+        return c.compile_select(select,
+                                self.xcontext_targets,
+                                self.xcontext_postings,
+                                self.xcontext_entries)
 
     def assertCompile(self, expected, query, debug=False):
         """Assert parsed and compiled contents from 'query' is 'expected'.
@@ -331,9 +249,9 @@ class TestCompileSelect(CompileSelectBase):
         # Test the wildcard expandion.
         query = self.compile("SELECT length(account), account as a, date;")
         self.assertEqual(
-            [q.Target(c.Length([c.AccountColumn()]), 'length_account'),
-             q.Target(c.AccountColumn(), 'a'),
-             q.Target(c.DateColumn(), 'date')],
+            [q.Target(cc.Length([cc.AccountColumn()]), 'length_account'),
+             q.Target(cc.AccountColumn(), 'a'),
+             q.Target(cc.DateColumn(), 'date')],
             query.c_targets)
 
     def test_compile_mixed_aggregates(self):

@@ -12,9 +12,6 @@ import io
 import re
 import operator
 
-import ply.lex
-import ply.yacc
-
 from beancount.core.amount import Decimal
 from beancount.core import position
 from beancount.core import inventory
@@ -22,10 +19,8 @@ from beancount.core import data
 from beancount.query import query_parser
 
 
-
 class CompilationError(Exception):
     """A compiler/interpreter error."""
-
 
 
 class EvalNode:
@@ -200,147 +195,11 @@ class EvalFunction(EvalNode):
                 for operand in self.operands]
 
 
-# Simple (i.e., not aggregating) function objects. These functionals maintain no
-# state.
-
-class Length(EvalFunction):
-    __intypes__ = [(list, set, str)]
-
-    def __init__(self, operands):
-        super().__init__(operands, int)
-
-    def __call__(self, posting):
-        args = self.eval_args(posting)
-        return len(args[0])
-
-# Operations on dates.
-
-class Year(EvalFunction):
-    __intypes__ = [datetime.date]
-
-    def __init__(self, operands):
-        super().__init__(operands, int)
-
-    def __call__(self, posting):
-        args = self.eval_args(posting)
-        return args[0].year
-
-class Month(EvalFunction):
-    __intypes__ = [datetime.date]
-
-    def __init__(self, operands):
-        super().__init__(operands, int)
-
-    def __call__(self, posting):
-        args = self.eval_args(posting)
-        return args[0].month
-
-class Day(EvalFunction):
-    __intypes__ = [datetime.date]
-
-    def __init__(self, operands):
-        super().__init__(operands, int)
-
-    def __call__(self, posting):
-        args = self.eval_args(posting)
-        return args[0].day
-
-# Operation on inventories.
-
-class Units(EvalFunction):
-    __intypes__ = [(position.Position, inventory.Inventory)]
-
-    def __init__(self, operands):
-        super().__init__(operands, inventory.Inventory)
-
-    def __call__(self, posting):
-        args = self.eval_args(posting)
-        return args[0].get_amount()
-
-class Cost(EvalFunction):
-    __intypes__ = [(position.Position, inventory.Inventory)]
-
-    def __init__(self, operands):
-        super().__init__(operands, inventory.Inventory)
-
-    def __call__(self, posting):
-        args = self.eval_args(posting)
-        return args[0].get_cost()
-
-SIMPLE_FUNCTIONS = {
-    'length': Length,
-    'units': Units,
-    'cost': Cost,
-    'year': Year,
-    'month': Month,
-    'day': Day,
-    }
-
-
-
-# Aggregating functions. These instances themselves both make the computation
-# and manage state for a single iteration.
+class EvalColumn(EvalNode):
+    "Base class for all column accessors."
 
 class EvalAggregator(EvalFunction):
     "Base class for all aggregator evaluator types."
-
-
-class Sum(EvalAggregator):
-    # FIXME: Not sure we should accept a position. Compile a special node for Sum(position) and Sum(inventory).
-    __intypes__ = [(int, float, Decimal, position.Position, inventory.Inventory)]
-
-    def __init__(self, operands):
-        super().__init__(operands, operands[0].dtype)
-
-    def __call__(self, posting):
-        args = self.eval_args(posting)
-        value = args[0]
-        if self.state is None:
-            if isinstance(value, position.Position):
-                self.state = inventory.Inventory()
-            else:
-                self.state = type(value)()
-        self.state += value
-
-class Count(EvalAggregator):
-    __intypes__ = [object]
-
-    def __init__(self, operands):
-        super().__init__(operands, int)
-
-    def __call__(self, posting):
-        if self.state is None:
-            self.state = 0
-        self.state += 1
-
-class First(EvalAggregator):
-    __intypes__ = [object]
-
-    def __init__(self, operands):
-        super().__init__(operands, operands[0].dtype)
-
-    def __call__(self, posting):
-        if self.state is None:
-            args = self.eval_args(posting)
-            self.state = args[0]
-
-class Last(EvalAggregator):
-    __intypes__ = [object]
-
-    def __init__(self, operands):
-        super().__init__(operands, operands[0].dtype)
-
-    def __call__(self, posting):
-        args = self.eval_args(posting)
-        self.state = args[0]
-
-AGGREGATOR_FUNCTIONS = {
-    'sum': Sum,
-    'count': Count,
-    'first': First,
-    'last': Last,
-    }
-
 
 
 class CompilationContext:
@@ -377,218 +236,6 @@ class CompilationContext:
                 name, self.context_name))
 
 
-
-# Column accessors for entries.
-
-class EvalColumn(EvalNode):
-    "Base class for all column accessors."
-
-class TypeEntryColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(str)
-
-    def __call__(self, entry):
-        return type(entry).__name__
-
-class FilenameEntryColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(str)
-
-    def __call__(self, entry):
-        return entry.source.filename
-
-class LineNoEntryColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(int)
-
-    def __call__(self, entry):
-        return entry.source.lineno
-
-class DateEntryColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(datetime.date)
-
-    def __call__(self, entry):
-        return entry.date
-
-class FlagEntryColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(str)
-
-    def __call__(self, entry):
-        return entry.flag
-
-class PayeeEntryColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(str)
-
-    def __call__(self, entry):
-        return entry.payee or ''
-
-class NarrationEntryColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(str)
-
-    def __call__(self, entry):
-        return entry.narration
-
-class TagsEntryColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(set)
-
-    def __call__(self, entry):
-        return entry.tags
-
-class LinksEntryColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(set)
-
-    def __call__(self, entry):
-        return entry.links
-
-class FilterEntriesContext(CompilationContext):
-    """An execution context that provides access to attributes on Transactions
-    and other entry types.
-    """
-    context_name = 'FROM clause'
-    columns = {
-        'type' : TypeEntryColumn,
-        'filename' : FilenameEntryColumn,
-        'lineno' : LineNoEntryColumn,
-        'date' : DateEntryColumn,
-        'flag' : FlagEntryColumn,
-        'payee' : PayeeEntryColumn,
-        'narration' : NarrationEntryColumn,
-        'tags' : TagsEntryColumn,
-        'links' : LinksEntryColumn,
-        }
-    functions = SIMPLE_FUNCTIONS
-
-
-
-# Column accessors for postings.
-
-class TypeColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(str)
-
-    def __call__(self, posting):
-        return type(posting.entry).__name__
-
-class FilenameColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(str)
-
-    def __call__(self, posting):
-        return posting.entry.source.filename
-
-class LineNoColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(int)
-
-    def __call__(self, posting):
-        return posting.entry.source.lineno
-
-class DateColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(datetime.date)
-
-    def __call__(self, posting):
-        return posting.entry.date
-
-class FlagColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(str)
-
-    def __call__(self, posting):
-        return posting.entry.flag
-
-class PayeeColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(str)
-
-    def __call__(self, posting):
-        return posting.entry.payee or ''
-
-class NarrationColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(str)
-
-    def __call__(self, posting):
-        return posting.entry.narration
-
-class TagsColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(set)
-
-    def __call__(self, posting):
-        return posting.entry.tags
-
-class LinksColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(set)
-
-    def __call__(self, posting):
-        return posting.entry.links
-
-class AccountColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(str)
-
-    def __call__(self, posting):
-        return posting.account
-
-class NumberColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(Decimal)
-
-    def __call__(self, posting):
-        return posting.position.number
-
-class CurrencyColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(str)
-
-    def __call__(self, posting):
-        return posting.position.lot.currency
-
-class ChangeColumn(EvalColumn):
-    def __init__(self):
-        super().__init__(position.Position)
-
-    def __call__(self, posting):
-        return posting.position
-
-class FilterPostingsContext(CompilationContext):
-    """An execution context that provides access to attributes on Postings.
-    """
-    context_name = 'WHERE clause'
-    columns = {
-        'type'      : TypeColumn,
-        'filename'  : FilenameColumn,
-        'lineno'    : LineNoColumn,
-        'date'      : DateColumn,
-        'flag'      : FlagColumn,
-        'payee'     : PayeeColumn,
-        'narration' : NarrationColumn,
-        'tags'      : TagsColumn,
-        'links'     : LinksColumn,
-        'account'   : AccountColumn,
-        'number'    : NumberColumn,
-        'currency'  : CurrencyColumn,
-        'change'    : ChangeColumn,
-        }
-    functions = SIMPLE_FUNCTIONS
-
-class TargetsContext(FilterPostingsContext):
-    """An execution context that provides access to attributes on Postings.
-    """
-    context_name = 'targets/column'
-    functions = copy.copy(FilterPostingsContext.functions)
-    functions.update(AGGREGATOR_FUNCTIONS)
-
-
-
 class AttributeColumn(EvalColumn):
     def __call__(self, row):
         return getattr(row, self.name)
@@ -603,8 +250,6 @@ class ResultSetContext(CompilationContext):
         """
         # FIXME: How do we figure out the data type here? We need the context.
         return AttributeColumn(name)
-
-
 
 
 def compile_expression(expr, xcontext):
@@ -717,7 +362,7 @@ def compile_targets(targets, xcontext):
     if isinstance(targets, query_parser.Wildcard):
         # Insert the full list of available columns.
         targets = [query_parser.Target(query_parser.Column(name), None)
-                   for name in TargetsContext.columns]
+                   for name in xcontext.columns]
 
     # Compile targets.
     c_targets = []
@@ -940,7 +585,7 @@ EvalQuery = collections.namedtuple(
                   'limit distinct flatten'))
 
 
-def compile_select(select):
+def compile_select(select, targets_xcontext, postings_xcontext, entries_xcontext):
     """Prepare an AST for a Select statement into a very rudimentary execution tree.
     The execution tree mostly looks much like an AST, but with some nodes
     replaced with knowledge specific to an execution context and eventually some
@@ -948,8 +593,11 @@ def compile_select(select):
 
     Args:
       select: An instance of query_parser.Select.
+      targets_xcontext: A compilation context for evaluating targets.
+      postings_xcontext: : A compilation context for evaluating postings filters.
+      entries_xcontext: : A compilation context for evaluating entry filters.
     Returns:
-      A modified instance of Select with some nodes replaced.
+      An instance of Query, ready to be executed.
     """
 
     # Process the FROM clause and figure out the execution context for the
@@ -962,7 +610,7 @@ def compile_select(select):
 
     elif from_clause is None or isinstance(from_clause, query_parser.From):
         # Bind the from clause contents.
-        xcontext_entries = FilterEntriesContext()
+        xcontext_entries = entries_xcontext
         if from_clause is not None:
             c_expression = (compile_expression(from_clause.expression, xcontext_entries)
                             if from_clause.expression is not None
@@ -970,8 +618,8 @@ def compile_select(select):
             c_from = query_parser.From(c_expression, from_clause.close)
         else:
             c_from = None
-        xcontext_target = TargetsContext()
-        xcontext_where = FilterPostingsContext()
+        xcontext_target = targets_xcontext
+        xcontext_where = postings_xcontext
 
     else:
         raise CompilationError("Unexpected from clause in AST: {}".format(from_clause))
