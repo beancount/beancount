@@ -759,8 +759,6 @@ def find_unique_name(name, allocated_set):
     return name
 
 
-
-
 def compile_targets(targets, xcontext):
     """Compile the targets and check for their validity. Process wildcard.
 
@@ -819,6 +817,22 @@ def compile_targets(targets, xcontext):
 
 
 def compile_group_by(group_by, c_targets, xcontext, simple_indexes, aggregate_indexes):
+    """Process a group-by clause.
+
+    Args:
+      group_by: A GroupBy instance as provided by the parser.
+      c_targets: A list of compiled target expressions.
+      xcontext: A compilation context to be used to evaluate GROUP BY expressions.
+      simple_indexes: A list of integer indexes for the non-aggregate targetsr.
+      aggregate_indexes: A list of integer indexes for the aggregate targetsr.
+    Returns:
+      A tuple of
+       new_targets: A list of new compiled target nodes.
+       new_indexes: A list of integer indexes that refer to the newly inserted targets.
+       group_indexes: A list of integer indexes to be used for processing grouping.
+    """
+    new_targets = copy.copy(c_targets)
+    new_indexes = []
     if group_by:
         # Check that HAVING is not supported yet.
         if group_by and group_by.having is not None:
@@ -870,15 +884,15 @@ def compile_group_by(group_by, c_targets, xcontext, simple_indexes, aggregate_in
 
                     # Add the new target. 'None' for the target name implies it
                     # should be invisible, not to be rendered.
-                    index = len(c_targets)
-                    c_targets.append(query_parser.Target(c_expr, None))
-                    simple_indexes.append(index)
+                    index = len(new_targets)
+                    new_targets.append(query_parser.Target(c_expr, None))
+                    new_indexes.append(index)
 
             assert index is not None, "Internal error, could not index group-by reference."
             group_indexes.append(index)
 
             # Check that the group-by column references a non-aggregate.
-            c_expr = c_targets[index].expression
+            c_expr = new_targets[index].expression
             _, aggregates = get_columns_and_aggregates(c_expr)
             if aggregates:
                 raise CompilationError(
@@ -901,7 +915,7 @@ def compile_group_by(group_by, c_targets, xcontext, simple_indexes, aggregate_in
             # anything useful, we won't need it.
             group_indexes = None
 
-    return group_indexes
+    return new_targets[len(c_targets):], new_indexes, group_indexes
 
 
 def compile_select(select):
@@ -951,9 +965,12 @@ def compile_select(select):
     c_targets, simple_indexes, aggregate_indexes = compile_targets(select.targets, xcontext_target)
 
     # Process the group-by clause.
-    group_indexes = compile_group_by(select.group_by,
-                                     c_targets, xcontext_target,
-                                     simple_indexes, aggregate_indexes)
+    new_targets, new_indexes, group_indexes = compile_group_by(
+        select.group_by,
+        c_targets, xcontext_target,
+        simple_indexes, aggregate_indexes)
+    c_targets.extend(new_targets)
+    simple_indexes.extend(new_indexes)
 
     # If this is an aggregate query (it has some aggregates), check that the set
     # of non-aggregates match exactly the group indexes. This should always be
