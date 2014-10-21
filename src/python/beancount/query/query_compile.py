@@ -66,22 +66,6 @@ class EvalNode:
                     if isinstance(element, EvalNode):
                         yield element
 
-    ## FIXME: remove
-    # def visit(self, visitor):
-    #     """In-order visitor.
-    #     Args:
-    #       visitor: A callable that will get invoked with this instance.
-    #     """
-    #     try:
-    #         visitor(self)
-    #         for attr in self.__slots__:
-    #             child = getattr(self, attr)
-    #             if isinstance(child, EvalNode):
-    #                 child.visit(visitor)
-    #     except StopIteration:
-    #         pass
-
-
 
 class EvalConstant(EvalNode):
     __slots__ = ('value',)
@@ -661,48 +645,6 @@ def compile_expression(expr, xcontext):
         assert False, "Invalid expression to compile: {}".format(expr)
 
     return c_expr
-
-
-def is_aggregate(node):
-    """Return true if the given node is derived from an aggregate.
-
-    Args:
-      node: An instance of EvalNode.
-    Returns:
-      A boolean.
-    """
-    if isinstance(node, EvalAggregator):
-        return True
-
-    for child in node.childnodes():
-        if is_aggregate(child):
-            return True
-
-    return False
-
-
-# def has_nested_aggregates(node, under_aggregate=False):
-#     """Check if the expression contains nested aggregates.
-
-#     Nested aggregates - aggregates of aggregates - should be disallowed. This
-#     function checks for their presence under the given evaluator node.
-
-#     Args:
-#       node: An instance of EvalNode.
-#       under_aggregate: A boolean, True if one of the parent nodes of this node
-#         is an aggregate evaluator.
-#     Returns:
-#       A boolean, true if the the expression contains a nested aggregate.
-#     """
-#     is_aggregate = isinstance(node, EvalAggregator)
-#     if under_aggregate and is_aggregate:
-#         return True
-
-#     for child in node.childnodes():
-#         if has_nested_aggregates(child, under_aggregate|is_aggregate):
-#             return True
-
-#     return False
 
 
 def get_columns_and_aggregates(node):

@@ -59,51 +59,25 @@ class TestCompileExpressionDataTypes(unittest.TestCase):
 
 class TestCompileAggregateChecks(unittest.TestCase):
 
-    def test_is_aggregrate_simple(self):
-        self.assertFalse(c.is_aggregate(
-            c.ChangeColumn()))
-        self.assertFalse(c.is_aggregate(
-            c.Length([c.AccountColumn()])))
-        self.assertTrue(c.is_aggregate(
-            c.Sum([c.ChangeColumn()])))
-
     def test_is_aggregrate_derived(self):
-        self.assertFalse(c.is_aggregate(
+        columns, aggregates = c.get_columns_and_aggregates(
             c.EvalAnd(
                 c.EvalEqual(c.ChangeColumn(), c.EvalConstant(42)),
                 c.EvalOr(
                     c.EvalNot(c.EvalEqual(c.DateColumn(),
                                           c.EvalConstant(datetime.date(2014, 1, 1)))),
-                    c.EvalConstant(False)))))
+                    c.EvalConstant(False))))
+        self.assertEqual((2, 0), (len(columns), len(aggregates)))
 
-        self.assertTrue(c.is_aggregate(
+        columns, aggregates = c.get_columns_and_aggregates(
             c.EvalAnd(
                 c.EvalEqual(c.ChangeColumn(), c.EvalConstant(42)),
                 c.EvalOr(
                     c.EvalNot(c.EvalEqual(c.DateColumn(),
                                           c.EvalConstant(datetime.date(2014, 1, 1)))),
                     # Aggregation node deep in the tree.
-                    c.Sum([c.EvalConstant(1)])))))
-
-    # def test_has_nested_aggregrates(self):
-    #     self.assertFalse(c.has_nested_aggregates(
-    #         c.ChangeColumn()))
-
-    #     self.assertFalse(c.has_nested_aggregates(
-    #         c.Sum([c.ChangeColumn()])))
-
-    #     self.assertFalse(c.has_nested_aggregates(
-    #         c.EvalEqual(c.Sum([c.ChangeColumn()]), c.EvalConstant(1))))
-
-    #     self.assertTrue(c.has_nested_aggregates(
-    #         c.First([c.Sum([c.ChangeColumn()])])))
-
-    #     self.assertTrue(c.has_nested_aggregates(
-    #         c.First([c.EvalEqual(c.Sum([c.ChangeColumn()]), c.EvalConstant(1))])))
-
-    #     self.assertTrue(c.has_nested_aggregates(
-    #         c.EvalOr(c.First([c.EvalEqual(c.Sum([c.ChangeColumn()]), c.EvalConstant(1))]),
-    #                  c.EvalConstant(False))))
+                    c.Sum([c.EvalConstant(1)]))))
+        self.assertEqual((2, 1), (len(columns), len(aggregates)))
 
     def test_get_columns_and_aggregates(self):
         # Simple column.
