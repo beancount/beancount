@@ -296,6 +296,14 @@ class TestSelectFromWhere(QueryParserTestBase):
                                  q.From(self.expr, datetime.date(2014, 10, 18))),
                          "SELECT a, b FROM d = (max(e) and 17) CLOSE ON 2014-10-18;")
 
+    def test_from_close_no_expr(self):
+        self.assertParse(qSelect(self.targets, q.From(None, True)),
+                         "SELECT a, b FROM CLOSE;")
+
+    def test_from_close_no_expr_dated(self):
+        self.assertParse(qSelect(self.targets, q.From(None, datetime.date(2014, 10, 18))),
+                         "SELECT a, b FROM CLOSE ON 2014-10-18;")
+
     def test_where_empty(self):
         with self.assertRaises(q.ParseError):
             self.parse("SELECT a, b WHERE;")

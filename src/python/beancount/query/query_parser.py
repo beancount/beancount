@@ -239,7 +239,7 @@ class Parser(Lexer):
 
     def p_select_statement(self, p):
         """
-        select_statement : SELECT distinct target_spec from_with_sub where \
+        select_statement : SELECT distinct target_spec from_subselect where \
                            group_by order_by pivot_by limit flatten
         """
         p[0] = Select(p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[2], p[10])
@@ -272,31 +272,35 @@ class Parser(Lexer):
         """
         p[0] = Target(p[1], p[3] if len(p) == 4 else None)
 
-    def p_from(self, p):
-        """
-        from : empty
-             | FROM expression close
-        """
-        if len(p) == 4:
-            p[0] = From(p[2], p[3])
-        elif len(p) == 5:
-            p[0] = p[3]
+    def p_from_empty(self, p):
+        "from : empty"
+        p[0] = None
 
-    def p_from_with_sub(self, p):
+    def p_from_expression_only(self, p):
+        "from : FROM expression"
+        p[0] = From(p[2], False)
+
+    def p_from_close_only(self, p):
+        "from : FROM close"
+        p[0] = From(None, p[2])
+
+    def p_from_expression_close(self, p):
+        "from : FROM expression close"
+        p[0] = From(p[2], p[3])
+
+    def p_from_subselect(self, p):
         """
-        from_with_sub : empty
-                      | FROM expression close
-                      | FROM LPAREN select_statement RPAREN
+        from_subselect : from
+                       | FROM LPAREN select_statement RPAREN
         """
-        if len(p) == 4:
-            p[0] = From(p[2], p[3])
-        elif len(p) == 5:
+        if len(p) == 2:
+            p[0] = p[1]
+        else:
             p[0] = p[3]
 
     def p_close(self, p):
         """
-        close : empty
-              | CLOSE
+        close : CLOSE
               | CLOSE ON DATE
         """
         p[0] = p[3] if len(p) == 4 else (p[1] == 'CLOSE')
