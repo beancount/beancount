@@ -287,7 +287,7 @@ class TestCompileMisc(unittest.TestCase):
         self.assertEqual('date_2', c.find_unique_name('date', {'date', 'date_1', 'date_3'}))
 
 
-class TestCompileSelect(unittest.TestCase):
+class CompileSelectBase(unittest.TestCase):
 
     maxDiff = 8192
 
@@ -326,6 +326,9 @@ class TestCompileSelect(unittest.TestCase):
             return actual
         except AssertionError:
             raise
+
+
+class TestCompileSelect(CompileSelectBase):
 
     def test_compile_from(self):
         # Test the compilation of from.
@@ -377,6 +380,14 @@ class TestCompileSelect(unittest.TestCase):
         self.assertTrue(re.search('Aggregates of aggregates',
                                   str(assertion.exception)))
 
+    def test_compile_having(self):
+        with self.assertRaises(c.CompilationError):
+            self.compile("""
+              SELECT account, sum(number) GROUP BY account HAVING sum(number) > 0;
+            """)
+
+
+class TestCompileSelectGroupBy(CompileSelectBase):
 
     def test_compile_group_by_non_aggregates(self):
         self.compile("""
@@ -479,14 +490,44 @@ class TestCompileSelect(unittest.TestCase):
               SELECT payee, last(account) as len GROUP BY date;
             """)
 
-    def test_compile_having(self):
-        with self.assertRaises(c.CompilationError):
-            self.compile("""
-              SELECT account, sum(number) GROUP BY account HAVING sum(number) > 0;
-            """)
 
-    def test_compile_order_by(self):
-        with self.assertRaises(c.CompilationError):
-            self.compile("""
-              SELECT account, sum(number) ORDER BY account;
-            """)
+class TestCompileSelectOrderBy(CompileSelectBase):
+
+    def test_compile_order_by_simple(self):
+        self.compile("""
+          SELECT account, sum(number) GROUP BY account ORDER BY account;
+        """)
+
+    def test_compile_order_by_simple(self):
+        self.compile("""
+          SELECT account, length(narration) GROUP BY account ORDER BY 1;
+        """)
+
+        self.compile("""
+          SELECT account, length(narration) as l GROUP BY account ORDER BY l;
+        """)
+
+        self.compile("""
+          SELECT account, length(narration) GROUP BY account ORDER BY year(date);
+        """)
+
+        self.compile("""
+          SELECT account GROUP BY account ORDER BY year(date);
+        """)
+
+    def test_compile_order_by_aggregate(self):
+        self.compile("""
+          SELECT account, first(narration) GROUP BY account ORDER BY 2;
+        """)
+
+        self.compile("""
+          SELECT account, first(narration) as f GROUP BY account ORDER BY f;
+        """)
+
+        self.compile("""
+          SELECT account, first(narration) GROUP BY account ORDER BY sum(number);
+        """)
+
+        self.compile("""
+          SELECT account GROUP BY account ORDER BY sum(number);
+        """)

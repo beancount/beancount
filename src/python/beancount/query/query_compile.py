@@ -768,7 +768,7 @@ def compile_targets(targets, xcontext):
     Returns:
       A tuple of
         c_targets: A list of compiled target expressions with resolved names.
-        simple_indexes: A list of integer indexes for the non-aggregate targetsr.
+        simple_indexes: A list of integer indexes for the non-aggregate targets.
         aggregate_indexes: A list of integer indexes for the aggregate targetsr.
     """
     # Bind the targets expressions to the execution context.
@@ -833,6 +833,7 @@ def compile_group_by(group_by, c_targets, xcontext, simple_indexes, aggregate_in
     """
     new_targets = copy.copy(c_targets)
     new_indexes = []
+    group_indexes = []
     if group_by:
         # Check that HAVING is not supported yet.
         if group_by and group_by.having is not None:
@@ -851,7 +852,6 @@ def compile_group_by(group_by, c_targets, xcontext, simple_indexes, aggregate_in
         # inserted into the list of targets as invisible targets.
         targets_name_map = {target.name: index
                             for index, target in enumerate(c_targets)}
-        group_indexes = []
         for column in group_by.columns:
             index = None
 
@@ -908,14 +908,87 @@ def compile_group_by(group_by, c_targets, xcontext, simple_indexes, aggregate_in
                 raise CompilationError(
                     "Aggregate query without a GROUP-BY should have only aggregates")
 
-            # Set the group-by indexes implicitly to be the list of all targets.
-            group_indexes = []
         else:
             # This is not an aggregate query; don't set group_indexes to
             # anything useful, we won't need it.
             group_indexes = None
 
     return new_targets[len(c_targets):], new_indexes, group_indexes
+
+
+def compile_order_by(order_by, c_targets, xcontext):
+    """Process an order-by clause.
+
+    Args:
+      order_by: A OrderBy instance as provided by the parser.
+      c_targets: A list of compiled target expressions.
+      xcontext: A compilation context to be used to evaluate ORDER BY expressions.
+    Returns:
+      A tuple of
+       new_targets: A list of new compiled target nodes.
+       new_simple_indexes: A list of integer indexes that refer to the newly inserted
+         non-aggregate targets.
+       new_aggregate_indexes: A list of integer indexes that refer to the newly inserted
+         aggregatetargets.
+       order_indexes: A list of integer indexes to be used for processing ordering.
+    """
+    new_targets = copy.copy(c_targets)
+    new_simple_indexes = []
+    new_aggregate_indexes = []
+    order_indexes = []
+
+    # Compile order-by expressions and resolve them to their targets if
+    # possible. A ORDER-BY column may be one of the following:
+    #
+    # * A reference to a target by name.
+    # * A reference to a target by index (starting at one).
+    # * A new expression, aggregate or not.
+    #
+    # References by name are converted to indexes. New expressions are
+    # inserted into the list of targets as invisible targets.
+    targets_name_map = {target.name: index
+                        for index, target in enumerate(c_targets)}
+    for column in order_by.columns:
+        index = None
+
+        # Process target references by index.
+        if isinstance(column, int):
+            index = column - 1
+            if not (0 <= index < len(c_targets)):
+                raise CompilationError(
+                    "Invalid ORDER-BY column index {}".format(column))
+
+        else:
+            # Process target references by name. These will be parsed as
+            # simple Column expressions. If they refer to a target name, we
+            # resolve them.
+            if isinstance(column, query_parser.Column):
+                name = column.name
+                index = targets_name_map.get(name, None)
+
+            # Otherwise we compile the expression and add it to the list of
+            # targets to evaluate and index into that new target.
+            if index is None:
+                c_expr = compile_expression(column, xcontext)
+
+                # Add the new target. 'None' for the target name implies it
+                # should be invisible, not to be rendered.
+                index = len(new_targets)
+                new_targets.append(query_parser.Target(c_expr, None))
+
+                _, aggregates = get_columns_and_aggregates(c_expr)
+                if aggregates:
+                    new_aggregate_indexes.append(index)
+                else:
+                    new_simple_indexes.append(index)
+
+        assert index is not None, "Internal error, could not index order-by reference."
+        order_indexes.append(index)
+
+    return (new_targets[len(c_targets):],
+            new_simple_indexes,
+            new_aggregate_indexes,
+            order_indexes)
 
 
 def compile_select(select):
@@ -962,13 +1035,15 @@ def compile_select(select):
                 "Aggregates are not allowed in from clause")
 
     # Compile the targets.
-    c_targets, simple_indexes, aggregate_indexes = compile_targets(select.targets, xcontext_target)
+    c_targets, simple_indexes, aggregate_indexes = compile_targets(select.targets,
+                                                                   xcontext_target)
 
     # Process the group-by clause.
     new_targets, new_indexes, group_indexes = compile_group_by(
         select.group_by,
         c_targets, xcontext_target,
         simple_indexes, aggregate_indexes)
+
     c_targets.extend(new_targets)
     simple_indexes.extend(new_indexes)
 
@@ -981,7 +1056,6 @@ def compile_select(select):
             raise CompilationError(
                 "Non-aggregates must be covered by GROUP-BY clause in aggregate query")
 
-
     # Bind the WHERE expression to the execution context.
     # Note: Aggregates are disallowed in this clause.
     # FIXME: check for this!
@@ -991,8 +1065,15 @@ def compile_select(select):
 
     # Check that ORDER-BY is not supported yet.
     if select.order_by is not None:
-        # FIXME: Compile the order clause and apply it.
-        raise CompilationError("The ORDER BY clause is not supported yet")
+        (new_targets,
+         new_simple_indexes,
+         new_aggregate_indexes,
+         order_indexes) = compile_order_by(select.order_by,
+                                           c_targets, xcontext_target)
+
+        c_targets.extend(new_targets)
+        simple_indexes.extend(new_simple_indexes)
+        aggregate_indexes.extend(new_aggregate_indexes)
 
     # Check that PIVOT-BY is not supported yet.
     if select.pivot_by is not None:
@@ -1013,55 +1094,32 @@ def compile_select(select):
 
 
 
-def interpret_select(entries, c_select):
-    """Given a compiled select statement, execute the query.
-
-    Args:
-      entries: A list of directives.
-      c_select: An instance of a compiled Select query, from the parser.
-    """
-    # Create a class for the row.
-    Tuple = collections.namedtuple('Tuple',
-                                   [target.name for target in c_select.targets])
-
-    # Filter the entries.
-    if c_select.from_clause:
-        expression = c_select.from_clause.expression
-        filtered_entries = []
-        for entry in entries:
-            if isinstance(entry, data.Transaction):
-                if expression(entry):
-                    filtered_entries.append(entry)
-            else:
-                filtered_entries.append(entry)
-    else:
-        filtered_entries = entries
-
-    # Process all the postings.
-    rows = []
-    expression = c_select.where_clause
-    try:
-        for entry in filtered_entries:
-            if isinstance(entry, data.Transaction):
-                for posting in entry.postings:
-                    if expression is None or expression(posting):
-                        row = Tuple(*[target.expression(posting)
-                                      for target in c_select.targets])
-                        rows.append(row)
-                        if c_select.limit and len(rows) == c_select.limit:
-                            raise StopIteration
-    except StopIteration:
-        pass
-
-    # Flatten if required.
 
 
-    return rows
-
-
-# FIXME: Add checking of datatypes. Something simple is better than nothing, but
-# something, please, will avoid many types of user mistakes.
-
-# Build a routine to assign an appropriate column name to trees.
-
-# Deal with sum of inventory, compile special nodes SumPosition(), SumInventory().
+# FIXME: Deal with sum of inventory, compile special nodes SumPosition(), SumInventory().
+# FIXME:
+# - Create a RowContext object that provides all the rows, so that we can
+# - Add year month date as columns, but should not be included in * default
+# - Add date() function to create dates from a string
+# - Check data types for functions
+# - Actually allow evaluating the SQL against generic rows of datasets.
+# - Implement aggregation
+# - Render with custom routine, not beancount.reports.table
+# - Deal with rendering on multiple lines, e.g., for inventories with multiple positions
+# - Make it possible to run from the command-line (batch)
+# - Invoke a pager when long output
+# - Implement set variables for format and verbosity and display precision and what-not
+# - Implement JOURNAL account FROM
+# - Implement BALANCES FROM
+# - pipe through a pager
+# - Find a way to pipe into treeify
+# - Find a way to trigger a close in the FROM clause
+# - implement order by
+# - implement limit
+# - implement distinct
+# - support simple boolean expressions in filter expressions, not just equalities and inequalities
+# - support simple mathematical operations, +, - , /.
+# - implement set operations, "in" for sets
+# - implement globbing matches
+# - case-sensitivity of regexps?
+# - make KeyboardInterrupt not exit the shell, just interrupt the current processing of a query.

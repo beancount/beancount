@@ -314,26 +314,26 @@ class Parser(Lexer):
             assert p[2], "Empty WHERE clause is not allowed"
             p[0] = p[2]
 
-    def p_group_by(self, p):
+    def p_expr_index_list(self, p):
         """
-        group_by : empty
-                 | GROUP BY group_by_expr_list having
-        """
-        p[0] = GroupBy(p[3], p[4]) if len(p) != 2 else None
-
-    def p_group_by_expr_list(self, p):
-        """
-        group_by_expr_list : group_by_expr
-                           | group_by_expr_list COMMA group_by_expr
+        expr_index_list : expr_index
+                        | expr_index_list COMMA expr_index
         """
         p[0] = self.handle_comma_separated_list(p)
 
-    def p_group_by_expr(self, p):
+    def p_expr_index(self, p):
         """
-        group_by_expr : expression
-                      | INTEGER
+        expr_index : expression
+                   | INTEGER
         """
         p[0] = p[1]
+
+    def p_group_by(self, p):
+        """
+        group_by : empty
+                 | GROUP BY expr_index_list having
+        """
+        p[0] = GroupBy(p[3], p[4]) if len(p) != 2 else None
 
     def p_having(self, p):
         """
@@ -345,7 +345,7 @@ class Parser(Lexer):
     def p_order_by(self, p):
         """
         order_by : empty
-                 | ORDER BY column_list ordering
+                 | ORDER BY expr_index_list ordering
         """
         p[0] = None if len(p) == 2 else OrderBy(p[3], p[4])
 
@@ -536,31 +536,3 @@ def get_expression_name(expr):
 
     else:
         assert False, "Unknown expression type."
-
-
-# FIXME:
-# - Create a RowContext object that provides all the rows, so that we can
-# - Add year month date as columns, but should not be included in * default
-# - Add date() function to create dates from a string
-# - Check data types for functions
-# - Actually allow evaluating the SQL against generic rows of datasets.
-# - Implement aggregation
-# - Render with custom routine, not beancount.reports.table
-# - Deal with rendering on multiple lines, e.g., for inventories with multiple positions
-# - Make it possible to run from the command-line (batch)
-# - Invoke a pager when long output
-# - Implement set variables for format and verbosity and display precision and what-not
-# - Implement JOURNAL account FROM
-# - Implement BALANCES FROM
-# - pipe through a pager
-# - Find a way to pipe into treeify
-# - Find a way to trigger a close in the FROM clause
-# - implement order by
-# - implement limit
-# - implement distinct
-# - support simple boolean expressions in filter expressions, not just equalities and inequalities
-# - support simple mathematical operations, +, - , /.
-# - implement set operations, "in" for sets
-# - implement globbing matches
-# - case-sensitivity of regexps?
-# - make KeyboardInterrupt not exit the shell, just interrupt the current processing of a query.
