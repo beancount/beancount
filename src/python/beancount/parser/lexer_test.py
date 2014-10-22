@@ -151,6 +151,15 @@ class TestLexer(unittest.TestCase):
         self.assertTrue(errors)
 
     @lex_tokens
+    def test_number_no_integer(self, tokens, errors):
+        """\
+          .2347 USD
+        """
+        # Note: this is not supported in order to make the lexer regexp more tractable.
+        # If we write our own lexer eventually we should be able to accept these.
+        self.assertTrue(errors)
+
+    @lex_tokens
     def test_currency_number(self, tokens, errors):
         """\
           555.00 CAD.11
