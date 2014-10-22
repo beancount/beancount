@@ -90,9 +90,9 @@ class TestClamp(cmptest.TestCase):
 
         ;; 2012-09-01  END   --------------------------------
 
-        2012-08-31 C "Conversion for Inventory(-3000.00 USD, 3750.00 CAD)"
-          Equity:Conversions              3000.00 USD  @ 0.00 NOTHING
-          Equity:Conversions             -3750.00 CAD  @ 0.00 NOTHING
+        2012-08-31 C "Conversion for Inventory(-3,000.00 USD, 3,750.00 CAD)"
+          Equity:Conversions              3,000.00 USD  @ 0.00 NOTHING
+          Equity:Conversions             -3,750.00 CAD  @ 0.00 NOTHING
 
         """, clamped_entries)
 
@@ -137,9 +137,9 @@ class TestClose(cmptest.TestCase):
           Income:Salary       -10000.00 USD
           Equity:Earnings      10000.00 USD
 
-        2014-03-01 C "Conversion for Inventory(-5000.00 USD, 6000.00 CAD)"
-          Equity:Conversions    5000.00 USD @ 0.00 NOTHING
-          Equity:Conversions   -6000.00 CAD @ 0.00 NOTHING
+        2014-03-01 C "Conversion for Inventory(-5,000.00 USD, 6,000.00 CAD)"
+          Equity:Conversions    5,000.00 USD @ 0.00 NOTHING
+          Equity:Conversions   -6,000.00 CAD @ 0.00 NOTHING
 
         """, closed_entries)
         self.assertEqual(5, len(closed_entries))

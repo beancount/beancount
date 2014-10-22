@@ -5,7 +5,6 @@ beancount: TODO
 
   - Make unused accounts and duplicates checking into optional plugins.
 
-  - Integrate patch from Nathan Grigg for parsing commas
   - Implement experimental precision check suggested by Nathan Grigg
   - Implement Equity:Rounding accumulation suggested by Nathan Grigg
 
@@ -218,6 +217,18 @@ precise balances throughout, but no manual input is required.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
+
+  - Treeify does not produce the correct output on this input because of the
+    lone Equity root account, fix this:
+
+      Assets:Stock-Plan:ESPP:Cash
+      Assets:Stock-Plan:ESPP:RSU          98.00 RSU
+      Assets:Stock-Plan:ESPP:STOCK         2.00 STOCK
+      Equity
+      Expenses:Vested-Shares               2.00 RSU
+      Income:Equity-Bonus:RSU           -100.00 RSU
+      Income:Equity-Bonus:Vested        -172.00 USD
+      Liabilities
 
 
   - Make options to render *all* reports with

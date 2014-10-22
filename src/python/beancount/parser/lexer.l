@@ -187,7 +187,7 @@ option		{ return OPTION; }
 }
 
  /* Numbers */
-[-+]?([0-9\.])+ 		{
+[-+]?([0-9]+|[0-9][0-9,]+[0-9])(\.[0-9]*)? 		{
     yylval->pyobj = BUILD("NUMBER", "s", yytext);
     return NUMBER;
 }
