@@ -5,7 +5,6 @@ beancount: TODO
 
   - Make unused accounts and duplicates checking into optional plugins.
 
-  - Integrate patch from Nathan Grigg for parsing commas
   - Implement experimental precision check suggested by Nathan Grigg
   - Implement Equity:Rounding accumulation suggested by Nathan Grigg
 
