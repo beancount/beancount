@@ -127,6 +127,12 @@ class TestLexer(unittest.TestCase):
           -1002.00 USD
           +1001 USD
           +1002.00 USD
+          1,001 USD
+          1,002.00 USD
+          -1,001 USD
+          -1,002.00 USD
+          +1,001 USD
+          +1,002.00 USD
         """
         self.assertFalse(errors)
 

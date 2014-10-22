@@ -149,7 +149,8 @@ class LexBuilder(object):
         """
         try:
             # Note: We don't use D() for efficiency here.
-            # We could consider it to extend the syntax to support commas.
+            if ',' in number:
+                number = number.replace(',', '')
             return Decimal(number)
         except Exception as e:
             self.errors.append(

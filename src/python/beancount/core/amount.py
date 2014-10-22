@@ -121,9 +121,9 @@ class Amount:
         # FIXME: The better way to do this would be to let the user specify a
         # desired rendering precision for each currency.
         if number == number.quantize(DISPLAY_QUANTIZE):
-            return "{:.2f} {}".format(number, self.currency)
+            return "{:,.2f} {}".format(number, self.currency)
         else:
-            return "{:.{width}f} {}".format(number, self.currency,
+            return "{:,.{width}f} {}".format(number, self.currency,
                                             width=max_digits)
 
     # We use the same as a printable representation.

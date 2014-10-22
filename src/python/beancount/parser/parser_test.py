@@ -597,7 +597,7 @@ class TestBalance(unittest.TestCase):
     def test_total_cost(self, entries, errors, _):
         """
           2013-05-18 * ""
-            Assets:Investments:MSFT      10 MSFT {{2000 USD}}
+            Assets:Investments:MSFT      10 MSFT {{2,000 USD}}
             Assets:Investments:Cash
 
           2013-05-18 * ""
