@@ -452,13 +452,13 @@ class TestBalance(QueryParserTestBase):
 
     def test_balance_empty(self):
         self.assertParse(q.Balance(None),
-                         "BALANCE;")
+                         "BALANCES;")
 
     def test_balance_from(self):
         self.assertParse(
             q.Balance(q.From(q.Equal(q.Column('date'),
                                      q.Constant(datetime.date(2014, 1, 1))), True)),
-            "BALANCE FROM date = 2014-01-01 CLOSE;")
+            "BALANCES FROM date = 2014-01-01 CLOSE;")
 
 class TestJournal(QueryParserTestBase):
 

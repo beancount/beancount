@@ -95,7 +95,7 @@ class Lexer:
     # List of reserved keywords.
     keywords = {
         'SELECT', 'AS', 'FROM', 'WHERE', 'CLOSE', 'ON',
-        'BALANCE', 'JOURNAL',
+        'BALANCES', 'JOURNAL',
         'GROUP', 'BY', 'HAVING', 'ORDER', 'DESC', 'ASC', 'PIVOT',
         'LIMIT', 'FLATTEN', 'DISTINCT',
         'AND', 'OR', 'NOT', 'GT', 'GTE', 'LT', 'LTE',
@@ -220,7 +220,7 @@ class Parser(Lexer):
 
     def p_balance_statement(self, p):
         """
-        balance_statement : BALANCE from
+        balance_statement : BALANCES from
         """
         p[0] = Balance(p[2])
 
