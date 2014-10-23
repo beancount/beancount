@@ -314,12 +314,12 @@ class TestCompileSelectGroupBy(CompileSelectBase):
 
     def test_compile_group_by_reference_by_number(self):
         self.compile("""
-          SELECT date, payee, narration GROUP BY 1, 2;
+          SELECT date, payee, narration GROUP BY 1, 2, 3;
         """)
 
         with self.assertRaises(c.CompilationError):
             self.compile("""
-              SELECT date, payee, narration GROUP BY 4;
+              SELECT date, payee, narration GROUP BY 1, 2, 3, 4;
             """)
 
     def test_compile_group_by_reference_an_aggregate(self):
@@ -373,13 +373,20 @@ class TestCompileSelectGroupBy(CompileSelectBase):
         """)
 
         # Non-aggregates not covered by group-by clause.
-        with self.assertRaises(c.CompilationError):
+        with self.assertRaises(c.CompilationError) as a:
             self.compile("""
               SELECT account, date, sum(number) GROUP BY account;
             """)
         with self.assertRaises(c.CompilationError):
             self.compile("""
               SELECT payee, last(account) as len GROUP BY date;
+            """)
+
+        # Non-aggregates not covered by group-by clause, and no aggregates in
+        # the list of targets.
+        with self.assertRaises(c.CompilationError):
+            self.compile("""
+              SELECT date, flag, account, number GROUP BY date, flag;
             """)
 
 

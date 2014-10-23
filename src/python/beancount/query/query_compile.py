@@ -648,7 +648,7 @@ def compile_select(select, targets_xcontext, postings_xcontext, entries_xcontext
     # of non-aggregates match exactly the group indexes. This should always be
     # the case at this point, because we have added all the necessary targets to
     # the list of group-by expressions and should have resolved all the indexes.
-    if aggregate_indexes:
+    if group_indexes or aggregate_indexes:
         if set(simple_indexes) != set(group_indexes):
             raise CompilationError(
                 "Non-aggregates must be covered by GROUP-BY clause in aggregate query")
