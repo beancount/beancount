@@ -61,6 +61,7 @@ setup(
                 'beancount.core',
                 'beancount.ops',
                 'beancount.plugins',
+                'beancount.query',
                 'beancount.reports',
                 'beancount.scripts',
                 'beancount.web',
