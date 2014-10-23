@@ -19,8 +19,9 @@ from beancount.core import data
 from beancount.query import query_compile as c
 
 
-# Simple (i.e., not aggregating) function objects. These functionals maintain no
-# state.
+
+
+# Non-agreggating functions. These functionals maintain no state.
 
 class Length(c.EvalFunction):
     __intypes__ = [(list, set, str)]
@@ -31,6 +32,7 @@ class Length(c.EvalFunction):
     def __call__(self, posting):
         args = self.eval_args(posting)
         return len(args[0])
+
 
 # Operations on dates.
 
@@ -63,6 +65,7 @@ class Day(c.EvalFunction):
     def __call__(self, posting):
         args = self.eval_args(posting)
         return args[0].day
+
 
 # Operation on inventories.
 
@@ -159,6 +162,7 @@ AGGREGATOR_FUNCTIONS = {
 
 
 
+
 # Column accessors for entries.
 
 class TypeEntryColumn(c.EvalColumn):
@@ -241,6 +245,7 @@ class FilterEntriesContext(c.CompilationContext):
         'links' : LinksEntryColumn,
         }
     functions = SIMPLE_FUNCTIONS
+
 
 
 
