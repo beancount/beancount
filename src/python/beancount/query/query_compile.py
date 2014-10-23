@@ -328,6 +328,20 @@ def _get_columns_and_aggregates(node, columns, aggregates):
             _get_columns_and_aggregates(child, columns, aggregates)
 
 
+def is_aggregate(node):
+    """Return true if the node is an aggregate.
+
+    Args:
+      node: An instance of EvalNode.
+    Returns:
+      A boolean.
+    """
+    # Note: We could be a tiny bit more efficient here, but it doesn't matter
+    # much. Performance of the query compilation matters very little overall.
+    _, aggregates = get_columns_and_aggregates(node)
+    return bool(aggregates)
+
+
 def find_unique_name(name, allocated_set):
     """Come up with a unique name for 'name' amongst 'allocated_set'.
 
@@ -353,10 +367,7 @@ def compile_targets(targets, xcontext):
       targets: A list of target expressions from the parser.
       xcontext: A compilation context for the targets.
     Returns:
-      A tuple of
-        c_targets: A list of compiled target expressions with resolved names.
-        simple_indexes: A list of integer indexes for the non-aggregate targets.
-        aggregate_indexes: A list of integer indexes for the aggregate targetsr.
+      A list of compiled target expressions with resolved names.
     """
     # Bind the targets expressions to the execution context.
     if isinstance(targets, query_parser.Wildcard):
@@ -377,8 +388,6 @@ def compile_targets(targets, xcontext):
 
     # Figure out if this query is an aggregate query and check validity of each
     # target's aggregation type.
-    simple_indexes = []
-    aggregate_indexes = []
     for index, c_target in enumerate(c_targets):
         columns, aggregates = get_columns_and_aggregates(c_target.expression)
 
@@ -387,36 +396,32 @@ def compile_targets(targets, xcontext):
             raise CompilationError(
                 "Mixed aggregates and non-aggregates are not allowed")
 
-        if not aggregates:
-            simple_indexes.append(index)
-        else:
-            aggregate_indexes.append(index)
-
+        if aggregates:
             # Check for aggregates of aggregates.
             for aggregate in aggregates:
                 for child in aggregate.childnodes():
-                    _, sub_aggregates = get_columns_and_aggregates(child)
-                    if sub_aggregates:
+                    if is_aggregate(child):
                         raise CompilationError(
                             "Aggregates of aggregates are not allowed")
 
-    return c_targets, simple_indexes, aggregate_indexes
+    return c_targets
 
 
-def compile_group_by(group_by, c_targets, xcontext, simple_indexes, aggregate_indexes):
+def compile_group_by(group_by, c_targets, xcontext):
     """Process a group-by clause.
 
     Args:
       group_by: A GroupBy instance as provided by the parser.
       c_targets: A list of compiled target expressions.
       xcontext: A compilation context to be used to evaluate GROUP BY expressions.
-      simple_indexes: A list of integer indexes for the non-aggregate targetsr.
-      aggregate_indexes: A list of integer indexes for the aggregate targetsr.
     Returns:
       A tuple of
        new_targets: A list of new compiled target nodes.
-       new_indexes: A list of integer indexes that refer to the newly inserted targets.
-       group_indexes: A list of integer indexes to be used for processing grouping.
+       group_indexes: If the query is an aggregate query, a list of integer
+         indexes to be used for processing grouping. Note that this list may be
+         empty (in the case of targets with only aggregates). On the other hand,
+         if this is not an aggregated query, this is set to None. So do
+         distinguish the empty list vs. None.
     """
     new_targets = copy.copy(c_targets)
     new_indexes = []
@@ -463,8 +468,7 @@ def compile_group_by(group_by, c_targets, xcontext, simple_indexes, aggregate_in
                     c_expr = compile_expression(column, xcontext)
 
                     # Check if the new expression is an aggregate.
-                    _, aggregates = get_columns_and_aggregates(c_expr)
-                    if aggregates:
+                    if is_aggregate(c_expr):
                         raise CompilationError(
                             "GROUP-BY expressions may not be aggregates: '{}'".format(
                                 column))
@@ -480,27 +484,27 @@ def compile_group_by(group_by, c_targets, xcontext, simple_indexes, aggregate_in
 
             # Check that the group-by column references a non-aggregate.
             c_expr = new_targets[index].expression
-            _, aggregates = get_columns_and_aggregates(c_expr)
-            if aggregates:
+            if is_aggregate(c_expr):
                 raise CompilationError(
                     "GROUP-BY expressions may not reference aggregates: '{}'".format(
                         column))
 
     else:
         # If it does not have a GROUP-BY clause...
-        if aggregate_indexes:
+        aggregate_bools = [is_aggregate(c_target.expression) for c_target in c_targets]
+        if any(aggregate_bools):
             # If the query is an aggregate query, check that all the targets are
             # aggregates.
-            if simple_indexes:
+            if not all(aggregate_bools):
                 raise CompilationError(
                     "Aggregate query without a GROUP-BY should have only aggregates")
-
+            assert group_indexes == []
         else:
             # This is not an aggregate query; don't set group_indexes to
             # anything useful, we won't need it.
             group_indexes = None
 
-    return new_targets[len(c_targets):], new_indexes, group_indexes
+    return new_targets[len(c_targets):], group_indexes
 
 
 def compile_order_by(order_by, c_targets, xcontext):
@@ -513,15 +517,9 @@ def compile_order_by(order_by, c_targets, xcontext):
     Returns:
       A tuple of
        new_targets: A list of new compiled target nodes.
-       new_simple_indexes: A list of integer indexes that refer to the newly inserted
-         non-aggregate targets.
-       new_aggregate_indexes: A list of integer indexes that refer to the newly inserted
-         aggregatetargets.
        order_indexes: A list of integer indexes to be used for processing ordering.
     """
     new_targets = copy.copy(c_targets)
-    new_simple_indexes = []
-    new_aggregate_indexes = []
     order_indexes = []
 
     # Compile order-by expressions and resolve them to their targets if
@@ -563,26 +561,16 @@ def compile_order_by(order_by, c_targets, xcontext):
                 index = len(new_targets)
                 new_targets.append(query_parser.Target(c_expr, None))
 
-                _, aggregates = get_columns_and_aggregates(c_expr)
-                if aggregates:
-                    new_aggregate_indexes.append(index)
-                else:
-                    new_simple_indexes.append(index)
-
         assert index is not None, "Internal error, could not index order-by reference."
         order_indexes.append(index)
 
-    return (new_targets[len(c_targets):],
-            new_simple_indexes,
-            new_aggregate_indexes,
-            order_indexes)
+    return (new_targets[len(c_targets):], order_indexes)
 
 
 # Compiled query.
-EvalQuery = collections.namedtuple(
-    'EvalQuery', ('c_targets c_from c_where '
-                  'simple_indexes aggregate_indexes group_indexes order_indexes '
-                  'limit distinct flatten'))
+EvalQuery = collections.namedtuple('EvalQuery', ('c_targets c_from c_where '
+                                                 'group_indexes order_indexes '
+                                                 'limit distinct flatten'))
 
 
 def compile_select(select, targets_xcontext, postings_xcontext, entries_xcontext):
@@ -626,30 +614,30 @@ def compile_select(select, targets_xcontext, postings_xcontext, entries_xcontext
 
     # Check that the from clause does not contain aggregates.
     if c_from and c_from.expression:
-        _, aggregates = get_columns_and_aggregates(c_from.expression)
-        if aggregates:
+        if is_aggregate(c_from.expression):
             raise CompilationError(
                 "Aggregates are not allowed in from clause")
 
     # Compile the targets.
-    c_targets, simple_indexes, aggregate_indexes = compile_targets(select.targets,
-                                                                   xcontext_target)
+    c_targets = compile_targets(select.targets, xcontext_target)
 
-    # Process the group-by clause.
-    new_targets, new_indexes, group_indexes = compile_group_by(
-        select.group_by,
-        c_targets, xcontext_target,
-        simple_indexes, aggregate_indexes)
+    # Process the GROUP-BY clause.
+    new_targets, group_indexes = compile_group_by(select.group_by,
+                                                  c_targets,
+                                                  xcontext_target)
+    if new_targets:
+        c_targets.extend(new_targets)
 
-    c_targets.extend(new_targets)
-    simple_indexes.extend(new_indexes)
-
-    # If this is an aggregate query (it has some aggregates), check that the set
-    # of non-aggregates match exactly the group indexes. This should always be
-    # the case at this point, because we have added all the necessary targets to
-    # the list of group-by expressions and should have resolved all the indexes.
-    if group_indexes or aggregate_indexes:
-        if set(simple_indexes) != set(group_indexes):
+    # If this is an aggregate query (it groups, see list of indexes), check that
+    # the set of non-aggregates match exactly the group indexes. This should
+    # always be the case at this point, because we have added all the necessary
+    # targets to the list of group-by expressions and should have resolved all
+    # the indexes.
+    if group_indexes is not None:
+        non_aggregate_indexes = [index
+                                 for index, c_target in enumerate(c_targets)
+                                 if not is_aggregate(c_target.expression)]
+        if set(non_aggregate_indexes) != set(group_indexes):
             raise CompilationError(
                 "Non-aggregates must be covered by GROUP-BY clause in aggregate query")
 
@@ -660,23 +648,18 @@ def compile_select(select, targets_xcontext, postings_xcontext, entries_xcontext
         # Aggregates are disallowed in this clause. Check for this.
         # NOTE: This should never trigger if the compilation context does not
         # contain any aggregate. Just being manic and safe here.
-        _, aggregates = get_columns_and_aggregates(c_where)
-        if aggregates:
+        if is_aggregate(c_where):
             raise CompilationError("Aggregates are disallowed in WHERE clause.")
     else:
         c_where = None
 
     # Check that ORDER-BY is not supported yet.
     if select.order_by is not None:
-        (new_targets,
-         new_simple_indexes,
-         new_aggregate_indexes,
-         order_indexes) = compile_order_by(select.order_by,
-                                           c_targets, xcontext_target)
-
-        c_targets.extend(new_targets)
-        simple_indexes.extend(new_simple_indexes)
-        aggregate_indexes.extend(new_aggregate_indexes)
+        (new_targets, order_indexes) = compile_order_by(select.order_by,
+                                                        c_targets,
+                                                        xcontext_target)
+        if new_targets:
+            c_targets.extend(new_targets)
     else:
         order_indexes = None
 
@@ -687,10 +670,17 @@ def compile_select(select, targets_xcontext, postings_xcontext, entries_xcontext
     return EvalQuery(c_targets,
                      c_from,
                      c_where,
-                     simple_indexes,
-                     aggregate_indexes,
                      group_indexes,
                      order_indexes,
                      select.limit,
                      select.distinct,
                      select.flatten)
+
+
+## FIXME: You need to clean up the indexes and add assertions for all of them in
+## query_compile_test. This is crucial. Work is not done here, the checks are
+## all good, but the indexes are incorrect. This needs a bit more work.
+
+
+## FIXME: Add an attribute to the compiled targets to indicate whether they are
+## aggregates or not, so we don't have to recompute it so many times over.

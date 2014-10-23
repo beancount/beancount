@@ -10,6 +10,26 @@ from beancount.query import query_parser as q
 from beancount.query import query_compile as c
 from beancount.query import query_contexts as cc
 from beancount.query import query_execute as x
+from beancount import loader
+
+
+INPUT = """
+
+2010-01-01 open Assets:Bank:Checking
+2010-01-01 open Assets:Bank:Savings
+
+2010-01-01 open Expenses:Restaurant
+
+2011-02-10 *
+  Assets:Bank:Checking       123.00 USD
+  Expenses:Restaurant
+
+"""
+
+def setUp(module):
+    # Load the global test input file.
+    global entries, errors, options_map
+    entries, errors, options_map = loader.load_string(INPUT)
 
 
 class ExecuteQueryBase(unittest.TestCase):
@@ -35,12 +55,36 @@ class ExecuteQueryBase(unittest.TestCase):
                                  self.xcontext_targets,
                                  self.xcontext_postings,
                                  self.xcontext_entries)
-        x.execute_query(query, entries)
+        return x.execute_query(query, entries)
 
 
+class TestExecute(ExecuteQueryBase):
 
+    def test_simple(self):
+        x = self.execute("""
+          SELECT date, flag, account
+          GROUP BY date, flag, account;
+        """)
+        print()
+        print(x._fields)
 
+        x = self.execute("""
+          SELECT date, flag, account, sum(change) as balance
+          GROUP BY date, flag, account;
+        """)
+        print()
+        print(x._fields)
 
-class TestExecute(unittest.TestCase):
+        x = self.execute("""
+          SELECT first(account), last(account)
+          GROUP BY account;
+        """)
+        print()
+        print(x._fields)
 
-    pass
+        x = self.execute("""
+          SELECT date, account, sum(change) as balance
+          GROUP BY date, flag, account;
+        """)
+        print()
+        print(x._fields)

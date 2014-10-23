@@ -82,33 +82,40 @@ class TestCompileAggregateChecks(unittest.TestCase):
 
     def test_get_columns_and_aggregates(self):
         # Simple column.
-        columns, aggregates = c.get_columns_and_aggregates(cc.ChangeColumn())
+        c_query = cc.ChangeColumn()
+        columns, aggregates = c.get_columns_and_aggregates(c_query)
         self.assertEqual((1, 0), (len(columns), len(aggregates)))
+        self.assertFalse(c.is_aggregate(c_query))
 
         # Multiple columns.
-        columns, aggregates = c.get_columns_and_aggregates(
-            c.EvalAnd(cc.ChangeColumn(), cc.DateColumn()))
+        c_query = c.EvalAnd(cc.ChangeColumn(), cc.DateColumn())
+        columns, aggregates = c.get_columns_and_aggregates(c_query)
         self.assertEqual((2, 0), (len(columns), len(aggregates)))
+        self.assertFalse(c.is_aggregate(c_query))
 
         # Simple aggregate.
-        columns, aggregates = c.get_columns_and_aggregates(
-            cc.Sum([cc.ChangeColumn()]))
+        c_query = cc.Sum([cc.ChangeColumn()])
+        columns, aggregates = c.get_columns_and_aggregates(c_query)
         self.assertEqual((0, 1), (len(columns), len(aggregates)))
+        self.assertTrue(c.is_aggregate(c_query))
 
-        # Multiple agreggates.
-        columns, aggregates = c.get_columns_and_aggregates(
-            c.EvalAnd(cc.First([cc.AccountColumn()]), cc.Last([cc.AccountColumn()])))
+        # Multiple aggregates.
+        c_query = c.EvalAnd(cc.First([cc.AccountColumn()]), cc.Last([cc.AccountColumn()]))
+        columns, aggregates = c.get_columns_and_aggregates(c_query)
         self.assertEqual((0, 2), (len(columns), len(aggregates)))
+        self.assertTrue(c.is_aggregate(c_query))
 
         # Simple non-aggregate function.
-        columns, aggregates = c.get_columns_and_aggregates(
-            cc.Length([cc.AccountColumn()]))
+        c_query = cc.Length([cc.AccountColumn()])
+        columns, aggregates = c.get_columns_and_aggregates(c_query)
         self.assertEqual((1, 0), (len(columns), len(aggregates)))
+        self.assertFalse(c.is_aggregate(c_query))
 
         # Mix of column and aggregates (this is used to detect this illegal case).
-        columns, aggregates = c.get_columns_and_aggregates(
-            c.EvalAnd(cc.Length([cc.AccountColumn()]), cc.Sum([cc.ChangeColumn()])))
+        c_query = c.EvalAnd(cc.Length([cc.AccountColumn()]), cc.Sum([cc.ChangeColumn()]))
+        columns, aggregates = c.get_columns_and_aggregates(c_query)
         self.assertEqual((1, 1), (len(columns), len(aggregates)))
+        self.assertTrue(c.is_aggregate(c_query))
 
 
 class TestCompileDataTypes(unittest.TestCase):
@@ -192,10 +199,66 @@ class CompileSelectBase(unittest.TestCase):
           The AST.
         """
         select = self.parser.parse(query.strip())
-        return c.compile_select(select,
-                                self.xcontext_targets,
-                                self.xcontext_postings,
-                                self.xcontext_entries)
+        query = c.compile_select(select,
+                                 self.xcontext_targets,
+                                 self.xcontext_postings,
+                                 self.xcontext_entries)
+        self.assertInvariants(query)
+        return query
+
+    def assertInvariants(self, query):
+        """Assert the invariants on the query.
+
+        Args:
+          query: An instance of EvalQuery, a compiled query statement.
+        Raises:
+          AssertionError: if the check fails.
+        """
+        # Check that the group references cover all the simple indexes.
+        if query.group_indexes is not None:
+            non_aggregate_indexes = [index
+                                     for index, c_target in enumerate(query.c_targets)
+                                     if not c.is_aggregate(c_target.expression)]
+
+            self.assertEqual(set(non_aggregate_indexes), set(query.group_indexes),
+                             "Invalid indexes: {}".format(query))
+
+    def assertIndexes(self,
+                      query,
+                      expected_simple_indexes,
+                      expected_aggregate_indexes,
+                      expected_group_indexes,
+                      expected_order_indexes):
+        """Check the four lists of indexes for comparison.
+
+        Args:
+          query: An instance of EvalQuery, a compiled query statement.
+          expected_simple_indexes: The expected visible non-aggregate indexes.
+          expected_aggregate_indexes: The expected visible aggregate indexes.
+          expected_group_indexes: The expected group_indexes.
+          expected_order_indexes: The expected order_indexes.
+        Raises:
+          AssertionError: if the check fails.
+        """
+        # Compute the list of _visible_ aggregates and non-aggregates.
+        simple_indexes = [index
+                          for index, c_target in enumerate(query.c_targets)
+                          if c_target.name and not c.is_aggregate(c_target.expression)]
+        aggregate_indexes = [index
+                             for index, c_target in enumerate(query.c_targets)
+                             if c_target.name and c.is_aggregate(c_target.expression)]
+
+        self.assertEqual(set(expected_simple_indexes), set(simple_indexes))
+
+        self.assertEqual(set(expected_aggregate_indexes), set(aggregate_indexes))
+
+        self.assertEqual(
+            set(expected_group_indexes) if expected_group_indexes is not None else None,
+            set(query.group_indexes) if query.group_indexes is not None else None)
+
+        self.assertEqual(
+            set(expected_order_indexes) if expected_order_indexes is not None else None,
+            set(query.order_indexes) if query.order_indexes is not None else None)
 
     def assertCompile(self, expected, query, debug=False):
         """Assert parsed and compiled contents from 'query' is 'expected'.
@@ -357,13 +420,16 @@ class TestCompileSelectGroupBy(CompileSelectBase):
 
     def test_compile_group_by_coverage(self):
         # Non-aggregates.
-        self.compile("SELECT account, length(account);")
+        query = self.compile("SELECT account, length(account);")
+        ###self.assertIndexes(query, [0, 1], [], None, None)
 
         # Aggregates only.
-        self.compile("SELECT first(account), last(account);")
+        query = self.compile("SELECT first(account), last(account);")
+        ###self.assertIndexes(query, [], [0, 1], [], None)
 
         # Mixed with non-aggregates in group-by clause.
         self.compile("SELECT account, sum(number) GROUP BY account;")
+        ###self.assertIndexes(query, [0], [1], [0], None)
 
         # Mixed with non-aggregates in group-by clause with non-aggregates a
         # strict subset of the group-by columns. 'account' is a subset of
@@ -389,6 +455,12 @@ class TestCompileSelectGroupBy(CompileSelectBase):
               SELECT date, flag, account, number GROUP BY date, flag;
             """)
 
+        # All non-aggregates and matching list of aggregates (this is a
+        # pointless list of aggregates, essentially).
+        self.compile("""
+          SELECT date, flag, account GROUP BY date, flag, account;
+        """)
+
 
 class TestCompileSelectOrderBy(CompileSelectBase):
 
@@ -399,15 +471,15 @@ class TestCompileSelectOrderBy(CompileSelectBase):
 
     def test_compile_order_by_simple(self):
         self.compile("""
-          SELECT account, length(narration) GROUP BY account ORDER BY 1;
+          SELECT account, length(narration) GROUP BY account, 2 ORDER BY 1, 2;
         """)
 
         self.compile("""
-          SELECT account, length(narration) as l GROUP BY account ORDER BY l;
+          SELECT account, length(narration) as l GROUP BY account, l ORDER BY l;
         """)
 
         self.compile("""
-          SELECT account, length(narration) GROUP BY account ORDER BY year(date);
+          SELECT account, length(narration) GROUP BY account, 2 ORDER BY year(date);
         """)
 
         self.compile("""
