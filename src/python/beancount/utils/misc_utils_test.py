@@ -26,6 +26,25 @@ class TestMiscUtils(unittest.TestCase):
         self.assertTrue(re.search("Operation", stdout.getvalue()))
         self.assertTrue(re.search("Time", stdout.getvalue()))
 
+    def test_box(self):
+        with test_utils.capture() as stdout:
+            with misc_utils.box():
+                print('A')
+        self.assertEqual(textwrap.dedent("""
+          ,----------------
+          A
+          `----------------
+        """), stdout.getvalue())
+
+        with test_utils.capture() as stdout:
+            with misc_utils.box('entries'):
+                print('A')
+        self.assertEqual(textwrap.dedent("""
+          ,--------(entries)--------
+          A
+          `-------------------------
+        """), stdout.getvalue())
+
     def test_swallow(self):
         with misc_utils.swallow(ValueError):
             pass

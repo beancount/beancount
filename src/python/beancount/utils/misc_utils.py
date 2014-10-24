@@ -4,6 +4,7 @@ Generic utility packages and functions.
 import collections
 import io
 import re
+import sys
 from time import time
 import contextlib
 from collections import defaultdict
@@ -29,6 +30,32 @@ def log_time(operation_name, log_timings, indent=0):
     if log_timings:
         log_timings("Operation: {:48} Time: {}{:6.0f} ms".format(
             "'{}'".format(operation_name), '      '*indent, (time2 - time1) * 1000))
+
+
+@contextlib.contextmanager
+def box(name=None, file=None):
+    """A context manager that prints out a box around a block.
+    This is useful for printing out stuff from tests in a way that is readable.
+
+    Args:
+      name: A string, the name of the box to use.
+      file: The file object to print to.
+    Yields:
+      None.
+    """
+    file = file or sys.stdout
+    file.write('\n')
+    if name:
+        header = ',--------({})--------\n'.format(name)
+        footer = '`{}\n'.format('-' * (len(header)-2))
+    else:
+        header = ',----------------\n'
+        footer = '`----------------\n'
+
+    file.write(header)
+    yield
+    file.write(footer)
+    file.flush()
 
 
 @contextlib.contextmanager
