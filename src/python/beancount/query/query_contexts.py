@@ -34,6 +34,16 @@ class Length(c.EvalFunction):
         args = self.eval_args(posting)
         return len(args[0])
 
+class Str(c.EvalFunction):
+    __intypes__ = [object]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, posting):
+        args = self.eval_args(posting)
+        return repr(args[0])
+
 
 # Operations on dates.
 
@@ -91,6 +101,7 @@ class Cost(c.EvalFunction):
         return args[0].get_cost()
 
 SIMPLE_FUNCTIONS = {
+    'str': Str,
     'length': Length,
     'units': Units,
     'cost': Cost,
@@ -104,6 +115,17 @@ SIMPLE_FUNCTIONS = {
 
 # Aggregating functions. These instances themselves both make the computation
 # and manage state for a single iteration.
+
+class Count(c.EvalAggregator):
+    __intypes__ = [object]
+
+    def __init__(self, operands):
+        super().__init__(operands, int)
+
+    def __call__(self, posting):
+        if self.state is None:
+            self.state = 0
+        self.state += 1
 
 class Sum(c.EvalAggregator):
     # FIXME: Not sure we should accept a position. Compile a special node for Sum(position) and Sum(inventory).
@@ -121,17 +143,6 @@ class Sum(c.EvalAggregator):
             else:
                 self.state = type(value)()
         self.state += value
-
-class Count(c.EvalAggregator):
-    __intypes__ = [object]
-
-    def __init__(self, operands):
-        super().__init__(operands, int)
-
-    def __call__(self, posting):
-        if self.state is None:
-            self.state = 0
-        self.state += 1
 
 class First(c.EvalAggregator):
     __intypes__ = [object]
@@ -154,11 +165,39 @@ class Last(c.EvalAggregator):
         args = self.eval_args(posting)
         self.state = args[0]
 
+class Min(c.EvalAggregator):
+    __intypes__ = [object]
+
+    def __init__(self, operands):
+        super().__init__(operands, operands[0].dtype)
+
+    def __call__(self, posting):
+        arg = self.eval_args(posting)[0]
+        if self.state is None:
+            self.state = arg
+        elif arg < self.state:
+            self.state = arg
+
+class Max(c.EvalAggregator):
+    __intypes__ = [object]
+
+    def __init__(self, operands):
+        super().__init__(operands, operands[0].dtype)
+
+    def __call__(self, posting):
+        arg = self.eval_args(posting)[0]
+        if self.state is None:
+            self.state = arg
+        elif arg > self.state:
+            self.state = arg
+
 AGGREGATOR_FUNCTIONS = {
     'sum': Sum,
     'count': Count,
     'first': First,
     'last': Last,
+    'min': Min,
+    'max': Max,
     }
 
 
