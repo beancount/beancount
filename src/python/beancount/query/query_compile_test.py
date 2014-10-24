@@ -218,7 +218,7 @@ class CompileSelectBase(unittest.TestCase):
         if query.group_indexes is not None:
             non_aggregate_indexes = [index
                                      for index, c_target in enumerate(query.c_targets)
-                                     if not c.is_aggregate(c_target.expression)]
+                                     if not c.is_aggregate(c_target.c_expr)]
 
             self.assertEqual(set(non_aggregate_indexes), set(query.group_indexes),
                              "Invalid indexes: {}".format(query))
@@ -291,11 +291,11 @@ class TestCompileSelect(CompileSelectBase):
         self.assertEqual(None, query.c_from)
 
         query = self.compile("SELECT account FROM CLOSE;")
-        self.assertEqual(q.From(None, True), query.c_from)
+        self.assertEqual(c.EvalFrom(None, True), query.c_from)
 
         query = self.compile("SELECT account FROM length(payee) != 0;")
-        self.assertTrue(isinstance(query.c_from, q.From))
-        self.assertTrue(isinstance(query.c_from.expression, c.EvalNode))
+        self.assertTrue(isinstance(query.c_from, c.EvalFrom))
+        self.assertTrue(isinstance(query.c_from.c_expr, c.EvalNode))
 
         with self.assertRaises(c.CompilationError):
             query = self.compile("SELECT account FROM sum(payee) != 0;")
@@ -305,16 +305,16 @@ class TestCompileSelect(CompileSelectBase):
         query = self.compile("SELECT *;")
         self.assertTrue(list, type(query.c_targets))
         self.assertGreater(len(query.c_targets), 3)
-        self.assertTrue(all(isinstance(target.expression, c.EvalColumn)
+        self.assertTrue(all(isinstance(target.c_expr, c.EvalColumn)
                             for target in query.c_targets))
 
     def test_compile_targets_named(self):
         # Test the wildcard expandion.
         query = self.compile("SELECT length(account), account as a, date;")
         self.assertEqual(
-            [q.Target(cc.Length([cc.AccountColumn()]), 'length_account'),
-             q.Target(cc.AccountColumn(), 'a'),
-             q.Target(cc.DateColumn(), 'date')],
+            [c.EvalTarget(cc.Length([cc.AccountColumn()]), 'length_account', False),
+             c.EvalTarget(cc.AccountColumn(), 'a', False),
+             c.EvalTarget(cc.DateColumn(), 'date', False)],
             query.c_targets)
 
     def test_compile_mixed_aggregates(self):
@@ -421,22 +421,24 @@ class TestCompileSelectGroupBy(CompileSelectBase):
     def test_compile_group_by_coverage(self):
         # Non-aggregates.
         query = self.compile("SELECT account, length(account);")
-        ###self.assertIndexes(query, [0, 1], [], None, None)
+        self.assertEqual(None, query.group_indexes)
+        self.assertEqual(None, query.order_indexes)
 
         # Aggregates only.
         query = self.compile("SELECT first(account), last(account);")
-        ###self.assertIndexes(query, [], [0, 1], [], None)
+        self.assertEqual([], query.group_indexes)
 
         # Mixed with non-aggregates in group-by clause.
-        self.compile("SELECT account, sum(number) GROUP BY account;")
-        ###self.assertIndexes(query, [0], [1], [0], None)
+        query = self.compile("SELECT account, sum(number) GROUP BY account;")
+        self.assertEqual([0], query.group_indexes)
 
         # Mixed with non-aggregates in group-by clause with non-aggregates a
         # strict subset of the group-by columns. 'account' is a subset of
         # {'account', 'flag'}.
-        self.compile("""
+        query = self.compile("""
           SELECT account, sum(number) GROUP BY account, flag;
         """)
+        self.assertEqual([0, 2], query.group_indexes)
 
         # Non-aggregates not covered by group-by clause.
         with self.assertRaises(c.CompilationError) as a:
@@ -457,48 +459,80 @@ class TestCompileSelectGroupBy(CompileSelectBase):
 
         # All non-aggregates and matching list of aggregates (this is a
         # pointless list of aggregates, essentially).
-        self.compile("""
+        query = self.compile("""
           SELECT date, flag, account GROUP BY date, flag, account;
         """)
+        self.assertEqual([0, 1, 2], query.group_indexes)
 
 
 class TestCompileSelectOrderBy(CompileSelectBase):
 
     def test_compile_order_by_simple(self):
-        self.compile("""
+        query = self.compile("""
           SELECT account, sum(number) GROUP BY account ORDER BY account;
         """)
+        self.assertEqual([0], query.group_indexes)
+        self.assertEqual([0], query.order_indexes)
 
     def test_compile_order_by_simple(self):
-        self.compile("""
+        query = self.compile("""
           SELECT account, length(narration) GROUP BY account, 2 ORDER BY 1, 2;
         """)
+        self.assertEqual([0, 1], query.group_indexes)
+        self.assertEqual([0, 1], query.order_indexes)
 
-        self.compile("""
+        query = self.compile("""
           SELECT account, length(narration) as l GROUP BY account, l ORDER BY l;
         """)
+        self.assertEqual([0, 1], query.group_indexes)
+        self.assertEqual([1], query.order_indexes)
 
-        self.compile("""
-          SELECT account, length(narration) GROUP BY account, 2 ORDER BY year(date);
-        """)
+    def test_compile_order_by_create_non_agg(self):
+        with self.assertRaises(c.CompilationError):
+            self.compile("""
+              SELECT account, last(narration) GROUP BY account ORDER BY year(date);
+            """)
 
-        self.compile("""
-          SELECT account GROUP BY account ORDER BY year(date);
+        with self.assertRaises(c.CompilationError):
+            self.compile("""
+              SELECT account GROUP BY account ORDER BY year(date);
+            """)
+
+        query = self.compile("""
+          SELECT account, year(date) GROUP BY 1, 2 ORDER BY 2;
         """)
+        self.assertEqual([0, 1], query.group_indexes)
+        self.assertEqual([1], query.order_indexes)
+
+        # We don't detect similarity between order-by and targets yet.
+        # This could eventually be improved.
+        with self.assertRaises(c.CompilationError):
+            self.compile("""
+              SELECT account, year(date) GROUP BY 1, 2 ORDER BY year(date);
+            """)
+
 
     def test_compile_order_by_aggregate(self):
-        self.compile("""
+        query = self.compile("""
           SELECT account, first(narration) GROUP BY account ORDER BY 2;
         """)
+        self.assertEqual([0], query.group_indexes)
+        self.assertEqual([1], query.order_indexes)
 
-        self.compile("""
+        query = self.compile("""
           SELECT account, first(narration) as f GROUP BY account ORDER BY f;
         """)
+        self.assertEqual([0], query.group_indexes)
+        self.assertEqual([1], query.order_indexes)
 
-        self.compile("""
+        query = self.compile("""
           SELECT account, first(narration) GROUP BY account ORDER BY sum(number);
         """)
+        self.assertEqual([0], query.group_indexes)
+        self.assertEqual([2], query.order_indexes)
 
-        self.compile("""
+        query = self.compile("""
           SELECT account GROUP BY account ORDER BY sum(number);
         """)
+        self.assertEqual([0], query.group_indexes)
+        self.assertEqual([1], query.order_indexes)

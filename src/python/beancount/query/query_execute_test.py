@@ -10,6 +10,8 @@ from beancount.query import query_parser as q
 from beancount.query import query_compile as c
 from beancount.query import query_contexts as cc
 from beancount.query import query_execute as x
+from beancount.parser import printer
+from beancount.parser import cmptest
 from beancount import loader
 
 
@@ -20,7 +22,7 @@ INPUT = """
 
 2010-01-01 open Expenses:Restaurant
 
-2011-02-10 *
+2011-02-10 * "Dinner with Jim"
   Assets:Bank:Checking       123.00 USD
   Expenses:Restaurant
 
@@ -44,18 +46,60 @@ class ExecuteQueryBase(unittest.TestCase):
     def setUp(self):
         self.parser = q.Parser()
 
-    def execute(self, query):
+    def parse(self, bql_string):
+        """Parse a query.
+
+        Args:
+          bql_string: An SQL query to be parsed.
+        Returns:
+          A parsed statement (Select() node).
+        """
+        return self.parser.parse(bql_string.strip())
+
+    def compile(self, bql_string):
+        """Parse a query and compile it.
+
+        Args:
+          bql_string: An SQL query to be parsed.
+        Returns:
+          A compiled EvalQuery node.
+        """
+        return c.compile_select(self.parse(bql_string),
+                                self.xcontext_targets,
+                                self.xcontext_postings,
+                                self.xcontext_entries)
+
+    def execute(self, bql_string):
         """Parse a query, execute it and compile it.
 
         Args:
-          query: An SQL query to be parsed.
+          bql_string: An SQL query to be parsed.
+        Returns:
+          A list of ResultRow instances.
         """
-        select = self.parser.parse(query.strip())
-        query = c.compile_select(select,
-                                 self.xcontext_targets,
-                                 self.xcontext_postings,
-                                 self.xcontext_entries)
-        return x.execute_query(query, entries)
+        return x.execute_query(self.compile(bql), entries)
+
+
+class TestFilterEntries(ExecuteQueryBase, cmptest.TestCase):
+
+    def test_filter_identity(self):
+        # Check that no filter outputs the very same thing.
+        filtered_entries = x.filter_entries(self.compile("""
+          SELECT * ;
+        """).c_from, entries)
+        self.assertEqualEntries(entries, filtered_entries)
+
+
+
+
+
+
+    def test_filter_fiddling(self):
+        filtered_entries = x.filter_entries(self.compile("""
+          SELECT * FROM narration = 'Dinner with Jim';
+        """).c_from, entries)
+        printer.print_entries(filtered_entries)
+
 
 
 class TestExecute(ExecuteQueryBase):

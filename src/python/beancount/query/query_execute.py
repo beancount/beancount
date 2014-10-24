@@ -15,12 +15,14 @@ def filter_entries(c_from, entries):
     Returns:
       A list of filtered entries.
     """
+    assert c_from is None or isinstance(c_from, query_compile.EvalFrom)
+    assert isinstance(entries, list)
     if c_from:
-        expression = c_from.expression
+        c_expr = c_from.c_expr
         filtered_entries = []
         for entry in entries:
             if isinstance(entry, data.Transaction):
-                if expression(entry):
+                if c_expr(entry):
                     filtered_entries.append(entry)
             else:
                 filtered_entries.append(entry)
@@ -41,17 +43,18 @@ def execute_query(query, entries):
       entries: A list of directives.
     """
     # Filter the entries using the WHERE clause.
-    filtered_entries = filter_entries(entries)
+    filtered_entries = filter_entries(query.c_from, entries)
 
     # Dispatch between the non-aggregated queries and aggregated queries.
+    if query.group_indexes is None:
+        # This is a non-aggregated query.
+        pass
+
+    else:
+        # This is an aggregated query.
+        raise NotImplementedError
+
     # FIXME: continue here
-
-
-
-
-
-
-
 
 
 
@@ -66,13 +69,13 @@ def execute_query(query, entries):
 
     # Process all the postings.
     rows = []
-    expression = query.c_where
+    c_expr = query.c_where
     try:
         for entry in filtered_entries:
             if isinstance(entry, data.Transaction):
                 for posting in entry.postings:
-                    if expression is None or expression(posting):
-                        row = Tuple(*[target.expression(posting)
+                    if c_expr is None or c_expr(posting):
+                        row = Tuple(*[target.c_expr(posting)
                                       for target in query.c_targets])
                         rows.append(row)
                         if query.limit and len(rows) == query.limit:

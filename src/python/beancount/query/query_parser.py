@@ -43,7 +43,6 @@ Select = collections.namedtuple(
 #   from_clause: An instance of 'From', or None if absent.
 Balance = collections.namedtuple('Balance', 'from_clause')
 
-
 # A select query that produces a journal of postings.
 # This is equivalent to
 #
@@ -55,32 +54,98 @@ Balance = collections.namedtuple('Balance', 'from_clause')
 #   from_clause: An instance of 'From', or None if absent.
 Journal = collections.namedtuple('Journal', 'account from_clause')
 
-
-# AST nodes for the top-level clauses.
+# A parsed SELECT column or target.
+#
+# Attributes:
+#   expression: A tree of expression nodes from the parser.
+#   name: A string, the given name of the target (given by "AS <name>").
 Target = cmptuple('Target', 'expression name')
+
+# A wildcard target. This replaces the list in Select.targets.
 Wildcard = cmptuple('Wildcard', '')
+
+# A FROM clause.
+#
+# Attributes:
+#   expression: A tree of expression nodes from the parser.
+#   close: A CLOSE clause, either None if absent, a boolean if the clause
+#     was present by no date was provided, or a datetime.date instance if
+#     a date was provided.
 From = cmptuple('From', 'expression close')
+
+# A GROUP BY clause.
+#
+# Attributes:
+#   columns: A list of group-by expressions, simple Column() or otherwise.
+#   having: An expression tree for the optional HAVING clause, or None.
 GroupBy = cmptuple('GroupBy', 'columns having')
+
+# An ORDER BY clause.
+#
+# Attributes:
+#   columns: A list of group-by expressions, simple Column() or otherwise.
+#   ordering: None, or 'ASC' or 'DESC' to specify the sorting order.
 OrderBy = cmptuple('OrderBy', 'columns ordering')
+
+# An PIVOT BY clause.
+#
+# Attributes:
+#   columns: A list of group-by expressions, simple Column() or otherwise.
 PivotBy = cmptuple('PivotBy', 'columns')
 
 # Nodes used in expressions. The meaning should be self-explanatory. This is
 # your run-of-the-mill hierarchical logical expression nodes. Any of these nodes
 # equivalent form "an expression."
+
+# A reference to a column.
+#
+# Attributes:
+#   name: A string, the name of the column to access.
 Column = cmptuple('Column', 'name')
+
+# A function call.
+#
+# Attributes:
+#   fname: A string, the name of the function.
+#   operands: A list of other expressions, the arguments of the function to
+#     evaluate. This is possibly an empty list.
 Function = cmptuple('Function', 'fname operands')
+
+# A constant node.
+#
+# Attributes:
+#   value: The constant value this represents.
 Constant = cmptuple('Constant', 'value')
+
+# Base classes for unary operators.
+#
+# Attributes:
+#   operand: An expression, the operand of the operator.
 UnaryOp = cmptuple('UnaryOp', 'operand')
+
+# Negation operator.
 class Not(UnaryOp): pass
+
+# Base classes for binary operators.
+#
+# Attributes:
+#   left: An expression, the left operand.
+#   right: An expression, the right operand.
 BinaryOp = cmptuple('BinaryOp', 'left right')
-class Equal(BinaryOp): pass
-class Match(BinaryOp): pass
+
+# Logical and/or operators.
 class And(BinaryOp): pass
 class Or(BinaryOp): pass
+
+# Equality and inequality comparison operators.
+class Equal(BinaryOp): pass
 class Greater(BinaryOp): pass
 class GreaterEq(BinaryOp): pass
 class Less(BinaryOp): pass
 class LessEq(BinaryOp): pass
+
+# A regular expression match operator.
+class Match(BinaryOp): pass
 
 
 
