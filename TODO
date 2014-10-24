@@ -191,6 +191,8 @@ precise balances throughout, but no manual input is required.
   - Send email about doc.
 
 
+  - In the comparison doc: describe how Beancount has asset types
+
   - Is there a script somewhere that can accept a CSV file and render a CSV
 
     pivot table from it?  The reason we need support is in order to carry out
@@ -210,12 +212,40 @@ precise balances throughout, but no manual input is required.
     the proposal files.
 
 
+* Query Language
+
+  - Rename context to environment
+
+  - Compiler will need a separate function compile_from()
+
+  - Add syntax: "print from ..." to print out the list of entries
+
+  - Flatten should parse close to distinct keyword
+
+  - Maybe add format keyword followed by the desired format instead of a set var
+    (or add both)
+
+  - Redirecting output should be done with > at the end of a statement
+
+  - "types ..." : print the inferred types of a statement, the targets, or maybe
+    that's just part of EXPLAIN?
+
+  - Describe prints all the columns and functions in each environments
+
+
+
 * Current / Misc / To Be Classified
 
   (This is a grab bag of ideas. When I have a new idea coming to me, I don't
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - Printer should not leave empty line if previous directing is the same type
+    except if transaction. This would work.
+
+
 
 
   - Create a verification plugin that checks that there is a single currency in
