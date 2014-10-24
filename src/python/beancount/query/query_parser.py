@@ -71,7 +71,7 @@ Wildcard = cmptuple('Wildcard', '')
 #   close: A CLOSE clause, either None if absent, a boolean if the clause
 #     was present by no date was provided, or a datetime.date instance if
 #     a date was provided.
-From = cmptuple('From', 'expression close')
+From = cmptuple('From', 'expression open close')
 
 # A GROUP BY clause.
 #
@@ -159,7 +159,7 @@ class Lexer:
 
     # List of reserved keywords.
     keywords = {
-        'SELECT', 'AS', 'FROM', 'WHERE', 'CLOSE', 'ON',
+        'SELECT', 'AS', 'FROM', 'WHERE', 'OPEN', 'CLOSE', 'ON',
         'BALANCES', 'JOURNAL',
         'GROUP', 'BY', 'HAVING', 'ORDER', 'DESC', 'ASC', 'PIVOT',
         'LIMIT', 'FLATTEN', 'DISTINCT',
@@ -337,21 +337,17 @@ class Parser(Lexer):
         """
         p[0] = Target(p[1], p[3] if len(p) == 4 else None)
 
-    def p_from_empty(self, p):
-        "from : empty"
-        p[0] = None
-
-    def p_from_expression_only(self, p):
-        "from : FROM expression"
-        p[0] = From(p[2], False)
-
-    def p_from_close_only(self, p):
-        "from : FROM close"
-        p[0] = From(None, p[2])
-
-    def p_from_expression_close(self, p):
-        "from : FROM expression close"
-        p[0] = From(p[2], p[3])
+    def p_from(self, p):
+        """
+        from : empty
+             | FROM opt_expression opt_open opt_close
+        """
+        if len(p) == 5:
+            if all(p[i] is None for i in range(2, 5)):
+                raise ParseError("Empty FROM expression is not allowed")
+            p[0] = From(p[2], p[3], p[4])
+        else:
+            p[0] = None
 
     def p_from_subselect(self, p):
         """
@@ -363,12 +359,20 @@ class Parser(Lexer):
         else:
             p[0] = p[3]
 
-    def p_close(self, p):
+    def p_opt_open(self, p):
         """
-        close : CLOSE
-              | CLOSE ON DATE
+        opt_open : empty
+                 | OPEN ON DATE
         """
-        p[0] = p[3] if len(p) == 4 else (p[1] == 'CLOSE')
+        p[0] = p[3] if len(p) == 4 else None
+
+    def p_opt_close(self, p):
+        """
+        opt_close : empty
+                  | CLOSE
+                  | CLOSE ON DATE
+        """
+        p[0] = p[3] if len(p) == 4 else (True if (p[1] == 'CLOSE') else None)
 
     def p_where(self, p):
         """
@@ -506,6 +510,13 @@ class Parser(Lexer):
     def p_expression_function(self, p):
         "expression : ID LPAREN expression_list_opt RPAREN"
         p[0] = Function(p[1], p[3])
+
+    def p_opt_expression(self, p):
+        """
+        opt_expression : empty
+                       | expression
+        """
+        p[0] =  p[1]
 
     def p_expression_list_opt(self, p):
         """

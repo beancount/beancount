@@ -106,7 +106,7 @@ class TestFilterEntries(ExecuteQueryBase, cmptest.TestCase):
         # Check that no filter outputs the very same thing.
         filtered_entries = x.filter_entries(self.compile("""
           SELECT * ;
-        """).c_from, entries)
+        """).c_from, entries, options_map)
         self.assertEqualEntries(entries, filtered_entries)
 
     def test_filter_by_year(self):
@@ -197,9 +197,6 @@ class TestExecute(ExecuteQueryBase):
         x = self.execute("""
           SELECT date, flag, payee, narration;
         """)
-        print(x)
-
-
 
     def __test_simple(self):
         x = self.execute("""

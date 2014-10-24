@@ -11,6 +11,8 @@ from os import path
 
 from beancount.query import query_parser
 from beancount.query import query_compile
+from beancount.query import query_contexts
+from beancount.query import query_execute
 from beancount.core import data
 from beancount.reports import table
 
@@ -49,11 +51,21 @@ class BQLShell(cmd.Cmd):
     """
     prompt = 'beancount> '
 
-    def __init__(self, entries):
+    def __init__(self, entries, options_map):
         super().__init__()
         load_history(path.expanduser(HISTORY_FILENAME))
         self.parser = query_parser.Parser()
         self.entries = entries
+        self.options_map = options_map
+
+    def cmdloop(self):
+        "Override cmdloop to handle keyboard interrupts."
+        while True:
+            try:
+                super().cmdloop()
+                break
+            except KeyboardInterrupt:
+                print('\n(Interrupted)')
 
     def do_select(self, line_rest):
         line = 'SELECT ' + line_rest
@@ -62,8 +74,18 @@ class BQLShell(cmd.Cmd):
 
             # FIXME: Make this eventually do more than just select.
             select = statement
-            c_select = query_compile.compile_select(select)
-            rows = query_compile.interpret_select(self.entries, c_select)
+
+            xcontext_targets = query_contexts.TargetsContext()
+            xcontext_entries = query_contexts.FilterEntriesContext()
+            xcontext_postings = query_contexts.FilterPostingsContext()
+
+            query = query_compile.compile_select(select,
+                                                 xcontext_targets,
+                                                 xcontext_postings,
+                                                 xcontext_entries)
+
+            rows = query_execute.execute_query(query, self.entries, self.options_map)
+
             if not rows:
                 print("(empty)")
             else:
@@ -127,14 +149,15 @@ class BQLShell(cmd.Cmd):
         return 1
 
 
-def run_noargs(entries):
+def run_noargs(entries, options_map):
     """Create and run a shell, possibly consuming stdin if not interactive.
     If we're running in a TTY, start an interactive shell.
 
     Args:
       entries: A list of directives.
+      options_map: A list of options, as produced by the parser.
     """
-    shell = BQLShell(entries)
+    shell = BQLShell(entries, options_map)
     if os.isatty(sys.stdin.fileno()):
         # If we're a TTY, run interactively.
         print("Ready with {} entries.".format(len(entries)))

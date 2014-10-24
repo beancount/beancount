@@ -291,7 +291,7 @@ class TestCompileSelect(CompileSelectBase):
         self.assertEqual(None, query.c_from)
 
         query = self.compile("SELECT account FROM CLOSE;")
-        self.assertEqual(c.EvalFrom(None, True), query.c_from)
+        self.assertEqual(c.EvalFrom(None, None, True), query.c_from)
 
         query = self.compile("SELECT account FROM length(payee) != 0;")
         self.assertTrue(isinstance(query.c_from, c.EvalFrom))

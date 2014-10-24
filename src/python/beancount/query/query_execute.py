@@ -22,6 +22,9 @@ def filter_entries(c_from, entries, options_map):
     assert c_from is None or isinstance(c_from, query_compile.EvalFrom)
     assert isinstance(entries, list)
 
+    if c_from is None:
+        return entries
+
     # Filter the entries with the FROM clause's expression.
     c_expr = c_from.c_expr
     if c_expr:
@@ -29,21 +32,40 @@ def filter_entries(c_from, entries, options_map):
     else:
         filtered_entries = entries
 
+    account_types = options.get_account_types(options_map)
+    current_accounts = options.get_current_accounts(options_map)
+    conversion_currency = options_map['conversion_currency']
+
+    # Process the OPEN clause.
+    if c_from.open is not None:
+        assert isinstance(c_from.close, datetime.date)
+        open_date = c_from.open
+
+        ## FIXME: Convert summarize.clamp() to summarize.open(), then use it
+        ## here. This is the Right Thing to do.
+
+        raise NotImplementedError
+        # filtered_entries = summarize.close(filtered_entries,
+        #                                    account_types,
+        #                                    conversion_currency,
+        #                                    *current_accounts)
+
     # Process the CLOSE clause.
     if c_from.close is not None:
-        account_types = options.get_account_types(options_map)
-        current_accounts = options.get_current_accounts(options_map)
-        conversion_currency = options_map['conversion_currency']
-
         if isinstance(c_from.close, datetime.date):
             close_date = c_from.close
-            filtered_entries = [entry for entry in entries if entry.date < close_date]
+            filtered_entries = summarize.truncate(entries, close_date)
 
         if c_from.close is True:
             filtered_entries = summarize.close(filtered_entries,
                                                account_types,
                                                conversion_currency,
                                                *current_accounts)
+
+
+    # We should always insert a conversions entry to balance everything,
+    # regardless.
+    ## FIXME: TODO
 
 
     return filtered_entries
@@ -58,20 +80,8 @@ def execute_query(query, entries, options_map):
       options_map: A parser's option_map.
     """
     # Filter the entries using the WHERE clause.
-    filtered_entries = filter_entries(query.c_from, entries, options_map)
-
-    # Dispatch between the non-aggregated queries and aggregated queries.
-    if query.group_indexes is None:
-        # This is a non-aggregated query.
-        pass
-
-    else:
-        # This is an aggregated query.
-        raise NotImplementedError
-
-    # FIXME: continue here
-
-
+    if query.c_from is not None:
+        entries = filter_entries(query.c_from, entries, options_map)
 
     # Create a class for each final result.
     ResultRow = collections.namedtuple('ResultRow',
@@ -79,26 +89,31 @@ def execute_query(query, entries, options_map):
                                         for target in query.c_targets
                                         if target.name])
 
-    return ResultRow
-
-
-    # Process all the postings.
-    rows = []
+    # Dispatch between the non-aggregated queries and aggregated queries.
+    results = []
     c_expr = query.c_where
-    try:
-        for entry in filtered_entries:
-            if isinstance(entry, data.Transaction):
-                for posting in entry.postings:
-                    if c_expr is None or c_expr(posting):
-                        row = Tuple(*[target.c_expr(posting)
-                                      for target in query.c_targets])
-                        rows.append(row)
-                        if query.limit and len(rows) == query.limit:
-                            raise StopIteration
-    except StopIteration:
-        pass
+    c_targets = query.c_targets
+    if query.group_indexes is None:
+        # This is a non-aggregated query.
+        try:
+            for entry in entries:
+                if isinstance(entry, data.Transaction):
+                    for posting in entry.postings:
+                        if c_expr is None or c_expr(posting):
+                            result = [c_target.c_expr(posting) for c_target in c_targets]
+                            results.append(ResultRow(*result))
+                            if query.limit and len(results) == query.limit:
+                                raise StopIteration
+        except StopIteration:
+            pass
+    else:
+        # This is an aggregated query.
+        raise NotImplementedError
+
+    # FIXME: continue here
+
 
     # Flatten if required.
 
 
-    return rows
+    return results

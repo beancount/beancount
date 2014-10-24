@@ -171,7 +171,7 @@ class TypeEntryColumn(c.EvalColumn):
         super().__init__(str)
 
     def __call__(self, entry):
-        return type(entry).__name__
+        return type(entry).__name__.lower()
 
 class FilenameEntryColumn(c.EvalColumn):
     def __init__(self):
@@ -267,7 +267,7 @@ class TypeColumn(c.EvalColumn):
         super().__init__(str)
 
     def __call__(self, posting):
-        return type(posting.entry).__name__
+        return type(posting.entry).__name__.lower()
 
 class FilenameColumn(c.EvalColumn):
     def __init__(self):
