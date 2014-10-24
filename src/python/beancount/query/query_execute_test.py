@@ -14,6 +14,8 @@ from beancount.parser import printer
 from beancount.parser import cmptest
 from beancount import loader
 
+from beancount.utils.misc_utils import box
+
 
 INPUT = """
 
@@ -22,8 +24,24 @@ INPUT = """
 
 2010-01-01 open Expenses:Restaurant
 
-2011-02-10 * "Dinner with Jim"
-  Assets:Bank:Checking       123.00 USD
+2010-01-01 * "Dinner with Cero"
+  Assets:Bank:Checking       100.00 USD
+  Expenses:Restaurant
+
+2011-01-01 * "Dinner with Uno"
+  Assets:Bank:Checking       101.00 USD
+  Expenses:Restaurant
+
+2012-02-02 * "Dinner with Dos"
+  Assets:Bank:Checking       102.00 USD
+  Expenses:Restaurant
+
+2013-03-03 * "Dinner with Tres"
+  Assets:Bank:Checking       103.00 USD
+  Expenses:Restaurant
+
+2014-04-04 * "Dinner with Quatro"
+  Assets:Bank:Checking       104.00 USD
   Expenses:Restaurant
 
 """
@@ -77,7 +95,7 @@ class ExecuteQueryBase(unittest.TestCase):
         Returns:
           A list of ResultRow instances.
         """
-        return x.execute_query(self.compile(bql), entries)
+        return x.execute_query(self.compile(bql_string), entries)
 
 
 class TestFilterEntries(ExecuteQueryBase, cmptest.TestCase):
@@ -89,12 +107,26 @@ class TestFilterEntries(ExecuteQueryBase, cmptest.TestCase):
         """).c_from, entries)
         self.assertEqualEntries(entries, filtered_entries)
 
+    def test_filter_by_year(self):
+        filtered_entries = x.filter_entries(self.compile("""
+          SELECT date, type FROM year(date) = 2012;
+        """).c_from, entries)
+
+        with box('entries'):
+            printer.print_entries(filtered_entries)
+
+        self.assertEqualEntries("""
+          2010-01-01 open Assets:Bank:Checking
+          2010-01-01 open Assets:Bank:Savings
+          2010-01-01 open Expenses:Restaurant
+
+          2012-02-02 * "Dinner with Dos"
+            Assets:Bank:Checking    102.00 USD
+            Expenses:Restaurant    -102.00 USD
+        """, filtered_entries)
 
 
-
-
-
-    def test_filter_fiddling(self):
+    def test_xxx(self):
         filtered_entries = x.filter_entries(self.compile("""
           SELECT * FROM narration = 'Dinner with Jim';
         """).c_from, entries)
@@ -104,7 +136,15 @@ class TestFilterEntries(ExecuteQueryBase, cmptest.TestCase):
 
 class TestExecute(ExecuteQueryBase):
 
-    def test_simple(self):
+    def test_non_aggregated(self):
+        x = self.execute("""
+          SELECT date, flag, payee, narration;
+        """)
+        print(x)
+
+
+
+    def __test_simple(self):
         x = self.execute("""
           SELECT date, flag, account
           GROUP BY date, flag, account;

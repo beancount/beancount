@@ -21,10 +21,7 @@ def filter_entries(c_from, entries):
         c_expr = c_from.c_expr
         filtered_entries = []
         for entry in entries:
-            if isinstance(entry, data.Transaction):
-                if c_expr(entry):
-                    filtered_entries.append(entry)
-            else:
+            if c_expr(entry):
                 filtered_entries.append(entry)
     else:
         filtered_entries = entries
