@@ -218,7 +218,8 @@ precise balances throughout, but no manual input is required.
 
   - Compiler will need a separate function compile_from()
 
-  - Add syntax: "print from ..." to print out the list of entries
+  - Add syntax: "print from ..." to print out the list of entries in Beancount
+    format.
 
   - Flatten should parse close to distinct keyword
 
@@ -240,6 +241,12 @@ precise balances throughout, but no manual input is required.
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - Idea! Allow the selection or reporting of all the postings since their last
+    balance check in each account. These postings can be called "unverified"
+    and it should be possible to report just those.
+
 
 
   - Printer should not leave empty line if previous directing is the same type

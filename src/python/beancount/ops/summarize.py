@@ -111,7 +111,6 @@ def close(entries,
     Returns:
       A modified list of entries, with the income and expense accounts
       transferred.
-
     """
 
     # Transfer the balances of income and expense accounts as earnings / net
