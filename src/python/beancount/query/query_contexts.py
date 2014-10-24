@@ -13,6 +13,7 @@ import re
 import operator
 
 from beancount.core.amount import Decimal
+from beancount.core.data import Transaction
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import data
@@ -198,35 +199,45 @@ class FlagEntryColumn(c.EvalColumn):
         super().__init__(str)
 
     def __call__(self, entry):
-        return entry.flag
+        return (entry.flags
+                if isinstance(entry, Transaction)
+                else None)
 
 class PayeeEntryColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, entry):
-        return entry.payee or ''
+        return (entry.payee or ''
+                if isinstance(entry, Transaction)
+                else None)
 
 class NarrationEntryColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
     def __call__(self, entry):
-        return entry.narration
+        return (entry.narration or ''
+                if isinstance(entry, Transaction)
+                else None)
 
 class TagsEntryColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(set)
 
     def __call__(self, entry):
-        return entry.tags
+        return (entry.tags
+                if isinstance(entry, Transaction)
+                else None)
 
 class LinksEntryColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(set)
 
     def __call__(self, entry):
-        return entry.links
+        return (entry.links
+                if isinstance(entry, Transaction)
+                else None)
 
 class FilterEntriesContext(c.CompilationContext):
     """An execution context that provides access to attributes on Transactions

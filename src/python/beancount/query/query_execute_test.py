@@ -1,6 +1,7 @@
 import datetime
 import re
 import unittest
+import textwrap
 
 from beancount.core.amount import D
 from beancount.core.amount import Decimal
@@ -95,12 +96,13 @@ class ExecuteQueryBase(unittest.TestCase):
         Returns:
           A list of ResultRow instances.
         """
-        return x.execute_query(self.compile(bql_string), entries)
+        return x.execute_query(self.compile(bql_string),
+                               entries, options_map)
 
 
 class TestFilterEntries(ExecuteQueryBase, cmptest.TestCase):
 
-    def test_filter_identity(self):
+    def test_filter_empty_from(self):
         # Check that no filter outputs the very same thing.
         filtered_entries = x.filter_entries(self.compile("""
           SELECT * ;
@@ -110,28 +112,83 @@ class TestFilterEntries(ExecuteQueryBase, cmptest.TestCase):
     def test_filter_by_year(self):
         filtered_entries = x.filter_entries(self.compile("""
           SELECT date, type FROM year(date) = 2012;
-        """).c_from, entries)
-
-        with box('entries'):
-            printer.print_entries(filtered_entries)
-
+        """).c_from, entries, options_map)
         self.assertEqualEntries("""
+
+          2012-02-02 * "Dinner with Dos"
+            Assets:Bank:Checking              102.00 USD
+            Expenses:Restaurant              -102.00 USD
+
+        """, filtered_entries)
+
+    def test_filter_by_expr1(self):
+        filtered_entries = x.filter_entries(self.compile("""
+          SELECT date, type
+          FROM NOT (type = 'Transaction' AND
+                    (year(date) = 2012 OR year(date) = 2013));
+        """).c_from, entries, options_map)
+        self.assertEqualEntries("""
+
           2010-01-01 open Assets:Bank:Checking
           2010-01-01 open Assets:Bank:Savings
           2010-01-01 open Expenses:Restaurant
 
-          2012-02-02 * "Dinner with Dos"
-            Assets:Bank:Checking    102.00 USD
-            Expenses:Restaurant    -102.00 USD
+          2010-01-01 * "Dinner with Cero"
+            Assets:Bank:Checking              100.00 USD
+            Expenses:Restaurant              -100.00 USD
+
+          2011-01-01 * "Dinner with Uno"
+            Assets:Bank:Checking              101.00 USD
+            Expenses:Restaurant              -101.00 USD
+
+
+          2014-04-04 * "Dinner with Quatro"
+            Assets:Bank:Checking              104.00 USD
+            Expenses:Restaurant              -104.00 USD
+
         """, filtered_entries)
 
-
-    def test_xxx(self):
+    def test_filter_by_expr2(self):
         filtered_entries = x.filter_entries(self.compile("""
-          SELECT * FROM narration = 'Dinner with Jim';
-        """).c_from, entries)
-        printer.print_entries(filtered_entries)
+          SELECT date, type FROM date < 2012-06-01;
+        """).c_from, entries, options_map)
+        self.assertEqualEntries("""
 
+          2010-01-01 open Assets:Bank:Checking
+          2010-01-01 open Assets:Bank:Savings
+          2010-01-01 open Expenses:Restaurant
+
+          2010-01-01 * "Dinner with Cero"
+            Assets:Bank:Checking              100.00 USD
+            Expenses:Restaurant              -100.00 USD
+
+          2011-01-01 * "Dinner with Uno"
+            Assets:Bank:Checking              101.00 USD
+            Expenses:Restaurant              -101.00 USD
+
+          2012-02-02 * "Dinner with Dos"
+            Assets:Bank:Checking              102.00 USD
+            Expenses:Restaurant              -102.00 USD
+
+        """, filtered_entries)
+
+    def test_filter_close_undated(self):
+        filtered_entries = x.filter_entries(self.compile("""
+          SELECT date, type FROM CLOSE;
+        """).c_from, entries, options_map)
+        self.assertEqualEntries(INPUT + textwrap.dedent("""
+
+          2014-04-04 T "Transfer balance for 'Expenses:Restaurant' (Transfer balance)"
+            Expenses:Restaurant                                 510.00 USD
+            Equity:Earnings:Current                            -510.00 USD
+
+        """), filtered_entries)
+
+    def test_filter_close_dated(self):
+        filtered_entries = x.filter_entries(self.compile("""
+          SELECT date, type FROM CLOSE ON 2013-06-01;
+        """).c_from, entries, options_map)
+        self.assertEqualEntries(entries[:-1], filtered_entries)
 
 
 class TestExecute(ExecuteQueryBase):
