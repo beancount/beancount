@@ -262,23 +262,23 @@ class ResultSetEnvironment(CompilationEnvironment):
         return AttributeColumn(name)
 
 
-def compile_expression(expr, xcontext):
+def compile_expression(expr, environ):
     """Bind an expression to its execution context.
 
     Args:
       expr: The root node of an expression.
-      xcontext: An CompilationEnvironment instance.
+      environ: An CompilationEnvironment instance.
     Returns:
       The root node of a bound expression.
     """
     # Convert column references to the context.
     if isinstance(expr, query_parser.Column):
-        c_expr = xcontext.get_column(expr.name)
+        c_expr = environ.get_column(expr.name)
 
     elif isinstance(expr, query_parser.Function):
-        c_operands = [compile_expression(operand, xcontext)
+        c_operands = [compile_expression(operand, environ)
                       for operand in expr.operands]
-        c_expr = xcontext.get_function(expr.fname, c_operands)
+        c_expr = environ.get_function(expr.fname, c_operands)
         # if len(c_operands) != len(c_expr.__intypes__):
         #     raise CompilationError(
         #         "Invalid number of arguments for {}: {} expected {}".format(
@@ -286,12 +286,12 @@ def compile_expression(expr, xcontext):
 
     elif isinstance(expr, query_parser.UnaryOp):
         node_type = OPERATORS[type(expr)]
-        c_expr = node_type(compile_expression(expr.operand, xcontext))
+        c_expr = node_type(compile_expression(expr.operand, environ))
 
     elif isinstance(expr, query_parser.BinaryOp):
         node_type = OPERATORS[type(expr)]
-        c_expr = node_type(compile_expression(expr.left, xcontext),
-                           compile_expression(expr.right, xcontext))
+        c_expr = node_type(compile_expression(expr.left, environ),
+                           compile_expression(expr.right, environ))
 
     elif isinstance(expr, query_parser.Constant):
         c_expr = EvalConstant(expr.value)
@@ -370,12 +370,21 @@ def find_unique_name(name, allocated_set):
     return name
 
 
-def compile_targets(targets, xcontext):
+# A compiled target.
+#
+# Attributes:
+#   c_expr: A compiled expression tree (an EvalNode root node).
+#   name: The name of the target. If None, this is an invisible
+#     target that gets evaluated but not displayed.
+#   is_aggregate: A boolean, true if 'c_expr' is an aggregate.
+EvalTarget = collections.namedtuple('EvalTarget', 'c_expr name is_aggregate')
+
+def compile_targets(targets, environ):
     """Compile the targets and check for their validity. Process wildcard.
 
     Args:
       targets: A list of target expressions from the parser.
-      xcontext: A compilation context for the targets.
+      environ: A compilation context for the targets.
     Returns:
       A list of compiled target expressions with resolved names.
     """
@@ -383,13 +392,13 @@ def compile_targets(targets, xcontext):
     if isinstance(targets, query_parser.Wildcard):
         # Insert the full list of available columns.
         targets = [query_parser.Target(query_parser.Column(name), None)
-                   for name in xcontext.columns]
+                   for name in environ.columns]
 
     # Compile targets.
     c_targets = []
     target_names = set()
     for target in targets:
-        c_expr = compile_expression(target.expression, xcontext)
+        c_expr = compile_expression(target.expression, environ)
         target_name = find_unique_name(
             target.name or query_parser.get_expression_name(target.expression),
             target_names)
@@ -417,13 +426,13 @@ def compile_targets(targets, xcontext):
     return c_targets
 
 
-def compile_group_by(group_by, c_targets, xcontext):
+def compile_group_by(group_by, c_targets, environ):
     """Process a group-by clause.
 
     Args:
       group_by: A GroupBy instance as provided by the parser.
       c_targets: A list of compiled target expressions.
-      xcontext: A compilation context to be used to evaluate GROUP BY expressions.
+      environ: A compilation context to be used to evaluate GROUP BY expressions.
     Returns:
       A tuple of
        new_targets: A list of new compiled target nodes.
@@ -474,7 +483,7 @@ def compile_group_by(group_by, c_targets, xcontext):
                 # Otherwise we compile the expression and add it to the list of
                 # targets to evaluate and index into that new target.
                 if index is None:
-                    c_expr = compile_expression(column, xcontext)
+                    c_expr = compile_expression(column, environ)
 
                     # Check if the new expression is an aggregate.
                     aggregate = is_aggregate(c_expr)
@@ -516,13 +525,13 @@ def compile_group_by(group_by, c_targets, xcontext):
     return new_targets[len(c_targets):], group_indexes
 
 
-def compile_order_by(order_by, c_targets, xcontext):
+def compile_order_by(order_by, c_targets, environ):
     """Process an order-by clause.
 
     Args:
       order_by: A OrderBy instance as provided by the parser.
       c_targets: A list of compiled target expressions.
-      xcontext: A compilation context to be used to evaluate ORDER BY expressions.
+      environ: A compilation context to be used to evaluate ORDER BY expressions.
     Returns:
       A tuple of
        new_targets: A list of new compiled target nodes.
@@ -563,7 +572,7 @@ def compile_order_by(order_by, c_targets, xcontext):
             # Otherwise we compile the expression and add it to the list of
             # targets to evaluate and index into that new target.
             if index is None:
-                c_expr = compile_expression(column, xcontext)
+                c_expr = compile_expression(column, environ)
 
                 # Add the new target. 'None' for the target name implies it
                 # should be invisible, not to be rendered.
@@ -576,21 +585,40 @@ def compile_order_by(order_by, c_targets, xcontext):
     return (new_targets[len(c_targets):], order_indexes)
 
 
-# A compiled target.
-#
-# Attributes:
-#   c_expr: A compiled expression tree (an EvalNode root node).
-#   name: The name of the target. If None, this is an invisible
-#     target that gets evaluated but not displayed.
-#   is_aggregate: A boolean, true if 'c_expr' is an aggregate.
-EvalTarget = collections.namedtuple('EvalTarget', 'c_expr name is_aggregate')
-
 # A compile FROM clause.
 #
 # Attributes:
 #   c_expr: A compiled expression tree (an EvalNode root node).
 #   close: (See query_parser.From.close).
 EvalFrom = collections.namedtuple('EvalFrom', 'c_expr open close clear')
+
+def compile_from(from_clause, environ):
+    """Compiled a From clause as provided by the parser, in the given environment.
+
+    Args:
+      select: An instance of query_parser.Select.
+      environ: : A compilation context for evaluating entry filters.
+    Returns:
+      An instance of Query, ready to be executed.
+    """
+    if from_clause is not None:
+        c_expression = (compile_expression(from_clause.expression, environ)
+                        if from_clause.expression is not None
+                        else None)
+
+        # Check that the from clause does not contain aggregates.
+        if c_expression is not None and is_aggregate(c_expression):
+            raise CompilationError("Aggregates are not allowed in from clause")
+
+        c_from = EvalFrom(c_expression,
+                          from_clause.open,
+                          from_clause.close,
+                          from_clause.clear)
+    else:
+        c_from = None
+
+    return c_from
+
 
 # A compiled query, ready for execution.
 #
@@ -613,8 +641,7 @@ EvalQuery = collections.namedtuple('EvalQuery', ('c_targets c_from c_where '
                                                  'group_indexes order_indexes '
                                                  'limit distinct flatten'))
 
-
-def compile_select(select, targets_xcontext, postings_xcontext, entries_xcontext):
+def compile_select(select, targets_environ, postings_environ, entries_environ):
     """Prepare an AST for a Select statement into a very rudimentary execution tree.
     The execution tree mostly looks much like an AST, but with some nodes
     replaced with knowledge specific to an execution context and eventually some
@@ -622,55 +649,39 @@ def compile_select(select, targets_xcontext, postings_xcontext, entries_xcontext
 
     Args:
       select: An instance of query_parser.Select.
-      targets_xcontext: A compilation context for evaluating targets.
-      postings_xcontext: : A compilation context for evaluating postings filters.
-      entries_xcontext: : A compilation context for evaluating entry filters.
+      targets_environ: A compilation environment for evaluating targets.
+      postings_environ: : A compilation environment for evaluating postings filters.
+      entries_environ: : A compilation environment for evaluating entry filters.
     Returns:
       An instance of Query, ready to be executed.
     """
 
-    # Process the FROM clause and figure out the execution context for the
+    # Process the FROM clause and figure out the execution environment for the
     # targets and the where clause.
     from_clause = select.from_clause
     if isinstance(from_clause, query_parser.Select):
         c_from = compile_select(from_clause) if from_clause is not None else None
-        xcontext_target = ResultSetEnvironment()
-        xcontext_where = ResultSetEnvironment()
+        environ_target = ResultSetEnvironment()
+        environ_where = ResultSetEnvironment()
 
     elif from_clause is None or isinstance(from_clause, query_parser.From):
         # Bind the from clause contents.
-        xcontext_entries = entries_xcontext
-        if from_clause is not None:
-            c_expression = (compile_expression(from_clause.expression, xcontext_entries)
-                            if from_clause.expression is not None
-                            else None)
-            c_from = EvalFrom(c_expression,
-                              from_clause.open,
-                              from_clause.close,
-                              from_clause.clear)
-        else:
-            c_from = None
-        xcontext_target = targets_xcontext
-        xcontext_where = postings_xcontext
+        c_from = compile_from(from_clause, entries_environ)
+        environ_target = targets_environ
+        environ_where = postings_environ
 
     else:
         raise CompilationError("Unexpected from clause in AST: {}".format(from_clause))
 
-    # Check that the from clause does not contain aggregates.
-    if c_from and c_from.c_expr:
-        if is_aggregate(c_from.c_expr):
-            raise CompilationError(
-                "Aggregates are not allowed in from clause")
-
     # Compile the targets.
-    c_targets = compile_targets(select.targets, xcontext_target)
+    c_targets = compile_targets(select.targets, environ_target)
 
-    # Bind the WHERE expression to the execution context.
+    # Bind the WHERE expression to the execution environment.
     if select.where_clause is not None:
-        c_where = compile_expression(select.where_clause, xcontext_where)
+        c_where = compile_expression(select.where_clause, environ_where)
 
         # Aggregates are disallowed in this clause. Check for this.
-        # NOTE: This should never trigger if the compilation context does not
+        # NOTE: This should never trigger if the compilation environment does not
         # contain any aggregate. Just being manic and safe here.
         if is_aggregate(c_where):
             raise CompilationError("Aggregates are disallowed in WHERE clause.")
@@ -680,7 +691,7 @@ def compile_select(select, targets_xcontext, postings_xcontext, entries_xcontext
     # Process the GROUP-BY clause.
     new_targets, group_indexes = compile_group_by(select.group_by,
                                                   c_targets,
-                                                  xcontext_target)
+                                                  environ_target)
     if new_targets:
         c_targets.extend(new_targets)
 
@@ -688,7 +699,7 @@ def compile_select(select, targets_xcontext, postings_xcontext, entries_xcontext
     if select.order_by is not None:
         (new_targets, order_indexes) = compile_order_by(select.order_by,
                                                         c_targets,
-                                                        xcontext_target)
+                                                        environ_target)
         if new_targets:
             c_targets.extend(new_targets)
     else:

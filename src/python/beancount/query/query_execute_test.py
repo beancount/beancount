@@ -173,7 +173,7 @@ class TestFilterEntries(ExecuteQueryBase, cmptest.TestCase):
 
     def test_filter_close_undated(self):
         filtered_entries = x.filter_entries(self.compile("""
-          SELECT date, type FROM CLOSE;
+          SELECT date, type FROM CLEAR;
         """).c_from, entries, options_map)
         self.assertEqualEntries(INPUT + textwrap.dedent("""
 

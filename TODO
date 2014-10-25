@@ -214,13 +214,10 @@ precise balances throughout, but no manual input is required.
 
 * Query Language
 
-  - Compiler will need a separate function compile_from() for using it in the
-    future with other report statements.
-
   - Add syntax: "print from ..." to print out the list of entries in Beancount
     format.
 
-  - Flatten should parse close to distinct keyword
+  - Flatten should parse closer to distinct keyword, as in SELECT FLATTEN ...
 
   - Maybe add format keyword followed by the desired format instead of a set var
     (or add both)
