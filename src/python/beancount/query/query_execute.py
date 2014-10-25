@@ -27,7 +27,7 @@ def filter_entries(c_from, entries, options_map):
 
     # Filter the entries with the FROM clause's expression.
     c_expr = c_from.c_expr
-    if c_expr:
+    if c_expr is not None:
         filtered_entries = [entry for entry in entries if c_expr(entry)]
     else:
         filtered_entries = entries

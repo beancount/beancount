@@ -8,28 +8,28 @@ from beancount.core import inventory
 from beancount.core import position
 from beancount.query import query_parser as q
 from beancount.query import query_compile as c
-from beancount.query import query_contexts as cc
+from beancount.query import query_env as cc
 
 
 class TestCompileExpression(unittest.TestCase):
 
     def test_expr_invalid(self):
         with self.assertRaises(c.CompilationError):
-            c.compile_expression(q.Column('invalid'), cc.TargetsContext())
+            c.compile_expression(q.Column('invalid'), cc.TargetsEnvironment())
 
     def test_expr_column(self):
         self.assertEqual(cc.FilenameColumn(),
-                         c.compile_expression(q.Column('filename'), cc.TargetsContext()))
+                         c.compile_expression(q.Column('filename'), cc.TargetsEnvironment()))
 
     def test_expr_function(self):
         self.assertEqual(cc.Sum([cc.ChangeColumn()]),
                          c.compile_expression(q.Function('sum', [q.Column('change')]),
-                                              cc.TargetsContext()))
+                                              cc.TargetsEnvironment()))
 
     def test_expr_unaryop(self):
         self.assertEqual(c.EvalNot(cc.AccountColumn()),
                          c.compile_expression(q.Not(q.Column('account')),
-                                              cc.TargetsContext()))
+                                              cc.TargetsEnvironment()))
 
     def test_expr_binaryop(self):
         self.assertEqual(c.EvalEqual(cc.DateColumn(),
@@ -37,11 +37,11 @@ class TestCompileExpression(unittest.TestCase):
                          c.compile_expression(
                              q.Equal(q.Column('date'),
                                      q.Constant(datetime.date(2014, 1, 1))),
-                             cc.TargetsContext()))
+                             cc.TargetsEnvironment()))
 
     def test_expr_constant(self):
         self.assertEqual(c.EvalConstant(D(17)),
-                         c.compile_expression(q.Constant(D(17)), cc.TargetsContext()))
+                         c.compile_expression(q.Constant(D(17)), cc.TargetsEnvironment()))
 
 
 class TestCompileExpressionDataTypes(unittest.TestCase):
@@ -49,13 +49,13 @@ class TestCompileExpressionDataTypes(unittest.TestCase):
     def test_expr_function_arity(self):
         # Compile with the correct number of arguments.
         c.compile_expression(q.Function('sum', [q.Column('number')]),
-                             cc.TargetsContext())
+                             cc.TargetsEnvironment())
 
         # Compile with an incorrect number of arguments.
         with self.assertRaises(c.CompilationError):
             c.compile_expression(q.Function('sum', [q.Column('date'),
                                                     q.Column('account')]),
-                                 cc.TargetsContext())
+                                 cc.TargetsEnvironment())
 
 
 class TestCompileAggregateChecks(unittest.TestCase):
@@ -183,9 +183,9 @@ class CompileSelectBase(unittest.TestCase):
     maxDiff = 8192
 
     # Default execution contexts.
-    xcontext_entries = cc.FilterEntriesContext()
-    xcontext_targets = cc.TargetsContext()
-    xcontext_postings = cc.FilterPostingsContext()
+    xcontext_entries = cc.FilterEntriesEnvironment()
+    xcontext_targets = cc.TargetsEnvironment()
+    xcontext_postings = cc.FilterPostingsEnvironment()
 
     def setUp(self):
         self.parser = q.Parser()

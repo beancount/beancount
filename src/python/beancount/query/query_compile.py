@@ -212,7 +212,7 @@ class EvalAggregator(EvalFunction):
     "Base class for all aggregator evaluator types."
 
 
-class CompilationContext:
+class CompilationEnvironment:
     """Base class for all compilation contexts. A compilation context provides
     column accessors specific to the particular row objects that we will access.
     """
@@ -250,7 +250,7 @@ class AttributeColumn(EvalColumn):
     def __call__(self, row):
         return getattr(row, self.name)
 
-class ResultSetContext(CompilationContext):
+class ResultSetEnvironment(CompilationEnvironment):
     """An execution context that provides access to attributes from a result set.
     """
     context_name = 'sub-query'
@@ -267,7 +267,7 @@ def compile_expression(expr, xcontext):
 
     Args:
       expr: The root node of an expression.
-      xcontext: An CompilationContext instance.
+      xcontext: An CompilationEnvironment instance.
     Returns:
       The root node of a bound expression.
     """
@@ -634,8 +634,8 @@ def compile_select(select, targets_xcontext, postings_xcontext, entries_xcontext
     from_clause = select.from_clause
     if isinstance(from_clause, query_parser.Select):
         c_from = compile_select(from_clause) if from_clause is not None else None
-        xcontext_target = ResultSetContext()
-        xcontext_where = ResultSetContext()
+        xcontext_target = ResultSetEnvironment()
+        xcontext_where = ResultSetEnvironment()
 
     elif from_clause is None or isinstance(from_clause, query_parser.From):
         # Bind the from clause contents.

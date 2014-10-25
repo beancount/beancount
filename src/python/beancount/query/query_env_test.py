@@ -8,7 +8,7 @@ from beancount.core import inventory
 from beancount.core import position
 from beancount.query import query_parser as q
 from beancount.query import query_compile as c
-from beancount.query import query_contexts as cc
+from beancount.query import query_env as cc
 
 
 class TestCompileDataTypes(unittest.TestCase):

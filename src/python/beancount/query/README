@@ -2,7 +2,7 @@ TODO list for BQL:
 
 FIXME: Deal with sum of inventory, compile special nodes SumPosition(), SumInventory().
 FIXME:
-- Create a RowContext object that provides all the rows, so that we can
+- Create a RowEnvironment object that provides all the rows, so that we can
 - Add year month date as columns, but should not be included in * default
 - Add date() function to create dates from a string
 - Check data types for functions

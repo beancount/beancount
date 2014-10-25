@@ -9,7 +9,7 @@ from beancount.core import inventory
 from beancount.core import position
 from beancount.query import query_parser as q
 from beancount.query import query_compile as c
-from beancount.query import query_contexts as cc
+from beancount.query import query_env as cc
 from beancount.query import query_execute as x
 from beancount.parser import printer
 from beancount.parser import cmptest
@@ -58,9 +58,9 @@ class ExecuteQueryBase(unittest.TestCase):
     maxDiff = 8192
 
     # Default execution contexts.
-    xcontext_entries = cc.FilterEntriesContext()
-    xcontext_targets = cc.TargetsContext()
-    xcontext_postings = cc.FilterPostingsContext()
+    xcontext_entries = cc.FilterEntriesEnvironment()
+    xcontext_targets = cc.TargetsEnvironment()
+    xcontext_postings = cc.FilterPostingsEnvironment()
 
     def setUp(self):
         self.parser = q.Parser()
@@ -124,7 +124,7 @@ class TestFilterEntries(ExecuteQueryBase, cmptest.TestCase):
     def test_filter_by_expr1(self):
         filtered_entries = x.filter_entries(self.compile("""
           SELECT date, type
-          FROM NOT (type = 'Transaction' AND
+          FROM NOT (type = 'transaction' AND
                     (year(date) = 2012 OR year(date) = 2013));
         """).c_from, entries, options_map)
         self.assertEqualEntries("""

@@ -214,8 +214,6 @@ precise balances throughout, but no manual input is required.
 
 * Query Language
 
-  - Rename context to environment
-
   - Compiler will need a separate function compile_from()
 
   - Add syntax: "print from ..." to print out the list of entries in Beancount

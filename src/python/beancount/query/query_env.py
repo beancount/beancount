@@ -1,4 +1,4 @@
-"""Context object for compiler.
+"""Environment object for compiler.
 
 This module contains the various column accessors and function evaluators that
 are made available by the query compiler via their compilation context objects.
@@ -278,7 +278,7 @@ class LinksEntryColumn(c.EvalColumn):
                 if isinstance(entry, Transaction)
                 else None)
 
-class FilterEntriesContext(c.CompilationContext):
+class FilterEntriesEnvironment(c.CompilationEnvironment):
     """An execution context that provides access to attributes on Transactions
     and other entry types.
     """
@@ -392,7 +392,7 @@ class ChangeColumn(c.EvalColumn):
     def __call__(self, posting):
         return posting.position
 
-class FilterPostingsContext(c.CompilationContext):
+class FilterPostingsEnvironment(c.CompilationEnvironment):
     """An execution context that provides access to attributes on Postings.
     """
     context_name = 'WHERE clause'
@@ -413,9 +413,9 @@ class FilterPostingsContext(c.CompilationContext):
         }
     functions = SIMPLE_FUNCTIONS
 
-class TargetsContext(FilterPostingsContext):
+class TargetsEnvironment(FilterPostingsEnvironment):
     """An execution context that provides access to attributes on Postings.
     """
     context_name = 'targets/column'
-    functions = copy.copy(FilterPostingsContext.functions)
+    functions = copy.copy(FilterPostingsEnvironment.functions)
     functions.update(AGGREGATOR_FUNCTIONS)

@@ -11,7 +11,7 @@ from os import path
 
 from beancount.query import query_parser
 from beancount.query import query_compile
-from beancount.query import query_contexts
+from beancount.query import query_env
 from beancount.query import query_execute
 from beancount.core import data
 from beancount.reports import table
@@ -75,9 +75,9 @@ class BQLShell(cmd.Cmd):
             # FIXME: Make this eventually do more than just select.
             select = statement
 
-            xcontext_targets = query_contexts.TargetsContext()
-            xcontext_entries = query_contexts.FilterEntriesContext()
-            xcontext_postings = query_contexts.FilterPostingsContext()
+            xcontext_targets = query_env.TargetsEnvironment()
+            xcontext_entries = query_env.FilterEntriesEnvironment()
+            xcontext_postings = query_env.FilterPostingsEnvironment()
 
             query = query_compile.compile_select(select,
                                                  xcontext_targets,
@@ -125,9 +125,9 @@ class BQLShell(cmd.Cmd):
             print(statement)
 
             # FIXME: Generalize this too.
-            xcontext_targets = query_contexts.TargetsContext()
-            xcontext_entries = query_contexts.FilterEntriesContext()
-            xcontext_postings = query_contexts.FilterPostingsContext()
+            xcontext_targets = query_env.TargetsEnvironment()
+            xcontext_entries = query_env.FilterEntriesEnvironment()
+            xcontext_postings = query_env.FilterPostingsEnvironment()
 
             c_select = query_compile.compile_select(statement,
                                                     xcontext_targets,
