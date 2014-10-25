@@ -21,6 +21,7 @@ from beancount.core import complete
 from beancount.ops import prices
 from beancount.ops import balance
 from beancount.utils import bisect_key
+from beancount.parser import options
 
 
 def clamp(entries,
@@ -88,6 +89,28 @@ def clamp(entries,
     return entries, index
 
 
+def clamp_with_options(entries, begin_date, end_date, options_map):
+    """Clamp by getting all the parameters from an options map.
+
+    See clamp() for details.
+
+    Args:
+      entries: See clamp().
+      begin_date: See clamp().
+      end_date: See clamp().
+      options_map: A parser's option_map.
+    Returns:
+      Same as clamp().
+    """
+    account_types = options.get_account_types(options_map)
+    previous_accounts = options.get_previous_accounts(options_map)
+    conversion_currency = options_map['conversion_currency']
+    return clamp(entries, begin_date, end_date,
+                 account_types,
+                 conversion_currency,
+                 *previous_accounts)
+
+
 def cap(entries,
         account_types,
         conversion_currency,
@@ -125,6 +148,26 @@ def cap(entries,
     entries = conversions(entries, account_conversions, conversion_currency, None)
 
     return entries
+
+
+def cap_with_options(entries, options_map):
+    """Close by getting all the parameters from an options map.
+
+    See cap() for details.
+
+    Args:
+      entries: See cap().
+      options_map: A parser's option_map.
+    Returns:
+      Same as close().
+    """
+    account_types = options.get_account_types(options_map)
+    current_accounts = options.get_current_accounts(options_map)
+    conversion_currency = options_map['conversion_currency']
+    return cap(entries,
+               account_types,
+               conversion_currency,
+               *current_accounts)
 
 
 def transfer_balances(entries, date, account_pred, transfer_account):
