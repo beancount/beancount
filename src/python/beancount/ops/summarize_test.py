@@ -105,10 +105,10 @@ class TestClamp(cmptest.TestCase):
         self.assertTrue(clamped_balance.is_empty())
 
 
-class TestClose(cmptest.TestCase):
+class TestCap(cmptest.TestCase):
 
     @parser.parsedoc
-    def test_close(self, entries, errors, options_map):
+    def test_cap(self, entries, errors, options_map):
         """
         2014-03-01 * "Some income and expense"
           Income:Salary        10000 USD
@@ -121,12 +121,12 @@ class TestClose(cmptest.TestCase):
         """
         self.assertFalse(errors)
         account_types = options.get_account_types(options_map)
-        closed_entries = summarize.close(entries, account_types,
+        capd_entries = summarize.cap(entries, account_types,
                                          'NOTHING',
                                          'Equity:Earnings',
                                          'Equity:Conversions')
 
-        self.assertIncludesEntries(entries, closed_entries)
+        self.assertIncludesEntries(entries, capd_entries)
         self.assertIncludesEntries("""
 
         2014-03-01 T "Transfer balance for 'Expenses:Taxes' (Transfer balance)"
@@ -141,8 +141,8 @@ class TestClose(cmptest.TestCase):
           Equity:Conversions    5,000.00 USD @ 0.00 NOTHING
           Equity:Conversions   -6,000.00 CAD @ 0.00 NOTHING
 
-        """, closed_entries)
-        self.assertEqual(5, len(closed_entries))
+        """, capd_entries)
+        self.assertEqual(5, len(capd_entries))
 
 
 INPUT_OPEN = """
@@ -182,7 +182,7 @@ INPUT_PRICES_LAST = """
 
 INPUT_BEFORE = """
 
-;; An account that gets closed before the period, should not appear in the
+;; An account that gets capped before the period, should not appear in the
 ;; output.
 
 2010-01-01 open  Assets:US:Temporary

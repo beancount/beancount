@@ -88,11 +88,11 @@ def clamp(entries,
     return entries, index
 
 
-def close(entries,
-          account_types,
-          conversion_currency,
-          account_earnings,
-          account_conversions):
+def cap(entries,
+        account_types,
+        conversion_currency,
+        account_earnings,
+        account_conversions):
     """Transfer net income to equity and insert a final conversion entry.
 
     This is used to move and nullify balances from the income and expense
