@@ -300,6 +300,20 @@ class TestCompileSelect(CompileSelectBase):
         with self.assertRaises(c.CompilationError):
             query = self.compile("SELECT account FROM sum(payee) != 0;")
 
+    def test_compile_from_invalid_dates(self):
+        query = self.compile("""
+          SELECT account FROM  OPEN ON 2014-03-01  CLOSE ON 2014-03-02;
+        """)
+
+        query = self.compile("""
+          SELECT account FROM  OPEN ON 2014-03-02  CLOSE ON 2014-03-02;
+        """)
+
+        with self.assertRaises(c.CompilationError):
+            query = self.compile("""
+              SELECT account FROM  OPEN ON 2014-03-03  CLOSE ON 2014-03-02;
+            """)
+
     def test_compile_targets_wildcard(self):
         # Test the wildcard expandion.
         query = self.compile("SELECT *;")

@@ -6,6 +6,7 @@ import datetime
 from beancount.core import data
 from beancount.query import query_compile
 from beancount.parser import options
+from beancount.parser import printer
 from beancount.ops import summarize
 
 
@@ -34,15 +35,15 @@ def filter_entries(c_from, entries, options_map):
 
     # Process the OPEN clause.
     if c_from.open is not None:
-        assert isinstance(c_from.close, datetime.date)
+        assert isinstance(c_from.open, datetime.date)
         open_date = c_from.open
-
         entries, index = summarize.open_opt(entries, open_date, options_map)
 
     # Process the CLOSE clause.
     if c_from.close is not None:
         if isinstance(c_from.close, datetime.date):
-            entries, index = summarize.close_opt(entries, c_from.close, options_map)
+            close_date = c_from.close
+            entries, index = summarize.close_opt(entries, close_date, options_map)
         elif c_from.close is True:
             entries, index = summarize.close_opt(entries, None, options_map)
 
@@ -51,6 +52,21 @@ def filter_entries(c_from, entries, options_map):
         entries, index = summarize.clear_opt(entries, None, options_map)
 
     return entries
+
+
+def execute_print(print_stmt, entries, options_map, file):
+    """Print entries from a print statement specification.
+
+    Args:
+      query: An instance of a compiled Print statemnet.
+      entries: A list of directives.
+      options_map: A parser's option_map.
+      file: The output file to print to.
+    """
+    if print_stmt.from_clause is not None:
+        entries = filter_entries(print_stmt.from_clause, entries, options_map)
+
+    printer.print_entries(entries, file=file)
 
 
 def execute_query(query, entries, options_map):

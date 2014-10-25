@@ -260,23 +260,26 @@ class NarrationEntryColumn(c.EvalColumn):
                 if isinstance(entry, Transaction)
                 else None)
 
+# A globally available empty set to fill in for None's.
+EMPTY_SET = frozenset()
+
 class TagsEntryColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(set)
 
     def __call__(self, entry):
-        return (entry.tags
+        return (entry.tags or EMPTY_SET
                 if isinstance(entry, Transaction)
-                else None)
+                else EMPTY_SET)
 
 class LinksEntryColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(set)
 
     def __call__(self, entry):
-        return (entry.links
+        return (entry.links or EMPTY_SET
                 if isinstance(entry, Transaction)
-                else None)
+                else EMPTY_SET)
 
 class FilterEntriesEnvironment(c.CompilationEnvironment):
     """An execution context that provides access to attributes on Transactions

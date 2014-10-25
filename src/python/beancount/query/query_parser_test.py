@@ -504,6 +504,19 @@ class TestJournal(QueryParserTestBase):
                                    None, True, None)),
             "JOURNAL FROM date = 2014-01-01 CLOSE;")
 
+class TestPrint(QueryParserTestBase):
+
+    def test_print_empty(self):
+        self.assertParse(q.Print(None),
+                         "PRINT;")
+
+    def test_print_from(self):
+        self.assertParse(
+            q.Print(q.From(q.Equal(q.Column('date'),
+                                   q.Constant(datetime.date(2014, 1, 1))),
+                           None, True, None)),
+            "PRINT FROM date = 2014-01-01 CLOSE;")
+
 class TestExpressionName(QueryParserTestBase):
 
     def test_column(self):

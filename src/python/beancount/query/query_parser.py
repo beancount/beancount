@@ -54,6 +54,12 @@ Balance = collections.namedtuple('Balance', 'from_clause')
 #   from_clause: An instance of 'From', or None if absent.
 Journal = collections.namedtuple('Journal', 'account from_clause')
 
+# A query that will simply print the selected entries in Beancount format.
+#
+# Attributes:
+#   from_clause: An instance of 'From', or None if absent.
+Print = collections.namedtuple('Print', 'from_clause')
+
 # A parsed SELECT column or target.
 #
 # Attributes:
@@ -147,6 +153,9 @@ class LessEq(BinaryOp): pass
 # A regular expression match operator.
 class Match(BinaryOp): pass
 
+# Membership operators.
+class Contains(BinaryOp): pass
+
 
 
 class ParseError(Exception):
@@ -160,10 +169,10 @@ class Lexer:
     # List of reserved keywords.
     keywords = {
         'SELECT', 'AS', 'FROM', 'WHERE', 'OPEN', 'CLOSE', 'CLEAR', 'ON',
-        'BALANCES', 'JOURNAL',
+        'BALANCES', 'JOURNAL', 'PRINT',
         'GROUP', 'BY', 'HAVING', 'ORDER', 'DESC', 'ASC', 'PIVOT',
         'LIMIT', 'FLATTEN', 'DISTINCT',
-        'AND', 'OR', 'NOT', 'GT', 'GTE', 'LT', 'LTE',
+        'AND', 'OR', 'NOT', 'IN',
         'TRUE', 'FALSE', 'NULL',
     }
 
@@ -171,7 +180,7 @@ class Lexer:
     tokens = [
         'ID', 'INTEGER', 'DECIMAL', 'STRING', 'DATE',
         'WILDCARD', 'COMMA', 'SEMI', 'LPAREN', 'RPAREN', 'TILDE',
-        'EQ', 'NE',
+        'EQ', 'NE', 'GT', 'GTE', 'LT', 'LTE',
     ] + list(keywords)
 
     # An identifier, for a column or a dimension or whatever.
@@ -231,12 +240,11 @@ class Lexer:
         raise ParseError("Unknown token: {}".format(token))
 
 
-class Parser(Lexer):
-    """PLY parser for the Beancount Query Language.
+class SelectParser(Lexer):
+    """PLY parser for the Beancount Query Language's SELECT statement.
     """
 
-    # Starting rule.
-    start = 'statement'
+    start = 'select_statement'
 
     def __init__(self, **options):
         self.ply_lexer = ply.lex.lex(module=self,
@@ -274,27 +282,6 @@ class Parser(Lexer):
             return [] if p[1] is None else [p[1]]
         else:
             return p[1] + [p[3]]
-
-    def p_statement(self, p):
-        """
-        statement : select_statement SEMI
-                  | balance_statement SEMI
-                  | journal_statement SEMI
-        """
-        p[0] = p[1]
-
-    def p_balance_statement(self, p):
-        """
-        balance_statement : BALANCES from
-        """
-        p[0] = Balance(p[2])
-
-    def p_journal_statement(self, p):
-        """
-        journal_statement : JOURNAL from
-                          | JOURNAL account from
-        """
-        p[0] = Journal(p[2], p[3]) if len(p) == 4 else Journal(None, p[2])
 
     def p_account(self, p):
         """
@@ -506,6 +493,10 @@ class Parser(Lexer):
         "expression : expression TILDE expression"
         p[0] = Match(p[1], p[3])
 
+    def p_expression_contains(self, p):
+        "expression : expression IN expression"
+        p[0] = Contains(p[1], p[3])
+
     def p_expression_column(self, p):
         "expression : column"
         p[0] = p[1]
@@ -588,6 +579,44 @@ class Parser(Lexer):
             oss.write("\n")
             oss.write("  {}^".format(' ' * token.lexpos))
             raise ParseError(oss.getvalue())
+
+
+class Parser(SelectParser):
+    """PLY parser for the Beancount Query Language's full command syntax.
+    """
+
+    start = 'statement'
+
+    def p_statement(self, p):
+        """
+        statement : select_statement SEMI
+                  | balance_statement SEMI
+                  | journal_statement SEMI
+                  | print_statement SEMI
+        """
+        p[0] = p[1]
+
+    def p_balance_statement(self, p):
+        """
+        balance_statement : BALANCES from
+        """
+        p[0] = Balance(p[2])
+
+    def p_journal_statement(self, p):
+        """
+        journal_statement : JOURNAL from
+                          | JOURNAL account from
+        """
+        p[0] = Journal(p[2], p[3]) if len(p) == 4 else Journal(None, p[2])
+
+    def p_print_statement(self, p):
+        """
+        print_statement : PRINT from
+        """
+        p[0] = Print(p[2])
+
+
+
 
 
 def get_expression_name(expr):

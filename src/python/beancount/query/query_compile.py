@@ -156,6 +156,17 @@ class EvalMatch(EvalBinaryOp):
         # Apply the search function.
         return self.operator(arg_right, arg_left)
 
+class EvalContains(EvalBinaryOp):
+
+    def __init__(self, left, right):
+        super().__init__(operator.contains, left, right, bool)
+
+    def __call__(self, context):
+        # Note: we need to reverse the arguments.
+        arg_left = self.left(context)
+        arg_right = self.right(context)
+        return self.operator(arg_right, arg_left)
+
 
 # Interpreter nodes.
 OPERATORS = {
@@ -169,6 +180,7 @@ OPERATORS = {
     query_parser.GreaterEq: EvalGreaterEq,
     query_parser.Less: EvalLess,
     query_parser.LessEq: EvalLessEq,
+    query_parser.Contains: EvalContains,
     }
 
 
@@ -279,10 +291,6 @@ def compile_expression(expr, environ):
         c_operands = [compile_expression(operand, environ)
                       for operand in expr.operands]
         c_expr = environ.get_function(expr.fname, c_operands)
-        # if len(c_operands) != len(c_expr.__intypes__):
-        #     raise CompilationError(
-        #         "Invalid number of arguments for {}: {} expected {}".format(
-        #             expr.fname, len(c_operands), len(c_expr.__intypes__)))
 
     elif isinstance(expr, query_parser.UnaryOp):
         node_type = OPERATORS[type(expr)]
@@ -609,6 +617,11 @@ def compile_from(from_clause, environ):
         # Check that the from clause does not contain aggregates.
         if c_expression is not None and is_aggregate(c_expression):
             raise CompilationError("Aggregates are not allowed in from clause")
+
+        if (isinstance(from_clause.open, datetime.date) and
+            isinstance(from_clause.close, datetime.date) and
+            from_clause.open > from_clause.close):
+            raise CompilationError("Invalid dates: CLOSE date must follow OPEN date")
 
         c_from = EvalFrom(c_expression,
                           from_clause.open,
