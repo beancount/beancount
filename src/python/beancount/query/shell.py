@@ -6,6 +6,7 @@ import sys
 import cmd
 import readline
 import atexit
+import pprint
 import traceback
 from os import path
 
@@ -91,29 +92,6 @@ class BQLShell(cmd.Cmd):
         except Exception as exc:
             traceback.print_exc()
 
-    # def do_explain(self, line):
-    #     """Debug compilation."""
-    #     try:
-    #         statement = self.parser.parse(line)
-    #         print(statement)
-
-    #         # FIXME: Generalize this too.
-    #         env_targets = query_env.TargetsEnvironment()
-    #         env_entries = query_env.FilterEntriesEnvironment()
-    #         env_postings = query_env.FilterPostingsEnvironment()
-
-    #         c_select = query_compile.compile_select(statement,
-    #                                                 env_targets,
-    #                                                 env_postings,
-    #                                                 env_entries)
-    #         print(c_select)
-
-    #     except (query_parser.ParseError,
-    #             query_compile.CompilationError) as exc:
-    #         print(exc)
-    #     except Exception as exc:
-    #         traceback.print_exc()
-
     def on_Print(self, print_stmt):
         # Compile the print statement.
         c_from = query_compile.compile_from(print_stmt.from_clause, self.env_entries)
@@ -141,6 +119,17 @@ class BQLShell(cmd.Cmd):
 
     def on_Balances(self, select):
         raise NotImplementedError
+
+    def on_Explain(self, explain):
+        if isinstance(explain.statement, query_parser.Select):
+            # Compile the select statement and print it uot.
+            query = query_compile.compile_select(explain.statement,
+                                                 self.env_targets,
+                                                 self.env_postings,
+                                                 self.env_entries)
+            print(query)
+        else:
+            print("(Unsupported statement)")
 
     def dispatch(self, statement):
         """Disatpch the given statement to a suitable method.

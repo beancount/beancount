@@ -16,6 +16,10 @@ from beancount.core import position
 from beancount.utils.misc_utils import cmptuple
 
 
+# A wrapper for a statement, that is a command to explain this
+# statement instead of executing it.
+Explain = collections.namedtuple('Explain', 'statement')
+
 # A 'select' query action.
 #
 # Attributes:
@@ -168,6 +172,7 @@ class Lexer:
 
     # List of reserved keywords.
     keywords = {
+        'EXPLAIN',
         'SELECT', 'AS', 'FROM', 'WHERE', 'OPEN', 'CLOSE', 'CLEAR', 'ON',
         'BALANCES', 'JOURNAL', 'PRINT',
         'GROUP', 'BY', 'HAVING', 'ORDER', 'DESC', 'ASC', 'PIVOT',
@@ -585,7 +590,15 @@ class Parser(SelectParser):
     """PLY parser for the Beancount Query Language's full command syntax.
     """
 
-    start = 'statement'
+    start = 'prefixed_statement'
+
+    def p_regular_statement(self, p):
+        "prefixed_statement : statement"
+        p[0] = p[1]
+
+    def p_explain_statement(self, p):
+        "prefixed_statement : EXPLAIN statement"
+        p[0] = Explain(p[2])
 
     def p_statement(self, p):
         """
