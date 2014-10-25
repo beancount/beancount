@@ -125,7 +125,14 @@ class BQLShell(cmd.Cmd):
             print(statement)
 
             # FIXME: Generalize this too.
-            c_select = query_compile.compile_select(statement)
+            xcontext_targets = query_contexts.TargetsContext()
+            xcontext_entries = query_contexts.FilterEntriesContext()
+            xcontext_postings = query_contexts.FilterPostingsContext()
+
+            c_select = query_compile.compile_select(statement,
+                                                    xcontext_targets,
+                                                    xcontext_postings,
+                                                    xcontext_entries)
             print(c_select)
 
         except (query_parser.ParseError,

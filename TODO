@@ -234,6 +234,31 @@ precise balances throughout, but no manual input is required.
   - Describe prints all the columns and functions in each environments
 
 
+We need to change the summarization functions in order to correctly implement
+the OPEN ON and CLOSE ON operations from the query syntax.
+
+There are two dates involved: an Open (O) date and a Close (C) date.
+
+The current definitions are:
+
+  clamp(O,C)  = transfer(O), summarize(O), truncate(C), conversions(C)
+  close(C)    = transfer(C), conversions(C)
+
+Those are currently invoked by code in beancount.web.views.
+
+We need to change those to match independently invoked clauses on the query:
+
+  open(O)     = conversions(O), transfer(O), summarize(O)
+  close(C)    = truncate(C), conversions(C)
+  transfer(C) = transfer(C)
+
+In order to replicate the older operations, you replace them like this:
+
+  clamp(O,C)  = open(O), close(C)
+  close(C)    = transfer(C)
+
+
+
 
 * Current / Misc / To Be Classified
 

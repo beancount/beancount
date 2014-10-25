@@ -238,7 +238,7 @@ class FlagEntryColumn(c.EvalColumn):
         super().__init__(str)
 
     def __call__(self, entry):
-        return (entry.flags
+        return (entry.flag
                 if isinstance(entry, Transaction)
                 else None)
 

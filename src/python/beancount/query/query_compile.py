@@ -146,6 +146,16 @@ class EvalMatch(EvalBinaryOp):
                 "Invalid data type for RHS of match: '{}'; must be a string".format(
                     right.dtype))
 
+    def __call__(self, context):
+        # Deal with None fields to match on.
+        arg_left = self.left(context)
+        arg_right = self.right(context)
+        if arg_left is None or arg_right is None:
+            return False
+
+        # Apply the search function.
+        return self.operator(arg_right, arg_left)
+
 
 # Interpreter nodes.
 OPERATORS = {
