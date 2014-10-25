@@ -590,7 +590,7 @@ EvalTarget = collections.namedtuple('EvalTarget', 'c_expr name is_aggregate')
 # Attributes:
 #   c_expr: A compiled expression tree (an EvalNode root node).
 #   close: (See query_parser.From.close).
-EvalFrom = collections.namedtuple('EvalFrom', 'c_expr open close')
+EvalFrom = collections.namedtuple('EvalFrom', 'c_expr open close clear')
 
 # A compiled query, ready for execution.
 #
@@ -644,7 +644,10 @@ def compile_select(select, targets_xcontext, postings_xcontext, entries_xcontext
             c_expression = (compile_expression(from_clause.expression, xcontext_entries)
                             if from_clause.expression is not None
                             else None)
-            c_from = EvalFrom(c_expression, from_clause.open, from_clause.close)
+            c_from = EvalFrom(c_expression,
+                              from_clause.open,
+                              from_clause.close,
+                              from_clause.clear)
         else:
             c_from = None
         xcontext_target = targets_xcontext

@@ -195,12 +195,6 @@ def clear_opt(entries, date, options_map):
     return clear(entries, date, account_types, current_accounts[0])
 
 
-
-
-
-
-
-
 def clamp(entries,
           begin_date, end_date,
           account_types,

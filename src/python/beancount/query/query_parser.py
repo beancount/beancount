@@ -71,7 +71,7 @@ Wildcard = cmptuple('Wildcard', '')
 #   close: A CLOSE clause, either None if absent, a boolean if the clause
 #     was present by no date was provided, or a datetime.date instance if
 #     a date was provided.
-From = cmptuple('From', 'expression open close')
+From = cmptuple('From', 'expression open close clear')
 
 # A GROUP BY clause.
 #
@@ -159,7 +159,7 @@ class Lexer:
 
     # List of reserved keywords.
     keywords = {
-        'SELECT', 'AS', 'FROM', 'WHERE', 'OPEN', 'CLOSE', 'ON',
+        'SELECT', 'AS', 'FROM', 'WHERE', 'OPEN', 'CLOSE', 'CLEAR', 'ON',
         'BALANCES', 'JOURNAL',
         'GROUP', 'BY', 'HAVING', 'ORDER', 'DESC', 'ASC', 'PIVOT',
         'LIMIT', 'FLATTEN', 'DISTINCT',
@@ -340,12 +340,12 @@ class Parser(Lexer):
     def p_from(self, p):
         """
         from : empty
-             | FROM opt_expression opt_open opt_close
+             | FROM opt_expression opt_open opt_close opt_clear
         """
-        if len(p) == 5:
-            if all(p[i] is None for i in range(2, 5)):
+        if len(p) != 2:
+            if all(p[i] is None for i in range(2, 6)):
                 raise ParseError("Empty FROM expression is not allowed")
-            p[0] = From(p[2], p[3], p[4])
+            p[0] = From(p[2], p[3], p[4], p[5])
         else:
             p[0] = None
 
@@ -373,6 +373,13 @@ class Parser(Lexer):
                   | CLOSE ON DATE
         """
         p[0] = p[3] if len(p) == 4 else (True if (p[1] == 'CLOSE') else None)
+
+    def p_opt_clear(self, p):
+        """
+        opt_clear : empty
+                  | CLEAR
+        """
+        p[0] = True if (p[1] == 'CLEAR') else None
 
     def p_where(self, p):
         """

@@ -284,25 +284,25 @@ class TestSelectFromWhere(QueryParserTestBase):
             self.parse("SELECT a, b FROM;")
 
     def test_from(self):
-        self.assertParse(qSelect(self.targets, q.From(self.expr, None, None)),
+        self.assertParse(qSelect(self.targets, q.From(self.expr, None, None, None)),
                          "SELECT a, b FROM d = (max(e) and 17);")
 
     def test_from_close_default(self):
-        self.assertParse(qSelect(self.targets, q.From(self.expr, None, True)),
+        self.assertParse(qSelect(self.targets, q.From(self.expr, None, True, None)),
                          "SELECT a, b FROM d = (max(e) and 17) CLOSE;")
 
     def test_from_close_dated(self):
         self.assertParse(qSelect(self.targets,
-                                 q.From(self.expr, None, datetime.date(2014, 10, 18))),
+                                 q.From(self.expr, None, datetime.date(2014, 10, 18), None)),
                          "SELECT a, b FROM d = (max(e) and 17) CLOSE ON 2014-10-18;")
 
     def test_from_close_no_expr(self):
-        self.assertParse(qSelect(self.targets, q.From(None, None, True)),
+        self.assertParse(qSelect(self.targets, q.From(None, None, True, None)),
                          "SELECT a, b FROM CLOSE;")
 
     def test_from_close_no_expr_dated(self):
         self.assertParse(qSelect(self.targets,
-                                 q.From(None, None, datetime.date(2014, 10, 18))),
+                                 q.From(None, None, datetime.date(2014, 10, 18), None)),
                          "SELECT a, b FROM CLOSE ON 2014-10-18;")
 
     def test_where_empty(self):
@@ -315,7 +315,7 @@ class TestSelectFromWhere(QueryParserTestBase):
 
     def test_both(self):
         self.assertParse(qSelect(self.targets,
-                                 q.From(self.expr, None, None),
+                                 q.From(self.expr, None, None, None),
                                  self.expr), """
           SELECT a, b
           FROM d = (max(e) and 17)
@@ -330,7 +330,7 @@ class TestSelectFromSelect(QueryParserTestBase):
             q.Wildcard(),
             q.From(q.Equal(q.Column('date'),
                            q.Constant(datetime.date(2014, 5, 2))),
-                   None, None))
+                   None, None, None))
 
         expected = qSelect([q.Target(q.Column('a'), None),
                             q.Target(q.Column('b'), None)],
@@ -460,7 +460,7 @@ class TestBalance(QueryParserTestBase):
         self.assertParse(
             q.Balance(q.From(q.Equal(q.Column('date'),
                                      q.Constant(datetime.date(2014, 1, 1))),
-                             None, True)),
+                             None, True, None)),
             "BALANCES FROM date = 2014-01-01 CLOSE;")
 
 class TestJournal(QueryParserTestBase):
@@ -477,7 +477,7 @@ class TestJournal(QueryParserTestBase):
         self.assertParse(
             q.Journal(None, q.From(q.Equal(q.Column('date'),
                                            q.Constant(datetime.date(2014, 1, 1))),
-                                   None, True)),
+                                   None, True, None)),
             "JOURNAL FROM date = 2014-01-01 CLOSE;")
 
 class TestExpressionName(QueryParserTestBase):

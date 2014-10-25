@@ -28,47 +28,29 @@ def filter_entries(c_from, entries, options_map):
     # Filter the entries with the FROM clause's expression.
     c_expr = c_from.c_expr
     if c_expr is not None:
-        filtered_entries = [entry for entry in entries if c_expr(entry)]
-    else:
-        filtered_entries = entries
+        entries = [entry for entry in entries if c_expr(entry)]
 
     account_types = options.get_account_types(options_map)
-    current_accounts = options.get_current_accounts(options_map)
-    conversion_currency = options_map['conversion_currency']
 
     # Process the OPEN clause.
     if c_from.open is not None:
         assert isinstance(c_from.close, datetime.date)
         open_date = c_from.open
 
-        ## FIXME: Convert summarize.clamp() to summarize.open(), then use it
-        ## here. This is the Right Thing to do.
-
-        raise NotImplementedError
-        # filtered_entries = summarize.close(filtered_entries,
-        #                                    account_types,
-        #                                    conversion_currency,
-        #                                    *current_accounts)
+        entries, index = summarize.open_opt(entries, open_date, options_map)
 
     # Process the CLOSE clause.
     if c_from.close is not None:
         if isinstance(c_from.close, datetime.date):
-            close_date = c_from.close
-            filtered_entries = summarize.truncate(entries, close_date)
+            entries, index = summarize.close_opt(entries, c_from.close, options_map)
+        elif c_from.close is True:
+            entries, index = summarize.close_opt(entries, None, options_map)
 
-        if c_from.close is True:
-            filtered_entries = summarize.cap(filtered_entries,
-                                             account_types,
-                                             conversion_currency,
-                                             *current_accounts)
+    # Process the CLEAR clause.
+    if c_from.clear is not None:
+        entries, index = summarize.clear_opt(entries, None, options_map)
 
-
-    # We should always insert a conversions entry to balance everything,
-    # regardless.
-    ## FIXME: TODO
-
-
-    return filtered_entries
+    return entries
 
 
 def execute_query(query, entries, options_map):
