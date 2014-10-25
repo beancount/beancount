@@ -61,7 +61,7 @@ class View:
         # income/expenses amounts to the balance sheet's equity (as "net
         # income"). This is used to render the end-period balance sheet, with
         # the current period's net income, closing the period.
-        self.closing_entries = summarize.cap_with_options(self.entries, options_map)
+        self.closing_entries = summarize.cap_opt(self.entries, options_map)
 
         # Realize the three sets of entries.
         account_types = options.get_account_types(options_map)
@@ -147,7 +147,7 @@ class YearView(View):
         begin_date = datetime.date(self.year, 1, 1)
         end_date = datetime.date(self.year+1, 1, 1)
         with misc_utils.log_time('clamp', logging.info):
-            entries, index = summarize.clamp_with_options(entries,
+            entries, index = summarize.clamp_opt(entries,
                                                           begin_date, end_date,
                                                           options_map)
         return entries, index

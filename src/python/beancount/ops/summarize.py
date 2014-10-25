@@ -245,7 +245,7 @@ def clamp(entries,
     return entries, index
 
 
-def clamp_with_options(entries, begin_date, end_date, options_map):
+def clamp_opt(entries, begin_date, end_date, options_map):
     """Clamp by getting all the parameters from an options map.
 
     See clamp() for details.
@@ -306,7 +306,7 @@ def cap(entries,
     return entries
 
 
-def cap_with_options(entries, options_map):
+def cap_opt(entries, options_map):
     """Close by getting all the parameters from an options map.
 
     See cap() for details.
