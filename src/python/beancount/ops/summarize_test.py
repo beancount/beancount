@@ -7,6 +7,7 @@ import datetime
 import collections
 import re
 
+from beancount.utils.misc_utils import box
 from beancount.core import inventory
 from beancount.core import data
 from beancount.core import flags
@@ -17,6 +18,286 @@ from beancount.parser import printer
 from beancount.parser import options
 from beancount.parser import cmptest
 from beancount import loader
+
+
+class TestOpenClose(cmptest.TestCase):
+
+    @parser.parsedoc
+    def setUp(self, entries, errors, options_map):
+        """
+        2012-03-01 * "Some income and expense to be summarized"
+          Income:Salary        10000 USD
+          Expenses:Taxes        3600 USD
+          Assets:US:Checking
+
+        2012-03-02 * "Some conversion to be summarized"
+          Assets:US:Checking   -5000 USD @ 1.2 CAD
+          Assets:CA:Checking    6000 CAD
+
+        ;; 2012-06-01  BEGIN --------------------------------
+
+        2012-08-01 * "Some income and expense to show"
+          Income:Salary        11000 USD
+          Expenses:Taxes        3200 USD
+          Assets:US:Checking
+
+        2012-08-02 * "Some other conversion to be summarized"
+          Assets:US:Checking   -3000 USD @ 1.25 CAD
+          Assets:CA:Checking    3750 CAD
+
+        ;; 2012-09-01  END   --------------------------------
+
+        2012-11-01 * "Some income and expense to be truncated"
+          Income:Salary        10000 USD
+          Expenses:Taxes        3600 USD
+          Assets:US:Checking
+
+        """
+        self.assertFalse(errors)
+        self.entries = entries
+        self.options_map = options_map
+
+        self.account_types = options.get_account_types(options_map)
+
+
+    def test_open(self):
+        date = datetime.date(2012, 6, 1)
+        opened_entries, index = summarize.open(self.entries, date,
+                                               self.account_types,
+                                               'NOTHING',
+                                               'Equity:Earnings:Previous',
+                                               'Equity:Opening-Balances',
+                                               'Equity:Conversions:Previous')
+
+        self.assertEqualEntries("""
+
+        2012-05-31 S "Opening balance for 'Assets:CA:Checking' (Summarization)"
+          Assets:CA:Checking             6,000.00 CAD
+          Equity:Opening-Balances       -6,000.00 CAD
+
+        2012-05-31 S "Opening balance for 'Assets:US:Checking' (Summarization)"
+          Assets:US:Checking           -18,600.00 USD
+          Equity:Opening-Balances       18,600.00 USD
+
+        2012-05-31 S "Opening balance for 'Equity:Earnings:Previous' (Summarization)"
+          Equity:Earnings:Previous      13,600.00 USD
+          Equity:Opening-Balances      -13,600.00 USD
+
+        2012-05-31 S "Opening balance for 'Equity:Conversions:Previous' (Summarization)"
+          Equity:Conversions:Previous    5,000.00 USD
+          Equity:Opening-Balances       -5,000.00 USD
+          Equity:Conversions:Previous   -6,000.00 CAD
+          Equity:Opening-Balances        6,000.00 CAD
+
+        ;; 2012-06-01  BEGIN --------------------------------
+
+        2012-08-01 * "Some income and expense to show"
+          Income:Salary                 11,000.00 USD
+          Expenses:Taxes                 3,200.00 USD
+          Assets:US:Checking           -14,200.00 USD
+
+        2012-08-02 * "Some other conversion to be summarized"
+          Assets:US:Checking            -3,000.00 USD @ 1.25 CAD ;  -3,750.00 CAD
+          Assets:CA:Checking             3,750.00 CAD            ;   3,750.00 CAD
+
+        2012-11-01 * "Some income and expense to be truncated"
+          Income:Salary                 10,000.00 USD
+          Expenses:Taxes                 3,600.00 USD
+          Assets:US:Checking           -13,600.00 USD
+
+        """, opened_entries)
+
+        # Check the index is correctly beginning after the list of summarizing entries.
+        self.assertEqual(4, index)
+
+        # Check that our original example list of entries does not balance.
+        input_balance = complete.compute_entries_balance(self.entries)
+        self.assertFalse(input_balance.is_empty())
+
+        # Check that the summarized entries add up to precisely zero.
+        summarized_entries = opened_entries[:index]
+        balances = complete.compute_entries_balance(summarized_entries)
+        self.assertTrue(balances.is_empty())
+
+        # Check further conversions aren't accounted for (the close operation
+        # takes care of this).
+        opened_balance = complete.compute_entries_balance(opened_entries)
+        self.assertFalse(opened_balance.is_empty())
+
+
+    def test_close(self):
+        date = datetime.date(2012, 9, 1)
+        closed_entries, index = summarize.close(self.entries, date,
+                                                'NOTHING',
+                                                'Equity:Conversions:Current')
+
+        self.assertEqualEntries("""
+
+        2012-03-01 * "Some income and expense to be summarized"
+          Income:Salary        10000 USD
+          Expenses:Taxes        3600 USD
+          Assets:US:Checking
+
+        2012-03-02 * "Some conversion to be summarized"
+          Assets:US:Checking   -5000 USD @ 1.2 CAD
+          Assets:CA:Checking    6000 CAD
+
+        ;; 2012-06-01  BEGIN --------------------------------
+
+        2012-08-01 * "Some income and expense to show"
+          Income:Salary        11000 USD
+          Expenses:Taxes        3200 USD
+          Assets:US:Checking
+
+        2012-08-02 * "Some other conversion to be summarized"
+          Assets:US:Checking   -3000 USD @ 1.25 CAD
+          Assets:CA:Checking    3750 CAD
+
+        ;; 2012-09-01  END   --------------------------------
+
+        2012-08-31 C "Conversion for Inventory(-8,000.00 USD, 9,750.00 CAD)"
+          Equity:Conversions:Current    8,000.00 USD  @ 0.00 NOTHING
+          Equity:Conversions:Current   -9,750.00 CAD  @ 0.00 NOTHING
+
+        """, closed_entries)
+
+        # Check the index is correctly beginning after the list of summarizing entries.
+        self.assertEqual(4, index)
+
+        # Check that our original example list of entries does not balance.
+        input_balance = complete.compute_entries_balance(self.entries)
+        self.assertFalse(input_balance.is_empty())
+
+        # Check that the truncated entries does not balance.
+        balances = complete.compute_entries_balance(closed_entries[:index])
+        self.assertFalse(balances.is_empty())
+
+        # Check that the closed entries add up to precisely zero.
+        balances = complete.compute_entries_balance(closed_entries)
+        self.assertTrue(balances.is_empty())
+
+
+    def test_clear(self):
+        date = datetime.date(2013, 1, 1)
+        clear_entries, index = summarize.clear(self.entries, date,
+                                               self.account_types,
+                                               'Equity:Earnings:Current')
+
+        self.assertEqualEntries("""
+
+        2012-03-01 * "Some income and expense to be summarized"
+          Income:Salary        10000 USD
+          Expenses:Taxes        3600 USD
+          Assets:US:Checking
+
+        2012-03-02 * "Some conversion to be summarized"
+          Assets:US:Checking   -5000 USD @ 1.2 CAD
+          Assets:CA:Checking    6000 CAD
+
+        ;; 2012-06-01  BEGIN --------------------------------
+
+        2012-08-01 * "Some income and expense to show"
+          Income:Salary        11000 USD
+          Expenses:Taxes        3200 USD
+          Assets:US:Checking
+
+        2012-08-02 * "Some other conversion to be summarized"
+          Assets:US:Checking   -3000 USD @ 1.25 CAD
+          Assets:CA:Checking    3750 CAD
+
+        ;; 2012-09-01  END   --------------------------------
+
+        2012-11-01 * "Some income and expense to be truncated"
+          Income:Salary        10,000.00 USD
+          Expenses:Taxes        3,600.00 USD
+          Assets:US:Checking  -13,600.00 USD
+
+        2012-12-31 T "Transfer balance for 'Expenses:Taxes' (Transfer balance)"
+          Expenses:Taxes           -10,400.00 USD
+          Equity:Earnings:Current   10,400.00 USD
+
+        2012-12-31 T "Transfer balance for 'Income:Salary' (Transfer balance)"
+          Income:Salary             -31,000.00 USD
+          Equity:Earnings:Current    31,000.00 USD
+
+        """, clear_entries)
+
+        # Check the index is correctly beginning after the list of summarizing entries.
+        self.assertEqual(5, index)
+
+        # Check that the cleared entries do not necessarily up to precisely zero
+        # without closing.
+        balances = complete.compute_entries_balance(clear_entries)
+        self.assertFalse(balances.is_empty())
+
+
+    def test_open_close_clear(self):
+        # Test out the full use case of a balance sheet for a particular year,
+        # opening, closing and clearing.
+        begin_date = datetime.date(2012, 6, 1)
+        end_date = datetime.date(2012, 9, 1)
+        clear_date = datetime.date(2013, 1, 1)
+        opened_entries, index = summarize.open(self.entries, begin_date,
+                                               self.account_types,
+                                               'NOTHING',
+                                               'Equity:Earnings:Previous',
+                                               'Equity:Opening-Balances',
+                                               'Equity:Conversions:Previous')
+
+        closed_entries, index = summarize.close(opened_entries, end_date,
+                                                'NOTHING',
+                                                'Equity:Conversions:Current')
+
+        clear_entries, index = summarize.clear(closed_entries, clear_date,
+                                               self.account_types,
+                                               'Equity:Earnings:Current')
+
+        self.assertEqualEntries("""
+
+        2012-05-31 S "Opening balance for 'Assets:CA:Checking' (Summarization)"
+          Assets:CA:Checking            6,000.00 CAD
+          Equity:Opening-Balances      -6,000.00 CAD
+
+        2012-05-31 S "Opening balance for 'Assets:US:Checking' (Summarization)"
+          Assets:US:Checking          -18,600.00 USD
+          Equity:Opening-Balances      18,600.00 USD
+
+        2012-05-31 S "Opening balance for 'Equity:Earnings:Previous' (Summarization)"
+          Equity:Earnings:Previous     13,600.00 USD
+          Equity:Opening-Balances     -13,600.00 USD
+
+        2012-05-31 S "Opening balance for 'Equity:Conversions:Previous' (Summarization)"
+          Equity:Conversions:Previous   5,000.00 USD
+          Equity:Opening-Balances      -5,000.00 USD
+          Equity:Conversions:Previous  -6,000.00 CAD
+          Equity:Opening-Balances       6,000.00 CAD
+
+        ;; 2012-06-01  BEGIN --------------------------------
+
+        2012-08-01 * "Some income and expense to show"
+          Income:Salary                11,000.00 USD
+          Expenses:Taxes                3,200.00 USD
+          Assets:US:Checking          -14,200.00 USD
+
+        2012-08-02 * "Some other conversion to be summarized"
+          Assets:US:Checking           -3,000.00 USD @ 1.25 CAD ;  -3,750.00 CAD
+          Assets:CA:Checking            3,750.00 CAD            ;   3,750.00 CAD
+
+        ;; 2012-09-01  END   --------------------------------
+
+        2012-08-31 C "Conversion for Inventory(-3,000.00 USD, 3,750.00 CAD)"
+          Equity:Conversions:Current    3,000.00 USD @ 0.00 NOTHING
+          Equity:Conversions:Current   -3,750.00 CAD @ 0.00 NOTHING
+
+        2012-12-31 T "Transfer balance for 'Income:Salary' (Transfer balance)"
+          Income:Salary               -11,000.00 USD
+          Equity:Earnings:Current      11,000.00 USD
+
+        2012-12-31 T "Transfer balance for 'Expenses:Taxes' (Transfer balance)"
+          Expenses:Taxes               -3,200.00 USD
+          Equity:Earnings:Current       3,200.00 USD
+
+        """, clear_entries)
 
 
 class TestClamp(cmptest.TestCase):

@@ -57,10 +57,10 @@ def filter_entries(c_from, entries, options_map):
             filtered_entries = summarize.truncate(entries, close_date)
 
         if c_from.close is True:
-            filtered_entries = summarize.close(filtered_entries,
-                                               account_types,
-                                               conversion_currency,
-                                               *current_accounts)
+            filtered_entries = summarize.cap(filtered_entries,
+                                             account_types,
+                                             conversion_currency,
+                                             *current_accounts)
 
 
     # We should always insert a conversions entry to balance everything,
