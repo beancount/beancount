@@ -141,7 +141,6 @@ class TestFilterEntries(ExecuteQueryBase, cmptest.TestCase):
             Assets:Bank:Checking              101.00 USD
             Expenses:Restaurant              -101.00 USD
 
-
           2014-04-04 * "Dinner with Quatro"
             Assets:Bank:Checking              104.00 USD
             Expenses:Restaurant              -104.00 USD
