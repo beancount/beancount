@@ -190,6 +190,16 @@ class TestFilterEntries(ExecuteQueryBase, cmptest.TestCase):
         self.assertEqualEntries(entries[:-1], filtered_entries)
 
 
+class TestAllocation(unittest.TestCase):
+
+    def test_allocator(self):
+        allocator = x.Allocator()
+        self.assertEqual(0, allocator.allocate())
+        self.assertEqual(1, allocator.allocate())
+        self.assertEqual(2, allocator.allocate())
+        self.assertEqual([None, None, None], allocator.create_store())
+
+
 class TestExecute(ExecuteQueryBase):
 
     def test_non_aggregated(self):

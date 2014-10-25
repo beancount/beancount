@@ -2,6 +2,7 @@
 """
 import collections
 import datetime
+import itertools
 
 from beancount.core import data
 from beancount.query import query_compile
@@ -86,24 +87,37 @@ def execute_print(print_stmt, entries, options_map, file):
 
 
 
-class Allocation(list):
-    """An allocation object used to hold the temporary contents of a row's aggregators.
-    """
-    def allocate(self, state):
-        """Allocate space for the given state object and return a handle to it.
+class Allocator:
+    def __init__(self):
+        self.size = 0
 
-        Args:
-          state: Any object to be used as a temporary for aggregates.
-        Returns:
-          A handle on the state object (this is actually an index into this array).
-        """
-        handle = len(self)
-        self.append(state)
+    def allocate(self):
+        handle = self.size
+        self.size += 1
         return handle
 
-    # State getter. Get the state from the given handle.
-    get = __getitem__
-    set = __setitem__
+    def create_store(self):
+        return [None] * self.size
+
+
+# class Allocation(list):
+#     """An allocation object used to hold the temporary contents of a row's aggregators.
+#     """
+#     def allocate(self, state):
+#         """Allocate space for the given state object and return a handle to it.
+
+#         Args:
+#           state: Any object to be used as a temporary for aggregates.
+#         Returns:
+#           A handle on the state object (this is actually an index into this array).
+#         """
+#         handle = len(self)
+#         self.append(state)
+#         return handle
+
+#     # State getter. Get the state from the given handle.
+#     get = list.__getitem__
+#     set = list.__setitem__
 
 
 
@@ -149,45 +163,52 @@ def execute_query(query, entries, options_map):
         # This is an aggregated query.
 
         # Pre-compute lists of the targets to evaluate.
-        c_simple_targets = [c_target
-                            for index in query.c_targets
-                            if index in query.group_indexes]
-        c_aggregate_targets = [c_target
-                               for index in query.c_targets
-                               if index not in query.group_indexes]
+        group_indexes = set(query.group_indexes)
+        c_simple_targets = []
+        c_aggregate_targets = []
+        for index, c_target in enumerate(query.c_targets):
+            targets = c_simple_targets if index in group_indexes else c_aggregate_targets
+            targets.append(c_target)
+
+        # Pre-allocate handles in aggregation nodes.
+        allocator = Allocator()
+        for c_target in c_aggregate_targets:
+            c_target.c_expr.allocate(allocator)
 
         # Iterate over all the postings to evaluate the aggregates.
+        agg_store = {}
         for entry in entries:
             if isinstance(entry, data.Transaction):
                 for posting in entry.postings:
                     if c_expr is None or c_expr(posting):
-                        row_key = [c_target.c_expr(posting)
-                                   for c_target in c_simple_targets]
+                        row_key = tuple(c_target.c_expr(posting)
+                                        for c_target in c_simple_targets)
                         try:
-                            alloc = agg_store[row_key]
+                            store = agg_store[row_key]
                         except KeyError:
                             # Get a new allocator. We just use an array for
                             # this, no need to make things complicated.
-                            alloc = Allocation()
+                            store = allocator.create_store()
                             for c_target in c_aggregate_targets:
-                                c_target.c_expr.initialize(alloc)
-                            agg_store[row_key] = alloc
+                                c_target.c_expr.initialize(store)
+                            agg_store[row_key] = store
 
                         for c_target in c_aggregate_targets:
-                            c_target.c_expr.update(alloc)
+                            c_target.c_expr.update(store, posting)
 
         # Iterate over all the aggregations to produce the result rows.
-        for entry in entries:
-            if isinstance(entry, data.Transaction):
-                for posting in entry.postings:
-                    if c_expr is None or c_expr(posting):
-                        for c_target in c_aggregate_targets:
-                            result = [c_target.c_expr(posting)
-                                      for c_target in c_targets]
-                            results.append(ResultRow(*result))
-                            if query.limit and len(results) == query.limit:
-                                raise StopIteration
-
+        for key, store in agg_store.items():
+            key_iter = iter(key)
+            result = []
+            for index, c_target in enumerate(query.c_targets):
+                if c_target.name is None:
+                    continue
+                if index in group_indexes:
+                    value = next(key_iter)
+                else:
+                    value = c_target.c_expr.finalize(store)
+                result.append(value)
+            results.append(ResultRow(*result))
 
     # Apply limit.
 

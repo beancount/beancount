@@ -101,13 +101,13 @@ class Cost(c.EvalFunction):
         return args[0].get_cost()
 
 SIMPLE_FUNCTIONS = {
-    'str': Str,
-    'length': Length,
-    'units': Units,
-    'cost': Cost,
-    'year': Year,
-    'month': Month,
-    'day': Day,
+    'str'    : Str,
+    'length' : Length,
+    'units'  : Units,
+    'cost'   : Cost,
+    'year'   : Year,
+    'month'  : Month,
+    'day'    : Day,
     }
 
 
@@ -122,10 +122,17 @@ class Count(c.EvalAggregator):
     def __init__(self, operands):
         super().__init__(operands, int)
 
-    def __call__(self, posting):
-        if self.state is None:
-            self.state = 0
-        self.state += 1
+    def allocate(self, allocator):
+        self.handle = allocator.allocate()
+
+    def initialize(self, store):
+        store[self.handle] = 0
+
+    def update(self, store, unused_ontext):
+        store[self.handle] += 1
+
+    def finalize(self, store):
+        return store[self.handle]
 
 class Sum(c.EvalAggregator):
     # FIXME: Not sure we should accept a position. Compile a special node for Sum(position) and Sum(inventory).
@@ -134,15 +141,18 @@ class Sum(c.EvalAggregator):
     def __init__(self, operands):
         super().__init__(operands, operands[0].dtype)
 
-    def __call__(self, posting):
-        args = self.eval_args(posting)
-        value = args[0]
-        if self.state is None:
-            if isinstance(value, position.Position):
-                self.state = inventory.Inventory()
-            else:
-                self.state = type(value)()
-        self.state += value
+    def allocate(self, allocator):
+        self.handle = allocator.allocate()
+
+    def initialize(self, store):
+        store[self.handle] = self.dtype()
+
+    def update(self, store, posting):
+        value = self.eval_args(posting)[0]
+        store[self.handle] += value
+
+    def finalize(self, store):
+        return store[self.handle]
 
 class First(c.EvalAggregator):
     __intypes__ = [object]
@@ -150,10 +160,19 @@ class First(c.EvalAggregator):
     def __init__(self, operands):
         super().__init__(operands, operands[0].dtype)
 
-    def __call__(self, posting):
-        if self.state is None:
-            args = self.eval_args(posting)
-            self.state = args[0]
+    def allocate(self, allocator):
+        self.handle = allocator.allocate()
+
+    def initialize(self, store):
+        store[self.handle] = None
+
+    def update(self, store, posting):
+        if store[self.handle] is None:
+            value = self.eval_args(posting)[0]
+            store[self.handle] = value
+
+    def finalize(self, store):
+        return store[self.handle]
 
 class Last(c.EvalAggregator):
     __intypes__ = [object]
@@ -161,9 +180,18 @@ class Last(c.EvalAggregator):
     def __init__(self, operands):
         super().__init__(operands, operands[0].dtype)
 
-    def __call__(self, posting):
-        args = self.eval_args(posting)
-        self.state = args[0]
+    def allocate(self, allocator):
+        self.handle = allocator.allocate()
+
+    def initialize(self, store):
+        store[self.handle] = None
+
+    def update(self, store, posting):
+        value = self.eval_args(posting)[0]
+        store[self.handle] = value
+
+    def finalize(self, store):
+        return store[self.handle]
 
 class Min(c.EvalAggregator):
     __intypes__ = [object]
@@ -171,12 +199,19 @@ class Min(c.EvalAggregator):
     def __init__(self, operands):
         super().__init__(operands, operands[0].dtype)
 
-    def __call__(self, posting):
-        arg = self.eval_args(posting)[0]
-        if self.state is None:
-            self.state = arg
-        elif arg < self.state:
-            self.state = arg
+    def allocate(self, allocator):
+        self.handle = allocator.allocate()
+
+    def initialize(self, store):
+        store[self.handle] = self.dtype()
+
+    def update(self, store, posting):
+        value = self.eval_args(posting)[0]
+        if value < store[self.handle]:
+            store[self.handle] = value
+
+    def finalize(self, store):
+        return store[self.handle]
 
 class Max(c.EvalAggregator):
     __intypes__ = [object]
@@ -184,20 +219,27 @@ class Max(c.EvalAggregator):
     def __init__(self, operands):
         super().__init__(operands, operands[0].dtype)
 
-    def __call__(self, posting):
-        arg = self.eval_args(posting)[0]
-        if self.state is None:
-            self.state = arg
-        elif arg > self.state:
-            self.state = arg
+    def allocate(self, allocator):
+        self.handle = allocator.allocate()
+
+    def initialize(self, store):
+        store[self.handle] = self.dtype()
+
+    def update(self, store, posting):
+        value = self.eval_args(posting)[0]
+        if value > store[self.handle]:
+            store[self.handle] = value
+
+    def finalize(self, store):
+        return store[self.handle]
 
 AGGREGATOR_FUNCTIONS = {
-    'sum': Sum,
-    'count': Count,
-    'first': First,
-    'last': Last,
-    'min': Min,
-    'max': Max,
+    'sum'   : Sum,
+    'count' : Count,
+    'first' : First,
+    'last'  : Last,
+    'min'   : Min,
+    'max'   : Max,
     }
 
 
@@ -287,15 +329,15 @@ class FilterEntriesEnvironment(c.CompilationEnvironment):
     """
     context_name = 'FROM clause'
     columns = {
-        'type' : TypeEntryColumn,
-        'filename' : FilenameEntryColumn,
-        'lineno' : LineNoEntryColumn,
-        'date' : DateEntryColumn,
-        'flag' : FlagEntryColumn,
-        'payee' : PayeeEntryColumn,
+        'type'      : TypeEntryColumn,
+        'filename'  : FilenameEntryColumn,
+        'lineno'    : LineNoEntryColumn,
+        'date'      : DateEntryColumn,
+        'flag'      : FlagEntryColumn,
+        'payee'     : PayeeEntryColumn,
         'narration' : NarrationEntryColumn,
-        'tags' : TagsEntryColumn,
-        'links' : LinksEntryColumn,
+        'tags'      : TagsEntryColumn,
+        'links'     : LinksEntryColumn,
         }
     functions = SIMPLE_FUNCTIONS
 
