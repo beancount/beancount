@@ -61,6 +61,57 @@ class EvalNode:
                     if isinstance(element, EvalNode):
                         yield element
 
+    def __call__(self, context):
+        """Evaluate this node. This is designed to recurse on its children.
+        All subclasses must override and implement this method.
+
+        Args:
+          context: The evaluation object to which the evaluation need to apply.
+            This is either an entry, a Posting instance, or a particular result
+            set row from a sub-select. This is the provider for the underlying
+            data.
+        Returns:
+          The evaluated value for this sub-expression tree.
+        """
+        raise NotImplementedError
+
+
+## FIXME: pre-process to find the aggregate nodes directly and move these
+## methods to aggregates. Remove the recursion.
+
+    def agg_initialize(self, alloc):
+        """Initialize this node's aggregate data. If the node is not an aggregate,
+        simply initialize the subnodes. Override this method in the aggregator
+        if you need data for storage.
+
+        Args:
+          alloc: An allocation object which we can allocate and initialize storage from.
+        """
+        for child in childnodes():
+            child.initialize(alloc)
+
+    def update(self, alloc, context):
+        """Evaluate this node. This is designed to recurse on its children.
+
+        Args:
+          alloc: An allocation object which we can get row-specific storage from.
+          context: The object to which the evaluation need to apply (see __call__).
+        """
+        for child in childnodes():
+            child.update(alloc, context)
+
+    def finalize(self, alloc):
+        """Finalize this node's aggregate data and return it.
+
+        For aggregate methods, this finalizes the node and returns the final
+        value. The context node will be the alloc instead of the context object.
+
+        Args:
+          alloc: An allocation object from which we can get the row-specific storage.
+        """
+        for child in childnodes():
+            child.finalize(alloc)
+
 
 class EvalConstant(EvalNode):
     __slots__ = ('value',)
@@ -188,7 +239,8 @@ OPERATORS = {
 ANY = object()
 
 class EvalFunction(EvalNode):
-    """Base class for all function objects."""
+
+        """Base class for all function objects."""
     __slots__ = ('operands',)
 
     # Type constraints on the input arguments.
@@ -222,6 +274,19 @@ class EvalColumn(EvalNode):
 
 class EvalAggregator(EvalFunction):
     "Base class for all aggregator evaluator types."
+
+    # We should not have to recurse any further because there should be no
+    # aggregations under an aggregation node.
+
+    def agg_initialize(self, _):
+        "Overrriden method that stops recursion on its children here."
+
+    def update(self, _, __):
+        "Overrriden method that stops recursion on its children here."
+
+    def finalize(self, _):
+        "Overrriden method that stops recursion on its children here."
+
 
 
 class CompilationEnvironment:

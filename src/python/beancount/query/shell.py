@@ -100,10 +100,14 @@ class BQLShell(cmd.Cmd):
 
     def on_Select(self, select):
         # Compile the select statement.
-        query = query_compile.compile_select(select,
-                                             self.env_targets,
-                                             self.env_postings,
-                                             self.env_entries)
+        try:
+            query = query_compile.compile_select(select,
+                                                 self.env_targets,
+                                                 self.env_postings,
+                                                 self.env_entries)
+        except query_compile.CompilationError as exc:
+            print('ERROR: {}.'.format(str(exc).rstrip('.')))
+            return
         # Execute it to obtain the result rows.
         rows = query_execute.execute_query(query, self.entries, self.options_map)
 

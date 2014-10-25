@@ -69,6 +69,44 @@ def execute_print(print_stmt, entries, options_map, file):
     printer.print_entries(entries, file=file)
 
 
+# def iterate(entries, flatten):
+#     """Iterate over the list entries and postings.
+
+#     Args:
+#       entries: A list of directives.
+#       flatten: A boolean, if true, iterate over each lots of an inventory separately.
+#     Yields:
+#       Posting or entry objects.
+#     """
+#     if not flatten:
+#         for entry in entries:
+#             if isinstance(entry, data.Transaction):
+#                 for posting in entry.postings:
+#                     yield posting
+
+
+
+class Allocation(list):
+    """An allocation object used to hold the temporary contents of a row's aggregators.
+    """
+    def allocate(self, state):
+        """Allocate space for the given state object and return a handle to it.
+
+        Args:
+          state: Any object to be used as a temporary for aggregates.
+        Returns:
+          A handle on the state object (this is actually an index into this array).
+        """
+        handle = len(self)
+        self.append(state)
+        return handle
+
+    # State getter. Get the state from the given handle.
+    get = __getitem__
+    set = __setitem__
+
+
+
 def execute_query(query, entries, options_map):
     """Given a compiled select statement, execute the query.
 
@@ -92,7 +130,8 @@ def execute_query(query, entries, options_map):
     c_expr = query.c_where
     c_targets = query.c_targets
     if query.group_indexes is None:
-        # This is a non-aggregated query.
+        # This is a non-aggregated query: iterate over all the postings once and
+        # produce the result rows immediately.
         try:
             for entry in entries:
                 if isinstance(entry, data.Transaction):
@@ -104,14 +143,58 @@ def execute_query(query, entries, options_map):
                                 raise StopIteration
         except StopIteration:
             pass
+
+        # FIMXE: Apply early limit only if sorting is not requested!
     else:
         # This is an aggregated query.
-        raise NotImplementedError
 
-    # FIXME: continue here
+        # Pre-compute lists of the targets to evaluate.
+        c_simple_targets = [c_target
+                            for index in query.c_targets
+                            if index in query.group_indexes]
+        c_aggregate_targets = [c_target
+                               for index in query.c_targets
+                               if index not in query.group_indexes]
+
+        # Iterate over all the postings to evaluate the aggregates.
+        for entry in entries:
+            if isinstance(entry, data.Transaction):
+                for posting in entry.postings:
+                    if c_expr is None or c_expr(posting):
+                        row_key = [c_target.c_expr(posting)
+                                   for c_target in c_simple_targets]
+                        try:
+                            alloc = agg_store[row_key]
+                        except KeyError:
+                            # Get a new allocator. We just use an array for
+                            # this, no need to make things complicated.
+                            alloc = Allocation()
+                            for c_target in c_aggregate_targets:
+                                c_target.c_expr.initialize(alloc)
+                            agg_store[row_key] = alloc
+
+                        for c_target in c_aggregate_targets:
+                            c_target.c_expr.update(alloc)
+
+        # Iterate over all the aggregations to produce the result rows.
+        for entry in entries:
+            if isinstance(entry, data.Transaction):
+                for posting in entry.postings:
+                    if c_expr is None or c_expr(posting):
+                        for c_target in c_aggregate_targets:
+                            result = [c_target.c_expr(posting)
+                                      for c_target in c_targets]
+                            results.append(ResultRow(*result))
+                            if query.limit and len(results) == query.limit:
+                                raise StopIteration
 
 
-    # Flatten if required.
+    # Apply limit.
 
 
     return results
+
+
+# FIXME: We could run the aggregations a lot faster if we pre-processed the
+# targets to find the aggregation nodes directly instead of recursing throughout
+# the tree to find them. Make this optimization.
