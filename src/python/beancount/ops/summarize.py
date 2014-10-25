@@ -172,6 +172,27 @@ def clear(entries,
     return new_entries, index
 
 
+def open_opt(entries, date, options_map):
+    """Convenience function to open() using an options map.
+    """
+    account_types = options.get_account_types(options_map)
+    previous_accounts = options.get_previous_accounts(options_map)
+    conversion_currency = options_map['conversion_currency']
+    return open(entries, date, account_types, conversion_currency, *previous_accounts)
+
+def close_opt(entries, date, options_map):
+    """Convenience function to close() using an options map.
+    """
+    conversion_currency = options_map['conversion_currency']
+    current_accounts = options.get_current_accounts(options_map)
+    return close(entries, date, conversion_currency, current_accounts[1])
+
+def clear_opt(entries, date, options_map):
+    """Convenience function to clear() using an options map.
+    """
+    account_types = options.get_account_types(options_map)
+    current_accounts = options.get_current_accounts(options_map)
+    return clear(entries, date, account_types, current_accounts[0])
 
 
 

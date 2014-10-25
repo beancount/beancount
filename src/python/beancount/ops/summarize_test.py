@@ -25,6 +25,14 @@ class TestOpenClose(cmptest.TestCase):
     @parser.parsedoc
     def setUp(self, entries, errors, options_map):
         """
+        option "account_previous_earnings"    "Earnings:Previous"
+        option "account_previous_balances"    "Opening-Balances"
+        option "account_previous_conversions" "Conversions:Previous"
+
+        option "account_current_earnings"     "Earnings:Current"
+        option "account_current_conversions"  "Conversions:Current"
+        option "conversion_currency"          "NOTHING"
+
         2012-03-01 * "Some income and expense to be summarized"
           Income:Salary        10000 USD
           Expenses:Taxes        3600 USD
@@ -59,15 +67,23 @@ class TestOpenClose(cmptest.TestCase):
 
         self.account_types = options.get_account_types(options_map)
 
+    def do_open(self, entries, date, *args):
+        return summarize.open(entries, date, *args)
+
+    def do_close(self, entries, date, *args):
+        return summarize.close(entries, date, *args)
+
+    def do_clear(self, entries, date, *args):
+        return summarize.clear(entries, date, *args)
 
     def test_open(self):
         date = datetime.date(2012, 6, 1)
-        opened_entries, index = summarize.open(self.entries, date,
-                                               self.account_types,
-                                               'NOTHING',
-                                               'Equity:Earnings:Previous',
-                                               'Equity:Opening-Balances',
-                                               'Equity:Conversions:Previous')
+        opened_entries, index = self.do_open(self.entries, date,
+                                             self.account_types,
+                                             'NOTHING',
+                                             'Equity:Earnings:Previous',
+                                             'Equity:Opening-Balances',
+                                             'Equity:Conversions:Previous')
 
         self.assertEqualEntries("""
 
@@ -127,9 +143,9 @@ class TestOpenClose(cmptest.TestCase):
 
     def test_close(self):
         date = datetime.date(2012, 9, 1)
-        closed_entries, index = summarize.close(self.entries, date,
-                                                'NOTHING',
-                                                'Equity:Conversions:Current')
+        closed_entries, index = self.do_close(self.entries, date,
+                                              'NOTHING',
+                                              'Equity:Conversions:Current')
 
         self.assertEqualEntries("""
 
@@ -179,9 +195,9 @@ class TestOpenClose(cmptest.TestCase):
 
     def test_clear(self):
         date = datetime.date(2013, 1, 1)
-        clear_entries, index = summarize.clear(self.entries, date,
-                                               self.account_types,
-                                               'Equity:Earnings:Current')
+        clear_entries, index = self.do_clear(self.entries, date,
+                                             self.account_types,
+                                             'Equity:Earnings:Current')
 
         self.assertEqualEntries("""
 
@@ -237,20 +253,20 @@ class TestOpenClose(cmptest.TestCase):
         begin_date = datetime.date(2012, 6, 1)
         end_date = datetime.date(2012, 9, 1)
         clear_date = datetime.date(2013, 1, 1)
-        opened_entries, index = summarize.open(self.entries, begin_date,
-                                               self.account_types,
-                                               'NOTHING',
-                                               'Equity:Earnings:Previous',
-                                               'Equity:Opening-Balances',
-                                               'Equity:Conversions:Previous')
+        opened_entries, index = self.do_open(self.entries, begin_date,
+                                             self.account_types,
+                                             'NOTHING',
+                                             'Equity:Earnings:Previous',
+                                             'Equity:Opening-Balances',
+                                             'Equity:Conversions:Previous')
 
-        closed_entries, index = summarize.close(opened_entries, end_date,
-                                                'NOTHING',
-                                                'Equity:Conversions:Current')
+        closed_entries, index = self.do_close(opened_entries, end_date,
+                                              'NOTHING',
+                                              'Equity:Conversions:Current')
 
-        clear_entries, index = summarize.clear(closed_entries, clear_date,
-                                               self.account_types,
-                                               'Equity:Earnings:Current')
+        clear_entries, index = self.do_clear(closed_entries, clear_date,
+                                             self.account_types,
+                                             'Equity:Earnings:Current')
 
         self.assertEqualEntries("""
 
@@ -298,6 +314,19 @@ class TestOpenClose(cmptest.TestCase):
           Equity:Earnings:Current       3,200.00 USD
 
         """, clear_entries)
+
+
+class TestOpenCloseWithOptions(TestOpenClose):
+    "Same test as the previous, but invoking all with options."
+
+    def do_open(self, entries, date, *args):
+        return summarize.open_opt(entries, date, self.options_map)
+
+    def do_close(self, entries, date, *args):
+        return summarize.close_opt(entries, date, self.options_map)
+
+    def do_clear(self, entries, date, *args):
+        return summarize.clear_opt(entries, date, self.options_map)
 
 
 class TestClamp(cmptest.TestCase):
