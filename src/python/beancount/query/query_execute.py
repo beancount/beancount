@@ -70,55 +70,29 @@ def execute_print(print_stmt, entries, options_map, file):
     printer.print_entries(entries, file=file)
 
 
-# def iterate(entries, flatten):
-#     """Iterate over the list entries and postings.
-
-#     Args:
-#       entries: A list of directives.
-#       flatten: A boolean, if true, iterate over each lots of an inventory separately.
-#     Yields:
-#       Posting or entry objects.
-#     """
-#     if not flatten:
-#         for entry in entries:
-#             if isinstance(entry, data.Transaction):
-#                 for posting in entry.postings:
-#                     yield posting
-
-
-
 class Allocator:
+    """A helper class to count slot allocations and return unique handles to them.
+    """
     def __init__(self):
         self.size = 0
 
     def allocate(self):
+        """Allocate a new slot to store row aggregation information.
+
+        Returns:
+          A unique handle used to index into an row-aggregation store (an integer).
+        """
         handle = self.size
         self.size += 1
         return handle
 
     def create_store(self):
+        """Create a new row-aggregation store suitable to contain all the node allocations.
+
+        Returns:
+          A store that can accomodate and be indexed by all the allocated slot handles.
+        """
         return [None] * self.size
-
-
-# class Allocation(list):
-#     """An allocation object used to hold the temporary contents of a row's aggregators.
-#     """
-#     def allocate(self, state):
-#         """Allocate space for the given state object and return a handle to it.
-
-#         Args:
-#           state: Any object to be used as a temporary for aggregates.
-#         Returns:
-#           A handle on the state object (this is actually an index into this array).
-#         """
-#         handle = len(self)
-#         self.append(state)
-#         return handle
-
-#     # State getter. Get the state from the given handle.
-#     get = list.__getitem__
-#     set = list.__setitem__
-
 
 
 def execute_query(query, entries, options_map):
@@ -173,7 +147,7 @@ def execute_query(query, entries, options_map):
         except StopIteration:
             pass
 
-        # FIMXE: Apply early limit only if sorting is not requested!
+        # FIXME: Apply early limit only if sorting is not requested!
     else:
         # This is an aggregated query.
         assert c_aggregate_exprs, "Internal error."
@@ -218,8 +192,18 @@ def execute_query(query, entries, options_map):
                 result.append(value)
             results.append(ResultRow(*result))
 
+    # Apply distinct.
+    # FIXME: TODO
+
+    # Apply order-by.
+    # FIXME: TODO
+
     # Apply limit.
     # FIXME: TODO
 
+    # FIXME: Also return a description of all the data types and row names. This
+    # will be used for rendering and for tests.
+
+    # FIXME: Compute the special 'balance' row and produce journals with it.
 
     return results

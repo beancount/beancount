@@ -145,7 +145,7 @@ class BQLShell(cmd.Cmd):
             print("(Unsupported statement)")
 
     def dispatch(self, statement):
-        """Disatpch the given statement to a suitable method.
+        """Dispatch the given statement to a suitable method.
 
         Args:
           statement: An instance provided by the parser.
