@@ -298,6 +298,27 @@ class DateEntryColumn(c.EvalColumn):
     def __call__(self, entry):
         return entry.date
 
+class YearEntryColumn(c.EvalColumn):
+    def __init__(self):
+        super().__init__(int)
+
+    def __call__(self, entry):
+        return entry.date.year
+
+class MonthEntryColumn(c.EvalColumn):
+    def __init__(self):
+        super().__init__(int)
+
+    def __call__(self, entry):
+        return entry.date.month
+
+class DayEntryColumn(c.EvalColumn):
+    def __init__(self):
+        super().__init__(int)
+
+    def __call__(self, entry):
+        return entry.date.day
+
 class FlagEntryColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(str)
@@ -356,6 +377,9 @@ class FilterEntriesEnvironment(c.CompilationEnvironment):
         'filename'  : FilenameEntryColumn,
         'lineno'    : LineNoEntryColumn,
         'date'      : DateEntryColumn,
+        'year'      : YearEntryColumn,
+        'month'     : MonthEntryColumn,
+        'day'       : DayEntryColumn,
         'flag'      : FlagEntryColumn,
         'payee'     : PayeeEntryColumn,
         'narration' : NarrationEntryColumn,
@@ -396,6 +420,27 @@ class DateColumn(c.EvalColumn):
 
     def __call__(self, posting):
         return posting.entry.date
+
+class YearColumn(c.EvalColumn):
+    def __init__(self):
+        super().__init__(int)
+
+    def __call__(self, posting):
+        return posting.entry.date.year
+
+class MonthColumn(c.EvalColumn):
+    def __init__(self):
+        super().__init__(int)
+
+    def __call__(self, posting):
+        return posting.entry.date.month
+
+class DayColumn(c.EvalColumn):
+    def __init__(self):
+        super().__init__(int)
+
+    def __call__(self, posting):
+        return posting.entry.date.day
 
 class FlagColumn(c.EvalColumn):
     def __init__(self):
@@ -469,6 +514,9 @@ class FilterPostingsEnvironment(c.CompilationEnvironment):
         'filename'  : FilenameColumn,
         'lineno'    : LineNoColumn,
         'date'      : DateColumn,
+        'year'      : YearColumn,
+        'month'     : MonthColumn,
+        'day'       : DayColumn,
         'flag'      : FlagColumn,
         'payee'     : PayeeColumn,
         'narration' : NarrationColumn,

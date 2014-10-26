@@ -219,7 +219,7 @@ class EvalMatch(EvalBinaryOp):
             return False
 
         # Apply the search function.
-        return self.operator(arg_right, arg_left)
+        return bool(self.operator(arg_right, arg_left))
 
 class EvalContains(EvalBinaryOp):
 

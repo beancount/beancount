@@ -136,20 +136,13 @@ def execute_query(query, entries, options_map):
 
         # This is a non-aggregated query: iterate over all the postings once and
         # produce the result rows immediately.
-        try:
-            for entry in entries:
-                if isinstance(entry, data.Transaction):
-                    for posting in entry.postings:
-                        if c_where is None or c_where(posting):
-                            result = ResultRow._make(c_expr(posting)
-                                                     for c_expr in c_simple_exprs)
-                            results.append(result)
-                            if query.limit and len(results) == query.limit:
-                                raise StopIteration
-        except StopIteration:
-            pass
-
-        # FIXME: Apply early limit only if sorting is not requested!
+        for entry in entries:
+            if isinstance(entry, data.Transaction):
+                for posting in entry.postings:
+                    if c_where is None or c_where(posting):
+                        result = ResultRow._make(c_expr(posting)
+                                                 for c_expr in c_simple_exprs)
+                        results.append(result)
     else:
         # This is an aggregated query.
         assert c_aggregate_exprs, "Internal error."
@@ -207,5 +200,9 @@ def execute_query(query, entries, options_map):
     # will be used for rendering and for tests.
 
     # FIXME: Compute the special 'balance' row and produce journals with it.
+
+    # FIXME: Apply early limit only if sorting is not requested.
+    # if query.limit and len(results) == query.limit:
+    #     raise StopIteration
 
     return results
