@@ -528,12 +528,10 @@ class TestCompileSelectOrderBy(CompileSelectBase):
         self.assertEqual([0, 1], query.group_indexes)
         self.assertEqual([1], query.order_indexes)
 
-        # We don't detect similarity between order-by and targets yet.
-        # This could eventually be improved.
-        with self.assertRaises(c.CompilationError):
-            self.compile("""
-              SELECT account, year(date) GROUP BY 1, 2 ORDER BY year(date);
-            """)
+        # We detect similarity between order-by and targets yet.
+        self.compile("""
+          SELECT account, year(date) GROUP BY 1, 2 ORDER BY year(date);
+        """)
 
     def test_compile_order_by_reconcile(self):
         # Check that no invisible column is created if redundant.

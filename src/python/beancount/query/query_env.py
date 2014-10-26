@@ -267,9 +267,7 @@ class Max(c.EvalAggregator):
 
 AGGREGATOR_FUNCTIONS = {
     ('sum', position.Position) : SumPosition,
-    ('sum', int)               : Sum,
-    ('sum', float)             : Sum,
-    ('sum', Decimal)           : Sum,
+    'sum'                      : Sum,
     'count'                    : Count,
     'first'                    : First,
     'last'                     : Last,

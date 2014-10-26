@@ -750,7 +750,7 @@ def compile_from(from_clause, environ):
 #   flatten: An optional boolean that requests we should output a single posting
 #     row for each currency present in an accumulated and output inventory.
 EvalQuery = collections.namedtuple('EvalQuery', ('c_targets c_from c_where '
-                                                 'group_indexes order_indexes '
+                                                 'group_indexes order_indexes ordering '
                                                  'limit distinct flatten'))
 
 def compile_select(select, targets_environ, postings_environ, entries_environ):
@@ -814,8 +814,10 @@ def compile_select(select, targets_environ, postings_environ, entries_environ):
                                                         environ_target)
         if new_targets:
             c_targets.extend(new_targets)
+        ordering = select.order_by.ordering
     else:
         order_indexes = None
+        ordering = None
 
     # If this is an aggregate query (it groups, see list of indexes), check that
     # the set of non-aggregates match exactly the group indexes. This should
@@ -839,6 +841,7 @@ def compile_select(select, targets_environ, postings_environ, entries_environ):
                      c_where,
                      group_indexes,
                      order_indexes,
+                     ordering,
                      select.limit,
                      select.distinct,
                      select.flatten)
