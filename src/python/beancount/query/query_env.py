@@ -77,6 +77,17 @@ class Day(c.EvalFunction):
         args = self.eval_args(posting)
         return args[0].day
 
+class Weekday(c.EvalFunction):
+    "Outputs a 3-letter locale-specific code."
+    __intypes__ = [datetime.date]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, posting):
+        args = self.eval_args(posting)
+        return args[0].strftime('%a')
+
 
 # Operation on inventories.
 
@@ -103,13 +114,14 @@ class Cost(c.EvalFunction):
         return args[0].get_cost()
 
 SIMPLE_FUNCTIONS = {
-    'str'    : Str,
-    'length' : Length,
-    'units'  : Units,
-    'cost'   : Cost,
-    'year'   : Year,
-    'month'  : Month,
-    'day'    : Day,
+    'str'     : Str,
+    'length'  : Length,
+    'units'   : Units,
+    'cost'    : Cost,
+    'year'    : Year,
+    'month'   : Month,
+    'day'     : Day,
+    'weekday' : Weekday,
     }
 
 
