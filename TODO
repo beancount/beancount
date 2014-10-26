@@ -214,9 +214,6 @@ precise balances throughout, but no manual input is required.
 
 * Query Language
 
-  - Add syntax: "print from ..." to print out the list of entries in Beancount
-    format.
-
   - Flatten should parse closer to distinct keyword, as in SELECT FLATTEN ...
 
   - Maybe add format keyword followed by the desired format instead of a set var
@@ -225,9 +222,9 @@ precise balances throughout, but no manual input is required.
   - Redirecting output should be done with > at the end of a statement
 
   - "types ..." : print the inferred types of a statement, the targets, or maybe
-    that's just part of EXPLAIN?
+    that's just part of EXPLAIN? DESCRIBE? Describe prints all the columns and
+    functions in each environments? Or is it HELP?
 
-  - Describe prints all the columns and functions in each environments
 
 
 * Current / Misc / To Be Classified

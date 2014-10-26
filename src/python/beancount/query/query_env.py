@@ -135,8 +135,7 @@ class Count(c.EvalAggregator):
         return store[self.handle]
 
 class Sum(c.EvalAggregator):
-    # FIXME: Not sure we should accept a position. Compile a special node for Sum(position) and Sum(inventory).
-    __intypes__ = [(int, float, Decimal, position.Position, inventory.Inventory)]
+    __intypes__ = [(int, float, Decimal)]
 
     def __init__(self, operands):
         super().__init__(operands, operands[0].dtype)
@@ -150,6 +149,25 @@ class Sum(c.EvalAggregator):
     def update(self, store, posting):
         value = self.eval_args(posting)[0]
         store[self.handle] += value
+
+    def finalize(self, store):
+        return store[self.handle]
+
+class SumPosition(c.EvalAggregator):
+    __intypes__ = [position.Position]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
+    def allocate(self, allocator):
+        self.handle = allocator.allocate()
+
+    def initialize(self, store):
+        store[self.handle] = inventory.Inventory()
+
+    def update(self, store, posting):
+        value = self.eval_args(posting)[0]
+        store[self.handle].add_position(value)
 
     def finalize(self, store):
         return store[self.handle]
@@ -234,12 +252,15 @@ class Max(c.EvalAggregator):
         return store[self.handle]
 
 AGGREGATOR_FUNCTIONS = {
-    'sum'   : Sum,
-    'count' : Count,
-    'first' : First,
-    'last'  : Last,
-    'min'   : Min,
-    'max'   : Max,
+    ('sum', position.Position) : SumPosition,
+    ('sum', int)               : Sum,
+    ('sum', float)             : Sum,
+    ('sum', Decimal)           : Sum,
+    'count'                    : Count,
+    'first'                    : First,
+    'last'                     : Last,
+    'min'                      : Min,
+    'max'                      : Max,
     }
 
 

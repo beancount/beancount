@@ -101,7 +101,7 @@ class EvalNode:
         Args:
           store: An object indexable by handles appropriated during allocate().
         """
-        for child in childnodes():
+        for child in self.childnodes():
             child.initialize(store)
 
     def update(self, store, context):
@@ -111,7 +111,7 @@ class EvalNode:
           store: An object indexable by handles appropriated during allocate().
           context: The object to which the evaluation need to apply (see __call__).
         """
-        for child in childnodes():
+        for child in self.childnodes():
             child.update(store, context)
 
     def finalize(self, store):
@@ -123,7 +123,7 @@ class EvalNode:
         Args:
           store: An object indexable by handles appropriated during allocate().
         """
-        for child in childnodes():
+        for child in self.childnodes():
             child.finalize(store)
 
 
@@ -330,10 +330,15 @@ class CompilationEnvironment:
           name: A string, the name of the function to access.
         """
         try:
-            return self.functions[name](operands)
+            key = tuple([name] + [operand.dtype for operand in operands])
+            return self.functions[key](operands)
         except KeyError:
-            raise CompilationError("Invalid function name '{}' in {} context.".format(
-                name, self.context_name))
+            # If not found with the operands, try just looking it up by name.
+            try:
+                return self.functions[name](operands)
+            except KeyError:
+                raise CompilationError("Invalid function name '{}' in {} context.".format(
+                    name, self.context_name))
 
 
 class AttributeColumn(EvalColumn):

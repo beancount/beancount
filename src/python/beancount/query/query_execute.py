@@ -139,20 +139,35 @@ def execute_query(query, entries, options_map):
                                         for target in query.c_targets
                                         if target.name])
 
+    # Pre-compute lists of the expressions to evaluate.
+    group_indexes = set(query.group_indexes)
+    c_simple_exprs = []
+    c_aggregate_exprs = []
+    for index, c_target in enumerate(query.c_targets):
+        c_expr = c_target.c_expr
+        if index in group_indexes:
+            c_simple_exprs.append(c_expr)
+        else:
+            _, aggregate_exprs = query_compile.get_columns_and_aggregates(c_expr)
+            c_aggregate_exprs.extend(aggregate_exprs)
+
     # Dispatch between the non-aggregated queries and aggregated queries.
     results = []
-    c_expr = query.c_where
+    c_where = query.c_where
     c_targets = query.c_targets
     if query.group_indexes is None:
+        assert not c_aggregate_exprs, "Internal error."
+
         # This is a non-aggregated query: iterate over all the postings once and
         # produce the result rows immediately.
         try:
             for entry in entries:
                 if isinstance(entry, data.Transaction):
                     for posting in entry.postings:
-                        if c_expr is None or c_expr(posting):
-                            result = [c_target.c_expr(posting) for c_target in c_targets]
-                            results.append(ResultRow(*result))
+                        if c_where is None or c_where(posting):
+                            result = ResultRow(c_expr(posting)
+                                               for c_expr in c_simple_exprs)
+                            results.append(result)
                             if query.limit and len(results) == query.limit:
                                 raise StopIteration
         except StopIteration:
@@ -162,39 +177,31 @@ def execute_query(query, entries, options_map):
     else:
         # This is an aggregated query.
 
-        # Pre-compute lists of the targets to evaluate.
-        group_indexes = set(query.group_indexes)
-        c_simple_targets = []
-        c_aggregate_targets = []
-        for index, c_target in enumerate(query.c_targets):
-            targets = c_simple_targets if index in group_indexes else c_aggregate_targets
-            targets.append(c_target)
-
         # Pre-allocate handles in aggregation nodes.
         allocator = Allocator()
-        for c_target in c_aggregate_targets:
-            c_target.c_expr.allocate(allocator)
+        for c_expr in c_aggregate_exprs:
+            c_expr.allocate(allocator)
 
         # Iterate over all the postings to evaluate the aggregates.
         agg_store = {}
         for entry in entries:
             if isinstance(entry, data.Transaction):
                 for posting in entry.postings:
-                    if c_expr is None or c_expr(posting):
-                        row_key = tuple(c_target.c_expr(posting)
-                                        for c_target in c_simple_targets)
+                    if c_where is None or c_where(posting):
+                        row_key = tuple(c_expr(posting)
+                                        for c_expr in c_simple_exprs)
                         try:
                             store = agg_store[row_key]
                         except KeyError:
                             # Get a new allocator. We just use an array for
                             # this, no need to make things complicated.
                             store = allocator.create_store()
-                            for c_target in c_aggregate_targets:
-                                c_target.c_expr.initialize(store)
+                            for c_expr in c_aggregate_exprs:
+                                c_expr.initialize(store)
                             agg_store[row_key] = store
 
-                        for c_target in c_aggregate_targets:
-                            c_target.c_expr.update(store, posting)
+                        for c_expr in c_aggregate_exprs:
+                            c_expr.update(store, posting)
 
         # Iterate over all the aggregations to produce the result rows.
         for key, store in agg_store.items():
@@ -211,11 +218,7 @@ def execute_query(query, entries, options_map):
             results.append(ResultRow(*result))
 
     # Apply limit.
+    # FIXME: TODO
 
 
     return results
-
-
-# FIXME: We could run the aggregations a lot faster if we pre-processed the
-# targets to find the aggregation nodes directly instead of recursing throughout
-# the tree to find them. Make this optimization.
