@@ -111,15 +111,17 @@ def execute_query(query, entries, options_map):
     ResultRow = collections.namedtuple('ResultRow',
                                        [target.name
                                         for target in query.c_targets
-                                        if target.name])
+                                        if target.name is not None])
 
     # Pre-compute lists of the expressions to evaluate.
-    group_indexes = set(query.group_indexes)
+    group_indexes = (set(query.group_indexes)
+                     if query.group_indexes is not None
+                     else query.group_indexes)
     c_simple_exprs = []
     c_aggregate_exprs = []
     for index, c_target in enumerate(query.c_targets):
         c_expr = c_target.c_expr
-        if index in group_indexes:
+        if group_indexes is None or index in group_indexes:
             c_simple_exprs.append(c_expr)
         else:
             _, aggregate_exprs = query_compile.get_columns_and_aggregates(c_expr)
@@ -139,8 +141,8 @@ def execute_query(query, entries, options_map):
                 if isinstance(entry, data.Transaction):
                     for posting in entry.postings:
                         if c_where is None or c_where(posting):
-                            result = ResultRow(c_expr(posting)
-                                               for c_expr in c_simple_exprs)
+                            result = ResultRow._make(c_expr(posting)
+                                                     for c_expr in c_simple_exprs)
                             results.append(result)
                             if query.limit and len(results) == query.limit:
                                 raise StopIteration
