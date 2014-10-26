@@ -803,27 +803,34 @@ class TestExecuteOptions(QueryBase):
 
 
 # balances,bal,trial,ledger:
-#   SELECT account, sum(change)
+#   SELECT account, sum(change) GROUP BY account;
+
 # balsheet:
 #   SELECT account, sum(change)
-#   FROM year = 2014 AND open:2014 AND close:2015
+#   FROM year = 2014  OPEN ON 2014-01-01  CLOSE ON 2015-01-01
+
 # income:
 #   SELECT account, sum(change)
 #   WHERE account ~ '(Income|Expenses):*'
+
 # journal,register,account:
 #   SELECT date, payee, narration, change, balance
 #   WHERE account = 'Assets:US:Bank:Checking'
+
 # conversions:
 #   SELECT date, payee, narration, change, balance
 #   WHERE flag = 'C'
 # or
 #   WHERE flag = FLAGS.conversion
+
 # documents:
 #   SELECT date, account, narration
 #   WHERE type = 'Document'
+
 # holdings:
 #   SELECT account, currency, cost-currency, sum(change)
 #   GROUP BY account, currency, cost-currency
+
 # holdings --by currency:
 #   SELECT currency, sum(change)
 #   GROUP BY currency

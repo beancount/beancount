@@ -29,13 +29,6 @@ def filter_entries(c_from, entries, options_map):
     if c_from is None:
         return entries
 
-    # Filter the entries with the FROM clause's expression.
-    c_expr = c_from.c_expr
-    if c_expr is not None:
-        entries = [entry for entry in entries if c_expr(entry)]
-
-    account_types = options.get_account_types(options_map)
-
     # Process the OPEN clause.
     if c_from.open is not None:
         assert isinstance(c_from.open, datetime.date)
@@ -53,6 +46,13 @@ def filter_entries(c_from, entries, options_map):
     # Process the CLEAR clause.
     if c_from.clear is not None:
         entries, index = summarize.clear_opt(entries, None, options_map)
+
+    # Filter the entries with the FROM clause's expression.
+    c_expr = c_from.c_expr
+    if c_expr is not None:
+        entries = [entry
+                   for entry in entries
+                   if c_expr(entry)]
 
     return entries
 
