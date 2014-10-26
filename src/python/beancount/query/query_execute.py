@@ -64,7 +64,7 @@ def execute_print(print_stmt, entries, options_map, file):
       options_map: A parser's option_map.
       file: The output file to print to.
     """
-    if print_stmt.from_clause is not None:
+    if print_stmt and print_stmt.from_clause is not None:
         entries = filter_entries(print_stmt.from_clause, entries, options_map)
 
     printer.print_entries(entries, file=file)

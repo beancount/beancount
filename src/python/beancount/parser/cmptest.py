@@ -34,12 +34,12 @@ class TestCase(unittest.TestCase):
             assert expected_missing or actual_missing
             oss = io.StringIO()
             if expected_missing:
-                oss.write("Missing from from expected set:\n\n")
+                oss.write("Present in expected set and not in actual set:\n\n")
                 for entry in expected_missing:
                     oss.write(printer.format_entry(entry))
                     oss.write('\n')
             if actual_missing:
-                oss.write("Missing from from actual:\n\n")
+                oss.write("Present in actual set and not in expected set:\n\n")
                 for entry in actual_missing:
                     oss.write(printer.format_entry(entry))
                     oss.write('\n')
