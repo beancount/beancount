@@ -9,9 +9,9 @@ option "operating_currency" "USD"
 
 * Equity Accounts
 
-1980-05-12 open Equity:Opening-Balances                         
+1980-05-12 open Equity:Opening-Balances
 
-1980-05-12 open Liabilities:AccountsPayable                     
+1980-05-12 open Liabilities:AccountsPayable
 
 * Banking
 
@@ -4090,13 +4090,13 @@ option "operating_currency" "USD"
 
 2012-01-01 open Assets:US:Hoogle:Vacation                    VACHR
 
-2012-01-01 open Expenses:Health:Life:GroupTermLife              
+2012-01-01 open Expenses:Health:Life:GroupTermLife
 
-2012-01-01 open Expenses:Health:Medical:Insurance               
+2012-01-01 open Expenses:Health:Medical:Insurance
 
-2012-01-01 open Expenses:Health:Dental:Insurance                
+2012-01-01 open Expenses:Health:Dental:Insurance
 
-2012-01-01 open Expenses:Health:Vision:Insurance                
+2012-01-01 open Expenses:Health:Vision:Insurance
 
 2012-01-01 event "employer" "Hoogle, 1600 Amphibious Parkway, River View, CA"
 
@@ -5576,25 +5576,26 @@ option "operating_currency" "USD"
 
 * Expenses
 
-1980-05-12 open Expenses:Food:Groceries                         
+1980-05-12 open Expenses:Food:Groceries
 
-1980-05-12 open Expenses:Food:Restaurant                        
+1980-05-12 open Expenses:Food:Restaurant
 
-1980-05-12 open Expenses:Food:Coffee                            
+1980-05-12 open Expenses:Food:Coffee
 
-1980-05-12 open Expenses:Food:Alcohol                           
+1980-05-12 open Expenses:Food:Alcohol
 
-1980-05-12 open Expenses:Transport:Tram                         
+1980-05-12 open Expenses:Transport:Tram
 
-1980-05-12 open Expenses:Home:Rent                              
+1980-05-12 open Expenses:Home:Rent
 
-1980-05-12 open Expenses:Home:Electricity                       
+1980-05-12 open Expenses:Home:Electricity
 
-1980-05-12 open Expenses:Home:Internet                          
+1980-05-12 open Expenses:Home:Internet
 
-1980-05-12 open Expenses:Financial:Fees                         
+1980-05-12 open Expenses:Financial:Fees
 
-1980-05-12 open Expenses:Financial:Commissions                  
+1980-05-12 open Expenses:Financial:Commissions
+
 
 * Prices
 
@@ -7339,4 +7340,3 @@ option "operating_currency" "USD"
 2014-10-10 price GLD                                      97.00 USD
 
 * Cash
-

@@ -109,13 +109,15 @@ class BQLShell(cmd.Cmd):
             print('ERROR: {}.'.format(str(exc).rstrip('.')))
             return
         # Execute it to obtain the result rows.
-        rows = query_execute.execute_query(query, self.entries, self.options_map)
+        result_types, result_rows = query_execute.execute_query(query,
+                                                                self.entries,
+                                                                self.options_map)
 
         # Output the resulting rows.
-        if not rows:
+        if not result_rows:
             print("(empty)")
         else:
-            table_ = table.create_table(rows)
+            table_ = table.create_table(result_rows)
             table.render_table(table_, sys.stdout, 'text')
 
     def on_Journal(self, select):

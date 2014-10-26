@@ -102,10 +102,20 @@ def execute_query(query, entries, options_map):
       query: An instance of a query_compile.Query
       entries: A list of directives.
       options_map: A parser's option_map.
+    Returns:
+      A pair of:
+        result_types: A list of (name, data-type) item pairs.
+        result_rows: A list of ResultRow tuples of length and types described by
+          'result_types'.
     """
     # Filter the entries using the WHERE clause.
     if query.c_from is not None:
         entries = filter_entries(query.c_from, entries, options_map)
+
+    # Figure out the result types that describe what we return.
+    result_types = [(target.name, target.c_expr.dtype)
+                    for target in query.c_targets
+                    if target.name is not None]
 
     # Create a class for each final result.
     ResultRow = collections.namedtuple('ResultRow',
@@ -128,7 +138,7 @@ def execute_query(query, entries, options_map):
             c_aggregate_exprs.extend(aggregate_exprs)
 
     # Dispatch between the non-aggregated queries and aggregated queries.
-    results = []
+    result_rows = []
     c_where = query.c_where
     c_targets = query.c_targets
     if query.group_indexes is None:
@@ -142,7 +152,7 @@ def execute_query(query, entries, options_map):
                     if c_where is None or c_where(posting):
                         result = ResultRow._make(c_expr(posting)
                                                  for c_expr in c_simple_exprs)
-                        results.append(result)
+                        result_rows.append(result)
     else:
         # This is an aggregated query.
         assert c_aggregate_exprs, "Internal error."
@@ -185,7 +195,7 @@ def execute_query(query, entries, options_map):
                 else:
                     value = c_target.c_expr.finalize(store)
                 result.append(value)
-            results.append(ResultRow(*result))
+            result_rows.append(ResultRow(*result))
 
     # Apply distinct.
     # FIXME: TODO
@@ -202,7 +212,7 @@ def execute_query(query, entries, options_map):
     # FIXME: Compute the special 'balance' row and produce journals with it.
 
     # FIXME: Apply early limit only if sorting is not requested.
-    # if query.limit and len(results) == query.limit:
+    # if query.limit and len(result_rows) == query.limit:
     #     raise StopIteration
 
-    return results
+    return (result_types, result_rows)

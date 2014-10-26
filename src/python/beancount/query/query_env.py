@@ -547,3 +547,6 @@ class TargetsEnvironment(FilterPostingsEnvironment):
     context_name = 'targets/column'
     functions = copy.copy(FilterPostingsEnvironment.functions)
     functions.update(AGGREGATOR_FUNCTIONS)
+
+    # The list of columns that a wildcard will expand into.
+    wildcard_columns = 'date flag payee narration change'.split()

@@ -483,7 +483,7 @@ def compile_targets(targets, environ):
     if isinstance(targets, query_parser.Wildcard):
         # Insert the full list of available columns.
         targets = [query_parser.Target(query_parser.Column(name), None)
-                   for name in environ.columns]
+                   for name in environ.wildcard_columns]
 
     # Compile targets.
     c_targets = []

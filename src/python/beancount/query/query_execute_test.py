@@ -95,7 +95,7 @@ class ExecuteQueryBase(unittest.TestCase):
                                 self.xcontext_postings,
                                 self.xcontext_entries)
 
-    def execute(self, bql_string):
+    def execute_query(self, bql_string):
         """Parse a query, execute it and compile it.
 
         Args:
@@ -285,14 +285,59 @@ class TestAllocation(unittest.TestCase):
         self.assertEqual([None, None, None], allocator.create_store())
 
 
-class TestExecute(ExecuteQueryBase):
+class TestExecuteQuery(ExecuteQueryBase):
 
-    def test_non_aggregated(self):
-        x = self.execute("""
+    INPUT1 = """
+
+      2010-01-01 open Assets:Bank:Checking
+      2010-01-01 open Expenses:Restaurant
+
+      2010-02-23 * "Bla"
+        Assets:Bank:Checking       100.00 USD
+        Expenses:Restaurant
+
+    """
+
+    def test_non_aggregated_basic_one(self):
+        entries, _, options_map = parser.parse_string(self.INPUT1)
+
+        result_types, result_rows = x.execute_query(self.compile("""
+          SELECT date;
+        """), entries, options_map)
+
+        self.assertEqual([
+            ('date', datetime.date),
+        ], result_types)
+
+        self.assertEqual([
+            (datetime.date(2010, 2, 23),),
+            (datetime.date(2010, 2, 23),),
+        ], result_rows)
+
+    def test_non_aggregated_basic_many(self):
+        entries, _, options_map = parser.parse_string(self.INPUT1)
+
+        result_types, result_rows = x.execute_query(self.compile("""
           SELECT date, flag, payee, narration;
-        """)
+        """), entries, options_map)
 
-    def __test_simple(self):
+        self.assertEqual([
+            ('date', datetime.date),
+            ('flag', str),
+            ('payee', str),
+            ('narration', str)
+        ], result_types)
+
+        self.assertEqual([
+            (datetime.date(2010, 2, 23), '*', '', 'Bla'),
+            (datetime.date(2010, 2, 23), '*', '', 'Bla'),
+        ], result_rows)
+
+
+
+
+
+    def __(self):
         x = self.execute("""
           SELECT date, flag, account
           GROUP BY date, flag, account;
