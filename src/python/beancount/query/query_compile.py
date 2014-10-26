@@ -17,6 +17,7 @@ from beancount.core import position
 from beancount.core import inventory
 from beancount.core import data
 from beancount.query import query_parser
+from beancount.utils.misc_utils import box
 
 
 class CompilationError(Exception):
@@ -534,6 +535,8 @@ def compile_group_by(group_by, c_targets, environ):
          distinguish the empty list vs. None.
     """
     new_targets = copy.copy(c_targets)
+    c_target_expressions = [c_target.c_expr for c_target in c_targets]
+
     group_indexes = []
     if group_by:
         # Check that HAVING is not supported yet.
@@ -583,10 +586,16 @@ def compile_group_by(group_by, c_targets, environ):
                             "GROUP-BY expressions may not be aggregates: '{}'".format(
                                 column))
 
-                    # Add the new target. 'None' for the target name implies it
-                    # should be invisible, not to be rendered.
-                    index = len(new_targets)
-                    new_targets.append(EvalTarget(c_expr, None, aggregate))
+                    # Attempt to reconcile the expression with one of the existing
+                    # target expressions.
+                    try:
+                        index = c_target_expressions.index(c_expr)
+                    except ValueError:
+                        # Add the new target. 'None' for the target name implies it
+                        # should be invisible, not to be rendered.
+                        index = len(new_targets)
+                        new_targets.append(EvalTarget(c_expr, None, aggregate))
+                        c_target_expressions.append(c_expr)
 
             assert index is not None, "Internal error, could not index group-by reference."
             group_indexes.append(index)
@@ -629,6 +638,7 @@ def compile_order_by(order_by, c_targets, environ):
        order_indexes: A list of integer indexes to be used for processing ordering.
     """
     new_targets = copy.copy(c_targets)
+    c_target_expressions = [c_target.c_expr for c_target in c_targets]
     order_indexes = []
 
     # Compile order-by expressions and resolve them to their targets if
@@ -665,10 +675,16 @@ def compile_order_by(order_by, c_targets, environ):
             if index is None:
                 c_expr = compile_expression(column, environ)
 
-                # Add the new target. 'None' for the target name implies it
-                # should be invisible, not to be rendered.
-                index = len(new_targets)
-                new_targets.append(EvalTarget(c_expr, None, is_aggregate(c_expr)))
+                # Attempt to reconcile the expression with one of the existing
+                # target expressions.
+                try:
+                    index = c_target_expressions.index(c_expr)
+                except ValueError:
+                    # Add the new target. 'None' for the target name implies it
+                    # should be invisible, not to be rendered.
+                    index = len(new_targets)
+                    new_targets.append(EvalTarget(c_expr, None, is_aggregate(c_expr)))
+                    c_target_expressions.append(c_expr)
 
         assert index is not None, "Internal error, could not index order-by reference."
         order_indexes.append(index)

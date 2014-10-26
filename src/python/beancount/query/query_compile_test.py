@@ -9,6 +9,7 @@ from beancount.core import position
 from beancount.query import query_parser as q
 from beancount.query import query_compile as c
 from beancount.query import query_env as cc
+from beancount.utils.misc_utils import box
 
 
 class TestCompileExpression(unittest.TestCase):
@@ -22,7 +23,7 @@ class TestCompileExpression(unittest.TestCase):
                          c.compile_expression(q.Column('filename'), cc.TargetsEnvironment()))
 
     def test_expr_function(self):
-        self.assertEqual(cc.Sum([cc.ChangeColumn()]),
+        self.assertEqual(cc.SumPosition([cc.ChangeColumn()]),
                          c.compile_expression(q.Function('sum', [q.Column('change')]),
                                               cc.TargetsEnvironment()))
 
@@ -94,7 +95,7 @@ class TestCompileAggregateChecks(unittest.TestCase):
         self.assertFalse(c.is_aggregate(c_query))
 
         # Simple aggregate.
-        c_query = cc.Sum([cc.ChangeColumn()])
+        c_query = cc.SumPosition([cc.ChangeColumn()])
         columns, aggregates = c.get_columns_and_aggregates(c_query)
         self.assertEqual((0, 1), (len(columns), len(aggregates)))
         self.assertTrue(c.is_aggregate(c_query))
@@ -112,7 +113,8 @@ class TestCompileAggregateChecks(unittest.TestCase):
         self.assertFalse(c.is_aggregate(c_query))
 
         # Mix of column and aggregates (this is used to detect this illegal case).
-        c_query = c.EvalAnd(cc.Length([cc.AccountColumn()]), cc.Sum([cc.ChangeColumn()]))
+        c_query = c.EvalAnd(cc.Length([cc.AccountColumn()]),
+                            cc.SumPosition([cc.ChangeColumn()]))
         columns, aggregates = c.get_columns_and_aggregates(c_query)
         self.assertEqual((1, 1), (len(columns), len(aggregates)))
         self.assertTrue(c.is_aggregate(c_query))
@@ -478,6 +480,14 @@ class TestCompileSelectGroupBy(CompileSelectBase):
         """)
         self.assertEqual([0, 1, 2], query.group_indexes)
 
+    def test_compile_group_by_reconcile(self):
+        # Check that no invisible column is created if redundant.
+        query = self.compile("""
+          SELECT account, length(account), sum(number)
+          GROUP BY account, length(account);
+        """)
+        self.assertEqual([0, 1], query.group_indexes)
+
 
 class TestCompileSelectOrderBy(CompileSelectBase):
 
@@ -525,6 +535,29 @@ class TestCompileSelectOrderBy(CompileSelectBase):
               SELECT account, year(date) GROUP BY 1, 2 ORDER BY year(date);
             """)
 
+    def test_compile_order_by_reconcile(self):
+        # Check that no invisible column is created if redundant.
+        query = self.compile("""
+          SELECT account, length(account)
+          ORDER BY length(account);
+        """)
+        self.assertEqual([1], query.order_indexes)
+
+    def test_compile_order_by_reference_invisible(self):
+        # So this is an interesting case: the grouping expression is an
+        # invisible non-aggregate (length(account)) and the ordering expression
+        # refers to the same non-aggregate expression. If they are reconciled to
+        # the same invisible expression, the condition that the grouping
+        # expressions cover all the non-aggregates is fulfilled. Otherwise, it
+        # would fail. In order to support the compilation of this, we must
+        # reconcile the grouping and ordering columns by comparing their values.
+        query = self.compile("""
+          SELECT count(account) as num, first(account) as first
+          GROUP BY length(account)
+          ORDER BY length(account);
+        """)
+        self.assertEqual([2], query.group_indexes)
+        self.assertEqual([2], query.order_indexes)
 
     def test_compile_order_by_aggregate(self):
         query = self.compile("""
