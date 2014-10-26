@@ -64,20 +64,6 @@ class TestMiscUtils(unittest.TestCase):
             [[('a', 1)], [('b', 2)], [('c', 3)], [('d', 4)]],
             sorted(grouped.values()))
 
-    def test_uniquify_last(self):
-        data = [('d', 9),
-                ('b', 4),
-                ('c', 8),
-                ('c', 6),
-                ('c', 7),
-                ('a', 3),
-                ('a', 1),
-                ('a', 2),
-                ('b', 5)]
-        unique_data = misc_utils.uniquify_last(data, lambda x: x[0])
-        self.assertEqual([('a', 2), ('b', 5), ('c', 7), ('d', 9)],
-                         list(unique_data))
-
     def test_filter_type(self):
         # pylint: disable=invalid-name
         class A: pass
@@ -169,3 +155,62 @@ class TestMiscUtils(unittest.TestCase):
         one = One(*args)
         two = Two(*args)
         self.assertFalse(one == two)
+
+
+class TestUniquify(unittest.TestCase):
+
+    def test_sorted_uniquify_first(self):
+        data = [('d', 9),
+                ('b', 4),
+                ('c', 8),
+                ('c', 6),
+                ('c', 7),
+                ('a', 3),
+                ('a', 1),
+                ('a', 2),
+                ('b', 5)]
+        unique_data = misc_utils.sorted_uniquify(data, lambda x: x[0], last=False)
+        self.assertEqual([('a', 3), ('b', 4), ('c', 8), ('d', 9)],
+                         list(unique_data))
+
+    def test_sorted_uniquify_last(self):
+        data = [('d', 9),
+                ('b', 4),
+                ('c', 8),
+                ('c', 6),
+                ('c', 7),
+                ('a', 3),
+                ('a', 1),
+                ('a', 2),
+                ('b', 5)]
+        unique_data = misc_utils.sorted_uniquify(data, lambda x: x[0], last=True)
+        self.assertEqual([('a', 2), ('b', 5), ('c', 7), ('d', 9)],
+                         list(unique_data))
+
+    def test_uniquify_first(self):
+        data = [('d', 9),
+                ('b', 4),
+                ('c', 8),
+                ('c', 6),
+                ('c', 7),
+                ('a', 3),
+                ('a', 1),
+                ('a', 2),
+                ('b', 5)]
+        unique_data = misc_utils.uniquify(data, lambda x: x[0], last=False)
+        self.assertEqual([('d', 9), ('b', 4), ('c', 8), ('a', 3)],
+                         list(unique_data))
+
+    def test_uniquify_last(self):
+        data = [('d', 9),
+                ('b', 4),
+                ('c', 8),
+                ('c', 6),
+                ('c', 7),
+                ('a', 3),
+                ('a', 1),
+                ('a', 2),
+                ('b', 5)]
+        unique_data = misc_utils.uniquify(data, lambda x: x[0], last=True)
+        self.assertEqual([('d', 9), ('c', 7), ('a', 2), ('b', 5)],
+                         list(unique_data))

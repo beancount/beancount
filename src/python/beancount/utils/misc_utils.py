@@ -90,34 +90,6 @@ def groupby(keyfun, elements):
     return grouped
 
 
-def uniquify_last(iterable, keyfunc=None):
-    """Given a sequence of elements, remove duplicates of the given key. Keep the
-    last element of a sequence of key-identical elements. This does _not_ maintain
-    the ordering of the original elements.
-
-    Args:
-      iterable: An iterable sequence.
-      keyfunc: A function that extracts from the elements the sort key
-        to use and uniquify on. If left unspecified, the identify function
-        is used and the uniquification occurs on the elements themselves.
-    Yields:
-      Elements from the iterable.
-    """
-    if keyfunc is None:
-        keyfunc = lambda x: x
-    unset = object()
-    prev_obj = unset
-    prev_key = unset
-    for obj in sorted(iterable, key=keyfunc):
-        key = keyfunc(obj)
-        if key != prev_key and prev_obj is not unset:
-            yield prev_obj
-        prev_obj = obj
-        prev_key = key
-    if prev_obj is not unset:
-        yield prev_obj
-
-
 def filter_type(elist, types):
     """Filter the given list to yield only instances of the given types.
 
@@ -340,3 +312,78 @@ def cmptuple(name, attributes):
     """
     base = collections.namedtuple('_{}'.format(name), attributes)
     return type(name, (TypeComparable, base,), {})
+
+
+def uniquify(iterable, keyfunc=None, last=False):
+    """Given a sequence of elements, remove duplicates of the given key. Keep either
+    the first or the last element of a sequence of key-identical elements. Order
+    is maintained as much as possible. This does maintain the ordering of the
+    original elements, they are returned in the same order as the original
+    elements.
+
+    Args:
+      iterable: An iterable sequence.
+      keyfunc: A function that extracts from the elements the sort key
+        to use and uniquify on. If left unspecified, the identify function
+        is used and the uniquification occurs on the elements themselves.
+      last: A boolean, True if we should keep the last item of the same keys.
+        Otherwise keep the first.
+    Yields:
+      Elements from the iterable.
+    """
+    if keyfunc is None:
+        keyfunc = lambda x: x
+    seen = set()
+    if last:
+        unique_reversed_list = []
+        for obj in reversed(iterable):
+            key = keyfunc(obj)
+            if key not in seen:
+                seen.add(key)
+                unique_reversed_list.append(obj)
+        yield from reversed(unique_reversed_list)
+    else:
+        for obj in iterable:
+            key = keyfunc(obj)
+            if key not in seen:
+                seen.add(key)
+                yield obj
+
+
+def sorted_uniquify(iterable, keyfunc=None, last=False):
+    """Given a sequence of elements, sort and remove duplicates of the given key.
+    Keep either the first or the last (by key) element of a sequence of
+    key-identical elements. This does _not_ maintain the ordering of the
+    original elements, they are returned sorted (by key) instead.
+
+    Args:
+      iterable: An iterable sequence.
+      keyfunc: A function that extracts from the elements the sort key
+        to use and uniquify on. If left unspecified, the identify function
+        is used and the uniquification occurs on the elements themselves.
+      last: A boolean, True if we should keep the last item of the same keys.
+        Otherwise keep the first.
+    Yields:
+      Elements from the iterable.
+    """
+    if keyfunc is None:
+        keyfunc = lambda x: x
+    UNSET = object()
+    if last:
+        prev_obj = UNSET
+        prev_key = UNSET
+        for obj in sorted(iterable, key=keyfunc):
+            key = keyfunc(obj)
+            if key != prev_key and prev_obj is not UNSET:
+                yield prev_obj
+            prev_obj = obj
+            prev_key = key
+        if prev_obj is not UNSET:
+            yield prev_obj
+    else:
+        prev_key = UNSET
+        for obj in sorted(iterable, key=keyfunc):
+            key = keyfunc(obj)
+            if key != prev_key:
+                yield obj
+                prev_key = key
