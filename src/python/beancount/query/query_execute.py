@@ -238,7 +238,7 @@ def execute_query(query, entries, options_map):
 
     # Apply distinct.
     if query.distinct:
-        result_rows = misc_utils.uniquify(result_rows)
+        result_rows = list(misc_utils.uniquify(result_rows))
 
     # Apply limit.
     if query.limit is not None:

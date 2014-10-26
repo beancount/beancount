@@ -300,86 +300,6 @@ class TestAllocation(unittest.TestCase):
         self.assertEqual([None, None, None], allocator.create_store())
 
 
-
-
-
-
-
-class TestExecuteQueryBasics(QueryBase):
-
-    INPUT = """
-
-      2010-01-01 open Assets:Bank:Checking
-      2010-01-01 open Expenses:Restaurant
-
-      2010-02-23 * "Bla"
-        Assets:Bank:Checking       100.00 USD
-        Expenses:Restaurant
-
-    """
-
-    def prepare(function):
-        @functools.wraps(function)
-        def test_fun(self):
-            entries, _, options_map = parser.parse_string(self.INPUT)
-            query = self.compile(function.__doc__)
-            result_types, result_rows = x.execute_query(query, entries, options_map)
-            return function(self, result_types, result_rows)
-        test_fun.__doc__ = None
-        return test_fun
-
-    @prepare
-    def test_aggregated_basic(self, result_types, result_rows):
-        """
-          SELECT account, sum(change) as amount GROUP BY account;
-        """
-        self.assertEqual([
-            ('account', str),
-            ('amount', inventory.Inventory),
-        ], result_types)
-
-        self.assertEqual([
-            ('Assets:Bank:Checking', inventory.from_string('100.00 USD')),
-            ('Expenses:Restaurant', inventory.from_string('-100.00 USD')),
-        ], sorted(result_rows))
-
-
-    @prepare
-    def test_aggregated_invisible(self, result_types, result_rows):
-        """
-          SELECT count(account) as num, first(account) as first GROUP BY length(account);
-        """
-        self.assertEqual([
-            ('num', int),
-            ('first', str),
-            ], result_types)
-
-        self.assertEqual([
-            (1, 'Assets:Bank:Checking'),
-            (1, 'Expenses:Restaurant'),
-            ], sorted(result_rows))
-
-    @prepare
-    def test_aggregated_invisible_order(self, result_types, result_rows):
-        """
-          SELECT count(account) as num, first(account) as first
-          GROUP BY length(account)
-          ORDER BY length(account);
-        """
-        self.assertEqual([
-            ('num', int),
-            ('first', str),
-            ], result_types)
-
-        self.assertEqual([
-            (1, 'Expenses:Restaurant'),
-            (1, 'Assets:Bank:Checking'),
-            ], result_rows)
-
-
-
-
-
 class TestExecuteNonAggregatedQuery(QueryBase):
 
     INPUT = """
@@ -748,54 +668,138 @@ class TestExecuteAggregatedQuery(QueryBase):
                 (2,),
                 ])
 
-    def __test_order_by_asc(self):
-        pass
-
-    def __test_order_by_desc(self):
-        pass
-
-    def __test_distinct(self):
-        pass
-
-    def __test_limit(self):
-        pass
 
 
 
+class TestExecuteOptions(QueryBase):
 
-    def __(self):
+    INPUT = """
+
+      2010-02-23 *
+        Assets:AssetA       5.00 USD
+        Assets:AssetD       2.00 USD
+        Assets:AssetB       4.00 USD
+        Assets:AssetC       3.00 USD
+        Assets:AssetE       1.00 USD
+        Equity:Rest
+
+    """
+
+    def test_order_by_asc_implicit(self):
+        self.check_query(
+            self.INPUT,
+            """
+            SELECT account, number ORDER BY number;
+            """,
+            [
+                ('account', str),
+                ('number', Decimal),
+                ],
+            [
+                ('Equity:Rest', D('-15.00')),
+                ('Assets:AssetE', D('1.00')),
+                ('Assets:AssetD', D('2.00')),
+                ('Assets:AssetC', D('3.00')),
+                ('Assets:AssetB', D('4.00')),
+                ('Assets:AssetA', D('5.00')),
+                ])
+
+    def test_order_by_asc_explicit(self):
+        self.check_query(
+            self.INPUT,
+            """
+            SELECT account, number ORDER BY number ASC;
+            """,
+            [
+                ('account', str),
+                ('number', Decimal),
+                ],
+            [
+                ('Equity:Rest', D('-15.00')),
+                ('Assets:AssetE', D('1.00')),
+                ('Assets:AssetD', D('2.00')),
+                ('Assets:AssetC', D('3.00')),
+                ('Assets:AssetB', D('4.00')),
+                ('Assets:AssetA', D('5.00')),
+                ])
+
+    def test_order_by_desc(self):
+        self.check_query(
+            self.INPUT,
+            """
+            SELECT account, number ORDER BY number DESC;
+            """,
+            [
+                ('account', str),
+                ('number', Decimal),
+                ],
+            [
+                ('Assets:AssetA', D('5.00')),
+                ('Assets:AssetB', D('4.00')),
+                ('Assets:AssetC', D('3.00')),
+                ('Assets:AssetD', D('2.00')),
+                ('Assets:AssetE', D('1.00')),
+                ('Equity:Rest', D('-15.00')),
+                ])
+
+    def test_distinct(self):
+        self.check_sorted_query(
+            """
+              2010-02-23 *
+                Assets:AssetA       5.00 USD
+                Assets:AssetA       2.00 USD
+                Assets:AssetA       4.00 USD
+                Equity:Rest
+            """,
+            """
+            SELECT account ;
+            """,
+            [
+                ('account', str),
+                ],
+            [
+                ('Assets:AssetA',),
+                ('Assets:AssetA',),
+                ('Assets:AssetA',),
+                ('Equity:Rest',),
+                ])
+
+        self.check_sorted_query(
+            """
+              2010-02-23 *
+                Assets:AssetA       5.00 USD
+                Assets:AssetA       2.00 USD
+                Assets:AssetA       4.00 USD
+                Equity:Rest
+            """,
+            """
+            SELECT DISTINCT account ;
+            """,
+            [
+                ('account', str),
+                ],
+            [
+                ('Assets:AssetA',),
+                ('Equity:Rest',),
+                ])
+
+    def test_limit(self):
+        self.check_query(
+            self.INPUT,
+            """
+            SELECT account, number ORDER BY number LIMIT 3;
+            """,
+            [
+                ('account', str),
+                ('number', Decimal),
+                ],
+            [
+                ('Equity:Rest', D('-15.00')),
+                ('Assets:AssetE', D('1.00')),
+                ('Assets:AssetD', D('2.00')),
+                ])
 
 
-        with box():
-            print(result_rows)
-
-        x = self.execute("""
-          SELECT date, flag, account
-          GROUP BY date, flag, account;
-        """)
-        print()
-        print(x._fields)
-
-        x = self.execute("""
-          SELECT date, flag, account, sum(change) as balance
-          GROUP BY date, flag, account;
-        """)
-        print()
-        print(x._fields)
-
-        x = self.execute("""
-          SELECT first(account), last(account)
-          GROUP BY account;
-        """)
-        print()
-        print(x._fields)
-
-        x = self.execute("""
-          SELECT date, account, sum(change) as balance
-          GROUP BY date, flag, account;
-        """)
-        print()
-        print(x._fields)
 
 
 # balances,bal,trial,ledger:
