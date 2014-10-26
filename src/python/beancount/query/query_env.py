@@ -80,6 +80,8 @@ class Day(c.EvalFunction):
 
 # Operation on inventories.
 
+## FIXME: Specialize both of these.
+
 class Units(c.EvalFunction):
     __intypes__ = [(position.Position, inventory.Inventory)]
 

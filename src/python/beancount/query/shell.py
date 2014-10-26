@@ -131,7 +131,16 @@ class BQLShell(cmd.Cmd):
                                                  self.env_targets,
                                                  self.env_postings,
                                                  self.env_entries)
-            print(query)
+            print("Compiled query:")
+            print("  {}".format(query))
+            print()
+            print("Targets:")
+            for c_target in query.c_targets:
+                print("  '{}'{}: {}".format(
+                    c_target.name or '(invisible)',
+                    ' (aggregate)' if query_compile.is_aggregate(c_target.c_expr) else '',
+                    c_target.c_expr.dtype.__name__))
+            print()
         else:
             print("(Unsupported statement)")
 

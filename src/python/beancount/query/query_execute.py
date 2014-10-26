@@ -176,6 +176,7 @@ def execute_query(query, entries, options_map):
         # FIMXE: Apply early limit only if sorting is not requested!
     else:
         # This is an aggregated query.
+        assert c_aggregate_exprs, "Internal error."
 
         # Pre-allocate handles in aggregation nodes.
         allocator = Allocator()
