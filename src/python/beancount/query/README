@@ -1,28 +1,42 @@
 TODO list for BQL:
 
+- Compute the special 'balance' row and produce journals with it.
+
+- Apply early limit only if sorting is not requested.
+
+    if query.limit and len(result_rows) == query.limit:
+        raise StopIteration
+
+- Add PAGER in rendering code.
+
+- Implement and support the ResultSetEnvironment
+  (Actually allow evaluating the SQL against generic rows of datasets.)
+
 FIXME: Deal with sum of inventory, compile special nodes SumPosition(), SumInventory().
+
 FIXME:
-- Create a RowEnvironment object that provides all the rows, so that we can
-- Add year month date as columns, but should not be included in * default
-- Add date() function to create dates from a string
-- Check data types for functions
-- Actually allow evaluating the SQL against generic rows of datasets.
-- Implement aggregation
+
 - Render with custom routine, not beancount.reports.table
+
 - Deal with rendering on multiple lines, e.g., for inventories with multiple positions
-- Make it possible to run from the command-line (batch)
-- Invoke a pager when long output
+
+
+- Make it possible to run from the command-line in batch mode
+
 - Implement set variables for format and verbosity and display precision and what-not
 - Implement JOURNAL account FROM
 - Implement BALANCES FROM
-- pipe through a pager
-- Find a way to pipe into treeify
-- Find a way to trigger a close in the FROM clause
-- implement order by
-- implement limit
-- implement distinct
-- support simple mathematical operations, +, - , /.
-- implement set operations, "in" for sets
-- implement globbing matches
-- case-sensitivity of regexps?
-- make KeyboardInterrupt not exit the shell, just interrupt the current processing of a query.
+
+- Invoke a pager when long output
+  * Find a way to pipe into treeify
+
+- Implement order by
+- Implement limit
+- Implement distinct
+- Removed case-sensitivity of regexps?
+
+New columns and functions:
+- Add date() function to create dates from a dateutil string
+- Support simple mathematical operations, +, - , /.
+- Implement set operations, "in" for sets
+- Implement globbing matches

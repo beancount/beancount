@@ -3,6 +3,7 @@ import io
 import re
 import unittest
 import textwrap
+import functools
 
 from beancount.core.amount import D
 from beancount.core.amount import Decimal
@@ -298,13 +299,20 @@ class TestExecuteQuery(ExecuteQueryBase):
 
     """
 
-    def test_non_aggregated_basic_one(self):
-        entries, _, options_map = parser.parse_string(self.INPUT1)
+    def prepare(function):
+        @functools.wraps(function)
+        def test_fun(self):
+            entries, _, options_map = parser.parse_string(self.INPUT1)
+            query = self.compile(function.__doc__)
+            result_types, result_rows = x.execute_query(query, entries, options_map)
+            return function(self, result_types, result_rows)
+        return test_fun
 
-        result_types, result_rows = x.execute_query(self.compile("""
+    @prepare
+    def test_non_aggregated_basic_one(self, result_types, result_rows):
+        """
           SELECT date;
-        """), entries, options_map)
-
+        """
         self.assertEqual([
             ('date', datetime.date),
         ], result_types)
@@ -314,13 +322,11 @@ class TestExecuteQuery(ExecuteQueryBase):
             (datetime.date(2010, 2, 23),),
         ], result_rows)
 
-    def test_non_aggregated_basic_many(self):
-        entries, _, options_map = parser.parse_string(self.INPUT1)
-
-        result_types, result_rows = x.execute_query(self.compile("""
+    @prepare
+    def test_non_aggregated_basic_many(self, result_types, result_rows):
+        """
           SELECT date, flag, payee, narration;
-        """), entries, options_map)
-
+        """
         self.assertEqual([
             ('date', datetime.date),
             ('flag', str),
@@ -333,11 +339,62 @@ class TestExecuteQuery(ExecuteQueryBase):
             (datetime.date(2010, 2, 23), '*', '', 'Bla'),
         ], result_rows)
 
+    @prepare
+    def test_aggregated_basic(self, result_types, result_rows):
+        """
+          SELECT account, sum(change) as amount GROUP BY account;
+        """
+        self.assertEqual([
+            ('account', str),
+            ('amount', inventory.Inventory),
+        ], result_types)
+
+        self.assertEqual([
+            ('Assets:Bank:Checking', inventory.from_string('100.00 USD')),
+            ('Expenses:Restaurant', inventory.from_string('-100.00 USD')),
+        ], sorted(result_rows))
+
+    @prepare
+    def test_aggregated_all_aggregated(self, result_types, result_rows):
+        """
+          SELECT first(account), last(account);
+        """
+        self.assertEqual([
+            ('first_account', str),
+            ('last_account', str),
+        ], result_types)
+
+        self.assertEqual([
+            ('Assets:Bank:Checking', 'Expenses:Restaurant'),
+        ], sorted(result_rows))
+
+    @prepare
+    def test_aggregated_invisible_columns(self, result_types, result_rows):
+        """
+          SELECT count(account) as num, first(account) as first GROUP BY length(account);
+        """
+        self.assertEqual([
+            ('num', int),
+            ('first', str),
+        ], result_types)
+
+        self.assertEqual([
+            (1, 'Assets:Bank:Checking'),
+            (1, 'Expenses:Restaurant'),
+        ], sorted(result_rows))
+
+
+
+
 
 
 
 
     def __(self):
+
+        with box():
+            print(result_rows)
+
         x = self.execute("""
           SELECT date, flag, account
           GROUP BY date, flag, account;
@@ -365,3 +422,84 @@ class TestExecuteQuery(ExecuteQueryBase):
         """)
         print()
         print(x._fields)
+
+
+# balances,bal,trial,ledger:
+#   SELECT account, sum(change)
+# balsheet:
+#   SELECT account, sum(change)
+#   FROM year = 2014 AND open:2014 AND close:2015
+# income:
+#   SELECT account, sum(change)
+#   WHERE account ~ '(Income|Expenses):*'
+# journal,register,account:
+#   SELECT date, payee, narration, change, balance
+#   WHERE account = 'Assets:US:Bank:Checking'
+# conversions:
+#   SELECT date, payee, narration, change, balance
+#   WHERE flag = 'C'
+# or
+#   WHERE flag = FLAGS.conversion
+# documents:
+#   SELECT date, account, narration
+#   WHERE type = 'Document'
+# holdings:
+#   SELECT account, currency, cost-currency, sum(change)
+#   GROUP BY account, currency, cost-currency
+# holdings --by currency:
+#   SELECT currency, sum(change)
+#   GROUP BY currency
+# holdings --by account
+#   SELECT account, sum(change)
+#   GROUP BY account
+# networth,equity:
+#   SELECT convert(sum(change), 'USD')
+#   SELECT convert(sum(change), 'CAD')
+# commodities:
+#   SELECT DISTINCT currency
+#   SELECT DISTINCT cost-currency
+#   SELECT DISTINCT currency, cost-currency
+# prices:
+#   SELECT date, currency, cost
+#   WHERE type = 'Price'
+# all_prices:
+#   PRINT
+#   WHERE type = 'Price'
+# check,validate:
+#   CHECK
+# errors:
+#   ERRORS
+# print:
+#   PRINT WHERE ...
+# accounts:
+#   SELECT DISTINCT account
+# current_events,latest_events:
+#   SELECT date, location, narration
+#   WHERE type = 'Event'
+# events:
+#   SELECT location, narration
+#   WHERE type = 'Event'
+# activity,updated:
+#   SELECT account, LATEST(date)
+# stats-types:
+#   SELECT DISTINCT COUNT(type)
+#   SELECT COUNT(DISTINCT type) -- unsure
+# stats-directives:
+#   SELECT COUNT(id)
+# stats-entries:
+#   SELECT COUNT(id) WHERE type = 'Transaction'
+# stats-postings:
+#   SELECT COUNT(*)
+
+
+# SELECT
+#   root_account, AVG(balance)
+# FROM (
+#   SELECT
+#     MAXDEPTH(account, 2) as root_account
+#     MONTH(date) as month,
+#     SUM(change) as balance
+#   WHERE date > 2014-01-01
+#   GROUP BY root_account, month
+# )
+# GROUP BY root_account

@@ -92,7 +92,8 @@ def groupby(keyfun, elements):
 
 def uniquify_last(iterable, keyfunc=None):
     """Given a sequence of elements, remove duplicates of the given key. Keep the
-    last element of a sequence of key-identical elements.
+    last element of a sequence of key-identical elements. This does _not_ maintain
+    the ordering of the original elements.
 
     Args:
       iterable: An iterable sequence.
@@ -100,7 +101,7 @@ def uniquify_last(iterable, keyfunc=None):
         to use and uniquify on. If left unspecified, the identify function
         is used and the uniquification occurs on the elements themselves.
     Yields:
-      (date, number) tuples.
+      Elements from the iterable.
     """
     if keyfunc is None:
         keyfunc = lambda x: x

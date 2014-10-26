@@ -198,6 +198,10 @@ def execute_query(query, entries, options_map):
             result_rows.append(ResultRow(*result))
 
     # Apply distinct.
+    if query.distinct:
+        result_rows = uniquify(result_rows)
+
+
     # FIXME: TODO
 
     # Apply order-by.
@@ -205,14 +209,5 @@ def execute_query(query, entries, options_map):
 
     # Apply limit.
     # FIXME: TODO
-
-    # FIXME: Also return a description of all the data types and row names. This
-    # will be used for rendering and for tests.
-
-    # FIXME: Compute the special 'balance' row and produce journals with it.
-
-    # FIXME: Apply early limit only if sorting is not requested.
-    # if query.limit and len(result_rows) == query.limit:
-    #     raise StopIteration
 
     return (result_types, result_rows)
