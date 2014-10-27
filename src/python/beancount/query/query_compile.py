@@ -205,22 +205,18 @@ class EvalLessEq(EvalBinaryOp):
 
 class EvalMatch(EvalBinaryOp):
 
+    @staticmethod
+    def match(left, right):
+        if left is None or right is None:
+            return False
+        return bool(re.search(right, left, re.IGNORECASE))
+
     def __init__(self, left, right):
-        super().__init__(re.search, left, right, bool)
+        super().__init__(self.match, left, right, bool)
         if right.dtype != str:
             raise CompilationError(
                 "Invalid data type for RHS of match: '{}'; must be a string".format(
                     right.dtype))
-
-    def __call__(self, context):
-        # Deal with None fields to match on.
-        arg_left = self.left(context)
-        arg_right = self.right(context)
-        if arg_left is None or arg_right is None:
-            return False
-
-        # Apply the search function.
-        return bool(self.operator(arg_right, arg_left))
 
 class EvalContains(EvalBinaryOp):
 
@@ -775,6 +771,9 @@ def compile_select(select, targets_environ, postings_environ, entries_environ):
         c_from = compile_select(from_clause) if from_clause is not None else None
         environ_target = ResultSetEnvironment()
         environ_where = ResultSetEnvironment()
+
+        # Remove this when we add support for nested queries.
+        raise CompilationError("Queries from nested SELECT are not supported yet")
 
     elif from_clause is None or isinstance(from_clause, query_parser.From):
         # Bind the from clause contents.

@@ -403,6 +403,28 @@ class LinksEntryColumn(c.EvalColumn):
                 if isinstance(entry, Transaction)
                 else EMPTY_SET)
 
+
+
+
+class MatchAccount(c.EvalFunction):
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, bool)
+
+    def __call__(self, entry):
+        if not isinstance(entry, Transaction):
+            return False
+        pattern = self.eval_args(entry)[0]
+        search = re.compile(pattern, re.IGNORECASE).search
+        return any(search(posting.account) for posting in entry.postings)
+
+# Functions defined only on entries.
+ENTRY_FUNCTIONS = {
+    'has_account' : MatchAccount,
+    }
+
+
 class FilterEntriesEnvironment(c.CompilationEnvironment):
     """An execution context that provides access to attributes on Transactions
     and other entry types.
@@ -423,7 +445,8 @@ class FilterEntriesEnvironment(c.CompilationEnvironment):
         'tags'      : TagsEntryColumn,
         'links'     : LinksEntryColumn,
         }
-    functions = SIMPLE_FUNCTIONS
+    functions = copy.copy(SIMPLE_FUNCTIONS)
+    functions.update(ENTRY_FUNCTIONS)
 
 
 
@@ -588,7 +611,7 @@ class FilterPostingsEnvironment(c.CompilationEnvironment):
         'price'     : PriceColumn,
         'weight'    : WeightColumn,
         }
-    functions = SIMPLE_FUNCTIONS
+    functions = copy.copy(SIMPLE_FUNCTIONS)
 
 class TargetsEnvironment(FilterPostingsEnvironment):
     """An execution context that provides access to attributes on Postings.

@@ -14,6 +14,7 @@ from beancount.query import query_parser
 from beancount.query import query_compile
 from beancount.query import query_env
 from beancount.query import query_execute
+#from beancount.query import query_render
 from beancount.core import data
 from beancount.reports import table
 
@@ -117,6 +118,7 @@ class BQLShell(cmd.Cmd):
         if not result_rows:
             print("(empty)")
         else:
+            #query_render.render(result_types, result_rows)
             table_ = table.create_table(result_rows)
             table.render_table(table_, sys.stdout, 'text')
 
