@@ -5,7 +5,6 @@ TODO list for BQL:
 
 - Render with custom routine, not beancount.reports.table
 
-  * Invoke a PAGER when long output
   * Find a way to pipe into treeify
   * Deal with rendering on multiple lines, e.g., for inventories with multiple positions
 

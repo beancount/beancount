@@ -2,21 +2,24 @@
 """
 import collections
 import os
+import io
 import sys
 import cmd
 import readline
 import atexit
 import pprint
 import traceback
+import subprocess
 from os import path
 
 from beancount.query import query_parser
 from beancount.query import query_compile
 from beancount.query import query_env
 from beancount.query import query_execute
-#from beancount.query import query_render
+from beancount.query import query_render
 from beancount.core import data
 from beancount.reports import table
+from beancount.utils import misc_utils
 
 
 HISTORY_FILENAME = "~/.bean-shell-history"
@@ -64,6 +67,22 @@ class BQLShell(cmd.Cmd):
         self.env_entries = query_env.FilterEntriesEnvironment()
         self.env_postings = query_env.FilterPostingsEnvironment()
 
+        self.initialize_vars()
+
+    def initialize_vars(self):
+        self.vars = {
+            'pager': os.environ.get('PAGER', None)
+            }
+
+    def get_pager(self):
+        """Create and return a context manager to write to, a pager subprocess if required.
+
+        Returns:
+          A pair of a file object to write to, and a pipe object to wait on (or
+        None if not necessary to wait).
+        """
+        return misc_utils.pager(self.vars.get('pager', None))
+
     def cmdloop(self):
         "Override cmdloop to handle keyboard interrupts."
         while True:
@@ -97,7 +116,9 @@ class BQLShell(cmd.Cmd):
         # Compile the print statement.
         c_from = query_compile.compile_from(print_stmt.from_clause, self.env_entries)
         c_print = query_parser.Print(c_from)
-        query_execute.execute_print(c_print, self.entries, self.options_map, sys.stdout)
+
+        with self.get_pager() as file:
+            query_execute.execute_print(c_print, self.entries, self.options_map, file)
 
     def on_Select(self, select):
         # Compile the select statement.
@@ -109,6 +130,7 @@ class BQLShell(cmd.Cmd):
         except query_compile.CompilationError as exc:
             print('ERROR: {}.'.format(str(exc).rstrip('.')))
             return
+
         # Execute it to obtain the result rows.
         result_types, result_rows = query_execute.execute_query(query,
                                                                 self.entries,
@@ -118,9 +140,8 @@ class BQLShell(cmd.Cmd):
         if not result_rows:
             print("(empty)")
         else:
-            #query_render.render(result_types, result_rows)
-            table_ = table.create_table(result_rows)
-            table.render_table(table_, sys.stdout, 'text')
+            with self.get_pager() as file:
+                query_render.render_text(result_types, result_rows, file)
 
     def on_Journal(self, select):
         raise NotImplementedError
