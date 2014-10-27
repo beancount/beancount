@@ -14,6 +14,8 @@ import operator
 
 from beancount.core.amount import Decimal
 from beancount.core.data import Transaction
+from beancount.core.compare import hash_entry
+from beancount.core import amount
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import data
@@ -93,35 +95,35 @@ class Weekday(c.EvalFunction):
 
 ## FIXME: Specialize both of these.
 
-class Units(c.EvalFunction):
-    __intypes__ = [(position.Position, inventory.Inventory)]
+class UnitsPosition(c.EvalFunction):
+    __intypes__ = [position.Position]
 
     def __init__(self, operands):
-        super().__init__(operands, inventory.Inventory)
+        super().__init__(operands, amount.Amount)
 
     def __call__(self, posting):
         args = self.eval_args(posting)
         return args[0].get_amount()
 
-class Cost(c.EvalFunction):
-    __intypes__ = [(position.Position, inventory.Inventory)]
+class CostPosition(c.EvalFunction):
+    __intypes__ = [position.Position]
 
     def __init__(self, operands):
-        super().__init__(operands, inventory.Inventory)
+        super().__init__(operands, position.Position)
 
     def __call__(self, posting):
         args = self.eval_args(posting)
-        return args[0].get_cost()
+        return args[0].at_cost()
 
 SIMPLE_FUNCTIONS = {
-    'str'     : Str,
-    'length'  : Length,
-    'units'   : Units,
-    'cost'    : Cost,
-    'year'    : Year,
-    'month'   : Month,
-    'day'     : Day,
-    'weekday' : Weekday,
+    'str'                          : Str,
+    'length'                       : Length,
+    ('units', position.Position)   : UnitsPosition,
+    ('cost', position.Position)    : CostPosition,
+    'year'                         : Year,
+    'month'                        : Month,
+    'day'                          : Day,
+    'weekday'                      : Weekday,
     }
 
 
@@ -167,8 +169,7 @@ class Sum(c.EvalAggregator):
     def finalize(self, store):
         return store[self.handle]
 
-class SumPosition(c.EvalAggregator):
-    __intypes__ = [position.Position]
+class SumBase(c.EvalAggregator):
 
     def __init__(self, operands):
         super().__init__(operands, inventory.Inventory)
@@ -179,12 +180,29 @@ class SumPosition(c.EvalAggregator):
     def initialize(self, store):
         store[self.handle] = inventory.Inventory()
 
+    def finalize(self, store):
+        return store[self.handle]
+
+class SumAmount(SumBase):
+    __intypes__ = [amount.Amount]
+
+    def update(self, store, posting):
+        value = self.eval_args(posting)[0]
+        store[self.handle].add_amount(value)
+
+class SumPosition(SumBase):
+    __intypes__ = [position.Position]
+
     def update(self, store, posting):
         value = self.eval_args(posting)[0]
         store[self.handle].add_position(value)
 
-    def finalize(self, store):
-        return store[self.handle]
+class SumInventory(SumBase):
+    __intypes__ = [inventory.Inventory]
+
+    def update(self, store, posting):
+        value = self.eval_args(posting)[0]
+        store[self.handle].update(value)
 
 class First(c.EvalAggregator):
     __intypes__ = [object]
@@ -266,19 +284,28 @@ class Max(c.EvalAggregator):
         return store[self.handle]
 
 AGGREGATOR_FUNCTIONS = {
-    ('sum', position.Position) : SumPosition,
-    'sum'                      : Sum,
-    'count'                    : Count,
-    'first'                    : First,
-    'last'                     : Last,
-    'min'                      : Min,
-    'max'                      : Max,
+    ('sum', amount.Amount)       : SumAmount,
+    ('sum', position.Position)   : SumPosition,
+    ('sum', inventory.Inventory) : SumInventory,
+    'sum'                        : Sum,
+    'count'                      : Count,
+    'first'                      : First,
+    'last'                       : Last,
+    'min'                        : Min,
+    'max'                        : Max,
     }
 
 
 
 
 # Column accessors for entries.
+
+class IdEntryColumn(c.EvalColumn):
+    def __init__(self):
+        super().__init__(str)
+
+    def __call__(self, entry):
+        return hash_entry(entry)
 
 class TypeEntryColumn(c.EvalColumn):
     def __init__(self):
@@ -383,6 +410,7 @@ class FilterEntriesEnvironment(c.CompilationEnvironment):
     """
     context_name = 'FROM clause'
     columns = {
+        'id'        : IdEntryColumn,
         'type'      : TypeEntryColumn,
         'filename'  : FilenameEntryColumn,
         'lineno'    : LineNoEntryColumn,
@@ -402,6 +430,13 @@ class FilterEntriesEnvironment(c.CompilationEnvironment):
 
 
 # Column accessors for postings.
+
+class IdColumn(c.EvalColumn):
+    def __init__(self):
+        super().__init__(str)
+
+    def __call__(self, posting):
+        return hash_entry(posting.entry)
 
 class TypeColumn(c.EvalColumn):
     def __init__(self):
@@ -520,6 +555,7 @@ class FilterPostingsEnvironment(c.CompilationEnvironment):
     """
     context_name = 'WHERE clause'
     columns = {
+        'id'        : IdColumn,
         'type'      : TypeColumn,
         'filename'  : FilenameColumn,
         'lineno'    : LineNoColumn,
