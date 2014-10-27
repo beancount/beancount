@@ -15,6 +15,7 @@ import operator
 from beancount.core.amount import Decimal
 from beancount.core.data import Transaction
 from beancount.core.compare import hash_entry
+from beancount.core import complete
 from beancount.core import amount
 from beancount.core import position
 from beancount.core import inventory
@@ -92,8 +93,6 @@ class Weekday(c.EvalFunction):
 
 
 # Operation on inventories.
-
-## FIXME: Specialize both of these.
 
 class UnitsPosition(c.EvalFunction):
     __intypes__ = [position.Position]
@@ -550,6 +549,20 @@ class ChangeColumn(c.EvalColumn):
     def __call__(self, posting):
         return posting.position
 
+class PriceColumn(c.EvalColumn):
+    def __init__(self):
+        super().__init__(amount.Amount)
+
+    def __call__(self, posting):
+        return posting.price
+
+class WeightColumn(c.EvalColumn):
+    def __init__(self):
+        super().__init__(amount.Amount)
+
+    def __call__(self, posting):
+        return complete.get_balance_amount(posting)
+
 class FilterPostingsEnvironment(c.CompilationEnvironment):
     """An execution context that provides access to attributes on Postings.
     """
@@ -572,6 +585,8 @@ class FilterPostingsEnvironment(c.CompilationEnvironment):
         'number'    : NumberColumn,
         'currency'  : CurrencyColumn,
         'change'    : ChangeColumn,
+        'price'     : PriceColumn,
+        'weight'    : WeightColumn,
         }
     functions = SIMPLE_FUNCTIONS
 
