@@ -218,6 +218,14 @@ precise balances throughout, but no manual input is required.
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Idea for a plugin: Create a new plugin that automatically inserts legs for
+    the "Trading Accounts" methods described here:
+    http://wiki.gnucash.org/wiki/Trading_Accounts
+    http://www.mscs.dal.ca/~selinger/accounting/tutorial.html
+    http://www.mscs.dal.ca/~selinger/accounting/gnucash.html
+    This should be implementable via a plugin.
+    The resulting Conversions entry should be empty...
+
   - Treeify does not produce the correct output on this input because of the
     lone Equity root account, fix this:
 
