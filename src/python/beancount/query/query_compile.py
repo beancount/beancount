@@ -334,8 +334,11 @@ class CompilationEnvironment:
             try:
                 return self.functions[name](operands)
             except KeyError:
-                raise CompilationError("Invalid function name '{}' in {} context.".format(
-                    name, self.context_name))
+                signature = '{}({})'.format(name,
+                                            ', '.join(operand.dtype.__name__
+                                                      for operand in operands))
+                raise CompilationError("Invalid function '{}' in {} context".format(
+                    signature, self.context_name))
 
 
 class AttributeColumn(EvalColumn):
