@@ -19,6 +19,11 @@ beancount: TODO
     update semantics is to _replace_ the previous values, and that's obviously
     not what we do.
 
+  - Rename Position.get_amount() -> Position.get_units(). Make sure the
+    terminology matches that of Inventory.
+
+  - I think we should remove Inventory.get_amounts(), replace by get_units().
+
   - Revise beancount.loader.load() to beancount.loader.load_file() + alias, as
     for the parser.
 

@@ -170,9 +170,43 @@ class Inventory:
         return [Amount(number, currency)
                 for currency, number in amounts_dict.items()]
 
+    def get_units(self):
+        """Return an inventory that represent unit values for all positions
+        in this inventory, stripping the costs and merging solely by unit.
+
+        For example, an inventory that contains these lots:
+
+           2 GOOGL
+           3 GOOG {300.00 USD}
+           4 GOOG {310.00 USD / 2014-10-28}
+
+        will provide:
+
+           2 GOOGL
+           7 GOOG
+
+        Returns:
+          An instance of Inventory.
+        """
+        cost_inventory = Inventory()
+        for position in self.positions:
+            cost_inventory.add_amount(position.get_amount())
+        return cost_inventory
+
     def get_cost(self):
         """Return an inventory of Amounts that represent book values for all positions
         in this inventory.
+
+        For example, an inventory that contains these lots:
+
+           2 GOOGL
+           3 GOOG {300.00 USD}
+           4 GOOG {310.00 USD / 2014-10-28}
+
+        will provide:
+
+           2 GOOGL
+           2140 USD
 
         Returns:
           An instance of Inventory.
