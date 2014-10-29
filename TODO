@@ -239,6 +239,12 @@ precise balances throughout, but no manual input is required.
       Liabilities
 
 
+  - Treeify: "find $PWD -print | treeify -F" leaves the prefix / rendered. This
+    is wrong. Also the same for "find . -print | treeify -F", the prefix "./"
+    is still there. Fix this.
+
+
+
   - Make options to render *all* reports with
       --lots (default)
       --units
