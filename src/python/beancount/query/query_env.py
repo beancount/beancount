@@ -20,6 +20,7 @@ from beancount.core import amount
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import data
+from beancount.core import account
 from beancount.query import query_compile as c
 
 
@@ -92,6 +93,20 @@ class Weekday(c.EvalFunction):
         return args[0].strftime('%a')
 
 
+# Operations on accounts.
+
+class Parent(c.EvalFunction):
+    "Get the parent name of the account."
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, posting):
+        args = self.eval_args(posting)
+        return account.parent(args[0])
+
+
 # Operation on inventories.
 
 class UnitsPosition(c.EvalFunction):
@@ -117,6 +132,7 @@ class CostPosition(c.EvalFunction):
 SIMPLE_FUNCTIONS = {
     'str'                          : Str,
     'length'                       : Length,
+    'parent'                       : Parent,
     ('units', position.Position)   : UnitsPosition,
     ('cost', position.Position)    : CostPosition,
     'year'                         : Year,
