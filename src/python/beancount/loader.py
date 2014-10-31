@@ -19,11 +19,14 @@ LoadError = collections.namedtuple('LoadError', 'source message entry')
 
 
 # List of default plugins to run.
-DEFAULT_PLUGINS = [
+DEFAULT_PLUGINS_PRE = [
     "beancount.ops.pad",
     "beancount.ops.implicit_prices",
-    "beancount.ops.balance",
     "beancount.ops.documents",
+    ]
+
+DEFAULT_PLUGINS_POST = [
+    "beancount.ops.balance",
     ]
 
 
@@ -146,7 +149,9 @@ def run_transformations(entries, parse_errors, options_map, log_timings):
     if options_map['plugin_processing_mode'] == 'raw':
         plugins_iter = options_map["plugin"]
     elif options_map['plugin_processing_mode'] == 'default':
-        plugins_iter = itertools.chain(DEFAULT_PLUGINS, options_map["plugin"])
+        plugins_iter = itertools.chain(DEFAULT_PLUGINS_PRE,
+                                       options_map["plugin"],
+                                       DEFAULT_PLUGINS_POST)
     else:
         assert "Invalid value for plugin_processing_mode: {}".format(
             options_map['plugin_processing_mode'])
