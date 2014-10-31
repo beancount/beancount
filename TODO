@@ -240,6 +240,14 @@ precise balances throughout, but no manual input is required.
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Idea for a plugin: Create a new plugin that automatically inserts legs for
+    the "Trading Accounts" methods described here:
+    http://wiki.gnucash.org/wiki/Trading_Accounts
+    http://www.mscs.dal.ca/~selinger/accounting/tutorial.html
+    http://www.mscs.dal.ca/~selinger/accounting/gnucash.html
+    This should be implementable via a plugin.
+    The resulting Conversions entry should be empty...
+
   - Idea: in the query language, provide a special Account:Payee field, in
     order to play with the notion of payee-as-subacccount often discussed. You
     could also provide a clean_payee() function, that would attempt to clean
@@ -281,6 +289,12 @@ precise balances throughout, but no manual input is required.
       Income:Equity-Bonus:RSU           -100.00 RSU
       Income:Equity-Bonus:Vested        -172.00 USD
       Liabilities
+
+
+  - Treeify: "find $PWD -print | treeify -F" leaves the prefix / rendered. This
+    is wrong. Also the same for "find . -print | treeify -F", the prefix "./"
+    is still there. Fix this.
+
 
 
   - Make options to render *all* reports with
