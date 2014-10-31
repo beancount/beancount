@@ -912,3 +912,7 @@ class TestExecuteUseCases(QueryBase):
 
 # Look at 401k
 # select account, sum(units(change)) where account ~ '2014.*401k' group by 1 order by 1;
+
+
+# FIXME: from mailing-list:
+# SELECT account, payee, sum(change) WHERE account ~ "Payable" OR account ~ "Receivable" GROUP BY 1, 2;
