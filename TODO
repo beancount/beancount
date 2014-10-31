@@ -240,6 +240,12 @@ precise balances throughout, but no manual input is required.
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Idea: in the query language, provide a special Account:Payee field, in
+    order to play with the notion of payee-as-subacccount often discussed. You
+    could also provide a clean_payee() function, that would attempt to clean
+    the ugly payee names!
+
+
   - Idea! Allow the selection or reporting of all the postings since their last
     balance check in each account. These postings can be called "unverified"
     and it should be possible to report just those.

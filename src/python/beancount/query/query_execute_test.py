@@ -800,6 +800,26 @@ class TestExecuteOptions(QueryBase):
                 ])
 
 
+class TestExecuteUseCases(QueryBase):
+    """Testing all the use cases from the proposal."""
+
+
+
+
+
+# FIXME: Create test cases for all query_env, including evaluation. The list of
+# tests is currently not exhaustive.
+
+
+
+
+# FIXME: This will be a great test query to look at the special 'balance' column:
+# select date, narration, account, change where account ~ 'Van.*Cash' ;
+
+
+# FIXME: This reports an ugly error -- fix this:
+# print from has_account ~ 'IRA:Cash' ;
+
 
 
 # balances,bal,trial,ledger:
@@ -888,3 +908,7 @@ class TestExecuteOptions(QueryBase):
 #   GROUP BY root_account, month
 # )
 # GROUP BY root_account
+
+
+# Look at 401k
+# select account, sum(units(change)) where account ~ '2014.*401k' group by 1 order by 1;
