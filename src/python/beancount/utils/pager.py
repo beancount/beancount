@@ -132,6 +132,7 @@ class ConditionalPager:
 
         # Wait for the subprocess (if we have one).
         if self.pipe:
+            self.file.close()
             self.pipe.wait()
 
         # Absorb broken pipes.
