@@ -147,6 +147,13 @@ class TestMiscUtils(unittest.TestCase):
         # capture is disabled.
         self.assertLess(-1, max_width)
 
+    def test_get_screen_height(self):
+        max_height = misc_utils.get_screen_height()
+        self.assertTrue(type(int), max_height)
+        # Note: Allow zero because the console function fails in nose when
+        # capture is disabled.
+        self.assertLess(-1, max_height)
+
     def test_cmptuple(self):
         One = misc_utils.cmptuple('Bla', 'a b c')
         Two = misc_utils.cmptuple('Bli', 'd e f')

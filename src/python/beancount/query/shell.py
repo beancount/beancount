@@ -20,6 +20,7 @@ from beancount.query import query_render
 from beancount.core import data
 from beancount.reports import table
 from beancount.utils import misc_utils
+from beancount.utils import pager
 
 
 HISTORY_FILENAME = "~/.bean-shell-history"
@@ -81,7 +82,8 @@ class BQLShell(cmd.Cmd):
           A pair of a file object to write to, and a pipe object to wait on (or
         None if not necessary to wait).
         """
-        return misc_utils.pager(self.vars.get('pager', None))
+        return pager.ConditionalPager(self.vars.get('pager', None),
+                                      minlines=misc_utils.get_screen_height())
 
     def cmdloop(self):
         "Override cmdloop to handle keyboard interrupts."

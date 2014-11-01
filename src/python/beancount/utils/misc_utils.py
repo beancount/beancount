@@ -77,47 +77,6 @@ def swallow(*exception_types):
             raise
 
 
-DEFAULT_PAGER = 'more'
-
-@contextlib.contextmanager
-def pager(command=None):
-    """Create a subprocess to write output to and wait for completion.
-
-    This contextmanager is intended to be used to pipe output to a pager and
-    wait on the pager to complete before continuing. Simply write to the file
-    object and upon exit we close the file object. This also silences broken
-    pipe errors triggered by the user exiting the sub-process, and recovers from
-    a failing pager command by just using stdout.
-
-    Args:
-      command: A string, the shell command to run as a sub-process. This is run
-        in a sub-shell with the full user environment. The intention is that you
-        will use the PAGER environment variable.  If left to None, we initialize
-        it to the PAGER.
-    Yields:
-      A file object to write to.
-    """
-    if command is None:
-        command = os.environ.get('PAGER', DEFAULT_PAGER)
-    if not command:
-        command = DEFAULT_PAGER
-
-    try:
-        pipe = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE)
-    except OSError as exc:
-        logging.error("Invalid pager: {}".format(exc))
-        yield sys.stdout
-        sys.stdout.flush()
-    else:
-        try:
-            stdin_wrapper = io.TextIOWrapper(pipe.stdin, 'utf-8')
-            yield stdin_wrapper
-            stdin_wrapper.close()
-            pipe.wait()
-        except BrokenPipeError:
-            pass
-
-
 def groupby(keyfun, elements):
     """Group the elements as a dict of lists, where the key is computed using the
     function 'keyfun'.
@@ -329,6 +288,21 @@ def get_screen_width():
     except io.UnsupportedOperation:
         return 0
     return curses.tigetnum('cols')
+
+
+def get_screen_height():
+    """Return the height of the terminal that runs this program.
+
+    Returns:
+      An integer, the number of characters the screen is high.
+      Return 0 if the terminal cannot be initialized.
+    """
+    import curses
+    try:
+        curses.setupterm()
+    except io.UnsupportedOperation:
+        return 0
+    return curses.tigetnum('lines')
 
 
 class TypeComparable:
