@@ -418,6 +418,7 @@ def generate_employment_income(employer_name,
 
         {date_begin} open Income:CC:Employer1:Vacation         VACCCY
         {date_begin} open Assets:CC:Employer1:Vacation         VACCCY
+        {date_begin} open Expenses:Vacation                    VACCCY
 
         {date_begin} open Expenses:Health:Life:GroupTermLife
         {date_begin} open Expenses:Health:Medical:Insurance
@@ -1221,6 +1222,14 @@ def generate_trip_entries(date_begin, date_end,
                     {account_credit}     {neg_amount:.2f} CCY
                     {account_expense}    {amount:.2f} CCY
                 """, **vars()))
+
+    # Consume the vacation days.
+    vacation_hrs = (date_end - date_begin).days * 8 # hrs/day
+    new_entries.extend(parse("""
+      {date_end} * "Consume vacation days"
+        Assets:CC:Employer1:Vacation -{vacation_hrs:.2f} VACCCY
+        Expenses:Vacation             {vacation_hrs:.2f} VACCCY
+    """, **vars()))
 
     # Generate events for the trip.
     new_entries.extend(parse("""
