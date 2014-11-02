@@ -18,9 +18,6 @@ beancount: TODO
   - Revise beancount.loader.load() to beancount.loader.load_file() + alias, as
     for the parser.
 
-  - Complete tutorial examples generation
-    * Write an automated test that runs it
-
   - Create a new command that spits out missing open directives (for doing
     demos without disabling the requirement of needing open directives).
 

@@ -31,6 +31,7 @@ COMMANDS = [
     ('accounts'                 , "bean-query {} accounts"),
     ('events'                   , "bean-query {} events"),
     ('stats-directives'         , "bean-query {} stats-directives"),
+
     ('stats-postings'           , "bean-query {} stats-postings"),
     ('holdings-csv'             , "bean-query -f csv {} holdings"),
     ]
@@ -58,6 +59,8 @@ def main():
 
         if path.getsize(errors_filename) == 0:
             os.remove(errors_filename)
+
+    return 0
 
 
 if __name__ == '__main__':
