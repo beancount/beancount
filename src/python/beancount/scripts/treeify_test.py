@@ -475,11 +475,11 @@ class TestTreeify(TestTreeifyBase):
     def test_width_wider(self):
         # The treeified column should be wider as it needs to.
         self.treeify_equal("""\
-          A:B       100.00 USD
-          A:B:C     101.00 USD
-          A:B:C:D   102.00 USD
+          Equity:B       100.00 USD
+          Equity:B:C     101.00 USD
+          Equity:B:C:D   102.00 USD
         """, """\
-          `-- A
+          `-- Equity
               `-- B           100.00 USD
                   `-- C       101.00 USD
                       `-- D   102.00 USD
@@ -489,11 +489,11 @@ class TestTreeify(TestTreeifyBase):
         # The treeified column should be of the same width even though it does
         # not need to.
         self.treeify_equal("""\
-          Abcdef:Bcdefg                100.00 USD
-          Abcdef:Bcdefg:Cdefgh         101.00 USD
-          Abcdef:Bcdefg:Cdefgh:Defghij 102.00 USD
+          Assets:Bcdefg                100.00 USD
+          Assets:Bcdefg:Cdefgh         101.00 USD
+          Assets:Bcdefg:Cdefgh:Defghij 102.00 USD
         """, """\
-          `-- Abcdef
+          `-- Assets
               `-- Bcdefg               100.00 USD
                   `-- Cdefgh           101.00 USD
                       `-- Defghij      102.00 USD
