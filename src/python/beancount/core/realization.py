@@ -202,7 +202,7 @@ def contains(real_account, account_name):
     return get(real_account, account_name) is not None
 
 
-def realize(entries, min_accounts=None):
+def realize(entries, min_accounts=None, compute_balance=True):
     """Group entries by account, into a "tree" of realized accounts. RealAccount's
     are essentially containers for lists of postings and the final balance of
     each account, and may be non-leaf accounts (used strictly for organizing
@@ -241,6 +241,11 @@ def realize(entries, min_accounts=None):
 
     Args:
       entries: A list of directives.
+      min_accounts: A list of strings, account names to ensure we create,
+        regardless of whether there are postings on those accounts or not.
+        This can be used to ensure the root accounts all exist.
+      compute_balance: A boolean, true if we should compute the final
+        balance on the realization.
     Returns:
       The root RealAccount instance.
     """
@@ -252,7 +257,8 @@ def realize(entries, min_accounts=None):
     for account_name, postings in postings_map.items():
         real_account = get_or_create(real_root, account_name)
         real_account.postings = postings
-        real_account.balance = complete.compute_postings_balance(postings)
+        if compute_balance:
+            real_account.balance = complete.compute_postings_balance(postings)
 
     # Ensure a minimum set of accounts that should exist. This is typically
     # called with an instance of AccountTypes to make sure that those exist.
