@@ -13,6 +13,7 @@ import re
 import operator
 
 from beancount.core.amount import Decimal
+from beancount.core.amount import ZERO
 from beancount.core.data import Transaction
 from beancount.core.compare import hash_entry
 from beancount.core import complete
@@ -581,6 +582,20 @@ class CurrencyColumn(c.EvalColumn):
     def __call__(self, posting):
         return posting.position.lot.currency
 
+class CostNumberColumn(c.EvalColumn):
+    def __init__(self):
+        super().__init__(Decimal)
+
+    def __call__(self, posting):
+        return posting.position.lot.cost.number if posting.position.lot.cost else ZERO
+
+class CostCurrencyColumn(c.EvalColumn):
+    def __init__(self):
+        super().__init__(str)
+
+    def __call__(self, posting):
+        return posting.position.lot.cost.currency if posting.position.lot.cost else ''
+
 class ChangeColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(position.Position)
@@ -607,25 +622,27 @@ class FilterPostingsEnvironment(c.CompilationEnvironment):
     """
     context_name = 'WHERE clause'
     columns = {
-        'id'        : IdColumn,
-        'type'      : TypeColumn,
-        'filename'  : FilenameColumn,
-        'lineno'    : LineNoColumn,
-        'date'      : DateColumn,
-        'year'      : YearColumn,
-        'month'     : MonthColumn,
-        'day'       : DayColumn,
-        'flag'      : FlagColumn,
-        'payee'     : PayeeColumn,
-        'narration' : NarrationColumn,
-        'tags'      : TagsColumn,
-        'links'     : LinksColumn,
-        'account'   : AccountColumn,
-        'number'    : NumberColumn,
-        'currency'  : CurrencyColumn,
-        'change'    : ChangeColumn,
-        'price'     : PriceColumn,
-        'weight'    : WeightColumn,
+        'id'            : IdColumn,
+        'type'          : TypeColumn,
+        'filename'      : FilenameColumn,
+        'lineno'        : LineNoColumn,
+        'date'          : DateColumn,
+        'year'          : YearColumn,
+        'month'         : MonthColumn,
+        'day'           : DayColumn,
+        'flag'          : FlagColumn,
+        'payee'         : PayeeColumn,
+        'narration'     : NarrationColumn,
+        'tags'          : TagsColumn,
+        'links'         : LinksColumn,
+        'account'       : AccountColumn,
+        'number'        : NumberColumn,
+        'currency'      : CurrencyColumn,
+        'cost_number'   : CostNumberColumn,
+        'cost_currency' : CostCurrencyColumn,
+        'change'        : ChangeColumn,
+        'price'         : PriceColumn,
+        'weight'        : WeightColumn,
         }
     functions = copy.copy(SIMPLE_FUNCTIONS)
 
