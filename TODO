@@ -151,10 +151,6 @@ beancount: TODO
 
 ** Documentation / Ongoing
 
-  - To Query Language proposal: add open:DATE and close:DATE
-  - Send email about doc.
-
-
   - Is there a script somewhere that can accept a CSV file and render a CSV
 
     pivot table from it?  The reason we need support is in order to carry out
@@ -167,8 +163,6 @@ beancount: TODO
     legs explanation
 
   - Write out the taxes section, you have all the details, no need to wait
-
-  - Example file and document, write a generator script
 
   - Clean up this TODO file, reorganize sections, remove what's redundant from
     the proposal files.
