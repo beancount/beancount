@@ -242,6 +242,10 @@ precise balances throughout, but no manual input is required.
     and it should just work automatically. It should pull the list of operating
     currencies and generate an appropriate list of SELECT targets.
 
+  - Create an "AROUND(date, [numdays])" function that matches dates some number
+    of days before or after. We should be able to use this to view transactions
+    occurring near another transaction.
+
 
 * Current / Misc / To Be Classified
 
