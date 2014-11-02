@@ -5,6 +5,10 @@ This script will inspect a text file and attempt to find a vertically
 left-aligned column of text that contains identifiers with multiple components,
 such as "Assets:US:Bank:Checking", and replace those by a tree-like structure rendered
 in ASCII, inserting new empty lines where necessary to create the tree.
+
+Note: If your paths have spaces in them, this will not work. Space is used as a
+delimiter to detect the end of a column. You can customize the delimiter with an
+option.
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
 __license__ = 'GNU GPL v2'
@@ -16,12 +20,15 @@ import sys
 from pprint import pprint
 
 
-def find_column(lines, pattern):
+def find_column(lines, pattern, delimiter):
     """Find a valid column with hierarchical data in the text lines.
 
     Args:
       lines: A list of strings, the contents of the input.
       pattern: A regular expression for the hierarchical entries.
+      delimiter: A regular expression that dictates how we detect the
+        end of a column. Normally this is a single space. If the patterns
+        contain spaces, you will need to increase this.
     Returns:
       A tuple of
         matches: A list of (line-number, name) tuples where 'name' is the
@@ -34,7 +41,7 @@ def find_column(lines, pattern):
     """
     # A mapping of the line beginning position to its match object.
     beginnings = collections.defaultdict(list)
-    pattern_and_whitespace = "({})\s*(?P<ws>.|$)".format(pattern)
+    pattern_and_whitespace = "({})(?P<ws>{}.|$)".format(pattern, delimiter)
     for no, line in enumerate(lines):
         for match in re.finditer(pattern_and_whitespace, line):
             beginnings[match.start()].append((no, line, match))
@@ -233,6 +240,12 @@ def main():
                                  r"(:[A-Z][A-Za-z0-9-_']*)+\b"),
                         help="Pattern for repeatable components")
 
+    parser.add_argument('-d', '--delimiter', action='store',
+                        default=r"[ \t]+",
+                        help=("Delimiter pattern to detect the end of a column text. "
+                              "If your pattens contain strings, you may want to set this "
+                              "to a longer string, like ' {2,}'"))
+
     parser.add_argument('-s', '--split', action='store',
                         default=":",
                         help="Pattern splitting into components")
@@ -249,7 +262,7 @@ def main():
     if args.filenames:
         # Note: you could spit an error if the other options are set: "you may
         # not use --filenames and specify a pattern or split" or somesuch.
-        args.pattern = r"\b([^ \t]*)(/[^ \t]*)+\b"
+        args.pattern = r"([^ \t]*)(/[^ \t]*)+"
         args.split = r"/"
 
     # Open input and output files.
@@ -258,7 +271,7 @@ def main():
     lines = list(input_file)
 
     # Find a column in the file. If not found, this will return None.
-    result = find_column(lines, args.pattern)
+    result = find_column(lines, args.pattern, args.delimiter)
     if result is None:
         print("WARNING: Could not find any valid column in input",
               file=sys.stderr)
@@ -267,6 +280,10 @@ def main():
         output_file.close()
         return -1
     column_matches, left, right = result
+
+    # print(column_matches, left, right)
+    # raise SystemExit
+
 
     # Process the input lines again, this time with the column.
     root = create_tree(column_matches, args.split)
@@ -322,4 +339,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except BrokenPipeError:
+        pass
