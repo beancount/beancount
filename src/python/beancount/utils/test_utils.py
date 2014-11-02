@@ -25,7 +25,8 @@ def find_repository_root(filename):
     Returns:
       A string, the root directory.
     """
-    while not path.exists(path.join(filename, 'README')):
+    while not all(path.exists(path.join(filename, sigfile))
+                  for sigfile in ('PKGINFO', 'COPYING', 'README')):
         filename = path.dirname(filename)
     return filename
 
