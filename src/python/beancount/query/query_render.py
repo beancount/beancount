@@ -83,7 +83,7 @@ def render_text(result_types, result_rows, file):
             for col, exp_value in enumerate(exp_row):
                 col_widths[col] = max(col_widths[col], len(exp_value))
         else:
-            # some of the values rendered to more than one line; we need to
+            # Some of the values rendered to more than one line; we need to
             # render them on separate lines and insert filler.
             exp_row = [exp_value if isinstance(exp_value, list) else (exp_value,)
                        for exp_value in exp_row]
@@ -102,14 +102,8 @@ def render_text(result_types, result_rows, file):
         formats.append('{{:{}{}.{}}}'.format(align, width, width))
     line_formatter = '| ' + ' | '.join(formats) + ' |\n'
 
-    # file.write(line_formatter)
-    # return
-
     # Render each string row to a single line.
-    #print(line_formatter)
     for str_row in str_rows:
-        # file.write(str(str_row))
-        # file.write('\n')
         line = line_formatter.format(*str_row)
         file.write(line)
 
@@ -134,9 +128,11 @@ def render_text__old(result_types, result_rows, file):
     table.render_table(table_, file, 'text')
 
 
+# FIXME: We need to figure out rendering precision correctly. In order to do
+# this, process all the entries and look at the maximum precision used. You
+# should be able to compute a dictionary of {commodity: precision} from the list of entries. This should be tested independently.
+
 # FIXME: You need to render the header.
-#
-# FIXME: We need to figure out rendering precision correctly.
 #
 # FIXME: Check out if it's possible to precompile a format string for execution
 # the same way it can be done with a regexp, to render faster.
