@@ -2,6 +2,7 @@ import os
 import re
 from os import path
 
+from beancount.parser import cmptest
 from beancount.utils import test_utils
 from beancount.scripts import doctor
 from beancount.scripts import directories_test
@@ -109,3 +110,32 @@ class TestScriptCheckDirectories(directories_test.TestScriptCheckDirectories):
                           'Expenses:Restaurant:Sub',
                           'Assets:Extra',
                           'Assets/Extra'}, clean_matches)
+
+
+class TestScriptMissingOpen(cmptest.TestCase):
+
+    @test_utils.docfile
+    def test_missing_open(self, filename):
+        """
+            2013-01-01 open Expenses:Movie
+            2013-01-01 open Assets:Cash
+
+            2014-03-03 * "Something"
+              Expenses:Restaurant   50.02 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
+
+            2014-04-04 * "Something"
+              Expenses:Alcohol      10.30 USD
+              Expenses:Movie        25.00 USD
+              Assets:Cash
+        """
+        with test_utils.capture() as stdout:
+            test_utils.run_with_args(doctor.main, ['missing-open', filename])
+
+        self.assertEqualEntries("""
+
+            2014-03-03 open Expenses:Restaurant
+            2014-04-04 open Expenses:Alcohol
+
+        """, stdout.getvalue())

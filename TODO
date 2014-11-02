@@ -16,9 +16,6 @@ beancount: TODO
   - Revise beancount.loader.load() to beancount.loader.load_file() + alias, as
     for the parser.
 
-  - Create a new command that spits out missing open directives (for doing
-    demos without disabling the requirement of needing open directives).
-
   - Create a two-column tool to convert one column into two columns (for text
     mode balance sheet and income statement). The equivalent UNIX tool does not
     exist. Select columns by regexp.

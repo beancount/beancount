@@ -16,6 +16,7 @@ from beancount.parser import printer
 from beancount.core import compare
 from beancount.core import data
 from beancount.core import complete
+from beancount.core import getters
 from beancount import loader
 from beancount.utils import misc_utils
 from beancount.scripts import directories
@@ -209,6 +210,32 @@ def do_context(filename, args):
             changed = (account, hash(position)) not in before_hashes
             print(position_line.format('!' if changed else '', account, str(position)))
         print()
+
+
+def do_missing_open(filename, args):
+    """Print out Open directives that are missing for the given input file.
+
+    This can be useful during demos in order to quickly generate all the
+    required Open directives without having to type them manually.
+
+    Args:
+      filename: A string, which consists in the filename.
+      args: A tuple of the rest of arguments. We're expecting the first argument
+        to be an integer as a string.
+    """
+    entries, errors, options = loader.load(filename)
+
+    # Get accounts usage and open directives.
+    first_use_map, _ = getters.get_accounts_use_map(entries)
+    open_close_map = getters.get_account_open_close(entries)
+
+    new_entries = []
+    for account, first_use_date in first_use_map.items():
+        if account not in open_close_map:
+            new_entries.append(
+                data.Open(data.Source(filename, 0), first_use_date, account, None))
+
+    printer.print_entries(data.sort(new_entries))
 
 
 def main():

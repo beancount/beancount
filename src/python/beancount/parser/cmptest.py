@@ -39,7 +39,7 @@ class TestCase(unittest.TestCase):
                     oss.write(printer.format_entry(entry))
                     oss.write('\n')
             if actual_missing:
-                oss.write("Missing from from actual:\n\n")
+                oss.write("Missing from from actual set:\n\n")
                 for entry in actual_missing:
                     oss.write(printer.format_entry(entry))
                     oss.write('\n')
