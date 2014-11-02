@@ -1,4 +1,3 @@
-import re
 import tempfile
 import datetime
 import subprocess

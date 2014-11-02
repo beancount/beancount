@@ -2,7 +2,6 @@
 """
 import collections
 
-from beancount.core import data
 from beancount.core import getters
 from beancount.core import realization
 

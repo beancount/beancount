@@ -2,7 +2,6 @@ import re
 import unittest
 
 from beancount import loader
-from beancount.parser import printer
 
 
 class TestLeafOnly(unittest.TestCase):

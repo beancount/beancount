@@ -2,7 +2,6 @@ import re
 import unittest
 
 from beancount import loader
-from beancount.parser import printer
 
 
 class TestOneCommodity(unittest.TestCase):

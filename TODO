@@ -3,8 +3,6 @@ beancount: TODO
 * Requirements for Shipping 1.0
 ** Current
 
-  - Make unused accounts and duplicates checking into optional plugins.
-
   - Complete presentation
 
   - Rename compute_balance_amount() -> compute_weight() and provide functions to

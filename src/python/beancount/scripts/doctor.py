@@ -16,7 +16,6 @@ from beancount.parser import printer
 from beancount.core import compare
 from beancount.core import data
 from beancount.core import complete
-from beancount.core import getters
 from beancount import loader
 from beancount.utils import misc_utils
 from beancount.scripts import directories

@@ -3,25 +3,11 @@
 This module contains reports that can convert an input file into other formats,
 such as Ledger.
 """
-import datetime
 import re
 import io
-import textwrap
-
-import dateutil.parser
 
 from beancount.reports import report
-from beancount.reports import table
-from beancount.reports import tree_table
-from beancount.parser import printer
-from beancount.parser import options
-from beancount.core import data
-from beancount.core import realization
-from beancount.core import getters
-from beancount.core import account_types
-from beancount.core import complete
 from beancount.core import amount
-from beancount.utils import misc_utils
 
 
 def quote(match):
@@ -149,8 +135,9 @@ class LedgerPrinter:
         oss.write(';; Close: {e.date:%Y/%m/%d} close {e.account}\n'.format(e=entry))
 
     def Price(_, entry, oss):
-        price_directive = 'P {e.date:%Y/%m/%d} 00:00:00 {e.currency:<16} {amount:>16}\n'.format(
-            e=entry, amount=str(entry.amount))
+        price_directive = (
+            'P {e.date:%Y/%m/%d} 00:00:00 {e.currency:<16} {amount:>16}\n'.format(
+            e=entry, amount=str(entry.amount)))
         oss.write(quote_currency(price_directive))
 
     def Event(_, entry, oss):

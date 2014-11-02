@@ -8,8 +8,6 @@ import subprocess
 from os import path
 
 from beancount.utils import test_utils
-from beancount.utils import file_utils
-from beancount.scripts import bake
 
 
 class TestSetup(test_utils.TestCase):

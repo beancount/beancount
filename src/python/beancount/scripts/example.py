@@ -8,7 +8,6 @@ evaluation.
 import argparse
 import calendar
 import collections
-import copy
 import datetime
 import decimal
 import functools
@@ -22,21 +21,16 @@ import re
 import re
 import sys
 import textwrap
-from textwrap import dedent
 
-import dateutil
 from dateutil import rrule
 from dateutil.parser import parse as parse_datetime
 
 from beancount.core.amount import D
 from beancount.core.amount import ZERO
-from beancount.core.amount import ONE
 from beancount.core.account import join
 from beancount.core import data
-from beancount.core import flags
 from beancount.core import amount
 from beancount.core import inventory
-from beancount.core import account_types
 from beancount.core import realization
 from beancount.parser import parser
 from beancount.parser import printer
@@ -52,18 +46,18 @@ from beancount import loader
 ONE_DAY = datetime.timedelta(days=1)
 
 # Annual salary.
-annual_salary = D('120000')
+ANNUAL_SALARY = D('120000')
 
 # Annual vacation days.
-annual_vacation_days = D('15')
+ANNUAL_VACATION_DAYS = D('15')
 
 # Divisor of the annual salary to estimate the rent.
-rent_divisor = D('50')
-rent_increment = D('25')
+RENT_DIVISOR = D('50')
+RENT_INCREMENT = D('25')
 
 
 # A list of mock employers.
-employers = [
+EMPLOYERS = [
     ('Hooli', "1 Carloston Rd, Mountain Beer, CA"),
     ('BayBook', "1501 Billow Rd, Benlo Park, CA"),
     ('Babble', "1 Continuous Loop, Bupertina, CA"),
@@ -71,7 +65,7 @@ employers = [
     ]
 
 # Generic names of restaurants and grocery places to choose from.
-restaurant_names = ["Rose Flower",
+RESTAURANT_NAMES = ["Rose Flower",
                     "Cafe Modagor",
                     "Goba Goba",
                     "Kin Soy",
@@ -80,7 +74,7 @@ restaurant_names = ["Rose Flower",
                     "Jewel of Morroco",
                     "Chichipotle"]
 
-restaurant_narrations = ["Eating out {}".format(party_name)
+RESTAURANT_NARRATIONS = ["Eating out {}".format(party_name)
                          for party_name in ["with Joe",
                                             "with Natasha",
                                             "with Bill",
@@ -90,15 +84,15 @@ restaurant_narrations = ["Eating out {}".format(party_name)
                                             "alone",
                                             ""]]
 
-groceries_names = ["Onion Market",
+GROCERIES_NAMES = ["Onion Market",
                    "Good Moods Market",
                    "Corner Deli",
                    "Farmer Fresh"]
 
-home_name = "New Metropolis"
+HOME_NAME = "New Metropolis"
 
 
-trip_destinations = {
+TRIP_DESTINATIONS = {
     "los-angeles": [
         ("Mr. Marcel", "Expenses:Food:Restaurant", (40, 25)),
         ("Banana Leaf", "Expenses:Food:Restaurant", (25, 10)),
@@ -141,7 +135,7 @@ trip_destinations = {
 
 
 # Limits on allowed retirement contributions.
-retirement_limits = {2000: D('10500'),
+RETIREMENT_LIMITS = {2000: D('10500'),
                      2001: D('10500'),
                      2002: D('11000'),
                      2003: D('12000'),
@@ -160,7 +154,7 @@ retirement_limits = {2000: D('10500'),
                      2016: D('18000'),
                      None: D('18500')}
 
-file_preamble = """\
+FILE_PREAMBLE = """\
 ;; -*- mode: org; mode: beancount; -*-
 ;; Birth: {date_birth}
 ;; Dates: {date_begin} - {date_end}
@@ -226,12 +220,12 @@ def skipiter(iterable, num_skip):
       For example, skipiter(range(10), 3) yields [0, 3, 6, 9].
     """
     assert num_skip > 0
-    it = iter(iterable)
+    sit = iter(iterable)
     while 1:
-        value = next(it)
+        value = next(sit)
         yield value
         for _ in range(num_skip-1):
-            next(it)
+            next(sit)
 
 
 def date_iter(date_begin, date_end):
@@ -245,9 +239,9 @@ def date_iter(date_begin, date_end):
     """
     assert date_begin <= date_end
     date = date_begin
-    ONE_DAY =  datetime.timedelta(days=1)
+    one_day = datetime.timedelta(days=1)
     while date < date_end:
-        date += ONE_DAY
+        date += one_day
         yield date
 
 
@@ -286,8 +280,8 @@ def delay_dates(date_iter, delay_days_min, delay_days_max):
     dates = list(date_iter)
     last_date = dates[-1]
     last_date = last_date.date() if isinstance(last_date, datetime.datetime) else last_date
-    for dt in dates:
-        date = dt.date() if isinstance(dt, datetime.datetime) else dt
+    for dtime in dates:
+        date = dtime.date() if isinstance(dtime, datetime.datetime) else dtime
         date += datetime.timedelta(days=random.randint(delay_days_min, delay_days_max))
         if date >= last_date:
             break
@@ -438,16 +432,16 @@ def generate_employment_income(employer_name,
     biweekly_pay = annual_salary / 26
     gross = biweekly_pay
 
-    medicare      = gross * D('0.0231')
-    federal       = gross * D('0.2303')
-    state         = gross * D('0.0791')
-    city          = gross * D('0.0379')
-    sdi           = D('1.12')
+    medicare = gross * D('0.0231')
+    federal = gross * D('0.2303')
+    state = gross * D('0.0791')
+    city = gross * D('0.0379')
+    sdi = D('1.12')
 
     lifeinsurance = D('24.32')
-    dental        = D('2.90')
-    medical       = D('27.38')
-    vision        = D('42.30')
+    dental = D('2.90')
+    medical = D('27.38')
+    vision = D('42.30')
 
     fixed = (medicare + federal + state + city + sdi +
              dental + medical + vision)
@@ -455,16 +449,16 @@ def generate_employment_income(employer_name,
     # Calculate vacation hours per-pay.
     with decimal.localcontext() as ctx:
         ctx.prec = 4
-        vacation_hrs = (annual_vacation_days * D('8')) / D('26')
+        vacation_hrs = (ANNUAL_VACATION_DAYS * D('8')) / D('26')
 
     transactions = []
-    for dt in skipiter(rrule.rrule(rrule.WEEKLY, byweekday=rrule.TH,
-                                   dtstart=date_begin, until=date_end), 2):
-        date = dt.date()
+    for dtime in skipiter(rrule.rrule(rrule.WEEKLY, byweekday=rrule.TH,
+                                      dtstart=date_begin, until=date_end), 2):
+        date = dtime.date()
         year = date.year
 
         if not date_prev or date_prev.year != date.year:
-            contrib_retirement = retirement_limits.get(date.year, retirement_limits[None])
+            contrib_retirement = RETIREMENT_LIMITS.get(date.year, RETIREMENT_LIMITS[None])
             contrib_socsec = D('7000')
         date_prev = date
 
@@ -546,7 +540,7 @@ def generate_tax_accounts(year, date_max):
     amount_federal = D(max(random.normalvariate(500, 120), 12))
     amount_state = D(max(random.normalvariate(300, 100), 10))
 
-    amount_limit = retirement_limits.get(year, retirement_limits[None])
+    amount_limit = RETIREMENT_LIMITS.get(year, RETIREMENT_LIMITS[None])
 
     entries = parse("""
 
@@ -594,7 +588,7 @@ def generate_retirement_employer_match(entries, account_invest, account_income):
     Returns:
       A list of new entries generated for employer contributions.
     """
-    MATCH_FRAC = D('0.50')
+    match_frac = D('0.50')
 
     new_entries = parse("""
 
@@ -603,7 +597,7 @@ def generate_retirement_employer_match(entries, account_invest, account_income):
     """, date=entries[0].date, account_income=account_income)
 
     for posting, balances in postings_for(entries, [account_invest]):
-        amount = posting.position.number * MATCH_FRAC
+        amount = posting.position.number * match_frac
         date = posting.entry.date + ONE_DAY
         new_entries.extend(parse("""
 
@@ -676,9 +670,11 @@ def generate_banking(date_begin, date_end, amount_initial):
     Args:
       date_begin: A date instance, the beginning date.
       date_end: A date instance, the end date.
-      amount_initial: A Decimal instance, the amount to initialize the checking account with.
+      amount_initial: A Decimal instance, the amount to initialize the checking
+        account with.
     Returns:
       A list of directives.
+
     """
     date_balance = date_begin + datetime.timedelta(days=1)
     return parse("""
@@ -723,13 +719,14 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
 
     # Iterate over all the dates, but merging in the postings for the cash
     # account.
-    MIN_AMOUNT = D('1000.00')
-    ROUND_AMOUNT = D('100.00')
-    COMMISSION = D('8.95')
-    ROUND_UNITS = D('1')
-    FRAC_INVEST = D('1.00')
-    P_DAILY_BUY = 1./15  # days
-    P_DAILY_SELL = 1./90  # days
+    min_amount = D('1000.00')
+    round_amount = D('100.00')
+    commission = D('8.95')
+    round_units = D('1')
+    frac_invest = D('1.00')
+    p_daily_buy = 1./15  # days
+    p_daily_sell = 1./90  # days
+
     stocks_inventory = inventory.Inventory()
     new_entries = []
     for date, balances in iter_dates_with_balance(date_begin, date_end,
@@ -738,28 +735,29 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
         balance = balances[account_cash]
         total_cash = balance.get_amount('CCY').number
         assert total_cash >= ZERO, ('Cash balance is negative: {}'.format(total_cash))
-        invest_cash = total_cash * FRAC_INVEST - COMMISSION
-        if invest_cash > MIN_AMOUNT:
-            if random.random() < P_DAILY_BUY:
+        invest_cash = total_cash * frac_invest - commission
+        if invest_cash > min_amount:
+            if random.random() < p_daily_buy:
                 commodities = random.sample(stocks, random.randint(1, len(stocks)))
-                lot_amount = round_to(invest_cash / len(commodities), ROUND_AMOUNT)
+                lot_amount = round_to(invest_cash / len(commodities), round_amount)
 
                 invested_amount = ZERO
                 for stock in commodities:
                     # Find the price at that date.
                     _, price = prices.get_price(price_map, (stock, 'CCY'), date)
 
-                    units = round_to((lot_amount / price), ROUND_UNITS)
+                    units = round_to((lot_amount / price), round_units)
                     if units <= ZERO:
                         continue
-                    amount_cash = units * price + COMMISSION
-                    #logging.info('Buying %s %s @ %s CCY = %s CCY', units, stock, price, units * price)
+                    amount_cash = units * price + commission
+                    # logging.info('Buying %s %s @ %s CCY = %s CCY',
+                    #              units, stock, price, units * price)
 
                     buy = parse("""
                       {date} * "Buy shares of {stock}"
                         {account}:Cash       -{amount_cash:.2f} CCY
                         {account}:{stock}     {units:.0f} {stock} {{{price:.2f} CCY}}
-                        Expenses:Financial:Commissions   {COMMISSION:.2f} CCY
+                        Expenses:Financial:Commissions   {commission:.2f} CCY
                     """, **vars())[0]
                     new_entries.append(buy)
 
@@ -770,7 +768,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
                 continue
 
         # Otherwise, sell with low probability.
-        if not stocks_inventory.is_empty() and random.random() < P_DAILY_SELL:
+        if not stocks_inventory.is_empty() and random.random() < p_daily_sell:
             # Choose the lot with the highest gain or highest loss.
             gains = []
             for position in stocks_inventory.positions:
@@ -792,12 +790,12 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
             #logging.info('Selling {} for {}'.format(sell_position, market_value))
 
             stock = sell_position.lot.currency
-            amount_cash = market_value - COMMISSION
+            amount_cash = market_value - commission
             sell = parse("""
               {date} * "Sell shares of {stock}"
                 {account}:{stock}              -{sell_position} @ {price:.2f} CCY
                 {account}:Cash                  {amount_cash:.2f} CCY
-                Expenses:Financial:Commissions  {COMMISSION:.2f} CCY
+                Expenses:Financial:Commissions  {commission:.2f} CCY
                 {account_gains}
             """, **vars())[0]
             new_entries.append(sell)
@@ -827,8 +825,8 @@ def generate_periodic_expenses(date_iter,
       A list of directives.
     """
     new_entries = []
-    for dt in date_iter:
-        date = dt.date() if isinstance(dt, datetime.datetime) else dt
+    for dtime in date_iter:
+        date = dtime.date() if isinstance(dtime, datetime.datetime) else dtime
         amount = D(amount_generator())
         txn_payee = (payee
                      if isinstance(payee, str)
@@ -1128,14 +1126,14 @@ def generate_regular_credit_expenses(date_birth, date_begin, date_end,
     """
     restaurant_expenses = generate_periodic_expenses(
         date_random_seq(date_begin, date_end, 1, 5),
-        restaurant_names, restaurant_narrations,
+        RESTAURANT_NAMES, RESTAURANT_NARRATIONS,
         account_credit, 'Expenses:Food:Restaurant',
         lambda: min(random.lognormvariate(math.log(30), math.log(1.5)),
                     random.randint(200, 220)))
 
     groceries_expenses = generate_periodic_expenses(
         date_random_seq(date_begin, date_end, 5, 20),
-        groceries_names, "Buying groceries",
+        GROCERIES_NAMES, "Buying groceries",
         account_credit, 'Expenses:Food:Groceries',
         lambda: min(random.lognormvariate(math.log(80), math.log(1.3)),
                     random.randint(250, 300)))
@@ -1166,21 +1164,21 @@ def compute_trip_dates(date_begin, date_end):
       Pairs of dates for the trips within the period.
     """
     # Min and max number of days remaining at home.
-    DAYS_AT_HOME = (4*30, 13*30)
+    days_at_home = (4*30, 13*30)
 
     # Length of trip.
-    DAYS_TRIP = (8, 22)
+    days_trip = (8, 22)
 
     # Number of days to ensure no trip at the beginning and the ned.
-    DAYS_BUFFER = 21
+    days_buffer = 21
 
-    date_begin += datetime.timedelta(days=DAYS_BUFFER)
-    date_end -= datetime.timedelta(days=DAYS_BUFFER)
+    date_begin += datetime.timedelta(days=days_buffer)
+    date_end -= datetime.timedelta(days=days_buffer)
 
     date = date_begin
     while 1:
-        duration_at_home = datetime.timedelta(days=random.randint(*DAYS_AT_HOME))
-        duration_trip = datetime.timedelta(days=random.randint(*DAYS_TRIP))
+        duration_at_home = datetime.timedelta(days=random.randint(*days_at_home))
+        duration_trip = datetime.timedelta(days=random.randint(*days_trip))
         date_trip_begin = date + duration_at_home
         date_trip_end = date_trip_begin + duration_trip
         if date_trip_end >= date_end:
@@ -1209,11 +1207,12 @@ def generate_trip_entries(date_begin, date_end,
     Returns:
       A list of entries for the trip, all tagged with the given tag.
     """
-    P_DAY_GENERATE = 0.3
+    p_day_generate = 0.3
+
     new_entries = []
     for date in date_iter(date_begin, date_end):
         for payee, account_expense, (mu, sigma3) in config:
-            if random.random() < P_DAY_GENERATE:
+            if random.random() < p_day_generate:
                 amount = random.normalvariate(mu, sigma3 / 3.)
                 neg_amount = -amount
                 new_entries.extend(parse("""
@@ -1267,12 +1266,12 @@ def generate_prices(date_begin, date_end, currencies, cost_currency):
         mu = growth * (7 / 365)
         sigma = random.uniform(0.005, 0.02) # Vol
 
-        for dt, price_float in zip(rrule.rrule(rrule.WEEKLY, byweekday=rrule.FR,
-                                               dtstart=date_begin, until=date_end),
-                             price_series(start_price, mu, sigma)):
+        for dtime, price_float in zip(rrule.rrule(rrule.WEEKLY, byweekday=rrule.FR,
+                                                  dtstart=date_begin, until=date_end),
+                                      price_series(start_price, mu, sigma)):
             price = D(price_float).quantize(digits)
             source = data.Source(generate_prices.__name__, next(counter))
-            entry = data.Price(source, dt.date(), currency,
+            entry = data.Price(source, dtime.date(), currency,
                                amount.Amount(price, cost_currency))
             entries.append(entry)
     return entries
@@ -1288,7 +1287,7 @@ def replace(string, replacements, strip=False):
     Returns:
       The input string with the replacements applied to it, with the indentation removed.
     """
-    output = dedent(string)
+    output = textwrap.dedent(string)
     if strip:
         output = output.strip()
     for from_, to_ in replacements.items():
@@ -1353,14 +1352,14 @@ def write_example_file(date_birth, date_begin, date_end, file):
     account_investing = 'Assets:CC:Investment:Cash'
 
     # Estimate the rent.
-    rent_amount = round_to(annual_salary / rent_divisor, rent_increment)
+    rent_amount = round_to(ANNUAL_SALARY / RENT_DIVISOR, RENT_INCREMENT)
 
     # Get a random employer.
-    employer_name, employer_address = random.choice(employers)
+    employer_name, employer_address = random.choice(EMPLOYERS)
 
     logging.info("Generating Salary Employment Income")
     income_entries = generate_employment_income(employer_name, employer_address,
-                                                annual_salary,
+                                                ANNUAL_SALARY,
                                                 account_checking,
                                                 join(account_retirement, 'Cash'),
                                                 date_begin, date_end)
@@ -1375,7 +1374,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
 
     logging.info("Generating Credit Card Expenses for Trips")
     trip_entries = []
-    destinations = sorted(trip_destinations.items())
+    destinations = sorted(TRIP_DESTINATIONS.items())
     destinations.extend(destinations)
     random.shuffle(destinations)
     for (date_trip_begin, date_trip_end), (destination_name, config) in zip(
@@ -1395,7 +1394,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
         this_trip_entries = generate_trip_entries(
             date_trip_begin, date_trip_end,
             tag, config,
-            destination_name.replace('-', ' ').title(), home_name,
+            destination_name.replace('-', ' ').title(), HOME_NAME,
             account_credit)
 
         trip_entries.extend(this_trip_entries)
@@ -1502,7 +1501,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
         output.write('{}\n\n'.format(title))
         printer.print_entries(data.sort(entries), file=output)
 
-    output.write(file_preamble.format(**vars()))
+    output.write(FILE_PREAMBLE.format(**vars()))
     output_section('* Equity Accounts', equity_entries)
     output_section('* Banking', data.sort(banking_entries +
                                                banking_expenses +
