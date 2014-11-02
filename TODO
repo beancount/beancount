@@ -22,11 +22,6 @@ beancount: TODO
   - Fix rendering of balances for HTML journals, esp. w.r.t. example file,
     rendering lots is just _not_ the ticket.
 
-  (bug)
-  - Bug: Link to source seems to have disappeared in the HTML UI
-
-  - Rendering links now fails somehow, generates an error.
-
 ** Rounding
 
   - Implement experimental precision check suggested by Nathan Grigg
