@@ -281,23 +281,23 @@ def sanity_check_types(entry):
     Raises:
       AssertionError: If there is anything that is unexpected, raises an exception.
     """
-    assert isinstance(entry, ALL_DIRECTIVES)
-    assert isinstance(entry.source, Source)
-    assert isinstance(entry.date, datetime.date)
+    assert isinstance(entry, ALL_DIRECTIVES), "Invalid directive type"
+    assert isinstance(entry.source, Source), "Invalid type for source"
+    assert isinstance(entry.date, datetime.date), "Invalid date type"
     if isinstance(entry, Transaction):
-        assert isinstance(entry.flag, (NoneType, str))
-        assert isinstance(entry.payee, (NoneType, str))
-        assert isinstance(entry.narration, (NoneType, str))
-        assert isinstance(entry.tags, (NoneType, set, frozenset))
-        assert isinstance(entry.links, (NoneType, set, frozenset))
-        assert isinstance(entry.postings, list)
+        assert isinstance(entry.flag, (NoneType, str)), "Invalid flag type"
+        assert isinstance(entry.payee, (NoneType, str)), "Invalid payee type"
+        assert isinstance(entry.narration, (NoneType, str)), "Invalid narration type"
+        assert isinstance(entry.tags, (NoneType, set, frozenset)), "Invalid tags type"
+        assert isinstance(entry.links, (NoneType, set, frozenset)), "Invalid links type"
+        assert isinstance(entry.postings, list), "Invalid postings list type"
         for posting in entry.postings:
-            assert isinstance(posting, Posting)
-            assert posting.entry is entry
-            assert isinstance(posting.account, str)
-            assert isinstance(posting.position, (Position, NoneType))
-            assert isinstance(posting.price, (Amount, NoneType))
-            assert isinstance(posting.flag, (str, NoneType))
+            assert isinstance(posting, Posting), "Invalid posting type"
+            assert posting.entry is entry, "Invalid posting reference to entry type"
+            assert isinstance(posting.account, str), "Invalid account type"
+            assert isinstance(posting.position, (Position, NoneType)), "Invalid pos type"
+            assert isinstance(posting.price, (Amount, NoneType)), "Invalid price type"
+            assert isinstance(posting.flag, (str, NoneType)), "Invalid flag type"
 
 
 def entry_replace(entry, **replacements):
@@ -314,9 +314,10 @@ def entry_replace(entry, **replacements):
     Returns:
       A new entry, with postings correctly reparented.
     """
+    new_postings = replacements.pop('postings', entry.postings)
     new_entry = entry._replace(postings=[], **replacements)
     new_entry.postings.extend(posting._replace(entry=new_entry)
-                              for posting in entry.postings)
+                              for posting in new_postings)
     return new_entry
 
 

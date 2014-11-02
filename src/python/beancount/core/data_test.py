@@ -68,9 +68,17 @@ class TestData(unittest.TestCase):
         with self.assertRaises(AssertionError):
             data.sanity_check_types(entry._replace(postings=None))
 
-    def test_entry_replace(self):
+    def test_entry_replace__attribute(self):
         entry = self.create_empty_transaction()
         new_entry = data.entry_replace(entry, narration="Some new narration replaced")
+        self.assertTrue(isinstance(new_entry, data.Transaction))
+        self.assertTrue(all(posting.entry == new_entry
+                            for posting in new_entry.postings))
+
+    def test_entry_replace__postings(self):
+        entry = self.create_empty_transaction()
+        new_postings = [posting._replace(entry=None) for posting in entry.postings]
+        new_entry = data.entry_replace(entry, postings=new_postings)
         self.assertTrue(isinstance(new_entry, data.Transaction))
         self.assertTrue(all(posting.entry == new_entry
                             for posting in new_entry.postings))
