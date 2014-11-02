@@ -204,7 +204,7 @@ def render_tree(root):
 
 
 def enum_tree_by_input_line_num(tree_lines):
-    """Accumulate the lines of a tree until a lien number is found.
+    """Accumulate the lines of a tree until a line number is found.
 
     Args:
       tree_lines: A list of lines as returned by render_tree.
@@ -292,10 +292,6 @@ def main():
         output_file.close()
         return -1
     column_matches, left, right = result
-
-    # print(column_matches, left, right)
-    # raise SystemExit
-
 
     # Process the input lines again, this time with the column.
     root = create_tree(column_matches, args.split)
