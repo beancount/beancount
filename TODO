@@ -5,11 +5,7 @@ beancount: TODO
 
   - Make unused accounts and duplicates checking into optional plugins.
 
-  - Implement experimental precision check suggested by Nathan Grigg
-  - Implement Equity:Rounding accumulation suggested by Nathan Grigg
-
-  - Complete tutorial doc
-  - Share it on the mailing-list, including Ledger conversion script
+  - Complete presentation
 
   - Rename compute_balance_amount() -> compute_weight() and provide functions to
     compute units, weight, etc. from Position objects, using consistent
@@ -23,16 +19,7 @@ beancount: TODO
     for the parser.
 
   - Complete tutorial examples generation
-    * Write accompanying document to describe the person
-    * Write links to the various tutorial commands
     * Write an automated test that runs it
-
-  - Complete presentation
-
-  - Maybe beancount.core.complete should be called beancount.core.interpolate.
-    That's the term I've been using for a while now isn't it.
-
-  - Rename all "balance amounts" to "weight".
 
   - Create a new command that spits out missing open directives (for doing
     demos without disabling the requirement of needing open directives).
@@ -44,10 +31,6 @@ beancount: TODO
   - Complete testing conversion to Ledger by converting my own file (still
     having some errors, though example file compiles well already).
 
-
-** Branches
-
-  - Complete and merge sampled_quantization
 
 ** Bugs
 
@@ -62,12 +45,14 @@ beancount: TODO
     rendering lots is just _not_ the ticket.
 
   (bug)
-  - Unrealized gain for closed years does not appear.
-  - Link to source seems to have disappeared
+  - Bug: Link to source seems to have disappeared in the HTML UI
 
   - Rendering links now fails somehow, generates an error.
 
 ** Rounding
+
+  - Implement experimental precision check suggested by Nathan Grigg
+  - Implement Equity:Rounding accumulation suggested by Nathan Grigg
 
   - Make (SMALL_EPSILON) balance tolerance user-configurable before release.
 
@@ -80,23 +65,22 @@ beancount: TODO
   - Maybe provide a way to make thhis tolerance settable by commodity.
     (See thread w/ Nathan on the mailing-list)
 
-  - This needs to be documented; write a dedicated doc on how rounding is handled.
+  - Doc: https://groups.google.com/d/msg/ledger-cli/m-TgILbfrwA/YjkmOM3LHXIJ
 
-https://groups.google.com/d/msg/ledger-cli/m-TgILbfrwA/YjkmOM3LHXIJ
+  Alright, so here's what I propose:
 
-Alright, so here's what I propose:
+  - I could add an option for the user to insert the name of a rounding account.
+  - This option would be empty by default, and the current behaviour would not
+    change.
+  - However, if you set an account for it, all transactions with an inexact
+    balance will receive the balance amount (and perhaps have a new leg inserted
+    on them automatically).
 
-- I could add an option for the user to insert the name of a rounding account.
-- This option would be empty by default, and the current behaviour would not
-  change.
-- However, if you set an account for it, all transactions with an inexact
-  balance will receive the balance amount (and perhaps have a new leg inserted
-  on them automatically).
+  Would that be a reasonable compromise? With no account, you get 0.005 looseness
+  (or whatever this becomes if inference is implemented). With an account, you get
+  precise balances throughout, but no manual input is required.
 
-Would that be a reasonable compromise? With no account, you get 0.005 looseness
-(or whatever this becomes if inference is implemented). With an account, you get
-precise balances throughout, but no manual input is required.
-
+  - Complete and merge sampled_quantization
 
 
 ** More tests
@@ -112,6 +96,13 @@ precise balances throughout, but no manual input is required.
   with the intermediate reports stage instead of just the web interface, it's
   becoming clearer where some files need to move. Try to make these moves
   before shipping, so that things don't move nearly as much later on.
+
+  - Maybe beancount.core.complete should be called beancount.core.interpolate.
+    That's the term I've been using for a while now isn't it. Clean up
+    terminology.
+
+  - Clean up terminology re. units, weight, etc.
+  - Rename all "balance amounts" to "weight".
 
   - beancount.core.realization: Look at deps for beancount.core.realization and
     move it upstream where it makes sense, maybe ops.
@@ -216,6 +207,11 @@ precise balances throughout, but no manual input is required.
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - BUG/CHANGE: Unrealized gain when rendering for closed years does not appear.
+    Perhaps we should insert the unrealized gains during close operation.
+
 
 
   - Idea for a plugin: Create a new plugin that automatically inserts legs for
@@ -2627,17 +2623,16 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
     subaccounts should not bother us much.
 
 
+** Dashboard
+
+  Add the following to the portfolio dashboard:
+  - PnL since yesterday, one week ago, two weeks ago, one month ago, three months ago
+  - Current portfolio breakdowns
+  - Cash report
+  - A listing of short-term lots vs. long-term lots
+  - Schedule of lots to become long-term in the near future
+
 * Tools
-** Scripts
-
-  - Build some common pandas.DataFrame command-line exporting routine;
-    basically, a new script should be able to load a ledger, filter some
-    entries, and build a DataFrame of some kind, and then with some COMMON
-    OPTIONS provide the ability to generate an output file in either string,
-    csv, excel, or html format.
-
-    The point is, the option to generate the output should all be the same.
-
 ** Emacs Support
 
   - Set the comment-syntax; currently it thinks it's '# '
@@ -2655,17 +2650,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
   - Perhaps we want to produce a report of all transactions with a highlight on
     them.
-
-** Total Net Worth Report
-
-  - balsheet: For Equity, separately report the total net worth in terms of EACH
-    of the operating currencies, using the latest prices.
-
-** General Rendering
-
-  - You should insert thousand-commas everywhere... no, really.... This should
-    be in the same routine that renders amounts by account type, with a sign
-    possibly inverted.
 
 ** Balance Sheet
 
