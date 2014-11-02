@@ -620,3 +620,13 @@ class TestLexerErrors(unittest.TestCase):
         self.assertEqual([], entries)
         self.assertEqual([parser.ParserSyntaxError, lexer.LexerError],
                          list(map(type, errors)))
+
+    @parsedoc
+    def test_no_final_newline(self, entries, errors, _):
+        """
+          2014-11-02 *
+            Assets:Something   1 USD
+            Assets:Other      -1 USD"""
+        self.assertFalse(errors)
+        self.assertEqual(1, len(entries))
+        self.assertEqual(2, len(entries[0].postings))

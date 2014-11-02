@@ -29,13 +29,6 @@ beancount: TODO
 
 ** Bugs
 
-  - A transaction at the very end of a file with a single newline causes a
-    parser error.
-
-      /var/folders/00/1fbd0000h01000cxqpysvccm005sdm/T/tmp10bnlr40:1597:    syntax error, unexpected $end, expecting EOL or COMMENT or ATAT or AT
-
-    See failing-with-no-last-newline.beancount
-
   - Fix rendering of balances for HTML journals, esp. w.r.t. example file,
     rendering lots is just _not_ the ticket.
 
@@ -2137,9 +2130,14 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
   - When an error occurs, skip the lexer to the next empty line and recommence.
 
-** Reentrant
+** Make the Parser Reentrant
 
   - Make the parser reentrant [2014-08-02]. This is _not_ a difficult task.
+
+    * Follow this:
+      http://www.lemoda.net/c/reentrant-parser/
+      http://flex.sourceforge.net/manual/Extra-Data.html
+      to remove all globals from my lexer and make it truly reentrant and free of globals.
 
     * You need to add unit tests that check the correctness of line numbers on
       parsed directives and errors.

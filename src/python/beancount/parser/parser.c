@@ -77,6 +77,10 @@ PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
       }
     }
 
+    /* Initialize the lexer. */
+    /* Note: This needs become part of yylex_init(). See 2.5.37.*/
+    yy_eof_times = 0;
+
     /* Initialize the parser. */
     yyin = fp;
     if ( report_filename != 0 ) {
@@ -128,6 +132,10 @@ PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
     Py_XINCREF(builder);
 
     yy_switch_to_buffer(yy_scan_string(input_string));
+
+    /* Initialize the lexer. */
+    /* Note: This needs become part of yylex_init(). See 2.5.37.*/
+    yy_eof_times = 0;
 
     /* Initialize the parser. */
     if ( report_filename != 0 ) {
@@ -185,9 +193,14 @@ PyObject* lexer_init(PyObject *self, PyObject *args)
         return PyErr_Format(PyExc_IOError, "Cannot open file '%s'", filename);
     }
 
+    /* Initialize the lexer. */
+    /* Note: This needs become part of yylex_init(). See 2.5.37.*/
+    yy_eof_times = 0;
+
     /* Initialize the parser. */
     yyin = fp;
     yy_filename = filename;
+    yy_eof_times = 0;
 
     Py_RETURN_NONE;
 }

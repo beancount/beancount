@@ -29,7 +29,8 @@ def do_dump_lexer(filename, unused_args):
       filename: A string, the Beancount input filename.
     """
     for token, lineno, text, obj in lexer.lex_iter(filename):
-        sys.stdout.write('{:12} {:6d} {}\n'.format(token, lineno, repr(text)))
+        sys.stdout.write('{:12} {:6d} {}\n'.format(
+            '(None)' if token is None else token, lineno, repr(text)))
 
 
 def do_roundtrip(filename, unused_args):
