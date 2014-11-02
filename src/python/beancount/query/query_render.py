@@ -132,6 +132,8 @@ def render_text__old(result_types, result_rows, file):
 # this, process all the entries and look at the maximum precision used. You
 # should be able to compute a dictionary of {commodity: precision} from the list of entries. This should be tested independently.
 
+# FIXME: Create formatter objects for each row type.
+#
 # FIXME: You need to render the header.
 #
 # FIXME: Check out if it's possible to precompile a format string for execution
@@ -148,3 +150,15 @@ def render_text__old(result_types, result_rows, file):
 # FIXME: Provide an option to split apart the commodity and the cost commodity
 # into their own columns. This generic object should be working for text, and
 # then could be simply reused by the CSV routines.
+#
+# FIXME: Add EXPLODE keyword to parser in order to allow the breaking out of the
+# various columns of an Inventory or Position. This design is a good balance of
+# being explicit and succint at the same time. The term 'explode' explains well
+# what is meant to happen.
+#
+#    SELECT account, EXPLODE sum(change) ...
+#
+# will result in columns:
+#
+#     account, change_number, change_currency, change_cost_number, change_cost_currency, change_lot_date, change_lot_label
+#
