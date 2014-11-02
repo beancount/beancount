@@ -236,8 +236,8 @@ def main():
                         help='Name of the file to write (default: stdout)')
 
     parser.add_argument('-r', '--pattern', action='store',
-                        default=(r"\b([A-Z][A-Za-z0-9-_']*)"
-                                 r"(:[A-Z][A-Za-z0-9-_']*)+\b"),
+                        default=(r"(Assets|Liabilities|Equity|Income|Expenses)"
+                                 r"(:[A-Z][A-Za-z0-9-_']*)*"),
                         help="Pattern for repeatable components")
 
     parser.add_argument('-d', '--delimiter', action='store',
@@ -253,17 +253,29 @@ def main():
     parser.add_argument('-F', '--filenames', action='store_true',
                         help="Use pattern and split suitable for filenames")
 
+    parser.add_argument('-A', '--loose-accounts', action='store_true',
+                        help="Use pattern and split suitable for loose account names")
+
     parser.add_argument('--filler', action='store',
                         default=' ',
                         help="Filler string for new lines inserted for formatting")
 
     args = parser.parse_args()
 
+    if sum([1 if expr else 0 for expr in (args.filenames,
+                                          args.loose_accounts,
+                                          args.pattern)]) > 1:
+        parser.error("Conflicted pattern options")
+
     if args.filenames:
         # Note: you could spit an error if the other options are set: "you may
         # not use --filenames and specify a pattern or split" or somesuch.
         args.pattern = r"([^ \t]*)(/[^ \t]*)+"
         args.split = r"/"
+
+    elif args.loose_accounts:
+        args.pattern = r"\b([A-Z][A-Za-z0-9-_']*)(:[A-Z][A-Za-z0-9-_']*)+\b"
+        args.split = r":"
 
     # Open input and output files.
     input_file = open(args.input, 'r') if args.input else sys.stdin
