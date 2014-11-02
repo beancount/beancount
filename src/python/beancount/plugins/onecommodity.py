@@ -47,6 +47,11 @@ def validate_one_commodity(entries, unused_options_map):
                     if len(cost_map[posting.account]) > 1:
                         units_source_map[posting.account] = entry
 
+        elif isinstance(entry, data.Balance):
+            units_map[entry.account].add(entry.amount.currency)
+            if len(units_map[entry.account]) > 1:
+                units_source_map[entry.account] = entry
+
     # Check units.
     errors = []
     for account, currencies in units_map.items():
