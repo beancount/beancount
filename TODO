@@ -9,19 +9,12 @@ beancount: TODO
     compute units, weight, etc. from Position objects, using consistent
     terminology.
 
-  - Rename Inventory.update() -> Inventory.add_inventory(). Idiomatic Python
-    update semantics is to _replace_ the previous values, and that's obviously
-    not what we do.
-
   - Revise beancount.loader.load() to beancount.loader.load_file() + alias, as
     for the parser.
 
   - Create a two-column tool to convert one column into two columns (for text
     mode balance sheet and income statement). The equivalent UNIX tool does not
     exist. Select columns by regexp.
-
-  - Complete testing conversion to Ledger by converting my own file (still
-    having some errors, though example file compiles well already).
 
 
 ** Bugs

@@ -6,8 +6,11 @@ such as Ledger.
 import re
 import io
 
-from beancount.reports import report
 from beancount.core import amount
+from beancount.core import data
+from beancount.core import position
+from beancount.core import complete
+from beancount.reports import report
 
 
 def quote(match):
@@ -31,6 +34,91 @@ def quote_currency(string):
       A string of text, with the commodity expressions surrounded with quotes.
     """
     return re.sub(r'\b([A-Z][A-Z0-9\'\.\_\-]{0,10}[A-Z0-9])\b', quote, string)
+
+
+def postings_by_type(entry):
+    """Split up the postings by simple, at-cost, at-price.
+
+    Args:
+      entry: An instance of Transaction.
+    Returns:
+      A tuple of simple postings, postings with price conversions, postings held at cost.
+    """
+    postings_at_cost = []
+    postings_at_price = []
+    postings_simple = []
+    for posting in entry.postings:
+        if posting.position.lot.cost:
+            accumlator = postings_at_cost
+        elif posting.price:
+            accumlator = postings_at_price
+        else:
+            accumlator = postings_simple
+        accumlator.append(posting)
+
+    return (postings_simple, postings_at_price, postings_at_cost)
+
+
+def split_currency_conversions(entry):
+    """If the transcation has a mix of conversion at cost and a
+    currency conversion, split the transction into two transactions: one
+    that applies the currency conversion in the same account, and one
+    that uses the other currency without conversion.
+
+    This is required because Ledger does not appear to be able to grok a
+    transaction like this one:
+
+      2014-11-02 * "Buy some stock with foreign currency funds"
+        Assets:CA:Investment:GOOG          5 GOOG {520.0 USD}
+        Expenses:Commissions            9.95 USD
+        Assets:CA:Investment:Cash   -2939.46 CAD @ 0.8879 USD
+
+    HISTORICAL NOTE: Adding a price directive on the first posting above makes
+    Ledger accept the transaction. So we will not split the transaction here
+    now. However, since Ledger's treatment of this type of conflict is subject
+    to revision (See http://bugs.ledger-cli.org/show_bug.cgi?id=630), we will
+    keep this code around, it might become useful eventually. See
+    https://groups.google.com/d/msg/ledger-cli/35hA0Dvhom0/WX8gY_5kHy0J for
+    details of the discussion.
+
+    Args:
+      entry: An instance of Transaction.
+    Returns:
+      A pair of
+        converted: boolean, true if a conversion was made.
+        entries: A list of the original entry if converted was False,
+          or a list of the split converted entries if True.
+    """
+    assert isinstance(entry, data.Transaction)
+
+    (postings_simple, postings_at_price, postings_at_cost) = postings_by_type(entry)
+
+    converted = postings_at_cost and postings_at_price
+    if converted:
+        # Generate a new entry for each currency conversion.
+        new_entries = []
+        replacement_postings = []
+        for posting_orig in postings_at_price:
+            weight = complete.get_balance_amount(posting_orig)
+            simple_position = position.Position(position.Lot(weight.currency, None, None),
+                                                weight.number)
+            posting_pos = data.Posting(None, posting_orig.account, simple_position, None, None)
+            posting_neg = data.Posting(None, posting_orig.account, -simple_position, None, None)
+
+            currency_entry = data.entry_replace(
+                entry,
+                postings=[posting_orig, posting_neg],
+                narration=entry.narration + ' (Currency conversion)')
+            new_entries.append(currency_entry)
+            replacement_postings.append(posting_pos)
+
+        converted_entry = data.entry_replace(entry, postings=(
+            postings_at_cost + postings_simple + replacement_postings))
+        new_entries.append(converted_entry)
+    else:
+        new_entries = [entry]
+
+    return converted, new_entries
 
 
 class LedgerReport(report.Report):
@@ -91,9 +179,20 @@ class LedgerPrinter:
         else:
             amount_str, cost_str = '', ''
 
-        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
-                     if posting.price is not None
-                     else '')
+        if posting.price is not None:
+            price_str = '@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
+        else:
+            # Figure out if we need to insert a price on a posting held at cost.
+            # See https://groups.google.com/d/msg/ledger-cli/35hA0Dvhom0/WX8gY_5kHy0J
+            (postings_simple,
+             postings_at_price,
+             postings_at_cost) = postings_by_type(posting.entry)
+
+            if postings_at_price and postings_at_cost and posting.position.lot.cost:
+                price_str = '@ {}'.format(
+                    posting.position.lot.cost.str(amount.MAXDIGITS_PRINTER))
+            else:
+                price_str = ''
 
         posting_str = '  {:64} {:>16} {:>16} {:>16}'.format(flag_posting,
                                                             quote_currency(amount_str),
