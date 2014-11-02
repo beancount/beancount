@@ -301,7 +301,7 @@ class Inventory:
         new_inventory += other
         return new_inventory
 
-    def update(self, other):
+    def add_inventory(self, other):
         """Add all the positions of another Inventory instance to this one.
 
         Args:
@@ -313,7 +313,7 @@ class Inventory:
             self.add_position(position)
         return self
 
-    __iadd__ = update
+    __iadd__ = add_inventory
 
     @staticmethod
     def from_string(string):

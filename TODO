@@ -2621,6 +2621,33 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
   - Cash report
   - A listing of short-term lots vs. long-term lots
   - Schedule of lots to become long-term in the near future
+  - Returns (computed correctly, over many periods)
+
+  From email to fxt:
+
+    I want to build an investment dashboard, that would contain:
+
+    - List of holdings, with various rollups (see the different aggregations of
+      holdings reports)
+    - Rollups of holdings against various types (e.g., Stocks vs. Bonds)
+    - P/L since the morning or for the last day, over the last week, last two
+      weeks, last month, last quarter, last year.
+    - Report of uninvested cash and the detail of where it is
+    - A listing of short-term vs. long-term lots, and a schedule of which lots are
+      going to switch from short-term to long-term in the near future (to avoid
+      selecting those for sale)
+    - Returns, as computed by my prototype of our ideas during the bicycle trip
+    - Automatically refresh current prices if run intra-day
+
+    This script would run every hour on a crontab and generate static HTML files
+    that I could access from my phone to make investment decisions and monitor
+    gains/losses during the day. I'm certain you would appreciate having such a
+    thing too. I want to integrate the code I already have out of
+    beancount/experiments and start moving all this stuff to the
+    beancount.dashboard.* and add unit tests and make it work on the tutorial file.
+    This should make it easy for others to use.
+
+
 
 * Tools
 ** Emacs Support
