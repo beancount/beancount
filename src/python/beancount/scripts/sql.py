@@ -151,7 +151,8 @@ class DirectiveWriter:
                 # Store common data.
                 connection.execute("""
                   INSERT INTO entry VALUES (?, ?, ?, ?, ?);
-                """, (eid, entry.date, self.name, entry.source.filename, entry.source.lineno))
+                """, (eid, entry.date, self.name,
+                      entry.source.filename, entry.source.lineno))
 
                 # Store detail data.
                 detail_data = self.get_detail(entry)

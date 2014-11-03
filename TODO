@@ -3,18 +3,11 @@ beancount: TODO
 * Requirements for Shipping 1.0
 ** Current
 
-  - Make unused accounts and duplicates checking into optional plugins.
-
-  - Implement experimental precision check suggested by Nathan Grigg
-  - Implement Equity:Rounding accumulation suggested by Nathan Grigg
+  - Complete presentation
 
   - Rename compute_balance_amount() -> compute_weight() and provide functions to
     compute units, weight, etc. from Position objects, using consistent
     terminology.
-
-  - Rename Inventory.update() -> Inventory.add_inventory(). Idiomatic Python
-    update semantics is to _replace_ the previous values, and that's obviously
-    not what we do.
 
   - Rename Position.get_amount() -> Position.get_units(). Make sure the
     terminology matches that of Inventory.
@@ -24,52 +17,20 @@ beancount: TODO
   - Revise beancount.loader.load() to beancount.loader.load_file() + alias, as
     for the parser.
 
-  - Complete tutorial examples generation
-    * Write accompanying document to describe the person
-    * Write links to the various tutorial commands
-    * Write an automated test that runs it
-
-  - Complete presentation
-
-  - Maybe beancount.core.complete should be called beancount.core.interpolate.
-    That's the term I've been using for a while now isn't it.
-
-  - Rename all "balance amounts" to "weight".
-
-  - Create a new command that spits out missing open directives (for doing
-    demos without disabling the requirement of needing open directives).
-
   - Create a two-column tool to convert one column into two columns (for text
     mode balance sheet and income statement). The equivalent UNIX tool does not
     exist. Select columns by regexp.
 
-  - Complete testing conversion to Ledger by converting my own file (still
-    having some errors, though example file compiles well already).
-
-
-** Branches
-
-  - Complete and merge sampled_quantization
 
 ** Bugs
-
-  - A transaction at the very end of a file with a single newline causes a
-    parser error.
-
-      /var/folders/00/1fbd0000h01000cxqpysvccm005sdm/T/tmp10bnlr40:1597:    syntax error, unexpected $end, expecting EOL or COMMENT or ATAT or AT
-
-    See failing-with-no-last-newline.beancount
 
   - Fix rendering of balances for HTML journals, esp. w.r.t. example file,
     rendering lots is just _not_ the ticket.
 
-  (bug)
-  - Unrealized gain for closed years does not appear.
-  - Link to source seems to have disappeared
-
-  - Rendering links now fails somehow, generates an error.
-
 ** Rounding
+
+  - Implement experimental precision check suggested by Nathan Grigg
+  - Implement Equity:Rounding accumulation suggested by Nathan Grigg
 
   - Make (SMALL_EPSILON) balance tolerance user-configurable before release.
 
@@ -82,23 +43,22 @@ beancount: TODO
   - Maybe provide a way to make thhis tolerance settable by commodity.
     (See thread w/ Nathan on the mailing-list)
 
-  - This needs to be documented; write a dedicated doc on how rounding is handled.
+  - Doc: https://groups.google.com/d/msg/ledger-cli/m-TgILbfrwA/YjkmOM3LHXIJ
 
-https://groups.google.com/d/msg/ledger-cli/m-TgILbfrwA/YjkmOM3LHXIJ
+  Alright, so here's what I propose:
 
-Alright, so here's what I propose:
+  - I could add an option for the user to insert the name of a rounding account.
+  - This option would be empty by default, and the current behaviour would not
+    change.
+  - However, if you set an account for it, all transactions with an inexact
+    balance will receive the balance amount (and perhaps have a new leg inserted
+    on them automatically).
 
-- I could add an option for the user to insert the name of a rounding account.
-- This option would be empty by default, and the current behaviour would not
-  change.
-- However, if you set an account for it, all transactions with an inexact
-  balance will receive the balance amount (and perhaps have a new leg inserted
-  on them automatically).
+  Would that be a reasonable compromise? With no account, you get 0.005 looseness
+  (or whatever this becomes if inference is implemented). With an account, you get
+  precise balances throughout, but no manual input is required.
 
-Would that be a reasonable compromise? With no account, you get 0.005 looseness
-(or whatever this becomes if inference is implemented). With an account, you get
-precise balances throughout, but no manual input is required.
-
+  - Complete and merge sampled_quantization
 
 
 ** More tests
@@ -114,6 +74,13 @@ precise balances throughout, but no manual input is required.
   with the intermediate reports stage instead of just the web interface, it's
   becoming clearer where some files need to move. Try to make these moves
   before shipping, so that things don't move nearly as much later on.
+
+  - Maybe beancount.core.complete should be called beancount.core.interpolate.
+    That's the term I've been using for a while now isn't it. Clean up
+    terminology.
+
+  - Clean up terminology re. units, weight, etc.
+  - Rename all "balance amounts" to "weight".
 
   - beancount.core.realization: Look at deps for beancount.core.realization and
     move it upstream where it makes sense, maybe ops.
@@ -189,9 +156,6 @@ precise balances throughout, but no manual input is required.
 
 ** Documentation / Ongoing
 
-  - To Query Language proposal: add open:DATE and close:DATE
-  - Send email about doc.
-
 
   - In the comparison doc: describe how Beancount has asset types
 
@@ -207,8 +171,6 @@ precise balances throughout, but no manual input is required.
     legs explanation
 
   - Write out the taxes section, you have all the details, no need to wait
-
-  - Example file and document, write a generator script
 
   - Clean up this TODO file, reorganize sections, remove what's redundant from
     the proposal files.
@@ -257,6 +219,11 @@ precise balances throughout, but no manual input is required.
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - BUG/CHANGE: Unrealized gain when rendering for closed years does not appear.
+    Perhaps we should insert the unrealized gains during close operation.
+
+
+
   - Idea for a plugin: Create a new plugin that automatically inserts legs for
     the "Trading Accounts" methods described here:
     http://wiki.gnucash.org/wiki/Trading_Accounts
@@ -291,26 +258,6 @@ precise balances throughout, but no manual input is required.
 
   - Put all verification plugins, including nounused and noduplicates under
     beancount.plugins.constraints.*.
-
-
-
-
-  - Treeify does not produce the correct output on this input because of the
-    lone Equity root account, fix this:
-
-      Assets:Stock-Plan:ESPP:Cash
-      Assets:Stock-Plan:ESPP:RSU          98.00 RSU
-      Assets:Stock-Plan:ESPP:STOCK         2.00 STOCK
-      Equity
-      Expenses:Vested-Shares               2.00 RSU
-      Income:Equity-Bonus:RSU           -100.00 RSU
-      Income:Equity-Bonus:Vested        -172.00 USD
-      Liabilities
-
-
-  - Treeify: "find $PWD -print | treeify -F" leaves the prefix / rendered. This
-    is wrong. Also the same for "find . -print | treeify -F", the prefix "./"
-    is still there. Fix this.
 
 
 
@@ -2233,9 +2180,14 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
   - When an error occurs, skip the lexer to the next empty line and recommence.
 
-** Reentrant
+** Make the Parser Reentrant
 
   - Make the parser reentrant [2014-08-02]. This is _not_ a difficult task.
+
+    * Follow this:
+      http://www.lemoda.net/c/reentrant-parser/
+      http://flex.sourceforge.net/manual/Extra-Data.html
+      to remove all globals from my lexer and make it truly reentrant and free of globals.
 
     * You need to add unit tests that check the correctness of line numbers on
       parsed directives and errors.
@@ -2714,17 +2666,43 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
     subaccounts should not bother us much.
 
 
+** Dashboard
+
+  Add the following to the portfolio dashboard:
+  - PnL since yesterday, one week ago, two weeks ago, one month ago, three months ago
+  - Current portfolio breakdowns
+  - Cash report
+  - A listing of short-term lots vs. long-term lots
+  - Schedule of lots to become long-term in the near future
+  - Returns (computed correctly, over many periods)
+
+  From email to fxt:
+
+    I want to build an investment dashboard, that would contain:
+
+    - List of holdings, with various rollups (see the different aggregations of
+      holdings reports)
+    - Rollups of holdings against various types (e.g., Stocks vs. Bonds)
+    - P/L since the morning or for the last day, over the last week, last two
+      weeks, last month, last quarter, last year.
+    - Report of uninvested cash and the detail of where it is
+    - A listing of short-term vs. long-term lots, and a schedule of which lots are
+      going to switch from short-term to long-term in the near future (to avoid
+      selecting those for sale)
+    - Returns, as computed by my prototype of our ideas during the bicycle trip
+    - Automatically refresh current prices if run intra-day
+
+    This script would run every hour on a crontab and generate static HTML files
+    that I could access from my phone to make investment decisions and monitor
+    gains/losses during the day. I'm certain you would appreciate having such a
+    thing too. I want to integrate the code I already have out of
+    beancount/experiments and start moving all this stuff to the
+    beancount.dashboard.* and add unit tests and make it work on the tutorial file.
+    This should make it easy for others to use.
+
+
+
 * Tools
-** Scripts
-
-  - Build some common pandas.DataFrame command-line exporting routine;
-    basically, a new script should be able to load a ledger, filter some
-    entries, and build a DataFrame of some kind, and then with some COMMON
-    OPTIONS provide the ability to generate an output file in either string,
-    csv, excel, or html format.
-
-    The point is, the option to generate the output should all be the same.
-
 ** Emacs Support
 
   - Set the comment-syntax; currently it thinks it's '# '
@@ -2742,17 +2720,6 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
   - Perhaps we want to produce a report of all transactions with a highlight on
     them.
-
-** Total Net Worth Report
-
-  - balsheet: For Equity, separately report the total net worth in terms of EACH
-    of the operating currencies, using the latest prices.
-
-** General Rendering
-
-  - You should insert thousand-commas everywhere... no, really.... This should
-    be in the same routine that renders amounts by account type, with a sign
-    possibly inverted.
 
 ** Balance Sheet
 

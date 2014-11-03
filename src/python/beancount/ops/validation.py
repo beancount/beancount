@@ -19,7 +19,6 @@ from beancount.core import data
 from beancount.core import getters
 from beancount.core import inventory
 from beancount.core import complete
-from beancount.core import compare
 from beancount.utils import misc_utils
 
 

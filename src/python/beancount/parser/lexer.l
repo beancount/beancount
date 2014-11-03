@@ -29,14 +29,15 @@
 #include "grammar.h"
 
 
-/* The filename being parsed. */
+/* Global declarations; defined below. */
+extern int yy_eof_times;
 extern const char* yy_filename;
 extern int yycolumn;
 
 
 
 /* Handle detecting the beginning of line. */
-extern int yy_line_tokens; /* Number of tokens since the bol */
+extern int yy_line_tokens; /* Number of tokens since the bol. */
 
 #define YY_USER_ACTION  {                               \
     yy_line_tokens++;                                   \
@@ -211,6 +212,17 @@ option		{ return OPTION; }
   return ERROR;
 }
 
+ /* Fake an EOL at the end of file, to ensure that files without a final newline
+  * will process postings right. */
+<<EOF>>     		{
+  if ( yy_eof_times == 0 ) {
+    yy_eof_times = 1;
+    yylloc->first_line = yylineno;
+    return EOL;
+  }
+  return 0;
+ }
+
  /* Note: we use a subparser because if we set a default rule to
     chomp this pattern, it would take precedence over valid rules
     if the matched text is longer and thus break the parser. */
@@ -225,9 +237,21 @@ option		{ return OPTION; }
 /* User Code */
 
 
+/* Note: All these globals should be moved to an yylex_extra */
+
+/* The number of times EOF has been hit. This is used to synthesize an EOL at
+ * the end of the file. */
+int yy_eof_times = 0;
+
+/* The filename being tokenized. */
 const char* yy_filename = 0;
+
+/* Number of tokens since the beginning of the line. */
 int yy_line_tokens = 0;
+
+/* The current column we're tokenizing at. */
 int yycolumn = 1;
+
 
 #define LEXEOF 0
 

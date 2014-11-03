@@ -87,6 +87,7 @@ class TestLexer(unittest.TestCase):
             ('EOL', 10, '\n', None),
             ('LINK', 10, '^sometag123', 'sometag123'),
             ('EOL', 11, '\n', None),
+            ('EOL', 11, '\x00', None),
             ], tokens)
 
     @lex_tokens
@@ -102,6 +103,7 @@ class TestLexer(unittest.TestCase):
             ('INDENT', 2, '  ', None),
             ('ACCOUNT', 2, 'Equity:Something', 'Equity:Something'),
             ('EOL', 3, '\n', None),
+            ('EOL', 3, '\x00', None),
             ], tokens)
 
     @lex_tokens
@@ -116,6 +118,7 @@ class TestLexer(unittest.TestCase):
             ('COMMA', 1, ',', None),
             ('CURRENCY', 1, 'AUD', 'AUD'),
             ('EOL', 2, '\n', None),
+            ('EOL', 2, '\x00', None),
             ], tokens)
 
     @lex_tokens
@@ -168,6 +171,7 @@ class TestLexer(unittest.TestCase):
             ('NUMBER', 1, '555.00', D('555.00')),
             ('CURRENCY', 1, 'CAD.11', 'CAD.11'),
             ('EOL', 2, '\n', None),
+            ('EOL', 2, '\x00', None),
             ], tokens)
 
     @lex_tokens
@@ -178,6 +182,7 @@ class TestLexer(unittest.TestCase):
         self.assertEqual([
             ('CURRENCY', 1, 'TEST-DA', 'TEST-DA'),
             ('EOL', 2, '\n', None),
+            ('EOL', 2, '\x00', None),
             ], tokens)
         self.assertEqual(0, len(errors))
 
@@ -189,6 +194,7 @@ class TestLexer(unittest.TestCase):
         self.assertEqual([
             ('ERROR', 1, '2013-12-98', None),
             ('EOL', 2, '\n', None),
+            ('EOL', 2, '\x00', None),
         ], tokens)
         self.assertTrue(errors)
         self.assertTrue(re.search('out of range', errors[0].message) or
@@ -202,6 +208,7 @@ class TestLexer(unittest.TestCase):
         self.assertEqual([
             ('ERROR', 1, '2013-12-228', None),
             ('EOL', 2, '\n', None),
+            ('EOL', 2, '\x00', None),
             ], tokens)
 
     @lex_tokens
@@ -212,6 +219,7 @@ class TestLexer(unittest.TestCase):
         self.assertEqual([
             ('ERROR', 1, 'A', None),
             ('EOL', 2, '\n', None),
+            ('EOL', 2, '\x00', None),
         ], tokens)
         self.assertTrue(errors)
         self.assertTrue(re.search('erroneous token', errors[0].message))
@@ -244,6 +252,7 @@ class TestLexer(unittest.TestCase):
             ('NUMBER', 1, '2340.19', D('2340.19')),
             ('CURRENCY', 1, 'USD', 'USD'),
             ('EOL', 2, '\n', None),
+            ('EOL', 2, '\x00', None),
             ], tokens)
         self.assertTrue(errors)
         self.assertTrue(re.search(r'\bcheck\b', errors[0].message))
@@ -268,3 +277,16 @@ class TestLexer(unittest.TestCase):
         """
         self.assertTrue(errors)
         self.assertTrue(re.search(r'Overly long', errors[0].message))
+
+    @lex_tokens
+    def test_no_final_newline(self, tokens, errors):
+        """\
+          2014-01-01 open Assets:Temporary \
+        """
+        self.assertEqual([
+            ('DATE', 1, '2014-01-01', datetime.date(2014, 1, 1)),
+            ('OPEN', 1, 'open', None),
+            ('ACCOUNT', 1, 'Assets:Temporary', 'Assets:Temporary'),
+            ('EOL', 1, '\x00', None),
+            ], tokens)
+        self.assertFalse(errors)

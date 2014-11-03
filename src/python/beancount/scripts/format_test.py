@@ -1,4 +1,3 @@
-import re
 import textwrap
 
 from beancount.utils import test_utils

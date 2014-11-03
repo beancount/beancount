@@ -5,7 +5,6 @@ import functools
 import inspect
 import textwrap
 import copy
-import tempfile
 import re
 from os import path
 
@@ -604,6 +603,7 @@ def parse_file(filename, **kw):
     return (entries, builder.errors, builder.options)
 
 # Alias, for compatibility.
+# pylint: disable=invalid-name
 parse = parse_file
 
 def parse_string(string, **kw):

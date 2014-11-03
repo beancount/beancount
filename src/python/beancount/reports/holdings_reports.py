@@ -232,11 +232,11 @@ class HoldingsReport(report.TableReport):
     def add_args(cls, parser):
         parser.add_argument('-c', '--currency',
                             action='store', default=None,
-                            help="Which currency to convert all the holdings to.")
+                            help="Which currency to convert all the holdings to")
 
         parser.add_argument('-r', '--relative',
                             action='store_true',
-                            help="True if we should render as relative values only.")
+                            help="True if we should render as relative values only")
 
         parser.add_argument('-g', '--groupby', '--by',
                             action='store', default=None,
@@ -259,6 +259,45 @@ class HoldingsReport(report.TableReport):
         # Get the summarized entries and print them out.
         holdings_entries = get_holdings_entries(entries, options_map)
         printer.print_entries(holdings_entries, file)
+
+
+class CashReport(report.TableReport):
+    """The list of cash holdings (defined as currency = cost-currency)."""
+
+    names = ['cash']
+
+    @classmethod
+    def add_args(cls, parser):
+        parser.add_argument('-c', '--currency',
+                            action='store', default=None,
+                            help="Which currency to convert all the holdings to")
+
+        parser.add_argument('-o', '--operating-only',
+                            action='store_true',
+                            help="Only report on operating currencies")
+
+    def generate_table(self, entries, errors, options_map):
+        holdings_list, price_map = get_assets_holdings(entries, options_map)
+
+        # Keep only the holdings where currency is the same as the cost-currency.
+        holdings_list = [holding
+                         for holding in holdings_list
+                         if (holding.currency == holding.cost_currency or
+                             holding.cost_currency is None)]
+
+        # Keep only those holdings held in one of the operating currencies.
+        if self.args.operating_only:
+            operating_currencies = set(options_map['operating_currency'])
+            holdings_list = [holding
+                             for holding in holdings_list
+                             if holding.currency in operating_currencies]
+
+        # Convert holdings to a unified currency.
+        if self.args.currency:
+            holdings_list = holdings.convert_to_currency(price_map, self.args.currency,
+                                                         holdings_list)
+
+        return table.create_table(holdings_list, FIELD_SPEC)
 
 
 class NetWorthReport(report.TableReport):
@@ -307,5 +346,6 @@ class NetWorthReport(report.TableReport):
 
 __reports__ = [
     HoldingsReport,
+    CashReport,
     NetWorthReport,
     ]

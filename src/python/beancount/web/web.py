@@ -42,31 +42,43 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
       build_url: A function used to render links to a Bottle application.
       leafonly: a boolean, if true, render only the name of the leaf nodes.
     """
-    def __init__(self, build_url, leaf_only):
+    def __init__(self, build_url, leaf_only, view_links=True):
         super().__init__()
         self.build_url = build_url
         self.leaf_only = leaf_only
+        self.view_links = view_links
 
     EMS_PER_COMPONENT = 1.5
 
     def render_account(self, account_name):
         """See base class."""
-        if self.leaf_only:
-            # Calculate the number of components to figure out the indent to
-            # render at.
-            components = account.split(account_name)
-            indent = '{:.1f}'.format(len(components) * self.EMS_PER_COMPONENT)
-            anchor = '<a href="{}" class="account">{}</a>'.format(
-                self.build_url('journal', account_name=account_name),
-                account.leaf(account_name))
-
-            return '<span "account" style="padding-left: {}em">{}</span>'.format(
-                indent, anchor)
+        if self.view_links:
+            if self.leaf_only:
+                # Calculate the number of components to figure out the indent to
+                # render at.
+                components = account.split(account_name)
+                indent = '{:.1f}'.format(len(components) * self.EMS_PER_COMPONENT)
+                anchor = '<a href="{}" class="account">{}</a>'.format(
+                    self.build_url('journal', account_name=account_name),
+                    account.leaf(account_name))
+                return '<span "account" style="padding-left: {}em">{}</span>'.format(
+                    indent, anchor)
+            else:
+                anchor = '<a href="{}" class="account">{}</a>'.format(
+                    self.build_url('journal', account_name=account_name),
+                    account_name)
+                return '<span "account">{}</span>'.format(anchor)
         else:
-            anchor = '<a href="{}" class="account">{}</a>'.format(
-                self.build_url('journal', account_name=account_name),
-                account_name)
-            return '<span "account">{}</span>'.format(anchor)
+            if self.leaf_only:
+                # Calculate the number of components to figure out the indent to
+                # render at.
+                components = account.split(account_name)
+                indent = '{:.1f}'.format(len(components) * self.EMS_PER_COMPONENT)
+                account_name = account.leaf(account_name)
+                return '<span "account" style="padding-left: {}em">{}</span>'.format(
+                    indent, account_name)
+            else:
+                return '<span "account">{}</span>'.format(account_name)
 
     def render_link(self, link):
         """See base class."""
@@ -318,7 +330,7 @@ def link(link=None):
     linked_entries = basicops.filter_link(link, app.entries)
 
     oss = io.StringIO()
-    formatter = HTMLFormatter(request.app.get_url, False)
+    formatter = HTMLFormatter(request.app.get_url, False, view_links=False)
     journal_html.html_entries_table_with_balance(oss, linked_entries, formatter)
     return render_global(
         pagetitle="Link: {}".format(link),

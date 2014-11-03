@@ -329,7 +329,7 @@ class TestInventory(unittest.TestCase):
     def test_update(self):
         inv1 = Inventory.from_string('11 USD')
         inv2 = Inventory.from_string('12 CAD')
-        inv_updated = inv1.update(inv2)
+        inv_updated = inv1.add_inventory(inv2)
         expect_updated = Inventory.from_string('11 USD, 12 CAD')
         self.assertEqual(expect_updated, inv_updated)
         self.assertEqual(expect_updated, inv1)

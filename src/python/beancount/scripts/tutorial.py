@@ -7,6 +7,7 @@ import os
 from os import path
 
 
+# pylint: disable=bad-whitespace
 COMMANDS = [
     ('balances'                 , "bean-query {} balances"),
     ('help-reports'             , "bean-query --help-reports"),
@@ -17,10 +18,14 @@ COMMANDS = [
     ('balances-restrict-cost'   , "bean-query {} balances -e ETrade -c"),
     ('balances-tree'            , "bean-query {} balances | treeify"),
     ('balsheet'                 , "bean-query {} balsheet"),
-    ('journal'                  , "bean-query {} journal -w 120 -a Assets:US:BofA:Checking"),
-    ('journal-with-balance'     , "bean-query {} journal -w 120 -a Assets:US:BofA:Checking -b"),
-    ('invest'                   , "bean-query {} journal -w 120 -a Assets:US:ETrade:GLD -b"),
-    ('invest-with-cost'         , "bean-query {} journal -w 120 -a Assets:US:ETrade:GLD -b -c"),
+    ('journal'                  , ("bean-query {} journal -w 120 "
+                                   "-a Assets:US:BofA:Checking")),
+    ('journal-with-balance'     , ("bean-query {} journal -w 120 "
+                                   "-a Assets:US:BofA:Checking -b")),
+    ('invest'                   , ("bean-query {} journal -w 120 "
+                                   "-a Assets:US:ETrade:GLD -b")),
+    ('invest-with-cost'         , ("bean-query {} journal -w 120 "
+                                   "-a Assets:US:ETrade:GLD -b -c")),
     ('journal-unrestricted'     , "bean-query {} journal -w 120 -b"),
     ('holdings'                 , "bean-query {} holdings"),
     ('holdings-by-account'      , "bean-query {} holdings --by account"),
@@ -31,6 +36,7 @@ COMMANDS = [
     ('accounts'                 , "bean-query {} accounts"),
     ('events'                   , "bean-query {} events"),
     ('stats-directives'         , "bean-query {} stats-directives"),
+
     ('stats-postings'           , "bean-query {} stats-postings"),
     ('holdings-csv'             , "bean-query -f csv {} holdings"),
     ]
@@ -58,6 +64,8 @@ def main():
 
         if path.getsize(errors_filename) == 0:
             os.remove(errors_filename)
+
+    return 0
 
 
 if __name__ == '__main__':

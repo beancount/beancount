@@ -3,7 +3,6 @@
 import collections
 
 from beancount.core import data
-from beancount.core import getters
 
 __plugins__ = ('validate_one_commodity',)
 
