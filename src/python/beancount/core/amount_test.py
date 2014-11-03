@@ -1,7 +1,9 @@
 import unittest
 import re
 
-from .amount import D, Decimal, ZERO
+from .amount import D
+from .amount import Decimal
+from .amount import ZERO
 from .amount import Amount
 from . import amount
 
@@ -33,6 +35,17 @@ class TestToDecimal(unittest.TestCase):
         self.assertEqual(Decimal('-83434309.10'), D('-83,434,309.10'))
         self.assertEqual(Decimal(), D(''))
         self.assertEqual(Decimal(), D(None))
+
+    def test_round_to(self):
+        self.assertEqual(D('135.12'), amount.round_to(D('135.12345'), D('0.01')))
+        self.assertEqual(D('135.12'), amount.round_to(D('135.12987'), D('0.01')))
+        self.assertEqual(D('-135.12'), amount.round_to(D('-135.12345'), D('0.01')))
+        self.assertEqual(D('-135.12'), amount.round_to(D('-135.12987'), D('0.01')))
+
+        self.assertEqual(D('130'), amount.round_to(D('135.12345'), D('10')))
+        self.assertEqual(D('130'), amount.round_to(D('135.12987'), D('10')))
+        self.assertEqual(D('-130'), amount.round_to(D('-135.12345'), D('10')))
+        self.assertEqual(D('-130'), amount.round_to(D('-135.12987'), D('10')))
 
 
 class TestAmount(unittest.TestCase):

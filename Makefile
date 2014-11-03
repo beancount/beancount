@@ -180,7 +180,10 @@ missing-tests:
 	./etc/find-missing-tests.py $(SRC)
 
 fixmes:
-	egrep -srn '\b(FIXME|TODO\()' $(SRC)
+	egrep -srn '\b(FIXME|TODO\()' $(SRC) || true
+
+multi-imports:
+	egrep -srn '^(from.*)?import.*,' $(SRC) || true
 
 # Check for unused imports.
 sfood-checker:
@@ -209,4 +212,4 @@ lint: pylint-pass
 
 
 # Check everything.
-status check: pylint-pass missing-tests fixmes dep-constraints tests-quiet
+status check: pylint-pass missing-tests fixmes dep-constraints tests-quiet multi-imports

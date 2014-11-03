@@ -27,6 +27,7 @@ from dateutil.parser import parse as parse_datetime
 
 from beancount.core.amount import D
 from beancount.core.amount import ZERO
+from beancount.core.amount import round_to
 from beancount.core.account import join
 from beancount.core import data
 from beancount.core import amount
@@ -193,39 +194,6 @@ def parse(input_string, **replacements):
         raise ValueError("Parsed text has errors")
 
     return data.sort(entries)
-
-
-# FIXME: This is generic; move to amount.
-def round_to(number, increment):
-    """Round a number *down* to a particular increment.
-
-    Args:
-      number: A Decimal, the number to be rounded.
-      increment: A Decimal, the size of the increment.
-    Returns:
-      A Decimal, the rounded number.
-    """
-    return int((number / increment)) * increment
-
-
-# FIXME: This is generic; move to utils.
-def skipiter(iterable, num_skip):
-    """Skip some elements from an iterator.
-
-    Args:
-      iterable: An iterator.
-      num_skip: The number of elements in the period.
-    Yields:
-      Elemnets from the iterable, with num_skip elements skipped.
-      For example, skipiter(range(10), 3) yields [0, 3, 6, 9].
-    """
-    assert num_skip > 0
-    sit = iter(iterable)
-    while 1:
-        value = next(sit)
-        yield value
-        for _ in range(num_skip-1):
-            next(sit)
 
 
 def date_iter(date_begin, date_end):
@@ -453,7 +421,7 @@ def generate_employment_income(employer_name,
         vacation_hrs = (ANNUAL_VACATION_DAYS * D('8')) / D('26')
 
     transactions = []
-    for dtime in skipiter(rrule.rrule(rrule.WEEKLY, byweekday=rrule.TH,
+    for dtime in misc_utils.skipiter(rrule.rrule(rrule.WEEKLY, byweekday=rrule.TH,
                                       dtstart=date_begin, until=date_end), 2):
         date = dtime.date()
         year = date.year
