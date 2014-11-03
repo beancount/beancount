@@ -12,6 +12,7 @@ from beancount.core.position import Position
 from beancount.core.data import Transaction
 from beancount.core.data import Posting
 from beancount.core.data import reparent_posting
+from beancount.core.data import entry_replace
 from beancount.core import getters
 from beancount.core import inventory
 
@@ -88,6 +89,30 @@ def compute_residual(postings):
     for posting in postings:
         inventory.add_amount(get_balance_amount(posting))
     return inventory
+
+
+def fill_residual_posting(entry, account_rounding):
+    """If necessary, insert a posting to absorb the residual.
+    This makes the transaction balance exactly.
+
+    Args:
+      entry: An instance of a Transaction.
+      account_rounding: A string, the name of the rounding account that
+        absorbs residuals / rounding errors.
+    Returns:
+      A possibly new, modified entry with a new posting. If a residual
+      was not needed - the transaction already balanced perfectly - no new
+      leg is inserted.
+    """
+    residual = compute_residual(entry.postings)
+    if residual.is_empty():
+        return entry
+    else:
+        new_postings = list(entry.postings)
+        for position in residual.get_positions():
+            rounding_posting = Posting(None, account_rounding, -position, None, None)
+            new_postings.append(rounding_posting)
+        return entry_replace(entry, postings=new_postings)
 
 
 def get_incomplete_postings(entry):

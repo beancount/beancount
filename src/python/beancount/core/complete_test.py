@@ -9,13 +9,14 @@ from beancount.core import inventory
 from beancount.core import complete
 from beancount.core import amount
 from beancount.parser import parser
+from beancount.parser import cmptest
 
 
 # True if errors are generated on residual by get_incomplete_postings().
 ERRORS_ON_RESIDUAL = False
 
 
-class TestBalance(unittest.TestCase):
+class TestBalance(cmptest.TestCase):
 
     def test_get_balance_amount(self):
 
@@ -74,6 +75,53 @@ class TestBalance(unittest.TestCase):
             P(None, "Assets:Bank:Savings", "89.00", "USD"),
             ])
         self.assertEqual([amount.Amount("5", "AAPL")], residual.get_amounts())
+
+    @parser.parsedoc
+    def test_fill_residual_posting(self, entries, _, __):
+        """
+        2014-01-01 *
+          Assets:Account1      100.00 USD
+          Assets:Other
+
+        2014-01-02 *
+          Assets:Account1      100.00 USD
+          Assets:Other        -100.00 USD
+
+        2014-01-03 *
+          Assets:Account1      100.00 USD
+          Assets:Other        -100.0000001 USD
+
+        2014-01-04 *
+          Assets:Account1      100.00 USD
+          Assets:Other        -112.69 CAD @ 0.8875 USD
+        """
+        account = 'Equity:Rounding'
+        for index in 0, 1:
+            entry = complete.fill_residual_posting(entries[index], account)
+            self.assertEqualEntries([entries[index]], [entry])
+            self.assertTrue(complete.compute_residual(entry.postings).is_empty())
+
+        entry = complete.fill_residual_posting(entries[2], account)
+        self.assertEqualEntries("""
+
+        2014-01-03 *
+          Assets:Account1      100.00 USD
+          Assets:Other        -100.0000001 USD
+          Equity:Rounding        0.0000001 USD
+
+        """, [entry])
+        self.assertTrue(complete.compute_residual(entry.postings).is_empty())
+
+        entry = complete.fill_residual_posting(entries[3], account)
+        self.assertEqualEntries("""
+
+        2014-01-04 *
+          Assets:Account1     100.00 USD
+          Assets:Other       -112.69 CAD @ 0.8875 USD
+          Equity:Rounding   0.012375 USD
+
+        """, [entry])
+        self.assertTrue(complete.compute_residual(entry.postings).is_empty())
 
     def test_get_incomplete_postings_pathological(self):
         source = data.Source(__file__, 0)
