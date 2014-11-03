@@ -120,6 +120,25 @@ def longest(seq):
     return longest
 
 
+def skipiter(iterable, num_skip):
+    """Skip some elements from an iterator.
+
+    Args:
+      iterable: An iterator.
+      num_skip: The number of elements in the period.
+    Yields:
+      Elemnets from the iterable, with num_skip elements skipped.
+      For example, skipiter(range(10), 3) yields [0, 3, 6, 9].
+    """
+    assert num_skip > 0
+    sit = iter(iterable)
+    while 1:
+        value = next(sit)
+        yield value
+        for _ in range(num_skip-1):
+            next(sit)
+
+
 def get_tuple_values(ntuple, predicate, memo=None):
     """Return all members referred to by this namedtuple instance that satisfy the
     given predicate. This function also works recursively on its members which
