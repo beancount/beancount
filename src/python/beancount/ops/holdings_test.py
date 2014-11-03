@@ -7,14 +7,14 @@ from beancount.core.amount import ZERO
 from beancount.core import position
 from beancount.ops import holdings
 from beancount.ops import prices
-from beancount.parser import parsedoc
+from beancount import loader
 
 
 class TestHoldings(unittest.TestCase):
 
     maxDiff = 4096
 
-    @parsedoc
+    @loader.loaddoc
     def test_get_final_holdings(self, entries, _, __):
         """
         2013-01-01 open Assets:Account1
@@ -88,7 +88,27 @@ class TestHoldings(unittest.TestCase):
                            if holding[0].startswith('Assets')]
         self.assertEqual(expected_values, holdings_list)
 
-    @parsedoc
+    @loader.loaddoc
+    def test_get_final_holdings__check_no_aggregates(self, entries, _, __):
+        """
+        option "plugin" "beancount.plugins.unrealized:Unrealized"
+
+        2013-01-01 open Assets:Investment   GOOG
+        2013-01-01 open Assets:Cash         USD
+
+        2013-04-01 *
+          Assets:Investment             15 GOOG {518.73 USD}
+          Assets:Cash
+
+        2013-06-01 price GOOG  600.00 USD
+        """
+        holdings_list = holdings.get_final_holdings(entries)
+
+        # Ensure that there is no Unrealized balance or sub-account.
+        self.assertEqual({'Assets:Cash', 'Assets:Investment'},
+                         set(holding.account for holding in holdings_list))
+
+    @loader.loaddoc
     def test_get_final_holdings_with_prices(self, entries, _, __):
         """
         2013-01-01 open Assets:Account1
@@ -277,7 +297,7 @@ class TestHoldings(unittest.TestCase):
                          holdings.aggregate_holdings_by(test_holdings,
                                                         lambda holding: holding.account))
 
-    @parsedoc
+    @loader.loaddoc
     def test_convert_to_currency(self, entries, _, __):
         """
         2013-01-01 price CAD 1.1 USD

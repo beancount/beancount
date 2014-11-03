@@ -5,10 +5,6 @@ beancount: TODO
 
   - Complete presentation
 
-  - Create a two-column tool to convert one column into two columns (for text
-    mode balance sheet and income statement). The equivalent UNIX tool does not
-    exist. Select columns by regexp.
-
   - Fix rendering of balances for HTML journals, esp. w.r.t. example file,
     rendering lots is just _not_ the ticket.
 
@@ -97,6 +93,9 @@ beancount: TODO
   becoming clearer where some files need to move. Try to make these moves
   before shipping, so that things don't move nearly as much later on.
 
+  - Move examples/tutoral/example.beancount -> examples/example.beancount, does
+    not need to be under tutorial/
+
   - Maybe beancount.core.complete should be called beancount.core.interpolate.
     That's the term I've been using for a while now isn't it. Clean up
     terminology.
@@ -130,17 +129,6 @@ beancount: TODO
   have a pretty solid pylint configuration passing.
 
   - Fix all FIXMEs everywhere, or convert them to items in this list.
-
-  - Make all imports not import symbols directly, only packages, except where
-    performance really, really matters (the parser)
-
-      grep -srn  'from beancount\..*\..*import'  /Users/blais/p/beancount/src/python/beancount
-
-    Add a check for this in linter makefile
-
-
-  - Remove all imports that import multiple things (makes it easier to grep if
-    only one)
 
   - Configure and run a clean pylint on the entire codebase.
 
@@ -179,7 +167,6 @@ beancount: TODO
 ** Documentation / Ongoing
 
   - Is there a script somewhere that can accept a CSV file and render a CSV
-
     pivot table from it?  The reason we need support is in order to carry out
     operations on columns of inventories. Maybe we should impleemnted some sort
     of swiss-knife tool that is able to parse inventories from columns and
@@ -206,6 +193,12 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - Create a two-column tool to convert one column into two columns (for text
+    mode balance sheet and income statement). The equivalent UNIX tool does not
+    exist. Select columns by regexp.
+
 
 
   - Support an include directive that is a URL, in order to fetch lists of
