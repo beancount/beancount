@@ -5,22 +5,38 @@ beancount: TODO
 
   - Complete presentation
 
-  - Rename compute_balance_amount() -> compute_weight() and provide functions to
-    compute units, weight, etc. from Position objects, using consistent
-    terminology.
-
-  - Revise beancount.loader.load() to beancount.loader.load_file() + alias, as
-    for the parser.
-
   - Create a two-column tool to convert one column into two columns (for text
     mode balance sheet and income statement). The equivalent UNIX tool does not
     exist. Select columns by regexp.
 
-
-** Bugs
-
   - Fix rendering of balances for HTML journals, esp. w.r.t. example file,
     rendering lots is just _not_ the ticket.
+
+  - Add more tests for intra-day trading, esp. w.r.t. ordering and inventory booking.
+
+  - Complete more thorough tests for journal_text_test.py
+
+
+** Display Precision
+
+  - Build a routine that can compute the commonly used precision for each
+    currency and (currency, account) pairs, and derive a PrecisionContext
+    object that can then be used to render all the data.
+
+  - Fix all of these with it:
+
+     grep -srn '\.str\b'    /home/blais/p/beancount/src/python/beancount/
+     /home/blais/p/beancount/src/python/beancount/parser/printer.py:57:        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
+     /home/blais/p/beancount/src/python/beancount/parser/printer.py:64:                balance_amount_str = balance_amount.str(amount.MAXDIGITS_PRINTER)
+     /home/blais/p/beancount/src/python/beancount/core/position.py:99:        amount_str = Amount(self.number, lot.currency).str(MAXDIGITS_PRINTER)
+     /home/blais/p/beancount/src/python/beancount/core/position.py:107:                    Amount(lot.cost.number, lot.cost.currency).str(MAXDIGITS_PRINTER))
+     /home/blais/p/beancount/src/python/beancount/core/amount.py:111:        return self.str(MAXDIGITS_QUANTIZE)
+     /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:185:            price_str = '@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
+     /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:195:                    posting.position.lot.cost.str(amount.MAXDIGITS_PRINTER))
+     /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:287:        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
+
+  - Use this routine in the BQL rendering routines.
+
 
 ** Rounding
 
@@ -56,14 +72,7 @@ beancount: TODO
   - Complete and merge sampled_quantization
 
 
-** More tests
-
-  - Add more tests for intra-day trading, esp. w.r.t. ordering and inventory booking.
-
-  - Complete more thorough tests for journal_text_test.py
-
-
-** Move Files to Final Location
+** Renames and Move Files to Final Location
 
   As I'm moving to a system with more plugins and less code in the core, and
   with the intermediate reports stage instead of just the web interface, it's
@@ -76,6 +85,18 @@ beancount: TODO
 
   - Clean up terminology re. units, weight, etc.
   - Rename all "balance amounts" to "weight".
+
+  - Rename compute_balance_amount() -> compute_weight() and provide functions to
+    compute units, weight, etc. from Position objects, using consistent
+    terminology.
+
+  - Rename Position.get_amount() -> Position.get_units(). Make sure the
+    terminology matches that of Inventory.
+
+
+  - Revise beancount.loader.load() to beancount.loader.load_file() + alias, as
+    for the parser.
+
 
   - beancount.core.realization: Look at deps for beancount.core.realization and
     move it upstream where it makes sense, maybe ops.
