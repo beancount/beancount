@@ -194,6 +194,11 @@ beancount: TODO
   - Clean up this TODO file, reorganize sections, remove what's redundant from
     the proposal files.
 
+  - Create new doc: Inter account transfer
+  - Create new doc: Computing portfolio returns using Beancount
+
+  - Change script to try to download to ODT format and then batch format to ebook
+
 
 * Current / Misc / To Be Classified
 
@@ -203,8 +208,45 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Support an include directive that is a URL, in order to fetch lists of
+    prices updated remotely, or via crontab. This way the dashboard does not
+    have to include code that fetches prices.
+
+
+  - Idea: option to search a lot from any account, not just the current account,
+    and cause an automatic lot transfer. Must match shares in the current
+    account, but the lot with the corresponding cost could come from any
+    account.
+
+  - Idea: Another output data format for the reports/query language could be
+    parseable Python format.
+
+
+  - Idea for an additional check: a plugin that computes the weight using the "@
+    price" value on a posting held-at-cost, checked against the rest of postings
+    minus income (gains) accounts.
+
+
+
+  - Comparison w/ Ledger doc: "balance sheet and closing of year"
+
+
+  - Docs for inventory booking: Add {* 634.23 USD} idea for average cost
+    booking: there should be an optional amount, and the star just means "before
+    and after". Add this to B docs.
+
+
+  - You should have a dwdidated section of your document that explains how market
+    values are reported, that is, via the unrealized gains plugin. Also provide a
+    market() function, to value holdings.
+
+
+
   - BUG/CHANGE: Unrealized gain when rendering for closed years does not appear.
     Perhaps we should insert the unrealized gains during close operation.
+
+    Idea: close realized gains along with close(), so that they don't show up for
+    the latest year.
 
 
 
