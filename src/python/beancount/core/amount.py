@@ -61,6 +61,18 @@ def D(strord=None):
         assert strord is None, "Invalid value to convert: {}".format(strord)
 
 
+def round_to(number, increment):
+    """Round a number *down* to a particular increment.
+
+    Args:
+      number: A Decimal, the number to be rounded.
+      increment: A Decimal, the size of the increment.
+    Returns:
+      A Decimal, the rounded number.
+    """
+    return int((number / increment)) * increment
+
+
 # Number of digits to display all amounts if we can do so precisely.
 DISPLAY_QUANTIZE = Decimal('.01')
 

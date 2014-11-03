@@ -27,6 +27,7 @@ from dateutil.parser import parse as parse_datetime
 
 from beancount.core.amount import D
 from beancount.core.amount import ZERO
+from beancount.core.amount import round_to
 from beancount.core.account import join
 from beancount.core import data
 from beancount.core import amount
@@ -193,19 +194,6 @@ def parse(input_string, **replacements):
         raise ValueError("Parsed text has errors")
 
     return data.sort(entries)
-
-
-# FIXME: This is generic; move to amount.
-def round_to(number, increment):
-    """Round a number *down* to a particular increment.
-
-    Args:
-      number: A Decimal, the number to be rounded.
-      increment: A Decimal, the size of the increment.
-    Returns:
-      A Decimal, the rounded number.
-    """
-    return int((number / increment)) * increment
 
 
 # FIXME: This is generic; move to utils.
