@@ -11,7 +11,8 @@ import time
 import threading
 
 import bottle
-from bottle import response, request
+from bottle import response
+from bottle import request
 
 from beancount.core import data
 from beancount.core import getters

@@ -1,7 +1,9 @@
 import unittest
 import re
 
-from .amount import D, Decimal, ZERO
+from .amount import D
+from .amount import Decimal
+from .amount import ZERO
 from .amount import Amount
 from . import amount
 

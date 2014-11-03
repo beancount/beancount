@@ -6,8 +6,13 @@ import unittest
 import copy
 from datetime import date
 
-from .amount import ZERO, D, Amount
-from .position import Lot, Position, from_string, from_amounts
+from .amount import ZERO
+from .amount import D
+from .amount import Amount
+from .position import Lot
+from .position import Position
+from .position import from_string
+from .position import from_amounts
 
 
 class TestPosition(unittest.TestCase):

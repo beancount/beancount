@@ -102,8 +102,10 @@ def split_currency_conversions(entry):
             weight = complete.get_balance_amount(posting_orig)
             simple_position = position.Position(position.Lot(weight.currency, None, None),
                                                 weight.number)
-            posting_pos = data.Posting(None, posting_orig.account, simple_position, None, None)
-            posting_neg = data.Posting(None, posting_orig.account, -simple_position, None, None)
+            posting_pos = data.Posting(None, posting_orig.account, simple_position,
+                                       None, None)
+            posting_neg = data.Posting(None, posting_orig.account, -simple_position,
+                                       None, None)
 
             currency_entry = data.entry_replace(
                 entry,
