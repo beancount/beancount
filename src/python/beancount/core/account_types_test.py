@@ -100,3 +100,13 @@ class TestAccountTypes(unittest.TestCase):
                 not expected,
                 account_types.is_income_statement_account(
                     account_name, account_types.DEFAULT_ACCOUNT_TYPES))
+
+    def test_get_account_type(self):
+        for account_name, expected in [
+                ("Assets:US:RBS:Savings", +1),
+                ("Liabilities:US:RBS:MortgageLoan", -1),
+                ("Equity:Opening-Balances", -1),
+                ("Income:US:ETrade:Dividends", -1),
+                ("Expenses:Toys:Computer", +1),
+        ]:
+            self.assertEqual(expected, account_types.get_account_sign(account_name))
