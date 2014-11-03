@@ -118,6 +118,7 @@ RENDERERS = {
     str                 : (identity, '<'),
     Decimal             : ('{:.2f}'.format, '>'),
     inventory.Inventory : (render_inventory, '>'),
+    datetime.date       : (str, '<'),
     }
 
 
