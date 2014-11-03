@@ -246,6 +246,8 @@ precise balances throughout, but no manual input is required.
     of days before or after. We should be able to use this to view transactions
     occurring near another transaction.
 
+  - This causes an ugly error message:
+    beancount> print from has_account ~ 'Rent';
 
 * Current / Misc / To Be Classified
 
