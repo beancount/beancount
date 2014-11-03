@@ -561,6 +561,13 @@ class LinksColumn(c.EvalColumn):
     def __call__(self, posting):
         return posting.entry.links
 
+class PostingFlagColumn(c.EvalColumn):
+    def __init__(self):
+        super().__init__(str)
+
+    def __call__(self, posting):
+        return posting.flag
+
 class AccountColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(str)
@@ -635,6 +642,7 @@ class FilterPostingsEnvironment(c.CompilationEnvironment):
         'narration'     : NarrationColumn,
         'tags'          : TagsColumn,
         'links'         : LinksColumn,
+        'posting_flag'  : PostingFlagColumn,
         'account'       : AccountColumn,
         'number'        : NumberColumn,
         'currency'      : CurrencyColumn,
