@@ -1,6 +1,6 @@
 -*- mode: org -*-
 beancount: TODO
-* Requirements for Shipping 1.0
+* Requirements for Shipping 2.0
 ** Current
 
   - Complete presentation
@@ -17,7 +17,7 @@ beancount: TODO
   - Complete more thorough tests for journal_text_test.py
 
 
-** Display Precision
+** Establish Display Precision
 
   - Build a routine that can compute the commonly used precision for each
     currency and (currency, account) pairs, and derive a PrecisionContext
@@ -72,16 +72,10 @@ beancount: TODO
   - Complete and merge sampled_quantization
 
 
-** Renames and Move Files to Final Location
+** Units, Weight Name Everything Consistently
 
-  As I'm moving to a system with more plugins and less code in the core, and
-  with the intermediate reports stage instead of just the web interface, it's
-  becoming clearer where some files need to move. Try to make these moves
-  before shipping, so that things don't move nearly as much later on.
-
-  - Maybe beancount.core.complete should be called beancount.core.interpolate.
-    That's the term I've been using for a while now isn't it. Clean up
-    terminology.
+  It's time for a bit of a better establishment in the names of the quantities
+  we use. This should be done for 2.0.
 
   - Clean up terminology re. units, weight, etc.
   - Rename all "balance amounts" to "weight".
@@ -93,10 +87,22 @@ beancount: TODO
   - Rename Position.get_amount() -> Position.get_units(). Make sure the
     terminology matches that of Inventory.
 
+  - I think we should remove Inventory.get_amounts(), replace by get_units().
+
+
+** Renames and Move Files to Final Location
+
+  As I'm moving to a system with more plugins and less code in the core, and
+  with the intermediate reports stage instead of just the web interface, it's
+  becoming clearer where some files need to move. Try to make these moves
+  before shipping, so that things don't move nearly as much later on.
+
+  - Maybe beancount.core.complete should be called beancount.core.interpolate.
+    That's the term I've been using for a while now isn't it. Clean up
+    terminology.
 
   - Revise beancount.loader.load() to beancount.loader.load_file() + alias, as
     for the parser.
-
 
   - beancount.core.realization: Look at deps for beancount.core.realization and
     move it upstream where it makes sense, maybe ops.
