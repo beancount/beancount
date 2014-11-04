@@ -248,6 +248,10 @@ beancount: TODO
 
   - You need to support "COUNT(*)", it's too common. r.Count(r.Wildcard()).
 
+  - The shell should have a method for rendering the context before and after a
+    particular transcation, and that transaction as well, in the middle. This
+    should replace the "bean-doctor context" command.
+
 
 
 * Current / Misc / To Be Classified
