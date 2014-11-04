@@ -15,6 +15,10 @@ beancount: TODO
 
   - Complete more thorough tests for journal_text_test.py
 
+  - Improve printer to avoid inserting spaces between directives of the same
+    type, except when they are transactions. This will result in a tider output
+    that is natural and prettier.
+
 
 ** Establish Display Precision
 
@@ -210,6 +214,10 @@ beancount: TODO
 
     * Insert links on matching lots, so that trades can be identified a
       posteriori.
+
+    This means, move beancount.ops.validation.validate_inventory_booking() to
+    its own file and make it do the three steps above.
+
 
 
   - Create a two-column tool to convert one column into two columns (for text
