@@ -8,6 +8,9 @@ beancount: TODO
   - Fix rendering of balances for HTML journals, esp. w.r.t. example file,
     rendering lots is just _not_ the ticket.
 
+      In HTML rendering, render only by units, and provide a link to a /context
+      page that renders inventory befre and after just like my context utility.
+
   - Add more tests for intra-day trading, esp. w.r.t. ordering and inventory booking.
 
   - Complete more thorough tests for journal_text_test.py
