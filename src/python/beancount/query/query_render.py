@@ -20,6 +20,26 @@ from beancount.utils.misc_utils import box
 from beancount.reports import table
 
 
+class Distribution:
+    """A class that computes a histogram of integer values. This is used to compute
+    a length that will cover at least some decent fraction of the samples.
+    """
+    def __init__(self):
+        self.hist = collections.defaultdict(itn)
+
+    def update(self, value):
+        self.hist[value] += 1
+
+    def getmax(self, min_frac):
+        total_count = sum(self.hist.values())
+        cumul_count = 0
+        for value, count in self.hist.items():
+            cumul_count += count
+            if cumul_count / total_count > min_frac:
+                return value
+        return value
+
+
 class ColumnRenderer:
     """Base class for classes that render and compute formatting and width for all
     values that appear within a column. All the values rendered are assumed to
@@ -383,6 +403,13 @@ def render_text__old(result_types, result_rows, file):
 
 
 # FIXME: Create a StringSetRenderer
+
+# FIXME: Instead of truncating (or in addition to), a number should ever only be
+# rendered to the maximum precision (number of fractional digits) with which it
+# was provided. Render white spaces on the right instead of additional zeroes.
+# This by itself might be enough to redeem the current method and the inference
+# of a "reasonable" precision that covers 90% of the numbers and then truncates
+# may not be necessary at all.
 
 # FIXME: You need to render the header.
 #

@@ -233,6 +233,23 @@ beancount: TODO
   - This causes an ugly error message:
     beancount> print from has_account ~ 'Rent';
 
+  - That's weird, why didn't those get merged together, investigate:
+
+     beancount> select cost_currency, sum(cost(change)) where account ~
+     'assets.*inv' group by 1 ;
+     ,-----+-----------------------------------.
+     +-----+-----------------------------------+
+     | CAD | XXXXX.XXXXXXX0000000000000000 CAD |
+     |     | XXXXX.XXXXXXX0000000000000000 CAD |
+     | USD |                                   |
+     `-----+-----------------------------------'
+
+    This is probably due to lot-dates not being rendered.
+
+  - You need to support "COUNT(*)", it's too common. r.Count(r.Wildcard()).
+
+
+
 * Current / Misc / To Be Classified
 
   (This is a grab bag of ideas. When I have a new idea coming to me, I don't

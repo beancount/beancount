@@ -15,6 +15,13 @@ from beancount.query import query_render
 from beancount.utils.misc_utils import box
 
 
+class TestDistribution(unittest.TestCase):
+
+    def test_hist(self):
+        query_render.Distribution()
+        # FIXME: continue here
+
+
 class ColumnRendererBase(unittest.TestCase):
 
     RendererClass = None

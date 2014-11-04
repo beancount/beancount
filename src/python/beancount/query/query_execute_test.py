@@ -916,3 +916,9 @@ class TestExecuteUseCases(QueryBase):
 
 # FIXME: from mailing-list:
 # SELECT account, payee, sum(change) WHERE account ~ "Payable" OR account ~ "Receivable" GROUP BY 1, 2;
+
+
+# FIXME: To render holdings at "average cost", e.g. when aggregating by account,
+# you could provide an "AVERAGE(Inventory)" function that merges an inventory's
+# lots in the same way that the holdings merge right now. THIS is how to replace
+# and remove all holdings support.
