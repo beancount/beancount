@@ -198,6 +198,20 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Separate inventory booking to be implemented in a plugin. It should do
+    three things:
+
+    * Find matching lots and raise errors when not found
+
+    * replace all partially specified lots to their fully specified versions
+      (they matched lots). For augmenting lots, this means insert the date. For
+      lot reductions, it means, find the matching lot and use that instead of
+      the partially specified one.
+
+    * Insert links on matching lots, so that trades can be identified a
+      posteriori.
+
+
   - Create a two-column tool to convert one column into two columns (for text
     mode balance sheet and income statement). The equivalent UNIX tool does not
     exist. Select columns by regexp.
