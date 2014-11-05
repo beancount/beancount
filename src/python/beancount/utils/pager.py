@@ -89,9 +89,10 @@ class ConditionalPager:
         Args:
           file: A file object to flush the accumulated data to.
         """
-        write = file.write
-        for data in self.accumulated_data:
-            write(data)
+        if self.accumulated_data:
+            write = file.write
+            for data in self.accumulated_data:
+                write(data)
         self.accumulated_data = None
         self.accumulated_lines = None
 
@@ -113,6 +114,11 @@ class ConditionalPager:
         else:
             # We've already created a pager subprocess... flush the lines to it.
             self.file.write(data)
+            # try:
+            # except BrokenPipeError:
+            #     # Make sure we don't barf on __exit__().
+            #     self.file = self.pipe = None
+            #     raise
 
     def __exit__(self, type, value, unused_traceback):
         """Context manager exit. This flushes the output to our output file.
@@ -122,21 +128,26 @@ class ConditionalPager:
           value: Optional exception value, as per context managers.
           unused_traceback: Optional trace.
         """
-        if self.file:
-            # Flush the output file and close it.
-            self.file.flush()
-        else:
-            # Oops... we never reached the threshold. Flush the accumulated
-            # output to the file.
-            self.flush_accumulated(self.default_file)
+        try:
+            if self.file:
+                # Flush the output file and close it.
+                self.file.flush()
+            else:
+                # Oops... we never reached the threshold. Flush the accumulated
+                # output to the file.
+                self.flush_accumulated(self.default_file)
 
-        # Wait for the subprocess (if we have one).
-        if self.pipe:
-            self.file.close()
-            self.pipe.wait()
+            # Wait for the subprocess (if we have one).
+            if self.pipe:
+                self.file.close()
+                self.pipe.wait()
+
+        # Absorb broken pipes that may occur on flush or close above.
+        except BrokenPipeError:
+            return True
 
         # Absorb broken pipes.
         if isinstance(value, BrokenPipeError):
-            pass
+            return True
         elif value:
             raise
