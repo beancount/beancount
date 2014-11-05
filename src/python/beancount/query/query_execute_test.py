@@ -1,23 +1,18 @@
 import datetime
 import io
-import re
 import unittest
 import textwrap
-import functools
 
 from beancount.core.amount import D
 from beancount.core.amount import Decimal
 from beancount.core import inventory
-from beancount.core import position
 from beancount.query import query_parser as q
 from beancount.query import query_compile as c
 from beancount.query import query_env as cc
 from beancount.query import query_execute as x
-from beancount.parser import printer
 from beancount.parser import cmptest
 from beancount.parser import parser
 from beancount.utils import misc_utils
-from beancount.utils.misc_utils import box
 
 
 class QueryBase(cmptest.TestCase):
@@ -586,7 +581,7 @@ class TestExecuteAggregatedQuery(QueryBase):
                 (20, inventory.from_string('100.00 USD'),),
                 ])
 
-    def test_aggregated_group_by_invisible_order_by_non_aggregate_invisible(self):
+    def test_aggregated_group_by_invisible_order_by_non_aggregate_invis(self):
         # GROUP-BY: 'account' is invisible.
         # ORDER-BY: 'sum(number)' is an aggregate and invisible.
         self.check_query(
@@ -915,7 +910,8 @@ class TestExecuteUseCases(QueryBase):
 
 
 # FIXME: from mailing-list:
-# SELECT account, payee, sum(change) WHERE account ~ "Payable" OR account ~ "Receivable" GROUP BY 1, 2;
+# SELECT account, payee, sum(change)
+# WHERE account ~ "Payable" OR account ~ "Receivable" GROUP BY 1, 2;
 
 
 # FIXME: To render holdings at "average cost", e.g. when aggregating by account,

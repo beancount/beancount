@@ -1,5 +1,4 @@
 import datetime
-import re
 import unittest
 
 from beancount.core.amount import D
@@ -7,7 +6,6 @@ from beancount.core.amount import Decimal
 from beancount.core import inventory
 from beancount.core import position
 from beancount.core import amount
-from beancount.query import query_parser as q
 from beancount.query import query_compile as c
 from beancount.query import query_env as cc
 
@@ -43,7 +41,8 @@ class TestCompileDataTypes(unittest.TestCase):
             cc.UnitsPosition([c.EvalConstant(17)])
         with self.assertRaises(c.CompilationError):
             cc.UnitsPosition([c.EvalConstant(inventory.Inventory())])
-        c_units = cc.UnitsPosition([c.EvalConstant(position.Position.from_string('100 USD'))])
+        c_units = cc.UnitsPosition(
+            [c.EvalConstant(position.Position.from_string('100 USD'))])
         self.assertEqual(amount.Amount, c_units.dtype)
 
     def test_compile_EvalCost(self):

@@ -2,15 +2,12 @@
 """
 import collections
 import datetime
-import itertools
 
 from beancount.core import data
 from beancount.query import query_compile
-from beancount.parser import options
 from beancount.parser import printer
 from beancount.ops import summarize
 from beancount.utils import misc_utils
-from beancount.utils.misc_utils import box
 
 
 def filter_entries(c_from, entries, options_map):
@@ -120,6 +117,7 @@ def execute_query(query, entries, options_map):
                     if target.name is not None]
 
     # Create a class for each final result.
+    # pylint: disable=invalid-name
     ResultRow = collections.namedtuple('ResultRow',
                                        [target.name
                                         for target in query.c_targets

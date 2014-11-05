@@ -158,6 +158,7 @@ class TestMiscUtils(unittest.TestCase):
         self.assertLess(-1, max_height)
 
     def test_cmptuple(self):
+        # pylint: disable=invalid-name
         One = misc_utils.cmptuple('Bla', 'a b c')
         Two = misc_utils.cmptuple('Bli', 'd e f')
 

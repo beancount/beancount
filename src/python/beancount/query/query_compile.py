@@ -7,17 +7,10 @@ query to be run against a list of entries.
 import collections
 import copy
 import datetime
-import itertools
-import io
 import re
 import operator
 
-from beancount.core.amount import Decimal
-from beancount.core import position
-from beancount.core import inventory
-from beancount.core import data
 from beancount.query import query_parser
-from beancount.utils.misc_utils import box
 
 
 class CompilationError(Exception):

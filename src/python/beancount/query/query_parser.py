@@ -2,7 +2,6 @@
 """
 import collections
 import datetime
-import itertools
 import io
 import re
 
@@ -12,9 +11,10 @@ import ply.lex
 import ply.yacc
 
 from beancount.core.amount import D
-from beancount.core import position
 from beancount.utils.misc_utils import cmptuple
 
+
+# pylint: disable=invalid-name
 
 # A wrapper for a statement, that is a command to explain this
 # statement instead of executing it.
@@ -213,18 +213,19 @@ class Lexer:
         return token
 
     # Constant tokens.
-    t_WILDCARD  = r"\*"
-    t_COMMA  = r","
-    t_SEMI   = r";"
-    t_LPAREN = r"\("
-    t_RPAREN = r"\)"
-    t_NE     = r"!="
-    t_EQ     = r"="
-    t_GTE  = r">="
-    t_GT  = r">"
-    t_LTE  = r"<="
-    t_LT  = r"<"
-    t_TILDE  = r"~"
+    # pylint: disable=bad-whitespace
+    t_WILDCARD = r"\*"
+    t_COMMA    = r","
+    t_SEMI     = r";"
+    t_LPAREN   = r"\("
+    t_RPAREN   = r"\)"
+    t_NE       = r"!="
+    t_EQ       = r"="
+    t_GTE      = r">="
+    t_GT       = r">"
+    t_LTE      = r"<="
+    t_LT       = r"<"
+    t_TILDE    = r"~"
 
     # Numbers.
     def t_DECIMAL(self, token):
@@ -519,7 +520,7 @@ class SelectParser(Lexer):
         opt_expression : empty
                        | expression
         """
-        p[0] =  p[1]
+        p[0] = p[1]
 
     def p_expression_list_opt(self, p):
         """

@@ -2,23 +2,12 @@
 """
 import collections
 import datetime
-import itertools
-import math
 from itertools import zip_longest
 
 from beancount.core.amount import Decimal
-from beancount.core.amount import ZERO
-from beancount.core import data
 from beancount.core import amount
 from beancount.core import position
 from beancount.core import inventory
-from beancount.query import query_compile
-from beancount.parser import options
-from beancount.parser import printer
-from beancount.ops import summarize
-from beancount.utils import misc_utils
-from beancount.utils.misc_utils import box
-from beancount.reports import table
 
 
 class Distribution:
@@ -305,17 +294,20 @@ class PositionRenderer(ColumnRenderer):
         if self.fmt_with_cost is None:
             lot = pos.lot
             strings.append(
-                self.fmt_without_cost.format(self.units_rdr.format(pos.get_amount())))
+                self.fmt_without_cost.format(
+                    self.units_rdr.format(pos.get_amount())))
         else:
             lot = pos.lot
             cost = lot.cost
             if cost:
                 strings.append(
-                    self.fmt_with_cost.format(self.units_rdr.format(pos.get_amount()),
-                                              self.cost_rdr.format(cost)))
+                    self.fmt_with_cost.format(
+                        self.units_rdr.format(pos.get_amount()),
+                        self.cost_rdr.format(cost)))
             else:
                 strings.append(
-                    self.fmt_without_cost.format(self.units_rdr.format(pos.get_amount())))
+                    self.fmt_without_cost.format(
+                        self.units_rdr.format(pos.get_amount())))
 
         if len(strings) == 1:
             return strings[0]
@@ -343,18 +335,21 @@ class InventoryRenderer(PositionRenderer):
             for pos in inv.get_positions():
                 lot = pos.lot
                 strings.append(
-                    self.fmt_without_cost.format(self.units_rdr.format(pos.get_amount())))
+                    self.fmt_without_cost.format(
+                        self.units_rdr.format(pos.get_amount())))
         else:
             for pos in inv.get_positions():
                 lot = pos.lot
                 cost = lot.cost
                 if cost:
                     strings.append(
-                        self.fmt_with_cost.format(self.units_rdr.format(pos.get_amount()),
-                                                  self.cost_rdr.format(cost)))
+                        self.fmt_with_cost.format(
+                            self.units_rdr.format(pos.get_amount()),
+                            self.cost_rdr.format(cost)))
                 else:
                     strings.append(
-                        self.fmt_without_cost.format(self.units_rdr.format(pos.get_amount())))
+                        self.fmt_without_cost.format(
+                            self.units_rdr.format(pos.get_amount())))
 
         if len(strings) == 1:
             return strings[0]

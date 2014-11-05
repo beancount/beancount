@@ -4,12 +4,9 @@ import unittest
 
 from beancount.core.amount import D
 from beancount.core.amount import Decimal
-from beancount.core import inventory
-from beancount.core import position
 from beancount.query import query_parser as q
 from beancount.query import query_compile as c
 from beancount.query import query_env as cc
-from beancount.utils.misc_utils import box
 
 
 class TestCompileExpression(unittest.TestCase):
@@ -20,7 +17,8 @@ class TestCompileExpression(unittest.TestCase):
 
     def test_expr_column(self):
         self.assertEqual(cc.FilenameColumn(),
-                         c.compile_expression(q.Column('filename'), cc.TargetsEnvironment()))
+                         c.compile_expression(q.Column('filename'),
+                                              cc.TargetsEnvironment()))
 
     def test_expr_function(self):
         self.assertEqual(cc.SumPosition([cc.ChangeColumn()]),
@@ -457,7 +455,7 @@ class TestCompileSelectGroupBy(CompileSelectBase):
         self.assertEqual([0, 2], query.group_indexes)
 
         # Non-aggregates not covered by group-by clause.
-        with self.assertRaises(c.CompilationError) as a:
+        with self.assertRaises(c.CompilationError):
             self.compile("""
               SELECT account, date, sum(number) GROUP BY account;
             """)

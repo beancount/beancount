@@ -7,7 +7,6 @@ import datetime
 import collections
 import re
 
-from beancount.utils.misc_utils import box
 from beancount.core import inventory
 from beancount.core import data
 from beancount.core import flags

@@ -4,13 +4,9 @@ This module contains the various column accessors and function evaluators that
 are made available by the query compiler via their compilation context objects.
 Define new columns and functions here.
 """
-import collections
 import copy
 import datetime
-import itertools
-import io
 import re
-import operator
 
 from beancount.core.amount import Decimal
 from beancount.core.amount import ZERO
@@ -20,7 +16,6 @@ from beancount.core import complete
 from beancount.core import amount
 from beancount.core import position
 from beancount.core import inventory
-from beancount.core import data
 from beancount.core import account
 from beancount.query import query_compile as c
 

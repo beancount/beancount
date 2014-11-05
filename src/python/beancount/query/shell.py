@@ -1,15 +1,11 @@
 """An interactive command-line shell interpreter for the Beancount Query Language.
 """
-import collections
 import os
-import io
 import sys
 import cmd
 import readline
 import atexit
-import pprint
 import traceback
-import subprocess
 from os import path
 
 from beancount.query import query_parser
@@ -18,7 +14,6 @@ from beancount.query import query_env
 from beancount.query import query_execute
 from beancount.query import query_render
 from beancount.core import data
-from beancount.reports import table
 from beancount.utils import misc_utils
 from beancount.utils import pager
 

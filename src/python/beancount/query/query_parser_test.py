@@ -300,7 +300,8 @@ class TestSelectFrom(TestSelectFromBase):
 
     def test_from_close_dated(self):
         self.assertParse(qSelect(self.targets,
-                                 q.From(self.expr, None, datetime.date(2014, 10, 18), None)),
+                                 q.From(self.expr, None, datetime.date(2014, 10, 18),
+                                        None)),
                          "SELECT a, b FROM d = (max(e) and 17) CLOSE ON 2014-10-18;")
 
     def test_from_close_no_expr(self):

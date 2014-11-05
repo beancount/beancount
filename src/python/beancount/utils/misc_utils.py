@@ -4,10 +4,7 @@ Generic utility packages and functions.
 import collections
 import io
 import re
-import os
 import sys
-import subprocess
-import logging
 from time import time
 import contextlib
 from collections import defaultdict
@@ -387,6 +384,8 @@ def uniquify(iterable, keyfunc=None, last=False):
                 yield obj
 
 
+UNSET = object()
+
 def sorted_uniquify(iterable, keyfunc=None, last=False):
     """Given a sequence of elements, sort and remove duplicates of the given key.
     Keep either the first or the last (by key) element of a sequence of
@@ -405,7 +404,6 @@ def sorted_uniquify(iterable, keyfunc=None, last=False):
     """
     if keyfunc is None:
         keyfunc = lambda x: x
-    UNSET = object()
     if last:
         prev_obj = UNSET
         prev_key = UNSET

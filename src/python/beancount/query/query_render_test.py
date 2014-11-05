@@ -1,19 +1,14 @@
 import datetime
 import io
-import re
 import unittest
-import textwrap
-import functools
 import collections
 
 from beancount.core.amount import D
 from beancount.core.amount import Decimal
-from beancount.core.amount import ZERO
 from beancount.core import inventory
 from beancount.core import position
 from beancount.core import amount
 from beancount.query import query_render
-from beancount.utils.misc_utils import box
 
 
 class TestDistribution(unittest.TestCase):
@@ -169,7 +164,7 @@ class TestInventoryRenderer(ColumnRendererBase):
 
         inv = inventory.from_string('5 GOOG {500.23 USD}')
         rdr = self.get(inv)
-        self.assertEqual('5 GOOG {500.23 USD}' ,
+        self.assertEqual('5 GOOG {500.23 USD}',
                          rdr.format(inv))
 
         inv = inventory.from_string('5 GOOG {500.23 USD}, 12.3456 CAAD')
@@ -184,6 +179,8 @@ class TestInventoryRenderer(ColumnRendererBase):
 
 
 class TestQueryRender(unittest.TestCase):
+
+    # pylint: disable=invalid-name
 
     def test_render_str(self):
         types = [('account', str)]
