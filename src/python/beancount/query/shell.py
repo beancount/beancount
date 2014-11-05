@@ -210,6 +210,25 @@ class BQLShell(cmd.Cmd):
         return 1
 
 
+def summary_statistics(entries):
+    """Calculate basic summary statistics to output a brief welcome message.
+
+    Args:
+      entries: A list of directives.
+    Returns:
+      A tuple of three integers, the total number of directives parsed, the total number
+      of transactions and the total number of postings there in.
+    """
+    num_directives = len(entries)
+    num_transactions = 0
+    num_postings = 0
+    for entry in entries:
+        if isinstance(entry, data.Transaction):
+            num_transactions += 1
+            num_postings += len(entry.postings)
+    return (num_directives, num_transactions, num_postings)
+
+
 def run_noargs(entries, options_map):
     """Create and run a shell, possibly consuming stdin if not interactive.
     If we're running in a TTY, start an interactive shell.
@@ -221,7 +240,11 @@ def run_noargs(entries, options_map):
     shell = BQLShell(entries, options_map)
     if os.isatty(sys.stdin.fileno()):
         # If we're a TTY, run interactively.
-        print("Ready with {} entries.".format(len(entries)))
+        num_directives, num_transactions, num_postings = summary_statistics(entries)
+        if 'title' in options_map:
+            print('Input file: "{}"'.format(options_map['title']))
+        print("Ready with {} directives ({} postings in {} transactions).".format(
+            num_directives, num_postings, num_transactions))
         try:
             shell.cmdloop()
         except KeyboardInterrupt:
