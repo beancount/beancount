@@ -227,7 +227,7 @@ class AmountRenderer(ColumnRenderer):
 
     def prepare(self):
         self.rdr.prepare()
-        self.fmt = '{{:{0}}} {{:{1}}}'.format(self.rdr.width(), self.ccylen)
+        self.fmt = '{{:{0}}} {{:{1}}}'.format(self.rdr.width(), max(self.ccylen, 1)
         self.empty = self.fmt.format('', '')
 
     def width(self):

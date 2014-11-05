@@ -128,7 +128,7 @@ class CostPosition(c.EvalFunction):
 
     def __call__(self, posting):
         args = self.eval_args(posting)
-        return args[0].at_cost()
+        return args[0].get_cost()
 
 SIMPLE_FUNCTIONS = {
     'str'                          : Str,
