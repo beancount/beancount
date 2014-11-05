@@ -9,8 +9,9 @@ from itertools import zip_longest
 from beancount.core.amount import Decimal
 from beancount.core.amount import ZERO
 from beancount.core import data
-from beancount.core import inventory
+from beancount.core import amount
 from beancount.core import position
+from beancount.core import inventory
 from beancount.query import query_compile
 from beancount.parser import options
 from beancount.parser import printer
@@ -25,7 +26,7 @@ class Distribution:
     a length that will cover at least some decent fraction of the samples.
     """
     def __init__(self):
-        self.hist = collections.defaultdict(itn)
+        self.hist = collections.defaultdict(int)
 
     def update(self, value):
         self.hist[value] += 1
@@ -106,6 +107,33 @@ class StringRenderer(ColumnRenderer):
         return self.fmt.format('' if string is None else string)
 
 
+class StringSetRenderer(ColumnRenderer):
+    """A renderer for sets of strings."""
+    dtype = set
+
+    def __init__(self):
+        self.maxlen = 0
+
+    def update(self, string_set):
+        if not string_set:
+            return
+        self.maxlen = max(max(len(string) for string in string_set), self.maxlen)
+
+    def prepare(self):
+        self.fmt = '{{:<{:d}.{:d}}}'.format(self.maxlen, self.maxlen)
+        self.empty = self.fmt.format('')
+
+    def width(self):
+        return self.maxlen
+
+    def format(self, string_set):
+        if string_set:
+            lines = sorted(map(self.fmt.format, string_set))
+            return lines[0] if len(lines) == 1 else lines
+        else:
+            return self.empty
+
+
 class DateTimeRenderer(ColumnRenderer):
     """A renderer for decimal numbers."""
     dtype = datetime.date
@@ -155,11 +183,58 @@ class DecimalRenderer(ColumnRenderer):
             precision=digits_fractional)
         self.empty = ' ' * width
 
+        # For manual formatting.
+        self.integral_width = width - digits_fractional - 1
+        self.format_number = '{: }'.format if self.has_negative else '{}'.format
+        self.fmt = '{{:<{}.{}}}'.format(self.total_width, self.total_width)
+
     def width(self):
         return self.total_width
 
     def format(self, number):
-        return self.empty if number is None else self.fmt.format(number)
+        if number is None:
+            return self.fmt.format('')
+
+        # This would be the straightforward implementation:
+        #   return self.empty if number is None else self.fmt.format(number)
+        # However, we want to let the number render to its natural precision and
+        # pad it to the right with zeros, yet align all the periods. So we
+        # convert it to a string, find the period, and pad it manually. We might
+        # consider eventually implementing this in C for performance reasons.
+        number_str = self.format_number(number)
+        index = number_str.find('.')
+        if index == -1:
+            index = len(number_str)
+        left_pad = ' ' * (self.integral_width - index)
+        return self.fmt.format(left_pad + number_str)
+
+
+class AmountRenderer(ColumnRenderer):
+    """A renderer for amounts. The currencies align with each other.
+    """
+    dtype = amount.Amount
+
+    def __init__(self):
+        super().__init__()
+        self.rdr = DecimalRenderer()
+        self.ccylen = 0
+
+    def update(self, amount_):
+        if amount_ is None:
+            return
+        self.rdr.update(amount_.number)
+        self.ccylen = max(self.ccylen, len(amount_.currency))
+
+    def prepare(self):
+        self.rdr.prepare()
+        self.fmt = '{{:{0}}} {{:{1}}}'.format(self.rdr.width(), self.ccylen)
+        self.empty = self.fmt.format('', '')
+
+    def width(self):
+        return len(self.empty)
+
+    def format(self, amount_):
+        return self.fmt.format(self.rdr.format(amount_.number), amount_.currency)
 
 
 class PositionRenderer(ColumnRenderer):
@@ -190,8 +265,10 @@ class PositionRenderer(ColumnRenderer):
         self.units_rdr.prepare()
         self.cost_rdr.prepare()
 
-        fmt_units = '{{:{0}}} {{:{1}}}'.format(self.units_rdr.width(), self.units_ccylen)
-        fmt_cost = '{{{{{{:{0}}} {{:{1}}}}}}}'.format(self.cost_rdr.width(), self.cost_ccylen)
+        fmt_units = '{{:{0}}} {{:{1}}}'.format(self.units_rdr.width(),
+                                               max(self.units_ccylen, 1))
+        fmt_cost = '{{{{{{:{0}}} {{:{1}}}}}}}'.format(self.cost_rdr.width(),
+                                                      self.cost_ccylen)
 
         if self.cost_ccylen == 0:
             self.fmt_cost = None # Will not get used.
@@ -322,10 +399,7 @@ def render_text(result_types, result_rows, file):
     if result_rows:
         assert len(result_types) == len(result_rows[0])
 
-    # # Get the names of the columns.
-    num_cols = len(result_types)
-    # col_names = [name for name, _ in result_types]
-
+    # Create column renderers.
     renderers = get_renderers(result_types, result_rows)
 
     # Render all the columns of all the rows to strings.
@@ -372,13 +446,19 @@ def render_text(result_types, result_rows, file):
     # Compute a final format string.
     formats = ['{{:{}}}'.format(renderer.width()) for renderer in renderers]
     line_formatter = '| ' + ' | '.join(formats) + ' |\n'
-    line_body = '-' + '-+-'.join(('-' * len(fmt.format(''))) for fmt in formats) + '-'
+    line_body = '-' + '-+-'.join(('-' * len(fmt.format(''))) for fmt in formats) + "-"
     top_line = ",{}.\n".format(line_body)
     middle_line = "+{}+\n".format(line_body)
     bottom_line = "`{}'\n".format(line_body)
 
+    # Compute the header.
+    header_formats = ['{{:^{}.{}}}'.format(renderer.width(), renderer.width()) for renderer in renderers]
+    header_formatter = '| ' + ' | '.join(header_formats) + ' |\n'
+    header_line = header_formatter.format(*[name for name, _ in result_types])
+
     # Render each string row to a single line.
     file.write(top_line)
+    file.write(header_line)
     file.write(middle_line)
     for str_row in str_rows:
         line = line_formatter.format(*str_row)
@@ -388,13 +468,14 @@ def render_text(result_types, result_rows, file):
 
 # A mapping of data-type -> (render-function, alignment)
 RENDERERS = {renderer_cls.dtype: renderer_cls
-             for renderer_cls in [
-                     StringRenderer,
-                     DecimalRenderer,
-                     DateTimeRenderer,
-                     PositionRenderer,
-                     InventoryRenderer,
-                 ]}
+             for renderer_cls in [StringRenderer,
+                                  StringSetRenderer,
+                                  DecimalRenderer,
+                                  DateTimeRenderer,
+                                  StringSetRenderer,
+                                  AmountRenderer,
+                                  PositionRenderer,
+                                  InventoryRenderer]}
 
 
 def render_text__old(result_types, result_rows, file):
@@ -402,17 +483,7 @@ def render_text__old(result_types, result_rows, file):
     table.render_table(table_, file, 'text')
 
 
-# FIXME: Create a StringSetRenderer
 
-# FIXME: Instead of truncating (or in addition to), a number should ever only be
-# rendered to the maximum precision (number of fractional digits) with which it
-# was provided. Render white spaces on the right instead of additional zeroes.
-# This by itself might be enough to redeem the current method and the inference
-# of a "reasonable" precision that covers 90% of the numbers and then truncates
-# may not be necessary at all.
-
-# FIXME: You need to render the header.
-#
 # FIXME: Check out if it's possible to precompile a format string for execution
 # the same way it can be done with a regexp, to render faster.
 #

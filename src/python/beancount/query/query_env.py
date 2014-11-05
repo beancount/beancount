@@ -124,7 +124,7 @@ class CostPosition(c.EvalFunction):
     __intypes__ = [position.Position]
 
     def __init__(self, operands):
-        super().__init__(operands, position.Position)
+        super().__init__(operands, amount.Amount)
 
     def __call__(self, posting):
         args = self.eval_args(posting)
@@ -218,7 +218,7 @@ class SumInventory(SumBase):
 
     def update(self, store, posting):
         value = self.eval_args(posting)[0]
-        store[self.handle].update(value)
+        store[self.handle].add_inventory(value)
 
 class First(c.EvalAggregator):
     __intypes__ = [object]
@@ -552,14 +552,14 @@ class TagsColumn(c.EvalColumn):
         super().__init__(set)
 
     def __call__(self, posting):
-        return posting.entry.tags
+        return posting.entry.tags or EMPTY_SET
 
 class LinksColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(set)
 
     def __call__(self, posting):
-        return posting.entry.links
+        return posting.entry.links or EMPTY_SET
 
 class PostingFlagColumn(c.EvalColumn):
     def __init__(self):

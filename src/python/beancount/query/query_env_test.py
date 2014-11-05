@@ -6,6 +6,7 @@ from beancount.core.amount import D
 from beancount.core.amount import Decimal
 from beancount.core import inventory
 from beancount.core import position
+from beancount.core import amount
 from beancount.query import query_parser as q
 from beancount.query import query_compile as c
 from beancount.query import query_env as cc
@@ -39,19 +40,19 @@ class TestCompileDataTypes(unittest.TestCase):
 
     def test_compile_EvalUnits(self):
         with self.assertRaises(c.CompilationError):
-            cc.Units([c.EvalConstant(17)])
-        c_units = cc.Units([c.EvalConstant(inventory.Inventory())])
-        self.assertEqual(inventory.Inventory, c_units.dtype)
-        c_units = cc.Units([c.EvalConstant(position.Position.from_string('100 USD'))])
-        self.assertEqual(inventory.Inventory, c_units.dtype)
+            cc.UnitsPosition([c.EvalConstant(17)])
+        with self.assertRaises(c.CompilationError):
+            cc.UnitsPosition([c.EvalConstant(inventory.Inventory())])
+        c_units = cc.UnitsPosition([c.EvalConstant(position.Position.from_string('100 USD'))])
+        self.assertEqual(amount.Amount, c_units.dtype)
 
     def test_compile_EvalCost(self):
         with self.assertRaises(c.CompilationError):
-            cc.Cost([c.EvalConstant(17)])
-        c_cost = cc.Cost([c.EvalConstant(inventory.Inventory())])
-        self.assertEqual(inventory.Inventory, c_cost.dtype)
-        c_cost = cc.Cost([c.EvalConstant(position.Position.from_string('100 USD'))])
-        self.assertEqual(inventory.Inventory, c_cost.dtype)
+            cc.CostPosition([c.EvalConstant(17)])
+        with self.assertRaises(c.CompilationError):
+            cc.CostPosition([c.EvalConstant(inventory.Inventory())])
+        c_cost = cc.CostPosition([c.EvalConstant(position.Position.from_string('100 USD'))])
+        self.assertEqual(amount.Amount, c_cost.dtype)
 
     def test_compile_EvalSum(self):
         with self.assertRaises(c.CompilationError):

@@ -205,6 +205,41 @@ beancount: TODO
 
 * Query Language
 
+  - Compute the special 'balance' row and produce journals with it.
+
+
+  - Render with custom routine, not beancount.reports.table
+
+    * Find a way to pipe into treeify
+    * Deal with rendering on multiple lines, e.g., for inventories with multiple positions
+
+  - Make it possible to run from the command-line in batch mode
+
+
+  - Implement set variables for format and verbosity and display precision and what-not
+  - Implement JOURNAL account FROM
+  - Implement BALANCES FROM
+
+
+
+
+  - Support matching on other than Transactions instances.
+
+  - You could apply an early limit only if sorting is not requested, stopping
+    after the limit number of rows.
+
+  - Implement and support the ResultSetEnvironment for nested select quereis.
+    (Actually allow evaluating the SQL against generic rows of datasets.)
+
+  - New columns and functions:
+    * Add date() function to create dates from a dateutil string
+    * Support simple mathematical operations, +, - , /.
+    * Implement set operations, "in" for sets
+    * Implement globbing matches
+
+
+
+
   - Build an 'statement' tool that will render a treeified balance sheet in two
     columns! Limit it to use the beginning of a line, and hard-code to use the
     five known categories (optionally changeable). It's okay if the tool is a
@@ -251,6 +286,18 @@ beancount: TODO
   - The shell should have a method for rendering the context before and after a
     particular transcation, and that transaction as well, in the middle. This
     should replace the "bean-doctor context" command.
+
+  - As a special feature, add an option to support automatic aggregations,
+    either implicitly with a set-var, or with the inclusion and support of
+    "GROUP BY *", or maybe "GROUP BY NATURAL" which is less misleading than
+    "GROUP BY *". Or perhaps just "GROUP" with the "BY ..." bit being optional.
+    I like that.
+
+    Although MySQL treats it differently: "If you use a group function in a
+    statement containing no GROUP BY clause, it is equivalent to grouping on all
+    rows. For more information, see Section 12.17.3, “MySQL Handling of GROUP
+    BY”."
+
 
 
 
