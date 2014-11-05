@@ -216,11 +216,20 @@ beancount: TODO
   - Make it possible to run from the command-line in batch mode
 
 
+  - Rename 'change' column to 'position'.
+
+
   - Implement set variables for format and verbosity and display precision and what-not
   - Implement JOURNAL account FROM
   - Implement BALANCES FROM
 
 
+
+  - Support both orders for this:
+
+      beancount> select account, sum(units(change)), sum(cost(change))   group by 1 order by 1;
+      beancount> select account, units(sum(change)), cost(sum(change))   group by 1 order by 1;
+      ERROR: Invalid function 'units(Inventory)' in targets/column context.
 
 
   - Support matching on other than Transactions instances.
@@ -297,6 +306,28 @@ beancount: TODO
     statement containing no GROUP BY clause, it is equivalent to grouping on all
     rows. For more information, see Section 12.17.3, “MySQL Handling of GROUP
     BY”."
+
+
+
+  - For the precision, create some sort of context object that will provide
+    the precision to render any number by, indexed by commodity. This should be
+    accumulated during rendering and then used for rendering.
+
+  - Provide an option to split apart the commodity and the cost commodity
+    into their own columns. This generic object should be working for text, and
+    then could be simply reused by the CSV routines.
+
+  - Add EXPLODE keyword to parser in order to allow the breaking out of the
+    various columns of an Inventory or Position. This design is a good balance of
+    being explicit and succint at the same time. The term 'explode' explains well
+    what is meant to happen.
+
+       SELECT account, EXPLODE sum(change) ...
+
+    will result in columns:
+
+        account, change_number, change_currency, change_cost_number, change_cost_currency, change_lot_date, change_lot_label
+
 
 
 

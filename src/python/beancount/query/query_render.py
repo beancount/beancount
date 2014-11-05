@@ -365,7 +365,15 @@ class InventoryRenderer(PositionRenderer):
 
 
 def get_renderers(result_types, result_rows):
-    # Create renderers for each column.
+    """Create renderers for each column.
+
+    Args:
+      result_types: A list of items describing the names and data types of the items in
+        each column.
+      result_rows: A list of ResultRow instances.
+    Returns:
+      A list of subclass instances of ColumnRenderer.
+    """
     renderers = [RENDERERS[dtype]() for _, dtype in result_types]
 
     # Prime and prepare each of the renderers with the date in order to be ready
@@ -380,7 +388,7 @@ def get_renderers(result_types, result_rows):
     return renderers
 
 
-def render_text(result_types, result_rows, file):
+def render_text(result_types, result_rows, file, boxed=False):
     """Render the result of executing a query in text format.
 
     Args:
@@ -388,6 +396,7 @@ def render_text(result_types, result_rows, file):
         each column.
       result_rows: A list of ResultRow instances.
       file: A file object to render the results to.
+      boxed: A boolean, true if we should render the results in a fancy-looking ASCII box.
     """
     # Important notes:
     #
@@ -445,27 +454,42 @@ def render_text(result_types, result_rows, file):
                     str_lines[index].append(exp_line)
             str_rows.extend(str_lines)
 
-    # Compute a final format string.
-    formats = ['{{:{}}}'.format(renderer.width()) for renderer in renderers]
-    line_formatter = '| ' + ' | '.join(formats) + ' |\n'
-    line_body = '-' + '-+-'.join(('-' * len(fmt.format(''))) for fmt in formats) + "-"
-    top_line = ",{}.\n".format(line_body)
-    middle_line = "+{}+\n".format(line_body)
-    bottom_line = "`{}'\n".format(line_body)
+    # Compute a final format strings.
+    formats = ['{{:{}}}'.format(renderer.width())
+               for renderer in renderers]
+    header_formats = ['{{:^{}.{}}}'.format(renderer.width(), renderer.width())
+                      for renderer in renderers]
+    if boxed:
+        line_formatter = '| ' + ' | '.join(formats) + ' |\n'
+        line_body = '-' + '-+-'.join(('-' * len(fmt.format(''))) for fmt in formats) + "-"
+        top_line = ",{}.\n".format(line_body)
+        middle_line = "+{}+\n".format(line_body)
+        bottom_line = "`{}'\n".format(line_body)
 
-    # Compute the header.
-    header_formats = ['{{:^{}.{}}}'.format(renderer.width(), renderer.width()) for renderer in renderers]
-    header_formatter = '| ' + ' | '.join(header_formats) + ' |\n'
-    header_line = header_formatter.format(*[name for name, _ in result_types])
+        # Compute the header.
+        header_formatter = '| ' + ' | '.join(header_formats) + ' |\n'
+        header_line = header_formatter.format(*[name for name, _ in result_types])
+    else:
+        line_formatter = ' '.join(formats) + '\n'
+        line_body = ' '.join(('-' * len(fmt.format(''))) for fmt in formats)
+        top_line = None
+        middle_line = "{}\n".format(line_body)
+        bottom_line = None
+
+        # Compute the header.
+        header_formatter = ' '.join(header_formats) + '\n'
+        header_line = header_formatter.format(*[name for name, _ in result_types])
 
     # Render each string row to a single line.
-    file.write(top_line)
+    if top_line:
+        file.write(top_line)
     file.write(header_line)
     file.write(middle_line)
     for str_row in str_rows:
         line = line_formatter.format(*str_row)
         file.write(line)
-    file.write(bottom_line)
+    if bottom_line:
+        file.write(bottom_line)
 
 
 # A mapping of data-type -> (render-function, alignment)
@@ -478,37 +502,3 @@ RENDERERS = {renderer_cls.dtype: renderer_cls
                                   AmountRenderer,
                                   PositionRenderer,
                                   InventoryRenderer]}
-
-
-def render_text__old(result_types, result_rows, file):
-    table_ = table.create_table(result_rows)
-    table.render_table(table_, file, 'text')
-
-
-
-# FIXME: Check out if it's possible to precompile a format string for execution
-# the same way it can be done with a regexp, to render faster.
-#
-# FIXME: Create some sort of column alignment object to accumulate the state of
-# alignment and deal with aligning numbers at the dot, and insert spaces for
-# lots.
-#
-# FIXME: For the precision, create some sort of context object that will provide
-# the precision to render any number by, indexed by commodity. This should be
-# accumulated during rendering and then used for rendering.
-#
-# FIXME: Provide an option to split apart the commodity and the cost commodity
-# into their own columns. This generic object should be working for text, and
-# then could be simply reused by the CSV routines.
-#
-# FIXME: Add EXPLODE keyword to parser in order to allow the breaking out of the
-# various columns of an Inventory or Position. This design is a good balance of
-# being explicit and succint at the same time. The term 'explode' explains well
-# what is meant to happen.
-#
-#    SELECT account, EXPLODE sum(change) ...
-#
-# will result in columns:
-#
-#     account, change_number, change_currency, change_cost_number, change_cost_currency, change_lot_date, change_lot_label
-#
