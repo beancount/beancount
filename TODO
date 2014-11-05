@@ -204,6 +204,13 @@ beancount: TODO
 
 * Query Language
 
+  - Add help like this: "help <topic>": help should be provided via docstring
+    over columns, functions, and parsed commands (select, print, journal, etc.).
+    Create a function that will compile all the help topics and implement it
+    from the shell. There should also be a way to list all the help topics.
+    Something basic, but one should be able to craft a query from it and find
+    out the list of legal names in each environment.
+
   - Compute the special 'balance' row and produce journals with it.
 
 
