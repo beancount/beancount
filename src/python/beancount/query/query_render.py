@@ -160,10 +160,12 @@ class DecimalRenderer(ColumnRenderer):
         self.max_adjusted = 0
         self.min_exponent = 0
         self.total_width = None
+        self.num_values = 0
 
     def update(self, number):
         if number is None:
             return
+        self.num_values += 1
         ntuple = number.as_tuple()
         if ntuple.sign:
             self.has_negative = True
@@ -171,28 +173,35 @@ class DecimalRenderer(ColumnRenderer):
         self.min_exponent = min(self.min_exponent, ntuple.exponent)
 
     def prepare(self):
-        digits_sign = 1 if self.has_negative else 0
-        digits_integral = max(self.max_adjusted, 0) + 1
-        digits_fractional = -self.min_exponent
-        digits_period = 1 if digits_fractional > 0 else 0
-        width = digits_sign + digits_integral + digits_period + digits_fractional
-        self.total_width = width
-        self.fmt = '{{:{sign}{width:d}.{precision:d}f}}'.format(
-            sign=' ' if digits_sign > 0 else '',
-            width=width,
-            precision=digits_fractional)
-        self.empty = ' ' * width
+        if self.num_values > 0:
+            digits_sign = 1 if self.has_negative else 0
+            digits_integral = max(self.max_adjusted, 0) + 1
+            digits_fractional = -self.min_exponent
+            digits_period = 1 if digits_fractional > 0 else 0
+            width = digits_sign + digits_integral + digits_period + digits_fractional
+            #print(digits_sign, digits_integral, digits_period, digits_fractional)
+            self.fmt = '{{:{sign}{width:d}.{precision:d}f}}'.format(
+                sign=' ' if digits_sign > 0 else '',
+                width=width,
+                precision=digits_fractional)
 
-        # For manual formatting.
-        self.integral_width = width - digits_fractional - 1
-        self.format_number = '{: }'.format if self.has_negative else '{}'.format
-        self.fmt = '{{:<{}.{}}}'.format(self.total_width, self.total_width)
+            # For manual formatting.
+            self.integral_width = width - digits_fractional - 1
+            self.format_number = '{: }'.format if self.has_negative else '{}'.format
+            self.fmt = '{{:<{}.{}}}'.format(width, width)
+        else:
+            width = 0
+
+        self.total_width = width
+        self.empty = ' ' * width
 
     def width(self):
         return self.total_width
 
     def format(self, number):
-        if number is None:
+        if self.total_width == 0:
+            return ''
+        elif number is None:
             return self.fmt.format('')
 
         # This would be the straightforward implementation:
@@ -227,13 +236,22 @@ class AmountRenderer(ColumnRenderer):
 
     def prepare(self):
         self.rdr.prepare()
-        self.fmt = '{{:{0}}} {{:{1}}}'.format(self.rdr.width(), max(self.ccylen, 1)
-        self.empty = self.fmt.format('', '')
+
+        if self.rdr.width() == 0:
+            self.fmt = None
+            self.empty = ''
+        else:
+            self.fmt = '{{:{0}}} {{:{1}}}'.format(self.rdr.width(), max(self.ccylen, 1))
+            self.empty = self.fmt.format('', '')
 
     def width(self):
         return len(self.empty)
 
     def format(self, amount_):
+        if amount_ is None:
+            return self.fmt.format('', '')
+        elif self.fmt is None:
+            return self.empty
         return self.fmt.format(self.rdr.format(amount_.number), amount_.currency)
 
 
@@ -245,67 +263,59 @@ class PositionRenderer(ColumnRenderer):
 
     def __init__(self):
         super().__init__()
-        self.units_rdr = DecimalRenderer()
-        self.units_ccylen = 0
-        self.cost_rdr = DecimalRenderer()
-        self.cost_ccylen = 0
+        self.units_rdr = AmountRenderer()
+        self.cost_rdr = AmountRenderer()
 
     def update(self, pos):
         if pos is None:
             return
         lot = pos.lot
         cost = lot.cost
-        self.units_rdr.update(pos.number)
-        self.units_ccylen = max(self.units_ccylen, len(lot.currency))
-        if cost:
-            self.cost_rdr.update(cost.number)
-            self.cost_ccylen = max(self.cost_ccylen, len(cost.currency))
+        self.units_rdr.update(pos.get_amount())
+        self.cost_rdr.update(cost)
 
     def prepare(self):
         self.units_rdr.prepare()
         self.cost_rdr.prepare()
 
-        fmt_units = '{{:{0}}} {{:{1}}}'.format(self.units_rdr.width(),
-                                               max(self.units_ccylen, 1))
-        fmt_cost = '{{{{{{:{0}}} {{:{1}}}}}}}'.format(self.cost_rdr.width(),
-                                                      self.cost_ccylen)
+        units_width = self.units_rdr.width()
+        cost_width = self.cost_rdr.width()
 
-        if self.cost_ccylen == 0:
-            self.fmt_cost = None # Will not get used.
-            self.fmt_nocost = fmt_units
+        #fmt_units = '{{{}}}'.format(':{}'.format(units_width) if units_width > 0 else '')
+        fmt_units = '{{:{}}}'.format(units_width)
+
+        if cost_width == 0:
+            self.fmt_with_cost = None # Will not get used.
+            self.fmt_without_cost = fmt_units
+            self.total_width = units_width
         else:
-            self.fmt_cost = '{} {}'.format(fmt_units, fmt_cost)
-            self.fmt_nocost = '{} {}'.format(fmt_units, ' ' * len(fmt_cost.format('', '')))
+            fmt_cost = '{{{{{{:{}}}}}}}'.format(cost_width)
+            self.fmt_with_cost = '{} {}'.format(fmt_units, fmt_cost)
+            self.fmt_without_cost = '{} {}'.format(
+                fmt_units, ' ' * len(fmt_cost.format(self.cost_rdr.format(None))))
+            self.total_width = len(self.fmt_with_cost.format('', ''))
 
-        self.empty = self.fmt_nocost.format('', '')
+        self.empty = ' ' * self.total_width
 
     def width(self):
-        return len(self.empty)
+        return self.total_width
 
     def format(self, pos):
         strings = []
-        if self.cost_ccylen == 0:
+        if self.fmt_with_cost is None:
             lot = pos.lot
             strings.append(
-                self.fmt_nocost.format(
-                    self.units_rdr.format(pos.number),
-                    lot.currency))
-
+                self.fmt_without_cost.format(self.units_rdr.format(pos.get_amount())))
         else:
             lot = pos.lot
             cost = lot.cost
             if cost:
                 strings.append(
-                    self.fmt_cost.format(
-                        self.units_rdr.format(pos.number),
-                        lot.currency,
-                        self.cost_rdr.format(cost.number if cost else None),
-                        cost.currency if cost else ''))
+                    self.fmt_with_cost.format(self.units_rdr.format(pos.get_amount()),
+                                              self.cost_rdr.format(cost)))
             else:
                 strings.append(
-                    self.fmt_nocost.format(
-                        self.units_rdr.format(pos.number),
-                        lot.currency))
+                    self.fmt_without_cost.format(self.units_rdr.format(pos.get_amount())))
 
         if len(strings) == 1:
             return strings[0]
@@ -329,30 +339,22 @@ class InventoryRenderer(PositionRenderer):
 
     def format(self, inv):
         strings = []
-        if self.cost_ccylen == 0:
-            for position in inv.get_positions():
-                lot = position.lot
+        if self.fmt_with_cost is None:
+            for pos in inv.get_positions():
+                lot = pos.lot
                 strings.append(
-                    self.fmt_nocost.format(
-                        self.units_rdr.format(position.number),
-                        lot.currency))
-
+                    self.fmt_without_cost.format(self.units_rdr.format(pos.get_amount())))
         else:
-            for position in inv.get_positions():
-                lot = position.lot
+            for pos in inv.get_positions():
+                lot = pos.lot
                 cost = lot.cost
                 if cost:
                     strings.append(
-                        self.fmt_cost.format(
-                            self.units_rdr.format(position.number),
-                            lot.currency,
-                            self.cost_rdr.format(cost.number if cost else None),
-                            cost.currency if cost else ''))
+                        self.fmt_with_cost.format(self.units_rdr.format(pos.get_amount()),
+                                                  self.cost_rdr.format(cost)))
                 else:
                     strings.append(
-                        self.fmt_nocost.format(
-                            self.units_rdr.format(position.number),
-                            lot.currency))
+                        self.fmt_without_cost.format(self.units_rdr.format(pos.get_amount())))
 
         if len(strings) == 1:
             return strings[0]

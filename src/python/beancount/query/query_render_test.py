@@ -82,6 +82,10 @@ class TestDecimalRenderer(ColumnRendererBase):
 
     RendererClass = query_render.DecimalRenderer
 
+    def test_integer(self):
+        rdr = self.get(D('1'))
+        self.assertEqual('2', rdr.format(D('2')))
+
     def test_integers(self):
         rdr = self.get(D('1'), D('222'), D('33'))
         self.assertEqual('444', rdr.format(D('444')))
@@ -104,17 +108,22 @@ class TestDecimalRenderer(ColumnRendererBase):
         self.assertEqual('1     ', rdr.format(D('1')))
         self.assertEqual('      ', rdr.format(None))
 
+    def test_virgin(self):
+        rdr = self.get()
+        self.assertEqual('', rdr.format(None))
+
 
 class TestAmountRenderer(ColumnRendererBase):
 
     RendererClass = query_render.AmountRenderer
 
-    def test_single(self):
+    def test_single_frac(self):
         pos = amount.from_string('100.00 USD')
         rdr = self.get(pos)
         self.assertEqual('100.00 USD',
                          rdr.format(pos))
 
+    def test_single_int(self):
         pos = amount.from_string('5 GOOG')
         rdr = self.get(pos)
         self.assertEqual('5 GOOG',
@@ -155,7 +164,7 @@ class TestInventoryRenderer(ColumnRendererBase):
     def test_various(self):
         inv = inventory.from_string('100.00 USD')
         rdr = self.get(inv)
-        self.assertEqual( '100.00 USD' ,
+        self.assertEqual('100.00 USD',
                          rdr.format(inv))
 
         inv = inventory.from_string('5 GOOG {500.23 USD}')
