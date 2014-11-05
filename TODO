@@ -5,16 +5,19 @@ beancount: TODO
 
   - Complete presentation
 
-  - Create a two-column tool to convert one column into two columns (for text
-    mode balance sheet and income statement). The equivalent UNIX tool does not
-    exist. Select columns by regexp.
-
   - Fix rendering of balances for HTML journals, esp. w.r.t. example file,
     rendering lots is just _not_ the ticket.
+
+      In HTML rendering, render only by units, and provide a link to a /context
+      page that renders inventory befre and after just like my context utility.
 
   - Add more tests for intra-day trading, esp. w.r.t. ordering and inventory booking.
 
   - Complete more thorough tests for journal_text_test.py
+
+  - Improve printer to avoid inserting spaces between directives of the same
+    type, except when they are transactions. This will result in a tider output
+    that is natural and prettier.
 
 
 ** Establish Display Precision
@@ -97,6 +100,9 @@ beancount: TODO
   becoming clearer where some files need to move. Try to make these moves
   before shipping, so that things don't move nearly as much later on.
 
+  - Move examples/tutoral/example.beancount -> examples/example.beancount, does
+    not need to be under tutorial/
+
   - Maybe beancount.core.complete should be called beancount.core.interpolate.
     That's the term I've been using for a while now isn't it. Clean up
     terminology.
@@ -130,17 +136,6 @@ beancount: TODO
   have a pretty solid pylint configuration passing.
 
   - Fix all FIXMEs everywhere, or convert them to items in this list.
-
-  - Make all imports not import symbols directly, only packages, except where
-    performance really, really matters (the parser)
-
-      grep -srn  'from beancount\..*\..*import'  /Users/blais/p/beancount/src/python/beancount
-
-    Add a check for this in linter makefile
-
-
-  - Remove all imports that import multiple things (makes it easier to grep if
-    only one)
 
   - Configure and run a clean pylint on the entire codebase.
 
@@ -182,7 +177,6 @@ beancount: TODO
   - In the comparison doc: describe how Beancount has asset types
 
   - Is there a script somewhere that can accept a CSV file and render a CSV
-
     pivot table from it?  The reason we need support is in order to carry out
     operations on columns of inventories. Maybe we should impleemnted some sort
     of swiss-knife tool that is able to parse inventories from columns and
@@ -196,6 +190,11 @@ beancount: TODO
 
   - Clean up this TODO file, reorganize sections, remove what's redundant from
     the proposal files.
+
+  - Create new doc: Inter account transfer
+  - Create new doc: Computing portfolio returns using Beancount
+
+  - Change script to try to download to ODT format and then batch format to ebook
 
 
 ** Example File
@@ -340,8 +339,69 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Separate inventory booking to be implemented in a plugin. It should do
+    three things:
+
+    * Find matching lots and raise errors when not found
+
+    * replace all partially specified lots to their fully specified versions
+      (they matched lots). For augmenting lots, this means insert the date. For
+      lot reductions, it means, find the matching lot and use that instead of
+      the partially specified one.
+
+    * Insert links on matching lots, so that trades can be identified a
+      posteriori.
+
+    This means, move beancount.ops.validation.validate_inventory_booking() to
+    its own file and make it do the three steps above.
+
+
+
+  - Create a two-column tool to convert one column into two columns (for text
+    mode balance sheet and income statement). The equivalent UNIX tool does not
+    exist. Select columns by regexp.
+
+
+
+  - Support an include directive that is a URL, in order to fetch lists of
+    prices updated remotely, or via crontab. This way the dashboard does not
+    have to include code that fetches prices.
+
+
+  - Idea: option to search a lot from any account, not just the current account,
+    and cause an automatic lot transfer. Must match shares in the current
+    account, but the lot with the corresponding cost could come from any
+    account.
+
+  - Idea: Another output data format for the reports/query language could be
+    parseable Python format.
+
+
+  - Idea for an additional check: a plugin that computes the weight using the "@
+    price" value on a posting held-at-cost, checked against the rest of postings
+    minus income (gains) accounts.
+
+
+
+  - Comparison w/ Ledger doc: "balance sheet and closing of year"
+
+
+  - Docs for inventory booking: Add {* 634.23 USD} idea for average cost
+    booking: there should be an optional amount, and the star just means "before
+    and after". Add this to B docs.
+
+
+  - You should have a dwdidated section of your document that explains how market
+    values are reported, that is, via the unrealized gains plugin. Also provide a
+    market() function, to value holdings.
+
+
+
   - BUG/CHANGE: Unrealized gain when rendering for closed years does not appear.
     Perhaps we should insert the unrealized gains during close operation.
+
+    Idea: close realized gains along with close(), so that they don't show up for
+    the latest year.
 
 
 

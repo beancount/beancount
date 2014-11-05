@@ -13,6 +13,9 @@ from beancount.core import complete
 from beancount.reports import report
 
 
+ROUNDING_ACCOUNT = 'Equity:Rounding'
+
+
 def quote(match):
     """Add quotes around a re.MatchObject.
 
@@ -149,6 +152,13 @@ class LedgerPrinter:
 
     def Transaction(cls, entry, oss):
         strings = []
+
+        # Insert a posting to absorb the residual if necessary. This is
+        # sometimes needed because Ledger bases its balancing precision on the
+        # *last* number of digits used on that currency. This is believed to be
+        # a bug, so instead, we simply insert a rounding account to absorb the
+        # residual and precisely balance the transaction.
+        entry = complete.fill_residual_posting(entry, ROUNDING_ACCOUNT)
 
         if entry.tags:
             for tag in sorted(entry.tags):

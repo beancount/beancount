@@ -26,8 +26,14 @@ class TestCase(unittest.TestCase):
         """
         if isinstance(expected_entries, str):
             expected_entries, _, __ = parser.parse_string(textwrap.dedent(expected_entries))
+        else:
+            assert isinstance(expected_entries, list)
+
         if isinstance(actual_entries, str):
             actual_entries, _, __ = parser.parse_string(textwrap.dedent(actual_entries))
+        else:
+            assert isinstance(expected_entries, list)
+
         same, expected_missing, actual_missing = compare.compare_entries(expected_entries,
                                                                          actual_entries)
         if not same:
