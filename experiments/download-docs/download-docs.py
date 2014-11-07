@@ -23,6 +23,8 @@ import httplib2
 import googleapiclient.discovery
 
 
+TOKEN_CACHE_FILENAME = path.join(os.environ['HOME'], '.oauth2-for-google-apis')
+
 def create_flow_from_file(scope):
     """Create a flow from data stored in a filename.
 
@@ -62,11 +64,8 @@ def create_flow_from_ids(scope):
     Returns:
       A flow object.
     """
-    secrets_filename = os.environ['GOOGLE_APIS']
-    flow = oauth2client.client.flow_from_clientsecrets(secrets_filename, scope)
-    flow.redirect_uri = oauth2client.client.OOB_CALLBACK_URN
-
-    # Note: You could also have used 'http://localhost' to redirect.
+    # Note: For 'redirect_uri', you could also have used 'http://localhost' to
+    # redirect.
     return OAuth2WebServerFlow(client_id=CLIENT_ID,
                                client_secret=CLIENT_SECRET,
                                scope=scope,
@@ -87,16 +86,24 @@ def get_authenticated_http(scope, storage_filename, opts):
     Returns:
       An authenticated http client object, from which you can use the Google APIs.
     """
-    flow = create_flow_from_ids(scope)
+    # Create a flow. You can create this by having the client specified from a
+    # file with the id and secret, or with an explicit id and secret. See two
+    # functions above.
+    flow = create_flow_from_file(scope)
 
+    # Create a transport, disable SSL certificates, which fails to validate.
     http = httplib2.Http()
     http.disable_ssl_certificate_validation = True
 
+    # Create a storage to cache the credentials for future runs, and look it up.
     storage = Storage(storage_filename)
     credentials = storage.get()
     if credentials is None:
+        # If the credentials haven't been found, run the flow. This will pop-up
+        # a web browser window for you to accept.
         credentials = tools.run_flow(flow, storage, opts, http=http)
 
+    # Authorize using the transport and return it.
     credentials.authorize(http)
 
     return http
@@ -168,7 +175,7 @@ def main():
                                      parents=[tools.argparser])
 
     parser.add_argument('--storage', action='store',
-                        default=path.join(os.environ['HOME'], '.oauth2-for-google-apis'),
+                        default=TOKEN_CACHE_FILENAME,
                         help="Storage filename")
 
     parser.add_argument('-o', '--output', action='store',
@@ -181,6 +188,10 @@ def main():
     # Check https://developers.google.com/drive/scopes for all available scopes.
     DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive'
     http = get_authenticated_http(DRIVE_SCOPE, opts.storage, opts)
+
+    # Re-initialize the logging module, because somehow the authentication forces itself.
+    # TODO: Move this to the utility function itself.
+    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
 
     # Access the drive API.
     drive = googleapiclient.discovery.build('drive', 'v2', http=http)
