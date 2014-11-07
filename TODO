@@ -38,7 +38,12 @@ beancount: TODO
      /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:195:                    posting.position.lot.cost.str(amount.MAXDIGITS_PRINTER))
      /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:287:        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
 
-  - Use this routine in the BQL rendering routines.
+  - Regenerate the example file with less digits, printing is bad.
+  - At the same time, figure out why printing is basically _always_ adding the
+    comment on each posting. It shouldn't, this is a bug.
+
+  - Maybe use this routine in the BQL rendering routines instead of using the
+    display precision mode in the displayed numbers only.
 
 
 ** Rounding
