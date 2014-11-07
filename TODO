@@ -26,7 +26,22 @@ beancount: TODO
     currency and (currency, account) pairs, and derive a PrecisionContext
     object that can then be used to render all the data.
 
-  - Fix all of these with it:
+
+  - Write unit tests for display precision, this isn't too great now.
+
+  - With the tests, figure out if we still need MAXDIGITS_QUANTIZE,
+    MAXDIGITS_PRINTER, etc., based on all usage. I think this is not the way I
+    want it to be.
+
+  - Allow the printer control over whether commas are to be rendered or not.
+
+  - Fix the alignment of the rendered postings by printer, it's out of whack.
+    See example.beancount file, doesn't look nice anymore. Has to do with
+    replacement of strings I believe. But the printer should *always* output
+    nicely aligned numbers.
+
+
+  - Fix all of these with the routine:
 
      grep -srn '\.str\b'    /home/blais/p/beancount/src/python/beancount/
      /home/blais/p/beancount/src/python/beancount/parser/printer.py:57:        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
@@ -38,15 +53,9 @@ beancount: TODO
      /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:195:                    posting.position.lot.cost.str(amount.MAXDIGITS_PRINTER))
      /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:287:        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
 
-  - Regenerate the example file with less digits, printing is bad.
 
   - At the same time, figure out why printing is basically _always_ adding the
     comment on each posting. It shouldn't, this is a bug.
-
-  - Write unit tests for display precision, this isn't too great now.
-  - With the tests, figure out if we still need MAXDIGITS_QUANTIZE,
-    MAXDIGITS_PRINTER, etc., based on all usage. I think this is not the way I
-    want it to be.
 
   - Maybe use this routine in the BQL rendering routines instead of using the
     display precision mode in the displayed numbers only.

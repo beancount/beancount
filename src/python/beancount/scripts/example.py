@@ -378,8 +378,8 @@ def generate_employment_income(employer_name,
         ;{date_begin} open Income:CC:Employer1:AnnualBonus     CCY
         {date_begin} open Income:CC:Employer1:GroupTermLife    CCY
 
-        {date_begin} open Income:CC:Employer1:Vacation         VACCCY
-        {date_begin} open Assets:CC:Employer1:Vacation         VACCCY
+        {date_begin} open Income:CC:Employer1:Vacation         VACHR
+        {date_begin} open Assets:CC:Employer1:Vacation         VACHR
 
         {date_begin} open Expenses:Health:Life:GroupTermLife
         {date_begin} open Expenses:Health:Medical:Insurance
@@ -460,8 +460,8 @@ def generate_employment_income(employer_name,
               Expenses:Taxes:Y{year}:CC:CityNYC                 {city:.2f} CCY
               Expenses:Taxes:Y{year}:CC:SDI                     {sdi:.2f} CCY
               Expenses:Taxes:Y{year}:CC:SocSec                  {socsec:.2f} CCY
-              Assets:CC:Employer1:Vacation                      {vacation_hrs:.2f} VACCCY
-              Income:CC:Employer1:Vacation                     -{vacation_hrs:.2f} VACCCY
+              Assets:CC:Employer1:Vacation                      {vacation_hrs:.2f} VACHR
+              Income:CC:Employer1:Vacation                     -{vacation_hrs:.2f} VACHR
         """
         if retirement == ZERO:
             # Remove retirement lines.
@@ -1276,7 +1276,7 @@ def contextualize_file(contents, employer):
     replacements = {
         'CC': 'US',
         'CCY': 'USD',
-        'VACCCY': 'VACHR',
+        'VACHR': 'VACHR',
         'DEFCCY': 'IRAUSD',
         'Bank1': 'BofA',
         'CreditCard1': 'Chase:Slate',
@@ -1284,8 +1284,8 @@ def contextualize_file(contents, employer):
         'Employer1': employer,
         'Retirement': 'Vanguard',
         'Investment': 'ETrade',
-        'FUND1': 'VBMPX',
-        'FUND2': 'RGAGX',
+        'MFUND1': 'VBMPX',
+        'MFUND2': 'RGAGX',
         'STK1': 'ITOT',
         'STK2': 'VEA',
         'STK3': 'VHT',
