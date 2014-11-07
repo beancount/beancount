@@ -202,6 +202,22 @@ beancount: TODO
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
 
+  - Allow sign normalization:
+
+    * Add an option to the parser to allow signs to be entered with the "all
+      positive" convention, and actually invert the signs right at the output
+      of the parser.  Balance errors should be enhanced to emphasize which of
+      the postings should be increased or decreased, based on the sign of the
+      balance error and the type of each account.
+
+    * For display, in the shell, provide a SIGN(account) function that allows
+      the user to multiply the inventory by, or a NORM(inventory, account)
+      function that would do that itself on the inventory.
+
+    This whole thing should be a minor version. This would be a valuable feature
+    IMO, allowing users to choose their favorite convention would be a plus.
+
+
   - Separate inventory booking to be implemented in a plugin. It should do
     three things:
 
