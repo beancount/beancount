@@ -1420,7 +1420,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
     logging.info("Generating Prices")
     # Generate price entries for investment currencies and create a price map to
     # use for later for generating investment transactions.
-    funds_allocation = {'FUND1': 0.40, 'FUND2': 0.60}
+    funds_allocation = {'MFUND1': 0.40, 'MFUND2': 0.60}
     stocks = ['STK1', 'STK2', 'STK3', 'STK4']
     price_entries = generate_prices(date_begin, date_end,
                                     sorted(funds_allocation.keys()) + stocks, 'CCY')
