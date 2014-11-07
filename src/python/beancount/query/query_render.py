@@ -20,14 +20,14 @@ class Distribution:
     def update(self, value):
         self.hist[value] += 1
 
-    def getmax(self, min_frac):
-        total_count = sum(self.hist.values())
-        cumul_count = 0
-        for value, count in self.hist.items():
-            cumul_count += count
-            if cumul_count / total_count > min_frac:
-                return value
-        return value
+    def mode(self):
+        max_value = 0
+        max_count = 0
+        for value, count in sorted(self.hist.items()):
+            if count >= max_count:
+                max_count = count
+                max_value = value
+        return max_value
 
 
 class ColumnRenderer:
@@ -150,6 +150,7 @@ class DecimalRenderer(ColumnRenderer):
         self.min_exponent = 0
         self.total_width = None
         self.num_values = 0
+        self.dist = Distribution()
 
     def update(self, number):
         if number is None:
@@ -160,12 +161,16 @@ class DecimalRenderer(ColumnRenderer):
             self.has_negative = True
         self.max_adjusted = max(self.max_adjusted, number.adjusted())
         self.min_exponent = min(self.min_exponent, ntuple.exponent)
+        self.dist.update(-ntuple.exponent)
 
     def prepare(self):
         if self.num_values > 0:
             digits_sign = 1 if self.has_negative else 0
             digits_integral = max(self.max_adjusted, 0) + 1
-            digits_fractional = -self.min_exponent
+            # Note: to compute the number of fractional digits to be displayed,
+            # we use the most frequent of the number of digits we saw to be
+            # rendered (the mode of the distribution of number of digits).
+            digits_fractional = self.dist.mode()  # -self.min_exponent
             digits_period = 1 if digits_fractional > 0 else 0
             width = digits_sign + digits_integral + digits_period + digits_fractional
             #print(digits_sign, digits_integral, digits_period, digits_fractional)
