@@ -135,8 +135,13 @@ class Amount:
         if number == number.quantize(DISPLAY_QUANTIZE):
             return "{:,.2f} {}".format(number, self.currency)
         else:
-            return "{:,.{width}f} {}".format(number, self.currency,
-                                            width=max_digits)
+            ntuple = number.as_tuple()
+            num_fractional_digits = len(ntuple.digits) + ntuple.exponent
+            if num_fractional_digits > max_digits:
+                return "{:,.{width}f} {}".format(number, self.currency,
+                                                 width=max_digits)
+            else:
+                return "{} {}".format(number, self.currency)
 
     # We use the same as a printable representation.
     __repr__ = __str__

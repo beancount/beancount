@@ -26,7 +26,22 @@ beancount: TODO
     currency and (currency, account) pairs, and derive a PrecisionContext
     object that can then be used to render all the data.
 
-  - Fix all of these with it:
+
+  - Write unit tests for display precision, this isn't too great now.
+
+  - With the tests, figure out if we still need MAXDIGITS_QUANTIZE,
+    MAXDIGITS_PRINTER, etc., based on all usage. I think this is not the way I
+    want it to be.
+
+  - Allow the printer control over whether commas are to be rendered or not.
+
+  - Fix the alignment of the rendered postings by printer, it's out of whack.
+    See example.beancount file, doesn't look nice anymore. Has to do with
+    replacement of strings I believe. But the printer should *always* output
+    nicely aligned numbers.
+
+
+  - Fix all of these with the routine:
 
      grep -srn '\.str\b'    /home/blais/p/beancount/src/python/beancount/
      /home/blais/p/beancount/src/python/beancount/parser/printer.py:57:        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
@@ -38,7 +53,12 @@ beancount: TODO
      /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:195:                    posting.position.lot.cost.str(amount.MAXDIGITS_PRINTER))
      /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:287:        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
 
-  - Use this routine in the BQL rendering routines.
+
+  - At the same time, figure out why printing is basically _always_ adding the
+    comment on each posting. It shouldn't, this is a bug.
+
+  - Maybe use this routine in the BQL rendering routines instead of using the
+    display precision mode in the displayed numbers only.
 
 
 ** Rounding
@@ -344,6 +364,22 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - Allow sign normalization:
+
+    * Add an option to the parser to allow signs to be entered with the "all
+      positive" convention, and actually invert the signs right at the output
+      of the parser.  Balance errors should be enhanced to emphasize which of
+      the postings should be increased or decreased, based on the sign of the
+      balance error and the type of each account.
+
+    * For display, in the shell, provide a SIGN(account) function that allows
+      the user to multiply the inventory by, or a NORM(inventory, account)
+      function that would do that itself on the inventory.
+
+    This whole thing should be a minor version. This would be a valuable feature
+    IMO, allowing users to choose their favorite convention would be a plus.
 
 
   - Separate inventory booking to be implemented in a plugin. It should do
