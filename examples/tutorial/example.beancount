@@ -3242,9 +3242,9 @@ option "operating_currency" "USD"
 
 2012-01-01 open Assets:US:Vanguard:Cash                       USD
 
-2012-01-01 open Assets:US:Vanguard:FUND1                      FUND1
+2012-01-01 open Assets:US:Vanguard:VBMPX                     VBMPX
 
-2012-01-01 open Assets:US:Vanguard:FUND2                      FUND2
+2012-01-01 open Assets:US:Vanguard:RGAGX                     RGAGX
 
 2012-01-01 open Income:US:Hoogle:Match401k                   USD
 
@@ -3252,900 +3252,900 @@ option "operating_currency" "USD"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2012-01-09 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         3.139 FUND1       {152.91 USD}                    ;    479.98449 USD
+2012-01-09 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         3.139 VBMPX       {152.91 USD}                    ;    479.98449 USD
   Assets:US:Vanguard:Cash                        -479.98 USD                                       ;      -479.98 USD
 
-2012-01-09 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         14.32 FUND2        {50.28 USD}                    ;    720.00960 USD
+2012-01-09 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         14.32 RGAGX        {50.28 USD}                    ;    720.00960 USD
   Assets:US:Vanguard:Cash                        -720.01 USD                                       ;      -720.01 USD
 
-2012-01-09 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                          1.57 FUND1       {152.91 USD}                    ;    240.06870 USD
+2012-01-09 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                          1.57 VBMPX       {152.91 USD}                    ;    240.06870 USD
   Assets:US:Vanguard:Cash                        -240.07 USD                                       ;      -240.07 USD
 
-2012-01-09 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                          7.16 FUND2        {50.28 USD}                    ;    360.00480 USD
+2012-01-09 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                          7.16 RGAGX        {50.28 USD}                    ;    360.00480 USD
   Assets:US:Vanguard:Cash                        -360.00 USD                                       ;      -360.00 USD
 
 2012-01-20 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2012-01-23 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         3.188 FUND1       {150.57 USD}                    ;    480.01716 USD
+2012-01-23 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         3.188 VBMPX       {150.57 USD}                    ;    480.01716 USD
   Assets:US:Vanguard:Cash                        -480.02 USD                                       ;      -480.02 USD
 
-2012-01-23 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        13.732 FUND2        {52.43 USD}                    ;    719.96876 USD
+2012-01-23 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        13.732 RGAGX        {52.43 USD}                    ;    719.96876 USD
   Assets:US:Vanguard:Cash                        -719.97 USD                                       ;      -719.97 USD
 
-2012-01-23 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.594 FUND1       {150.57 USD}                    ;    240.00858 USD
+2012-01-23 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.594 VBMPX       {150.57 USD}                    ;    240.00858 USD
   Assets:US:Vanguard:Cash                        -240.01 USD                                       ;      -240.01 USD
 
-2012-01-23 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         6.866 FUND2        {52.43 USD}                    ;    359.98438 USD
+2012-01-23 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         6.866 RGAGX        {52.43 USD}                    ;    359.98438 USD
   Assets:US:Vanguard:Cash                        -359.98 USD                                       ;      -359.98 USD
 
 2012-02-03 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2012-02-06 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         3.124 FUND1       {153.66 USD}                    ;    480.03384 USD
+2012-02-06 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         3.124 VBMPX       {153.66 USD}                    ;    480.03384 USD
   Assets:US:Vanguard:Cash                        -480.03 USD                                       ;      -480.03 USD
 
-2012-02-06 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        13.523 FUND2        {53.24 USD}                    ;    719.96452 USD
+2012-02-06 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        13.523 RGAGX        {53.24 USD}                    ;    719.96452 USD
   Assets:US:Vanguard:Cash                        -719.96 USD                                       ;      -719.96 USD
 
-2012-02-06 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.562 FUND1       {153.66 USD}                    ;    240.01692 USD
+2012-02-06 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.562 VBMPX       {153.66 USD}                    ;    240.01692 USD
   Assets:US:Vanguard:Cash                        -240.02 USD                                       ;      -240.02 USD
 
-2012-02-06 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         6.761 FUND2        {53.24 USD}                    ;    359.95564 USD
+2012-02-06 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         6.761 RGAGX        {53.24 USD}                    ;    359.95564 USD
   Assets:US:Vanguard:Cash                        -359.96 USD                                       ;      -359.96 USD
 
 2012-02-17 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2012-02-20 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         3.144 FUND1       {152.69 USD}                    ;    480.05736 USD
+2012-02-20 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         3.144 VBMPX       {152.69 USD}                    ;    480.05736 USD
   Assets:US:Vanguard:Cash                        -480.06 USD                                       ;      -480.06 USD
 
-2012-02-20 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        14.051 FUND2        {51.24 USD}                    ;    719.97324 USD
+2012-02-20 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        14.051 RGAGX        {51.24 USD}                    ;    719.97324 USD
   Assets:US:Vanguard:Cash                        -719.97 USD                                       ;      -719.97 USD
 
-2012-02-20 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.572 FUND1       {152.69 USD}                    ;    240.02868 USD
+2012-02-20 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.572 VBMPX       {152.69 USD}                    ;    240.02868 USD
   Assets:US:Vanguard:Cash                        -240.03 USD                                       ;      -240.03 USD
 
-2012-02-20 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.025 FUND2        {51.24 USD}                    ;    359.96100 USD
+2012-02-20 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.025 RGAGX        {51.24 USD}                    ;    359.96100 USD
   Assets:US:Vanguard:Cash                        -359.96 USD                                       ;      -359.96 USD
 
 2012-03-02 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2012-03-05 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         3.167 FUND1       {151.55 USD}                    ;    479.95885 USD
+2012-03-05 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         3.167 VBMPX       {151.55 USD}                    ;    479.95885 USD
   Assets:US:Vanguard:Cash                        -479.96 USD                                       ;      -479.96 USD
 
-2012-03-05 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        13.907 FUND2        {51.77 USD}                    ;    719.96539 USD
+2012-03-05 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        13.907 RGAGX        {51.77 USD}                    ;    719.96539 USD
   Assets:US:Vanguard:Cash                        -719.97 USD                                       ;      -719.97 USD
 
-2012-03-05 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.584 FUND1       {151.55 USD}                    ;    240.05520 USD
+2012-03-05 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.584 VBMPX       {151.55 USD}                    ;    240.05520 USD
   Assets:US:Vanguard:Cash                        -240.06 USD                                       ;      -240.06 USD
 
-2012-03-05 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         6.954 FUND2        {51.77 USD}                    ;    360.00858 USD
+2012-03-05 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         6.954 RGAGX        {51.77 USD}                    ;    360.00858 USD
   Assets:US:Vanguard:Cash                        -360.01 USD                                       ;      -360.01 USD
 
 2012-03-16 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2012-03-19 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         3.278 FUND1       {146.44 USD}                    ;    480.03032 USD
+2012-03-19 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         3.278 VBMPX       {146.44 USD}                    ;    480.03032 USD
   Assets:US:Vanguard:Cash                        -480.03 USD                                       ;      -480.03 USD
 
-2012-03-19 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        13.646 FUND2        {52.76 USD}                    ;    719.96296 USD
+2012-03-19 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        13.646 RGAGX        {52.76 USD}                    ;    719.96296 USD
   Assets:US:Vanguard:Cash                        -719.96 USD                                       ;      -719.96 USD
 
-2012-03-19 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.639 FUND1       {146.44 USD}                    ;    240.01516 USD
+2012-03-19 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.639 VBMPX       {146.44 USD}                    ;    240.01516 USD
   Assets:US:Vanguard:Cash                        -240.02 USD                                       ;      -240.02 USD
 
-2012-03-19 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         6.823 FUND2        {52.76 USD}                    ;    359.98148 USD
+2012-03-19 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         6.823 RGAGX        {52.76 USD}                    ;    359.98148 USD
   Assets:US:Vanguard:Cash                        -359.98 USD                                       ;      -359.98 USD
 
 2012-03-30 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2012-04-02 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         3.216 FUND1       {149.27 USD}                    ;    480.05232 USD
+2012-04-02 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         3.216 VBMPX       {149.27 USD}                    ;    480.05232 USD
   Assets:US:Vanguard:Cash                        -480.05 USD                                       ;      -480.05 USD
 
-2012-04-02 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        13.646 FUND2        {52.76 USD}                    ;    719.96296 USD
+2012-04-02 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        13.646 RGAGX        {52.76 USD}                    ;    719.96296 USD
   Assets:US:Vanguard:Cash                        -719.96 USD                                       ;      -719.96 USD
 
-2012-04-02 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.608 FUND1       {149.27 USD}                    ;    240.02616 USD
+2012-04-02 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.608 VBMPX       {149.27 USD}                    ;    240.02616 USD
   Assets:US:Vanguard:Cash                        -240.03 USD                                       ;      -240.03 USD
 
-2012-04-02 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         6.823 FUND2        {52.76 USD}                    ;    359.98148 USD
+2012-04-02 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         6.823 RGAGX        {52.76 USD}                    ;    359.98148 USD
   Assets:US:Vanguard:Cash                        -359.98 USD                                       ;      -359.98 USD
 
 2012-04-13 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2012-04-16 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         3.142 FUND1       {152.74 USD}                    ;    479.90908 USD
+2012-04-16 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         3.142 VBMPX       {152.74 USD}                    ;    479.90908 USD
   Assets:US:Vanguard:Cash                        -479.91 USD                                       ;      -479.91 USD
 
-2012-04-16 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        13.942 FUND2        {51.64 USD}                    ;    719.96488 USD
+2012-04-16 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        13.942 RGAGX        {51.64 USD}                    ;    719.96488 USD
   Assets:US:Vanguard:Cash                        -719.96 USD                                       ;      -719.96 USD
 
-2012-04-16 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.572 FUND1       {152.74 USD}                    ;    240.10728 USD
+2012-04-16 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.572 VBMPX       {152.74 USD}                    ;    240.10728 USD
   Assets:US:Vanguard:Cash                        -240.11 USD                                       ;      -240.11 USD
 
-2012-04-16 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         6.972 FUND2        {51.64 USD}                    ;    360.03408 USD
+2012-04-16 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         6.972 RGAGX        {51.64 USD}                    ;    360.03408 USD
   Assets:US:Vanguard:Cash                        -360.03 USD                                       ;      -360.03 USD
 
 2012-04-27 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2012-04-30 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         3.199 FUND1       {150.03 USD}                    ;    479.94597 USD
+2012-04-30 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         3.199 VBMPX       {150.03 USD}                    ;    479.94597 USD
   Assets:US:Vanguard:Cash                        -479.95 USD                                       ;      -479.95 USD
 
-2012-04-30 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        13.904 FUND2        {51.78 USD}                    ;    719.94912 USD
+2012-04-30 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        13.904 RGAGX        {51.78 USD}                    ;    719.94912 USD
   Assets:US:Vanguard:Cash                        -719.95 USD                                       ;      -719.95 USD
 
-2012-04-30 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                          1.60 FUND1       {150.03 USD}                    ;    240.04800 USD
+2012-04-30 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                          1.60 VBMPX       {150.03 USD}                    ;    240.04800 USD
   Assets:US:Vanguard:Cash                        -240.05 USD                                       ;      -240.05 USD
 
-2012-04-30 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         6.953 FUND2        {51.78 USD}                    ;    360.02634 USD
+2012-04-30 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         6.953 RGAGX        {51.78 USD}                    ;    360.02634 USD
   Assets:US:Vanguard:Cash                        -360.03 USD                                       ;      -360.03 USD
 
 2012-05-11 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2012-05-14 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         3.038 FUND1       {158.01 USD}                    ;    480.03438 USD
+2012-05-14 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         3.038 VBMPX       {158.01 USD}                    ;    480.03438 USD
   Assets:US:Vanguard:Cash                        -480.03 USD                                       ;      -480.03 USD
 
-2012-05-14 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         14.12 FUND2        {50.99 USD}                    ;    719.97880 USD
+2012-05-14 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         14.12 RGAGX        {50.99 USD}                    ;    719.97880 USD
   Assets:US:Vanguard:Cash                        -719.98 USD                                       ;      -719.98 USD
 
-2012-05-14 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.519 FUND1       {158.01 USD}                    ;    240.01719 USD
+2012-05-14 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.519 VBMPX       {158.01 USD}                    ;    240.01719 USD
   Assets:US:Vanguard:Cash                        -240.02 USD                                       ;      -240.02 USD
 
-2012-05-14 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                          7.06 FUND2        {50.99 USD}                    ;    359.98940 USD
+2012-05-14 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                          7.06 RGAGX        {50.99 USD}                    ;    359.98940 USD
   Assets:US:Vanguard:Cash                        -359.99 USD                                       ;      -359.99 USD
 
 2012-05-25 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2012-05-28 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         3.065 FUND1       {156.60 USD}                    ;    479.97900 USD
+2012-05-28 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         3.065 VBMPX       {156.60 USD}                    ;    479.97900 USD
   Assets:US:Vanguard:Cash                        -479.98 USD                                       ;      -479.98 USD
 
-2012-05-28 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        14.616 FUND2        {49.26 USD}                    ;    719.98416 USD
+2012-05-28 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        14.616 RGAGX        {49.26 USD}                    ;    719.98416 USD
   Assets:US:Vanguard:Cash                        -719.98 USD                                       ;      -719.98 USD
 
-2012-05-28 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.533 FUND1       {156.60 USD}                    ;    240.06780 USD
+2012-05-28 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.533 VBMPX       {156.60 USD}                    ;    240.06780 USD
   Assets:US:Vanguard:Cash                        -240.07 USD                                       ;      -240.07 USD
 
-2012-05-28 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.308 FUND2        {49.26 USD}                    ;    359.99208 USD
+2012-05-28 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.308 RGAGX        {49.26 USD}                    ;    359.99208 USD
   Assets:US:Vanguard:Cash                        -359.99 USD                                       ;      -359.99 USD
 
 2012-06-08 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2012-06-11 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         3.053 FUND1       {157.21 USD}                    ;    479.96213 USD
+2012-06-11 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         3.053 VBMPX       {157.21 USD}                    ;    479.96213 USD
   Assets:US:Vanguard:Cash                        -479.96 USD                                       ;      -479.96 USD
 
-2012-06-11 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        14.702 FUND2        {48.97 USD}                    ;    719.95694 USD
+2012-06-11 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        14.702 RGAGX        {48.97 USD}                    ;    719.95694 USD
   Assets:US:Vanguard:Cash                        -719.96 USD                                       ;      -719.96 USD
 
-2012-06-11 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.527 FUND1       {157.21 USD}                    ;    240.05967 USD
+2012-06-11 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.527 VBMPX       {157.21 USD}                    ;    240.05967 USD
   Assets:US:Vanguard:Cash                        -240.06 USD                                       ;      -240.06 USD
 
-2012-06-11 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.352 FUND2        {48.97 USD}                    ;    360.02744 USD
+2012-06-11 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.352 RGAGX        {48.97 USD}                    ;    360.02744 USD
   Assets:US:Vanguard:Cash                        -360.03 USD                                       ;      -360.03 USD
 
 2012-06-22 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2012-06-25 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         3.064 FUND1       {156.67 USD}                    ;    480.03688 USD
+2012-06-25 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         3.064 VBMPX       {156.67 USD}                    ;    480.03688 USD
   Assets:US:Vanguard:Cash                        -480.04 USD                                       ;      -480.04 USD
 
-2012-06-25 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        15.496 FUND2        {46.46 USD}                    ;    719.94416 USD
+2012-06-25 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        15.496 RGAGX        {46.46 USD}                    ;    719.94416 USD
   Assets:US:Vanguard:Cash                        -719.94 USD                                       ;      -719.94 USD
 
-2012-06-25 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.532 FUND1       {156.67 USD}                    ;    240.01844 USD
+2012-06-25 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.532 VBMPX       {156.67 USD}                    ;    240.01844 USD
   Assets:US:Vanguard:Cash                        -240.02 USD                                       ;      -240.02 USD
 
-2012-06-25 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.748 FUND2        {46.46 USD}                    ;    359.97208 USD
+2012-06-25 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.748 RGAGX        {46.46 USD}                    ;    359.97208 USD
   Assets:US:Vanguard:Cash                        -359.97 USD                                       ;      -359.97 USD
 
 2012-07-06 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2012-07-09 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         3.004 FUND1       {159.79 USD}                    ;    480.00916 USD
+2012-07-09 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         3.004 VBMPX       {159.79 USD}                    ;    480.00916 USD
   Assets:US:Vanguard:Cash                        -480.01 USD                                       ;      -480.01 USD
 
-2012-07-09 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        15.692 FUND2        {45.88 USD}                    ;    719.94896 USD
+2012-07-09 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        15.692 RGAGX        {45.88 USD}                    ;    719.94896 USD
   Assets:US:Vanguard:Cash                        -719.95 USD                                       ;      -719.95 USD
 
-2012-07-09 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.502 FUND1       {159.79 USD}                    ;    240.00458 USD
+2012-07-09 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.502 VBMPX       {159.79 USD}                    ;    240.00458 USD
   Assets:US:Vanguard:Cash                        -240.00 USD                                       ;      -240.00 USD
 
-2012-07-09 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.846 FUND2        {45.88 USD}                    ;    359.97448 USD
+2012-07-09 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.846 RGAGX        {45.88 USD}                    ;    359.97448 USD
   Assets:US:Vanguard:Cash                        -359.97 USD                                       ;      -359.97 USD
 
 2012-07-20 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         100.00 USD
   Income:US:Hoogle:Match401k                     -100.00 USD
 
-2012-07-23 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         0.505 FUND1       {158.44 USD}                    ;     80.01220 USD
+2012-07-23 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         0.505 VBMPX       {158.44 USD}                    ;     80.01220 USD
   Assets:US:Vanguard:Cash                         -80.01 USD                                       ;       -80.01 USD
 
-2012-07-23 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         2.668 FUND2        {44.98 USD}                    ;    120.00664 USD
+2012-07-23 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         2.668 RGAGX        {44.98 USD}                    ;    120.00664 USD
   Assets:US:Vanguard:Cash                        -120.01 USD                                       ;      -120.01 USD
 
-2012-07-23 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         0.252 FUND1       {158.44 USD}                    ;     39.92688 USD
+2012-07-23 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         0.252 VBMPX       {158.44 USD}                    ;     39.92688 USD
   Assets:US:Vanguard:Cash                         -39.93 USD                                       ;       -39.93 USD
 
-2012-07-23 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         1.334 FUND2        {44.98 USD}                    ;     60.00332 USD
+2012-07-23 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         1.334 RGAGX        {44.98 USD}                    ;     60.00332 USD
   Assets:US:Vanguard:Cash                         -60.00 USD                                       ;       -60.00 USD
 
 2013-01-04 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2013-01-07 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                          2.65 FUND1       {181.16 USD}                    ;    480.07400 USD
+2013-01-07 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                          2.65 VBMPX       {181.16 USD}                    ;    480.07400 USD
   Assets:US:Vanguard:Cash                        -480.07 USD                                       ;      -480.07 USD
 
-2013-01-07 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         15.07 FUND2        {47.78 USD}                    ;    720.04460 USD
+2013-01-07 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         15.07 RGAGX        {47.78 USD}                    ;    720.04460 USD
   Assets:US:Vanguard:Cash                        -720.04 USD                                       ;      -720.04 USD
 
-2013-01-07 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.325 FUND1       {181.16 USD}                    ;    240.03700 USD
+2013-01-07 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.325 VBMPX       {181.16 USD}                    ;    240.03700 USD
   Assets:US:Vanguard:Cash                        -240.04 USD                                       ;      -240.04 USD
 
-2013-01-07 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.534 FUND2        {47.78 USD}                    ;    359.97452 USD
+2013-01-07 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.534 RGAGX        {47.78 USD}                    ;    359.97452 USD
   Assets:US:Vanguard:Cash                        -359.97 USD                                       ;      -359.97 USD
 
 2013-01-18 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2013-01-21 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                          2.58 FUND1       {186.02 USD}                    ;    479.93160 USD
+2013-01-21 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                          2.58 VBMPX       {186.02 USD}                    ;    479.93160 USD
   Assets:US:Vanguard:Cash                        -479.93 USD                                       ;      -479.93 USD
 
-2013-01-21 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        15.404 FUND2        {46.74 USD}                    ;    719.98296 USD
+2013-01-21 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        15.404 RGAGX        {46.74 USD}                    ;    719.98296 USD
   Assets:US:Vanguard:Cash                        -719.98 USD                                       ;      -719.98 USD
 
-2013-01-21 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                          1.29 FUND1       {186.02 USD}                    ;    239.96580 USD
+2013-01-21 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                          1.29 VBMPX       {186.02 USD}                    ;    239.96580 USD
   Assets:US:Vanguard:Cash                        -239.97 USD                                       ;      -239.97 USD
 
-2013-01-21 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.703 FUND2        {46.74 USD}                    ;    360.03822 USD
+2013-01-21 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.703 RGAGX        {46.74 USD}                    ;    360.03822 USD
   Assets:US:Vanguard:Cash                        -360.04 USD                                       ;      -360.04 USD
 
 2013-02-01 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2013-02-04 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                          2.59 FUND1       {185.32 USD}                    ;    479.97880 USD
+2013-02-04 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                          2.59 VBMPX       {185.32 USD}                    ;    479.97880 USD
   Assets:US:Vanguard:Cash                        -479.98 USD                                       ;      -479.98 USD
 
-2013-02-04 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        15.558 FUND2        {46.28 USD}                    ;    720.02424 USD
+2013-02-04 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        15.558 RGAGX        {46.28 USD}                    ;    720.02424 USD
   Assets:US:Vanguard:Cash                        -720.02 USD                                       ;      -720.02 USD
 
-2013-02-04 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.295 FUND1       {185.32 USD}                    ;    239.98940 USD
+2013-02-04 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.295 VBMPX       {185.32 USD}                    ;    239.98940 USD
   Assets:US:Vanguard:Cash                        -239.99 USD                                       ;      -239.99 USD
 
-2013-02-04 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.779 FUND2        {46.28 USD}                    ;    360.01212 USD
+2013-02-04 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.779 RGAGX        {46.28 USD}                    ;    360.01212 USD
   Assets:US:Vanguard:Cash                        -360.01 USD                                       ;      -360.01 USD
 
 2013-02-15 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2013-02-18 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.597 FUND1       {184.82 USD}                    ;    479.97754 USD
+2013-02-18 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.597 VBMPX       {184.82 USD}                    ;    479.97754 USD
   Assets:US:Vanguard:Cash                        -479.98 USD                                       ;      -479.98 USD
 
-2013-02-18 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        15.704 FUND2        {45.85 USD}                    ;    720.02840 USD
+2013-02-18 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        15.704 RGAGX        {45.85 USD}                    ;    720.02840 USD
   Assets:US:Vanguard:Cash                        -720.03 USD                                       ;      -720.03 USD
 
-2013-02-18 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.299 FUND1       {184.82 USD}                    ;    240.08118 USD
+2013-02-18 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.299 VBMPX       {184.82 USD}                    ;    240.08118 USD
   Assets:US:Vanguard:Cash                        -240.08 USD                                       ;      -240.08 USD
 
-2013-02-18 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.852 FUND2        {45.85 USD}                    ;    360.01420 USD
+2013-02-18 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.852 RGAGX        {45.85 USD}                    ;    360.01420 USD
   Assets:US:Vanguard:Cash                        -360.01 USD                                       ;      -360.01 USD
 
 2013-03-01 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2013-03-04 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.571 FUND1       {186.70 USD}                    ;    480.00570 USD
+2013-03-04 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.571 VBMPX       {186.70 USD}                    ;    480.00570 USD
   Assets:US:Vanguard:Cash                        -480.01 USD                                       ;      -480.01 USD
 
-2013-03-04 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        15.065 FUND2        {47.79 USD}                    ;    719.95635 USD
+2013-03-04 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        15.065 RGAGX        {47.79 USD}                    ;    719.95635 USD
   Assets:US:Vanguard:Cash                        -719.96 USD                                       ;      -719.96 USD
 
-2013-03-04 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.285 FUND1       {186.70 USD}                    ;    239.90950 USD
+2013-03-04 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.285 VBMPX       {186.70 USD}                    ;    239.90950 USD
   Assets:US:Vanguard:Cash                        -239.91 USD                                       ;      -239.91 USD
 
-2013-03-04 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.532 FUND2        {47.79 USD}                    ;    359.95428 USD
+2013-03-04 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.532 RGAGX        {47.79 USD}                    ;    359.95428 USD
   Assets:US:Vanguard:Cash                        -359.95 USD                                       ;      -359.95 USD
 
 2013-03-15 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2013-03-18 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.601 FUND1       {184.59 USD}                    ;    480.11859 USD
+2013-03-18 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.601 VBMPX       {184.59 USD}                    ;    480.11859 USD
   Assets:US:Vanguard:Cash                        -480.12 USD                                       ;      -480.12 USD
 
-2013-03-18 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        15.502 FUND2        {46.45 USD}                    ;    720.06790 USD
+2013-03-18 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        15.502 RGAGX        {46.45 USD}                    ;    720.06790 USD
   Assets:US:Vanguard:Cash                        -720.07 USD                                       ;      -720.07 USD
 
-2013-03-18 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                          1.30 FUND1       {184.59 USD}                    ;    239.96700 USD
+2013-03-18 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                          1.30 VBMPX       {184.59 USD}                    ;    239.96700 USD
   Assets:US:Vanguard:Cash                        -239.97 USD                                       ;      -239.97 USD
 
-2013-03-18 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.749 FUND2        {46.45 USD}                    ;    359.94105 USD
+2013-03-18 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.749 RGAGX        {46.45 USD}                    ;    359.94105 USD
   Assets:US:Vanguard:Cash                        -359.94 USD                                       ;      -359.94 USD
 
 2013-03-29 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2013-04-01 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.643 FUND1       {181.60 USD}                    ;    479.96880 USD
+2013-04-01 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.643 VBMPX       {181.60 USD}                    ;    479.96880 USD
   Assets:US:Vanguard:Cash                        -479.97 USD                                       ;      -479.97 USD
 
-2013-04-01 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        15.034 FUND2        {47.89 USD}                    ;    719.97826 USD
+2013-04-01 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        15.034 RGAGX        {47.89 USD}                    ;    719.97826 USD
   Assets:US:Vanguard:Cash                        -719.98 USD                                       ;      -719.98 USD
 
-2013-04-01 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.322 FUND1       {181.60 USD}                    ;    240.07520 USD
+2013-04-01 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.322 VBMPX       {181.60 USD}                    ;    240.07520 USD
   Assets:US:Vanguard:Cash                        -240.08 USD                                       ;      -240.08 USD
 
-2013-04-01 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.518 FUND2        {47.89 USD}                    ;    360.03702 USD
+2013-04-01 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.518 RGAGX        {47.89 USD}                    ;    360.03702 USD
   Assets:US:Vanguard:Cash                        -360.04 USD                                       ;      -360.04 USD
 
 2013-04-12 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2013-04-15 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.607 FUND1       {184.12 USD}                    ;    480.00084 USD
+2013-04-15 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.607 VBMPX       {184.12 USD}                    ;    480.00084 USD
   Assets:US:Vanguard:Cash                        -480.00 USD                                       ;      -480.00 USD
 
-2013-04-15 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        15.018 FUND2        {47.94 USD}                    ;    719.96292 USD
+2013-04-15 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        15.018 RGAGX        {47.94 USD}                    ;    719.96292 USD
   Assets:US:Vanguard:Cash                        -719.96 USD                                       ;      -719.96 USD
 
-2013-04-15 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.303 FUND1       {184.12 USD}                    ;    239.90836 USD
+2013-04-15 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.303 VBMPX       {184.12 USD}                    ;    239.90836 USD
   Assets:US:Vanguard:Cash                        -239.91 USD                                       ;      -239.91 USD
 
-2013-04-15 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.509 FUND2        {47.94 USD}                    ;    359.98146 USD
+2013-04-15 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.509 RGAGX        {47.94 USD}                    ;    359.98146 USD
   Assets:US:Vanguard:Cash                        -359.98 USD                                       ;      -359.98 USD
 
 2013-04-26 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2013-04-29 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                          2.53 FUND1       {189.72 USD}                    ;    479.99160 USD
+2013-04-29 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                          2.53 VBMPX       {189.72 USD}                    ;    479.99160 USD
   Assets:US:Vanguard:Cash                        -479.99 USD                                       ;      -479.99 USD
 
-2013-04-29 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        14.695 FUND2        {49.00 USD}                    ;    720.05500 USD
+2013-04-29 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        14.695 RGAGX        {49.00 USD}                    ;    720.05500 USD
   Assets:US:Vanguard:Cash                        -720.06 USD                                       ;      -720.06 USD
 
-2013-04-29 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.265 FUND1       {189.72 USD}                    ;    239.99580 USD
+2013-04-29 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.265 VBMPX       {189.72 USD}                    ;    239.99580 USD
   Assets:US:Vanguard:Cash                        -240.00 USD                                       ;      -240.00 USD
 
-2013-04-29 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.347 FUND2        {49.00 USD}                    ;    360.00300 USD
+2013-04-29 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.347 RGAGX        {49.00 USD}                    ;    360.00300 USD
   Assets:US:Vanguard:Cash                        -360.00 USD                                       ;      -360.00 USD
 
 2013-05-10 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2013-05-13 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.502 FUND1       {191.83 USD}                    ;    479.95866 USD
+2013-05-13 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.502 VBMPX       {191.83 USD}                    ;    479.95866 USD
   Assets:US:Vanguard:Cash                        -479.96 USD                                       ;      -479.96 USD
 
-2013-05-13 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        14.458 FUND2        {49.80 USD}                    ;    720.00840 USD
+2013-05-13 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        14.458 RGAGX        {49.80 USD}                    ;    720.00840 USD
   Assets:US:Vanguard:Cash                        -720.01 USD                                       ;      -720.01 USD
 
-2013-05-13 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.251 FUND1       {191.83 USD}                    ;    239.97933 USD
+2013-05-13 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.251 VBMPX       {191.83 USD}                    ;    239.97933 USD
   Assets:US:Vanguard:Cash                        -239.98 USD                                       ;      -239.98 USD
 
-2013-05-13 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                          7.23 FUND2        {49.80 USD}                    ;    360.05400 USD
+2013-05-13 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                          7.23 RGAGX        {49.80 USD}                    ;    360.05400 USD
   Assets:US:Vanguard:Cash                        -360.05 USD                                       ;      -360.05 USD
 
 2013-05-24 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2013-05-27 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                          2.58 FUND1       {186.05 USD}                    ;    480.00900 USD
+2013-05-27 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                          2.58 VBMPX       {186.05 USD}                    ;    480.00900 USD
   Assets:US:Vanguard:Cash                        -480.01 USD                                       ;      -480.01 USD
 
-2013-05-27 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        15.007 FUND2        {47.98 USD}                    ;    720.03586 USD
+2013-05-27 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        15.007 RGAGX        {47.98 USD}                    ;    720.03586 USD
   Assets:US:Vanguard:Cash                        -720.04 USD                                       ;      -720.04 USD
 
-2013-05-27 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                          1.29 FUND1       {186.05 USD}                    ;    240.00450 USD
+2013-05-27 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                          1.29 VBMPX       {186.05 USD}                    ;    240.00450 USD
   Assets:US:Vanguard:Cash                        -240.00 USD                                       ;      -240.00 USD
 
-2013-05-27 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.503 FUND2        {47.98 USD}                    ;    359.99394 USD
+2013-05-27 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.503 RGAGX        {47.98 USD}                    ;    359.99394 USD
   Assets:US:Vanguard:Cash                        -359.99 USD                                       ;      -359.99 USD
 
 2013-06-07 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2013-06-10 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.666 FUND1       {180.05 USD}                    ;    480.01330 USD
+2013-06-10 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.666 VBMPX       {180.05 USD}                    ;    480.01330 USD
   Assets:US:Vanguard:Cash                        -480.01 USD                                       ;      -480.01 USD
 
-2013-06-10 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        14.959 FUND2        {48.13 USD}                    ;    719.97667 USD
+2013-06-10 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        14.959 RGAGX        {48.13 USD}                    ;    719.97667 USD
   Assets:US:Vanguard:Cash                        -719.98 USD                                       ;      -719.98 USD
 
-2013-06-10 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.333 FUND1       {180.05 USD}                    ;    240.00665 USD
+2013-06-10 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.333 VBMPX       {180.05 USD}                    ;    240.00665 USD
   Assets:US:Vanguard:Cash                        -240.01 USD                                       ;      -240.01 USD
 
-2013-06-10 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                          7.48 FUND2        {48.13 USD}                    ;    360.01240 USD
+2013-06-10 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                          7.48 RGAGX        {48.13 USD}                    ;    360.01240 USD
   Assets:US:Vanguard:Cash                        -360.01 USD                                       ;      -360.01 USD
 
 2013-06-21 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2013-06-24 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                          2.73 FUND1       {175.82 USD}                    ;    479.98860 USD
+2013-06-24 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                          2.73 VBMPX       {175.82 USD}                    ;    479.98860 USD
   Assets:US:Vanguard:Cash                        -479.99 USD                                       ;      -479.99 USD
 
-2013-06-24 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        15.638 FUND2        {46.04 USD}                    ;    719.97352 USD
+2013-06-24 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        15.638 RGAGX        {46.04 USD}                    ;    719.97352 USD
   Assets:US:Vanguard:Cash                        -719.97 USD                                       ;      -719.97 USD
 
-2013-06-24 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.365 FUND1       {175.82 USD}                    ;    239.99430 USD
+2013-06-24 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.365 VBMPX       {175.82 USD}                    ;    239.99430 USD
   Assets:US:Vanguard:Cash                        -239.99 USD                                       ;      -239.99 USD
 
-2013-06-24 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                          7.82 FUND2        {46.04 USD}                    ;    360.03280 USD
+2013-06-24 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                          7.82 RGAGX        {46.04 USD}                    ;    360.03280 USD
   Assets:US:Vanguard:Cash                        -360.03 USD                                       ;      -360.03 USD
 
 2013-07-05 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2013-07-08 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.824 FUND1       {169.96 USD}                    ;    479.96704 USD
+2013-07-08 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.824 VBMPX       {169.96 USD}                    ;    479.96704 USD
   Assets:US:Vanguard:Cash                        -479.97 USD                                       ;      -479.97 USD
 
-2013-07-08 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        15.391 FUND2        {46.78 USD}                    ;    719.99098 USD
+2013-07-08 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        15.391 RGAGX        {46.78 USD}                    ;    719.99098 USD
   Assets:US:Vanguard:Cash                        -719.99 USD                                       ;      -719.99 USD
 
-2013-07-08 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.412 FUND1       {169.96 USD}                    ;    239.98352 USD
+2013-07-08 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.412 VBMPX       {169.96 USD}                    ;    239.98352 USD
   Assets:US:Vanguard:Cash                        -239.98 USD                                       ;      -239.98 USD
 
-2013-07-08 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.696 FUND2        {46.78 USD}                    ;    360.01888 USD
+2013-07-08 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.696 RGAGX        {46.78 USD}                    ;    360.01888 USD
   Assets:US:Vanguard:Cash                        -360.02 USD                                       ;      -360.02 USD
 
 2013-07-19 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         350.00 USD
   Income:US:Hoogle:Match401k                     -350.00 USD
 
-2013-07-22 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.639 FUND1       {170.82 USD}                    ;    279.97398 USD
+2013-07-22 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.639 VBMPX       {170.82 USD}                    ;    279.97398 USD
   Assets:US:Vanguard:Cash                        -279.97 USD                                       ;      -279.97 USD
 
-2013-07-22 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         8.776 FUND2        {47.86 USD}                    ;    420.01936 USD
+2013-07-22 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         8.776 RGAGX        {47.86 USD}                    ;    420.01936 USD
   Assets:US:Vanguard:Cash                        -420.02 USD                                       ;      -420.02 USD
 
-2013-07-22 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                          0.82 FUND1       {170.82 USD}                    ;    140.07240 USD
+2013-07-22 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                          0.82 VBMPX       {170.82 USD}                    ;    140.07240 USD
   Assets:US:Vanguard:Cash                        -140.07 USD                                       ;      -140.07 USD
 
-2013-07-22 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         4.388 FUND2        {47.86 USD}                    ;    210.00968 USD
+2013-07-22 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         4.388 RGAGX        {47.86 USD}                    ;    210.00968 USD
   Assets:US:Vanguard:Cash                        -210.01 USD                                       ;      -210.01 USD
 
 2014-01-03 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2014-01-06 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                          2.60 FUND1       {184.64 USD}                    ;    480.06400 USD
+2014-01-06 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                          2.60 VBMPX       {184.64 USD}                    ;    480.06400 USD
   Assets:US:Vanguard:Cash                        -480.06 USD                                       ;      -480.06 USD
 
-2014-01-06 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        15.534 FUND2        {46.35 USD}                    ;    720.00090 USD
+2014-01-06 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        15.534 RGAGX        {46.35 USD}                    ;    720.00090 USD
   Assets:US:Vanguard:Cash                        -720.00 USD                                       ;      -720.00 USD
 
-2014-01-06 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                          1.30 FUND1       {184.64 USD}                    ;    240.03200 USD
+2014-01-06 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                          1.30 VBMPX       {184.64 USD}                    ;    240.03200 USD
   Assets:US:Vanguard:Cash                        -240.03 USD                                       ;      -240.03 USD
 
-2014-01-06 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.766 FUND2        {46.35 USD}                    ;    359.95410 USD
+2014-01-06 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.766 RGAGX        {46.35 USD}                    ;    359.95410 USD
   Assets:US:Vanguard:Cash                        -359.95 USD                                       ;      -359.95 USD
 
 2014-01-17 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2014-01-20 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.627 FUND1       {182.74 USD}                    ;    480.05798 USD
+2014-01-20 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.627 VBMPX       {182.74 USD}                    ;    480.05798 USD
   Assets:US:Vanguard:Cash                        -480.06 USD                                       ;      -480.06 USD
 
-2014-01-20 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        15.231 FUND2        {47.27 USD}                    ;    719.96937 USD
+2014-01-20 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        15.231 RGAGX        {47.27 USD}                    ;    719.96937 USD
   Assets:US:Vanguard:Cash                        -719.97 USD                                       ;      -719.97 USD
 
-2014-01-20 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.313 FUND1       {182.74 USD}                    ;    239.93762 USD
+2014-01-20 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.313 VBMPX       {182.74 USD}                    ;    239.93762 USD
   Assets:US:Vanguard:Cash                        -239.94 USD                                       ;      -239.94 USD
 
-2014-01-20 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.615 FUND2        {47.27 USD}                    ;    359.96105 USD
+2014-01-20 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.615 RGAGX        {47.27 USD}                    ;    359.96105 USD
   Assets:US:Vanguard:Cash                        -359.96 USD                                       ;      -359.96 USD
 
 2014-01-31 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2014-02-03 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.639 FUND1       {181.86 USD}                    ;    479.92854 USD
+2014-02-03 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.639 VBMPX       {181.86 USD}                    ;    479.92854 USD
   Assets:US:Vanguard:Cash                        -479.93 USD                                       ;      -479.93 USD
 
-2014-02-03 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        15.309 FUND2        {47.03 USD}                    ;    719.98227 USD
+2014-02-03 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        15.309 RGAGX        {47.03 USD}                    ;    719.98227 USD
   Assets:US:Vanguard:Cash                        -719.98 USD                                       ;      -719.98 USD
 
-2014-02-03 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                          1.32 FUND1       {181.86 USD}                    ;    240.05520 USD
+2014-02-03 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                          1.32 VBMPX       {181.86 USD}                    ;    240.05520 USD
   Assets:US:Vanguard:Cash                        -240.06 USD                                       ;      -240.06 USD
 
-2014-02-03 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.656 FUND2        {47.03 USD}                    ;    360.06168 USD
+2014-02-03 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.656 RGAGX        {47.03 USD}                    ;    360.06168 USD
   Assets:US:Vanguard:Cash                        -360.06 USD                                       ;      -360.06 USD
 
 2014-02-14 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2014-02-17 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.525 FUND1       {190.12 USD}                    ;    480.05300 USD
+2014-02-17 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.525 VBMPX       {190.12 USD}                    ;    480.05300 USD
   Assets:US:Vanguard:Cash                        -480.05 USD                                       ;      -480.05 USD
 
-2014-02-17 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         15.89 FUND2        {45.31 USD}                    ;    719.97590 USD
+2014-02-17 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         15.89 RGAGX        {45.31 USD}                    ;    719.97590 USD
   Assets:US:Vanguard:Cash                        -719.98 USD                                       ;      -719.98 USD
 
-2014-02-17 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.262 FUND1       {190.12 USD}                    ;    239.93144 USD
+2014-02-17 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.262 VBMPX       {190.12 USD}                    ;    239.93144 USD
   Assets:US:Vanguard:Cash                        -239.93 USD                                       ;      -239.93 USD
 
-2014-02-17 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.944 FUND2        {45.31 USD}                    ;    359.94264 USD
+2014-02-17 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.944 RGAGX        {45.31 USD}                    ;    359.94264 USD
   Assets:US:Vanguard:Cash                        -359.94 USD                                       ;      -359.94 USD
 
 2014-02-28 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2014-03-03 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.602 FUND1       {184.48 USD}                    ;    480.01696 USD
+2014-03-03 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.602 VBMPX       {184.48 USD}                    ;    480.01696 USD
   Assets:US:Vanguard:Cash                        -480.02 USD                                       ;      -480.02 USD
 
-2014-03-03 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        16.155 FUND2        {44.57 USD}                    ;    720.02835 USD
+2014-03-03 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        16.155 RGAGX        {44.57 USD}                    ;    720.02835 USD
   Assets:US:Vanguard:Cash                        -720.03 USD                                       ;      -720.03 USD
 
-2014-03-03 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.301 FUND1       {184.48 USD}                    ;    240.00848 USD
+2014-03-03 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.301 VBMPX       {184.48 USD}                    ;    240.00848 USD
   Assets:US:Vanguard:Cash                        -240.01 USD                                       ;      -240.01 USD
 
-2014-03-03 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         8.077 FUND2        {44.57 USD}                    ;    359.99189 USD
+2014-03-03 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         8.077 RGAGX        {44.57 USD}                    ;    359.99189 USD
   Assets:US:Vanguard:Cash                        -359.99 USD                                       ;      -359.99 USD
 
 2014-03-14 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2014-03-17 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.614 FUND1       {183.66 USD}                    ;    480.08724 USD
+2014-03-17 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.614 VBMPX       {183.66 USD}                    ;    480.08724 USD
   Assets:US:Vanguard:Cash                        -480.09 USD                                       ;      -480.09 USD
 
-2014-03-17 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         16.14 FUND2        {44.61 USD}                    ;    720.00540 USD
+2014-03-17 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         16.14 RGAGX        {44.61 USD}                    ;    720.00540 USD
   Assets:US:Vanguard:Cash                        -720.01 USD                                       ;      -720.01 USD
 
-2014-03-17 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.307 FUND1       {183.66 USD}                    ;    240.04362 USD
+2014-03-17 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.307 VBMPX       {183.66 USD}                    ;    240.04362 USD
   Assets:US:Vanguard:Cash                        -240.04 USD                                       ;      -240.04 USD
 
-2014-03-17 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         8.069 FUND2        {44.61 USD}                    ;    359.95809 USD
+2014-03-17 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         8.069 RGAGX        {44.61 USD}                    ;    359.95809 USD
   Assets:US:Vanguard:Cash                        -359.96 USD                                       ;      -359.96 USD
 
 2014-03-28 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2014-03-31 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.716 FUND1       {176.75 USD}                    ;    480.05300 USD
+2014-03-31 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.716 VBMPX       {176.75 USD}                    ;    480.05300 USD
   Assets:US:Vanguard:Cash                        -480.05 USD                                       ;      -480.05 USD
 
-2014-03-31 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        16.296 FUND2        {44.18 USD}                    ;    719.95728 USD
+2014-03-31 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        16.296 RGAGX        {44.18 USD}                    ;    719.95728 USD
   Assets:US:Vanguard:Cash                        -719.96 USD                                       ;      -719.96 USD
 
-2014-03-31 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.358 FUND1       {176.75 USD}                    ;    240.02650 USD
+2014-03-31 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.358 VBMPX       {176.75 USD}                    ;    240.02650 USD
   Assets:US:Vanguard:Cash                        -240.03 USD                                       ;      -240.03 USD
 
-2014-03-31 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         8.147 FUND2        {44.18 USD}                    ;    359.93446 USD
+2014-03-31 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         8.147 RGAGX        {44.18 USD}                    ;    359.93446 USD
   Assets:US:Vanguard:Cash                        -359.93 USD                                       ;      -359.93 USD
 
 2014-04-11 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2014-04-14 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.608 FUND1       {184.04 USD}                    ;    479.97632 USD
+2014-04-14 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.608 VBMPX       {184.04 USD}                    ;    479.97632 USD
   Assets:US:Vanguard:Cash                        -479.98 USD                                       ;      -479.98 USD
 
-2014-04-14 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        15.982 FUND2        {45.05 USD}                    ;    719.98910 USD
+2014-04-14 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        15.982 RGAGX        {45.05 USD}                    ;    719.98910 USD
   Assets:US:Vanguard:Cash                        -719.99 USD                                       ;      -719.99 USD
 
-2014-04-14 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.304 FUND1       {184.04 USD}                    ;    239.98816 USD
+2014-04-14 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.304 VBMPX       {184.04 USD}                    ;    239.98816 USD
   Assets:US:Vanguard:Cash                        -239.99 USD                                       ;      -239.99 USD
 
-2014-04-14 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         7.991 FUND2        {45.05 USD}                    ;    359.99455 USD
+2014-04-14 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         7.991 RGAGX        {45.05 USD}                    ;    359.99455 USD
   Assets:US:Vanguard:Cash                        -359.99 USD                                       ;      -359.99 USD
 
 2014-04-25 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2014-04-28 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.684 FUND1       {178.85 USD}                    ;    480.03340 USD
+2014-04-28 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.684 VBMPX       {178.85 USD}                    ;    480.03340 USD
   Assets:US:Vanguard:Cash                        -480.03 USD                                       ;      -480.03 USD
 
-2014-04-28 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        16.315 FUND2        {44.13 USD}                    ;    719.98095 USD
+2014-04-28 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        16.315 RGAGX        {44.13 USD}                    ;    719.98095 USD
   Assets:US:Vanguard:Cash                        -719.98 USD                                       ;      -719.98 USD
 
-2014-04-28 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.342 FUND1       {178.85 USD}                    ;    240.01670 USD
+2014-04-28 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.342 VBMPX       {178.85 USD}                    ;    240.01670 USD
   Assets:US:Vanguard:Cash                        -240.02 USD                                       ;      -240.02 USD
 
-2014-04-28 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         8.158 FUND2        {44.13 USD}                    ;    360.01254 USD
+2014-04-28 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         8.158 RGAGX        {44.13 USD}                    ;    360.01254 USD
   Assets:US:Vanguard:Cash                        -360.01 USD                                       ;      -360.01 USD
 
 2014-05-09 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2014-05-12 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.584 FUND1       {185.78 USD}                    ;    480.05552 USD
+2014-05-12 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.584 VBMPX       {185.78 USD}                    ;    480.05552 USD
   Assets:US:Vanguard:Cash                        -480.06 USD                                       ;      -480.06 USD
 
-2014-05-12 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        16.359 FUND2        {44.01 USD}                    ;    719.95959 USD
+2014-05-12 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        16.359 RGAGX        {44.01 USD}                    ;    719.95959 USD
   Assets:US:Vanguard:Cash                        -719.96 USD                                       ;      -719.96 USD
 
-2014-05-12 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.292 FUND1       {185.78 USD}                    ;    240.02776 USD
+2014-05-12 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.292 VBMPX       {185.78 USD}                    ;    240.02776 USD
   Assets:US:Vanguard:Cash                        -240.03 USD                                       ;      -240.03 USD
 
-2014-05-12 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         8.179 FUND2        {44.01 USD}                    ;    359.95779 USD
+2014-05-12 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         8.179 RGAGX        {44.01 USD}                    ;    359.95779 USD
   Assets:US:Vanguard:Cash                        -359.96 USD                                       ;      -359.96 USD
 
 2014-05-23 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2014-05-26 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.611 FUND1       {183.80 USD}                    ;    479.90180 USD
+2014-05-26 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.611 VBMPX       {183.80 USD}                    ;    479.90180 USD
   Assets:US:Vanguard:Cash                        -479.90 USD                                       ;      -479.90 USD
 
-2014-05-26 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        16.132 FUND2        {44.63 USD}                    ;    719.97116 USD
+2014-05-26 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        16.132 RGAGX        {44.63 USD}                    ;    719.97116 USD
   Assets:US:Vanguard:Cash                        -719.97 USD                                       ;      -719.97 USD
 
-2014-05-26 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.306 FUND1       {183.80 USD}                    ;    240.04280 USD
+2014-05-26 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.306 VBMPX       {183.80 USD}                    ;    240.04280 USD
   Assets:US:Vanguard:Cash                        -240.04 USD                                       ;      -240.04 USD
 
-2014-05-26 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         8.067 FUND2        {44.63 USD}                    ;    360.03021 USD
+2014-05-26 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         8.067 RGAGX        {44.63 USD}                    ;    360.03021 USD
   Assets:US:Vanguard:Cash                        -360.03 USD                                       ;      -360.03 USD
 
 2014-06-06 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2014-06-09 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.567 FUND1       {187.00 USD}                    ;    480.02900 USD
+2014-06-09 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.567 VBMPX       {187.00 USD}                    ;    480.02900 USD
   Assets:US:Vanguard:Cash                        -480.03 USD                                       ;      -480.03 USD
 
-2014-06-09 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         16.42 FUND2        {43.85 USD}                    ;    720.01700 USD
+2014-06-09 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         16.42 RGAGX        {43.85 USD}                    ;    720.01700 USD
   Assets:US:Vanguard:Cash                        -720.02 USD                                       ;      -720.02 USD
 
-2014-06-09 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.283 FUND1       {187.00 USD}                    ;    239.92100 USD
+2014-06-09 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.283 VBMPX       {187.00 USD}                    ;    239.92100 USD
   Assets:US:Vanguard:Cash                        -239.92 USD                                       ;      -239.92 USD
 
-2014-06-09 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         8.209 FUND2        {43.85 USD}                    ;    359.96465 USD
+2014-06-09 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         8.209 RGAGX        {43.85 USD}                    ;    359.96465 USD
   Assets:US:Vanguard:Cash                        -359.96 USD                                       ;      -359.96 USD
 
 2014-06-20 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2014-06-23 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.504 FUND1       {191.67 USD}                    ;    479.94168 USD
+2014-06-23 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.504 VBMPX       {191.67 USD}                    ;    479.94168 USD
   Assets:US:Vanguard:Cash                        -479.94 USD                                       ;      -479.94 USD
 
-2014-06-23 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        16.005 FUND2        {44.99 USD}                    ;    720.06495 USD
+2014-06-23 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        16.005 RGAGX        {44.99 USD}                    ;    720.06495 USD
   Assets:US:Vanguard:Cash                        -720.06 USD                                       ;      -720.06 USD
 
-2014-06-23 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.252 FUND1       {191.67 USD}                    ;    239.97084 USD
+2014-06-23 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.252 VBMPX       {191.67 USD}                    ;    239.97084 USD
   Assets:US:Vanguard:Cash                        -239.97 USD                                       ;      -239.97 USD
 
-2014-06-23 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         8.003 FUND2        {44.99 USD}                    ;    360.05497 USD
+2014-06-23 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         8.003 RGAGX        {44.99 USD}                    ;    360.05497 USD
   Assets:US:Vanguard:Cash                        -360.05 USD                                       ;      -360.05 USD
 
 2014-07-04 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         600.00 USD
   Income:US:Hoogle:Match401k                     -600.00 USD
 
-2014-07-07 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         2.424 FUND1       {198.07 USD}                    ;    480.12168 USD
+2014-07-07 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         2.424 VBMPX       {198.07 USD}                    ;    480.12168 USD
   Assets:US:Vanguard:Cash                        -480.12 USD                                       ;      -480.12 USD
 
-2014-07-07 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                        16.044 FUND2        {44.88 USD}                    ;    720.05472 USD
+2014-07-07 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                        16.044 RGAGX        {44.88 USD}                    ;    720.05472 USD
   Assets:US:Vanguard:Cash                        -720.05 USD                                       ;      -720.05 USD
 
-2014-07-07 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.211 FUND1       {198.07 USD}                    ;    239.86277 USD
+2014-07-07 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.211 VBMPX       {198.07 USD}                    ;    239.86277 USD
   Assets:US:Vanguard:Cash                        -239.86 USD                                       ;      -239.86 USD
 
-2014-07-07 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                          8.02 FUND2        {44.88 USD}                    ;    359.93760 USD
+2014-07-07 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                          8.02 RGAGX        {44.88 USD}                    ;    359.93760 USD
   Assets:US:Vanguard:Cash                        -359.94 USD                                       ;      -359.94 USD
 
 2014-07-18 * "Employer match for contribution"
   Assets:US:Vanguard:Cash                         350.00 USD
   Income:US:Hoogle:Match401k                     -350.00 USD
 
-2014-07-21 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         1.411 FUND1       {198.47 USD}                    ;    280.04117 USD
+2014-07-21 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         1.411 VBMPX       {198.47 USD}                    ;    280.04117 USD
   Assets:US:Vanguard:Cash                        -280.04 USD                                       ;      -280.04 USD
 
-2014-07-21 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                          9.13 FUND2        {46.01 USD}                    ;    420.07130 USD
+2014-07-21 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                          9.13 RGAGX        {46.01 USD}                    ;    420.07130 USD
   Assets:US:Vanguard:Cash                        -420.07 USD                                       ;      -420.07 USD
 
-2014-07-21 * "Investing 40% of cash in FUND1"
-  Assets:US:Vanguard:FUND1                         0.705 FUND1       {198.47 USD}                    ;    139.92135 USD
+2014-07-21 * "Investing 40% of cash in VBMPX"
+  Assets:US:Vanguard:VBMPX                         0.705 VBMPX       {198.47 USD}                    ;    139.92135 USD
   Assets:US:Vanguard:Cash                        -139.92 USD                                       ;      -139.92 USD
 
-2014-07-21 * "Investing 60% of cash in FUND2"
-  Assets:US:Vanguard:FUND2                         4.564 FUND2        {46.01 USD}                    ;    209.98964 USD
+2014-07-21 * "Investing 60% of cash in RGAGX"
+  Assets:US:Vanguard:RGAGX                         4.564 RGAGX        {46.01 USD}                    ;    209.98964 USD
   Assets:US:Vanguard:Cash                        -209.99 USD                                       ;      -209.99 USD
 
 * Sources of Income
@@ -5701,9 +5701,9 @@ option "operating_currency" "USD"
 
 * Prices
 
-2012-01-06 price FUND1                            152.91 USD
+2012-01-06 price VBMPX                            152.91 USD
 
-2012-01-06 price FUND2                             50.28 USD
+2012-01-06 price RGAGX                             50.28 USD
 
 2012-01-06 price ITOT                             162.87 USD
 
@@ -5713,9 +5713,9 @@ option "operating_currency" "USD"
 
 2012-01-06 price GLD                               98.24 USD
 
-2012-01-13 price FUND1                            155.89 USD
+2012-01-13 price VBMPX                            155.89 USD
 
-2012-01-13 price FUND2                             51.29 USD
+2012-01-13 price RGAGX                             51.29 USD
 
 2012-01-13 price ITOT                             162.26 USD
 
@@ -5725,9 +5725,9 @@ option "operating_currency" "USD"
 
 2012-01-13 price GLD                              103.29 USD
 
-2012-01-20 price FUND1                            150.57 USD
+2012-01-20 price VBMPX                            150.57 USD
 
-2012-01-20 price FUND2                             52.43 USD
+2012-01-20 price RGAGX                             52.43 USD
 
 2012-01-20 price ITOT                             161.94 USD
 
@@ -5737,9 +5737,9 @@ option "operating_currency" "USD"
 
 2012-01-20 price GLD                              106.45 USD
 
-2012-01-27 price FUND1                            149.87 USD
+2012-01-27 price VBMPX                            149.87 USD
 
-2012-01-27 price FUND2                             52.26 USD
+2012-01-27 price RGAGX                             52.26 USD
 
 2012-01-27 price ITOT                             161.27 USD
 
@@ -5749,9 +5749,9 @@ option "operating_currency" "USD"
 
 2012-01-27 price GLD                              108.86 USD
 
-2012-02-03 price FUND1                            153.66 USD
+2012-02-03 price VBMPX                            153.66 USD
 
-2012-02-03 price FUND2                             53.24 USD
+2012-02-03 price RGAGX                             53.24 USD
 
 2012-02-03 price ITOT                             161.90 USD
 
@@ -5761,9 +5761,9 @@ option "operating_currency" "USD"
 
 2012-02-03 price GLD                              109.62 USD
 
-2012-02-10 price FUND1                            153.54 USD
+2012-02-10 price VBMPX                            153.54 USD
 
-2012-02-10 price FUND2                             50.86 USD
+2012-02-10 price RGAGX                             50.86 USD
 
 2012-02-10 price ITOT                             163.11 USD
 
@@ -5773,9 +5773,9 @@ option "operating_currency" "USD"
 
 2012-02-10 price GLD                              107.74 USD
 
-2012-02-17 price FUND1                            152.69 USD
+2012-02-17 price VBMPX                            152.69 USD
 
-2012-02-17 price FUND2                             51.24 USD
+2012-02-17 price RGAGX                             51.24 USD
 
 2012-02-17 price ITOT                             166.02 USD
 
@@ -5785,9 +5785,9 @@ option "operating_currency" "USD"
 
 2012-02-17 price GLD                              107.99 USD
 
-2012-02-24 price FUND1                            151.87 USD
+2012-02-24 price VBMPX                            151.87 USD
 
-2012-02-24 price FUND2                             51.39 USD
+2012-02-24 price RGAGX                             51.39 USD
 
 2012-02-24 price ITOT                             166.58 USD
 
@@ -5797,9 +5797,9 @@ option "operating_currency" "USD"
 
 2012-02-24 price GLD                              107.54 USD
 
-2012-03-02 price FUND1                            151.55 USD
+2012-03-02 price VBMPX                            151.55 USD
 
-2012-03-02 price FUND2                             51.77 USD
+2012-03-02 price RGAGX                             51.77 USD
 
 2012-03-02 price ITOT                             166.21 USD
 
@@ -5809,9 +5809,9 @@ option "operating_currency" "USD"
 
 2012-03-02 price GLD                              108.47 USD
 
-2012-03-09 price FUND1                            147.37 USD
+2012-03-09 price VBMPX                            147.37 USD
 
-2012-03-09 price FUND2                             53.38 USD
+2012-03-09 price RGAGX                             53.38 USD
 
 2012-03-09 price ITOT                             167.62 USD
 
@@ -5821,9 +5821,9 @@ option "operating_currency" "USD"
 
 2012-03-09 price GLD                              108.59 USD
 
-2012-03-16 price FUND1                            146.44 USD
+2012-03-16 price VBMPX                            146.44 USD
 
-2012-03-16 price FUND2                             52.76 USD
+2012-03-16 price RGAGX                             52.76 USD
 
 2012-03-16 price ITOT                             168.57 USD
 
@@ -5833,9 +5833,9 @@ option "operating_currency" "USD"
 
 2012-03-16 price GLD                              112.62 USD
 
-2012-03-23 price FUND1                            147.68 USD
+2012-03-23 price VBMPX                            147.68 USD
 
-2012-03-23 price FUND2                             53.13 USD
+2012-03-23 price RGAGX                             53.13 USD
 
 2012-03-23 price ITOT                             169.21 USD
 
@@ -5845,9 +5845,9 @@ option "operating_currency" "USD"
 
 2012-03-23 price GLD                              110.67 USD
 
-2012-03-30 price FUND1                            149.27 USD
+2012-03-30 price VBMPX                            149.27 USD
 
-2012-03-30 price FUND2                             52.76 USD
+2012-03-30 price RGAGX                             52.76 USD
 
 2012-03-30 price ITOT                             166.81 USD
 
@@ -5857,9 +5857,9 @@ option "operating_currency" "USD"
 
 2012-03-30 price GLD                              110.07 USD
 
-2012-04-06 price FUND1                            150.72 USD
+2012-04-06 price VBMPX                            150.72 USD
 
-2012-04-06 price FUND2                             52.18 USD
+2012-04-06 price RGAGX                             52.18 USD
 
 2012-04-06 price ITOT                             168.35 USD
 
@@ -5869,9 +5869,9 @@ option "operating_currency" "USD"
 
 2012-04-06 price GLD                              112.54 USD
 
-2012-04-13 price FUND1                            152.74 USD
+2012-04-13 price VBMPX                            152.74 USD
 
-2012-04-13 price FUND2                             51.64 USD
+2012-04-13 price RGAGX                             51.64 USD
 
 2012-04-13 price ITOT                             171.15 USD
 
@@ -5881,9 +5881,9 @@ option "operating_currency" "USD"
 
 2012-04-13 price GLD                              114.82 USD
 
-2012-04-20 price FUND1                            148.72 USD
+2012-04-20 price VBMPX                            148.72 USD
 
-2012-04-20 price FUND2                             51.19 USD
+2012-04-20 price RGAGX                             51.19 USD
 
 2012-04-20 price ITOT                             171.31 USD
 
@@ -5893,9 +5893,9 @@ option "operating_currency" "USD"
 
 2012-04-20 price GLD                              112.17 USD
 
-2012-04-27 price FUND1                            150.03 USD
+2012-04-27 price VBMPX                            150.03 USD
 
-2012-04-27 price FUND2                             51.78 USD
+2012-04-27 price RGAGX                             51.78 USD
 
 2012-04-27 price ITOT                             172.37 USD
 
@@ -5905,9 +5905,9 @@ option "operating_currency" "USD"
 
 2012-04-27 price GLD                              112.00 USD
 
-2012-05-04 price FUND1                            154.16 USD
+2012-05-04 price VBMPX                            154.16 USD
 
-2012-05-04 price FUND2                             51.85 USD
+2012-05-04 price RGAGX                             51.85 USD
 
 2012-05-04 price ITOT                             172.64 USD
 
@@ -5917,9 +5917,9 @@ option "operating_currency" "USD"
 
 2012-05-04 price GLD                              111.69 USD
 
-2012-05-11 price FUND1                            158.01 USD
+2012-05-11 price VBMPX                            158.01 USD
 
-2012-05-11 price FUND2                             50.99 USD
+2012-05-11 price RGAGX                             50.99 USD
 
 2012-05-11 price ITOT                             171.25 USD
 
@@ -5929,9 +5929,9 @@ option "operating_currency" "USD"
 
 2012-05-11 price GLD                              111.88 USD
 
-2012-05-18 price FUND1                            153.81 USD
+2012-05-18 price VBMPX                            153.81 USD
 
-2012-05-18 price FUND2                             50.80 USD
+2012-05-18 price RGAGX                             50.80 USD
 
 2012-05-18 price ITOT                             172.92 USD
 
@@ -5941,9 +5941,9 @@ option "operating_currency" "USD"
 
 2012-05-18 price GLD                              112.26 USD
 
-2012-05-25 price FUND1                            156.60 USD
+2012-05-25 price VBMPX                            156.60 USD
 
-2012-05-25 price FUND2                             49.26 USD
+2012-05-25 price RGAGX                             49.26 USD
 
 2012-05-25 price ITOT                             173.88 USD
 
@@ -5953,9 +5953,9 @@ option "operating_currency" "USD"
 
 2012-05-25 price GLD                              112.77 USD
 
-2012-06-01 price FUND1                            156.72 USD
+2012-06-01 price VBMPX                            156.72 USD
 
-2012-06-01 price FUND2                             49.16 USD
+2012-06-01 price RGAGX                             49.16 USD
 
 2012-06-01 price ITOT                             175.90 USD
 
@@ -5965,9 +5965,9 @@ option "operating_currency" "USD"
 
 2012-06-01 price GLD                              111.24 USD
 
-2012-06-08 price FUND1                            157.21 USD
+2012-06-08 price VBMPX                            157.21 USD
 
-2012-06-08 price FUND2                             48.97 USD
+2012-06-08 price RGAGX                             48.97 USD
 
 2012-06-08 price ITOT                             176.12 USD
 
@@ -5977,9 +5977,9 @@ option "operating_currency" "USD"
 
 2012-06-08 price GLD                              112.80 USD
 
-2012-06-15 price FUND1                            155.65 USD
+2012-06-15 price VBMPX                            155.65 USD
 
-2012-06-15 price FUND2                             47.44 USD
+2012-06-15 price RGAGX                             47.44 USD
 
 2012-06-15 price ITOT                             176.36 USD
 
@@ -5989,9 +5989,9 @@ option "operating_currency" "USD"
 
 2012-06-15 price GLD                              113.53 USD
 
-2012-06-22 price FUND1                            156.67 USD
+2012-06-22 price VBMPX                            156.67 USD
 
-2012-06-22 price FUND2                             46.46 USD
+2012-06-22 price RGAGX                             46.46 USD
 
 2012-06-22 price ITOT                             175.25 USD
 
@@ -6001,9 +6001,9 @@ option "operating_currency" "USD"
 
 2012-06-22 price GLD                              113.13 USD
 
-2012-06-29 price FUND1                            159.91 USD
+2012-06-29 price VBMPX                            159.91 USD
 
-2012-06-29 price FUND2                             46.62 USD
+2012-06-29 price RGAGX                             46.62 USD
 
 2012-06-29 price ITOT                             174.89 USD
 
@@ -6013,9 +6013,9 @@ option "operating_currency" "USD"
 
 2012-06-29 price GLD                              116.00 USD
 
-2012-07-06 price FUND1                            159.79 USD
+2012-07-06 price VBMPX                            159.79 USD
 
-2012-07-06 price FUND2                             45.88 USD
+2012-07-06 price RGAGX                             45.88 USD
 
 2012-07-06 price ITOT                             175.88 USD
 
@@ -6025,9 +6025,9 @@ option "operating_currency" "USD"
 
 2012-07-06 price GLD                              111.74 USD
 
-2012-07-13 price FUND1                            161.95 USD
+2012-07-13 price VBMPX                            161.95 USD
 
-2012-07-13 price FUND2                             45.36 USD
+2012-07-13 price RGAGX                             45.36 USD
 
 2012-07-13 price ITOT                             176.21 USD
 
@@ -6037,9 +6037,9 @@ option "operating_currency" "USD"
 
 2012-07-13 price GLD                              110.38 USD
 
-2012-07-20 price FUND1                            158.44 USD
+2012-07-20 price VBMPX                            158.44 USD
 
-2012-07-20 price FUND2                             44.98 USD
+2012-07-20 price RGAGX                             44.98 USD
 
 2012-07-20 price ITOT                             178.28 USD
 
@@ -6049,9 +6049,9 @@ option "operating_currency" "USD"
 
 2012-07-20 price GLD                              111.08 USD
 
-2012-07-27 price FUND1                            159.58 USD
+2012-07-27 price VBMPX                            159.58 USD
 
-2012-07-27 price FUND2                             44.05 USD
+2012-07-27 price RGAGX                             44.05 USD
 
 2012-07-27 price ITOT                             178.01 USD
 
@@ -6061,9 +6061,9 @@ option "operating_currency" "USD"
 
 2012-07-27 price GLD                              112.78 USD
 
-2012-08-03 price FUND1                            161.87 USD
+2012-08-03 price VBMPX                            161.87 USD
 
-2012-08-03 price FUND2                             43.59 USD
+2012-08-03 price RGAGX                             43.59 USD
 
 2012-08-03 price ITOT                             176.84 USD
 
@@ -6073,9 +6073,9 @@ option "operating_currency" "USD"
 
 2012-08-03 price GLD                              111.54 USD
 
-2012-08-10 price FUND1                            161.69 USD
+2012-08-10 price VBMPX                            161.69 USD
 
-2012-08-10 price FUND2                             44.68 USD
+2012-08-10 price RGAGX                             44.68 USD
 
 2012-08-10 price ITOT                             177.04 USD
 
@@ -6085,9 +6085,9 @@ option "operating_currency" "USD"
 
 2012-08-10 price GLD                              111.11 USD
 
-2012-08-17 price FUND1                            164.98 USD
+2012-08-17 price VBMPX                            164.98 USD
 
-2012-08-17 price FUND2                             45.44 USD
+2012-08-17 price RGAGX                             45.44 USD
 
 2012-08-17 price ITOT                             174.59 USD
 
@@ -6097,9 +6097,9 @@ option "operating_currency" "USD"
 
 2012-08-17 price GLD                              112.96 USD
 
-2012-08-24 price FUND1                            168.55 USD
+2012-08-24 price VBMPX                            168.55 USD
 
-2012-08-24 price FUND2                             45.30 USD
+2012-08-24 price RGAGX                             45.30 USD
 
 2012-08-24 price ITOT                             175.40 USD
 
@@ -6109,9 +6109,9 @@ option "operating_currency" "USD"
 
 2012-08-24 price GLD                              114.96 USD
 
-2012-08-31 price FUND1                            172.92 USD
+2012-08-31 price VBMPX                            172.92 USD
 
-2012-08-31 price FUND2                             45.22 USD
+2012-08-31 price RGAGX                             45.22 USD
 
 2012-08-31 price ITOT                             173.11 USD
 
@@ -6121,9 +6121,9 @@ option "operating_currency" "USD"
 
 2012-08-31 price GLD                              110.73 USD
 
-2012-09-07 price FUND1                            173.39 USD
+2012-09-07 price VBMPX                            173.39 USD
 
-2012-09-07 price FUND2                             45.49 USD
+2012-09-07 price RGAGX                             45.49 USD
 
 2012-09-07 price ITOT                             172.90 USD
 
@@ -6133,9 +6133,9 @@ option "operating_currency" "USD"
 
 2012-09-07 price GLD                              109.87 USD
 
-2012-09-14 price FUND1                            168.43 USD
+2012-09-14 price VBMPX                            168.43 USD
 
-2012-09-14 price FUND2                             46.44 USD
+2012-09-14 price RGAGX                             46.44 USD
 
 2012-09-14 price ITOT                             174.12 USD
 
@@ -6145,9 +6145,9 @@ option "operating_currency" "USD"
 
 2012-09-14 price GLD                              111.87 USD
 
-2012-09-21 price FUND1                            165.52 USD
+2012-09-21 price VBMPX                            165.52 USD
 
-2012-09-21 price FUND2                             45.19 USD
+2012-09-21 price RGAGX                             45.19 USD
 
 2012-09-21 price ITOT                             175.48 USD
 
@@ -6157,9 +6157,9 @@ option "operating_currency" "USD"
 
 2012-09-21 price GLD                              112.14 USD
 
-2012-09-28 price FUND1                            174.34 USD
+2012-09-28 price VBMPX                            174.34 USD
 
-2012-09-28 price FUND2                             44.87 USD
+2012-09-28 price RGAGX                             44.87 USD
 
 2012-09-28 price ITOT                             175.59 USD
 
@@ -6169,9 +6169,9 @@ option "operating_currency" "USD"
 
 2012-09-28 price GLD                              111.31 USD
 
-2012-10-05 price FUND1                            181.75 USD
+2012-10-05 price VBMPX                            181.75 USD
 
-2012-10-05 price FUND2                             44.50 USD
+2012-10-05 price RGAGX                             44.50 USD
 
 2012-10-05 price ITOT                             179.42 USD
 
@@ -6181,9 +6181,9 @@ option "operating_currency" "USD"
 
 2012-10-05 price GLD                              110.71 USD
 
-2012-10-12 price FUND1                            179.70 USD
+2012-10-12 price VBMPX                            179.70 USD
 
-2012-10-12 price FUND2                             44.65 USD
+2012-10-12 price RGAGX                             44.65 USD
 
 2012-10-12 price ITOT                             179.14 USD
 
@@ -6193,9 +6193,9 @@ option "operating_currency" "USD"
 
 2012-10-12 price GLD                              112.03 USD
 
-2012-10-19 price FUND1                            180.81 USD
+2012-10-19 price VBMPX                            180.81 USD
 
-2012-10-19 price FUND2                             45.34 USD
+2012-10-19 price RGAGX                             45.34 USD
 
 2012-10-19 price ITOT                             180.02 USD
 
@@ -6205,9 +6205,9 @@ option "operating_currency" "USD"
 
 2012-10-19 price GLD                              114.66 USD
 
-2012-10-26 price FUND1                            177.15 USD
+2012-10-26 price VBMPX                            177.15 USD
 
-2012-10-26 price FUND2                             46.16 USD
+2012-10-26 price RGAGX                             46.16 USD
 
 2012-10-26 price ITOT                             177.65 USD
 
@@ -6217,9 +6217,9 @@ option "operating_currency" "USD"
 
 2012-10-26 price GLD                              114.45 USD
 
-2012-11-02 price FUND1                            177.06 USD
+2012-11-02 price VBMPX                            177.06 USD
 
-2012-11-02 price FUND2                             45.92 USD
+2012-11-02 price RGAGX                             45.92 USD
 
 2012-11-02 price ITOT                             178.41 USD
 
@@ -6229,9 +6229,9 @@ option "operating_currency" "USD"
 
 2012-11-02 price GLD                              116.34 USD
 
-2012-11-09 price FUND1                            181.99 USD
+2012-11-09 price VBMPX                            181.99 USD
 
-2012-11-09 price FUND2                             45.82 USD
+2012-11-09 price RGAGX                             45.82 USD
 
 2012-11-09 price ITOT                             178.01 USD
 
@@ -6241,9 +6241,9 @@ option "operating_currency" "USD"
 
 2012-11-09 price GLD                              112.94 USD
 
-2012-11-16 price FUND1                            182.74 USD
+2012-11-16 price VBMPX                            182.74 USD
 
-2012-11-16 price FUND2                             46.65 USD
+2012-11-16 price RGAGX                             46.65 USD
 
 2012-11-16 price ITOT                             176.33 USD
 
@@ -6253,9 +6253,9 @@ option "operating_currency" "USD"
 
 2012-11-16 price GLD                              116.26 USD
 
-2012-11-23 price FUND1                            182.06 USD
+2012-11-23 price VBMPX                            182.06 USD
 
-2012-11-23 price FUND2                             46.24 USD
+2012-11-23 price RGAGX                             46.24 USD
 
 2012-11-23 price ITOT                             175.27 USD
 
@@ -6265,9 +6265,9 @@ option "operating_currency" "USD"
 
 2012-11-23 price GLD                              115.72 USD
 
-2012-11-30 price FUND1                            182.21 USD
+2012-11-30 price VBMPX                            182.21 USD
 
-2012-11-30 price FUND2                             45.48 USD
+2012-11-30 price RGAGX                             45.48 USD
 
 2012-11-30 price ITOT                             173.72 USD
 
@@ -6277,9 +6277,9 @@ option "operating_currency" "USD"
 
 2012-11-30 price GLD                              112.87 USD
 
-2012-12-07 price FUND1                            186.11 USD
+2012-12-07 price VBMPX                            186.11 USD
 
-2012-12-07 price FUND2                             46.14 USD
+2012-12-07 price RGAGX                             46.14 USD
 
 2012-12-07 price ITOT                             176.94 USD
 
@@ -6289,9 +6289,9 @@ option "operating_currency" "USD"
 
 2012-12-07 price GLD                              112.84 USD
 
-2012-12-14 price FUND1                            188.00 USD
+2012-12-14 price VBMPX                            188.00 USD
 
-2012-12-14 price FUND2                             46.77 USD
+2012-12-14 price RGAGX                             46.77 USD
 
 2012-12-14 price ITOT                             175.35 USD
 
@@ -6301,9 +6301,9 @@ option "operating_currency" "USD"
 
 2012-12-14 price GLD                              111.24 USD
 
-2012-12-21 price FUND1                            186.50 USD
+2012-12-21 price VBMPX                            186.50 USD
 
-2012-12-21 price FUND2                             47.77 USD
+2012-12-21 price RGAGX                             47.77 USD
 
 2012-12-21 price ITOT                             174.55 USD
 
@@ -6313,9 +6313,9 @@ option "operating_currency" "USD"
 
 2012-12-21 price GLD                              108.59 USD
 
-2012-12-28 price FUND1                            182.93 USD
+2012-12-28 price VBMPX                            182.93 USD
 
-2012-12-28 price FUND2                             48.03 USD
+2012-12-28 price RGAGX                             48.03 USD
 
 2012-12-28 price ITOT                             175.79 USD
 
@@ -6325,9 +6325,9 @@ option "operating_currency" "USD"
 
 2012-12-28 price GLD                              110.75 USD
 
-2013-01-04 price FUND1                            181.16 USD
+2013-01-04 price VBMPX                            181.16 USD
 
-2013-01-04 price FUND2                             47.78 USD
+2013-01-04 price RGAGX                             47.78 USD
 
 2013-01-04 price ITOT                             178.52 USD
 
@@ -6337,9 +6337,9 @@ option "operating_currency" "USD"
 
 2013-01-04 price GLD                              109.48 USD
 
-2013-01-11 price FUND1                            183.80 USD
+2013-01-11 price VBMPX                            183.80 USD
 
-2013-01-11 price FUND2                             47.29 USD
+2013-01-11 price RGAGX                             47.29 USD
 
 2013-01-11 price ITOT                             180.98 USD
 
@@ -6349,9 +6349,9 @@ option "operating_currency" "USD"
 
 2013-01-11 price GLD                              110.17 USD
 
-2013-01-18 price FUND1                            186.02 USD
+2013-01-18 price VBMPX                            186.02 USD
 
-2013-01-18 price FUND2                             46.74 USD
+2013-01-18 price RGAGX                             46.74 USD
 
 2013-01-18 price ITOT                             185.00 USD
 
@@ -6361,9 +6361,9 @@ option "operating_currency" "USD"
 
 2013-01-18 price GLD                              109.86 USD
 
-2013-01-25 price FUND1                            186.01 USD
+2013-01-25 price VBMPX                            186.01 USD
 
-2013-01-25 price FUND2                             46.97 USD
+2013-01-25 price RGAGX                             46.97 USD
 
 2013-01-25 price ITOT                             185.77 USD
 
@@ -6373,9 +6373,9 @@ option "operating_currency" "USD"
 
 2013-01-25 price GLD                              114.81 USD
 
-2013-02-01 price FUND1                            185.32 USD
+2013-02-01 price VBMPX                            185.32 USD
 
-2013-02-01 price FUND2                             46.28 USD
+2013-02-01 price RGAGX                             46.28 USD
 
 2013-02-01 price ITOT                             186.21 USD
 
@@ -6385,9 +6385,9 @@ option "operating_currency" "USD"
 
 2013-02-01 price GLD                              116.25 USD
 
-2013-02-08 price FUND1                            186.90 USD
+2013-02-08 price VBMPX                            186.90 USD
 
-2013-02-08 price FUND2                             46.32 USD
+2013-02-08 price RGAGX                             46.32 USD
 
 2013-02-08 price ITOT                             185.79 USD
 
@@ -6397,9 +6397,9 @@ option "operating_currency" "USD"
 
 2013-02-08 price GLD                              113.11 USD
 
-2013-02-15 price FUND1                            184.82 USD
+2013-02-15 price VBMPX                            184.82 USD
 
-2013-02-15 price FUND2                             45.85 USD
+2013-02-15 price RGAGX                             45.85 USD
 
 2013-02-15 price ITOT                             184.61 USD
 
@@ -6409,9 +6409,9 @@ option "operating_currency" "USD"
 
 2013-02-15 price GLD                              111.74 USD
 
-2013-02-22 price FUND1                            185.52 USD
+2013-02-22 price VBMPX                            185.52 USD
 
-2013-02-22 price FUND2                             46.85 USD
+2013-02-22 price RGAGX                             46.85 USD
 
 2013-02-22 price ITOT                             186.94 USD
 
@@ -6421,9 +6421,9 @@ option "operating_currency" "USD"
 
 2013-02-22 price GLD                              111.56 USD
 
-2013-03-01 price FUND1                            186.70 USD
+2013-03-01 price VBMPX                            186.70 USD
 
-2013-03-01 price FUND2                             47.79 USD
+2013-03-01 price RGAGX                             47.79 USD
 
 2013-03-01 price ITOT                             187.41 USD
 
@@ -6433,9 +6433,9 @@ option "operating_currency" "USD"
 
 2013-03-01 price GLD                              113.32 USD
 
-2013-03-08 price FUND1                            185.40 USD
+2013-03-08 price VBMPX                            185.40 USD
 
-2013-03-08 price FUND2                             46.26 USD
+2013-03-08 price RGAGX                             46.26 USD
 
 2013-03-08 price ITOT                             186.12 USD
 
@@ -6445,9 +6445,9 @@ option "operating_currency" "USD"
 
 2013-03-08 price GLD                              115.38 USD
 
-2013-03-15 price FUND1                            184.59 USD
+2013-03-15 price VBMPX                            184.59 USD
 
-2013-03-15 price FUND2                             46.45 USD
+2013-03-15 price RGAGX                             46.45 USD
 
 2013-03-15 price ITOT                             187.46 USD
 
@@ -6457,9 +6457,9 @@ option "operating_currency" "USD"
 
 2013-03-15 price GLD                              114.91 USD
 
-2013-03-22 price FUND1                            184.44 USD
+2013-03-22 price VBMPX                            184.44 USD
 
-2013-03-22 price FUND2                             46.89 USD
+2013-03-22 price RGAGX                             46.89 USD
 
 2013-03-22 price ITOT                             188.73 USD
 
@@ -6469,9 +6469,9 @@ option "operating_currency" "USD"
 
 2013-03-22 price GLD                              113.99 USD
 
-2013-03-29 price FUND1                            181.60 USD
+2013-03-29 price VBMPX                            181.60 USD
 
-2013-03-29 price FUND2                             47.89 USD
+2013-03-29 price RGAGX                             47.89 USD
 
 2013-03-29 price ITOT                             189.81 USD
 
@@ -6481,9 +6481,9 @@ option "operating_currency" "USD"
 
 2013-03-29 price GLD                              112.81 USD
 
-2013-04-05 price FUND1                            181.64 USD
+2013-04-05 price VBMPX                            181.64 USD
 
-2013-04-05 price FUND2                             47.38 USD
+2013-04-05 price RGAGX                             47.38 USD
 
 2013-04-05 price ITOT                             191.17 USD
 
@@ -6493,9 +6493,9 @@ option "operating_currency" "USD"
 
 2013-04-05 price GLD                              112.30 USD
 
-2013-04-12 price FUND1                            184.12 USD
+2013-04-12 price VBMPX                            184.12 USD
 
-2013-04-12 price FUND2                             47.94 USD
+2013-04-12 price RGAGX                             47.94 USD
 
 2013-04-12 price ITOT                             190.87 USD
 
@@ -6505,9 +6505,9 @@ option "operating_currency" "USD"
 
 2013-04-12 price GLD                              113.49 USD
 
-2013-04-19 price FUND1                            188.84 USD
+2013-04-19 price VBMPX                            188.84 USD
 
-2013-04-19 price FUND2                             48.56 USD
+2013-04-19 price RGAGX                             48.56 USD
 
 2013-04-19 price ITOT                             192.46 USD
 
@@ -6517,9 +6517,9 @@ option "operating_currency" "USD"
 
 2013-04-19 price GLD                              114.69 USD
 
-2013-04-26 price FUND1                            189.72 USD
+2013-04-26 price VBMPX                            189.72 USD
 
-2013-04-26 price FUND2                             49.00 USD
+2013-04-26 price RGAGX                             49.00 USD
 
 2013-04-26 price ITOT                             193.40 USD
 
@@ -6529,9 +6529,9 @@ option "operating_currency" "USD"
 
 2013-04-26 price GLD                              115.22 USD
 
-2013-05-03 price FUND1                            188.72 USD
+2013-05-03 price VBMPX                            188.72 USD
 
-2013-05-03 price FUND2                             49.68 USD
+2013-05-03 price RGAGX                             49.68 USD
 
 2013-05-03 price ITOT                             192.04 USD
 
@@ -6541,9 +6541,9 @@ option "operating_currency" "USD"
 
 2013-05-03 price GLD                              116.26 USD
 
-2013-05-10 price FUND1                            191.83 USD
+2013-05-10 price VBMPX                            191.83 USD
 
-2013-05-10 price FUND2                             49.80 USD
+2013-05-10 price RGAGX                             49.80 USD
 
 2013-05-10 price ITOT                             188.26 USD
 
@@ -6553,9 +6553,9 @@ option "operating_currency" "USD"
 
 2013-05-10 price GLD                              114.01 USD
 
-2013-05-17 price FUND1                            187.13 USD
+2013-05-17 price VBMPX                            187.13 USD
 
-2013-05-17 price FUND2                             48.03 USD
+2013-05-17 price RGAGX                             48.03 USD
 
 2013-05-17 price ITOT                             189.73 USD
 
@@ -6565,9 +6565,9 @@ option "operating_currency" "USD"
 
 2013-05-17 price GLD                              114.58 USD
 
-2013-05-24 price FUND1                            186.05 USD
+2013-05-24 price VBMPX                            186.05 USD
 
-2013-05-24 price FUND2                             47.98 USD
+2013-05-24 price RGAGX                             47.98 USD
 
 2013-05-24 price ITOT                             189.57 USD
 
@@ -6577,9 +6577,9 @@ option "operating_currency" "USD"
 
 2013-05-24 price GLD                              114.86 USD
 
-2013-05-31 price FUND1                            180.83 USD
+2013-05-31 price VBMPX                            180.83 USD
 
-2013-05-31 price FUND2                             47.46 USD
+2013-05-31 price RGAGX                             47.46 USD
 
 2013-05-31 price ITOT                             189.53 USD
 
@@ -6589,9 +6589,9 @@ option "operating_currency" "USD"
 
 2013-05-31 price GLD                              115.60 USD
 
-2013-06-07 price FUND1                            180.05 USD
+2013-06-07 price VBMPX                            180.05 USD
 
-2013-06-07 price FUND2                             48.13 USD
+2013-06-07 price RGAGX                             48.13 USD
 
 2013-06-07 price ITOT                             191.86 USD
 
@@ -6601,9 +6601,9 @@ option "operating_currency" "USD"
 
 2013-06-07 price GLD                              114.61 USD
 
-2013-06-14 price FUND1                            182.06 USD
+2013-06-14 price VBMPX                            182.06 USD
 
-2013-06-14 price FUND2                             47.69 USD
+2013-06-14 price RGAGX                             47.69 USD
 
 2013-06-14 price ITOT                             192.26 USD
 
@@ -6613,9 +6613,9 @@ option "operating_currency" "USD"
 
 2013-06-14 price GLD                              115.55 USD
 
-2013-06-21 price FUND1                            175.82 USD
+2013-06-21 price VBMPX                            175.82 USD
 
-2013-06-21 price FUND2                             46.04 USD
+2013-06-21 price RGAGX                             46.04 USD
 
 2013-06-21 price ITOT                             190.83 USD
 
@@ -6625,9 +6625,9 @@ option "operating_currency" "USD"
 
 2013-06-21 price GLD                              114.75 USD
 
-2013-06-28 price FUND1                            176.52 USD
+2013-06-28 price VBMPX                            176.52 USD
 
-2013-06-28 price FUND2                             46.67 USD
+2013-06-28 price RGAGX                             46.67 USD
 
 2013-06-28 price ITOT                             190.98 USD
 
@@ -6637,9 +6637,9 @@ option "operating_currency" "USD"
 
 2013-06-28 price GLD                              113.48 USD
 
-2013-07-05 price FUND1                            169.96 USD
+2013-07-05 price VBMPX                            169.96 USD
 
-2013-07-05 price FUND2                             46.78 USD
+2013-07-05 price RGAGX                             46.78 USD
 
 2013-07-05 price ITOT                             193.85 USD
 
@@ -6649,9 +6649,9 @@ option "operating_currency" "USD"
 
 2013-07-05 price GLD                              113.01 USD
 
-2013-07-12 price FUND1                            171.14 USD
+2013-07-12 price VBMPX                            171.14 USD
 
-2013-07-12 price FUND2                             47.89 USD
+2013-07-12 price RGAGX                             47.89 USD
 
 2013-07-12 price ITOT                             195.88 USD
 
@@ -6661,9 +6661,9 @@ option "operating_currency" "USD"
 
 2013-07-12 price GLD                              113.84 USD
 
-2013-07-19 price FUND1                            170.82 USD
+2013-07-19 price VBMPX                            170.82 USD
 
-2013-07-19 price FUND2                             47.86 USD
+2013-07-19 price RGAGX                             47.86 USD
 
 2013-07-19 price ITOT                             197.73 USD
 
@@ -6673,9 +6673,9 @@ option "operating_currency" "USD"
 
 2013-07-19 price GLD                              116.71 USD
 
-2013-07-26 price FUND1                            168.37 USD
+2013-07-26 price VBMPX                            168.37 USD
 
-2013-07-26 price FUND2                             47.45 USD
+2013-07-26 price RGAGX                             47.45 USD
 
 2013-07-26 price ITOT                             200.11 USD
 
@@ -6685,9 +6685,9 @@ option "operating_currency" "USD"
 
 2013-07-26 price GLD                              114.66 USD
 
-2013-08-02 price FUND1                            174.92 USD
+2013-08-02 price VBMPX                            174.92 USD
 
-2013-08-02 price FUND2                             46.58 USD
+2013-08-02 price RGAGX                             46.58 USD
 
 2013-08-02 price ITOT                             203.36 USD
 
@@ -6697,9 +6697,9 @@ option "operating_currency" "USD"
 
 2013-08-02 price GLD                              113.51 USD
 
-2013-08-09 price FUND1                            178.78 USD
+2013-08-09 price VBMPX                            178.78 USD
 
-2013-08-09 price FUND2                             47.23 USD
+2013-08-09 price RGAGX                             47.23 USD
 
 2013-08-09 price ITOT                             201.90 USD
 
@@ -6709,9 +6709,9 @@ option "operating_currency" "USD"
 
 2013-08-09 price GLD                              110.33 USD
 
-2013-08-16 price FUND1                            183.15 USD
+2013-08-16 price VBMPX                            183.15 USD
 
-2013-08-16 price FUND2                             46.93 USD
+2013-08-16 price RGAGX                             46.93 USD
 
 2013-08-16 price ITOT                             203.24 USD
 
@@ -6721,9 +6721,9 @@ option "operating_currency" "USD"
 
 2013-08-16 price GLD                              109.23 USD
 
-2013-08-23 price FUND1                            183.88 USD
+2013-08-23 price VBMPX                            183.88 USD
 
-2013-08-23 price FUND2                             47.27 USD
+2013-08-23 price RGAGX                             47.27 USD
 
 2013-08-23 price ITOT                             203.37 USD
 
@@ -6733,9 +6733,9 @@ option "operating_currency" "USD"
 
 2013-08-23 price GLD                              111.36 USD
 
-2013-08-30 price FUND1                            179.58 USD
+2013-08-30 price VBMPX                            179.58 USD
 
-2013-08-30 price FUND2                             47.42 USD
+2013-08-30 price RGAGX                             47.42 USD
 
 2013-08-30 price ITOT                             205.36 USD
 
@@ -6745,9 +6745,9 @@ option "operating_currency" "USD"
 
 2013-08-30 price GLD                              111.98 USD
 
-2013-09-06 price FUND1                            179.40 USD
+2013-09-06 price VBMPX                            179.40 USD
 
-2013-09-06 price FUND2                             47.80 USD
+2013-09-06 price RGAGX                             47.80 USD
 
 2013-09-06 price ITOT                             205.20 USD
 
@@ -6757,9 +6757,9 @@ option "operating_currency" "USD"
 
 2013-09-06 price GLD                              111.11 USD
 
-2013-09-13 price FUND1                            174.29 USD
+2013-09-13 price VBMPX                            174.29 USD
 
-2013-09-13 price FUND2                             47.63 USD
+2013-09-13 price RGAGX                             47.63 USD
 
 2013-09-13 price ITOT                             205.86 USD
 
@@ -6769,9 +6769,9 @@ option "operating_currency" "USD"
 
 2013-09-13 price GLD                              110.98 USD
 
-2013-09-20 price FUND1                            176.55 USD
+2013-09-20 price VBMPX                            176.55 USD
 
-2013-09-20 price FUND2                             46.66 USD
+2013-09-20 price RGAGX                             46.66 USD
 
 2013-09-20 price ITOT                             209.03 USD
 
@@ -6781,9 +6781,9 @@ option "operating_currency" "USD"
 
 2013-09-20 price GLD                              108.50 USD
 
-2013-09-27 price FUND1                            180.62 USD
+2013-09-27 price VBMPX                            180.62 USD
 
-2013-09-27 price FUND2                             46.68 USD
+2013-09-27 price RGAGX                             46.68 USD
 
 2013-09-27 price ITOT                             209.01 USD
 
@@ -6793,9 +6793,9 @@ option "operating_currency" "USD"
 
 2013-09-27 price GLD                              107.46 USD
 
-2013-10-04 price FUND1                            183.32 USD
+2013-10-04 price VBMPX                            183.32 USD
 
-2013-10-04 price FUND2                             46.01 USD
+2013-10-04 price RGAGX                             46.01 USD
 
 2013-10-04 price ITOT                             208.09 USD
 
@@ -6805,9 +6805,9 @@ option "operating_currency" "USD"
 
 2013-10-04 price GLD                              105.90 USD
 
-2013-10-11 price FUND1                            182.88 USD
+2013-10-11 price VBMPX                            182.88 USD
 
-2013-10-11 price FUND2                             46.52 USD
+2013-10-11 price RGAGX                             46.52 USD
 
 2013-10-11 price ITOT                             210.15 USD
 
@@ -6817,9 +6817,9 @@ option "operating_currency" "USD"
 
 2013-10-11 price GLD                              104.82 USD
 
-2013-10-18 price FUND1                            185.42 USD
+2013-10-18 price VBMPX                            185.42 USD
 
-2013-10-18 price FUND2                             46.08 USD
+2013-10-18 price RGAGX                             46.08 USD
 
 2013-10-18 price ITOT                             212.43 USD
 
@@ -6829,9 +6829,9 @@ option "operating_currency" "USD"
 
 2013-10-18 price GLD                              108.35 USD
 
-2013-10-25 price FUND1                            182.22 USD
+2013-10-25 price VBMPX                            182.22 USD
 
-2013-10-25 price FUND2                             45.41 USD
+2013-10-25 price RGAGX                             45.41 USD
 
 2013-10-25 price ITOT                             212.15 USD
 
@@ -6841,9 +6841,9 @@ option "operating_currency" "USD"
 
 2013-10-25 price GLD                              108.03 USD
 
-2013-11-01 price FUND1                            192.10 USD
+2013-11-01 price VBMPX                            192.10 USD
 
-2013-11-01 price FUND2                             44.51 USD
+2013-11-01 price RGAGX                             44.51 USD
 
 2013-11-01 price ITOT                             210.05 USD
 
@@ -6853,9 +6853,9 @@ option "operating_currency" "USD"
 
 2013-11-01 price GLD                              108.66 USD
 
-2013-11-08 price FUND1                            192.93 USD
+2013-11-08 price VBMPX                            192.93 USD
 
-2013-11-08 price FUND2                             44.48 USD
+2013-11-08 price RGAGX                             44.48 USD
 
 2013-11-08 price ITOT                             212.86 USD
 
@@ -6865,9 +6865,9 @@ option "operating_currency" "USD"
 
 2013-11-08 price GLD                              107.10 USD
 
-2013-11-15 price FUND1                            190.64 USD
+2013-11-15 price VBMPX                            190.64 USD
 
-2013-11-15 price FUND2                             44.09 USD
+2013-11-15 price RGAGX                             44.09 USD
 
 2013-11-15 price ITOT                             211.52 USD
 
@@ -6877,9 +6877,9 @@ option "operating_currency" "USD"
 
 2013-11-15 price GLD                              109.86 USD
 
-2013-11-22 price FUND1                            191.85 USD
+2013-11-22 price VBMPX                            191.85 USD
 
-2013-11-22 price FUND2                             44.01 USD
+2013-11-22 price RGAGX                             44.01 USD
 
 2013-11-22 price ITOT                             209.97 USD
 
@@ -6889,9 +6889,9 @@ option "operating_currency" "USD"
 
 2013-11-22 price GLD                              112.22 USD
 
-2013-11-29 price FUND1                            189.48 USD
+2013-11-29 price VBMPX                            189.48 USD
 
-2013-11-29 price FUND2                             43.98 USD
+2013-11-29 price RGAGX                             43.98 USD
 
 2013-11-29 price ITOT                             209.91 USD
 
@@ -6901,9 +6901,9 @@ option "operating_currency" "USD"
 
 2013-11-29 price GLD                              114.18 USD
 
-2013-12-06 price FUND1                            188.10 USD
+2013-12-06 price VBMPX                            188.10 USD
 
-2013-12-06 price FUND2                             45.10 USD
+2013-12-06 price RGAGX                             45.10 USD
 
 2013-12-06 price ITOT                             211.18 USD
 
@@ -6913,9 +6913,9 @@ option "operating_currency" "USD"
 
 2013-12-06 price GLD                              113.22 USD
 
-2013-12-13 price FUND1                            187.93 USD
+2013-12-13 price VBMPX                            187.93 USD
 
-2013-12-13 price FUND2                             45.20 USD
+2013-12-13 price RGAGX                             45.20 USD
 
 2013-12-13 price ITOT                             208.60 USD
 
@@ -6925,9 +6925,9 @@ option "operating_currency" "USD"
 
 2013-12-13 price GLD                              115.10 USD
 
-2013-12-20 price FUND1                            184.82 USD
+2013-12-20 price VBMPX                            184.82 USD
 
-2013-12-20 price FUND2                             45.78 USD
+2013-12-20 price RGAGX                             45.78 USD
 
 2013-12-20 price ITOT                             207.44 USD
 
@@ -6937,9 +6937,9 @@ option "operating_currency" "USD"
 
 2013-12-20 price GLD                              115.03 USD
 
-2013-12-27 price FUND1                            181.15 USD
+2013-12-27 price VBMPX                            181.15 USD
 
-2013-12-27 price FUND2                             46.46 USD
+2013-12-27 price RGAGX                             46.46 USD
 
 2013-12-27 price ITOT                             205.78 USD
 
@@ -6949,9 +6949,9 @@ option "operating_currency" "USD"
 
 2013-12-27 price GLD                              115.39 USD
 
-2014-01-03 price FUND1                            184.64 USD
+2014-01-03 price VBMPX                            184.64 USD
 
-2014-01-03 price FUND2                             46.35 USD
+2014-01-03 price RGAGX                             46.35 USD
 
 2014-01-03 price ITOT                             207.06 USD
 
@@ -6961,9 +6961,9 @@ option "operating_currency" "USD"
 
 2014-01-03 price GLD                              113.55 USD
 
-2014-01-10 price FUND1                            182.96 USD
+2014-01-10 price VBMPX                            182.96 USD
 
-2014-01-10 price FUND2                             46.72 USD
+2014-01-10 price RGAGX                             46.72 USD
 
 2014-01-10 price ITOT                             208.00 USD
 
@@ -6973,9 +6973,9 @@ option "operating_currency" "USD"
 
 2014-01-10 price GLD                              112.58 USD
 
-2014-01-17 price FUND1                            182.74 USD
+2014-01-17 price VBMPX                            182.74 USD
 
-2014-01-17 price FUND2                             47.27 USD
+2014-01-17 price RGAGX                             47.27 USD
 
 2014-01-17 price ITOT                             208.29 USD
 
@@ -6985,9 +6985,9 @@ option "operating_currency" "USD"
 
 2014-01-17 price GLD                              112.02 USD
 
-2014-01-24 price FUND1                            185.33 USD
+2014-01-24 price VBMPX                            185.33 USD
 
-2014-01-24 price FUND2                             47.28 USD
+2014-01-24 price RGAGX                             47.28 USD
 
 2014-01-24 price ITOT                             207.17 USD
 
@@ -6997,9 +6997,9 @@ option "operating_currency" "USD"
 
 2014-01-24 price GLD                              112.94 USD
 
-2014-01-31 price FUND1                            181.86 USD
+2014-01-31 price VBMPX                            181.86 USD
 
-2014-01-31 price FUND2                             47.03 USD
+2014-01-31 price RGAGX                             47.03 USD
 
 2014-01-31 price ITOT                             209.66 USD
 
@@ -7009,9 +7009,9 @@ option "operating_currency" "USD"
 
 2014-01-31 price GLD                              115.26 USD
 
-2014-02-07 price FUND1                            184.14 USD
+2014-02-07 price VBMPX                            184.14 USD
 
-2014-02-07 price FUND2                             45.71 USD
+2014-02-07 price RGAGX                             45.71 USD
 
 2014-02-07 price ITOT                             210.53 USD
 
@@ -7021,9 +7021,9 @@ option "operating_currency" "USD"
 
 2014-02-07 price GLD                              113.79 USD
 
-2014-02-14 price FUND1                            190.12 USD
+2014-02-14 price VBMPX                            190.12 USD
 
-2014-02-14 price FUND2                             45.31 USD
+2014-02-14 price RGAGX                             45.31 USD
 
 2014-02-14 price ITOT                             211.48 USD
 
@@ -7033,9 +7033,9 @@ option "operating_currency" "USD"
 
 2014-02-14 price GLD                              118.51 USD
 
-2014-02-21 price FUND1                            180.27 USD
+2014-02-21 price VBMPX                            180.27 USD
 
-2014-02-21 price FUND2                             44.48 USD
+2014-02-21 price RGAGX                             44.48 USD
 
 2014-02-21 price ITOT                             210.93 USD
 
@@ -7045,9 +7045,9 @@ option "operating_currency" "USD"
 
 2014-02-21 price GLD                              121.25 USD
 
-2014-02-28 price FUND1                            184.48 USD
+2014-02-28 price VBMPX                            184.48 USD
 
-2014-02-28 price FUND2                             44.57 USD
+2014-02-28 price RGAGX                             44.57 USD
 
 2014-02-28 price ITOT                             210.93 USD
 
@@ -7057,9 +7057,9 @@ option "operating_currency" "USD"
 
 2014-02-28 price GLD                              118.10 USD
 
-2014-03-07 price FUND1                            184.11 USD
+2014-03-07 price VBMPX                            184.11 USD
 
-2014-03-07 price FUND2                             43.91 USD
+2014-03-07 price RGAGX                             43.91 USD
 
 2014-03-07 price ITOT                             213.02 USD
 
@@ -7069,9 +7069,9 @@ option "operating_currency" "USD"
 
 2014-03-07 price GLD                              119.32 USD
 
-2014-03-14 price FUND1                            183.66 USD
+2014-03-14 price VBMPX                            183.66 USD
 
-2014-03-14 price FUND2                             44.61 USD
+2014-03-14 price RGAGX                             44.61 USD
 
 2014-03-14 price ITOT                             213.30 USD
 
@@ -7081,9 +7081,9 @@ option "operating_currency" "USD"
 
 2014-03-14 price GLD                              118.78 USD
 
-2014-03-21 price FUND1                            178.16 USD
+2014-03-21 price VBMPX                            178.16 USD
 
-2014-03-21 price FUND2                             44.29 USD
+2014-03-21 price RGAGX                             44.29 USD
 
 2014-03-21 price ITOT                             211.10 USD
 
@@ -7093,9 +7093,9 @@ option "operating_currency" "USD"
 
 2014-03-21 price GLD                              118.10 USD
 
-2014-03-28 price FUND1                            176.75 USD
+2014-03-28 price VBMPX                            176.75 USD
 
-2014-03-28 price FUND2                             44.18 USD
+2014-03-28 price RGAGX                             44.18 USD
 
 2014-03-28 price ITOT                             211.77 USD
 
@@ -7105,9 +7105,9 @@ option "operating_currency" "USD"
 
 2014-03-28 price GLD                              118.16 USD
 
-2014-04-04 price FUND1                            179.46 USD
+2014-04-04 price VBMPX                            179.46 USD
 
-2014-04-04 price FUND2                             44.59 USD
+2014-04-04 price RGAGX                             44.59 USD
 
 2014-04-04 price ITOT                             210.11 USD
 
@@ -7117,9 +7117,9 @@ option "operating_currency" "USD"
 
 2014-04-04 price GLD                              118.63 USD
 
-2014-04-11 price FUND1                            184.04 USD
+2014-04-11 price VBMPX                            184.04 USD
 
-2014-04-11 price FUND2                             45.05 USD
+2014-04-11 price RGAGX                             45.05 USD
 
 2014-04-11 price ITOT                             210.82 USD
 
@@ -7129,9 +7129,9 @@ option "operating_currency" "USD"
 
 2014-04-11 price GLD                              116.54 USD
 
-2014-04-18 price FUND1                            180.59 USD
+2014-04-18 price VBMPX                            180.59 USD
 
-2014-04-18 price FUND2                             44.50 USD
+2014-04-18 price RGAGX                             44.50 USD
 
 2014-04-18 price ITOT                             208.70 USD
 
@@ -7141,9 +7141,9 @@ option "operating_currency" "USD"
 
 2014-04-18 price GLD                              116.24 USD
 
-2014-04-25 price FUND1                            178.85 USD
+2014-04-25 price VBMPX                            178.85 USD
 
-2014-04-25 price FUND2                             44.13 USD
+2014-04-25 price RGAGX                             44.13 USD
 
 2014-04-25 price ITOT                             209.34 USD
 
@@ -7153,9 +7153,9 @@ option "operating_currency" "USD"
 
 2014-04-25 price GLD                              115.51 USD
 
-2014-05-02 price FUND1                            184.68 USD
+2014-05-02 price VBMPX                            184.68 USD
 
-2014-05-02 price FUND2                             43.92 USD
+2014-05-02 price RGAGX                             43.92 USD
 
 2014-05-02 price ITOT                             212.84 USD
 
@@ -7165,9 +7165,9 @@ option "operating_currency" "USD"
 
 2014-05-02 price GLD                              114.73 USD
 
-2014-05-09 price FUND1                            185.78 USD
+2014-05-09 price VBMPX                            185.78 USD
 
-2014-05-09 price FUND2                             44.01 USD
+2014-05-09 price RGAGX                             44.01 USD
 
 2014-05-09 price ITOT                             213.13 USD
 
@@ -7177,9 +7177,9 @@ option "operating_currency" "USD"
 
 2014-05-09 price GLD                              114.34 USD
 
-2014-05-16 price FUND1                            187.16 USD
+2014-05-16 price VBMPX                            187.16 USD
 
-2014-05-16 price FUND2                             44.27 USD
+2014-05-16 price RGAGX                             44.27 USD
 
 2014-05-16 price ITOT                             211.72 USD
 
@@ -7189,9 +7189,9 @@ option "operating_currency" "USD"
 
 2014-05-16 price GLD                              115.66 USD
 
-2014-05-23 price FUND1                            183.80 USD
+2014-05-23 price VBMPX                            183.80 USD
 
-2014-05-23 price FUND2                             44.63 USD
+2014-05-23 price RGAGX                             44.63 USD
 
 2014-05-23 price ITOT                             209.44 USD
 
@@ -7201,9 +7201,9 @@ option "operating_currency" "USD"
 
 2014-05-23 price GLD                              111.55 USD
 
-2014-05-30 price FUND1                            183.10 USD
+2014-05-30 price VBMPX                            183.10 USD
 
-2014-05-30 price FUND2                             44.64 USD
+2014-05-30 price RGAGX                             44.64 USD
 
 2014-05-30 price ITOT                             211.67 USD
 
@@ -7213,9 +7213,9 @@ option "operating_currency" "USD"
 
 2014-05-30 price GLD                              115.46 USD
 
-2014-06-06 price FUND1                            187.00 USD
+2014-06-06 price VBMPX                            187.00 USD
 
-2014-06-06 price FUND2                             43.85 USD
+2014-06-06 price RGAGX                             43.85 USD
 
 2014-06-06 price ITOT                             216.10 USD
 
@@ -7225,9 +7225,9 @@ option "operating_currency" "USD"
 
 2014-06-06 price GLD                              114.07 USD
 
-2014-06-13 price FUND1                            188.87 USD
+2014-06-13 price VBMPX                            188.87 USD
 
-2014-06-13 price FUND2                             44.14 USD
+2014-06-13 price RGAGX                             44.14 USD
 
 2014-06-13 price ITOT                             217.96 USD
 
@@ -7237,9 +7237,9 @@ option "operating_currency" "USD"
 
 2014-06-13 price GLD                              112.43 USD
 
-2014-06-20 price FUND1                            191.67 USD
+2014-06-20 price VBMPX                            191.67 USD
 
-2014-06-20 price FUND2                             44.99 USD
+2014-06-20 price RGAGX                             44.99 USD
 
 2014-06-20 price ITOT                             219.36 USD
 
@@ -7249,9 +7249,9 @@ option "operating_currency" "USD"
 
 2014-06-20 price GLD                              111.86 USD
 
-2014-06-27 price FUND1                            195.09 USD
+2014-06-27 price VBMPX                            195.09 USD
 
-2014-06-27 price FUND2                             44.74 USD
+2014-06-27 price RGAGX                             44.74 USD
 
 2014-06-27 price ITOT                             218.34 USD
 
@@ -7261,9 +7261,9 @@ option "operating_currency" "USD"
 
 2014-06-27 price GLD                              111.69 USD
 
-2014-07-04 price FUND1                            198.07 USD
+2014-07-04 price VBMPX                            198.07 USD
 
-2014-07-04 price FUND2                             44.88 USD
+2014-07-04 price RGAGX                             44.88 USD
 
 2014-07-04 price ITOT                             220.65 USD
 
@@ -7273,9 +7273,9 @@ option "operating_currency" "USD"
 
 2014-07-04 price GLD                              111.63 USD
 
-2014-07-11 price FUND1                            198.45 USD
+2014-07-11 price VBMPX                            198.45 USD
 
-2014-07-11 price FUND2                             45.36 USD
+2014-07-11 price RGAGX                             45.36 USD
 
 2014-07-11 price ITOT                             218.37 USD
 
@@ -7285,9 +7285,9 @@ option "operating_currency" "USD"
 
 2014-07-11 price GLD                              111.30 USD
 
-2014-07-18 price FUND1                            198.47 USD
+2014-07-18 price VBMPX                            198.47 USD
 
-2014-07-18 price FUND2                             46.01 USD
+2014-07-18 price RGAGX                             46.01 USD
 
 2014-07-18 price ITOT                             218.70 USD
 
@@ -7297,9 +7297,9 @@ option "operating_currency" "USD"
 
 2014-07-18 price GLD                              109.16 USD
 
-2014-07-25 price FUND1                            200.77 USD
+2014-07-25 price VBMPX                            200.77 USD
 
-2014-07-25 price FUND2                             45.83 USD
+2014-07-25 price RGAGX                             45.83 USD
 
 2014-07-25 price ITOT                             220.31 USD
 
@@ -7309,9 +7309,9 @@ option "operating_currency" "USD"
 
 2014-07-25 price GLD                              113.78 USD
 
-2014-08-01 price FUND1                            191.43 USD
+2014-08-01 price VBMPX                            191.43 USD
 
-2014-08-01 price FUND2                             45.90 USD
+2014-08-01 price RGAGX                             45.90 USD
 
 2014-08-01 price ITOT                             218.80 USD
 
@@ -7321,9 +7321,9 @@ option "operating_currency" "USD"
 
 2014-08-01 price GLD                              112.66 USD
 
-2014-08-08 price FUND1                            188.50 USD
+2014-08-08 price VBMPX                            188.50 USD
 
-2014-08-08 price FUND2                             46.12 USD
+2014-08-08 price RGAGX                             46.12 USD
 
 2014-08-08 price ITOT                             221.31 USD
 
@@ -7333,9 +7333,9 @@ option "operating_currency" "USD"
 
 2014-08-08 price GLD                              111.14 USD
 
-2014-08-15 price FUND1                            186.22 USD
+2014-08-15 price VBMPX                            186.22 USD
 
-2014-08-15 price FUND2                             47.33 USD
+2014-08-15 price RGAGX                             47.33 USD
 
 2014-08-15 price ITOT                             225.52 USD
 
@@ -7345,9 +7345,9 @@ option "operating_currency" "USD"
 
 2014-08-15 price GLD                              112.93 USD
 
-2014-08-22 price FUND1                            183.23 USD
+2014-08-22 price VBMPX                            183.23 USD
 
-2014-08-22 price FUND2                             46.80 USD
+2014-08-22 price RGAGX                             46.80 USD
 
 2014-08-22 price ITOT                             227.89 USD
 
@@ -7357,9 +7357,9 @@ option "operating_currency" "USD"
 
 2014-08-22 price GLD                              115.10 USD
 
-2014-08-29 price FUND1                            188.93 USD
+2014-08-29 price VBMPX                            188.93 USD
 
-2014-08-29 price FUND2                             47.19 USD
+2014-08-29 price RGAGX                             47.19 USD
 
 2014-08-29 price ITOT                             229.49 USD
 
@@ -7369,9 +7369,9 @@ option "operating_currency" "USD"
 
 2014-08-29 price GLD                              116.15 USD
 
-2014-09-05 price FUND1                            187.01 USD
+2014-09-05 price VBMPX                            187.01 USD
 
-2014-09-05 price FUND2                             46.69 USD
+2014-09-05 price RGAGX                             46.69 USD
 
 2014-09-05 price ITOT                             227.61 USD
 
@@ -7381,9 +7381,9 @@ option "operating_currency" "USD"
 
 2014-09-05 price GLD                              116.02 USD
 
-2014-09-12 price FUND1                            185.82 USD
+2014-09-12 price VBMPX                            185.82 USD
 
-2014-09-12 price FUND2                             46.45 USD
+2014-09-12 price RGAGX                             46.45 USD
 
 2014-09-12 price ITOT                             227.39 USD
 
@@ -7393,9 +7393,9 @@ option "operating_currency" "USD"
 
 2014-09-12 price GLD                              116.39 USD
 
-2014-09-19 price FUND1                            184.88 USD
+2014-09-19 price VBMPX                            184.88 USD
 
-2014-09-19 price FUND2                             46.25 USD
+2014-09-19 price RGAGX                             46.25 USD
 
 2014-09-19 price ITOT                             230.50 USD
 
@@ -7405,9 +7405,9 @@ option "operating_currency" "USD"
 
 2014-09-19 price GLD                              115.17 USD
 
-2014-09-26 price FUND1                            182.83 USD
+2014-09-26 price VBMPX                            182.83 USD
 
-2014-09-26 price FUND2                             46.06 USD
+2014-09-26 price RGAGX                             46.06 USD
 
 2014-09-26 price ITOT                             230.93 USD
 
@@ -7417,9 +7417,9 @@ option "operating_currency" "USD"
 
 2014-09-26 price GLD                              115.70 USD
 
-2014-10-03 price FUND1                            183.38 USD
+2014-10-03 price VBMPX                            183.38 USD
 
-2014-10-03 price FUND2                             45.31 USD
+2014-10-03 price RGAGX                             45.31 USD
 
 2014-10-03 price ITOT                             230.22 USD
 
@@ -7429,9 +7429,9 @@ option "operating_currency" "USD"
 
 2014-10-03 price GLD                              116.82 USD
 
-2014-10-10 price FUND1                            178.61 USD
+2014-10-10 price VBMPX                            178.61 USD
 
-2014-10-10 price FUND2                             45.97 USD
+2014-10-10 price RGAGX                             45.97 USD
 
 2014-10-10 price ITOT                             228.00 USD
 
@@ -7441,9 +7441,9 @@ option "operating_currency" "USD"
 
 2014-10-10 price GLD                              114.86 USD
 
-2014-10-17 price FUND1                            179.30 USD
+2014-10-17 price VBMPX                            179.30 USD
 
-2014-10-17 price FUND2                             45.85 USD
+2014-10-17 price RGAGX                             45.85 USD
 
 2014-10-17 price ITOT                             226.71 USD
 
@@ -7453,9 +7453,9 @@ option "operating_currency" "USD"
 
 2014-10-17 price GLD                              115.99 USD
 
-2014-10-24 price FUND1                            178.08 USD
+2014-10-24 price VBMPX                            178.08 USD
 
-2014-10-24 price FUND2                             45.38 USD
+2014-10-24 price RGAGX                             45.38 USD
 
 2014-10-24 price ITOT                             229.65 USD
 
@@ -7465,9 +7465,9 @@ option "operating_currency" "USD"
 
 2014-10-24 price GLD                              115.17 USD
 
-2014-10-31 price FUND1                            178.30 USD
+2014-10-31 price VBMPX                            178.30 USD
 
-2014-10-31 price FUND2                             45.46 USD
+2014-10-31 price RGAGX                             45.46 USD
 
 2014-10-31 price ITOT                             229.66 USD
 
@@ -7477,9 +7477,9 @@ option "operating_currency" "USD"
 
 2014-10-31 price GLD                              113.92 USD
 
-2014-11-07 price FUND1                            183.48 USD
+2014-11-07 price VBMPX                            183.48 USD
 
-2014-11-07 price FUND2                             45.70 USD
+2014-11-07 price RGAGX                             45.70 USD
 
 2014-11-07 price ITOT                             229.50 USD
 
