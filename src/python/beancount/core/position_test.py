@@ -4,6 +4,7 @@ Unit tests for the Position class.
 import datetime
 import unittest
 import copy
+import random
 from datetime import date
 
 from .amount import ZERO
@@ -93,6 +94,19 @@ class TestPosition(unittest.TestCase):
         self.assertTrue(positions[2] is pos3)
         self.assertTrue(positions[3] is pos4)
         self.assertTrue(positions[4] is pos5)
+
+    def test_eq_and_sortkey__bycost(self):
+        pos1 = Position(Lot("USD", None, None), D('1'))
+        pos2 = Position(Lot("USD", Amount.from_string('10 USD'), None), D('1'))
+        pos3 = Position(Lot("USD", Amount.from_string('11 USD'), None), D('1'))
+        pos4 = Position(Lot("USD", Amount.from_string('12 USD'), None), D('1'))
+
+        positions = [pos3, pos2, pos1, pos4]
+        self.assertEqual([pos1, pos2, pos3, pos4], sorted(positions))
+
+        for _ in range(64):
+            random.shuffle(positions)
+            self.assertEqual([pos1, pos2, pos3, pos4], sorted(positions))
 
     def test_copy(self):
         # Ensure that the lot instances are shared.

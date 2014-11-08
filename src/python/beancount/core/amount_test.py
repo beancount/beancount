@@ -101,7 +101,7 @@ class TestAmount(unittest.TestCase):
         amount2 = Amount('100,034.027456', 'CAD')
         self.assertEqual(2, len({amount: True, amount2: False}))
 
-    def test_sort(self):
+    def test_sort__explicit(self):
         # Check that we can sort currency-first.
         amounts = [
             Amount('1', 'USD'),
@@ -112,6 +112,26 @@ class TestAmount(unittest.TestCase):
             Amount('200', 'EUR'),
         ]
         amounts = sorted(amounts, key=amount.amount_sortkey)
+        self.assertEqual([
+            Amount('100', 'CAD'),
+            Amount('200', 'EUR'),
+            Amount('201', 'EUR'),
+            Amount('1', 'USD'),
+            Amount('2', 'USD'),
+            Amount('3', 'USD'),
+        ], amounts)
+
+    def test_sort__natural(self):
+        # Check that we can sort currency-first.
+        amounts = [
+            Amount('1', 'USD'),
+            Amount('201', 'EUR'),
+            Amount('3', 'USD'),
+            Amount('100', 'CAD'),
+            Amount('2', 'USD'),
+            Amount('200', 'EUR'),
+        ]
+        amounts = sorted(amounts)
         self.assertEqual([
             Amount('100', 'CAD'),
             Amount('200', 'EUR'),

@@ -25,6 +25,7 @@ from .amount import ZERO
 from .amount import Decimal
 from .amount import D
 from .amount import Amount
+from .amount import NULL_AMOUNT
 from .amount import amount_mult
 from .amount import MAXDIGITS_PRINTER
 from .amount import CURRENCY_RE
@@ -148,9 +149,10 @@ class Position:
         Returns:
           A tuple, used to sort lists of positions.
         """
-        return (CURRENCY_ORDER.get(self.lot.currency,
-                                   NCURRENCIES + len(self.lot.currency)),
-                self.number)
+        lot = self.lot
+        currency = lot.currency
+        order_units = CURRENCY_ORDER.get(currency, NCURRENCIES + len(currency))
+        return (order_units, lot.cost or NULL_AMOUNT, self.number)
 
     def __lt__(self, other):
         """A least-than comparison operator for positions.
