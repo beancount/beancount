@@ -143,6 +143,32 @@ class Inventory:
         return Inventory([Position(position.lot, -(position.number))
                           for position in self.positions])
 
+    #
+    # Methods to access portions of an inventory.
+    #
+
+    def get_positions(self):
+        """Return the positions in this inventory.
+
+        Returns:
+          A list of positions (do not modify it).
+        """
+        return self.positions
+
+    def get_position(self, lot):
+        """Find a position by lot, or return None.
+
+        Args:
+          lot: An instance of Lot to key by.
+        Returns:
+          An instance of Position for the matching lot.
+        """
+        for position in self.positions:
+            if position.lot == lot:
+                return position
+
+    __getitem__ = get_position
+
     def get_units(self, currency):
         """Fetch the total amount across all the position in the given currency.
         This may sum multiple lots in the same currency denomination.
@@ -158,17 +184,10 @@ class Inventory:
                 total_units += position.number
         return Amount(total_units, currency)
 
-    def get_position(self, lot):
-        """Find a position by lot, or return None.
 
-        Args:
-          lot: An instance of Lot to key by.
-        Returns:
-          An instance of Position for the matching lot.
-        """
-        for position in self.positions:
-            if position.lot == lot:
-                return position
+    #
+    # Methods to convert an Inventory into another.
+    #
 
     def units(self):
         """Return an inventory of units for all position (aggregated).
@@ -192,13 +211,10 @@ class Inventory:
             cost_inventory.add_amount(position.get_cost())
         return cost_inventory
 
-    def get_positions(self):
-        """Return the positions in this inventory.
 
-        Returns:
-          A list of positions (do not modify it).
-        """
-        return self.positions
+    #
+    # Methods to build an Inventory instance.
+    #
 
     def _get_create_position(self, lot):
         """Find or create a position associated with the given lot.
