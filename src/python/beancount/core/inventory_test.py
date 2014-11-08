@@ -172,7 +172,7 @@ class TestInventory(unittest.TestCase):
         ninv = Inventory.from_string('-1.50 JPY, -1.51 USD, -1.52 CAD')
         self.assertEqual(pinv, -ninv)
 
-    def test_get_amount(self):
+    def test_get_units(self):
         inv = Inventory.from_string('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
         self.assertEqual(inv.get_units('JPY'), A('40.50 JPY'))
         self.assertEqual(inv.get_units('USD'), A('40.51 USD'))
@@ -180,19 +180,21 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(inv.get_units('AUD'), A('0 AUD'))
         self.assertEqual(inv.get_units('NZD'), A('0 NZD'))
 
-    def test_get_amounts(self):
+    def test_units(self):
         inv = Inventory()
-        self.assertEqual(inv.get_amounts(), [])
+        self.assertEqual(inv.units(), Inventory.from_string(''))
 
         inv = Inventory.from_string('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
-        self.assertEqual(set(inv.get_amounts()), set([
-            A('40.50 JPY'),
-            A('40.51 USD'),
-            A('40.52 CAD')]))
+        self.assertEqual(inv.units(),
+                         Inventory.from_string('40.50 JPY, 40.51 USD, 40.52 CAD'))
 
         # Check that the same units coalesce.
         inv = Inventory.from_string('2 GOOG {400 USD}, 3 GOOG {410 USD}')
-        self.assertEqual(inv.get_amounts(), [A('5 GOOG')])
+        self.assertEqual(inv.units(), Inventory.from_string('5 GOOG'))
+
+        inv = Inventory.from_string('2 GOOG {400 USD}, -3 GOOG {410 USD}')
+        self.assertEqual(inv.units(), Inventory.from_string('-1 GOOG'))
+
 
     POSITIONS_ALL_KINDS = [
         position.from_string('40.50 USD'),

@@ -1004,7 +1004,7 @@ def check_non_negative(entries, account, currency):
         balance = balances[account]
         date = posting.entry.date
         if date != previous_date:
-            assert all(amt.number >= ZERO for amt in balance.get_amounts()), (
+            assert all(pos.number >= ZERO for pos in balance.get_positions()), (
                 "Negative balance: {} at: {}".format(balance, posting.entry.date))
         previous_date = date
 

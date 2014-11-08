@@ -113,7 +113,7 @@ beancount: TODO
   X Position.at_cost()       -> Position  -> Position.cost()
   X get_balance_amount()     -> Amount    -> Position.get_weight(Price)
   X Inventory.get_amount(Currency) -> Amount -> Inventory.get_units()
-    Inventory.get_amounts()  -> Inventory -> Inventory.units()
+  X Inventory.get_amounts()  -> Inventory -> Inventory.units()
     Inventory.get_cost()     -> Inventory -> Inventory.cost()
                              -> Inventory -> Inventory.average()
     Inventory.get_positions_with_currency(Currency) -> Inventory -> REMOVE THIS

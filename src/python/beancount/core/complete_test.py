@@ -65,7 +65,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Checking", "-194.50", "USD"),
             ])
-        self.assertEqual([amount.Amount("-89", "USD")], residual.get_amounts())
+        self.assertEqual(inventory.from_string("-89 USD"), residual.units())
 
         # Try with more accounts.
         residual = complete.compute_residual([
@@ -74,7 +74,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:Investing", "5", "AAPL"),
             P(None, "Assets:Bank:Savings", "89.00", "USD"),
             ])
-        self.assertEqual([amount.Amount("5", "AAPL")], residual.get_amounts())
+        self.assertEqual(inventory.from_string("5 AAPL"), residual.units())
 
     @parser.parsedoc
     def test_fill_residual_posting(self, entries, _, __):

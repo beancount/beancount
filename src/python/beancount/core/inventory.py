@@ -170,17 +170,16 @@ class Inventory:
             if position.lot == lot:
                 return position
 
-    def get_amounts(self):
+    def units(self):
         """Return a list of Amounts (ignoring cost).
 
         Returns:
           A list of all the amounts for the inventory's positions.
         """
-        amounts_dict = collections.defaultdict(D)
+        units_inventory = Inventory()
         for position in self.positions:
-            amounts_dict[position.lot.currency] += position.number
-        return [Amount(number, currency)
-                for currency, number in amounts_dict.items()]
+            units_inventory.add_amount(position.get_units())
+        return units_inventory
 
     def get_cost(self):
         """Return an inventory of Amounts that represent book values for all positions
