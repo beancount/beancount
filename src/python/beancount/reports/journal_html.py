@@ -101,7 +101,7 @@ def iterate_html_postings(postings, formatter):
                                'expected = {}, balance = {}, difference = {}').format(
                                    formatter.render_account(entry.account),
                                    entry.amount,
-                                   entry_balance.get_amount(entry.amount.currency),
+                                   entry_balance.get_units(entry.amount.currency),
                                    entry.diff_amount)
                 extra_class = 'fail'
 

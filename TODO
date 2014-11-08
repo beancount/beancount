@@ -108,14 +108,15 @@ beancount: TODO
   I like this: the get_*() methods all return an Amount instance, and the simple
   methods all return the same type as the object upon which they are invoked.
 
-  X Position.get_amount() -> Amount    -> Position.get_units()
-  X Position.get_cost()   -> Amount    -> Position.get_cost() [NO CHANGE]
-  X Position.at_cost()    -> Position  -> Position.cost()
-  X get_balance_amount()  -> Amount    -> Position.get_weight(Price)
-    Inventory.get_units() -> Inventory -> Inventory.units()
-    Inventory.get_cost()  -> Inventory -> Inventory.cost()
-                          -> Inventory -> Inventory.average()
-    Inventory.get_positions_with_currency(Currency) -> Inventory -> Inventory.with_currency(Currency)
+  X Position.get_amount()    -> Amount    -> Position.get_units()
+  X Position.get_cost()      -> Amount    -> Position.get_cost() [NO CHANGE]
+  X Position.at_cost()       -> Position  -> Position.cost()
+  X get_balance_amount()     -> Amount    -> Position.get_weight(Price)
+  X Inventory.get_amount(Currency) -> Amount -> Inventory.get_units()
+    Inventory.get_amounts()  -> Inventory -> Inventory.units()
+    Inventory.get_cost()     -> Inventory -> Inventory.cost()
+                             -> Inventory -> Inventory.average()
+    Inventory.get_positions_with_currency(Currency) -> Inventory -> REMOVE THIS
     Inventory.get_position() -> Inventory -> Inventory.get_position(Lot) [NO CHANGE]
 
 

@@ -62,7 +62,7 @@ class TestInventory(unittest.TestCase):
 
     def checkAmount(self, inventory, number, currency):
         amount_ = amount.Amount(number, currency)
-        inv_amount = inventory.get_amount(amount_.currency)
+        inv_amount = inventory.get_units(amount_.currency)
         self.assertEqual(inv_amount, amount_)
 
     def test_from_string(self):
@@ -174,11 +174,11 @@ class TestInventory(unittest.TestCase):
 
     def test_get_amount(self):
         inv = Inventory.from_string('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
-        self.assertEqual(inv.get_amount('JPY'), A('40.50 JPY'))
-        self.assertEqual(inv.get_amount('USD'), A('40.51 USD'))
-        self.assertEqual(inv.get_amount('CAD'), A('40.52 CAD'))
-        self.assertEqual(inv.get_amount('AUD'), A('0 AUD'))
-        self.assertEqual(inv.get_amount('NZD'), A('0 NZD'))
+        self.assertEqual(inv.get_units('JPY'), A('40.50 JPY'))
+        self.assertEqual(inv.get_units('USD'), A('40.51 USD'))
+        self.assertEqual(inv.get_units('CAD'), A('40.52 CAD'))
+        self.assertEqual(inv.get_units('AUD'), A('0 AUD'))
+        self.assertEqual(inv.get_units('NZD'), A('0 NZD'))
 
     def test_get_amounts(self):
         inv = Inventory()

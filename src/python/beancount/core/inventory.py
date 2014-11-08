@@ -143,7 +143,7 @@ class Inventory:
         return Inventory([Position(position.lot, -(position.number))
                           for position in self.positions])
 
-    def get_amount(self, currency):
+    def get_units(self, currency):
         """Fetch the total amount across all the position in the given currency.
         This may sum multiple lots in the same currency denomination.
 
@@ -157,6 +157,18 @@ class Inventory:
             if position.lot.currency == currency:
                 total_units += position.number
         return Amount(total_units, currency)
+
+    def get_position(self, lot):
+        """Find a position by lot, or return None.
+
+        Args:
+          lot: An instance of Lot to key by.
+        Returns:
+          An instance of Position for the matching lot.
+        """
+        for position in self.positions:
+            if position.lot == lot:
+                return position
 
     def get_amounts(self):
         """Return a list of Amounts (ignoring cost).
@@ -190,6 +202,7 @@ class Inventory:
         """
         return self.positions
 
+    # FIXME: Remove this
     def get_positions_with_currency(self, currency):
         """Return a filtered list of the positions with lots in the given
         currency.
@@ -202,18 +215,6 @@ class Inventory:
         return [position
                 for position in self.positions
                 if position.lot.currency == currency]
-
-    def get_position(self, lot):
-        """Find a position by lot, or return None.
-
-        Args:
-          lot: An instance of Lot to key by.
-        Returns:
-          An instance of Position for the matching lot.
-        """
-        for position in self.positions:
-            if position.lot == lot:
-                return position
 
     def _get_create_position(self, lot):
         """Find or create a position associated with the given lot.
