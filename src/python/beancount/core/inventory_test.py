@@ -195,7 +195,6 @@ class TestInventory(unittest.TestCase):
         inv = Inventory.from_string('2 GOOG {400 USD}, -3 GOOG {410 USD}')
         self.assertEqual(inv.units(), Inventory.from_string('-1 GOOG'))
 
-
     POSITIONS_ALL_KINDS = [
         position.from_string('40.50 USD'),
         position.from_string('40.50 USD {1.10 CAD}'),
@@ -206,6 +205,23 @@ class TestInventory(unittest.TestCase):
                         [position.from_string('50.00 CAD')])
         inv_cost = inv.cost()
         self.assertEqual(Inventory.from_string('40.50 USD, 139.10 CAD'), inv_cost)
+
+    def test_average(self):
+        # Identity, no aggregation.
+        inv = Inventory.from_string('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
+        self.assertEqual(inv.average(), inv)
+
+        # Identity, no aggregation, with a mix of lots at cost and without cost.
+        inv = Inventory.from_string('40 USD {1.01 CAD}, 40 USD')
+        self.assertEqual(inv.average(), inv)
+
+        # Aggregation.
+        inv = Inventory.from_string('40 USD {1.01 CAD}, 40 USD {1.02 CAD}')
+        self.assertEqual(inv.average(), Inventory.from_string('80.00 USD {1.015 CAD}'))
+
+        # Aggregation, more units.
+        inv = Inventory.from_string('2 GOOG {500 USD}, 3 GOOG {520 USD}, 4 GOOG {530 USD}')
+        self.assertEqual(inv.average(), Inventory.from_string('9 GOOG {520 USD}'))
 
     def test_get_position(self):
         inv = Inventory(self.POSITIONS_ALL_KINDS)

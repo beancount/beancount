@@ -211,6 +211,36 @@ class Inventory:
             cost_inventory.add_amount(position.get_cost())
         return cost_inventory
 
+    def average(self):
+        """Average all lots of the same currency together..
+
+        Returns:
+          An instance of Inventory.
+        """
+        groups = collections.defaultdict(list)
+        for position in self.positions:
+            lot = position.lot
+            key = (lot.currency,
+                   lot.cost.currency if lot.cost else None)
+            groups[key].append(position)
+
+        average_inventory = Inventory()
+        for (currency, cost_currency), positions in groups.items():
+            total_units = sum(position.number
+                              for position in positions)
+            units_amount = Amount(total_units, currency)
+
+            if cost_currency:
+                total_cost = sum(position.get_cost().number
+                                 for position in positions)
+                cost_amount = Amount(total_cost / total_units, cost_currency)
+            else:
+                cost_amount = None
+
+            average_inventory.add_amount(units_amount, cost_amount)
+
+        return average_inventory
+
 
     #
     # Methods to build an Inventory instance.
