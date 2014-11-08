@@ -150,9 +150,9 @@ class DecimalRenderer(ColumnRenderer):
         self.min_exponent = 0
         self.total_width = None
         self.num_values = 0
-        self.dist = Distribution()
+        self.dists = collections.defaultdict(Distribution)
 
-    def update(self, number):
+    def update(self, number, key=None):
         if number is None:
             return
         self.num_values += 1
@@ -161,38 +161,38 @@ class DecimalRenderer(ColumnRenderer):
             self.has_negative = True
         self.max_adjusted = max(self.max_adjusted, number.adjusted())
         self.min_exponent = min(self.min_exponent, ntuple.exponent)
-        self.dist.update(-ntuple.exponent)
+        self.dists[key].update(-ntuple.exponent)
 
     def prepare(self):
+        total_width = 0
         if self.num_values > 0:
             digits_sign = 1 if self.has_negative else 0
             digits_integral = max(self.max_adjusted, 0) + 1
-            # Note: to compute the number of fractional digits to be displayed,
-            # we use the most frequent of the number of digits we saw to be
-            # rendered (the mode of the distribution of number of digits).
-            digits_fractional = self.dist.mode()  # -self.min_exponent
-            digits_period = 1 if digits_fractional > 0 else 0
-            width = digits_sign + digits_integral + digits_period + digits_fractional
-            #print(digits_sign, digits_integral, digits_period, digits_fractional)
-            self.fmt = '{{:{sign}{width:d}.{precision:d}f}}'.format(
-                sign=' ' if digits_sign > 0 else '',
-                width=width,
-                precision=digits_fractional)
-
-            # For manual formatting.
-            self.integral_width = width - digits_fractional - 1
+            self.integral_width = digits_sign + digits_integral
             self.format_number = '{: }'.format if self.has_negative else '{}'.format
-            self.fmt = '{{:<{}.{}}}'.format(width, width)
-        else:
-            width = 0
 
-        self.total_width = width
-        self.empty = ' ' * width
+            for dist in self.dists.values():
+                # Note: to compute the number of fractional digits to be displayed,
+                # we use the most frequent of the number of digits we saw to be
+                # rendered (the mode of the distribution of number of digits).
+                digits_fractional = dist.mode()  # -self.min_exponent
+                digits_period = 1 if digits_fractional > 0 else 0
+                width = digits_sign + digits_integral + digits_period + digits_fractional
+                if width > total_width:
+                    total_width = width
+
+            self.fmt = '{{:<{}.{}}}'.format(total_width, total_width)
+
+        self.total_width = total_width
+        self.empty = ' ' * total_width
+
+        for key, dist in self.dists.items():
+            print('{:16} {:8} {}'.format(key, dist.mode(), dist.hist))
 
     def width(self):
         return self.total_width
 
-    def format(self, number):
+    def format(self, number, key=None):
         if self.total_width == 0:
             return ''
         elif number is None:
@@ -225,7 +225,7 @@ class AmountRenderer(ColumnRenderer):
     def update(self, amount_):
         if amount_ is None:
             return
-        self.rdr.update(amount_.number)
+        self.rdr.update(amount_.number, amount_.currency)
         self.ccylen = max(self.ccylen, len(amount_.currency))
 
     def prepare(self):
@@ -246,7 +246,8 @@ class AmountRenderer(ColumnRenderer):
             return self.fmt.format('', '')
         elif self.fmt is None:
             return self.empty
-        return self.fmt.format(self.rdr.format(amount_.number), amount_.currency)
+        return self.fmt.format(self.rdr.format(amount_.number, amount_.currency),
+                               amount_.currency)
 
 
 class PositionRenderer(ColumnRenderer):

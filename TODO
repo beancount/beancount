@@ -224,6 +224,24 @@ beancount: TODO
 
 * Query Language
 
+  - The current number formatting code truncates numbers longer than the mode
+    and should be rounding it. Make it round.
+
+  - Another problem is that although the mode of the precision could be
+    selected to be 2, if other currencies have a higher maximum, numbers with
+    greater precision than that will render to more digits. This is not nice.
+
+  - The insertion of unrealized value in this test query is the reason we have
+    14 digits of precision; this is not right, the unrealized entries should be
+    generated with less precision, should be quantized to the mode of the
+    precisions in the input file itself:
+
+       select account, sum(units(change)) from close on 2015-01-01   where account ~ 'ameritra'   group by 1 order by 1;
+
+
+    Time to write test for this, for the mode rounding.
+
+
   - Make mode of decimal objects "per currency" in the amount renderer.
 
   - Add help like this: "help <topic>": help should be provided via docstring
