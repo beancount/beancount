@@ -100,15 +100,27 @@ class TestPosition(unittest.TestCase):
         pos2 = copy.copy(pos1)
         self.assertTrue(pos1.lot is pos2.lot)
 
-    def test_getamount(self):
-        pos = Position(Lot("USD", Amount('10', 'AUD'), None), D('28372'))
-        self.assertEqual(Amount('28372', 'USD'), pos.get_units())
-        self.assertEqual(Amount('283720', 'AUD'), pos.get_cost())
+    def test_quantities(self):
+        A = Amount.from_string
 
-        cpos = pos.cost()
-        self.assertTrue(isinstance(cpos, Position))
-        self.assertEqual(Amount('283720', 'AUD'), cpos.get_units())
-        self.assertEqual(Amount('283720', 'AUD'), cpos.get_cost())
+        pos = Position(Lot("USD", None, None), D('10'))
+        self.assertEqual(A('10 USD'), pos.get_units())
+        self.assertEqual(A('10 USD'), pos.get_cost())
+        self.assertEqual(A('10 USD'), pos.get_weight())
+        self.assertEqual(A('16 AUD'), pos.get_weight(A('1.6 AUD')))
+
+        pos = Position(Lot("USD", A('1.5 AUD'), None), D('10'))
+        self.assertEqual(A('10 USD'), pos.get_units())
+        self.assertEqual(A('15 AUD'), pos.get_cost())
+        self.assertEqual(A('15 AUD'), pos.get_weight())
+        self.assertEqual(A('15 AUD'), pos.get_weight(A('1.6 AUD')))
+
+        cost_pos = pos.cost()
+        self.assertEqual(A('15 AUD'), cost_pos.get_units())
+        self.assertEqual(A('15 AUD'), cost_pos.get_cost())
+        self.assertEqual(A('15 AUD'), cost_pos.get_weight())
+        with self.assertRaises(AssertionError):
+            self.assertEqual(A('15 AUD'), cost_pos.get_weight(A('1.6 AUD')))
 
     def test_add(self):
         pos = Position(Lot("USD", Amount('10', 'AUD'), None), D('28372'))
