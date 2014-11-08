@@ -417,7 +417,7 @@ def get_renderers(result_types, result_rows):
     return renderers
 
 
-def render_text(result_types, result_rows, file, boxed=False):
+def render_text(result_types, result_rows, file, boxed=False, spaced=False):
     """Render the result of executing a query in text format.
 
     Args:
@@ -426,6 +426,8 @@ def render_text(result_types, result_rows, file, boxed=False):
       result_rows: A list of ResultRow instances.
       file: A file object to render the results to.
       boxed: A boolean, true if we should render the results in a fancy-looking ASCII box.
+      spaced: If true, leave an empty line between each of the rows. This is useful if the
+        results have a lot of rows that render over multiple lines.
     """
     # Important notes:
     #
@@ -441,6 +443,10 @@ def render_text(result_types, result_rows, file, boxed=False):
 
     # Create column renderers.
     renderers = get_renderers(result_types, result_rows)
+
+    # Precompute a spacing row.
+    if spaced:
+        spacing_row = [''] * len(renderers)
 
     # Render all the columns of all the rows to strings.
     str_rows = []
@@ -482,6 +488,9 @@ def render_text(result_types, result_rows, file, boxed=False):
                                                    fillvalue=''):
                     str_lines[index].append(exp_line)
             str_rows.extend(str_lines)
+
+        if spaced:
+            str_rows.append(spacing_row)
 
     # Compute a final format strings.
     formats = ['{{:{}}}'.format(renderer.width())
