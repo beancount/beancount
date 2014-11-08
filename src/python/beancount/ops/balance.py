@@ -85,7 +85,7 @@ def check(entries, options_map):
                 subtree_balance += real_child.balance
 
             # Get only the amount in the desired currency.
-            balance_amount = subtree_balance.get_amount(expected_amount.currency)
+            balance_amount = subtree_balance.get_units(expected_amount.currency)
 
             # Check if the amount is within bounds of the expected amount.
             diff_amount = amount.amount_sub(balance_amount, expected_amount)

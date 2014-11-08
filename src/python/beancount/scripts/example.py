@@ -343,7 +343,7 @@ def get_minimum_balance(entries, account, currency):
     min_amount = ZERO
     for posting, balances in postings_for(data.sort(entries), [account]):
         balance = balances[account]
-        current = balance.get_amount(currency).number
+        current = balance.get_units(currency).number
         if current < min_amount:
             min_amount = current
     return min_amount
@@ -605,7 +605,7 @@ def generate_retirement_investments(entries, account, commodities_items, price_m
     new_entries = []
     for posting, balances in postings_for(entries, [account_cash]):
         balance = balances[account_cash]
-        amount_to_invest = balance.get_amount('CCY').number
+        amount_to_invest = balance.get_units('CCY').number
 
         # Find the date the following Monday, the date to invest.
         txn_date = posting.entry.date
@@ -702,7 +702,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
                                                   entries, [account_cash]):
         # If the balance is high, buy with high probability.
         balance = balances[account_cash]
-        total_cash = balance.get_amount('CCY').number
+        total_cash = balance.get_units('CCY').number
         assert total_cash >= ZERO, ('Cash balance is negative: {}'.format(total_cash))
         invest_cash = total_cash * frac_invest - commission
         if invest_cash > min_amount:
@@ -740,7 +740,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
         if not stocks_inventory.is_empty() and random.random() < p_daily_sell:
             # Choose the lot with the highest gain or highest loss.
             gains = []
-            for position in stocks_inventory.positions:
+            for position in stocks_inventory.get_positions():
                 base_quote = (position.lot.currency, position.lot.cost.currency)
                 _, price = prices.get_price(price_map, base_quote, date)
                 if price == position.lot.cost.number:
@@ -837,7 +837,7 @@ def generate_clearing_entries(date_iter,
 
         # Check if we need to clear.
         if next_date <= posting.entry.date:
-            pos_amount = balance_clear.get_amount('CCY')
+            pos_amount = balance_clear.get_units('CCY')
             neg_amount = -pos_amount
             new_entries.extend(parse("""
               {next_date} * "{payee}" "{narration}"
@@ -883,7 +883,7 @@ def generate_outgoing_transfers(entries,
 
     # Reverse the balance amounts taking into account the minimum balance for
     # all time in the future.
-    amounts = [(balances[account].get_amount('CCY').number, posting)
+    amounts = [(balances[account].get_units('CCY').number, posting)
                for posting, balances in postings_for(entries, [account])]
     reversed_amounts = []
     last_amount, _ = amounts[-1]
@@ -981,7 +981,7 @@ def generate_balance_checks(entries, account, date_iter):
     with misc_utils.swallow(StopIteration):
         for posting, balance in postings_for(entries, [account], before=True):
             while posting.entry.date >= next_date:
-                amount = balance[account].get_amount('CCY').number
+                amount = balance[account].get_units('CCY').number
                 balance_checks.extend(parse("""
                   {next_date} balance {account} {amount} CCY
                 """, **vars()))
@@ -1005,7 +1005,7 @@ def check_non_negative(entries, account, currency):
         balance = balances[account]
         date = posting.entry.date
         if date != previous_date:
-            assert all(amt.number >= ZERO for amt in balance.get_amounts()), (
+            assert all(pos.number >= ZERO for pos in balance.get_positions()), (
                 "Negative balance: {} at: {}".format(balance, posting.entry.date))
         previous_date = date
 

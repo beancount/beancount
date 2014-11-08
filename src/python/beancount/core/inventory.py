@@ -50,7 +50,7 @@ from beancount.core.position import Position
 from beancount.core.position import from_string as position_from_string
 
 
-class Inventory:
+class Inventory(list):
     """An Inventory is a set of positions.
 
     Attributes:
@@ -58,15 +58,12 @@ class Inventory:
         Because the lists are always very short, we prefer to avoid using mappings
         for the sake of simplicity.
     """
-    __slots__ = ('positions',)
-
     def __init__(self, positions=None):
         """Create a new inventory using a list of existing positions.
 
         Args:
           positions: A list of Position instances.
         """
-        self.positions = []
         if positions:
             assert isinstance(positions, list), positions
             for position in positions:
@@ -78,7 +75,7 @@ class Inventory:
         Returns:
           A string, for human consumption.
         """
-        return 'Inventory({})'.format(', '.join(map(str, sorted(self.positions))))
+        return 'Inventory({})'.format(', '.join(map(str, sorted(self))))
 
     __repr__ = __str__
 
@@ -88,12 +85,12 @@ class Inventory:
         Returns:
           A boolean.
         """
-        return not bool(self.positions)
+        return len(self) == 0
 
     def __bool__(self):
-        # Don't define this, be explicit.
+        # Don't define this, be explicit by using is_empty() instead.
         raise NotImplementedError
-        return bool(self.positions)
+        return bool(self)
 
     def __copy__(self):
         """A shallow copy of this inventory object. All the positions contained
@@ -102,15 +99,7 @@ class Inventory:
         Returns:
           An instance of Inventory, equal to this one.
         """
-        return Inventory(list(map(copy.copy, self.positions)))
-
-    def __len__(self):
-        """Returns the number of positions held in this inventory.
-
-        Returns:
-          An integer.
-        """
-        return len(self.positions)
+        return Inventory(list(map(copy.copy, self)))
 
     def __eq__(self, other):
         """Equality predicate.
@@ -120,7 +109,7 @@ class Inventory:
         Returns:
           True if the two inventories have the same position contents.
         """
-        return sorted(self.positions) == sorted(other.positions)
+        return sorted(self) == sorted(other)
 
     def is_small(self, epsilon):
         """Return true if all the positions in the inventory are small.
@@ -132,7 +121,7 @@ class Inventory:
           A boolean.
         """
         return all(abs(position.number) <= epsilon
-                   for position in self.positions)
+                   for position in self)
 
     def __neg__(self):
         """Return an inventory with the negative of values of this one.
@@ -141,9 +130,35 @@ class Inventory:
           An instance of Inventory.
         """
         return Inventory([Position(position.lot, -(position.number))
-                          for position in self.positions])
+                          for position in self])
 
-    def get_amount(self, currency):
+    #
+    # Methods to access portions of an inventory.
+    #
+
+    def get_positions(self):
+        """Return the positions in this inventory.
+
+        Returns:
+          A list of positions (do not modify it).
+        """
+        return list(self)
+
+    def get_position(self, lot):
+        """Find a position by lot, or return None.
+
+        Args:
+          lot: An instance of Lot to key by.
+        Returns:
+          An instance of Position for the matching lot.
+        """
+        for position in self:
+            if position.lot == lot:
+                return position
+
+    __getitem__ = get_position
+
+    def get_units(self, currency):
         """Fetch the total amount across all the position in the given currency.
         This may sum multiple lots in the same currency denomination.
 
@@ -153,49 +168,29 @@ class Inventory:
           An instance of Amount, with the given currency.
         """
         total_units = ZERO
-        for position in self.positions:
+        for position in self:
             if position.lot.currency == currency:
                 total_units += position.number
         return Amount(total_units, currency)
 
-    def get_amounts(self):
-        """Return a list of Amounts (ignoring cost).
 
-        Returns:
-          A list of all the amounts for the inventory's positions.
-        """
-        amounts_dict = collections.defaultdict(D)
-        for position in self.positions:
-            amounts_dict[position.lot.currency] += position.number
-        return [Amount(number, currency)
-                for currency, number in amounts_dict.items()]
+    #
+    # Methods to convert an Inventory into another.
+    #
 
-    def get_units(self):
-        """Return an inventory that represent unit values for all positions
-        in this inventory, stripping the costs and merging solely by unit.
-
-        For example, an inventory that contains these lots:
-
-           2 GOOGL
-           3 GOOG {300.00 USD}
-           4 GOOG {310.00 USD / 2014-10-28}
-
-        will provide:
-
-           2 GOOGL
-           7 GOOG
+    def units(self):
+        """Return an inventory of units for all position (aggregated).
 
         Returns:
           An instance of Inventory.
         """
-        cost_inventory = Inventory()
-        for position in self.positions:
-            cost_inventory.add_amount(position.get_amount())
-        return cost_inventory
+        units_inventory = Inventory()
+        for position in self:
+            units_inventory.add_amount(position.get_units())
+        return units_inventory
 
-    def get_cost(self):
-        """Return an inventory of Amounts that represent book values for all positions
-        in this inventory.
+    def cost(self):
+        """Return an inventory of costs for all positions (aggregated).
 
         For example, an inventory that contains these lots:
 
@@ -212,42 +207,44 @@ class Inventory:
           An instance of Inventory.
         """
         cost_inventory = Inventory()
-        for position in self.positions:
+        for position in self:
             cost_inventory.add_amount(position.get_cost())
         return cost_inventory
 
-    def get_positions(self):
-        """Return the positions in this inventory.
+    def average(self):
+        """Average all lots of the same currency together..
 
         Returns:
-          A list of positions (do not modify it).
+          An instance of Inventory.
         """
-        return self.positions
+        groups = collections.defaultdict(list)
+        for position in self:
+            lot = position.lot
+            key = (lot.currency,
+                   lot.cost.currency if lot.cost else None)
+            groups[key].append(position)
 
-    def get_positions_with_currency(self, currency):
-        """Return a filtered list of the positions with lots in the given
-        currency.
+        average_inventory = Inventory()
+        for (currency, cost_currency), positions in groups.items():
+            total_units = sum(position.number
+                              for position in positions)
+            units_amount = Amount(total_units, currency)
 
-        Args:
-          currency: A string, the currency to filter by.
-        Returns:
-          A list of positions.
-        """
-        return [position
-                for position in self.positions
-                if position.lot.currency == currency]
+            if cost_currency:
+                total_cost = sum(position.get_cost().number
+                                 for position in positions)
+                cost_amount = Amount(total_cost / total_units, cost_currency)
+            else:
+                cost_amount = None
 
-    def get_position(self, lot):
-        """Find a position by lot, or return None.
+            average_inventory.add_amount(units_amount, cost_amount)
 
-        Args:
-          lot: An instance of Lot to key by.
-        Returns:
-          An instance of Position for the matching lot.
-        """
-        for position in self.positions:
-            if position.lot == lot:
-                return position
+        return average_inventory
+
+
+    #
+    # Methods to build an Inventory instance.
+    #
 
     def _get_create_position(self, lot):
         """Find or create a position associated with the given lot.
@@ -258,13 +255,13 @@ class Inventory:
           An instance of Position, either the position that was found, or a new
           Position instance that was created for this lot.
         """
-        for position in self.positions:
+        for position in self:
             if position.lot == lot:
                 found = position
                 break
         else:
             found = Position(lot, ZERO)
-            self.positions.append(found)
+            self.append(found)
         return found
 
     def add_amount(self, amount, cost=None, lot_date=None):
@@ -299,6 +296,18 @@ class Inventory:
         assert isinstance(new_position, Position), new_position
         return self._add(new_position.number, new_position.lot)
 
+    def add_inventory(self, other):
+        """Add all the positions of another Inventory instance to this one.
+
+        Args:
+          other: An instance of Inventory to add to this one.
+        Returns:
+          This inventory, modified.
+        """
+        for position in other.get_positions():
+            self.add_position(position)
+        return self
+
     def _add(self, number, lot):
         """Return True if this position was booked against and reduced another.
 
@@ -319,7 +328,7 @@ class Inventory:
         # If the resulting position is a zero position, remove it. We want to
         # avoid zero positions in the Inventory as an invariant.
         if position.number == ZERO:
-            self.positions.remove(position)
+            self.remove(position)
 
         return position, reducing
 
@@ -334,23 +343,6 @@ class Inventory:
         new_inventory = self.__copy__()
         new_inventory += other
         return new_inventory
-
-    def add_inventory(self, other):
-        """Add all the positions of another Inventory instance to this one.
-
-        Args:
-          other: An instance of Inventory to add to this one, or an instance of
-            Position.
-        Returns:
-          This inventory, modified.
-
-        """
-        if isinstance(other, Inventory):
-            for position in other.positions:
-                self.add_position(position)
-        else:
-            self.add_position(other)
-        return self
 
     __iadd__ = add_inventory
 
@@ -384,11 +376,10 @@ def check_invariants(inventory):
       True if the invariants are respected.
     """
     # Check that all the keys are unique.
-    lots = set(position.lot for position in inventory.positions)
-    nlots = len(lots)
-    npositions = len(inventory.positions)
-    assert nlots == npositions, (nlots, npositions)
+    positions = inventory.get_positions()
+    lots = set(position.lot for position in positions)
+    assert len(lots) == len(inventory), "Invalid inventory: {}".format(inventory)
 
     # Check that none of the amounts is zero.
-    for position in inventory.positions:
+    for position in positions:
         assert position.number, position

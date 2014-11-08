@@ -60,7 +60,7 @@ class EntryPrinter:
 
         if print_balance:
             if posting.position:
-                balance_amount = complete.get_balance_amount(posting)
+                balance_amount = complete.get_posting_weight(posting)
                 balance_amount_str = balance_amount.str(amount.MAXDIGITS_PRINTER)
             else:
                 balance_amount_str = 'UNKNOWN'
@@ -68,17 +68,17 @@ class EntryPrinter:
         else:
             balance_str = ''
 
-        assert all(len(string) <= 18
+        assert all(len(string) <= 25
                    for string in (amount_str, cost_str, price_str, balance_str)), (
                            amount_str, cost_str, price_str, balance_str)
-        oss.write('  {:64} {:>18} {:>18} {:>18} {:>18}'.format(
+        oss.write('  {:64} {:>22} {:>22} {:>22} {:>22}'.format(
             flag_posting, amount_str, cost_str, price_str, balance_str).rstrip())
 
         oss.write('\n')
 
     def Balance(_, entry, oss):
         comment = '   ; Diff: {}'.format(entry.diff_amount) if entry.diff_amount else ''
-        oss.write(('{e.date} balance {e.account:47} {e.amount:>18}'
+        oss.write(('{e.date} balance {e.account:47} {e.amount:>22}'
                    '{comment}\n').format(e=entry, comment=comment))
 
     def Note(_, entry, oss):
@@ -98,7 +98,7 @@ class EntryPrinter:
         oss.write('{e.date} close {e.account}\n'.format(e=entry))
 
     def Price(_, entry, oss):
-        oss.write('{e.date} price {e.currency:<18} {amount:>18}\n'.format(
+        oss.write('{e.date} price {e.currency:<22} {amount:>22}\n'.format(
             e=entry, amount=str(entry.amount)))
 
     def Event(_, entry, oss):

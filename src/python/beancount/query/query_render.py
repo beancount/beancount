@@ -186,8 +186,8 @@ class DecimalRenderer(ColumnRenderer):
         self.total_width = total_width
         self.empty = ' ' * total_width
 
-        for key, dist in self.dists.items():
-            print('{:16} {:8} {}'.format(key, dist.mode(), dist.hist))
+        # for key, dist in self.dists.items():
+        #     print('{:16} {:8} {}'.format(key or '', dist.mode(), dist.hist))
 
     def width(self):
         return self.total_width
@@ -266,7 +266,7 @@ class PositionRenderer(ColumnRenderer):
             return
         lot = pos.lot
         cost = lot.cost
-        self.units_rdr.update(pos.get_amount())
+        self.units_rdr.update(pos.get_units())
         self.cost_rdr.update(cost)
 
     def prepare(self):
@@ -301,19 +301,19 @@ class PositionRenderer(ColumnRenderer):
             lot = pos.lot
             strings.append(
                 self.fmt_without_cost.format(
-                    self.units_rdr.format(pos.get_amount())))
+                    self.units_rdr.format(pos.get_units())))
         else:
             lot = pos.lot
             cost = lot.cost
             if cost:
                 strings.append(
                     self.fmt_with_cost.format(
-                        self.units_rdr.format(pos.get_amount()),
+                        self.units_rdr.format(pos.get_units()),
                         self.cost_rdr.format(cost)))
             else:
                 strings.append(
                     self.fmt_without_cost.format(
-                        self.units_rdr.format(pos.get_amount())))
+                        self.units_rdr.format(pos.get_units())))
 
         if len(strings) == 1:
             return strings[0]
@@ -342,7 +342,7 @@ class InventoryRenderer(PositionRenderer):
                 lot = pos.lot
                 strings.append(
                     self.fmt_without_cost.format(
-                        self.units_rdr.format(pos.get_amount())))
+                        self.units_rdr.format(pos.get_units())))
         else:
             for pos in inv.get_positions():
                 lot = pos.lot
@@ -350,12 +350,12 @@ class InventoryRenderer(PositionRenderer):
                 if cost:
                     strings.append(
                         self.fmt_with_cost.format(
-                            self.units_rdr.format(pos.get_amount()),
+                            self.units_rdr.format(pos.get_units()),
                             self.cost_rdr.format(cost)))
                 else:
                     strings.append(
                         self.fmt_without_cost.format(
-                            self.units_rdr.format(pos.get_amount())))
+                            self.units_rdr.format(pos.get_units())))
 
         if len(strings) == 1:
             return strings[0]

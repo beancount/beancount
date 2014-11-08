@@ -348,7 +348,7 @@ class TestPadding(cmptest.TestCase):
             if isinstance(posting, data.Posting):
                 position_, _ = pad_balance.add_position(posting.position)
                 self.assertFalse(position_.is_negative_at_cost())
-            balances.append((type(posting), pad_balance.get_amount('USD')))
+            balances.append((type(posting), pad_balance.get_units('USD')))
 
         self.assertEqual(balances, [(data.Open, amount.from_string('0.00 USD')),
                                     (data.Pad, amount.from_string('0.00 USD')),

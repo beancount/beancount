@@ -251,7 +251,7 @@ def render_posting(posting, number_format):
       A string, the rendered posting.
     """
     position = posting.position
-    amount = position.get_amount()
+    amount = position.get_units()
     strings = [
         posting.flag if posting.flag else ' ',
         '{:32}'.format(posting.account),
@@ -294,22 +294,24 @@ def size_and_render_amounts(postings, at_cost, render_balance):
         # so we'd rather do make the conversion at this level (inventory) than
         # convert the positions or amounts later.)
         if at_cost:
-            change = change.get_cost()
+            change = change.cost()
             if render_balance:
-                balance = balance.get_cost()
+                balance = balance.cost()
 
         # Compute the amounts and maximum widths for the change column.
-        change_amounts = change.get_amounts()
-        for amount in change_amounts:
+        change_amounts = []
+        for position in change.get_positions():
+            amount = position.get_units()
+            change_amounts.append(amount)
             change_sizer.update(amount.number, amount.currency)
 
         # Compute the amounts and maximum widths for the balance column.
+        balance_amounts = []
         if render_balance:
-            balance_amounts = balance.get_amounts()
-            for amount in balance_amounts:
+            for position in balance.get_positions():
+                amount = position.get_units()
+                balance_amounts.append(amount)
                 balance_sizer.update(amount.number, amount.currency)
-        else:
-            balance_amounts = []
 
         entry_data.append((entry, leg_postings, change_amounts, balance_amounts))
 

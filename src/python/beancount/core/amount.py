@@ -162,6 +162,15 @@ class Amount:
             return False
         return (self.number, self.currency) == (other.number, other.currency)
 
+    def __lt__(self, other):
+        """Ordering comparison. This is used in the sorting key of positions.
+        Args:
+          other: An instance of Amount.
+        Returns:
+          True if this is less than the other Amount.
+        """
+        return amount_sortkey(self) < amount_sortkey(other)
+
     def __hash__(self):
         """A hashing function for amounts. The hash includes the currency.
         Returns:
@@ -256,3 +265,4 @@ def amount_sub(amount1, amount2):
 
 
 from_string = Amount.from_string
+NULL_AMOUNT = Amount(ZERO, '')

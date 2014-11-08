@@ -812,7 +812,7 @@ class TestConversions(cmptest.TestCase):
 
         converted_balance = complete.compute_entries_balance(conversion_entries,
                                                              date=date)
-        self.assertTrue(converted_balance.get_cost().is_empty())
+        self.assertTrue(converted_balance.cost().is_empty())
 
     def test_conversions__not_needed(self):
         date = datetime.date(2012, 3, 2)
@@ -822,7 +822,7 @@ class TestConversions(cmptest.TestCase):
 
         converted_balance = complete.compute_entries_balance(conversion_entries,
                                                              date=date)
-        self.assertTrue(converted_balance.get_cost().is_empty())
+        self.assertTrue(converted_balance.cost().is_empty())
 
     def test_conversions__needed_middle(self):
         date = datetime.date(2012, 3, 3)
@@ -839,7 +839,7 @@ class TestConversions(cmptest.TestCase):
 
         converted_balance = complete.compute_entries_balance(conversion_entries,
                                                              date=date)
-        self.assertTrue(converted_balance.get_cost().is_empty())
+        self.assertTrue(converted_balance.cost().is_empty())
 
     def test_conversions__with_transactions_at_cost(self):
         date = datetime.date(2012, 3, 10)
@@ -856,7 +856,7 @@ class TestConversions(cmptest.TestCase):
 
         converted_balance = complete.compute_entries_balance(conversion_entries,
                                                              date=date)
-        self.assertTrue(converted_balance.get_cost().is_empty())
+        self.assertTrue(converted_balance.cost().is_empty())
 
     def test_conversions__multiple(self):
         date = datetime.date(2012, 5, 10)
@@ -872,7 +872,7 @@ class TestConversions(cmptest.TestCase):
         """, conversion_entries)
 
         converted_balance = complete.compute_entries_balance(conversion_entries)
-        self.assertTrue(converted_balance.get_cost().is_empty())
+        self.assertTrue(converted_balance.cost().is_empty())
 
     def test_conversions__no_date(self):
         conversion_entries = summarize.conversions(self.entries, self.ACCOUNT,
@@ -887,7 +887,7 @@ class TestConversions(cmptest.TestCase):
         """, conversion_entries)
 
         converted_balance = complete.compute_entries_balance(conversion_entries)
-        self.assertTrue(converted_balance.get_cost().is_empty())
+        self.assertTrue(converted_balance.cost().is_empty())
 
 
 class TestTruncate(cmptest.TestCase):

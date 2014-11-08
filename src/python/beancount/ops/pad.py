@@ -89,7 +89,7 @@ def pad(entries, options_map):
                 # does not check a single position, but rather checks that the
                 # total amount for a particular currency (which itself is
                 # distinct from the cost).
-                balance_amount = pad_balance.get_amount(check_amount.currency)
+                balance_amount = pad_balance.get_units(check_amount.currency)
                 diff_amount = amount.amount_sub(balance_amount, check_amount)
                 if abs(diff_amount.number) > tolerance:
                     # The check fails; we need to pad.
@@ -106,8 +106,9 @@ def pad(entries, options_map):
                         # Note: we decide that it's an error to try to pad
                         # positions at cost; we check here that all the existing
                         # positions with that currency have no cost.
-                        positions = pad_balance.get_positions_with_currency(
-                            check_amount.currency)
+                        positions = [position
+                                     for position in pad_balance.get_positions()
+                                     if position.lot.currency == check_amount.currency]
                         for position_ in positions:
                             if position_.lot.cost is not None:
                                 pad_errors.append(
