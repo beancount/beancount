@@ -631,7 +631,7 @@ def dump_balances(real_account, at_cost=False, fullnames=False, file=None):
     for first_line, cont_line, real_account in dump(real_account):
         if not real_account.balance.is_empty():
             if at_cost:
-                rinv = real_account.balance.get_cost().units()
+                rinv = real_account.balance.cost()
             else:
                 rinv = real_account.balance.units()
             amounts = [position.get_units() for position in rinv.get_positions()]

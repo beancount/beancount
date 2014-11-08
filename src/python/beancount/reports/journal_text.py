@@ -294,9 +294,9 @@ def size_and_render_amounts(postings, at_cost, render_balance):
         # so we'd rather do make the conversion at this level (inventory) than
         # convert the positions or amounts later.)
         if at_cost:
-            change = change.get_cost()
+            change = change.cost()
             if render_balance:
-                balance = balance.get_cost()
+                balance = balance.cost()
 
         # Compute the amounts and maximum widths for the change column.
         change_amounts = []

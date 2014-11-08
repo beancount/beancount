@@ -171,19 +171,18 @@ class Inventory:
                 return position
 
     def units(self):
-        """Return a list of Amounts (ignoring cost).
+        """Return an inventory of units for all position (aggregated).
 
         Returns:
-          A list of all the amounts for the inventory's positions.
+          An instance of Inventory.
         """
         units_inventory = Inventory()
         for position in self.positions:
             units_inventory.add_amount(position.get_units())
         return units_inventory
 
-    def get_cost(self):
-        """Return an inventory of Amounts that represent book values for all positions
-        in this inventory.
+    def cost(self):
+        """Return an inventory of costs for all positions (aggregated).
 
         Returns:
           An instance of Inventory.

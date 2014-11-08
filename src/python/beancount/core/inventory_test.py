@@ -201,10 +201,10 @@ class TestInventory(unittest.TestCase):
         position.from_string('40.50 USD {1.10 CAD}'),
         position.from_string('40.50 USD {1.10 CAD / 2012-01-01}')]
 
-    def test_get_cost(self):
+    def test_cost(self):
         inv = Inventory(self.POSITIONS_ALL_KINDS +
                         [position.from_string('50.00 CAD')])
-        inv_cost = inv.get_cost()
+        inv_cost = inv.cost()
         self.assertEqual(Inventory.from_string('40.50 USD, 139.10 CAD'), inv_cost)
 
     def test_get_positions_with_currency(self):

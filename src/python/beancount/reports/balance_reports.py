@@ -39,7 +39,7 @@ class BalancesReport(report.HTMLReport,
                                             self.formatter,
                                             classes=['trial'])
 
-        balance_cost = realization.compute_balance(real_root).get_cost()
+        balance_cost = realization.compute_balance(real_root).cost()
         if not balance_cost.is_empty():
             text += """
               Total Balance: <span class="num">{}</span>

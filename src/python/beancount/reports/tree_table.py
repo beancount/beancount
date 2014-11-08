@@ -156,7 +156,7 @@ def table_of_balances(real_root, operating_currencies, formatter, classes=None):
                 row_classes.append('parent-node')
 
             # For each account line, get the final balance of the account (at cost).
-            line_balance = real_account.balance.get_cost()
+            line_balance = real_account.balance.cost()
 
             # Update the total balance for the totals line.
             balance_totals += line_balance
