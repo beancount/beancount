@@ -28,10 +28,15 @@ def invariant_check(method, prefun, postfun):
     Returns:
       An unbound method, decorated.
     """
+    reentrant = []
     def new_method(self, *args, **kw):
-        prefun(self)
+        if not reentrant:
+            reentrant.append(None)
+            prefun(self)
         result = method(self, *args, **kw)
-        postfun(self)
+        if not reentrant:
+            postfun(self)
+            reentrant.pop()
         return result
     return new_method
 
@@ -44,25 +49,44 @@ def instrument_invariants(klass, prefun, postfun):
       prefun: A function that checks invariants pre-call.
       postfun: A function that checks invariants pre-call.
     """
+    instrumented = {}
     for attrname, object_ in klass.__dict__.items():
         if attrname.startswith('_'):
             continue
         if not isinstance(object_, types.FunctionType):
             continue
+        instrumented[attrname] = object_
         setattr(klass, attrname,
                 invariant_check(object_, prefun, postfun))
+    klass.__instrumented = instrumented
+
+def uninstrument_invariants(klass):
+    """Undo the instrumentation for invariants.
+
+    Args:
+      klass: A class object, whose methods to be uninstrumented.
+    """
+    instrumented = getattr(klass, '__instrumented', None)
+    if instrumented:
+        for attrname, object_ in instrumented.items():
+            setattr(klass, attrname, object_)
+    del klass.__instrumented
+
 
 def setUp(module):
     instrument_invariants(Inventory,
                           inventory.check_invariants,
                           inventory.check_invariants)
 
+def tearDown(module):
+    uninstrument_invariants(Inventory)
+
 
 class TestInventory(unittest.TestCase):
 
     def checkAmount(self, inventory, number, currency):
         amount_ = amount.Amount(number, currency)
-        inv_amount = inventory.get_amount(amount_.currency)
+        inv_amount = inventory.get_units(amount_.currency)
         self.assertEqual(inv_amount, amount_)
 
     def test_from_string(self):
@@ -172,45 +196,56 @@ class TestInventory(unittest.TestCase):
         ninv = Inventory.from_string('-1.50 JPY, -1.51 USD, -1.52 CAD')
         self.assertEqual(pinv, -ninv)
 
-    def test_get_amount(self):
+    def test_get_units(self):
         inv = Inventory.from_string('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
-        self.assertEqual(inv.get_amount('JPY'), A('40.50 JPY'))
-        self.assertEqual(inv.get_amount('USD'), A('40.51 USD'))
-        self.assertEqual(inv.get_amount('CAD'), A('40.52 CAD'))
-        self.assertEqual(inv.get_amount('AUD'), A('0 AUD'))
-        self.assertEqual(inv.get_amount('NZD'), A('0 NZD'))
+        self.assertEqual(inv.get_units('JPY'), A('40.50 JPY'))
+        self.assertEqual(inv.get_units('USD'), A('40.51 USD'))
+        self.assertEqual(inv.get_units('CAD'), A('40.52 CAD'))
+        self.assertEqual(inv.get_units('AUD'), A('0 AUD'))
+        self.assertEqual(inv.get_units('NZD'), A('0 NZD'))
 
-    def test_get_amounts(self):
+    def test_units(self):
         inv = Inventory()
-        self.assertEqual(inv.get_amounts(), [])
+        self.assertEqual(inv.units(), Inventory.from_string(''))
 
         inv = Inventory.from_string('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
-        self.assertEqual(set(inv.get_amounts()), set([
-            A('40.50 JPY'),
-            A('40.51 USD'),
-            A('40.52 CAD')]))
+        self.assertEqual(inv.units(),
+                         Inventory.from_string('40.50 JPY, 40.51 USD, 40.52 CAD'))
 
         # Check that the same units coalesce.
         inv = Inventory.from_string('2 GOOG {400 USD}, 3 GOOG {410 USD}')
-        self.assertEqual(inv.get_amounts(), [A('5 GOOG')])
+        self.assertEqual(inv.units(), Inventory.from_string('5 GOOG'))
+
+        inv = Inventory.from_string('2 GOOG {400 USD}, -3 GOOG {410 USD}')
+        self.assertEqual(inv.units(), Inventory.from_string('-1 GOOG'))
 
     POSITIONS_ALL_KINDS = [
         position.from_string('40.50 USD'),
         position.from_string('40.50 USD {1.10 CAD}'),
         position.from_string('40.50 USD {1.10 CAD / 2012-01-01}')]
 
-    def test_get_cost(self):
+    def test_cost(self):
         inv = Inventory(self.POSITIONS_ALL_KINDS +
                         [position.from_string('50.00 CAD')])
-        inv_cost = inv.get_cost()
+        inv_cost = inv.cost()
         self.assertEqual(Inventory.from_string('40.50 USD, 139.10 CAD'), inv_cost)
 
-    def test_get_positions_with_currency(self):
-        usd_positions = self.POSITIONS_ALL_KINDS
-        cad_positions = [position.from_string('50.00 CAD')]
-        inv = Inventory(usd_positions + cad_positions)
-        self.assertEqual(cad_positions, inv.get_positions_with_currency('CAD'))
-        self.assertEqual(usd_positions, inv.get_positions_with_currency('USD'))
+    def test_average(self):
+        # Identity, no aggregation.
+        inv = Inventory.from_string('40.50 JPY, 40.51 USD {1.01 CAD}, 40.52 CAD')
+        self.assertEqual(inv.average(), inv)
+
+        # Identity, no aggregation, with a mix of lots at cost and without cost.
+        inv = Inventory.from_string('40 USD {1.01 CAD}, 40 USD')
+        self.assertEqual(inv.average(), inv)
+
+        # Aggregation.
+        inv = Inventory.from_string('40 USD {1.01 CAD}, 40 USD {1.02 CAD}')
+        self.assertEqual(inv.average(), Inventory.from_string('80.00 USD {1.015 CAD}'))
+
+        # Aggregation, more units.
+        inv = Inventory.from_string('2 GOOG {500 USD}, 3 GOOG {520 USD}, 4 GOOG {530 USD}')
+        self.assertEqual(inv.average(), Inventory.from_string('9 GOOG {520 USD}'))
 
     def test_get_position(self):
         inv = Inventory(self.POSITIONS_ALL_KINDS)
@@ -223,6 +258,10 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(
             position.from_string('40.50 USD {1.10 CAD / 2012-01-01}'),
             inv.get_position(Lot('USD', A('1.10 CAD'), date(2012, 1, 1))))
+
+        self.assertEqual(
+            position.from_string('40.50 USD {1.10 CAD / 2012-01-01}'),
+            inv[Lot('USD', A('1.10 CAD'), date(2012, 1, 1))])
 
     def test_add(self):
         inv = Inventory()

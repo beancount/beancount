@@ -101,7 +101,7 @@ def iterate_html_postings(postings, formatter):
                                'expected = {}, balance = {}, difference = {}').format(
                                    formatter.render_account(entry.account),
                                    entry.amount,
-                                   entry_balance.get_amount(entry.amount.currency),
+                                   entry_balance.get_units(entry.amount.currency),
                                    entry.diff_amount)
                 extra_class = 'fail'
 
@@ -210,7 +210,7 @@ def html_entries_table_with_balance(oss, account_postings, formatter, render_pos
                            formatter.render_account(posting.account),
                            posting.position,
                            posting.price or '',
-                           complete.get_balance_amount(posting)))
+                           complete.get_posting_weight(posting)))
 
     write('</table>')
 
@@ -285,10 +285,10 @@ def html_entries_table(oss, account_postings, formatter, render_postings=True):
                 '''.format(' '.join(classes),
                            posting.flag or '',
                            formatter.render_account(posting.account),
-                           posting.position.get_amount(),
+                           posting.position.get_units(),
                            posting.position.lot.cost or '',
                            posting.price or '',
-                           complete.get_balance_amount(posting)))
+                           complete.get_posting_weight(posting)))
 
     write('</table>')
 

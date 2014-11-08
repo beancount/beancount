@@ -25,6 +25,7 @@ from .amount import ZERO
 from .amount import Decimal
 from .amount import D
 from .amount import Amount
+from .amount import NULL_AMOUNT
 from .amount import amount_mult
 from .amount import MAXDIGITS_PRINTER
 from .amount import CURRENCY_RE
@@ -148,9 +149,10 @@ class Position:
         Returns:
           A tuple, used to sort lists of positions.
         """
-        return (CURRENCY_ORDER.get(self.lot.currency,
-                                   NCURRENCIES + len(self.lot.currency)),
-                self.number)
+        lot = self.lot
+        currency = lot.currency
+        order_units = CURRENCY_ORDER.get(currency, NCURRENCIES + len(currency))
+        return (order_units, lot.cost or NULL_AMOUNT, self.number)
 
     def __lt__(self, other):
         """A least-than comparison operator for positions.
@@ -172,7 +174,7 @@ class Position:
         # Note: We use Decimal() for efficiency.
         return Position(self.lot, Decimal(self.number))
 
-    def get_amount(self):
+    def get_units(self):
         """Get the Amount that correponds to this lot. The amount is the number of units
         of the currency, irrespective of its cost or lot date.
 
@@ -195,7 +197,30 @@ class Position:
         else:
             return amount_mult(cost, self.number)
 
-    def at_cost(self):
+    def get_weight(self, price=None):
+        """Compute the weight of the position, with the given price.
+
+        Returns:
+          An instance of Amount.
+        """
+        # It the self has a cost, use that to balance this posting.
+        lot = self.lot
+        if lot.cost is not None:
+            amount = amount_mult(lot.cost, self.number)
+
+        # If there is a price, use that to balance this posting.
+        elif price is not None:
+            assert self.lot.currency != price.currency, (
+                "Invalid currency for price: {} in {}".format(self, price))
+            amount = amount_mult(price, self.number)
+
+        # Otherwise, just use the units.
+        else:
+            amount = Amount(self.number, self.lot.currency)
+
+        return amount
+
+    def cost(self):
         """Return a Position representing the cost of this position. See get_cost().
 
         Returns:

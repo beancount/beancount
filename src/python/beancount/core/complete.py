@@ -27,7 +27,7 @@ BalanceError = collections.namedtuple('BalanceError', 'source message entry')
 SMALL_EPSILON = D('0.005')
 
 
-def get_balance_amount(posting):
+def get_posting_weight(posting):
     """Get the amount that will need to be balanced from a posting of a transaction.
 
     This is a *key* element of the semantics of transactions in this software. A
@@ -45,22 +45,7 @@ def get_balance_amount(posting):
     Returns:
       An amount, required to balance this posting.
     """
-    position = posting.position
-    lot = position.lot
-
-    # It the position has a cost, use that to balance this posting.
-    if lot.cost is not None:
-        amount = amount_mult(lot.cost, position.number)
-
-    # If there is a price, use that to balance this posting.
-    elif posting.price is not None:
-        amount = amount_mult(posting.price, position.number)
-
-    # Otherwise, just use the amount itself.
-    else:
-        amount = position.get_amount()
-
-    return amount
+    return posting.position.get_weight(posting.price)
 
 
 def has_nontrivial_balance(posting):
@@ -87,7 +72,7 @@ def compute_residual(postings):
     """
     inventory = Inventory()
     for posting in postings:
-        inventory.add_amount(get_balance_amount(posting))
+        inventory.add_amount(get_posting_weight(posting))
     return inventory
 
 
@@ -162,7 +147,7 @@ def get_incomplete_postings(entry):
             currencies.add(position.lot.currency)
 
             # Compute the amount to balance and update the inventory.
-            balance_amount = get_balance_amount(posting)
+            balance_amount = get_posting_weight(posting)
             inventory.add_amount(balance_amount)
 
             has_regular_postings = True
