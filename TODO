@@ -209,8 +209,9 @@ beancount: TODO
 
 * Query Language
 
-  - We need a rendered for 'int' columns!  I forgot.
-
+  - Cache .format methods in renderers, they may be caching the formatting
+    themselves. Time the difference, see if it matters, look at CPython
+    implementation to find out.
 
   - The current number formatting code truncates numbers longer than the mode
     and should be rounding it. Make it round.

@@ -2,6 +2,7 @@
 """
 import collections
 import datetime
+import math
 from itertools import zip_longest
 
 from beancount.core.amount import Decimal
@@ -140,6 +141,36 @@ class DateTimeRenderer(ColumnRenderer):
         return self.empty if dtime is None else dtime.strftime('%Y-%m-%d')
 
 
+class IntegerRenderer(ColumnRenderer):
+    """A renderer for integers."""
+    dtype = int
+
+    def __init__(self):
+        self.has_negative = False
+        self.max_digits = 0
+
+    def update(self, number):
+        if number is None:
+            return
+        self.max_digits = max(self.max_digits,
+                              (int(math.log10(abs(number)))+1) if number else 1)
+        if number < 0:
+            self.has_negative = True
+
+    def prepare(self):
+        self.max_width = (1 if self.has_negative else 0) + self.max_digits
+        self.fmt = '{{:{}{}d}}'.format(' ' if self.has_negative else '',
+                                       self.max_width)
+
+    def width(self):
+        return self.max_width
+
+    def format(self, number):
+        if number is None:
+            return self.fmt.format('')
+        return self.fmt.format(number)
+
+
 class DecimalRenderer(ColumnRenderer):
     """A renderer for decimal numbers."""
     dtype = Decimal
@@ -185,9 +216,6 @@ class DecimalRenderer(ColumnRenderer):
 
         self.total_width = total_width
         self.empty = ' ' * total_width
-
-        # for key, dist in self.dists.items():
-        #     print('{:16} {:8} {}'.format(key or '', dist.mode(), dist.hist))
 
     def width(self):
         return self.total_width
@@ -497,6 +525,7 @@ def render_text(result_types, result_rows, file, boxed=False):
 RENDERERS = {renderer_cls.dtype: renderer_cls
              for renderer_cls in [StringRenderer,
                                   StringSetRenderer,
+                                  IntegerRenderer,
                                   DecimalRenderer,
                                   DateTimeRenderer,
                                   StringSetRenderer,

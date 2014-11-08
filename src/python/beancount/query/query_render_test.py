@@ -73,6 +73,36 @@ class TestDateTimeRenderer(ColumnRendererBase):
         self.assertEqual('          ', rdr.format(None))
 
 
+class TestIntegerRenderer(ColumnRendererBase):
+
+    RendererClass = query_render.IntegerRenderer
+
+    def test_integers(self):
+        rdr = self.get(1, 222, 33)
+        self.assertEqual('  0', rdr.format(0))
+        self.assertEqual('  1', rdr.format(1))
+        self.assertEqual('444', rdr.format(444))
+
+    def test_integers_negative(self):
+        rdr = self.get(1, -222, 33)
+        self.assertEqual('   0', rdr.format(0))
+        self.assertEqual('   1', rdr.format(1))
+        self.assertEqual(' 444', rdr.format(444))
+        self.assertEqual('-444', rdr.format(-444))
+
+    def test_overflow(self):
+        rdr = self.get(1, 100, 1000)
+        self.assertEqual('   1', rdr.format(1))
+        # Note: Unfortunately we can't quite prevent it with a single format
+        # string, but we don't really need to, so we won't bother.
+        self.assertEqual('3456789', rdr.format(3456789))
+
+    def test_zeros_only(self):
+        rdr = self.get(0)
+        self.assertEqual('1', rdr.format(1))
+
+
+
 class TestDecimalRenderer(ColumnRendererBase):
 
     RendererClass = query_render.DecimalRenderer
