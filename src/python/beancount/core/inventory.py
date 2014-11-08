@@ -265,6 +265,18 @@ class Inventory:
         assert isinstance(new_position, Position), new_position
         return self._add(new_position.number, new_position.lot)
 
+    def add_inventory(self, other):
+        """Add all the positions of another Inventory instance to this one.
+
+        Args:
+          other: An instance of Inventory to add to this one.
+        Returns:
+          This inventory, modified.
+        """
+        for position in other.positions:
+            self.add_position(position)
+        return self
+
     def _add(self, number, lot):
         """Return True if this position was booked against and reduced another.
 
@@ -300,18 +312,6 @@ class Inventory:
         new_inventory = self.__copy__()
         new_inventory += other
         return new_inventory
-
-    def add_inventory(self, other):
-        """Add all the positions of another Inventory instance to this one.
-
-        Args:
-          other: An instance of Inventory to add to this one.
-        Returns:
-          This inventory, modified.
-        """
-        for position in other.positions:
-            self.add_position(position)
-        return self
 
     __iadd__ = add_inventory
 

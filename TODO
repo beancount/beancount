@@ -104,10 +104,33 @@ beancount: TODO
   we use. This should be done for 2.0. Units, cost, weight, should have precise
   and consistent meanings. Clean up terminology re. units, weight, etc.
 
+  Position.get_units()  -> Amount    -> Position.get_units_amount()
+  Position.get_cost()   -> Amount    -> Position.get_cost_amount()
+  Position.at_cost()    -> Position  -> Position.get_cost()
+  Inventory.get_units() -> Inventory -> Inventory.get_units()
+  Inventory.get_cost()  -> Inventory -> Inventory.get_cost()
+
+
+  I like this: the get_*() methods all return an Amount instance, and the as_*()
+  methods all return the same type as the object upon which they are invoked.
+
+    Position.get_amount() -> Amount    -> Position.get_units()
+    Position.get_cost()   -> Amount    -> Position.get_cost()
+                          -> Amount    -> Position.get_weight(Price)
+    get_balance_amount()  -> Amount    -> Position.get_weight(Price)
+    Position.at_cost()    -> Position  -> Position.as_cost()
+    Inventory.get_units() -> Inventory -> Inventory.as_units()
+    Inventory.get_cost()  -> Inventory -> Inventory.as_cost()
+
+
+  - Can we make Inventory a subclass of 'list'?  That would be real nice, would
+    make a lot of sense.
+
   - Rename Position.get_amount() -> Position.get_units(). Make sure the
     terminology matches that of Inventory.
 
-  - I think we should remove Inventory.get_amounts(), replace by get_units().
+  - I think we should remove Inventory.get_amounts(), replace by get_units(),
+    and it should be an inventory, not a list of amounts.
 
   - Rename all "balance amounts" to "weight".
 
@@ -801,8 +824,6 @@ beancount: TODO
   - Also derive from namedtuple to provide a stable hash function instead of
     code in beancount.core.compare.
 
-  - Can we make Inventory a subclass of 'list'?  That would be real nice, would
-    make a lot of sense.
 
 
 
