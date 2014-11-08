@@ -739,7 +739,7 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
         if not stocks_inventory.is_empty() and random.random() < p_daily_sell:
             # Choose the lot with the highest gain or highest loss.
             gains = []
-            for position in stocks_inventory.positions:
+            for position in stocks_inventory.get_positions():
                 base_quote = (position.lot.currency, position.lot.cost.currency)
                 _, price = prices.get_price(price_map, base_quote, date)
                 if price == position.lot.cost.number:

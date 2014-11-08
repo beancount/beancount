@@ -50,7 +50,7 @@ from beancount.core.position import Position
 from beancount.core.position import from_string as position_from_string
 
 
-class Inventory:
+class Inventory(list):
     """An Inventory is a set of positions.
 
     Attributes:
@@ -58,15 +58,12 @@ class Inventory:
         Because the lists are always very short, we prefer to avoid using mappings
         for the sake of simplicity.
     """
-    __slots__ = ('positions',)
-
     def __init__(self, positions=None):
         """Create a new inventory using a list of existing positions.
 
         Args:
           positions: A list of Position instances.
         """
-        self.positions = []
         if positions:
             assert isinstance(positions, list), positions
             for position in positions:
@@ -78,7 +75,7 @@ class Inventory:
         Returns:
           A string, for human consumption.
         """
-        return 'Inventory({})'.format(', '.join(map(str, sorted(self.positions))))
+        return 'Inventory({})'.format(', '.join(map(str, sorted(self))))
 
     __repr__ = __str__
 
@@ -88,12 +85,12 @@ class Inventory:
         Returns:
           A boolean.
         """
-        return not bool(self.positions)
+        return len(self) == 0
 
     def __bool__(self):
-        # Don't define this, be explicit.
+        # Don't define this, be explicit by using is_empty() instead.
         raise NotImplementedError
-        return bool(self.positions)
+        return bool(self)
 
     def __copy__(self):
         """A shallow copy of this inventory object. All the positions contained
@@ -102,15 +99,7 @@ class Inventory:
         Returns:
           An instance of Inventory, equal to this one.
         """
-        return Inventory(list(map(copy.copy, self.positions)))
-
-    def __len__(self):
-        """Returns the number of positions held in this inventory.
-
-        Returns:
-          An integer.
-        """
-        return len(self.positions)
+        return Inventory(list(map(copy.copy, self)))
 
     def __eq__(self, other):
         """Equality predicate.
@@ -120,7 +109,7 @@ class Inventory:
         Returns:
           True if the two inventories have the same position contents.
         """
-        return sorted(self.positions) == sorted(other.positions)
+        return sorted(self) == sorted(other)
 
     def is_small(self, epsilon):
         """Return true if all the positions in the inventory are small.
@@ -132,7 +121,7 @@ class Inventory:
           A boolean.
         """
         return all(abs(position.number) <= epsilon
-                   for position in self.positions)
+                   for position in self)
 
     def __neg__(self):
         """Return an inventory with the negative of values of this one.
@@ -141,7 +130,7 @@ class Inventory:
           An instance of Inventory.
         """
         return Inventory([Position(position.lot, -(position.number))
-                          for position in self.positions])
+                          for position in self])
 
     #
     # Methods to access portions of an inventory.
@@ -153,7 +142,7 @@ class Inventory:
         Returns:
           A list of positions (do not modify it).
         """
-        return self.positions
+        return list(self)
 
     def get_position(self, lot):
         """Find a position by lot, or return None.
@@ -163,7 +152,7 @@ class Inventory:
         Returns:
           An instance of Position for the matching lot.
         """
-        for position in self.positions:
+        for position in self:
             if position.lot == lot:
                 return position
 
@@ -179,7 +168,7 @@ class Inventory:
           An instance of Amount, with the given currency.
         """
         total_units = ZERO
-        for position in self.positions:
+        for position in self:
             if position.lot.currency == currency:
                 total_units += position.number
         return Amount(total_units, currency)
@@ -196,7 +185,7 @@ class Inventory:
           An instance of Inventory.
         """
         units_inventory = Inventory()
-        for position in self.positions:
+        for position in self:
             units_inventory.add_amount(position.get_units())
         return units_inventory
 
@@ -207,7 +196,7 @@ class Inventory:
           An instance of Inventory.
         """
         cost_inventory = Inventory()
-        for position in self.positions:
+        for position in self:
             cost_inventory.add_amount(position.get_cost())
         return cost_inventory
 
@@ -218,7 +207,7 @@ class Inventory:
           An instance of Inventory.
         """
         groups = collections.defaultdict(list)
-        for position in self.positions:
+        for position in self:
             lot = position.lot
             key = (lot.currency,
                    lot.cost.currency if lot.cost else None)
@@ -255,13 +244,13 @@ class Inventory:
           An instance of Position, either the position that was found, or a new
           Position instance that was created for this lot.
         """
-        for position in self.positions:
+        for position in self:
             if position.lot == lot:
                 found = position
                 break
         else:
             found = Position(lot, ZERO)
-            self.positions.append(found)
+            self.append(found)
         return found
 
     def add_amount(self, amount, cost=None, lot_date=None):
@@ -304,7 +293,7 @@ class Inventory:
         Returns:
           This inventory, modified.
         """
-        for position in other.positions:
+        for position in other.get_positions():
             self.add_position(position)
         return self
 
@@ -328,7 +317,7 @@ class Inventory:
         # If the resulting position is a zero position, remove it. We want to
         # avoid zero positions in the Inventory as an invariant.
         if position.number == ZERO:
-            self.positions.remove(position)
+            self.remove(position)
 
         return position, reducing
 
@@ -376,11 +365,10 @@ def check_invariants(inventory):
       True if the invariants are respected.
     """
     # Check that all the keys are unique.
-    lots = set(position.lot for position in inventory.positions)
-    nlots = len(lots)
-    npositions = len(inventory.positions)
-    assert nlots == npositions, (nlots, npositions)
+    positions = inventory.get_positions()
+    lots = set(position.lot for position in positions)
+    assert len(lots) == len(inventory), "Invalid inventory: {}".format(inventory)
 
     # Check that none of the amounts is zero.
-    for position in inventory.positions:
+    for position in positions:
         assert position.number, position

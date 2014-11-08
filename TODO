@@ -119,8 +119,7 @@ beancount: TODO
   X Inventory.get_positions_with_currency(Currency) -> Inventory -> REMOVE THIS
   X Inventory.get_position() -> Inventory -> Inventory.get_position(Lot) [NO CHANGE]
 
-
-  - Can we make Inventory a subclass of 'list'?  That would be real nice, would
+  X Can we make Inventory a subclass of 'list'?  That would be real nice, would
     make a lot of sense.
 
   X Rename compute_balance_amount() -> compute_weight() and provide functions to

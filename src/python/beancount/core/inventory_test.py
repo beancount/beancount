@@ -28,10 +28,15 @@ def invariant_check(method, prefun, postfun):
     Returns:
       An unbound method, decorated.
     """
+    reentrant = []
     def new_method(self, *args, **kw):
-        prefun(self)
+        if not reentrant:
+            reentrant.append(None)
+            prefun(self)
         result = method(self, *args, **kw)
-        postfun(self)
+        if not reentrant:
+            postfun(self)
+            reentrant.pop()
         return result
     return new_method
 
@@ -44,18 +49,37 @@ def instrument_invariants(klass, prefun, postfun):
       prefun: A function that checks invariants pre-call.
       postfun: A function that checks invariants pre-call.
     """
+    instrumented = {}
     for attrname, object_ in klass.__dict__.items():
         if attrname.startswith('_'):
             continue
         if not isinstance(object_, types.FunctionType):
             continue
+        instrumented[attrname] = object_
         setattr(klass, attrname,
                 invariant_check(object_, prefun, postfun))
+    klass.__instrumented = instrumented
+
+def uninstrument_invariants(klass):
+    """Undo the instrumentation for invariants.
+
+    Args:
+      klass: A class object, whose methods to be uninstrumented.
+    """
+    instrumented = getattr(klass, '__instrumented', None)
+    if instrumented:
+        for attrname, object_ in instrumented.items():
+            setattr(klass, attrname, object_)
+    del klass.__instrumented
+
 
 def setUp(module):
     instrument_invariants(Inventory,
                           inventory.check_invariants,
                           inventory.check_invariants)
+
+def tearDown(module):
+    uninstrument_invariants(Inventory)
 
 
 class TestInventory(unittest.TestCase):
