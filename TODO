@@ -5,11 +5,14 @@ beancount: TODO
 
   - Complete presentation
 
+
   - Fix rendering of balances for HTML journals, esp. w.r.t. example file,
     rendering lots is just _not_ the ticket.
 
       In HTML rendering, render only by units, and provide a link to a /context
       page that renders inventory befre and after just like my context utility.
+
+
 
   - Add more tests for intra-day trading, esp. w.r.t. ordering and inventory booking.
 
@@ -98,19 +101,20 @@ beancount: TODO
 ** Units, Weight Name Everything Consistently
 
   It's time for a bit of a better establishment in the names of the quantities
-  we use. This should be done for 2.0.
+  we use. This should be done for 2.0. Units, cost, weight, should have precise
+  and consistent meanings. Clean up terminology re. units, weight, etc.
 
-  - Clean up terminology re. units, weight, etc.
+  - Rename Position.get_amount() -> Position.get_units(). Make sure the
+    terminology matches that of Inventory.
+
+  - I think we should remove Inventory.get_amounts(), replace by get_units().
+
   - Rename all "balance amounts" to "weight".
 
   - Rename compute_balance_amount() -> compute_weight() and provide functions to
     compute units, weight, etc. from Position objects, using consistent
     terminology.
 
-  - Rename Position.get_amount() -> Position.get_units(). Make sure the
-    terminology matches that of Inventory.
-
-  - I think we should remove Inventory.get_amounts(), replace by get_units().
 
 
 ** Renames and Move Files to Final Location
