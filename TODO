@@ -123,7 +123,7 @@ beancount: TODO
   - Can we make Inventory a subclass of 'list'?  That would be real nice, would
     make a lot of sense.
 
-  - Rename compute_balance_amount() -> compute_weight() and provide functions to
+  X Rename compute_balance_amount() -> compute_weight() and provide functions to
     compute units, weight, etc. from Position objects, using consistent
     terminology.
 
@@ -236,6 +236,12 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - You should add tests to ensure that an Inventory() can never have positions
+    created with a cost of the same cost_currency as the currency. This should
+    be enforced in the Position object itself.
+
 
 
   - Allow sign normalization:

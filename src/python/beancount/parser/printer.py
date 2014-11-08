@@ -60,7 +60,7 @@ class EntryPrinter:
 
         if print_balance:
             if posting.position:
-                balance_amount = complete.get_balance_amount(posting)
+                balance_amount = complete.get_posting_weight(posting)
                 balance_amount_str = balance_amount.str(amount.MAXDIGITS_PRINTER)
             else:
                 balance_amount_str = 'UNKNOWN'
