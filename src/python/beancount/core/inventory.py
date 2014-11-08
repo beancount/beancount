@@ -200,20 +200,6 @@ class Inventory:
         """
         return self.positions
 
-    # FIXME: Remove this
-    def get_positions_with_currency(self, currency):
-        """Return a filtered list of the positions with lots in the given
-        currency.
-
-        Args:
-          currency: A string, the currency to filter by.
-        Returns:
-          A list of positions.
-        """
-        return [position
-                for position in self.positions
-                if position.lot.currency == currency]
-
     def _get_create_position(self, lot):
         """Find or create a position associated with the given lot.
 

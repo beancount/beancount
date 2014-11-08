@@ -207,13 +207,6 @@ class TestInventory(unittest.TestCase):
         inv_cost = inv.cost()
         self.assertEqual(Inventory.from_string('40.50 USD, 139.10 CAD'), inv_cost)
 
-    def test_get_positions_with_currency(self):
-        usd_positions = self.POSITIONS_ALL_KINDS
-        cad_positions = [position.from_string('50.00 CAD')]
-        inv = Inventory(usd_positions + cad_positions)
-        self.assertEqual(cad_positions, inv.get_positions_with_currency('CAD'))
-        self.assertEqual(usd_positions, inv.get_positions_with_currency('USD'))
-
     def test_get_position(self):
         inv = Inventory(self.POSITIONS_ALL_KINDS)
         self.assertEqual(
