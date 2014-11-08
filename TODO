@@ -290,6 +290,9 @@ beancount: TODO
     bit more limited than treeify. It should optionally do the treeification.
     It should also optionally sort the account names (or not).
 
+    * Add a --title option to render at the top.
+
+
   - Flatten should parse closer to distinct keyword, as in SELECT FLATTEN ...
 
   - Maybe add format keyword followed by the desired format instead of a set var

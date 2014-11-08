@@ -113,7 +113,7 @@ class UnitsPosition(c.EvalFunction):
 
     def __call__(self, posting):
         args = self.eval_args(posting)
-        return args[0].get_amount()
+        return args[0].get_units()
 
 class CostPosition(c.EvalFunction):
     __intypes__ = [position.Position]
