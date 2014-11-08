@@ -105,7 +105,7 @@ class TestPosition(unittest.TestCase):
         self.assertEqual(Amount('28372', 'USD'), pos.get_units())
         self.assertEqual(Amount('283720', 'AUD'), pos.get_cost())
 
-        cpos = pos.at_cost()
+        cpos = pos.cost()
         self.assertTrue(isinstance(cpos, Position))
         self.assertEqual(Amount('283720', 'AUD'), cpos.get_units())
         self.assertEqual(Amount('283720', 'AUD'), cpos.get_cost())

@@ -195,7 +195,7 @@ class Position:
         else:
             return amount_mult(cost, self.number)
 
-    def at_cost(self):
+    def cost(self):
         """Return a Position representing the cost of this position. See get_cost().
 
         Returns:
