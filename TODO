@@ -224,6 +224,9 @@ beancount: TODO
 
 * Query Language
 
+  - We need a rendered for 'int' columns!  I forgot.
+
+
   - The current number formatting code truncates numbers longer than the mode
     and should be rounding it. Make it round.
 
