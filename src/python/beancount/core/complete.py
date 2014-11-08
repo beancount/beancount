@@ -58,7 +58,7 @@ def get_balance_amount(posting):
 
     # Otherwise, just use the amount itself.
     else:
-        amount = position.get_amount()
+        amount = position.get_units()
 
     return amount
 

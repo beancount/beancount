@@ -102,24 +102,24 @@ class TestPosition(unittest.TestCase):
 
     def test_getamount(self):
         pos = Position(Lot("USD", Amount('10', 'AUD'), None), D('28372'))
-        self.assertEqual(Amount('28372', 'USD'), pos.get_amount())
+        self.assertEqual(Amount('28372', 'USD'), pos.get_units())
         self.assertEqual(Amount('283720', 'AUD'), pos.get_cost())
 
         cpos = pos.at_cost()
         self.assertTrue(isinstance(cpos, Position))
-        self.assertEqual(Amount('283720', 'AUD'), cpos.get_amount())
+        self.assertEqual(Amount('283720', 'AUD'), cpos.get_units())
         self.assertEqual(Amount('283720', 'AUD'), cpos.get_cost())
 
     def test_add(self):
         pos = Position(Lot("USD", Amount('10', 'AUD'), None), D('28372'))
         pos.add(D('337'))
-        self.assertEqual(Amount('28709', 'USD'), pos.get_amount())
+        self.assertEqual(Amount('28709', 'USD'), pos.get_units())
         self.assertEqual(Amount('287090', 'AUD'), pos.get_cost())
 
     def test_negative(self):
         pos = Position(Lot("USD", Amount('10', 'AUD'), None), D('28372'))
         negpos = pos.get_negative()
-        self.assertEqual(Amount('-28372', 'USD'), negpos.get_amount())
+        self.assertEqual(Amount('-28372', 'USD'), negpos.get_units())
         self.assertEqual(Amount('-283720', 'AUD'), negpos.get_cost())
 
     def test_is_negative_at_cost(self):

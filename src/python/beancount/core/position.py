@@ -172,7 +172,7 @@ class Position:
         # Note: We use Decimal() for efficiency.
         return Position(self.lot, Decimal(self.number))
 
-    def get_amount(self):
+    def get_units(self):
         """Get the Amount that correponds to this lot. The amount is the number of units
         of the currency, irrespective of its cost or lot date.
 

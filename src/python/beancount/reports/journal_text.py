@@ -251,7 +251,7 @@ def render_posting(posting, number_format):
       A string, the rendered posting.
     """
     position = posting.position
-    amount = position.get_amount()
+    amount = position.get_units()
     strings = [
         posting.flag if posting.flag else ' ',
         '{:32}'.format(posting.account),

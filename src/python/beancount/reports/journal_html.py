@@ -285,7 +285,7 @@ def html_entries_table(oss, account_postings, formatter, render_postings=True):
                 '''.format(' '.join(classes),
                            posting.flag or '',
                            formatter.render_account(posting.account),
-                           posting.position.get_amount(),
+                           posting.position.get_units(),
                            posting.position.lot.cost or '',
                            posting.price or '',
                            complete.get_balance_amount(posting)))
