@@ -224,6 +224,8 @@ beancount: TODO
 
 * Query Language
 
+  - Make mode of decimal objects "per currency" in the amount renderer.
+
   - Add help like this: "help <topic>": help should be provided via docstring
     over columns, functions, and parsed commands (select, print, journal, etc.).
     Create a function that will compile all the help topics and implement it
