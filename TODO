@@ -98,36 +98,6 @@ beancount: TODO
   - Complete and merge sampled_quantization
 
 
-** Units, Weight Name Everything Consistently
-
-  It's time for a bit of a better establishment in the names of the quantities
-  we use. This should be done for 2.0. Units, cost, weight, should have precise
-  and consistent meanings. Clean up terminology re. units, weight, etc.
-
-
-  I like this: the get_*() methods all return an Amount instance, and the simple
-  methods all return the same type as the object upon which they are invoked.
-
-  X Position.get_amount()    -> Amount    -> Position.get_units()
-  X Position.get_cost()      -> Amount    -> Position.get_cost() [NO CHANGE]
-  X Position.at_cost()       -> Position  -> Position.cost()
-  X get_balance_amount()     -> Amount    -> Position.get_weight(Price)
-  X Inventory.get_amount(Currency) -> Amount -> Inventory.get_units()
-  X Inventory.get_amounts()  -> Inventory -> Inventory.units()
-  X Inventory.get_cost()     -> Inventory -> Inventory.cost()
-                             -> Inventory -> Inventory.average()
-  X Inventory.get_positions_with_currency(Currency) -> Inventory -> REMOVE THIS
-  X Inventory.get_position() -> Inventory -> Inventory.get_position(Lot) [NO CHANGE]
-
-  X Can we make Inventory a subclass of 'list'?  That would be real nice, would
-    make a lot of sense.
-
-  X Rename compute_balance_amount() -> compute_weight() and provide functions to
-    compute units, weight, etc. from Position objects, using consistent
-    terminology.
-
-
-
 ** Renames and Move Files to Final Location
 
   As I'm moving to a system with more plugins and less code in the core, and
