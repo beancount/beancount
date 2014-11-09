@@ -44,7 +44,7 @@ def D(strord=None):
     system manipulates (never use floating-point in an accounting system)..
 
     Args:
-      stdord: A string or Decimal instancė
+      stdord: A string or Decimal instance.
     Returns:
       A Decimal instance.
     """
