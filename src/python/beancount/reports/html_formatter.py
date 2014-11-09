@@ -37,9 +37,18 @@ class HTMLFormatter:
                 if not inv.is_empty()
                 else '')
 
-    def render_link(self, link):
+    def render_context(self, entry):
+        """Render a transaction context (maybe as an HTML link).
 
-        """Render a link.
+        Args:
+          entry: A directive.
+        Returns:
+          A string of HTML to be spliced inside an HTML template.
+        """
+        return ''
+
+    def render_link(self, link):
+        """Render a transaction link (maybe as an HTML link).
 
         Args:
           link: A string, the name of the link to render.

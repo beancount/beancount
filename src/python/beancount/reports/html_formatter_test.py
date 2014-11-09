@@ -13,6 +13,7 @@ class TestHTMLFormatter(unittest.TestCase):
         formatter = html_formatter.HTMLFormatter()
         formatter.render_account('Assets:US:Bank:Checking')
         formatter.render_inventory(inventory.from_string('10 CAD, 2 GOOG {500 USD}'))
+        formatter.render_context('2b4722c3f89f43841cacf16325c2')
         formatter.render_link('fc6189c48a53')
         formatter.render_doc('/path/to/my/document.pdf')
         formatter.render_event_type('location')

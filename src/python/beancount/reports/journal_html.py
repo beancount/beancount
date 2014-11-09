@@ -161,7 +161,7 @@ def html_entries_table_with_balance(oss, account_postings, formatter, render_pos
         # Render a row.
         write('''
           <tr class="{} {}" title="{}">
-            <td class="datecell">{}</td>
+            <td class="datecell"><a href="{}">{}</a></td>
             <td class="flag">{}</td>
             <td class="description" colspan="4">{}</td>
             <td class="change num">{}</td>
@@ -169,7 +169,8 @@ def html_entries_table_with_balance(oss, account_postings, formatter, render_pos
           <tr>
         '''.format(row.rowtype, row.extra_class,
                    '{}:{}'.format(entry.source.filename, entry.source.lineno),
-                   entry.date, row.flag, description,
+                   formatter.render_context(entry), entry.date,
+                   row.flag, description,
                    row.amount_str, row.balance_str))
 
         if render_postings and isinstance(entry, data.Transaction):
@@ -245,13 +246,14 @@ def html_entries_table(oss, account_postings, formatter, render_postings=True):
         # Render a row.
         write('''
           <tr class="{} {}" title="{}">
-            <td class="datecell">{}</td>
+            <td class="datecell"><a href="{}">{}</a></td>
             <td class="flag">{}</td>
             <td class="description" colspan="5">{}</td>
           <tr>
         '''.format(row.rowtype, row.extra_class,
                    '{}:{}'.format(entry.source.filename, entry.source.lineno),
-                   entry.date, row.flag, description))
+                   formatter.render_context(entry), entry.date,
+                   row.flag, description))
 
         if render_postings and isinstance(entry, data.Transaction):
             for posting in entry.postings:
