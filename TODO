@@ -66,14 +66,6 @@ beancount: TODO
   - beancount.core.getters: Should this move to ops as well? Check the
     dependency tree, see if it makes sense.
 
-  - Emerge a principle for where the following files should separate:
-
-      beancount.ops.*
-      beancount.plugins.*
-
-  - Make various attempts to simplify depgraph, we want to ship with a really
-    lean dependency graph.
-
   - Should 'bean-query not be called bean-count or bean-report? Choose a final
     name and live with it. I like 'bean-count' best. EMBRACE ONE.
     bean-report
@@ -159,6 +151,17 @@ beancount: TODO
   precise balances throughout, but no manual input is required.
 
   - Complete and merge sampled_quantization
+
+
+* Internal: Review Dependency Graph
+
+  - Emerge a principle for where the following files should separate:
+
+      beancount.ops.*
+      beancount.plugins.*
+
+  - Make various attempts to simplify depgraph, we want to ship with a really
+    lean dependency graph.
 
 
 * Current / Misc / To Be Classified
