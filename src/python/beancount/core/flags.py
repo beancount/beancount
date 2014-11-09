@@ -1,5 +1,7 @@
 """Flag constants.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 
 # Special flags;  pylint: disable=bad-whitespace
 #

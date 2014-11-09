@@ -7,6 +7,8 @@ this is the best solution in the short-term, the account types are used
 in too many places to pass around that state everywhere. Maybe we change
 this later on.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import re
 from collections import namedtuple
 

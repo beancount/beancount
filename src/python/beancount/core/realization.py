@@ -15,6 +15,8 @@ final balance of that account, resulting from its list of postings.
 You should not build RealAccount trees yourself; instead, you should filter the
 list of desired directives to display and call the realize() function with them.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import io
 import collections
 import operator

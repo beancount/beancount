@@ -1,5 +1,7 @@
 """Check that document directories mirror a list of accounts correctly.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 from beancount.core import getters
 from beancount.core import account
 

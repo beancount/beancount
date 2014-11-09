@@ -2,6 +2,8 @@
 
 This is to share my portfolio with others, or to compute its daily changes.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import argparse
 import io
 import logging

@@ -4,6 +4,8 @@ This object encapsulates the rendering of various objects to HTML.
 You may, and should, derive and override from this object in order to
 provide links within a web interface.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 from beancount.parser import printer
 
 

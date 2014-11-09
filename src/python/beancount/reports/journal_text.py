@@ -1,5 +1,7 @@
 """Text rendering routines for serving a lists of postings/entries.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import csv
 import itertools
 import math

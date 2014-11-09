@@ -16,6 +16,8 @@ About Decimal usage:
   handles more syntax, e.g., handles None, and numbers with commas.
 
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
 import re
 

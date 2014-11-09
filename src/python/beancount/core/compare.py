@@ -1,5 +1,7 @@
 """Comparison helpers for data objects.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import hashlib
 

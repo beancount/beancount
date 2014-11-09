@@ -1,5 +1,7 @@
 """Report classes for all reports that display ending journals of accounts.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 from beancount.reports import report
 from beancount.reports import journal_html
 from beancount.reports import journal_text

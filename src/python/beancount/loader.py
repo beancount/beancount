@@ -1,5 +1,7 @@
 """Loader code. This is the main entry point to load up a file.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import functools
 import textwrap
 import importlib

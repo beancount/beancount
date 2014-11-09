@@ -3,6 +3,8 @@
 This module contains reports that can convert an input file into other formats,
 such as Ledger.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import re
 import io
 

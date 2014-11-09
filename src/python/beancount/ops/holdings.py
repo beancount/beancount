@@ -1,5 +1,7 @@
 """Compute final holdings for a list of entries.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import functools
 

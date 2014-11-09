@@ -1,5 +1,7 @@
 """Beancount syntax parser.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import functools
 import inspect

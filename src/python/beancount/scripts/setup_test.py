@@ -1,5 +1,7 @@
 """A test for setup.py.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import os
 import shutil
 import sys

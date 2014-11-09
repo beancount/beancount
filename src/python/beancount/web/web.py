@@ -2,6 +2,8 @@
 Web server for Beancount ledgers.
 This uses the Bottle single-file micro web framework (with no plugins).
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import argparse
 from os import path
 import io

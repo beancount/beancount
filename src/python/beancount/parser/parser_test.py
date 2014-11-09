@@ -1,6 +1,8 @@
 """
 Tests for parser.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import unittest
 import inspect
 import tempfile

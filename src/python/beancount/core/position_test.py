@@ -1,6 +1,8 @@
 """
 Unit tests for the Position class.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import datetime
 import unittest
 import copy

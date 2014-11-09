@@ -1,6 +1,8 @@
 """
 Unit tests for the Inventory class.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import unittest
 import copy
 from datetime import date

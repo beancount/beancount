@@ -1,6 +1,8 @@
 """
 Generic utility packages and functions.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import io
 import re
 from time import time

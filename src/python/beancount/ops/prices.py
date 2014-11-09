@@ -6,6 +6,8 @@ Prices are deduced from Price entries found in the file, or perhaps
 created by scripts (for example you could build a script that will fetch
 live prices online and create entries on-the-fly).
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 
 from beancount.core.amount import ONE

@@ -1,5 +1,7 @@
 """Conversion from internal data structures to text.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import io
 import sys
 import textwrap

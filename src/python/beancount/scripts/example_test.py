@@ -1,3 +1,5 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 from beancount.utils import test_utils
 from beancount.scripts import example
 from beancount.ops import validation

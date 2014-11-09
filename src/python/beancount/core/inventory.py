@@ -38,6 +38,8 @@ pull to do this is that for positions which aren't booked, we simply leave the '
   match.
 
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import copy
 import collections
 from datetime import date

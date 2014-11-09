@@ -1,5 +1,7 @@
 """Beancount syntax lexer.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import datetime
 import re

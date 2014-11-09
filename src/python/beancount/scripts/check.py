@@ -2,6 +2,8 @@
 
 This also measures the time it takes to run all these steps.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import argparse
 import logging
 import sys

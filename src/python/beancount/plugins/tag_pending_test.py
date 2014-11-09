@@ -1,3 +1,5 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 from beancount import loader
 from beancount.plugins import tag_pending
 from beancount.utils import test_utils

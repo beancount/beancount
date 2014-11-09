@@ -71,15 +71,6 @@ beancount: TODO
     bean-report
 
 
-** Cleanup Tasks
-
-  Some amount of generic cleanup should be performed before calling the release.
-  This is just tightening up the bolts on the beast before shipping. I want to
-  have a pretty solid pylint configuration passing.
-
-  - Add __author__ to all files?
-
-
 ** Documentation / Ongoing
 
   - Complete presentation

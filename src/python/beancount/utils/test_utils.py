@@ -1,5 +1,7 @@
 """Support utillities for testing scripts.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import textwrap
 import unittest
 import io

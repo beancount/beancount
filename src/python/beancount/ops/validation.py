@@ -7,6 +7,8 @@ invariants are violated. They are not sanity checks--user data is subject to
 constraints which are hopefully detected here and which will result in errors
 trickled up to the user.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 from os import path
 import collections
 

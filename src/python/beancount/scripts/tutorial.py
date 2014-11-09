@@ -1,5 +1,7 @@
 """Write output files for the tutorial commands.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import argparse
 import logging
 import subprocess

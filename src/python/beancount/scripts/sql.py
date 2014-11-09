@@ -1,5 +1,7 @@
 """Convert a Beancount ledger into an SQL database.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import sqlite3
 import argparse
 import logging

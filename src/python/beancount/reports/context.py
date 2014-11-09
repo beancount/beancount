@@ -1,6 +1,8 @@
 """Produce a rendering of the account balances just before and after a
 particular entry is applied.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import io
 
 from beancount.parser import printer

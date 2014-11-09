@@ -1,5 +1,7 @@
 """Compute unrealized gains.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 
 from beancount.core.amount import ZERO

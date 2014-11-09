@@ -1,5 +1,7 @@
 """Text manipulation utilities.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import functools
 

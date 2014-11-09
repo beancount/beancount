@@ -1,5 +1,7 @@
 """Code used to automatically complete postings without positions.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import copy
 

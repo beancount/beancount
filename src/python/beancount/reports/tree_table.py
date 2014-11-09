@@ -1,5 +1,7 @@
 """Routines to render an HTML table with a tree of accounts.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import io
 
 from beancount.core import account_types

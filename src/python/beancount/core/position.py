@@ -16,6 +16,8 @@ A "Position" represents a specific number of units of an associated lot:
   (number, lot)
 
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import datetime
 from collections import namedtuple
 import re

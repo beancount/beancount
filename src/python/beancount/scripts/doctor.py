@@ -3,6 +3,8 @@
 This tool is able to dump lexer/parser state, and will provide other services in
 the name of debugging.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import re
 import sys
 import argparse

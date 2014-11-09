@@ -1,6 +1,8 @@
 """
 Unit tests for summarization.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 
 from datetime import date
 import datetime

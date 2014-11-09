@@ -1,6 +1,8 @@
 """
 Tests for documents.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import datetime
 import textwrap
 from os import path

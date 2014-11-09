@@ -1,5 +1,7 @@
 """Everything that relates to creating the Document directives.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import re
 import datetime
 from os import path
