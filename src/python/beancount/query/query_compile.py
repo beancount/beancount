@@ -291,7 +291,6 @@ class EvalAggregator(EvalFunction):
         "Overrriden method that stops recursion on its children here."
 
 
-
 class CompilationEnvironment:
     """Base class for all compilation contexts. A compilation context provides
     column accessors specific to the particular row objects that we will access.

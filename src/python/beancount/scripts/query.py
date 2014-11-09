@@ -228,7 +228,7 @@ def main():
                 sys.exit(1)
     else:
         # Invoke the interactive shell interpreter by default.
-        shell.run_noargs(entries, options_map)
+        shell.run_noargs(entries, errors, options_map)
 
     return 0
 

@@ -209,6 +209,25 @@ beancount: TODO
 
 * Query Language
 
+  - Remove FIXME allocate() from query_compile file.
+  - FIXME: Render the __intypes__ here nicely instead of the key.
+
+  - Complete doc generation for from, where, targets
+  - Complete doc strings in the environment
+  - Add tests for all environment functions
+  - Add interactive shell tests (somehow)
+  - Rename bean-query to bean-report
+    * Allow calling with a command-line argument directly
+    * Support a 'batch mode' format to process multiple statements (needs
+      support for redirection of output to files)
+  - Create tests for all the realistic test cases
+  - Write a documentation doc
+
+  - Implement basic JOURNAL and BALANCES transformations, even if basic.
+  - Create a setvar for style (boxed, spaced, etc.)
+  - Rename 'change' column to 'position'.
+  - Compute the special 'balance' row and produce journals with it.
+
   - Cache .format methods in renderers, they may be caching the formatting
     themselves. Time the difference, see if it matters, look at CPython
     implementation to find out.
@@ -240,7 +259,6 @@ beancount: TODO
     Something basic, but one should be able to craft a query from it and find
     out the list of legal names in each environment.
 
-  - Compute the special 'balance' row and produce journals with it.
 
 
   - Render with custom routine, not beancount.reports.table
@@ -251,7 +269,6 @@ beancount: TODO
   - Make it possible to run from the command-line in batch mode
 
 
-  - Rename 'change' column to 'position'.
 
 
   - Implement set variables for format and verbosity and display precision and what-not

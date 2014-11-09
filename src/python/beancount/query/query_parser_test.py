@@ -518,6 +518,20 @@ class TestPrint(QueryParserTestBase):
                            None, True, None)),
             "PRINT FROM date = 2014-01-01 CLOSE;")
 
+class TestOtherCommands(QueryParserTestBase):
+
+    def test_help(self):
+        self.assertParse(q.Help(None), "HELP;")
+        self.assertParse(q.Help(None), "HELP")
+
+    def test_help_topic(self):
+        self.assertParse(q.Help('something'), "HELP something;")
+
+    def test_history(self):
+        self.assertParse(q.History(), "HISTORY;")
+        self.assertParse(q.History(), "HISTORY")
+
+
 class TestExpressionName(QueryParserTestBase):
 
     def test_column(self):

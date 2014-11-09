@@ -16,10 +16,6 @@ from beancount.utils.misc_utils import cmptuple
 
 # pylint: disable=invalid-name
 
-# A wrapper for a statement, that is a command to explain this
-# statement instead of executing it.
-Explain = collections.namedtuple('Explain', 'statement')
-
 # A 'select' query action.
 #
 # Attributes:
@@ -63,6 +59,11 @@ Journal = collections.namedtuple('Journal', 'account from_clause')
 # Attributes:
 #   from_clause: An instance of 'From', or None if absent.
 Print = collections.namedtuple('Print', 'from_clause')
+
+# Errors command (prints errors and context around them).
+Errors = collections.namedtuple('Errors', '')
+
+
 
 # A parsed SELECT column or target.
 #
@@ -175,6 +176,7 @@ class Lexer:
         'EXPLAIN',
         'SELECT', 'AS', 'FROM', 'WHERE', 'OPEN', 'CLOSE', 'CLEAR', 'ON',
         'BALANCES', 'JOURNAL', 'PRINT',
+        'ERRORS',
         'GROUP', 'BY', 'HAVING', 'ORDER', 'DESC', 'ASC', 'PIVOT',
         'LIMIT', 'FLATTEN', 'DISTINCT',
         'AND', 'OR', 'NOT', 'IN',
@@ -591,24 +593,31 @@ class Parser(SelectParser):
     """PLY parser for the Beancount Query Language's full command syntax.
     """
 
-    start = 'prefixed_statement'
+    start = 'top_statement'
 
     def p_regular_statement(self, p):
-        "prefixed_statement : statement"
+        "top_statement : statement delimiter"
         p[0] = p[1]
 
     def p_explain_statement(self, p):
-        "prefixed_statement : EXPLAIN statement"
+        "top_statement : EXPLAIN statement delimiter"
         p[0] = Explain(p[2])
 
     def p_statement(self, p):
         """
-        statement : select_statement SEMI
-                  | balance_statement SEMI
-                  | journal_statement SEMI
-                  | print_statement SEMI
+        statement : select_statement
+                  | balance_statement
+                  | journal_statement
+                  | print_statement
+                  | errors_statement
         """
         p[0] = p[1]
+
+    def p_delimiter(self, p):
+        """
+        delimiter : SEMI
+                  | empty
+        """
 
     def p_balance_statement(self, p):
         """
@@ -629,8 +638,11 @@ class Parser(SelectParser):
         """
         p[0] = Print(p[2])
 
-
-
+    def p_errors_statement(self, p):
+        """
+        errors_statement : ERRORS
+        """
+        p[0] = Errors()
 
 
 def get_expression_name(expr):

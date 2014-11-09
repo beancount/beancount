@@ -20,8 +20,6 @@ from beancount.core import account
 from beancount.query import query_compile as c
 
 
-
-
 # Non-agreggating functions. These functionals maintain no state.
 
 class Length(c.EvalFunction):
