@@ -6,6 +6,7 @@ import textwrap
 
 from beancount.core import amount
 from beancount.core import complete
+from beancount.core import data
 
 
 class EntryPrinter:
@@ -139,9 +140,16 @@ def print_entries(entries, file=None, prefix=None):
     output = file or sys.stdout
     if prefix:
         output.write(prefix)
+    previous_type = type(entries[0]) if entries else None
     for entry in entries:
+        # Insert a newline between transactions and between blocks of directives
+        # of the same type.
+        entry_type = type(entry)
+        if entry_type is data.Transaction or entry_type is not previous_type:
+            output.write('\n')
+            previous_type = entry_type
+
         output.write(format_entry(entry))
-        output.write('\n')
 
 
 def render_source(source):

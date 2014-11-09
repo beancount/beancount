@@ -3,24 +3,22 @@ beancount: TODO
 * Requirements for Shipping 2.0
 ** Current
 
-  - Complete presentation
-
-
   - Fix rendering of balances for HTML journals, esp. w.r.t. example file,
     rendering lots is just _not_ the ticket.
 
       In HTML rendering, render only by units, and provide a link to a /context
       page that renders inventory befre and after just like my context utility.
 
+  - Reconcile the rendering of units, cost, lots between text and HTML reports,
+    the set of options for all of these should be the same.
+
+  - Implement unit tests for all the functions in beancount.reports.journal_text
+
 
 
   - Add more tests for intra-day trading, esp. w.r.t. ordering and inventory booking.
 
   - Complete more thorough tests for journal_text_test.py
-
-  - Improve printer to avoid inserting spaces between directives of the same
-    type, except when they are transactions. This will result in a tider output
-    that is natural and prettier.
 
 
 ** Establish Display Precision
@@ -62,40 +60,6 @@ beancount: TODO
 
   - Maybe use this routine in the BQL rendering routines instead of using the
     display precision mode in the displayed numbers only.
-
-
-** Rounding
-
-  - Implement experimental precision check suggested by Nathan Grigg
-  - Implement Equity:Rounding accumulation suggested by Nathan Grigg
-
-  - Make (SMALL_EPSILON) balance tolerance user-configurable before release.
-
-  - Infer precision from numbers like this:
-
-      >>> d = Decimal('1.2300')
-      >>> getcontext().power(10, -(len(str(d).split('.')[-1])+1)) * 5
-      Decimal('0.00005')
-
-  - Maybe provide a way to make thhis tolerance settable by commodity.
-    (See thread w/ Nathan on the mailing-list)
-
-  - Doc: https://groups.google.com/d/msg/ledger-cli/m-TgILbfrwA/YjkmOM3LHXIJ
-
-  Alright, so here's what I propose:
-
-  - I could add an option for the user to insert the name of a rounding account.
-  - This option would be empty by default, and the current behaviour would not
-    change.
-  - However, if you set an account for it, all transactions with an inexact
-    balance will receive the balance amount (and perhaps have a new leg inserted
-    on them automatically).
-
-  Would that be a reasonable compromise? With no account, you get 0.005 looseness
-  (or whatever this becomes if inference is implemented). With an account, you get
-  precise balances throughout, but no manual input is required.
-
-  - Complete and merge sampled_quantization
 
 
 ** Renames and Move Files to Final Location
@@ -151,8 +115,6 @@ beancount: TODO
 
 ** Unsure
 
-  - Implement unit tests for all the functions in beancount.reports.journal_text
-
   - Differentiate between the concept of "journal" and "register" report: a
     "journal" should include all the postings and no running balance. A
     "register" should by default only render just one account's postings and
@@ -170,13 +132,9 @@ beancount: TODO
     These should be present for a 1.0 release, even if in a rudimentary form.
 
 
-** Reports
-
-  - Reconcile the rendering of units, cost, lots between text and HTML reports,
-    the set of options for all of these should be the same.
-
-
 ** Documentation / Ongoing
+
+  - Complete presentation
 
   - Is there a script somewhere that can accept a CSV file and render a CSV
     pivot table from it?  The reason we need support is in order to carry out
@@ -185,8 +143,9 @@ beancount: TODO
     perform various operations on them, aggregations, etc. using Beancount's
     Inventory() class. This could be a powerful tool!
 
-  - Nice Health Care section is nearly complete... complete it with DEDUC and COPAY
-    legs explanation
+  - Nice Health Care section is nearly complete... complete it with DEDUC and
+    COPAY legs explanation. Write an accompanying plugin to insert the
+    deductible tracking and what-not.
 
   - Write out the taxes section, you have all the details, no need to wait
 
@@ -197,6 +156,40 @@ beancount: TODO
   - Create new doc: Computing portfolio returns using Beancount
 
   - Change script to try to download to ODT format and then batch format to ebook
+
+
+* Deal with Rounding
+
+  - Implement experimental precision check suggested by Nathan Grigg
+  - Implement Equity:Rounding accumulation suggested by Nathan Grigg
+
+  - Make (SMALL_EPSILON) balance tolerance user-configurable before release.
+
+  - Infer precision from numbers like this:
+
+      >>> d = Decimal('1.2300')
+      >>> getcontext().power(10, -(len(str(d).split('.')[-1])+1)) * 5
+      Decimal('0.00005')
+
+  - Maybe provide a way to make thhis tolerance settable by commodity.
+    (See thread w/ Nathan on the mailing-list)
+
+  - Doc: https://groups.google.com/d/msg/ledger-cli/m-TgILbfrwA/YjkmOM3LHXIJ
+
+  Alright, so here's what I propose:
+
+  - I could add an option for the user to insert the name of a rounding account.
+  - This option would be empty by default, and the current behaviour would not
+    change.
+  - However, if you set an account for it, all transactions with an inexact
+    balance will receive the balance amount (and perhaps have a new leg inserted
+    on them automatically).
+
+  Would that be a reasonable compromise? With no account, you get 0.005 looseness
+  (or whatever this becomes if inference is implemented). With an account, you get
+  precise balances throughout, but no manual input is required.
+
+  - Complete and merge sampled_quantization
 
 
 * Current / Misc / To Be Classified
