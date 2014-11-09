@@ -63,8 +63,8 @@ class TestSelectTarget(QueryParserTestBase):
             self.parse("SELECT")
 
     def test_unterminated__non_empty(self):
-        with self.assertRaises(q.ParseError):
-            self.parse("SELECT date, account")
+        # Unterminated statements are now accepted.
+        self.parse("SELECT date, account")
 
     def test_empty(self):
         with self.assertRaises(q.ParseError):
@@ -517,19 +517,6 @@ class TestPrint(QueryParserTestBase):
                                    q.Constant(datetime.date(2014, 1, 1))),
                            None, True, None)),
             "PRINT FROM date = 2014-01-01 CLOSE;")
-
-class TestOtherCommands(QueryParserTestBase):
-
-    def test_help(self):
-        self.assertParse(q.Help(None), "HELP;")
-        self.assertParse(q.Help(None), "HELP")
-
-    def test_help_topic(self):
-        self.assertParse(q.Help('something'), "HELP something;")
-
-    def test_history(self):
-        self.assertParse(q.History(), "HISTORY;")
-        self.assertParse(q.History(), "HISTORY")
 
 
 class TestExpressionName(QueryParserTestBase):

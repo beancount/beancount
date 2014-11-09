@@ -70,57 +70,6 @@ class EvalNode:
         raise NotImplementedError
 
 
-
-## FIXME: pre-process to find the aggregate nodes directly and move these
-## methods to aggregates. Remove the recursion.
-
-    def allocate(self, allocator):
-        """Allocate handles to store data for a node's aggregate storage.
-
-        This is called once before beginning aggregations. If you need any
-        kind of per-aggregate storage during the computation phase, get it
-        in this method.
-
-        Args:
-          allocator: An instance of Allocator, on which you can call allocate() to
-            obtain a handle for a slot to store data on store objects later on.
-        """
-        # Do nothing by default.
-
-    def initialize(self, store):
-        """Initialize this node's aggregate data. If the node is not an aggregate,
-        simply initialize the subnodes. Override this method in the aggregator
-        if you need data for storage.
-
-        Args:
-          store: An object indexable by handles appropriated during allocate().
-        """
-        for child in self.childnodes():
-            child.initialize(store)
-
-    def update(self, store, context):
-        """Evaluate this node. This is designed to recurse on its children.
-
-        Args:
-          store: An object indexable by handles appropriated during allocate().
-          context: The object to which the evaluation need to apply (see __call__).
-        """
-        for child in self.childnodes():
-            child.update(store, context)
-
-    def finalize(self, store):
-        """Finalize this node's aggregate data and return it.
-
-        For aggregate methods, this finalizes the node and returns the final
-        value. The context node will be the alloc instead of the context object.
-
-        Args:
-          store: An object indexable by handles appropriated during allocate().
-        """
-        for child in self.childnodes():
-            child.finalize(store)
-
-
 class EvalConstant(EvalNode):
     __slots__ = ('value',)
 
@@ -281,14 +230,51 @@ class EvalAggregator(EvalFunction):
     # We should not have to recurse any further because there should be no
     # aggregations under an aggregation node.
 
-    def agg_initialize(self, _):
-        "Overrriden method that stops recursion on its children here."
+## FIXME: pre-process to find the aggregate nodes directly and move these
+## methods to aggregates. Remove the recursion.
 
-    def update(self, _, __):
-        "Overrriden method that stops recursion on its children here."
+    def allocate(self, allocator):
+        """Allocate handles to store data for a node's aggregate storage.
 
-    def finalize(self, _):
-        "Overrriden method that stops recursion on its children here."
+        This is called once before beginning aggregations. If you need any
+        kind of per-aggregate storage during the computation phase, get it
+        in this method.
+
+        Args:
+          allocator: An instance of Allocator, on which you can call allocate() to
+            obtain a handle for a slot to store data on store objects later on.
+        """
+        # Do nothing by default.
+
+    def initialize(self, store):
+        """Initialize this node's aggregate data. If the node is not an aggregate,
+        simply initialize the subnodes. Override this method in the aggregator
+        if you need data for storage.
+
+        Args:
+          store: An object indexable by handles appropriated during allocate().
+        """
+        # Do nothing by default.
+
+    def update(self, store, context):
+        """Evaluate this node. This is designed to recurse on its children.
+
+        Args:
+          store: An object indexable by handles appropriated during allocate().
+          context: The object to which the evaluation need to apply (see __call__).
+        """
+        # Do nothing by default.
+
+    def finalize(self, store):
+        """Finalize this node's aggregate data and return it.
+
+        For aggregate methods, this finalizes the node and returns the final
+        value. The context node will be the alloc instead of the context object.
+
+        Args:
+          store: An object indexable by handles appropriated during allocate().
+        """
+        # Do nothing by default.
 
 
 class CompilationEnvironment:

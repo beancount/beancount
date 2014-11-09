@@ -209,7 +209,6 @@ beancount: TODO
 
 * Query Language
 
-  - Remove FIXME allocate() from query_compile file.
   - FIXME: Render the __intypes__ here nicely instead of the key.
 
   - Complete doc generation for from, where, targets
@@ -222,6 +221,10 @@ beancount: TODO
       support for redirection of output to files)
   - Create tests for all the realistic test cases
   - Write a documentation doc
+
+  - In docs: explain five ways to "get data out": web, report, query,
+    export/convert, write script.
+
 
   - Implement basic JOURNAL and BALANCES transformations, even if basic.
   - Create a setvar for style (boxed, spaced, etc.)
