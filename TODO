@@ -300,15 +300,6 @@ beancount: TODO
 
 
 
-  - Build an 'statement' tool that will render a treeified balance sheet in two
-    columns! Limit it to use the beginning of a line, and hard-code to use the
-    five known categories (optionally changeable). It's okay if the tool is a
-    bit more limited than treeify. It should optionally do the treeification.
-    It should also optionally sort the account names (or not).
-
-    * Add a --title option to render at the top.
-
-
   - Flatten should parse closer to distinct keyword, as in SELECT FLATTEN ...
 
   - Maybe add format keyword followed by the desired format instead of a set var
