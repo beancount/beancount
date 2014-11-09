@@ -372,7 +372,7 @@ class BQLShell(DispatchingShell):
           {functions}
 
         """).strip()
-        print(template.format(**generate_env_attribute_list(self.env_entries)))
+        print(template.format(**generate_env_attribute_list(self.env_postings)))
 
 
 def generate_env_attribute_list(env):
@@ -418,10 +418,23 @@ def generate_env_attributes(wrapper, field_dict, filter_pred=None):
     # Expand the name if its key has argument types.
     #
     # FIXME: Render the __intypes__ here nicely instead of the key.
-    flat_items = [(("{}({})".format(name[0], ','.join(cls.__name__ for cls in name[1:]))
-                    if isinstance(name, tuple)
-                    else name), column_cls)
-                  for name, column_cls in field_dict.items()]
+    flat_items = []
+    for name, column_cls in field_dict.items():
+        if isinstance(name, tuple):
+            name = name[0]
+
+        if issubclass(column_cls, query_compile.EvalFunction):
+            name = name.upper()
+            args = []
+            for dtypes in column_cls.__intypes__:
+                if isinstance(dtypes, (tuple, list)):
+                    arg = '|'.join(dtype.__name__ for dtype in dtypes)
+                else:
+                    arg = dtypes.__name__
+                args.append(arg)
+            name = "{}({})".format(name, ','.join(args))
+
+        flat_items.append((name, column_cls))
 
     # Render each of the attributes.
     oss = io.StringIO()

@@ -209,10 +209,6 @@ beancount: TODO
 
 * Query Language
 
-  - FIXME: Render the __intypes__ here nicely instead of the key.
-
-  - Complete doc generation for from, where, targets
-  - Complete doc strings in the environment
   - Add tests for all environment functions
   - Add interactive shell tests (somehow)
   - Rename bean-query to bean-report
@@ -386,6 +382,11 @@ beancount: TODO
 
         account, change_number, change_currency, change_cost_number, change_cost_currency, change_lot_date, change_lot_label
 
+
+
+  - Idea: support entry.<field> in the targets and where clauses. This would
+    remove the need to have duplicated columns, would make the language simpler
+    and more intuitive.
 
 
 

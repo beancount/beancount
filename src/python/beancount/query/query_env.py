@@ -17,12 +17,14 @@ from beancount.core import amount
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import account
+from beancount.core import data
 from beancount.query import query_compile as c
 
 
 # Non-agreggating functions. These functionals maintain no state.
 
 class Length(c.EvalFunction):
+    "Compute the length of the argument. This works on sequences."
     __intypes__ = [(list, set, str)]
 
     def __init__(self, operands):
@@ -33,6 +35,7 @@ class Length(c.EvalFunction):
         return len(args[0])
 
 class Str(c.EvalFunction):
+    "Convert the argument to a string."
     __intypes__ = [object]
 
     def __init__(self, operands):
@@ -46,6 +49,7 @@ class Str(c.EvalFunction):
 # Operations on dates.
 
 class Year(c.EvalFunction):
+    "Extract the year from a date."
     __intypes__ = [datetime.date]
 
     def __init__(self, operands):
@@ -56,6 +60,7 @@ class Year(c.EvalFunction):
         return args[0].year
 
 class Month(c.EvalFunction):
+    "Extract the month from a date."
     __intypes__ = [datetime.date]
 
     def __init__(self, operands):
@@ -66,6 +71,7 @@ class Month(c.EvalFunction):
         return args[0].month
 
 class Day(c.EvalFunction):
+    "Extract the day from a date."
     __intypes__ = [datetime.date]
 
     def __init__(self, operands):
@@ -76,7 +82,7 @@ class Day(c.EvalFunction):
         return args[0].day
 
 class Weekday(c.EvalFunction):
-    "Outputs a 3-letter locale-specific code."
+    "Extract a 3-letter weekday from a date."
     __intypes__ = [datetime.date]
 
     def __init__(self, operands):
@@ -104,6 +110,7 @@ class Parent(c.EvalFunction):
 # Operation on inventories.
 
 class UnitsPosition(c.EvalFunction):
+    "Get the number of units of a position (stripping cost)."
     __intypes__ = [position.Position]
 
     def __init__(self, operands):
@@ -114,6 +121,7 @@ class UnitsPosition(c.EvalFunction):
         return args[0].get_units()
 
 class CostPosition(c.EvalFunction):
+    "Get the cost of a position."
     __intypes__ = [position.Position]
 
     def __init__(self, operands):
@@ -142,6 +150,7 @@ SIMPLE_FUNCTIONS = {
 # and manage state for a single iteration.
 
 class Count(c.EvalAggregator):
+    "Count the number of occurrences of the argument."
     __intypes__ = [object]
 
     def __init__(self, operands):
@@ -160,6 +169,7 @@ class Count(c.EvalAggregator):
         return store[self.handle]
 
 class Sum(c.EvalAggregator):
+    "Calculate the sum of the numerical argument."
     __intypes__ = [(int, float, Decimal)]
 
     def __init__(self, operands):
@@ -193,6 +203,7 @@ class SumBase(c.EvalAggregator):
         return store[self.handle]
 
 class SumAmount(SumBase):
+    "Calculate the sum of the amount. The result is an Inventory."
     __intypes__ = [amount.Amount]
 
     def update(self, store, posting):
@@ -200,6 +211,7 @@ class SumAmount(SumBase):
         store[self.handle].add_amount(value)
 
 class SumPosition(SumBase):
+    "Calculate the sum of the position. The result is an Inventory."
     __intypes__ = [position.Position]
 
     def update(self, store, posting):
@@ -207,6 +219,7 @@ class SumPosition(SumBase):
         store[self.handle].add_position(value)
 
 class SumInventory(SumBase):
+    "Calculate the sum of the inventories. The result is an Inventory."
     __intypes__ = [inventory.Inventory]
 
     def update(self, store, posting):
@@ -214,6 +227,7 @@ class SumInventory(SumBase):
         store[self.handle].add_inventory(value)
 
 class First(c.EvalAggregator):
+    "Keep the first of the values seen."
     __intypes__ = [object]
 
     def __init__(self, operands):
@@ -234,6 +248,7 @@ class First(c.EvalAggregator):
         return store[self.handle]
 
 class Last(c.EvalAggregator):
+    "Keep the last of the values seen."
     __intypes__ = [object]
 
     def __init__(self, operands):
@@ -253,6 +268,7 @@ class Last(c.EvalAggregator):
         return store[self.handle]
 
 class Min(c.EvalAggregator):
+    "Compute the minimum of the values."
     __intypes__ = [object]
 
     def __init__(self, operands):
@@ -273,6 +289,7 @@ class Min(c.EvalAggregator):
         return store[self.handle]
 
 class Max(c.EvalAggregator):
+    "Compute the maximum of the values."
     __intypes__ = [object]
 
     def __init__(self, operands):
@@ -310,6 +327,9 @@ AGGREGATOR_FUNCTIONS = {
 # Column accessors for entries.
 
 class IdEntryColumn(c.EvalColumn):
+    "Unique id of a directive."
+    __intypes__ = [data.Transaction]
+
     def __init__(self):
         super().__init__(str)
 
@@ -317,6 +337,9 @@ class IdEntryColumn(c.EvalColumn):
         return hash_entry(entry)
 
 class TypeEntryColumn(c.EvalColumn):
+    "The data type of the directive."
+    __intypes__ = [data.Transaction]
+
     def __init__(self):
         super().__init__(str)
 
@@ -324,6 +347,9 @@ class TypeEntryColumn(c.EvalColumn):
         return type(entry).__name__.lower()
 
 class FilenameEntryColumn(c.EvalColumn):
+    "The filename where the directive was parsed from or created."
+    __intypes__ = [data.Transaction]
+
     def __init__(self):
         super().__init__(str)
 
@@ -331,6 +357,9 @@ class FilenameEntryColumn(c.EvalColumn):
         return entry.source.filename
 
 class LineNoEntryColumn(c.EvalColumn):
+    "The line number from the file the directive was parsed from."
+    __intypes__ = [data.Transaction]
+
     def __init__(self):
         super().__init__(int)
 
@@ -338,6 +367,9 @@ class LineNoEntryColumn(c.EvalColumn):
         return entry.source.lineno
 
 class DateEntryColumn(c.EvalColumn):
+    "The date of the directive."
+    __intypes__ = [data.Transaction]
+
     def __init__(self):
         super().__init__(datetime.date)
 
@@ -345,6 +377,9 @@ class DateEntryColumn(c.EvalColumn):
         return entry.date
 
 class YearEntryColumn(c.EvalColumn):
+    "The year of the date of the directive."
+    __intypes__ = [data.Transaction]
+
     def __init__(self):
         super().__init__(int)
 
@@ -352,6 +387,9 @@ class YearEntryColumn(c.EvalColumn):
         return entry.date.year
 
 class MonthEntryColumn(c.EvalColumn):
+    "The month of the date of the directive."
+    __intypes__ = [data.Transaction]
+
     def __init__(self):
         super().__init__(int)
 
@@ -359,6 +397,9 @@ class MonthEntryColumn(c.EvalColumn):
         return entry.date.month
 
 class DayEntryColumn(c.EvalColumn):
+    "The day of the date of the directive."
+    __intypes__ = [data.Transaction]
+
     def __init__(self):
         super().__init__(int)
 
@@ -366,6 +407,9 @@ class DayEntryColumn(c.EvalColumn):
         return entry.date.day
 
 class FlagEntryColumn(c.EvalColumn):
+    "The flag the transaction."
+    __intypes__ = [data.Transaction]
+
     def __init__(self):
         super().__init__(str)
 
@@ -375,6 +419,9 @@ class FlagEntryColumn(c.EvalColumn):
                 else None)
 
 class PayeeEntryColumn(c.EvalColumn):
+    "The payee of the transaction."
+    __intypes__ = [data.Transaction]
+
     def __init__(self):
         super().__init__(str)
 
@@ -384,6 +431,9 @@ class PayeeEntryColumn(c.EvalColumn):
                 else None)
 
 class NarrationEntryColumn(c.EvalColumn):
+    "The narration of the transaction."
+    __intypes__ = [data.Transaction]
+
     def __init__(self):
         super().__init__(str)
 
@@ -396,6 +446,9 @@ class NarrationEntryColumn(c.EvalColumn):
 EMPTY_SET = frozenset()
 
 class TagsEntryColumn(c.EvalColumn):
+    "The set of tags of the transaction."
+    __intypes__ = [data.Transaction]
+
     def __init__(self):
         super().__init__(set)
 
@@ -405,6 +458,9 @@ class TagsEntryColumn(c.EvalColumn):
                 else EMPTY_SET)
 
 class LinksEntryColumn(c.EvalColumn):
+    "The set of links of the transaction."
+    __intypes__ = [data.Transaction]
+
     def __init__(self):
         super().__init__(set)
 
@@ -417,6 +473,8 @@ class LinksEntryColumn(c.EvalColumn):
 
 
 class MatchAccount(c.EvalFunction):
+    """A predicate, true if the transaction has at least one posting matching
+    the regular expression argument."""
     __intypes__ = [str]
 
     def __init__(self, operands):
@@ -464,6 +522,9 @@ class FilterEntriesEnvironment(c.CompilationEnvironment):
 # Column accessors for postings.
 
 class IdColumn(c.EvalColumn):
+    "The unique id of the parent transaction for this posting."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(str)
 
@@ -471,6 +532,9 @@ class IdColumn(c.EvalColumn):
         return hash_entry(posting.entry)
 
 class TypeColumn(c.EvalColumn):
+    "The data type of the parent transaction for this posting."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(str)
 
@@ -478,6 +542,9 @@ class TypeColumn(c.EvalColumn):
         return type(posting.entry).__name__.lower()
 
 class FilenameColumn(c.EvalColumn):
+    "The filename where the posting was parsed from or created."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(str)
 
@@ -485,6 +552,9 @@ class FilenameColumn(c.EvalColumn):
         return posting.entry.source.filename
 
 class LineNoColumn(c.EvalColumn):
+    "The line number from the file the posting was parsed from."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(int)
 
@@ -492,6 +562,9 @@ class LineNoColumn(c.EvalColumn):
         return posting.entry.source.lineno
 
 class DateColumn(c.EvalColumn):
+    "The date of the parent transaction for this posting."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(datetime.date)
 
@@ -499,6 +572,9 @@ class DateColumn(c.EvalColumn):
         return posting.entry.date
 
 class YearColumn(c.EvalColumn):
+    "The year of the date of the parent transaction for this posting."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(int)
 
@@ -506,6 +582,9 @@ class YearColumn(c.EvalColumn):
         return posting.entry.date.year
 
 class MonthColumn(c.EvalColumn):
+    "The month of the date of the parent transaction for this posting."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(int)
 
@@ -513,6 +592,9 @@ class MonthColumn(c.EvalColumn):
         return posting.entry.date.month
 
 class DayColumn(c.EvalColumn):
+    "The day of the date of the parent transaction for this posting."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(int)
 
@@ -520,6 +602,9 @@ class DayColumn(c.EvalColumn):
         return posting.entry.date.day
 
 class FlagColumn(c.EvalColumn):
+    "The flag of the parent transaction for this posting."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(str)
 
@@ -527,6 +612,9 @@ class FlagColumn(c.EvalColumn):
         return posting.entry.flag
 
 class PayeeColumn(c.EvalColumn):
+    "The payee of the parent transaction for this posting."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(str)
 
@@ -534,6 +622,9 @@ class PayeeColumn(c.EvalColumn):
         return posting.entry.payee or ''
 
 class NarrationColumn(c.EvalColumn):
+    "The narration of the parent transaction for this posting."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(str)
 
@@ -541,6 +632,9 @@ class NarrationColumn(c.EvalColumn):
         return posting.entry.narration
 
 class TagsColumn(c.EvalColumn):
+    "The set of tags of the parent transaction for this posting."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(set)
 
@@ -548,6 +642,9 @@ class TagsColumn(c.EvalColumn):
         return posting.entry.tags or EMPTY_SET
 
 class LinksColumn(c.EvalColumn):
+    "The set of links of the parent transaction for this posting."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(set)
 
@@ -555,6 +652,9 @@ class LinksColumn(c.EvalColumn):
         return posting.entry.links or EMPTY_SET
 
 class PostingFlagColumn(c.EvalColumn):
+    "The flag of the posting itself."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(str)
 
@@ -562,6 +662,9 @@ class PostingFlagColumn(c.EvalColumn):
         return posting.flag
 
 class AccountColumn(c.EvalColumn):
+    "The account of the posting."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(str)
 
@@ -569,6 +672,9 @@ class AccountColumn(c.EvalColumn):
         return posting.account
 
 class NumberColumn(c.EvalColumn):
+    "The number of units of the posting."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(Decimal)
 
@@ -576,6 +682,9 @@ class NumberColumn(c.EvalColumn):
         return posting.position.number
 
 class CurrencyColumn(c.EvalColumn):
+    "The currency of the posting."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(str)
 
@@ -583,6 +692,9 @@ class CurrencyColumn(c.EvalColumn):
         return posting.position.lot.currency
 
 class CostNumberColumn(c.EvalColumn):
+    "The number of cost units of the posting."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(Decimal)
 
@@ -590,6 +702,9 @@ class CostNumberColumn(c.EvalColumn):
         return posting.position.lot.cost.number if posting.position.lot.cost else ZERO
 
 class CostCurrencyColumn(c.EvalColumn):
+    "The cost currency of the posting."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(str)
 
@@ -597,6 +712,9 @@ class CostCurrencyColumn(c.EvalColumn):
         return posting.position.lot.cost.currency if posting.position.lot.cost else ''
 
 class ChangeColumn(c.EvalColumn):
+    "The position for the posting. These can be summed into inventories."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(position.Position)
 
@@ -604,6 +722,9 @@ class ChangeColumn(c.EvalColumn):
         return posting.position
 
 class PriceColumn(c.EvalColumn):
+    "The price attached to the posting."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(amount.Amount)
 
@@ -611,6 +732,9 @@ class PriceColumn(c.EvalColumn):
         return posting.price
 
 class WeightColumn(c.EvalColumn):
+    "The computed weight used for this posting."
+    __intypes__ = [data.Posting]
+
     def __init__(self):
         super().__init__(amount.Amount)
 
