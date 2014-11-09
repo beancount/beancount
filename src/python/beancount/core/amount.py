@@ -130,8 +130,9 @@ class Amount:
         """
         number = self.number
 
-        # FIXME: The better way to do this would be to let the user specify a
-        # desired rendering precision for each currency.
+        # Note: The better way to do this would be to let the user specify a
+        # desired rendering precision for each currency. We will correctly
+        # handle this when we review the display precision.
         if number == number.quantize(DISPLAY_QUANTIZE):
             return "{:,.2f} {}".format(number, self.currency)
         else:

@@ -47,8 +47,8 @@ def output_transactions(connection, entries):
             flag 		CHARACTER(1),
             payee 		VARCHAR,
             narration 		VARCHAR,
-            tags                VARCHAR,  -- FIXME: Should refer to an auxiliary table.
-            links               VARCHAR   -- FIXME: Should refer to an auxiliary table.
+            tags                VARCHAR, -- Comma-separated
+            links               VARCHAR  -- Comma-separated
           );
         """)
 

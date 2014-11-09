@@ -205,16 +205,10 @@ def render_overlay():
           <li><a href="{}">Errors</a></li>
         </ul>
       </div>'''.format(app.router.build('errors'))
-    # FIXME: Disabled fancy overlay for now, until we figure out how to
-    # smoothly make it fade out.
-    #
-    # formatter = HTMLFormatter(request.app.get_url, leaf_only=False)
-    # oss = io.StringIO()
-    # oss.write('<div id="overlay">\n')
-    # report_ = misc_reports.ErrorReport.from_args(formatter=formatter)
-    # report_.render_htmldiv([], app.errors, app.options, oss)
-    # oss.write('</div>\n')
-    # return oss.getvalue()
+
+    # It would be nice to have a fancy overlay here, that automatically appears
+    # after parsing if there are errors and that automatically smoothly fades
+    # out.
 
 
 def render_global(*args, **kw):

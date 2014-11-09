@@ -9,6 +9,8 @@ beancount: TODO
 
   - Add more tests for intra-day trading, esp. w.r.t. ordering and inventory booking.
 
+  - Allow the printer control over whether commas are to be rendered or not.
+
 
 ** Establish Display Precision
 
@@ -23,7 +25,6 @@ beancount: TODO
     MAXDIGITS_PRINTER, etc., based on all usage. I think this is not the way I
     want it to be.
 
-  - Allow the printer control over whether commas are to be rendered or not.
 
   - Fix the alignment of the rendered postings by printer, it's out of whack.
     See example.beancount file, doesn't look nice anymore. Has to do with
@@ -90,44 +91,12 @@ beancount: TODO
   This is just tightening up the bolts on the beast before shipping. I want to
   have a pretty solid pylint configuration passing.
 
-  - Fix all FIXMEs everywhere, or convert them to items in this list.
-
-  - Configure and run a clean pylint on the entire codebase.
-
   - Add __author__ to all files?
-
-  - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
-
-
-** Unsure
-
-  - Differentiate between the concept of "journal" and "register" report: a
-    "journal" should include all the postings and no running balance. A
-    "register" should by default only render just one account's postings and
-    render a running balance column. This is the distinction between the two,
-    and making this distinction will allow us to produce two useful but
-    distinct reports for the console output, even if these are somewhat similar
-    for the web output.
-
-    This should probably be done before the release, so that at least the first
-    version has some decent console reports, even if the revamp of reports
-    comes later on.
-
-
-  - Implement text report for journal, income statement and balance sheet.
-    These should be present for a 1.0 release, even if in a rudimentary form.
 
 
 ** Documentation / Ongoing
 
   - Complete presentation
-
-  - Is there a script somewhere that can accept a CSV file and render a CSV
-    pivot table from it?  The reason we need support is in order to carry out
-    operations on columns of inventories. Maybe we should impleemnted some sort
-    of swiss-knife tool that is able to parse inventories from columns and
-    perform various operations on them, aggregations, etc. using Beancount's
-    Inventory() class. This could be a powerful tool!
 
   - Nice Health Care section is nearly complete... complete it with DEDUC and
     COPAY legs explanation. Write an accompanying plugin to insert the
@@ -135,19 +104,39 @@ beancount: TODO
 
   - Write out the taxes section, you have all the details, no need to wait
 
-  - Clean up this TODO file, reorganize sections, remove what's redundant from
-    the proposal files.
+  - Create new proposal doc: Inter account transfer
 
-  - Create new doc: Inter account transfer
-  - Create new doc: Computing portfolio returns using Beancount
+  - Create new project doc: Computing portfolio returns using Beancount
 
   - Change script to try to download to ODT format and then batch format to ebook
+
+
+* Standalone Tools
+
+  - Build an 'statement' tool that will render a treeified balance sheet in two
+    columns! Limit it to use the beginning of a line, and hard-code to use the
+    five known categories (optionally changeable). It's okay if the tool is a
+    bit more limited than treeify. It should optionally do the treeification.
+    It should also optionally sort the account names (or not).
+
+    * Add a --title option to render at the top.
+
+  - 'csv-pivot': build this: a script that can accept a CSV file and render a
+    CSV pivot table from it. The reason we need support is in order to carry out
+    operations on columns of inventories. Maybe we should impleemnted some sort
+    of swiss-knife tool that is able to parse inventories from columns and
+    perform various operations on them, aggregations, etc. using Beancount's
+    Inventory() class. This could be a powerful tool! Make it possible to parse
+    and create Inventory objects from cells.
+
 
 
 * Deal with Rounding
 
   - Implement experimental precision check suggested by Nathan Grigg
   - Implement Equity:Rounding accumulation suggested by Nathan Grigg
+
+  - Remove b.c.amount.DISPLAY_QUANTIZE if possible.
 
   - Make (SMALL_EPSILON) balance tolerance user-configurable before release.
 
@@ -184,6 +173,42 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - (web) In the web interface, it would be nice to have a fancy overlay here,
+    that automatically appears after parsing if there are errors and that
+    automatically smoothly fades out.
+
+  - Configure more pylint tests and make them pass. We're using a small subset
+    at the moment.
+
+
+  - Perhaps should build a version of treeify for internal usage that works on
+    HTML columns, off of HTML text. Or BETTER: just a stateful tool that can
+    transform an account's name to indent it properly every time you feed it the
+    full account name! This could be used by the routine that want to render
+    columns as tree. Maybe 'treeify' should use that as well. That would make a
+    lot of sense.
+
+
+  - In bean-sql, render out the tags to their own table and create a 1:N join
+    table for them. Also, flatten out lots and refer to unique lots so that
+    trades can be easily identified by looking at all entries that relate to a
+    particular lot.
+
+
+  - Extend the option syntax to allow an optional arbitrary configuration
+    expression for plugins, instead of the current method:
+
+      option "plugin" "<module>" "<options>"
+
+    Actually, make plugin its own directive:
+
+      plugin "<module>" "<options>"
+
+    A more potent configuration will allow me to move in a lot of the
+    experiments into the main directory, including some of my own personal
+    plugins, which require a more extensive configuration.
 
 
   - Eventually you want to clean up the locations of the example files. I think
@@ -1481,6 +1506,9 @@ beancount: TODO
 
   - Support in test_utils.capture('stdout', 'stderr') as (stdout, stderr).
     Replace all nested code that is inconvenient.
+
+
+  - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
 
 
 

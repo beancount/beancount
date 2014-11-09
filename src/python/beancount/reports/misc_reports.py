@@ -149,8 +149,6 @@ class ActivityReport(report.HTMLReport,
         cutoff = self.args.cutoff
         errors = []
 
-        # FIXME(reports): This renders not as a tree, and also the Liabilities table
-        # is not the same width. Fix this, this doesn't look good.
         account_types = options.get_account_types(options_map)
         for root in (account_types.assets,
                      account_types.liabilities):
