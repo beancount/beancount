@@ -1,7 +1,6 @@
 import textwrap
 
 from beancount.utils import test_utils
-from beancount.utils import test_utils
 from beancount.reports import context
 from beancount import loader
 

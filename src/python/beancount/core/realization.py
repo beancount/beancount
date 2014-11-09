@@ -32,7 +32,6 @@ from beancount.core import inventory
 from beancount.core import amount
 from beancount.core import data
 from beancount.core import account
-from beancount.core import account
 from beancount.core import complete
 from beancount.core import flags
 

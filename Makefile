@@ -190,7 +190,7 @@ dep-constraints: build/beancount.deps
 
 # Run the linter on all source code.
 #LINT_PASS=line-too-long,bad-whitespace,bad-continuation,bad-indentation
-LINT_PASS=line-too-long,bad-whitespace,bad-indentation,unused-import,invalid-name
+LINT_PASS=line-too-long,bad-whitespace,bad-indentation,unused-import,invalid-name,reimported
 LINT_FAIL=bad-continuation
 
 pylint-pass:

@@ -6,7 +6,6 @@ from beancount.core.data import create_simple_posting_with_cost as PCost
 from beancount.core import complete
 from beancount.core import data
 from beancount.core import inventory
-from beancount.core import complete
 from beancount.core import amount
 from beancount.parser import parser
 from beancount.parser import cmptest

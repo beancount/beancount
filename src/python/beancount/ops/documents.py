@@ -8,7 +8,6 @@ from collections import namedtuple
 from beancount.core.data import Document
 from beancount.core import account
 from beancount.core import data
-from beancount.core import data
 from beancount.core import getters
 
 __plugins__ = ('process_documents', 'verify_document_files_exist')
