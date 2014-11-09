@@ -512,10 +512,6 @@ def index():
             ("Holdings by Currency", "holdings_bycurrency"),
             ("Net Worth", "networth"),
             ("Commodities", "commodities"),
-            # FIXME: Add those.
-            #("Print", "print"),
-            #("Prices Database", "pricedb"),
-            #("Accounts", "accounts"),
             ("Events", "event_index"),
             ("Activity/Update", "activity"),
             ("Statistics (Types)", "stats_types"),

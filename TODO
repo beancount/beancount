@@ -3,12 +3,6 @@ beancount: TODO
 * Requirements for Shipping 2.0
 ** Current
 
-  - Fix rendering of balances for HTML journals, esp. w.r.t. example file,
-    rendering lots is just _not_ the ticket.
-
-      In HTML rendering, render only by units, and provide a link to a /context
-      page that renders inventory befre and after just like my context utility.
-
   - Implement unit tests for all the functions in beancount.reports.journal_text
   - Complete more thorough tests for journal_text_test.py
 
@@ -63,9 +57,6 @@ beancount: TODO
   with the intermediate reports stage instead of just the web interface, it's
   becoming clearer where some files need to move. Try to make these moves
   before shipping, so that things don't move nearly as much later on.
-
-  - Move examples/tutoral/example.beancount -> examples/example.beancount, does
-    not need to be under tutorial/
 
   - Maybe beancount.core.complete should be called beancount.core.interpolate.
     That's the term I've been using for a while now isn't it. Clean up
@@ -193,6 +184,11 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - Eventually you want to clean up the locations of the example files. I think
+    the basic.beancount and starterkit.beancount files aren't really that useful
+    anymore, other than for automated testing.
 
 
   - You should add tests to ensure that an Inventory() can never have positions
