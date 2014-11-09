@@ -42,7 +42,6 @@ import copy
 import collections
 from datetime import date
 
-from beancount.core.amount import D
 from beancount.core.amount import ZERO
 from beancount.core.amount import Amount
 from beancount.core.position import Lot

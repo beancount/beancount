@@ -115,7 +115,7 @@ class TestPosition(unittest.TestCase):
         self.assertTrue(pos1.lot is pos2.lot)
 
     def test_quantities(self):
-        A = Amount.from_string
+        A = Amount.from_string  # pylint: disable=invalid-name
 
         pos = Position(Lot("USD", None, None), D('10'))
         self.assertEqual(A('10 USD'), pos.get_units())
