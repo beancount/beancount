@@ -9,21 +9,6 @@ from beancount.core import realization
 from beancount.core import flags
 
 
-def balance_html(balance_inventory):
-    """Render a list of balance positions for an HTML table cell.
-
-    Each position is rendered on its own HTML row.
-
-    Args:
-      balance_inventory: An instance of Inventory.
-    Return:
-      A string, a snippet of HTML.
-    """
-    return ('<br/>'.join(map(str, balance_inventory.get_positions()))
-            if not balance_inventory.is_empty()
-            else '')
-
-
 # Names to render for transaction rows.
 FLAG_ROWTYPES = {
     flags.FLAG_PADDING  : 'Padding',
@@ -61,7 +46,8 @@ def iterate_html_postings(postings, formatter):
 
     Args:
       postings: A list of Posting or directive instances.
-      formatter: An instance of HTMLFormatter, to be render accounts, links and docs.
+      formatter: An instance of HTMLFormatter, to be render accounts,
+        inventories, links and docs.
     Yields:
       Instances of Row tuples. See above.
     """
@@ -69,7 +55,7 @@ def iterate_html_postings(postings, formatter):
         entry, leg_postings, change, entry_balance = entry_line
 
         # Prepare the data to be rendered for this row.
-        balance_str = balance_html(entry_balance)
+        balance_str = formatter.render_inventory(entry_balance)
 
         rowtype = entry.__class__.__name__
         flag = ''
@@ -85,7 +71,7 @@ def iterate_html_postings(postings, formatter):
                 description = ('<span class="payee">{}</span>'
                                '<span class="pnsep">|</span>'
                                '{}').format(entry.payee, description)
-            amount_str = balance_html(change)
+            amount_str = formatter.render_inventory(change)
 
             if entry.links and formatter:
                 links = [formatter.render_link(link) for link in entry.links]
@@ -143,7 +129,8 @@ def html_entries_table_with_balance(oss, account_postings, formatter, render_pos
     Args:
       oss: A file object to write the output to.
       account_postings: A list of Posting or directive instances.
-      formatter: An instance of HTMLFormatter, to be render accounts, links and docs.
+      formatter: An instance of HTMLFormatter, to be render accounts,
+        inventories, links and docs.
       render_postings: A boolean; if true, render the postings as rows under the
         main transaction row.
     """
@@ -227,7 +214,8 @@ def html_entries_table(oss, account_postings, formatter, render_postings=True):
     Args:
       oss: A file object to write the output to.
       account_postings: A list of Posting or directive instances.
-      formatter: An instance of HTMLFormatter, to be render accounts, links and docs.
+      formatter: An instance of HTMLFormatter, to be render accounts,
+        inventories, links and docs.
       render_postings: A boolean; if true, render the postings as rows under the
         main transaction row.
     """

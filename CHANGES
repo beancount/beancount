@@ -2,3 +2,15 @@
    beancount: CHANGES
 ========================
 
+2014-11-09
+
+  - Made default rendering for changes and balances of HTML reports by units().
+    Rendering all the lots was horrible in even moderately complex stock trading
+    accounts with a few positions. Now we aggregate by currency ("units").
+
+     In order for the user to be able to view the previously available lot
+     detail from the web interface, we now provide a link to the "context",
+     which is a link specific to a transaction that renders the balances for all
+     the accounts just before the transaction is applied, and just after.
+
+  (Beginning to summarize user-facing changes here.)

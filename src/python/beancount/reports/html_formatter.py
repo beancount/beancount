@@ -22,7 +22,23 @@ class HTMLFormatter:
         """
         return account_name
 
+    def render_inventory(self, inv):
+        """Render an inventory.
+
+        You can use this opportunity to convert the inventory to units or cost
+        or whatever.
+
+        Args:
+          inv: An Inventory instance.
+        Returns:
+          A string of HTM to be spliced inside a table cell.
+        """
+        return ('<br/>'.join(map(str, inv.get_positions()))
+                if not inv.is_empty()
+                else '')
+
     def render_link(self, link):
+
         """Render a link.
 
         Args:

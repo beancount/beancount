@@ -27,9 +27,9 @@ from beancount.parser import options
 from beancount.parser import printer
 from beancount import loader
 from beancount.web import views
-from beancount.reports import journal_html
 from beancount.reports import html_formatter
 from beancount.reports import balance_reports
+from beancount.reports import journal_html
 from beancount.reports import journal_reports
 from beancount.reports import holdings_reports
 from beancount.reports import price_reports
@@ -80,6 +80,10 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
                     indent, account_name)
             else:
                 return '<span "account">{}</span>'.format(account_name)
+
+    def render_inventory(self, inv):
+        """Override this formatter to convert the inventory to units only."""
+        return super().render_inventory(inv.units())
 
     def render_link(self, link):
         """See base class."""

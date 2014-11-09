@@ -10,23 +10,6 @@ from beancount.reports import html_formatter
 from beancount.reports import journal_html
 
 
-class TestHTMLBalance(unittest.TestCase):
-
-    def test_balance_html(self):
-        balance = inventory.Inventory()
-        self.assertEqual('', journal_html.balance_html(balance))
-
-        balance = inventory.Inventory.from_string('111 USD, 222 CAD, 3 GOOG {400 USD}')
-        html_balance = journal_html.balance_html(balance)
-        self.assertTrue(re.search(r'\b111\b', html_balance))
-        self.assertTrue(re.search(r'\bUSD\b', html_balance))
-        self.assertTrue(re.search(r'\b222\b', html_balance))
-        self.assertTrue(re.search(r'\bCAD\b', html_balance))
-        self.assertTrue(re.search(r'\b3\b', html_balance))
-        self.assertTrue(re.search(r'\bGOOG\b', html_balance))
-        self.assertTrue(re.search(r'\b400\b', html_balance))
-
-
 class TestJournalRender(unittest.TestCase):
 
     @loader.loaddoc

@@ -9,16 +9,11 @@ beancount: TODO
       In HTML rendering, render only by units, and provide a link to a /context
       page that renders inventory befre and after just like my context utility.
 
-  - Reconcile the rendering of units, cost, lots between text and HTML reports,
-    the set of options for all of these should be the same.
-
   - Implement unit tests for all the functions in beancount.reports.journal_text
-
+  - Complete more thorough tests for journal_text_test.py
 
 
   - Add more tests for intra-day trading, esp. w.r.t. ordering and inventory booking.
-
-  - Complete more thorough tests for journal_text_test.py
 
 
 ** Establish Display Precision

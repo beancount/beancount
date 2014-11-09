@@ -118,9 +118,7 @@ class TestScriptPositions(test_utils.TestCase):
         output = stdout.getvalue()
         self.assertLines("""
            2014-01-15 price GOOG             512.01 USD
-
            2014-02-01 price GOOG             524.02 USD
-
            2014-02-10 price GOOG             536.03 USD
         """, output)
 
