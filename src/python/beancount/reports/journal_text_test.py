@@ -57,8 +57,9 @@ class TestJournalRenderPosting(unittest.TestCase):
                          position.from_string('10 VHT {45.32 USD}'),
                          amount.from_string('47.00 USD'), None),
             self.number_format)
-        self.assertEqual('  Assets:Something                 10 VHT {45.32 USD} @ 47.00 USD',
-                         str_posting)
+        self.assertEqual(
+            '  Assets:Something                 10 VHT {45.32 USD} @ 47.00 USD',
+            str_posting)
 
 
 class TestJournalTextRender(unittest.TestCase):

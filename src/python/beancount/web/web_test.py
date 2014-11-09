@@ -1,6 +1,5 @@
 import unittest
 from os import path
-import os
 import re
 import argparse
 import sys
@@ -12,7 +11,7 @@ from beancount.web import web
 from beancount.utils import test_utils
 
 
-debug = False
+DEBUG = False
 
 
 def scrape_urls(url_format, predicate, ignore_regexp=None):
@@ -33,11 +32,11 @@ def scrape_urls(url_format, predicate, ignore_regexp=None):
 
         # Skip served documents.
         if ignore_regexp and re.match(ignore_regexp, url):
-            if debug:
+            if DEBUG:
                 print("Skipping: {}".format(url), file=sys.stderr)
             continue
 
-        if debug:
+        if DEBUG:
             print("Processing: {}".format(url), file=sys.stderr)
 
         # Fetch the URL and check its return status.
