@@ -1,5 +1,6 @@
 import datetime
 import re
+import textwrap
 
 from beancount.core import data
 from beancount.parser import parser
@@ -9,9 +10,9 @@ from beancount.ops import validation
 
 class TestValidateInventoryBooking(cmptest.TestCase):
 
-    @parser.parsedoc
-    def test_validate_inventory_booking(self, entries, errors, options_map):
-        """
+    def setUp(self):
+        self.input_str = textwrap.dedent("""
+
         2014-01-01 open Assets:Investments:Cash
         2014-01-01 open Assets:Investments:Stock
 
@@ -35,12 +36,9 @@ class TestValidateInventoryBooking(cmptest.TestCase):
           Assets:Investments:Stock  -15 GOOG {500 USD}
           Assets:Investments:Cash
 
-        """
-        validation_errors = validation.validate_inventory_booking(entries, options_map)
+        """)
 
-        self.assertEqual([validation.ValidationError, validation.ValidationError],
-                         list(map(type, validation_errors)))
-        self.assertEqualEntries("""
+        self.expected_errors_str = textwrap.dedent("""
 
         2014-06-24 * "Go negative from zero"
           Assets:Investments:Stock  -1 GOOG {500 USD}
@@ -50,10 +48,27 @@ class TestValidateInventoryBooking(cmptest.TestCase):
           Assets:Investments:Stock  -15 GOOG {500 USD}
           Assets:Investments:Cash
 
-        """, [e.entry for e in validation_errors])
+        """)
+
+    def do_validate_inventory_booking(self, input_str, expected_errors_str):
+        entries, errors, options_map = parser.parse_string(input_str)
+        validation_errors = validation.validate_inventory_booking(entries, options_map)
+
+        self.assertEqual([validation.ValidationError, validation.ValidationError],
+                         list(map(type, validation_errors)))
+        self.assertEqualEntries(expected_errors_str,
+                                [e.entry for e in validation_errors])
+
+    def test_validate_inventory_booking(self):
+        self.do_validate_inventory_booking(self.input_str, self.expected_errors_str)
+
+    def test_validate_inventory_booking__same_day(self):
+        input_str = re.sub(r'\b2\d\b', '22', self.input_str)
+        expected_errors_str = re.sub(r'\b2\d\b', '22', self.expected_errors_str)
+        self.do_validate_inventory_booking(input_str, expected_errors_str)
 
     @parser.parsedoc
-    def test_negative_lots(self, entries, errors, options_map):
+    def test_simple_negative_lots(self, entries, errors, options_map):
         """
           2013-05-01 open Assets:Bank:Investing
           2013-05-01 open Equity:Opening-Balances

@@ -7,8 +7,6 @@ beancount: TODO
   - Complete more thorough tests for journal_text_test.py
 
 
-  - Add more tests for intra-day trading, esp. w.r.t. ordering and inventory booking.
-
   - Allow the printer control over whether commas are to be rendered or not.
 
 
