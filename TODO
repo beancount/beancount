@@ -1,20 +1,16 @@
 -*- mode: org -*-
 beancount: TODO
 * Requirements for Shipping 2.0
-** Current
-
-  - Implement unit tests for all the functions in beancount.reports.journal_text
-  - Complete more thorough tests for journal_text_test.py
-
-
-  - Allow the printer control over whether commas are to be rendered or not.
-
-
 ** Establish Display Precision
 
   - Build a routine that can compute the commonly used precision for each
     currency and (currency, account) pairs, and derive a PrecisionContext
     object that can then be used to render all the data.
+
+  - Create a DisplayContext that contains settings for how to render numbers:
+    the precision by currency, whether commas should be printed or not.
+
+  - Allow the printer control over whether commas are to be rendered or not.
 
 
   - Write unit tests for display precision, this isn't too great now.

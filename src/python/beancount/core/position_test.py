@@ -37,6 +37,10 @@ class TestPosition(unittest.TestCase):
         lot_date = datetime.date(2014, 6, 15)
         self.assertEqual(Position(Lot("GOOG", cost, lot_date), D('2.2')), pos)
 
+        # Missing currency.
+        with self.assertRaises(ValueError):
+            pos = from_string('2.2 GOOG {532.43}')
+
     def test_strs(self):
         pos = from_string('2.2 GOOG {532.43 USD / 2014-06-15}')
         self.assertEqual(('2.20 GOOG', '{532.43 USD / 2014-06-15}'), pos.strs())

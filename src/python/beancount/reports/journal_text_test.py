@@ -1,9 +1,64 @@
 import io
 import unittest
 
-from beancount import loader
+from beancount.core.amount import D
 from beancount.core import realization
+from beancount.core import amount
+from beancount.core import position
+from beancount.core import data
 from beancount.reports import journal_text
+from beancount import loader
+
+
+class TestAmountColumnSizer(unittest.TestCase):
+
+    def test_sizer(self):
+        sizer = journal_text.AmountColumnSizer('balance')
+        sizer.update(D('10'), 'USD')
+        sizer.update(D('200'), 'GOOG')
+        sizer.update(D('3000.01'), 'GOOGL')
+        self.assertEqual(4, sizer.get_number_width())
+        self.assertEqual('{0:>10.4f} {1:<5}', sizer.get_format(4))
+        self.assertEqual('{balance:<16}', sizer.get_generic_format(4))
+
+
+class TestJournalRenderPosting(unittest.TestCase):
+
+    number_format = '{} {}'
+
+    def test_render_posting_no_cost(self):
+        str_posting = journal_text.render_posting(
+            data.Posting(None, 'Assets:Something',
+                         position.from_string('100 USD'), None, None),
+            self.number_format)
+        self.assertEqual('  Assets:Something                 100 USD',
+                         str_posting)
+
+    def test_render_posting_cost(self):
+        str_posting = journal_text.render_posting(
+            data.Posting(None, 'Assets:Something',
+                         position.from_string('10 VHT {45.32 USD}'), None, None),
+            self.number_format)
+        self.assertEqual('  Assets:Something                 10 VHT {45.32 USD}',
+                         str_posting)
+
+    def test_render_posting_price(self):
+        str_posting = journal_text.render_posting(
+            data.Posting(None, 'Assets:Something',
+                         position.from_string('10 VHT'),
+                         amount.from_string('45.32 USD'), None),
+            self.number_format)
+        self.assertEqual('  Assets:Something                 10 VHT @ 45.32 USD',
+                         str_posting)
+
+    def test_render_posting_cost_price(self):
+        str_posting = journal_text.render_posting(
+            data.Posting(None, 'Assets:Something',
+                         position.from_string('10 VHT {45.32 USD}'),
+                         amount.from_string('47.00 USD'), None),
+            self.number_format)
+        self.assertEqual('  Assets:Something                 10 VHT {45.32 USD} @ 47.00 USD',
+                         str_posting)
 
 
 class TestJournalTextRender(unittest.TestCase):
@@ -50,6 +105,30 @@ class TestJournalTextRender(unittest.TestCase):
         real_root = realization.realize(self.entries)
         self.real_account = realization.get(real_root, 'Assets:Checking')
         self.postings = realization.get_postings(self.real_account)
+
+    def test_get_entry_text_description(self):
+        expected_descriptions = [
+            'Assets:Checking',
+            'Assets:Investing',
+            'Assets:Savings',
+            'Income:MountainOfMoney',
+            'Equity:Opening-Balances',
+            '-',
+            '(Padding inserted for Balance of 100.00 USD for difference 100.00 USD)',
+            'PASS - In Assets:Checking',
+            'Salary',
+            'PASS - In Assets:Checking',
+            'Something to say',
+            '/path/to/document.pdf',
+            'Transfer',
+            'Investment',
+            '-',
+            'FAIL - In Assets:Checking; expected = 0.00 USD, difference = 600.00 USD',
+            'Assets:Checking',
+            ]
+        for expected_description, entry in zip(expected_descriptions, self.entries):
+            self.assertEqual(expected_description,
+                             journal_text.get_entry_text_description(entry))
 
     def test_combinations(self):
         for width in (80, 200):

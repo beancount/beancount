@@ -81,10 +81,10 @@ class AmountColumnSizer:
           fields.
         """
         return ('{{0:>{width:d}.{precision:d}f}} {{1:<{currency_width}}}').format(
-                    prefix=self.prefix,
-                    width=1 + self.get_number_width() + 1 + precision,
-                    precision=precision,
-                    currency_width=self.max_currency_width)
+            prefix=self.prefix,
+            width=1 + self.get_number_width() + 1 + precision,
+            precision=precision,
+            currency_width=self.max_currency_width)
 
 
 # Verbosity levels.
@@ -250,6 +250,9 @@ def render_posting(posting, number_format):
     Returns:
       A string, the rendered posting.
     """
+    # Note: there's probably no need to redo the work of rendering here... see
+    # if you can't just simply replace this by Position.str().
+
     position = posting.position
     amount = position.get_units()
     strings = [
@@ -259,7 +262,7 @@ def render_posting(posting, number_format):
         ]
 
     if position.lot.cost:
-        cost = position.get_cost()
+        cost = position.lot.cost
         strings.append('{{{}}}'.format(number_format.format(cost.number,
                                                             cost.currency).strip()))
 
