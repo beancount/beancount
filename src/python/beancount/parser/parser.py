@@ -177,6 +177,17 @@ class Builder(lexer.LexBuilder):
         else:
             option = self.options[key]
             if isinstance(option, list):
+                # Process the 'plugin' option specially: accept an optional
+                # argument from it. NOTE: We will eventually phase this out and
+                # replace it by a dedicated 'plugin' directive.
+                if key == 'plugin':
+                    match = re.match('(.*):(.*)', value)
+                    if match:
+                        plugin_name, plugin_config = match.groups()
+                    else:
+                        plugin_name, plugin_config = value, None
+                    value = (plugin_name, plugin_config)
+
                 # Append to a list of values.
                 option.append(value)
             else:
@@ -196,6 +207,18 @@ class Builder(lexer.LexBuilder):
             if key.startswith('name_'):
                 # Update the set of valid account types.
                 self.account_regexp = valid_account_regexp(self.options)
+
+    def plugin(self, filename, lineno, plugin_name, plugin_config):
+        """Process a plugin directive.
+
+        Args:
+          filename: current filename.
+          lineno: current line number.
+          plugin_name: A string, the name of the plugin module to import.
+          plugin_config: A string or None, an optional configuration string to
+            pass in to the plugin module.
+        """
+        self.options['plugin'].append((plugin_name, plugin_config))
 
     def amount(self, number, currency):
         """Process an amount grammar rule.

@@ -91,6 +91,7 @@ const char* getTokenName(int token);
 %token PUSHTAG             /* 'pushtag' keyword */
 %token POPTAG              /* 'poptag' keyword */
 %token OPTION              /* 'option' keyword */
+%token PLUGIN              /* 'plugin' keyword */
 %token <pyobj> DATE        /* A date object */
 %token <pyobj> ACCOUNT     /* The name of an account */
 %token <pyobj> CURRENCY    /* A currency specification */
@@ -364,11 +365,23 @@ option : OPTION STRING STRING eol
           DECREF2($2, $3);
        }
 
+plugin : PLUGIN STRING eol
+       {
+          BUILD("plugin", "siOO", FILE_LINE_ARGS, $2, Py_None);
+          DECREF1($2);
+       }
+       | PLUGIN STRING STRING eol
+       {
+          BUILD("plugin", "siOO", FILE_LINE_ARGS, $2, $3);
+          DECREF2($2, $3);
+       }
+
 directive : SKIPPED
           | empty_line
           | pushtag
           | poptag
           | option
+          | plugin
 
 
 declarations : declarations directive

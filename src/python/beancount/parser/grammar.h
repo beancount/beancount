@@ -73,13 +73,14 @@ extern int yydebug;
     PUSHTAG = 283,
     POPTAG = 284,
     OPTION = 285,
-    DATE = 286,
-    ACCOUNT = 287,
-    CURRENCY = 288,
-    STRING = 289,
-    NUMBER = 290,
-    TAG = 291,
-    LINK = 292
+    PLUGIN = 286,
+    DATE = 287,
+    ACCOUNT = 288,
+    CURRENCY = 289,
+    STRING = 290,
+    NUMBER = 291,
+    TAG = 292,
+    LINK = 293
   };
 #endif
 
@@ -94,7 +95,7 @@ union YYSTYPE
     const char* string;
     PyObject* pyobj;
 
-#line 98 "src/python/beancount/parser/grammar.h" /* yacc.c:1909  */
+#line 99 "src/python/beancount/parser/grammar.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

@@ -140,6 +140,7 @@ document	{ return DOCUMENT; }
 pushtag	        { return PUSHTAG; }
 poptag		{ return POPTAG; }
 option		{ return OPTION; }
+plugin		{ return PLUGIN; }
 
  /* Dates. */
 [0-9]{4,}[\-/][0-9]+[\-/][0-9]+	{
