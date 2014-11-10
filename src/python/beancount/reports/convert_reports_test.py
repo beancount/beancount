@@ -1,9 +1,11 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import tempfile
 import datetime
 import subprocess
 
 from beancount.utils import test_utils
-from beancount.scripts import query
+from beancount.scripts import report
 from beancount.scripts import example
 from beancount.parser import parser
 from beancount.parser import cmptest
@@ -100,7 +102,7 @@ class TestLedgerConversion(test_utils.TestCase):
 
         """
         with test_utils.capture() as stdout:
-            result = test_utils.run_with_args(query.main, [filename, 'ledger'])
+            result = test_utils.run_with_args(report.main, [filename, 'ledger'])
         self.assertEqual(0, result)
         self.assertLines("""
 
@@ -131,7 +133,7 @@ class TestLedgerConversion(test_utils.TestCase):
 
         """
         with test_utils.capture() as stdout:
-            result = test_utils.run_with_args(query.main, [filename, 'ledger'])
+            result = test_utils.run_with_args(report.main, [filename, 'ledger'])
         self.assertEqual(0, result)
         self.assertLines("""
 
@@ -166,7 +168,7 @@ class TestLedgerConversion(test_utils.TestCase):
             with tempfile.NamedTemporaryFile('w', suffix='.ledger') as lgrfile:
                 with test_utils.capture() as stdout:
                     result = test_utils.run_with_args(
-                        query.main, [beanfile.name, '-o', lgrfile.name, 'ledger'])
+                        report.main, [beanfile.name, '-o', lgrfile.name, 'ledger'])
                 self.assertEqual(0, result)
 
                 self.check_parses_ledger(lgrfile.name)

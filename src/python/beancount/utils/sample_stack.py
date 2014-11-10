@@ -8,6 +8,8 @@ the low-level functions. With the utilities in this file, I can just pepper
 those locations with stack samplers which tell me where those low-level functions
 are invoked.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import shelve
 import sys
 import traceback

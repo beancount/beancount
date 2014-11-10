@@ -16,6 +16,8 @@ A "Position" represents a specific number of units of an associated lot:
   (number, lot)
 
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import datetime
 from collections import namedtuple
 import re
@@ -281,8 +283,9 @@ class Position:
         """
         match = re.match(
             (r'\s*([-+]?[0-9.]+)\s+({currency})'
-             '(\s+{{([-+]?[0-9.]+)\s+({currency})'
-             '(\s*/\s*(\d\d\d\d-\d\d-\d\d))?}})?').format(currency=CURRENCY_RE),
+             r'(\s+{{([-+]?[0-9.]+)\s+({currency})'
+             r'(\s*/\s*(\d\d\d\d-\d\d-\d\d))?}})?'
+             r'\s*$').format(currency=CURRENCY_RE),
             string)
         if not match:
             raise ValueError("Invalid string for position: '{}'".format(string))

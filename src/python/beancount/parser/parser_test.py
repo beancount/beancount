@@ -1,6 +1,8 @@
 """
 Tests for parser.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import unittest
 import inspect
 import tempfile
@@ -12,8 +14,8 @@ from beancount.parser import parser
 from beancount.parser import lexer
 from beancount.core import data
 from beancount.core import amount
-from beancount.core import complete
-from beancount.core import complete_test
+from beancount.core import interpolate
+from beancount.core import interpolate_test
 
 
 def check_list(test, objlist, explist):
@@ -184,7 +186,7 @@ class TestParserComplete(unittest.TestCase):
             Expenses:Restaurant         100 USD
         """
         check_list(self, entries, [data.Transaction])
-        check_list(self, errors, 1 if complete_test.ERRORS_ON_RESIDUAL else 0)
+        check_list(self, errors, 1 if interpolate_test.ERRORS_ON_RESIDUAL else 0)
         entry = entries[0]
         self.assertEqual(1, len(entry.postings))
 
@@ -557,7 +559,8 @@ class TestTransactions(unittest.TestCase):
         """
         check_list(self, entries, [data.Transaction])
         check_list(self, errors,
-                   [complete.BalanceError] if complete_test.ERRORS_ON_RESIDUAL else [])
+                   [interpolate.BalanceError]
+                   if interpolate_test.ERRORS_ON_RESIDUAL else [])
 
     @parsedoc
     def test_no_postings(self, entries, errors, _):

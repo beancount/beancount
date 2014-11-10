@@ -1,3 +1,5 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import unittest
 
 from beancount.reports import journal_reports

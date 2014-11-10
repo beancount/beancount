@@ -1,3 +1,5 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 from beancount.core.amount import D
 from beancount.core import data
 from beancount.ops import implicit_prices

@@ -1,6 +1,8 @@
 """
 Tests for cmptest base test class.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import textwrap
 import re
 

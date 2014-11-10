@@ -193,9 +193,12 @@ sfood-checker:
 dep-constraints: build/beancount.deps
 	./etc/dependency-constraints.py $<
 
+check-author:
+	find src/python/beancount -type f -name '*.py' ! -exec grep -q '__author__' {} \; -print
+
 # Run the linter on all source code.
 #LINT_PASS=line-too-long,bad-whitespace,bad-continuation,bad-indentation
-LINT_PASS=line-too-long,bad-whitespace,bad-indentation,unused-import,invalid-name
+LINT_PASS=line-too-long,bad-whitespace,bad-indentation,unused-import,invalid-name,reimported
 LINT_FAIL=bad-continuation
 
 pylint-pass:

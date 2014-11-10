@@ -1,6 +1,8 @@
 """
 Tests for test utilities.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import unittest
 import os
 import sys

@@ -2,6 +2,8 @@
 
 This is meant to be used as an error diagnostic tool.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import re
 import sys
 import subprocess

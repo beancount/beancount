@@ -3,6 +3,8 @@
 This tool is able to dump lexer/parser state, and will provide other services in
 the name of debugging.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import re
 import sys
 import argparse
@@ -15,12 +17,12 @@ from beancount.parser import options
 from beancount.parser import printer
 from beancount.core import compare
 from beancount.core import data
-from beancount.core import complete
 from beancount.core import getters
 from beancount import loader
 from beancount.utils import misc_utils
 from beancount.scripts import directories
 from beancount.scripts import checkdeps
+from beancount.reports import context
 
 
 def do_dump_lexer(filename, unused_args):
@@ -46,7 +48,7 @@ def do_roundtrip(filename, unused_args):
     """
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     logging.info("Read the entries")
-    entries, errors, options = loader.load(filename)
+    entries, errors, options = loader.load_file(filename)
     printer.print_errors(errors, file=sys.stderr)
 
     logging.info("Print them out to a file")
@@ -108,7 +110,7 @@ def do_directories(filename, args):
         case will be interpreted as the names of root directories to validate against
         the accounts in the given ledger.
     """
-    entries, _, __ = loader.load(filename)
+    entries, _, __ = loader.load_file(filename)
 
     directories.validate_directories(entries, args)
 
@@ -165,51 +167,10 @@ def do_context(filename, args):
     lineno = int(args[0])
 
     # Load the input file.
-    entries, errors, options = loader.load(filename)
+    entries, errors, options = loader.load_file(filename)
 
-    # Find the closest entry.
-    closest_entry = data.find_closest(entries, filename, lineno)
-    if closest_entry is None:
-        raise SystemExit("No entry could be found before {}:{}".format(filename, lineno))
-    source = closest_entry.source
-    print("{}:{}:".format(source.filename, source.lineno))
-
-    # Get the entry's accounts and accumulate the balances of these accounts up
-    # to the entry.
-    balance_before, balance_after = complete.compute_entry_context(entries, closest_entry)
-
-    # Get the list of account sorted by the order in which they appear in the
-    # closest entry.
-    accounts = sorted(balance_before.keys())
-    if isinstance(closest_entry, data.Transaction):
-        ordering = {posting.account: index
-                    for (index, posting) in enumerate(closest_entry.postings)}
-        accounts = sorted(accounts, key=ordering.get)
-
-    # Create a format line for printing the contents of account balances.
-    max_account_width = max(map(len, accounts)) if accounts else 1
-    position_line = '; {{:1}} {{:{width}}}  {{:>49}}'.format(width=max_account_width)
-
-    # Print the context before.
-    print()
-    before_hashes = set()
-    for account in accounts:
-        for position in balance_before[account].get_positions():
-            before_hashes.add((account, hash(position)))
-            print(position_line.format('', account, str(position)))
-        print()
-
-    # Print the entry itself.
-    print()
-    printer.print_entry(closest_entry)
-
-    # Print the context after.
-    print()
-    for account in accounts:
-        for position in balance_after[account].get_positions():
-            changed = (account, hash(position)) not in before_hashes
-            print(position_line.format('!' if changed else '', account, str(position)))
-        print()
+    str_context = context.render_entry_context(entries, filename, lineno)
+    sys.stdout.write(str_context)
 
 
 def do_missing_open(filename, args):
@@ -223,7 +184,7 @@ def do_missing_open(filename, args):
       args: A tuple of the rest of arguments. We're expecting the first argument
         to be an integer as a string.
     """
-    entries, errors, options = loader.load(filename)
+    entries, errors, options = loader.load_file(filename)
 
     # Get accounts usage and open directives.
     first_use_map, _ = getters.get_accounts_use_map(entries)

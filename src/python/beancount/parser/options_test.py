@@ -1,6 +1,8 @@
 """
 Test various options.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import unittest
 
 from beancount.parser import parsedoc

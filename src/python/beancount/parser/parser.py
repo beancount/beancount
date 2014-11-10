@@ -1,5 +1,7 @@
 """Beancount syntax parser.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import functools
 import inspect
@@ -25,9 +27,9 @@ from beancount.core.data import Note
 from beancount.core.data import Document
 from beancount.core.data import Source
 from beancount.core.data import Posting
-from beancount.core.complete import balance_incomplete_postings
-from beancount.core.complete import compute_residual
-from beancount.core.complete import SMALL_EPSILON
+from beancount.core.interpolate import balance_incomplete_postings
+from beancount.core.interpolate import compute_residual
+from beancount.core.interpolate import SMALL_EPSILON
 
 from beancount.parser import _parser
 from beancount.parser import lexer
@@ -605,6 +607,7 @@ def parse_file(filename, **kw):
 # Alias, for compatibility.
 # pylint: disable=invalid-name
 parse = parse_file
+
 
 def parse_string(string, **kw):
     """Parse a beancount input file and return Ledger with the list of

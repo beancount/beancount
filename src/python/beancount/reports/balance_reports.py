@@ -1,5 +1,7 @@
 """Report classes for all reports that display ending balances of accounts.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import re
 
 from beancount.reports import report

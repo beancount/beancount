@@ -4,6 +4,8 @@ This object encapsulates the rendering of various objects to HTML.
 You may, and should, derive and override from this object in order to
 provide links within a web interface.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 from beancount.parser import printer
 
 
@@ -22,8 +24,33 @@ class HTMLFormatter:
         """
         return account_name
 
+    def render_inventory(self, inv):
+        """Render an inventory.
+
+        You can use this opportunity to convert the inventory to units or cost
+        or whatever.
+
+        Args:
+          inv: An Inventory instance.
+        Returns:
+          A string of HTM to be spliced inside a table cell.
+        """
+        return ('<br/>'.join(map(str, inv.get_positions()))
+                if not inv.is_empty()
+                else '')
+
+    def render_context(self, entry):
+        """Render a transaction context (maybe as an HTML link).
+
+        Args:
+          entry: A directive.
+        Returns:
+          A string of HTML to be spliced inside an HTML template.
+        """
+        return ''
+
     def render_link(self, link):
-        """Render a link.
+        """Render a transaction link (maybe as an HTML link).
 
         Args:
           link: A string, the name of the link to render.

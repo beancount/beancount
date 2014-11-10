@@ -1,6 +1,8 @@
 """
 Tests for lexer.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import datetime
 import functools
 import textwrap

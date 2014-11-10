@@ -1,5 +1,7 @@
 """This plugin validates that there are no duplicate transactions.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 from beancount.core import compare
 
 __plugins__ = ('validate_no_duplicates',)

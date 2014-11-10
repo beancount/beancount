@@ -1,5 +1,7 @@
 """Basic data structures used to represent the Ledger entries.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import datetime
 from collections import namedtuple
 import sys

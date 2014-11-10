@@ -6,6 +6,26 @@ rejected, and the reasons why they were rejected.
 
 * Rejected Ideas
 
+  - Differentiate between the concept of "journal" and "register" report: a
+    "journal" should include all the postings and no running balance. A
+    "register" should by default only render just one account's postings and
+    render a running balance column. This is the distinction between the two,
+    and making this distinction will allow us to produce two useful but
+    distinct reports for the console output, even if these are somewhat similar
+    for the web output.
+
+    This should probably be done before the release, so that at least the first
+    version has some decent console reports, even if the revamp of reports
+    comes later on.
+
+  - Implement text report for journal, income statement and balance sheet.
+    These should be present for a 1.0 release, even if in a rudimentary form.
+
+      *REJECTED* The BQL query syntax will support both these uses cases, no
+      need to spend more time working on the custom reports (I'm hoping to replace
+      them entirely by the query syntax eventually.)
+
+
   - Support Ledger's aliases?
 
       *REJECTED*: This is not necessary, and it adds yet another special case for

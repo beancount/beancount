@@ -2,10 +2,13 @@
 Web server for Beancount ledgers.
 This uses the Bottle single-file micro web framework (with no plugins).
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import argparse
 from os import path
 import io
 import logging
+import re
 import sys
 import time
 import threading
@@ -18,6 +21,7 @@ from beancount.core import data
 from beancount.core import getters
 from beancount.core import account
 from beancount.core import account_types
+from beancount.core import compare
 from beancount.ops import basicops
 from beancount.ops import prices
 from beancount.utils import misc_utils
@@ -27,13 +31,14 @@ from beancount.parser import options
 from beancount.parser import printer
 from beancount import loader
 from beancount.web import views
-from beancount.reports import journal_html
 from beancount.reports import html_formatter
 from beancount.reports import balance_reports
+from beancount.reports import journal_html
 from beancount.reports import journal_reports
 from beancount.reports import holdings_reports
 from beancount.reports import price_reports
 from beancount.reports import misc_reports
+from beancount.reports import context
 
 
 class HTMLFormatter(html_formatter.HTMLFormatter):
@@ -48,6 +53,10 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
         self.build_url = build_url
         self.leaf_only = leaf_only
         self.view_links = view_links
+
+    def build_global(self, *args, **kwds):
+        "Render to global application."
+        return app.router.build(*args, **kwds)
 
     EMS_PER_COMPONENT = 1.5
 
@@ -81,9 +90,21 @@ class HTMLFormatter(html_formatter.HTMLFormatter):
             else:
                 return '<span "account">{}</span>'.format(account_name)
 
+    def render_inventory(self, inv):
+        """Override this formatter to convert the inventory to units only."""
+        return super().render_inventory(inv.units())
+
+    def render_context(self, entry):
+        """See base class."""
+        # Note: rendering to global application.
+        # Note(2): we could avoid rendering links to summarizing and transfer
+        # entries which are not going to be found.
+        return self.build_global('context', ehash=compare.hash_entry(entry))
+
     def render_link(self, link):
         """See base class."""
-        return self.build_url('link', link=link)
+        # Note: rendering to global application.
+        return self.build_global('link', link=link)
 
     def render_doc(self, filename):
         """See base class."""
@@ -186,16 +207,10 @@ def render_overlay():
           <li><a href="{}">Errors</a></li>
         </ul>
       </div>'''.format(app.router.build('errors'))
-    # FIXME: Disabled fancy overlay for now, until we figure out how to
-    # smoothly make it fade out.
-    #
-    # formatter = HTMLFormatter(request.app.get_url, leaf_only=False)
-    # oss = io.StringIO()
-    # oss.write('<div id="overlay">\n')
-    # report_ = misc_reports.ErrorReport.from_args(formatter=formatter)
-    # report_.render_htmldiv([], app.errors, app.options, oss)
-    # oss.write('</div>\n')
-    # return oss.getvalue()
+
+    # It would be nice to have a fancy overlay here, that automatically appears
+    # after parsing if there are errors and that automatically smoothly fades
+    # out.
 
 
 def render_global(*args, **kw):
@@ -338,6 +353,35 @@ def link(link=None):
         contents=oss.getvalue())
 
 
+@app.route('/context/<ehash:re:[a-fA-F0-9]*>', name='context')
+def context_(ehash=None):
+    "Render the before & after context around a transaction entry."
+
+    matching_entries = [entry
+                        for entry in app.entries
+                        if ehash == compare.hash_entry(entry)]
+
+    oss = io.StringIO()
+    if len(matching_entries) == 0:
+        print("ERROR: Could not find matching entry for '{}'".format(ehash),
+              file=oss)
+
+    elif len(matching_entries) > 1:
+        print("ERROR: Ambiguous entries for '{}'".format(ehash),
+              file=oss)
+        print(file=oss)
+        printer.print_entries(matching_entries, file=oss)
+
+    else:
+        oss.write("<pre>\n")
+        for entry in matching_entries:
+            oss.write(context.render_entry_context(
+                app.entries, entry.source.filename, entry.source.lineno))
+        oss.write("</pre>\n")
+
+    return render_global(
+        pagetitle="Context: {}".format(ehash),
+        contents=oss.getvalue())
 
 
 
@@ -464,10 +508,6 @@ def index():
             ("Holdings by Currency", "holdings_bycurrency"),
             ("Net Worth", "networth"),
             ("Commodities", "commodities"),
-            # FIXME: Add those.
-            #("Print", "print"),
-            #("Prices Database", "pricedb"),
-            #("Accounts", "accounts"),
             ("Events", "event_index"),
             ("Activity/Update", "activity"),
             ("Statistics (Types)", "stats_types"),
@@ -642,12 +682,6 @@ def doc(filename=None):
     # Redirect to global page.
     bottle.redirect(app.router.build('doc', filename=filename))
 
-@viewapp.route('/link/<link:re:.*>', name='link')
-def link(link=None):
-    # Redirect to global page.
-    bottle.redirect(app.router.build('link', link=link))
-
-
 @viewapp.route('/documents', name='documents')
 def documents():
     "Render a tree with all the documents found."
@@ -788,15 +822,19 @@ def url_restrict_generator(url_prefix):
       A handler decorator.
     """
     # A list of URLs that should always be accepted, even when restricted.
-    allowed = ['/web.css',
-               '/favicon.ico',
-               '/toc',
-               '/errors',
-               '/source']
+    allowed_regexps = [re.compile(regexp).match
+                       for regexp in ['/web.css',
+                                      '/favicon.ico',
+                                      '/toc',
+                                      '/errors',
+                                      '/source',
+                                      '/link',
+                                      '/context']]
 
     def url_restrict_handler(callback):
         def wrapper(*args, **kwargs):
-            if request.path in allowed or request.path.startswith(url_prefix):
+            if (any(match(request.path) for match in allowed_regexps) or
+                request.path.startswith(url_prefix)):
                 return callback(*args, **kwargs)
             if request.path == '/':
                 bottle.redirect(url_prefix)
@@ -869,7 +907,7 @@ def auto_reload_input_file(callback):
                 app.source = f.read()
 
             # Parse the beancount file.
-            entries, errors, options_map = loader.load(filename)
+            entries, errors, options_map = loader.load_file(filename)
 
             # Print out the list of errors.
             if errors:

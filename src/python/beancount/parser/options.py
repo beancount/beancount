@@ -1,6 +1,8 @@
 """
 Declaration of options and their default values.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import io
 import textwrap

@@ -1,6 +1,8 @@
 """Getter functions that operate on lists of entries to return various lists of
 things that they reference, accounts, tags, links, currencies, etc.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 from collections import defaultdict
 
 from beancount.core.data import Transaction

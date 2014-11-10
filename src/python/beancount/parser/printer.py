@@ -1,11 +1,14 @@
 """Conversion from internal data structures to text.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import io
 import sys
 import textwrap
 
 from beancount.core import amount
-from beancount.core import complete
+from beancount.core import interpolate
+from beancount.core import data
 
 
 class EntryPrinter:
@@ -39,7 +42,7 @@ class EntryPrinter:
 
         oss.write('{e.date} {e.flag} {}\n'.format(' '.join(strings), e=entry))
 
-        non_trivial_balance = any(map(complete.has_nontrivial_balance, entry.postings))
+        non_trivial_balance = any(map(interpolate.has_nontrivial_balance, entry.postings))
         for posting in entry.postings:
             cls.Posting(cls, posting, oss, non_trivial_balance)
 
@@ -60,7 +63,7 @@ class EntryPrinter:
 
         if print_balance:
             if posting.position:
-                balance_amount = complete.get_posting_weight(posting)
+                balance_amount = interpolate.get_posting_weight(posting)
                 balance_amount_str = balance_amount.str(amount.MAXDIGITS_PRINTER)
             else:
                 balance_amount_str = 'UNKNOWN'
@@ -139,9 +142,16 @@ def print_entries(entries, file=None, prefix=None):
     output = file or sys.stdout
     if prefix:
         output.write(prefix)
+    previous_type = type(entries[0]) if entries else None
     for entry in entries:
+        # Insert a newline between transactions and between blocks of directives
+        # of the same type.
+        entry_type = type(entry)
+        if entry_type is data.Transaction or entry_type is not previous_type:
+            output.write('\n')
+            previous_type = entry_type
+
         output.write(format_entry(entry))
-        output.write('\n')
 
 
 def render_source(source):

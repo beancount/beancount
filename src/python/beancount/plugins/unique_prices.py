@@ -11,6 +11,8 @@ different price for the day's closing price, this would generate an error.
 I'm not certain this will be useful in the long run, so placing it in a
 plugin.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 
 from beancount.core import data

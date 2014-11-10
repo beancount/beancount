@@ -1,5 +1,7 @@
 """Report classes for all reports that display ending journals of accounts.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 from beancount.reports import report
 from beancount.reports import journal_html
 from beancount.reports import journal_text
@@ -101,7 +103,7 @@ class ConversionsReport(report.HTMLReport):
                               render_postings=True)
 
         # Note: Can we somehow add a balance at the bottom? Do we really need one?
-        # conversion_balance = complete.compute_entries_balance(conversion_entries)
+        # conversion_balance = interpolate.compute_entries_balance(conversion_entries)
 
 
 class DocumentsReport(report.HTMLReport):

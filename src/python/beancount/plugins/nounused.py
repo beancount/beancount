@@ -1,5 +1,7 @@
 """This plugin validates that there are no unused accounts.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 
 from beancount.core import data

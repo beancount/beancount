@@ -1,5 +1,7 @@
 """Views are filters on the global list of entries, which produces a subset of entries.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import datetime
 import logging
 

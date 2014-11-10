@@ -1,14 +1,19 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import unittest
 from os import path
-import os
 import re
 import argparse
+import sys
 
 import urllib.request
 import lxml.html
 
 from beancount.web import web
 from beancount.utils import test_utils
+
+
+DEBUG = False
 
 
 def scrape_urls(url_format, predicate, ignore_regexp=None):
@@ -27,13 +32,18 @@ def scrape_urls(url_format, predicate, ignore_regexp=None):
         assert url not in done
         done.add(url)
 
+        # Skip served documents.
+        if ignore_regexp and re.match(ignore_regexp, url):
+            if DEBUG:
+                print("Skipping: {}".format(url), file=sys.stderr)
+            continue
+
+        if DEBUG:
+            print("Processing: {}".format(url), file=sys.stderr)
+
         # Fetch the URL and check its return status.
         response = urllib.request.urlopen(url_format.format(url))
         predicate(response, url)
-
-        # Skip served documents.
-        if ignore_regexp and re.match(ignore_regexp, url):
-            continue
 
         # Get all the links in the page and add all the ones we haven't yet
         # seen.
@@ -72,7 +82,7 @@ def scrape(filename, predicate, port, quiet=True, extra_args=None):
     #
     # - Components views... well there are just too many, makes the tests
     #   impossibly slow. Just keep the A's so some are covered.
-    scrape_urls(url_format, predicate, '^/(doc/|view/component/[^A])')
+    scrape_urls(url_format, predicate, '^/(doc/|context/|view/component/[^A])')
 
     web.thread_server_shutdown(thread)
 
@@ -82,6 +92,9 @@ class TestWeb(unittest.TestCase):
     def check_page_okay(self, response, url):
         self.assertEqual(200, response.status, url)
 
+    def get_example_file(self, filename):
+        return path.join(test_utils.find_repository_root(__file__), 'examples', filename)
+
     @test_utils.docfile
     def test_scrape_empty_file(self, filename):
         """
@@ -90,26 +103,20 @@ class TestWeb(unittest.TestCase):
         scrape(filename, self.check_page_okay, test_utils.get_test_port())
 
     def test_scrape_basic(self):
-        filename = path.join(test_utils.find_repository_root(__file__),
-                             'examples', 'basic', 'basic.beancount')
-        scrape(filename, self.check_page_okay, test_utils.get_test_port())
+        scrape(self.get_example_file('basic/basic.beancount'),
+               self.check_page_okay, test_utils.get_test_port())
 
     def test_scrape_basic_view(self):
-        filename = path.join(test_utils.find_repository_root(__file__),
-                             'examples', 'basic', 'basic.beancount')
-        scrape(filename, self.check_page_okay, test_utils.get_test_port(),
+        scrape(self.get_example_file('basic/basic.beancount'),
+               self.check_page_okay, test_utils.get_test_port(),
                extra_args=['--view', 'year/2013'])
 
     def test_scrape_starterkit(self):
-        filename = path.join(test_utils.find_repository_root(__file__),
-                             'examples', 'starterkit', 'starter.beancount')
-        scrape(filename, self.check_page_okay, test_utils.get_test_port())
+        scrape(self.get_example_file('starterkit/starter.beancount'),
+               self.check_page_okay, test_utils.get_test_port())
 
-    def test_scrape_environ_var_ledger(self):
-        try:
-            filename = os.environ['TEST_LEDGER']
-        except KeyError:
-            raise unittest.SkipTest()
-        if not path.exists(filename):
-            raise unittest.SkipTest()
-        scrape(filename, self.check_page_okay, test_utils.get_test_port())
+    # Note: Great idea, but sorry, too slow (approx. 50s on MBA). We need to
+    # find some way to enable this on demand.
+    def __test_scrape_example(self):
+        scrape(self.get_example_file('tutorial/example.beancount'),
+               self.check_page_okay, test_utils.get_test_port())

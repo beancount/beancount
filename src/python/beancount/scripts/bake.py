@@ -5,6 +5,8 @@ runs a server and a scraper that puts all the files in the directory,
 and if your output name has an archive suffix, we automatically the
 fetched directory contents to the archive and delete them.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import argparse
 import subprocess
 import shutil

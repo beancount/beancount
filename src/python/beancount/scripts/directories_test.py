@@ -1,3 +1,5 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import tempfile
 import unittest
 import os

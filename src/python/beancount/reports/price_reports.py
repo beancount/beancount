@@ -1,5 +1,7 @@
 """Miscellaneous report classes.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import datetime
 
 from beancount.reports import report

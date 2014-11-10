@@ -1,6 +1,8 @@
 """
 Unit tests for the Position class.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import datetime
 import unittest
 import copy
@@ -36,6 +38,10 @@ class TestPosition(unittest.TestCase):
         cost = Amount(D('532.43'), 'USD')
         lot_date = datetime.date(2014, 6, 15)
         self.assertEqual(Position(Lot("GOOG", cost, lot_date), D('2.2')), pos)
+
+        # Missing currency.
+        with self.assertRaises(ValueError):
+            pos = from_string('2.2 GOOG {532.43}')
 
     def test_strs(self):
         pos = from_string('2.2 GOOG {532.43 USD / 2014-06-15}')
@@ -115,7 +121,7 @@ class TestPosition(unittest.TestCase):
         self.assertTrue(pos1.lot is pos2.lot)
 
     def test_quantities(self):
-        A = Amount.from_string
+        A = Amount.from_string  # pylint: disable=invalid-name
 
         pos = Position(Lot("USD", None, None), D('10'))
         self.assertEqual(A('10 USD'), pos.get_units())

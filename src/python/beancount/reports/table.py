@@ -1,5 +1,7 @@
 """Table rendering.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import csv
 import collections
 import io

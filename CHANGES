@@ -2,3 +2,28 @@
    beancount: CHANGES
 ========================
 
+2014-11-09
+
+  - Renamed the 'bean-query' tool to 'bean-report'. There is a good reason for
+    this: there is a new tool coming that will provide an command-shell to make
+    interactive queries on your ledger contents. This tool will be
+    called--appropriately--"bean-query". I decided that the two tools should be
+    separate: "bean-report" will be used to render custom-coded reports (nothing
+    changes), and "bean-query" will be used to build reports out of SQL-like
+    queries. I'm hoping that eventually bean-query functionality will entirely
+    subsume bean-report reports, but that is unclear at this point.
+
+  - (Internal) Renamed beancount.core.complete to beancount.core.interpolate.
+    I've been using the term interpolate for a while now, in the docs, and it's
+    way more telling than complete.
+
+  - Made default rendering for changes and balances of HTML reports by units().
+    Rendering all the lots was horrible in even moderately complex stock trading
+    accounts with a few positions. Now we aggregate by currency ("units").
+
+     In order for the user to be able to view the previously available lot
+     detail from the web interface, we now provide a link to the "context",
+     which is a link specific to a transaction that renders the balances for all
+     the accounts just before the transaction is applied, and just after.
+
+  (Beginning to summarize user-facing changes here.)

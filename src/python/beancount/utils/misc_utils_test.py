@@ -1,6 +1,8 @@
 """
 Tests for general utils.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import unittest
 import re
 import time

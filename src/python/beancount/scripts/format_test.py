@@ -1,3 +1,5 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import textwrap
 
 from beancount.utils import test_utils

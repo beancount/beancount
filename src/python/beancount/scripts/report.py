@@ -2,6 +2,8 @@
 
 This is to share my portfolio with others, or to compute its daily changes.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import argparse
 import io
 import logging
@@ -213,10 +215,10 @@ def main():
     # Parse the input file.
     errors_file = None if args.no_errors else sys.stderr
     with misc_utils.log_time('beancount.loader (total)', logging.info):
-        entries, errors, options_map = loader.load(args.filename,
-                                                   log_timings=logging.info,
-                                                   log_errors=errors_file,
-                                                   extra_validations=extra_validations)
+        entries, errors, options_map = loader.load_file(args.filename,
+                                                        log_timings=logging.info,
+                                                        log_errors=errors_file,
+                                                        extra_validations=extra_validations)
 
     if hasattr(args, 'report_class'):
         # Create holdings list.

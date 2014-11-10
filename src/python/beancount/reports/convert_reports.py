@@ -3,13 +3,15 @@
 This module contains reports that can convert an input file into other formats,
 such as Ledger.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import re
 import io
 
 from beancount.core import amount
 from beancount.core import data
 from beancount.core import position
-from beancount.core import complete
+from beancount.core import interpolate
 from beancount.reports import report
 
 
@@ -102,7 +104,7 @@ def split_currency_conversions(entry):
         new_entries = []
         replacement_postings = []
         for posting_orig in postings_at_price:
-            weight = complete.get_posting_weight(posting_orig)
+            weight = interpolate.get_posting_weight(posting_orig)
             simple_position = position.Position(position.Lot(weight.currency, None, None),
                                                 weight.number)
             posting_pos = data.Posting(None, posting_orig.account, simple_position,
@@ -158,7 +160,7 @@ class LedgerPrinter:
         # *last* number of digits used on that currency. This is believed to be
         # a bug, so instead, we simply insert a rounding account to absorb the
         # residual and precisely balance the transaction.
-        entry = complete.fill_residual_posting(entry, ROUNDING_ACCOUNT)
+        entry = interpolate.fill_residual_posting(entry, ROUNDING_ACCOUNT)
 
         if entry.tags:
             for tag in sorted(entry.tags):

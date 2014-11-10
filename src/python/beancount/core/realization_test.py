@@ -1,5 +1,7 @@
 """Unit tests for realizations.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import copy
 import datetime
 import io

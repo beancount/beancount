@@ -1,12 +1,15 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import io
 from datetime import date
 import unittest
 import re
+import textwrap
 
 from beancount.parser import printer
 from beancount.parser import parser
 from beancount.core import data
-from beancount.core import complete
+from beancount.core import interpolate
 from beancount.parser import cmptest
 
 
@@ -22,7 +25,7 @@ class TestPrinter(unittest.TestCase):
 
     def test_format_and_print_error(self):
         entry = data.Open(SOURCE, date(2014, 1, 15), 'Assets:Bank:Checking', [])
-        error = complete.BalanceError(SOURCE, "Example balance error", entry)
+        error = interpolate.BalanceError(SOURCE, "Example balance error", entry)
         error_str = printer.format_error(error)
         self.assertTrue(isinstance(error_str, str))
 
@@ -161,3 +164,66 @@ class TestEntryPrinter(cmptest.TestCase):
         2014-06-08 event "employer" "Four Square"
         """
         self.assertRoundTrip(entries, errors)
+
+
+def characterize_spaces(text):
+    """Classify each line to a particular type.
+
+    Args:
+      text: A string, the text to classify.
+    Returns:
+      A list of line types, one for each line.
+    """
+    lines = []
+    for line in text.splitlines():
+        if re.match(r'\d\d\d\d-\d\d-\d\d open', line):
+            linecls = 'open'
+        elif re.match(r'\d\d\d\d-\d\d-\d\d price', line):
+            linecls = 'price'
+        elif re.match(r'\d\d\d\d-\d\d-\d\d', line):
+            linecls = 'txn'
+        elif re.match(r'[ \t]$', line):
+            linecls = 'empty'
+        else:
+            linecls = None
+        lines.append(linecls)
+    return lines
+
+
+class TestPrinterSpacing(unittest.TestCase):
+
+    maxDiff = 8192
+
+    def test_spacing(self):
+        input_text = textwrap.dedent("""\
+        2014-01-01 open Assets:Account1
+        2014-01-01 open Assets:Account2
+        2014-01-01 open Assets:Cash
+
+        2014-06-08 *
+          Assets:Account1       111.00 BEAN
+          Assets:Cash
+
+        2014-06-08 * "Narration"
+          Assets:Account1       111.00 BEAN
+          Assets:Cash
+
+        2014-06-08 * "Payee" | "Narration"
+          Assets:Account2       111.00 BEAN
+          Assets:Cash
+
+        2014-10-01 close Assets:Account2
+
+        2014-10-11 price BEAN   10 USD
+        2014-10-12 price BEAN   11 USD
+        2014-10-13 price BEAN   11 USD
+        """)
+        entries, _, __ = parser.parse_string(input_text)
+
+        oss = io.StringIO()
+        printer.print_entries(entries, file=oss)
+
+        expected_classes = characterize_spaces(input_text)
+        actual_classes = characterize_spaces(oss.getvalue())
+
+        self.assertEqual(expected_classes, actual_classes)

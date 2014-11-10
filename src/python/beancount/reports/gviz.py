@@ -1,6 +1,8 @@
 """
 Support for creating Google gviz timeline charts.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import io
 
 

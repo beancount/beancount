@@ -4,6 +4,8 @@ These account objects are rather simple and dumb; they do not contain the list
 of their associated postings. This is achieved by building a realization; see
 realization.py for details.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import re
 import os
 from os import path

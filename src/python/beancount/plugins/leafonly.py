@@ -1,5 +1,7 @@
 """A plugin that issues errors when more than one commodity is used in an account.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 
 from beancount.core import getters

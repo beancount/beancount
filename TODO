@@ -1,212 +1,5 @@
 -*- mode: org -*-
 beancount: TODO
-* Requirements for Shipping 2.0
-** Current
-
-  - Complete presentation
-
-
-  - Fix rendering of balances for HTML journals, esp. w.r.t. example file,
-    rendering lots is just _not_ the ticket.
-
-      In HTML rendering, render only by units, and provide a link to a /context
-      page that renders inventory befre and after just like my context utility.
-
-
-
-  - Add more tests for intra-day trading, esp. w.r.t. ordering and inventory booking.
-
-  - Complete more thorough tests for journal_text_test.py
-
-  - Improve printer to avoid inserting spaces between directives of the same
-    type, except when they are transactions. This will result in a tider output
-    that is natural and prettier.
-
-
-** Establish Display Precision
-
-  - Build a routine that can compute the commonly used precision for each
-    currency and (currency, account) pairs, and derive a PrecisionContext
-    object that can then be used to render all the data.
-
-
-  - Write unit tests for display precision, this isn't too great now.
-
-  - With the tests, figure out if we still need MAXDIGITS_QUANTIZE,
-    MAXDIGITS_PRINTER, etc., based on all usage. I think this is not the way I
-    want it to be.
-
-  - Allow the printer control over whether commas are to be rendered or not.
-
-  - Fix the alignment of the rendered postings by printer, it's out of whack.
-    See example.beancount file, doesn't look nice anymore. Has to do with
-    replacement of strings I believe. But the printer should *always* output
-    nicely aligned numbers.
-
-
-  - Fix all of these with the routine:
-
-     grep -srn '\.str\b'    /home/blais/p/beancount/src/python/beancount/
-     /home/blais/p/beancount/src/python/beancount/parser/printer.py:57:        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
-     /home/blais/p/beancount/src/python/beancount/parser/printer.py:64:                balance_amount_str = balance_amount.str(amount.MAXDIGITS_PRINTER)
-     /home/blais/p/beancount/src/python/beancount/core/position.py:99:        amount_str = Amount(self.number, lot.currency).str(MAXDIGITS_PRINTER)
-     /home/blais/p/beancount/src/python/beancount/core/position.py:107:                    Amount(lot.cost.number, lot.cost.currency).str(MAXDIGITS_PRINTER))
-     /home/blais/p/beancount/src/python/beancount/core/amount.py:111:        return self.str(MAXDIGITS_QUANTIZE)
-     /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:185:            price_str = '@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
-     /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:195:                    posting.position.lot.cost.str(amount.MAXDIGITS_PRINTER))
-     /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:287:        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
-
-
-  - At the same time, figure out why printing is basically _always_ adding the
-    comment on each posting. It shouldn't, this is a bug.
-
-  - Maybe use this routine in the BQL rendering routines instead of using the
-    display precision mode in the displayed numbers only.
-
-
-** Rounding
-
-  - Implement experimental precision check suggested by Nathan Grigg
-  - Implement Equity:Rounding accumulation suggested by Nathan Grigg
-
-  - Make (SMALL_EPSILON) balance tolerance user-configurable before release.
-
-  - Infer precision from numbers like this:
-
-      >>> d = Decimal('1.2300')
-      >>> getcontext().power(10, -(len(str(d).split('.')[-1])+1)) * 5
-      Decimal('0.00005')
-
-  - Maybe provide a way to make thhis tolerance settable by commodity.
-    (See thread w/ Nathan on the mailing-list)
-
-  - Doc: https://groups.google.com/d/msg/ledger-cli/m-TgILbfrwA/YjkmOM3LHXIJ
-
-  Alright, so here's what I propose:
-
-  - I could add an option for the user to insert the name of a rounding account.
-  - This option would be empty by default, and the current behaviour would not
-    change.
-  - However, if you set an account for it, all transactions with an inexact
-    balance will receive the balance amount (and perhaps have a new leg inserted
-    on them automatically).
-
-  Would that be a reasonable compromise? With no account, you get 0.005 looseness
-  (or whatever this becomes if inference is implemented). With an account, you get
-  precise balances throughout, but no manual input is required.
-
-  - Complete and merge sampled_quantization
-
-
-** Renames and Move Files to Final Location
-
-  As I'm moving to a system with more plugins and less code in the core, and
-  with the intermediate reports stage instead of just the web interface, it's
-  becoming clearer where some files need to move. Try to make these moves
-  before shipping, so that things don't move nearly as much later on.
-
-  - Move examples/tutoral/example.beancount -> examples/example.beancount, does
-    not need to be under tutorial/
-
-  - Maybe beancount.core.complete should be called beancount.core.interpolate.
-    That's the term I've been using for a while now isn't it. Clean up
-    terminology.
-
-  - Revise beancount.loader.load() to beancount.loader.load_file() + alias, as
-    for the parser.
-
-  - beancount.core.realization: Look at deps for beancount.core.realization and
-    move it upstream where it makes sense, maybe ops.
-
-  - beancount.core.getters: Should this move to ops as well? Check the
-    dependency tree, see if it makes sense.
-
-  - Emerge a principle for where the following files should separate:
-
-      beancount.ops.*
-      beancount.plugins.*
-
-  - Make various attempts to simplify depgraph, we want to ship with a really
-    lean dependency graph.
-
-  - Should 'bean-query not be called bean-count or bean-report? Choose a final
-    name and live with it. I like 'bean-count' best. EMBRACE ONE.
-    bean-report
-
-
-** Cleanup Tasks
-
-  Some amount of generic cleanup should be performed before calling the release.
-  This is just tightening up the bolts on the beast before shipping. I want to
-  have a pretty solid pylint configuration passing.
-
-  - Fix all FIXMEs everywhere, or convert them to items in this list.
-
-  - Configure and run a clean pylint on the entire codebase.
-
-  - Add __author__ to all files?
-
-  - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
-
-
-** Unsure
-
-  - Implement unit tests for all the functions in beancount.reports.journal_text
-
-  - Differentiate between the concept of "journal" and "register" report: a
-    "journal" should include all the postings and no running balance. A
-    "register" should by default only render just one account's postings and
-    render a running balance column. This is the distinction between the two,
-    and making this distinction will allow us to produce two useful but
-    distinct reports for the console output, even if these are somewhat similar
-    for the web output.
-
-    This should probably be done before the release, so that at least the first
-    version has some decent console reports, even if the revamp of reports
-    comes later on.
-
-
-  - Implement text report for journal, income statement and balance sheet.
-    These should be present for a 1.0 release, even if in a rudimentary form.
-
-
-** Reports
-
-  - Reconcile the rendering of units, cost, lots between text and HTML reports,
-    the set of options for all of these should be the same.
-
-
-** Documentation / Ongoing
-
-
-  - In the comparison doc: describe how Beancount has asset types
-
-  - Is there a script somewhere that can accept a CSV file and render a CSV
-    pivot table from it?  The reason we need support is in order to carry out
-    operations on columns of inventories. Maybe we should impleemnted some sort
-    of swiss-knife tool that is able to parse inventories from columns and
-    perform various operations on them, aggregations, etc. using Beancount's
-    Inventory() class. This could be a powerful tool!
-
-  - Nice Health Care section is nearly complete... complete it with DEDUC and COPAY
-    legs explanation
-
-  - Write out the taxes section, you have all the details, no need to wait
-
-  - Clean up this TODO file, reorganize sections, remove what's redundant from
-    the proposal files.
-
-  - Create new doc: Inter account transfer
-  - Create new doc: Computing portfolio returns using Beancount
-
-  - Change script to try to download to ODT format and then batch format to ebook
-
-
-** Example File
-
-  - Consume vacation
-
-
 * Query Language
 
   - Add tests for all environment functions
@@ -382,12 +175,182 @@ beancount: TODO
 
 
 
+* Requirements for Shipping 2.0
+** Establish Display Precision
+
+  - Build a routine that can compute the commonly used precision for each
+    currency and (currency, account) pairs, and derive a PrecisionContext
+    object that can then be used to render all the data.
+
+
+
+  - Create a DisplayContext that contains settings for how to render numbers:
+    the precision by currency, whether commas should be printed or not.
+
+  - Allow the printer control over whether commas are to be rendered or not.
+
+
+  - Write unit tests for display precision, this isn't too great now.
+
+  - With the tests, figure out if we still need MAXDIGITS_QUANTIZE,
+    MAXDIGITS_PRINTER, etc., based on all usage. I think this is not the way I
+    want it to be.
+
+
+  - Fix the alignment of the rendered postings by printer, it's out of whack.
+    See example.beancount file, doesn't look nice anymore. Has to do with
+    replacement of strings I believe. But the printer should *always* output
+    nicely aligned numbers.
+
+
+  - Fix all of these with the routine:
+
+     grep -srn '\.str\b'    /home/blais/p/beancount/src/python/beancount/
+     /home/blais/p/beancount/src/python/beancount/parser/printer.py:57:        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
+     /home/blais/p/beancount/src/python/beancount/parser/printer.py:64:                balance_amount_str = balance_amount.str(amount.MAXDIGITS_PRINTER)
+     /home/blais/p/beancount/src/python/beancount/core/position.py:99:        amount_str = Amount(self.number, lot.currency).str(MAXDIGITS_PRINTER)
+     /home/blais/p/beancount/src/python/beancount/core/position.py:107:                    Amount(lot.cost.number, lot.cost.currency).str(MAXDIGITS_PRINTER))
+     /home/blais/p/beancount/src/python/beancount/core/amount.py:111:        return self.str(MAXDIGITS_QUANTIZE)
+     /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:185:            price_str = '@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
+     /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:195:                    posting.position.lot.cost.str(amount.MAXDIGITS_PRINTER))
+     /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:287:        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
+
+
+  - Maybe use this routine in the BQL rendering routines instead of using the
+    display precision mode in the displayed numbers only.
+
+
+** Documentation / Ongoing
+
+  - Complete "How Inventories Work?"
+  - Complete intro document on double-entry bookkeepingk."
+  - Complete Design Doc
+
+  - Change documentation script to try to download to ODT format and then batch
+    format to ebook
+
+
+* Standalone Tools
+
+  - Build an 'statement' tool that will render a treeified balance sheet in two
+    columns! Limit it to use the beginning of a line, and hard-code to use the
+    five known categories (optionally changeable). It's okay if the tool is a
+    bit more limited than treeify. It should optionally do the treeification.
+    It should also optionally sort the account names (or not).
+
+    * Add a --title option to render at the top.
+
+  - 'csv-pivot': build this: a script that can accept a CSV file and render a
+    CSV pivot table from it. The reason we need support is in order to carry out
+    operations on columns of inventories. Maybe we should impleemnted some sort
+    of swiss-knife tool that is able to parse inventories from columns and
+    perform various operations on them, aggregations, etc. using Beancount's
+    Inventory() class. This could be a powerful tool! Make it possible to parse
+    and create Inventory objects from cells.
+
+
+
+* Deal with Rounding
+
+  - Implement experimental precision check suggested by Nathan Grigg
+  - Implement Equity:Rounding accumulation suggested by Nathan Grigg
+
+  - Remove b.c.amount.DISPLAY_QUANTIZE if possible.
+
+  - Make (SMALL_EPSILON) balance tolerance user-configurable before release.
+
+  - Infer precision from numbers like this:
+
+      >>> d = Decimal('1.2300')
+      >>> getcontext().power(10, -(len(str(d).split('.')[-1])+1)) * 5
+      Decimal('0.00005')
+
+  - Maybe provide a way to make thhis tolerance settable by commodity.
+    (See thread w/ Nathan on the mailing-list)
+
+  - Doc: https://groups.google.com/d/msg/ledger-cli/m-TgILbfrwA/YjkmOM3LHXIJ
+
+  Alright, so here's what I propose:
+
+  - I could add an option for the user to insert the name of a rounding account.
+  - This option would be empty by default, and the current behaviour would not
+    change.
+  - However, if you set an account for it, all transactions with an inexact
+    balance will receive the balance amount (and perhaps have a new leg inserted
+    on them automatically).
+
+  Would that be a reasonable compromise? With no account, you get 0.005 looseness
+  (or whatever this becomes if inference is implemented). With an account, you get
+  precise balances throughout, but no manual input is required.
+
+  - Complete and merge sampled_quantization
+
+
 * Current / Misc / To Be Classified
 
   (This is a grab bag of ideas. When I have a new idea coming to me, I don't
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+
+
+  - In the comparison doc: describe how Beancount has asset types
+
+
+  - A nice new Health Care section is nearly complete... complete it with DEDUC
+    and COPAY legs explanation. Write an accompanying plugin to insert the
+    deductible tracking and what-not.
+
+  - Write out the taxes section, you have all the details, no need to wait
+
+  - Create new proposal doc: Inter account transfer
+
+  - Create new project doc: Computing portfolio returns using Beancount
+
+
+
+
+  - (web) In the web interface, it would be nice to have a fancy overlay here,
+    that automatically appears after parsing if there are errors and that
+    automatically smoothly fades out.
+
+  - Configure more pylint tests and make them pass. We're using a small subset
+    at the moment.
+
+
+  - Perhaps should build a version of treeify for internal usage that works on
+    HTML columns, off of HTML text. Or BETTER: just a stateful tool that can
+    transform an account's name to indent it properly every time you feed it the
+    full account name! This could be used by the routine that want to render
+    columns as tree. Maybe 'treeify' should use that as well. That would make a
+    lot of sense.
+
+
+  - In bean-sql, render out the tags to their own table and create a 1:N join
+    table for them. Also, flatten out lots and refer to unique lots so that
+    trades can be easily identified by looking at all entries that relate to a
+    particular lot.
+
+
+  - Extend the option syntax to allow an optional arbitrary configuration
+    expression for plugins, instead of the current method:
+
+      option "plugin" "<module>" "<options>"
+
+    Actually, make plugin its own directive:
+
+      plugin "<module>" "<options>"
+
+    A more potent configuration will allow me to move in a lot of the
+    experiments into the main directory, including some of my own personal
+    plugins, which require a more extensive configuration.
+
+
+  - Eventually you want to clean up the locations of the example files. I think
+    the basic.beancount and starterkit.beancount files aren't really that useful
+    anymore, other than for automated testing.
 
 
   - You should add tests to ensure that an Inventory() can never have positions
@@ -495,12 +458,6 @@ beancount: TODO
   - Idea! Allow the selection or reporting of all the postings since their last
     balance check in each account. These postings can be called "unverified"
     and it should be possible to report just those.
-
-
-
-  - Printer should not leave empty line if previous directing is the same type
-    except if transaction. This would work.
-
 
 
 
@@ -1710,6 +1667,9 @@ beancount: TODO
     Replace all nested code that is inconvenient.
 
 
+  - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
+
+
 
 ** Refactoring: Holding to Position
 
@@ -1888,6 +1848,28 @@ Improve this bit:
     >   divide each group further.
     >
     > I will change that, thanks for the comment.
+
+
+* Internal: Review Dependency Graph
+
+  As I'm moving to a system with more plugins and less code in the core, and
+  with the intermediate reports stage instead of just the web interface, it's
+  becoming clearer where some files need to move.
+
+  - Make various attempts to simplify depgraph, we want to ship with a really
+    lean dependency graph.
+
+  - Emerge a principle for where the following files should separate:
+
+      beancount.ops.*
+      beancount.plugins.*
+
+  - beancount.core.realization: Look at deps for beancount.core.realization and
+    move it upstream where it makes sense, maybe ops.
+
+  - beancount.core.getters: Should this move to ops as well? Check the
+    dependency tree, see if it makes sense.
+
 
 
 * Core

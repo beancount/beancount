@@ -1,5 +1,7 @@
 """File utilities.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 from os import path
 
 

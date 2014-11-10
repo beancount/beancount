@@ -1,5 +1,7 @@
 """Everything that relates to creating the Document directives.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import re
 import datetime
 from os import path
@@ -7,7 +9,6 @@ from collections import namedtuple
 
 from beancount.core.data import Document
 from beancount.core import account
-from beancount.core import data
 from beancount.core import data
 from beancount.core import getters
 

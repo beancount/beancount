@@ -1,7 +1,9 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import re
 
 from beancount.utils import test_utils
-from beancount.scripts import query
+from beancount.scripts import report
 
 
 def search_words(words, line):
@@ -21,15 +23,15 @@ def search_words(words, line):
 class TestHelpReports(test_utils.TestCase):
 
     def test_get_list_report_string(self):
-        help_string = query.get_list_report_string()
+        help_string = report.get_list_report_string()
         self.assertTrue(help_string and isinstance(help_string, str))
 
     def test_get_list_report_string__one_report(self):
-        help_string = query.get_list_report_string('print')
+        help_string = report.get_list_report_string('print')
         self.assertTrue(help_string and isinstance(help_string, str))
 
     def test_get_list_report_string__invalid_report(self):
-        help_string = query.get_list_report_string('blablabla')
+        help_string = report.get_list_report_string('blablabla')
         self.assertEqual(None, help_string)
 
 
@@ -41,7 +43,7 @@ class TestScriptQuery(test_utils.TestCase):
         ""
         # Check that invocation with just a filename prints something (the list of reports).
         with test_utils.capture() as stdout:
-            test_utils.run_with_args(query.main, [filename])
+            test_utils.run_with_args(report.main, [filename])
         self.assertTrue(stdout.getvalue())
 
 
@@ -68,7 +70,7 @@ class TestScriptPositions(test_utils.TestCase):
           Assets:Account3     800 EUR @ 1.25 USD
         """
         with test_utils.capture() as stdout:
-            test_utils.run_with_args(query.main, [filename, 'holdings'])
+            test_utils.run_with_args(report.main, [filename, 'holdings'])
         output = stdout.getvalue()
         self.assertTrue(search_words('Assets:Account1 1,000.00 USD', output))
         self.assertTrue(search_words('Assets:Account2    30.00 BOOG', output))
@@ -85,7 +87,7 @@ class TestScriptPositions(test_utils.TestCase):
           Assets:Cash
         """
         with test_utils.capture() as stdout:
-            test_utils.run_with_args(query.main, [filename, 'trial'])
+            test_utils.run_with_args(report.main, [filename, 'trial'])
         output = stdout.getvalue()
         self.assertLines("""
             Assets:Cash               -50.02 USD
@@ -99,7 +101,7 @@ class TestScriptPositions(test_utils.TestCase):
     def test_print_trial_empty(self, filename):
         ""
         with test_utils.capture() as stdout:
-            test_utils.run_with_args(query.main, [filename, 'trial'])
+            test_utils.run_with_args(report.main, [filename, 'trial'])
 
     @test_utils.docfile
     def test_all_prices(self, filename):
@@ -115,13 +117,11 @@ class TestScriptPositions(test_utils.TestCase):
         2014-02-10 price GOOG 536.03 USD
         """
         with test_utils.capture() as stdout:
-            test_utils.run_with_args(query.main, [filename, 'all_prices'])
+            test_utils.run_with_args(report.main, [filename, 'all_prices'])
         output = stdout.getvalue()
         self.assertLines("""
            2014-01-15 price GOOG             512.01 USD
-
            2014-02-01 price GOOG             524.02 USD
-
            2014-02-10 price GOOG             536.03 USD
         """, output)
 
@@ -136,7 +136,7 @@ class TestScriptPositions(test_utils.TestCase):
           Assets:Cash
         """
         with test_utils.capture() as stdout:
-            test_utils.run_with_args(query.main, [filename, 'accounts'])
+            test_utils.run_with_args(report.main, [filename, 'accounts'])
 
         self.assertLines("""
             Assets:Cash          2013-01-01
@@ -147,4 +147,4 @@ class TestScriptPositions(test_utils.TestCase):
     def test_list_accounts_empty(self, filename):
         ""
         with test_utils.capture() as stdout:
-            test_utils.run_with_args(query.main, [filename, 'accounts'])
+            test_utils.run_with_args(report.main, [filename, 'accounts'])

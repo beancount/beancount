@@ -16,6 +16,8 @@ About Decimal usage:
   handles more syntax, e.g., handles None, and numbers with commas.
 
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
 import re
 
@@ -44,7 +46,7 @@ def D(strord=None):
     system manipulates (never use floating-point in an accounting system)..
 
     Args:
-      stdord: A string or Decimal instancė
+      stdord: A string or Decimal instance.
     Returns:
       A Decimal instance.
     """
@@ -130,8 +132,9 @@ class Amount:
         """
         number = self.number
 
-        # FIXME: The better way to do this would be to let the user specify a
-        # desired rendering precision for each currency.
+        # Note: The better way to do this would be to let the user specify a
+        # desired rendering precision for each currency. We will correctly
+        # handle this when we review the display precision.
         if number == number.quantize(DISPLAY_QUANTIZE):
             return "{:,.2f} {}".format(number, self.currency)
         else:

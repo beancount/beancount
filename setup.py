@@ -25,7 +25,7 @@ install_scripts = [join('bin', x) for x in """
 bean-bake
 bean-check
 bean-doctor
-bean-query
+bean-report
 bean-web
 bean-example
 bean-format

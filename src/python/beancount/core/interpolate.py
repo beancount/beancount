@@ -1,11 +1,12 @@
 """Code used to automatically complete postings without positions.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import copy
 
 from beancount.core.amount import D
 from beancount.core.amount import ZERO
-from beancount.core.amount import amount_mult
 from beancount.core.inventory import Inventory
 from beancount.core.position import Lot
 from beancount.core.position import Position

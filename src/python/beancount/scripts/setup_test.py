@@ -1,5 +1,7 @@
 """A test for setup.py.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import os
 import shutil
 import sys
@@ -41,7 +43,7 @@ class TestSetup(test_utils.TestCase):
             # Run some basic commands using the newly installed version.
             example_filename = path.join(rootdir, 'examples/basic/basic.beancount')
 
-            command = [path.join(bindir, 'bean-query'), example_filename, 'balsheet']
+            command = [path.join(bindir, 'bean-report'), example_filename, 'balsheet']
             pipe = subprocess.Popen(command, shell=False,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE,

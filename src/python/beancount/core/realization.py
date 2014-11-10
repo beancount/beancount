@@ -15,6 +15,8 @@ final balance of that account, resulting from its list of postings.
 You should not build RealAccount trees yourself; instead, you should filter the
 list of desired directives to display and call the realize() function with them.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import io
 import collections
 import operator
@@ -32,8 +34,7 @@ from beancount.core import inventory
 from beancount.core import amount
 from beancount.core import data
 from beancount.core import account
-from beancount.core import account
-from beancount.core import complete
+from beancount.core import interpolate
 from beancount.core import flags
 
 
@@ -258,7 +259,7 @@ def realize(entries, min_accounts=None, compute_balance=True):
         real_account = get_or_create(real_root, account_name)
         real_account.postings = postings
         if compute_balance:
-            real_account.balance = complete.compute_postings_balance(postings)
+            real_account.balance = interpolate.compute_postings_balance(postings)
 
     # Ensure a minimum set of accounts that should exist. This is typically
     # called with an instance of AccountTypes to make sure that those exist.

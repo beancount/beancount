@@ -3,6 +3,8 @@ the date of the first entry) and automatically removes open directives for
 unused accounts. This can be used as a convenience for doing demos, or when
 setting up your initial transactions, as an intermediate step.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 from beancount.core import data
 from beancount.core import getters
 

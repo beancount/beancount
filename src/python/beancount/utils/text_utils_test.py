@@ -1,6 +1,8 @@
 """
 Tests for text_utils.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 from beancount.utils import text_utils
 
 import unittest

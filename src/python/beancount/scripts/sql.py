@@ -1,5 +1,7 @@
 """Convert a Beancount ledger into an SQL database.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import sqlite3
 import argparse
 import logging
@@ -47,8 +49,8 @@ def output_transactions(connection, entries):
             flag 		CHARACTER(1),
             payee 		VARCHAR,
             narration 		VARCHAR,
-            tags                VARCHAR,  -- FIXME: Should refer to aux table.
-            links               VARCHAR   -- FIXME: Should refer to aux table.
+            tags                VARCHAR, -- Comma-separated
+            links               VARCHAR  -- Comma-separated
           );
         """)
 
@@ -323,9 +325,9 @@ def main():
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
 
-    entries, errors, options_map = loader.load(args.filename,
-                                               log_timings=logging.info,
-                                               log_errors=sys.stderr)
+    entries, errors, options_map = loader.load_file(args.filename,
+                                                    log_timings=logging.info,
+                                                    log_errors=sys.stderr)
 
     # Delete previous database if it already exists.
     if path.exists(args.database):
