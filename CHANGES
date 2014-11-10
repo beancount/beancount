@@ -4,6 +4,15 @@
 
 2014-11-09
 
+  - Renamed the 'bean-query' tool to 'bean-report'. There is a good reason for
+    this: there is a new tool coming that will provide an command-shell to make
+    interactive queries on your ledger contents. This tool will be
+    called--appropriately--"bean-query". I decided that the two tools should be
+    separate: "bean-report" will be used to render custom-coded reports (nothing
+    changes), and "bean-query" will be used to build reports out of SQL-like
+    queries. I'm hoping that eventually bean-query functionality will entirely
+    subsume bean-report reports, but that is unclear at this point.
+
   - (Internal) Renamed beancount.core.complete to beancount.core.interpolate.
     I've been using the term interpolate for a while now, in the docs, and it's
     way more telling than complete.

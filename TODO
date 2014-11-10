@@ -45,28 +45,14 @@ beancount: TODO
     display precision mode in the displayed numbers only.
 
 
-** Renames and Move Files to Final Location
-
-  - Should 'bean-query not be called bean-count or bean-report? Choose a final
-    name and live with it. I like 'bean-count' best. EMBRACE ONE.
-    bean-report
-
-
 ** Documentation / Ongoing
 
-  - Complete presentation
+  - Complete "How Inventories Work?"
+  - Complete intro document on double-entry bookkeepingk."
+  - Complete Design Doc
 
-  - Nice Health Care section is nearly complete... complete it with DEDUC and
-    COPAY legs explanation. Write an accompanying plugin to insert the
-    deductible tracking and what-not.
-
-  - Write out the taxes section, you have all the details, no need to wait
-
-  - Create new proposal doc: Inter account transfer
-
-  - Create new project doc: Computing portfolio returns using Beancount
-
-  - Change script to try to download to ODT format and then batch format to ebook
+  - Change documentation script to try to download to ODT format and then batch
+    format to ebook
 
 
 * Standalone Tools
@@ -131,6 +117,19 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - A nice new Health Care section is nearly complete... complete it with DEDUC
+    and COPAY legs explanation. Write an accompanying plugin to insert the
+    deductible tracking and what-not.
+
+  - Write out the taxes section, you have all the details, no need to wait
+
+  - Create new proposal doc: Inter account transfer
+
+  - Create new project doc: Computing portfolio returns using Beancount
+
+
 
 
   - (web) In the web interface, it would be nice to have a fancy overlay here,

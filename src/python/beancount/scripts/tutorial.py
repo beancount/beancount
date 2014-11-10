@@ -11,36 +11,36 @@ from os import path
 
 # pylint: disable=bad-whitespace
 COMMANDS = [
-    ('balances'                 , "bean-query {} balances"),
-    ('help-reports'             , "bean-query --help-reports"),
-    ('help-subcmd'              , "bean-query {} balances --help"),
-    ('help-global'              , "bean-query --help"),
-    ('help-formats'             , "bean-query --help-formats"),
-    ('balances-restrict'        , "bean-query {} balances -e ETrade"),
-    ('balances-restrict-cost'   , "bean-query {} balances -e ETrade -c"),
-    ('balances-tree'            , "bean-query {} balances | treeify"),
-    ('balsheet'                 , "bean-query {} balsheet"),
-    ('journal'                  , ("bean-query {} journal -w 120 "
+    ('balances'                 , "bean-report {} balances"),
+    ('help-reports'             , "bean-report --help-reports"),
+    ('help-subcmd'              , "bean-report {} balances --help"),
+    ('help-global'              , "bean-report --help"),
+    ('help-formats'             , "bean-report --help-formats"),
+    ('balances-restrict'        , "bean-report {} balances -e ETrade"),
+    ('balances-restrict-cost'   , "bean-report {} balances -e ETrade -c"),
+    ('balances-tree'            , "bean-report {} balances | treeify"),
+    ('balsheet'                 , "bean-report {} balsheet"),
+    ('journal'                  , ("bean-report {} journal -w 120 "
                                    "-a Assets:US:BofA:Checking")),
-    ('journal-with-balance'     , ("bean-query {} journal -w 120 "
+    ('journal-with-balance'     , ("bean-report {} journal -w 120 "
                                    "-a Assets:US:BofA:Checking -b")),
-    ('invest'                   , ("bean-query {} journal -w 120 "
+    ('invest'                   , ("bean-report {} journal -w 120 "
                                    "-a Assets:US:ETrade:GLD -b")),
-    ('invest-with-cost'         , ("bean-query {} journal -w 120 "
+    ('invest-with-cost'         , ("bean-report {} journal -w 120 "
                                    "-a Assets:US:ETrade:GLD -b -c")),
-    ('journal-unrestricted'     , "bean-query {} journal -w 120 -b"),
-    ('holdings'                 , "bean-query {} holdings"),
-    ('holdings-by-account'      , "bean-query {} holdings --by account"),
-    ('holdings-by-root-account' , "bean-query {} holdings --by root-account"),
-    ('holdings-by-commodity'    , "bean-query {} holdings --by commodity"),
-    ('holdings-by-currency'     , "bean-query {} holdings --by currency"),
-    ('networth'                 , "bean-query {} networth"),
-    ('accounts'                 , "bean-query {} accounts"),
-    ('events'                   , "bean-query {} events"),
-    ('stats-directives'         , "bean-query {} stats-directives"),
+    ('journal-unrestricted'     , "bean-report {} journal -w 120 -b"),
+    ('holdings'                 , "bean-report {} holdings"),
+    ('holdings-by-account'      , "bean-report {} holdings --by account"),
+    ('holdings-by-root-account' , "bean-report {} holdings --by root-account"),
+    ('holdings-by-commodity'    , "bean-report {} holdings --by commodity"),
+    ('holdings-by-currency'     , "bean-report {} holdings --by currency"),
+    ('networth'                 , "bean-report {} networth"),
+    ('accounts'                 , "bean-report {} accounts"),
+    ('events'                   , "bean-report {} events"),
+    ('stats-directives'         , "bean-report {} stats-directives"),
 
-    ('stats-postings'           , "bean-query {} stats-postings"),
-    ('holdings-csv'             , "bean-query -f csv {} holdings"),
+    ('stats-postings'           , "bean-report {} stats-postings"),
+    ('holdings-csv'             , "bean-report -f csv {} holdings"),
     ]
 
 
