@@ -11,13 +11,6 @@ from beancount.core import amount
 from beancount.query import query_render
 
 
-class TestDistribution(unittest.TestCase):
-
-    def test_hist(self):
-        query_render.Distribution()
-        # FIXME: continue here
-
-
 class ColumnRendererBase(unittest.TestCase):
 
     RendererClass = None

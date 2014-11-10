@@ -9,26 +9,7 @@ from beancount.core.amount import Decimal
 from beancount.core import amount
 from beancount.core import position
 from beancount.core import inventory
-
-
-class Distribution:
-    """A class that computes a histogram of integer values. This is used to compute
-    a length that will cover at least some decent fraction of the samples.
-    """
-    def __init__(self):
-        self.hist = collections.defaultdict(int)
-
-    def update(self, value):
-        self.hist[value] += 1
-
-    def mode(self):
-        max_value = 0
-        max_count = 0
-        for value, count in sorted(self.hist.items()):
-            if count >= max_count:
-                max_count = count
-                max_value = value
-        return max_value
+from beancount.utils import misc_utils
 
 
 class ColumnRenderer:
@@ -181,7 +162,7 @@ class DecimalRenderer(ColumnRenderer):
         self.min_exponent = 0
         self.total_width = None
         self.num_values = 0
-        self.dists = collections.defaultdict(Distribution)
+        self.dists = collections.defaultdict(misc_utils.Distribution)
 
     def update(self, number, key=None):
         if number is None:
