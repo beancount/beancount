@@ -212,10 +212,10 @@ def main():
     # Parse the input file.
     errors_file = None if args.no_errors else sys.stderr
     with misc_utils.log_time('beancount.loader (total)', logging.info):
-        entries, errors, options_map = loader.load(args.filename,
-                                                   log_timings=logging.info,
-                                                   log_errors=errors_file,
-                                                   extra_validations=extra_validations)
+        entries, errors, options_map = loader.load_file(args.filename,
+                                                        log_timings=logging.info,
+                                                        log_errors=errors_file,
+                                                        extra_validations=extra_validations)
 
     # Create holdings list.
     with misc_utils.log_time('report.render', logging.info):

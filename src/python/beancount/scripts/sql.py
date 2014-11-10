@@ -325,9 +325,9 @@ def main():
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
 
-    entries, errors, options_map = loader.load(args.filename,
-                                               log_timings=logging.info,
-                                               log_errors=sys.stderr)
+    entries, errors, options_map = loader.load_file(args.filename,
+                                                    log_timings=logging.info,
+                                                    log_errors=sys.stderr)
 
     # Delete previous database if it already exists.
     if path.exists(args.database):

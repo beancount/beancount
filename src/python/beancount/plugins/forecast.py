@@ -32,7 +32,7 @@ __plugins__ = ('forecast_plugin',)
 def forecast_plugin(entries, options_map):
     """An example filter that piggybacks on top of the Beancount input syntax to
     insert forecast entries automatically. This functions accepts the return
-    value of beancount.loader.load() and must return the same type of output.
+    value of beancount.loader.load_file() and must return the same type of output.
 
     Args:
       entries: a list of entry instances

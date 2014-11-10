@@ -45,13 +45,13 @@ class TestLoader(unittest.TestCase):
             with tempfile.NamedTemporaryFile('w') as tmpfile:
                 tmpfile.write(TEST_INPUT)
                 tmpfile.flush()
-                entries, errors, options_map = loader.load(tmpfile.name)
+                entries, errors, options_map = loader.load_file(tmpfile.name)
                 self.assertTrue(isinstance(entries, list))
                 self.assertTrue(isinstance(errors, list))
                 self.assertTrue(isinstance(options_map, dict))
 
-                entries, errors, options_map = loader.load(tmpfile.name,
-                                                           log_timings=logging.info)
+                entries, errors, options_map = loader.load_file(tmpfile.name,
+                                                                log_timings=logging.info)
                 self.assertTrue(isinstance(entries, list))
                 self.assertTrue(isinstance(errors, list))
                 self.assertTrue(isinstance(options_map, dict))

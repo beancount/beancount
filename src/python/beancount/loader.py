@@ -32,7 +32,7 @@ DEFAULT_PLUGINS_POST = [
     ]
 
 
-def load(filename, log_timings=None, log_errors=None, extra_validations=None):
+def load_file(filename, log_timings=None, log_errors=None, extra_validations=None):
     """Open a Beancount input file, parse it, run transformations and validate.
 
     Args:
@@ -51,6 +51,11 @@ def load(filename, log_timings=None, log_errors=None, extra_validations=None):
         options_map: A dict of the options parsed from the file.
     """
     return _load(parser.parse_file, filename, log_timings, log_errors, extra_validations)
+
+
+# Alias, for compatibility.
+# pylint: disable=invalid-name
+load = load_file
 
 
 def load_string(string, log_timings=None, log_errors=None, extra_validations=None):

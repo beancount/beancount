@@ -608,6 +608,7 @@ def parse_file(filename, **kw):
 # pylint: disable=invalid-name
 parse = parse_file
 
+
 def parse_string(string, **kw):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts.

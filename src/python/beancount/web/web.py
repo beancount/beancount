@@ -907,7 +907,7 @@ def auto_reload_input_file(callback):
                 app.source = f.read()
 
             # Parse the beancount file.
-            entries, errors, options_map = loader.load(filename)
+            entries, errors, options_map = loader.load_file(filename)
 
             # Print out the list of errors.
             if errors:

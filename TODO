@@ -47,9 +47,6 @@ beancount: TODO
 
 ** Renames and Move Files to Final Location
 
-  - Revise beancount.loader.load() to beancount.loader.load_file() + alias, as
-    for the parser.
-
   - Should 'bean-query not be called bean-count or bean-report? Choose a final
     name and live with it. I like 'bean-count' best. EMBRACE ONE.
     bean-report

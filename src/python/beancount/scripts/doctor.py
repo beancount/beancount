@@ -48,7 +48,7 @@ def do_roundtrip(filename, unused_args):
     """
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     logging.info("Read the entries")
-    entries, errors, options = loader.load(filename)
+    entries, errors, options = loader.load_file(filename)
     printer.print_errors(errors, file=sys.stderr)
 
     logging.info("Print them out to a file")
@@ -110,7 +110,7 @@ def do_directories(filename, args):
         case will be interpreted as the names of root directories to validate against
         the accounts in the given ledger.
     """
-    entries, _, __ = loader.load(filename)
+    entries, _, __ = loader.load_file(filename)
 
     directories.validate_directories(entries, args)
 
@@ -167,7 +167,7 @@ def do_context(filename, args):
     lineno = int(args[0])
 
     # Load the input file.
-    entries, errors, options = loader.load(filename)
+    entries, errors, options = loader.load_file(filename)
 
     str_context = context.render_entry_context(entries, filename, lineno)
     sys.stdout.write(str_context)
@@ -184,7 +184,7 @@ def do_missing_open(filename, args):
       args: A tuple of the rest of arguments. We're expecting the first argument
         to be an integer as a string.
     """
-    entries, errors, options = loader.load(filename)
+    entries, errors, options = loader.load_file(filename)
 
     # Get accounts usage and open directives.
     first_use_map, _ = getters.get_accounts_use_map(entries)
