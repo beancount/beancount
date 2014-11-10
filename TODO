@@ -7,6 +7,8 @@ beancount: TODO
     currency and (currency, account) pairs, and derive a PrecisionContext
     object that can then be used to render all the data.
 
+
+
   - Create a DisplayContext that contains settings for how to render numbers:
     the precision by currency, whether commas should be printed or not.
 
@@ -39,19 +41,11 @@ beancount: TODO
      /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:287:        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
 
 
-  - At the same time, figure out why printing is basically _always_ adding the
-    comment on each posting. It shouldn't, this is a bug.
-
   - Maybe use this routine in the BQL rendering routines instead of using the
     display precision mode in the displayed numbers only.
 
 
 ** Renames and Move Files to Final Location
-
-  As I'm moving to a system with more plugins and less code in the core, and
-  with the intermediate reports stage instead of just the web interface, it's
-  becoming clearer where some files need to move. Try to make these moves
-  before shipping, so that things don't move nearly as much later on.
 
   - Maybe beancount.core.complete should be called beancount.core.interpolate.
     That's the term I've been using for a while now isn't it. Clean up
@@ -59,12 +53,6 @@ beancount: TODO
 
   - Revise beancount.loader.load() to beancount.loader.load_file() + alias, as
     for the parser.
-
-  - beancount.core.realization: Look at deps for beancount.core.realization and
-    move it upstream where it makes sense, maybe ops.
-
-  - beancount.core.getters: Should this move to ops as well? Check the
-    dependency tree, see if it makes sense.
 
   - Should 'bean-query not be called bean-count or bean-report? Choose a final
     name and live with it. I like 'bean-count' best. EMBRACE ONE.
@@ -142,17 +130,6 @@ beancount: TODO
   precise balances throughout, but no manual input is required.
 
   - Complete and merge sampled_quantization
-
-
-* Internal: Review Dependency Graph
-
-  - Emerge a principle for where the following files should separate:
-
-      beancount.ops.*
-      beancount.plugins.*
-
-  - Make various attempts to simplify depgraph, we want to ship with a really
-    lean dependency graph.
 
 
 * Current / Misc / To Be Classified
@@ -1677,6 +1654,28 @@ Improve this bit:
     >   divide each group further.
     >
     > I will change that, thanks for the comment.
+
+
+* Internal: Review Dependency Graph
+
+  As I'm moving to a system with more plugins and less code in the core, and
+  with the intermediate reports stage instead of just the web interface, it's
+  becoming clearer where some files need to move.
+
+  - Make various attempts to simplify depgraph, we want to ship with a really
+    lean dependency graph.
+
+  - Emerge a principle for where the following files should separate:
+
+      beancount.ops.*
+      beancount.plugins.*
+
+  - beancount.core.realization: Look at deps for beancount.core.realization and
+    move it upstream where it makes sense, maybe ops.
+
+  - beancount.core.getters: Should this move to ops as well? Check the
+    dependency tree, see if it makes sense.
+
 
 
 * Core
