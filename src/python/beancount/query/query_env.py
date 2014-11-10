@@ -12,7 +12,7 @@ from beancount.core.amount import Decimal
 from beancount.core.amount import ZERO
 from beancount.core.data import Transaction
 from beancount.core.compare import hash_entry
-from beancount.core import complete
+from beancount.core import interpolate
 from beancount.core import amount
 from beancount.core import position
 from beancount.core import inventory
@@ -739,7 +739,7 @@ class WeightColumn(c.EvalColumn):
         super().__init__(amount.Amount)
 
     def __call__(self, posting):
-        return complete.get_balance_amount(posting)
+        return interpolate.get_balance_amount(posting)
 
 class FilterPostingsEnvironment(c.CompilationEnvironment):
     """An execution context that provides access to attributes on Postings.

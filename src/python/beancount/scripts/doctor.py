@@ -48,7 +48,7 @@ def do_roundtrip(filename, unused_args):
     """
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
     logging.info("Read the entries")
-    entries, errors, options = loader.load_file(filename)
+    entries, errors, options_map = loader.load_file(filename)
     printer.print_errors(errors, file=sys.stderr)
 
     logging.info("Print them out to a file")
@@ -60,7 +60,7 @@ def do_roundtrip(filename, unused_args):
     logging.info("Read the entries from that file")
     # Note that we don't want to run any of the auto-generation here...
     # parse-only, not load.
-    entries_roundtrip, errors, options = parser.parse_file(round1_filename)
+    entries_roundtrip, errors, options_map = parser.parse_file(round1_filename)
 
     # Print out the list of errors from parsing the results.
     if errors:
@@ -167,7 +167,7 @@ def do_context(filename, args):
     lineno = int(args[0])
 
     # Load the input file.
-    entries, errors, options = loader.load_file(filename)
+    entries, errors, options_map = loader.load_file(filename)
 
     str_context = context.render_entry_context(entries, filename, lineno)
     sys.stdout.write(str_context)
@@ -184,7 +184,7 @@ def do_missing_open(filename, args):
       args: A tuple of the rest of arguments. We're expecting the first argument
         to be an integer as a string.
     """
-    entries, errors, options = loader.load_file(filename)
+    entries, errors, options_map = loader.load_file(filename)
 
     # Get accounts usage and open directives.
     first_use_map, _ = getters.get_accounts_use_map(entries)
@@ -197,6 +197,29 @@ def do_missing_open(filename, args):
                 data.Open(data.Source(filename, 0), first_use_date, account, None))
 
     printer.print_entries(data.sort(new_entries))
+
+
+def do_precision(filename, args):
+    """Print out the precision inferred from the parsed numbers in the input file.
+
+    Args:
+      filename: A string, which consists in the filename.
+      args: A tuple of the rest of arguments. We're expecting the first argument
+        to be an integer as a string.
+    """
+    entries, errors, options_map = loader.load_file(filename)
+    max_width = max(map(len, options_map['precision'].keys()))
+    fmt = '{{:{}}}   {{:2}} | {{:24}}   {{:2}} | {{:24}}'.format(max_width)
+    for currency, precision in sorted(options_map['precision'].items()):
+        max_precision = options_map['max_precision'][currency]
+        if max_precision == precision:
+            print(fmt.format(currency,
+                             precision, '{:.{prec}f}'.format(0, prec=precision),
+                             '', ''))
+        else:
+            print(fmt.format(currency,
+                             precision, '{:.{prec}f}'.format(0, prec=precision),
+                             max_precision, '{:.{prec}f}'.format(0, prec=max_precision)))
 
 
 def main():

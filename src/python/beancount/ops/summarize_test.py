@@ -128,17 +128,17 @@ class TestOpenClose(cmptest.TestCase):
         self.assertEqual(4, index)
 
         # Check that our original example list of entries does not balance.
-        input_balance = complete.compute_entries_balance(self.entries)
+        input_balance = interpolate.compute_entries_balance(self.entries)
         self.assertFalse(input_balance.is_empty())
 
         # Check that the summarized entries add up to precisely zero.
         summarized_entries = opened_entries[:index]
-        balances = complete.compute_entries_balance(summarized_entries)
+        balances = interpolate.compute_entries_balance(summarized_entries)
         self.assertTrue(balances.is_empty())
 
         # Check further conversions aren't accounted for (the close operation
         # takes care of this).
-        opened_balance = complete.compute_entries_balance(opened_entries)
+        opened_balance = interpolate.compute_entries_balance(opened_entries)
         self.assertFalse(opened_balance.is_empty())
 
 
@@ -182,15 +182,15 @@ class TestOpenClose(cmptest.TestCase):
         self.assertEqual(4, index)
 
         # Check that our original example list of entries does not balance.
-        input_balance = complete.compute_entries_balance(self.entries)
+        input_balance = interpolate.compute_entries_balance(self.entries)
         self.assertFalse(input_balance.is_empty())
 
         # Check that the truncated entries does not balance.
-        balances = complete.compute_entries_balance(closed_entries[:index])
+        balances = interpolate.compute_entries_balance(closed_entries[:index])
         self.assertFalse(balances.is_empty())
 
         # Check that the closed entries add up to precisely zero.
-        balances = complete.compute_entries_balance(closed_entries)
+        balances = interpolate.compute_entries_balance(closed_entries)
         self.assertTrue(balances.is_empty())
 
 
@@ -244,7 +244,7 @@ class TestOpenClose(cmptest.TestCase):
 
         # Check that the cleared entries do not necessarily up to precisely zero
         # without closing.
-        balances = complete.compute_entries_balance(clear_entries)
+        balances = interpolate.compute_entries_balance(clear_entries)
         self.assertFalse(balances.is_empty())
 
 

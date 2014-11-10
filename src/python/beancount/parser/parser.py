@@ -36,6 +36,7 @@ from beancount.parser import lexer
 from beancount.parser import options
 from beancount.core import account
 from beancount.core import data
+from beancount.utils import misc_utils
 
 
 __sanity_checks__ = False
@@ -96,6 +97,31 @@ class Builder(lexer.LexBuilder):
         # types.
         self.account_regexp = valid_account_regexp(self.options)
 
+        # A mapping of currency to a frequency distribution of precisions seen
+        # in the input file. This is used to feed some information that allows
+        # us to select what precision to use for rendering.
+        self.precision_dist = collections.defaultdict(misc_utils.Distribution)
+
+    def get_entries(self):
+        """Return the accumulated entries.
+
+        Returns:
+          A list of sorted directives.
+        """
+        return sorted(self.entries, key=data.entry_sortkey)
+
+    def get_options(self):
+        """Return the final options map.
+
+        Returns:
+          A dict of option names to options.
+        """
+        self.options['precision'] = {currency: -dist.mode()
+                                     for currency, dist in self.precision_dist.items()}
+        self.options['max_precision'] = {currency: -dist.min()
+                                         for currency, dist in self.precision_dist.items()}
+        return self.options
+
     def get_invalid_account(self):
         """See base class."""
         return account.join(self.options['name_equity'], 'InvalidAccountName')
@@ -151,6 +177,17 @@ class Builder(lexer.LexBuilder):
         else:
             option = self.options[key]
             if isinstance(option, list):
+                # Process the 'plugin' option specially: accept an optional
+                # argument from it. NOTE: We will eventually phase this out and
+                # replace it by a dedicated 'plugin' directive.
+                if key == 'plugin':
+                    match = re.match('(.*):(.*)', value)
+                    if match:
+                        plugin_name, plugin_config = match.groups()
+                    else:
+                        plugin_name, plugin_config = value, None
+                    value = (plugin_name, plugin_config)
+
                 # Append to a list of values.
                 option.append(value)
             else:
@@ -171,6 +208,18 @@ class Builder(lexer.LexBuilder):
                 # Update the set of valid account types.
                 self.account_regexp = valid_account_regexp(self.options)
 
+    def plugin(self, filename, lineno, plugin_name, plugin_config):
+        """Process a plugin directive.
+
+        Args:
+          filename: current filename.
+          lineno: current line number.
+          plugin_name: A string, the name of the plugin module to import.
+          plugin_config: A string or None, an optional configuration string to
+            pass in to the plugin module.
+        """
+        self.options['plugin'].append((plugin_name, plugin_config))
+
     def amount(self, number, currency):
         """Process an amount grammar rule.
 
@@ -180,8 +229,9 @@ class Builder(lexer.LexBuilder):
         Returns:
           An instance of Amount.
         """
-        assert isinstance(number, Decimal)
-        assert isinstance(currency, str)
+        # Update the mapping that stores the parsed precisions.
+        # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
+        self.precision_dist[currency].update(number.as_tuple().exponent)
         return Amount(number, currency)
 
     def lot_cost_date(self, cost, lot_date, istotal):
@@ -601,8 +651,7 @@ def parse_file(filename, **kw):
         abs_filename = path.abspath(filename)
         builder.options["filename"] = abs_filename
     _parser.parse_file(filename, builder, **kw)
-    entries = sorted(builder.entries, key=data.entry_sortkey)
-    return (entries, builder.errors, builder.options)
+    return (builder.get_entries(), builder.errors, builder.get_options())
 
 # Alias, for compatibility.
 # pylint: disable=invalid-name
@@ -621,8 +670,7 @@ def parse_string(string, **kw):
     builder = Builder()
     builder.options["filename"] = "<string>"
     _parser.parse_string(string, builder, **kw)
-    entries = sorted(builder.entries, key=data.entry_sortkey)
-    return (entries, builder.errors, builder.options)
+    return (builder.get_entries(), builder.errors, builder.get_options())
 
 
 def parsedoc(fun):

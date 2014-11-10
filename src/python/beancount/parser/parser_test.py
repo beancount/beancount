@@ -395,6 +395,46 @@ class TestParserOptions(unittest.TestCase):
         self.assertNotEqual("filename", "gniagniagniagniagnia")
 
 
+class TestParserPlugin(unittest.TestCase):
+
+    @parsedoc
+    def test_plugin(self, entries, errors, options_map):
+        """
+          plugin "beancount.plugin.unrealized"
+        """
+        self.assertFalse(errors)
+        self.assertEqual([('beancount.plugin.unrealized', None)],
+                         options_map['plugin'])
+
+    @parsedoc
+    def test_plugin_with_config(self, entries, errors, options_map):
+        """
+          plugin "beancount.plugin.unrealized" "Unrealized"
+        """
+        self.assertFalse(errors)
+        self.assertEqual([('beancount.plugin.unrealized', 'Unrealized')],
+                         options_map['plugin'])
+
+    # Note: this is testing the old method, which will become obsolete one day.
+    @parsedoc
+    def test_plugin_as_option(self, entries, errors, options_map):
+        """
+          option "plugin" "beancount.plugin.unrealized"
+        """
+        self.assertFalse(errors)
+        self.assertEqual([('beancount.plugin.unrealized', None)],
+                         options_map['plugin'])
+
+    @parsedoc
+    def test_plugin_as_option_with_config(self, entries, errors, options_map):
+        """
+          option "plugin" "beancount.plugin.unrealized:Unrealized"
+        """
+        self.assertFalse(errors)
+        self.assertEqual([('beancount.plugin.unrealized', 'Unrealized')],
+                         options_map['plugin'])
+
+
 class TestParserLinks(unittest.TestCase):
 
     @parsedoc

@@ -227,3 +227,17 @@ class TestUniquify(unittest.TestCase):
         unique_data = misc_utils.uniquify(data, lambda x: x[0], last=True)
         self.assertEqual([('d', 9), ('c', 7), ('a', 2), ('b', 5)],
                          list(unique_data))
+
+
+class TestDistribution(unittest.TestCase):
+
+    def test_distribution(self):
+        dist = misc_utils.Distribution()
+        dist.update(1)
+        dist.update(2)
+        dist.update(2)
+        dist.update(2)
+        dist.update(3)
+        dist.update(3)
+        dist.update(4)
+        self.assertEqual(2, dist.mode())

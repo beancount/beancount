@@ -334,19 +334,6 @@ beancount: TODO
     particular lot.
 
 
-  - Extend the option syntax to allow an optional arbitrary configuration
-    expression for plugins, instead of the current method:
-
-      option "plugin" "<module>" "<options>"
-
-    Actually, make plugin its own directive:
-
-      plugin "<module>" "<options>"
-
-    A more potent configuration will allow me to move in a lot of the
-    experiments into the main directory, including some of my own personal
-    plugins, which require a more extensive configuration.
-
 
   - Eventually you want to clean up the locations of the example files. I think
     the basic.beancount and starterkit.beancount files aren't really that useful
@@ -940,7 +927,7 @@ beancount: TODO
     through would generate a warning in the errors.
 
   - Setting the filename on options_map might help in making document
-    processing alos as a plugin.
+    processing also as a plugin.
 
 
 
@@ -1704,6 +1691,8 @@ beancount: TODO
   functionality into nice isolated plugin modules. Even functionality as basic
   as Balance checks.  I'm not going to to do this in the first release, but I
   want to set the stage for it.
+
+
 ** Precision
 
   - (precision) FIXME: The better way to render numbers at the end would be to
