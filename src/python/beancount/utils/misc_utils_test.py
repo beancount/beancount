@@ -146,3 +146,17 @@ class TestMiscUtils(unittest.TestCase):
         # Note: Allow zero because the console function fails in nose when
         # capture is disabled.
         self.assertLess(-1, max_width)
+
+
+class TestDistribution(unittest.TestCase):
+
+    def test_distribution(self):
+        dist = misc_utils.Distribution()
+        dist.update(1)
+        dist.update(2)
+        dist.update(2)
+        dist.update(2)
+        dist.update(3)
+        dist.update(3)
+        dist.update(4)
+        self.assertEqual(2, dist.mode())

@@ -3,6 +3,7 @@ Generic utility packages and functions.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import collections
 import io
 import re
 from time import time
@@ -305,3 +306,46 @@ def get_screen_width():
     except io.UnsupportedOperation:
         return 0
     return curses.tigetnum('cols')
+
+
+class Distribution:
+    """A class that computes a histogram of integer values. This is used to compute
+    a length that will cover at least some decent fraction of the samples.
+    """
+    def __init__(self):
+        self.hist = collections.defaultdict(int)
+
+    def update(self, value):
+        """Add a sample to the distribution.
+
+        Args:
+          value: A value of the function.
+        """
+        self.hist[value] += 1
+
+    def min(self):
+        """Return the minimum value seen in the distribution.
+
+        Returns:
+          An element of the value type, or None, if the distribution was empty.
+        """
+        if not self.hist:
+            return None
+        value, _ = sorted(self.hist.items())[0]
+        return value
+
+    def mode(self):
+        """Return the mode of the distribution.
+
+        Returns:
+          An element of the value type, or None, if the distribution was empty.
+        """
+        if not self.hist:
+            return None
+        max_value = 0
+        max_count = 0
+        for value, count in sorted(self.hist.items()):
+            if count >= max_count:
+                max_count = count
+                max_value = value
+        return max_value
