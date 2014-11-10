@@ -3,6 +3,14 @@ beancount: TODO
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 
+  - The printer's output is all misalinged. You need to fix this urgently. Use
+    the display precision, or some other simpler method. The new printer should
+    printer as tightly as possible.
+
+
+  - Allow the printer control over whether commas are to be rendered or not.
+
+
   - Build a routine that can compute the commonly used precision for each
     currency and (currency, account) pairs, and derive a PrecisionContext
     object that can then be used to render all the data.
@@ -12,7 +20,6 @@ beancount: TODO
   - Create a DisplayContext that contains settings for how to render numbers:
     the precision by currency, whether commas should be printed or not.
 
-  - Allow the printer control over whether commas are to be rendered or not.
 
 
   - Write unit tests for display precision, this isn't too great now.
@@ -117,6 +124,12 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - IMPORTANT: Unrealized gains for opened periods should show only gains since
+    the openings. In other words, unrealized gains should be realized
+    marked-to-market at the time of open.
+
 
 
   - A nice new Health Care section is nearly complete... complete it with DEDUC
