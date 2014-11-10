@@ -559,7 +559,8 @@ class TestTransactions(unittest.TestCase):
         """
         check_list(self, entries, [data.Transaction])
         check_list(self, errors,
-                   [interpolate.BalanceError] if interpolate_test.ERRORS_ON_RESIDUAL else [])
+                   [interpolate.BalanceError]
+                   if interpolate_test.ERRORS_ON_RESIDUAL else [])
 
     @parsedoc
     def test_no_postings(self, entries, errors, _):

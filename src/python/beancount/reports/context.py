@@ -36,7 +36,8 @@ def render_entry_context(entries, filename, lineno):
 
     # Get the entry's accounts and accumulate the balances of these accounts up
     # to the entry.
-    balance_before, balance_after = interpolate.compute_entry_context(entries, closest_entry)
+    balance_before, balance_after = interpolate.compute_entry_context(entries,
+                                                                      closest_entry)
 
     # Get the list of accounts sorted by the order in which they appear in the
     # closest entry.
