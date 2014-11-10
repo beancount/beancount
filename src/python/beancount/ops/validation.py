@@ -20,7 +20,7 @@ from beancount.core.data import Note
 from beancount.core import data
 from beancount.core import getters
 from beancount.core import inventory
-from beancount.core import complete
+from beancount.core import interpolate
 from beancount.utils import misc_utils
 
 
@@ -349,8 +349,8 @@ def validate_check_transaction_balances(entries, options_map):
             # the plugins) are balanced. See {9e6c14b51a59}.
             #
             # Detect complete sets of postings that have residual balance;
-            balance = complete.compute_residual(entry.postings)
-            if not balance.is_small(complete.SMALL_EPSILON):
+            balance = interpolate.compute_residual(entry.postings)
+            if not balance.is_small(interpolate.SMALL_EPSILON):
                 errors.append(
                     ValidationError(entry.source,
                                     "Transaction does not balance: {}".format(balance),

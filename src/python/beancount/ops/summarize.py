@@ -19,7 +19,7 @@ from beancount.core import amount
 from beancount.core import inventory
 from beancount.core import data
 from beancount.core import flags
-from beancount.core import complete
+from beancount.core import interpolate
 from beancount.ops import prices
 from beancount.ops import balance
 from beancount.utils import bisect_key
@@ -254,7 +254,7 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
       A modified list of entries.
     """
     # Compute the balance at the given date.
-    conversion_balance = complete.compute_entries_balance(entries, date=date)
+    conversion_balance = interpolate.compute_entries_balance(entries, date=date)
 
     # Early exit if there is nothing to do.
     if conversion_balance.is_empty():

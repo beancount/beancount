@@ -12,7 +12,7 @@ import re
 from beancount.core import inventory
 from beancount.core import data
 from beancount.core import flags
-from beancount.core import complete
+from beancount.core import interpolate
 from beancount.ops import summarize
 from beancount.parser import parser
 from beancount.parser import printer
@@ -100,10 +100,10 @@ class TestClamp(cmptest.TestCase):
 
         self.assertEqual(3, index)
 
-        input_balance = complete.compute_entries_balance(entries)
+        input_balance = interpolate.compute_entries_balance(entries)
         self.assertFalse(input_balance.is_empty())
 
-        clamped_balance = complete.compute_entries_balance(clamped_entries)
+        clamped_balance = interpolate.compute_entries_balance(clamped_entries)
         self.assertTrue(clamped_balance.is_empty())
 
 
@@ -503,7 +503,7 @@ class TestConversions(cmptest.TestCase):
                                                    'NOTHING', date)
         self.assertEqualEntries(self.entries, conversion_entries)
 
-        converted_balance = complete.compute_entries_balance(conversion_entries,
+        converted_balance = interpolate.compute_entries_balance(conversion_entries,
                                                              date=date)
         self.assertTrue(converted_balance.cost().is_empty())
 
@@ -513,7 +513,7 @@ class TestConversions(cmptest.TestCase):
                                                    'NOTHING', date)
         self.assertEqualEntries(self.entries, conversion_entries)
 
-        converted_balance = complete.compute_entries_balance(conversion_entries,
+        converted_balance = interpolate.compute_entries_balance(conversion_entries,
                                                              date=date)
         self.assertTrue(converted_balance.cost().is_empty())
 
@@ -530,7 +530,7 @@ class TestConversions(cmptest.TestCase):
 
         """, conversion_entries)
 
-        converted_balance = complete.compute_entries_balance(conversion_entries,
+        converted_balance = interpolate.compute_entries_balance(conversion_entries,
                                                              date=date)
         self.assertTrue(converted_balance.cost().is_empty())
 
@@ -547,7 +547,7 @@ class TestConversions(cmptest.TestCase):
 
         """, conversion_entries)
 
-        converted_balance = complete.compute_entries_balance(conversion_entries,
+        converted_balance = interpolate.compute_entries_balance(conversion_entries,
                                                              date=date)
         self.assertTrue(converted_balance.cost().is_empty())
 
@@ -564,7 +564,7 @@ class TestConversions(cmptest.TestCase):
 
         """, conversion_entries)
 
-        converted_balance = complete.compute_entries_balance(conversion_entries)
+        converted_balance = interpolate.compute_entries_balance(conversion_entries)
         self.assertTrue(converted_balance.cost().is_empty())
 
     def test_conversions__no_date(self):
@@ -579,7 +579,7 @@ class TestConversions(cmptest.TestCase):
 
         """, conversion_entries)
 
-        converted_balance = complete.compute_entries_balance(conversion_entries)
+        converted_balance = interpolate.compute_entries_balance(conversion_entries)
         self.assertTrue(converted_balance.cost().is_empty())
 
 

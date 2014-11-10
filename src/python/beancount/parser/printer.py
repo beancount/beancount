@@ -7,7 +7,7 @@ import sys
 import textwrap
 
 from beancount.core import amount
-from beancount.core import complete
+from beancount.core import interpolate
 from beancount.core import data
 
 
@@ -42,7 +42,7 @@ class EntryPrinter:
 
         oss.write('{e.date} {e.flag} {}\n'.format(' '.join(strings), e=entry))
 
-        non_trivial_balance = any(map(complete.has_nontrivial_balance, entry.postings))
+        non_trivial_balance = any(map(interpolate.has_nontrivial_balance, entry.postings))
         for posting in entry.postings:
             cls.Posting(cls, posting, oss, non_trivial_balance)
 
@@ -63,7 +63,7 @@ class EntryPrinter:
 
         if print_balance:
             if posting.position:
-                balance_amount = complete.get_posting_weight(posting)
+                balance_amount = interpolate.get_posting_weight(posting)
                 balance_amount_str = balance_amount.str(amount.MAXDIGITS_PRINTER)
             else:
                 balance_amount_str = 'UNKNOWN'

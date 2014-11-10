@@ -5,7 +5,7 @@ import copy
 
 from beancount.core.data import create_simple_posting as P
 from beancount.core.data import create_simple_posting_with_cost as PCost
-from beancount.core import complete
+from beancount.core import interpolate
 from beancount.core import data
 from beancount.core import inventory
 from beancount.core import amount
@@ -24,52 +24,52 @@ class TestBalance(cmptest.TestCase):
         # Entry without cost, without price.
         posting = P(None, "Assets:Bank:Checking", "105.50", "USD")
         self.assertEqual(amount.Amount("105.50", "USD"),
-                         complete.get_posting_weight(posting))
+                         interpolate.get_posting_weight(posting))
 
         # Entry without cost, with price.
         posting = posting._replace(price=amount.Amount("0.90", "CAD"))
         self.assertEqual(amount.Amount("94.95", "CAD"),
-                         complete.get_posting_weight(posting))
+                         interpolate.get_posting_weight(posting))
 
         # Entry with cost, without price.
         posting = PCost(None, "Assets:Bank:Checking", "105.50", "USD", "0.80", "EUR")
         self.assertEqual(amount.Amount("84.40", "EUR"),
-                         complete.get_posting_weight(posting))
+                         interpolate.get_posting_weight(posting))
 
         # Entry with cost, and with price (the price should be ignored).
         posting = posting._replace(price=amount.Amount("2.00", "CAD"))
         self.assertEqual(amount.Amount("84.40", "EUR"),
-                         complete.get_posting_weight(posting))
+                         interpolate.get_posting_weight(posting))
 
     def test_has_nontrivial_balance(self):
 
         # Entry without cost, without price.
         posting = P(None, "Assets:Bank:Checking", "105.50", "USD")
-        self.assertFalse(complete.has_nontrivial_balance(posting))
+        self.assertFalse(interpolate.has_nontrivial_balance(posting))
 
         # Entry without cost, with price.
         posting = posting._replace(price=amount.Amount("0.90", "CAD"))
-        self.assertTrue(complete.has_nontrivial_balance(posting))
+        self.assertTrue(interpolate.has_nontrivial_balance(posting))
 
         # Entry with cost, without price.
         posting = PCost(None, "Assets:Bank:Checking", "105.50", "USD", "0.80", "EUR")
-        self.assertTrue(complete.has_nontrivial_balance(posting))
+        self.assertTrue(interpolate.has_nontrivial_balance(posting))
 
         # Entry with cost, and with price (the price should be ignored).
         posting = posting._replace(price=amount.Amount("2.00", "CAD"))
-        self.assertTrue(complete.has_nontrivial_balance(posting))
+        self.assertTrue(interpolate.has_nontrivial_balance(posting))
 
     def test_compute_residual(self):
 
         # Try with two accounts.
-        residual = complete.compute_residual([
+        residual = interpolate.compute_residual([
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Checking", "-194.50", "USD"),
             ])
         self.assertEqual(inventory.from_string("-89 USD"), residual.units())
 
         # Try with more accounts.
-        residual = complete.compute_residual([
+        residual = interpolate.compute_residual([
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Checking", "-194.50", "USD"),
             P(None, "Assets:Bank:Investing", "5", "AAPL"),
@@ -98,11 +98,11 @@ class TestBalance(cmptest.TestCase):
         """
         account = 'Equity:Rounding'
         for index in 0, 1:
-            entry = complete.fill_residual_posting(entries[index], account)
+            entry = interpolate.fill_residual_posting(entries[index], account)
             self.assertEqualEntries([entries[index]], [entry])
-            self.assertTrue(complete.compute_residual(entry.postings).is_empty())
+            self.assertTrue(interpolate.compute_residual(entry.postings).is_empty())
 
-        entry = complete.fill_residual_posting(entries[2], account)
+        entry = interpolate.fill_residual_posting(entries[2], account)
         self.assertEqualEntries("""
 
         2014-01-03 *
@@ -111,9 +111,9 @@ class TestBalance(cmptest.TestCase):
           Equity:Rounding        0.0000001 USD
 
         """, [entry])
-        self.assertTrue(complete.compute_residual(entry.postings).is_empty())
+        self.assertTrue(interpolate.compute_residual(entry.postings).is_empty())
 
-        entry = complete.fill_residual_posting(entries[3], account)
+        entry = interpolate.fill_residual_posting(entries[3], account)
         self.assertEqualEntries("""
 
         2014-01-04 *
@@ -122,14 +122,14 @@ class TestBalance(cmptest.TestCase):
           Equity:Rounding   0.012375 USD
 
         """, [entry])
-        self.assertTrue(complete.compute_residual(entry.postings).is_empty())
+        self.assertTrue(interpolate.compute_residual(entry.postings).is_empty())
 
     def test_get_incomplete_postings_pathological(self):
         source = data.Source(__file__, 0)
 
         # Test with no entries.
         entry = data.Transaction(source, None, None, None, None, None, None, [])
-        new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
+        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
         self.assertEqual(0, len(new_postings))
         self.assertEqual(0, len(errors))
@@ -138,7 +138,7 @@ class TestBalance(cmptest.TestCase):
         entry = data.Transaction(source, None, None, None, None, None, None, [
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             ])
-        new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
+        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
         self.assertEqual(1, len(new_postings))
         self.assertEqual(1 if ERRORS_ON_RESIDUAL else 0, len(errors))
@@ -148,7 +148,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Savings", "-105.50", "USD"),
             ])
-        new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
+        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
         self.assertEqual(2, len(new_postings))
         self.assertEqual(0, len(errors))
@@ -158,7 +158,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Savings", "-115.50", "USD"),
             ])
-        new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
+        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
         self.assertEqual(2, len(new_postings))
         self.assertEqual(1 if ERRORS_ON_RESIDUAL else 0, len(errors))
@@ -167,7 +167,7 @@ class TestBalance(cmptest.TestCase):
         entry = data.Transaction(source, None, None, None, None, None, None, [
             P(None, "Assets:Bank:Checking", None, None),
             ])
-        new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
+        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
         self.assertEqual(0, len(new_postings))
         self.assertEqual(1, len(errors))
@@ -178,7 +178,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:Savings", "-105.50", "USD"),
             P(None, "Assets:Bank:Balancing", None, None),
             ])
-        new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
+        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertTrue(has_inserted)
         self.assertEqual(3, len(new_postings))
         self.assertEqual(1, len(errors))
@@ -190,7 +190,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:BalancingA", None, None),
             P(None, "Assets:Bank:BalancingB", None, None),
             ])
-        new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
+        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertTrue(has_inserted)
         self.assertEqual(3, len(new_postings))
         self.assertEqual(1, len(errors))
@@ -204,7 +204,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:Savings", "-115.50", "USD"),
             P(None, "Assets:Bank:Balancing", None, None),
             ])
-        new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
+        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertTrue(has_inserted)
         self.assertEqual(3, len(new_postings))
         self.assertEqual(0, len(errors))
@@ -218,7 +218,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Income:US:Anthem:InsurancePayments", "-23738.54", "USD"),
             P(None, "Assets:Bank:Checking", "24014.45", "USD"),
             ])
-        new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
+        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
         self.assertEqual(3, len(new_postings))
         self.assertEqual(1 if ERRORS_ON_RESIDUAL else 0, len(errors))
@@ -229,7 +229,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Income:US:Anthem:InsurancePayments", "0", "USD"),
             P(None, "Income:US:Anthem:InsurancePayments", None, None),
             ])
-        new_postings, has_inserted, errors = complete.get_incomplete_postings(entry)
+        new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
         self.assertEqual(1, len(new_postings))
         self.assertEqual(0, len(errors))
@@ -241,7 +241,7 @@ class TestBalance(cmptest.TestCase):
             Expenses:Restaurant         50 USD
         """)[0][0]
         orig_entry = copy.deepcopy(entry)
-        errors = complete.balance_incomplete_postings(entry)
+        errors = interpolate.balance_incomplete_postings(entry)
         self.assertFalse(errors)
         self.assertEqual(orig_entry, entry)
 
@@ -251,7 +251,7 @@ class TestBalance(cmptest.TestCase):
             Expenses:Restaurant
         """)[0][0]
         orig_entry = copy.deepcopy(entry)
-        errors = complete.balance_incomplete_postings(entry)
+        errors = interpolate.balance_incomplete_postings(entry)
         self.assertFalse(errors)
         self.assertEqual(strip_recursive(orig_entry),
                          strip_recursive(entry))
@@ -262,7 +262,7 @@ class TestBalance(cmptest.TestCase):
             Liabilities:CreditCard     -50 CAD
             Expenses:Restaurant
         """)[0][0]
-        errors = complete.balance_incomplete_postings(entry)
+        errors = interpolate.balance_incomplete_postings(entry)
         self.assertFalse(errors)
         self.assertEqual(4, len(entry.postings))
 
@@ -288,7 +288,7 @@ class TestComputeBalance(unittest.TestCase):
           Assets:Other          1000 EUR @@ 1780 GBP
         """
         postings = entries[:-1] + entries[-1].postings
-        computed_balance = complete.compute_postings_balance(postings)
+        computed_balance = interpolate.compute_postings_balance(postings)
 
         expected_balance = inventory.Inventory()
         expected_balance.add_amount(amount.Amount('333.97', 'USD'))
@@ -322,7 +322,7 @@ class TestComputeBalance(unittest.TestCase):
           Assets:Other
 
         """
-        computed_balance = complete.compute_entries_balance(entries)
+        computed_balance = interpolate.compute_entries_balance(entries)
         expected_balance = inventory.Inventory()
         self.assertEqual(expected_balance, computed_balance)
 
@@ -342,7 +342,7 @@ class TestComputeBalance(unittest.TestCase):
           Assets:Other
 
         """
-        computed_balance = complete.compute_entries_balance(entries)
+        computed_balance = interpolate.compute_entries_balance(entries)
         expected_balance = inventory.Inventory()
         expected_balance.add_amount(amount.Amount('-400', 'USD'))
         expected_balance.add_amount(amount.Amount('10', 'GOOG'), amount.Amount('40', 'USD'))
@@ -363,7 +363,7 @@ class TestComputeBalance(unittest.TestCase):
           Assets:Investing          1000 EUR @@ 1780 GBP
           Assets:Other
         """
-        computed_balance = complete.compute_entries_balance(entries)
+        computed_balance = interpolate.compute_entries_balance(entries)
         expected_balance = inventory.Inventory()
         expected_balance.add_amount(amount.Amount('2000.00', 'EUR'))
         expected_balance.add_amount(amount.Amount('-3560.00', 'GBP'))
@@ -407,7 +407,7 @@ class TestComputeBalance(unittest.TestCase):
                 entry.tags and
                 'context' in entry.tags):
                 break
-        balance_before, balance_after = complete.compute_entry_context(entries, entry)
+        balance_before, balance_after = interpolate.compute_entry_context(entries, entry)
 
         self.assertEqual(inventory.from_string('100.00 USD'),
                          balance_before['Assets:Account1'])
@@ -424,5 +424,5 @@ class TestComputeBalance(unittest.TestCase):
         for entry in entries:
             if isinstance(entry, data.Balance):
                 break
-        balance_before, balance_after = complete.compute_entry_context(entries, entry)
+        balance_before, balance_after = interpolate.compute_entry_context(entries, entry)
         self.assertEqual(balance_before, balance_after)

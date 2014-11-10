@@ -47,10 +47,6 @@ beancount: TODO
 
 ** Renames and Move Files to Final Location
 
-  - Maybe beancount.core.complete should be called beancount.core.interpolate.
-    That's the term I've been using for a while now isn't it. Clean up
-    terminology.
-
   - Revise beancount.loader.load() to beancount.loader.load_file() + alias, as
     for the parser.
 

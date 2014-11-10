@@ -8,7 +8,7 @@ import io
 from beancount.parser import printer
 from beancount.core import compare
 from beancount.core import data
-from beancount.core import complete
+from beancount.core import interpolate
 
 
 def render_entry_context(entries, filename, lineno):
@@ -36,7 +36,7 @@ def render_entry_context(entries, filename, lineno):
 
     # Get the entry's accounts and accumulate the balances of these accounts up
     # to the entry.
-    balance_before, balance_after = complete.compute_entry_context(entries, closest_entry)
+    balance_before, balance_after = interpolate.compute_entry_context(entries, closest_entry)
 
     # Get the list of accounts sorted by the order in which they appear in the
     # closest entry.

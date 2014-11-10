@@ -4,6 +4,10 @@
 
 2014-11-09
 
+  - (Internal) Renamed beancount.core.complete to beancount.core.interpolate.
+    I've been using the term interpolate for a while now, in the docs, and it's
+    way more telling than complete.
+
   - Made default rendering for changes and balances of HTML reports by units().
     Rendering all the lots was horrible in even moderately complex stock trading
     accounts with a few positions. Now we aggregate by currency ("units").

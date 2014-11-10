@@ -6,7 +6,7 @@ import collections
 from os import path
 
 from beancount.core import data
-from beancount.core import complete
+from beancount.core import interpolate
 from beancount.core import realization
 from beancount.core import flags
 
@@ -200,7 +200,7 @@ def html_entries_table_with_balance(oss, account_postings, formatter, render_pos
                            formatter.render_account(posting.account),
                            posting.position,
                            posting.price or '',
-                           complete.get_posting_weight(posting)))
+                           interpolate.get_posting_weight(posting)))
 
     write('</table>')
 
@@ -280,7 +280,7 @@ def html_entries_table(oss, account_postings, formatter, render_postings=True):
                            posting.position.get_units(),
                            posting.position.lot.cost or '',
                            posting.price or '',
-                           complete.get_posting_weight(posting)))
+                           interpolate.get_posting_weight(posting)))
 
     write('</table>')
 

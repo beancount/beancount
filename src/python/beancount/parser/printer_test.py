@@ -9,7 +9,7 @@ import textwrap
 from beancount.parser import printer
 from beancount.parser import parser
 from beancount.core import data
-from beancount.core import complete
+from beancount.core import interpolate
 from beancount.parser import cmptest
 
 
@@ -25,7 +25,7 @@ class TestPrinter(unittest.TestCase):
 
     def test_format_and_print_error(self):
         entry = data.Open(SOURCE, date(2014, 1, 15), 'Assets:Bank:Checking', [])
-        error = complete.BalanceError(SOURCE, "Example balance error", entry)
+        error = interpolate.BalanceError(SOURCE, "Example balance error", entry)
         error_str = printer.format_error(error)
         self.assertTrue(isinstance(error_str, str))
 
