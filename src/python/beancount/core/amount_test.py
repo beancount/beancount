@@ -183,6 +183,7 @@ class TestDisplayPrecision(unittest.TestCase):
         self.assertEqual('-1764.9876543', dc(self.number))
 
     def test_precision_empty_default_integers(self):
+        dc = amount.DisplayContext()
         self.assertEqual(' 4343', dc(D('4343')))
         self.assertEqual('-4343', dc(D('-4343')))
 

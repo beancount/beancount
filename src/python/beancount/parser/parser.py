@@ -117,12 +117,17 @@ class Builder(lexer.LexBuilder):
         Returns:
           A dict of option names to options.
         """
+        self.options['render_commas'] = (
+            self.options['render_commas'].lower() in ('1', 'true'))
+
         dcontext = amount.DisplayContext()
+        dcontext.set_commas(self.options['render_commas'])
         for currency, dist in self.precision_dist.items():
             dcontext.set_precision(-dist.mode(), currency, False)
             dcontext.set_precision_max(-dist.min(), currency, False)
         dcontext.update()
         self.options['display_context'] = dcontext
+
         return self.options
 
     def get_invalid_account(self):

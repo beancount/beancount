@@ -3,27 +3,21 @@ beancount: TODO
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 
-
+  (printer)
   - The printer's output is all misalinged. You need to fix this urgently. Use
     the display precision, or some other simpler method. The new printer should
     printer as tightly as possible.
-
-
   - Allow the printer control over whether commas are to be rendered or not.
-
-
   - Write unit tests for display precision, this isn't too great now.
 
   - With the tests, figure out if we still need MAXDIGITS_QUANTIZE,
     MAXDIGITS_PRINTER, etc., based on all usage. I think this is not the way I
     want it to be.
 
-
   - Fix the alignment of the rendered postings by printer, it's out of whack.
     See example.beancount file, doesn't look nice anymore. Has to do with
     replacement of strings I believe. But the printer should *always* output
     nicely aligned numbers.
-
 
   - Fix all of these with the routine:
 
@@ -37,15 +31,12 @@ beancount: TODO
      /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:195:                    posting.position.lot.cost.str(amount.MAXDIGITS_PRINTER))
      /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:287:        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
 
-
-  - Maybe use this routine in the BQL rendering routines instead of using the
-    display precision mode in the displayed numbers only.
-
-
 ** Misc
 
   - Make b.w.web also 'app.options_map' instead of 'app.options'.
 
+  - Make _all_ plugins accept a configuration parameter, unconditionally. The
+    interface should be this regular.
 
 ** Documentation / Ongoing
 
@@ -55,7 +46,6 @@ beancount: TODO
 
   - Change documentation script to try to download to ODT format and then batch
     format to ebook
-
 
 * Standalone Tools
 
@@ -119,6 +109,11 @@ beancount: TODO
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+  - Figure out if rendering commas in numbers is meant to be handled by the
+    locale. If so, figure out MAYBE how to avoid having a render_commas option
+    at all, and to initialize the value from the locale setting.
 
 
   - IMPORTANT: Unrealized gains for opened periods should show only gains since
