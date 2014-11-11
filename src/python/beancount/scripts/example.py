@@ -1465,10 +1465,23 @@ def write_example_file(date_birth, date_begin, date_end, file):
                                              date_random_seq(date_begin, date_end, 20, 30))
 
     logging.info("Outputting and Formatting Entries")
+    dcontext = amount.DisplayContext()
+    for currency, precision in {'USD': 2,
+                                'CAD': 2,
+                                'VACHR':0,
+                                'IRAUSD': 2,
+                                'VBMPX': 3,
+                                'RGAGX': 3,
+                                'ITOT': 0,
+                                'VEA': 0,
+                                'VHT': 0,
+                                'GLD': 0}.items():
+        dcontext.set_precision(precision, currency)
+
     output = io.StringIO()
     def output_section(title, entries):
         output.write('{}\n\n'.format(title))
-        printer.print_entries(data.sort(entries), file=output)
+        printer.print_entries(data.sort(entries), dcontext, file=output)
 
     output.write(FILE_PREAMBLE.format(**vars()))
     output_section('* Equity Accounts', equity_entries)

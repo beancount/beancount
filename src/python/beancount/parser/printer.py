@@ -16,6 +16,9 @@ class EntryPrinter:
 
     # pylint: disable=invalid-name
 
+    def __init__(self, display_context):
+        self.dcontext = display_context
+
     @classmethod
     def __call__(cls, obj):
         oss = io.StringIO()
@@ -108,34 +111,37 @@ class EntryPrinter:
         oss.write('{e.date} event "{e.type}" "{e.description}"\n'.format(e=entry))
 
 
-def format_entry(entry):
+def format_entry(entry, display_context=None):
     """Format an entry into a string in the same input syntax the parser accepts.
 
     Args:
       entry: An entry instance.
+      display_context: An instance of DisplayContext used to format the numbers.
     Returns:
       A string, the formatted entry.
     """
-    return EntryPrinter()(entry)
+    return EntryPrinter(display_context)(entry)
 
 
-def print_entry(entry, file=None):
+def print_entry(entry, display_context=None, file=None):
     """A convenience function that prints a single entry to a file.
 
     Args:
       entry: A directive entry.
+      display_context: An instance of DisplayContext used to format the numbers.
       file: An optional file object to write the entries to.
     """
     output = file or sys.stdout
-    output.write(format_entry(entry))
+    output.write(format_entry(entry, display_context))
     output.write('\n')
 
 
-def print_entries(entries, file=None, prefix=None):
+def print_entries(entries, display_context=None, file=None, prefix=None):
     """A convenience function that prints a list of entries to a file.
 
     Args:
       entries: A list of directives.
+      display_context: An instance of DisplayContext used to format the numbers.
       file: An optional file object to write the entries to.
     """
     assert isinstance(entries, list)
@@ -151,7 +157,7 @@ def print_entries(entries, file=None, prefix=None):
             output.write('\n')
             previous_type = entry_type
 
-        output.write(format_entry(entry))
+        output.write(format_entry(entry, display_context))
 
 
 def render_source(source):

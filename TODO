@@ -3,6 +3,13 @@ beancount: TODO
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 
+make the default print of the DisplayPrecision print at the natural precision of the number
+render_entry_context -> print_entry
+print_entries
+format_entry
+
+  - Make b.w.web also 'app.options_map' instead of 'app.options'.
+
   - The printer's output is all misalinged. You need to fix this urgently. Use
     the display precision, or some other simpler method. The new printer should
     printer as tightly as possible.

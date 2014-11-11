@@ -45,7 +45,7 @@ class TestEntryPrinter(cmptest.TestCase):
 
         # Print out the entries and parse them back in.
         oss1 = io.StringIO()
-        printer.print_entries(entries1, oss1)
+        printer.print_entries(entries1, file=oss1)
         entries2, errors, __ = parser.parse_string(oss1.getvalue())
 
         self.assertEqualEntries(entries1, entries2)
@@ -53,7 +53,7 @@ class TestEntryPrinter(cmptest.TestCase):
 
         # Print out those reparsed and parse them back in.
         oss2 = io.StringIO()
-        printer.print_entries(entries2, oss2)
+        printer.print_entries(entries2, file=oss2)
         entries3, errors, __ = parser.parse_string(oss2.getvalue())
 
         self.assertEqualEntries(entries1, entries3)
