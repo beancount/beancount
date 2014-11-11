@@ -31,6 +31,7 @@ from .amount import NULL_AMOUNT
 from .amount import amount_mult
 from .amount import MAXDIGITS_PRINTER
 from .amount import CURRENCY_RE
+from .display_context import DEFAULT_DISPLAY_CONTEXT
 
 
 # Lots are a representations of a commodity with an optional associated cost and
@@ -98,8 +99,9 @@ class Position:
         Returns:
           A pair of (amount, cost) strings.
         """
+        dcontext = DEFAULT_DISPLAY_CONTEXT ## FIXME: Pass this in.
         lot = self.lot
-        amount_str = Amount(self.number, lot.currency).to_string(MAXDIGITS_PRINTER)
+        amount_str = Amount(self.number, lot.currency).to_string(dcontext)
 
         # Optionally render the cost and lot-date.
         if lot.cost or lot.lot_date:
@@ -107,7 +109,7 @@ class Position:
             cost_str_list.append('{')
             if lot.cost:
                 cost_str_list.append(
-                    Amount(lot.cost.number, lot.cost.currency).to_string(MAXDIGITS_PRINTER))
+                    Amount(lot.cost.number, lot.cost.currency).to_string(dcontext))
             if lot.lot_date:
                 cost_str_list.append(' / {}'.format(lot.lot_date))
             cost_str_list.append('}')

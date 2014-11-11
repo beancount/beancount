@@ -60,7 +60,7 @@ class TestLedgerUtilityFunctions(cmptest.TestCase):
             Assets:CA:Investment:Cash        2,609.946534 USD
 
           2014-10-03 * "Buy some stock with foreign currency funds"
-            Assets:CA:Investment:GOOG            5.00 GOOG {520.00 USD}
+            Assets:CA:Investment:GOOG            5 GOOG {520.0 USD}
             Expenses:Commissions                 9.95 USD
             Assets:CA:Investment:Cash       -2,609.946534 USD
 
@@ -144,12 +144,12 @@ class TestLedgerConversion(test_utils.TestCase):
           account Assets:CA:Investment:Cash
 
           2014/11/02 * Buy some stock with foreign currency funds
-            Assets:CA:Investment:GOOG    5.00 GOOG    {520.00 USD}    @ 520.00 USD
-            Expenses:Commissions         9.95 USD
-            Assets:CA:Investment:Cash    -2,939.46 CAD    @ 0.8879 USD
-            Equity:Rounding        -0.003466 USD
+            Assets:CA:Investment:GOOG           5 GOOG    {520.0 USD}    @ 520.0 USD
+            Expenses:Commissions             9.95 USD
+            Assets:CA:Investment:Cash    -2939.46 CAD    @ 0.8879 USD
+            Equity:Rounding             -0.003466 USD
 
-          P 2014/11/02 00:00:00 GOOG    520.00 USD
+          P 2014/11/02 00:00:00 GOOG    520.0 USD
 
           P 2014/11/02 00:00:00 CAD    0.8879 USD
 

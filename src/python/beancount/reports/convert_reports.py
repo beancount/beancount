@@ -194,7 +194,7 @@ class LedgerPrinter:
             amount_str, cost_str = '', ''
 
         if posting.price is not None:
-            price_str = '@ {}'.format(posting.price.to_string(amount.MAXDIGITS_PRINTER))
+            price_str = '@ {}'.format(posting.price.to_string())
         else:
             # Figure out if we need to insert a price on a posting held at cost.
             # See https://groups.google.com/d/msg/ledger-cli/35hA0Dvhom0/WX8gY_5kHy0J
@@ -204,7 +204,7 @@ class LedgerPrinter:
 
             if postings_at_price and postings_at_cost and posting.position.lot.cost:
                 price_str = '@ {}'.format(
-                    posting.position.lot.cost.to_string(amount.MAXDIGITS_PRINTER))
+                    posting.position.lot.cost.to_string())
             else:
                 price_str = ''
 
@@ -296,7 +296,7 @@ class HLedgerPrinter(LedgerPrinter):
         else:
             amount_str, cost_str = '', ''
 
-        price_str = ('@ {}'.format(posting.price.to_string(amount.MAXDIGITS_PRINTER))
+        price_str = ('@ {}'.format(posting.price.to_string())
                      if posting.price is not None
                      else '')
 

@@ -10,6 +10,7 @@ import textwrap
 from beancount.core import account_types
 from beancount.core import account
 from beancount.core import amount
+from beancount.core import display_context
 
 
 # list of option groups, with their description, option names and default
@@ -36,7 +37,8 @@ PRIVATE_OPTION_GROUPS = [
       An instance of DisplayContext, which is used to format numbers for output
       with precision inferred from that in the input file. This is created
       automatically by the parser.
-    """, [OptDesc("display_context", amount.DisplayContext(), amount.DisplayContext())]),
+    """, [OptDesc("display_context",
+                  display_context.DisplayContext(), display_context.DisplayContext())]),
     ]
 
 

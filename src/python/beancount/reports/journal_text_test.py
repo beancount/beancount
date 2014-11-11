@@ -101,7 +101,6 @@ class TestJournalTextRender(unittest.TestCase):
         ;; Failing.
         2014-05-01 balance  Assets:Checking   0.00 USD
 
-
         2014-12-31 close Assets:Checking
         """
         self.entries = entries
@@ -126,7 +125,7 @@ class TestJournalTextRender(unittest.TestCase):
             'Transfer',
             'Investment',
             '-',
-            'FAIL - In Assets:Checking; expected = 0.00 USD, difference = 600.00 USD',
+            'FAIL - In Assets:Checking; expected = 0 USD, difference = 600.00 USD',
             'Assets:Checking',
             ]
         for expected_description, entry in zip(expected_descriptions, self.entries):

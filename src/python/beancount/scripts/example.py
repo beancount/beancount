@@ -34,6 +34,7 @@ from beancount.core import data
 from beancount.core import amount
 from beancount.core import inventory
 from beancount.core import realization
+from beancount.core import display_context
 from beancount.parser import parser
 from beancount.parser import printer
 from beancount.ops import validation
@@ -1465,7 +1466,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
                                              date_random_seq(date_begin, date_end, 20, 30))
 
     logging.info("Outputting and Formatting Entries")
-    dcontext = amount.DisplayContext()
+    dcontext = display_context.DisplayContext()
     for currency, precision in {'USD': 2,
                                 'CAD': 2,
                                 'VACHR':0,

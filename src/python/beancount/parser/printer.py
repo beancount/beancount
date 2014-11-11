@@ -9,6 +9,7 @@ import textwrap
 from beancount.core import amount
 from beancount.core import interpolate
 from beancount.core import data
+from beancount.core import display_context
 
 
 class EntryPrinter:
@@ -16,16 +17,16 @@ class EntryPrinter:
 
     # pylint: disable=invalid-name
 
-    def __init__(self, display_context):
-        self.dcontext = display_context
+    def __init__(self, dcontext=None):
+        self.dcontext = dcontext or display_context.DEFAULT_DISPLAY_CONTEXT
 
-    @classmethod
-    def __call__(cls, obj):
+    def __call__(self, obj):
         oss = io.StringIO()
-        getattr(cls, obj.__class__.__name__)(cls, obj, oss)
+        method = getattr(self, obj.__class__.__name__)
+        method(obj, oss)
         return oss.getvalue()
 
-    def Transaction(cls, entry, oss):
+    def Transaction(self, entry, oss):
         # Compute the string for the payee and narration line.
         strings = []
         if entry.payee:
@@ -47,9 +48,9 @@ class EntryPrinter:
 
         non_trivial_balance = any(map(interpolate.has_nontrivial_balance, entry.postings))
         for posting in entry.postings:
-            cls.Posting(cls, posting, oss, non_trivial_balance)
+            self.Posting(posting, oss, non_trivial_balance)
 
-    def Posting(_, posting, oss, print_balance=False):
+    def Posting(self, posting, oss, print_balance=False):
         flag = '{} '.format(posting.flag) if posting.flag else ''
         assert posting.account is not None
 
@@ -60,14 +61,14 @@ class EntryPrinter:
         else:
             amount_str, cost_str = '', ''
 
-        price_str = ('@ {}'.format(posting.price.to_string(amount.MAXDIGITS_PRINTER))
+        price_str = ('@ {}'.format(posting.price.to_string(self.dcontext))
                      if posting.price is not None
                      else '')
 
         if print_balance:
             if posting.position:
                 balance_amount = interpolate.get_posting_weight(posting)
-                balance_amount_str = balance_amount.to_string(amount.MAXDIGITS_PRINTER)
+                balance_amount_str = balance_amount.to_string(self.dcontext)
             else:
                 balance_amount_str = 'UNKNOWN'
             balance_str = '; {:>16}'.format(balance_amount_str)
