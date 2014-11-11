@@ -8,9 +8,10 @@ import textwrap
 
 from beancount.parser import printer
 from beancount.parser import parser
+from beancount.parser import cmptest
 from beancount.core import data
 from beancount.core import interpolate
-from beancount.parser import cmptest
+from beancount.utils import test_utils
 
 
 SOURCE = data.Source('beancount/core/testing.beancount', 12345)
@@ -229,5 +230,38 @@ class TestPrinterSpacing(unittest.TestCase):
         self.assertEqual(expected_classes, actual_classes)
 
 
-class TestDisplayContext(unittest.TestCase):
-    pass
+class TestDisplayContext(test_utils.TestCase):
+
+    maxDiff = 2048
+
+    @parser.parsedoc
+    def test_precision(self, entries, errors, options_map):
+        """
+        2014-07-01 *
+          Assets:Account              1 INT
+          Assets:Account            1.1 FP1
+          Assets:Account          22.22 FP2
+          Assets:Account        333.333 FP3
+          Assets:Account      4444.4444 FP4
+          Assets:Account    55555.55555 FP4
+          Assets:Cash
+        """
+        dcontext = options_map['display_context']
+        oss = io.StringIO()
+        printer.print_entries(entries, dcontext, file=oss)
+
+        expected_str = textwrap.dedent("""
+        2014-07-01 *
+          Assets:Account                   1 INT
+          Assets:Account                 1.1 FP1
+          Assets:Account               22.22 FP2
+          Assets:Account             333.333 FP3
+          Assets:Account           4444.4444 FP4
+          Assets:Account         55555.55555 FP4
+          Assets:Cash                     -1 INT
+          Assets:Cash                   -1.1 FP1
+          Assets:Cash                 -22.22 FP2
+          Assets:Cash               -333.333 FP3
+          Assets:Cash           -59999.99995 FP4
+        """)
+        self.assertLines(expected_str, oss.getvalue())

@@ -369,3 +369,7 @@ class DisplayContext:
 
             print(fmt.format(currency or '*', precision, sample, precision_max, sample_max),
                   file=file)
+
+
+# Default instance of DisplayContext to use if None is spcified.
+DEFAULT_DISPLAY_CONTEXT = DisplayContext()

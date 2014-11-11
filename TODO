@@ -3,6 +3,12 @@ beancount: TODO
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 
+  - Rename all str() and strs() functions to to_string(). Implement in all
+    methods, all should accept a DisplayContext object to format their numbers.
+
+  - __str__ methods should use a default instance of DisplayContext() created
+    somewhere.
+
   (printer)
   - The printer's output is all misalinged. You need to fix this urgently. Use
     the display precision, or some other simpler method. The new printer should
