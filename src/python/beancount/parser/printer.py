@@ -56,10 +56,7 @@ class EntryPrinter:
 
         flag_posting = '{:}{:62}'.format(flag, posting.account)
 
-        if posting.position:
-            amount_str, cost_str = posting.position.strs()
-        else:
-            amount_str, cost_str = '', ''
+        pos_str = posting.position.to_string(self.dcontext) if posting.position else ''
 
         price_str = ('@ {}'.format(posting.price.to_string(self.dcontext))
                      if posting.price is not None
@@ -67,19 +64,16 @@ class EntryPrinter:
 
         if print_balance:
             if posting.position:
-                balance_amount = interpolate.get_posting_weight(posting)
-                balance_amount_str = balance_amount.to_string(self.dcontext)
+                weight = interpolate.get_posting_weight(posting)
+                weight_str = weight.to_string(self.dcontext)
             else:
-                balance_amount_str = 'UNKNOWN'
-            balance_str = '; {:>16}'.format(balance_amount_str)
+                weight_str = 'UNKNOWN'
+            balance_str = '; {:>16}'.format(weight_str)
         else:
             balance_str = ''
 
-        assert all(len(string) <= 25
-                   for string in (amount_str, cost_str, price_str, balance_str)), (
-                           amount_str, cost_str, price_str, balance_str)
-        oss.write('  {:64} {:>22} {:>22} {:>22} {:>22}'.format(
-            flag_posting, amount_str, cost_str, price_str, balance_str).rstrip())
+        oss.write('  {:64} {} {:>22} {:>22}'.format(
+            flag_posting, pos_str, price_str, balance_str).rstrip())
 
         oss.write('\n')
 

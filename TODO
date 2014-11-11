@@ -3,10 +3,8 @@ beancount: TODO
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 
-  - Rename all str() and strs() functions to to_string(). Implement in all
-    methods, all should accept a DisplayContext object to format their numbers.
-
-  - Remove Position.strs().
+  - Enhande the DisplayContext to store the longuest possible number of integral
+    digits required.
 
   - __str__ methods should use a default instance of DisplayContext() created
     somewhere, or simply get removed.
@@ -16,9 +14,9 @@ beancount: TODO
   (printer)
   - The printer's output is all misalinged. You need to fix this urgently. Use
     the display precision, or some other simpler method. The new printer should
-    printer as tightly as possible.
-  - Allow the printer control over whether commas are to be rendered or not.
-  - Write unit tests for display precision, this isn't too great now.
+    printer as tightly as possible, with the currencies aligned. We need to
+    compute the maximum number of digits used for this though. This depends on
+    the display context.
 
   - With the tests, figure out if we still need MAXDIGITS_QUANTIZE,
     MAXDIGITS_PRINTER, etc., based on all usage. I think this is not the way I

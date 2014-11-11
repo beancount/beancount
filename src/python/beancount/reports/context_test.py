@@ -70,9 +70,9 @@ class TestContext(test_utils.TestCase):
 
 
         2013-02-07 * "Buy shares of ITOT"
-          Assets:US:ETrade:Cash                             -1126.21 USD                       ;    -1126.21 USD
-          Assets:US:ETrade:ITOT                                6.00 ITOT     {186.21 USD}      ;     1117.26 USD
-          Expenses:Financial:Commissions                        8.95 USD                       ;        8.95 USD
+          Assets:US:ETrade:Cash                             -1126.21 USD                  ;    -1126.21 USD
+          Assets:US:ETrade:ITOT                                6.00 ITOT {186.21 USD}     ;     1117.26 USD
+          Expenses:Financial:Commissions                        8.95 USD                  ;        8.95 USD
 
 
         ; ! Assets:US:ETrade:Cash                      -2537.65 USD
