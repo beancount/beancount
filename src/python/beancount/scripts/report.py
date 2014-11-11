@@ -1,6 +1,4 @@
-"""Print out a list of current holdings, relative or absolute.
-
-This is to share my portfolio with others, or to compute its daily changes.
+"""Produce various custom implemented reports.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
@@ -18,7 +16,6 @@ from beancount.reports import misc_reports
 from beancount.reports import table
 from beancount.utils import file_utils
 from beancount.utils import misc_utils
-from beancount.query import shell
 
 
 def get_list_report_string(only_report=None):
@@ -150,7 +147,7 @@ def main():
                         help='Do not report errors.')
 
     parser.add_argument('filename', metavar='FILENAME.beancount',
-                        help='The Beancout input filename to load.')
+                        help='The Beancount input filename to load.')
 
     subparsers = parser.add_subparsers(title='report',
                                        help='Name/specification of the desired report.')
@@ -178,9 +175,10 @@ def main():
 
     args = parser.parse_args()
 
-    # Warn on filters--not supported at this time. Coming soon.
+    # Warn on filters--not supported at this time.
     if hasattr(args, 'filters') and args.filters:
-        parser.error("Filters are not supported yet. Extra args: {}".format(args.filters))
+        parser.error(("Filters are not supported yet. Extra args: {}. "
+                      "See bean-query if you need filtering now.").format(args.filters))
 
     # Handle special commands.
     if args.help_reports:
@@ -229,8 +227,7 @@ def main():
                 sys.stderr.write("Error: {}\n".format(exc))
                 sys.exit(1)
     else:
-        # Invoke the interactive shell interpreter by default.
-        shell.run_noargs(entries, errors, options_map)
+        print(get_list_report_string())
 
     return 0
 

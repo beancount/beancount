@@ -74,9 +74,10 @@ class DispatchingShell(cmd.Cmd):
     doc_header = "Shell utility commands (type help <topic>):"
     misc_header = "Beancount query commands:"
 
-    def __init__(self, parser):
+    def __init__(self, is_interactive, parser):
         super().__init__()
         load_history(path.expanduser(HISTORY_FILENAME))
+        self.is_interactive = is_interactive
         self.parser = parser
         self.initialize_vars()
         self.add_help()
@@ -104,8 +105,11 @@ class DispatchingShell(cmd.Cmd):
           A pair of a file object to write to, and a pipe object to wait on (or
         None if not necessary to wait).
         """
-        return pager.ConditionalPager(self.vars.get('pager', None),
-                                      minlines=misc_utils.get_screen_height())
+        if self.is_interactive:
+            return pager.ConditionalPager(self.vars.get('pager', None),
+                                          minlines=misc_utils.get_screen_height())
+        else:
+            return sys.stdout
 
     def cmdloop(self):
         """Override cmdloop to handle keyboard interrupts."""
@@ -154,8 +158,12 @@ class DispatchingShell(cmd.Cmd):
         Returns:
           Whatever the invoked method happens to return.
         """
-        method = getattr(self, 'do_{}'.format(type(statement).__name__.lower()))
-        return method(statement)
+        try:
+            method = getattr(self, 'on_{}'.format(type(statement).__name__))
+        except AttributeError:
+            print("Internal error: statement '{}' is unsupported.".format(statement))
+        else:
+            return method(statement)
 
     def default(self, line):
         """Handle statements via our parser instance and dispatch to appropriate methods.
@@ -191,8 +199,8 @@ class BQLShell(DispatchingShell):
     """
     prompt = 'beancount> '
 
-    def __init__(self, entries, errors, options_map):
-        super().__init__(query_parser.Parser())
+    def __init__(self, is_interactive, entries, errors, options_map):
+        super().__init__(is_interactive, query_parser.Parser())
 
         self.entries = entries
         self.errors = errors
@@ -216,8 +224,12 @@ class BQLShell(DispatchingShell):
         Print entries in Beancount format.
         """
         # Compile the print statement.
-        c_from = query_compile.compile_from(print_stmt.from_clause, self.env_entries)
-        c_print = query_parser.Print(c_from)
+        try:
+            c_from = query_compile.compile_from(print_stmt.from_clause, self.env_entries)
+            c_print = query_parser.Print(c_from)
+        except query_compile.CompilationError as exc:
+            print('ERROR: {}.'.format(str(exc).rstrip('.')))
+            return
 
         with self.get_pager() as file:
             query_execute.execute_print(c_print, self.entries, self.options_map, file)
@@ -308,10 +320,15 @@ class BQLShell(DispatchingShell):
         """
         if isinstance(explain.statement, query_parser.Select):
             # Compile the select statement and print it uot.
-            query = query_compile.compile_select(explain.statement,
-                                                 self.env_targets,
-                                                 self.env_postings,
-                                                 self.env_entries)
+            try:
+                query = query_compile.compile_select(explain.statement,
+                                                     self.env_targets,
+                                                     self.env_postings,
+                                                     self.env_entries)
+            except query_compile.CompilationError as exc:
+                print('ERROR: {}.'.format(str(exc).rstrip('.')))
+                return
+
             print("Compiled query:")
             print("  {}".format(query))
             print()
@@ -467,30 +484,3 @@ def summary_statistics(entries):
             num_transactions += 1
             num_postings += len(entry.postings)
     return (num_directives, num_transactions, num_postings)
-
-
-def run_noargs(entries, errors, options_map):
-    """Create and run a shell, possibly consuming stdin if not interactive.
-    If we're running in a TTY, start an interactive shell.
-
-    Args:
-      entries: A list of directives.
-      errors: A list of errors, as provided by the parser.
-      options_map: A list of options, as produced by the parser.
-    """
-    shell = BQLShell(entries, errors, options_map)
-    if os.isatty(sys.stdin.fileno()):
-        # If we're a TTY, run interactively.
-        num_directives, num_transactions, num_postings = summary_statistics(entries)
-        if 'title' in options_map:
-            print('Input file: "{}"'.format(options_map['title']))
-        print("Ready with {} directives ({} postings in {} transactions).".format(
-            num_directives, num_postings, num_transactions))
-        try:
-            shell.cmdloop()
-        except KeyboardInterrupt:
-            print('\nExit')
-    else:
-        # If we're not a TTY, read the BQL command from standard input.
-        script = sys.stdin.read()
-        pass ## FIXME: TODO - shell.process_command(script)

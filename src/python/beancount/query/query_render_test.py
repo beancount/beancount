@@ -233,3 +233,7 @@ class TestQueryRender(unittest.TestCase):
         # FIXME:
         # with box():
         #     print(oss.getvalue())
+
+
+# Add a test like this, where the column's result ends up being zero wide.
+# bean-query $L  "select account, sum(units(change)) from open on 2014-01-01 close on 2015-01-01 clear  where account ~ 'PnL'  group by 1"

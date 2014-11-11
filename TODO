@@ -2,6 +2,20 @@
 beancount: TODO
 * Query Language
 
+  - Move beancount.scripts.report_test.search_words() to
+    test_utils.search_words().
+
+  - The OPEN ON and CLOSE ON syntaxes get on my nerves. I need something
+    simpler, maybe even something simpler for "just this year". Maybe an
+    auto-open at the first transaction that occurs after filtering, something
+    like this:
+
+       FROM  year = 2014  CLAMPED
+
+    where CLAMPED means (open + close + clear) operations.
+
+  - Add an automated test in setup_test.py for running bean-query
+
   - Add tests for all environment functions
   - Add interactive shell tests (somehow)
   - Rename bean-query to bean-report

@@ -474,7 +474,7 @@ def render_text(result_types, result_rows, file, boxed=False, spaced=False):
             str_rows.append(spacing_row)
 
     # Compute a final format strings.
-    formats = ['{{:{}}}'.format(renderer.width())
+    formats = ['{{:{}}}'.format(max(renderer.width(), 1))
                for renderer in renderers]
     header_formats = ['{{:^{}.{}}}'.format(renderer.width(), renderer.width())
                       for renderer in renderers]

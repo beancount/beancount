@@ -71,9 +71,9 @@ class EntryPrinter:
         else:
             balance_str = ''
 
-        assert all(len(string) <= 25
-                   for string in (amount_str, cost_str, price_str, balance_str)), (
-                           amount_str, cost_str, price_str, balance_str)
+        # assert all(len(string) <= 25
+        #            for string in (amount_str, cost_str, price_str, balance_str)), (
+        #                    amount_str, cost_str, price_str, balance_str)
         oss.write('  {:64} {:>22} {:>22} {:>22} {:>22}'.format(
             flag_posting, amount_str, cost_str, price_str, balance_str).rstrip())
 

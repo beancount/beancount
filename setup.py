@@ -26,6 +26,7 @@ bean-bake
 bean-check
 bean-doctor
 bean-report
+bean-query
 bean-web
 bean-example
 bean-format
