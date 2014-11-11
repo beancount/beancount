@@ -227,3 +227,7 @@ class TestPrinterSpacing(unittest.TestCase):
         actual_classes = characterize_spaces(oss.getvalue())
 
         self.assertEqual(expected_classes, actual_classes)
+
+
+class TestDisplayContext(unittest.TestCase):
+    pass

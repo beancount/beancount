@@ -3,12 +3,6 @@ beancount: TODO
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 
-make the default print of the DisplayPrecision print at the natural precision of the number
-render_entry_context -> print_entry
-print_entries
-format_entry
-
-  - Make b.w.web also 'app.options_map' instead of 'app.options'.
 
   - The printer's output is all misalinged. You need to fix this urgently. Use
     the display precision, or some other simpler method. The new printer should
@@ -16,17 +10,6 @@ format_entry
 
 
   - Allow the printer control over whether commas are to be rendered or not.
-
-
-  - Build a routine that can compute the commonly used precision for each
-    currency and (currency, account) pairs, and derive a PrecisionContext
-    object that can then be used to render all the data.
-
-
-
-  - Create a DisplayContext that contains settings for how to render numbers:
-    the precision by currency, whether commas should be printed or not.
-
 
 
   - Write unit tests for display precision, this isn't too great now.
@@ -57,6 +40,11 @@ format_entry
 
   - Maybe use this routine in the BQL rendering routines instead of using the
     display precision mode in the displayed numbers only.
+
+
+** Misc
+
+  - Make b.w.web also 'app.options_map' instead of 'app.options'.
 
 
 ** Documentation / Ongoing

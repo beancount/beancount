@@ -271,6 +271,10 @@ from_string = Amount.from_string
 NULL_AMOUNT = Amount(ZERO, '')
 
 
+# A constant that indicates we should be rendering at full precision.
+FULL_PRECISION = object()
+
+
 class DisplayContext:
     """A class used to contain various settings that control how we output numbers.
     In particular, the precision used for each currency, and whether or not
@@ -279,8 +283,9 @@ class DisplayContext:
 
     Attributes:
       commas: A boolean, whether we should render commas or not.
-      precision: A dict of currency to precision. The value for a key of None
-        provides the default precision.
+      precision: A dict of currency to precision. A key of None provides the
+        default precision. A special value of FULL_PRECISION indicates we should render
+        at the natural precision for the given number.
       formats: A dict of currency to a pre-baked format string to render a
         number. (A key of None is treated as for self.precision.)
       precision_max: Like 'precision' but for maximum number of digits.
@@ -288,13 +293,10 @@ class DisplayContext:
       default_format: The default display format.
     """
 
-    # The default precision for all unset values.
-    default_precision = 2
-
     def __init__(self):
         self.commas = False
-        self.precision = {None: self.default_precision}
-        self.precision_max = {None: self.default_precision}
+        self.precision = {None: FULL_PRECISION}
+        self.precision_max = {None: FULL_PRECISION}
         self.formats = {}
         self.update()
 
@@ -303,8 +305,11 @@ class DisplayContext:
         comma_str = ',' if commas else ''
         formats = {}
         for currency, precision in precision_dict.items():
-            formats[currency] = (
-                '{{: {0}.{1}f}}'.format(comma_str, precision))
+            if precision is FULL_PRECISION:
+                fmt = '{{: {0}}}'.format(comma_str)
+            else:
+                fmt = '{{: {0}.{1}f}}'.format(comma_str, precision)
+            formats[currency] = fmt
         default_format = formats[None]
         return formats, default_format
 
@@ -344,16 +349,23 @@ class DisplayContext:
     def dump(self, file):
         max_currency_width = max(len(ccy) if ccy is not None else 1
                                  for ccy in self.precision)
-        fmt = '{{:{}}}   {{:2}} | {{:24}}   {{:2}} | {{:24}}'.format(max_currency_width)
+        fmt = '{{:{}}}   {{:4}} | {{:24}}   {{:4}} | {{:24}}'.format(max_currency_width)
         currencies = set(self.precision) | set(self.precision_max)
         currencies.discard(None)
         for currency in [None] + sorted(currencies):
             precision = self.precision.get(currency, '')
+            if precision is FULL_PRECISION:
+                precision = 'FULL'
+                sample = ''
+            else:
+                sample = self.formats.get(currency, '').format(0)
+
             precision_max = self.precision_max.get(currency, '')
-            sample = self.formats.get(currency, '').format(0)
-            sample_max = self.formats_max.get(currency, '').format(0)
-            # if precision_max == precision and formats == formats_max:
-            #     precision_max = ''
-            #     formats_max = ''
+            if precision_max is FULL_PRECISION:
+                precision_max = 'FULL'
+                sample_max = ''
+            else:
+                sample_max = self.formats_max.get(currency, '').format(0)
+
             print(fmt.format(currency or '*', precision, sample, precision_max, sample_max),
                   file=file)

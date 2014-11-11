@@ -179,15 +179,19 @@ class TestDisplayPrecision(unittest.TestCase):
 
     def test_precision_empty_default(self):
         dc = amount.DisplayContext()
-        self.assertEqual('-1764.99', dc.format(self.number))
-        self.assertEqual('-1764.99', dc(self.number))
+        self.assertEqual('-1764.9876543', dc.format(self.number))
+        self.assertEqual('-1764.9876543', dc(self.number))
+
+    def test_precision_empty_default_integers(self):
+        self.assertEqual(' 4343', dc(D('4343')))
+        self.assertEqual('-4343', dc(D('-4343')))
 
     def test_precision_commas(self):
         dc = amount.DisplayContext()
         dc.set_commas(True)
-        self.assertEqual('-1,764.99', dc.format(self.number))
+        self.assertEqual('-1,764.9876543', dc.format(self.number))
         dc.set_commas(False)
-        self.assertEqual('-1764.99', dc.format(self.number))
+        self.assertEqual('-1764.9876543', dc.format(self.number))
 
     def test_precision_default(self):
         dc = amount.DisplayContext()
@@ -199,7 +203,7 @@ class TestDisplayPrecision(unittest.TestCase):
     def test_precision_currency(self):
         dc = amount.DisplayContext()
         dc.set_precision(5, 'RBF1010')
-        self.assertEqual('-1764.99', dc.format(self.number))
+        self.assertEqual('-1764.9876543', dc.format(self.number))
         self.assertEqual('-1764.98765', dc.format(self.number, 'RBF1010'))
         dc.set_precision(1)
         dc.set_precision(3, 'RBF1010')
