@@ -99,7 +99,7 @@ class Position:
           A pair of (amount, cost) strings.
         """
         lot = self.lot
-        amount_str = Amount(self.number, lot.currency).str(MAXDIGITS_PRINTER)
+        amount_str = Amount(self.number, lot.currency).to_string(MAXDIGITS_PRINTER)
 
         # Optionally render the cost and lot-date.
         if lot.cost or lot.lot_date:
@@ -107,7 +107,7 @@ class Position:
             cost_str_list.append('{')
             if lot.cost:
                 cost_str_list.append(
-                    Amount(lot.cost.number, lot.cost.currency).str(MAXDIGITS_PRINTER))
+                    Amount(lot.cost.number, lot.cost.currency).to_string(MAXDIGITS_PRINTER))
             if lot.lot_date:
                 cost_str_list.append(' / {}'.format(lot.lot_date))
             cost_str_list.append('}')

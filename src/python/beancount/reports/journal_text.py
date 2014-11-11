@@ -253,7 +253,7 @@ def render_posting(posting, number_format):
       A string, the rendered posting.
     """
     # Note: there's probably no need to redo the work of rendering here... see
-    # if you can't just simply replace this by Position.str().
+    # if you can't just simply replace this by Position.to_string().
 
     position = posting.position
     amount = position.get_units()

@@ -7,7 +7,9 @@ beancount: TODO
     methods, all should accept a DisplayContext object to format their numbers.
 
   - __str__ methods should use a default instance of DisplayContext() created
-    somewhere.
+    somewhere, or simply get removed.
+
+  - Remove __format__ from Amount.
 
   (printer)
   - The printer's output is all misalinged. You need to fix this urgently. Use

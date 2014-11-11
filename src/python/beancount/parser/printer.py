@@ -60,14 +60,14 @@ class EntryPrinter:
         else:
             amount_str, cost_str = '', ''
 
-        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
+        price_str = ('@ {}'.format(posting.price.to_string(amount.MAXDIGITS_PRINTER))
                      if posting.price is not None
                      else '')
 
         if print_balance:
             if posting.position:
                 balance_amount = interpolate.get_posting_weight(posting)
-                balance_amount_str = balance_amount.str(amount.MAXDIGITS_PRINTER)
+                balance_amount_str = balance_amount.to_string(amount.MAXDIGITS_PRINTER)
             else:
                 balance_amount_str = 'UNKNOWN'
             balance_str = '; {:>16}'.format(balance_amount_str)

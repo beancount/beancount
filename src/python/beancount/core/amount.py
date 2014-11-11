@@ -110,7 +110,7 @@ class Amount:
         Returns:
           A formatted string of the quantized amount and symbol.
         """
-        return self.str(MAXDIGITS_QUANTIZE)
+        return self.to_string(MAXDIGITS_QUANTIZE)
 
     def __format__(self, format_spec):
         """Explicit support for formatting.
@@ -120,9 +120,11 @@ class Amount:
         Returns:
           A formatted string object.
         """
+        # FIXME: I'm not so sure about this. What's up here? I don't think we
+        # need this.
         return str(self).format(format_spec)
 
-    def str(self, max_digits):
+    def to_string(self, max_digits):
         """Convert an Amount instance to a printable string.
 
         Args:
