@@ -2,6 +2,10 @@
 beancount: TODO
 * Query Language
 
+  - Use the display_context  in the BQL rendering routines instead of using the
+    display precision mode in the displayed numbers only.
+
+
   - Move beancount.scripts.report_test.search_words() to
     test_utils.search_words().
 
@@ -185,8 +189,6 @@ beancount: TODO
   - Idea: support entry.<field> in the targets and where clauses. This would
     remove the need to have duplicated columns, would make the language simpler
     and more intuitive.
-
-
 
 
 * Requirements for Shipping 2.0
