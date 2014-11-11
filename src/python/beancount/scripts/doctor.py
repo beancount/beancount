@@ -208,18 +208,8 @@ def do_precision(filename, args):
         to be an integer as a string.
     """
     entries, errors, options_map = loader.load_file(filename)
-    max_width = max(map(len, options_map['precision'].keys()))
-    fmt = '{{:{}}}   {{:2}} | {{:24}}   {{:2}} | {{:24}}'.format(max_width)
-    for currency, precision in sorted(options_map['precision'].items()):
-        max_precision = options_map['max_precision'][currency]
-        if max_precision == precision:
-            print(fmt.format(currency,
-                             precision, '{:.{prec}f}'.format(0, prec=precision),
-                             '', ''))
-        else:
-            print(fmt.format(currency,
-                             precision, '{:.{prec}f}'.format(0, prec=precision),
-                             max_precision, '{:.{prec}f}'.format(0, prec=max_precision)))
+    dcontext = options_map['display_context']
+    dcontext.dump(sys.stdout)
 
 
 def main():
