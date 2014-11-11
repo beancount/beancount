@@ -195,7 +195,7 @@ class TestPrinterSpacing(unittest.TestCase):
 
     maxDiff = 8192
 
-    def test_spacing(self):
+    def test_interline_spacing(self):
         input_text = textwrap.dedent("""\
         2014-01-01 open Assets:Account1
         2014-01-01 open Assets:Account2
@@ -266,3 +266,26 @@ class TestDisplayContext(test_utils.TestCase):
           Assets:Cash           -55555.55555 FP5
         """)
         self.assertLines(expected_str, oss.getvalue())
+
+
+class TestPrinterAlignment(test_utils.TestCase):
+
+    @parser.parsedoc
+    def test_align(self, entries, errors, options_map):
+        """
+        2014-07-01 *
+          Assets:US:Investments:GOOG          45 GOOG {504.30 USD}
+          Assets:US:Investments:GOOG           4 GOOG {504.30 USD / 2014-11-11}
+          Expenses:Commissions            9.9505 USD
+          Assets:US:Investments:Cash   -22473.32 CAD @ 1.10 USD
+        """
+        dcontext = options_map['display_context']
+        printer.print_entries(entries, dcontext)
+        # oss = io.StringIO()
+        # printer.print_entries(entries, dcontext, file=oss)
+        # expected_str = textwrap.dedent("""
+        # """)
+        # self.assertLines(expected_str, oss.getvalue())
+
+
+    # FIXME: Add many more alignment tests that compare the precise strings.

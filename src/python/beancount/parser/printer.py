@@ -144,6 +144,7 @@ def print_entries(entries, display_context=None, file=None, prefix=None):
     if prefix:
         output.write(prefix)
     previous_type = type(entries[0]) if entries else None
+    eprinter = EntryPrinter(display_context)
     for entry in entries:
         # Insert a newline between transactions and between blocks of directives
         # of the same type.
@@ -152,7 +153,7 @@ def print_entries(entries, display_context=None, file=None, prefix=None):
             output.write('\n')
             previous_type = entry_type
 
-        output.write(format_entry(entry, display_context))
+        output.write(eprinter(entry))
 
 
 def render_source(source):

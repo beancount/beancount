@@ -29,7 +29,6 @@ from .amount import D
 from .amount import Amount
 from .amount import NULL_AMOUNT
 from .amount import amount_mult
-from .amount import MAXDIGITS_PRINTER
 from .amount import CURRENCY_RE
 from .display_context import DEFAULT_DISPLAY_CONTEXT
 

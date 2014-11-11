@@ -3,14 +3,6 @@ beancount: TODO
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 
-  - Enhande the DisplayContext to store the longuest possible number of integral
-    digits required.
-
-  - __str__ methods should use a default instance of DisplayContext() created
-    somewhere, or simply get removed.
-
-  - Remove __format__ from Amount.
-
   (printer)
   - The printer's output is all misalinged. You need to fix this urgently. Use
     the display precision, or some other simpler method. The new printer should
@@ -18,26 +10,18 @@ beancount: TODO
     compute the maximum number of digits used for this though. This depends on
     the display context.
 
-  - With the tests, figure out if we still need MAXDIGITS_QUANTIZE,
-    MAXDIGITS_PRINTER, etc., based on all usage. I think this is not the way I
-    want it to be.
+  - Enhance the DisplayContext to store the longuest possible number of integral
+    digits required.
+
+  - __str__ methods should use a default instance of DisplayContext() created
+    somewhere, or simply get removed.
+
+  - Remove __format__ from Amount.
 
   - Fix the alignment of the rendered postings by printer, it's out of whack.
     See example.beancount file, doesn't look nice anymore. Has to do with
     replacement of strings I believe. But the printer should *always* output
     nicely aligned numbers.
-
-  - Fix all of these with the routine:
-
-     grep -srn '\.str\b'    /home/blais/p/beancount/src/python/beancount/
-     /home/blais/p/beancount/src/python/beancount/parser/printer.py:57:        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
-     /home/blais/p/beancount/src/python/beancount/parser/printer.py:64:                balance_amount_str = balance_amount.str(amount.MAXDIGITS_PRINTER)
-     /home/blais/p/beancount/src/python/beancount/core/position.py:99:        amount_str = Amount(self.number, lot.currency).str(MAXDIGITS_PRINTER)
-     /home/blais/p/beancount/src/python/beancount/core/position.py:107:                    Amount(lot.cost.number, lot.cost.currency).str(MAXDIGITS_PRINTER))
-     /home/blais/p/beancount/src/python/beancount/core/amount.py:111:        return self.str(MAXDIGITS_QUANTIZE)
-     /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:185:            price_str = '@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
-     /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:195:                    posting.position.lot.cost.str(amount.MAXDIGITS_PRINTER))
-     /home/blais/p/beancount/src/python/beancount/reports/convert_reports.py:287:        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
 
   - Add an option for the DisplayContext to issue a warning if numbers are
     rendered through it that lose some precision.

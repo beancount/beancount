@@ -78,16 +78,6 @@ def round_to(number, increment):
     return int((number / increment)) * increment
 
 
-# Number of digits to display all amounts if we can do so precisely.
-DISPLAY_QUANTIZE = Decimal('.01')
-
-# Maximum number of digits to display numbers for user.
-MAXDIGITS_QUANTIZE = 5
-
-# Maximum number of digits to display for printing for debugging.
-MAXDIGITS_PRINTER = 12
-
-
 class Amount:
     """An 'Amount' represents a number of a particular unit of something.
 
