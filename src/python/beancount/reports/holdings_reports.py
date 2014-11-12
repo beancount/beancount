@@ -260,7 +260,7 @@ class HoldingsReport(report.TableReport):
         # Get the summarized entries and print them out.
         holdings_entries = get_holdings_entries(entries, options_map)
         dcontext = options_map['display_context']
-        printer.print_entries(holdings_entries, dcontext, file)
+        printer.print_entries(holdings_entries, dcontext, file=file)
 
 
 class CashReport(report.TableReport):

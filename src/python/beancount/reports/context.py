@@ -63,7 +63,7 @@ def render_entry_context(entries, display_context, filename, lineno):
 
     # Print the entry itself.
     print(file=oss)
-    printer.print_entry(closest_entry, display_context, file=oss)
+    printer.print_entry(closest_entry, display_context, render_weights=True, file=oss)
 
     # Print the context after.
     print(file=oss)

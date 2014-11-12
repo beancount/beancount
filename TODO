@@ -3,13 +3,6 @@ beancount: TODO
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 
-  (printer)
-  - The printer's output is all misalinged. You need to fix this urgently. Use
-    the display precision, or some other simpler method. The new printer should
-    printer as tightly as possible, with the currencies aligned. We need to
-    compute the maximum number of digits used for this though. This depends on
-    the display context.
-
   - Enhance the DisplayContext to store the longuest possible number of integral
     digits required.
 
@@ -18,10 +11,9 @@ beancount: TODO
 
   - Remove __format__ from Amount.
 
-  - Fix the alignment of the rendered postings by printer, it's out of whack.
-    See example.beancount file, doesn't look nice anymore. Has to do with
-    replacement of strings I believe. But the printer should *always* output
-    nicely aligned numbers.
+  - Implement to_string() on Inventory objects.
+
+  - Add an option for the printer to render the accounts with a minimum width.
 
   - Add an option for the DisplayContext to issue a warning if numbers are
     rendered through it that lose some precision.
@@ -29,10 +21,11 @@ beancount: TODO
 
 ** Misc
 
-  - Make b.w.web also 'app.options_map' instead of 'app.options'.
+  - (easy) Make b.w.web also 'app.options_map' instead of 'app.options'.
 
-  - Make _all_ plugins accept a configuration parameter, unconditionally. The
+  - (easy) Make _all_ plugins accept a configuration parameter, unconditionally. The
     interface should be this regular.
+
 
 ** Documentation / Ongoing
 
@@ -42,6 +35,7 @@ beancount: TODO
 
   - Change documentation script to try to download to ODT format and then batch
     format to ebook
+
 
 * Standalone Tools
 

@@ -41,7 +41,6 @@ class ErrorReport(report.HTMLReport):
         printer.print_errors(errors, file=file)
 
     def render_htmldiv(self, entries, errors, options_map, file):
-        print(repr(options_map))
         dcontext = options_map['display_context']
         file.write('<div id="errors">\n')
         for error in errors:

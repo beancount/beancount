@@ -252,40 +252,92 @@ class TestDisplayContext(test_utils.TestCase):
 
         expected_str = textwrap.dedent("""
         2014-07-01 *
-          Assets:Account                   1 INT
-          Assets:Account                 1.1 FP1
-          Assets:Account               22.22 FP2
-          Assets:Account             333.333 FP3
-          Assets:Account           4444.4444 FP4
-          Assets:Account         55555.55555 FP5
-          Assets:Cash                     -1 INT
-          Assets:Cash                   -1.1 FP1
-          Assets:Cash                 -22.22 FP2
-          Assets:Cash               -333.333 FP3
-          Assets:Cash             -4444.4444 FP4
-          Assets:Cash           -55555.55555 FP5
+          Assets:Account             1 INT
+          Assets:Account           1.1 FP1
+          Assets:Account         22.22 FP2
+          Assets:Account       333.333 FP3
+          Assets:Account     4444.4444 FP4
+          Assets:Account   55555.55555 FP5
+          Assets:Cash               -1 INT
+          Assets:Cash             -1.1 FP1
+          Assets:Cash           -22.22 FP2
+          Assets:Cash         -333.333 FP3
+          Assets:Cash       -4444.4444 FP4
+          Assets:Cash     -55555.55555 FP5
         """)
         self.assertLines(expected_str, oss.getvalue())
 
 
 class TestPrinterAlignment(test_utils.TestCase):
 
+    def test_align_position_strings(self):
+        aligned_strings, width = printer.align_position_strings([
+            '45 GOOG {504.30 USD}',
+            '4 GOOG {504.30 USD / 2014-11-11}',
+            '9.9505 USD',
+            '',
+            '-22473.32 CAD @ 1.10 USD',
+            'UNKNOWN',
+            '76400.203',
+        ])
+        self.assertEqual(40, width)
+        self.assertEqual([
+            '       45 GOOG {504.30 USD}             ',
+            '        4 GOOG {504.30 USD / 2014-11-11}',
+            '   9.9505 USD                           ',
+            '                                        ',
+            '-22473.32 CAD @ 1.10 USD                ',
+            'UNKNOWN                                 ',
+            '76400.203                               ',
+            ], aligned_strings)
+
     @parser.parsedoc
     def test_align(self, entries, errors, options_map):
         """
-        2014-07-01 *
+        2014-07-01 * "Something"
+          Expenses:Commissions  20000 USD
+          Expenses:Commissions  9.9505 USD
+        """
+        dcontext = options_map['display_context']
+        oss = io.StringIO()
+        printer.print_entries(entries, dcontext, file=oss)
+        expected_str = textwrap.dedent("""
+        2014-07-01 * "Something"
+          Expenses:Commissions  20000 USD
+          Expenses:Commissions     10 USD
+        """)
+        self.assertEqual(expected_str, oss.getvalue())
+
+    @parser.parsedoc
+    def test_align_with_weight(self, entries, errors, options_map):
+        """
+        2014-07-01 * "Something"
           Assets:US:Investments:GOOG          45 GOOG {504.30 USD}
           Assets:US:Investments:GOOG           4 GOOG {504.30 USD / 2014-11-11}
           Expenses:Commissions            9.9505 USD
           Assets:US:Investments:Cash   -22473.32 CAD @ 1.10 USD
         """
         dcontext = options_map['display_context']
-        printer.print_entries(entries, dcontext)
-        # oss = io.StringIO()
-        # printer.print_entries(entries, dcontext, file=oss)
-        # expected_str = textwrap.dedent("""
-        # """)
-        # self.assertLines(expected_str, oss.getvalue())
 
+        oss = io.StringIO()
+        printer.print_entries(entries, dcontext, render_weights=False, file=oss)
+        expected_str = ''.join([
+            '\n',
+            '2014-07-01 * "Something"\n',
+            '  Assets:US:Investments:GOOG         45 GOOG {504.30 USD}             \n',
+            '  Assets:US:Investments:GOOG          4 GOOG {504.30 USD / 2014-11-11}\n',
+            '  Expenses:Commissions             9.95 USD                           \n',
+            '  Assets:US:Investments:Cash  -22473.32 CAD @ 1.10 USD                \n',
+            ])
+        self.assertEqual(expected_str, oss.getvalue())
 
-    # FIXME: Add many more alignment tests that compare the precise strings.
+        oss = io.StringIO()
+        printer.print_entries(entries, dcontext, render_weights=True, file=oss)
+        expected_str = textwrap.dedent("""
+        2014-07-01 * "Something"
+          Assets:US:Investments:GOOG         45 GOOG {504.30 USD}               ;  22693.50 USD
+          Assets:US:Investments:GOOG          4 GOOG {504.30 USD / 2014-11-11}  ;   2017.20 USD
+          Expenses:Commissions             9.95 USD                             ;      9.95 USD
+          Assets:US:Investments:Cash  -22473.32 CAD @ 1.10 USD                  ; -24720.65 USD
+        """)
+        self.assertEqual(expected_str, oss.getvalue())
