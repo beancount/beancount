@@ -83,13 +83,15 @@ class EntryPrinter:
       dcontext: An instance of DisplayContext with which to render all the numbers.
       render_weight: A boolean, true if we should render the weight of the postings
         as a comment, for debugging.
+      min_width_account: An integer, the minimum width to leave for the account name.
     """
 
     # pylint: disable=invalid-name
 
-    def __init__(self, dcontext=None, render_weight=False):
+    def __init__(self, dcontext=None, render_weight=False, min_width_account=None):
         self.dcontext = dcontext or display_context.DEFAULT_DISPLAY_CONTEXT
         self.render_weight = render_weight
+        self.min_width_account = min_width_account
 
     def __call__(self, obj):
         """Render a directive.
@@ -130,6 +132,9 @@ class EntryPrinter:
         width_account = max(len(flag_account) for flag_account in strs_account)
         strs_position, width_position = align_position_strings(row[1] for row in rows)
         strs_weight, width_weight = align_position_strings(row[2] for row in rows)
+
+        if self.min_width_account and self.min_width_account > width_account:
+            width_account = self.min_width_account
 
         non_trivial_balance = (any(map(interpolate.has_nontrivial_balance, entry.postings))
                                if self.render_weight

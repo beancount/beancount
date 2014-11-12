@@ -13,8 +13,6 @@ beancount: TODO
 
   - Implement to_string() on Inventory objects.
 
-  - Add an option for the printer to render the accounts with a minimum width.
-
   - Add an option for the DisplayContext to issue a warning if numbers are
     rendered through it that lose some precision.
 

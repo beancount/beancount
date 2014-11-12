@@ -309,6 +309,24 @@ class TestPrinterAlignment(test_utils.TestCase):
         self.assertEqual(expected_str, oss.getvalue())
 
     @parser.parsedoc
+    def test_align_min_width_account(self, entries, errors, options_map):
+        """
+        2014-07-01 * "Something"
+          Expenses:Commissions  20000 USD
+          Expenses:Commissions  9.9505 USD
+        """
+        dcontext = options_map['display_context']
+        oss = io.StringIO()
+        eprinter = printer.EntryPrinter(dcontext, min_width_account=40)
+        oss.write(eprinter(entries[0]))
+        expected_str = textwrap.dedent("""\
+        2014-07-01 * "Something"
+          Expenses:Commissions                      20000 USD
+          Expenses:Commissions                         10 USD
+        """)
+        self.assertEqual(expected_str, oss.getvalue())
+
+    @parser.parsedoc
     def test_align_with_weight(self, entries, errors, options_map):
         """
         2014-07-01 * "Something"
