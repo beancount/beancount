@@ -14,7 +14,7 @@
     the output is now kept as tightly as possible close to the account names.
 
   - Numbers don't render with commas by default anymore. There is a new option:
-    'render_commas' that you can set to have commas in numbersrendered in all
+    'render_commas' that you can set to have commas in numbers rendered in all
     the routines that output numbers.
 
 
