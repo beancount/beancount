@@ -29,8 +29,8 @@ from .amount import D
 from .amount import Amount
 from .amount import NULL_AMOUNT
 from .amount import amount_mult
-from .amount import MAXDIGITS_PRINTER
 from .amount import CURRENCY_RE
+from .display_context import DEFAULT_DISPLAY_CONTEXT
 
 
 # Lots are a representations of a commodity with an optional associated cost and
@@ -92,29 +92,41 @@ class Position:
         """
         return hash((self.lot, self.number))
 
-    def strs(self):
-        """Return a pair of string representations for the position.
+    def to_string(self, dcontext=DEFAULT_DISPLAY_CONTEXT, detail=True):
+        """Render the position to a string.
 
+        Args:
+          dcontext: An instance of DisplayContext.
+          detail: A boolean, true if we should only render the lot details
+           beyond the cost (lot-date, label, etc.). If false, we only render
+           the cost, if present.
         Returns:
-          A pair of (amount, cost) strings.
+          A string, the rendered position.
         """
         lot = self.lot
-        amount_str = Amount(self.number, lot.currency).str(MAXDIGITS_PRINTER)
 
-        # Optionally render the cost and lot-date.
-        if lot.cost or lot.lot_date:
-            cost_str_list = []
-            cost_str_list.append('{')
-            if lot.cost:
-                cost_str_list.append(
-                    Amount(lot.cost.number, lot.cost.currency).str(MAXDIGITS_PRINTER))
-            if lot.lot_date:
-                cost_str_list.append(' / {}'.format(lot.lot_date))
-            cost_str_list.append('}')
-            cost_str = ''.join(cost_str_list)
+        # Render the units.
+        pos_str = Amount(self.number, lot.currency).to_string(dcontext)
+
+        # Render the cost (and other lot parameters, lot-date, label, etc.).
+        if detail:
+            if lot.cost or lot.lot_date:
+                cost_str_list = []
+                cost_str_list.append('{')
+                if lot.cost:
+                    cost_str_list.append(
+                        Amount(lot.cost.number, lot.cost.currency).to_string(dcontext))
+                if lot.lot_date:
+                    cost_str_list.append(' / {}'.format(lot.lot_date))
+                cost_str_list.append('}')
+                pos_str = '{} {}'.format(pos_str, ''.join(cost_str_list))
+
         else:
-            cost_str = ''
-        return (amount_str, cost_str)
+            # Render just the cost, if present.
+            if lot.cost is not None:
+                pos_str = '{} {{{}}}'.format(pos_str, lot.cost.to_string(dcontext))
+
+        return pos_str
 
     def __str__(self):
         """Return a string representation of the position.
@@ -122,8 +134,7 @@ class Position:
         Returns:
           A string, a printable representation of the position.
         """
-        amount_str, cost_str = self.strs()
-        return ' '.join(self.strs()) if cost_str else amount_str
+        return self.to_string()
 
     __repr__ = __str__
 

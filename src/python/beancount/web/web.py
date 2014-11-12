@@ -370,13 +370,15 @@ def context_(ehash=None):
         print("ERROR: Ambiguous entries for '{}'".format(ehash),
               file=oss)
         print(file=oss)
-        printer.print_entries(matching_entries, file=oss)
+        dcontext = app.options['display_context']
+        printer.print_entries(matching_entries, dcontext, file=oss)
 
     else:
+        dcontext = app.options['display_context']
         oss.write("<pre>\n")
         for entry in matching_entries:
             oss.write(context.render_entry_context(
-                app.entries, entry.source.filename, entry.source.lineno))
+                app.entries, dcontext, entry.source.filename, entry.source.lineno))
         oss.write("</pre>\n")
 
     return render_global(

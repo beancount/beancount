@@ -62,38 +62,38 @@ class TestImplicitPrices(cmptest.TestCase):
         2013-02-01 price USD 1.10 CAD
 
         2013-04-01 * "A transaction with a price conversion."
-          Assets:Account1                        150.00 USD                        @ 1.12 CAD
+          Assets:Account1                        150 USD                        @ 1.12 CAD
           Assets:Other                          -168.00 CAD
 
         2013-04-01 price USD 1.12 CAD
 
         2013-04-02 * "A transaction with a cost."
-          Assets:Account1                      1500.00 GOOG     {520.00 USD}
-          Assets:Other                       -780000.00 USD
+          Assets:Account1                      1500 GOOG     {520 USD}
+          Assets:Other                       -780000 USD
 
-        2013-04-02 price GOOG 520.00 USD
+        2013-04-02 price GOOG 520 USD
 
         2013-04-03 * "A transaction with a cost that reduces an existing position"
-          Assets:Account1                      -500.00 GOOG     {520.00 USD}
-          Assets:Other                        260000.00 USD
+          Assets:Account1                      -500 GOOG     {520 USD}
+          Assets:Other                        260000 USD
 
         2013-04-04 * "A transaction with a cost that reduces existing position, with price"
-          Assets:Account1                      -100.00 GOOG     {520.00 USD}     @ 530.00 USD
-          Assets:Other                         52000.00 USD
+          Assets:Account1                      -100 GOOG     {520 USD}     @ 530 USD
+          Assets:Other                         52000 USD
 
-        2013-04-04 price GOOG 530.00 USD
+        2013-04-04 price GOOG 530 USD
 
         2013-04-05 * "A transaction with another cost that is not reducing."
-          Assets:Account1                       500.00 GOOG     {540.00 USD}
-          Assets:Other                       -270000.00 USD
+          Assets:Account1                       500 GOOG     {540 USD}
+          Assets:Other                       -270000 USD
 
-        2013-04-05 price GOOG 540.00 USD
+        2013-04-05 price GOOG 540 USD
 
         2013-04-06 * "A transaction with a cost and a price."
-          Assets:Account1                       500.00 GOOG     {540.00 USD}     @ 560.00 USD
-          Assets:Other                       -270000.00 USD
+          Assets:Account1                       500 GOOG     {540 USD}     @ 560 USD
+          Assets:Other                       -270000 USD
 
-        2013-04-06 price GOOG 560.00 USD
+        2013-04-06 price GOOG 560 USD
         """, new_entries)
 
         self.assertEqual(6, len(price_entries))
@@ -148,19 +148,19 @@ class TestImplicitPrices(cmptest.TestCase):
           Assets:Account2             1500 GOOG {530 USD}
           Assets:Other
 
-        2013-04-01 price GOOG 520.00 USD
+        2013-04-01 price GOOG 520 USD
 
-        2013-04-02 price GOOG 530.00 USD
+        2013-04-02 price GOOG 530 USD
 
         2013-04-10 * "Reduces existing position in account 1"
-          Assets:Account1                       -100.00 GOOG     {520.00 USD}
-          Assets:Other                          52000.00 USD
+          Assets:Account1                       -100 GOOG     {520 USD}
+          Assets:Other                          52000 USD
 
         2013-04-11 * "Does not find an existing position in account 2"
-          Assets:Account2                       -200.00 GOOG     {520.00 USD}
-          Assets:Other                         104000.00 USD
+          Assets:Account2                       -200 GOOG     {520 USD}
+          Assets:Other                         104000 USD
 
-        2013-04-11 price GOOG 520.00 USD
+        2013-04-11 price GOOG 520 USD
 
         """, new_entries)
 
@@ -196,15 +196,15 @@ class TestImplicitPrices(cmptest.TestCase):
           Assets:Account2             1500 GOOG {520 USD}
           Assets:Other
 
-        2013-04-01 price GOOG 520.00 USD
+        2013-04-01 price GOOG 520 USD
 
         2013-04-02 * "Second one is disallowed because of different price"
           Assets:Account1             1500 GOOG {520 USD}
           Assets:Account2             1500 GOOG {530 USD}
           Assets:Other
 
-        2013-04-02 price GOOG 520.00 USD
-        2013-04-02 price GOOG 530.00 USD  ;; Allowed for now.
+        2013-04-02 price GOOG 520 USD
+        2013-04-02 price GOOG 530 USD  ;; Allowed for now.
 
         """, new_entries)
 
@@ -250,7 +250,7 @@ class TestImplicitPrices(cmptest.TestCase):
           Assets:Account2             1500 GOOG {520 USD}
           Assets:Other
 
-        2013-04-01 price GOOG 520.00 USD
+        2013-04-01 price GOOG 520 USD
 
         2013-04-02 * "Second one is disallowed because of different price #1"
           Assets:Account1             1500 GOOG {520 USD}
@@ -260,8 +260,8 @@ class TestImplicitPrices(cmptest.TestCase):
           Assets:Account2             1500 GOOG {530 USD}
           Assets:Other
 
-        2013-04-02 price GOOG 520.00 USD
-        2013-04-02 price GOOG 530.00 USD  ;; Allowed for now.
+        2013-04-02 price GOOG 520 USD
+        2013-04-02 price GOOG 530 USD  ;; Allowed for now.
 
         """, new_entries)
 
@@ -302,7 +302,7 @@ class TestImplicitPrices(cmptest.TestCase):
           Assets:Account1             1500 GOOG {530 USD}
           Assets:Other
 
-        2013-04-01 price GOOG 520.00 USD
-        2013-04-01 price GOOG 530.00 USD
+        2013-04-01 price GOOG 520 USD
+        2013-04-01 price GOOG 530 USD
 
         """, new_entries)

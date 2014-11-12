@@ -14,7 +14,7 @@ from beancount.core.amount import ZERO
 from beancount.core.amount import Decimal
 from beancount.core.amount import Amount
 from beancount.core.amount import amount_div
-from beancount.core import amount
+from beancount.core import display_context
 from beancount.core.position import Lot
 from beancount.core.position import Position
 from beancount.core.data import Transaction
@@ -117,12 +117,17 @@ class Builder(lexer.LexBuilder):
         Returns:
           A dict of option names to options.
         """
-        dcontext = amount.DisplayContext()
+        self.options['render_commas'] = (
+            self.options['render_commas'].lower() in ('1', 'true'))
+
+        dcontext = display_context.DisplayContext()
+        dcontext.set_commas(self.options['render_commas'])
         for currency, dist in self.precision_dist.items():
             dcontext.set_precision(-dist.mode(), currency, False)
             dcontext.set_precision_max(-dist.min(), currency, False)
         dcontext.update()
         self.options['display_context'] = dcontext
+
         return self.options
 
     def get_invalid_account(self):

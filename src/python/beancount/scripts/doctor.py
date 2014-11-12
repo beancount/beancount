@@ -55,7 +55,7 @@ def do_roundtrip(filename, unused_args):
     basename, extension = path.splitext(filename)
     round1_filename = ''.join([basename, '.roundtrip1', extension])
     with open(round1_filename, 'w') as outfile:
-        printer.print_entries(entries, outfile)
+        printer.print_entries(entries, file=outfile)
 
     logging.info("Read the entries from that file")
     # Note that we don't want to run any of the auto-generation here...
@@ -72,7 +72,7 @@ def do_roundtrip(filename, unused_args):
     logging.info("Print what you read to yet another file")
     round2_filename = ''.join([basename, '.roundtrip2', extension])
     with open(round2_filename, 'w') as outfile:
-        printer.print_entries(entries_roundtrip, outfile)
+        printer.print_entries(entries_roundtrip, file=outfile)
 
     logging.info("Compare the original entries with the re-read ones")
     same, missing1, missing2 = compare.compare_entries(entries, entries_roundtrip)
@@ -82,7 +82,6 @@ def do_roundtrip(filename, unused_args):
         logging.error('Entries differ!')
         print()
         print('\n\nMissing from original:')
-        #printer.print_entries(missing1)
         for entry in entries:
             print(entry)
             print(compare.hash_entry(entry))
@@ -90,7 +89,6 @@ def do_roundtrip(filename, unused_args):
             print()
 
         print('\n\nMissing from round-trip:')
-        #printer.print_entries(missing2)
         for entry in missing2:
             print(entry)
             print(compare.hash_entry(entry))
@@ -169,7 +167,8 @@ def do_context(filename, args):
     # Load the input file.
     entries, errors, options_map = loader.load_file(filename)
 
-    str_context = context.render_entry_context(entries, filename, lineno)
+    dcontext = options_map['display_context']
+    str_context = context.render_entry_context(entries, dcontext, filename, lineno)
     sys.stdout.write(str_context)
 
 
@@ -196,7 +195,8 @@ def do_missing_open(filename, args):
             new_entries.append(
                 data.Open(data.Source(filename, 0), first_use_date, account, None))
 
-    printer.print_entries(data.sort(new_entries))
+    dcontext = options_map['display_context']
+    printer.print_entries(data.sort(new_entries), dcontext)
 
 
 def do_precision(filename, args):
