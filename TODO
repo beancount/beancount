@@ -1,6 +1,7 @@
 -*- mode: org -*-
 beancount: TODO
 * Query Language
+http://furius.ca/beancount/doc/proposal-query
 
   - Move beancount.scripts.report_test.search_words() to
     test_utils.search_words().
@@ -265,6 +266,7 @@ beancount: TODO
 
 
 * Deal with Rounding
+http://furius.ca/beancount/doc/proposal-rounding
 
   - Implement experimental precision check suggested by Nathan Grigg
   - Implement Equity:Rounding accumulation suggested by Nathan Grigg
