@@ -3,8 +3,16 @@ beancount: TODO
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 
+  - Render prices at maximum precision... this is important for round-trip!
+
   - Enhance the DisplayContext to store the longuest possible number of integral
     digits required.
+
+  - Add a "target num columns" instead of a "min_width_account" to the
+    EntryPrinter and figure out the min_width_account automatically from it,
+    depending on whether we've got render_weights on or not. Use hte longest
+    possible number of integral digits required from the DisplayContext in
+    order to make this tight.
 
   - __str__ methods should use a default instance of DisplayContext() created
     somewhere, or simply get removed.
@@ -16,6 +24,13 @@ beancount: TODO
   - Add an option for the DisplayContext to issue a warning if numbers are
     rendered through it that lose some precision.
 
+  (web)
+  - Make the web interface not render postings anymore by default.
+  - Rename /context to /entry
+
+  - Add "display_precision" option whereby the user can set the precision to be
+    used by each currency.
+
 
 ** Misc
 
@@ -24,6 +39,9 @@ beancount: TODO
   - (easy) Make _all_ plugins accept a configuration parameter, unconditionally. The
     interface should be this regular.
 
+  - Don't install all the _test.py files, make sure they're not installed, + add
+    a lint check that ensures the non-test files are never importing any of othe
+    test files.
 
 ** Documentation / Ongoing
 
