@@ -1,6 +1,7 @@
 -*- mode: org -*-
 beancount: TODO
 * Query Language
+http://furius.ca/beancount/doc/proposal-query
 
   - Use the display_context  in the BQL rendering routines instead of using the
     display precision mode in the displayed numbers only.
@@ -267,6 +268,7 @@ beancount: TODO
 
 
 * Deal with Rounding
+http://furius.ca/beancount/doc/proposal-rounding
 
   - Implement experimental precision check suggested by Nathan Grigg
   - Implement Equity:Rounding accumulation suggested by Nathan Grigg
