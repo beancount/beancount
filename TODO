@@ -192,6 +192,23 @@ http://furius.ca/beancount/doc/proposal-query
     and more intuitive.
 
 
+  - Idea: Another output data format for the reports/query language could be
+    parseable Python format.
+
+
+
+  - (query syntax) It *would* make sense to use full SQL for this, even if the
+    aggregation method is an inventory.
+
+      targets: units, cost, market, lots
+      data-source: balances, journal, holdings
+      restricts: ... all the conditions that match transactions, with = ...
+      aggregations: by currency, by day, by month, by account (regexp), etc.
+      other: filter display, pivot table (for by-month reports), max depth
+
+    You would render these as a table.
+
+
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 
