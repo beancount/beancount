@@ -12,18 +12,13 @@ from beancount.utils import sample_stack
 
 class TestSampleStack(unittest.TestCase):
 
-    # def test_sample(self):
-    #   sample_stack.sample('/tmp/samples.db')
-    #   sample_stack.sample('/tmp/samples.db')
-    #   sample_stack.sample('/tmp/samples.db')
-
     filename = '/tmp/samples.db'
 
     def deleteSamples(self):
         if path.exists(self.filename):
             os.remove(self.filename)
-    #setUp = tearDown = deleteSamples
-    setUp = deleteSamples
+
+    setUp = tearDown = deleteSamples
 
     def test_sample(self):
         num = 10
