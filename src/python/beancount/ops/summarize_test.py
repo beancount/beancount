@@ -291,7 +291,7 @@ class TestTransferBalances(cmptest.TestCase):
                                     INPUT_PRICES_LAST +
                                     INPUT_BEFORE +
                                     INPUT_PERIOD), xfer_entries)
-        self.assertIncludesEntries(""",
+        self.assertIncludesEntries("""
 
         2010-12-31 T "Transfer balance for 'Assets:US:Chase:Checking' (Transfer balance)"
           Assets:US:Chase:Checking                                             -2459.98 USD
@@ -307,7 +307,7 @@ class TestTransferBalances(cmptest.TestCase):
             lambda account: account.startswith('Assets:US:Investing'),
             self.TRANSFER_ACCOUNT)
         self.assertIncludesEntries(self.entries, xfer_entries)
-        self.assertIncludesEntries(""",
+        self.assertIncludesEntries("""
 
         2010-12-31 T "Transfer balance for 'Assets:US:Investing:GOOG' (Transfer balance)"
           Assets:US:Investing:GOOG                                               -5 GOOG     {510.00 USD}                  ;   -2550.00 USD
@@ -326,7 +326,7 @@ class TestTransferBalances(cmptest.TestCase):
                                     INPUT_PRICES_LAST +
                                     INPUT_BEFORE +
                                     INPUT_PERIOD), xfer_entries)
-        self.assertIncludesEntries(""",
+        self.assertIncludesEntries("""
 
         2011-02-28 T "Transfer balance for 'Assets:US:Chase:Checking' (Transfer balance)"
           Assets:US:Chase:Checking                                             -8459.98 USD
@@ -341,7 +341,7 @@ class TestTransferBalances(cmptest.TestCase):
             lambda account: account.startswith('Assets:US:Chase'),
             self.TRANSFER_ACCOUNT)
         self.assertIncludesEntries(self.entries, xfer_entries)
-        self.assertIncludesEntries(""",
+        self.assertIncludesEntries("""
 
         2011-04-01 T "Transfer balance for 'Assets:US:Chase:Checking' (Transfer balance)"
           Assets:US:Chase:Checking                                             -8459.98 USD
@@ -357,7 +357,7 @@ class TestTransferBalances(cmptest.TestCase):
             lambda account: re.match('(Income|Expenses):', account),
             self.TRANSFER_ACCOUNT)
         self.assertIncludesEntries(self.entries, xfer_entries)
-        self.assertIncludesEntries(""",
+        self.assertIncludesEntries("""
 
         2010-12-31 T "Transfer balance for 'Expenses:Flights' (Transfer balance)"
           Expenses:Flights                                                      -345.23 USD

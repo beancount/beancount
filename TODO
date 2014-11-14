@@ -49,6 +49,15 @@ beancount: TODO
 
 ** Misc
 
+  - IMPORTANT LATENT BUG. You need to extend the lexer to parse A-Z for flags,
+    not just PSTCU! This is important, as I just realized that it could prevent
+    the correct parsing for entries in a round-trip, with postings produced with
+    unexpected flags. In fact, any character with whitespace on each side should
+    parse as a flag. This is very important.
+
+    This manifests when adding a posting with letter 'M' right now. Replicate
+    this, fix the problem.
+
   - (easy) Don't render postings in the HTML interface by default. The detail
     can be made available via bean-query now, and users can click on /context
     link in order to get the full transaction detail. Journals should be
