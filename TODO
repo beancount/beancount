@@ -116,6 +116,7 @@ beancount: TODO
 
 
 * Deal with Rounding
+http://furius.ca/beancount/doc/propostal-rounding
 
   - Implement experimental precision check suggested by Nathan Grigg
   - Implement Equity:Rounding accumulation suggested by Nathan Grigg
@@ -492,6 +493,35 @@ http://furius.ca/beancount/doc/proposal-inter
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
+
+
+
+  - In the comparison doc: describe how Beancount has asset types
+
+
+
+  - Idea: in the query language, provide a special Account:Payee field, in
+    order to play with the notion of payee-as-subacccount often discussed.
+
+    could also provide a clean_payee() function, that would attempt to clean
+    the ugly payee names!
+
+
+  - Idea! Allow the selection or reporting of all the postings since their
+
+    balance check in each account. These postings can be called "unverified"
+    and it should be possible to report just those.
+
+
+
+  - Create a verification plugin that checks that there is a single currency in
+    use per account. Check Open directives, also check actual usage.
+
+  - Create a verification plugin that checks that there aren't any postings to
+    non-leaf accounts.
+
+  - Put all verification plugins, including nounused and noduplicates under
+    beancount.plugins.constraints.*.
 
 
 
