@@ -34,7 +34,7 @@ class TestCase(unittest.TestCase):
         if isinstance(actual_entries, str):
             actual_entries, _, __ = parser.parse_string(textwrap.dedent(actual_entries))
         else:
-            assert isinstance(expected_entries, list)
+            assert isinstance(actual_entries, list)
 
         same, expected_missing, actual_missing = compare.compare_entries(expected_entries,
                                                                          actual_entries)
