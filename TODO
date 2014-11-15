@@ -3,6 +3,19 @@ beancount: TODO
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 
+  - Rewrite DisplayContext to have all the info into per-currency objects.
+    Move as much as you can there.
+    Derive common max/info about signs and integer to the common object.
+    Move all set_*() methods to the builder.
+    We can remove that optional update=boolean madness too.
+    Convert callers of these methods (example.py) to use the builder.
+    Add a new per-currency format string that will align with all other currenceis.
+    Add integer width to the formats, as an option.
+    Add docstrings to DisplayContext.
+
+  - In the EntryPrinter(), figure out the maximum width of accounts and set it
+    up.
+
   - Render prices at maximum precision... this is important for round-trip!
 
   - Enhance the DisplayContext to store the longuest possible number of integral

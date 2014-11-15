@@ -1,5 +1,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import sys
 import unittest
 import io
 from decimal import Decimal
@@ -88,3 +89,14 @@ class TestDisplayContextBuilder(unittest.TestCase):
         self.assertEqual('1.23', dcontext.format(Decimal('1.234567'), 'USD'))
         self.assertEqual('1.2346', dcontext.format(Decimal('1.234567'), 'CAD'))
         self.assertEqual('1.235', dcontext.format(Decimal('1.234567'), 'RBF1005'))
+
+    def test_integer_width(self):
+        builder = DisplayContextBuilder()
+        builder.update(Decimal('1.45'), 'USD')
+        builder.update(Decimal('12.46'), 'USD')
+        builder.update(Decimal('1234.47'), 'USD')
+        builder.update(Decimal('123.4500'), 'USD')
+        builder.update(Decimal('0.4500'), 'USD')
+        builder.update(Decimal('0.008'), 'USD')
+        dcontext = builder.build()
+        ## FIXME: Complete this.

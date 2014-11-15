@@ -236,7 +236,7 @@ class Builder(lexer.LexBuilder):
         """
         # Update the mapping that stores the parsed precisions.
         # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
-        self.dcupdate(number)
+        self.dcupdate(number, currency)
         return Amount(number, currency)
 
     def lot_cost_date(self, cost, lot_date, istotal):

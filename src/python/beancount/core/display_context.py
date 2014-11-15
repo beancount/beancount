@@ -3,25 +3,31 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import collections
+import io
 
 from beancount.utils import misc_utils
 
 
 # A constant that indicates we should be rendering at full precision.
-FULL_PRECISION = object()
+FULL_PRECISION = 'FULL'
 
 
 class DisplayContextBuilder:
     """A builder object used to construct a DisplayContext from a series of numbers.
 
     Attributes:
-      precision_dict: A mapping of currency to a frequency distribution of
-        precisions seen in the input file. This is used to feed some information
-        that allows us to select what precision to use for rendering.
-
+      builder_infos: A dict of currency string to BuilderCurrencyInfo instance.
     """
+    class BuilderCurrencyInfo:
+        """A container of information for a single currency."""
+        def __init__(self):
+            # A frequency distribution of precisions seen in the input file.
+            self.precision_dist = misc_utils.Distribution()
+            # The maximum number of digits for the integer part.
+            self.max_int_digits = 1
+
     def __init__(self):
-        self.precision_dist = collections.defaultdict(misc_utils.Distribution)
+        self.builder_infos = collections.defaultdict(self.BuilderCurrencyInfo)
 
     def update(self, number, currency=None):
         """Update the builder with the given number for the given currency.
@@ -32,7 +38,15 @@ class DisplayContextBuilder:
         """
         # Note: This method gets called on every parsed number. Performance of
         # this method is tantamount. We should optimize this later.
-        self.precision_dist[currency].update(number.as_tuple().exponent)
+        num_tuple = number.as_tuple()
+
+        # Update the precision.
+        cinfo = self.builder_infos[currency]
+        cinfo.precision_dist.update(num_tuple.exponent)
+
+        # Update the maximum number of integral digits.
+        num_int_digits = len(num_tuple.digits) + num_tuple.exponent
+        cinfo.max_int_digits = max(cinfo.max_int_digits, num_int_digits)
 
     def build(self):
         """Build a display context object from the accumulated info from the numbers.
@@ -41,7 +55,8 @@ class DisplayContextBuilder:
           An instance of DisplayContext.
         """
         dcontext = DisplayContext()
-        for currency, dist in self.precision_dist.items():
+        for currency, cinfo in self.builder_infos.items():
+            dist = cinfo.precision_dist
             dcontext.set_precision(-dist.mode(), currency, False)
             dcontext.set_precision_max(-dist.min(), currency, False)
         dcontext.update()
@@ -60,25 +75,28 @@ class DisplayContext:
       precision: A dict of currency to precision. A key of None provides the
         default precision. A special value of FULL_PRECISION indicates we should render
         at the natural precision for the given number.
+      precision_max: Like 'precision' but for maximum number of digits.
       formats: A dict of currency to a pre-baked format string to render a
         number. (A key of None is treated as for self.precision.)
-      precision_max: Like 'precision' but for maximum number of digits.
       formats_max: Like 'formats' but for maximum number of digits.
       default_format: The default display format.
     """
 
     def __init__(self):
         self.commas = False
-        self.signs = False
+
+        self.signs = True
         self.precision = {None: FULL_PRECISION}
         self.precision_max = {None: FULL_PRECISION}
         self.formats = {}
+        self.formats_max = {}
+
         self.update()
 
     @staticmethod
-    def _formats_dict(precision_dict, commas):
+    def _formats_dict(precision_dict, commas, signs):
         comma_str = ',' if commas else ''
-        signs_str = ' ' if commas else ''
+        signs_str = ' ' if signs else ''
         formats = {}
         for currency, precision in precision_dict.items():
             if precision is FULL_PRECISION:
@@ -91,9 +109,9 @@ class DisplayContext:
 
     def update(self):
         self.formats, self.formats_default = (
-            self._formats_dict(self.precision, self.commas))
+            self._formats_dict(self.precision, self.commas, self.signs))
         self.formats_max, self.formats_max_default = (
-            self._formats_dict(self.precision_max, self.commas))
+            self._formats_dict(self.precision_max, self.commas, self.signs))
 
     def set_commas(self, commas, update=True):
         self.commas = commas
@@ -145,6 +163,11 @@ class DisplayContext:
 
             print(fmt.format(currency or '*', precision, sample, precision_max, sample_max),
                   file=file)
+
+    def __str__(self):
+        oss = io.StringIO()
+        self.dump(oss)
+        return oss.getvalue()
 
 
 # Default instance of DisplayContext to use if None is spcified.
