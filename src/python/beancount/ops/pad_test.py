@@ -129,16 +129,16 @@ class TestPadding(cmptest.TestCase):
           2013-05-03 balance Assets:Checking                                 172.45 USD
 
           2013-05-15 * "Add 20$"
-            Assets:Checking                                                         20.00 USD
-            Assets:Cash                                                            -20.00 USD
+            Assets:Checking                                                         20 USD
+            Assets:Cash                                                            -20 USD
 
           2013-05-20 pad Assets:Checking Equity:Opening-Balances
 
-          2013-05-20 P "(Padding inserted for Balance of 200.00 USD for difference 7.55 USD)"
+          2013-05-20 P "(Padding inserted for Balance of 200 USD for difference 7.55 USD)"
             Assets:Checking                                                          7.55 USD
             Equity:Opening-Balances                                                  -7.55 USD
 
-          2013-06-01 balance Assets:Checking                                 200.00 USD
+          2013-06-01 balance Assets:Checking                                 200 USD
 
         """, entries)
 
@@ -170,11 +170,11 @@ class TestPadding(cmptest.TestCase):
 
           2013-05-20 pad Assets:Checking Equity:Opening-Balances
 
-          2013-05-20 P "(Padding inserted for Balance of 200.00 USD for difference 200.00 USD)"
-            Assets:Checking                                                        200.00 USD
-            Equity:Opening-Balances                                                -200.00 USD
+          2013-05-20 P "(Padding inserted for Balance of 200 USD for difference 200 USD)"
+            Assets:Checking                                                        200 USD
+            Equity:Opening-Balances                                               -200 USD
 
-          2013-06-01 balance Assets:Checking                                 200.00 USD
+          2013-06-01 balance Assets:Checking                                 200 USD
 
         """, entries)
 
@@ -193,7 +193,7 @@ class TestPadding(cmptest.TestCase):
           ;; This pad will do nothing, should raise a warning..
           2013-05-20 pad  Assets:Checking   Equity:Opening-Balances
 
-          2013-06-01 balance Assets:Checking   200.0 USD
+          2013-06-01 balance Assets:Checking   200.00 USD
 
         """
         self.assertEqual([pad.PadError], list(map(type, errors)))

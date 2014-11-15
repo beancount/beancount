@@ -64,8 +64,8 @@ class TestTables(unittest.TestCase):
             cells.append("<pre>{}</pre>".format(real_node.balance))
         html = oss.getvalue()
         self.assertTrue(re.search('<table', html))
-        self.assertTrue(re.search('3,000', html))
-        self.assertTrue(re.search('-3,000', html))
+        self.assertTrue(re.search('3000', html))
+        self.assertTrue(re.search('-3000', html))
         self.assertTrue(re.search('5cdc3b134179', html))
         self.assertTrue(re.search('Assets:US:Checking', html))
 

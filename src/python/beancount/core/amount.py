@@ -25,6 +25,9 @@ import re
 # install cdecimal anymore.
 import decimal
 
+# Import object to format numbers at specific precisions.
+from .display_context import DEFAULT_DISPLAY_CONTEXT
+
 # pylint: disable=invalid-name
 Decimal = decimal.Decimal
 
@@ -75,16 +78,6 @@ def round_to(number, increment):
     return int((number / increment)) * increment
 
 
-# Number of digits to display all amounts if we can do so precisely.
-DISPLAY_QUANTIZE = Decimal('.01')
-
-# Maximum number of digits to display numbers for user.
-MAXDIGITS_QUANTIZE = 5
-
-# Maximum number of digits to display for printing for debugging.
-MAXDIGITS_PRINTER = 12
-
-
 class Amount:
     """An 'Amount' represents a number of a particular unit of something.
 
@@ -110,7 +103,7 @@ class Amount:
         Returns:
           A formatted string of the quantized amount and symbol.
         """
-        return self.str(MAXDIGITS_QUANTIZE)
+        return self.to_string()
 
     def __format__(self, format_spec):
         """Explicit support for formatting.
@@ -120,31 +113,20 @@ class Amount:
         Returns:
           A formatted string object.
         """
+        # FIXME: I'm not so sure about this. What's up here? I don't think we
+        # need this.
         return str(self).format(format_spec)
 
-    def str(self, max_digits):
+    def to_string(self, dcontext=DEFAULT_DISPLAY_CONTEXT):
         """Convert an Amount instance to a printable string.
 
         Args:
-          max_digits: The maximum number of digits to print.
+          dcontext: An instance of DisplayContext.
         Returns:
           A formatted string of the quantized amount and symbol.
         """
-        number = self.number
-
-        # Note: The better way to do this would be to let the user specify a
-        # desired rendering precision for each currency. We will correctly
-        # handle this when we review the display precision.
-        if number == number.quantize(DISPLAY_QUANTIZE):
-            return "{:,.2f} {}".format(number, self.currency)
-        else:
-            ntuple = number.as_tuple()
-            num_fractional_digits = len(ntuple.digits) + ntuple.exponent
-            if num_fractional_digits > max_digits:
-                return "{:,.{width}f} {}".format(number, self.currency,
-                                                 width=max_digits)
-            else:
-                return "{} {}".format(number, self.currency)
+        return "{} {}".format(dcontext.format(self.number, self.currency),
+                              self.currency)
 
     # We use the same as a printable representation.
     __repr__ = __str__

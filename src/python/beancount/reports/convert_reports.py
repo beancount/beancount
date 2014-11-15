@@ -12,6 +12,7 @@ from beancount.core import amount
 from beancount.core import data
 from beancount.core import position
 from beancount.core import interpolate
+from beancount.core import display_context
 from beancount.reports import report
 
 
@@ -146,13 +147,16 @@ class LedgerPrinter:
 
     # pylint: disable=invalid-name
 
-    @classmethod
-    def __call__(cls, obj):
+    def __init__(self, dcontext=None):
+        self.dcontext = dcontext or display_context.DEFAULT_DISPLAY_CONTEXT
+
+    def __call__(self, obj):
         oss = io.StringIO()
-        getattr(cls, obj.__class__.__name__)(cls, obj, oss)
+        method = getattr(self, obj.__class__.__name__)
+        method(obj, oss)
         return oss.getvalue()
 
-    def Transaction(cls, entry, oss):
+    def Transaction(self, entry, oss):
         strings = []
 
         # Insert a posting to absorb the residual if necessary. This is
@@ -180,21 +184,20 @@ class LedgerPrinter:
                                                          e=entry))
 
         for posting in entry.postings:
-            cls.Posting(cls, posting, oss)
+            self.Posting(posting, oss)
 
-    def Posting(_, posting, oss):
+    def Posting(self, posting, oss):
         flag = '{} '.format(posting.flag) if posting.flag else ''
         assert posting.account is not None
 
         flag_posting = '{:}{:62}'.format(flag, posting.account)
 
-        if posting.position:
-            amount_str, cost_str = posting.position.strs()
-        else:
-            amount_str, cost_str = '', ''
+        pos_str = (posting.position.to_string(self.dcontext, detail=False)
+                   if posting.position
+                   else '')
 
         if posting.price is not None:
-            price_str = '@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
+            price_str = '@ {}'.format(posting.price.to_string(self.dcontext))
         else:
             # Figure out if we need to insert a price on a posting held at cost.
             # See https://groups.google.com/d/msg/ledger-cli/35hA0Dvhom0/WX8gY_5kHy0J
@@ -204,14 +207,13 @@ class LedgerPrinter:
 
             if postings_at_price and postings_at_cost and posting.position.lot.cost:
                 price_str = '@ {}'.format(
-                    posting.position.lot.cost.str(amount.MAXDIGITS_PRINTER))
+                    posting.position.lot.cost.to_string(self.dcontext))
             else:
                 price_str = ''
 
-        posting_str = '  {:64} {:>16} {:>16} {:>16}'.format(flag_posting,
-                                                            quote_currency(amount_str),
-                                                            quote_currency(cost_str),
-                                                            quote_currency(price_str))
+        posting_str = '  {:64} {} {}'.format(flag_posting,
+                                             quote_currency(pos_str),
+                                             quote_currency(price_str))
         oss.write(posting_str.rstrip())
 
         oss.write('\n')
@@ -276,27 +278,20 @@ class HLedgerPrinter(LedgerPrinter):
 
     # pylint: disable=invalid-name
 
-    @classmethod
-    def __call__(cls, obj):
-        oss = io.StringIO()
-        getattr(cls, obj.__class__.__name__)(cls, obj, oss)
-        return oss.getvalue()
-
-    def Posting(_, posting, oss):
+    def Posting(self, posting, oss):
         flag = '{} '.format(posting.flag) if posting.flag else ''
         assert posting.account is not None
 
         flag_posting = '{:}{:62}'.format(flag, posting.account)
 
-        if posting.position:
-            amount_str, cost_str = posting.position.strs()
-            if cost_str:
-                # Convert the cost as a price entry, that's what HLedger appears to want.
-                cost_str = '@ {}'.format(cost_str.lstrip('{').rstrip('}'))
-        else:
-            amount_str, cost_str = '', ''
+        pos_str = (posting.position.to_string(self.dcontext, detail=False)
+                   if posting.position
+                   else '')
+        if pos_str:
+            # Convert the cost as a price entry, that's what HLedger appears to want.
+            pos_str = pos_str.replace('{', '@ ').replace('}', '')
 
-        price_str = ('@ {}'.format(posting.price.str(amount.MAXDIGITS_PRINTER))
+        price_str = ('@ {}'.format(posting.price.to_string(self.dcontext))
                      if posting.price is not None
                      else '')
 

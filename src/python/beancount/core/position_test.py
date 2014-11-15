@@ -43,13 +43,17 @@ class TestPosition(unittest.TestCase):
         with self.assertRaises(ValueError):
             pos = from_string('2.2 GOOG {532.43}')
 
-    def test_strs(self):
-        pos = from_string('2.2 GOOG {532.43 USD / 2014-06-15}')
-        self.assertEqual(('2.20 GOOG', '{532.43 USD / 2014-06-15}'), pos.strs())
-
     def test_str(self):
         pos = from_string('2.2 GOOG {532.43 USD / 2014-06-15}')
-        self.assertEqual(('2.20 GOOG {532.43 USD / 2014-06-15}'), str(pos))
+        self.assertEqual(('2.2 GOOG {532.43 USD / 2014-06-15}'), str(pos))
+
+    def test_to_string(self):
+        pos = from_string('2.2 GOOG {532.43 USD / 2014-06-15}')
+        self.assertEqual(('2.2 GOOG {532.43 USD / 2014-06-15}'), pos.to_string())
+
+    def test_to_string_no_detail(self):
+        pos = from_string('2.2 GOOG {532.43 USD / 2014-06-15}')
+        self.assertEqual(('2.2 GOOG {532.43 USD}'), pos.to_string(detail=False))
 
     def test_from_amounts(self):
         pos = from_amounts(Amount(D('10.00'), 'USD'))

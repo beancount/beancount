@@ -2,6 +2,22 @@
    beancount: CHANGES
 ========================
 
+2014-11-11
+
+  - The precision of rendered numbers isn't quantized nor subject to hard-coded
+    maximums anymore. I cleaned this up. There is a new "DisplayContext" object
+    that maintains the most common and maximum precisions to be used to render
+    each currency, and this precision is derived automatically from the numbers
+    used in the input file (the most common is the mode of the distribution of
+    numbers seen). The alignment of the printer's amounts is now also fixed (it
+    rendered correct transactions lately but alignment was a little borked), and
+    the output is now kept as tightly as possible close to the account names.
+
+  - Numbers don't render with commas by default anymore. There is a new option:
+    'render_commas' that you can set to have commas in numbers rendered in all
+    the routines that output numbers.
+
+
 2014-11-09
 
   - A new directive has been created: "plugin" that accepts the an optional

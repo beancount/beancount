@@ -41,6 +41,7 @@ class ErrorReport(report.HTMLReport):
         printer.print_errors(errors, file=file)
 
     def render_htmldiv(self, entries, errors, options_map, file):
+        dcontext = options_map['display_context']
         file.write('<div id="errors">\n')
         for error in errors:
             file.write('<div class="error">\n')
@@ -51,7 +52,8 @@ class ErrorReport(report.HTMLReport):
                 error.message))
             if error.entry is not None:
                 file.write('<pre class="syntax">\n')
-                file.write(textwrap.indent(printer.format_entry(error.entry), '  '))
+                file.write(textwrap.indent(
+                    printer.format_entry(error.entry, dcontext), '  '))
                 file.write('</pre>\n')
             file.write('</div>\n')
         file.write('</div>\n')
@@ -64,7 +66,8 @@ class PrintReport(report.Report):
     default_format = 'beancount'
 
     def render_beancount(self, entries, errors, options_map, file):
-        printer.print_entries(entries, file=file)
+        dcontext = options_map['display_context']
+        printer.print_entries(entries, dcontext, file=file)
 
 
 class AccountsReport(report.Report):

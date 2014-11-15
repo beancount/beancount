@@ -336,30 +336,30 @@ class TestClamp(cmptest.TestCase):
     def test_clamp(self, entries, errors, options_map):
         """
         2012-03-01 * "Some income and expense to be summarized"
-          Income:Salary        10000 USD
-          Expenses:Taxes        3600 USD
+          Income:Salary        10000.00 USD
+          Expenses:Taxes        3600.00 USD
           Assets:US:Checking
 
         2012-03-02 * "Some conversion to be summarized"
-          Assets:US:Checking   -5000 USD @ 1.2 CAD
-          Assets:CA:Checking    6000 CAD
+          Assets:US:Checking   -5000.00 USD @ 1.2 CAD
+          Assets:CA:Checking    6000.00 CAD
 
         ;; 2012-06-01  BEGIN --------------------------------
 
         2012-08-01 * "Some income and expense to show"
-          Income:Salary        11000 USD
-          Expenses:Taxes        3200 USD
+          Income:Salary        11000.00 USD
+          Expenses:Taxes        3200.00 USD
           Assets:US:Checking
 
         2012-08-02 * "Some other conversion to be summarized"
-          Assets:US:Checking   -3000 USD @ 1.25 CAD
-          Assets:CA:Checking    3750 CAD
+          Assets:US:Checking   -3000.00 USD @ 1.25 CAD
+          Assets:CA:Checking    3750.00 CAD
 
         ;; 2012-09-01  END   --------------------------------
 
         2012-11-01 * "Some income and expense to be truncated"
-          Income:Salary        10000 USD
-          Expenses:Taxes        3600 USD
+          Income:Salary        10000.00 USD
+          Expenses:Taxes        3600.00 USD
           Assets:US:Checking
 
         """
@@ -401,9 +401,9 @@ class TestClamp(cmptest.TestCase):
 
         ;; 2012-09-01  END   --------------------------------
 
-        2012-08-31 C "Conversion for Inventory(-3,000.00 USD, 3,750.00 CAD)"
-          Equity:Conversions              3,000.00 USD  @ 0.00 NOTHING
-          Equity:Conversions             -3,750.00 CAD  @ 0.00 NOTHING
+        2012-08-31 C "Conversion for Inventory(-3000.00 USD, 3750.00 CAD)"
+          Equity:Conversions              3000.00 USD  @ 0.00 NOTHING
+          Equity:Conversions             -3750.00 CAD  @ 0.00 NOTHING
 
         """, clamped_entries)
 
@@ -422,13 +422,13 @@ class TestCap(cmptest.TestCase):
     def test_cap(self, entries, errors, options_map):
         """
         2014-03-01 * "Some income and expense"
-          Income:Salary        10000 USD
-          Expenses:Taxes        3500 USD
+          Income:Salary        10000.00 USD
+          Expenses:Taxes        3500.00 USD
           Assets:US:Checking
 
         2014-02-01 * "Some conversion"
-          Assets:US:Checking   -5000 USD @ 1.2 CAD
-          Assets:CA:Checking    6000 CAD
+          Assets:US:Checking   -5000.00 USD @ 1.2 CAD
+          Assets:CA:Checking    6000.00 CAD
         """
         self.assertFalse(errors)
         account_types = options.get_account_types(options_map)
@@ -448,9 +448,9 @@ class TestCap(cmptest.TestCase):
           Income:Salary       -10000.00 USD
           Equity:Earnings      10000.00 USD
 
-        2014-03-01 C "Conversion for Inventory(-5,000.00 USD, 6,000.00 CAD)"
-          Equity:Conversions    5,000.00 USD @ 0.00 NOTHING
-          Equity:Conversions   -6,000.00 CAD @ 0.00 NOTHING
+        2014-03-01 C "Conversion for Inventory(-5000.00 USD, 6000.00 CAD)"
+          Equity:Conversions    5000.00 USD @ 0 NOTHING
+          Equity:Conversions   -6000.00 CAD @ 0 NOTHING
 
         """, capd_entries)
         self.assertEqual(5, len(capd_entries))
@@ -500,9 +500,9 @@ INPUT_BEFORE = """
 2010-11-22 close  Assets:US:Temporary
 
 2010-11-16 *
-  Income:US:Employer:Salary    -5000 USD
-  Assets:US:Chase:Checking      3000 USD
-  Expenses:Taxes                2000 USD
+  Income:US:Employer:Salary    -5000.00 USD
+  Assets:US:Chase:Checking      3000.00 USD
+  Expenses:Taxes                2000.00 USD
 
 2010-11-20 * "First hit on credit card account"
   Liabilities:US:Chase:CreditCard   -67.20 USD
@@ -521,13 +521,13 @@ INPUT_BEFORE = """
   Assets:US:Chase:Checking    -2550 USD
 
 2010-12-05 * "Conversion"
-  Assets:US:Chase:Checking    -910 USD
-  Assets:CA:BMO:Checking      1000 CAD @ 0.91 USD
+  Assets:US:Chase:Checking    -910.00 USD
+  Assets:CA:BMO:Checking      1000.00 CAD @ 0.91 USD
 
 2010-12-16 *
-  Income:US:Employer:Salary    -5000 USD
-  Assets:US:Chase:Checking      3000 USD
-  Expenses:Taxes                2000 USD
+  Income:US:Employer:Salary    -5000.00 USD
+  Assets:US:Chase:Checking      3000.00 USD
+  Expenses:Taxes                2000.00 USD
 
 """
 
@@ -537,9 +537,9 @@ INPUT_PERIOD = """
 2011-04-01 price USD  1.18 CAD
 
 2011-01-16 *
-  Income:US:Employer:Salary    -5000 USD
-  Assets:US:Chase:Checking      3000 USD
-  Expenses:Taxes                2000 USD
+  Income:US:Employer:Salary    -5000.00 USD
+  Assets:US:Chase:Checking      3000.00 USD
+  Expenses:Taxes                2000.00 USD
 
 2011-01-20 * "Dinner at Cull & Pistol"
   Liabilities:US:Chase:CreditCard   -89.23 USD
@@ -552,9 +552,9 @@ INPUT_PERIOD = """
   Assets:Cash
 
 2011-02-16 *
-  Income:US:Employer:Salary    -5000 USD
-  Assets:US:Chase:Checking      3000 USD
-  Expenses:Taxes                2000 USD
+  Income:US:Employer:Salary    -5000.00 USD
+  Assets:US:Chase:Checking      3000.00 USD
+  Expenses:Taxes                2000.00 USD
 
 """
 
@@ -600,7 +600,7 @@ class TestTransferBalances(cmptest.TestCase):
                                     INPUT_PRICES_LAST +
                                     INPUT_BEFORE +
                                     INPUT_PERIOD), xfer_entries)
-        self.assertIncludesEntries(""",
+        self.assertIncludesEntries("""
 
         2010-12-31 T "Transfer balance for 'Assets:US:Chase:Checking' (Transfer balance)"
           Assets:US:Chase:Checking                                             -2459.98 USD
@@ -616,10 +616,10 @@ class TestTransferBalances(cmptest.TestCase):
             lambda account: account.startswith('Assets:US:Investing'),
             self.TRANSFER_ACCOUNT)
         self.assertIncludesEntries(self.entries, xfer_entries)
-        self.assertIncludesEntries(""",
+        self.assertIncludesEntries("""
 
         2010-12-31 T "Transfer balance for 'Assets:US:Investing:GOOG' (Transfer balance)"
-          Assets:US:Investing:GOOG                                               -5.00 GOOG     {510.00 USD}                  ;   -2550.00 USD
+          Assets:US:Investing:GOOG                                               -5 GOOG     {510.00 USD}                  ;   -2550.00 USD
           Equity:Transfer                                                       2550.00 USD                                   ;    2550.00 USD
 
         """, xfer_entries)
@@ -635,7 +635,7 @@ class TestTransferBalances(cmptest.TestCase):
                                     INPUT_PRICES_LAST +
                                     INPUT_BEFORE +
                                     INPUT_PERIOD), xfer_entries)
-        self.assertIncludesEntries(""",
+        self.assertIncludesEntries("""
 
         2011-02-28 T "Transfer balance for 'Assets:US:Chase:Checking' (Transfer balance)"
           Assets:US:Chase:Checking                                             -8459.98 USD
@@ -650,7 +650,7 @@ class TestTransferBalances(cmptest.TestCase):
             lambda account: account.startswith('Assets:US:Chase'),
             self.TRANSFER_ACCOUNT)
         self.assertIncludesEntries(self.entries, xfer_entries)
-        self.assertIncludesEntries(""",
+        self.assertIncludesEntries("""
 
         2011-04-01 T "Transfer balance for 'Assets:US:Chase:Checking' (Transfer balance)"
           Assets:US:Chase:Checking                                             -8459.98 USD
@@ -666,7 +666,7 @@ class TestTransferBalances(cmptest.TestCase):
             lambda account: re.match('(Income|Expenses):', account),
             self.TRANSFER_ACCOUNT)
         self.assertIncludesEntries(self.entries, xfer_entries)
-        self.assertIncludesEntries(""",
+        self.assertIncludesEntries("""
 
         2010-12-31 T "Transfer balance for 'Expenses:Flights' (Transfer balance)"
           Expenses:Flights                                                      -345.23 USD
@@ -725,7 +725,7 @@ class TestSummarize(cmptest.TestCase):
           Equity:Opening-Balances                                              -2459.98 USD
 
         2010-12-31 S "Opening balance for 'Assets:US:Investing:GOOG' (Summarization)"
-          Assets:US:Investing:GOOG                                                5.00 GOOG     {510.00 USD}                  ;    2550.00 USD
+          Assets:US:Investing:GOOG                                                5 GOOG     {510.00 USD}                  ;    2550.00 USD
           Equity:Opening-Balances                                              -2550.00 USD                                   ;   -2550.00 USD
 
         2010-12-31 S "Opening balance for 'Expenses:Flights' (Summarization)"
@@ -788,20 +788,20 @@ class TestConversions(cmptest.TestCase):
           2012-01-01 open Assets:CA:Invest:NT
 
           2012-03-01 * "Earn some money"
-            Income:US:Job            -1000 USD
-            Assets:US:Checking        1000 USD
+            Income:US:Job            -1000.00 USD
+            Assets:US:Checking        1000.00 USD
 
           2012-03-02 * "Transfer to Investment"
-            Assets:US:Checking       -800 USD
-            Assets:CA:Invest          800 CAD @ 1 USD
+            Assets:US:Checking       -800.00 USD
+            Assets:CA:Invest          800.00 CAD @ 1 USD
 
           2012-03-03 * "Buy some stock"
-            Assets:CA:Invest         -600 CAD
+            Assets:CA:Invest         -600.00 CAD
             Assets:CA:Invest:NT        60 NT {10 CAD}
 
           2012-05-01 * "Transfer some money back"
-            Assets:CA:Invest         -100 CAD @ 1 USD
-            Assets:US:Checking        100 USD
+            Assets:CA:Invest         -100.00 CAD @ 1 USD
+            Assets:US:Checking        100.00 USD
 
         """
         self.entries = entries
@@ -850,9 +850,9 @@ class TestConversions(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
-        2012-03-09 C "Conversion for Inventory(-800.00 USD, 200.00 CAD, 60.00 NT {10.00 CAD})"
-          Equity:Conversions   800.00 USD  @ 0.00 XFER
-          Equity:Conversions  -800.00 CAD  @ 0.00 XFER
+        2012-03-09 C "Conversion for Inventory(-800.00 USD, 200.00 CAD, 60 NT {10 CAD})"
+          Equity:Conversions   800.00 USD  @ 0 XFER
+          Equity:Conversions  -800.00 CAD  @ 0 XFER
 
         """, conversion_entries)
 
@@ -867,9 +867,9 @@ class TestConversions(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
-        2012-05-09 C "Conversion for Inventory(-700.00 USD, 100.00 CAD, 60.00 NT {10.00 CAD})"
-          Equity:Conversions   700.00 USD  @ 0.00 NOTHING
-          Equity:Conversions  -700.00 CAD  @ 0.00 NOTHING
+        2012-05-09 C "Conversion for Inventory(-700.00 USD, 100.00 CAD, 60 NT {10 CAD})"
+          Equity:Conversions   700.00 USD  @ 0 NOTHING
+          Equity:Conversions  -700.00 CAD  @ 0 NOTHING
 
         """, conversion_entries)
 
@@ -882,7 +882,7 @@ class TestConversions(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
-        2012-05-01 C "Conversion for Inventory(-700.00 USD, 100.00 CAD, 60.00 NT {10.00 CAD})"
+        2012-05-01 C "Conversion for Inventory(-700.00 USD, 100.00 CAD, 60 NT {10 CAD})"
           Equity:Conversions   700.00 USD  @ 0.00 NOTHING
           Equity:Conversions  -700.00 CAD  @ 0.00 NOTHING
 
@@ -991,7 +991,7 @@ class TestEntriesFromBalance(cmptest.TestCase):
 
     def setUp(self):
         self.balances = collections.defaultdict(inventory.Inventory)
-        self.balances['Assets:US:Investment'] = inventory.from_string('10 GOOG {500 USD}')
+        self.balances['Assets:US:Investment'] = inventory.from_string('10 GOOG {500.00 USD}')
         self.balances['Assets:US:Bank:Checking'] = inventory.from_string('1823.23 USD')
 
     def test_create_entries_from_balances__simple(self):
@@ -1005,7 +1005,7 @@ class TestEntriesFromBalance(cmptest.TestCase):
             Equity:Opening-Balances                                               -1823.23 USD
 
           2014-01-01 ! "Narration for Assets:US:Investment at 2014-01-01"
-            Assets:US:Investment                                                   10.00 GOOG     {500.00 USD}
+            Assets:US:Investment                                                   10 GOOG     {500.00 USD}
             Equity:Opening-Balances                                               -5000.00 USD
         """, entries)
 
@@ -1020,7 +1020,7 @@ class TestEntriesFromBalance(cmptest.TestCase):
             Equity:Opening-Balances                                                1823.23 USD
 
           2014-01-01 * "Narration for Assets:US:Investment at 2014-01-01"
-            Assets:US:Investment                                                  -10.00 GOOG     {500.00 USD}
+            Assets:US:Investment                                                  -10 GOOG     {500.00 USD}
             Equity:Opening-Balances                                                5000.00 USD
         """, entries)
 

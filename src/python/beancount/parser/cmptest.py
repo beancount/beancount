@@ -11,6 +11,10 @@ from beancount.parser import printer
 from beancount.core import compare
 
 
+class TestError(Exception):
+    """Errors within the test implementation itself. These should never occur."""
+
+
 class TestCase(unittest.TestCase):
 
     def assertEqualEntries(self, expected_entries, actual_entries):
@@ -27,12 +31,20 @@ class TestCase(unittest.TestCase):
           AssertionError: If the exception fails.
         """
         if isinstance(expected_entries, str):
-            expected_entries, _, __ = parser.parse_string(textwrap.dedent(expected_entries))
+            expected_entries, errors, __ = parser.parse_string(textwrap.dedent(expected_entries))
+            if errors:
+                oss = io.StringIO()
+                printer.print_errors(errors, file=oss)
+                raise TestError("Unexpected errors in expected: {}".format(oss.getvalue()))
         else:
             assert isinstance(expected_entries, list)
 
         if isinstance(actual_entries, str):
-            actual_entries, _, __ = parser.parse_string(textwrap.dedent(actual_entries))
+            actual_entries, errors, __ = parser.parse_string(textwrap.dedent(actual_entries))
+            if errors:
+                oss = io.StringIO()
+                printer.print_errors(errors, file=oss)
+                raise TestError("Unexpected errors in actual: {}".format(oss.getvalue()))
         else:
             assert isinstance(actual_entries, list)
 
@@ -66,9 +78,18 @@ class TestCase(unittest.TestCase):
           AssertionError: If the exception fails.
         """
         if isinstance(subset_entries, str):
-            subset_entries, _, __ = parser.parse_string(textwrap.dedent(subset_entries))
+            subset_entries, errors, _ = parser.parse_string(textwrap.dedent(subset_entries))
+            if errors:
+                oss = io.StringIO()
+                printer.print_errors(errors, file=oss)
+                raise TestError("Unexpected errors in subset: {}".format(oss.getvalue()))
         if isinstance(entries, str):
-            entries, _, __ = parser.parse_string(textwrap.dedent(entries))
+            entries, errors, _ = parser.parse_string(textwrap.dedent(entries))
+            if errors:
+                oss = io.StringIO()
+                printer.print_errors(errors, file=oss)
+                raise TestError("Unexpected errors in actual: {}".format(oss.getvalue()))
+
         includes, missing = compare.includes_entries(subset_entries, entries)
         if not includes:
             assert missing
@@ -93,9 +114,17 @@ class TestCase(unittest.TestCase):
           AssertionError: If the exception fails.
         """
         if isinstance(subset_entries, str):
-            subset_entries, _, __ = parser.parse_string(textwrap.dedent(subset_entries))
+            subset_entries, errors, _ = parser.parse_string(textwrap.dedent(subset_entries))
+            if errors:
+                oss = io.StringIO()
+                printer.print_errors(errors, file=oss)
+                raise TestError("Unexpected errors in subset: {}".format(oss.getvalue()))
         if isinstance(entries, str):
-            entries, _, __ = parser.parse_string(textwrap.dedent(entries))
+            entries, errors, _ = parser.parse_string(textwrap.dedent(entries))
+            if errors:
+                oss = io.StringIO()
+                printer.print_errors(errors, file=oss)
+                raise TestError("Unexpected errors in actual: {}".format(oss.getvalue()))
         excludes, extra = compare.excludes_entries(subset_entries, entries)
         if not excludes:
             assert extra

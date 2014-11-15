@@ -435,6 +435,24 @@ class TestParserPlugin(unittest.TestCase):
                          options_map['plugin'])
 
 
+class TestDisplayContextOptions(unittest.TestCase):
+
+    @parsedoc
+    def test_render_commas_no(self, _, __, options_map):
+        """
+          option "render_commas" "0"
+        """
+        self.assertEqual(False, options_map['render_commas'])
+
+    @parsedoc
+    def test_render_commas_yes(self, _, __, options_map):
+        """
+          option "render_commas" "1"
+        """
+        self.assertEqual(True, options_map['render_commas'])
+
+
+
 class TestParserLinks(unittest.TestCase):
 
     @parsedoc

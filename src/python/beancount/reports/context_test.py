@@ -54,13 +54,15 @@ class TestContext(test_utils.TestCase):
 
         search_filename = entries[0].source.filename
         search_lineno = entries[-3].source.lineno + 2
-        str_context = context.render_entry_context(entries, search_filename, search_lineno)
+        dcontext = options_map['display_context']
+        str_context = context.render_entry_context(entries, dcontext,
+                                                   search_filename, search_lineno)
 
         self.assertLines(textwrap.dedent("""
-        Hash:cfd532bf83c5bbb324183d981f8ebbf0
+        Hash:298dca350249afe0378cf8bac2fb12cf
         Location: <string>:29
 
-        ;   Assets:US:ETrade:Cash                      -1,411.44 USD
+        ;   Assets:US:ETrade:Cash                       -1411.44 USD
 
         ;   Assets:US:ETrade:ITOT             4.00 ITOT {173.11 USD}
 
@@ -68,15 +70,17 @@ class TestContext(test_utils.TestCase):
 
 
         2013-02-07 * "Buy shares of ITOT"
-          Assets:US:ETrade:Cash                            -1,126.21 USD                       ;    -1,126.21 USD
-          Assets:US:ETrade:ITOT                                6.00 ITOT     {186.21 USD}      ;     1,117.26 USD
-          Expenses:Financial:Commissions                        8.95 USD                       ;         8.95 USD
+          Assets:US:ETrade:Cash           -1126.21 USD                ; -1126.21 USD
+          Assets:US:ETrade:ITOT               6.00 ITOT {186.21 USD}  ;  1117.26 USD
+          Expenses:Financial:Commissions      8.95 USD                ;     8.95 USD
 
 
-        ; ! Assets:US:ETrade:Cash                      -2,537.65 USD
+        ; ! Assets:US:ETrade:Cash                      -2537.65 USD
 
         ;   Assets:US:ETrade:ITOT             4.00 ITOT {173.11 USD}
         ; ! Assets:US:ETrade:ITOT             6.00 ITOT {186.21 USD}
 
         ; ! Expenses:Financial:Commissions                 44.75 USD
         """), str_context)
+
+    maxDiff = 8192

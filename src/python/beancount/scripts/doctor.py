@@ -5,6 +5,7 @@ the name of debugging.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import os
 import re
 import sys
 import argparse
@@ -46,56 +47,60 @@ def do_roundtrip(filename, unused_args):
     Args:
       filename: A string, the Beancount input filename.
     """
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    logging.info("Read the entries")
-    entries, errors, options_map = loader.load_file(filename)
-    printer.print_errors(errors, file=sys.stderr)
+    round1_filename = round2_filename = None
+    try:
+        logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+        logging.info("Read the entries")
+        entries, errors, options_map = loader.load_file(filename)
+        printer.print_errors(errors, file=sys.stderr)
 
-    logging.info("Print them out to a file")
-    basename, extension = path.splitext(filename)
-    round1_filename = ''.join([basename, '.roundtrip1', extension])
-    with open(round1_filename, 'w') as outfile:
-        printer.print_entries(entries, outfile)
+        logging.info("Print them out to a file")
+        basename, extension = path.splitext(filename)
+        round1_filename = ''.join([basename, '.roundtrip1', extension])
+        with open(round1_filename, 'w') as outfile:
+            printer.print_entries(entries, file=outfile)
 
-    logging.info("Read the entries from that file")
-    # Note that we don't want to run any of the auto-generation here...
-    # parse-only, not load.
-    entries_roundtrip, errors, options_map = parser.parse_file(round1_filename)
+        logging.info("Read the entries from that file")
+        # Note that we don't want to run any of the auto-generation here...
+        # parse-only, not load.
+        entries_roundtrip, errors, options_map = parser.parse_file(round1_filename)
 
-    # Print out the list of errors from parsing the results.
-    if errors:
-        print(',----------------------------------------------------------------------')
-        printer.print_errors(errors, file=sys.stdout)
-        print(error_text)
-        print('`----------------------------------------------------------------------')
+        # Print out the list of errors from parsing the results.
+        if errors:
+            print(',----------------------------------------------------------------------')
+            printer.print_errors(errors, file=sys.stdout)
+            print(error_text)
+            print('`----------------------------------------------------------------------')
 
-    logging.info("Print what you read to yet another file")
-    round2_filename = ''.join([basename, '.roundtrip2', extension])
-    with open(round2_filename, 'w') as outfile:
-        printer.print_entries(entries_roundtrip, outfile)
+        logging.info("Print what you read to yet another file")
+        round2_filename = ''.join([basename, '.roundtrip2', extension])
+        with open(round2_filename, 'w') as outfile:
+            printer.print_entries(entries_roundtrip, file=outfile)
 
-    logging.info("Compare the original entries with the re-read ones")
-    same, missing1, missing2 = compare.compare_entries(entries, entries_roundtrip)
-    if same:
-        logging.info('Entries are the same. Congratulations.')
-    else:
-        logging.error('Entries differ!')
-        print()
-        print('\n\nMissing from original:')
-        #printer.print_entries(missing1)
-        for entry in entries:
-            print(entry)
-            print(compare.hash_entry(entry))
-            print(printer.format_entry(entry))
+        logging.info("Compare the original entries with the re-read ones")
+        same, missing1, missing2 = compare.compare_entries(entries, entries_roundtrip)
+        if same:
+            logging.info('Entries are the same. Congratulations.')
+        else:
+            logging.error('Entries differ!')
             print()
+            print('\n\nMissing from original:')
+            for entry in entries:
+                print(entry)
+                print(compare.hash_entry(entry))
+                print(printer.format_entry(entry))
+                print()
 
-        print('\n\nMissing from round-trip:')
-        #printer.print_entries(missing2)
-        for entry in missing2:
-            print(entry)
-            print(compare.hash_entry(entry))
-            print(printer.format_entry(entry))
-            print()
+            print('\n\nMissing from round-trip:')
+            for entry in missing2:
+                print(entry)
+                print(compare.hash_entry(entry))
+                print(printer.format_entry(entry))
+                print()
+    finally:
+        for filename in (round1_filename, round2_filename):
+            if path.exists(filename):
+                os.remove(filename)
 
 
 def do_directories(filename, args):
@@ -169,7 +174,8 @@ def do_context(filename, args):
     # Load the input file.
     entries, errors, options_map = loader.load_file(filename)
 
-    str_context = context.render_entry_context(entries, filename, lineno)
+    dcontext = options_map['display_context']
+    str_context = context.render_entry_context(entries, dcontext, filename, lineno)
     sys.stdout.write(str_context)
 
 
@@ -196,7 +202,8 @@ def do_missing_open(filename, args):
             new_entries.append(
                 data.Open(data.Source(filename, 0), first_use_date, account, None))
 
-    printer.print_entries(data.sort(new_entries))
+    dcontext = options_map['display_context']
+    printer.print_entries(data.sort(new_entries), dcontext)
 
 
 def do_precision(filename, args):
@@ -208,18 +215,8 @@ def do_precision(filename, args):
         to be an integer as a string.
     """
     entries, errors, options_map = loader.load_file(filename)
-    max_width = max(map(len, options_map['precision'].keys()))
-    fmt = '{{:{}}}   {{:2}} | {{:24}}   {{:2}} | {{:24}}'.format(max_width)
-    for currency, precision in sorted(options_map['precision'].items()):
-        max_precision = options_map['max_precision'][currency]
-        if max_precision == precision:
-            print(fmt.format(currency,
-                             precision, '{:.{prec}f}'.format(0, prec=precision),
-                             '', ''))
-        else:
-            print(fmt.format(currency,
-                             precision, '{:.{prec}f}'.format(0, prec=precision),
-                             max_precision, '{:.{prec}f}'.format(0, prec=max_precision)))
+    dcontext = options_map['display_context']
+    dcontext.dump(sys.stdout)
 
 
 def main():

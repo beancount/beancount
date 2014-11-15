@@ -2,12 +2,14 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
 import re
+import io
 
 from .amount import D
 from .amount import Decimal
 from .amount import ZERO
 from .amount import Amount
 from . import amount
+from . import display_context
 
 
 class TestDecimalPrecision(unittest.TestCase):
@@ -77,8 +79,19 @@ class TestAmount(unittest.TestCase):
             Amount.from_string('100.00 U')
 
     def test_tostring(self):
-        amount = Amount('100,034.02', 'USD')
-        self.assertTrue(re.search(r'\.\d\d\b', str(amount)))
+        amount = Amount('100034.023', 'USD')
+
+        self.assertEqual('100034.023 USD', str(amount))
+
+        dc = display_context.DisplayContext()
+        dc.set_commas(True)
+        self.assertEqual(' 100,034.023 USD', amount.to_string(dc))
+
+        dc.set_precision(1)
+        self.assertEqual(' 100,034.0 USD', amount.to_string(dc))
+
+        dc.set_precision(4, 'USD')
+        self.assertEqual(' 100,034.0230 USD', amount.to_string(dc))
 
     def test_comparisons(self):
         amount1 = Amount(Decimal('100'), 'USD')
@@ -87,13 +100,6 @@ class TestAmount(unittest.TestCase):
 
         amount3 = Amount(Decimal('101'), 'USD')
         self.assertNotEqual(amount1, amount3)
-
-    def test_tostring_quantize(self):
-        amount = Amount('100,034.027456', 'USD')
-        self.assertTrue(re.search(r'\.02746\b', str(amount)))
-
-        amount = Amount('100,034.05000', 'USD')
-        self.assertTrue(re.search(r'\.05\b', str(amount)))
 
     def test_hash(self):
         amount = Amount('100,034.027456', 'USD')
