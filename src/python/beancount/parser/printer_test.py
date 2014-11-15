@@ -5,6 +5,7 @@ from datetime import date
 import unittest
 import re
 import textwrap
+import sys
 
 from beancount.parser import printer
 from beancount.parser import parser

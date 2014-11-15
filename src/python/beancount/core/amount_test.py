@@ -85,7 +85,7 @@ class TestAmount(unittest.TestCase):
 
         dc = display_context.DisplayContext()
         dc.set_commas(True)
-        self.assertEqual(' 100,034.023 USD', amount.to_string(dc))
+        self.assertEqual('100,034.023 USD', amount.to_string(dc))
 
         dc.set_precision(1)
         self.assertEqual(' 100,034.0 USD', amount.to_string(dc))

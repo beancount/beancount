@@ -27,7 +27,7 @@ def find_external_flows(entries, related_regexp):
         related accounts.
     Returns:
       A tuple of a list of transactions with external flows and a list of
-      datetime.date instnaces.
+      datetime.date instances.
     """
     external_entries = []
     dates = set()
@@ -45,7 +45,7 @@ def find_external_flows(entries, related_regexp):
 
 
 def compute_balance_for_accounts(entries, match_account, boundary_entry):
-    """Compute the balance for a subste of accounts before and after an entry.
+    """Compute the balance for a subset of accounts before and after an entry.
 
     Args:
       entries: A list of directives.
@@ -57,7 +57,6 @@ def compute_balance_for_accounts(entries, match_account, boundary_entry):
       Two Inventory instances: one computed before applying the boundary entry
       and one computed after.
     """
-
     balance_before = inventory.Inventory()
     for entry in entries:
         if entry is boundary_entry:
@@ -110,7 +109,7 @@ def inventory_value(balance):
     """Convert an inventory in a single number.
 
     Args:
-      balance: An instnace of Inventory, assumed to contain either zero or
+      balance: An instance of Inventory, assumed to contain either zero or
         one positions.
     Returns:
       A Decimal number.
@@ -141,7 +140,11 @@ def main():
 
     entries, errors, options_map = loader.load(opts.filename)
 
-    # Find and print the lis tof external entries.
+    # FIXME: Add a pre-processing step where we identify the actual list of
+    # accounts that are related, and which ones will be considered assets. The
+    # find_external_flows(). function below should accept two lists of accounts.
+
+    # Find and print the list of external entries.
     external_entries, dates = find_external_flows(entries, opts.related)
 
     # Create a predicate for the Assets accounts.
@@ -220,3 +223,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+# FIXME: Create tests with P2P lending transactions, trading account transactions, etc.

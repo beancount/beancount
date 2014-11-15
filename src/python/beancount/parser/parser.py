@@ -98,10 +98,9 @@ class Builder(lexer.LexBuilder):
         # types.
         self.account_regexp = valid_account_regexp(self.options)
 
-        # A mapping of currency to a frequency distribution of precisions seen
-        # in the input file. This is used to feed some information that allows
-        # us to select what precision to use for rendering.
-        self.precision_dist = collections.defaultdict(misc_utils.Distribution)
+        # A display context builder.
+        self.dcbuilder = display_context.DisplayContextBuilder()
+        self.dcupdate = self.dcbuilder.update
 
     def get_entries(self):
         """Return the accumulated entries.
@@ -117,15 +116,13 @@ class Builder(lexer.LexBuilder):
         Returns:
           A dict of option names to options.
         """
+        # Normalize the option to a boolean object.
         self.options['render_commas'] = (
             self.options['render_commas'].lower() in ('1', 'true'))
 
-        dcontext = display_context.DisplayContext()
+        # Build and store the inferred DisplayContext instance.
+        dcontext = self.dcbuilder.build()
         dcontext.set_commas(self.options['render_commas'])
-        for currency, dist in self.precision_dist.items():
-            dcontext.set_precision(-dist.mode(), currency, False)
-            dcontext.set_precision_max(-dist.min(), currency, False)
-        dcontext.update()
         self.options['display_context'] = dcontext
 
         return self.options
@@ -239,7 +236,7 @@ class Builder(lexer.LexBuilder):
         """
         # Update the mapping that stores the parsed precisions.
         # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
-        self.precision_dist[currency].update(number.as_tuple().exponent)
+        self.dcupdate(number, currency)
         return Amount(number, currency)
 
     def lot_cost_date(self, cost, lot_date, istotal):
