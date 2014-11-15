@@ -89,38 +89,38 @@ class TestOpenClose(cmptest.TestCase):
         self.assertEqualEntries("""
 
         2012-05-31 S "Opening balance for 'Assets:CA:Checking' (Summarization)"
-          Assets:CA:Checking             6,000.00 CAD
-          Equity:Opening-Balances       -6,000.00 CAD
+          Assets:CA:Checking             6,000 CAD
+          Equity:Opening-Balances       -6,000 CAD
 
         2012-05-31 S "Opening balance for 'Assets:US:Checking' (Summarization)"
-          Assets:US:Checking           -18,600.00 USD
-          Equity:Opening-Balances       18,600.00 USD
+          Assets:US:Checking           -18,600 USD
+          Equity:Opening-Balances       18,600 USD
 
         2012-05-31 S "Opening balance for 'Equity:Earnings:Previous' (Summarization)"
-          Equity:Earnings:Previous      13,600.00 USD
-          Equity:Opening-Balances      -13,600.00 USD
+          Equity:Earnings:Previous      13,600 USD
+          Equity:Opening-Balances      -13,600 USD
 
         2012-05-31 S "Opening balance for 'Equity:Conversions:Previous' (Summarization)"
-          Equity:Conversions:Previous    5,000.00 USD
-          Equity:Opening-Balances       -5,000.00 USD
-          Equity:Conversions:Previous   -6,000.00 CAD
-          Equity:Opening-Balances        6,000.00 CAD
+          Equity:Conversions:Previous    5,000 USD
+          Equity:Opening-Balances       -5,000 USD
+          Equity:Conversions:Previous   -6,000 CAD
+          Equity:Opening-Balances        6,000 CAD
 
         ;; 2012-06-01  BEGIN --------------------------------
 
         2012-08-01 * "Some income and expense to show"
-          Income:Salary                 11,000.00 USD
-          Expenses:Taxes                 3,200.00 USD
-          Assets:US:Checking           -14,200.00 USD
+          Income:Salary                 11,000 USD
+          Expenses:Taxes                 3,200 USD
+          Assets:US:Checking           -14,200 USD
 
         2012-08-02 * "Some other conversion to be summarized"
-          Assets:US:Checking            -3,000.00 USD @ 1.25 CAD ;  -3,750.00 CAD
-          Assets:CA:Checking             3,750.00 CAD            ;   3,750.00 CAD
+          Assets:US:Checking            -3,000 USD @ 1.25 CAD ;  -3,750 CAD
+          Assets:CA:Checking             3,750 CAD            ;   3,750 CAD
 
         2012-11-01 * "Some income and expense to be truncated"
-          Income:Salary                 10,000.00 USD
-          Expenses:Taxes                 3,600.00 USD
-          Assets:US:Checking           -13,600.00 USD
+          Income:Salary                 10,000 USD
+          Expenses:Taxes                 3,600 USD
+          Assets:US:Checking           -13,600 USD
 
         """, opened_entries)
 
@@ -172,9 +172,9 @@ class TestOpenClose(cmptest.TestCase):
 
         ;; 2012-09-01  END   --------------------------------
 
-        2012-08-31 C "Conversion for Inventory(-8,000.00 USD, 9,750.00 CAD)"
-          Equity:Conversions:Current    8,000.00 USD  @ 0.00 NOTHING
-          Equity:Conversions:Current   -9,750.00 CAD  @ 0.00 NOTHING
+        2012-08-31 C "Conversion for Inventory(-8000 USD, 9750 CAD)"
+          Equity:Conversions:Current    8000 USD  @ 0 NOTHING
+          Equity:Conversions:Current   -9750 CAD  @ 0 NOTHING
 
         """, closed_entries)
 
@@ -225,17 +225,17 @@ class TestOpenClose(cmptest.TestCase):
         ;; 2012-09-01  END   --------------------------------
 
         2012-11-01 * "Some income and expense to be truncated"
-          Income:Salary        10,000.00 USD
-          Expenses:Taxes        3,600.00 USD
-          Assets:US:Checking  -13,600.00 USD
+          Income:Salary        10000 USD
+          Expenses:Taxes        3600 USD
+          Assets:US:Checking  -13600 USD
 
         2012-12-31 T "Transfer balance for 'Expenses:Taxes' (Transfer balance)"
-          Expenses:Taxes           -10,400.00 USD
-          Equity:Earnings:Current   10,400.00 USD
+          Expenses:Taxes           -10400 USD
+          Equity:Earnings:Current   10400 USD
 
         2012-12-31 T "Transfer balance for 'Income:Salary' (Transfer balance)"
-          Income:Salary             -31,000.00 USD
-          Equity:Earnings:Current    31,000.00 USD
+          Income:Salary             -31000 USD
+          Equity:Earnings:Current    31000 USD
 
         """, clear_entries)
 
@@ -272,47 +272,47 @@ class TestOpenClose(cmptest.TestCase):
         self.assertEqualEntries("""
 
         2012-05-31 S "Opening balance for 'Assets:CA:Checking' (Summarization)"
-          Assets:CA:Checking            6,000.00 CAD
-          Equity:Opening-Balances      -6,000.00 CAD
+          Assets:CA:Checking            6,000 CAD
+          Equity:Opening-Balances      -6,000 CAD
 
         2012-05-31 S "Opening balance for 'Assets:US:Checking' (Summarization)"
-          Assets:US:Checking          -18,600.00 USD
-          Equity:Opening-Balances      18,600.00 USD
+          Assets:US:Checking          -18,600 USD
+          Equity:Opening-Balances      18,600 USD
 
         2012-05-31 S "Opening balance for 'Equity:Earnings:Previous' (Summarization)"
-          Equity:Earnings:Previous     13,600.00 USD
-          Equity:Opening-Balances     -13,600.00 USD
+          Equity:Earnings:Previous     13,600 USD
+          Equity:Opening-Balances     -13,600 USD
 
         2012-05-31 S "Opening balance for 'Equity:Conversions:Previous' (Summarization)"
-          Equity:Conversions:Previous   5,000.00 USD
-          Equity:Opening-Balances      -5,000.00 USD
-          Equity:Conversions:Previous  -6,000.00 CAD
-          Equity:Opening-Balances       6,000.00 CAD
+          Equity:Conversions:Previous   5,000 USD
+          Equity:Opening-Balances      -5,000 USD
+          Equity:Conversions:Previous  -6,000 CAD
+          Equity:Opening-Balances       6,000 CAD
 
         ;; 2012-06-01  BEGIN --------------------------------
 
         2012-08-01 * "Some income and expense to show"
-          Income:Salary                11,000.00 USD
-          Expenses:Taxes                3,200.00 USD
-          Assets:US:Checking          -14,200.00 USD
+          Income:Salary                11,000 USD
+          Expenses:Taxes                3,200 USD
+          Assets:US:Checking          -14,200 USD
 
         2012-08-02 * "Some other conversion to be summarized"
-          Assets:US:Checking           -3,000.00 USD @ 1.25 CAD ;  -3,750.00 CAD
-          Assets:CA:Checking            3,750.00 CAD            ;   3,750.00 CAD
+          Assets:US:Checking           -3,000 USD @ 1.25 CAD ;  -3,750 CAD
+          Assets:CA:Checking            3,750 CAD            ;   3,750 CAD
 
         ;; 2012-09-01  END   --------------------------------
 
-        2012-08-31 C "Conversion for Inventory(-3,000.00 USD, 3,750.00 CAD)"
-          Equity:Conversions:Current    3,000.00 USD @ 0.00 NOTHING
-          Equity:Conversions:Current   -3,750.00 CAD @ 0.00 NOTHING
+        2012-08-31 C "Conversion for Inventory(-3000 USD, 3750 CAD)"
+          Equity:Conversions:Current    3,000 USD @ 0 NOTHING
+          Equity:Conversions:Current   -3,750 CAD @ 0 NOTHING
 
         2012-12-31 T "Transfer balance for 'Income:Salary' (Transfer balance)"
-          Income:Salary               -11,000.00 USD
-          Equity:Earnings:Current      11,000.00 USD
+          Income:Salary               -11,000 USD
+          Equity:Earnings:Current      11,000 USD
 
         2012-12-31 T "Transfer balance for 'Expenses:Taxes' (Transfer balance)"
-          Expenses:Taxes               -3,200.00 USD
-          Equity:Earnings:Current       3,200.00 USD
+          Expenses:Taxes               -3,200 USD
+          Equity:Earnings:Current       3,200 USD
 
         """, clear_entries)
 
