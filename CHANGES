@@ -2,6 +2,12 @@
    beancount: CHANGES
 ========================
 
+2014-11-13
+
+  - Added a new "beancount.plugins.ira_contribs" module that automatically
+    inserts postings for tracking pre-tax money contributions.
+
+
 2014-11-11
 
   - The precision of rendered numbers isn't quantized nor subject to hard-coded
