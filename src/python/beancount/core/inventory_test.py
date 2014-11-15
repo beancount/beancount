@@ -8,13 +8,13 @@ import copy
 from datetime import date
 import types
 
-from beancount.core.amount import D
-from beancount.core.position import Position
-from beancount.core.position import Lot
-from beancount.core.inventory import Inventory
-from beancount.core import amount
-from beancount.core import position
-from beancount.core import inventory
+from .amount import D
+from .position import Position
+from .position import Lot
+from .inventory import Inventory
+from . import amount
+from . import position
+from . import inventory
 
 
 A = amount.from_string
@@ -143,7 +143,7 @@ class TestInventory(unittest.TestCase):
 
     def test_str(self):
         inv = Inventory.from_string('100.00 USD, 101.00 CAD')
-        self.assertEqual('Inventory(100.00 USD, 101.00 CAD)', str(inv))
+        self.assertEqual('(100.00 USD, 101.00 CAD)', str(inv))
 
     def test_copy(self):
         inv = Inventory()

@@ -97,6 +97,17 @@ class Amount:
         self.number = D(number)
         self.currency = currency
 
+    def to_string(self, dcontext=DEFAULT_DISPLAY_CONTEXT):
+        """Convert an Amount instance to a printable string.
+
+        Args:
+          dcontext: An instance of DisplayContext.
+        Returns:
+          A formatted string of the quantized amount and symbol.
+        """
+        return "{} {}".format(dcontext.format(self.number, self.currency),
+                              self.currency)
+
     def __str__(self):
         """Convert an Amount instance to a printable string with the defaults.
 
@@ -104,6 +115,8 @@ class Amount:
           A formatted string of the quantized amount and symbol.
         """
         return self.to_string()
+
+    __repr__ = __str__
 
     def __format__(self, format_spec):
         """Explicit support for formatting.
@@ -116,20 +129,6 @@ class Amount:
         # FIXME: I'm not so sure about this. What's up here? I don't think we
         # need this.
         return str(self).format(format_spec)
-
-    def to_string(self, dcontext=DEFAULT_DISPLAY_CONTEXT):
-        """Convert an Amount instance to a printable string.
-
-        Args:
-          dcontext: An instance of DisplayContext.
-        Returns:
-          A formatted string of the quantized amount and symbol.
-        """
-        return "{} {}".format(dcontext.format(self.number, self.currency),
-                              self.currency)
-
-    # We use the same as a printable representation.
-    __repr__ = __str__
 
     def __bool__(self):
         """Boolean predicate returns true if the number is non-zero.

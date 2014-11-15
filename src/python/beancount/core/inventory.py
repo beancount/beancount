@@ -44,11 +44,12 @@ import copy
 import collections
 from datetime import date
 
-from beancount.core.amount import ZERO
-from beancount.core.amount import Amount
-from beancount.core.position import Lot
-from beancount.core.position import Position
-from beancount.core.position import from_string as position_from_string
+from .amount import ZERO
+from .amount import Amount
+from .position import Lot
+from .position import Position
+from .position import from_string as position_from_string
+from .display_context import DEFAULT_DISPLAY_CONTEXT
 
 
 class Inventory(list):
@@ -70,13 +71,24 @@ class Inventory(list):
             for position in positions:
                 self.add_position(position)
 
+    def to_string(self, dcontext=DEFAULT_DISPLAY_CONTEXT):
+        """Convert an Inventory instance to a printable string.
+
+        Args:
+          dcontext: An instance of DisplayContext.
+        Returns:
+          A formatted string of the quantized amount and symbol.
+        """
+        return '({})'.format(', '.join(position_.to_string()
+                                       for position_ in sorted(self)))
+
     def __str__(self):
         """Render as a human-readable string.
 
         Returns:
           A string, for human consumption.
         """
-        return 'Inventory({})'.format(', '.join(map(str, sorted(self))))
+        return self.to_string()
 
     __repr__ = __str__
 

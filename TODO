@@ -14,12 +14,7 @@ beancount: TODO
     possible number of integral digits required from the DisplayContext in
     order to make this tight.
 
-  - __str__ methods should use a default instance of DisplayContext() created
-    somewhere, or simply get removed.
-
   - Remove __format__ from Amount.
-
-  - Implement to_string() on Inventory objects.
 
   - Add an option for the DisplayContext to issue a warning if numbers are
     rendered through it that lose some precision.
