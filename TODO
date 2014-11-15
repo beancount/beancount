@@ -508,7 +508,6 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
   - Idea! Allow the selection or reporting of all the postings since their
-
     balance check in each account. These postings can be called "unverified"
     and it should be possible to report just those.
 
