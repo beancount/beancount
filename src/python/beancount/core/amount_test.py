@@ -88,10 +88,10 @@ class TestAmount(unittest.TestCase):
         self.assertEqual('100,034.023 USD', amount.to_string(dc))
 
         dc.set_precision(1)
-        self.assertEqual(' 100,034.0 USD', amount.to_string(dc))
+        self.assertEqual('100,034.0 USD', amount.to_string(dc))
 
         dc.set_precision(4, 'USD')
-        self.assertEqual(' 100,034.0230 USD', amount.to_string(dc))
+        self.assertEqual('100,034.0230 USD', amount.to_string(dc))
 
     def test_comparisons(self):
         amount1 = Amount(Decimal('100'), 'USD')

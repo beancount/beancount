@@ -12,6 +12,7 @@ beancount: TODO
     Add a new per-currency format string that will align with all other currenceis.
     Add integer width to the formats, as an option.
     Add docstrings to DisplayContext.
+    Add tests for signs.
 
   - In the EntryPrinter(), figure out the maximum width of accounts and set it
     up.
