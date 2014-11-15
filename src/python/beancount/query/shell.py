@@ -109,7 +109,7 @@ class DispatchingShell(cmd.Cmd):
             return pager.ConditionalPager(self.vars.get('pager', None),
                                           minlines=misc_utils.get_screen_height())
         else:
-            return sys.stdout
+            return pager.flush_only(sys.stdout)
 
     def cmdloop(self):
         """Override cmdloop to handle keyboard interrupts."""

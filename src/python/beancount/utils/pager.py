@@ -13,6 +13,7 @@ upon exit we close the file object. This also silences broken pipe errors
 triggered by the user exiting the sub-process, and recovers from a failing pager
 command by just using stdout.
 """
+import contextlib
 import os
 import sys
 import subprocess
@@ -151,3 +152,22 @@ class ConditionalPager:
             return True
         elif value:
             raise
+
+
+@contextlib.contextmanager
+def flush_only(fileobj):
+    """A contextmanager around a file object that does not close the file.
+
+    This is used to return a context manager on a file object but not close it.
+    We flush it instead. This is useful in order to provide an alternative to a
+    pager class as above.
+
+    Args:
+      fileobj: A file object, to remain open after running the context manager.
+    Yields:
+      A context manager that yields this object.
+    """
+    try:
+        yield fileobj
+    finally:
+        fileobj.flush()

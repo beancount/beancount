@@ -22,12 +22,12 @@ class TestScriptQuery(test_utils.TestCase):
 
         2013-04-05 *
           Assets:Account1     -3000 USD
-          Assets:Account2     30 BOOG {100 USD}
+          Assets:Account2        30 BOOG {100 USD}
 
         2013-04-05 *
           Assets:Account1     -1000 USD
-          Assets:Account3     800 EUR @ 1.25 USD
+          Assets:Account3       800 EUR @ 1.25 USD
         """
         with test_utils.capture() as stdout:
-            test_utils.run_with_args(query.main, [filename])
+            test_utils.run_with_args(query.main, [filename, "SELECT 1;"])
         output = stdout.getvalue()
