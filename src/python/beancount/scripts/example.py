@@ -1307,10 +1307,10 @@ def contextualize_file(contents, employer):
         'STK4': 'GLD',
         }
     new_contents = replace(contents, replacements)
-    return format.align_beancount(new_contents), replacements
+    return new_contents, replacements
 
 
-def write_example_file(date_birth, date_begin, date_end, file):
+def write_example_file(date_birth, date_begin, date_end, reformat, file):
     """Generate the example file.
 
     Args:
@@ -1319,6 +1319,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
         transactions.
       date_end: A datetime.date instance, the end date at which to generate
         transactions.
+      reformat: A boolean, true if we should apply global reformatting to this file.
       file: A file object, where to write out the output.
     """
     # The following code entirely writes out the output to generic names, such
@@ -1518,6 +1519,8 @@ def write_example_file(date_birth, date_begin, date_end, file):
 
     logging.info("Contextualizing to Realistic Names")
     contents, replacements = contextualize_file(output.getvalue(), employer_name)
+    if reformat:
+        contents = format.align_beancount(contents)
     file.write(contents)
 
     logging.info("Validating Results")
@@ -1549,6 +1552,10 @@ def main():
     argparser.add_argument('-s', '--seed', action='store', type=int,
                            help="Fix the random seed for debugging.")
 
+    argparser.add_argument('--no-reformat', dest='reformat',
+                           action='store_false', default=True,
+                           help="Don't format the output")
+
     argparser.add_argument('-o', '--output', action='store',
                            help="Output filename (default stdout)")
 
@@ -1563,6 +1570,7 @@ def main():
     write_example_file(opts.date_birth,
                        opts.date_begin,
                        opts.date_end,
+                       opts.reformat,
                        file=output_file)
 
     return 0
