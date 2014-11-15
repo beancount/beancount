@@ -121,7 +121,7 @@ class Builder(lexer.LexBuilder):
             self.options['render_commas'].lower() in ('1', 'true'))
 
         # Build and store the inferred DisplayContext instance.
-        dcteonxt = self.dcbuilder.build()
+        dcontext = self.dcbuilder.build()
         dcontext.set_commas(self.options['render_commas'])
         self.options['display_context'] = dcontext
 
