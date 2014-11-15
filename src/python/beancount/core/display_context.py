@@ -2,9 +2,50 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import collections
+
+from beancount.utils import misc_utils
+
 
 # A constant that indicates we should be rendering at full precision.
 FULL_PRECISION = object()
+
+
+class DisplayContextBuilder:
+    """A builder object used to construct a DisplayContext from a series of numbers.
+
+    Attributes:
+      precision_dict: A mapping of currency to a frequency distribution of
+        precisions seen in the input file. This is used to feed some information
+        that allows us to select what precision to use for rendering.
+
+    """
+    def __init__(self):
+        self.precision_dist = collections.defaultdict(misc_utils.Distribution)
+
+    def update(self, number, currency=None):
+        """Update the builder with the given number for the given currency.
+
+        Args:
+          number: An instance of Decimal to consider for this currency.
+          currency: An optional string, the currency this numbers applies to.
+        """
+        # Note: This method gets called on every parsed number. Performance of
+        # this method is tantamount. We should optimize this later.
+        self.precision_dist[currency].update(number.as_tuple().exponent)
+
+    def build(self):
+        """Build a display context object from the accumulated info from the numbers.
+
+        Returns:
+          An instance of DisplayContext.
+        """
+        dcontext = DisplayContext()
+        for currency, dist in self.precision_dist.items():
+            dcontext.set_precision(-dist.mode(), currency, False)
+            dcontext.set_precision_max(-dist.min(), currency, False)
+        dcontext.update()
+        return dcontext
 
 
 class DisplayContext:

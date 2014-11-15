@@ -5,9 +5,10 @@ import io
 from decimal import Decimal
 
 from .display_context import DisplayContext
+from .display_context import DisplayContextBuilder
 
 
-class TestDisplayPrecision(unittest.TestCase):
+class TestDisplayContext(unittest.TestCase):
 
     number = Decimal('-1764.9876543')
 
@@ -66,3 +67,24 @@ class TestDisplayPrecision(unittest.TestCase):
         oss = io.StringIO()
         dc.dump(oss)
         self.assertTrue(oss.getvalue())
+
+
+class TestDisplayContextBuilder(unittest.TestCase):
+
+    def test_build_empty(self):
+        builder = DisplayContextBuilder()
+        dcontext = builder.build()
+        self.assertEqual('1.234567', dcontext.format(Decimal('1.234567'), 'CAD'))
+
+    def test_build(self):
+        builder = DisplayContextBuilder()
+        builder.update(Decimal('123.45'), 'USD')
+        builder.update(Decimal('123.46'), 'USD')
+        builder.update(Decimal('123.47'), 'USD')
+        builder.update(Decimal('123.4500'), 'USD')
+        builder.update(Decimal('123.4500'))
+        builder.update(Decimal('123.450'), 'RBF1005')
+        dcontext = builder.build()
+        self.assertEqual('1.23', dcontext.format(Decimal('1.234567'), 'USD'))
+        self.assertEqual('1.2346', dcontext.format(Decimal('1.234567'), 'CAD'))
+        self.assertEqual('1.235', dcontext.format(Decimal('1.234567'), 'RBF1005'))
