@@ -18,6 +18,7 @@ from beancount.core import position
 from beancount.core import inventory
 from beancount.core import account
 from beancount.core import data
+from beancount.core import getters
 from beancount.query import query_compile as c
 
 
@@ -471,7 +472,6 @@ class LinksEntryColumn(c.EvalColumn):
 
 
 
-
 class MatchAccount(c.EvalFunction):
     """A predicate, true if the transaction has at least one posting matching
     the regular expression argument."""
@@ -481,11 +481,10 @@ class MatchAccount(c.EvalFunction):
         super().__init__(operands, bool)
 
     def __call__(self, entry):
-        if not isinstance(entry, Transaction):
-            return False
         pattern = self.eval_args(entry)[0]
         search = re.compile(pattern, re.IGNORECASE).search
-        return any(search(posting.account) for posting in entry.postings)
+        return any(search(account) for account in getters.get_entry_accounts(entry))
+
 
 # Functions defined only on entries.
 ENTRY_FUNCTIONS = {
