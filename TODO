@@ -48,12 +48,6 @@ beancount: TODO
     locale. If so, figure out MAYBE how to avoid having a render_commas option
     at all, and to initialize the value from the locale setting.
 
-  - Create Inventory.from_string() and simplify a lot of the tests with it.
-
-  - Simplify all tests by using their from_string() converters. All
-    constructors should accept a single string, and that should call
-    from_string() automatically, Amount, Position, Inventory, etc.
-
 
 
 ** Misc

@@ -315,6 +315,14 @@ class Distribution:
     def __init__(self):
         self.hist = collections.defaultdict(int)
 
+    def empty(self):
+        """Return true if the distribution is empty.
+
+        Returns:
+          A boolean.
+        """
+        return len(self.hist) == 0
+
     def update(self, value):
         """Add a sample to the distribution.
 
