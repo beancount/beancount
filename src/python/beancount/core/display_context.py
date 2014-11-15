@@ -85,7 +85,7 @@ class DisplayContext:
     def __init__(self):
         self.commas = False
 
-        self.signs = True
+        self.signs = False
         self.precision = {None: FULL_PRECISION}
         self.precision_max = {None: FULL_PRECISION}
         self.formats = {}
