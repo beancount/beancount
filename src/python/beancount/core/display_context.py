@@ -170,6 +170,8 @@ class DisplayContext:
               precision=Precision.MOST_COMMON,
               commas=None,
               reserved=0):
+        if reserved != 0:
+            raise NotImplementedError("Reserved digits aren't supported yet.")
         if alignment == Align.NATURAL:
             build_method = self._build_natural
         elif alignment == Align.RIGHT:
