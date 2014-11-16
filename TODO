@@ -3,33 +3,17 @@ beancount: TODO
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 
-  - Formats should be stored separately. The DisplayContext object _itself_ is
-    should be a builder: it contains precision and presence of signs, you
-    provide desired alignment, perhaps an override on the presence of signs,
-    whether or not to render commas, and a number of reserved digits and it
-    produces a Formatter object that you can then use to format currencies with.
+  - In the DisplayContext, implement caching of the formatters created to
+    increase speed, especially for printing a single entry repeatedly.
 
-  - Rewrite DisplayContext to have all the info into per-currency objects.
-    Move as much as you can there.
-    Derive common max/info about signs and integer to the common object.
-    Move all set_*() methods to the builder.
-    We can remove that optional update=boolean madness too.
-    Convert callers of these methods (example.py) to use the builder.
-    Add a new per-currency format string that will align with all other currenceis.
-    Add integer width to the formats, as an option.
-    Add docstrings to DisplayContext.
-    Add tests for signs.
-    Make sure we take into account the comma in the calculation of the width.
-    Make the query_render routines use a DisplayContext object to compute their alignment.
-    Per-currency format strings can be created with some padding whitespace on the right.
+  - Implement reserved number of digits.
 
-  - In the EntryPrinter(), figure out the maximum width of accounts and set it
-    up.
+  - Add docstrings to DisplayContext.
+  - Make the query_render routines use a DisplayContext object to compute their alignment.
+
+  - In the EntryPrinter(), figure out the maximum width of accounts and set it up.
 
   - Render prices at maximum precision... this is important for round-trip!
-
-  - Enhance the DisplayContext to store the longuest possible number of integral
-    digits required.
 
   - Add a "target num columns" instead of a "min_width_account" to the
     EntryPrinter and figure out the min_width_account automatically from it,
@@ -37,26 +21,19 @@ beancount: TODO
     possible number of integral digits required from the DisplayContext in
     order to make this tight.
 
-  - Remove __format__ from Amount.
-
   - Add an option for the DisplayContext to issue a warning if numbers are
     rendered through it that lose some precision.
-
-  - Figure out where the vanilla __str__ methods for Amount and Position are
-    being used and make sure they're not anywhere that we care about precision.
-    Perhaps remove them even (raise exception, run tests).
 
   (web)
   - Make the web interface not render postings anymore by default.
   - Rename /context to /entry
 
-  - Add "display_precision" option whereby the user can set the precision to be
-    used by each currency.
+  - Add "display_precision" input file option whereby the user can set the
+    precision to be used by each currency.
 
   - Figure out if rendering commas in numbers is meant to be handled by the
     locale. If so, figure out MAYBE how to avoid having a render_commas option
     at all, and to initialize the value from the locale setting.
-
 
 
 ** Misc

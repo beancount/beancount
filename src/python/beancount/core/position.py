@@ -30,7 +30,7 @@ from .amount import Amount
 from .amount import NULL_AMOUNT
 from .amount import amount_mult
 from .amount import CURRENCY_RE
-from .display_context import DEFAULT_DISPLAY_CONTEXT
+from .display_context import DEFAULT_FORMATTER
 
 
 # Lots are a representations of a commodity with an optional associated cost and
@@ -92,11 +92,11 @@ class Position:
         """
         return hash((self.lot, self.number))
 
-    def to_string(self, dcontext=DEFAULT_DISPLAY_CONTEXT, detail=True):
+    def to_string(self, numfmt=DEFAULT_FORMATTER, detail=True):
         """Render the position to a string.
 
         Args:
-          dcontext: An instance of DisplayContext.
+          numfmt: An instance of NumFormatter.
           detail: A boolean, true if we should only render the lot details
            beyond the cost (lot-date, label, etc.). If false, we only render
            the cost, if present.
@@ -106,7 +106,7 @@ class Position:
         lot = self.lot
 
         # Render the units.
-        pos_str = Amount(self.number, lot.currency).to_string(dcontext)
+        pos_str = Amount(self.number, lot.currency).to_string(numfmt)
 
         # Render the cost (and other lot parameters, lot-date, label, etc.).
         if detail:
@@ -115,7 +115,7 @@ class Position:
                 cost_str_list.append('{')
                 if lot.cost:
                     cost_str_list.append(
-                        Amount(lot.cost.number, lot.cost.currency).to_string(dcontext))
+                        Amount(lot.cost.number, lot.cost.currency).to_string(numfmt))
                 if lot.lot_date:
                     cost_str_list.append(' / {}'.format(lot.lot_date))
                 cost_str_list.append('}')
@@ -124,7 +124,7 @@ class Position:
         else:
             # Render just the cost, if present.
             if lot.cost is not None:
-                pos_str = '{} {{{}}}'.format(pos_str, lot.cost.to_string(dcontext))
+                pos_str = '{} {{{}}}'.format(pos_str, lot.cost.to_string(numfmt))
 
         return pos_str
 

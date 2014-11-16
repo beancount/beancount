@@ -854,8 +854,8 @@ def generate_clearing_entries(date_iter,
             neg_amount = -pos_amount
             new_entries.extend(parse("""
               {next_date} * "{payee}" "{narration}"
-                {account_clear}     {neg_amount:.2f}
-                {account_from}      {pos_amount:.2f}
+                {account_clear}     {neg_amount.number:.2f} CCY
+                {account_from}      {pos_amount.number:.2f} CCY
             """, **vars()))
             balance_clear.add_amount(neg_amount)
 
@@ -1481,6 +1481,7 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
 
     logging.info("Outputting and Formatting Entries")
     dcontext = display_context.DisplayContext()
+    default_int_digits = 8
     for currency, precision in {'USD': 2,
                                 'CAD': 2,
                                 'VACHR':0,
@@ -1491,7 +1492,10 @@ def write_example_file(date_birth, date_begin, date_end, reformat, file):
                                 'VEA': 0,
                                 'VHT': 0,
                                 'GLD': 0}.items():
-        dcontext.set_precision(precision, currency)
+        int_digits = default_int_digits
+        if precision > 0:
+            int_digits += 1 + precision
+        dcontext.update(D('{{:0{}.{}f}}'.format(int_digits, precision).format(0)), currency)
 
     output = io.StringIO()
     def output_section(title, entries):

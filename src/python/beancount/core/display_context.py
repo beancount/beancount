@@ -99,13 +99,13 @@ class _CurrencyContext:
         self.fractional_dist = misc_utils.Distribution()
 
     def __str__(self):
-        fmt = 'sign={:1}  integer_max={:2}  fractional_common={:2}  fractional_max={:2}'
+        fmt = 'sign={:<2}  integer_max={:<2}  fractional_common={:<2}  fractional_max={:<2}'
         dist = self.fractional_dist
         return fmt.format(
             int(self.has_sign),
             self.integer_max,
-            None if dist.empty() else dist.mode(),
-            None if dist.empty() else dist.max())
+            '_' if dist.empty() else dist.mode(),
+            '_' if dist.empty() else dist.max())
 
     def update(self, number):
         # Note: Please do care for the performance of this routine. This is run
@@ -151,7 +151,7 @@ class DisplayContext:
 
     def __str__(self):
         oss = io.StringIO()
-        linefmt = '{:16}:  {}\n'
+        linefmt = '{:16}: {}\n'
         for currency, ccontext in sorted(self.ccontexts.items()):
             oss.write(linefmt.format(currency, ccontext))
         return oss.getvalue()
@@ -295,11 +295,19 @@ class NumFormatter:
         self.fmtfuncs = {currency: fmtstr.format
                          for currency, fmtstr in fmtstrings.items()}
 
+    def __str__(self):
+        return 'NumFormatter({})'.format(self.fmtstrings)
+
     def format(self, number, currency='__default__'):
-        return self.fmtfuncs[currency](number)
+        try:
+            func = self.fmtfuncs[currency]
+        except KeyError:
+            func = self.fmtfuncs['__default__']
+        return func(number)
 
     __call__ = format
 
 
 # Default instance of DisplayContext to use if None is spcified.
 DEFAULT_DISPLAY_CONTEXT = DisplayContext()
+DEFAULT_FORMATTER = DEFAULT_DISPLAY_CONTEXT.build()
