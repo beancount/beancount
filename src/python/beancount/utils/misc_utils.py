@@ -342,6 +342,17 @@ class Distribution:
         value, _ = sorted(self.hist.items())[0]
         return value
 
+    def max(self):
+        """Return the minimum value seen in the distribution.
+
+        Returns:
+          An element of the value type, or None, if the distribution was empty.
+        """
+        if not self.hist:
+            return None
+        value, _ = sorted(self.hist.items())[-1]
+        return value
+
     def mode(self):
         """Return the mode of the distribution.
 
