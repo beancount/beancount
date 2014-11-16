@@ -3,6 +3,12 @@ beancount: TODO
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 
+  - Formats should be stored separately. The DisplayContext object _itself_ is
+    should be a builder: it contains precision and presence of signs, you
+    provide desired alignment, perhaps an override on the presence of signs,
+    whether or not to render commas, and a number of reserved digits and it
+    produces a Formatter object that you can then use to format currencies with.
+
   - Rewrite DisplayContext to have all the info into per-currency objects.
     Move as much as you can there.
     Derive common max/info about signs and integer to the common object.
@@ -13,6 +19,9 @@ beancount: TODO
     Add integer width to the formats, as an option.
     Add docstrings to DisplayContext.
     Add tests for signs.
+    Make sure we take into account the comma in the calculation of the width.
+    Make the query_render routines use a DisplayContext object to compute their alignment.
+    Per-currency format strings can be created with some padding whitespace on the right.
 
   - In the EntryPrinter(), figure out the maximum width of accounts and set it
     up.

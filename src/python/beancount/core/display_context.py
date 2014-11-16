@@ -1,4 +1,59 @@
-"""A settings class for control over the number of digits rendered.
+"""A settings class to offer control over the number of digits rendered.
+
+This module contains routines that can accumulate information on the width and
+precision of numbers to be rendered and derive the precision required to render
+all of them consistently and under certain common alignment requirements. This
+is required in order to output neatly lined up columns of numbers in various
+styles.
+
+A common case is that the precision can be observed for numbers present in the
+input file. This display precision can be used as the "precision by default" if
+we write a routine for which it is inconvenient to feed all the numbers to build
+such an accumulator.
+
+Here are all the aspects supported by this module:
+
+  PRECISION: Numbers for a particular currency are always rendered to the same
+  precision, and they can be rendered to one of two precisions; either
+
+    1. the most common number of fractional digits, or
+    2. the maximum number of digits seen (this is useful for rendering prices).
+
+  ALIGNMENT: Several alignment methods are supported.
+
+    "natural": Render the strings as small as possible with no padding, but to
+    their currency's precision. Like this:
+
+      '1.2345'
+      '764'
+      '-7,409.01'
+      '0.00000125'
+
+    "dot-aligned": The periods will align vertically, the left and right sides
+      are padded so that the column of numbers has the same width:
+
+      '     1.2345    '
+      '   764         '
+      '-7,409.01      '
+      '     0.00000125'
+
+    "right": The strings are all flushed right, the left side is padded so that
+      the column of numbers has the same width:
+
+      '     1.2345'
+      '        764'
+      '  -7,409.01'
+      ' 0.00000125'
+
+  SIGN: If a negative sign is present in the input numbers, the rendered numbers
+  reserve a space for it. If not, then we save the space.
+
+  COMMAS: If the user requests to render commas, commas are rendered in the
+  output.
+
+  RESERVED: A number of extra integral digits reserved on the left in order to
+  allow rendering novel numbers that haven't yet been seen.
+
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
