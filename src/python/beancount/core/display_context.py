@@ -99,13 +99,35 @@ class _CurrencyContext:
         self.fractional_dist = misc_utils.Distribution()
 
     def __str__(self):
-        fmt = 'sign={:<2}  integer_max={:<2}  fractional_common={:<2}  fractional_max={:<2}'
+        fmt = ('sign={:<2}  integer_max={:<2}  fractional_common={:<2}  fractional_max={:<2}  '
+               '"{}" "{}"')
         dist = self.fractional_dist
+
+        example = ''
+        if self.has_sign:
+            example += '-'
+        example += '0' * self.integer_max
+
+        example_common = example
+        fractional_common = self.get_fractional(Precision.MOST_COMMON)
+        if fractional_common is None:
+            example_common = example + '.*'
+        elif fractional_common > 0:
+            example_common = example + '.' + ('0' * fractional_common)
+
+        example_max = example
+        fractional_max = self.get_fractional(Precision.MAXIMUM)
+        if fractional_max is None:
+            example_max = example + '.*'
+        elif fractional_max > 0:
+            example_max = example + '.' + ('0' * fractional_max)
+
         return fmt.format(
             int(self.has_sign),
             self.integer_max,
             '_' if dist.empty() else dist.mode(),
-            '_' if dist.empty() else dist.max())
+            '_' if dist.empty() else dist.max(),
+            example_common, example_max)
 
     def update(self, number):
         # Note: Please do care for the performance of this routine. This is run
