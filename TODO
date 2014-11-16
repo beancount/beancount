@@ -3,18 +3,20 @@ beancount: TODO
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 
+  - Make setting the precision from bean-example easier (provide a method to
+    create that format and update without conversion on the DisplayContext
+    itself).
+
   - In the DisplayContext, implement caching of the formatters created to
     increase speed, especially for printing a single entry repeatedly.
 
   - Implement reserved number of digits.
 
   - Add docstrings to DisplayContext.
+
   - Make the query_render routines use a DisplayContext object to compute their alignment.
 
   - In the EntryPrinter(), figure out the maximum width of accounts and set it up.
-
-  - Render prices at maximum precision... this is important for round-trip!
-
   - Add a "target num columns" instead of a "min_width_account" to the
     EntryPrinter and figure out the min_width_account automatically from it,
     depending on whether we've got render_weights on or not. Use hte longest
@@ -24,16 +26,8 @@ beancount: TODO
   - Add an option for the DisplayContext to issue a warning if numbers are
     rendered through it that lose some precision.
 
-  (web)
-  - Make the web interface not render postings anymore by default.
-  - Rename /context to /entry
-
   - Add "display_precision" input file option whereby the user can set the
     precision to be used by each currency.
-
-  - Figure out if rendering commas in numbers is meant to be handled by the
-    locale. If so, figure out MAYBE how to avoid having a render_commas option
-    at all, and to initialize the value from the locale setting.
 
 
 ** Misc
@@ -61,6 +55,10 @@ beancount: TODO
   - Don't install all the _test.py files, make sure they're not installed, + add
     a lint check that ensures the non-test files are never importing any of othe
     test files.
+
+  (web)
+  - Make the web interface not render postings anymore by default.
+  - Rename /context to /entry
 
 
 ** Documentation / Ongoing
@@ -485,6 +483,11 @@ http://furius.ca/beancount/doc/proposal-inter
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
+
+
+  - Figure out if rendering commas in numbers is normally intended to be handled
+    by the locale. If so, figure out MAYBE how to avoid having a render_commas
+    option at all, and to initialize the value from the locale setting.
 
 
   - In the comparison doc: describe how Beancount has asset types
