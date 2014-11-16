@@ -347,6 +347,8 @@ http://furius.ca/beancount/doc/proposal-inventory
     flex one. I think we can do a much better job at error reporting by writing
     our own, but I'm unsure how the performance compares.
 
+  - Optimize the main update() routine that is called in display_context.
+
 
 * Dashboard
 
