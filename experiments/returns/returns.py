@@ -14,7 +14,6 @@ from beancount.parser import options
 from beancount.core import data
 from beancount.core import account_types
 from beancount.core import inventory
-from beancount.core import complete
 from beancount.ops import prices
 
 
@@ -101,7 +100,7 @@ def get_inventory_market_value(balance, date, price_map):
             new_amount = amount.Amount(position.number * price_number, cost_currency)
         else:
             new_amount = amount.Amount(position.number, lot.currency)
-        new_balance.add(new_amount)
+        new_balance.add_amount(new_amount)
     return new_balance
 
 
@@ -150,7 +149,7 @@ def main():
     # Create a predicate for the Assets accounts.
     acc_types = options.get_account_types(options_map)
     match = re.compile(opts.related).match
-    is_asset_account = lambda account_: (
+    is_asset_account = lambda account_, match=match: (
         match(account_) and
         account_types.get_account_type(account_) == acc_types.assets)
 
