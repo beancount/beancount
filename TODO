@@ -85,6 +85,8 @@ beancount: TODO
 
 ** Documentation / Ongoing
 
+  - Write document on converting between implementations
+
   - Complete "How Inventories Work?"
   - Complete intro document on double-entry bookkeepingk."
   - Complete Design Doc
@@ -126,6 +128,8 @@ beancount: TODO
 
 * Deal with Rounding
 http://furius.ca/beancount/doc/propostal-rounding
+
+  - Check Vanguard rounding... do they maintain a higher precision internally?
 
   - Implement experimental precision check suggested by Nathan Grigg
   - Implement Equity:Rounding accumulation suggested by Nathan Grigg
