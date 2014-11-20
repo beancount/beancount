@@ -75,35 +75,6 @@ def compute_balance_for_accounts(entries, match_account, boundary_entry):
     return balance_before, balance_after
 
 
-def get_inventory_market_value(balance, date, price_map):
-    """Compute the market value of the inventory in a currency at a date.
-
-    This function converts all the positions to their market value, in their
-    respective cost currencies.
-
-    Args:
-      balance: An instance of Inventory.
-      date: A datetime.date instance, the date at which to market the instruments.
-        If the date provided is None, the inventory is valued at the latest market
-        prices.
-      price_map: A price map, as created by beancount.ops.prices.
-    Returns:
-      An inventory of market values per currency.
-    """
-    new_balance = inventory.Inventory()
-    for position in balance.get_positions():
-        lot = position.lot
-        cost_currency = lot.cost.currency if lot.cost else None
-        if cost_currency:
-            base_quote = (lot.currency, cost_currency)
-            price_date, price_number = prices.get_price(price_map, base_quote, date)
-            new_amount = amount.Amount(position.number * price_number, cost_currency)
-        else:
-            new_amount = amount.Amount(position.number, lot.currency)
-        new_balance.add_amount(new_amount)
-    return new_balance
-
-
 def inventory_value(balance):
     """Convert an inventory in a single number.
 
@@ -181,11 +152,13 @@ def main():
                                                                      is_asset_account,
                                                                      entry)
         # Compute the market value before the external flow.
-        inventory_before = get_inventory_market_value(balance_before, date, price_map)
+        inventory_before = prices.get_inventory_market_value(balance_before, date,
+                                                             price_map)
         value_before = inventory_value(inventory_before)
 
         # Compute the market value after the external flow.
-        inventory_after = get_inventory_market_value(balance_after, date, price_map)
+        inventory_after = pricesget_inventory_market_value(balance_after, date,
+                                                           price_map)
         value_after = inventory_value(inventory_after)
 
         print(',--------------------------------')
