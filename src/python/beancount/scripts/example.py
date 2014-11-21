@@ -190,7 +190,7 @@ def parse(input_string, **replacements):
     else:
         formatted_string = input_string
 
-    entries, errors, unused_options = parser.parse_string(formatted_string)
+    entries, errors, unused_options = parser.parse_string(textwrap.dedent(formatted_string))
     if errors:
         printer.print_errors(errors, file=sys.stderr)
         raise ValueError("Parsed text has errors")

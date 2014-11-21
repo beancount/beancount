@@ -206,6 +206,12 @@ plugin		{ return PLUGIN; }
     return LINK;
 }
 
+ /* Key */
+[a-z][a-z0-9\-_]+: 		{
+    yylval->pyobj = BUILD("KEY", "s#", yytext, yyleng-1);
+    return KEY;
+}
+
  /* Default rule. */
 .			{
   unput(*yytext);
