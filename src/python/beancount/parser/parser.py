@@ -622,14 +622,6 @@ class Builder(lexer.LexBuilder):
                 else:
                     key_values.append(posting)
 
-        # # FIXME: Disallow the same key multiple times on the same transaction.
-        # print()
-        # for key_value in key_values:
-        #     pass
-        #     print(key_value)
-        # print()
-
-
         # Unpack the transaction fields.
         payee_narration = self.unpack_txn_strings(txn_fields, source)
         if payee_narration is None:

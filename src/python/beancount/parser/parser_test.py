@@ -719,6 +719,16 @@ class TestMetaData(unittest.TestCase):
         self.assertEqual(1, len(entries))
 
     @parsedoc
+    def test_metadata_transaction__repeated(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            test: "Bananas"
+            test: "Apples"
+            test: "Oranges"
+        """
+        self.assertEqual(1, len(entries))
+
+    @parsedoc
     def test_metadata_other(self, entries, errors, _):
         """
           2013-01-01 open Equity:Other
