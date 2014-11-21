@@ -1,3 +1,5 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import textwrap
 
 from beancount import loader
@@ -7,7 +9,7 @@ from beancount.parser import cmptest
 class TestExampleExcludeTag(cmptest.TestCase):
 
     def test_exclude_tag(self):
-        INPUT = textwrap.dedent("""
+        input_text = textwrap.dedent("""
 
             option "plugin" "beancount.plugins.exclude_tag"
 
@@ -23,7 +25,7 @@ class TestExampleExcludeTag(cmptest.TestCase):
               Assets:Cash
 
         """)
-        entries, errors, __ = loader.load_string(INPUT)
+        entries, errors, __ = loader.load_string(input_text)
         self.assertFalse(errors)
         self.assertEqualEntries("""
 

@@ -15,17 +15,27 @@ final balance of that account, resulting from its list of postings.
 You should not build RealAccount trees yourself; instead, you should filter the
 list of desired directives to display and call the realize() function with them.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import io
 import collections
 import operator
 import copy
 
-from beancount.core import inventory
-from beancount.core.amount import amount_sortkey
-from beancount.core import data
-from beancount.core.data import Transaction, Balance, Open, Close, Pad, Note, Document
+from beancount.core.data import Transaction
 from beancount.core.data import Posting
+from beancount.core.data import Balance
+from beancount.core.data import Open
+from beancount.core.data import Close
+from beancount.core.data import Pad
+from beancount.core.data import Note
+from beancount.core.data import Document
+from beancount.core import inventory
+from beancount.core import amount
+from beancount.core import data
 from beancount.core import account
+from beancount.core import interpolate
+from beancount.core import flags
 
 
 class RealAccount(dict):
@@ -146,7 +156,7 @@ def get(real_account, account_name, default=None):
     """
     if not isinstance(account_name, str):
         raise ValueError
-    components = account_name.split(account.sep)
+    components = account.split(account_name)
     for component in components:
         real_child = real_account.get(component, default)
         if real_child is default:
@@ -169,7 +179,7 @@ def get_or_create(real_account, account_name):
     """
     if not isinstance(account_name, str):
         raise ValueError
-    components = account_name.split(account.sep)
+    components = account.split(account_name)
     path = []
     for component in components:
         path.append(component)
@@ -193,7 +203,7 @@ def contains(real_account, account_name):
     return get(real_account, account_name) is not None
 
 
-def realize(entries, min_accounts=None):
+def realize(entries, min_accounts=None, compute_balance=True):
     """Group entries by account, into a "tree" of realized accounts. RealAccount's
     are essentially containers for lists of postings and the final balance of
     each account, and may be non-leaf accounts (used strictly for organizing
@@ -232,6 +242,11 @@ def realize(entries, min_accounts=None):
 
     Args:
       entries: A list of directives.
+      min_accounts: A list of strings, account names to ensure we create,
+        regardless of whether there are postings on those accounts or not.
+        This can be used to ensure the root accounts all exist.
+      compute_balance: A boolean, true if we should compute the final
+        balance on the realization.
     Returns:
       The root RealAccount instance.
     """
@@ -243,7 +258,8 @@ def realize(entries, min_accounts=None):
     for account_name, postings in postings_map.items():
         real_account = get_or_create(real_root, account_name)
         real_account.postings = postings
-        real_account.balance = compute_postings_balance(postings)
+        if compute_balance:
+            real_account.balance = interpolate.compute_postings_balance(postings)
 
     # Ensure a minimum set of accounts that should exist. This is typically
     # called with an instance of AccountTypes to make sure that those exist.
@@ -288,48 +304,6 @@ def postings_by_account(entries):
             postings_map[entry.source_account].append(entry)
 
     return postings_map
-
-
-def compute_postings_balance(postings):
-    """Compute the balance of a list of Postings's positions.
-
-    Args:
-      postings: A list of Posting instances and other directives (which are
-        skipped).
-    Returns:
-      An Inventory.
-    """
-    final_balance = inventory.Inventory()
-    for posting in postings:
-        if isinstance(posting, data.Posting):
-            final_balance.add_position(posting.position, True)
-    return final_balance
-
-
-def compute_entries_balance(entries, prefix=None, date=None):
-    """Compute the balance of all postings of a list of entries.
-
-    Sum up all the positions in all the postings of all the transactions in the
-    list of entries and return an inventory of it.
-
-    Args:
-      entries: A list of directives.
-      prefix: If specified, a prefix string to restrict by account name. Only
-        postings with an account that starts with this prefix will be summed up.
-      date: A datetime.date instance at which to stop adding up the balance.
-        The date is exclusive.
-    Returns:
-      An instance of Inventory.
-    """
-    total_balance = inventory.Inventory()
-    for entry in entries:
-        if not (date is None or entry.date < date):
-            break
-        if isinstance(entry, Transaction):
-            for posting in entry.postings:
-                if prefix is None or posting.account.startswith(prefix):
-                    total_balance.add_position(posting.position, True)
-    return total_balance
 
 
 def filter(real_account, predicate):
@@ -453,8 +427,8 @@ def iterate_with_balance(postings_or_entries):
                     # Compute the change due to this transaction and update the
                     # total balance at the same time.
                     for date_posting in date_postings:
-                        change.add_position(date_posting.position, True)
-                        running_balance.add_position(date_posting.position, True)
+                        change.add_position(date_posting.position)
+                        running_balance.add_position(date_posting.position)
                 yield date_entry, date_postings, change, running_balance
 
             date_entries.clear()
@@ -479,10 +453,47 @@ def iterate_with_balance(postings_or_entries):
         change = inventory.Inventory()
         if date_postings:
             for date_posting in date_postings:
-                change.add_position(date_posting.position, True)
-                running_balance.add_position(date_posting.position, True)
+                change.add_position(date_posting.position)
+                running_balance.add_position(date_posting.position)
         yield date_entry, date_postings, change, running_balance
     date_entries.clear()
+
+
+def compute_balance(real_account):
+    """Compute the total balance of this account and all its subaccounts.
+
+    Args:
+      real_account: A RealAccount instance.
+    Returns:
+      An Inventory.
+    """
+    total_balance = inventory.Inventory()
+    for real_account in iter_children(real_account):
+        total_balance += real_account.balance
+    return total_balance
+
+
+def find_last_active_posting(postings):
+    """Look at the end of the list of postings, and find the last
+    posting or entry that is not an automatically added directive.
+    Note that if the account is closed, the last posting is assumed
+    to be a Close directive (this is the case if the input is valid
+    and checks without errors.
+
+    Args:
+      postings: a list of postings or entries.
+    Returns:
+      An entry, or None, if the input list was empty.
+    """
+    for posting in reversed(postings):
+        if not isinstance(posting, (Posting, Open, Close, Pad, Balance, Note)):
+            continue
+
+        # pylint: disable=bad-continuation
+        if (isinstance(posting, Posting) and
+            posting.entry.flag == flags.FLAG_UNREALIZED):
+            continue
+        return posting
 
 
 def index_key(sequence, value, key, cmp):
@@ -520,7 +531,7 @@ def dump(root_account):
         first_line: A string, the first line to render, which includes the
           account name.
         continuation_line: A string, further line to render if necessary.
-        real_account: The rRealAccount instance which corresponds to this
+        real_account: The RealAccount instance which corresponds to this
           line.
     """
     # Compute all the lines ahead of time in order to calculate the width.
@@ -595,25 +606,51 @@ PREFIX_LEAF_1 = '`-- '
 PREFIX_LEAF_C = '    '
 
 
-def dump_balances(real_account):
+def dump_balances(real_account, at_cost=False, fullnames=False, file=None):
     """Dump a realization tree with balances.
 
     Args:
       real_account: An instance of RealAccount.
+      at_cost: A boolean, if true, render the values at cost.
+      fullnames: A boolean, if true, don't render a tree of accounts and
+        render the full account names.
+      file: A file object to dump the output to. If not specified, we
+        return the output as a string.
     Returns:
-      A string, the rendered tree.
+      A string, the rendered tree, or nothing, if 'file' was provided.
     """
-    oss = io.StringIO()
+
+    if fullnames:
+        # Compute the maximum account name length;
+        maxlen = max(len(real_child.account)
+                     for real_child in iter_children(real_account, leaf_only=True))
+        line_format = '{{:{width}}} {{}}\n'.format(width=maxlen)
+    else:
+        line_format = '{}       {}\n'
+
+    output = file or io.StringIO()
     for first_line, cont_line, real_account in dump(real_account):
         if not real_account.balance.is_empty():
-            amounts = real_account.balance.get_cost().get_amounts()
-            positions = ['{0.number:12,.2f} {0.currency}'.format(amount)
-                         for amount in sorted(amounts, key=amount_sortkey)]
+            if at_cost:
+                rinv = real_account.balance.cost()
+            else:
+                rinv = real_account.balance.units()
+            amounts = [position.get_units() for position in rinv.get_positions()]
+            positions = ['{0.number:12,.2f} {0.currency}'.format(amount_)
+                         for amount_ in sorted(amounts, key=amount.amount_sortkey)]
         else:
             positions = ['']
 
-        line = first_line
-        for position in positions:
-            oss.write('{}       {}\n'.format(line, position))
-            line = cont_line
-    return oss.getvalue()
+        if fullnames:
+            for position in positions:
+                if not position and len(real_account) > 0:
+                    continue  # Skip parent accounts with no position to render.
+                output.write(line_format.format(real_account.account, position))
+        else:
+            line = first_line
+            for position in positions:
+                output.write(line_format.format(line, position))
+                line = cont_line
+
+    if file is None:
+        return output.getvalue()

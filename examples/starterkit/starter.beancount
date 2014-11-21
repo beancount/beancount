@@ -119,7 +119,7 @@ option "documents" "starterdocs"
 ;; Now insert the balance as of the last date that you have a
 ;; statement for (or if this is available, you can log into your
 ;; online account and check that your current account balance is).
-2013-12-22 check  Assets:US:BofABank:Checking   973.03 USD
+2013-12-22 balance  Assets:US:BofABank:Checking   973.03 USD
 
 ;; That's it! That is the main template. The rest of this file
 ;; just follows this example in order to setup all the available
@@ -133,7 +133,7 @@ option "documents" "starterdocs"
 
 2004-08-01 open   Assets:US:BofABank:Savings  USD
 2004-08-01 pad    Assets:US:BofABank:Savings  Equity:Opening-Balances
-2013-12-22 check  Assets:US:BofABank:Savings  2402.81 USD
+2013-12-22 balance  Assets:US:BofABank:Savings  2402.81 USD
 
 
 
@@ -148,7 +148,7 @@ option "documents" "starterdocs"
 2010-03-20 pad    Liabilities:US:BofABank:Mortgage  Equity:Opening-Balances
 
 ;; Current value of mortgage.
-2013-12-22 check   Liabilities:US:BofABank:Mortgage  -101832.34 USD
+2013-12-22 balance   Liabilities:US:BofABank:Mortgage  -101832.34 USD
 
 
 
@@ -158,7 +158,7 @@ option "documents" "starterdocs"
 
 2009-08-01 open   Liabilities:US:Amex:BlueCash  USD
 2009-08-01 pad    Liabilities:US:Amex:BlueCash  Equity:Opening-Balances
-2013-12-22 check  Liabilities:US:Amex:BlueCash  -1121.26 USD
+2013-12-22 balance  Liabilities:US:Amex:BlueCash  -1121.26 USD
 
 
 
@@ -187,8 +187,8 @@ option "documents" "starterdocs"
 ;; purchase transactions, you would find the capital gain appearing.
 ;;
 
-2013-12-22 check  Assets:US:Fidelity:Boogle401k:RGAGX  201.02 RGAGX
-2013-12-22 check  Assets:US:Fidelity:Boogle401k:VBMPX  743.82 VBMPX
+2013-12-22 balance  Assets:US:Fidelity:Boogle401k:RGAGX  201.02 RGAGX
+2013-12-22 balance  Assets:US:Fidelity:Boogle401k:VBMPX  743.82 VBMPX
 
 2013-12-22 price RGAGX  40.93 USD
 2013-12-22 price VBMPX  10.02 USD
@@ -206,7 +206,7 @@ option "documents" "starterdocs"
 ;; deposits.
 2011-03-15 open   Assets:US:ETrade:Investment:Cash  USD
 2011-03-15 pad    Assets:US:ETrade:Investment:Cash  Equity:Opening-Balances
-2013-12-22 check  Assets:US:ETrade:Investment:Cash  102.10 USD
+2013-12-22 balance  Assets:US:ETrade:Investment:Cash  102.10 USD
 
 
 ;; These we won't pad; because there's a tax consequence on the
@@ -224,14 +224,14 @@ option "documents" "starterdocs"
 2013-02-03 * "Bought some Google stock"
   Assets:US:ETrade:Investment:GOOG         8 GOOG {701.20 USD}
   Expenses:Financial:Commissions         7.95 USD
-  Assets:US:ETrade:Investment:Cash   
+  Assets:US:ETrade:Investment:Cash
 
 2013-09-03 * "Bought some Google stock"
   Assets:US:ETrade:Investment:GOOG         4 GOOG {850.08 USD}
   Expenses:Financial:Commissions         7.95 USD
   Assets:US:ETrade:Investment:Cash
 
-2013-12-22 check  Assets:US:ETrade:Investment:GOOG  12 GOOG
+2013-12-22 balance  Assets:US:ETrade:Investment:GOOG  12 GOOG
 2013-12-22 price  GOOG   1101.02 USD
 
 
@@ -242,7 +242,7 @@ option "documents" "starterdocs"
   Expenses:Financial:Commissions         7.95 USD
   Assets:US:ETrade:Investment:Cash
 
-2013-12-22 check  Assets:US:ETrade:Investment:AAPL  10 AAPL
+2013-12-22 balance  Assets:US:ETrade:Investment:AAPL  10 AAPL
 2013-12-22 price  AAPL   549.02 USD
 
 

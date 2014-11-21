@@ -1,6 +1,10 @@
 """
 Generic utility packages and functions.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
+import collections
+import io
 import re
 from time import time
 import contextlib
@@ -8,22 +12,41 @@ from collections import defaultdict
 
 
 @contextlib.contextmanager
-def log_time(operation_name, log_function):
+def log_time(operation_name, log_timings, indent=0):
     """A context manager that times the block and logs it to info level.
 
     Args:
       operation_name: A string, a label for the name of the operation.
-      log_function: A function to write log messages to. If left to None,
+      log_timings: A function to write log messages to. If left to None,
         no timings are written (this becomes a no-op).
+      indent: An integer, the indentation level for the format of the timing
+        line. This is useful if you're logging timing to a hierarchy of
+        operations.
     Yields:
       The start time of the operation.
     """
-    t1 = time()
-    yield t1
-    t2 = time()
-    if log_function:
-        log_function("Operation: {:48} Time: {:6.0f} ms".format(
-            "'{}'".format(operation_name), (t2 - t1)*1000))
+    time1 = time()
+    yield time1
+    time2 = time()
+    if log_timings:
+        log_timings("Operation: {:48} Time: {}{:6.0f} ms".format(
+            "'{}'".format(operation_name), '      '*indent, (time2 - time1) * 1000))
+
+
+@contextlib.contextmanager
+def swallow(*exception_types):
+    """Catch and ignore certain exceptions.
+
+    Args:
+      exception_types: A tuple of exception classes to ignore.
+    Yields:
+      None.
+    """
+    try:
+        yield
+    except Exception as exc:
+        if not isinstance(exc, exception_types):
+            raise
 
 
 def groupby(keyfun, elements):
@@ -56,16 +79,16 @@ def uniquify_last(iterable, keyfunc=None):
     """
     if keyfunc is None:
         keyfunc = lambda x: x
-    UNSET = object()
-    prev_obj = UNSET
-    prev_key = UNSET
+    unset = object()
+    prev_obj = unset
+    prev_key = unset
     for obj in sorted(iterable, key=keyfunc):
         key = keyfunc(obj)
-        if key != prev_key and prev_obj is not UNSET:
+        if key != prev_key and prev_obj is not unset:
             yield prev_obj
         prev_obj = obj
         prev_key = key
-    if prev_obj is not UNSET:
+    if prev_obj is not unset:
         yield prev_obj
 
 
@@ -93,11 +116,30 @@ def longest(seq):
       The longest list from the sequence.
     """
     longest, length = None, -1
-    for x in seq:
-        lenx = len(x)
-        if lenx > length:
-            longest, length = x, lenx
+    for element in seq:
+        len_element = len(element)
+        if len_element > length:
+            longest, length = element, len_element
     return longest
+
+
+def skipiter(iterable, num_skip):
+    """Skip some elements from an iterator.
+
+    Args:
+      iterable: An iterator.
+      num_skip: The number of elements in the period.
+    Yields:
+      Elemnets from the iterable, with num_skip elements skipped.
+      For example, skipiter(range(10), 3) yields [0, 3, 6, 9].
+    """
+    assert num_skip > 0
+    sit = iter(iterable)
+    while 1:
+        value = next(sit)
+        yield value
+        for _ in range(num_skip-1):
+            next(sit)
 
 
 def get_tuple_values(ntuple, predicate, memo=None):
@@ -188,42 +230,17 @@ def compute_unique_clean_ids(strings):
         idmap = {}
         mre = re.compile(regexp)
         for string in string_set:
-            id = mre.sub(replacement, string)
-            if id in seen:
+            id_ = mre.sub(replacement, string)
+            if id_ in seen:
                 break  # Collision.
-            seen.add(id)
-            idmap[id] = string
+            seen.add(id_)
+            idmap[id_] = string
         else:
             break
     else:
         return # Could not find a unique mapping.
 
     return idmap
-
-
-def bisect_right_with_key(a, x, key, lo=0, hi=None):
-    """Like bisect.bisect_right, but with a key lookup parameter.
-
-    Args:
-      a: The list to search in.
-      x: The element to search for.
-      key: A function, to extract the value from the list.
-      lo: The smallest index to search.
-      hi: The largest index to search.
-    Returns:
-      As in bisect.bisect_right, an element from list 'a'.
-    """
-    if lo < 0:
-        raise ValueError('lo must be non-negative')
-    if hi is None:
-        hi = len(a)
-    while lo < hi:
-        mid = (lo+hi)//2
-        if x < key(a[mid]):
-            hi = mid
-        else:
-            lo = mid+1
-    return lo
 
 
 def map_namedtuple_attributes(attributes, mapper, object_):
@@ -274,3 +291,61 @@ def first_paragraph(docstring):
             break
         lines.append(line.rstrip())
     return ' '.join(lines)
+
+
+def get_screen_width():
+    """Return the width of the terminal that runs this program.
+
+    Returns:
+      An integer, the number of characters the screen is wide.
+      Return 0 if the terminal cannot be initialized.
+    """
+    import curses
+    try:
+        curses.setupterm()
+    except io.UnsupportedOperation:
+        return 0
+    return curses.tigetnum('cols')
+
+
+class Distribution:
+    """A class that computes a histogram of integer values. This is used to compute
+    a length that will cover at least some decent fraction of the samples.
+    """
+    def __init__(self):
+        self.hist = collections.defaultdict(int)
+
+    def update(self, value):
+        """Add a sample to the distribution.
+
+        Args:
+          value: A value of the function.
+        """
+        self.hist[value] += 1
+
+    def min(self):
+        """Return the minimum value seen in the distribution.
+
+        Returns:
+          An element of the value type, or None, if the distribution was empty.
+        """
+        if not self.hist:
+            return None
+        value, _ = sorted(self.hist.items())[0]
+        return value
+
+    def mode(self):
+        """Return the mode of the distribution.
+
+        Returns:
+          An element of the value type, or None, if the distribution was empty.
+        """
+        if not self.hist:
+            return None
+        max_value = 0
+        max_count = 0
+        for value, count in sorted(self.hist.items()):
+            if count >= max_count:
+                max_count = count
+                max_value = value
+        return max_value

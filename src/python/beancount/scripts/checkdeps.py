@@ -2,6 +2,8 @@
 
 This is meant to be used as an error diagnostic tool.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import re
 import sys
 import subprocess
@@ -19,7 +21,7 @@ def check_dependencies():
     """
     return [
         check_python(),
-        check_cdecimal(),
+        check_dateutil(),
         check_bottle(),
         check_wget(),
         ]
@@ -37,20 +39,20 @@ def check_python():
             sys.version_info[:2] >= (3, 3))
 
 
-def check_cdecimal():
-    """Check that cdecimal 2.3 or above is installed.
+def check_dateutil():
+    """Check that dateutil is installed.
 
     Returns:
       A triple of (package-name, version-number, sufficient) as per
       check_dependencies().
     """
     try:
-        import cdecimal
+        import dateutil
         # Note: There is no method to obtain the version number.
-        version, sufficient = 'INSTALLED', True
+        version, sufficient = dateutil.__version__, True
     except ImportError:
         version, sufficient = None, False
-    return ('cdecimal', version, sufficient)
+    return ('dateutil', version, sufficient)
 
 
 def check_bottle():
@@ -82,9 +84,9 @@ def check_wget():
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         stdout, stderr = pipe.communicate()
-        mo = re.search(r'\b(\d+\.\d[\d\.]*)', (stdout + stderr).decode())
-        if mo:
-            version, sufficient = mo.group(1), True
-    except FileNotFoundError as e:
+        match = re.search(r'\b(\d+\.\d[\d\.]*)', (stdout + stderr).decode())
+        if match:
+            version, sufficient = match.group(1), True
+    except FileNotFoundError as exc:
         pass
     return ('wget', version, sufficient)

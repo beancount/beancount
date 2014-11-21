@@ -1,6 +1,8 @@
 """
 Bottle utilities, mostly helpers to do mounts on top of dynamic routes.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import bottle
 from bottle import request
 
@@ -47,6 +49,7 @@ def internal_redirect(app, path_depth):
     Raises:
       Exception: Any exception, depending on the callback.
     """
+    # pylint: disable=invalid-name
     try:
         request.path_shift(path_depth)
         rs = bottle.HTTPResponse([])

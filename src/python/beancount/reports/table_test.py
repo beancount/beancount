@@ -1,9 +1,11 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import io
 import collections
 import textwrap
 import unittest
 
-from beancount.core.amount import Decimal
+from beancount.core.amount import D
 from beancount.reports import table
 
 
@@ -14,12 +16,13 @@ class TestTable(unittest.TestCase):
         self.assertEqual(['A', 'A B', 'Aa Bb Cc'], attributes)
 
     def test_create_table(self):
+        # pylint: disable=invalid-name
         Tup = collections.namedtuple('Tup', 'country capital currency amount')
 
         tuples = [
-            Tup("Malawi", "Lilongwe", "Kwacha", Decimal("0.111")),
-            Tup("Mali", "Bamako", "CFA franc", Decimal("0.222")),
-            Tup("Mauritania", "Nouakchott", "Ouguiya", Decimal("0.333")),
+            Tup("Malawi", "Lilongwe", "Kwacha", D("0.111")),
+            Tup("Mali", "Bamako", "CFA franc", D("0.222")),
+            Tup("Mauritania", "Nouakchott", "Ouguiya", D("0.333")),
             ]
         table_object = table.create_table(
             tuples, ["country",
@@ -36,10 +39,10 @@ class TestTable(unittest.TestCase):
         ]
         table_object = table.create_table(tuples, [(0, 'Currency'), 1])
 
-        self.assertEqual(table.TableReport(columns=[0, 1],
-                                           header=['Currency', 'Field 1'],
-                                           body=[['USD', '1111.00'],
-                                                 ['CAD', '1333.33']]),
+        self.assertEqual(table.Table(columns=[0, 1],
+                                     header=['Currency', 'Field 1'],
+                                     body=[['USD', '1111.00'],
+                                           ['CAD', '1333.33']]),
                          table_object)
 
     def test_table_to_html(self):
@@ -126,7 +129,7 @@ class TestTable(unittest.TestCase):
                 ['aaaa', 'bb', 'c', 'd'],
             ])
 
-    def test_render_table(self):
+    def test_generate_table(self):
         table_object = self.test_create_table()
         oss = io.StringIO()
         table.render_table(table_object, oss, 'csv')

@@ -1,8 +1,10 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import unittest
 from os import path
-import os
 import re
 import argparse
+import sys
 
 import urllib.request
 import lxml.html
@@ -11,17 +13,7 @@ from beancount.web import web
 from beancount.utils import test_utils
 
 
-# FIXME: Move this to test_utils.py
-def find_repository_root():
-    """Return the path to the repository root.
-
-    Returns:
-      A string, the root directory.
-    """
-    filename = __file__
-    while not path.exists(path.join(filename, 'README')):
-        filename = path.dirname(filename)
-    return filename
+DEBUG = False
 
 
 def scrape_urls(url_format, predicate, ignore_regexp=None):
@@ -40,13 +32,18 @@ def scrape_urls(url_format, predicate, ignore_regexp=None):
         assert url not in done
         done.add(url)
 
+        # Skip served documents.
+        if ignore_regexp and re.match(ignore_regexp, url):
+            if DEBUG:
+                print("Skipping: {}".format(url), file=sys.stderr)
+            continue
+
+        if DEBUG:
+            print("Processing: {}".format(url), file=sys.stderr)
+
         # Fetch the URL and check its return status.
         response = urllib.request.urlopen(url_format.format(url))
         predicate(response, url)
-
-        # Skip served documents.
-        if ignore_regexp and re.match(ignore_regexp, url):
-            continue
 
         # Get all the links in the page and add all the ones we haven't yet
         # seen.
@@ -58,12 +55,12 @@ def scrape_urls(url_format, predicate, ignore_regexp=None):
 
 def find_links(html_text):
     root = lxml.html.fromstring(html_text)
-    for a in root.xpath('//a'):
-        assert 'href' in a.attrib
-        yield a.attrib['href']
+    for anchor in root.xpath('//a'):
+        assert 'href' in anchor.attrib
+        yield anchor.attrib['href']
 
 
-def scrape(filename, predicate, port, quiet=True):
+def scrape(filename, predicate, port, quiet=True, extra_args=None):
     url_format = 'http://localhost:{}{{}}'.format(port)
 
     # Create a set of valid arguments to run the app.
@@ -72,14 +69,20 @@ def scrape(filename, predicate, port, quiet=True):
     group.set_defaults(filename=filename,
                        port=port,
                        quiet=quiet)
-    args = argparser.parse_args(args=[filename])
+
+    all_args = [filename]
+    if extra_args:
+        all_args.extend(extra_args)
+    args = argparser.parse_args(args=all_args)
 
     thread = web.thread_server_start(args)
 
     # Skips:
-    # Docs cannot be read for external files.
-    # Components views... well there are just too many, makes the tests impossibly slow.
-    scrape_urls(url_format, predicate, '^/(doc|view/component)/')
+    # - Docs cannot be read for external files.
+    #
+    # - Components views... well there are just too many, makes the tests
+    #   impossibly slow. Just keep the A's so some are covered.
+    scrape_urls(url_format, predicate, '^/(doc/|context/|view/component/[^A])')
 
     web.thread_server_shutdown(thread)
 
@@ -89,6 +92,9 @@ class TestWeb(unittest.TestCase):
     def check_page_okay(self, response, url):
         self.assertEqual(200, response.status, url)
 
+    def get_example_file(self, filename):
+        return path.join(test_utils.find_repository_root(__file__), 'examples', filename)
+
     @test_utils.docfile
     def test_scrape_empty_file(self, filename):
         """
@@ -97,17 +103,20 @@ class TestWeb(unittest.TestCase):
         scrape(filename, self.check_page_okay, test_utils.get_test_port())
 
     def test_scrape_basic(self):
-        filename = path.join(find_repository_root(),
-                             'examples', 'basic', 'basic.beancount')
-        scrape(filename, self.check_page_okay, test_utils.get_test_port())
+        scrape(self.get_example_file('basic/basic.beancount'),
+               self.check_page_okay, test_utils.get_test_port())
+
+    def test_scrape_basic_view(self):
+        scrape(self.get_example_file('basic/basic.beancount'),
+               self.check_page_okay, test_utils.get_test_port(),
+               extra_args=['--view', 'year/2013'])
 
     def test_scrape_starterkit(self):
-        filename = path.join(find_repository_root(),
-                             'examples', 'starterkit', 'starter.beancount')
-        scrape(filename, self.check_page_okay, test_utils.get_test_port())
+        scrape(self.get_example_file('starterkit/starter.beancount'),
+               self.check_page_okay, test_utils.get_test_port())
 
-    def __test_scrape_thisisreal(self):
-        filename = path.join(os.environ['HOME'],
-                             'r/q/office/accounting/blais.beancount')
-        if path.exists(filename):
-            scrape(filename, self.check_page_okay, test_utils.get_test_port())
+    # Note: Great idea, but sorry, too slow (approx. 50s on MBA). We need to
+    # find some way to enable this on demand.
+    def __test_scrape_example(self):
+        scrape(self.get_example_file('tutorial/example.beancount'),
+               self.check_page_okay, test_utils.get_test_port())

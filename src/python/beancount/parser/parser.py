@@ -1,32 +1,50 @@
 """Beancount syntax parser.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import functools
 import inspect
 import textwrap
 import copy
-import tempfile
 import re
 from os import path
+
+from beancount.core.amount import ZERO
+from beancount.core.amount import Decimal
+from beancount.core.amount import Amount
+from beancount.core.amount import amount_div
+from beancount.core import display_context
+from beancount.core.position import Lot
+from beancount.core.position import Position
+from beancount.core.data import Transaction
+from beancount.core.data import Balance
+from beancount.core.data import Open
+from beancount.core.data import Close
+from beancount.core.data import Pad
+from beancount.core.data import Event
+from beancount.core.data import Price
+from beancount.core.data import Note
+from beancount.core.data import Document
+from beancount.core.data import Source
+from beancount.core.data import Posting
+from beancount.core.interpolate import balance_incomplete_postings
+from beancount.core.interpolate import compute_residual
+from beancount.core.interpolate import SMALL_EPSILON
 
 from beancount.parser import _parser
 from beancount.parser import lexer
 from beancount.parser import options
+from beancount.core import account
 from beancount.core import data
-from beancount.core.amount import ZERO, Decimal, Amount, amount_div
-from beancount.core.position import Lot, Position
-from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price
-from beancount.core.data import Note, Document
-from beancount.core.data import FileLocation, Posting
-from beancount.core.complete import balance_incomplete_postings
-from beancount.core.complete import compute_residual, SMALL_EPSILON
+from beancount.utils import misc_utils
 
 
 __sanity_checks__ = False
 
 
-ParserError = collections.namedtuple('ParserError', 'fileloc message entry')
-ParserSyntaxError = collections.namedtuple('ParserError', 'fileloc message entry')
+ParserError = collections.namedtuple('ParserError', 'source message entry')
+ParserSyntaxError = collections.namedtuple('ParserSyntaxError', 'source message entry')
 
 
 # Temporary holder for key-value pairs.
@@ -34,7 +52,13 @@ KeyValue = collections.namedtuple('KeyValue', 'key value')
 
 
 def valid_account_regexp(options):
-    """Build a regexp to validate account names from the options."""
+    """Build a regexp to validate account names from the options.
+
+    Args:
+      options: A dict of options, as per beancount.parser.options.
+    Returns:
+      A string, a regular expression that will match all account names.
+    """
     names = map(options.__getitem__, ('name_assets',
                                       'name_liabilities',
                                       'name_equity',
@@ -78,6 +102,43 @@ class Builder(lexer.LexBuilder):
         # types.
         self.account_regexp = valid_account_regexp(self.options)
 
+        # A display context builder.
+        self.dcbuilder = display_context.DisplayContextBuilder()
+        self.dcupdate = self.dcbuilder.update
+
+    def get_entries(self):
+        """Return the accumulated entries.
+
+        Returns:
+          A list of sorted directives.
+        """
+        return sorted(self.entries, key=data.entry_sortkey)
+
+    def get_options(self):
+        """Return the final options map.
+
+        Returns:
+          A dict of option names to options.
+        """
+        # Normalize the option to a boolean object.
+        self.options['render_commas'] = (
+            self.options['render_commas'].lower() in ('1', 'true'))
+
+        # Build and store the inferred DisplayContext instance.
+        dcontext = self.dcbuilder.build()
+        dcontext.set_commas(self.options['render_commas'])
+        self.options['display_context'] = dcontext
+
+        return self.options
+
+    def get_invalid_account(self):
+        """See base class."""
+        return account.join(self.options['name_equity'], 'InvalidAccountName')
+
+    def get_long_string_maxlines(self):
+        """See base class."""
+        return self.options['long_string_maxlines']
+
     def store_result(self, entries):
         """Start rule stores the final result here.
 
@@ -115,24 +176,58 @@ class Builder(lexer.LexBuilder):
           value: option's value
         """
         if key not in self.options:
-            fileloc = FileLocation(filename, lineno)
+            source = Source(filename, lineno)
             self.errors.append(
-                ParserError(fileloc, "Invalid option: '{}'".format(key), None))
+                ParserError(source, "Invalid option: '{}'".format(key), None))
         elif key in options.READ_ONLY_OPTIONS:
-            fileloc = FileLocation(filename, lineno)
+            source = Source(filename, lineno)
             self.errors.append(
-                ParserError(fileloc, "Option '{}' may not be set.".format(key), None))
+                ParserError(source, "Option '{}' may not be set".format(key), None))
         else:
             option = self.options[key]
             if isinstance(option, list):
+                # Process the 'plugin' option specially: accept an optional
+                # argument from it. NOTE: We will eventually phase this out and
+                # replace it by a dedicated 'plugin' directive.
+                if key == 'plugin':
+                    match = re.match('(.*):(.*)', value)
+                    if match:
+                        plugin_name, plugin_config = match.groups()
+                    else:
+                        plugin_name, plugin_config = value, None
+                    value = (plugin_name, plugin_config)
+
+                # Append to a list of values.
                 option.append(value)
             else:
+                # Validate some option values.
+                if key == 'plugin_processing_mode':
+                    if value not in ('raw', 'default'):
+                        source = Source(filename, lineno)
+                        self.errors.append(
+                            ParserError(source,
+                                        ("Invalid value for '{}': '{}'").format(key, value),
+                                        None))
+                        return
+                # Set the value.
                 self.options[key] = value
 
             # Refresh the list of valid account regexps as we go.
             if key.startswith('name_'):
                 # Update the set of valid account types.
                 self.account_regexp = valid_account_regexp(self.options)
+
+    def plugin(self, filename, lineno, plugin_name, plugin_config):
+        """Process a plugin directive.
+
+        Args:
+          filename: current filename.
+          lineno: current line number.
+          plugin_name: A string, the name of the plugin module to import.
+          plugin_config: A string or None, an optional configuration string to
+            pass in to the plugin module.
+        """
+        self.options['plugin'].append((plugin_name, plugin_config))
 
     def amount(self, number, currency):
         """Process an amount grammar rule.
@@ -143,8 +238,9 @@ class Builder(lexer.LexBuilder):
         Returns:
           An instance of Amount.
         """
-        assert isinstance(number, Decimal)
-        assert isinstance(currency, str)
+        # Update the mapping that stores the parsed precisions.
+        # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
+        self.dcupdate(number, currency)
         return Amount(number, currency)
 
     def lot_cost_date(self, cost, lot_date, istotal):
@@ -159,10 +255,12 @@ class Builder(lexer.LexBuilder):
         assert isinstance(cost, Amount)
         return (cost, lot_date, istotal)
 
-    def position(self, amount, lot_cost_date):
+    def position(self, filename, lineno, amount, lot_cost_date):
         """Process a position grammar rule.
 
         Args:
+          filename: the current filename.
+          lineno: the current line number.
           amount: an instance of Amount for the position.
           lot_cost_date: a tuple of (cost, lot-date)
         Returns:
@@ -172,6 +270,21 @@ class Builder(lexer.LexBuilder):
         if istotal:
             cost = amount_div(cost, amount.number)
         lot = Lot(amount.currency, cost, lot_date)
+
+        # We don't allow a cost nor a price of zero. (Conversion entries may use
+        # a price of zero as the only special case, but never for costs.)
+        if cost is not None:
+            if amount.number == ZERO:
+                source = Source(filename, lineno)
+                self.errors.append(
+                    ParserError(source,
+                                "Amount is zero or negative: {}".format(cost), None))
+
+            if cost.number <= ZERO:
+                source = Source(filename, lineno)
+                self.errors.append(
+                    ParserError(source, "Cost is zero or negative: {}".format(cost), None))
+
         return Position(lot, amount.number)
 
     def handle_list(self, object_list, new_object):
@@ -198,55 +311,55 @@ class Builder(lexer.LexBuilder):
           lineno: the current line number
         Returns:
         """
-        fileloc = FileLocation(filename, lineno)
-        self.errors.append(ParserSyntaxError(fileloc, message, None))
+        source = Source(filename, lineno)
+        self.errors.append(ParserSyntaxError(source, message, None))
 
     def open(self, filename, lineno, date, account, currencies, kvlist):
         """Process an open directive.
 
         Args:
-          filename: the current filename.
-          lineno: the current line number.
-          date: a datetime object.
-          account: an Account instance.
-          currencies: a list of constraint currencies.
+          filename: The current filename.
+          lineno: The current line number.
+          date: A datetime object.
+          account: A string, the name of the account.
+          currencies: A list of constraint currencies.
           kvlist: a list of KeyValue instances.
         Returns:
           A new Open object.
         """
-        fileloc = FileLocation(filename, lineno)
-        return Open(fileloc, date, account, currencies)
+        source = Source(filename, lineno)
+        return Open(source, date, account, currencies)
 
     def close(self, filename, lineno, date, account, kvlist):
         """Process a close directive.
 
         Args:
-          filename: the current filename.
-          lineno: the current line number.
-          date: a datetime object.
-          account: an Account instance.
+          filename: The current filename.
+          lineno: The current line number.
+          date: A datetime object.
+          account: A string, the name of the account.
           kvlist: a list of KeyValue instances.
         Returns:
           A new Close object.
         """
-        fileloc = FileLocation(filename, lineno)
-        return Close(fileloc, date, account)
+        source = Source(filename, lineno)
+        return Close(source, date, account)
 
     def pad(self, filename, lineno, date, account, source_account, kvlist):
         """Process a pad directive.
 
         Args:
-          filename: the current filename.
-          lineno: the current line number.
-          date: a datetime object.
-          account: an Account instance, account to be padded.
-          source_account: an Account instance, account to pad from.
+          filename: The current filename.
+          lineno: The current line number.
+          date: A datetime object.
+          account: A string, the account to be padded.
+          source_account: A string, the account to pad from.
           kvlist: a list of KeyValue instances.
         Returns:
           A new Pad object.
         """
-        fileloc = FileLocation(filename, lineno)
-        return Pad(fileloc, date, account, source_account)
+        source = Source(filename, lineno)
+        return Pad(source, date, account, source_account)
 
     def balance(self, filename, lineno, date, account, amount, kvlist):
         """Process an assertion directive.
@@ -256,18 +369,18 @@ class Builder(lexer.LexBuilder):
         or failed.
 
         Args:
-          filename: the current filename.
-          lineno: the current line number.
-          date: a datetime object.
-          account: an Account instance.
-          amount: the expected amount, to be checked.
+          filename: The current filename.
+          lineno: The current line number.
+          date: A datetime object.
+          account: A string, the account to balance.
+          amount: The expected amount, to be checked.
           kvlist: a list of KeyValue instances.
         Returns:
           A new Balance object.
         """
         diff_amount = None
-        fileloc = FileLocation(filename, lineno)
-        return Balance(fileloc, date, account, amount, diff_amount)
+        source = Source(filename, lineno)
+        return Balance(source, date, account, amount, diff_amount)
 
     def event(self, filename, lineno, date, event_type, description, kvlist):
         """Process an event directive.
@@ -282,8 +395,8 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Event object.
         """
-        fileloc = FileLocation(filename, lineno)
-        return Event(fileloc, date, event_type, description)
+        source = Source(filename, lineno)
+        return Event(source, date, event_type, description)
 
     def price(self, filename, lineno, date, currency, amount, kvlist):
         """Process a price directive.
@@ -298,24 +411,24 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Price object.
         """
-        fileloc = FileLocation(filename, lineno)
-        return Price(fileloc, date, currency, amount)
+        source = Source(filename, lineno)
+        return Price(source, date, currency, amount)
 
     def note(self, filename, lineno, date, account, comment, kvlist):
         """Process a note directive.
 
         Args:
-          filename: the current filename.
-          lineno: the current line number.
-          date: a datetime object.
-          account: an Account instance.
-          comment: a str, the note's comments contents.
+          filename: The current filename.
+          lineno: The current line number.
+          date: A datetime object.
+          account: A string, the account to attach the note to.
+          comment: A str, the note's comments contents.
           kvlist: a list of KeyValue instances.
         Returns:
           A new Note object.
         """
-        fileloc = FileLocation(filename, lineno)
-        return Note(fileloc, date, account, comment)
+        source = Source(filename, lineno)
+        return Note(source, date, account, comment)
 
     def document(self, filename, lineno, date, account, document_filename, kvlist):
         """Process a document directive.
@@ -330,37 +443,40 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Document object.
         """
-        fileloc = FileLocation(filename, lineno)
+        source = Source(filename, lineno)
         if not path.isabs(document_filename):
             document_filename = path.abspath(path.join(path.dirname(filename),
                                                        document_filename))
 
-        return Document(fileloc, date, account, document_filename)
+        return Document(source, date, account, document_filename)
+
 
     def key_value(self, key, value):
         """Process a document directive.
 
         Args:
-          filename: the current filename.
-          lineno: the current line number.
-          date: a datetime object.
-          account: an Account instance.
-          document_filename: a str, the name of the document file.
+          filename: The current filename.
+          lineno: The current line number.
+          date: A datetime object.
+          account: A string, the account the document relates to.
+          document_filename: A str, the name of the document file.
         Returns:
           A new Document object.
         """
         return KeyValue(key, value)
 
-    def posting(self, account, position, price, istotal, flag):
+    def posting(self, filename, lineno, account, position, price, istotal, flag):
         """Process a posting grammar rule.
 
         Args:
-          account: an Account instance for the posting.
-          position: an instance of Position from the grammar rule.
+          filename: the current filename.
+          lineno: the current line number.
+          account: A string, the account of the posting.
+          position: An instance of Position from the grammar rule.
           price: Either None, or an instance of Amount that is the cost of the position.
-          istotal: a bool, True if the price is for the total amount being parsed, or
+          istotal: A bool, True if the price is for the total amount being parsed, or
                    False if the price is for each lot of the position.
-          flag: a str, one-character, the flag associated with this posting.
+          flag: A string, one-character, the flag associated with this posting.
         Returns:
           A new Posting object, with no parent entry.
         """
@@ -370,6 +486,13 @@ class Builder(lexer.LexBuilder):
             price = Amount(ZERO
                            if position.number == ZERO
                            else price.number / position.number, price.currency)
+
+        # Note: Allow zero prices becuase we need them for round-trips.
+        # if price is not None and price.number == ZERO:
+        #     source = Source(filename, lineno)
+        #     self.errors.append(
+        #         ParserError(source, "Price is zero: {}".format(price), None))
+
         return Posting(None, account, position, price, chr(flag) if flag else None)
 
 
@@ -434,7 +557,7 @@ class Builder(lexer.LexBuilder):
         txn_fields.has_pipe.append(1)
         return txn_fields
 
-    def unpack_txn_strings(self, txn_fields, fileloc):
+    def unpack_txn_strings(self, txn_fields, source):
         """Unpack a txn_fields accumulator to its payee and narration fields.
 
         Args:
@@ -449,7 +572,7 @@ class Builder(lexer.LexBuilder):
             payee, narration = None, txn_fields.strings[0]
             if txn_fields.has_pipe:
                 self.errors.append(
-                    ParserError(fileloc,
+                    ParserError(source,
                                 "One string with a | symbol yields only a narration: "
                                 "{}".format(txn_fields.strings), None))
         elif num_strings == 2:
@@ -458,7 +581,7 @@ class Builder(lexer.LexBuilder):
             payee, narration = None, ""
         else:
             self.errors.append(
-                ParserError(fileloc,
+                ParserError(source,
                             "Too many strings on transaction description: {}".format(
                                 txn_fields.strings), None))
             return None
@@ -482,21 +605,22 @@ class Builder(lexer.LexBuilder):
           flag: a str, one-character, the flag associated with this transaction.
           txn_fields: A tuple of transaction fields, which includes descriptions
             (payee and narration), tags, and links.
-          postings_and_kv: a list of Posting of KeyValue instances, to be inserted in this
-            transaction.
+          postings_and_kv: a list of Posting or KeyValue instances, to be inserted in this
+            transaction, or None, if no postings have been declared.
         Returns:
           A new Transaction object.
         """
-        fileloc = FileLocation(filename, lineno)
+        source = Source(filename, lineno)
 
         # Separate postings and key-valus.
         postings = []
         key_values = []
-        for posting in postings_and_kv:
-            if isinstance(posting, Posting):
-                postings.append(posting)
-            else:
-                key_values.append(posting)
+        if postings_and_kv:
+            for posting in postings_and_kv:
+                if isinstance(posting, Posting):
+                    postings.append(posting)
+                else:
+                    key_values.append(posting)
 
         # # FIXME: Disallow the same key multiple times on the same transaction.
         # print()
@@ -507,7 +631,7 @@ class Builder(lexer.LexBuilder):
 
 
         # Unpack the transaction fields.
-        payee_narration = self.unpack_txn_strings(txn_fields, fileloc)
+        payee_narration = self.unpack_txn_strings(txn_fields, source)
         if payee_narration is None:
             return None
         payee, narration = payee_narration
@@ -520,10 +644,14 @@ class Builder(lexer.LexBuilder):
         # # Detect when a transaction does not have at least two legs.
         # if postings is None or len(postings) < 2:
         #     self.errors.append(
-        #         ParserError(fileloc,
+        #         ParserError(source,
         #                     "Transaction with only one posting: {}".format(postings),
         #                     None))
         #     return None
+
+        # If there are no postings, make sure we insert a list object.
+        if postings is None:
+            postings = []
 
         # Merge the tags from the stack with the explicit tags of this
         # transaction, or make None.
@@ -538,7 +666,7 @@ class Builder(lexer.LexBuilder):
         links = frozenset(links) if links else None
 
         # Create the transaction. Note: we need to parent the postings.
-        entry = Transaction(fileloc, date, chr(flag),
+        entry = Transaction(source, date, chr(flag),
                             payee, narration, tags, links, postings)
 
         # Balance incomplete auto-postings and set the parent link to this entry as well.
@@ -555,7 +683,7 @@ class Builder(lexer.LexBuilder):
         return entry
 
 
-def parse(filename, **kw):
+def parse_file(filename, **kw):
     """Parse a beancount input file and return Ledger with the list of
     transactions and tree of accounts.
 
@@ -569,11 +697,15 @@ def parse(filename, **kw):
         a dict of the option values that were parsed from the file.)
     """
     builder = Builder()
-    abs_filename = path.abspath(filename)
-    builder.options["filename"] = abs_filename
-    _parser.parse(abs_filename, builder, **kw)
-    entries = sorted(builder.entries, key=data.entry_sortkey)
-    return (entries, builder.errors, builder.options)
+    if filename:
+        abs_filename = path.abspath(filename)
+        builder.options["filename"] = abs_filename
+    _parser.parse_file(filename, builder, **kw)
+    return (builder.get_entries(), builder.errors, builder.get_options())
+
+# Alias, for compatibility.
+# pylint: disable=invalid-name
+parse = parse_file
 
 
 def parse_string(string, **kw):
@@ -583,12 +715,12 @@ def parse_string(string, **kw):
     Args:
       string: a str, the contents to be parsed instead of a file's.
     Return:
-      Same as the output of parse().
+      Same as the output of parse_file().
     """
-    with tempfile.NamedTemporaryFile('w') as tmp_file:
-        tmp_file.write(string)
-        tmp_file.flush()
-        return parse(tmp_file.name, **kw)
+    builder = Builder()
+    builder.options["filename"] = "<string>"
+    _parser.parse_string(string, builder, **kw)
+    return (builder.get_entries(), builder.errors, builder.get_options())
 
 
 def parsedoc(fun):
@@ -614,8 +746,8 @@ def parsedoc(fun):
     @functools.wraps(fun)
     def newfun(self):
         entries, errors, options_map = parse_string(textwrap.dedent(fun.__doc__),
-                                                report_filename=filename,
-                                                report_firstline=lineno)
+                                                    report_filename=filename,
+                                                    report_firstline=lineno)
         return fun(self, entries, errors, options_map)
     newfun.__doc__ = None
     return newfun

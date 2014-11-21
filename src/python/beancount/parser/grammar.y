@@ -54,9 +54,6 @@ const char* getTokenName(int token);
 %locations
 /* %glr-parser */
 
-/* FIXME: Pass this explicitly eventually. */
-/* %parse-param { PyObject* builder} */
-
 
 /* Collection of value types. */
 %union {
@@ -94,6 +91,7 @@ const char* getTokenName(int token);
 %token PUSHTAG             /* 'pushtag' keyword */
 %token POPTAG              /* 'poptag' keyword */
 %token OPTION              /* 'option' keyword */
+%token PLUGIN              /* 'plugin' keyword */
 %token <pyobj> DATE        /* A date object */
 %token <pyobj> ACCOUNT     /* The name of an account */
 %token <pyobj> CURRENCY    /* A currency specification */
@@ -155,7 +153,8 @@ txn : TXN
 eol : EOL
     | COMMENT EOL
 
-/* FIXME: I want to add INDENT EOF and COMMENT EOF here.*/
+/* Note: Technically we could have the lexer yield EOF and handle INDENT EOF and
+   COMMENT EOF. However this is not necessary. */
 empty_line : EOL
            | COMMENT EOL
            | INDENT EOL
@@ -202,22 +201,22 @@ optflag : empty
 
 posting : INDENT optflag ACCOUNT position eol
         {
-            $$ = BUILD("posting", "OOOOb", $3, $4, Py_None, Py_False, $2);
+            $$ = BUILD("posting", "siOOOOb", FILE_LINE_ARGS, $3, $4, Py_None, Py_False, $2);
             DECREF2($3, $4);
         }
         | INDENT optflag ACCOUNT position AT amount eol
         {
-            $$ = BUILD("posting", "OOOOb", $3, $4, $6, Py_False, $2);
+            $$ = BUILD("posting", "siOOOOb", FILE_LINE_ARGS, $3, $4, $6, Py_False, $2);
             DECREF3($3, $4, $6);
         }
         | INDENT optflag ACCOUNT position ATAT amount eol
         {
-            $$ = BUILD("posting", "OOOOb", $3, $4, $6, Py_True, $2);
+            $$ = BUILD("posting", "siOOOOb", FILE_LINE_ARGS, $3, $4, $6, Py_True, $2);
             DECREF3($3, $4, $6);
         }
         | INDENT optflag ACCOUNT eol
         {
-            $$ = BUILD("posting", "OOOOb", $3, Py_None, Py_None, Py_False, $2);
+            $$ = BUILD("posting", "siOOOOb", FILE_LINE_ARGS, $3, Py_None, Py_None, Py_False, $2);
             DECREF1($3);
         }
 
@@ -314,15 +313,15 @@ amount : NUMBER CURRENCY
        }
 
 position : amount
-           {
-               $$ = BUILD("position", "OO", $1, Py_None);
-               DECREF1($1);
-           }
-           | amount lot_cost_date
-           {
-               $$ = BUILD("position", "OO", $1, $2);
-               DECREF2($1, $2);
-           }
+         {
+             $$ = BUILD("position", "siOO", FILE_LINE_ARGS, $1, Py_None);
+             DECREF1($1);
+         }
+         | amount lot_cost_date
+         {
+             $$ = BUILD("position", "siOO", FILE_LINE_ARGS, $1, $2);
+             DECREF2($1, $2);
+         }
 
 lot_cost_date : LCURL amount RCURL
          {
@@ -391,11 +390,23 @@ option : OPTION STRING STRING eol
           DECREF2($2, $3);
        }
 
+plugin : PLUGIN STRING eol
+       {
+          BUILD("plugin", "siOO", FILE_LINE_ARGS, $2, Py_None);
+          DECREF1($2);
+       }
+       | PLUGIN STRING STRING eol
+       {
+          BUILD("plugin", "siOO", FILE_LINE_ARGS, $2, $3);
+          DECREF2($2, $3);
+       }
+
 directive : SKIPPED
           | empty_line
           | pushtag
           | poptag
           | option
+          | plugin
 
 
 declarations : declarations directive

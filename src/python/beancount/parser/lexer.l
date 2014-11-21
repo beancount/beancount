@@ -6,7 +6,7 @@
 
 /* Options */
 %option noyywrap
-%option nodefault
+/* %option nodefault */
 %option yylineno
 %option never-interactive
 %option warn
@@ -29,14 +29,15 @@
 #include "grammar.h"
 
 
-/* The filename being parsed. */
+/* Global declarations; defined below. */
+extern int yy_eof_times;
 extern const char* yy_filename;
 extern int yycolumn;
 
 
 
 /* Handle detecting the beginning of line. */
-extern int yy_line_tokens; /* Number of tokens since the bol */
+extern int yy_line_tokens; /* Number of tokens since the bol. */
 
 #define YY_USER_ACTION  {                               \
     yy_line_tokens++;                                   \
@@ -48,13 +49,16 @@ extern int yy_line_tokens; /* Number of tokens since the bol */
 
 
 /* Skip the rest of the input line. */
-void yy_skip_line(void);
+int yy_skip_line(void);
 
 
 /* Utility functions. */
 int strtonl(const char* buf, size_t nchars);
 
 }
+
+/* A start condition for chomping an invalid token. */
+%x INVALID
 
 
 /*--------------------------------------------------------------------------------------*/
@@ -126,7 +130,6 @@ int strtonl(const char* buf, size_t nchars);
  /* Keywords. */
 txn		{ return TXN; }
 balance		{ return BALANCE; }
-check		{ return BALANCE; } /* To be removed eventually */
 open		{ return OPEN; }
 close		{ return CLOSE; }
 pad		{ return PAD; }
@@ -137,13 +140,32 @@ document	{ return DOCUMENT; }
 pushtag	        { return PUSHTAG; }
 poptag		{ return POPTAG; }
 option		{ return OPTION; }
+plugin		{ return PLUGIN; }
 
  /* Dates. */
-[0-9][0-9][0-9][0-9][-/][0-9][0-9][-/][0-9][0-9]	{
-    int year = strtonl(yytext, 4);
-    int month = strtonl(yytext+5, 2);
-    int day = strtonl(yytext+8, 2);
+[0-9]{4,}[\-/][0-9]+[\-/][0-9]+	{
+    const char* year_str;
+    const char* month_str;
+    const char* day_str;
+    int year, month, day;
+
+    /* Parse the numbers. */
+    year_str = yytext;
+    month_str = strpbrk(year_str, "-/");
+    year = strtonl(year_str, month_str - year_str);
+    month_str++;
+    day_str = strpbrk(month_str, "-/");
+    month = strtonl(month_str, day_str - month_str);
+    day_str++;
+    day = strtonl(day_str, yytext + yyleng - day_str);
+
+    /* Attempt to create the date. */
     yylval->pyobj = BUILD("DATE", "iii", year, month, day);
+
+    /* Return error if we could not. An error has already been logged. */
+    if (yylval->pyobj == Py_None) {
+      return ERROR;
+    }
     return DATE;
 }
 
@@ -154,8 +176,8 @@ option		{ return OPTION; }
 }
 
  /* Currencies. These are defined as uppercase only in order to disambiguate the
-  * syntax. */
-[A-Z][A-Z0-9\'\.\_]{1,10}	{
+  * syntax. This is kept in sync with beancount.core.amount.CURRENCY_RE. */
+[A-Z][A-Z0-9\'\.\_\-]{0,10}[A-Z0-9]	{
     yylval->pyobj = BUILD("CURRENCY", "s", yytext);
     return CURRENCY;
 }
@@ -167,7 +189,7 @@ option		{ return OPTION; }
 }
 
  /* Numbers */
-[-+]?([0-9\.])+ 		{
+[-+]?([0-9]+|[0-9][0-9,]+[0-9])(\.[0-9]*)? 		{
     yylval->pyobj = BUILD("NUMBER", "s", yytext);
     return NUMBER;
 }
@@ -190,38 +212,75 @@ option		{ return OPTION; }
     return KEY;
 }
 
- /* Default rule. This should never be reached. */
-.	{
-    yylval->pyobj = BUILD("ERROR", "s", yytext);
-    return ERROR;
+ /* Default rule. */
+.			{
+  unput(*yytext);
+  BEGIN(INVALID);
+  return ERROR;
 }
 
+ /* Fake an EOL at the end of file, to ensure that files without a final newline
+  * will process postings right. */
+<<EOF>>     		{
+  if ( yy_eof_times == 0 ) {
+    yy_eof_times = 1;
+    yylloc->first_line = yylineno;
+    return EOL;
+  }
+  return 0;
+ }
+
+ /* Note: we use a subparser because if we set a default rule to
+    chomp this pattern, it would take precedence over valid rules
+    if the matched text is longer and thus break the parser. */
+<INVALID>[^ \t\n\r]+     {
+    yylval->pyobj = BUILD("ERROR", "s#", yytext, yyleng);
+    BEGIN(INITIAL);
+}
 
 
 %%
 /*--------------------------------------------------------------------------------------*/
 /* User Code */
 
+
+/* Note: All these globals should be moved to an yylex_extra */
+
+/* The number of times EOF has been hit. This is used to synthesize an EOL at
+ * the end of the file. */
+int yy_eof_times = 0;
+
+/* The filename being tokenized. */
 const char* yy_filename = 0;
+
+/* Number of tokens since the beginning of the line. */
 int yy_line_tokens = 0;
+
+/* The current column we're tokenizing at. */
 int yycolumn = 1;
+
 
 #define LEXEOF 0
 
-void yy_skip_line()
+int yy_skip_line()
 {
+    int num_chars = 0;
     for ( ;; ) {
         int c = input();
+        num_chars++;
         if ( c == LEXEOF || c == -1 ) {
             break;
         }
         if ( c == '\n' ) {
             unput(c);
+            num_chars--;
             break;
         }
     }
+    return num_chars;
 }
 
+/* Convert an integer string to a number. */
 int strtonl(const char* buf, size_t nchars)
 {
     int result = 0;

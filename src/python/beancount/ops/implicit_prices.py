@@ -6,15 +6,18 @@ Prices are deduced from Price entries found in the file, or perhaps
 created by scripts (for example you could build a script that will fetch
 live prices online and create entries on-the-fly).
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 
-from beancount.core.data import Transaction, Price
+from beancount.core.data import Transaction
+from beancount.core import data
 from beancount.core import inventory
 
 __plugins__ = ('add_implicit_prices',)
 
 
-ImplicitPriceError = collections.namedtuple('ImplicitPriceError', 'fileloc message entry')
+ImplicitPriceError = collections.namedtuple('ImplicitPriceError', 'source message entry')
 
 
 def add_implicit_prices(entries, unused_options_map):
@@ -47,27 +50,27 @@ def add_implicit_prices(entries, unused_options_map):
             for posting in entry.postings:
                 # Check if the position is matching against an existing
                 # position.
-                reducing = balances[posting.account].add_position(posting.position, True)
+                _, reducing = balances[posting.account].add_position(posting.position)
 
                 # Add prices when they're explicitly specified on a posting. An
                 # explicitly specified price may occur in a conversion, e.g.
-                #      Asset:Account    100 USD @ 1.10 CAD
+                #      Assets:Account    100 USD @ 1.10 CAD
                 # or, if a cost is also specified, as the current price of the
                 # underlying instrument, e.g.
-                #      Asset:Account    100 GOOG {564.20} @ {581.97} USD
+                #      Assets:Account    100 GOOG {564.20} @ {581.97} USD
                 if posting.price is not None:
-                    price_entry = Price(entry.fileloc, entry.date,
-                                        posting.position.lot.currency,
-                                        posting.price)
+                    price_entry = data.Price(entry.source, entry.date,
+                                             posting.position.lot.currency,
+                                             posting.price)
 
                 # Add costs, when we're not matching against an existing
                 # position. This happens when we're just specifying the cost,
                 # e.g.
-                #      Asset:Account    100 GOOG {564.20}
+                #      Assets:Account    100 GOOG {564.20}
                 elif posting.position.lot.cost is not None and not reducing:
-                    price_entry = Price(entry.fileloc, entry.date,
-                                        posting.position.lot.currency,
-                                        posting.position.lot.cost)
+                    price_entry = data.Price(entry.source, entry.date,
+                                             posting.position.lot.currency,
+                                             posting.position.lot.cost)
 
                 else:
                     price_entry = None
@@ -94,7 +97,7 @@ def add_implicit_prices(entries, unused_options_map):
                         # else:
                         #     errors.append(
                         #         ImplicitPriceError(
-                        #             entry.fileloc,
+                        #             entry.source,
                         #             "Duplicate prices for {} on {}".format(entry,
                         #                                                    dup_entry),
                         #             entry))

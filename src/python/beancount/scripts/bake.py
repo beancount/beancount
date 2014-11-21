@@ -5,6 +5,8 @@ runs a server and a scraper that puts all the files in the directory,
 and if your output name has an archive suffix, we automatically the
 fetched directory contents to the archive and delete them.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import argparse
 import subprocess
 import shutil
@@ -13,6 +15,7 @@ from os import path
 
 from beancount.web import web
 from beancount.scripts import checkdeps
+from beancount.utils import file_utils
 
 
 def bake_to_directory(webargs, output, quiet_subproc=False, quiet_server=False):
@@ -43,16 +46,16 @@ def bake_to_directory(webargs, output, quiet_subproc=False, quiet_server=False):
                url,
                '--directory-prefix', output]
 
-    p = subprocess.Popen(command,
-                         shell=False,
-                         stdout=subprocess.PIPE if quiet_subproc else None,
-                         stderr=subprocess.PIPE if quiet_subproc else None)
-    _, _ = p.communicate()
+    pipe = subprocess.Popen(command,
+                            shell=False,
+                            stdout=subprocess.PIPE if quiet_subproc else None,
+                            stderr=subprocess.PIPE if quiet_subproc else None)
+    _, _ = pipe.communicate()
 
     # Shutdown the server thread.
     web.thread_server_shutdown(thread)
 
-    return (p.returncode == 0)
+    return pipe.returncode == 0
 
 
 def archive(command_template, directory, archive, quiet=False):
@@ -83,14 +86,14 @@ def archive(command_template, directory, archive, quiet=False):
                                       basename=path.basename(directory),
                                       archive=archive)
 
-    p = subprocess.Popen(shlex.split(command),
-                         shell=False,
-                         cwd=path.dirname(directory),
-                         stdout=subprocess.PIPE if quiet else None,
-                         stderr=subprocess.PIPE if quiet else None)
-    _, _ = p.communicate()
-    if p.returncode != 0:
-        raise OSError("Archive failure.")
+    pipe = subprocess.Popen(shlex.split(command),
+                            shell=False,
+                            cwd=path.dirname(directory),
+                            stdout=subprocess.PIPE if quiet else None,
+                            stderr=subprocess.PIPE if quiet else None)
+    _, _ = pipe.communicate()
+    if pipe.returncode != 0:
+        raise OSError("Archive failure")
 
 
 ARCHIVERS = {
@@ -99,25 +102,6 @@ ARCHIVERS = {
     '.tar.bz2' : 'tar -C {dirname} -jcvf {archive} {basename}',
     '.zip'     : 'zip -r {archive} {basename}',
     }
-
-
-# FIXME: Move this to utils.
-def path_greedy_split(filename):
-    """Split a path, returning the longest possible extension.
-
-    Args:
-      filename: A string, the filename to split.
-    Returns:
-      A pair of basename, extension (which includes the leading period).
-    """
-    basename = path.basename(filename)
-    index = basename.find('.')
-    if index == -1:
-        extension = None
-    else:
-        extension = basename[index:]
-        basename = basename[:index]
-    return (path.join(path.dirname(filename), basename), extension)
 
 
 def main():
@@ -146,7 +130,7 @@ def main():
         parser.error("Invalid options, cannot specify both --verbose and --quiet")
 
     # Figure out the archival method.
-    output_directory, extension = path_greedy_split(opts.output)
+    output_directory, extension = file_utils.path_greedy_split(opts.output)
     if extension:
         try:
             archival_command = ARCHIVERS[extension]
@@ -167,7 +151,7 @@ def main():
     # Make sure that wget is installed.
     package, version, sufficient = checkdeps.check_wget()
     if not sufficient:
-        parser.error("Package {} is not installed or insufficient (version: {}).".format(
+        parser.error("Package {} is not installed or insufficient (version: {})".format(
             package, version or 'N/A'))
 
     baked = bake_to_directory(opts, output_directory, not opts.verbose, opts.quiet)

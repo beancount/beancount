@@ -53,7 +53,7 @@ def main():
     entries, errors, options_map = loader.load(opts.filename)
 
     # Load the rename map, if specified.
-    rename_map = {}
+    rename_map = lambda x: x
     if opts.rename_map:
         with open(opts.rename_map) as f:
             code = compile(f.read(), opts.rename_map, 'exec')

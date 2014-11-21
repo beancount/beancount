@@ -1,5 +1,7 @@
 """Check that document directories mirror a list of accounts correctly.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 from beancount.core import getters
 from beancount.core import account
 
@@ -23,7 +25,7 @@ def validate_directory(accounts, document_dir):
     """
     # Generate all parent accounts in the account_set we're checking against, so
     # that parent directories with no corresponding account don't warn.
-    accounts_with_parents = accounts.copy()
+    accounts_with_parents = set(accounts)
     for account_ in accounts:
         while True:
             parent = account.parent(account_)

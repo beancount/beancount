@@ -1,7 +1,8 @@
 """
 Tests for documents.
 """
-import re
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import datetime
 import textwrap
 from os import path
@@ -12,11 +13,9 @@ from beancount.parser import parser
 from beancount.parser import cmptest
 
 
-class TestDocuments(account_test.TestWalk,
-                    cmptest.TestCase):
+class TestDocuments(account_test.TmpFilesTestBase, cmptest.TestCase):
 
-    # This is used by TestWalk.
-    test_documents = [
+    TEST_DOCUMENTS = [
         'root/Assets/US/Bank/Checking/other.txt',
         'root/Assets/US/Bank/Checking/2014-06-08.bank-statement.pdf',
         'root/Assets/US/Bank/Checking/otherdir/',
@@ -38,7 +37,7 @@ class TestDocuments(account_test.TestWalk,
           2014-07-10 document Liabilities:US:Bank  "does-not-exist.pdf"
 
         """).replace('ROOT', self.root))
-        entries, _, options_map = parser.parse(input_filename)
+        entries, _, options_map = parser.parse_file(input_filename)
 
         # In this test we set the root to the directory root, but only the
         # checking account is declared, and so only that entry should get
@@ -59,17 +58,16 @@ class TestDocuments(account_test.TestWalk,
                                  for entry in entries
                                  if isinstance(entry, documents.Document)])
 
-        self.assertEqual(1, len(errors))
-        self.assertTrue(re.search(r'does-not-exist\.pdf', errors[0].message))
+        self.assertEqual(0, len(errors))
 
-    def test_verify_document_entries(self):
-        entries, _, __ = parser.parse_string(textwrap.dedent("""
+    def test_verify_document_files_exist(self):
+        entries, _, options_map = parser.parse_string(textwrap.dedent("""
           2014-06-08 document Assets:US:Bank:Checking "ROOT/Assets/US/Bank/Checking/2014-06-08.bank-statement.pdf"
           2014-07-01 document Assets:US:Bank:Savings  "ROOT/Assets/US/Bank/Savings/2014-07-01.savings.pdf"
           2014-07-10 document Assets:US:Bank:Savings  "ROOT/Assets/US/Bank/Savings/2014-07-10.something-else.pdf"
         """).replace('ROOT', self.root))
 
-        _, errors = documents.verify_document_entries(entries)
+        _, errors = documents.verify_document_files_exist(entries, options_map)
         self.assertEqual(1, len(errors))
         document_error = errors[0]
         self.assertTrue(
@@ -126,3 +124,53 @@ class TestDocuments(account_test.TestWalk,
             self.root, '/tmp/input.beancount', accounts)
         self.assertEqualEntries(entries1[:1], entries6)
         self.assertEqual([], errors1)
+
+
+class TestDocumentsConstraints(account_test.TmpFilesTestBase, cmptest.TestCase):
+
+    TEST_DOCUMENTS = [
+        'root/Assets/',
+        'root/Assets/US/2014-01-01.us.pdf',
+        'root/Assets/US/Bank/2014-02-01.bank.pdf',
+        'root/Assets/US/Bank/Checking/2014-03-01.checking.pdf',
+        'root/Assets/US/Bank/Savings/2014-03-02.savings.pdf',
+    ]
+
+    def test_find_documents__no_constraint(self):
+        expected_dates = [datetime.date(2014, 1, 1),
+                          datetime.date(2014, 2, 1),
+                          datetime.date(2014, 3, 1),
+                          datetime.date(2014, 3, 2)]
+
+        entries, errors = documents.find_documents(
+            self.root, '/tmp/input.beancount')
+        self.assertFalse(errors)
+        self.assertEqual(expected_dates, [entry.date for entry in entries])
+
+    def test_find_documents__with_leaf_constraints(self):
+        expected_dates = [datetime.date(2014, 3, 1), datetime.date(2014, 3, 2)]
+
+        entries, errors = documents.find_documents(
+            self.root, '/tmp/input.beancount', {'Assets:US:Bank:Checking',
+                                                'Assets:US:Bank:Savings'}, True)
+        self.assertEqual(2, len(errors))
+        self.assertEqual(expected_dates, [entry.date for entry in entries])
+
+        entries, errors = documents.find_documents(
+            self.root, '/tmp/input.beancount', {'Assets:US:Bank:Checking',
+                                                'Assets:US:Bank:Savings'}, False)
+        self.assertEqual(0, len(errors))
+        self.assertEqual(expected_dates, [entry.date for entry in entries])
+
+    def test_find_documents__with_parent_constraints(self):
+        expected_dates = [datetime.date(2014, 2, 1)]
+
+        entries, errors = documents.find_documents(
+            self.root, '/tmp/input.beancount', {'Assets:US:Bank'}, True)
+        self.assertEqual(3, len(errors))
+        self.assertEqual(expected_dates, [entry.date for entry in entries])
+
+        entries, errors = documents.find_documents(
+            self.root, '/tmp/input.beancount', {'Assets:US:Bank'}, False)
+        self.assertEqual(0, len(errors))
+        self.assertEqual(expected_dates, [entry.date for entry in entries])

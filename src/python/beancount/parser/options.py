@@ -1,12 +1,16 @@
 """
 Declaration of options and their default values.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import io
 import textwrap
 
 from beancount.core import account_types
 from beancount.core import account
+from beancount.core import amount
+from beancount.core import display_context
 
 
 # list of option groups, with their description, option names and default
@@ -28,6 +32,13 @@ PRIVATE_OPTION_GROUPS = [
       contents of the ledger have been extracted. This may be None, if no file
       was used.
     """, [OptDesc("filename", None, None)]),
+
+    OptGroup("""
+      An instance of DisplayContext, which is used to format numbers for output
+      with precision inferred from that in the input file. This is created
+      automatically by the parser.
+    """, [OptDesc("display_context",
+                  display_context.DisplayContext(), display_context.DisplayContext())]),
     ]
 
 
@@ -43,7 +54,9 @@ PUBLIC_OPTION_GROUPS = [
       Root names of every account. This can be used to customize your category
       names, so that if you prefer "Revenue" over "Income" or "Capital" over
       "Equity", you can set them here. The account names in your input files
-      must match, and the parser will validate these.
+      must match, and the parser will validate these. You should place these
+      options at the beginning of your file, because they affect how the parser
+      recognizes account names.
     """, [
         OptDesc("name_assets", _TYPES.assets, _TYPES.assets),
         OptDesc("name_liabilities", _TYPES.liabilities, _TYPES.liabilities),
@@ -95,6 +108,14 @@ PUBLIC_OPTION_GROUPS = [
                   "NOTHING", "NOTHING")]),
 
     OptGroup("""
+      The tolerance allowed for balance checks and padding directives. In the
+      real world, rounding occurs in various places, and we need to allow a
+      small (but very small) amount of tolerance in checking the balance of
+      transactions and in requiring padding entries to be auto-inserted. This is
+      the tolerance amount, which you can override.
+    """, [OptDesc("tolerance", "0.015", "0.015")]),
+
+    OptGroup("""
       A list of directory roots, relative to the CWD, which should be searched
       for document files. For the document files to be automatically found they
       must have the following filename format: YYYY-MM-DD.(.*)
@@ -115,19 +136,43 @@ PUBLIC_OPTION_GROUPS = [
     """, [OptDesc("operating_currency", [], "USD")]),
 
     OptGroup("""
+      A boolean, true if the number formatting routines should output commas
+      as thousand separators in numbers.
+    """, [OptDesc("render_commas", "", "")]),
+
+    OptGroup("""
+      A string that defines which set of plugins is to be run by the loader: if
+      the mode is "default", a preset list of plugins are automatically run
+      before any user plugin. If the mode is "raw", no preset plugins are run at
+      all, only user plugins are run (the user should explicitly load the
+      desired list of plugins by using the 'plugin' option. This is useful in case the
+      user wants full control over the ordering in which the plugins are run).
+    """, [OptDesc("plugin_processing_mode", "default", "raw")]),
+
+    OptGroup("""
       A list of Python modules containing transformation functions to run the
       entries through after parsing. The parser reads the entries as they are,
       transforms them through a list of standard functions, such as balance
       checks and inserting padding entries, and then hands the entries over to
       those plugins to add more auto-generated goodies. The list is a list of
-      strings, each string should be the name of a Python module to import, and
-      within the module we expect a special '__plugins__' attribute that should
-      list the name of transform functions to run the entries through. Each
-      function accepts a pair of (entries, options_map) and should return a pair
-      of (new entries, error instances). Errors should not be printed out the
-      output, they will be converted to strins by the loader and displayed as
-      dictacted by the output medium.
-    """, [OptDesc("plugin", [], "beancount.plugins.module_name:OPTION")]),
+      pairs/tuples, in the format (plugin-name, plugin-configuration). The
+      plugin-name should be the name of a Python module to import, and within
+      the module we expect a special '__plugins__' attribute that should list
+      the name of transform functions to run the entries through. The
+      plugin-configuration argument is an optional string to be provided by the
+      user. Each function accepts a pair of (entries, options_map) and should
+      return a pair of (new entries, error instances). If a plugin configuration
+      is provided, it is provided as an extra argument to the plugin function.
+      Errors should not be printed out the output, they will be converted to
+      strins by the loader and displayed as dictacted by the output medium.
+    """, [OptDesc("plugin", [], "beancount.plugins.module_name")]),
+
+    OptGroup("""
+      The number of lines beyond which a multi-line string will trigger a
+      overly long line warning. This warning is meant to help detect a dangling
+      quote by warning users of unexpectedly long strings.
+    """, [OptDesc("long_string_maxlines", 64, 64)]),
+
     ]
 
 
@@ -162,7 +207,7 @@ def get_account_types(options):
 
 
 def get_previous_accounts(options):
-    """Return Account objects for the opening, earnings, and conversion accounts.
+    """Return account names for the previous earnings, balances and conversion accounts.
 
     Args:
       options: a dict of ledger options.
@@ -183,7 +228,7 @@ def get_previous_accounts(options):
 
 
 def get_current_accounts(options):
-    """Return Account objects for the opening, earnings, and conversion accounts.
+    """Return account names for the current earnings and conversion accounts.
 
     Args:
       options: a dict of ledger options.

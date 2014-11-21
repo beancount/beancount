@@ -1,0 +1,47 @@
+2000-01-01 open Equity:Opening-Balances
+
+2000-01-01 open Assets:MyBank:Checking      USD
+
+2013-01-01 open Assets:ScotiaBank:Cash      USD
+2013-01-01 open Assets:ScotiaBank:VTI       VTI
+2013-01-01 open Assets:ScotiaBank:LQD       LQD
+2013-01-01 open Income:ScotiaBank:Gains     USD
+
+2013-01-01 * "Opening"
+  Assets:MyBank:Checking		20000.00 USD
+  Equity:Opening-Balances
+
+2013-02-10 * "Contribution"
+  Assets:MyBank:Checking		-3000.00 USD
+  Assets:ScotiaBank:Cash
+
+2013-04-01 * "Buy some ETFs"
+  Assets:ScotiaBank:VTI            50 VTI {50.00 USD}
+  Assets:ScotiaBank:Cash     -2500.00 USD
+
+2013-08-01 * "Sell some ETFs"
+  Assets:ScotiaBank:VTI           -40 VTI {50.00 USD}
+  Assets:ScotiaBank:Cash      2100.00 USD
+  Income:ScotiaBank:Gains
+
+2013-08-15 price VTI  55.00 USD
+
+2013-09-20 * "Withdrawal"
+  Assets:ScotiaBank:Cash      -500.00 USD
+  Assets:MyBank:Checking
+
+2014-01-01 price VTI  52.00 USD
+
+2014-01-12 * "Buy some bonds"
+  Assets:ScotiaBank:LQD     10 LQD {102.22 USD}
+  Assets:ScotiaBank:Cash
+
+2014-02-15 * "Contribution"
+  Assets:MyBank:Checking    -150 USD
+  Assets:ScotiaBank:Cash
+
+2014-03-01 * "Receive dividend"
+  Income:ScotiaBank:Dividends    -150 USD
+  Assets:ScotiaBank:Cash
+
+2014-01-01 price VTI  58.00 USD

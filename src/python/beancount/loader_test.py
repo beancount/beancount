@@ -1,3 +1,6 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
+import logging
 import unittest
 import tempfile
 
@@ -39,15 +42,16 @@ class TestLoader(unittest.TestCase):
 
     def test_load(self):
         with test_utils.capture():
-            with tempfile.NamedTemporaryFile('w') as f:
-                f.write(TEST_INPUT)
-                f.flush()
-                entries, errors, options_map = loader.load(f.name)
+            with tempfile.NamedTemporaryFile('w') as tmpfile:
+                tmpfile.write(TEST_INPUT)
+                tmpfile.flush()
+                entries, errors, options_map = loader.load_file(tmpfile.name)
                 self.assertTrue(isinstance(entries, list))
                 self.assertTrue(isinstance(errors, list))
                 self.assertTrue(isinstance(options_map, dict))
 
-                entries, errors, options_map = loader.load(f.name, log_function=print)
+                entries, errors, options_map = loader.load_file(tmpfile.name,
+                                                                log_timings=logging.info)
                 self.assertTrue(isinstance(entries, list))
                 self.assertTrue(isinstance(errors, list))
                 self.assertTrue(isinstance(options_map, dict))
@@ -60,7 +64,7 @@ class TestLoader(unittest.TestCase):
             self.assertTrue(isinstance(options_map, dict))
 
             entries, errors, options_map = loader.load_string(TEST_INPUT,
-                                                              log_function=print)
+                                                              log_timings=logging.info)
             self.assertTrue(isinstance(entries, list))
             self.assertTrue(isinstance(errors, list))
             self.assertTrue(isinstance(options_map, dict))

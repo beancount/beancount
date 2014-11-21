@@ -1,16 +1,21 @@
 """
 Tests for parser.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import unittest
 import inspect
+import tempfile
+import sys
+import subprocess
 
-from beancount.parser import parsedoc
-from beancount.parser import parser, ParserError
+from beancount.parser.parser import parsedoc
+from beancount.parser import parser
 from beancount.parser import lexer
-from beancount.core.data import Transaction, Balance, Open, Close, Pad, Event, Price, Note
-from beancount.core.amount import Amount
-from beancount.core import complete
-from beancount.parser import printer
+from beancount.core import data
+from beancount.core import amount
+from beancount.core import interpolate
+from beancount.core import interpolate_test
 
 
 def check_list(test, objlist, explist):
@@ -33,6 +38,42 @@ def check_list(test, objlist, explist):
             test.assertTrue(isinstance(type(obj), type(exp)))
 
 
+class TestParserInputs(unittest.TestCase):
+    """Try difference sources for the parser's input."""
+
+    INPUT = """
+      2013-05-18 * "Nice dinner at Mermaid Inn"
+        Expenses:Restaurant         100 USD
+        Assets:US:Cash
+    """
+
+    def test_parse_string(self):
+        entries, errors, _ = parser.parse_string(self.INPUT)
+        self.assertEqual(1, len(entries))
+        self.assertEqual(0, len(errors))
+
+    def test_parse_file(self):
+        with tempfile.NamedTemporaryFile('w', suffix='.beancount') as file:
+            file.write(self.INPUT)
+            file.flush()
+            entries, errors, _ = parser.parse_file(file.name)
+            self.assertEqual(1, len(entries))
+            self.assertEqual(0, len(errors))
+
+    @classmethod
+    def parse_stdin(cls):
+        entries, errors, _ = parser.parse_file("-")
+        assert entries
+        assert not errors
+
+    def test_parse_stdin(self):
+        code = ('import beancount.parser.parser_test as p; '
+                'p.TestParserInputs.parse_stdin()')
+        pipe = subprocess.Popen([sys.executable, '-c', code, __file__],
+                                stdin=subprocess.PIPE)
+        output, errors = pipe.communicate(self.INPUT.encode('utf-8'))
+
+
 class TestParserEntryTypes(unittest.TestCase):
     """Basic smoke test one entry of each kind."""
 
@@ -43,7 +84,7 @@ class TestParserEntryTypes(unittest.TestCase):
             Expenses:Restaurant         100 USD
             Assets:US:Cash
         """
-        check_list(self, entries, [Transaction])
+        check_list(self, entries, [data.Transaction])
 
     @parsedoc
     def test_entry_transaction_2(self, entries, _, __):
@@ -52,70 +93,78 @@ class TestParserEntryTypes(unittest.TestCase):
             Expenses:Restaurant         100 USD
             Assets:US:Cash
         """
-        check_list(self, entries, [Transaction])
+        check_list(self, entries, [data.Transaction])
 
     @parsedoc
-    def test_entry_check(self, entries, _, __):
+    def test_entry_balance(self, entries, _, __):
         """
           2013-05-18 balance Assets:US:BestBank:Checking  200 USD
         """
-        check_list(self, entries, [Balance])
+        check_list(self, entries, [data.Balance])
+
+    @parsedoc
+    def test_entry_balance_with_cost(self, entries, errors, __):
+        """
+          2013-05-18 balance Assets:Investments  10 MSFT {45.30 USD}
+        """
+        check_list(self, entries, [])
+        check_list(self, errors, [parser.ParserSyntaxError])
 
     @parsedoc
     def test_entry_open_1(self, entries, _, __):
         """
           2013-05-18 open Assets:US:BestBank:Checking
         """
-        check_list(self, entries, [Open])
+        check_list(self, entries, [data.Open])
 
     @parsedoc
     def test_entry_open_2(self, entries, _, __):
         """
           2013-05-18 open Assets:US:BestBank:Checking   USD
         """
-        check_list(self, entries, [Open])
+        check_list(self, entries, [data.Open])
 
     @parsedoc
-    def test_entry_open_3(self, entries, _, __):
+    def test_entry_open_3(self, entries, errors, __):
         """
           2013-05-18 open Assets:Cash   USD,CAD,EUR
         """
-        check_list(self, entries, [Open])
+        check_list(self, entries, [data.Open])
 
     @parsedoc
     def test_entry_close(self, entries, _, __):
         """
           2013-05-18 close Assets:US:BestBank:Checking
         """
-        check_list(self, entries, [Close])
+        check_list(self, entries, [data.Close])
 
     @parsedoc
     def test_entry_pad(self, entries, _, __):
         """
-          2013-05-18 pad Assets:US:BestBank:Checking  Equity:Opening-Balancess
+          2013-05-18 pad Assets:US:BestBank:Checking  Equity:Opening-Balances
         """
-        check_list(self, entries, [Pad])
+        check_list(self, entries, [data.Pad])
 
     @parsedoc
     def test_entry_event(self, entries, _, __):
         """
           2013-05-18 event "location" "New York, USA"
         """
-        check_list(self, entries, [Event])
+        check_list(self, entries, [data.Event])
 
     @parsedoc
     def test_entry_note(self, entries, _, __):
         """
           2013-05-18 note Assets:US:BestBank:Checking  "Blah, di blah."
         """
-        check_list(self, entries, [Note])
+        check_list(self, entries, [data.Note])
 
     @parsedoc
     def test_entry_price(self, entries, _, __):
         """
           2013-05-18 price USD   1.0290 CAD
         """
-        check_list(self, entries, [Price])
+        check_list(self, entries, [data.Price])
 
 
 class TestParserComplete(unittest.TestCase):
@@ -127,7 +176,7 @@ class TestParserComplete(unittest.TestCase):
           2013-05-18 * "Nice dinner at Mermaid Inn"
             Expenses:Restaurant         0 USD
         """
-        check_list(self, entries, [Transaction])
+        check_list(self, entries, [data.Transaction])
         check_list(self, errors, 0)
 
     @parsedoc
@@ -136,8 +185,8 @@ class TestParserComplete(unittest.TestCase):
           2013-05-18 * "Nice dinner at Mermaid Inn"
             Expenses:Restaurant         100 USD
         """
-        check_list(self, entries, [Transaction])
-        check_list(self, errors, 1)
+        check_list(self, entries, [data.Transaction])
+        check_list(self, errors, 1 if interpolate_test.ERRORS_ON_RESIDUAL else 0)
         entry = entries[0]
         self.assertEqual(1, len(entry.postings))
 
@@ -170,7 +219,7 @@ class TestUglyBugs(unittest.TestCase):
     def test_extra_whitespace_note(self):
         input_ = '\n2013-07-11 note Assets:Cash "test"\n\n  ;;\n'
         entries, errors, _ = parser.parse_string(input_)
-        check_list(self, entries, [Note])
+        check_list(self, entries, [data.Note])
         check_list(self, errors, [])
 
     def test_extra_whitespace_transaction(self):
@@ -183,7 +232,7 @@ class TestUglyBugs(unittest.TestCase):
         ])
 
         entries, errors, _ = parser.parse_string(input_, yydebug=0)
-        check_list(self, entries, [Transaction])
+        check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
 
     def test_extra_whitespace_comment(self):
@@ -194,8 +243,36 @@ class TestUglyBugs(unittest.TestCase):
             '  ;;',
         ])
         entries, errors, _ = parser.parse_string(input_)
-        check_list(self, entries, [Transaction])
+        check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
+
+    @parsedoc
+    def test_indent_eof(self, entries, errors, _):
+        "\t"
+        check_list(self, entries, [])
+        check_list(self, errors, [])
+
+    @parsedoc
+    def test_comment_eof(self, entries, errors, _):
+        "; comment"
+        check_list(self, entries, [])
+        check_list(self, errors, [])
+
+    @parsedoc
+    def test_no_empty_lines(self, entries, errors, _):
+        """
+          2013-05-01 open Assets:Cash   USD,CAD,EUR
+          2013-05-02 close Assets:US:BestBank:Checking
+          2013-05-03 pad Assets:US:BestBank:Checking  Equity:Opening-Balancess
+          2013-05-04 event "location" "New York, USA"
+          2013-05-05 * "Payee" "Narration"
+            Assets:US:BestBank:Checking   100.00 USD
+            Assets:Cash
+          2013-05-06 note Assets:US:BestBank:Checking  "Blah, di blah."
+          2013-05-07 price USD   1.0290 CAD
+        """
+        self.assertEqual(7, len(entries))
+        self.assertEqual([], errors)
 
 
 class TestMultipleLines(unittest.TestCase):
@@ -244,7 +321,7 @@ class TestSyntaxErrors(unittest.TestCase):
 
         # Check that we indeed read the 'check' entry that comes after the one
         # with the error.
-        check_list(self, entries, [Balance])
+        check_list(self, entries, [data.Balance])
 
         # Make sure at least one error is reported.
         self.assertTrue(parser.ParserSyntaxError in map(type, errors))
@@ -270,9 +347,9 @@ class TestLineNumbers(unittest.TestCase):
             TestLineNumbers.test_line_numbers.__wrapped__)
         first_line += 1
 
-        self.assertEqual(2, entries[0].fileloc.lineno - first_line)
-        self.assertEqual(6, entries[1].fileloc.lineno - first_line)
-        self.assertEqual(8, entries[2].fileloc.lineno - first_line)
+        self.assertEqual(2, entries[0].source.lineno - first_line)
+        self.assertEqual(6, entries[1].source.lineno - first_line)
+        self.assertEqual(8, entries[2].source.lineno - first_line)
 
 
 class TestParserOptions(unittest.TestCase):
@@ -318,6 +395,64 @@ class TestParserOptions(unittest.TestCase):
         self.assertNotEqual("filename", "gniagniagniagniagnia")
 
 
+class TestParserPlugin(unittest.TestCase):
+
+    @parsedoc
+    def test_plugin(self, entries, errors, options_map):
+        """
+          plugin "beancount.plugin.unrealized"
+        """
+        self.assertFalse(errors)
+        self.assertEqual([('beancount.plugin.unrealized', None)],
+                         options_map['plugin'])
+
+    @parsedoc
+    def test_plugin_with_config(self, entries, errors, options_map):
+        """
+          plugin "beancount.plugin.unrealized" "Unrealized"
+        """
+        self.assertFalse(errors)
+        self.assertEqual([('beancount.plugin.unrealized', 'Unrealized')],
+                         options_map['plugin'])
+
+    # Note: this is testing the old method, which will become obsolete one day.
+    @parsedoc
+    def test_plugin_as_option(self, entries, errors, options_map):
+        """
+          option "plugin" "beancount.plugin.unrealized"
+        """
+        self.assertFalse(errors)
+        self.assertEqual([('beancount.plugin.unrealized', None)],
+                         options_map['plugin'])
+
+    @parsedoc
+    def test_plugin_as_option_with_config(self, entries, errors, options_map):
+        """
+          option "plugin" "beancount.plugin.unrealized:Unrealized"
+        """
+        self.assertFalse(errors)
+        self.assertEqual([('beancount.plugin.unrealized', 'Unrealized')],
+                         options_map['plugin'])
+
+
+class TestDisplayContextOptions(unittest.TestCase):
+
+    @parsedoc
+    def test_render_commas_no(self, _, __, options_map):
+        """
+          option "render_commas" "0"
+        """
+        self.assertEqual(False, options_map['render_commas'])
+
+    @parsedoc
+    def test_render_commas_yes(self, _, __, options_map):
+        """
+          option "render_commas" "1"
+        """
+        self.assertEqual(True, options_map['render_commas'])
+
+
+
 class TestParserLinks(unittest.TestCase):
 
     @parsedoc
@@ -328,7 +463,7 @@ class TestParserLinks(unittest.TestCase):
             Assets:US:Cash
 
         """
-        check_list(self, entries, [Transaction])
+        check_list(self, entries, [data.Transaction])
         self.assertEqual(entries[0].links, set(['38784734873']))
 
 
@@ -341,7 +476,7 @@ class TestTransactions(unittest.TestCase):
             Expenses:Restaurant         100 USD
             Assets:US:Cash
         """
-        check_list(self, entries, [Transaction])
+        check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
         self.assertEqual(None, entries[0].payee)
         self.assertEqual("Nice dinner at Mermaid Inn", entries[0].narration)
@@ -359,7 +494,7 @@ class TestTransactions(unittest.TestCase):
             Assets:US:BestBank:Checking
 
         """
-        check_list(self, entries, [Transaction, Transaction])
+        check_list(self, entries, [data.Transaction, data.Transaction])
         check_list(self, errors, [])
         self.assertEqual(None, entries[0].payee)
         self.assertEqual("Nice dinner at Mermaid Inn", entries[0].narration)
@@ -373,7 +508,7 @@ class TestTransactions(unittest.TestCase):
             Expenses:Restaurant         100 USD
             Assets:US:Cash
         """
-        check_list(self, entries, [Transaction])
+        check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
         self.assertEqual("", entries[0].narration)
         self.assertEqual(None, entries[0].payee)
@@ -385,7 +520,7 @@ class TestTransactions(unittest.TestCase):
             Expenses:Restaurant         100 USD
             Assets:US:Cash
         """
-        check_list(self, entries, [Transaction])
+        check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
         self.assertEqual("", entries[0].narration)
         self.assertEqual(None, entries[0].payee)
@@ -399,8 +534,8 @@ class TestTransactions(unittest.TestCase):
         """
         # Make sure a single string and a pipe raises an error, because '|' does
         # not carry any special meaning anymore.
-        check_list(self, entries, [Transaction])
-        check_list(self, errors, [ParserError])
+        check_list(self, entries, [data.Transaction])
+        check_list(self, errors, [parser.ParserError])
         self.assertEqual(None, entries[0].payee)
         self.assertEqual("Mermaid Inn", entries[0].narration)
 
@@ -412,7 +547,7 @@ class TestTransactions(unittest.TestCase):
             Assets:US:Cash
         """
         check_list(self, entries, [])
-        check_list(self, errors, [ParserError])
+        check_list(self, errors, [parser.ParserError])
 
     @parsedoc
     def test_link_and_then_tag(self, entries, errors, _):
@@ -421,7 +556,7 @@ class TestTransactions(unittest.TestCase):
             Expenses:Restaurant         100 USD
             Assets:US:Cash
         """
-        check_list(self, entries, [Transaction])
+        check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
         self.assertEqual("Money from CC", entries[0].narration)
         self.assertEqual(None, entries[0].payee)
@@ -435,7 +570,7 @@ class TestTransactions(unittest.TestCase):
             Expenses:Restaurant         100 USD
             Assets:US:Cash
         """
-        check_list(self, entries, [Transaction])
+        check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
         self.assertEqual("Money from CC", entries[0].narration)
         self.assertEqual(None, entries[0].payee)
@@ -450,8 +585,28 @@ class TestTransactions(unittest.TestCase):
             Equity:Conversions         101 CAD @ 0 XFER
             Equity:Conversions         102 AUD @ 0 XFER
         """
-        check_list(self, entries, [Transaction])
+        check_list(self, entries, [data.Transaction])
         check_list(self, errors, [])
+
+    @parsedoc
+    def test_zero_units(self, entries, errors, _):
+        """
+          2014-04-20 * "Zero number of units"
+            Assets:Investment         0 GOOG {500.00 USD}
+            Assets:Cash
+        """
+        check_list(self, entries, [data.Transaction])
+        check_list(self, errors, [parser.ParserError])
+
+    @parsedoc
+    def test_zero_costs(self, entries, errors, _):
+        """
+          2014-04-20 * "Like a conversion entry"
+            Assets:Investment         10 GOOG {0 USD}
+            Assets:Cash
+        """
+        check_list(self, entries, [data.Transaction])
+        check_list(self, errors, [parser.ParserError])
 
     @parsedoc
     def test_imbalance(self, entries, errors, _):
@@ -460,8 +615,17 @@ class TestTransactions(unittest.TestCase):
             Assets:Checking         100 USD
             Assets:Checking         -99 USD
         """
-        check_list(self, entries, [Transaction])
-        check_list(self, errors, [complete.BalanceError])
+        check_list(self, entries, [data.Transaction])
+        check_list(self, errors,
+                   [interpolate.BalanceError]
+                   if interpolate_test.ERRORS_ON_RESIDUAL else [])
+
+    @parsedoc
+    def test_no_postings(self, entries, errors, _):
+        """
+          2014-07-17 * "(JRN) INTRA-ACCOUNT TRANSFER" ^795422780
+        """
+        self.assertTrue(isinstance(entries[0].postings, list))
 
 
 class TestCurrencies(unittest.TestCase):
@@ -487,14 +651,14 @@ class TestBalance(unittest.TestCase):
             Assets:Investments:Cash
         """
         posting = entries[0].postings[0]
-        self.assertEqual(Amount('200', 'USD'), posting.price)
+        self.assertEqual(amount.from_string('200 USD'), posting.price)
         self.assertEqual(None, posting.position.lot.cost)
 
     @parsedoc
     def test_total_cost(self, entries, errors, _):
         """
           2013-05-18 * ""
-            Assets:Investments:MSFT      10 MSFT {{2000 USD}}
+            Assets:Investments:MSFT      10 MSFT {{2,000 USD}}
             Assets:Investments:Cash
 
           2013-05-18 * ""
@@ -503,7 +667,7 @@ class TestBalance(unittest.TestCase):
         """
         for entry in entries:
             posting = entry.postings[0]
-            self.assertEqual(Amount('200', 'USD'), posting.position.lot.cost)
+            self.assertEqual(amount.from_string('200 USD'), posting.position.lot.cost)
             self.assertEqual(None, posting.price)
 
 
@@ -585,3 +749,25 @@ class TestMetaData(unittest.TestCase):
             test1: "Something"
         """
         self.assertEqual(9, len(entries))
+
+
+class TestLexerErrors(unittest.TestCase):
+
+    @parsedoc
+    def test_bad_account(self, entries, errors, _):
+        """
+          2011-01-01 open Assets:A
+        """
+        self.assertEqual([], entries)
+        self.assertEqual([parser.ParserSyntaxError, lexer.LexerError],
+                         list(map(type, errors)))
+
+    @parsedoc
+    def test_no_final_newline(self, entries, errors, _):
+        """
+          2014-11-02 *
+            Assets:Something   1 USD
+            Assets:Other      -1 USD"""
+        self.assertFalse(errors)
+        self.assertEqual(1, len(entries))
+        self.assertEqual(2, len(entries[0].postings))

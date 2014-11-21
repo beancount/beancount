@@ -1,6 +1,5 @@
 """
 Web server reporting front-end.
 """
-from beancount.web.web import main
+__author__ = "Martin Blais <blais@furius.ca>"
 
-__all__ = ('main',)

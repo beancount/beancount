@@ -1,21 +1,26 @@
 """Beancount syntax lexer.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import datetime
 import re
 import tempfile
 
 from beancount.core import data
+from beancount.core import account
 from beancount.core.amount import Decimal
 from beancount.parser import _parser
 
 
-LexerError = collections.namedtuple('LexerError', 'fileloc message entry')
+LexerError = collections.namedtuple('LexerError', 'source message entry')
 
 
 class LexBuilder(object):
     """A builder used only for getting the lexer to pass.
     The methods do nothing."""
+
+    # pylint: disable=invalid-name
 
     def __init__(self):
         # A mapping of all the accounts created.
@@ -27,14 +32,38 @@ class LexBuilder(object):
         # Errors that occurred during lexing and parsing.
         self.errors = []
 
+        # Default number of lines as threshold to warn over long strings.
+        self.long_string_maxlines_default = 64
+
+    def get_invalid_account(self):
+        """Return the name of an invalid account placeholder.
+
+        When an account name is not deemed a valid one, replace it by
+        this account name. This can be overridden by the parser to
+        take into account the options.
+
+        Returns:
+          A string, the name of the root/type for invalid account names.
+        """
+        return 'Equity:InvalidAccountName'
+
+    def get_long_string_maxlines(self):
+        """Number of lines for a string to trigger a warning.
+        This is meant to help users detecting dangling quotes in their source.
+
+        Returns:
+          An integer, the number of characters beyond which to warm about a string.
+        """
+        return self.long_string_maxlines_default
+
     def get_lexer_location(self):
-        return data.FileLocation(_parser.get_yyfilename(),
-                                 _parser.get_yylineno())
+        return data.Source(_parser.get_yyfilename(),
+                           _parser.get_yylineno())
 
     def ERROR(self, string):
         self.errors.append(
             LexerError(self.get_lexer_location(),
-                       "Lexer error; erroneous token: {}".format(string),
+                       "Lexer error; erroneous token: '{}'".format(string),
                        None))
 
     def DATE(self, year, month, day):
@@ -47,7 +76,12 @@ class LexBuilder(object):
         Returns:
           A new datetime object.
         """
-        return datetime.date(year, month, day)
+        try:
+            return datetime.date(year, month, day)
+        except ValueError as exc:
+            self.errors.append(
+                LexerError(self.get_lexer_location(), str(exc), None))
+            return None
 
     def ACCOUNT(self, account_name):
         """Process an ACCOUNT token.
@@ -58,7 +92,7 @@ class LexBuilder(object):
         Args:
           account_name: a str, the valid name of an account.
         Returns:
-          A new Account object.
+          A string, the naem of the account.
         """
         # Check account name validity.
         if not self.account_regexp.match(account_name):
@@ -66,7 +100,7 @@ class LexBuilder(object):
                 LexerError(self.get_lexer_location(),
                            "Invalid account name: {}".format(account_name),
                            None))
-            return account.join(self.options['name_equity'], 'InvalidAccountName')
+            return account.join(self.get_invalid_account())
 
         # Create an account, reusing their strings as we go.
         try:
@@ -96,6 +130,15 @@ class LexBuilder(object):
           The string. Nothing to be done or cleaned up. Eventually we might
           do some decoding here.
         """
+        # If a multiline string, warm over a certain number of lines.
+        if '\n' in string:
+            num_lines = string.count('\n') + 1
+            if num_lines > self.get_long_string_maxlines():
+                self.errors.append(
+                    LexerError(
+                        self.get_lexer_location(),
+                        "Overly long string ({} lines); possible error".format(num_lines),
+                        None))
         return string
 
     def NUMBER(self, number):
@@ -107,6 +150,9 @@ class LexBuilder(object):
           A Decimal instance built of the number string.
         """
         try:
+            # Note: We don't use D() for efficiency here.
+            if ',' in number:
+                number = number.replace(',', '')
             return Decimal(number)
         except Exception as e:
             self.errors.append(

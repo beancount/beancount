@@ -2,3 +2,72 @@
    beancount: CHANGES
 ========================
 
+2014-11-13
+
+  - Added a new "beancount.plugins.ira_contribs" module that automatically
+    inserts postings for tracking pre-tax money contributions.
+
+
+2014-11-11
+
+  - The precision of rendered numbers isn't quantized nor subject to hard-coded
+    maximums anymore. I cleaned this up. There is a new "DisplayContext" object
+    that maintains the most common and maximum precisions to be used to render
+    each currency, and this precision is derived automatically from the numbers
+    used in the input file (the most common is the mode of the distribution of
+    numbers seen). The alignment of the printer's amounts is now also fixed (it
+    rendered correct transactions lately but alignment was a little borked), and
+    the output is now kept as tightly as possible close to the account names.
+
+  - Numbers don't render with commas by default anymore. There is a new option:
+    'render_commas' that you can set to have commas in numbers rendered in all
+    the routines that output numbers.
+
+
+2014-11-09
+
+  - A new directive has been created: "plugin" that accepts the an optional
+    plugin-configuration string. Instead of
+
+      option "plugin" "<module>"
+      option "plugin" "<module>:<config>"
+
+    Now use:
+
+      plugin "<module>"
+      plugin "<module>" "<config>"
+
+    The plugin option will remain functional for a while. The configuration
+    string is as previously a free-form string whose meaning is to be defined by
+    the plugin itself.
+
+  - The parser now stores the distribution of the precisions of all the numbers
+    it parses, and this adds a little bit of overhead (about 4%). With a large
+    file, you might notice a little tiny bit of extra slowness. The reason I
+    created this is in order to automatically infer reasonable defaults for the
+    display precision (used in the SQL shell at the moment).
+
+  - Renamed the 'bean-query' tool to 'bean-report'. There is a good reason for
+    this: there is a new tool coming that will provide an command-shell to make
+    interactive queries on your ledger contents. This tool will be
+    called--appropriately--"bean-query". I decided that the two tools should be
+    separate: "bean-report" will be used to render custom-coded reports (nothing
+    changes), and "bean-query" will be used to build reports out of SQL-like
+    queries. I'm hoping that eventually bean-query functionality will entirely
+    subsume bean-report reports, but that is unclear at this point.
+
+  - Made default rendering for changes and balances of HTML reports by units().
+    Rendering all the lots was horrible in even moderately complex stock trading
+    accounts with a few positions. Now we aggregate by currency ("units").
+
+     In order for the user to be able to view the previously available lot
+     detail from the web interface, we now provide a link to the "context",
+     which is a link specific to a transaction that renders the balances for all
+     the accounts just before the transaction is applied, and just after.
+
+  - (Internal) Renamed beancount.core.complete to beancount.core.interpolate.
+    I've been using the term interpolate for a while now, in the docs, and it's
+    way more telling than complete.
+
+
+(Beginning to summarize user-facing changes 2014-11-09.)

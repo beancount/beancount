@@ -1,21 +1,22 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import itertools
 import unittest
 import datetime
 
-from beancount.core.amount import to_decimal, ZERO
+from beancount.core.amount import D
+from beancount.core.amount import ZERO
+from beancount.core import position
 from beancount.ops import holdings
 from beancount.ops import prices
-from beancount.parser import parsedoc
-
-
-D = to_decimal
+from beancount import loader
 
 
 class TestHoldings(unittest.TestCase):
 
     maxDiff = 4096
 
-    @parsedoc
+    @loader.loaddoc
     def test_get_final_holdings(self, entries, _, __):
         """
         2013-01-01 open Assets:Account1
@@ -89,7 +90,27 @@ class TestHoldings(unittest.TestCase):
                            if holding[0].startswith('Assets')]
         self.assertEqual(expected_values, holdings_list)
 
-    @parsedoc
+    @loader.loaddoc
+    def test_get_final_holdings__check_no_aggregates(self, entries, _, __):
+        """
+        option "plugin" "beancount.plugins.unrealized:Unrealized"
+
+        2013-01-01 open Assets:Investment   GOOG
+        2013-01-01 open Assets:Cash         USD
+
+        2013-04-01 *
+          Assets:Investment             15 GOOG {518.73 USD}
+          Assets:Cash
+
+        2013-06-01 price GOOG  600.00 USD
+        """
+        holdings_list = holdings.get_final_holdings(entries)
+
+        # Ensure that there is no Unrealized balance or sub-account.
+        self.assertEqual({'Assets:Cash', 'Assets:Investment'},
+                         set(holding.account for holding in holdings_list))
+
+    @loader.loaddoc
     def test_get_final_holdings_with_prices(self, entries, _, __):
         """
         2013-01-01 open Assets:Account1
@@ -176,7 +197,7 @@ class TestHoldings(unittest.TestCase):
         ]))
         expected_holdings = sorted(itertools.starmap(holdings.Holding, [
             ('Assets:Account1', D('10'), 'AAPL', D('593.27'), 'USD',
-             D('5932.70'), D('6000.10'), D('600.01'), None),
+             D('5932.70'), D('6000.10'), D('600.01'), datetime.date(2014, 3, 1)),
 
             ('Assets', D('30'), 'GOOG', D('519.07'), 'USD',
              D('15572.10'), D('17402.20'), D('580.0733333333333333333333333'), None),
@@ -206,7 +227,7 @@ class TestHoldings(unittest.TestCase):
              D('11120.00'), D('11780.30'), D('589.015'), None),
 
             ('Assets:Account2', D('20'), 'GOOG', D('519.24'), 'USD',
-             D('10384.80'), D('11622.00'), D('581.10'), None),
+             D('10384.80'), D('11622.00'), D('581.10'), datetime.date(2014, 2, 15)),
 
             ('Assets:Cash', D('101.11'), 'USD', None, None,
              None, None, None, None),
@@ -215,7 +236,70 @@ class TestHoldings(unittest.TestCase):
                          holdings.aggregate_holdings_by(test_holdings,
                                                         lambda holding: holding.account))
 
-    @parsedoc
+    def test_aggregate_holdings__same_price_same_date(self):
+        test_holdings = list(itertools.starmap(holdings.Holding, [
+            ('Assets:Account1', D('10'), 'GOOG', D('500'), 'USD', D('5000'), D('6000'),
+             D('600'), datetime.date(2014, 2, 1)),
+            ('Assets:Account1', D('20'), 'GOOG', D('530'), 'USD', D('10600'), D('12000'),
+             D('600'), datetime.date(2014, 2, 1)),
+        ]))
+        expected_holdings = sorted(itertools.starmap(holdings.Holding, [
+            ('Assets:Account1', D('30'), 'GOOG', D('520'), 'USD', D('15600'), D('18000'),
+             D('600'), datetime.date(2014, 2, 1)),
+        ]))
+        self.assertEqual(expected_holdings,
+                         holdings.aggregate_holdings_by(test_holdings,
+                                                        lambda holding: holding.account))
+
+    def test_aggregate_holdings__diff_price_same_date(self):
+        test_holdings = list(itertools.starmap(holdings.Holding, [
+            ('Assets:Account1', D('10'), 'GOOG', D('500'), 'USD', D('5000'), D('6000'),
+             D('600'), datetime.date(2014, 2, 1)),
+            ('Assets:Account1', D('20'), 'GOOG', D('530'), 'USD', D('10600'), D('12000'),
+             D('630'), datetime.date(2014, 2, 1)),
+        ]))
+        # Price is recalculated from the market value, date is maintained.
+        expected_holdings = sorted(itertools.starmap(holdings.Holding, [
+            ('Assets:Account1', D('30'), 'GOOG', D('520'), 'USD', D('15600'), D('18000'),
+             D('600'), datetime.date(2014, 2, 1)),
+        ]))
+        self.assertEqual(expected_holdings,
+                         holdings.aggregate_holdings_by(test_holdings,
+                                                        lambda holding: holding.account))
+
+    def test_aggregate_holdings__same_price_diff_date(self):
+        test_holdings = list(itertools.starmap(holdings.Holding, [
+            ('Assets:Account1', D('10'), 'GOOG', D('500'), 'USD', D('5000'), D('6000'),
+             D('600'), datetime.date(2014, 2, 1)),
+            ('Assets:Account1', D('20'), 'GOOG', D('530'), 'USD', D('10600'), D('12000'),
+             D('600'), datetime.date(2014, 2, 2)),
+        ]))
+        # Date is cleared.
+        expected_holdings = sorted(itertools.starmap(holdings.Holding, [
+            ('Assets:Account1', D('30'), 'GOOG', D('520'), 'USD', D('15600'), D('18000'),
+             D('600'), None),
+        ]))
+        self.assertEqual(expected_holdings,
+                         holdings.aggregate_holdings_by(test_holdings,
+                                                        lambda holding: holding.account))
+
+    def test_aggregate_holdings__diff_price_diff_date(self):
+        test_holdings = list(itertools.starmap(holdings.Holding, [
+            ('Assets:Account1', D('10'), 'GOOG', D('500'), 'USD', D('5000'), D('6000'),
+             D('610'), datetime.date(2014, 2, 1)),
+            ('Assets:Account1', D('20'), 'GOOG', D('530'), 'USD', D('10600'), D('12000'),
+             D('600'), datetime.date(2014, 2, 2)),
+        ]))
+        # Price is recalculated from the market value, date is maintained.
+        expected_holdings = sorted(itertools.starmap(holdings.Holding, [
+            ('Assets:Account1', D('30'), 'GOOG', D('520'), 'USD', D('15600'), D('18000'),
+             D('600'), None),
+        ]))
+        self.assertEqual(expected_holdings,
+                         holdings.aggregate_holdings_by(test_holdings,
+                                                        lambda holding: holding.account))
+
+    @loader.loaddoc
     def test_convert_to_currency(self, entries, _, __):
         """
         2013-01-01 price CAD 1.1 USD
@@ -326,3 +410,18 @@ class TestHoldings(unittest.TestCase):
             'Assets:US:Checking', D('70.0'), 'MSFT', D('54.34'), 'USD',
             D('3803.80'), D('4200.00'), D('60'), datetime.date(2012, 5, 2))
         self.assertEqual(expected_holding, holdings.scale_holding(test_holding, D('0.7')))
+
+    def test_holding_to_position(self):
+        test_holding = holdings.Holding(
+            'Assets:US:Checking', D('100'), 'MSFT', D('54.34'), 'USD',
+            D('5434.00'), D('6000.00'), D('60'), datetime.date(2012, 5, 2))
+        actual_position = holdings.holding_to_position(test_holding)
+        expected_position = position.from_string('100 MSFT {54.34 USD}')
+        self.assertEqual(expected_position, actual_position)
+
+        test_holding = holdings.Holding(
+            'Assets:US:Checking', D('100'), 'USD', None, None,
+            None, None, None, datetime.date(2012, 5, 2))
+        actual_position = holdings.holding_to_position(test_holding)
+        expected_position = position.from_string('100.00 USD')
+        self.assertEqual(expected_position, actual_position)

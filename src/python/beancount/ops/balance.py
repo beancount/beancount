@@ -1,9 +1,13 @@
 """Automatic padding of gaps between entries.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 
-from beancount.core.amount import Decimal, amount_sub
-from beancount.core.data import Transaction, Balance
+from beancount.core.amount import D
+from beancount.core.data import Transaction
+from beancount.core.data import Balance
+from beancount.core import amount
 from beancount.core import inventory
 from beancount.core import realization
 from beancount.core import getters
@@ -11,16 +15,10 @@ from beancount.core import getters
 __plugins__ = ('check',)
 
 
-BalanceError = collections.namedtuple('BalanceError', 'fileloc message entry')
+BalanceError = collections.namedtuple('BalanceError', 'source message entry')
 
 
-# This is based on some real-world usage: FOREX brokerage, for instance,
-# accumulates error up to 1bp, and we need to tolerate that if our importers
-# insert checks on at regular spaces, so we set the maximum limit at 1bp.
-# FIXME: Move this up to options?
-CHECK_PRECISION = Decimal('.015')
-
-def check(entries, unused_options_map):
+def check(entries, options_map):
     """Process the balance assertion directives.
 
     For each Balance directive, check that their expected balance corresponds to
@@ -29,10 +27,12 @@ def check(entries, unused_options_map):
 
     Args:
       entries: A list of directives.
-      unused_options_map: A dict of options, parsed from the input file.
+      options_map: A dict of options, parsed from the input file.
     Returns:
       A pair of a list of directives and a list of balance check errors.
     """
+    tolerance = D(options_map['tolerance'])
+
     new_entries = []
     check_errors = []
 
@@ -70,7 +70,7 @@ def check(entries, unused_options_map):
                 if real_account is not None:
                     # Note: Always allow negative lots for the purpose of balancing.
                     # This error should show up somewhere else than here.
-                    real_account.balance.add_position(posting.position, True)
+                    real_account.balance.add_position(posting.position)
 
         elif isinstance(entry, Balance):
             # Check the balance against the check entry.
@@ -87,18 +87,20 @@ def check(entries, unused_options_map):
                 subtree_balance += real_child.balance
 
             # Get only the amount in the desired currency.
-            balance_amount = subtree_balance.get_amount(expected_amount.currency)
+            balance_amount = subtree_balance.get_units(expected_amount.currency)
 
             # Check if the amount is within bounds of the expected amount.
-            diff_amount = amount_sub(balance_amount, expected_amount)
-            if abs(diff_amount.number) > CHECK_PRECISION:
+            diff_amount = amount.amount_sub(balance_amount, expected_amount)
+            if abs(diff_amount.number) > tolerance:
                 check_errors.append(
-                    BalanceError(entry.fileloc,
+                    BalanceError(entry.source,
                                  ("Balance failed for '{}': "
                                   "expected {} != accumulated {} ({} {})").format(
-                                      entry.account, balance_amount, expected_amount,
-                                      diff_amount,
-                                      'too much' if diff_amount else 'too little'),
+                                      entry.account, expected_amount, balance_amount,
+                                      abs(diff_amount.number),
+                                      ('too much'
+                                       if diff_amount.number > 0
+                                       else 'too little')),
                                  entry))
 
                 # Substitute the entry by a failing entry, with the diff_amount
@@ -106,7 +108,7 @@ def check(entries, unused_options_map):
                 # of ideas, maybe leaving the original check intact and insert a
                 # new error entry might be more functional or easier to
                 # understand.
-                entry = Balance(entry.fileloc, entry.date, entry.account,
+                entry = Balance(entry.source, entry.date, entry.account,
                                 entry.amount, diff_amount)
 
         new_entries.append(entry)

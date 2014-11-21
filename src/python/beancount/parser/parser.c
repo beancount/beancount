@@ -35,11 +35,17 @@ PyObject* checkNull(PyObject* o)
 
 
 
-PyDoc_STRVAR(parse_doc,
-"Parse the filename, calling back methods on the builder.\
+PyDoc_STRVAR(parse_file_doc,
+"Parse the filename, calling back methods on the builder.\n\
+Your builder is responsible to accumulating results.\n\
+If you pass in '-' for filename, stdin is parsed.");
+
+PyDoc_STRVAR(parse_string_doc,
+"Parse the given string, calling back methods on the builder.\n\
 Your builder is responsible to accumulating results.");
 
-PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
+
+PyObject* parse_file(PyObject *self, PyObject *args, PyObject* kwds)
 {
     FILE* fp = NULL;
     int result;
@@ -49,7 +55,6 @@ PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
     const char* report_filename = 0;
     int report_firstline = 0;
     extern int yydebug;
-    /* FIXME: You could support flex debugging too: yyset_debug(int bdebug) */
     static char *kwlist[] = {"filename", "builder",
                              "report_filename", "report_firstline",
                              "yydebug", NULL};
@@ -62,10 +67,19 @@ PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
     Py_XINCREF(builder);
 
     /* Open the file. */
-    fp = fopen(filename, "r");
-    if ( fp == NULL ) {
-        return PyErr_Format(PyExc_IOError, "Cannot open file '%s'.", filename);
+    if ( strcmp(filename, "-") == 0 ) {
+      fp = stdin;
     }
+    else {
+      fp = fopen(filename, "r");
+      if ( fp == NULL ) {
+        return PyErr_Format(PyExc_IOError, "Cannot open file '%s'", filename);
+      }
+    }
+
+    /* Initialize the lexer. */
+    /* Note: This needs become part of yylex_init(). See 2.5.37.*/
+    yy_eof_times = 0;
 
     /* Initialize the parser. */
     yyin = fp;
@@ -91,15 +105,63 @@ PyObject* parse(PyObject *self, PyObject *args, PyObject* kwds)
 
     /* Check for parsing errors. */
     if ( result != 0 ) {
-        return PyErr_Format(PyExc_RuntimeError, "Parsing error.");
+        return PyErr_Format(PyExc_RuntimeError, "Parsing error");
     }
 
     Py_RETURN_NONE;
 }
 
-/* FIXME: Make a version of this which takes a string as input! For
- * unit-testing... */
+PyObject* parse_string(PyObject *self, PyObject *args, PyObject* kwds)
+{
+    int result;
 
+    /* Unpack and validate arguments */
+    const char* input_string = 0;
+    const char* report_filename = 0;
+    int report_firstline = 0;
+    extern int yydebug;
+    static char *kwlist[] = {"input_string", "builder",
+                             "report_filename", "report_firstline",
+                             "yydebug", NULL};
+    if ( !PyArg_ParseTupleAndKeywords(args, kwds, "sO|sip", kwlist,
+                                      &input_string, &builder,
+                                      &report_filename, &report_firstline,
+                                      &yydebug) ) {
+        return NULL;
+    }
+    Py_XINCREF(builder);
+
+    yy_switch_to_buffer(yy_scan_string(input_string));
+
+    /* Initialize the lexer. */
+    /* Note: This needs become part of yylex_init(). See 2.5.37.*/
+    yy_eof_times = 0;
+
+    /* Initialize the parser. */
+    if ( report_filename != 0 ) {
+        yy_filename = report_filename;
+    }
+    else {
+        yy_filename = "<string>";
+    }
+    yy_firstline = report_firstline;
+
+    /* Parse! This will call back methods on the builder instance. */
+    result = yyparse();
+
+    /* Finalize the parser. */
+    yylex_destroy();
+    Py_XDECREF(builder);
+    builder = 0;
+    yy_filename = 0;
+
+    /* Check for parsing errors. */
+    if ( result != 0 ) {
+        return PyErr_Format(PyExc_RuntimeError, "Parsing error");
+    }
+
+    Py_RETURN_NONE;
+}
 
 PyObject* get_yyfilename(PyObject *self, PyObject *args)
 {
@@ -128,12 +190,17 @@ PyObject* lexer_init(PyObject *self, PyObject *args)
     /* Open the file. */
     fp = fopen(filename, "r");
     if ( fp == NULL ) {
-        return PyErr_Format(PyExc_IOError, "Cannot open file '%s'.", filename);
+        return PyErr_Format(PyExc_IOError, "Cannot open file '%s'", filename);
     }
+
+    /* Initialize the lexer. */
+    /* Note: This needs become part of yylex_init(). See 2.5.37.*/
+    yy_eof_times = 0;
 
     /* Initialize the parser. */
     yyin = fp;
     yy_filename = filename;
+    yy_eof_times = 0;
 
     Py_RETURN_NONE;
 }
@@ -173,7 +240,8 @@ PyObject* lexer_next(PyObject *self, PyObject *args)
 
 
 static PyMethodDef module_functions[] = {
-    {"parse", (PyCFunction)parse, METH_VARARGS|METH_KEYWORDS, parse_doc},
+    {"parse_file", (PyCFunction)parse_file, METH_VARARGS|METH_KEYWORDS, parse_file_doc},
+    {"parse_string", (PyCFunction)parse_string, METH_VARARGS|METH_KEYWORDS, parse_string_doc},
     {"get_yyfilename", (PyCFunction)get_yyfilename, METH_VARARGS, NULL},
     {"get_yylineno", (PyCFunction)get_yylineno, METH_VARARGS, NULL},
     {"lexer_init", lexer_init, METH_VARARGS, NULL},
@@ -184,7 +252,7 @@ static PyMethodDef module_functions[] = {
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
     "_beancount",                         /* m_name */
-    "Beancount parser extension module.", /* m_doc */
+    "Beancount parser extension module",  /* m_doc */
     -1,                                   /* m_size */
     module_functions,                     /* m_methods */
     NULL,                                 /* m_reload */

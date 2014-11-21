@@ -1,11 +1,17 @@
 """Basic data structures used to represent the Ledger entries.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import datetime
 from collections import namedtuple
+import sys
 
 # Note: this file is mirrorred into ledgerhub. Relative imports only.
-from .amount import Amount, Decimal, to_decimal
-from .position import Position, Lot
+from .amount import Amount
+from .amount import Decimal
+from .amount import D
+from .position import Position
+from .position import Lot
 from .account import has_component
 
 
@@ -13,7 +19,7 @@ from .account import has_component
 # within the program. They are all treated as immutable.
 #
 # Common Attributes:
-#   fileloc: A FileLocation instance, denotes where the directive was parsed from.
+#   source: A Source instance, denotes where the directive was parsed from.
 #   date: A datetime.date instance; all directives have an associated date. Note:
 #     Beancount does not consider time, only dates. The line where the directive
 #     shows up in the file is used as a secondary sort key beyond the date.
@@ -21,17 +27,17 @@ from .account import has_component
 # An "open account" directive.
 #
 # Attributes:
-#   account: An Account, the account that is being opened.
+#   account: A string, the name of the account that is being opened.
 #   currencies: A list of strings, currencies that are allowed in this account.
 #     May be None, in which case it means that there are no restrictions on which
 #     currencies may be stored in this account.
-Open = namedtuple('Open', 'fileloc date account currencies')
+Open = namedtuple('Open', 'source date account currencies')
 
 # A "close account" directive.
 #
 # Attributes:
-#   account: An Account, the account that is being closed.
-Close = namedtuple('Close', 'fileloc date account')
+#   account: A string, the name of the account that is being closed.
+Close = namedtuple('Close', 'source date account')
 
 # A "pad this account with this other account" directive. This directive
 # automatically inserts transactions that will make the next chronological
@@ -40,10 +46,10 @@ Close = namedtuple('Close', 'fileloc date account')
 # in case you need it, while you're enterering past history into your Ledger.
 #
 # Attributes:
-#   account: The Account which needs to be filled.
-#   source_account: The Account which is used to debit from in order to fill
-#     'account'.
-Pad = namedtuple('Pad', 'fileloc date account source_account')
+#   account: A string, the name of the account which needs to be filled.
+#   source_account: A string, the anem of the account which is used to debit from
+#     in order to fill 'account'.
+Pad = namedtuple('Pad', 'source date account source_account')
 
 # A "check the balance of this account" directive. This directive asserts that
 # the declared account should have a known number of units of a particular
@@ -53,12 +59,12 @@ Pad = namedtuple('Pad', 'fileloc date account source_account')
 # transactions correctly.
 #
 # Attributes:
-#   account: The Account whose balance to check at the given date.
+#   account: A string, the account whose balance to check at the given date.
 #   amount: An Amount, the number of units of the given currency you're
 #     expecting 'account' to have at this date.
 #   diff_amount: None if the balance check succeeds. This value is set to
 #     an Amount instance if the balance fails, the amount of the difference.
-Balance = namedtuple('Balance', 'fileloc date account amount diff_amount')
+Balance = namedtuple('Balance', 'source date account amount diff_amount')
 
 # A transaction! This is the main type of object that we manipulate, and the
 # entire reason this whole project exists in the first place, because
@@ -78,7 +84,7 @@ Balance = namedtuple('Balance', 'fileloc date account amount diff_amount')
 #   postings: A list of Posting instances, the legs of this transaction. See the
 #     doc under Posting below.
 Transaction = namedtuple('Transaction',
-                         'fileloc date flag payee narration tags links postings')
+                         'source date flag payee narration tags links postings')
 
 # A note directive, a general note that is attached to an account. These are
 # used to attach text at a particular date in a specific account. The notes can
@@ -88,11 +94,11 @@ Transaction = namedtuple('Transaction',
 # file, which does not get parsed and stored.
 #
 # Attributes:
-#   account: An Account which the note is to be attached to. This is never None,
-#     notes always have an account they correspond to.
+#   account: A string, the account which the note is to be attached to. This is
+#     never None, notes always have an account they correspond to.
 #   comment: A free-form string, the text of the note. This can be logn if you
 #     want it to.
-Note = namedtuple('Note', 'fileloc date account comment')
+Note = namedtuple('Note', 'source date account comment')
 
 # An "event value change" directive. These directives are used as string
 # variables that have different values over time. You can use these to track an
@@ -119,7 +125,7 @@ Note = namedtuple('Note', 'fileloc date account comment')
 #     unique variable whose value changes over time. For example, 'location'.
 #   description: A free-form string, the value of the variable as of the date
 #     of the transaction.
-Event = namedtuple('Event', 'fileloc date type description')
+Event = namedtuple('Event', 'source date type description')
 
 # A price declaration directive. This establishes the price of a currency in
 # terms of another currency as of the directive's date. A history of the prices
@@ -134,7 +140,7 @@ Event = namedtuple('Event', 'fileloc date type description')
 #  currency: A string, the currency that is being priced, e.g. GOOG.
 #  amount: An instance of Amount, the number of units and currency that
 #    'currency' is worth, for instance 1200.12 USD.
-Price = namedtuple('Price', 'fileloc date currency amount')
+Price = namedtuple('Price', 'source date currency amount')
 
 # A document file declaration directive. This directive is used to attach a
 # statement to an account, at a particular date. A typical usage would be to
@@ -147,9 +153,10 @@ Price = namedtuple('Price', 'fileloc date currency amount')
 # on the file hierarchy, and you can get them by parsing the list of entries.
 #
 # Attributes:
-#   account: An Account, which the statement or document is associated with.
+#   account: A string, the accountwhich the statement or document is associated
+#     with.
 #   filename: The absolute filename of the document file.
-Document = namedtuple('Document', 'fileloc date account filename')
+Document = namedtuple('Document', 'source date account filename')
 
 
 # A list of all the valid directive types.
@@ -163,9 +170,11 @@ ALL_DIRECTIVES = (
 #
 # Attributes:
 #   filename: A string, the name of the input that the directive was read from.
+#     If the directive was synthesized by a plugin, this should be the plugin
+#     name instead.
 #   lineno: An integer, the line number where the directive was found. For
 #     automatically created directives, this may be None.
-FileLocation = namedtuple('FileLocation', 'filename lineno')
+Source = namedtuple('Source', 'filename lineno')
 
 
 # Postings are contained in Transaction entries. These represent the individual
@@ -180,7 +189,7 @@ FileLocation = namedtuple('FileLocation', 'filename lineno')
 #     entries and though it creates a circular dependency between Transaction
 #     and Posting, it allows us to easily resolve the lists of Postings to their
 #     transactions for rendering.
-#   account: An Account, the account that is modified by this posting.
+#   account: A string, the account that is modified by this posting.
 #   position: An instance of Position (see position.py), the amount and lot that
 #     is to be posted to this leg's account.
 #   price: An instance of Amount, the price at which the position took place, or
@@ -215,10 +224,10 @@ def create_simple_posting(entry, account, number, currency):
     """Create a simple posting on the entry, with just a number and currency (no cost).
 
     Args:
-      entry: the entry instance to add the posting to
-      account: an instance of Account to use on the posting
-      number: a Decimal number or string to use in the posting's Amount
-      currency: a string, the currency for the Amount
+      entry: The entry instance to add the posting to.
+      account: A string, the account to use on the posting.
+      number: A Decimal number or string to use in the posting's Amount.
+      currency: A string, the currency for the Amount.
     Returns:
       An instance of Posting, and as a side-effect the entry has had its list of
       postings modified with the new Posting instance.
@@ -229,7 +238,7 @@ def create_simple_posting(entry, account, number, currency):
         position = None
     else:
         if not isinstance(number, Decimal):
-            number = to_decimal(number)
+            number = D(number)
         position = Position(Lot(currency, None, None), number)
     posting = Posting(entry, account, position, None, None)
     if entry is not None:
@@ -243,12 +252,12 @@ def create_simple_posting_with_cost(entry, account,
     """Create a simple posting on the entry, with just a number and currency (no cost).
 
     Args:
-      entry: the entry instance to add the posting to
-      account: an instance of Account to use on the posting
-      number: a Decimal number or string to use in the posting's Amount
-      currency: a string, the currency for the Amount
-      cost_number: a Decimal number or string to use for the posting's cost Amount
-      cost_currency: a string, the currency for the cost Amount
+      entry: The entry instance to add the posting to.
+      account: A string, the account to use on the posting.
+      number: A Decimal number or string to use in the posting's Amount.
+      currency: A string, the currency for the Amount.
+      cost_number: A Decimal number or string to use for the posting's cost Amount.
+      cost_currency: a string, the currency for the cost Amount.
     Returns:
       An instance of Posting, and as a side-effect the entry has had its list of
       postings modified with the new Posting instance.
@@ -256,9 +265,9 @@ def create_simple_posting_with_cost(entry, account,
     if isinstance(account, str):
         pass
     if not isinstance(number, Decimal):
-        number = to_decimal(number)
+        number = D(number)
     if cost_number and not isinstance(cost_number, Decimal):
-        cost_number = to_decimal(cost_number)
+        cost_number = D(cost_number)
     cost = Amount(cost_number, cost_currency)
     position = Position(Lot(currency, cost, None), number)
     posting = Posting(entry, account, position, None, None)
@@ -267,7 +276,7 @@ def create_simple_posting_with_cost(entry, account,
     return posting
 
 
-NoneType = type(None)
+NoneType = type(None)  # pylint: disable=invalid-name
 
 def sanity_check_types(entry):
     """Check that the entry and its postings has all correct data types.
@@ -277,23 +286,23 @@ def sanity_check_types(entry):
     Raises:
       AssertionError: If there is anything that is unexpected, raises an exception.
     """
-    assert isinstance(entry, ALL_DIRECTIVES)
-    assert isinstance(entry.fileloc, FileLocation)
-    assert isinstance(entry.date, datetime.date)
+    assert isinstance(entry, ALL_DIRECTIVES), "Invalid directive type"
+    assert isinstance(entry.source, Source), "Invalid type for source"
+    assert isinstance(entry.date, datetime.date), "Invalid date type"
     if isinstance(entry, Transaction):
-        assert isinstance(entry.flag, (NoneType, str))
-        assert isinstance(entry.payee, (NoneType, str))
-        assert isinstance(entry.narration, (NoneType, str))
-        assert isinstance(entry.tags, (NoneType, set, frozenset))
-        assert isinstance(entry.links, (NoneType, set, frozenset))
-        assert isinstance(entry.postings, list)
+        assert isinstance(entry.flag, (NoneType, str)), "Invalid flag type"
+        assert isinstance(entry.payee, (NoneType, str)), "Invalid payee type"
+        assert isinstance(entry.narration, (NoneType, str)), "Invalid narration type"
+        assert isinstance(entry.tags, (NoneType, set, frozenset)), "Invalid tags type"
+        assert isinstance(entry.links, (NoneType, set, frozenset)), "Invalid links type"
+        assert isinstance(entry.postings, list), "Invalid postings list type"
         for posting in entry.postings:
-            assert isinstance(posting, Posting)
-            assert posting.entry is entry
-            assert isinstance(posting.account, str)
-            assert isinstance(posting.position, (Position, NoneType))
-            assert isinstance(posting.price, (Amount, NoneType))
-            assert isinstance(posting.flag, (str, NoneType))
+            assert isinstance(posting, Posting), "Invalid posting type"
+            assert posting.entry is entry, "Invalid posting reference to entry type"
+            assert isinstance(posting.account, str), "Invalid account type"
+            assert isinstance(posting.position, (Position, NoneType)), "Invalid pos type"
+            assert isinstance(posting.price, (Amount, NoneType)), "Invalid price type"
+            assert isinstance(posting.flag, (str, NoneType)), "Invalid flag type"
 
 
 def entry_replace(entry, **replacements):
@@ -310,9 +319,10 @@ def entry_replace(entry, **replacements):
     Returns:
       A new entry, with postings correctly reparented.
     """
+    new_postings = replacements.pop('postings', entry.postings)
     new_entry = entry._replace(postings=[], **replacements)
     new_entry.postings.extend(posting._replace(entry=new_entry)
-                              for posting in entry.postings)
+                              for posting in new_postings)
     return new_entry
 
 
@@ -396,7 +406,18 @@ def entry_sortkey(entry):
       A tuple of (date, integer, integer), that forms the sort key for the
       entry.
     """
-    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.fileloc.lineno)
+    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.source.lineno)
+
+
+def sort(entries):
+    """A convenience to sort a list of entries, using entry_sortkey().
+
+    Args:
+      entries: A list of directives.
+    Returns:
+      A sorted list of directives.
+    """
+    return sorted(entries, key=entry_sortkey)
 
 
 def posting_sortkey(entry):
@@ -412,7 +433,7 @@ def posting_sortkey(entry):
     """
     if isinstance(entry, Posting):
         entry = entry.entry
-    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.fileloc.lineno)
+    return (entry.date, SORT_ORDER.get(type(entry), 0), entry.source.lineno)
 
 
 def has_entry_account_component(entry, component):
@@ -429,3 +450,27 @@ def has_entry_account_component(entry, component):
     return (isinstance(entry, Transaction) and
             any(has_component(posting.account, component)
                 for posting in entry.postings))
+
+
+def find_closest(entries, filename, lineno):
+    """Find the closest entry from entries to (filename, lineno).
+
+    Args:
+      entries: A list of directives.
+      filename: A string, the name of the ledger file to look for.
+      lineno: An integer, the line number closest after the directive we're
+        looking for. This may be the exact/first line of the directive.
+    Returns:
+      The closest entry found in the given file for the given filename, or
+      None, if none could be found.
+    """
+    min_diffline = sys.maxsize
+    closest_entry = None
+    for entry in entries:
+        source = entry.source
+        if source.filename == filename and source.lineno > 0:
+            diffline = lineno - source.lineno
+            if diffline >= 0 and diffline < min_diffline:
+                min_diffline = diffline
+                closest_entry = entry
+    return closest_entry

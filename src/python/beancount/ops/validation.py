@@ -7,21 +7,25 @@ invariants are violated. They are not sanity checks--user data is subject to
 constraints which are hopefully detected here and which will result in errors
 trickled up to the user.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 from os import path
 import collections
 
-from beancount.core import data
-from beancount.core.data import Open, Close, Transaction, Document, Note
+from beancount.core.data import Open
+from beancount.core.data import Close
+from beancount.core.data import Transaction
+from beancount.core.data import Document
+from beancount.core.data import Note
 from beancount.core import data
 from beancount.core import getters
 from beancount.core import inventory
-from beancount.core import complete
-from beancount.core import compare
+from beancount.core import interpolate
 from beancount.utils import misc_utils
 
 
 # An error from one of the checks.
-ValidationError = collections.namedtuple('ValidationError', 'fileloc message entry')
+ValidationError = collections.namedtuple('ValidationError', 'source message entry')
 
 
 # Directive types that should be allowed after the account is closed.
@@ -57,13 +61,13 @@ def validate_inventory_booking(entries, unused_options_map):
             # without allowing booking to a negative position, and if an error
             # is encountered, catch it and return it.
             running_balance = balances[posting.account]
-            try:
-                running_balance.add_position(posting.position, allow_negative=False)
-            except ValueError as e:
+
+            position_, reducing = running_balance.add_position(posting.position)
+            if position_.is_negative_at_cost():
                 errors.append(
                     ValidationError(
-                        posting.entry.fileloc,
-                        str(e),
+                        posting.entry.source,
+                        "Position held at cost goes negative: {}".format(position_),
                         posting.entry))
 
     return errors
@@ -98,8 +102,8 @@ def validate_open_close(entries, unused_options_map):
             if entry.account in open_map:
                 errors.append(
                     ValidationError(
-                        entry.fileloc,
-                        "Duplicate open directive for {}.".format(entry.account),
+                        entry.source,
+                        "Duplicate open directive for {}".format(entry.account),
                         entry))
             else:
                 open_map[entry.account] = entry
@@ -108,8 +112,8 @@ def validate_open_close(entries, unused_options_map):
             if entry.account in close_map:
                 errors.append(
                     ValidationError(
-                        entry.fileloc,
-                        "Duplicate close directive for {}.".format(entry.account),
+                        entry.source,
+                        "Duplicate close directive for {}".format(entry.account),
                         entry))
             else:
                 try:
@@ -117,15 +121,15 @@ def validate_open_close(entries, unused_options_map):
                     if entry.date <= open_entry.date:
                         errors.append(
                             ValidationError(
-                                entry.fileloc,
+                                entry.source,
                                 "Internal error: closing date for {} "
-                                "appears before opening date.".format(entry.account),
+                                "appears before opening date".format(entry.account),
                                 entry))
                 except KeyError:
                     errors.append(
                         ValidationError(
-                            entry.fileloc,
-                            "Unopened account {}is being closed.".format(entry.account),
+                            entry.source,
+                            "Unopened account {} is being closed".format(entry.account),
                             entry))
 
                 close_map[entry.account] = entry
@@ -161,8 +165,8 @@ def validate_duplicate_balances(entries, unused_options_map):
             if entry.amount != previous_entry.amount:
                 errors.append(
                     ValidationError(
-                        entry.fileloc,
-                        "Duplicate balance assertion with different amounts.",
+                        entry.source,
+                        "Duplicate balance assertion with different amounts",
                         entry))
         except KeyError:
             balance_entries[key] = entry
@@ -222,48 +226,9 @@ def validate_active_accounts(entries, unused_options_map):
             message = "Invalid reference to inactive account '{}'".format(account)
         else:
             message = "Invalid reference to unknown account '{}'".format(account)
-        errors.append(ValidationError(entry.fileloc, message, entry))
+        errors.append(ValidationError(entry.source, message, entry))
 
     return errors
-
-
-def validate_unused_accounts(entries, options_map):
-    """Check that all accounts declared open are actually used.
-
-    We check that all of the accounts that are open are at least referred to by
-    another directive. These are probably unused, so issue a warning (we like to
-    be pedantic). Note that an account that is open and then closed is
-    considered used--this is a valid use case that may occur in reality. If you
-    have a use case for an account to be open but never used, you can quiet that
-    warning by initializing the account with a balance asserts or a pad
-    directive, or even use a note will be sufficient.
-
-    (This is probably a good candidate for optional inclusion as a "pedantic"
-    plugin.)
-
-    Args:
-      entries: A list of directives.
-      unused_options_map: An options map.
-    Returns:
-      A list of new errors, if any were found.
-    """
-    # Find all the accounts referenced by entries which are not Open, and the
-    # open directives for error reporting below.
-    open_map = {}
-    referenced_accounts = set()
-    for entry in entries:
-        if isinstance(entry, Open):
-            open_map[entry.account] = entry
-            continue
-        referenced_accounts.update(getters.get_entry_accounts(entry))
-
-    # Create a list of suitable errors, with the location of the Open directives
-    # corresponding to the unused accounts.
-    return [ValidationError(open_entry.fileloc,
-                            "Unused account '{}'.".format(account),
-                            open_entry)
-            for account, open_entry in open_map.items()
-            if account not in referenced_accounts]
 
 
 def validate_currency_constraints(entries, options_map):
@@ -306,8 +271,8 @@ def validate_currency_constraints(entries, options_map):
             if posting.position.lot.currency not in valid_currencies:
                 errors.append(
                     ValidationError(
-                        entry.fileloc,
-                        "Invalid currency {} for account '{}'.".format(
+                        entry.source,
+                        "Invalid currency {} for account '{}'".format(
                             posting.position.lot.currency, posting.account),
                         entry))
 
@@ -327,7 +292,7 @@ def validate_documents_paths(entries, options_map):
     Returns:
       A list of new errors, if any were found.
     """
-    return [ValidationError(entry.fileloc, "Invalid relative path for entry.", entry)
+    return [ValidationError(entry.source, "Invalid relative path for entry", entry)
             for entry in entries
             if (isinstance(entry, Document) and
                 not path.isabs(entry.filename))]
@@ -353,15 +318,15 @@ def validate_data_types(entries, options_map):
             data.sanity_check_types(entry)
         except AssertionError as exc:
             errors.append(
-                ValidationError(entry.fileloc,
+                ValidationError(entry.source,
                                 "Invalid data types: {}".format(exc),
                                 entry))
     return errors
 
 
-def validate_check_balances(entries, options_map):
-    """Check again that all transactions balance, as users may have transformed
-    transactions.
+def validate_check_transaction_balances(entries, options_map):
+    """Check again that all transaction postings balance, as users may have
+    transformed transactions.
 
     Args:
       entries: A list of directives.
@@ -374,65 +339,66 @@ def validate_check_balances(entries, options_map):
     errors = []
     for entry in entries:
         if isinstance(entry, Transaction):
-            balance = complete.compute_residual(entry.postings)
-            if not balance.is_small(complete.SMALL_EPSILON):
+            # IMPORTANT: This validation is _crucial_ and cannot be skipped.
+            # This is where we actually detect and warn on unbalancing
+            # transactions. This _must_ come after the user routines, because
+            # unbalancing input is legal, as those types of transactions may be
+            # "fixed up" by a user-plugin. In other words, we want to allow
+            # users to input unbalancing transactions as long as the final
+            # transactions objects that appear on the stream (after processing
+            # the plugins) are balanced. See {9e6c14b51a59}.
+            #
+            # Detect complete sets of postings that have residual balance;
+            balance = interpolate.compute_residual(entry.postings)
+            if not balance.is_small(interpolate.SMALL_EPSILON):
                 errors.append(
-                    ValidationError(entry.fileloc,
-                                    "Transaction does not balance: {}.".format(balance),
+                    ValidationError(entry.source,
+                                    "Transaction does not balance: {}".format(balance),
                                     entry))
     return errors
 
 
-def validate_duplicates(entries, options_map):
-    """Check that the entries are unique, by computing hashes.
-
-    Args:
-      entries: A list of directives.
-      unused_options_map: An options map.
-    Returns:
-      A list of new errors, if any were found.
-    """
-    unused_hashes, errors = compare.hash_entries(entries)
-    return errors
-
-
 # A list of reasonably fast validations to always run by default.
-BASIC_VALIDATIONS = [validate_data_types,
-                     validate_inventory_booking,
+BASIC_VALIDATIONS = [validate_inventory_booking,
                      validate_open_close,
                      validate_active_accounts,
-                     validate_unused_accounts,
                      validate_currency_constraints,
                      validate_duplicate_balances,
-                     validate_documents_paths]
+                     validate_documents_paths,
+                     validate_check_transaction_balances]
 
 # These are slow, and thus only turned on in the check() routine.
 # We're hoping to optimize these and make them decently fast, so
 # we're not providing an option at this moment, this can be enabled
 # by modifying the 'VALIDATIONS' attribute below.
-HARDCORE_VALIDATIONS = [validate_data_types,
-                        validate_check_balances,
-                        validate_duplicates]
+HARDCORE_VALIDATIONS = [validate_data_types]
 
 # The list of validations to run.
 VALIDATIONS = BASIC_VALIDATIONS
 
 
-def validate(entries, options_map, log_function=None):
+def validate(entries, options_map, log_timings=None, extra_validations=None):
     """Perform all the standard checks on parsed contents.
 
     Args:
       entries: A list of directives.
       unused_options_map: An options map.
-      log_function: An optional function to use for logging time of operations.
+      log_timings: An optional function to use for logging the time of individual
+        operations.
+      extra_validations: A list of extra validation functions to run after loading
+        this list of entries.
     Returns:
       A list of new errors, if any were found.
     """
+    validation_tests = VALIDATIONS
+    if extra_validations:
+        validation_tests += extra_validations
+
     # Run various validation routines define above.
     errors = []
-    for validation_function in VALIDATIONS:
+    for validation_function in validation_tests:
         with misc_utils.log_time('function: {}'.format(validation_function.__name__),
-                                 log_function):
+                                 log_timings, indent=2):
             new_errors = validation_function(entries, options_map)
         errors.extend(new_errors)
 

@@ -1,0 +1,54 @@
+;; IRS Pub 550 - Loss and gain on same day. Example.
+
+;; Loss and gain on same day. Loss from a wash sale of one block of stock or
+;; securities cannot be used to reduce any gains on identical blocks sold the
+;; same day.
+
+;; Example.
+;;
+;; During 2007, you bought 100 shares of X stock on each of three occasions. You
+;; paid $158 a share for the first block of 100 shares, $100 a share for the
+;; second block, and $95 a share for the third block. On December 27, 2012, you
+;; sold 300 shares of X stock for $125 a share. On January 9, 2013, you bought
+;; 250 shares of identical X stock. You cannot deduct the loss of $33 a share on
+;; the first block because within 30 days after the date of sale you bought 250
+;; identical shares of X stock. In addition, you cannot reduce the gain realized
+;; on the sale of the second and third blocks of stock by this loss.
+
+2000-01-01 open Assets:Investments:Cash
+2000-01-01 open Income:Investments:PnL
+2000-01-01 open Assets:Investments:XXX
+
+
+;; "You cannot deduct the loss of $33 a share on the first block because within 30 days after the date of sale you bought 250 identical shares of X stock."
+2007-02-01 * "During 2007, you bought 100 shares of X stock on each of three occasions. You paid $158 a share for the first block of 100 shares,"
+  Assets:Investments:Cash
+  Assets:Investments:XXX                                            100 XXX {158 USD}
+
+;; "In addition, you cannot reduce the gain realized on the sale of the second and third blocks of stock by this loss."
+2007-04-01 * "$100 a share for the second block,"
+  Assets:Investments:Cash
+  Assets:Investments:XXX                                            100 XXX {100 USD}
+
+;; "In addition, you cannot reduce the gain realized on the sale of the second and third blocks of stock by this loss."
+2007-04-01 * "and $95 a share for the third block."
+  Assets:Investments:Cash
+  Assets:Investments:XXX                                            100 XXX {95 USD}
+
+2012-12-27 * "On December 27, 2012, you sold 300 shares of X stock for $125 a share." ^wash-2f47f36aaab4
+  Assets:Investments:XXX                                           -100 XXX {158 USD}
+  Assets:Investments:XXX                                           -100 XXX {100 USD}
+  Assets:Investments:XXX                                           -100 XXX {95 USD}
+  Assets:Investments:Cash                                         37500 USD
+  Income:Investments:PnL
+
+2013-01-09 * "On January 9, 2013, you bought 250 shares of identical X stock."
+  Assets:Investments:Cash
+  Assets:Investments:XXX                                            250 XXX {140 USD}
+
+
+;; FIXME: You need to wash at at 12/27 for correct reporting.
+2013-01-09 * "(wash)" ^wash-2f47f36aaab4
+  Income:Investments:PnL   -3300 USD
+  Assets:Investments:XXX                                           -250 XXX {140 USD}
+  Assets:Investments:XXX                                            250 XXX {153.20 USD}

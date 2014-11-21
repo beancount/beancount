@@ -1,6 +1,8 @@
 """
 Tests for cmptest base test class.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import textwrap
 import re
 
@@ -20,7 +22,7 @@ class TestTestCase(cmptest.TestCase):
         Liabilities:US:Amex:BlueCash                                           -73.64 USD
         Expenses:Communications:Phone:TMobile
 
-      2014-01-30 * "AMAZON SERVICES-KIND866-216-107 / PRYETZFD58N DIGITAL" |
+      2014-01-30 * "AMAZON SERVICES-KIND866-216-107 / PRYETZFD58N DIGITAL"
         Liabilities:US:Amex:BlueCash                                           -12.74 USD
         Expenses:Books
 
@@ -44,7 +46,7 @@ class TestTestCase(cmptest.TestCase):
         self.assertEqualEntries(self.ledger_text, entries)
 
         # Try out various modifications and ensure comparison fails.
-        mod_ledger_text, _ = re.subn(r' \* ', ' F ', self.ledger_text, 1)
+        mod_ledger_text, _ = re.subn(r' \* ', ' ! ', self.ledger_text, 1)
         with self.assertRaises(AssertionError):
             self.assertEqualEntries(entries, mod_ledger_text)
 
@@ -94,7 +96,7 @@ class TestTestCase(cmptest.TestCase):
 
         self.assertIncludesEntries("""
 
-          2014-01-30 * "AMAZON SERVICES-KIND866-216-107 / PRYETZFD58N DIGITAL" |
+          2014-01-30 * "AMAZON SERVICES-KIND866-216-107 / PRYETZFD58N DIGITAL"
             Liabilities:US:Amex:BlueCash                                           -12.74 USD
             Expenses:Books
 
@@ -126,7 +128,7 @@ class TestTestCase(cmptest.TestCase):
         with self.assertRaises(AssertionError):
             self.assertExcludesEntries("""
 
-              2014-01-30 * "AMAZON SERVICES-KIND866-216-107 / PRYETZFD58N DIGITAL" |
+              2014-01-30 * "AMAZON SERVICES-KIND866-216-107 / PRYETZFD58N DIGITAL"
                 Liabilities:US:Amex:BlueCash                                           -12.74 USD
                 Expenses:Books
 

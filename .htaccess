@@ -1,3 +1,8 @@
+# Redirect for external sites.
+
+RedirectMatch /mailing-list$              https://groups.google.com/forum/#!forum/beancount
+RedirectMatch /list                       /beancount/mailing-list
+
 # Short redirect links for most of the documentation on Google Drive.
 
 RedirectMatch /doc/index$                 https://docs.google.com/document/d/1RaondTJCS_IUPBHFNdT8oqFKJjVJDsfsn6JEjBG04eA/
@@ -6,6 +11,8 @@ RedirectMatch /doc/meta$                  /beancount/doc/index
 RedirectMatch /doc/motivation$            https://docs.google.com/document/d/1e4Vz3wZB_8-ZcAwIFde8X5CjzKshE4-OXtVVHm4RQ8s/
 RedirectMatch /doc/intro$                 /beancount/doc/motivation
 RedirectMatch /doc/context$               /beancount/doc/motivation
+
+RedirectMatch /doc/comparison$            https://docs.google.com/document/d/1dW2vIjaXVJAf9hr7GlZVe3fJOkM-MtlVjvCO1ZpNLmg/
 
 RedirectMatch /doc/history$               https://docs.google.com/document/d/17wTH7aKnN_7-6nCxsOad6zIQfHwQgJUdI02RjzQuNi8/
 RedirectMatch /doc/credits$               /beancount/doc/history
@@ -16,10 +23,12 @@ RedirectMatch /doc/doubleentry$           /beancount/doc/double-entry
 RedirectMatch /doc/double$                /beancount/doc/double-entry
 RedirectMatch /doc/de-method$             /beancount/doc/double-entry
 
+RedirectMatch /doc/equity$                https://docs.google.com/document/d/1H6C4YNPSe8GvC9Pe4Mp84q7ErPwI2AlZrFfKuNq-TG4/
+RedirectMatch /doc/using-equity           /beancount/doc/equity
+
 RedirectMatch /doc/install$               https://docs.google.com/document/d/1FqyrTPwiHVLyncWTf3v5TcooCu9z5JRX8Nm41lVZi0U/
 
 RedirectMatch /doc/getting-started$       https://docs.google.com/document/d/1P5At-z1sP8rgwYLHso5sEy3u4rMnIUDDgob9Y_BYuWE/
-RedirectMatch /doc/examples$              /beancount/doc/cookbook
 
 RedirectMatch /doc/tools$                 https://docs.google.com/document/d/1e44jtLyVRl2H2Pj4K3WUc66otAlTOFOc90-tsrFEQdo/
 RedirectMatch /doc/invocation$            /beancount/doc/tools
@@ -65,18 +74,28 @@ RedirectMatch /doc/devel$                 /beancount/doc/design-doc
 RedirectMatch /doc/conversions$           https://docs.google.com/document/d/1rW7zQyMiv8hKZ0993pwQiu5vTxzEOQf_Q67GvVk6zu0/
 
 RedirectMatch /doc/example$               https://docs.google.com/document/d/1G-gsmwK551lSyuHboVLW3xbLhh99JfoKIbNnZSJxteE/
+RedirectMatch /doc/tutorial$              /beancount/doc/example
 
 RedirectMatch /doc/custom-appplication$   https://docs.google.com/document/d/1SnR7BdE2VXFTMEvnkhAd9PwXu_AxytTYpiS1LjXdP0E/
 RedirectMatch /doc/custom$                /beancount/doc/custom-application
 RedirectMatch /doc/application$           /beancount/doc/custom-application
 
+RedirectMatch /doc/portfolio-returns$     https://docs.google.com/document/d/1vEFB44-HFqydYVJXA-QxT4AN0K5xHHfSkhTmRSCPkac/
+RedirectMatch /doc/returns$               /beancount/doc/portfolio-returns
+RedirectMatch /doc/calculating-returns$   /beancount/doc/portfolio-returns
+
 RedirectMatch /doc/proposal-booking$      https://docs.google.com/document/d/1F8IJ_7fMHZ75XFPocMokLxVZczAhrBRBVN9uMhQFCZ4/
 RedirectMatch /doc/proposal-inventory$    /beancount/doc/proposal-booking
+
+RedirectMatch /doc/proposal-rounding$     https://docs.google.com/document/d/1MY2JMiiXUmcwsOT0CkiK-fCo0ZE7nbr8uTcTL50b6X4/
+RedirectMatch /doc/proposal-residual$     /beancount/doc/proposal-rounding
+RedirectMatch /doc/rounding$              /beancount/doc/proposal-rounding
 
 RedirectMatch /doc/proposal-filtering$    https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 RedirectMatch /doc/proposal-filter$       /beancount/doc/proposal-filtering
 RedirectMatch /doc/proposal-filters$      /beancount/doc/proposal-filtering
 RedirectMatch /doc/proposal-views$        /beancount/doc/proposal-filtering
+RedirectMatch /doc/proposal-query$        /beancount/doc/proposal-filtering
 
 RedirectMatch /doc/proposal-dates$        https://docs.google.com/document/d/1x0qqWGRHi02ef-FtUW172SHkdJ8quOZD-Xli7r4Nl_k/
 RedirectMatch /doc/proposal-dates$        /beancount/doc/proposal-settlement
@@ -90,3 +109,13 @@ RedirectMatch /doc/proposal-forecast$     /beancount/doc/proposal-budget
 
 RedirectMatch /doc/proposal-padding$      https://docs.google.com/document/d/1rZW3Hz5oJw1x9AwbcBj6uw5FabCHqubiIvaHwAjmCvk/
 RedirectMatch /doc/proposal-pad$          /beancount/doc/proposal-padding
+
+RedirectMatch /doc/proposal-mirror$       https://docs.google.com/document/d/1dhz-_Of-hdubafHg-OESEMdMG_-fJqw4P4KcJsKPqk0/
+RedirectMatch /doc/mirror$      	  /beancount/doc/proposal-mirror
+
+RedirectMatch /doc/proposal-inter$        https://docs.google.com/document/d/12YyAqfGygzCGMZsbsO3ZpUK08j6rUCQvB2Je9c42oqc/
+RedirectMatch /doc/inter-account$      	  /beancount/doc/proposal-inter
+
+RedirectMatch /doc/proposal-funds$        https://docs.google.com/document/d/1nf_yCiLuewVCEjkXq9Kd9SqbZGWqcs0v0pT5xQnkyzs/
+RedirectMatch /doc/fund$	    	  /beancount/doc/proposal-funds
+RedirectMatch /doc/fund-accounting$    	  /beancount/doc/proposal-funds

@@ -1,0 +1,25 @@
+Name            text  html  htmldiv  csv  beancount  ledger
+--------------  ----  ----  -------  ---  ---------  ------
+balances        X     X     X                              
+balsheet              X     X                              
+income                X     X                              
+journal         X     X     X        X                     
+conversions           X     X                              
+documents             X     X                              
+holdings        X     X     X        X    X                
+networth        X     X     X        X                     
+commodities     X     X     X        X                     
+prices          X     X     X        X                     
+all_prices                                X                
+pricedb                                   X                
+check           X                                          
+errors          X     X     X                              
+print                                     X                
+accounts                                  X                
+current_events  X     X     X        X                     
+events          X     X     X        X                     
+activity              X     X                              
+stats-types     X     X     X        X                     
+stats-postings  X     X     X        X                     
+ledger                                               X     
+--------------  ----  ----  -------  ---  ---------  ------

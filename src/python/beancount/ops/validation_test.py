@@ -1,5 +1,8 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import datetime
 import re
+import textwrap
 
 from beancount.core import data
 from beancount.parser import parser
@@ -9,9 +12,9 @@ from beancount.ops import validation
 
 class TestValidateInventoryBooking(cmptest.TestCase):
 
-    @parser.parsedoc
-    def test_validate_inventory_booking(self, entries, errors, options_map):
-        """
+    def setUp(self):
+        self.input_str = textwrap.dedent("""
+
         2014-01-01 open Assets:Investments:Cash
         2014-01-01 open Assets:Investments:Stock
 
@@ -35,12 +38,9 @@ class TestValidateInventoryBooking(cmptest.TestCase):
           Assets:Investments:Stock  -15 GOOG {500 USD}
           Assets:Investments:Cash
 
-        """
-        validation_errors = validation.validate_inventory_booking(entries, options_map)
+        """)
 
-        self.assertEqual([validation.ValidationError, validation.ValidationError],
-                         list(map(type, validation_errors)))
-        self.assertEqualEntries("""
+        self.expected_errors_str = textwrap.dedent("""
 
         2014-06-24 * "Go negative from zero"
           Assets:Investments:Stock  -1 GOOG {500 USD}
@@ -50,7 +50,37 @@ class TestValidateInventoryBooking(cmptest.TestCase):
           Assets:Investments:Stock  -15 GOOG {500 USD}
           Assets:Investments:Cash
 
-        """, [e.entry for e in validation_errors])
+        """)
+
+    def do_validate_inventory_booking(self, input_str, expected_errors_str):
+        entries, errors, options_map = parser.parse_string(input_str)
+        validation_errors = validation.validate_inventory_booking(entries, options_map)
+
+        self.assertEqual([validation.ValidationError, validation.ValidationError],
+                         list(map(type, validation_errors)))
+        self.assertEqualEntries(expected_errors_str,
+                                [e.entry for e in validation_errors])
+
+    def test_validate_inventory_booking(self):
+        self.do_validate_inventory_booking(self.input_str, self.expected_errors_str)
+
+    def test_validate_inventory_booking__same_day(self):
+        input_str = re.sub(r'\b2\d\b', '22', self.input_str)
+        expected_errors_str = re.sub(r'\b2\d\b', '22', self.expected_errors_str)
+        self.do_validate_inventory_booking(input_str, expected_errors_str)
+
+    @parser.parsedoc
+    def test_simple_negative_lots(self, entries, errors, options_map):
+        """
+          2013-05-01 open Assets:Bank:Investing
+          2013-05-01 open Equity:Opening-Balances
+
+          2013-05-02 *
+            Assets:Bank:Investing                -1 GOOG {501 USD}
+            Equity:Opening-Balances
+        """
+        validation_errors = validation.validate_inventory_booking(entries, options_map)
+        self.assertEqual([validation.ValidationError], list(map(type, validation_errors)))
 
 
 class TestValidateOpenClose(cmptest.TestCase):
@@ -118,7 +148,7 @@ class TestValidateOpenClose(cmptest.TestCase):
                          [error.entry.account for error in errors])
 
 
-class TestValidateBalances(cmptest.TestCase):
+class TestValidateDuplicateBalances(cmptest.TestCase):
 
     @parser.parsedoc
     def test_validate_duplicate_balances(self, entries, _, options_map):
@@ -156,20 +186,20 @@ class TestValidateActiveAccounts(cmptest.TestCase):
     @parser.parsedoc
     def test_validate_active_accounts(self, entries, _, options_map):
         """
-        2014-01-01 open  Equity:OpeningBalances
+        2014-01-01 open  Equity:Opening-Balances
 
         2014-02-01 * "Invalid before"
           Assets:Temporary    1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-02-02 note  Assets:Temporary "Invalid note entry"
-        2014-02-03 pad   Assets:Temporary Equity:OpeningBalances
+        2014-02-03 pad   Assets:Temporary Equity:Opening-Balances
 
         2014-03-01 open  Assets:Temporary
 
         2014-04-01 * "Valid"
           Assets:Temporary    1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-05-01 * "Unknown account"
           Assets:Temporary    1 USD
@@ -179,7 +209,7 @@ class TestValidateActiveAccounts(cmptest.TestCase):
 
         2014-10-01 * "Invalid after"
           Assets:Temporary    1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         ;; These should be allowed after close.
         2014-10-02 note  Assets:Temporary "Invalid note entry again"
@@ -192,10 +222,10 @@ class TestValidateActiveAccounts(cmptest.TestCase):
 
         2014-02-01 * "Invalid before"
           Assets:Temporary    1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-02-02 note  Assets:Temporary "Invalid note entry"
-        2014-02-03 pad   Assets:Temporary Equity:OpeningBalances
+        2014-02-03 pad   Assets:Temporary Equity:Opening-Balances
 
         2014-05-01 * "Unknown account"
           Assets:Temporary    1 USD
@@ -203,7 +233,7 @@ class TestValidateActiveAccounts(cmptest.TestCase):
 
         2014-10-01 * "Invalid after"
           Assets:Temporary    1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         """, [error.entry for error in errors])
 
@@ -212,27 +242,17 @@ class TestValidateActiveAccounts(cmptest.TestCase):
              re.search('unknown.*Equity:ImUnknown', error.message))
             for error in errors))
 
-
-class TestValidateUnusedAccounts(cmptest.TestCase):
-
     @parser.parsedoc
-    def test_validate_unused_accounts(self, entries, _, options_map):
+    def test_validate_active_accounts__unopened(self, entries, _, options_map):
         """
-        2014-01-01 open  Assets:Account1 ; Used, kept open
-        2014-01-01 open  Assets:Account2 ; Used and closed
-        2014-01-01 open  Assets:Account3 ; Unused
-        2014-01-01 open  Equity:OpeningBalances
-
         2014-02-01 *
-          Assets:Account1            1 USD
-          Assets:Account2            1 USD
-          Equity:OpeningBalances
-
-        2014-06-01 close Assets:Account2
+          Assets:US:Bank:Checking     100 USD
+          Assets:US:Bank:Savings     -100 USD
         """
-        errors = validation.validate_unused_accounts(entries, options_map)
-        self.assertEqual(1, len(errors))
-        self.assertEqual('Assets:Account3', errors[0].entry.account)
+        errors = validation.validate_active_accounts(entries, options_map)
+        self.assertEqual(2, len(errors))
+        self.assertEqual([validation.ValidationError, validation.ValidationError],
+                         list(map(type, errors)))
 
 
 class TestValidateCurrencyConstraints(cmptest.TestCase):
@@ -246,32 +266,32 @@ class TestValidateCurrencyConstraints(cmptest.TestCase):
 
         2014-01-02 * "Entries without cost"
           Assets:Account1            1 USD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-01-03 * "Entries without cost" #expected
           Assets:Account1            1 CAD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-01-04 * "Entries with cost"
           Assets:Account2            1 GOOG {500 USD}
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-01-05 * "Entries with cost" #expected
           Assets:Account2            1 AAPL {500 USD}
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-01-02 * "Multiple currencies"
           Assets:Account3            1 USD
           Assets:Account3            1 GOOG {500 USD}
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-01-05 * "Multiple currencies" #expected
           Assets:Account3            1 CAD
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         2014-01-05 * "Multiple currencies" #expected
           Assets:Account3            1 AAPL {500 USD}
-          Equity:OpeningBalances
+          Equity:Opening-Balances
 
         """
         errors = validation.validate_currency_constraints(entries, options_map)
@@ -283,67 +303,55 @@ class TestValidateCurrencyConstraints(cmptest.TestCase):
                                 [error.entry for error in errors])
 
 
-class TestValidate(cmptest.TestCase):
-
-    @parser.parsedoc
-    def test_validate_currency_constraints(self, entries, _, options_map):
-        """
-        2014-01-01 open  Assets:Account1    USD
-        2014-01-01 open  Assets:Account2    GOOG
-        2014-01-01 open  Assets:Account3    USD,GOOG
-
-        2014-01-02 * "Entries without cost"
-          Assets:Account1            1 USD
-          Equity:OpeningBalances
-
-        2014-01-03 * "Entries without cost" #expected
-          Assets:Account1            1 CAD
-          Equity:OpeningBalances
-
-        2014-01-04 * "Entries with cost"
-          Assets:Account2            1 GOOG {500 USD}
-          Equity:OpeningBalances
-
-        2014-01-05 * "Entries with cost" #expected
-          Assets:Account2            1 AAPL {500 USD}
-          Equity:OpeningBalances
-
-        2014-01-02 * "Multiple currencies"
-          Assets:Account3            1 USD
-          Assets:Account3            1 GOOG {500 USD}
-          Equity:OpeningBalances
-
-        2014-01-05 * "Multiple currencies" #expected
-          Assets:Account3            1 CAD
-          Equity:OpeningBalances
-
-        2014-01-05 * "Multiple currencies" #expected
-          Assets:Account3            1 AAPL {500 USD}
-          Equity:OpeningBalances
-
-        """
-        errors = validation.validate_currency_constraints(entries, options_map)
-
-        self.assertEqualEntries([entry for entry in entries
-                                 if (isinstance(entry, data.Transaction) and
-                                     entry.tags and
-                                     'expected' in entry.tags)],
-                                [error.entry for error in errors])
+class TestValidateDocumentPaths(cmptest.TestCase):
 
     def test_validate_documents_paths(self):
         date = datetime.date(2014, 3, 3)
-        fileloc = data.FileLocation('<validation_test>', 0)
-        entries = [data.Document(fileloc, date, 'Assets:Account1',
+        source = data.Source('<validation_test>', 0)
+        entries = [data.Document(source, date, 'Assets:Account1',
                                  "/abs/path/to/something.pdf"),
-                   data.Document(fileloc, date, 'Assets:Account2',
+                   data.Document(source, date, 'Assets:Account2',
                                  "relative/something.pdf"),
-                   data.Document(fileloc, date, 'Assets:Account2',
+                   data.Document(source, date, 'Assets:Account2',
                                  "../something.pdf"),
-                   data.Document(fileloc, date, 'Assets:Account2',
+                   data.Document(source, date, 'Assets:Account2',
                                  "")]
         errors = validation.validate_documents_paths(entries, {})
         self.assertEqual(3, len(errors))
         self.assertEqual({'Assets:Account2'}, set(error.entry.account for error in errors))
+
+
+class TestValidateDataTypes(cmptest.TestCase):
+
+    @parser.parsedoc
+    def test_validate_data_types(self, entries, errors, options_map):
+        """
+        2014-06-24 * "Narration"
+          Assets:Investments:Stock  1 GOOG {500 USD}
+          Assets:Investments:Cash
+        """
+        # Just a basic test that runs the sanitation code (that should already
+        # be well tested by itself).
+        entry = entries[0]
+        new_entry = entry._replace(narration=None)
+        valid_errors = validation.validate_data_types([new_entry], options_map)
+        self.assertEqual([validation.ValidationError], list(map(type, valid_errors)))
+
+
+class TestValidateCheckTransactionBalances(cmptest.TestCase):
+
+    @parser.parsedoc
+    def test_validate_check_transaction_balances(self, entries, errors, options_map):
+        """
+        2014-06-24 * "Narration"
+          Assets:Investments:Stock  1 USD
+          Assets:Investments:Cash   1 USD
+        """
+        valid_errors = validation.validate_check_transaction_balances(entries, options_map)
+        self.assertEqual([validation.ValidationError], list(map(type, valid_errors)))
+
+
+class TestValidate(cmptest.TestCase):
 
     @parser.parsedoc
     def test_validate(self, entries, _, options_map):

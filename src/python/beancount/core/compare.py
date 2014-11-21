@@ -1,15 +1,21 @@
 """Comparison helpers for data objects.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import collections
 import hashlib
 
-from .data import entry_sortkey
+from .data import Price
+from . import data
 
 
-CompareError = collections.namedtuple('CompareError', 'fileloc message entry')
+CompareError = collections.namedtuple('CompareError', 'source message entry')
+
+# A list of field names that are being ignored for persistence.
+IGNORED_FIELD_NAMES = {'source', 'entry', 'diff_amount'}
 
 
-def stable_hash_namedtuple(objtuple, ignore=frozenset()):
+def stable_hash_namedtuple__recursive(objtuple, ignore=frozenset()):
     """Hash the given namedtuple and its child fields.
 
     The hash_obj is updated. This iterates over all the members of objtuple,
@@ -22,6 +28,7 @@ def stable_hash_namedtuple(objtuple, ignore=frozenset()):
         computing a stable hash. For instance, circular references to objects
         or irrelevant data.
     """
+    # Note: this routine is slow and would stand to be implemented in C.
     hashobj = hashlib.md5()
     for attr_name, attr_value in zip(objtuple._fields, objtuple):
         if attr_name in ignore:
@@ -42,6 +49,10 @@ def stable_hash_namedtuple(objtuple, ignore=frozenset()):
     return hashobj.hexdigest()
 
 
+# pylint: disable=invalid-name
+stable_hash_namedtuple = stable_hash_namedtuple__recursive
+
+
 def hash_entry(entry):
     """Compute the stable hash of a single entry.
 
@@ -50,7 +61,7 @@ def hash_entry(entry):
     Returns:
       A stable hexadecimal hash of this entry.
     """
-    return stable_hash_namedtuple(entry, {'fileloc', 'entry', 'diff_amount'})
+    return stable_hash_namedtuple(entry, IGNORED_FIELD_NAMES)
 
 
 def hash_entries(entries):
@@ -66,20 +77,30 @@ def hash_entries(entries):
     """
     entry_hash_dict = {}
     errors = []
+    num_legal_duplicates = 0
     for entry in entries:
         entry_type = type(entry)
 
         hash_ = hash_entry(entry)
+
         if hash_ in entry_hash_dict:
-            other_entry = entry_hash_dict[hash_]
-            errors.append(
-                CompareError(entry.fileloc,
-                             "Duplicate entry: {} == {}".format(entry, other_entry),
-                             entry))
+            if isinstance(entry, Price):
+                # Note: Allow duplicate Price entries, they should be common
+                # because of the nature of stock markets (if they're closed, the
+                # data source is likely to return an entry for the previously
+                # available date, which may already have been fetched).
+                num_legal_duplicates += 1
+            else:
+                other_entry = entry_hash_dict[hash_]
+                errors.append(
+                    CompareError(entry.source,
+                                 "Duplicate entry: {} == {}".format(entry, other_entry),
+                                 entry))
         entry_hash_dict[hash_] = entry
 
     if not errors:
-        assert len(entry_hash_dict) == len(entries), (len(entry_hash_dict), len(entries))
+        assert len(entry_hash_dict) + num_legal_duplicates == len(entries), (
+            len(entry_hash_dict), len(entries), num_legal_duplicates)
     return entry_hash_dict, errors
 
 
@@ -111,10 +132,8 @@ def compare_entries(entries1, entries2):
         raise ValueError(str(error))
 
     same = keys1 == keys2
-    missing1 = sorted([hashes1[key] for key in keys1 - keys2],
-                      key=entry_sortkey)
-    missing2 = sorted([hashes2[key] for key in keys2 - keys1],
-                      key=entry_sortkey)
+    missing1 = data.sort([hashes1[key] for key in keys1 - keys2])
+    missing2 = data.sort([hashes2[key] for key in keys2 - keys1])
     return (same, missing1, missing2)
 
 
@@ -139,8 +158,7 @@ def includes_entries(subset_entries, entries):
         raise ValueError(str(error))
 
     includes = subset_keys.issubset(keys)
-    missing = sorted([subset_hashes[key] for key in subset_keys - keys],
-                     key=entry_sortkey)
+    missing = data.sort([subset_hashes[key] for key in subset_keys - keys])
     return (includes, missing)
 
 
@@ -166,6 +184,5 @@ def excludes_entries(subset_entries, entries):
 
     intersection = keys.intersection(subset_keys)
     excludes = not bool(intersection)
-    extra = sorted([subset_hashes[key] for key in intersection],
-                   key=entry_sortkey)
+    extra = data.sort([subset_hashes[key] for key in intersection])
     return (excludes, extra)

@@ -25,14 +25,18 @@ install_scripts = [join('bin', x) for x in """
 bean-bake
 bean-check
 bean-doctor
-bean-query
+bean-report
 bean-web
+bean-example
+bean-format
+bean-sql
+treeify
 """.splitlines() if x and not x.startswith('#')]
 
 
 setup(
     name="beancount",
-    version='2.0beta',
+    version='2.0beta2',
     description="Command-line Double-Entry Accounting",
 
     long_description="""
@@ -49,7 +53,7 @@ setup(
     url="http://furius.ca/beancount",
 
     # See note about about setuptools; uncomment if fixed.
-    ##install_requires = ['python-dateutil', 'BeautifulSoup4', 'lxml'],
+    ##install_requires = ['python-dateutil'],
 
     package_dir = {'': 'src/python'},
     packages = ['beancount',
@@ -67,6 +71,7 @@ setup(
                           '*.html',
                           '*.css',
                           'third_party/*.js'],
+        'beancount.reports': ['*.html'],
         },
 
     scripts=install_scripts,

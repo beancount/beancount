@@ -1,8 +1,10 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import unittest
 import datetime
 import re
 
-from beancount.core.amount import to_decimal as D
+from beancount.core.amount import D
 from beancount.core import amount
 from beancount.ops import prices
 from beancount.parser import parsedoc
@@ -94,7 +96,7 @@ class TestPriceMap(unittest.TestCase):
         # Ensure that the forward exception includes the forward detail.
         try:
             prices._lookup_price_and_inverse(price_map, ('EUR', 'USD'))
-            self.fail("Exception not raised.")
+            self.fail("Exception not raised")
         except KeyError as exc:
             self.assertTrue(re.search("('EUR', 'USD')", str(exc)))
 
@@ -121,6 +123,10 @@ class TestPriceMap(unittest.TestCase):
         inv_price_list = prices.get_all_prices(price_map, ('CAD', 'USD'))
         self.assertEqual(len(price_list), len(inv_price_list))
 
+        # Test not found.
+        with self.assertRaises(KeyError):
+            prices.get_all_prices(price_map, ('EWJ', 'JPY'))
+
     @parsedoc
     def test_get_latest_price(self, entries, _, __):
         """
@@ -133,6 +139,10 @@ class TestPriceMap(unittest.TestCase):
         expected = (datetime.date(2013, 6, 11), D('1.11'))
         self.assertEqual(expected, price_list)
 
+        # Test not found.
+        result = prices.get_latest_price(price_map, ('EWJ', 'JPY'))
+        self.assertEqual((None, None), result)
+
     @parsedoc
     def test_get_price(self, entries, _, __):
         """
@@ -144,28 +154,40 @@ class TestPriceMap(unittest.TestCase):
 
         date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 5, 15))
         self.assertEqual(None, price)
+        self.assertEqual(None, date)
 
         date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 6, 1))
         self.assertEqual(D('1.00'), price)
+        self.assertEqual(datetime.date(2013, 6, 1), date)
 
         date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 6, 5))
         self.assertEqual(D('1.00'), price)
+        self.assertEqual(datetime.date(2013, 6, 1), date)
 
         date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 6, 10))
         self.assertEqual(D('1.50'), price)
+        self.assertEqual(datetime.date(2013, 6, 10), date)
 
         date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 6, 20))
         self.assertEqual(D('1.50'), price)
+        self.assertEqual(datetime.date(2013, 6, 10), date)
 
         date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 7, 1))
         self.assertEqual(D('2.00'), price)
+        self.assertEqual(datetime.date(2013, 7, 1), date)
 
         date, price = prices.get_price(price_map, 'USD/CAD', datetime.date(2013, 7, 15))
         self.assertEqual(D('2.00'), price)
+        self.assertEqual(datetime.date(2013, 7, 1), date)
 
         # With no date, should devolved to get_latest_price().
         date, price = prices.get_price(price_map, 'USD/CAD', None)
         self.assertEqual(D('2.00'), price)
+        self.assertEqual(datetime.date(2013, 7, 1), date)
+
+        # Test not found.
+        result = prices.get_price(price_map, ('EWJ', 'JPY'))
+        self.assertEqual((None, None), result)
 
     @parsedoc
     def test_convert_amount(self, entries, _, __):

@@ -1,3 +1,5 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import unittest
 import tempfile
 import os
@@ -7,11 +9,57 @@ from os import path
 from . import account
 
 
+# Note: Ideally this should live in beancount.utils.test_utils, but since we
+# sync these files to ledgerhub, we leave this here for now.
+class TmpFilesTestBase(unittest.TestCase):
+    """A test utility base class that creates and cleans up a directory hierarchy.
+    This convenience is useful for testing functions that work on files, such as the
+    documents tests, or the accounts walk.
+    """
+
+    # The list of strings, documents to create.
+    # Filenames ending with a '/' will be created as directories.
+    TEST_DOCUMENTS = None
+
+    def setUp(self):
+        self.tempdir, self.root = self.create_file_hierarchy(self.TEST_DOCUMENTS)
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir, ignore_errors=True)
+
+    @staticmethod
+    def create_file_hierarchy(test_files, subdir='root'):
+        """A test utility that creates a hierarchy of files.
+
+        Args:
+          test_files: A list of strings, relative filenames to a temporary root
+            directory. If the filename ends with a '/', we create a directory;
+            otherwise, we create a regular file.
+          subdir: A string, the subdirectory name under the temporary directory
+            location, to create the hierarchy under.
+        Returns:
+          A pair of strings, the temporary directory, and the subdirectory under
+            that which hosts the root of the tree.
+        """
+        tempdir = tempfile.mkdtemp(prefix="beancount-test-tmpdir.")
+        root = path.join(tempdir, subdir)
+        for filename in test_files:
+            abs_filename = path.join(tempdir, filename)
+            if filename.endswith('/'):
+                os.makedirs(abs_filename)
+            else:
+                parent_dir = path.dirname(abs_filename)
+                if not path.exists(parent_dir):
+                    os.makedirs(parent_dir)
+                open(abs_filename, 'w')
+        return tempdir, root
+
+
 class TestAccount(unittest.TestCase):
 
     def test_is_valid(self):
         self.assertTrue(account.is_valid("Assets:US:RBS:Checking"))
-        self.assertTrue(account.is_valid("Equity:OpeningBalances"))
+        self.assertTrue(account.is_valid("Equity:Opening-Balances"))
         self.assertTrue(account.is_valid("Income:US:ETrade:Dividends-USD"))
         self.assertTrue(account.is_valid("Assets:US:RBS"))
         self.assertTrue(account.is_valid("Assets:US"))
@@ -33,6 +81,16 @@ class TestAccount(unittest.TestCase):
         account_name = account.join()
         self.assertEqual("", account_name)
 
+    def test_account_split(self):
+        account_name = account.split("Expenses:Toys:Computer")
+        self.assertEqual(["Expenses", "Toys", "Computer"], account_name)
+
+        account_name = account.split("Expenses")
+        self.assertEqual(["Expenses"], account_name)
+
+        account_name = account.split("")
+        self.assertEqual([""], account_name)
+
     def test_parent(self):
         self.assertEqual("Expenses:Toys",
                          account.parent("Expenses:Toys:Computer"))
@@ -52,6 +110,15 @@ class TestAccount(unittest.TestCase):
         self.assertEqual("US:BofA:Checking",
                          account.sans_root("Assets:US:BofA:Checking"))
         self.assertEqual("", account.sans_root("Assets"))
+
+    def test_root(self):
+        name = "Liabilities:US:Credit-Card:Blue"
+        self.assertEqual("", account.root(0, name))
+        self.assertEqual("Liabilities", account.root(1, name))
+        self.assertEqual("Liabilities:US", account.root(2, name))
+        self.assertEqual("Liabilities:US:Credit-Card", account.root(3, name))
+        self.assertEqual("Liabilities:US:Credit-Card:Blue", account.root(4, name))
+        self.assertEqual("Liabilities:US:Credit-Card:Blue", account.root(5, name))
 
     def test_has_component(self):
         self.assertTrue(account.has_component('Liabilities:US:Credit-Card', 'US'))
@@ -78,36 +145,9 @@ class TestAccount(unittest.TestCase):
                          account.commonprefix(['']))
 
 
-def create_file_hierarchy(test_files, subdir='root'):
-    """Create a hierarchy of files.
+class TestWalk(TmpFilesTestBase):
 
-    Args:
-      test_files: A list of strings, relative filenames to a temporary root
-        directory. If the filename ends with a '/', we create a directory;
-        otherwise, we create a regular file.
-      subdir: A string, the subdirectory name under the temporary directory
-        location, to create the hierarchy under.
-    Returns:
-      A pair of strings, the temporary directory, and the subdirectory under
-        that which hosts the root of the tree.
-    """
-    tempdir = tempfile.mkdtemp(prefix="beancount-test-tmpdir.")
-    root = path.join(tempdir, subdir)
-    for filename in test_files:
-        abs_filename = path.join(tempdir, filename)
-        if filename.endswith('/'):
-            os.makedirs(abs_filename)
-        else:
-            parent_dir = path.dirname(abs_filename)
-            if not path.exists(parent_dir):
-                os.makedirs(parent_dir)
-            open(abs_filename, 'w')
-    return tempdir, root
-
-
-class TestWalk(unittest.TestCase):
-
-    test_documents = [
+    TEST_DOCUMENTS = [
         'root/Assets/US/Bank/Checking/other.txt',
         'root/Assets/US/Bank/Checking/2014-06-08.bank-statement.pdf',
         'root/Assets/US/Bank/Checking/otherdir/',
@@ -116,12 +156,6 @@ class TestWalk(unittest.TestCase):
         'root/Assets/US/Bank/Savings/2014-07-01.savings.pdf',
         'root/Liabilities/US/Bank/',  # Empty directory.
     ]
-
-    def setUp(self):
-        self.tempdir, self.root = create_file_hierarchy(self.test_documents)
-
-    def tearDown(self):
-        shutil.rmtree(self.tempdir, ignore_errors=True)
 
     def test_walk(self):
         actual_data = [

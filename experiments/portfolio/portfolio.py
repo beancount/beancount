@@ -5,11 +5,11 @@ import argparse
 import functools
 import logging
 
-from beancount.core.amount import to_decimal, Decimal
+from beancount.core.amount import D
 from beancount import loader
 from beancount.ops import prices
 from beancount.ops import holdings
-from beancount.reports import rholdings
+from beancount.reports import holdings_reports
 from beancount.parser import options
 
 
@@ -40,7 +40,7 @@ def join(holdings_list, features_map, keyfun):
     all_labels = set(label
                      for features in features_map.values()
                      for label in features)
-    features_total = {label: to_decimal('0') for label in all_labels}
+    features_total = {label: D('0') for label in all_labels}
     features_holdings = {label: [] for label in all_labels}
 
     # Normalize the feature vectors.
@@ -50,20 +50,21 @@ def join(holdings_list, features_map, keyfun):
     # Accumulate the market value of each holding in buckets for each label.
     for holding in holdings_list:
         key = keyfun(holding)
+
+        if key is None:
+            logging.debug("Key not found: %s, %s, %s",
+                          holding.account, holding.currency, holding.cost_currency)
+
         try:
-            if key is None:
-                logging.debug("Key not found: %s, %s, %s",
-                              holding.account, holding.currency, holding.cost_currency)
             features = norm_features_map[key]
-            for label, fraction in features.items():
-                if not holding.market_value:
-                    continue
-                scaled_holding = holdings.scale_holding(holding, to_decimal(fraction))
-                features_total[label] += scaled_holding.market_value
-                features_holdings[label].append(scaled_holding)
-        except KeyError:
-            raise KeyError("Key '{}' not found in mapping: {} for holding {}".format(
-                key, norm_features_map, holding))
+        except KeyError as exc:
+            raise KeyError("Key '{}' not found in map {}".format(key, norm_features_map))
+        for label, fraction in features.items():
+            if not holding.market_value:
+                continue
+            scaled_holding = holdings.scale_holding(holding, D(fraction))
+            features_total[label] += scaled_holding.market_value
+            features_holdings[label].append(scaled_holding)
 
     return {label: (features_total[label], features_holdings[label])
             for label in all_labels}
@@ -116,7 +117,7 @@ def holding_account_prefix_getter(features_map, holding):
     return key
 
 
-def print_features(title, features, currency, print_holdings=False):
+def print_features(title, features, currency, relative=False, print_holdings=False):
     """Print a features aggregation.
 
     Args:
@@ -134,9 +135,14 @@ def print_features(title, features, currency, print_holdings=False):
     for label, (value, holdings_list) in sorted(features.items(), key=lambda x: x[1], reverse=1):
         frac = value / total_value
 
-        print('  {:{width}}  {:>16.2f} {} ( {:>6.1%} )'.format(
-            label, value, currency, frac,
-            width=label_width))
+        if not relative:
+            print('  {:{width}}  {:>16.2f} {} ( {:>6.1%} )'.format(
+                label, value, currency, frac,
+                width=label_width))
+        else:
+            print('  {:{width}}  {:>6.1%}'.format(
+                label, frac,
+                width=label_width))
         if print_holdings:
             for holding in holdings_list:
                 print('      {:60} {:12} {:>16.2f} {:12}'.format(holding.account, holding.currency, holding.market_value, holding.cost_currency))
@@ -162,7 +168,7 @@ def load(holdings_filename, prices_filename, currency):
 
     # Load the holdings list.
     # Generate with "bean-query LEDGER print_prices"
-    mixed_holdings_list = list(rholdings.load_from_csv(open(holdings_filename)))
+    mixed_holdings_list = list(holdings_reports.load_from_csv(open(holdings_filename)))
 
     # Convert all the amounts to a common currency (otherwise summing market
     # values makes no sense).

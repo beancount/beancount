@@ -123,8 +123,11 @@ debug:
 
 
 # Run the unittests.
-test tests unittest unittests:
+test tests unittests:
 	nosetests -v $(SRC)
+
+tests-quiet:
+	nosetests $(SRC)
 
 
 # Run the parser and measure its performance.
@@ -136,6 +139,16 @@ check:
 # Run the demo program.
 demo:
 	bin/bean-web --debug examples/demo.beancount
+
+
+# Generate the tutorial files from the example file.
+EXAMPLE=examples/tutorial/example.beancount
+$(EXAMPLE):
+	./bin/bean-example -s 0 -o $(EXAMPLE)
+
+TUTORIAL=examples/tutorial
+tutorial: $(EXAMPLE)
+	python3 src/python/beancount/scripts/tutorial.py $(EXAMPLE) $(TUTORIAL)
 
 
 # Run the web server.
@@ -158,33 +171,43 @@ import:
 sandbox:
 	bean-sandbox $(INPUT)
 
-# Report on the sorry state of test coverage, for 1.0 release.
-# sources and imports are going to move to ledgerhub.
-status test-status:
-	@echo "Missing tests:"
-	@./etc/find-missing-tests.py $(SRC)
-	@echo ""
-	@echo "Remaining FIXME:"
-	@egrep -srn '\b(FIXME|TODO\()' $(SRC)
+missing-tests:
+	./etc/find-missing-tests.py $(SRC)
 
+fixmes:
+	egrep -srn '\b(FIXME|TODO\()' $(SRC) || true
+
+multi-imports:
+	egrep -srn '^(from.*)?import.*,' $(SRC) || true
 
 # Check for unused imports.
 sfood-checker:
 	sfood-checker bin src/python
 
+# Check dependency constraints.
+dep-constraints: build/beancount.deps
+	./etc/dependency-constraints.py $<
+
+check-author:
+	find src/python/beancount -type f -name '*.py' ! -exec grep -q '__author__' {} \; -print
+
 # Run the linter on all source code.
 #LINT_PASS=line-too-long,bad-whitespace,bad-continuation,bad-indentation
-LINT_PASS=line-too-long,bad-whitespace,bad-indentation,unused-import
-LINT_FAIL=
+LINT_PASS=line-too-long,bad-whitespace,bad-indentation,unused-import,invalid-name,reimported
+LINT_FAIL=bad-continuation
 
 pylint-pass:
 	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_PASS) $(SRC)
 
 pylint-fail:
-	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all  --enable=$(LINT_FAIL) $(SRC)
+	pylint --rcfile=$(PWD)/etc/pylintrc --disable=all --enable=$(LINT_FAIL) $(SRC)
 
 pylint-all:
 	pylint --rcfile=$(PWD)/etc/pylintrc $(SRC)
 
 # Run all currently configured linter checks.
 lint: pylint-pass
+
+
+# Check everything.
+status check: pylint-pass missing-tests fixmes dep-constraints tests-quiet multi-imports

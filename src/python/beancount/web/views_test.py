@@ -1,3 +1,5 @@
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import unittest
 
 from beancount import loader
@@ -16,7 +18,6 @@ class TestViewsFromEmpty(unittest.TestCase):
 
         view = views.AllView(entries, options_map, 'FROM_EMPTY')
         self.assertEqual(entries, view.all_entries)
-        self.assertEqual(options_map, view.options)
         self.assertEqual('FROM_EMPTY', view.title)
 
         self.assertEqual([], view.entries)
@@ -74,7 +75,6 @@ class TestViews(unittest.TestCase):
         # Use an EmptyView to test the common attributes, it's a no-op, really.
         view = views.EmptyView(self.entries, self.options_map, 'TITLE')
         self.assertEqual(self.entries, view.all_entries)
-        self.assertEqual(self.options_map, view.options)
         self.assertEqual('TITLE', view.title)
 
         self.assertTrue(isinstance(view.entries, list))

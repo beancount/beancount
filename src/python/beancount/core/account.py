@@ -1,15 +1,18 @@
-"""Account object.
+"""Functions that operate on account strings.
 
 These account objects are rather simple and dumb; they do not contain the list
 of their associated postings. This is achieved by building a realization; see
 realization.py for details.
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import re
 import os
 from os import path
 
 
 # Component separator for account names.
+# pylint: disable=invalid-name
 sep = ':'
 
 
@@ -36,6 +39,17 @@ def join(*components):
       A string, joined in a single account name.
     """
     return sep.join(components)
+
+
+def split(account_name):
+    """Split an account's name into its components.
+
+    Args:
+      account_name: A string, an account name.
+    Returns:
+      A list of strings, the components of the account name (without the separators).
+    """
+    return account_name.split(sep)
 
 
 def parent(account_name):
@@ -81,18 +95,30 @@ def sans_root(account_name):
     return join(*components) if account_name else None
 
 
-def has_component(account, component):
+def root(num_components, account_name):
+    """Return the first few components of an account's name.
+
+    Args:
+      num_components: An integer, the number of components to return.
+      account_name: A string, an account name.
+    Returns:
+      A string, the account root up to 'num_components' components.
+    """
+    return join(*(split(account_name)[:num_components]))
+
+
+def has_component(account_name, component):
     """Return true if one of the account contains a given component.
 
     Args:
-      account: A string, an account name.
+      account_name: A string, an account name.
       component: A string, a component of an account name. For instance,
         'Food' in 'Expenses:Food:Restaurant'. All components are considered.
     Returns:
       A boolean, true if the component is in the account. Note that a component
       name must be whole, that is 'NY' is not in Expenses:Taxes:StateNY'.
     """
-    return re.search('(^|:){}(:|$)'.format(component), account)
+    return re.search('(^|:){}(:|$)'.format(component), account_name)
 
 
 def commonprefix(accounts):
