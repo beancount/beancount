@@ -719,6 +719,21 @@ class TestMetaData(unittest.TestCase):
         self.assertEqual(1, len(entries))
 
     @parsedoc
+    def test_metadata_transaction__indented(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+              test1: "Something"
+            Assets:Investments:MSFT      10 MSFT @@ 2000 USD
+              test2: "has"
+              test3: "to"
+            Assets:Investments:Cash
+              test4: "come"
+              test5: "from"
+              test6: "this"
+        """
+        self.assertEqual(1, len(entries))
+
+    @parsedoc
     def test_metadata_transaction__repeated(self, entries, errors, _):
         """
           2013-05-18 * ""
@@ -727,6 +742,19 @@ class TestMetaData(unittest.TestCase):
             test: "Oranges"
         """
         self.assertEqual(1, len(entries))
+
+    @parsedoc
+    def test_metadata_empty(self, entries, errors, _):
+        """
+          2013-05-18 * "blabla"
+            oranges:
+            bananas:
+
+          2013-05-19 open Assets:Something
+            apples:
+        """
+        self.assertFalse(errors)
+        self.assertEqual(2, len(entries))
 
     @parsedoc
     def test_metadata_other(self, entries, errors, _):

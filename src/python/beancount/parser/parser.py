@@ -587,7 +587,7 @@ class Builder(lexer.LexBuilder):
             return None
         return payee, narration
 
-    def transaction(self, filename, lineno, date, flag, txn_fields, postings_and_kv):
+    def transaction(self, filename, lineno, date, flag, txn_fields, posting_or_kv_list):
         """Process a transaction directive.
 
         All the postings of the transaction are available at this point, and so the
@@ -605,8 +605,8 @@ class Builder(lexer.LexBuilder):
           flag: a str, one-character, the flag associated with this transaction.
           txn_fields: A tuple of transaction fields, which includes descriptions
             (payee and narration), tags, and links.
-          postings_and_kv: a list of Posting or KeyValue instances, to be inserted in this
-            transaction, or None, if no postings have been declared.
+          posting_or_kv_list: a list of Posting or KeyValue instances, to be inserted in
+            this transaction, or None, if no postings have been declared.
         Returns:
           A new Transaction object.
         """
@@ -614,13 +614,17 @@ class Builder(lexer.LexBuilder):
 
         # Separate postings and key-valus.
         postings = []
-        key_values = []
-        if postings_and_kv:
-            for posting in postings_and_kv:
-                if isinstance(posting, Posting):
-                    postings.append(posting)
+        metadata = entry_metadata = {}
+        if posting_or_kv_list:
+            for posting_or_kv in posting_or_kv_list:
+                if isinstance(posting_or_kv, Posting):
+                    postings.append(posting_or_kv)
+                    metadata = {}
                 else:
-                    key_values.append(posting)
+                    metadata[posting_or_kv.key] = posting_or_kv.value
+
+        # print('entry meta', entry_metadata)
+        # print('last posting meta', metadata)
 
         # Unpack the transaction fields.
         payee_narration = self.unpack_txn_strings(txn_fields, source)

@@ -225,6 +225,11 @@ key_value : INDENT KEY STRING eol
               $$ = BUILD("key_value", "OO", $2, $3);
               DECREF2($2, $3);
           }
+          | INDENT KEY eol
+          {
+              $$ = BUILD("key_value", "OO", $2, Py_None);
+              DECREF1($2);
+          }
 
 posting_or_kv_list : empty
                    {
