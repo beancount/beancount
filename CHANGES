@@ -2,6 +2,13 @@
    beancount: CHANGES
 ========================
 
+2014-11-21
+
+  - Merged "metadata" branch into default, Beancount now parses the metadata but
+    does not store it anywhere. This was done so that early adopters can start
+    to enter metadata right away even if it is not usable yet.
+
+
 2014-11-13
 
   - Added a new "beancount.plugins.ira_contribs" module that automatically
