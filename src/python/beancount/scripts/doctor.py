@@ -26,7 +26,7 @@ from beancount.scripts import checkdeps
 from beancount.reports import context
 
 
-def do_dump_lexer(filename, unused_args):
+def do_lex(filename, unused_args):
     """Dump the lexer output for a Beancount syntax file.
 
     Args:
@@ -35,6 +35,17 @@ def do_dump_lexer(filename, unused_args):
     for token, lineno, text, obj in lexer.lex_iter(filename):
         sys.stdout.write('{:12} {:6d} {}\n'.format(
             '(None)' if token is None else token, lineno, repr(text)))
+
+do_dump_lexer = do_lex
+
+
+def do_parse(filename, unused_args):
+    """Run the parser in debug mode.
+
+    Args:
+      filename: A string, the Beancount input filename.
+    """
+    entries, errors, _ = parser.parse_file(filename, yydebug=1)
 
 
 def do_roundtrip(filename, unused_args):
