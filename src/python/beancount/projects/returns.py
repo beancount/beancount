@@ -510,6 +510,7 @@ if __name__ == '__main__':
 # FIXME: Issue warnings if the price date is too far from the requested market
 # value date.
 
+# FIXME:
 # On Sun, Nov 23, 2014 at 5:50 PM, Filippo Tampieri wrote:
 # One suggestion: often people seem to talk about their average returns
 # excluding the cash they have sitting idle; being able to include or exclude
@@ -519,3 +520,11 @@ if __name__ == '__main__':
 #   to break the algorithm to compute periods around some internal flows (e.g. a
 #   buy or a sell). It's not a trivial difference. I'll see if I can paameterize
 #   the segmenting algorithm.
+
+# FIXME: Check that no unrealized gains entries are present, this would really
+# skew the result. Ingore them if you find them, that's the correct way to treat
+# them.
+
+
+# This returns the same value for partial year to annualized, is this expected?
+#   python3 -m beancount.projects.returns   ~/p/beancount-data/rrsp.beancount   '(.*:RRSP|Expenses:Financial)'  --date-begin=2014-01-01 --date-end=2015-01-01
