@@ -419,3 +419,54 @@ class TestReturnsConstrained(test_utils.TestCase):
         self.assertEqual([
             (datetime.date(2015, 3, 1), datetime.date(2015, 6, 1), inv_final, inv_final),
             ], periods)
+
+    def test_segment_periods_around(self):
+        periods = returns.segment_periods(self.entries, self.assets, self.assets,
+                                          date_begin=datetime.date(2013, 12, 1),
+                                          date_end=datetime.date(2015, 3, 1))
+
+        self.assertEqual([
+            (datetime.date(2013, 12, 1), datetime.date(2014, 1, 15)),
+            (datetime.date(2014, 1, 15), datetime.date(2014, 6, 15)),
+            (datetime.date(2014, 6, 15), datetime.date(2015, 3, 1)),
+            ], [(date_begin, date_end) for date_begin, date_end, _, __ in periods])
+
+        inv_final = inventory.from_string('600 USD, '
+                                          '21 ACME {100 USD}, '
+                                          '22 ACME {110 USD}, '
+                                          '23 ACME {120 USD}, '
+                                          '24 ACME {130 USD}')
+        self.assertEqual(inv_final, periods[-1][3])
+
+    @loader.loaddoc
+    def test_segment_periods_hanging_last_period(self, entries, errors, _):
+        """
+        2014-01-01 open Assets:US:Investments:ACME
+        2014-01-01 open Assets:US:Investments:Cash
+        2014-01-01 open Assets:US:Bank:Checking
+
+        2014-01-15 * "Deposit"
+          Assets:US:Investments:Cash       2500 USD
+          Assets:US:Bank:Checking
+
+        2014-02-01 * "Buy"
+          Assets:US:Investments:ACME       21 ACME {100 USD}
+          Assets:US:Investments:Cash
+
+        2014-06-15 * "Deposit"
+          Assets:US:Investments:Cash       1000 USD
+          Assets:US:Bank:Checking
+        """
+        self.assertFalse(errors)
+
+        periods = returns.segment_periods(entries, self.assets, self.assets,
+                                          date_end=datetime.date(2020, 1, 1))
+
+        self.assertEqual([
+            (datetime.date(2014, 1, 1), datetime.date(2014, 1, 15)),
+            (datetime.date(2014, 1, 15), datetime.date(2014, 6, 15)),
+            (datetime.date(2014, 6, 15), datetime.date(2020, 1, 1)),
+            ], [(date_begin, date_end) for date_begin, date_end, _, __ in periods])
+
+        self.assertEqual(inventory.from_string('1400 USD, '
+                                               '21 ACME {100 USD}'), periods[-1][3])

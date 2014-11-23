@@ -227,6 +227,10 @@ def segment_periods(entries, accounts_assets, accounts_intflows,
         try:
             entry = next(iter_entries)
         except StopIteration:
+            # If there is an end date, insert that final period to cover the end
+            # date, with no changes.
+            if date_end:
+                periods.append((period_end, date_end, balance, balance))
             break
 
         period_begin = period_end
@@ -300,9 +304,19 @@ def annualize_returns(returns, date_first, date_last):
       date_last: A datetime.date instance, the beginning of the period.
     Returns:
       A dict of float, the returns adjusted to equivalent annual rates.
+    Raises:
+      ValueError: If the data includes 0-day periods to annualize
+        non-trivially.
     """
     num_days = (date_last - date_first).days
-    exponent = 365. / num_days
+    if num_days == 0:
+        for currency, return_ in returns.items():
+            if return_ != 1:
+                raise ValueError("Invalid period for return: {} days for {}".format(
+                    num_days, return_))
+        exponent = 1.
+    else:
+        exponent = 365. / num_days
     return {currency: return_ ** exponent
             for currency, return_ in returns.items()}
 
@@ -493,9 +507,15 @@ if __name__ == '__main__':
     main()
 
 
-# FIXME: You should be able to provide begin and end dates and automatically
-# create stops to compute the returns during that period, and crop it if outside
-# the period we know about.
-
 # FIXME: Issue warnings if the price date is too far from the requested market
 # value date.
+
+# On Sun, Nov 23, 2014 at 5:50 PM, Filippo Tampieri wrote:
+# One suggestion: often people seem to talk about their average returns
+# excluding the cash they have sitting idle; being able to include or exclude
+# idle cash from the calculations would be interesting.
+#
+#   Ha! That's a great idea. It wouldn't be super extra hard, but I would have
+#   to break the algorithm to compute periods around some internal flows (e.g. a
+#   buy or a sell). It's not a trivial difference. I'll see if I can paameterize
+#   the segmenting algorithm.
