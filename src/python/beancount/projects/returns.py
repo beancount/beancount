@@ -170,10 +170,11 @@ def compute_returns(entries, options_map,
     # Segment the entries, splitting at entries with external flow and computing
     # the balances before and after. This returns all such periods with the
     # balances at their beginning and end.
-    periods = segment_periods(entries, accounts_assets, is_external_flow_entry)
+    periods = segment_periods(entries, accounts_assets, accounts_intflows)
 
     # From the period balances, compute the returns.
-    logging.info("Calculating period returns")
+    logging.info("Calculating period returns...")
+    logging.info("")
     all_returns = []
     for (date_begin, date_end, balance_begin, balance_end) in periods:
         period_returns, mktvalues = compute_period_returns(date_begin, date_end,
@@ -210,10 +211,33 @@ def compute_returns(entries, options_map,
     return total_returns, (date_first, date_last)
 
 
-def segment_periods(entries, accounts_assets, is_external_flow_entry):
-    # FIXME: Needs docs
+def segment_periods(entries, accounts_assets, accounts_intflows):
+    """Segment entries in terms of piecewise periods of internal flow.
+
+    This function iterated through the given entries and computes balances at
+    the beginning and end of periods without external flow entries. You should be
+    able to then compute the returns from these informations.
+
+    Args:
+      entries: A list of directives. The list may contain directives other than
+        than transactions as well as directives with no relation to the assets or
+        internal flow accounts (the function simply ignores that which is not
+        relevant).
+      accounts_assets: A set of the asset accounts in the related group.
+      accounts_intflows: A set of the internal flow accounts in the related group.
+    Returns:
+      A list of period tuples, each of which contains:
+        date_begin: A datetime.date instance, the first day of the period.
+        date_end: A datetime.date instance, the last day of the period.
+        balance_begin: An Inventory instance, the balance at the beginning of the period.
+        balance_end: An Inventory instance, the balance at the end of the period.
+    """
     logging.info("Segmenting periods...")
-    entry_logger = misc_utils.LineFileProxy(logging.debug, '   ')
+
+    accounts_related = accounts_assets | accounts_intflows
+    is_external_flow_entry = lambda entry: (isinstance(entry, data.Transaction) and
+                                            any(posting.account not in accounts_related
+                                                for posting in entry.postings))
 
     # Find the first matching entry's date.
     for entry in entries:
@@ -227,8 +251,9 @@ def segment_periods(entries, accounts_assets, is_external_flow_entry):
     iter_entries = (entry
                     for entry in entries
                     if getters.get_entry_accounts(entry) & accounts_assets)
-    done = False
     periods = []
+    entry_logger = misc_utils.LineFileProxy(logging.debug, '   ')
+    done = False
     while True:
         balance_begin = copy.copy(balance)
 
@@ -284,11 +309,13 @@ def compute_period_returns(date_begin, date_end,
       balance_end: An instance of the Inventory at the end of the period.
       price_map: An instance of PriceMap as computed by prices.build_price_map().
     Returns:
-      A dict of currency -> floating-point return for the period. The union of
-      all currencies at market-value is returned. This is done to be able to evaluate
-      and report on returns in multiple currencies.
-
-      FIXME: Add to doc for return args
+      A pair of:
+        returns: A dict of currency -> floating-point return for the period. The
+          union of all currencies for those is returned (this is done to be able
+          to evaluate and report on returns in multiple currencies).
+        (mktvalue_begin, mktvalue_end): Both instances of Inventory, the balance
+          of the porfolio evaluated at the market value at the beginning and end
+          of the period.
     """
     # Evaluate the boundary balances at market value.
     mktvalue_begin = prices.get_inventory_market_value(balance_begin, date_begin, price_map)
@@ -370,6 +397,10 @@ def main():
     # Annualize the returns.
     annual_returns = annualize_returns(returns, date_first, date_last)
 
+    print('Total returns from {} to {}:'.format(date_first, date_last))
+    for currency, return_ in sorted(returns.items()):
+        print('  {}: {:.3%}'.format(currency, return_ - 1))
+
     print('Averaged annual returns from {} to {}:'.format(date_first, date_last))
     for currency, return_ in sorted(annual_returns.items()):
         print('  {}: {:.3%}'.format(currency, return_ - 1))
@@ -382,6 +413,3 @@ if __name__ == '__main__':
 # FIXME: You should be able to provide begin and end dates and automatically
 # create stops to compute the returns during that period, and crop it if outside
 # the period we know about.
-
-# FIXME: You should be able to provide additional dates to break at, i.e., at
-# year boundaries, and compute annual returns.
