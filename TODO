@@ -509,6 +509,13 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
 
+  - IDEA: Using inference and a reasonable buffer amount, can I automatically
+    figure out how much extra cash from checking can safely be transferred out
+    for investing? i.e. sum up upcoming expenses (rent + cc) and expected
+    salary payments, and calculate it automatically. Not obvious, but why not?
+
+
+
   - IDEA: Create a plugin that will convert "doc:" metadata to a document file,
     that will search for a unique string name in all the filenames and
     associate the filename with this directive via a link or something.
