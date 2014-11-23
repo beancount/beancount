@@ -183,6 +183,9 @@ Source = namedtuple('Source', 'filename lineno')
 # entry field should be set to.
 #
 # Attributes:
+#   metadata: A dict of strings to values, the metadata that was attached
+#     specifically to that posting, or None, if not provided. In practice, most
+#     of the instances will be unlikely to have metadata.
 #   entry: A Transaction instance (see above), which the posting applies to.
 #     It is convenient to have Posting instances point to their parent entries,
 #     because account journals contain lists of Postings and non-Transaction
@@ -200,7 +203,7 @@ Source = namedtuple('Source', 'filename lineno')
 #     associated with the posting. Most postings don't have a flag, but it can
 #     be convenient to mark a particular posting as problematic or pending to
 #     be reconciled for a future import of its account.
-Posting = namedtuple('Posting', 'entry account position price flag')
+Posting = namedtuple('Posting', 'entry account position price flag metadata')
 
 
 def strip_back_reference(entry):
@@ -240,7 +243,7 @@ def create_simple_posting(entry, account, number, currency):
         if not isinstance(number, Decimal):
             number = D(number)
         position = Position(Lot(currency, None, None), number)
-    posting = Posting(entry, account, position, None, None)
+    posting = Posting(entry, account, position, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
     return posting
@@ -270,7 +273,7 @@ def create_simple_posting_with_cost(entry, account,
         cost_number = D(cost_number)
     cost = Amount(cost_number, cost_currency)
     position = Position(Lot(currency, cost, None), number)
-    posting = Posting(entry, account, position, None, None)
+    posting = Posting(entry, account, position, None, None, None)
     if entry is not None:
         entry.postings.append(posting)
     return posting

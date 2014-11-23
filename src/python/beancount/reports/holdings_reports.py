@@ -103,9 +103,9 @@ def get_holdings_entries(entries, options_map):
         position_ = holdings.holding_to_position(holding)
 
         entry.postings.append(
-            data.Posting(entry, holding.account, position_, None, None))
+            data.Posting(entry, holding.account, position_, None, None, None))
         entry.postings.append(
-            data.Posting(entry, equity_account, -position_.cost(), None, None))
+            data.Posting(entry, equity_account, -position_.cost(), None, None, None))
 
         holdings_entries.append(entry)
 

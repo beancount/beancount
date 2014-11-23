@@ -280,7 +280,8 @@ def conversions(entries, conversion_account, conversion_currency, date=None):
         # Conversions.)
         price = amount.Amount(amount.ZERO, conversion_currency)
         conversion_entry.postings.append(
-            data.Posting(conversion_entry, conversion_account, -position, price, None))
+            data.Posting(conversion_entry, conversion_account, -position, price,
+                         None, None))
 
     # Make a copy of the list of entries and insert the new transaction into it.
     new_entries = list(entries)
@@ -348,10 +349,10 @@ def create_entries_from_balances(balances, date, source_account, direction,
             source, date, flag, None, narration, None, None, postings)
 
         for position in account_balance.get_positions():
-            postings.append(data.Posting(new_entry, account, position, None, None))
+            postings.append(data.Posting(new_entry, account, position, None, None, None))
             cost_position = position.cost()
             postings.append(
-                data.Posting(new_entry, source_account, -cost_position, None, None))
+                data.Posting(new_entry, source_account, -cost_position, None, None, None))
 
         new_entries.append(new_entry)
 

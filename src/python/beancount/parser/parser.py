@@ -493,7 +493,8 @@ class Builder(lexer.LexBuilder):
         #     self.errors.append(
         #         ParserError(source, "Price is zero: {}".format(price), None))
 
-        return Posting(None, account, position, price, chr(flag) if flag else None)
+        return Posting(None, account, position, price, chr(flag) if flag else None,
+                       None)
 
 
     def txn_field_new(self):
@@ -614,17 +615,23 @@ class Builder(lexer.LexBuilder):
 
         # Separate postings and key-valus.
         postings = []
-        metadata = entry_metadata = {}
+        # entry_metadata = {}
         if posting_or_kv_list:
+            # last_posting = None
             for posting_or_kv in posting_or_kv_list:
                 if isinstance(posting_or_kv, Posting):
                     postings.append(posting_or_kv)
-                    metadata = {}
+                    # last_posting = posting_or_kv
                 else:
-                    metadata[posting_or_kv.key] = posting_or_kv.value
-
-        # print('entry meta', entry_metadata)
-        # print('last posting meta', metadata)
+                    pass
+                    # if last_posting is None:
+                    #     entry_metadata[posting_or_kv.key] = posting_or_kv.value
+                    # else:
+                    #     if last_posting.metadata is None:
+                    #         last_posting = last_posting._replace(metadata={})
+                    #         postings.pop(-1)
+                    #         postings.append(last_posting)
+                    #     last_posting.metadata[posting_or_kv.key] = posting_or_kv.value
 
         # Unpack the transaction fields.
         payee_narration = self.unpack_txn_strings(txn_fields, source)

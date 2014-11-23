@@ -133,11 +133,11 @@ def pad(entries, options_map):
 
                         new_entry.postings.append(
                             data.Posting(new_entry, active_pad.account, diff_position,
-                                         None, None))
+                                         None, None, None))
                         new_entry.postings.append(
                             data.Posting(new_entry,
                                          active_pad.source_account, -diff_position,
-                                         None, None))
+                                         None, None, None))
 
                         # Save it for later insertion after the active pad.
                         new_entries[active_pad].append(new_entry)

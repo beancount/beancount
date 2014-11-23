@@ -59,7 +59,7 @@ class TestContext(test_utils.TestCase):
                                                    search_filename, search_lineno)
 
         self.assertLines(textwrap.dedent("""
-        Hash:298dca350249afe0378cf8bac2fb12cf
+        Hash:d2aa9e1944253186f1d5a676d2d883cb
         Location: <string>:29
 
         ;   Assets:US:ETrade:Cash                       -1411.44 USD

@@ -31,7 +31,7 @@ class TestJournalRenderPosting(unittest.TestCase):
     def test_render_posting_no_cost(self):
         str_posting = journal_text.render_posting(
             data.Posting(None, 'Assets:Something',
-                         position.from_string('100 USD'), None, None),
+                         position.from_string('100 USD'), None, None, None),
             self.number_format)
         self.assertEqual('  Assets:Something                 100 USD',
                          str_posting)
@@ -39,7 +39,7 @@ class TestJournalRenderPosting(unittest.TestCase):
     def test_render_posting_cost(self):
         str_posting = journal_text.render_posting(
             data.Posting(None, 'Assets:Something',
-                         position.from_string('10 VHT {45.32 USD}'), None, None),
+                         position.from_string('10 VHT {45.32 USD}'), None, None, None),
             self.number_format)
         self.assertEqual('  Assets:Something                 10 VHT {45.32 USD}',
                          str_posting)
@@ -48,7 +48,7 @@ class TestJournalRenderPosting(unittest.TestCase):
         str_posting = journal_text.render_posting(
             data.Posting(None, 'Assets:Something',
                          position.from_string('10 VHT'),
-                         amount.from_string('45.32 USD'), None),
+                         amount.from_string('45.32 USD'), None, None),
             self.number_format)
         self.assertEqual('  Assets:Something                 10 VHT @ 45.32 USD',
                          str_posting)
@@ -57,7 +57,7 @@ class TestJournalRenderPosting(unittest.TestCase):
         str_posting = journal_text.render_posting(
             data.Posting(None, 'Assets:Something',
                          position.from_string('10 VHT {45.32 USD}'),
-                         amount.from_string('47.00 USD'), None),
+                         amount.from_string('47.00 USD'), None, None),
             self.number_format)
         self.assertEqual(
             '  Assets:Something                 10 VHT {45.32 USD} @ 47.00 USD',
