@@ -36,6 +36,8 @@ import io
 import re
 import logging
 
+from dateutil.parser import parse as parse_datetime
+
 from beancount.core.amount import ZERO
 from beancount.core import amount
 from beancount import loader
@@ -88,127 +90,6 @@ def find_matching(entries, acc_types, related_regexp):
     return (matching_entries, (accounts_assets,
                                accounts_intflows,
                                accounts_extflows))
-
-
-def compute_returns_with_regexp(entries, options_map, related_regexp):
-    """Compute the returns of a portfolio of accounts defined by a regular expression.
-
-    Args:
-      entries: A list of directives.
-      options_map: An options dict as produced by the loader.
-    Returns:
-      See compute_returns().
-    """
-    acc_types = options.get_account_types(options_map)
-    price_map = prices.build_price_map(entries)
-
-    # Fetch the matching entries and figure out account name groups.
-    matching_entries, (accounts_assets,
-                       accounts_intflows,
-                       accounts_extflows) = find_matching(entries, acc_types,
-                                                          related_regexp)
-
-    logging.info('Asset accounts:')
-    for account in sorted(accounts_assets):
-        logging.info('  %s', account)
-
-    logging.info('Internal flows:')
-    for account in sorted(accounts_intflows):
-        logging.info('  %s', account)
-
-    logging.info('External flows:')
-    for account in sorted(accounts_extflows):
-        logging.info('  %s', account)
-    logging.info('')
-
-    return compute_returns(entries, options_map,
-                           accounts_assets, accounts_intflows, price_map)
-
-
-def compute_returns(entries, options_map,
-                    accounts_assets, accounts_intflows,
-                    price_map=None):
-    """Compute the returns of a portfolio of accounts defined by a regular expression.
-
-    Args:
-      entries: A list of directives that may affect the account.
-      options_map: An options dict as produced by the loader.
-      accounts_assets: A set of account name strings, the names of the asset accounts
-        included in valuing the portfolio.
-      accounts_intflow: A set of account name strings, the names of internal flow
-        accounts (normally income and expenses) that aren't external flows.
-      price_map: An instance of PriceMap as computed by prices.build_price_map(). If left
-        to its default value of None, we derive the price_map from the entries themselves.
-    Returns:
-      A dict of currency -> float total returns and a pair of (begin, end) datetime.date
-      instances from which it was computed.
-    """
-    if price_map is None:
-        price_map = prices.build_price_map(entries)
-
-    accounts_related = accounts_assets | accounts_intflows
-
-    # Predicates based on account groups determined above.
-    is_external_flow_entry = lambda entry: (isinstance(entry, data.Transaction) and
-                                            any(posting.account not in accounts_related
-                                                for posting in entry.postings))
-
-    # Verify that external flow entries only affect balance sheet accounts and
-    # not income or expenses accounts (internal flows). We do this because we
-    # want to ensure that all income and expenses are incurred against assets
-    # that live within the assets group. An example of something we'd like to
-    # avoid is an external flow paying for fees incurred within the account that
-    # should diminish the returns of the related accounts.
-    for entry in entries:
-        if is_external_flow_entry(entry):
-            if any(posting.account in accounts_intflows for posting in entry.postings):
-                oss = io.StringIO()
-                printer.print_entry(entry, file=oss)
-                logging.error("External flow may not affect non-asset accounts: {}".format(
-                    oss.getvalue()))
-
-    # Segment the entries, splitting at entries with external flow and computing
-    # the balances before and after. This returns all such periods with the
-    # balances at their beginning and end.
-    periods = segment_periods(entries, accounts_assets, accounts_intflows)
-
-    # From the period balances, compute the returns.
-    logging.info("Calculating period returns...")
-    logging.info("")
-    all_returns = []
-    for (date_begin, date_end, balance_begin, balance_end) in periods:
-        period_returns, mktvalues = compute_period_returns(date_begin, date_end,
-                                                           balance_begin, balance_end,
-                                                           price_map)
-        mktvalue_begin, mktvalue_end = mktvalues
-        all_returns.append(period_returns)
-
-        annual_returns = (annualize_returns(period_returns, date_begin, date_end)
-                          if date_end != date_begin
-                          else {})
-
-        logging.info("From %s to %s", date_begin, date_end)
-        logging.info("  Begin %s => %s", balance_begin, mktvalue_begin)
-        logging.info("  End   %s => %s", balance_end, mktvalue_end)
-        logging.info("  Returns     %s", period_returns)
-        logging.info("  Annualized  %s", annual_returns)
-        logging.info("")
-
-    # Compute the piecewise returns. Note that we have to be careful to handle
-    # all available currencies.
-    currencies = set(currency
-                     for returns in all_returns
-                     for currency in returns.keys())
-    total_returns = {}
-    for currency in currencies:
-        total_return = 1.
-        for returns in all_returns:
-            total_return *= returns.get(currency, 1.)
-        total_returns[currency] = total_return
-
-    date_first = periods[0][0]
-    date_last = periods[-1][1]
-    return total_returns, (date_first, date_last)
 
 
 def segment_periods(entries, accounts_assets, accounts_intflows):
@@ -371,7 +252,141 @@ def annualize_returns(returns, date_first, date_last):
             for currency, return_ in returns.items()}
 
 
+def compute_returns(entries, options_map,
+                    accounts_assets, accounts_intflows,
+                    price_map=None,
+                    date_begin=None, date_end=None):
+    """Compute the returns of a portfolio of accounts defined by a regular expression.
+
+    Args:
+      entries: A list of directives that may affect the account.
+      options_map: An options dict as produced by the loader.
+      accounts_assets: A set of account name strings, the names of the asset accounts
+        included in valuing the portfolio.
+      accounts_intflow: A set of account name strings, the names of internal flow
+        accounts (normally income and expenses) that aren't external flows.
+      price_map: An instance of PriceMap as computed by prices.build_price_map(). If left
+        to its default value of None, we derive the price_map from the entries themselves.
+      date_begin: A datetime.date instance, the beginning date of the period to compute
+        returns over.
+      date_end: A datetime.date instance, the end date of the period to compute returns
+        over.
+    Returns:
+      A dict of currency -> float total returns and a pair of (begin, end) datetime.date
+      instances from which it was computed.
+    """
+    if price_map is None:
+        price_map = prices.build_price_map(entries)
+
+    accounts_related = accounts_assets | accounts_intflows
+
+    # Predicates based on account groups determined above.
+    is_external_flow_entry = lambda entry: (isinstance(entry, data.Transaction) and
+                                            any(posting.account not in accounts_related
+                                                for posting in entry.postings))
+
+    # Verify that external flow entries only affect balance sheet accounts and
+    # not income or expenses accounts (internal flows). We do this because we
+    # want to ensure that all income and expenses are incurred against assets
+    # that live within the assets group. An example of something we'd like to
+    # avoid is an external flow paying for fees incurred within the account that
+    # should diminish the returns of the related accounts.
+    for entry in entries:
+        if is_external_flow_entry(entry):
+            if any(posting.account in accounts_intflows for posting in entry.postings):
+                oss = io.StringIO()
+                printer.print_entry(entry, file=oss)
+                logging.error("External flow may not affect non-asset accounts: {}".format(
+                    oss.getvalue()))
+
+    # Segment the entries, splitting at entries with external flow and computing
+    # the balances before and after. This returns all such periods with the
+    # balances at their beginning and end.
+    periods = segment_periods(entries, accounts_assets, accounts_intflows)
+
+    # From the period balances, compute the returns.
+    logging.info("Calculating period returns...")
+    logging.info("")
+    all_returns = []
+    for (date_begin, date_end, balance_begin, balance_end) in periods:
+        period_returns, mktvalues = compute_period_returns(date_begin, date_end,
+                                                           balance_begin, balance_end,
+                                                           price_map)
+        mktvalue_begin, mktvalue_end = mktvalues
+        all_returns.append(period_returns)
+
+        annual_returns = (annualize_returns(period_returns, date_begin, date_end)
+                          if date_end != date_begin
+                          else {})
+
+        logging.info("From %s to %s", date_begin, date_end)
+        logging.info("  Begin %s => %s", balance_begin, mktvalue_begin)
+        logging.info("  End   %s => %s", balance_end, mktvalue_end)
+        logging.info("  Returns     %s", period_returns)
+        logging.info("  Annualized  %s", annual_returns)
+        logging.info("")
+
+    # Compute the piecewise returns. Note that we have to be careful to handle
+    # all available currencies.
+    currencies = set(currency
+                     for returns in all_returns
+                     for currency in returns.keys())
+    total_returns = {}
+    for currency in currencies:
+        total_return = 1.
+        for returns in all_returns:
+            total_return *= returns.get(currency, 1.)
+        total_returns[currency] = total_return
+
+    date_first = periods[0][0]
+    date_last = periods[-1][1]
+    return total_returns, (date_first, date_last)
+
+
+def compute_returns_with_regexp(entries, options_map, related_regexp,
+                                date_begin=None, date_end=None):
+    """Compute the returns of a portfolio of accounts defined by a regular expression.
+
+    Args:
+      entries: A list of directives.
+      options_map: An options dict as produced by the loader.
+      date_begin: A datetime.date instance, the beginning date of the period to compute
+        returns over.
+      date_end: A datetime.date instance, the end date of the period to compute returns
+        over.
+    Returns:
+      See compute_returns().
+    """
+    acc_types = options.get_account_types(options_map)
+    price_map = prices.build_price_map(entries)
+
+    # Fetch the matching entries and figure out account name groups.
+    matching_entries, (accounts_assets,
+                       accounts_intflows,
+                       accounts_extflows) = find_matching(entries, acc_types,
+                                                          related_regexp)
+
+    logging.info('Asset accounts:')
+    for account in sorted(accounts_assets):
+        logging.info('  %s', account)
+
+    logging.info('Internal flows:')
+    for account in sorted(accounts_intflows):
+        logging.info('  %s', account)
+
+    logging.info('External flows:')
+    for account in sorted(accounts_extflows):
+        logging.info('  %s', account)
+    logging.info('')
+
+    return compute_returns(entries, options_map,
+                           accounts_assets, accounts_intflows,
+                           price_map,
+                           date_begin, date_end)
+
+
 def main():
+    parse_date = lambda s: parse_datetime(s).date()
     parser = argparse.ArgumentParser()
 
     parser.add_argument('filename', help='Ledger filename')
@@ -381,6 +396,16 @@ def main():
 
     parser.add_argument('-v', '--verbose', action='store_true',
                         help="Output detailed processing information. Useful for debugging")
+
+    parser.add_argument('--date-begin', '--begin-date', action='store', type=parse_date,
+                        default=None,
+                        help=("Beginning date of the period to compute returns over "
+                              "(default is the first related directive)"))
+
+    parser.add_argument('--date-end', '--end-date', action='store', type=parse_date,
+                        default=None,
+                        help=("End date of the period to compute returns over "
+                              "(default is the last related directive)"))
 
     args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
@@ -392,7 +417,9 @@ def main():
     # Compute the returns.
     returns, (date_first, date_last) = compute_returns_with_regexp(entries,
                                                                    options_map,
-                                                                   args.related_regexp)
+                                                                   args.related_regexp,
+                                                                   args.date_begin,
+                                                                   args.date_end)
 
     # Annualize the returns.
     annual_returns = annualize_returns(returns, date_first, date_last)
