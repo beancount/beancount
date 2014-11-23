@@ -97,15 +97,15 @@ class Amount:
         self.number = D(number)
         self.currency = currency
 
-    def to_string(self, numfmt=DEFAULT_FORMATTER):
+    def to_string(self, dformat=DEFAULT_FORMATTER):
         """Convert an Amount instance to a printable string.
 
         Args:
-          numfmt: An instance of NumFormatter.
+          dformat: An instance of DisplayFormatter.
         Returns:
           A formatted string of the quantized amount and symbol.
         """
-        return "{} {}".format(numfmt.format(self.number, self.currency),
+        return "{} {}".format(dformat.format(self.number, self.currency),
                               self.currency)
 
     def __str__(self):

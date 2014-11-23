@@ -204,7 +204,7 @@ class DisplayContext:
             raise ValueError("Unknown alignment: {}".foramt(alignment))
         fmtstrings = build_method(precision, commas, reserved)
 
-        return NumFormatter(self, fmtstrings)
+        return DisplayFormatter(self, fmtstrings)
 
     def _build_natural(self, precision, commas, reserved):
         comma_str = ',' if commas else ''
@@ -294,7 +294,7 @@ class DisplayContext:
         return fmtstrings
 
 
-class NumFormatter:
+class DisplayFormatter:
     """A class used to contain various settings that control how we output numbers.
     In particular, the precision used for each currency, and whether or not
     commas should be printed. This object is intended to be passed around to all
@@ -320,7 +320,7 @@ class NumFormatter:
                          for currency, fmtstr in fmtstrings.items()}
 
     def __str__(self):
-        return 'NumFormatter({})'.format(self.fmtstrings)
+        return 'DisplayFormatter({})'.format(self.fmtstrings)
 
     def format(self, number, currency='__default__'):
         try:

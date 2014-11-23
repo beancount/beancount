@@ -92,11 +92,11 @@ class Position:
         """
         return hash((self.lot, self.number))
 
-    def to_string(self, numfmt=DEFAULT_FORMATTER, detail=True):
+    def to_string(self, dformat=DEFAULT_FORMATTER, detail=True):
         """Render the position to a string.
 
         Args:
-          numfmt: An instance of NumFormatter.
+          dformat: An instance of DisplayFormatter.
           detail: A boolean, true if we should only render the lot details
            beyond the cost (lot-date, label, etc.). If false, we only render
            the cost, if present.
@@ -106,7 +106,7 @@ class Position:
         lot = self.lot
 
         # Render the units.
-        pos_str = Amount(self.number, lot.currency).to_string(numfmt)
+        pos_str = Amount(self.number, lot.currency).to_string(dformat)
 
         # Render the cost (and other lot parameters, lot-date, label, etc.).
         if detail:
@@ -115,7 +115,7 @@ class Position:
                 cost_str_list.append('{')
                 if lot.cost:
                     cost_str_list.append(
-                        Amount(lot.cost.number, lot.cost.currency).to_string(numfmt))
+                        Amount(lot.cost.number, lot.cost.currency).to_string(dformat))
                 if lot.lot_date:
                     cost_str_list.append(' / {}'.format(lot.lot_date))
                 cost_str_list.append('}')
@@ -124,7 +124,7 @@ class Position:
         else:
             # Render just the cost, if present.
             if lot.cost is not None:
-                pos_str = '{} {{{}}}'.format(pos_str, lot.cost.to_string(numfmt))
+                pos_str = '{} {{{}}}'.format(pos_str, lot.cost.to_string(dformat))
 
         return pos_str
 

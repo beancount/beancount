@@ -90,8 +90,8 @@ class EntryPrinter:
 
     def __init__(self, dcontext=None, render_weight=False, min_width_account=None):
         self.dcontext = dcontext or display_context.DEFAULT_DISPLAY_CONTEXT
-        self.numfmt = self.dcontext.build(precision=display_context.Precision.MOST_COMMON)
-        self.numfmt_max = self.dcontext.build(precision=display_context.Precision.MAXIMUM)
+        self.dformat = self.dcontext.build(precision=display_context.Precision.MOST_COMMON)
+        self.dformat_max = self.dcontext.build(precision=display_context.Precision.MAXIMUM)
         self.render_weight = render_weight
         self.min_width_account = min_width_account
 
@@ -167,14 +167,14 @@ class EntryPrinter:
         # Render a string with the amount and cost and optional price, if
         # present. Also render a string with the weight.
         if posting.position:
-            position_str = posting.position.to_string(self.numfmt)
-            weight_str = interpolate.get_posting_weight(posting).to_string(self.numfmt)
+            position_str = posting.position.to_string(self.dformat)
+            weight_str = interpolate.get_posting_weight(posting).to_string(self.dformat)
         else:
             position_str = ''
             weight_str = ''
 
         if posting.price is not None:
-            position_str += ' @ {}'.format(posting.price.to_string(self.numfmt_max))
+            position_str += ' @ {}'.format(posting.price.to_string(self.dformat_max))
 
         return flag_account, position_str, weight_str
 
@@ -189,7 +189,7 @@ class EntryPrinter:
         comment = '   ; Diff: {}'.format(entry.diff_amount) if entry.diff_amount else ''
         oss.write(('{e.date} balance {e.account:47} {amount}'
                    '{comment}\n').format(e=entry,
-                                         amount=entry.amount.to_string(self.numfmt),
+                                         amount=entry.amount.to_string(self.dformat),
                                          comment=comment))
 
     def Note(_, entry, oss):
@@ -210,7 +210,7 @@ class EntryPrinter:
 
     def Price(self, entry, oss):
         oss.write('{e.date} price {e.currency:<22} {amount:>22}\n'.format(
-            e=entry, amount=entry.amount.to_string(self.numfmt_max)))
+            e=entry, amount=entry.amount.to_string(self.dformat_max)))
 
     def Event(_, entry, oss):
         oss.write('{e.date} event "{e.type}" "{e.description}"\n'.format(e=entry))

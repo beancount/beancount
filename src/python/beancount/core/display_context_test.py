@@ -36,15 +36,15 @@ class DisplayContextBaseTest(unittest.TestCase):
                 else:
                     number, currency = number
                     dcontext.update(number, currency)
-        numfmt = dcontext.build(alignment=self.alignment, **build_args)
+        dformat = dcontext.build(alignment=self.alignment, **build_args)
 
         fmt_numbers = []
         for number in numbers:
             if isinstance(number, Decimal):
-                fmt_numbers.append(numfmt.format(number))
+                fmt_numbers.append(dformat.format(number))
             else:
                 number, currency = number
-                fmt_numbers.append(numfmt.format(number, currency))
+                fmt_numbers.append(dformat.format(number, currency))
 
         self.assertEqual(expected_fmt_numbers, fmt_numbers)
 
