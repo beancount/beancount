@@ -509,6 +509,11 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
 
+  - IDEA: Create a plugin that will convert "doc:" metadata to a document file,
+    that will search for a unique string name in all the filenames and
+    associate the filename with this directive via a link or something.
+
+
   - In the comparison doc: describe how Beancount has asset types
 
 
