@@ -193,9 +193,6 @@ class TestReturnsPeriods(test_utils.TestCase):
         """
         self.assertFalse(errors)
         assets = {'Assets:US:Investments:Cash'}
-        is_external_flow_entry = lambda entry: (isinstance(entry, data.Transaction) and
-                                                any(posting.account not in assets
-                                                    for posting in entry.postings))
         periods = returns.segment_periods(entries, assets, assets)
         self.assertEqual([
             (datetime.date(2014, 1, 1), datetime.date(2014, 2, 1),
@@ -203,6 +200,88 @@ class TestReturnsPeriods(test_utils.TestCase):
             (datetime.date(2014, 2, 1), datetime.date(2014, 8, 1),
              inventory.from_string('10000 USD'), inventory.from_string('10000 USD'))
             ], periods)
+
+
+    INPUT_BEGIN_END = """
+        2014-01-01 open Assets:US:Investments:ACME
+        2014-01-01 open Assets:US:Investments:Cash
+        2014-01-01 open Assets:US:Bank:Checking
+
+        2014-01-15 * "Deposit"
+          Assets:US:Investments:Cash       5000 USD
+          Assets:US:Bank:Checking
+
+        2014-02-01 * "Buy"
+          Assets:US:Investments:ACME       21 ACME {100 USD}
+          Assets:US:Investments:Cash
+
+        2014-05-01 * "Buy"
+          Assets:US:Investments:ACME       22 ACME {110 USD}
+          Assets:US:Investments:Cash
+
+        2014-06-15 * "Deposit"
+          Assets:US:Investments:Cash       6000 USD
+          Assets:US:Bank:Checking
+
+        2014-08-01 * "Buy"
+          Assets:US:Investments:ACME       23 ACME {120 USD}
+          Assets:US:Investments:Cash
+
+        2014-10-01 * "Buy"
+          Assets:US:Investments:ACME       24 ACME {130 USD}
+          Assets:US:Investments:Cash
+    """
+
+    def test_segment_periods_with_begin(self):
+        entries, errors, _ = loader.load_string(self.INPUT_BEGIN_END)
+        self.assertFalse(errors)
+        assets = {'Assets:US:Investments:ACME',
+                  'Assets:US:Investments:Cash'}
+
+        # Test the default case, no beginning.
+        periods = returns.segment_periods(entries, assets, assets)
+        self.assertEqual([
+            (datetime.date(2014, 1, 1), datetime.date(2014, 1, 15)),
+            (datetime.date(2014, 1, 15), datetime.date(2014, 6, 15)),
+            (datetime.date(2014, 6, 15), datetime.date(2014, 10, 1)),
+            ], [(date_begin, date_end) for date_begin, date_end, _, __ in periods])
+
+        self.assertEqual(inventory.from_string(''), periods[0][2])
+
+        # Test with a begin date.
+        periods = returns.segment_periods(entries, assets, assets,
+                                          datetime.date(2014, 4, 20))
+        self.assertEqual([
+            (datetime.date(2014, 4, 20), datetime.date(2014, 6, 15)),
+            (datetime.date(2014, 6, 15), datetime.date(2014, 10, 1)),
+            ], [(date_begin, date_end) for date_begin, date_end, _, __ in periods])
+
+        self.assertEqual(inventory.from_string('2900 USD, 21 ACME {100 USD}'), periods[0][2])
+
+        # Test with another begin date.
+        periods = returns.segment_periods(entries, assets, assets,
+                                          datetime.date(2014, 9, 10))
+        self.assertEqual([
+            (datetime.date(2014, 9, 10), datetime.date(2014, 10, 1)),
+            ], [(date_begin, date_end) for date_begin, date_end, _, __ in periods])
+
+        self.assertEqual(inventory.from_string('3720 USD, '
+                                               '21 ACME {100 USD}, '
+                                               '22 ACME {110 USD}, '
+                                               '23 ACME {120 USD}'), periods[0][2])
+
+        # Test with another begin date.
+        periods = returns.segment_periods(entries, assets, assets,
+                                          datetime.date(2014, 10, 15))
+        self.assertEqual([
+            (datetime.date(2014, 10, 15), datetime.date(2014, 10, 15))
+            ], [(date_begin, date_end) for date_begin, date_end, _, __ in periods])
+
+        self.assertEqual(inventory.from_string('600 USD, '
+                                               '21 ACME {100 USD}, '
+                                               '22 ACME {110 USD}, '
+                                               '23 ACME {120 USD}, '
+                                               '24 ACME {130 USD}'), periods[0][2])
 
     # Deposit, one investment, no other changes but a price change.
     @loader.loaddoc

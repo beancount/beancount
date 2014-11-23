@@ -92,6 +92,23 @@ def find_matching(entries, acc_types, related_regexp):
                                accounts_extflows))
 
 
+def sum_balances_for_accounts(balance, entry, accounts):
+    """Accumulate balance for assets postings accounts on entry.
+
+    Args:
+      balance: An instance of Inventory.
+      entry: A directive (directives other than Transactions are ignored).
+      accounts: A set of strings, the names of accounts whose postings to include.
+    Returns:
+      This destructively modifies balance and returns it.
+    """
+    if isinstance(entry, data.Transaction):
+        for posting in entry.postings:
+            if posting.account in accounts:
+                balance.add_position(posting.position)
+    return balance
+
+
 def segment_periods(entries, accounts_assets, accounts_intflows,
                     date_begin=None, date_end=None):
     """Segment entries in terms of piecewise periods of internal flow.
@@ -125,21 +142,29 @@ def segment_periods(entries, accounts_assets, accounts_intflows,
                                             any(posting.account not in accounts_related
                                                 for posting in entry.postings))
 
-    # # Find the first matching entry's date.
-    # for entry in entries:
-    #     if getters.get_entry_accounts(entry) & accounts_assets:
-    #         date_begin = entry.date
-    #         break
-    # else:
-    #     date_begin = None
-
+    # Create an iterator over the entries we care about.
     iter_entries = (entry
                     for entry in entries
                     if getters.get_entry_accounts(entry) & accounts_assets)
     entry = next(iter_entries)
-    date_begin = entry.date
 
+    # If a beginning cut-off has been specified, skip the entries before then
+    # (and make sure to accumulate the initial balance correctly).
     balance = inventory.Inventory()
+    if date_begin is not None:
+        try:
+            while True:
+                if entry.date >= date_begin:
+                    break
+                balance = sum_balances_for_accounts(balance, entry, accounts_assets)
+                entry = next(iter_entries)
+        except StopIteration:
+            # No periods found! Just return an empty list.
+            return [(date_begin, date_begin, balance, balance)]
+    else:
+        date_begin = entry.date
+
+    # Main loop over the entries.
     periods = []
     entry_logger = misc_utils.LineFileProxy(logging.debug, '   ')
     done = False
@@ -158,10 +183,7 @@ def segment_periods(entries, accounts_assets, accounts_intflows,
                 break
             if entry:
                 printer.print_entry(entry, file=entry_logger)
-            if isinstance(entry, data.Transaction):
-                for posting in entry.postings:
-                    if posting.account in accounts_assets:
-                        balance.add_position(posting.position)
+            balance = sum_balances_for_accounts(balance, entry, accounts_assets)
             try:
                 entry = next(iter_entries)
             except StopIteration:
@@ -186,9 +208,7 @@ def segment_periods(entries, accounts_assets, accounts_intflows,
         assert is_external_flow_entry(entry), entry
         if entry:
             printer.print_entry(entry, file=entry_logger)
-        for posting in entry.postings:
-            if posting.account in accounts_assets:
-                balance.add_position(posting.position)
+        balance = sum_balances_for_accounts(balance, entry, accounts_assets)
         try:
             entry = next(iter_entries)
         except StopIteration:
