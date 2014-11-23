@@ -46,6 +46,7 @@ from beancount.core import account_types
 from beancount.core import inventory
 from beancount.core import getters
 from beancount.ops import prices
+from beancount.utils import misc_utils
 
 
 def find_matching(entries, acc_types, related_regexp):
@@ -172,6 +173,7 @@ def compute_returns(entries, options_map,
     periods = segment_periods(entries, accounts_assets, is_external_flow_entry)
 
     # From the period balances, compute the returns.
+    logging.info("Calculating period returns")
     all_returns = []
     for (date_begin, date_end, balance_begin, balance_end) in periods:
         period_returns, mktvalues = compute_period_returns(date_begin, date_end,
@@ -184,7 +186,7 @@ def compute_returns(entries, options_map,
                           if date_end != date_begin
                           else {})
 
-        logging.info("Period: from %s to %s", date_begin, date_end)
+        logging.info("From %s to %s", date_begin, date_end)
         logging.info("  Begin %s => %s", balance_begin, mktvalue_begin)
         logging.info("  End   %s => %s", balance_end, mktvalue_end)
         logging.info("  Returns     %s", period_returns)
@@ -211,6 +213,7 @@ def compute_returns(entries, options_map,
 def segment_periods(entries, accounts_assets, is_external_flow_entry):
     # FIXME: Needs docs
     logging.info("Segmenting periods...")
+    entry_logger = misc_utils.LineFileProxy(logging.debug, '   ')
 
     # Find the first matching entry's date.
     for entry in entries:
@@ -238,7 +241,7 @@ def segment_periods(entries, accounts_assets, is_external_flow_entry):
         for entry in iter_entries:
             if is_external_flow_entry(entry):
                 break
-            log_entry(entry, logging.debug)
+            printer.print_entry(entry, file=entry_logger)
             if isinstance(entry, data.Transaction):
                 for posting in entry.postings:
                     if posting.account in accounts_assets:
@@ -260,7 +263,7 @@ def segment_periods(entries, accounts_assets, is_external_flow_entry):
 
         # Absorb the balance of the external flow entry.
         assert is_external_flow_entry(entry)
-        log_entry(entry, logging.debug)
+        printer.print_entry(entry, file=entry_logger)
         for posting in entry.postings:
             if posting.account in accounts_assets:
                 balance.add_position(posting.position)
@@ -325,30 +328,6 @@ def compute_period_returns(date_begin, date_end,
     return returns, (mktvalue_begin, mktvalue_end)
 
 
-def log_entry(entry, log_func):
-    """Log an entry either to the logging module.
-    """
-    oss = io.StringIO()
-    printer.print_entry(entry, file=oss)
-    for line in oss.getvalue().splitlines():
-        log_func('  {}'.format(line))
-
-
-
-def log_with_prefix(entry, is_external_flow):
-    """Log an entry either to the info or debug log.
-
-    Args:
-      entry: A Transaction directive.
-      is_external_flow: A boolean, true if this is an external flow entry.
-    """
-    oss = io.StringIO()
-    printer.print_entry(entry, file=oss)
-    log_func = logging.info if is_external_flow else logging.debug
-    for line in oss.getvalue().splitlines():
-        log_func(line)
-
-
 def annualize_returns(returns, date_first, date_last):
     """Annualize the return rates computed from the given date range.
 
@@ -398,11 +377,6 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-# FIXME: Build an object that behaves like a file but autoamtically breaks lines
-# and logs to a particular log level, and use that with
-# printer.print_entry(file=... instead).
 
 
 # FIXME: You should be able to provide begin and end dates and automatically
