@@ -196,7 +196,7 @@ class TestReturnsPeriods(test_utils.TestCase):
         is_external_flow_entry = lambda entry: (isinstance(entry, data.Transaction) and
                                                 any(posting.account not in assets
                                                     for posting in entry.postings))
-        periods = returns.segment_periods(entries, assets, is_external_flow_entry)
+        periods = returns.segment_periods(entries, assets, assets)
         self.assertEqual([
             (datetime.date(2014, 1, 1), datetime.date(2014, 2, 1),
              inventory.from_string(''), inventory.from_string('')),

@@ -92,7 +92,8 @@ def find_matching(entries, acc_types, related_regexp):
                                accounts_extflows))
 
 
-def segment_periods(entries, accounts_assets, accounts_intflows):
+def segment_periods(entries, accounts_assets, accounts_intflows,
+                    date_begin=None, date_end=None):
     """Segment entries in terms of piecewise periods of internal flow.
 
     This function iterated through the given entries and computes balances at
@@ -106,10 +107,14 @@ def segment_periods(entries, accounts_assets, accounts_intflows):
         relevant).
       accounts_assets: A set of the asset accounts in the related group.
       accounts_intflows: A set of the internal flow accounts in the related group.
+      date_begin: A datetime.date instance, the beginning date of the period to compute
+        returns over.
+      date_end: A datetime.date instance, the end date of the period to compute returns
+        over.
     Returns:
       A list of period tuples, each of which contains:
-        date_begin: A datetime.date instance, the first day of the period.
-        date_end: A datetime.date instance, the last day of the period.
+        period_begin: A datetime.date instance, the first day of the period.
+        period_end: A datetime.date instance, the last day of the period.
         balance_begin: An Inventory instance, the balance at the beginning of the period.
         balance_end: An Inventory instance, the balance at the end of the period.
     """
@@ -120,18 +125,21 @@ def segment_periods(entries, accounts_assets, accounts_intflows):
                                             any(posting.account not in accounts_related
                                                 for posting in entry.postings))
 
-    # Find the first matching entry's date.
-    for entry in entries:
-        if getters.get_entry_accounts(entry) & accounts_assets:
-            date_begin = entry.date
-            break
-    else:
-        date_begin = None
+    # # Find the first matching entry's date.
+    # for entry in entries:
+    #     if getters.get_entry_accounts(entry) & accounts_assets:
+    #         date_begin = entry.date
+    #         break
+    # else:
+    #     date_begin = None
 
-    balance = inventory.Inventory()
     iter_entries = (entry
                     for entry in entries
                     if getters.get_entry_accounts(entry) & accounts_assets)
+    entry = next(iter_entries)
+    date_begin = entry.date
+
+    balance = inventory.Inventory()
     periods = []
     entry_logger = misc_utils.LineFileProxy(logging.debug, '   ')
     done = False
@@ -144,18 +152,25 @@ def segment_periods(entries, accounts_assets, accounts_intflows):
         logging.debug("")
 
         # Consume all internal flow entries, simply accumulating the total balance.
-        for entry in iter_entries:
+        while True:
+            date_end = entry.date
             if is_external_flow_entry(entry):
                 break
-            printer.print_entry(entry, file=entry_logger)
+            if entry:
+                printer.print_entry(entry, file=entry_logger)
             if isinstance(entry, data.Transaction):
                 for posting in entry.postings:
                     if posting.account in accounts_assets:
                         balance.add_position(posting.position)
+            try:
+                entry = next(iter_entries)
+            except StopIteration:
+                entry = None
+                done = True
+                break
         else:
             done = True
 
-        date_end = entry.date
         balance_end = copy.copy(balance)
         periods.append((date_begin, date_end, balance_begin, balance_end))
 
@@ -168,11 +183,16 @@ def segment_periods(entries, accounts_assets, accounts_intflows):
             break
 
         # Absorb the balance of the external flow entry.
-        assert is_external_flow_entry(entry)
-        printer.print_entry(entry, file=entry_logger)
+        assert is_external_flow_entry(entry), entry
+        if entry:
+            printer.print_entry(entry, file=entry_logger)
         for posting in entry.postings:
             if posting.account in accounts_assets:
                 balance.add_position(posting.position)
+        try:
+            entry = next(iter_entries)
+        except StopIteration:
+            break
 
         date_begin = date_end
 
@@ -302,24 +322,25 @@ def compute_returns(entries, options_map,
     # Segment the entries, splitting at entries with external flow and computing
     # the balances before and after. This returns all such periods with the
     # balances at their beginning and end.
-    periods = segment_periods(entries, accounts_assets, accounts_intflows)
+    periods = segment_periods(entries, accounts_assets, accounts_intflows,
+                              date_begin, date_end)
 
     # From the period balances, compute the returns.
     logging.info("Calculating period returns...")
     logging.info("")
     all_returns = []
-    for (date_begin, date_end, balance_begin, balance_end) in periods:
-        period_returns, mktvalues = compute_period_returns(date_begin, date_end,
+    for (period_begin, period_end, balance_begin, balance_end) in periods:
+        period_returns, mktvalues = compute_period_returns(period_begin, period_end,
                                                            balance_begin, balance_end,
                                                            price_map)
         mktvalue_begin, mktvalue_end = mktvalues
         all_returns.append(period_returns)
 
-        annual_returns = (annualize_returns(period_returns, date_begin, date_end)
-                          if date_end != date_begin
+        annual_returns = (annualize_returns(period_returns, period_begin, period_end)
+                          if period_end != period_begin
                           else {})
 
-        logging.info("From %s to %s", date_begin, date_end)
+        logging.info("From %s to %s", period_begin, period_end)
         logging.info("  Begin %s => %s", balance_begin, mktvalue_begin)
         logging.info("  End   %s => %s", balance_end, mktvalue_end)
         logging.info("  Returns     %s", period_returns)
