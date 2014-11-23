@@ -692,6 +692,8 @@ class TestMetaData(unittest.TestCase):
             Assets:Investments:Cash
         """
         self.assertEqual(1, len(entries))
+        self.assertEqual({'test': 'Something'},
+                         entries[0].postings[0].metadata)
 
     @parsedoc
     def test_metadata_transaction__end(self, entries, errors, _):
@@ -702,6 +704,8 @@ class TestMetaData(unittest.TestCase):
             test: "Something"
         """
         self.assertEqual(1, len(entries))
+        self.assertEqual({'test': 'Something'},
+                         entries[0].postings[1].metadata)
 
     @parsedoc
     def test_metadata_transaction__many(self, entries, errors, _):

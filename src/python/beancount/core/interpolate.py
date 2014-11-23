@@ -191,7 +191,7 @@ def get_incomplete_postings(entry):
                 position = Position(Lot(currency, None, None), ZERO)
                 new_postings.append(
                     Posting(entry, old_posting.account, position,
-                            None, old_posting.flag, None))
+                            None, old_posting.flag, old_posting.metadata))
                 has_inserted = True
         else:
             # Convert all the residual positions in inventory into a posting for
@@ -200,7 +200,7 @@ def get_incomplete_postings(entry):
                 position.number = -position.number
                 new_postings.append(
                     Posting(entry, old_posting.account, position,
-                            None, old_posting.flag, None))
+                            None, old_posting.flag, old_posting.metadata))
                 has_inserted = True
 
         postings[index:index+1] = new_postings

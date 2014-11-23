@@ -615,23 +615,22 @@ class Builder(lexer.LexBuilder):
 
         # Separate postings and key-valus.
         postings = []
-        # entry_metadata = {}
+        entry_metadata = {}
         if posting_or_kv_list:
-            # last_posting = None
+            last_posting = None
             for posting_or_kv in posting_or_kv_list:
                 if isinstance(posting_or_kv, Posting):
                     postings.append(posting_or_kv)
-                    # last_posting = posting_or_kv
+                    last_posting = posting_or_kv
                 else:
-                    pass
-                    # if last_posting is None:
-                    #     entry_metadata[posting_or_kv.key] = posting_or_kv.value
-                    # else:
-                    #     if last_posting.metadata is None:
-                    #         last_posting = last_posting._replace(metadata={})
-                    #         postings.pop(-1)
-                    #         postings.append(last_posting)
-                    #     last_posting.metadata[posting_or_kv.key] = posting_or_kv.value
+                    if last_posting is None:
+                        entry_metadata[posting_or_kv.key] = posting_or_kv.value
+                    else:
+                        if last_posting.metadata is None:
+                            last_posting = last_posting._replace(metadata={})
+                            postings.pop(-1)
+                            postings.append(last_posting)
+                        last_posting.metadata[posting_or_kv.key] = posting_or_kv.value
 
         # Unpack the transaction fields.
         payee_narration = self.unpack_txn_strings(txn_fields, source)
