@@ -18,11 +18,11 @@ class TestData(unittest.TestCase):
 
     def create_empty_transaction(self):
         return data.Transaction(SOURCE, date(2014, 1, 15), FLAG, None,
-                                "Some example narration", None, None, [])
+                                "Some example narration", None, None, [], None)
 
     def test_strip_back_reference(self):
         entry = data.Transaction(data.Source(".", 0), datetime.date.today(), FLAG,
-                                 None, "Something", None, None, [])
+                                 None, "Something", None, None, [], None)
         data.create_simple_posting(entry, 'Liabilities:CreditCard', '-50', 'USD')
         data.create_simple_posting(entry, 'Expenses:Restaurant', '50', 'USD')
         self.assertTrue(all(posting.entry is not None
@@ -125,17 +125,17 @@ class TestData(unittest.TestCase):
         date3 = date(2014, 1, 20)
         entries = [
             data.Transaction(data.Source(".", 1100), date3, FLAG,
-                             None, "Next day", None, None, []),
-            data.Close(data.Source(".", 1000), date2, account),
+                             None, "Next day", None, None, [], None),
+            data.Close(data.Source(".", 1000), date2, account, None),
             data.Balance(data.Source(".", 1001), date2, account,
-                         amount.Amount(D('200.00'), 'USD"'), None),
-            data.Open(data.Source(".", 1002), date2, account, 'USD'),
+                         amount.Amount(D('200.00'), 'USD"'), None, None),
+            data.Open(data.Source(".", 1002), date2, account, 'USD', None),
             data.Transaction(data.Source(".", 1009), date2, FLAG,
-                             None, "Transaction 2", None, None, []),
+                             None, "Transaction 2", None, None, [], None),
             data.Transaction(data.Source(".", 1008), date2, FLAG,
-                             None, "Transaction 1", None, None, []),
+                             None, "Transaction 1", None, None, [], None),
             data.Transaction(data.Source(".", 900), date1, FLAG,
-                             None, "Previous day", None, None, []),
+                             None, "Previous day", None, None, [], None),
             ]
 
         for entry in entries:
@@ -190,7 +190,7 @@ class TestData(unittest.TestCase):
 
     def test_has_entry_account_component(self):
         entry = data.Transaction(data.Source(".", 0), datetime.date.today(), FLAG,
-                                 None, "Something", None, None, [])
+                                 None, "Something", None, None, [], None)
         data.create_simple_posting(entry, 'Liabilities:US:CreditCard', '-50', 'USD')
         data.create_simple_posting(entry, 'Expenses:Food:Restaurant', '50', 'USD')
 
@@ -209,14 +209,17 @@ class TestData(unittest.TestCase):
 
     def test_find_closest(self):
         entry1 = data.Transaction(data.Source("/tmp/apples.beancount", 200),
-                                  datetime.date(2014, 9, 14), '*', None, "", None, None, [])
+                                  datetime.date(2014, 9, 14), '*', None, "", None, None, [],
+                                  None)
 
         # Insert a decoy from another file (should fail).
         entry2 = data.Transaction(data.Source("/tmp/bananas.beancount", 100),
-                                  datetime.date(2014, 9, 20), '*', None, "", None, None, [])
+                                  datetime.date(2014, 9, 20), '*', None, "", None, None, [],
+                                  None)
 
         entry3 = data.Transaction(data.Source("/tmp/apples.beancount", 105),
-                                  datetime.date(2014, 10, 1), '*', None, "", None, None, [])
+                                  datetime.date(2014, 10, 1), '*', None, "", None, None, [],
+                                  None)
 
         entries = [entry1, entry2, entry3]
 

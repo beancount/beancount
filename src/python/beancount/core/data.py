@@ -2,6 +2,7 @@
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import collections
 import datetime
 from collections import namedtuple
 import sys
@@ -13,6 +14,20 @@ from .amount import D
 from .position import Position
 from .position import Lot
 from .account import has_component
+
+
+def new_directive(clsname, fields):
+    """Create a directive class. Do not include default fields.
+    This should probably be carried out through inheritance.
+
+    Args:
+      name: A string, the capitalized name of the directive.
+      fields: A string or the list of strings, names for the fields
+        to add to the base tuple.
+    Returns:
+      A type object for the new directive type.
+    """
+    return collections.namedtuple(clsname, 'source date {} metadata'.format(fields))
 
 
 # All possible types of entries. These are the main data structrues in use
@@ -31,13 +46,13 @@ from .account import has_component
 #   currencies: A list of strings, currencies that are allowed in this account.
 #     May be None, in which case it means that there are no restrictions on which
 #     currencies may be stored in this account.
-Open = namedtuple('Open', 'source date account currencies')
+Open = new_directive('Open', 'account currencies')
 
 # A "close account" directive.
 #
 # Attributes:
 #   account: A string, the name of the account that is being closed.
-Close = namedtuple('Close', 'source date account')
+Close = new_directive('Close', 'account')
 
 # A "pad this account with this other account" directive. This directive
 # automatically inserts transactions that will make the next chronological
@@ -49,7 +64,7 @@ Close = namedtuple('Close', 'source date account')
 #   account: A string, the name of the account which needs to be filled.
 #   source_account: A string, the anem of the account which is used to debit from
 #     in order to fill 'account'.
-Pad = namedtuple('Pad', 'source date account source_account')
+Pad = new_directive('Pad', 'account source_account')
 
 # A "check the balance of this account" directive. This directive asserts that
 # the declared account should have a known number of units of a particular
@@ -64,7 +79,7 @@ Pad = namedtuple('Pad', 'source date account source_account')
 #     expecting 'account' to have at this date.
 #   diff_amount: None if the balance check succeeds. This value is set to
 #     an Amount instance if the balance fails, the amount of the difference.
-Balance = namedtuple('Balance', 'source date account amount diff_amount')
+Balance = new_directive('Balance', 'account amount diff_amount')
 
 # A transaction! This is the main type of object that we manipulate, and the
 # entire reason this whole project exists in the first place, because
@@ -83,8 +98,8 @@ Balance = namedtuple('Balance', 'source date account amount diff_amount')
 #   links: A set of link strings (without the '^'), or None, if an empty set.
 #   postings: A list of Posting instances, the legs of this transaction. See the
 #     doc under Posting below.
-Transaction = namedtuple('Transaction',
-                         'source date flag payee narration tags links postings')
+Transaction = new_directive('Transaction',
+                            'flag payee narration tags links postings')
 
 # A note directive, a general note that is attached to an account. These are
 # used to attach text at a particular date in a specific account. The notes can
@@ -98,7 +113,7 @@ Transaction = namedtuple('Transaction',
 #     never None, notes always have an account they correspond to.
 #   comment: A free-form string, the text of the note. This can be logn if you
 #     want it to.
-Note = namedtuple('Note', 'source date account comment')
+Note = new_directive('Note', 'account comment')
 
 # An "event value change" directive. These directives are used as string
 # variables that have different values over time. You can use these to track an
@@ -125,7 +140,7 @@ Note = namedtuple('Note', 'source date account comment')
 #     unique variable whose value changes over time. For example, 'location'.
 #   description: A free-form string, the value of the variable as of the date
 #     of the transaction.
-Event = namedtuple('Event', 'source date type description')
+Event = new_directive('Event', 'type description')
 
 # A price declaration directive. This establishes the price of a currency in
 # terms of another currency as of the directive's date. A history of the prices
@@ -140,7 +155,7 @@ Event = namedtuple('Event', 'source date type description')
 #  currency: A string, the currency that is being priced, e.g. GOOG.
 #  amount: An instance of Amount, the number of units and currency that
 #    'currency' is worth, for instance 1200.12 USD.
-Price = namedtuple('Price', 'source date currency amount')
+Price = new_directive('Price', 'currency amount')
 
 # A document file declaration directive. This directive is used to attach a
 # statement to an account, at a particular date. A typical usage would be to
@@ -156,7 +171,7 @@ Price = namedtuple('Price', 'source date currency amount')
 #   account: A string, the accountwhich the statement or document is associated
 #     with.
 #   filename: The absolute filename of the document file.
-Document = namedtuple('Document', 'source date account filename')
+Document = new_directive('Document', 'account filename')
 
 
 # A list of all the valid directive types.

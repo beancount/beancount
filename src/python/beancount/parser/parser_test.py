@@ -682,6 +682,7 @@ class TestMetaData(unittest.TestCase):
             Assets:Investments:Cash
         """
         self.assertEqual(1, len(entries))
+        self.assertEqual({'test': 'Something'}, entries[0].metadata)
 
     @parsedoc
     def test_metadata_transaction__middle(self, entries, errors, _):
@@ -721,6 +722,11 @@ class TestMetaData(unittest.TestCase):
             test6: "this"
         """
         self.assertEqual(1, len(entries))
+        self.assertEqual({'test1': 'Something'}, entries[0].metadata)
+        self.assertEqual({'test2': 'has', 'test3': 'to'},
+                         entries[0].postings[0].metadata)
+        self.assertEqual({'test4': 'come', 'test5': 'from', 'test6': 'this'},
+                         entries[0].postings[1].metadata)
 
     @parsedoc
     def test_metadata_transaction__indented(self, entries, errors, _):
@@ -736,6 +742,11 @@ class TestMetaData(unittest.TestCase):
               test6: "this"
         """
         self.assertEqual(1, len(entries))
+        self.assertEqual({'test1': 'Something'}, entries[0].metadata)
+        self.assertEqual({'test2': 'has', 'test3': 'to'},
+                         entries[0].postings[0].metadata)
+        self.assertEqual({'test4': 'come', 'test5': 'from', 'test6': 'this'},
+                         entries[0].postings[1].metadata)
 
     @parsedoc
     def test_metadata_transaction__repeated(self, entries, errors, _):
@@ -746,6 +757,7 @@ class TestMetaData(unittest.TestCase):
             test: "Oranges"
         """
         self.assertEqual(1, len(entries))
+        self.assertEqual({'test': 'Oranges'}, entries[0].metadata)
 
     @parsedoc
     def test_metadata_empty(self, entries, errors, _):
@@ -759,6 +771,8 @@ class TestMetaData(unittest.TestCase):
         """
         self.assertFalse(errors)
         self.assertEqual(2, len(entries))
+        self.assertEqual({'oranges': None, 'bananas': None}, entries[0].metadata)
+        self.assertEqual({'apples': None}, entries[1].metadata)
 
     @parsedoc
     def test_metadata_other(self, entries, errors, _):

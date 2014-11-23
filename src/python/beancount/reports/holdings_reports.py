@@ -97,7 +97,7 @@ def get_holdings_entries(entries, options_map):
     for index, holding in enumerate(holdings_list):
         source = data.Source('report_holdings_print', index)
         entry = data.Transaction(source, latest_date, flags.FLAG_SUMMARIZE,
-                                 None, "", None, None, [])
+                                 None, "", None, None, [], None)
 
         # Convert the holding to a position.
         position_ = holdings.holding_to_position(holding)
@@ -119,7 +119,7 @@ def get_holdings_entries(entries, options_map):
 
     # Add an entry for the equity account we're using.
     source = data.Source('report_holdings_print', -1)
-    used_open_entries.insert(0, data.Open(source, latest_date, equity_account, None))
+    used_open_entries.insert(0, data.Open(source, latest_date, equity_account, None, None))
 
     # Get the latest price entries.
     price_entries = prices.get_last_price_entries(entries, None)

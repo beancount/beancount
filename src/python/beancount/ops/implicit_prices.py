@@ -61,7 +61,7 @@ def add_implicit_prices(entries, unused_options_map):
                 if posting.price is not None:
                     price_entry = data.Price(entry.source, entry.date,
                                              posting.position.lot.currency,
-                                             posting.price)
+                                             posting.price, None)
 
                 # Add costs, when we're not matching against an existing
                 # position. This happens when we're just specifying the cost,
@@ -70,7 +70,8 @@ def add_implicit_prices(entries, unused_options_map):
                 elif posting.position.lot.cost is not None and not reducing:
                     price_entry = data.Price(entry.source, entry.date,
                                              posting.position.lot.currency,
-                                             posting.position.lot.cost)
+                                             posting.position.lot.cost,
+                                             None)
 
                 else:
                     price_entry = None

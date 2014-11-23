@@ -328,7 +328,8 @@ class Builder(lexer.LexBuilder):
           A new Open object.
         """
         source = Source(filename, lineno)
-        return Open(source, date, account, currencies)
+        metadata = None if kvlist is None else dict(kvlist)
+        return Open(source, date, account, currencies, metadata)
 
     def close(self, filename, lineno, date, account, kvlist):
         """Process a close directive.
@@ -343,7 +344,8 @@ class Builder(lexer.LexBuilder):
           A new Close object.
         """
         source = Source(filename, lineno)
-        return Close(source, date, account)
+        metadata = None if kvlist is None else dict(kvlist)
+        return Close(source, date, account, metadata)
 
     def pad(self, filename, lineno, date, account, source_account, kvlist):
         """Process a pad directive.
@@ -359,7 +361,8 @@ class Builder(lexer.LexBuilder):
           A new Pad object.
         """
         source = Source(filename, lineno)
-        return Pad(source, date, account, source_account)
+        metadata = None if kvlist is None else dict(kvlist)
+        return Pad(source, date, account, source_account, metadata)
 
     def balance(self, filename, lineno, date, account, amount, kvlist):
         """Process an assertion directive.
@@ -380,7 +383,8 @@ class Builder(lexer.LexBuilder):
         """
         diff_amount = None
         source = Source(filename, lineno)
-        return Balance(source, date, account, amount, diff_amount)
+        metadata = None if kvlist is None else dict(kvlist)
+        return Balance(source, date, account, amount, diff_amount, metadata)
 
     def event(self, filename, lineno, date, event_type, description, kvlist):
         """Process an event directive.
@@ -396,7 +400,8 @@ class Builder(lexer.LexBuilder):
           A new Event object.
         """
         source = Source(filename, lineno)
-        return Event(source, date, event_type, description)
+        metadata = None if kvlist is None else dict(kvlist)
+        return Event(source, date, event_type, description, metadata)
 
     def price(self, filename, lineno, date, currency, amount, kvlist):
         """Process a price directive.
@@ -412,7 +417,8 @@ class Builder(lexer.LexBuilder):
           A new Price object.
         """
         source = Source(filename, lineno)
-        return Price(source, date, currency, amount)
+        metadata = None if kvlist is None else dict(kvlist)
+        return Price(source, date, currency, amount, metadata)
 
     def note(self, filename, lineno, date, account, comment, kvlist):
         """Process a note directive.
@@ -428,7 +434,8 @@ class Builder(lexer.LexBuilder):
           A new Note object.
         """
         source = Source(filename, lineno)
-        return Note(source, date, account, comment)
+        metadata = None if kvlist is None else dict(kvlist)
+        return Note(source, date, account, comment, metadata)
 
     def document(self, filename, lineno, date, account, document_filename, kvlist):
         """Process a document directive.
@@ -448,7 +455,8 @@ class Builder(lexer.LexBuilder):
             document_filename = path.abspath(path.join(path.dirname(filename),
                                                        document_filename))
 
-        return Document(source, date, account, document_filename)
+        metadata = None if kvlist is None else dict(kvlist)
+        return Document(source, date, account, document_filename, metadata)
 
 
     def key_value(self, key, value):
@@ -493,8 +501,7 @@ class Builder(lexer.LexBuilder):
         #     self.errors.append(
         #         ParserError(source, "Price is zero: {}".format(price), None))
 
-        return Posting(None, account, position, price, chr(flag) if flag else None,
-                       None)
+        return Posting(None, account, position, price, chr(flag) if flag else None, None)
 
 
     def txn_field_new(self):
@@ -669,7 +676,8 @@ class Builder(lexer.LexBuilder):
 
         # Create the transaction. Note: we need to parent the postings.
         entry = Transaction(source, date, chr(flag),
-                            payee, narration, tags, links, postings)
+                            payee, narration, tags, links, postings,
+                            entry_metadata or None)
 
         # Balance incomplete auto-postings and set the parent link to this entry as well.
         balance_errors = balance_incomplete_postings(entry)

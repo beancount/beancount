@@ -1255,7 +1255,7 @@ def generate_prices(date_begin, date_end, currencies, cost_currency):
             price = D(price_float).quantize(digits)
             source = data.Source(generate_prices.__name__, next(counter))
             entry = data.Price(source, dtime.date(), currency,
-                               amount.Amount(price, cost_currency))
+                               amount.Amount(price, cost_currency), None)
             entries.append(entry)
     return entries
 

@@ -128,7 +128,7 @@ class TestBalance(cmptest.TestCase):
         source = data.Source(__file__, 0)
 
         # Test with no entries.
-        entry = data.Transaction(source, None, None, None, None, None, None, [])
+        entry = data.Transaction(source, None, None, None, None, None, None, [], None)
         new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
         self.assertEqual(0, len(new_postings))
@@ -137,7 +137,7 @@ class TestBalance(cmptest.TestCase):
         # Test with only a single leg (and check that it does not balance).
         entry = data.Transaction(source, None, None, None, None, None, None, [
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
-            ])
+            ], None)
         new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
         self.assertEqual(1, len(new_postings))
@@ -147,7 +147,7 @@ class TestBalance(cmptest.TestCase):
         entry = data.Transaction(source, None, None, None, None, None, None, [
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Savings", "-105.50", "USD"),
-            ])
+            ], None)
         new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
         self.assertEqual(2, len(new_postings))
@@ -157,7 +157,7 @@ class TestBalance(cmptest.TestCase):
         entry = data.Transaction(source, None, None, None, None, None, None, [
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Savings", "-115.50", "USD"),
-            ])
+            ], None)
         new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
         self.assertEqual(2, len(new_postings))
@@ -166,7 +166,7 @@ class TestBalance(cmptest.TestCase):
         # Test with only one auto-posting.
         entry = data.Transaction(source, None, None, None, None, None, None, [
             P(None, "Assets:Bank:Checking", None, None),
-            ])
+            ], None)
         new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
         self.assertEqual(0, len(new_postings))
@@ -177,7 +177,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Savings", "-105.50", "USD"),
             P(None, "Assets:Bank:Balancing", None, None),
-            ])
+            ], None)
         new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertTrue(has_inserted)
         self.assertEqual(3, len(new_postings))
@@ -189,7 +189,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:Savings", "-106.50", "USD"),
             P(None, "Assets:Bank:BalancingA", None, None),
             P(None, "Assets:Bank:BalancingB", None, None),
-            ])
+            ], None)
         new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertTrue(has_inserted)
         self.assertEqual(3, len(new_postings))
@@ -203,7 +203,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Assets:Bank:Checking", "105.50", "USD"),
             P(None, "Assets:Bank:Savings", "-115.50", "USD"),
             P(None, "Assets:Bank:Balancing", None, None),
-            ])
+            ], None)
         new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertTrue(has_inserted)
         self.assertEqual(3, len(new_postings))
@@ -217,7 +217,7 @@ class TestBalance(cmptest.TestCase):
             P(None, "Income:US:Anthem:InsurancePayments", "-275.81", "USD"),
             P(None, "Income:US:Anthem:InsurancePayments", "-23738.54", "USD"),
             P(None, "Assets:Bank:Checking", "24014.45", "USD"),
-            ])
+            ], None)
         new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
         self.assertEqual(3, len(new_postings))
@@ -228,7 +228,7 @@ class TestBalance(cmptest.TestCase):
         entry = data.Transaction(source, None, None, None, None, None, None, [
             P(None, "Income:US:Anthem:InsurancePayments", "0", "USD"),
             P(None, "Income:US:Anthem:InsurancePayments", None, None),
-            ])
+            ], None)
         new_postings, has_inserted, errors = interpolate.get_incomplete_postings(entry)
         self.assertFalse(has_inserted)
         self.assertEqual(1, len(new_postings))

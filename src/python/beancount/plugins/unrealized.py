@@ -119,7 +119,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
                          gain_loss_str, h=holding)
         entry = data.Transaction(source._replace(lineno=1000 + index),
                                  latest_date, flags.FLAG_UNREALIZED,
-                                 None, narration, None, None, [])
+                                 None, narration, None, None, [], None)
 
         # Book this as income, converting the account name to be the same, but as income.
         # Note: this is a rather convenient but arbitraty choice--maybe it would be best to
@@ -155,7 +155,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
     for account_ in sorted(new_accounts):
         if account_ not in open_entries:
             open_entry = data.Open(source._replace(lineno=index),
-                                   latest_date, account_, None)
+                                   latest_date, account_, None, None)
             new_open_entries.append(open_entry)
 
     return (entries + new_open_entries + new_entries, errors)

@@ -109,7 +109,7 @@ def check(entries, options_map):
                 # new error entry might be more functional or easier to
                 # understand.
                 entry = Balance(entry.source, entry.date, entry.account,
-                                entry.amount, diff_amount)
+                                entry.amount, diff_amount, None)
 
         new_entries.append(entry)
 
