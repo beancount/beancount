@@ -134,8 +134,15 @@ def segment_periods(entries, accounts_assets, accounts_intflows,
         period_end: A datetime.date instance, the last day of the period.
         balance_begin: An Inventory instance, the balance at the beginning of the period.
         balance_end: An Inventory instance, the balance at the end of the period.
+    Raises:
+      ValueError: If the dates create an impossible situation, the beginning must come before
+        the requested end, if specified.
     """
     logging.info("Segmenting periods...")
+
+    if date_begin and date_end and date_begin >= date_end:
+        raise ValueError("Dates are not ordered correctly: {} >= {}".format(
+            date_begin, date_end))
 
     accounts_related = accounts_assets | accounts_intflows
     is_external_flow_entry = lambda entry: (isinstance(entry, data.Transaction) and
@@ -152,17 +159,20 @@ def segment_periods(entries, accounts_assets, accounts_intflows,
     # (and make sure to accumulate the initial balance correctly).
     balance = inventory.Inventory()
     if date_begin is not None:
+        period_begin = date_begin
         try:
             while True:
                 if entry.date >= date_begin:
+                    break
+                if date_end and entry.date >= date_end:
                     break
                 balance = sum_balances_for_accounts(balance, entry, accounts_assets)
                 entry = next(iter_entries)
         except StopIteration:
             # No periods found! Just return an empty list.
-            return [(date_begin, date_begin, balance, balance)]
+            return [(date_begin, date_end or date_begin, balance, balance)]
     else:
-        date_begin = entry.date
+        period_begin = entry.date
 
     # Main loop over the entries.
     periods = []
@@ -172,14 +182,18 @@ def segment_periods(entries, accounts_assets, accounts_intflows,
         balance_begin = copy.copy(balance)
 
         logging.debug(",-----------------------------------------------------------")
-        logging.debug("Begin:   %s", date_begin)
+        logging.debug("Begin:   %s", period_begin)
         logging.debug("Balance: %s", balance_begin)
         logging.debug("")
 
         # Consume all internal flow entries, simply accumulating the total balance.
         while True:
-            date_end = entry.date
+            period_end = entry.date
             if is_external_flow_entry(entry):
+                break
+            if date_end and entry.date >= date_end:
+                period_end = date_end
+                done = True
                 break
             if entry:
                 printer.print_entry(entry, file=entry_logger)
@@ -187,17 +201,18 @@ def segment_periods(entries, accounts_assets, accounts_intflows,
             try:
                 entry = next(iter_entries)
             except StopIteration:
-                entry = None
                 done = True
+                if date_end:
+                    period_end = date_end
                 break
         else:
             done = True
 
         balance_end = copy.copy(balance)
-        periods.append((date_begin, date_end, balance_begin, balance_end))
+        periods.append((period_begin, period_end, balance_begin, balance_end))
 
         logging.debug("Balance: %s", balance_end)
-        logging.debug("End:     %s", date_end)
+        logging.debug("End:     %s", period_end)
         logging.debug("`-----------------------------------------------------------")
         logging.debug("")
 
@@ -214,7 +229,7 @@ def segment_periods(entries, accounts_assets, accounts_intflows,
         except StopIteration:
             break
 
-        date_begin = date_end
+        period_begin = period_end
 
     return periods
 
@@ -481,3 +496,6 @@ if __name__ == '__main__':
 # FIXME: You should be able to provide begin and end dates and automatically
 # create stops to compute the returns during that period, and crop it if outside
 # the period we know about.
+
+# FIXME: Issue warnings if the price date is too far from the requested market
+# value date.
