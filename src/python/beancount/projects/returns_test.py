@@ -6,6 +6,7 @@ from unittest import mock
 
 from beancount.utils import test_utils
 from beancount.projects import returns
+from beancount.ops import prices
 from beancount.parser import options
 from beancount import loader
 
@@ -122,7 +123,6 @@ P2P_INPUT = """
   Assets:US:TD:Checking                                                       1180.00 USD
   Assets:US:Prosper:Cash
 
-
 """
 
 
@@ -159,6 +159,8 @@ class TestReturns(test_utils.TestCase):
         self.assertTrue(mock_obj.called)
 
     def test_compute_returns(self, ):
+        price_map = prices.build_price_map(self.entries)
         matching_entries, (acc_assets, acc_intflows, _) = returns.find_matching(
             self.entries, self.acc_types, '.*:Prosper')
-        returns.compute_returns(self.entries, self.options_map, acc_assets, acc_intflows)
+        returns.compute_returns(self.entries, self.options_map, price_map,
+                                acc_assets, acc_intflows)

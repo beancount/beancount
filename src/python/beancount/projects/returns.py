@@ -197,15 +197,15 @@ def compute_returns(entries, options_map, price_map,
         # Consume all external flow entries, absorbing the balance change before
         # beginning the next period.
         try:
-            logging.info('External entries:')
+            logging.debug('External entries:')
             while is_external_flow_entry(entry):
-                logging.info("  Balance: %s", balance)
-                log_entry(entry, logging.info)
+                logging.debug("  Balance: %s", balance)
+                log_entry(entry, logging.debug)
                 for posting in entry.postings:
                     if posting.account in accounts_assets:
                         balance.add_position(posting.position)
-                logging.info("  Balance: %s", balance)
-                logging.info("")
+                logging.debug("  Balance: %s", balance)
+                logging.debug("")
                 entry = next(iter_entries)
         except StopIteration:
             done = True
