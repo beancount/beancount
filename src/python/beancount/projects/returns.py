@@ -44,6 +44,7 @@ from beancount.parser import options
 from beancount.core import data
 from beancount.core import account_types
 from beancount.core import inventory
+from beancount.core import getters
 from beancount.ops import prices
 
 
@@ -119,26 +120,31 @@ def compute_returns_with_regexp(entries, options_map, related_regexp):
         logging.info('  %s', account)
     logging.info('')
 
-    return compute_returns(matching_entries, options_map, price_map,
-                           accounts_assets, accounts_intflows)
+    return compute_returns(entries, options_map,
+                           accounts_assets, accounts_intflows, price_map)
 
 
-def compute_returns(entries, options_map, price_map,
-                    accounts_assets, accounts_intflows):
+def compute_returns(entries, options_map,
+                    accounts_assets, accounts_intflows,
+                    price_map=None):
     """Compute the returns of a portfolio of accounts defined by a regular expression.
 
     Args:
       entries: A list of directives that may affect the account.
       options_map: An options dict as produced by the loader.
-      price_map: An instance of PriceMap as computed by prices.build_price_map().
       accounts_assets: A set of account name strings, the names of the asset accounts
         included in valuing the portfolio.
       accounts_intflow: A set of account name strings, the names of internal flow
         accounts (normally income and expenses) that aren't external flows.
+      price_map: An instance of PriceMap as computed by prices.build_price_map(). If left
+        to its default value of None, we derive the price_map from the entries themselves.
     Returns:
       A dict of currency -> float total returns and a pair of (begin, end) datetime.date
       instances from which it was computed.
     """
+    if price_map is None:
+        price_map = prices.build_price_map(entries)
+
     accounts_related = accounts_assets | accounts_intflows
 
     # Predicates based on account groups determined above.
@@ -160,70 +166,108 @@ def compute_returns(entries, options_map, price_map,
                 logging.error("External flow may not affect non-asset accounts: {}".format(
                     oss.getvalue()))
 
-    # Process all the entries in chronological order.
-    balance = inventory.Inventory()
-    iter_entries = (entry
-                    for entry in entries
-                    if isinstance(entry, data.Transaction))
-    entry = next(iter_entries)
-    done = False
-    piecewise_returns = []
-    date_first = entry.date
-    while not done:
-        date_begin = entry.date
-        balance_begin = copy.copy(balance)
+    # Segment the entries, splitting at entries with external flow and computing
+    # the balances before and after. This returns all such periods with the
+    # balances at their beginning and end.
+    periods = segment_periods(entries, accounts_assets, is_external_flow_entry)
 
-        # Consume all internal flow entries, simply accumulating the total balance.
-        try:
-            logging.debug('Internal entries:')
-            while not is_external_flow_entry(entry):
-                logging.debug("  Balance: %s", balance)
-                log_entry(entry, logging.debug)
-                for posting in entry.postings:
-                    if posting.account in accounts_assets:
-                        balance.add_position(posting.position)
-                logging.debug("  Balance: %s", balance)
-                logging.debug("")
-                entry = next(iter_entries)
-        except StopIteration:
-            pass
+    # From the period balances, compute the returns.
+    all_returns = []
+    for (date_begin, date_end, balance_begin, balance_end) in periods:
+        period_returns, mktvalues = compute_period_returns(date_begin, date_end,
+                                                           balance_begin, balance_end,
+                                                           price_map)
+        mktvalue_begin, mktvalue_end = mktvalues
+        all_returns.append(period_returns)
 
-        date_end = entry.date
-        balance_end = copy.copy(balance)
-        returns = compute_period_returns(date_begin, date_end,
-                                         balance_begin, balance_end, price_map)
-        piecewise_returns.append(returns)
+        annual_returns = (annualize_returns(period_returns, date_begin, date_end)
+                          if date_end != date_begin
+                          else {})
 
-        # Consume all external flow entries, absorbing the balance change before
-        # beginning the next period.
-        try:
-            logging.debug('External entries:')
-            while is_external_flow_entry(entry):
-                logging.debug("  Balance: %s", balance)
-                log_entry(entry, logging.debug)
-                for posting in entry.postings:
-                    if posting.account in accounts_assets:
-                        balance.add_position(posting.position)
-                logging.debug("  Balance: %s", balance)
-                logging.debug("")
-                entry = next(iter_entries)
-        except StopIteration:
-            done = True
-    date_last = entry.date
+        logging.info("Period: from %s to %s", date_begin, date_end)
+        logging.info("  Begin %s => %s", balance_begin, mktvalue_begin)
+        logging.info("  End   %s => %s", balance_end, mktvalue_end)
+        logging.info("  Returns     %s", period_returns)
+        logging.info("  Annualized  %s", annual_returns)
+        logging.info("")
 
     # Compute the piecewise returns. Note that we have to be careful to handle
     # all available currencies.
     currencies = set(currency
-                     for returns in piecewise_returns
+                     for returns in all_returns
                      for currency in returns.keys())
     total_returns = {}
     for currency in currencies:
         total_return = 1.
-        for returns in piecewise_returns:
+        for returns in all_returns:
             total_return *= returns.get(currency, 1.)
         total_returns[currency] = total_return
 
-    return total_returns, (date_first, date_end)
+    date_first = periods[0][0]
+    date_last = periods[-1][1]
+    return total_returns, (date_first, date_last)
+
+
+def segment_periods(entries, accounts_assets, is_external_flow_entry):
+    # FIXME: Needs docs
+    logging.info("Segmenting periods...")
+
+    # Find the first matching entry's date.
+    for entry in entries:
+        if getters.get_entry_accounts(entry) & accounts_assets:
+            date_begin = entry.date
+            break
+    else:
+        date_begin = None
+
+    balance = inventory.Inventory()
+    iter_entries = (entry
+                    for entry in entries
+                    if getters.get_entry_accounts(entry) & accounts_assets)
+    done = False
+    periods = []
+    while True:
+        balance_begin = copy.copy(balance)
+
+        logging.debug(",-----------------------------------------------------------")
+        logging.debug("Begin:   %s", date_begin)
+        logging.debug("Balance: %s", balance_begin)
+        logging.debug("")
+
+        # Consume all internal flow entries, simply accumulating the total balance.
+        for entry in iter_entries:
+            if is_external_flow_entry(entry):
+                break
+            log_entry(entry, logging.debug)
+            if isinstance(entry, data.Transaction):
+                for posting in entry.postings:
+                    if posting.account in accounts_assets:
+                        balance.add_position(posting.position)
+        else:
+            done = True
+
+        date_end = entry.date
+        balance_end = copy.copy(balance)
+        periods.append((date_begin, date_end, balance_begin, balance_end))
+
+        logging.debug("Balance: %s", balance_end)
+        logging.debug("End:     %s", date_end)
+        logging.debug("`-----------------------------------------------------------")
+        logging.debug("")
+
+        if done:
+            break
+
+        # Absorb the balance of the external flow entry.
+        assert is_external_flow_entry(entry)
+        log_entry(entry, logging.debug)
+        for posting in entry.postings:
+            if posting.account in accounts_assets:
+                balance.add_position(posting.position)
+
+        date_begin = date_end
+
+    return periods
 
 
 def compute_period_returns(date_begin, date_end,
@@ -240,6 +284,8 @@ def compute_period_returns(date_begin, date_end,
       A dict of currency -> floating-point return for the period. The union of
       all currencies at market-value is returned. This is done to be able to evaluate
       and report on returns in multiple currencies.
+
+      FIXME: Add to doc for return args
     """
     # Evaluate the boundary balances at market value.
     mktvalue_begin = prices.get_inventory_market_value(balance_begin, date_begin, price_map)
@@ -276,18 +322,7 @@ def compute_period_returns(date_begin, date_end,
         else:
             returns[currency] = float(end / begin)
 
-    annual_returns = {}
-    if date_end != date_begin:
-        annual_returns = annualize_returns(returns, date_begin, date_end)
-
-    logging.info("PERIOD: %s -> %s", date_begin, date_end)
-    logging.info("  BEGIN %s => %s", balance_begin, mktvalue_begin)
-    logging.info("  END   %s => %s", balance_end, mktvalue_end)
-    logging.info("  RETURNS: %s", returns)
-    logging.info("  ANNUALIZED: %s", annual_returns)
-    logging.info("")
-
-    return returns
+    return returns, (mktvalue_begin, mktvalue_end)
 
 
 def log_entry(entry, log_func):
@@ -295,7 +330,7 @@ def log_entry(entry, log_func):
     """
     oss = io.StringIO()
     printer.print_entry(entry, file=oss)
-    for line in oss.getvalue().rstrip().splitlines():
+    for line in oss.getvalue().splitlines():
         log_func('  {}'.format(line))
 
 
@@ -363,3 +398,16 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+# FIXME: Build an object that behaves like a file but autoamtically breaks lines
+# and logs to a particular log level, and use that with
+# printer.print_entry(file=... instead).
+
+
+# FIXME: You should be able to provide begin and end dates and automatically
+# create stops to compute the returns during that period, and crop it if outside
+# the period we know about.
+
+# FIXME: You should be able to provide additional dates to break at, i.e., at
+# year boundaries, and compute annual returns.
