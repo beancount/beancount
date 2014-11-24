@@ -475,14 +475,13 @@ class TestReturnsConstrained(test_utils.TestCase):
 class TestReturnsInternalize(test_utils.TestCase):
 
     @loader.loaddoc
-    def test_internalize(self, entries, errors, options_map):
+    def test_exhibit_problem(self, entries, errors, options_map):
         """
         2014-01-01 open Assets:US:Investments:ACME
         2014-01-01 open Assets:US:Investments:Cash
         2014-01-01 open Assets:US:Bank:Checking
         2014-01-01 open Income:US:Investments:Dividends
-
-        ;; Note: The amounts are scaled up weird to exacerbate the effect.
+        2014-01-01 open Assets:Internalized
 
         2014-01-01 * "Deposit"
           Assets:US:Investments:Cash       10000 USD
@@ -492,12 +491,13 @@ class TestReturnsInternalize(test_utils.TestCase):
           Assets:US:Investments:ACME       5 ACME {20.00 USD}
           Assets:US:Investments:Cash
 
-        2014-06-01 * "Dividend"
-          Income:US:Investments:Dividends -2000 USD
+        2014-06-01 * "Dividend from ACME"
+          Income:US:Investments:Dividends -300 USD
           Assets:US:Investments:Cash
 
-        2015-01-01 price ACME          26.00 USD
-        2015-01-01 balance Assets:US:Investments:Cash  11900 USD
+        2015-01-01 price ACME            26.00 USD
+
+        2015-01-01 balance Assets:US:Investments:Cash  10200 USD
         2015-01-01 balance Assets:US:Investments:ACME  5 ACME
         """
         self.assertFalse(errors)
@@ -506,9 +506,12 @@ class TestReturnsInternalize(test_utils.TestCase):
         assets = {'Assets:US:Investments:ACME', 'Assets:US:Investments:Cash'}
         intflows = {'Income:US:Investments:Dividends'}
         returns_with_cash = returns.compute_returns(entries, assets, intflows)
-        self.assertEqual(({'USD': 1.203}, (datetime.date(2014, 1, 1),
+        self.assertEqual(({'USD': 1.033}, (datetime.date(2014, 1, 1),
                                            datetime.date(2015, 1, 1))),
                          returns_with_cash)
+
+        # TODO: Enable internalization above and check that the results with or
+        # without internalization are the same.
 
         # Compute the returns excluding cash in the account.
         assets = {'Assets:US:Investments:ACME'}
@@ -517,5 +520,58 @@ class TestReturnsInternalize(test_utils.TestCase):
                                            datetime.date(2015, 1, 1))),
                          returns_no_cash)
 
-        ## FIXME: The 1.300 is incorrect... we need to take dividend into
-        ## account, so it's a lot more.
+        ## FIXME: The 1.300 is incorrect above... we need to take the dividend
+        ## into account, so it's a lot more.
+
+
+    @loader.loaddoc
+    def test_explicit_solution(self, entries, errors, options_map):
+        """
+        2014-01-01 open Assets:US:Investments:ACME
+        2014-01-01 open Assets:US:Investments:Cash
+        2014-01-01 open Assets:US:Bank:Checking
+        2014-01-01 open Income:US:Investments:Dividends
+        2014-01-01 open Assets:Internalized
+
+        2014-01-01 * "Deposit"
+          Assets:US:Investments:Cash       10000 USD
+          Assets:US:Bank:Checking
+
+        2014-01-01 * "Buy"
+          Assets:US:Investments:ACME       5 ACME {20.00 USD}
+          Assets:US:Investments:Cash
+
+        2014-06-01 * "Dividend from ACME"
+          Income:US:Investments:Dividends -300 USD
+          Assets:Internalized
+
+        2014-06-01 * "Dividend (Internalized)"
+          Assets:Internalized             -300 USD
+          Assets:US:Investments:Cash
+
+        2015-01-01 price ACME            26.00 USD
+
+        2015-01-01 balance Assets:US:Investments:Cash  10200 USD
+        2015-01-01 balance Assets:US:Investments:ACME  5 ACME
+        """
+        self.assertFalse(errors)
+
+        # Compute the returns including cash in the account. This should return
+        # the same as the first case in the previous example.
+        assets = {'Assets:US:Investments:ACME', 'Assets:US:Investments:Cash',
+                  'Assets:Internalized'}
+        intflows = {'Income:US:Investments:Dividends'}
+        returns_with_cash = returns.compute_returns(entries, assets, intflows)
+        self.assertEqual(({'USD': 1.033}, (datetime.date(2014, 1, 1),
+                                           datetime.date(2015, 1, 1))),
+                         returns_with_cash)
+
+        # Compute the returns excluding cash in the account.
+        #
+        # Now this should correctly reflect the impact of the large dividend when not
+        # considering the cash account.
+        assets = {'Assets:US:Investments:ACME', 'Assets:Internalized'}
+        returns_no_cash = returns.compute_returns(entries, assets, intflows)
+        self.assertEqual(({'USD': 5.200}, (datetime.date(2014, 1, 1),
+                                           datetime.date(2015, 1, 1))),
+                         returns_no_cash)
