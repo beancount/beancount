@@ -825,3 +825,59 @@ def compile_select(select, targets_environ, postings_environ, entries_environ):
                      select.limit,
                      select.distinct,
                      select.flatten)
+
+
+def translate_journal(journal):
+    """Translate a Journal entry into an uncompiled Select statement.
+
+    Args:
+      journal: An instance of a Journal object.
+    Returns:
+      An instance of an uncompiled Select object.
+    """
+    p = query_parser
+
+    columns = [
+        p.Target(p.Column('date'), None),
+        p.Target(p.Column('flag'), None),
+        p.Target(p.Function('maxwidth', [p.Column('payee'), p.Constant(48)]), None),
+        p.Target(p.Function('maxwidth', [p.Column('narration'), p.Constant(80)]), None),
+        p.Target(p.Column('account'), None),
+        p.Target(p.Column('change'), None),
+        ]
+
+    where_expr = (p.Match(p.Column('account'), p.Constant(journal.account))
+                  if journal.account
+                  else None)
+
+    return p.Select(columns,
+                    journal.from_clause,
+                    where_expr,
+                    None, None, None, None, None, None)
+
+
+def translate_balance(balance):
+    """Translate a Balances entry into an uncompiled Select statement.
+
+    Args:
+      balance: An instance of a Balance object.
+    Returns:
+      An instance of an uncompiled Select object.
+    """
+    p = query_parser
+
+    summary_expr = (p.Function('sum', [p.Column('change')])
+                    if balance.summary_func is None
+                    else p.Function('sum', [p.Function(balance.summary_func,
+                                                       [p.Column('change')])]))
+    columns = [
+        p.Target(p.Column('account'), None),
+        p.Target(summary_expr, None),
+        ]
+
+    return p.Select(columns,
+                    balance.from_clause,
+                    None,
+                    p.GroupBy([1], None),
+                    p.OrderBy([1], None),
+                    None, None, None, None)

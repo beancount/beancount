@@ -34,7 +34,6 @@ http://furius.ca/beancount/doc/proposal-query
     export/convert, write script.
 
 
-  - Implement basic JOURNAL and BALANCES transformations, even if basic.
   - Create a setvar for style (boxed, spaced, etc.)
   - Rename 'change' column to 'position'.
   - Compute the special 'balance' row and produce journals with it.

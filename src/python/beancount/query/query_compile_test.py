@@ -4,7 +4,7 @@ import unittest
 
 from beancount.core.amount import D
 from beancount.core.amount import Decimal
-from beancount.query import query_parser as q
+from beancount.query import query_parser as p
 from beancount.query import query_compile as c
 from beancount.query import query_env as cc
 
@@ -13,47 +13,47 @@ class TestCompileExpression(unittest.TestCase):
 
     def test_expr_invalid(self):
         with self.assertRaises(c.CompilationError):
-            c.compile_expression(q.Column('invalid'), cc.TargetsEnvironment())
+            c.compile_expression(p.Column('invalid'), cc.TargetsEnvironment())
 
     def test_expr_column(self):
         self.assertEqual(cc.FilenameColumn(),
-                         c.compile_expression(q.Column('filename'),
+                         c.compile_expression(p.Column('filename'),
                                               cc.TargetsEnvironment()))
 
     def test_expr_function(self):
         self.assertEqual(cc.SumPosition([cc.ChangeColumn()]),
-                         c.compile_expression(q.Function('sum', [q.Column('change')]),
+                         c.compile_expression(p.Function('sum', [p.Column('change')]),
                                               cc.TargetsEnvironment()))
 
     def test_expr_unaryop(self):
         self.assertEqual(c.EvalNot(cc.AccountColumn()),
-                         c.compile_expression(q.Not(q.Column('account')),
+                         c.compile_expression(p.Not(p.Column('account')),
                                               cc.TargetsEnvironment()))
 
     def test_expr_binaryop(self):
         self.assertEqual(c.EvalEqual(cc.DateColumn(),
                                      c.EvalConstant(datetime.date(2014, 1, 1))),
                          c.compile_expression(
-                             q.Equal(q.Column('date'),
-                                     q.Constant(datetime.date(2014, 1, 1))),
+                             p.Equal(p.Column('date'),
+                                     p.Constant(datetime.date(2014, 1, 1))),
                              cc.TargetsEnvironment()))
 
     def test_expr_constant(self):
         self.assertEqual(c.EvalConstant(D(17)),
-                         c.compile_expression(q.Constant(D(17)), cc.TargetsEnvironment()))
+                         c.compile_expression(p.Constant(D(17)), cc.TargetsEnvironment()))
 
 
 class TestCompileExpressionDataTypes(unittest.TestCase):
 
     def test_expr_function_arity(self):
         # Compile with the correct number of arguments.
-        c.compile_expression(q.Function('sum', [q.Column('number')]),
+        c.compile_expression(p.Function('sum', [p.Column('number')]),
                              cc.TargetsEnvironment())
 
         # Compile with an incorrect number of arguments.
         with self.assertRaises(c.CompilationError):
-            c.compile_expression(q.Function('sum', [q.Column('date'),
-                                                    q.Column('account')]),
+            c.compile_expression(p.Function('sum', [p.Column('date'),
+                                                    p.Column('account')]),
                                  cc.TargetsEnvironment())
 
 
@@ -188,7 +188,10 @@ class CompileSelectBase(unittest.TestCase):
     xcontext_postings = cc.FilterPostingsEnvironment()
 
     def setUp(self):
-        self.parser = q.Parser()
+        self.parser = p.Parser()
+
+    def parse(self, query):
+        return self.parser.parse(query.strip())
 
     def compile(self, query):
         """Parse one query and compile it.
@@ -198,7 +201,7 @@ class CompileSelectBase(unittest.TestCase):
         Returns:
           The AST.
         """
-        select = self.parser.parse(query.strip())
+        select = self.parse(query)
         query = c.compile_select(select,
                                  self.xcontext_targets,
                                  self.xcontext_postings,
@@ -579,3 +582,95 @@ class TestCompileSelectOrderBy(CompileSelectBase):
         """)
         self.assertEqual([0], query.group_indexes)
         self.assertEqual([1], query.order_indexes)
+
+
+class TestTranslationJournal(CompileSelectBase):
+
+    def test_journal(self):
+        journal = self.parse("JOURNAL;")
+        select = c.translate_journal(journal)
+        self.assertEqual(
+            p.Select([
+                p.Target(p.Column('date'), None),
+                p.Target(p.Column('flag'), None),
+                p.Target(p.Function('maxwidth', [p.Column('payee'), p.Constant(48)]), None),
+                p.Target(p.Function('maxwidth', [p.Column('narration'), p.Constant(80)]), None),
+                p.Target(p.Column('account'), None),
+                p.Target(p.Column('change'), None)
+            ],
+                 None, None, None, None, None, None, None, None),
+            select)
+
+    def test_journal_with_account(self):
+        journal = self.parse("JOURNAL 'liabilities';")
+        select = c.translate_journal(journal)
+        self.assertEqual(
+            p.Select([
+                p.Target(p.Column('date'), None),
+                p.Target(p.Column('flag'), None),
+                p.Target(p.Function('maxwidth', [p.Column('payee'), p.Constant(48)]), None),
+                p.Target(p.Function('maxwidth', [p.Column('narration'), p.Constant(80)]), None),
+                p.Target(p.Column('account'), None),
+                p.Target(p.Column('change'), None)
+            ],
+                 None,
+                     p.Match(p.Column('account'), p.Constant('liabilities')),
+                     None, None, None, None, None, None),
+            select)
+
+    def test_journal_with_account_and_from(self):
+        journal = self.parse("JOURNAL 'liabilities' FROM year = 2014;")
+        select = c.translate_journal(journal)
+        self.assertEqual(
+            p.Select([
+                p.Target(p.Column('date'), None),
+                p.Target(p.Column('flag'), None),
+                p.Target(p.Function('maxwidth', [p.Column('payee'), p.Constant(48)]), None),
+                p.Target(p.Function('maxwidth', [p.Column('narration'), p.Constant(80)]), None),
+                p.Target(p.Column('account'), None),
+                p.Target(p.Column('change'), None)
+            ],
+                 p.From(p.Equal(p.Column('year'), p.Constant(2014)), None, None, None),
+                     p.Match(p.Column('account'), p.Constant('liabilities')),
+                     None, None, None, None, None, None),
+            select)
+
+
+class TestTranslationBalance(CompileSelectBase):
+
+    def test_balance(self):
+        balance = self.parse("BALANCE;")
+        select = c.translate_balance(balance)
+        self.assertEqual(
+            p.Select([
+                p.Target(p.Column('account'), None),
+                p.Target(p.Function('sum', [p.Column('change')]), None),
+            ], None, None, p.GroupBy([1], None), p.OrderBy([1], None),
+                     None, None, None, None),
+            select)
+
+    def test_balance_with_units(self):
+        balance = self.parse("BALANCE cost;")
+        select = c.translate_balance(balance)
+        self.assertEqual(
+            p.Select([
+                p.Target(p.Column('account'), None),
+                p.Target(p.Function('sum', [p.Function('cost', [p.Column('change')])]), None),
+            ], None, None, p.GroupBy([1], None), p.OrderBy([1], None),
+                     None, None, None, None),
+            select)
+
+    def test_balance_with_units_and_from(self):
+        balance = self.parse("BALANCE cost FROM year = 2014;")
+        select = c.translate_balance(balance)
+        self.assertEqual(
+            p.Select([
+                p.Target(p.Column('account'), None),
+                p.Target(p.Function('sum', [p.Function('cost', [p.Column('change')])]), None),
+            ],
+                     p.From(p.Equal(p.Column('year'), p.Constant(2014)), None, None, None),
+                     None,
+                     p.GroupBy([1], None),
+                     p.OrderBy([1], None),
+                     None, None, None, None),
+            select)

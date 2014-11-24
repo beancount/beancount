@@ -478,15 +478,24 @@ class TestSelectOptions(QueryParserTestBase):
 class TestBalance(QueryParserTestBase):
 
     def test_balance_empty(self):
-        self.assertParse(q.Balance(None),
-                         "BALANCES;")
+        self.assertParse(q.Balance(None, None),
+                         "BALANCE;")
 
     def test_balance_from(self):
         self.assertParse(
-            q.Balance(q.From(q.Equal(q.Column('date'),
+            q.Balance(None,
+                      q.From(q.Equal(q.Column('date'),
                                      q.Constant(datetime.date(2014, 1, 1))),
                              None, True, None)),
-            "BALANCES FROM date = 2014-01-01 CLOSE;")
+            "BALANCE FROM date = 2014-01-01 CLOSE;")
+
+    def test_balance_from_with_transformer(self):
+        self.assertParse(
+            q.Balance('units',
+                      q.From(q.Equal(q.Column('date'),
+                                     q.Constant(datetime.date(2014, 1, 1))),
+                             None, True, None)),
+            "BALANCE units FROM date = 2014-01-01 CLOSE;")
 
 class TestJournal(QueryParserTestBase):
 

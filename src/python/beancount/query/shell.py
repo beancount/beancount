@@ -278,7 +278,7 @@ class BQLShell(DispatchingShell):
           CLEAR: Transfer final Income and Expenses balances to Equity.
 
         """
-        # Compile the select statement.
+        # Compile the SELECT statement.
         try:
             query = query_compile.compile_select(select,
                                                  self.env_targets,
@@ -303,16 +303,34 @@ class BQLShell(DispatchingShell):
     def on_Journal(self, journal):
         """
         Select a journal of some subset of postings. This command is a
-        convenience
+        convenience and converts into an equivalent Select statement, designed
+        to extract the most sensible list of columns for the register of a list
+        of entries as a table.
 
-        """
-        raise NotImplementedError
+        The general form of a JOURNAL statement loosely follows SQL syntax:
 
-    def on_Balances(self, balances):
+           JOURNAL <account-regexp> [FROM_CLAUSE]
+
+        See the SELECT query help for more details on the FROM clause.
         """
-        Print balances on some aggregations of postings.
+        select = query_compile.translate_journal(journal)
+        return self.on_Select(select)
+
+    def on_Balance(self, balance):
         """
-        raise NotImplementedError
+        Select balances of some subset of postings. This command is a
+        convenience and converts into an equivalent Select statement, designed
+        to extract the most sensible list of columns for the register of a list
+        of entries as a table.
+
+        The general form of a JOURNAL statement loosely follows SQL syntax:
+
+           BALANCE [FROM_CLAUSE]
+
+        See the SELECT query help for more details on the FROM clause.
+        """
+        select = query_compile.translate_balance(balance)
+        return self.on_Select(select)
 
     def on_Explain(self, explain):
         """

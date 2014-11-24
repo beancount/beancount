@@ -7,6 +7,7 @@ Define new columns and functions here.
 import copy
 import datetime
 import re
+import textwrap
 
 from beancount.core.amount import Decimal
 from beancount.core.amount import ZERO
@@ -45,6 +46,17 @@ class Str(c.EvalFunction):
     def __call__(self, posting):
         args = self.eval_args(posting)
         return repr(args[0])
+
+class MaxWidth(c.EvalFunction):
+    "Convert the argument to a substring. This can be used to ensure maximum width"
+    __intypes__ = [str, int]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, posting):
+        string, width = self.eval_args(posting)
+        return textwrap.shorten(string, width=width)
 
 
 # Operations on dates.
@@ -135,6 +147,7 @@ class CostPosition(c.EvalFunction):
 SIMPLE_FUNCTIONS = {
     'str'                          : Str,
     'length'                       : Length,
+    'maxwidth'                     : MaxWidth,
     'parent'                       : Parent,
     ('units', position.Position)   : UnitsPosition,
     ('cost', position.Position)    : CostPosition,
@@ -143,7 +156,6 @@ SIMPLE_FUNCTIONS = {
     'day'                          : Day,
     'weekday'                      : Weekday,
     }
-
 
 
 

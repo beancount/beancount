@@ -40,8 +40,10 @@ Select = collections.namedtuple(
 #   GROUP BY account
 #
 # Attributes:
+#   summary_func: A method on an inventory to call on the changes column.
+#     May be to extract units, value at cost, etc.
 #   from_clause: An instance of 'From', or None if absent.
-Balance = collections.namedtuple('Balance', 'from_clause')
+Balance = collections.namedtuple('Balance', 'summary_func from_clause')
 
 # A select query that produces a journal of postings.
 # This is equivalent to
@@ -175,7 +177,7 @@ class Lexer:
     keywords = {
         'EXPLAIN',
         'SELECT', 'AS', 'FROM', 'WHERE', 'OPEN', 'CLOSE', 'CLEAR', 'ON',
-        'BALANCES', 'JOURNAL', 'PRINT',
+        'BALANCE', 'JOURNAL', 'PRINT',
         'ERRORS',
         'GROUP', 'BY', 'HAVING', 'ORDER', 'DESC', 'ASC', 'PIVOT',
         'LIMIT', 'FLATTEN', 'DISTINCT',
@@ -621,9 +623,10 @@ class Parser(SelectParser):
 
     def p_balance_statement(self, p):
         """
-        balance_statement : BALANCES from
+        balance_statement : BALANCE from
+                          | BALANCE ID from
         """
-        p[0] = Balance(p[2])
+        p[0] = Balance(None, p[2]) if len(p) == 3 else Balance(p[2], p[3])
 
     def p_journal_statement(self, p):
         """
