@@ -6,6 +6,7 @@ import logging
 import textwrap
 from unittest import mock
 
+from beancount.core.amount import D
 from beancount.utils import test_utils
 from beancount.projects import returns
 from beancount.parser import options
@@ -16,7 +17,7 @@ from beancount import loader
 
 
 def setUp(self):
-    logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
 
 
 class TestReturnsFunctions(test_utils.TestCase):
@@ -169,8 +170,7 @@ class TestReturnsFunctions(test_utils.TestCase):
         price_map = prices.build_price_map(self.entries)
         matching_entries, (acc_assets, acc_intflows, _) = returns.find_matching(
             self.entries, self.acc_types, '.*:Prosper')
-        returns.compute_returns(self.entries, self.options_map,
-                                acc_assets, acc_intflows, price_map)
+        returns.compute_returns(self.entries, acc_assets, acc_intflows, price_map)
 
 
 class TestReturnsPeriods(test_utils.TestCase):
@@ -470,3 +470,52 @@ class TestReturnsConstrained(test_utils.TestCase):
 
         self.assertEqual(inventory.from_string('1400 USD, '
                                                '21 ACME {100 USD}'), periods[-1][3])
+
+
+class TestReturnsInternalize(test_utils.TestCase):
+
+    @loader.loaddoc
+    def test_internalize(self, entries, errors, options_map):
+        """
+        2014-01-01 open Assets:US:Investments:ACME
+        2014-01-01 open Assets:US:Investments:Cash
+        2014-01-01 open Assets:US:Bank:Checking
+        2014-01-01 open Income:US:Investments:Dividends
+
+        ;; Note: The amounts are scaled up weird to exacerbate the effect.
+
+        2014-01-01 * "Deposit"
+          Assets:US:Investments:Cash       10000 USD
+          Assets:US:Bank:Checking
+
+        2014-01-01 * "Buy"
+          Assets:US:Investments:ACME       5 ACME {20.00 USD}
+          Assets:US:Investments:Cash
+
+        2014-06-01 * "Dividend"
+          Income:US:Investments:Dividends -2000 USD
+          Assets:US:Investments:Cash
+
+        2015-01-01 price ACME          26.00 USD
+        2015-01-01 balance Assets:US:Investments:Cash  11900 USD
+        2015-01-01 balance Assets:US:Investments:ACME  5 ACME
+        """
+        self.assertFalse(errors)
+
+        # Compute the returns including cash in the account.
+        assets = {'Assets:US:Investments:ACME', 'Assets:US:Investments:Cash'}
+        intflows = {'Income:US:Investments:Dividends'}
+        returns_with_cash = returns.compute_returns(entries, assets, intflows)
+        self.assertEqual(({'USD': 1.203}, (datetime.date(2014, 1, 1),
+                                           datetime.date(2015, 1, 1))),
+                         returns_with_cash)
+
+        # Compute the returns excluding cash in the account.
+        assets = {'Assets:US:Investments:ACME'}
+        returns_no_cash = returns.compute_returns(entries, assets, intflows)
+        self.assertEqual(({'USD': 1.300}, (datetime.date(2014, 1, 1),
+                                           datetime.date(2015, 1, 1))),
+                         returns_no_cash)
+
+        ## FIXME: The 1.300 is incorrect... we need to take dividend into
+        ## account, so it's a lot more.

@@ -138,7 +138,7 @@ def segment_periods(entries, accounts_assets, accounts_intflows,
       ValueError: If the dates create an impossible situation, the beginning must come before
         the requested end, if specified.
     """
-    logging.info("Segmenting periods...")
+    logging.info("Segmenting periods.")
 
     if date_begin and date_end and date_begin >= date_end:
         raise ValueError("Dates are not ordered correctly: {} >= {}".format(
@@ -321,15 +321,14 @@ def annualize_returns(returns, date_first, date_last):
             for currency, return_ in returns.items()}
 
 
-def compute_returns(entries, options_map,
+def compute_returns(entries,
                     accounts_assets, accounts_intflows,
                     price_map=None,
                     date_begin=None, date_end=None):
-    """Compute the returns of a portfolio of accounts defined by a regular expression.
+    """Compute the returns of a portfolio of accounts.
 
     Args:
       entries: A list of directives that may affect the account.
-      options_map: An options dict as produced by the loader.
       accounts_assets: A set of account name strings, the names of the asset accounts
         included in valuing the portfolio.
       accounts_intflow: A set of account name strings, the names of internal flow
@@ -375,7 +374,7 @@ def compute_returns(entries, options_map,
                               date_begin, date_end)
 
     # From the period balances, compute the returns.
-    logging.info("Calculating period returns...")
+    logging.info("Calculating period returns.")
     logging.info("")
     all_returns = []
     for (period_begin, period_end, balance_begin, balance_end) in periods:
@@ -449,7 +448,7 @@ def compute_returns_with_regexp(entries, options_map, related_regexp,
         logging.info('  %s', account)
     logging.info('')
 
-    return compute_returns(entries, options_map,
+    return compute_returns(entries,
                            accounts_assets, accounts_intflows,
                            price_map,
                            date_begin, date_end)
@@ -528,3 +527,9 @@ if __name__ == '__main__':
 
 # This returns the same value for partial year to annualized, is this expected?
 #   python3 -m beancount.projects.returns   ~/p/beancount-data/rrsp.beancount   '(.*:RRSP|Expenses:Financial)'  --date-begin=2014-01-01 --date-end=2015-01-01
+
+
+# Split transactions of internal flow postings against external flow postings,
+# as per this:
+#
+#   https://groups.google.com/d/msg/beancount/P4d0fJZeQ0o/N5c50miOPYcJ
