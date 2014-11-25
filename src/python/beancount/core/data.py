@@ -34,8 +34,14 @@ from .account import has_component
 #   booking: A string, the booking method to use to disambiguate postings to this
 #     account (when zero or more than one postings match the specification), or
 #     None if not specified. In practice, this attribute will be should be left
-#     unspecified (None) in the vast majority of cases.
+#     unspecified (None) in the vast majority of cases. See BOOKING_METHODS for
+#     valid attribute values when set.
 Open = namedtuple('Open', 'source date account currencies booking')
+
+# A set of valid booking method names for positions on accounts.
+# The following methods are not yet implemented:
+#   FIFO, LIFO, AVERAGE, AVERAGE_ONLY.
+BOOKING_METHODS = {'STRICT', 'NONE'}
 
 # A "close account" directive.
 #

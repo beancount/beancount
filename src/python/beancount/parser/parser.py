@@ -28,6 +28,7 @@ from beancount.core.data import Note
 from beancount.core.data import Document
 from beancount.core.data import Source
 from beancount.core.data import Posting
+from beancount.core.data import BOOKING_METHODS
 from beancount.core.interpolate import balance_incomplete_postings
 from beancount.core.interpolate import compute_residual
 from beancount.core.interpolate import SMALL_EPSILON
@@ -329,8 +330,11 @@ class Builder(lexer.LexBuilder):
           A new Open object.
         """
         source = Source(filename, lineno)
-        ## FIXME: Validate booking method here.
-        return Open(source, date, account, currencies, booking)
+        entry = Open(source, date, account, currencies, booking)
+        if booking and booking not in BOOKING_METHODS:
+            self.errors.append(
+                ParserError(source, "Invalid booking method: {}".format(booking), entry))
+        return entry
 
     def close(self, filename, lineno, date, account, kvlist):
         """Process a close directive.
