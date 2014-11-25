@@ -63,6 +63,9 @@ def validate_inventory_booking(entries, unused_options_map):
             running_balance = balances[posting.account]
 
             position_, reducing = running_balance.add_position(posting.position)
+
+            # Note: We could disable this check if the default booking method
+            # for the account is "NONE".
             if position_.is_negative_at_cost():
                 errors.append(
                     ValidationError(
