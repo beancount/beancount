@@ -329,7 +329,8 @@ class Builder(lexer.LexBuilder):
           A new Open object.
         """
         source = Source(filename, lineno)
-        return Open(source, date, account, currencies)
+        ## FIXME: Validate booking method here.
+        return Open(source, date, account, currencies, booking)
 
     def close(self, filename, lineno, date, account, kvlist):
         """Process a close directive.
