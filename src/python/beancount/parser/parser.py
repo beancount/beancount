@@ -314,7 +314,7 @@ class Builder(lexer.LexBuilder):
         source = Source(filename, lineno)
         self.errors.append(ParserSyntaxError(source, message, None))
 
-    def open(self, filename, lineno, date, account, currencies, kvlist):
+    def open(self, filename, lineno, date, account, currencies, booking, kvlist):
         """Process an open directive.
 
         Args:
@@ -323,6 +323,7 @@ class Builder(lexer.LexBuilder):
           date: A datetime object.
           account: A string, the name of the account.
           currencies: A list of constraint currencies.
+          booking: A string, the booking method, or None if none was specified.
           kvlist: a list of KeyValue instances.
         Returns:
           A new Open object.

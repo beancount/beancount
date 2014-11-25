@@ -132,6 +132,22 @@ class TestParserEntryTypes(unittest.TestCase):
         check_list(self, entries, [data.Open])
 
     @parsedoc
+    def test_entry_open_4(self, entries, errors, __):
+        """
+          2013-05-18 open Assets:US:Vanguard:VIIPX  VIIPX  "AVERAGE_ONLY"
+        """
+        check_list(self, entries, [data.Open])
+        ## FIXME: Add this in. self.assertEqual(entries[0].booking, 'AVERAGE_ONLY')
+
+    @parsedoc
+    def test_entry_open_5(self, entries, errors, __):
+        """
+          2013-05-18 open Assets:US:Vanguard:VIIPX    "AVERAGE_ONLY"
+        """
+        check_list(self, entries, [data.Open])
+        ## FIXME: Add this in. self.assertEqual(entries[0].booking, 'AVERAGE_ONLY')
+
+    @parsedoc
     def test_entry_close(self, entries, _, __):
         """
           2013-05-18 close Assets:US:BestBank:Checking
