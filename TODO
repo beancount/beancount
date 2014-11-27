@@ -85,6 +85,8 @@ beancount: TODO
 
 ** Documentation / Ongoing
 
+  - Write document on converting between implementations
+
   - Complete "How Inventories Work?"
   - Complete intro document on double-entry bookkeepingk."
   - Complete Design Doc
@@ -127,6 +129,8 @@ beancount: TODO
 * Deal with Rounding
 http://furius.ca/beancount/doc/propostal-rounding
 
+  - Check Vanguard rounding... do they maintain a higher precision internally?
+
   - Implement experimental precision check suggested by Nathan Grigg
   - Implement Equity:Rounding accumulation suggested by Nathan Grigg
 
@@ -163,6 +167,40 @@ http://furius.ca/beancount/doc/propostal-rounding
 
 * Inventory Booking Proposal
 http://furius.ca/beancount/doc/proposal-inventory
+
+  - Make a temporary hack to disable strict checks on a per-account basis. This
+    will keep us going against average cost until the full inventory proposal
+    is implemented.
+
+
+      "The inventory booking proposal for average booking won't be implemented in
+      the next few weeks... I'm tempted to think that maybe I should provide a way
+      to disable the strict balance checks in the interim. This way we could enter
+      the transactions without matching lots strictly... at least all the data
+      would be present and the balance checks would work.  Would people think it's
+      a good idea?  I would do this by extending the default value for the type of
+      booking is intended to take place (as in the inventory proposal) and add a
+      new value for it, i.e,. in addition to STRICT, FIFO, LIFO, AVERAGE,
+      AVERAGE_ONLY, I would add NONE. I would use the proposed syntax extension for
+      the Open directive, e.g.
+
+      2014-08-84 open Assets:US:Vanguard:VIIPX    VIIPX    "NONE"
+
+      This also means that you could setup all your accounts to remove all inventory
+      booking, which results in a booking method similar to Ledger (no checks and no
+      errors), by setting the default value for it, like this:
+
+        option "booking_method" "NONE"
+
+      This could appeal to those who would like less checks, like Ledger, or who are
+      converting their Ledger ledgers to Beancount.
+
+      Down the road, the inventory booking would use that and implement all methods,
+      but for now, only the balance check would consult that value and disable the
+      check if the default booking method is "NONE". I think I could easily hack that
+      in in a few hours."
+
+
 
   - Implement the proposal
 
@@ -503,6 +541,18 @@ http://furius.ca/beancount/doc/proposal-inter
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
 
+
+
+  - IDEA: Using inference and a reasonable buffer amount, can I automatically
+    figure out how much extra cash from checking can safely be transferred out
+    for investing? i.e. sum up upcoming expenses (rent + cc) and expected
+    salary payments, and calculate it automatically. Not obvious, but why not?
+
+
+
+  - IDEA: Create a plugin that will convert "doc:" metadata to a document file,
+    that will search for a unique string name in all the filenames and
+    associate the filename with this directive via a link or something.
 
 
   - In the comparison doc: describe how Beancount has asset types

@@ -82,6 +82,20 @@ class TestValidateInventoryBooking(cmptest.TestCase):
         validation_errors = validation.validate_inventory_booking(entries, options_map)
         self.assertEqual([validation.ValidationError], list(map(type, validation_errors)))
 
+    @parser.parsedoc
+    def test_simple_negative_lots_in_single_transaction(self, entries, errors, options_map):
+        """
+          2013-05-01 open Assets:Bank:Investing
+          2013-05-01 open Equity:Opening-Balances
+
+          2013-05-02 *
+            Assets:Bank:Investing                 5 GOOG {501 USD}
+            Assets:Bank:Investing                -1 GOOG {502 USD}
+            Equity:Opening-Balances
+        """
+        validation_errors = validation.validate_inventory_booking(entries, options_map)
+        self.assertEqual([validation.ValidationError], list(map(type, validation_errors)))
+
 
 class TestValidateOpenClose(cmptest.TestCase):
 

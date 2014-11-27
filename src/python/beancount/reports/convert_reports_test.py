@@ -130,7 +130,6 @@ class TestLedgerConversion(test_utils.TestCase):
             Assets:CA:Investment:GOOG          5 GOOG {520.0 USD}
             Expenses:Commissions            9.95 USD
             Assets:CA:Investment:Cash   -2939.46 CAD @ 0.8879 USD
-
         """
         with test_utils.capture() as stdout:
             result = test_utils.run_with_args(report.main, [filename, 'ledger'])

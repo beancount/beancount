@@ -182,6 +182,17 @@ class LexBuilder(object):
         """
         return link
 
+    def KEY(self, key):
+        """Process a KEY token.
+
+        Args:
+          key: a str, the name of the key string.
+        Returns:
+          The link string itself. For now we don't need to represent this by
+          an object.
+        """
+        return key
+
 
 def lex_iter(file, builder=None):
     """An iterator that yields all the tokens in the given file.

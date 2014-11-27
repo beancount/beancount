@@ -99,12 +99,15 @@ const char* getTokenName(int token);
 %token <pyobj> NUMBER      /* A floating-point number */
 %token <pyobj> TAG         /* A tag that can be associated with a transaction */
 %token <pyobj> LINK        /* A link that can be associated with a transaction */
+%token <pyobj> KEY         /* A key in a key-value pair */
 
 /* Types for non-terminal symbols. */
 %type <character> txn
 %type <character> optflag
 %type <pyobj> transaction
 %type <pyobj> posting
+%type <pyobj> key_value
+%type <pyobj> key_value_list
 %type <pyobj> posting_list
 %type <pyobj> currency_list
 %type <pyobj> open
@@ -122,13 +125,14 @@ const char* getTokenName(int token);
 %type <pyobj> declarations
 %type <pyobj> txn_fields
 %type <pyobj> filename
+%type <pyobj> opt_booking
 
 
 /* Start symbol. */
 %start file
 
 /* We have four expected shift/reduce conflicts at 'eol'. */
-%expect 3
+%expect 11
 
 
 /*--------------------------------------------------------------------------------*/
@@ -217,16 +221,38 @@ posting : INDENT optflag ACCOUNT position eol
             DECREF1($3);
         }
 
+key_value : INDENT KEY STRING eol
+          {
+              $$ = BUILD("key_value", "OO", $2, $3);
+              DECREF2($2, $3);
+          }
+
 posting_list : empty
              {
                  Py_INCREF(Py_None);
                  $$ = Py_None;
+             }
+             | posting_list key_value
+             {
+                 $$ = BUILD("handle_list", "OO", $1, $2);
+                 DECREF2($1, $2);
              }
              | posting_list posting
              {
                  $$ = BUILD("handle_list", "OO", $1, $2);
                  DECREF2($1, $2);
              }
+
+key_value_list : empty
+               {
+                   Py_INCREF(Py_None);
+                   $$ = Py_None;
+               }
+               | key_value_list key_value
+               {
+                   $$ = BUILD("handle_list", "OO", $1, $2);
+                   DECREF2($1, $2);
+               }
 
 currency_list : empty
               {
@@ -256,28 +282,38 @@ poptag : POPTAG TAG eol
            DECREF1($2);
        }
 
-open : DATE OPEN ACCOUNT currency_list eol
+open : DATE OPEN ACCOUNT currency_list opt_booking eol key_value_list
      {
-         $$ = BUILD("open", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
-         DECREF3($1, $3, $4);
+         $$ = BUILD("open", "siOOOOO", FILE_LINE_ARGS, $1, $3, $4, $5, $7);
+         DECREF5($1, $3, $4, $5, $7);
      }
 
-close : DATE CLOSE ACCOUNT eol
+opt_booking : STRING
+            {
+                $$ = $1;
+            }
+            | empty
+            {
+                Py_INCREF(Py_None);
+                $$ = Py_None;
+            }
+
+close : DATE CLOSE ACCOUNT eol key_value_list
       {
-          $$ = BUILD("close", "siOO", FILE_LINE_ARGS, $1, $3);
-          DECREF2($1, $3);
+          $$ = BUILD("close", "siOOO", FILE_LINE_ARGS, $1, $3, $5);
+          DECREF3($1, $3, $5);
       }
 
-pad : DATE PAD ACCOUNT ACCOUNT eol
+pad : DATE PAD ACCOUNT ACCOUNT eol key_value_list
     {
-        $$ = BUILD("pad", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
-        DECREF3($1, $3, $4);
+        $$ = BUILD("pad", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+        DECREF4($1, $3, $4, $6);
     }
 
-balance : DATE BALANCE ACCOUNT amount eol
+balance : DATE BALANCE ACCOUNT amount eol key_value_list
       {
-          $$ = BUILD("balance", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
-          DECREF3($1, $3, $4);
+          $$ = BUILD("balance", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+          DECREF4($1, $3, $4, $6);
       }
 
 amount : NUMBER CURRENCY
@@ -320,31 +356,31 @@ lot_cost_date : LCURL amount RCURL
          }
 
 
-price : DATE PRICE CURRENCY amount eol
+price : DATE PRICE CURRENCY amount eol key_value_list
       {
-          $$ = BUILD("price", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
-          DECREF3($1, $3, $4);
+          $$ = BUILD("price", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+          DECREF4($1, $3, $4, $6);
       }
 
-event : DATE EVENT STRING STRING eol
+event : DATE EVENT STRING STRING eol key_value_list
       {
-          $$ = BUILD("event", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
-          DECREF3($1, $3, $4);
+          $$ = BUILD("event", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+          DECREF4($1, $3, $4, $6);
       }
 
-note : DATE NOTE ACCOUNT STRING eol
+note : DATE NOTE ACCOUNT STRING eol key_value_list
       {
-          $$ = BUILD("note", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
-          DECREF3($1, $3, $4);
+          $$ = BUILD("note", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+          DECREF4($1, $3, $4, $6);
       }
 
 filename : STRING
 
-document : DATE DOCUMENT ACCOUNT filename eol
-      {
-        $$ = BUILD("document", "siOOO", FILE_LINE_ARGS, $1, $3, $4);
-        DECREF3($1, $3, $4);
-      }
+document : DATE DOCUMENT ACCOUNT filename eol key_value_list
+         {
+             $$ = BUILD("document", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
+             DECREF4($1, $3, $4, $6);
+         }
 
 entry : transaction
       | balance
@@ -450,6 +486,7 @@ const char* getTokenName(int token)
         case NUMBER   : return "NUMBER";
         case TAG      : return "TAG";
         case LINK     : return "LINK";
+        case KEY      : return "KEY";
     }
     return 0;
 }

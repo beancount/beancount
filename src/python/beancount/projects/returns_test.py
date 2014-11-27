@@ -29,7 +29,7 @@ def setUp(self):
 
 class TestReturnsFunctions(test_utils.TestCase):
 
-    INPUT = """
+    INPUT = textwrap.dedent("""
 
     2000-01-31 open Assets:US:TD:Checking                 USD
     2000-01-31 open Equity:Opening-Balances               USD,LENCLUB
@@ -140,7 +140,7 @@ class TestReturnsFunctions(test_utils.TestCase):
       Assets:US:TD:Checking                                                       1180.00 USD
       Assets:US:Prosper:Cash
 
-    """
+    """)
 
     def setUp(self):
         self.entries, errors, self.options_map = loader.load_string(self.INPUT)
