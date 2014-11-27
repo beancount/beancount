@@ -422,6 +422,17 @@ def internalize(entries,
         else:
             new_entries.append(entry)
 
+    # The transfer account does not have an Open entry, insert one. (This is
+    # just us being pedantic about Beancount requirements, this will not change
+    # the returns, but if someone looks at internalized entries it produces a
+    # correct set of entries you can load cleanly).
+    open_close_map = getters.get_account_open_close(new_entries)
+    if transfer_account not in open_close_map:
+        open_transfer_entry = data.Open(data.Source("beancount.projects.returns", 0),
+                                        new_entries[0].date,
+                                        transfer_account, None, None)
+        new_entries.insert(0, open_transfer_entry)
+
     return new_entries, replaced_entries
 
 
@@ -617,9 +628,6 @@ def main():
 if __name__ == '__main__':
     main()
 
-
-# FIXME: Should we insert a directive for opening the transfer account?
-# Yes, do this.
 
 # FIXME: Check that no unrealized gains entries are present, this would really
 # skew the result. Ingore them if you find them, that's the correct way to treat

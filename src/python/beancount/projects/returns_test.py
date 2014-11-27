@@ -524,6 +524,14 @@ class TestReturnsInternalize(cmptest.TestCase):
             {'Income:Account', 'Expenses:Account'},
             'Equity:Internalized')
 
+        # Check that the split entry has been replaced.
+        self.assertEqualEntries("""
+        2014-01-01 * "Int/ext flows - should be internalized"
+          Income:Account     -100 USD
+          Expenses:External   100 USD
+        """, replaced_entries)
+
+        # Look for the replaced entries and assert them.
         self.assertIncludesEntries("""
         2014-01-01 R "Int/ext flows - should be internalized" ^internalized-00001
           Income:Account       -100 USD
@@ -534,11 +542,10 @@ class TestReturnsInternalize(cmptest.TestCase):
           Equity:Internalized  -100 USD
         """, new_entries)
 
-        self.assertEqualEntries("""
-        2014-01-01 * "Int/ext flows - should be internalized"
-          Income:Account     -100 USD
-          Expenses:External   100 USD
-        """, replaced_entries)
+        # Check that the internalized account is present.
+        self.assertIncludesEntries("""
+        2014-01-01 open Equity:Internalized
+        """, new_entries)
 
 
     # Demonstrate internalization by ignoring cash accounts by explicitly
