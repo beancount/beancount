@@ -130,6 +130,23 @@ class TestParserEntryTypes(unittest.TestCase):
           2013-05-18 open Assets:Cash   USD,CAD,EUR
         """
         check_list(self, entries, [data.Open])
+        self.assertEqual(entries[0].booking, None)
+
+    @parsedoc
+    def test_entry_open_4(self, entries, errors, __):
+        """
+          2013-05-18 open Assets:US:Vanguard:VIIPX  VIIPX  "STRICT"
+        """
+        check_list(self, entries, [data.Open])
+        self.assertEqual(entries[0].booking, 'STRICT')
+
+    @parsedoc
+    def test_entry_open_5(self, entries, errors, __):
+        """
+          2013-05-18 open Assets:US:Vanguard:VIIPX    "STRICT"
+        """
+        check_list(self, entries, [data.Open])
+        self.assertEqual(entries[0].booking, 'STRICT')
 
     @parsedoc
     def test_entry_close(self, entries, _, __):

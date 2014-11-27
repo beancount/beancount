@@ -125,6 +125,7 @@ const char* getTokenName(int token);
 %type <pyobj> declarations
 %type <pyobj> txn_fields
 %type <pyobj> filename
+%type <pyobj> opt_booking
 
 
 /* Start symbol. */
@@ -281,11 +282,21 @@ poptag : POPTAG TAG eol
            DECREF1($2);
        }
 
-open : DATE OPEN ACCOUNT currency_list eol key_value_list
+open : DATE OPEN ACCOUNT currency_list opt_booking eol key_value_list
      {
-         $$ = BUILD("open", "siOOOO", FILE_LINE_ARGS, $1, $3, $4, $6);
-         DECREF4($1, $3, $4, $6);
+         $$ = BUILD("open", "siOOOOO", FILE_LINE_ARGS, $1, $3, $4, $5, $7);
+         DECREF5($1, $3, $4, $5, $7);
      }
+
+opt_booking : STRING
+            {
+                $$ = $1;
+            }
+            | empty
+            {
+                Py_INCREF(Py_None);
+                $$ = Py_None;
+            }
 
 close : DATE CLOSE ACCOUNT eol key_value_list
       {

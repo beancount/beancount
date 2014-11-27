@@ -153,7 +153,7 @@ def add_unrealized_gains(entries, options_map, subaccount=None):
     for account_ in sorted(new_accounts):
         if account_ not in open_entries:
             open_entry = data.Open(source._replace(lineno=index),
-                                   latest_date, account_, None)
+                                   latest_date, account_, None, None)
             new_open_entries.append(open_entry)
 
     return (entries + new_open_entries + new_entries, errors)
