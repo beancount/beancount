@@ -30,6 +30,8 @@ We consider three sets of accounts:
     isn't just a trivial exercise!
 
 """
+__author__ = "Martin Blais <blais@furius.ca>"
+
 import argparse
 import copy
 import io
@@ -453,9 +455,11 @@ def compute_returns(entries, transfer_account,
           up in order to internalize their flow. (This is mostly returns to be used by
           tests, you can otherwise safely discard this.)
     """
+    if not accounts_assets:
+        raise ValueError("Cannot calculate returns without assets accounts to value")
+
     if price_map is None:
         price_map = prices.build_price_map(entries)
-
 
     # Predicates based on account groups determined above.
     accounts_related = accounts_assets | accounts_intflows
@@ -513,16 +517,16 @@ def compute_returns(entries, transfer_account,
     return total_returns, (date_first, date_last), internalized_entries
 
 
-def compute_returns_with_regexp(entries, transfer_account,
-                                options_map, related_regexp,
+def compute_returns_with_regexp(entries, options_map,
+                                transfer_account,related_regexp,
                                 date_begin=None, date_end=None):
     """Compute the returns of a portfolio of accounts defined by a regular expression.
 
     Args:
       entries: A list of directives.
+      options_map: An options dict as produced by the loader.
       transfer_account: A string, the name of an account to use for internalizing entries
         which need to be split between internal and external flows.
-      options_map: An options dict as produced by the loader.
       date_begin: A datetime.date instance, the beginning date of the period to compute
         returns over.
       date_end: A datetime.date instance, the end date of the period to compute returns
@@ -592,9 +596,8 @@ def main():
     entries, errors, options_map = loader.load(args.filename)
 
     # Compute the returns.
-    returns, (date_first, date_last) = compute_returns_with_regexp(entries,
-                                                                   opts.transfer_account,
-                                                                   options_map,
+    returns, (date_first, date_last) = compute_returns_with_regexp(entries, options_map,
+                                                                   args.transfer_account,
                                                                    args.related_regexp,
                                                                    args.date_begin,
                                                                    args.date_end)
@@ -625,6 +628,5 @@ if __name__ == '__main__':
 # This returns the same value for partial year to annualized, is this expected?
 #   python3 -m beancount.projects.returns   ~/p/beancount-data/rrsp.beancount   '(.*:RRSP|Expenses:Financial)'  --date-begin=2014-01-01 --date-end=2015-01-01
 
-# FIXME: Create a script that will run this on the example account.
-
 # FIXME: Should we insert a directive for opening the transfer account?
+# Yes, do this.

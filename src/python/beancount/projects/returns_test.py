@@ -5,20 +5,22 @@ import re
 import logging
 import textwrap
 import sys
+import subprocess
+from os import path
 from unittest import mock
 
-from beancount.core.amount import D
-from beancount.utils import test_utils
-from beancount.projects import returns
-from beancount.parser import options
-from beancount.ops import prices
+from beancount import loader
+from beancount.core import compare
 from beancount.core import data
 from beancount.core import inventory
-from beancount.core import compare
+from beancount.core.amount import D
+from beancount.ops import prices
 from beancount.parser import cmptest
+from beancount.parser import options
 from beancount.parser import parser
 from beancount.parser import printer
-from beancount import loader
+from beancount.projects import returns
+from beancount.utils import test_utils
 
 
 def setUp(self):
@@ -166,8 +168,8 @@ class TestReturnsFunctions(test_utils.TestCase):
 
     @mock.patch('beancount.projects.returns.compute_returns')
     def test_compute_returns_with_regexp(self, mock_obj):
-        returns.compute_returns_with_regexp(self.entries, 'Equity:Internalized',
-                                            self.options_map, '.*:Prosper')
+        returns.compute_returns_with_regexp(self.entries, self.options_map,
+                                            'Equity:Internalized', '.*:Prosper')
         self.assertTrue([list, dict, set, set], map(type, mock_obj.call_args))
         self.assertTrue(mock_obj.called)
 
@@ -231,7 +233,7 @@ class TestReturnsPeriods(test_utils.TestCase):
         """
         self.assertFalse(errors)
         returns_dict, dates, _ = returns.compute_returns_with_regexp(
-            entries, 'Equity:Internalized', options_map, '.*:Investments')
+            entries, options_map, 'Equity:Internalized', '.*:Investments')
         self.assertEqual({'USD': 1.1}, returns_dict)
         self.assertEqual((datetime.date(2014, 2, 1), datetime.date(2014, 8, 2)), dates)
 
@@ -256,7 +258,7 @@ class TestReturnsPeriods(test_utils.TestCase):
         """
         self.assertFalse(errors)
         returns_dict, dates, _ = returns.compute_returns_with_regexp(
-            entries, 'Equity:Internalized', options_map, '.*:Investments')
+            entries, options_map, 'Equity:Internalized', '.*:Investments')
         self.assertEqual({'USD': 1.1}, returns_dict)
         self.assertEqual((datetime.date(1990, 1, 1), datetime.date(2014, 8, 2)), dates)
 
@@ -677,3 +679,19 @@ class TestReturnsInternalize(cmptest.TestCase):
           Assets:US:Bank:Checking
 
         """, internalized_entries)
+
+
+class TestReturnsExampleScript(test_utils.TestCase):
+
+    def test_returns_example_script(self):
+        # We want to ensure the example script doesn't break unexpectedly, so
+        # call it from the unit tests.
+        script_name = path.join(test_utils.find_repository_root(__file__),
+                                'examples', 'returns', 'returns-example.py')
+        self.assertTrue(path.exists(script_name))
+
+        pipe = subprocess.Popen(script_name, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output, errors = pipe.communicate()
+        self.assertEqual(0, pipe.returncode)
+        self.assertFalse(errors)
+        self.assertTrue(re.search(b'Returns for', output))
