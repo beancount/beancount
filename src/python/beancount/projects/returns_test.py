@@ -683,6 +683,21 @@ class TestReturnsInternalize(cmptest.TestCase):
 
 class TestReturnsExampleScript(test_utils.TestCase):
 
+    def test_returns_invoke_via_main(self):
+        # We want to ensure we can call the module and it doesn't fail.
+        example_filename = path.join(test_utils.find_repository_root(__file__),
+                                     'examples', 'tutorial', 'example.beancount')
+        self.assertTrue(path.exists(example_filename))
+
+        command = [sys.executable, '-m', 'beancount.projects.returns',
+                   example_filename,
+                   '(.*:US:ETrade|Expenses:Financial:Commissions)']
+        pipe = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output, errors = pipe.communicate()
+        self.assertEqual(0, pipe.returncode)
+        self.assertTrue(re.search(b'Total returns', output))
+        self.assertTrue(re.search(b'Averaged annual returns', output))
+
     def test_returns_example_script(self):
         # We want to ensure the example script doesn't break unexpectedly, so
         # call it from the unit tests.

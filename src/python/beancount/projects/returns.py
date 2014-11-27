@@ -596,11 +596,11 @@ def main():
     entries, errors, options_map = loader.load(args.filename)
 
     # Compute the returns.
-    returns, (date_first, date_last) = compute_returns_with_regexp(entries, options_map,
-                                                                   args.transfer_account,
-                                                                   args.related_regexp,
-                                                                   args.date_begin,
-                                                                   args.date_end)
+    returns, (date_first, date_last), _ = compute_returns_with_regexp(entries, options_map,
+                                                                      args.transfer_account,
+                                                                      args.related_regexp,
+                                                                      args.date_begin,
+                                                                      args.date_end)
 
     # Annualize the returns.
     annual_returns = annualize_returns(returns, date_first, date_last)
@@ -618,15 +618,12 @@ if __name__ == '__main__':
     main()
 
 
-# FIXME: Issue warnings if the price date is too far from the requested market
-# value date.
+# FIXME: Should we insert a directive for opening the transfer account?
+# Yes, do this.
 
 # FIXME: Check that no unrealized gains entries are present, this would really
 # skew the result. Ingore them if you find them, that's the correct way to treat
 # them.
 
-# This returns the same value for partial year to annualized, is this expected?
-#   python3 -m beancount.projects.returns   ~/p/beancount-data/rrsp.beancount   '(.*:RRSP|Expenses:Financial)'  --date-begin=2014-01-01 --date-end=2015-01-01
-
-# FIXME: Should we insert a directive for opening the transfer account?
-# Yes, do this.
+# FIXME: Issue warnings if the price date is too far from the requested market
+# value date.
