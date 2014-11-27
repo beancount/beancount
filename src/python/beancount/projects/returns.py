@@ -47,6 +47,7 @@ from beancount.core import data
 from beancount.core import account_types
 from beancount.core import inventory
 from beancount.core import getters
+from beancount.core import flags
 from beancount.ops import prices
 from beancount.utils import misc_utils
 
@@ -323,7 +324,7 @@ def annualize_returns(returns, date_first, date_last):
 
 def internalize_entries(entries,
                         accounts_assets, accounts_intflows,
-                        account_transfer):
+                        transfer_account):
     """Internalize internal flows that would be lost because booked against external
     flow accounts. This splits up entries that have accounts both in internal
     flows and external flows. A new set of entries are returned, along with a
@@ -333,34 +334,89 @@ def internalize_entries(entries,
       entries: A list of directives to process for internalization.
       transfer_account: A string, the name of an account to use for internalizing entries
         which need to be split between internal and external flows. A good default value
-        would be an equity account, 'Equity:Transfer' or something like that.
+        would be an equity account, 'Equity:Internalized' or something like that.
       accounts_assets: A set of account name strings, the names of the asset accounts
         included in valuing the portfolio.
       accounts_intflows: A set of account name strings, the names of internal flow
         accounts (normally income and expenses) that aren't external flows.
       transfer_account: A string, the name of an account to use for internalizing entries
         which need to be split between internal and external flows. A good default value
-        would be an equity account, 'Equity:Transfer' or something like that.
+        would be an equity account, 'Equity:Internalized' or something like that.
     Returns:
       A pair of the new list of internalized entries, including all the other entries, and
       a short list of just the original entires that were removed and replaced by pairs of
       enitres.
     """
-    return entries, []
+    # Verify that external flow entries only affect balance sheet accounts and
+    # not income or expenses accounts (internal flows). We do this because we
+    # want to ensure that all income and expenses are incurred against assets
+    # that live within the assets group. An example of something we'd like to
+    # avoid is an external flow paying for fees incurred within the account that
+    # should diminish the returns of the related accounts. To fix this, we split
+    # the entry into two entries, one without external flows against an transfer
+    # account that we consider an assets account, and just the external flows
+    # against this same tranfer account.
+    assert(isinstance(transfer_account, str)), (
+        "Invalid transfer account: {}".format(transfer_account))
 
-    # # Verify that external flow entries only affect balance sheet accounts and
-    # # not income or expenses accounts (internal flows). We do this because we
-    # # want to ensure that all income and expenses are incurred against assets
-    # # that live within the assets group. An example of something we'd like to
-    # # avoid is an external flow paying for fees incurred within the account that
-    # # should diminish the returns of the related accounts.
-    # for entry in entries:
-    #     if is_external_flow_entry(entry):
-    #         if any(posting.account in accounts_intflows for posting in entry.postings):
-    #             oss = io.StringIO()
-    #             printer.print_entry(entry, file=oss)
-    #             logging.error("External flow may not affect non-asset accounts: {}".format(
-    #                 oss.getvalue()))
+    new_entries = []
+    replaced_entries = []
+    index = 1
+    for entry in entries:
+        if not isinstance(entry, data.Transaction):
+            new_entries.append(entry)
+            continue
+
+        # Break up postings into the three categories.
+        postings_assets = []
+        postings_intflows = []
+        postings_extflows = []
+        for posting in entry.postings:
+            if posting.account in accounts_assets:
+                postings_list = postings_assets
+            elif posting.account in accounts_intflows:
+                postings_list = postings_intflows
+            else:
+                postings_list = postings_extflows
+            postings_list.append(posting)
+
+        # Check if the entry is to be internalized and split it up in two
+        # entries and replace the entrie if that's the case.
+        if postings_intflows and postings_extflows:
+            replaced_entries.append(entry)
+
+            # We will attach a link to each of the split entries.
+            link = 'INTERNALIZED-{}'.format(index)
+            index += 1
+
+            # Calculate the weight of the balance to transfer.
+            balance_transfer = inventory.Inventory()
+            for posting in postings_extflows:
+                balance_transfer.add_amount(posting.position.get_weight(posting.price))
+
+            prototype_entry = entry._replace(flag=flags.FLAG_RETURNS,
+                                             links=(entry.links or set()) | set([link]))
+
+            # Create internal flows posting.
+            postings_transfer_int = [
+                data.Posting(None, transfer_account, position_, None, None)
+                for position_ in balance_transfer.get_positions()]
+            new_entries.append(data.entry_replace(prototype_entry,
+                                                  postings=(postings_assets +
+                                                            postings_intflows +
+                                                            postings_transfer_int)))
+
+            # Create external flows posting.
+            postings_transfer_ext = [
+                data.Posting(None, transfer_account, -position_, None, None)
+                for position_ in balance_transfer.get_positions()]
+            new_entries.append(data.entry_replace(prototype_entry,
+                                                  postings=(postings_extflows +
+                                                            postings_transfer_ext)))
+        else:
+            new_entries.append(entry)
+
+    return new_entries, replaced_entries
 
 
 def compute_returns(entries, transfer_account,
@@ -374,7 +430,7 @@ def compute_returns(entries, transfer_account,
       entries: A list of directives that may affect the account.
       transfer_account: A string, the name of an account to use for internalizing entries
         which need to be split between internal and external flows. A good default value
-        would be an equity account, 'Equity:Transfer' or something like that.
+        would be an equity account, 'Equity:Internalized' or something like that.
       accounts_assets: A set of account name strings, the names of the asset accounts
         included in valuing the portfolio.
       accounts_intflows: A set of account name strings, the names of internal flow
@@ -396,9 +452,9 @@ def compute_returns(entries, transfer_account,
     if price_map is None:
         price_map = prices.build_price_map(entries)
 
-    accounts_related = accounts_assets | accounts_intflows
 
     # Predicates based on account groups determined above.
+    accounts_related = accounts_assets | accounts_intflows
     is_external_flow_entry = lambda entry: (isinstance(entry, data.Transaction) and
                                             any(posting.account not in accounts_related
                                                 for posting in entry.postings))
@@ -406,6 +462,7 @@ def compute_returns(entries, transfer_account,
     # Internalize entries with internal/external flows.
     entries, internalized_entries = internalize_entries(
         entries, accounts_assets, accounts_intflows, transfer_account)
+    accounts_assets.add(transfer_account)
 
     # Segment the entries, splitting at entries with external flow and computing
     # the balances before and after. This returns all such periods with the
@@ -507,7 +564,7 @@ def main():
                         help="A regular expression for related accounts")
 
     parser.add_argument('--transfer-account', action='store',
-                        default='Equity:Transfer',
+                        default='Equity:Internalized',
                         help="Default name for subaccount to use for transfer account.")
 
     parser.add_argument('-v', '--verbose', action='store_true',
@@ -584,3 +641,5 @@ if __name__ == '__main__':
 
 
 # FIXME: Create a script that will run this on the example account.
+
+# FIXME: Should we insert a directive for the transfer account.
