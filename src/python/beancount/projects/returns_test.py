@@ -47,7 +47,6 @@ class TestReturnsFunctions(test_utils.TestCase):
     2014-06-30 balance Assets:US:Prosper:FundsLent     19954.84 LENCLUB
 
 
-
     2014-07-01 * "Monthly_Statement"
       Assets:US:Prosper:InFunding                               2575.00 USD
       Assets:US:Prosper:FundsLent                               1825.00 LENCLUB {1 USD}
@@ -141,7 +140,7 @@ class TestReturnsFunctions(test_utils.TestCase):
         self.assertFalse(errors)
         self.acc_types = options.get_account_types(self.options_map)
 
-    def test_find_matching(self, ):
+    def test_find_matching(self):
         matching_entries, (acc_assets,
                            acc_intflows,
                            acc_extflows) = returns.find_matching(
@@ -162,15 +161,17 @@ class TestReturnsFunctions(test_utils.TestCase):
 
     @mock.patch('beancount.projects.returns.compute_returns')
     def test_compute_returns_with_regexp(self, mock_obj):
-        returns.compute_returns_with_regexp(self.entries, self.options_map, '.*:Prosper')
+        returns.compute_returns_with_regexp(self.entries, 'Equity:Transfer',
+                                            self.options_map, '.*:Prosper')
         self.assertTrue([list, dict, set, set], map(type, mock_obj.call_args))
         self.assertTrue(mock_obj.called)
 
-    def test_compute_returns(self, ):
+    def test_compute_returns(self):
         price_map = prices.build_price_map(self.entries)
         matching_entries, (acc_assets, acc_intflows, _) = returns.find_matching(
             self.entries, self.acc_types, '.*:Prosper')
-        returns.compute_returns(self.entries, acc_assets, acc_intflows, price_map)
+        returns.compute_returns(self.entries, 'Equity:Transfer',
+                                acc_assets, acc_intflows, price_map)
 
 
 class TestReturnsPeriods(test_utils.TestCase):
@@ -224,11 +225,10 @@ class TestReturnsPeriods(test_utils.TestCase):
         2014-08-02 balance Assets:US:Investments:Cash    0 USD
         """
         self.assertFalse(errors)
-        returns_dict = returns.compute_returns_with_regexp(entries, options_map,
-                                                           '.*:Investments')
-        self.assertEqual(({'USD': 1.1},
-                          (datetime.date(2014, 2, 1), datetime.date(2014, 8, 2))),
-                         returns_dict)
+        returns_dict, dates, _ = returns.compute_returns_with_regexp(
+            entries, 'Equity:Transfer', options_map, '.*:Investments')
+        self.assertEqual({'USD': 1.1}, returns_dict)
+        self.assertEqual((datetime.date(2014, 2, 1), datetime.date(2014, 8, 2)), dates)
 
     # Dilute returns from a faraway initial date.
     @loader.loaddoc
@@ -247,14 +247,13 @@ class TestReturnsPeriods(test_utils.TestCase):
           Assets:US:Investments:Cash       -9,000 USD
 
         2014-08-01 price ACME  100.00 USD
+        2014-08-02 balance Assets:US:Investments:Cash       1,000 USD
         """
         self.assertFalse(errors)
-        returns_dict = returns.compute_returns_with_regexp(entries, options_map,
-                                                           '.*:Investments')
-        #print(returns_dict)
-        # self.assertEqual(({'USD': 1.1},
-        #                   (datetime.date(2014, 2, 1), datetime.date(2014, 8, 2))),
-        #                  returns_dict)
+        returns_dict, dates, _ = returns.compute_returns_with_regexp(
+            entries, 'Equity:Transfer', options_map, '.*:Investments')
+        self.assertEqual({'USD': 1.1}, returns_dict)
+        self.assertEqual((datetime.date(1990, 1, 1), datetime.date(2014, 8, 2)), dates)
 
 
 class TestReturnsConstrained(test_utils.TestCase):
@@ -474,54 +473,9 @@ class TestReturnsConstrained(test_utils.TestCase):
 
 class TestReturnsInternalize(test_utils.TestCase):
 
-    @loader.loaddoc
-    def test_exhibit_problem(self, entries, errors, options_map):
-        """
-        2014-01-01 open Assets:US:Investments:ACME
-        2014-01-01 open Assets:US:Investments:Cash
-        2014-01-01 open Assets:US:Bank:Checking
-        2014-01-01 open Income:US:Investments:Dividends
-        2014-01-01 open Assets:Internalized
 
-        2014-01-01 * "Deposit"
-          Assets:US:Investments:Cash       10000 USD
-          Assets:US:Bank:Checking
 
-        2014-01-01 * "Buy"
-          Assets:US:Investments:ACME       5 ACME {20.00 USD}
-          Assets:US:Investments:Cash
 
-        2014-06-01 * "Dividend from ACME"
-          Income:US:Investments:Dividends -300 USD
-          Assets:US:Investments:Cash
-
-        2015-01-01 price ACME            26.00 USD
-
-        2015-01-01 balance Assets:US:Investments:Cash  10200 USD
-        2015-01-01 balance Assets:US:Investments:ACME  5 ACME
-        """
-        self.assertFalse(errors)
-
-        # Compute the returns including cash in the account.
-        assets = {'Assets:US:Investments:ACME', 'Assets:US:Investments:Cash'}
-        intflows = {'Income:US:Investments:Dividends'}
-        returns_with_cash = returns.compute_returns(entries, assets, intflows)
-        self.assertEqual(({'USD': 1.033}, (datetime.date(2014, 1, 1),
-                                           datetime.date(2015, 1, 1))),
-                         returns_with_cash)
-
-        # TODO: Enable internalization above and check that the results with or
-        # without internalization are the same.
-
-        # Compute the returns excluding cash in the account.
-        assets = {'Assets:US:Investments:ACME'}
-        returns_no_cash = returns.compute_returns(entries, assets, intflows)
-        self.assertEqual(({'USD': 1.300}, (datetime.date(2014, 1, 1),
-                                           datetime.date(2015, 1, 1))),
-                         returns_no_cash)
-
-        ## FIXME: The 1.300 is incorrect above... we need to take the dividend
-        ## into account, so it's a lot more.
 
 
     @loader.loaddoc
@@ -555,23 +509,65 @@ class TestReturnsInternalize(test_utils.TestCase):
         2015-01-01 balance Assets:US:Investments:ACME  5 ACME
         """
         self.assertFalse(errors)
+        self.compute_and_check_returns(entries, [])
+
+    @loader.loaddoc
+    def test_implicit_solution(self, entries, errors, _):
+        """
+        2014-01-01 open Assets:US:Investments:ACME
+        2014-01-01 open Assets:US:Investments:Cash
+        2014-01-01 open Assets:US:Bank:Checking
+        2014-01-01 open Income:US:Investments:Dividends
+        2014-01-01 open Assets:Internalized
+
+        2014-01-01 * "Deposit"
+          Assets:US:Investments:Cash       10000 USD
+          Assets:US:Bank:Checking
+
+        2014-01-01 * "Buy"
+          Assets:US:Investments:ACME       5 ACME {20.00 USD}
+          Assets:US:Investments:Cash
+
+        2014-06-01 * "Dividend from ACME"
+          Income:US:Investments:Dividends -300 USD
+          Assets:US:Investments:Cash
+
+        2015-01-01 price ACME            26.00 USD
+
+        2015-01-01 balance Assets:US:Investments:Cash  10200 USD
+        2015-01-01 balance Assets:US:Investments:ACME  5 ACME
+        """
+        self.assertFalse(errors)
+        self.compute_and_check_returns(entries, [])
+
+    def compute_and_check_returns(self, entries, expected_internalized):
+        expected_internalized_entries = None
+        if expected_internalized:
+            expected_internalized_entries, _, __ = parse_string(
+                textwrap.dedent(expected_internalized))
 
         # Compute the returns including cash in the account. This should return
         # the same as the first case in the previous example.
         assets = {'Assets:US:Investments:ACME', 'Assets:US:Investments:Cash',
                   'Assets:Internalized'}
         intflows = {'Income:US:Investments:Dividends'}
-        returns_with_cash = returns.compute_returns(entries, assets, intflows)
-        self.assertEqual(({'USD': 1.033}, (datetime.date(2014, 1, 1),
-                                           datetime.date(2015, 1, 1))),
-                         returns_with_cash)
+        returns_with_cash, dates, internalized_entries = returns.compute_returns(
+            entries, 'Equity:Transfer', assets, intflows)
+        self.assertEqual({'USD': 1.033}, returns_with_cash)
+        self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
+
+        if expected_internalized_entries:
+            self.assertEqualEntries(expected_internalized_entries, internalized_entries)
 
         # Compute the returns excluding cash in the account.
         #
         # Now this should correctly reflect the impact of the large dividend when not
         # considering the cash account.
         assets = {'Assets:US:Investments:ACME', 'Assets:Internalized'}
-        returns_no_cash = returns.compute_returns(entries, assets, intflows)
-        self.assertEqual(({'USD': 5.200}, (datetime.date(2014, 1, 1),
-                                           datetime.date(2015, 1, 1))),
-                         returns_no_cash)
+        returns_no_cash, dates, internalized_entries = returns.compute_returns(
+            entries, 'Equity:Transfer', assets, intflows)
+        #self.assertEqual({'USD': 5.200}, returns_no_cash)
+        self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
+
+        if expected_internalized_entries:
+            self.assertEqualEntries(expected_internalized_entries, internalized_entries)

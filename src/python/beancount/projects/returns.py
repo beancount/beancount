@@ -321,17 +321,63 @@ def annualize_returns(returns, date_first, date_last):
             for currency, return_ in returns.items()}
 
 
-def compute_returns(entries,
+def internalize_entries(entries,
+                        accounts_assets, accounts_intflows,
+                        account_transfer):
+    """Internalize internal flows that would be lost because booked against external
+    flow accounts. This splits up entries that have accounts both in internal
+    flows and external flows. A new set of entries are returned, along with a
+    list of entries that were split and replaced by a pair of entries.
+
+    Args:
+      entries: A list of directives to process for internalization.
+      transfer_account: A string, the name of an account to use for internalizing entries
+        which need to be split between internal and external flows. A good default value
+        would be an equity account, 'Equity:Transfer' or something like that.
+      accounts_assets: A set of account name strings, the names of the asset accounts
+        included in valuing the portfolio.
+      accounts_intflows: A set of account name strings, the names of internal flow
+        accounts (normally income and expenses) that aren't external flows.
+      transfer_account: A string, the name of an account to use for internalizing entries
+        which need to be split between internal and external flows. A good default value
+        would be an equity account, 'Equity:Transfer' or something like that.
+    Returns:
+      A pair of the new list of internalized entries, including all the other entries, and
+      a short list of just the original entires that were removed and replaced by pairs of
+      enitres.
+    """
+    return entries, []
+
+    # # Verify that external flow entries only affect balance sheet accounts and
+    # # not income or expenses accounts (internal flows). We do this because we
+    # # want to ensure that all income and expenses are incurred against assets
+    # # that live within the assets group. An example of something we'd like to
+    # # avoid is an external flow paying for fees incurred within the account that
+    # # should diminish the returns of the related accounts.
+    # for entry in entries:
+    #     if is_external_flow_entry(entry):
+    #         if any(posting.account in accounts_intflows for posting in entry.postings):
+    #             oss = io.StringIO()
+    #             printer.print_entry(entry, file=oss)
+    #             logging.error("External flow may not affect non-asset accounts: {}".format(
+    #                 oss.getvalue()))
+
+
+def compute_returns(entries, transfer_account,
                     accounts_assets, accounts_intflows,
                     price_map=None,
                     date_begin=None, date_end=None):
+
     """Compute the returns of a portfolio of accounts.
 
     Args:
       entries: A list of directives that may affect the account.
+      transfer_account: A string, the name of an account to use for internalizing entries
+        which need to be split between internal and external flows. A good default value
+        would be an equity account, 'Equity:Transfer' or something like that.
       accounts_assets: A set of account name strings, the names of the asset accounts
         included in valuing the portfolio.
-      accounts_intflow: A set of account name strings, the names of internal flow
+      accounts_intflows: A set of account name strings, the names of internal flow
         accounts (normally income and expenses) that aren't external flows.
       price_map: An instance of PriceMap as computed by prices.build_price_map(). If left
         to its default value of None, we derive the price_map from the entries themselves.
@@ -340,8 +386,12 @@ def compute_returns(entries,
       date_end: A datetime.date instance, the end date of the period to compute returns
         over.
     Returns:
-      A dict of currency -> float total returns and a pair of (begin, end) datetime.date
-      instances from which it was computed.
+      A triple of
+        returns: A dict of currency -> float total returns.
+        dates: A pair of (date_first, date_last) datetime.date instances.
+        internalized_entries: A short list of the entries that were required to be split
+          up in order to internalize their flow. (This is mostly returns to be used by
+          tests, you can otherwise safely discard this.)
     """
     if price_map is None:
         price_map = prices.build_price_map(entries)
@@ -353,19 +403,9 @@ def compute_returns(entries,
                                             any(posting.account not in accounts_related
                                                 for posting in entry.postings))
 
-    # Verify that external flow entries only affect balance sheet accounts and
-    # not income or expenses accounts (internal flows). We do this because we
-    # want to ensure that all income and expenses are incurred against assets
-    # that live within the assets group. An example of something we'd like to
-    # avoid is an external flow paying for fees incurred within the account that
-    # should diminish the returns of the related accounts.
-    for entry in entries:
-        if is_external_flow_entry(entry):
-            if any(posting.account in accounts_intflows for posting in entry.postings):
-                oss = io.StringIO()
-                printer.print_entry(entry, file=oss)
-                logging.error("External flow may not affect non-asset accounts: {}".format(
-                    oss.getvalue()))
+    # Internalize entries with internal/external flows.
+    entries, internalized_entries = internalize_entries(
+        entries, accounts_assets, accounts_intflows, transfer_account)
 
     # Segment the entries, splitting at entries with external flow and computing
     # the balances before and after. This returns all such periods with the
@@ -409,15 +449,18 @@ def compute_returns(entries,
 
     date_first = periods[0][0]
     date_last = periods[-1][1]
-    return total_returns, (date_first, date_last)
+    return total_returns, (date_first, date_last), internalized_entries
 
 
-def compute_returns_with_regexp(entries, options_map, related_regexp,
+def compute_returns_with_regexp(entries, transfer_account,
+                                options_map, related_regexp,
                                 date_begin=None, date_end=None):
     """Compute the returns of a portfolio of accounts defined by a regular expression.
 
     Args:
       entries: A list of directives.
+      transfer_account: A string, the name of an account to use for internalizing entries
+        which need to be split between internal and external flows.
       options_map: An options dict as produced by the loader.
       date_begin: A datetime.date instance, the beginning date of the period to compute
         returns over.
@@ -448,7 +491,7 @@ def compute_returns_with_regexp(entries, options_map, related_regexp,
         logging.info('  %s', account)
     logging.info('')
 
-    return compute_returns(entries,
+    return compute_returns(entries, transfer_account,
                            accounts_assets, accounts_intflows,
                            price_map,
                            date_begin, date_end)
@@ -462,6 +505,10 @@ def main():
 
     parser.add_argument('related_regexp', action='store',
                         help="A regular expression for related accounts")
+
+    parser.add_argument('--transfer-account', action='store',
+                        default='Equity:Transfer',
+                        help="Default name for subaccount to use for transfer account.")
 
     parser.add_argument('-v', '--verbose', action='store_true',
                         help="Output detailed processing information. Useful for debugging")
@@ -485,6 +532,7 @@ def main():
 
     # Compute the returns.
     returns, (date_first, date_last) = compute_returns_with_regexp(entries,
+                                                                   opts.transfer_account,
                                                                    options_map,
                                                                    args.related_regexp,
                                                                    args.date_begin,
@@ -533,3 +581,6 @@ if __name__ == '__main__':
 # as per this:
 #
 #   https://groups.google.com/d/msg/beancount/P4d0fJZeQ0o/N5c50miOPYcJ
+
+
+# FIXME: Create a script that will run this on the example account.
