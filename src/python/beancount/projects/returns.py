@@ -322,9 +322,13 @@ def annualize_returns(returns, date_first, date_last):
             for currency, return_ in returns.items()}
 
 
-def internalize_entries(entries,
-                        accounts_assets, accounts_intflows,
-                        transfer_account):
+# The format of the links that are added to internalized transactions.
+LINK_FORMAT = 'internalized-{:05d}'
+
+
+def internalize(entries,
+                accounts_assets, accounts_intflows,
+                transfer_account):
     """Internalize internal flows that would be lost because booked against external
     flow accounts. This splits up entries that have accounts both in internal
     flows and external flows. A new set of entries are returned, along with a
@@ -386,7 +390,7 @@ def internalize_entries(entries,
             replaced_entries.append(entry)
 
             # We will attach a link to each of the split entries.
-            link = 'INTERNALIZED-{}'.format(index)
+            link = LINK_FORMAT.format(index)
             index += 1
 
             # Calculate the weight of the balance to transfer.
@@ -411,8 +415,8 @@ def internalize_entries(entries,
                 data.Posting(None, transfer_account, -position_, None, None)
                 for position_ in balance_transfer.get_positions()]
             new_entries.append(data.entry_replace(prototype_entry,
-                                                  postings=(postings_extflows +
-                                                            postings_transfer_ext)))
+                                                  postings=(postings_transfer_ext +
+                                                            postings_extflows)))
         else:
             new_entries.append(entry)
 
@@ -460,7 +464,7 @@ def compute_returns(entries, transfer_account,
                                                 for posting in entry.postings))
 
     # Internalize entries with internal/external flows.
-    entries, internalized_entries = internalize_entries(
+    entries, internalized_entries = internalize(
         entries, accounts_assets, accounts_intflows, transfer_account)
     accounts_assets.add(transfer_account)
 

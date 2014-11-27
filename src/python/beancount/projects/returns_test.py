@@ -14,6 +14,7 @@ from beancount.parser import options
 from beancount.ops import prices
 from beancount.core import data
 from beancount.core import inventory
+from beancount.core import compare
 from beancount.parser import cmptest
 from beancount.parser import parser
 from beancount.parser import printer
@@ -477,9 +478,65 @@ class TestReturnsConstrained(test_utils.TestCase):
 
 class TestReturnsInternalize(cmptest.TestCase):
 
-    # FIXME: Add an explicit smoke test for internalize
+    # Check internalization by ignoring cash accounts.
+    @loader.loaddoc
+    def test_internalization(self, entries, errors, _):
+        """
+        2014-01-01 open Equity:Somewhere
+        2014-01-01 open Assets:Account1
+        2014-01-01 open Assets:Account2
+        2014-01-01 open Income:Account
+        2014-01-01 open Expenses:Account
+        2014-01-01 open Expenses:External
 
+        2014-01-01 * "Funding accounts... external flow, with other account"
+          Equity:Somewhere     -10000 USD
+          Assets:Account1       5000 USD
+          Assets:Account2       5000 USD
 
+        2014-01-01 * "Internal flows between asset accounts"
+          Assets:Account1       -1000 USD
+          Assets:Account2
+
+        2014-01-01 * "Internal flows between asset and intflows accounts"
+          Income:Account     -1000 USD
+          Expenses:Account      10 USD
+          Assets:Account1
+
+        2014-01-01 * "Int/ext flows - should be internalized"
+          Income:Account     -100 USD
+          Expenses:External   100 USD
+
+        2014-01-01 * "Internal flows only"
+          Income:Account       -10 USD
+          Expenses:Account      10 USD
+
+        2015-01-01 balance Assets:Account1   4990 USD
+        2015-01-01 balance Assets:Account2   6000 USD
+        """
+        self.assertFalse(errors)
+
+        new_entries, replaced_entries = returns.internalize(
+            entries,
+            {'Assets:Account1', 'Assets:Account2'},
+            {'Income:Account', 'Expenses:Account'},
+            'Equity:Internalized')
+
+        self.assertIncludesEntries("""
+        2014-01-01 R "Int/ext flows - should be internalized" ^internalized-00001
+          Income:Account       -100 USD
+          Equity:Internalized   100 USD
+
+        2014-01-01 R "Int/ext flows - should be internalized" ^internalized-00001
+          Expenses:External     100 USD
+          Equity:Internalized  -100 USD
+        """, new_entries)
+
+        self.assertEqualEntries("""
+        2014-01-01 * "Int/ext flows - should be internalized"
+          Income:Account     -100 USD
+          Expenses:External   100 USD
+        """, replaced_entries)
 
 
     # Demonstrate internalization by ignoring cash accounts by explicitly
@@ -609,6 +666,7 @@ class TestReturnsInternalize(cmptest.TestCase):
         intflows = {'Income:US:Investments:Dividends'}
         returns_with_cash, dates, internalized_entries = returns.compute_returns(
             entries, 'Equity:Internalized', assets, intflows)
+
         self.assertEqual({'USD': 1.0330899999999998}, returns_with_cash)
         self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
 
