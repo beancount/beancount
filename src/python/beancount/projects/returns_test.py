@@ -10,15 +10,10 @@ from os import path
 from unittest import mock
 
 from beancount import loader
-from beancount.core import compare
-from beancount.core import data
 from beancount.core import inventory
-from beancount.core.amount import D
 from beancount.ops import prices
 from beancount.parser import cmptest
 from beancount.parser import options
-from beancount.parser import parser
-from beancount.parser import printer
 from beancount.projects import returns
 from beancount.utils import test_utils
 
@@ -321,7 +316,8 @@ class TestReturnsConstrained(test_utils.TestCase):
             (datetime.date(2014, 6, 15), datetime.date(2014, 10, 1)),
             ], [(date_begin, date_end) for date_begin, date_end, _, __ in periods])
 
-        self.assertEqual(inventory.from_string('2900 USD, 21 ACME {100 USD}'), periods[0][2])
+        self.assertEqual(inventory.from_string('2900 USD, 21 ACME {100 USD}'),
+                         periods[0][2])
 
         # Test with another begin date.
         periods = returns.segment_periods(self.entries, self.assets, self.assets,
@@ -357,7 +353,8 @@ class TestReturnsConstrained(test_utils.TestCase):
             (datetime.date(2014, 1, 15), datetime.date(2014, 4, 20)),
             ], [(date_begin, date_end) for date_begin, date_end, _, __ in periods])
 
-        self.assertEqual(inventory.from_string('2900 USD, 21 ACME {100 USD}'), periods[-1][3])
+        self.assertEqual(inventory.from_string('2900 USD, 21 ACME {100 USD}'),
+                         periods[-1][3])
 
         # Test with another end date.
         periods = returns.segment_periods(self.entries, self.assets, self.assets,

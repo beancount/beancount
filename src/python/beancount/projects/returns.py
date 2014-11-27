@@ -34,14 +34,12 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import argparse
 import copy
-import io
 import re
 import logging
 
 from dateutil.parser import parse as parse_datetime
 
 from beancount.core.amount import ZERO
-from beancount.core import amount
 from beancount import loader
 from beancount.parser import printer
 from beancount.parser import options
@@ -83,7 +81,8 @@ def find_matching(entries, acc_types, related_regexp):
 
             for posting in entry.postings:
                 if match(posting.account):
-                    if account_types.is_income_statement_account(posting.account, acc_types):
+                    if account_types.is_income_statement_account(posting.account,
+                                                                 acc_types):
                         accounts_intflows.add(posting.account)
                     else:
                         accounts_assets.add(posting.account)
@@ -138,8 +137,8 @@ def segment_periods(entries, accounts_assets, accounts_intflows,
         balance_begin: An Inventory instance, the balance at the beginning of the period.
         balance_end: An Inventory instance, the balance at the end of the period.
     Raises:
-      ValueError: If the dates create an impossible situation, the beginning must come before
-        the requested end, if specified.
+      ValueError: If the dates create an impossible situation, the beginning
+        must come before the requested end, if specified.
     """
     logging.info("Segmenting periods.")
 
@@ -529,7 +528,7 @@ def compute_returns(entries, transfer_account,
 
 
 def compute_returns_with_regexp(entries, options_map,
-                                transfer_account,related_regexp,
+                                transfer_account, related_regexp,
                                 date_begin=None, date_end=None):
     """Compute the returns of a portfolio of accounts defined by a regular expression.
 
@@ -627,11 +626,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-# FIXME: Check that no unrealized gains entries are present, this would really
-# skew the result. Ingore them if you find them, that's the correct way to treat
-# them.
-
-# FIXME: Issue warnings if the price date is too far from the requested market
-# value date.

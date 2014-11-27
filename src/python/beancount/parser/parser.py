@@ -11,7 +11,6 @@ import re
 from os import path
 
 from beancount.core.amount import ZERO
-from beancount.core.amount import Decimal
 from beancount.core.amount import Amount
 from beancount.core.amount import amount_div
 from beancount.core import display_context
@@ -38,7 +37,6 @@ from beancount.parser import lexer
 from beancount.parser import options
 from beancount.core import account
 from beancount.core import data
-from beancount.utils import misc_utils
 
 
 __sanity_checks__ = False
