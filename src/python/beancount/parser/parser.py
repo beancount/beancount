@@ -611,7 +611,7 @@ class Builder(lexer.LexBuilder):
         # Merge the tags from the stack with the explicit tags of this
         # transaction, or make None.
         tags = txn_fields.tags
-        assert isinstance(tags, set)
+        assert isinstance(tags, (set, frozenset))
         if self.tags:
             tags.update(self.tags)
         tags = frozenset(tags) if tags else None
