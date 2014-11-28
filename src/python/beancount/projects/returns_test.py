@@ -11,9 +11,11 @@ from unittest import mock
 
 from beancount import loader
 from beancount.core import inventory
+from beancount.core import data
 from beancount.ops import prices
 from beancount.parser import cmptest
 from beancount.parser import options
+from beancount.parser import printer
 from beancount.projects import returns
 from beancount.utils import test_utils
 
@@ -714,3 +716,51 @@ class TestReturnsExampleScript(test_utils.TestCase):
         self.assertEqual(0, pipe.returncode)
         self.assertFalse(errors)
         self.assertTrue(re.search(b'Returns for', output))
+
+
+class TestReturnsWithUnrealized(test_utils.TestCase):
+
+    @loader.loaddoc
+    def test_returns_with_unrealized(self, entries, errors, _):
+        """
+        plugin "beancount.plugins.unrealized"
+
+        2014-01-01 open Assets:US:Investments:ACME
+        2014-01-01 open Assets:US:Investments:Cash
+        2014-01-01 open Assets:US:Bank:Checking
+        2014-01-01 open Income:US:Investments:Dividends
+
+        2014-01-01 * "Deposit"
+          Assets:US:Investments:Cash      1000 USD
+          Assets:US:Bank:Checking
+
+        2014-01-01 * "Buy"
+          Assets:US:Investments:ACME        50 ACME {20.00 USD}
+          Assets:US:Investments:Cash
+
+        2015-01-01 price ACME            20.30 USD
+
+        2015-01-01 balance Assets:US:Investments:ACME  50 ACME
+        """
+        self.assertFalse(errors)
+
+        expected_returns = {'USD': 1.015}
+
+        assets = {'Assets:US:Investments:ACME', 'Assets:US:Investments:Cash'}
+        intflows = {'Income:US:Investments:Dividends'}
+        returns_, dates, internalized_entries = returns.compute_returns(
+            entries, 'Equity:Internalized', assets, intflows)
+        self.assertEqual(expected_returns, returns_)
+
+        # Now, the unrealized gains is usually inserted at the end of the list
+        # of entries, which has no effect because no final period is created for
+        # it. Try moving the unrealized gains a bit earlier, just to make sure
+        # it has no effect.
+        last_entry = entries[-1]
+        moved_entry = data.entry_replace(last_entry,
+                                         date=last_entry.date - datetime.timedelta(days=20))
+        new_entries = entries[:-1] + [moved_entry]
+
+        returns_, dates, internalized_entries = returns.compute_returns(
+            new_entries, 'Equity:Internalized', assets, intflows)
+        self.assertEqual(expected_returns, returns_)

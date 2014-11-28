@@ -2,12 +2,8 @@
 beancount: TODO
 * Returns
 
-  - Check that no unrealized gains entries are present, this would really skew
-    the result. Ingore them if you find them, that's the correct way to treat
-    them.
-
-  - FIXME: Issue warnings if the price date is too far from the requested market
-    value date.
+  - Issue warnings if the price date is too far from the requested market value
+    date.
 
 
 * Requirements for Shipping 2.0

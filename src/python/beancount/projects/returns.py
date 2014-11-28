@@ -477,6 +477,14 @@ def compute_returns(entries, transfer_account,
                                             any(posting.account not in accounts_related
                                                 for posting in entry.postings))
 
+    # Remove unrealized entries, if any are found. (Note that unrealized gains
+    # only inserted at the end of the list of entries have no effect because
+    # this module never creates a period after these. This may change in the future).
+    entries = [entry
+               for entry in entries
+               if not (isinstance(entry, data.Transaction) and
+                       entry.flag == flags.FLAG_UNREALIZED)]
+
     # Internalize entries with internal/external flows.
     entries, internalized_entries = internalize(
         entries, accounts_assets, accounts_intflows, transfer_account)
