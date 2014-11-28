@@ -13,6 +13,7 @@ Note that you can also invoke beancount.projects.returns directly like this:
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import argparse
 import datetime
 import logging
 from os import path
@@ -25,11 +26,15 @@ from beancount import loader
 
 
 def main():
-    # Uncomment this if you want to view he detailed log of each calculation.
-    #logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
+    # Parse and validate options.
+    parser = argparse.ArgumentParser(description=__doc__.strip())
+    parser.add_argument('--verbose', '-v', action='store_true', help='Verbose mode')
+    args = parser.parse_args()
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG, format='%(levelname)-8s: %(message)s')
 
     # Load the example file.
-    examples_dir = path.dirname(path.dirname(__file__))
+    examples_dir = path.dirname(path.dirname(path.abspath(__file__)))
     filename = path.join(examples_dir, 'tutorial', 'example.beancount')
     entries, _, options_map = loader.load_file(filename, log_errors=print)
 
@@ -53,11 +58,12 @@ def main():
 
     # Loop over accounts with investments in them. This is defined by the user.
     FORMAT = "  {:<16}  {:10} -> {:10}: {:>12.2%} {:>12.2%}"
-    for account_name, regexp in [
-        ('ETrade', '(.*:US:ETrade|Expenses:Financial:Commissions)'),
-        ('Vanguard', '(.*:US:Vanguard|Expenses:Financial:Commissions)')]:
+    for account_name, assets_regexp, intflows_regexp in [
+        ('ETrade', 'Assets:US:ETrade', '(Income:US:ETrade|Expenses:Financial)'),
+        ('Vanguard', 'Assets:US:Vanguard', '(Income:US:ETrade|Expenses:Financial)')]:
 
         # Print a header.
+        print()
         print("Returns for {} account".format(account_name))
         print(FORMAT.replace('.2%', '').format('Period', 'Begin', 'End', 'Total', 'Annualized'))
 
@@ -65,14 +71,15 @@ def main():
         for period_name, date_begin, date_end in periods:
             # Compute the returns.
             total_returns, dates, int_entries = returns.compute_returns_with_regexp(
-                entries, options_map, 'Assets:Internalized', regexp, date_begin, date_end)
+                entries, options_map, 'Assets:Internalized',
+                assets_regexp, intflows_regexp,
+                date_begin, date_end)
 
             # Annualize the returns for the period.
             annual_returns = returns.annualize_returns(total_returns, date_begin, date_end)
 
             print(FORMAT.format(period_name, str(date_begin), str(date_end),
                                 total_returns['USD'] - 1, annual_returns['USD'] - 1))
-        print()
 
 
 if __name__ == '__main__':

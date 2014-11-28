@@ -148,7 +148,8 @@ class TestReturnsFunctions(test_utils.TestCase):
         matching_entries, (acc_assets,
                            acc_intflows,
                            acc_extflows) = returns.find_matching(
-                               self.entries, self.acc_types, '.*:Prosper')
+                               self.entries, self.acc_types,
+                               'Assets:US:Prosper', '(Income|Expenses):')
 
         self.assertEqual({'Assets:US:Prosper:InFunding',
                           'Assets:US:Prosper:Cash',
@@ -166,14 +167,15 @@ class TestReturnsFunctions(test_utils.TestCase):
     @mock.patch('beancount.projects.returns.compute_returns')
     def test_compute_returns_with_regexp(self, mock_obj):
         returns.compute_returns_with_regexp(self.entries, self.options_map,
-                                            'Equity:Internalized', '.*:Prosper')
+                                            'Equity:Internalized',
+                                            '.*:Prosper', '(Income|Expenses):')
         self.assertTrue([list, dict, set, set], map(type, mock_obj.call_args))
         self.assertTrue(mock_obj.called)
 
     def test_compute_returns(self):
         price_map = prices.build_price_map(self.entries)
         matching_entries, (acc_assets, acc_intflows, _) = returns.find_matching(
-            self.entries, self.acc_types, '.*:Prosper')
+            self.entries, self.acc_types, '.*:Prosper', '(Income|Expenses):')
         returns.compute_returns(self.entries, 'Equity:Internalized',
                                 acc_assets, acc_intflows, price_map)
 
@@ -230,7 +232,9 @@ class TestReturnsPeriods(test_utils.TestCase):
         """
         self.assertFalse(errors)
         returns_dict, dates, _ = returns.compute_returns_with_regexp(
-            entries, options_map, 'Equity:Internalized', '.*:Investments')
+            entries, options_map,
+            'Equity:Internalized',
+            '.*:Investments', '(Income|Expenses):')
         self.assertEqual({'USD': 1.1}, returns_dict)
         self.assertEqual((datetime.date(2014, 2, 1), datetime.date(2014, 8, 2)), dates)
 
@@ -255,7 +259,9 @@ class TestReturnsPeriods(test_utils.TestCase):
         """
         self.assertFalse(errors)
         returns_dict, dates, _ = returns.compute_returns_with_regexp(
-            entries, options_map, 'Equity:Internalized', '.*:Investments')
+            entries, options_map,
+            'Equity:Internalized',
+            '.*:Investments', '(Income|Expenses):')
         self.assertEqual({'USD': 1.1}, returns_dict)
         self.assertEqual((datetime.date(1990, 1, 1), datetime.date(2014, 8, 2)), dates)
 
@@ -697,7 +703,7 @@ class TestReturnsExampleScript(test_utils.TestCase):
 
         command = [sys.executable, '-m', 'beancount.projects.returns',
                    example_filename,
-                   '(.*:US:ETrade|Expenses:Financial:Commissions)']
+                   'Assets:US:ETrade', 'Expenses:Financial:Commissions']
         pipe = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output, errors = pipe.communicate()
         self.assertEqual(0, pipe.returncode)

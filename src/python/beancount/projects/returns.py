@@ -52,14 +52,16 @@ from beancount.ops import prices
 from beancount.utils import misc_utils
 
 
-def find_matching(entries, acc_types, related_regexp):
+def find_matching(entries, acc_types, assets_regexp, intflows_regexp):
     """Match entries and identify account groups.
 
     Args:
       entries: A list of directives.
       acc_types: An instance of account_types.AccountTypes
-      related_regexp: A regular expression string that defines the set of
-        related accounts.
+      assets_regexp: A regular expression string that matches names of asset accounts to
+        value for the portfolio.
+      intflows_regexp: A regular expression string that matches names of accounts considered
+        internal flows to the portfolio (typically income and expenses accounts).
     Returns:
       A list of all entries with an account matching the given pattern, and a
       triplet of account lists:
@@ -70,22 +72,21 @@ def find_matching(entries, acc_types, related_regexp):
     accounts_assets = set()
     accounts_intflows = set()
     accounts_extflows = set()
-    match = re.compile(related_regexp).match
+    assets_match = re.compile(assets_regexp).match
+    intflows_match = re.compile(intflows_regexp).match
 
     matching_entries = []
     for entry in entries:
         if not isinstance(entry, data.Transaction):
             continue
-        if any(match(posting.account) for posting in entry.postings):
+        if any(assets_match(posting.account) for posting in entry.postings):
             matching_entries.append(entry)
 
             for posting in entry.postings:
-                if match(posting.account):
-                    if account_types.is_income_statement_account(posting.account,
-                                                                 acc_types):
-                        accounts_intflows.add(posting.account)
-                    else:
-                        accounts_assets.add(posting.account)
+                if assets_match(posting.account):
+                    accounts_assets.add(posting.account)
+                elif intflows_match(posting.account):
+                    accounts_intflows.add(posting.account)
                 else:
                     accounts_extflows.add(posting.account)
 
@@ -141,6 +142,8 @@ def segment_periods(entries, accounts_assets, accounts_intflows,
         must come before the requested end, if specified.
     """
     logging.info("Segmenting periods.")
+    logging.info("Date begin: %s", date_begin)
+    logging.info("Date end:   %s", date_end)
 
     if date_begin and date_end and date_begin >= date_end:
         raise ValueError("Dates are not ordered correctly: {} >= {}".format(
@@ -184,8 +187,8 @@ def segment_periods(entries, accounts_assets, accounts_intflows,
         balance_begin = copy.copy(balance)
 
         logging.debug(",-----------------------------------------------------------")
-        logging.debug("Begin:   %s", period_begin)
-        logging.debug("Balance: %s", balance_begin)
+        logging.debug(" Begin:   %s", period_begin)
+        logging.debug(" Balance: %s", balance_begin.units())
         logging.debug("")
 
         # Consume all internal flow entries, simply accumulating the total balance.
@@ -213,8 +216,8 @@ def segment_periods(entries, accounts_assets, accounts_intflows,
         balance_end = copy.copy(balance)
         periods.append((period_begin, period_end, balance_begin, balance_end))
 
-        logging.debug("Balance: %s", balance_end)
-        logging.debug("End:     %s", period_end)
+        logging.debug(" Balance: %s", balance_end.units())
+        logging.debug(" End:     %s", period_end)
         logging.debug("`-----------------------------------------------------------")
         logging.debug("")
 
@@ -387,7 +390,7 @@ def internalize(entries,
 
         # Check if the entry is to be internalized and split it up in two
         # entries and replace the entrie if that's the case.
-        if postings_intflows and postings_extflows:
+        if postings_assets and postings_intflows and postings_extflows:
             replaced_entries.append(entry)
 
             # We will attach a link to each of the split entries.
@@ -471,12 +474,6 @@ def compute_returns(entries, transfer_account,
     if price_map is None:
         price_map = prices.build_price_map(entries)
 
-    # Predicates based on account groups determined above.
-    accounts_related = accounts_assets | accounts_intflows
-    is_external_flow_entry = lambda entry: (isinstance(entry, data.Transaction) and
-                                            any(posting.account not in accounts_related
-                                                for posting in entry.postings))
-
     # Remove unrealized entries, if any are found. (Note that unrealized gains
     # only inserted at the end of the list of entries have no effect because
     # this module never creates a period after these. This may change in the future).
@@ -493,7 +490,8 @@ def compute_returns(entries, transfer_account,
     # Segment the entries, splitting at entries with external flow and computing
     # the balances before and after. This returns all such periods with the
     # balances at their beginning and end.
-    periods = segment_periods(entries, accounts_assets, accounts_intflows,
+    periods = segment_periods(entries,
+                              accounts_assets, accounts_intflows,
                               date_begin, date_end)
 
     # From the period balances, compute the returns.
@@ -507,13 +505,16 @@ def compute_returns(entries, transfer_account,
         mktvalue_begin, mktvalue_end = mktvalues
         all_returns.append(period_returns)
 
-        annual_returns = (annualize_returns(period_returns, period_begin, period_end)
-                          if period_end != period_begin
-                          else {})
+        try:
+            annual_returns = (annualize_returns(period_returns, period_begin, period_end)
+                              if period_end != period_begin
+                              else {})
+        except OverflowError:
+            annual_returns = 'OVERFLOW'
 
         logging.info("From %s to %s", period_begin, period_end)
-        logging.info("  Begin %s => %s", balance_begin, mktvalue_begin)
-        logging.info("  End   %s => %s", balance_end, mktvalue_end)
+        logging.info("  Begin %s => %s", balance_begin.units(), mktvalue_begin)
+        logging.info("  End   %s => %s", balance_end.units(), mktvalue_end)
         logging.info("  Returns     %s", period_returns)
         logging.info("  Annualized  %s", annual_returns)
         logging.info("")
@@ -536,7 +537,7 @@ def compute_returns(entries, transfer_account,
 
 
 def compute_returns_with_regexp(entries, options_map,
-                                transfer_account, related_regexp,
+                                transfer_account, assets_regexp, intflows_regexp,
                                 date_begin=None, date_end=None):
     """Compute the returns of a portfolio of accounts defined by a regular expression.
 
@@ -545,12 +546,17 @@ def compute_returns_with_regexp(entries, options_map,
       options_map: An options dict as produced by the loader.
       transfer_account: A string, the name of an account to use for internalizing entries
         which need to be split between internal and external flows.
+      assets_regexp: A regular expression string that matches names of asset accounts to
+        value for the portfolio.
+      intflows_regexp: A regular expression string that matches names of accounts considered
+        internal flows to the portfolio (typically income and expenses accounts).
       date_begin: A datetime.date instance, the beginning date of the period to compute
         returns over.
       date_end: A datetime.date instance, the end date of the period to compute returns
         over.
     Returns:
       See compute_returns().
+
     """
     acc_types = options.get_account_types(options_map)
     price_map = prices.build_price_map(entries)
@@ -559,7 +565,7 @@ def compute_returns_with_regexp(entries, options_map,
     matching_entries, (accounts_assets,
                        accounts_intflows,
                        accounts_extflows) = find_matching(entries, acc_types,
-                                                          related_regexp)
+                                                          assets_regexp, intflows_regexp)
 
     logging.info('Asset accounts:')
     for account in sorted(accounts_assets):
@@ -586,8 +592,14 @@ def main():
 
     parser.add_argument('filename', help='Ledger filename')
 
-    parser.add_argument('related_regexp', action='store',
-                        help="A regular expression for related accounts")
+    parser.add_argument('assets_regexp', action='store',
+                        help=("A regular expression string that matches names of asset "
+                              "accounts to value for the portfolio."))
+
+    parser.add_argument('intflows_regexp', action='store',
+                        help=("A regular expression string that matches names of accounts "
+                              "considered internal flows to the portfolio (typically "
+                              "income and expenses accounts)."))
 
     parser.add_argument('--transfer-account', action='store',
                         default='Equity:Internalized',
@@ -614,11 +626,11 @@ def main():
     entries, errors, options_map = loader.load(args.filename)
 
     # Compute the returns.
-    returns, (date_first, date_last), _ = compute_returns_with_regexp(entries, options_map,
-                                                                      args.transfer_account,
-                                                                      args.related_regexp,
-                                                                      args.date_begin,
-                                                                      args.date_end)
+    returns, (date_first, date_last), _ = compute_returns_with_regexp(
+        entries, options_map,
+        args.transfer_account,
+        args.assets_regexp, args.intflows_regexp,
+        args.date_begin, args.date_end)
 
     # Annualize the returns.
     annual_returns = annualize_returns(returns, date_first, date_last)
