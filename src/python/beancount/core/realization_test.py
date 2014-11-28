@@ -525,19 +525,19 @@ class TestRealOther(test_utils.TestCase):
         # pylint: disable=bad-whitespace
         rtuple = realization.iterate_with_balance(real_account.postings[:-2])
         self.assertEqual([
-            (data.Open        , 0 , 'Inventory()'          , 'Inventory()')          ,
-            (data.Transaction , 1 , 'Inventory(11.11 CAD)' , 'Inventory(11.11 CAD)') ,
-            (data.Transaction , 2 , 'Inventory(40.03 CAD)' , 'Inventory(51.14 CAD)') ,
+            (data.Open        , 0 , '()'          , '()')          ,
+            (data.Transaction , 1 , '(11.11 CAD)' , '(11.11 CAD)') ,
+            (data.Transaction , 2 , '(40.03 CAD)' , '(51.14 CAD)') ,
             ], simplify_rtuple(rtuple))
 
         # Test it again with the final balance entry.
         rtuple = realization.iterate_with_balance(real_account.postings)
         self.assertEqual([
-            (data.Open        , 0 , 'Inventory()'          , 'Inventory()')          ,
-            (data.Transaction , 1 , 'Inventory(11.11 CAD)' , 'Inventory(11.11 CAD)') ,
-            (data.Transaction , 2 , 'Inventory(40.03 CAD)' , 'Inventory(51.14 CAD)') ,
-            (data.Note        , 0 , 'Inventory()'          , 'Inventory(51.14 CAD)') ,
-            (data.Balance     , 0 , 'Inventory()'          , 'Inventory(51.14 CAD)') ,
+            (data.Open        , 0 , '()'          , '()')          ,
+            (data.Transaction , 1 , '(11.11 CAD)' , '(11.11 CAD)') ,
+            (data.Transaction , 2 , '(40.03 CAD)' , '(51.14 CAD)') ,
+            (data.Note        , 0 , '()'          , '(51.14 CAD)') ,
+            (data.Balance     , 0 , '()'          , '(51.14 CAD)') ,
             ], simplify_rtuple(rtuple))
 
         # Test it out with valid input but with entries for the same transaction
@@ -547,11 +547,11 @@ class TestRealOther(test_utils.TestCase):
         postings[-3], postings[-2] = postings[-2], postings[-3]
         rtuple = realization.iterate_with_balance(postings)
         self.assertEqual([
-            (data.Open        , 0 , 'Inventory()'          , 'Inventory()')          ,
-            (data.Transaction , 1 , 'Inventory(11.11 CAD)' , 'Inventory(11.11 CAD)') ,
-            (data.Transaction , 2 , 'Inventory(40.03 CAD)' , 'Inventory(51.14 CAD)') ,
-            (data.Note        , 0 , 'Inventory()'          , 'Inventory(51.14 CAD)') ,
-            (data.Balance     , 0 , 'Inventory()'          , 'Inventory(51.14 CAD)') ,
+            (data.Open        , 0 , '()'          , '()')          ,
+            (data.Transaction , 1 , '(11.11 CAD)' , '(11.11 CAD)') ,
+            (data.Transaction , 2 , '(40.03 CAD)' , '(51.14 CAD)') ,
+            (data.Note        , 0 , '()'          , '(51.14 CAD)') ,
+            (data.Balance     , 0 , '()'          , '(51.14 CAD)') ,
             ], simplify_rtuple(rtuple))
 
         # Go one step further and test it out with invalid date ordering.

@@ -190,7 +190,7 @@ def parse(input_string, **replacements):
     else:
         formatted_string = input_string
 
-    entries, errors, unused_options = parser.parse_string(formatted_string)
+    entries, errors, unused_options = parser.parse_string(textwrap.dedent(formatted_string))
     if errors:
         printer.print_errors(errors, file=sys.stderr)
         raise ValueError("Parsed text has errors")
@@ -445,14 +445,19 @@ def generate_employment_income(employer_name,
             ctx.prec = 6
             deposit = (gross - retirement - fixed - socsec)
 
+        retirement_neg = -retirement
+        gross_neg = -gross
+        lifeinsurance_neg = -lifeinsurance
+        vacation_hrs_neg = -vacation_hrs
+
         template = """
             {date} * "{employer_name}" | "Payroll"
               {account_deposit}                                 {deposit:.2f} CCY
               {account_retirement}                              {retirement:.2f} CCY
-              Assets:CC:Federal:PreTax401k                     -{retirement:.2f} DEFCCY
+              Assets:CC:Federal:PreTax401k                      {retirement_neg:.2f} DEFCCY
               Expenses:Taxes:Y{year}:CC:Federal:PreTax401k      {retirement:.2f} DEFCCY
-              Income:CC:Employer1:Salary                       -{gross:.2f} CCY
-              Income:CC:Employer1:GroupTermLife                -{lifeinsurance:.2f} CCY
+              Income:CC:Employer1:Salary                        {gross_neg:.2f} CCY
+              Income:CC:Employer1:GroupTermLife                 {lifeinsurance_neg:.2f} CCY
               Expenses:Health:Life:GroupTermLife                {lifeinsurance:.2f} CCY
               Expenses:Health:Dental:Insurance                  {dental} CCY
               Expenses:Health:Medical:Insurance                 {medical} CCY
@@ -464,7 +469,7 @@ def generate_employment_income(employer_name,
               Expenses:Taxes:Y{year}:CC:SDI                     {sdi:.2f} CCY
               Expenses:Taxes:Y{year}:CC:SocSec                  {socsec:.2f} CCY
               Assets:CC:Employer1:Vacation                      {vacation_hrs:.2f} VACHR
-              Income:CC:Employer1:Vacation                     -{vacation_hrs:.2f} VACHR
+              Income:CC:Employer1:Vacation                      {vacation_hrs_neg:.2f} VACHR
         """
         if retirement == ZERO:
             # Remove retirement lines.
@@ -509,9 +514,12 @@ def generate_tax_accounts(year, date_max):
     date_state = (date_filing + datetime.timedelta(days=random.randint(0, 4)))
 
     amount_federal = D(max(random.normalvariate(500, 120), 12))
+    amount_federal_neg = amount_federal
     amount_state = D(max(random.normalvariate(300, 100), 10))
+    amount_state_neg = amount_state
 
     amount_limit = RETIREMENT_LIMITS.get(year, RETIREMENT_LIMITS[None])
+    amount_limit_neg = -amount_limit
 
     entries = parse("""
 
@@ -528,7 +536,7 @@ def generate_tax_accounts(year, date_max):
       {date_year} balance Assets:CC:Federal:PreTax401k  0 DEFCCY
 
       {date_year} * "Allowed contributions for one year"
-        Income:CC:Federal:PreTax401k    -{amount_limit} DEFCCY
+        Income:CC:Federal:PreTax401k     {amount_limit_neg} DEFCCY
         Assets:CC:Federal:PreTax401k     {amount_limit} DEFCCY
 
       {date_filing} * "Filing taxes for {year}"
@@ -537,11 +545,11 @@ def generate_tax_accounts(year, date_max):
         Liabilities:AccountsPayable
 
       {date_federal} * "FEDERAL TAXPYMT"
-        Assets:CC:Bank1:Checking      -{amount_federal:.2f} CCY
+        Assets:CC:Bank1:Checking       {amount_federal_neg:.2f} CCY
         Liabilities:AccountsPayable
 
       {date_state} * "STATE TAX & FINANC PYMT"
-        Assets:CC:Bank1:Checking      -{amount_state:.2f} CCY
+        Assets:CC:Bank1:Checking       {amount_state_neg:.2f} CCY
         Liabilities:AccountsPayable
 
     """, **vars())
@@ -569,12 +577,13 @@ def generate_retirement_employer_match(entries, account_invest, account_income):
 
     for posting, balances in postings_for(entries, [account_invest]):
         amount = posting.position.number * match_frac
+        amount_neg = -amount
         date = posting.entry.date + ONE_DAY
         new_entries.extend(parse("""
 
           {date} * "Employer match for contribution"
             {account_invest}         {amount:.2f} CCY
-            {account_income}        -{amount:.2f} CCY
+            {account_income}         {amount_neg:.2f} CCY
 
         """, **vars()))
 
@@ -622,11 +631,12 @@ def generate_retirement_investments(entries, account, commodities_items, price_m
             _, price = prices.get_price(price_map, (commodity, 'CCY'), txn_date)
             units = (amount_fraction / price).quantize(D('0.001'))
             amount_cash = (units * price).quantize(D('0.01'))
+            amount_cash_neg = -amount_cash
             new_entries.extend(parse("""
 
               {txn_date} * "Investing {fraction:.0%} of cash in {commodity}"
                 {account}:{commodity}  {units:.3f} {commodity} {{{price:.2f} CCY}}
-                {account}:Cash         -{amount_cash:.2f} CCY
+                {account}:Cash         {amount_cash_neg:.2f} CCY
 
             """, **vars()))
 
@@ -720,13 +730,13 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
                     units = round_to((lot_amount / price), round_units)
                     if units <= ZERO:
                         continue
-                    amount_cash = units * price + commission
+                    amount_cash = -(units * price + commission)
                     # logging.info('Buying %s %s @ %s CCY = %s CCY',
                     #              units, stock, price, units * price)
 
                     buy = parse("""
                       {date} * "Buy shares of {stock}"
-                        {account}:Cash       -{amount_cash:.2f} CCY
+                        {account}:Cash        {amount_cash:.2f} CCY
                         {account}:{stock}     {units:.0f} {stock} {{{price:.2f} CCY}}
                         Expenses:Financial:Commissions   {commission:.2f} CCY
                     """, **vars())[0]
@@ -760,11 +770,12 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
             gain, market_value, price, sell_position = lot_tuple
             #logging.info('Selling {} for {}'.format(sell_position, market_value))
 
+            sell_position = -sell_position
             stock = sell_position.lot.currency
             amount_cash = market_value - commission
             sell = parse("""
               {date} * "Sell shares of {stock}"
-                {account}:{stock}              -{sell_position} @ {price:.2f} CCY
+                {account}:{stock}               {sell_position} @ {price:.2f} CCY
                 {account}:Cash                  {amount_cash:.2f} CCY
                 Expenses:Financial:Commissions  {commission:.2f} CCY
                 {account_gains}
@@ -805,9 +816,10 @@ def generate_periodic_expenses(date_iter,
         txn_narration = (narration
                          if isinstance(narration, str)
                          else random.choice(narration))
+        amount_neg = -amount
         new_entries.extend(parse("""
           {date} * "{txn_payee}" "{txn_narration}"
-            {account_from}   -{amount:.2f} CCY
+            {account_from}    {amount_neg:.2f} CCY
             {account_to}      {amount:.2f} CCY
         """, **vars()))
 
@@ -910,9 +922,10 @@ def generate_outgoing_transfers(entries,
                                        transfer_increment)
 
             date = posting.entry.date + datetime.timedelta(days=1)
+            amount_transfer_neg = -amount_transfer
             new_entries.extend(parse("""
               {date} * "Transfering accumulated savings to other account"
-                {account}         -{amount_transfer:2f} CCY
+                {account}          {amount_transfer_neg:2f} CCY
                 {account_out}      {amount_transfer:2f} CCY
             """, **vars()))
 
@@ -1185,10 +1198,10 @@ def generate_trip_entries(date_begin, date_end,
         for payee, account_expense, (mu, sigma3) in config:
             if random.random() < p_day_generate:
                 amount = random.normalvariate(mu, sigma3 / 3.)
-                neg_amount = -amount
+                amount_neg = -amount
                 new_entries.extend(parse("""
                   {date} * "{payee}" "" #{tag}
-                    {account_credit}     {neg_amount:.2f} CCY
+                    {account_credit}     {amount_neg:.2f} CCY
                     {account_expense}    {amount:.2f} CCY
                 """, **vars()))
 

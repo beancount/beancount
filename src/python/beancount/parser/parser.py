@@ -28,6 +28,7 @@ from beancount.core.data import Note
 from beancount.core.data import Document
 from beancount.core.data import Source
 from beancount.core.data import Posting
+from beancount.core.data import BOOKING_METHODS
 from beancount.core.interpolate import balance_incomplete_postings
 from beancount.core.interpolate import compute_residual
 from beancount.core.interpolate import SMALL_EPSILON
@@ -45,6 +46,10 @@ __sanity_checks__ = False
 
 ParserError = collections.namedtuple('ParserError', 'source message entry')
 ParserSyntaxError = collections.namedtuple('ParserSyntaxError', 'source message entry')
+
+
+# Temporary holder for key-value pairs.
+KeyValue = collections.namedtuple('KeyValue', 'key value')
 
 
 def valid_account_regexp(options):
@@ -98,10 +103,9 @@ class Builder(lexer.LexBuilder):
         # types.
         self.account_regexp = valid_account_regexp(self.options)
 
-        # A mapping of currency to a frequency distribution of precisions seen
-        # in the input file. This is used to feed some information that allows
-        # us to select what precision to use for rendering.
-        self.precision_dist = collections.defaultdict(misc_utils.Distribution)
+        # A display context builder.
+        self.dcbuilder = display_context.DisplayContextBuilder()
+        self.dcupdate = self.dcbuilder.update
 
     def get_entries(self):
         """Return the accumulated entries.
@@ -117,15 +121,13 @@ class Builder(lexer.LexBuilder):
         Returns:
           A dict of option names to options.
         """
+        # Normalize the option to a boolean object.
         self.options['render_commas'] = (
             self.options['render_commas'].lower() in ('1', 'true'))
 
-        dcontext = display_context.DisplayContext()
+        # Build and store the inferred DisplayContext instance.
+        dcontext = self.dcbuilder.build()
         dcontext.set_commas(self.options['render_commas'])
-        for currency, dist in self.precision_dist.items():
-            dcontext.set_precision(-dist.mode(), currency, False)
-            dcontext.set_precision_max(-dist.min(), currency, False)
-        dcontext.update()
         self.options['display_context'] = dcontext
 
         return self.options
@@ -239,7 +241,7 @@ class Builder(lexer.LexBuilder):
         """
         # Update the mapping that stores the parsed precisions.
         # Note: This is relatively slow, adds about 70ms because of number.as_tuple().
-        self.precision_dist[currency].update(number.as_tuple().exponent)
+        self.dcupdate(number, currency)
         return Amount(number, currency)
 
     def lot_cost_date(self, cost, lot_date, istotal):
@@ -313,7 +315,7 @@ class Builder(lexer.LexBuilder):
         source = Source(filename, lineno)
         self.errors.append(ParserSyntaxError(source, message, None))
 
-    def open(self, filename, lineno, date, account, currencies):
+    def open(self, filename, lineno, date, account, currencies, booking, kvlist):
         """Process an open directive.
 
         Args:
@@ -322,13 +324,19 @@ class Builder(lexer.LexBuilder):
           date: A datetime object.
           account: A string, the name of the account.
           currencies: A list of constraint currencies.
+          booking: A string, the booking method, or None if none was specified.
+          kvlist: a list of KeyValue instances.
         Returns:
           A new Open object.
         """
         source = Source(filename, lineno)
-        return Open(source, date, account, currencies)
+        entry = Open(source, date, account, currencies, booking)
+        if booking and booking not in BOOKING_METHODS:
+            self.errors.append(
+                ParserError(source, "Invalid booking method: {}".format(booking), entry))
+        return entry
 
-    def close(self, filename, lineno, date, account):
+    def close(self, filename, lineno, date, account, kvlist):
         """Process a close directive.
 
         Args:
@@ -336,13 +344,14 @@ class Builder(lexer.LexBuilder):
           lineno: The current line number.
           date: A datetime object.
           account: A string, the name of the account.
+          kvlist: a list of KeyValue instances.
         Returns:
           A new Close object.
         """
         source = Source(filename, lineno)
         return Close(source, date, account)
 
-    def pad(self, filename, lineno, date, account, source_account):
+    def pad(self, filename, lineno, date, account, source_account, kvlist):
         """Process a pad directive.
 
         Args:
@@ -351,13 +360,14 @@ class Builder(lexer.LexBuilder):
           date: A datetime object.
           account: A string, the account to be padded.
           source_account: A string, the account to pad from.
+          kvlist: a list of KeyValue instances.
         Returns:
           A new Pad object.
         """
         source = Source(filename, lineno)
         return Pad(source, date, account, source_account)
 
-    def balance(self, filename, lineno, date, account, amount):
+    def balance(self, filename, lineno, date, account, amount, kvlist):
         """Process an assertion directive.
 
         We produce no errors here by default. We replace the failing ones in the
@@ -370,6 +380,7 @@ class Builder(lexer.LexBuilder):
           date: A datetime object.
           account: A string, the account to balance.
           amount: The expected amount, to be checked.
+          kvlist: a list of KeyValue instances.
         Returns:
           A new Balance object.
         """
@@ -377,7 +388,7 @@ class Builder(lexer.LexBuilder):
         source = Source(filename, lineno)
         return Balance(source, date, account, amount, diff_amount)
 
-    def event(self, filename, lineno, date, event_type, description):
+    def event(self, filename, lineno, date, event_type, description, kvlist):
         """Process an event directive.
 
         Args:
@@ -386,13 +397,14 @@ class Builder(lexer.LexBuilder):
           date: a datetime object.
           event_type: a str, the name of the event type.
           description: a str, the event value, the contents.
+          kvlist: a list of KeyValue instances.
         Returns:
           A new Event object.
         """
         source = Source(filename, lineno)
         return Event(source, date, event_type, description)
 
-    def price(self, filename, lineno, date, currency, amount):
+    def price(self, filename, lineno, date, currency, amount, kvlist):
         """Process a price directive.
 
         Args:
@@ -401,13 +413,14 @@ class Builder(lexer.LexBuilder):
           date: a datetime object.
           currency: the currency to be priced.
           amount: an instance of Amount, that is the price of the currency.
+          kvlist: a list of KeyValue instances.
         Returns:
           A new Price object.
         """
         source = Source(filename, lineno)
         return Price(source, date, currency, amount)
 
-    def note(self, filename, lineno, date, account, comment):
+    def note(self, filename, lineno, date, account, comment, kvlist):
         """Process a note directive.
 
         Args:
@@ -416,13 +429,35 @@ class Builder(lexer.LexBuilder):
           date: A datetime object.
           account: A string, the account to attach the note to.
           comment: A str, the note's comments contents.
+          kvlist: a list of KeyValue instances.
         Returns:
           A new Note object.
         """
         source = Source(filename, lineno)
         return Note(source, date, account, comment)
 
-    def document(self, filename, lineno, date, account, document_filename):
+    def document(self, filename, lineno, date, account, document_filename, kvlist):
+        """Process a document directive.
+
+        Args:
+          filename: the current filename.
+          lineno: the current line number.
+          date: a datetime object.
+          account: an Account instance.
+          document_filename: a str, the name of the document file.
+          kvlist: a list of KeyValue instances.
+        Returns:
+          A new Document object.
+        """
+        source = Source(filename, lineno)
+        if not path.isabs(document_filename):
+            document_filename = path.abspath(path.join(path.dirname(filename),
+                                                       document_filename))
+
+        return Document(source, date, account, document_filename)
+
+
+    def key_value(self, key, value):
         """Process a document directive.
 
         Args:
@@ -434,12 +469,7 @@ class Builder(lexer.LexBuilder):
         Returns:
           A new Document object.
         """
-        source = Source(filename, lineno)
-        if not path.isabs(document_filename):
-            document_filename = path.abspath(path.join(path.dirname(filename),
-                                                       document_filename))
-
-        return Document(source, date, account, document_filename)
+        return KeyValue(key, value)
 
     def posting(self, filename, lineno, account, position, price, istotal, flag):
         """Process a posting grammar rule.
@@ -563,7 +593,7 @@ class Builder(lexer.LexBuilder):
             return None
         return payee, narration
 
-    def transaction(self, filename, lineno, date, flag, txn_fields, postings):
+    def transaction(self, filename, lineno, date, flag, txn_fields, postings_and_kv):
         """Process a transaction directive.
 
         All the postings of the transaction are available at this point, and so the
@@ -581,12 +611,22 @@ class Builder(lexer.LexBuilder):
           flag: a str, one-character, the flag associated with this transaction.
           txn_fields: A tuple of transaction fields, which includes descriptions
             (payee and narration), tags, and links.
-          postings: a list of Posting instances, to be inserted in this transaction, or
-            None, if no postings have been declared.
+          postings_and_kv: a list of Posting or KeyValue instances, to be inserted in this
+            transaction, or None, if no postings have been declared.
         Returns:
           A new Transaction object.
         """
         source = Source(filename, lineno)
+
+        # Separate postings and key-valus.
+        postings = []
+        key_values = []
+        if postings_and_kv:
+            for posting in postings_and_kv:
+                if isinstance(posting, Posting):
+                    postings.append(posting)
+                else:
+                    key_values.append(posting)
 
         # Unpack the transaction fields.
         payee_narration = self.unpack_txn_strings(txn_fields, source)

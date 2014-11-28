@@ -5,6 +5,7 @@ from datetime import date
 import unittest
 import re
 import textwrap
+import sys
 
 from beancount.parser import printer
 from beancount.parser import parser
@@ -25,7 +26,7 @@ class TestPrinter(unittest.TestCase):
         self.assertTrue(re.search(SOURCE.filename, source_str))
 
     def test_format_and_print_error(self):
-        entry = data.Open(SOURCE, date(2014, 1, 15), 'Assets:Bank:Checking', [])
+        entry = data.Open(SOURCE, date(2014, 1, 15), 'Assets:Bank:Checking', [], None)
         error = interpolate.BalanceError(SOURCE, "Example balance error", entry)
         error_str = printer.format_error(error)
         self.assertTrue(isinstance(error_str, str))

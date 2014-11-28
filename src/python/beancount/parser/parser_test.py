@@ -130,6 +130,23 @@ class TestParserEntryTypes(unittest.TestCase):
           2013-05-18 open Assets:Cash   USD,CAD,EUR
         """
         check_list(self, entries, [data.Open])
+        self.assertEqual(entries[0].booking, None)
+
+    @parsedoc
+    def test_entry_open_4(self, entries, errors, __):
+        """
+          2013-05-18 open Assets:US:Vanguard:VIIPX  VIIPX  "STRICT"
+        """
+        check_list(self, entries, [data.Open])
+        self.assertEqual(entries[0].booking, 'STRICT')
+
+    @parsedoc
+    def test_entry_open_5(self, entries, errors, __):
+        """
+          2013-05-18 open Assets:US:Vanguard:VIIPX    "STRICT"
+        """
+        check_list(self, entries, [data.Open])
+        self.assertEqual(entries[0].booking, 'STRICT')
 
     @parsedoc
     def test_entry_close(self, entries, _, __):
@@ -669,6 +686,96 @@ class TestBalance(unittest.TestCase):
             posting = entry.postings[0]
             self.assertEqual(amount.from_string('200 USD'), posting.position.lot.cost)
             self.assertEqual(None, posting.price)
+
+
+class TestMetaData(unittest.TestCase):
+
+    @parsedoc
+    def test_metadata_transaction__begin(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            test: "Something"
+            Assets:Investments:MSFT      10 MSFT @@ 2000 USD
+            Assets:Investments:Cash
+        """
+        self.assertEqual(1, len(entries))
+
+    @parsedoc
+    def test_metadata_transaction__middle(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      10 MSFT @@ 2000 USD
+            test: "Something"
+            Assets:Investments:Cash
+        """
+        self.assertEqual(1, len(entries))
+
+    @parsedoc
+    def test_metadata_transaction__end(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            Assets:Investments:MSFT      10 MSFT @@ 2000 USD
+            Assets:Investments:Cash
+            test: "Something"
+        """
+        self.assertEqual(1, len(entries))
+
+    @parsedoc
+    def test_metadata_transaction__many(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            test1: "Something"
+            Assets:Investments:MSFT      10 MSFT @@ 2000 USD
+            test2: "has"
+            test3: "to"
+            Assets:Investments:Cash
+            test4: "come"
+            test5: "from"
+            test6: "this"
+        """
+        self.assertEqual(1, len(entries))
+
+    @parsedoc
+    def test_metadata_transaction__repeated(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            test: "Bananas"
+            test: "Apples"
+            test: "Oranges"
+        """
+        self.assertEqual(1, len(entries))
+
+    @parsedoc
+    def test_metadata_other(self, entries, errors, _):
+        """
+          2013-01-01 open Equity:Other
+
+          2013-01-01 open Assets:Investments
+            test1: "Something"
+            test2: "Something"
+
+          2014-01-01 close Assets:Investments
+            test1: "Something"
+
+          2013-01-10 note Assets:Investments "Bla"
+            test1: "Something"
+
+          2013-01-31 pad Assets:Investments Equity:Other
+            test1: "Something"
+
+          2013-02-01 balance Assets:Investments  111.00 USD
+            test1: "Something"
+
+          2013-03-01 event "location" "Nowhere"
+            test1: "Something"
+
+          2013-03-01 document Assets:Investments "/path/to/something.pdf"
+            test1: "Something"
+
+          2013-03-01 price  GOOG  500 USD
+            test1: "Something"
+        """
+        self.assertEqual(9, len(entries))
 
 
 class TestLexerErrors(unittest.TestCase):

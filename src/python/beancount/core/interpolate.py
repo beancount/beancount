@@ -166,7 +166,7 @@ def get_incomplete_postings(entry):
                              "Too many auto-postings; cannot fill in",
                              entry))
             # Delete the redundant auto-postings.
-            for index in auto_postings_indices[1:]:
+            for index in sorted(auto_postings_indices[1:], reverse=1):
                 del postings[index]
 
         index = auto_postings_indices[0]

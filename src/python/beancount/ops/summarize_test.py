@@ -401,7 +401,7 @@ class TestClamp(cmptest.TestCase):
 
         ;; 2012-09-01  END   --------------------------------
 
-        2012-08-31 C "Conversion for Inventory(-3000.00 USD, 3750.00 CAD)"
+        2012-08-31 C "Conversion for (-3000.00 USD, 3750.00 CAD)"
           Equity:Conversions              3000.00 USD  @ 0.00 NOTHING
           Equity:Conversions             -3750.00 CAD  @ 0.00 NOTHING
 
@@ -448,7 +448,7 @@ class TestCap(cmptest.TestCase):
           Income:Salary       -10000.00 USD
           Equity:Earnings      10000.00 USD
 
-        2014-03-01 C "Conversion for Inventory(-5000.00 USD, 6000.00 CAD)"
+        2014-03-01 C "Conversion for (-5000.00 USD, 6000.00 CAD)"
           Equity:Conversions    5000.00 USD @ 0 NOTHING
           Equity:Conversions   -6000.00 CAD @ 0 NOTHING
 
@@ -833,7 +833,7 @@ class TestConversions(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
-        2012-03-02 C "Conversion for Inventory(-800.00 USD, 800.00 CAD)"
+        2012-03-02 C "Conversion for (-800.00 USD, 800.00 CAD)"
           Equity:Conversions       800.00 USD @ 0 NOTHING
           Equity:Conversions      -800.00 CAD @ 0 NOTHING
 
@@ -850,7 +850,7 @@ class TestConversions(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
-        2012-03-09 C "Conversion for Inventory(-800.00 USD, 200.00 CAD, 60 NT {10 CAD})"
+        2012-03-09 C "Conversion for (-800.00 USD, 200.00 CAD, 60 NT {10 CAD})"
           Equity:Conversions   800.00 USD  @ 0 XFER
           Equity:Conversions  -800.00 CAD  @ 0 XFER
 
@@ -867,7 +867,7 @@ class TestConversions(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
-        2012-05-09 C "Conversion for Inventory(-700.00 USD, 100.00 CAD, 60 NT {10 CAD})"
+        2012-05-09 C "Conversion for (-700.00 USD, 100.00 CAD, 60 NT {10 CAD})"
           Equity:Conversions   700.00 USD  @ 0 NOTHING
           Equity:Conversions  -700.00 CAD  @ 0 NOTHING
 
@@ -882,7 +882,7 @@ class TestConversions(cmptest.TestCase):
         self.assertIncludesEntries(self.entries, conversion_entries)
         self.assertIncludesEntries("""
 
-        2012-05-01 C "Conversion for Inventory(-700.00 USD, 100.00 CAD, 60 NT {10 CAD})"
+        2012-05-01 C "Conversion for (-700.00 USD, 100.00 CAD, 60 NT {10 CAD})"
           Equity:Conversions   700.00 USD  @ 0.00 NOTHING
           Equity:Conversions  -700.00 CAD  @ 0.00 NOTHING
 
