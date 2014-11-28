@@ -207,6 +207,10 @@ http://furius.ca/beancount/doc/proposal-query
 
     You would render these as a table.
 
+  - Implement a "reload" command to avoid having to leave the shell after the
+    file changes. Maybe we should even have an "autoreload" feature that just
+    kicks in before a query, like the web interface.
+
 
 * Requirements for Shipping 2.0
 ** Establish Display Precision
