@@ -500,9 +500,8 @@ def annualize_returns(returns, date_first, date_last):
 LINK_FORMAT = 'internalized-{:05d}'
 
 
-def internalize(entries,
-                accounts_assets, accounts_intflows,
-                transfer_account):
+def internalize(entries, transfer_account,
+                accounts_assets, accounts_intflows):
     """Internalize internal flows that would be lost because booked against external
     flow accounts. This splits up entries that have accounts both in internal
     flows and external flows. A new set of entries are returned, along with a
@@ -517,9 +516,6 @@ def internalize(entries,
         included in valuing the portfolio.
       accounts_intflows: A set of account name strings, the names of internal flow
         accounts (normally income and expenses) that aren't external flows.
-      transfer_account: A string, the name of an account to use for internalizing entries
-        which need to be split between internal and external flows. A good default value
-        would be an equity account, 'Equity:Internalized' or something like that.
     Returns:
       A pair of the new list of internalized entries, including all the other entries, and
       a short list of just the original entires that were removed and replaced by pairs of
@@ -653,8 +649,8 @@ def compute_returns(entries, transfer_account,
                        entry.flag == flags.FLAG_UNREALIZED)]
 
     # Internalize entries with internal/external flows.
-    entries, internalized_entries = internalize(
-        entries, accounts_assets, accounts_intflows, transfer_account)
+    entries, internalized_entries = internalize(entries, transfer_account,
+                                                accounts_assets, accounts_intflows)
     accounts_assets.add(transfer_account)
 
     # Segment the entries, splitting at entries with external flow and computing

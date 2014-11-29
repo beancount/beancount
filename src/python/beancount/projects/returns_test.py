@@ -567,9 +567,8 @@ class TestReturnsInternalize(cmptest.TestCase):
         accounts_intflows = {'Income:Invest:PnL', 'Income:Invest:Dividends',
                              'Expenses:Commissions', 'Expenses:Fees'}
         new_entries, replaced_entries = returns.internalize(
-            entries,
-            accounts_assets, accounts_intflows,
-            'Equity:Internalized')
+            entries, 'Equity:Internalized',
+            accounts_assets, accounts_intflows)
 
         # Check that the split entry has been replaced.
         self.assertEqualEntries("""
@@ -624,18 +623,16 @@ class TestReturnsInternalize(cmptest.TestCase):
 
         # Check internalizing when including cash accounts.
         new_entries, replaced_entries = returns.internalize(
-            entries,
+            entries, 'Equity:Internalized',
             {'Assets:Invest:Cash', 'Assets:Invest:BOOG'},
-            {'Income:Invest:Dividends'},
-            'Equity:Internalized')
+            {'Income:Invest:Dividends'})
         self.assertEqual([], replaced_entries)
 
         # Check internalizing when excluding cash accounts.
         new_entries, replaced_entries = returns.internalize(
-            entries,
+            entries, 'Equity:Internalized',
             {'Assets:Invest:BOOG'},
-            {'Income:Invest:Dividends'},
-            'Equity:Internalized')
+            {'Income:Invest:Dividends'})
 
         ## FIXME: Allow explicit internalization and uncomment this:
         if 0:
