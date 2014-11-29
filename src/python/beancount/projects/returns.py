@@ -12,22 +12,189 @@ accounts that result in the activity of the portfolio itself.
 
 We consider three sets of accounts:
 
-  "Assets accounts": Accounts whose balances are counted towards calculating the
-    total value of the portfolio. These are asset accounts that match the
-    regular expression pattern.
+  "Assets accounts" or "Value accounts": Accounts whose balances are counted
+    towards calculating the total value of the portfolio. These are asset
+    accounts that match the regular expression pattern.
 
-  "Internal flow accounts": Accounts which are not valued, but which are used to
-    post internal activity of the account. These are income received as a result
-    of the portfolio activity, such as dividends or realized capital gains, and
+  "Internal accounts": Accounts which are not valued, but which are used to post
+    internal activity of the account. These are income received as a result of
+    the portfolio activity, such as dividends or realized capital gains, and
     expenses incurred as a result of carrying out activity related to the
     investment activity, such as commissions and fees. These are income and
     expenses accounts.
 
-  "External flow accounts": Accounts that are considered external to the group
-    of related accounts. These are accounts from which funds will be deposited
-    or withdrawn. These deposits or withdrawals must be excluded from the
-    portfolio returns. Their presence is the reason computing portfolio returns
-    isn't just a trivial exercise!
+  "External accounts": Accounts that are considered external to the group of
+    related accounts. These are accounts from which funds will be deposited or
+    withdrawn. These deposits or withdrawals must be excluded from the portfolio
+    returns. Their presence is the reason computing portfolio returns isn't just
+    a trivial exercise!
+
+Given this characterization, we can characterize transactions by which accounts
+they have on their postings. Think of it as a Venn diagram with three circles
+and all their possible intersections. We will use the following accounts in our
+examples below:
+
+  ;; Value accounts
+  2014-01-01 open Assets:Invest:Cash      USD
+  2014-01-01 open Assets:Invest:BOOG      BOOG
+
+  ;; Internal accounts (non-value)
+  2014-01-01 open Income:Invest:PnL       USD
+  2014-01-01 open Income:Invest:Dividends USD
+  2014-01-01 open Expenses:Commissions    USD
+  2014-01-01 open Expenses:Fees           USD
+
+  ;; External accounts
+  2014-01-01 open Assets:Bank:Checking    USD
+  2014-01-01 open Income:Salary           USD
+  2014-01-01 open Expenses:Taxes          USD
+
+Let us first consider transactions which have at least some value accounts:
+
+  VALUE ONLY: All postings are on value accounts. An example would be some cash
+    converted into units of a stock (with no expenses):
+
+       2014-02-01 * "Buying some BOOG"
+         Assets:Invest:Cash       -650.00 USD
+         Assets:Invest:BOOG            10 BOOG {65 USD}
+
+  VALUE + INTERNAL: Such a transaction would be one where, for example, there is
+    some change that triggers a commission and/or a capital gain:
+
+       2014-02-15 * "Selling half my position"
+         Assets:Invest:BOOG            -5 BOOG {65 USD} @ 70 USD
+         Assets:Invest:Cash        340.05 USD
+         Expenses:Commissions        9.95 USD
+         Income:Invest:PnL         -25.00 USD
+
+     Or the receipt of a dividend:
+
+       2014-02-20 * "Dividends from BOOG position"
+         Assets:Invest:Cash         12.00 USD
+         Income:Invest:Dividends   -12.00 USD
+
+Both of these type of transactions represents transfers within asset accounts
+and as such do not present any challenges or events in terms of calculating the
+returns. Since internal flow accounts are meant to be considered as revenue or
+costs internal to the portofolio, they can just be processed without having to
+revalue the portfolio across them.
+
+
+Other transactions need special treatment , however:
+
+  VALUE + EXTERNAL: These would be tranactions either with a deposit or a
+    withdrawal from/to one of the value accounts:
+
+       2014-01-10 * "Transferring money for investing"
+         Assets:Bank:Checking      -500.00 USD
+         Assets:Invest:Cash         500.00 USD
+
+       2014-06-30 * "Taking some money out for car repairs"
+         Assets:Invest:Cash       -400.00 USD
+         Assets:Bank:Checking      400.00 USD
+
+These transactions require special treatment: We need to compute the value of
+the asset accounts before they get applied, book the returns for the previous
+leg, then apply the transaction to its accounts and revalue the value accounts,
+and begin a new piecewise returns segment.
+
+
+Other transactions are a bit more problematic:
+
+  VALUE + INTERNAL + EXTERNAL: Those transactions with external flows may
+    sometimes involve posting amounts to one of the internal flow accounts:
+
+       2014-04-01 * "Transferring money by wire"
+         Assets:Bank:Checking      -500.00 USD
+         Assets:Invest:Cash         480.00 USD
+         Expenses:Fees               20.00 USD
+
+The question here is whether the postings with interflows should be internalized
+or not, e.g., whether the 20.00 USD wire fee in the transaction above should be
+considered a cost within the portfolio activity or not. We will assume that they
+always are, and in order to keep our algorithm simple, we will internalize the
+postings by splitting the transaction like this:
+
+       2014-04-01 * "Transferring money by wire" ^internalized-27356
+         Assets:Bank:Checking      -500.00 USD
+         Equity:Internalized        500.00 USD
+
+       2014-04-01 * "Transferring money by wire" ^internalized-27356
+         Equity:Internalized       -500.00 USD
+         Assets:Invest:Cash         480.00 USD
+         Expenses:Fees               20.00 USD
+
+Here we have created a new "transfer" account called "Equity:Internalized" which
+is automatically added to the set of value accounts. Now we have two
+transactions, one with only VALUE + EXTERNAL accounts and one with VALUE +
+INTERNAL accounts. The 20$ effectively reduces the returns of the segment that
+includes the second transaction.
+
+
+Then, we turn to other groups that don't include value accounts:
+
+  EXTERNAL ONLY: These are other types of transactions on completely unrelated
+    accounts. We simply ignore other transactions that do not affect our value
+    nor internal flow accounts. Within our limited context above, here is such a
+    transaction:
+
+       2014-01-02 * "Salary Pay"
+         Income:Salary            -3461.54 USD
+         Expenses:Taxes            1176.92 USD
+         Assets:Bank:Checking      2284.62 USD
+
+
+  INTERNAL + EXTERNAL: Then we may have transactions that affect some internal
+    accounts and some external accounts. The treatment for these is less clear.
+    Some internal accounts are clearly tied to our investment portfolio, such as
+    "Income:Invest:Dividends" and others are more general and can be used
+    outside of the context of our investment portfolio, such as "Expenses:Fees"
+    which could be used to book a monthly bank fee, for example, like this:
+
+       2014-03-17 * "Monthly fees"
+         Assets:Bank:Checking        -4.00 USD
+         Expenses:Fees                4.00 USD
+
+    Such a transaction should clearly not be considered as part of our portfolio
+    in any way. The only relation is the common use of the "Expenses:Fees"
+    account between transactions in the portfolio and transactions outside the
+    portfolio. However, consider this transaction where an income account that
+    is clearly associated with our portfolio is used to receive a dividend in an
+    external account:
+
+       2014-03-20 * "Dividend payment correction with fee"
+         Income:Invest:Dividends     -9.00 USD
+         Assets:Bank:Checking         9.00 USD
+
+     This should clearly be included in the portfolio. The problem here is that
+     there is no distinction between an internal flow account tied to this
+     portfolio, such as "Income:Invest:Dividends" and one that is not and which
+     is used widely outside of this context, such as "Expenses:Fees".
+
+     In the context of this example, such transactions never occur. But...
+     consider what would happen if we were attempting to compute the value of
+     the portfolio excepting cash: the "Assets:Invest:Cash" account and a
+     regular dividend contribution becomes one of these transactions:
+
+       2014-03-20 * "Dividend payment"
+         Income:Invest:Dividends     -9.00 USD ;; Internal
+         Assets:Invest:Cash           9.00 USD ;; External
+
+     So we will have to do something about those transactions eventually.
+     For now, we choose to ignore them.
+
+
+  INTERNAL ONLY: Finally, consider this contrived example transaction where a
+    dividend happens to equal exactly some fee:
+
+       2014-03-20 * "Dividend payment with fee"
+         Income:Invest:Dividends     -9.00 USD
+         Expenses:Fees                9.00 USD
+
+     It is unclear whether that should be in the portfolio or not. We have no
+     way to know. In either case, the transaction would have no impact on the
+     value of the portfolio, so we choose to ignore these transactions safely.
+     (Examples of these are rare.)
 
 """
 __author__ = "Martin Blais <blais@furius.ca>"

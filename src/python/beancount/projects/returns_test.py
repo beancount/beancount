@@ -489,62 +489,95 @@ class TestReturnsInternalize(cmptest.TestCase):
     @loader.loaddoc
     def test_internalization(self, entries, errors, _):
         """
-        2014-01-01 open Equity:Somewhere
-        2014-01-01 open Assets:Account1
-        2014-01-01 open Assets:Account2
-        2014-01-01 open Income:Account
-        2014-01-01 open Expenses:Account
-        2014-01-01 open Expenses:External
+        ;; Value accounts
+        2014-01-01 open Assets:Invest:Cash      USD
+        2014-01-01 open Assets:Invest:BOOG      BOOG
 
-        2014-01-01 * "Funding accounts... external flow, with other account"
-          Equity:Somewhere     -10000 USD
-          Assets:Account1       5000 USD
-          Assets:Account2       5000 USD
+        ;; Internal accounts (non-value)
+        2014-01-01 open Income:Invest:PnL       USD
+        2014-01-01 open Income:Invest:Dividends USD
+        2014-01-01 open Expenses:Commissions    USD
+        2014-01-01 open Expenses:Fees           USD
 
-        2014-01-01 * "Internal flows between asset accounts"
-          Assets:Account1       -1000 USD
-          Assets:Account2
+        ;; External accounts
+        2014-01-01 open Assets:Bank:Checking    USD
+        2014-01-01 open Income:Salary           USD
+        2014-01-01 open Expenses:Taxes          USD
 
-        2014-01-01 * "Internal flows between asset and intflows accounts"
-          Income:Account     -1000 USD
-          Expenses:Account      10 USD
-          Assets:Account1
+        2014-01-02 * "Salary Pay"
+          Income:Salary            -3461.54 USD
+          Expenses:Taxes            1176.92 USD
+          Assets:Bank:Checking      2284.62 USD
 
-        2014-01-01 * "Int/ext flows - should be internalized"
-          Income:Account     -100 USD
-          Expenses:External   100 USD
+        2014-01-10 * "Transferring money for investing"
+          Assets:Bank:Checking      -500.00 USD
+          Assets:Invest:Cash         500.00 USD
 
-        2014-01-01 * "Internal flows only"
-          Income:Account       -10 USD
-          Expenses:Account      10 USD
+        2014-02-01 * "Buying some BOOG"
+          Assets:Invest:Cash        -650.00 USD
+          Assets:Invest:BOOG             10 BOOG {65 USD}
 
-        2015-01-01 balance Assets:Account1   4990 USD
-        2015-01-01 balance Assets:Account2   6000 USD
+        2014-02-15 * "Selling half my position"
+          Assets:Invest:BOOG             -5 BOOG {65 USD} @ 70 USD
+          Assets:Invest:Cash         340.05 USD
+          Expenses:Commissions         9.95 USD
+          Income:Invest:PnL          -25.00 USD
+
+        2014-02-20 * "Dividends from BOOG position"
+          Assets:Invest:Cash          12.00 USD
+          Income:Invest:Dividends    -12.00 USD
+
+        2014-03-17 * "Monthly fees"
+          Assets:Bank:Checking        -4.00 USD
+          Expenses:Fees                4.00 USD
+
+        2014-03-20 * "Dividend payment with fee"
+          Income:Invest:Dividends     -9.00 USD
+          Expenses:Fees                9.00 USD
+
+        2014-03-20 * "Dividend payment correction with fee"
+          Income:Invest:Dividends     -9.00 USD
+          Assets:Bank:Checking         9.00 USD
+
+        2014-04-01 * "Transferring money by wire"
+          Assets:Bank:Checking      -500.00 USD
+          Assets:Invest:Cash         480.00 USD
+          Expenses:Fees               20.00 USD
+
+        2014-06-30 * "Taking some money out for car repairs"
+          Assets:Invest:Cash        -400.00 USD
+          Assets:Bank:Checking       400.00 USD
+
+        2015-01-01 balance Assets:Invest:Cash     282.05 USD
+        2015-01-01 balance Assets:Bank:Checking  1689.62 USD
         """
         self.assertFalse(errors)
 
         new_entries, replaced_entries = returns.internalize(
             entries,
-            {'Assets:Account1', 'Assets:Account2'},
-            {'Income:Account', 'Expenses:Account'},
+            {'Assets:Invest:Cash', 'Assets:Invest:BOOG'},
+            {'Income:Invest:PnL', 'Income:Invest:Dividends',
+             'Expenses:Commissions', 'Expenses:Fees'},
             'Equity:Internalized')
 
         # Check that the split entry has been replaced.
         self.assertEqualEntries("""
-        2014-01-01 * "Int/ext flows - should be internalized"
-          Income:Account     -100 USD
-          Expenses:External   100 USD
+        2014-04-01 * "Transferring money by wire"
+          Assets:Bank:Checking      -500.00 USD
+          Assets:Invest:Cash         480.00 USD
+          Expenses:Fees               20.00 USD
         """, replaced_entries)
 
         # Look for the replaced entries and assert them.
         self.assertIncludesEntries("""
-        2014-01-01 R "Int/ext flows - should be internalized" ^internalized-00001
-          Income:Account       -100 USD
-          Equity:Internalized   100 USD
+        2014-04-01 R "Transferring money by wire" ^internalized-00001
+          Assets:Invest:Cash    480.00 USD
+          Expenses:Fees          20.00 USD
+          Equity:Internalized  -500.00 USD
 
-        2014-01-01 R "Int/ext flows - should be internalized" ^internalized-00001
-          Expenses:External     100 USD
-          Equity:Internalized  -100 USD
+        2014-04-01 R "Transferring money by wire" ^internalized-00001
+          Equity:Internalized    500.00 USD
+          Assets:Bank:Checking  -500.00 USD
         """, new_entries)
 
         # Check that the internalized account is present.
