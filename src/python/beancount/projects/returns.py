@@ -299,11 +299,13 @@ def segment_periods(entries, accounts_assets, accounts_intflows,
       date_end: A datetime.date instance, the end date of the period to compute returns
         over.
     Returns:
-      A list of period tuples, each of which contains:
-        period_begin: A datetime.date instance, the first day of the period.
-        period_end: A datetime.date instance, the last day of the period.
-        balance_begin: An Inventory instance, the balance at the beginning of the period.
-        balance_end: An Inventory instance, the balance at the end of the period.
+      A pair of
+        periods: A list of period tuples, each of which contains:
+          period_begin: A datetime.date instance, the first day of the period.
+          period_end: A datetime.date instance, the last day of the period.
+          balance_begin: An Inventory instance, the balance at the beginning of the period.
+          balance_end: An Inventory instance, the balance at the end of the period.
+        portfolio_entries: A list of the entries that we used in computing the portfolio.
     Raises:
       ValueError: If the dates create an impossible situation, the beginning
         must come before the requested end, if specified.
@@ -322,9 +324,10 @@ def segment_periods(entries, accounts_assets, accounts_intflows,
                                                 for posting in entry.postings))
 
     # Create an iterator over the entries we care about.
-    iter_entries = (entry
-                    for entry in entries
-                    if getters.get_entry_accounts(entry) & accounts_assets)
+    portfolio_entries = [entry
+                         for entry in entries
+                         if getters.get_entry_accounts(entry) & accounts_assets]
+    iter_entries = iter(portfolio_entries)
     entry = next(iter_entries)
 
     # If a beginning cut-off has been specified, skip the entries before then
@@ -342,7 +345,7 @@ def segment_periods(entries, accounts_assets, accounts_intflows,
                 entry = next(iter_entries)
         except StopIteration:
             # No periods found! Just return an empty list.
-            return [(date_begin, date_end or date_begin, balance, balance)]
+            return [(date_begin, date_end or date_begin, balance, balance)], []
     else:
         period_begin = entry.date
 
@@ -407,7 +410,7 @@ def segment_periods(entries, accounts_assets, accounts_intflows,
 
         period_begin = period_end
 
-    return periods
+    return periods, portfolio_entries
 
 
 def compute_period_returns(date_begin, date_end,
@@ -657,9 +660,9 @@ def compute_returns(entries, transfer_account,
     # Segment the entries, splitting at entries with external flow and computing
     # the balances before and after. This returns all such periods with the
     # balances at their beginning and end.
-    periods = segment_periods(entries,
-                              accounts_assets, accounts_intflows,
-                              date_begin, date_end)
+    periods, portfolio_entries = segment_periods(entries,
+                                                 accounts_assets, accounts_intflows,
+                                                 date_begin, date_end)
 
     # From the period balances, compute the returns.
     logging.info("Calculating period returns.")

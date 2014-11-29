@@ -5,6 +5,8 @@ beancount: TODO
   - Issue warnings if the price date is too far from the requested market value
     date.
 
+  - Rename "accounts_assets" -> "accounts_value".
+
 
 * Requirements for Shipping 2.0
 ** Establish Display Precision
