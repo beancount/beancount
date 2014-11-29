@@ -147,7 +147,8 @@ class TestReturnsFunctions(test_utils.TestCase):
     def test_find_matching(self):
         matching_entries, (acc_assets,
                            acc_intflows,
-                           acc_extflows) = returns.find_matching(
+                           acc_extflows,
+                           acc_internalize) = returns.find_matching(
                                self.entries, self.acc_types,
                                'Assets:US:Prosper', '(Income|Expenses):')
 
@@ -164,6 +165,9 @@ class TestReturnsFunctions(test_utils.TestCase):
                           'Assets:US:TD:Checking'},
                          acc_extflows)
 
+        self.assertEqual(None,
+                         acc_internalize)
+
     @mock.patch('beancount.projects.returns.compute_returns')
     def test_compute_returns_with_regexp(self, mock_obj):
         returns.compute_returns_with_regexp(self.entries, self.options_map,
@@ -174,10 +178,11 @@ class TestReturnsFunctions(test_utils.TestCase):
 
     def test_compute_returns(self):
         price_map = prices.build_price_map(self.entries)
-        matching_entries, (acc_assets, acc_intflows, _) = returns.find_matching(
+        matching_entries, (acc_assets, acc_intflows, _, _) = returns.find_matching(
             self.entries, self.acc_types, '.*:Prosper', '(Income|Expenses):')
         returns.compute_returns(self.entries, 'Equity:Internalized',
-                                acc_assets, acc_intflows, price_map)
+                                acc_assets, acc_intflows,
+                                price_map=price_map)
 
 
 class TestReturnsPeriods(test_utils.TestCase):
@@ -631,15 +636,14 @@ class TestReturnsInternalize(cmptest.TestCase):
         new_entries, replaced_entries = returns.internalize(
             entries, 'Equity:Internalized',
             {'Assets:Invest:BOOG'},
+            {'Income:Invest:Dividends'},
             {'Income:Invest:Dividends'})
 
-        ## FIXME: Allow explicit internalization and uncomment this:
-        if 0:
-            self.assertEqualEntries("""
-            2014-03-01 * "Dividend"
-              Income:Invest:Dividends     -90.00 USD
-              Assets:Invest:Cash           90.00 USD
-            """, replaced_entries)
+        self.assertEqualEntries("""
+        2014-03-01 * "Dividend"
+          Income:Invest:Dividends     -90.00 USD
+          Assets:Invest:Cash           90.00 USD
+        """, replaced_entries)
 
 
     @loader.loaddoc
@@ -662,15 +666,24 @@ class TestReturnsInternalize(cmptest.TestCase):
         """
         self.assertFalse(errors)
         returns_, dates, internalized_entries = returns.compute_returns(
-            entries, 'Equity:Internalized', {'Assets:Invest:Cash'}, {'Expenses:Fees'})
-        self.assertEqual({'USD': 0.98}, returns_)
-        self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
+            entries, 'Equity:Internalized',
+            {'Assets:Invest:Cash'},
+            {'Expenses:Fees'},
+            None)
 
         # IMPORTANT NOTE: When you internalize, the returns are affected by
         # whether the internalized transaction is added before or after the
         # externalized one, because the fee is taken over one side or the other,
         # and their amounts are of a different magnitude. I'm not sure how best
         # it is to handle this.
+        self.assertEqual({'USD': 0.98}, returns_)
+        self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
+
+    def test_internalization_explicit_fails(self):
+        with self.assertRaises(ValueError):
+            returns.internalize(
+                [], 'Equity:Internalized',
+                {'Assets:Invest:Cash'}, {'Expenses:Fees'}, {'Income:Invest:PnL'})
 
     @loader.loaddoc
     def test_internalization_explicit_returns(self, entries, errors, _):
@@ -691,18 +704,18 @@ class TestReturnsInternalize(cmptest.TestCase):
         """
         self.assertFalse(errors)
         returns_, dates, internalized_entries = returns.compute_returns(
-            entries, 'Equity:Internalized', {'Assets:Invest:Cash'}, {'Expenses:Fees'})
-        print(returns_)
-
-        ## FIXME: Allow explicit internalization and uncomment this:
-        if 0:
-            self.assertEqual({'USD': 1.1}, returns_)
-            self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
+            entries, 'Equity:Internalized',
+            {'Assets:Invest:Cash'},
+            {'Income:Invest:Dividends', 'Expenses:Fees'},
+            {'Income:Invest:Dividends'})
+        self.assertEqual({'USD': 1.1}, returns_)
+        self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
 
     @loader.loaddoc
     def test_internalization_explicit_returns_bycash(self, entries, errors, _):
         """
         2014-01-01 open Assets:Bank:Checking     USD
+        2014-01-01 open Assets:Invest:BOOG       BOOG
         2014-01-01 open Assets:Invest:Cash       USD
         2014-01-01 open Income:Invest:Dividends  USD
 
@@ -710,21 +723,25 @@ class TestReturnsInternalize(cmptest.TestCase):
           Assets:Bank:Checking      -1000.00 USD
           Assets:Invest:Cash         1000.00 USD
 
+        2014-01-10 * "Buying"
+          Assets:Invest:Cash       -500.00 USD
+          Assets:Invest:BOOG            50 BOOG {10.00 USD}
+
         2014-04-01 * "Dividends"
           Assets:Invest:Cash         100.00 USD
           Income:Invest:Dividends   -100.00 USD
 
-        2015-01-01 balance Assets:Invest:Cash     1100.00 USD
+        2015-01-01 balance Assets:Invest:Cash     600.00 USD
+        2015-01-01 balance Assets:Invest:BOOG         50 BOOG
         """
         self.assertFalse(errors)
         returns_, dates, internalized_entries = returns.compute_returns(
-            entries, 'Equity:Internalized', {'Assets:Invest:Cash'}, {'Expenses:Fees'})
-        print(returns_)
-
-        ## FIXME: Allow explicit internalization and uncomment this:
-        if 0:
-            self.assertEqual({'USD': 1.1}, returns_)
-            self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
+            entries, 'Equity:Internalized',
+            {'Assets:Invest:BOOG'},
+            {'Income:Invest:Dividends'},
+            {'Income:Invest:Dividends'})
+        self.assertEqual({'USD': 1.2}, returns_)
+        self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
 
 
 class TestReturnsExampleScript(test_utils.TestCase):

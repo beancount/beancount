@@ -73,7 +73,7 @@ def main():
             total_returns, dates, int_entries = returns.compute_returns_with_regexp(
                 entries, options_map, 'Assets:Internalized',
                 assets_regexp, intflows_regexp,
-                date_begin, date_end)
+                date_begin=date_begin, date_end=date_end)
 
             # Annualize the returns for the period.
             annual_returns = returns.annualize_returns(total_returns, date_begin, date_end)

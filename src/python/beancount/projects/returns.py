@@ -180,8 +180,11 @@ Then, we turn to other groups that don't include value accounts:
          Income:Invest:Dividends     -9.00 USD ;; Internal
          Assets:Invest:Cash           9.00 USD ;; External
 
-     So we will have to do something about those transactions eventually.
-     For now, we choose to ignore them.
+     So we will have to do something about those transactions: we provide the
+     user with the ability to specify a list of accounts that will force
+     internalization ("accounts_internalize"). When specified, transactions with
+     no value accounts but with some postings matching one of these accounts
+     will be internalized explicitly.
 
 
   INTERNAL ONLY: Finally, consider this contrived example transaction where a
@@ -217,49 +220,6 @@ from beancount.core import getters
 from beancount.core import flags
 from beancount.ops import prices
 from beancount.utils import misc_utils
-
-
-def find_matching(entries, acc_types, assets_regexp, intflows_regexp):
-    """Match entries and identify account groups.
-
-    Args:
-      entries: A list of directives.
-      acc_types: An instance of account_types.AccountTypes
-      assets_regexp: A regular expression string that matches names of asset accounts to
-        value for the portfolio.
-      intflows_regexp: A regular expression string that matches names of accounts considered
-        internal flows to the portfolio (typically income and expenses accounts).
-    Returns:
-      A list of all entries with an account matching the given pattern, and a
-      triplet of account lists:
-        accounts_assets: A set of the asset accounts in the related group.
-        accounts_intflows: A set of the internal flow accounts in the related group.
-        accounts_extflows: A set of the external flow accounts.
-    """
-    accounts_assets = set()
-    accounts_intflows = set()
-    accounts_extflows = set()
-    assets_match = re.compile(assets_regexp).match
-    intflows_match = re.compile(intflows_regexp).match
-
-    matching_entries = []
-    for entry in entries:
-        if not isinstance(entry, data.Transaction):
-            continue
-        if any(assets_match(posting.account) for posting in entry.postings):
-            matching_entries.append(entry)
-
-            for posting in entry.postings:
-                if assets_match(posting.account):
-                    accounts_assets.add(posting.account)
-                elif intflows_match(posting.account):
-                    accounts_intflows.add(posting.account)
-                else:
-                    accounts_extflows.add(posting.account)
-
-    return (matching_entries, (accounts_assets,
-                               accounts_intflows,
-                               accounts_extflows))
 
 
 def sum_balances_for_accounts(balance, entry, accounts):
@@ -501,7 +461,7 @@ LINK_FORMAT = 'internalized-{:05d}'
 
 
 def internalize(entries, transfer_account,
-                accounts_assets, accounts_intflows):
+                accounts_assets, accounts_intflows, accounts_internalize=None):
     """Internalize internal flows that would be lost because booked against external
     flow accounts. This splits up entries that have accounts both in internal
     flows and external flows. A new set of entries are returned, along with a
@@ -516,10 +476,18 @@ def internalize(entries, transfer_account,
         included in valuing the portfolio.
       accounts_intflows: A set of account name strings, the names of internal flow
         accounts (normally income and expenses) that aren't external flows.
+      accounts_internalize: A set of account name strings to trigger explicit
+        internalization of transactions with no value account. If a transaction
+        is found that has only internal accounts and external accounts, the
+        postings whose accounts are in this set of accounts will be internalize.
+        This is a method that can be used to pull dividends in the portfolio
+        when valueing portfolios without their cash component. See docstring and
+        documentation for details. If specific, this set of accounts must be a
+        subset of the internal flows accounts.
     Returns:
       A pair of the new list of internalized entries, including all the other entries, and
       a short list of just the original entires that were removed and replaced by pairs of
-      enitres.
+      entries.
     """
     # Verify that external flow entries only affect balance sheet accounts and
     # not income or expenses accounts (internal flows). We do this because we
@@ -533,6 +501,10 @@ def internalize(entries, transfer_account,
     assert(isinstance(transfer_account, str)), (
         "Invalid transfer account: {}".format(transfer_account))
 
+    if accounts_internalize and not (accounts_internalize <= accounts_intflows):
+        raise ValueError(
+            "Internalization accounts is not a subset of internal flows accounts.")
+
     new_entries = []
     replaced_entries = []
     index = 1
@@ -545,6 +517,7 @@ def internalize(entries, transfer_account,
         postings_assets = []
         postings_intflows = []
         postings_extflows = []
+        postings_internalize = []
         for posting in entry.postings:
             if posting.account in accounts_assets:
                 postings_list = postings_assets
@@ -554,9 +527,14 @@ def internalize(entries, transfer_account,
                 postings_list = postings_extflows
             postings_list.append(posting)
 
+            if accounts_internalize and posting.account in accounts_internalize:
+                postings_internalize.append(posting)
+
         # Check if the entry is to be internalized and split it up in two
         # entries and replace the entrie if that's the case.
-        if postings_assets and postings_intflows and postings_extflows:
+        if (postings_intflows and postings_extflows and
+            (postings_assets or postings_internalize)):
+
             replaced_entries.append(entry)
 
             # We will attach a link to each of the split entries.
@@ -605,7 +583,7 @@ def internalize(entries, transfer_account,
 
 
 def compute_returns(entries, transfer_account,
-                    accounts_assets, accounts_intflows,
+                    accounts_assets, accounts_intflows, accounts_internalize=None,
                     price_map=None,
                     date_begin=None, date_end=None):
 
@@ -620,6 +598,8 @@ def compute_returns(entries, transfer_account,
         included in valuing the portfolio.
       accounts_intflows: A set of account name strings, the names of internal flow
         accounts (normally income and expenses) that aren't external flows.
+      accounts_internalize: A set of account name strings used to force internalization.
+        See internalize() for details.
       price_map: An instance of PriceMap as computed by prices.build_price_map(). If left
         to its default value of None, we derive the price_map from the entries themselves.
       date_begin: A datetime.date instance, the beginning date of the period to compute
@@ -649,8 +629,9 @@ def compute_returns(entries, transfer_account,
                        entry.flag == flags.FLAG_UNREALIZED)]
 
     # Internalize entries with internal/external flows.
-    entries, internalized_entries = internalize(entries, transfer_account,
-                                                accounts_assets, accounts_intflows)
+    entries, internalized_entries = internalize(
+        entries, transfer_account,
+        accounts_assets, accounts_intflows, accounts_internalize)
     accounts_assets.add(transfer_account)
 
     # Segment the entries, splitting at entries with external flow and computing
@@ -702,8 +683,63 @@ def compute_returns(entries, transfer_account,
     return total_returns, (date_first, date_last), internalized_entries
 
 
+def find_matching(entries, acc_types,
+                  assets_regexp, intflows_regexp, internalize_regexp=None):
+    """Match entries and identify account groups.
+
+    Args:
+      entries: A list of directives.
+      acc_types: An instance of account_types.AccountTypes
+      assets_regexp: A regular expression string that matches names of asset accounts to
+        value for the portfolio.
+      intflows_regexp: A regular expression string that matches names of accounts considered
+        internal flows to the portfolio (typically income and expenses accounts).
+      internalize_regexp: A regular expression string that matches names of accounts
+        to force internalization of. See internalize() for details.
+    Returns:
+      A list of all entries with an account matching the given pattern, and a
+      triplet of account lists:
+        accounts_assets: A set of the asset accounts in the related group.
+        accounts_intflows: A set of the internal flow accounts in the related group.
+        accounts_extflows: A set of the external flow accounts.
+        accounts_internalize: A set of the explicitly internalized accounts, or None,
+          if left unspecified.
+    """
+    accounts_assets = set()
+    accounts_intflows = set()
+    accounts_extflows = set()
+    accounts_internalize = set()
+    assets_match = re.compile(assets_regexp).match
+    intflows_match = re.compile(intflows_regexp).match
+    internalize_match = re.compile(internalize_regexp).match if internalize_regexp else None
+
+    matching_entries = []
+    for entry in entries:
+        if not isinstance(entry, data.Transaction):
+            continue
+        if any(assets_match(posting.account) for posting in entry.postings):
+            matching_entries.append(entry)
+
+            for posting in entry.postings:
+                if assets_match(posting.account):
+                    accounts_assets.add(posting.account)
+                elif intflows_match(posting.account):
+                    accounts_intflows.add(posting.account)
+                else:
+                    accounts_extflows.add(posting.account)
+
+                if internalize_match and internalize_match(posting.account):
+                    accounts_internalize.add(posting.account)
+
+    return (matching_entries, (accounts_assets,
+                               accounts_intflows,
+                               accounts_extflows,
+                               accounts_internalize or None))
+
+
 def compute_returns_with_regexp(entries, options_map,
-                                transfer_account, assets_regexp, intflows_regexp,
+                                transfer_account,
+                                assets_regexp, intflows_regexp, internalize_regexp=None,
                                 date_begin=None, date_end=None):
     """Compute the returns of a portfolio of accounts defined by a regular expression.
 
@@ -716,13 +752,14 @@ def compute_returns_with_regexp(entries, options_map,
         value for the portfolio.
       intflows_regexp: A regular expression string that matches names of accounts considered
         internal flows to the portfolio (typically income and expenses accounts).
+      internalize_regexp: A regular expression string that matches names of accounts
+        to force internalization of. See internalize() for details.
       date_begin: A datetime.date instance, the beginning date of the period to compute
         returns over.
       date_end: A datetime.date instance, the end date of the period to compute returns
         over.
     Returns:
       See compute_returns().
-
     """
     acc_types = options.get_account_types(options_map)
     price_map = prices.build_price_map(entries)
@@ -730,8 +767,11 @@ def compute_returns_with_regexp(entries, options_map,
     # Fetch the matching entries and figure out account name groups.
     matching_entries, (accounts_assets,
                        accounts_intflows,
-                       accounts_extflows) = find_matching(entries, acc_types,
-                                                          assets_regexp, intflows_regexp)
+                       accounts_extflows,
+                       accounts_internalize) = find_matching(entries, acc_types,
+                                                             assets_regexp,
+                                                             intflows_regexp,
+                                                             internalize_regexp)
 
     logging.info('Asset accounts:')
     for account in sorted(accounts_assets):
@@ -746,8 +786,14 @@ def compute_returns_with_regexp(entries, options_map,
         logging.info('  %s', account)
     logging.info('')
 
+    if accounts_internalize:
+        logging.info('Explicitly internalized accounts:')
+        for account in sorted(accounts_internalize):
+            logging.info('  %s', account)
+        logging.info('')
+
     return compute_returns(entries, transfer_account,
-                           accounts_assets, accounts_intflows,
+                           accounts_assets, accounts_intflows, accounts_internalize,
                            price_map,
                            date_begin, date_end)
 
