@@ -487,7 +487,7 @@ class TestReturnsInternalize(cmptest.TestCase):
 
     # Check internalization of all transaction categories.
     @loader.loaddoc
-    def test_internalization(self, entries, errors, _):
+    def test_internalization_implicit(self, entries, errors, _):
         """
         ;; Value accounts
         2014-01-01 open Assets:Invest:Cash      USD
@@ -618,7 +618,6 @@ class TestReturnsInternalize(cmptest.TestCase):
         2015-01-01 balance Assets:Invest:BOOG         10 BOOG
         2015-01-01 balance Assets:Invest:Cash      90.00 USD
         """
-        printer.print_errors(errors)
         self.assertFalse(errors)
 
         # Check internalizing when including cash accounts.
@@ -643,151 +642,89 @@ class TestReturnsInternalize(cmptest.TestCase):
             """, replaced_entries)
 
 
+    @loader.loaddoc
+    def test_internalization_implicit_returns(self, entries, errors, _):
+        """
+        2014-01-01 open Assets:Bank:Checking    USD
+        2014-01-01 open Assets:Invest:Cash      USD
+        2014-01-01 open Expenses:Fees           USD
 
+        2014-01-10 * "Transferring money for investing"
+          Assets:Bank:Checking      -1000.00 USD
+          Assets:Invest:Cash         1000.00 USD
 
+        2014-04-01 * "Transferring money by wire"
+          Assets:Bank:Checking      -500.00 USD
+          Assets:Invest:Cash         480.00 USD
+          Expenses:Fees               20.00 USD
 
-    # FIXME: Compute returns with regular case.
-    # FIXME: Compute returns with explicitly forced case.
+        2015-01-01 balance Assets:Invest:Cash     1480.00 USD
+        """
+        self.assertFalse(errors)
+        returns_, dates, internalized_entries = returns.compute_returns(
+            entries, 'Equity:Internalized', {'Assets:Invest:Cash'}, {'Expenses:Fees'})
+        self.assertEqual({'USD': 0.98}, returns_)
+        self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
 
+        # IMPORTANT NOTE: When you internalize, the returns are affected by
+        # whether the internalized transaction is added before or after the
+        # externalized one, because the fee is taken over one side or the other,
+        # and their amounts are of a different magnitude. I'm not sure how best
+        # it is to handle this.
 
-    # # Demonstrate internalization by ignoring cash accounts by explicitly
-    # # building entries without the need internalization, i.e., we internalize
-    # # manually.
-    # @loader.loaddoc
-    # def test_explicit_solution(self, entries, errors, options_map):
-    #     """
-    #     2014-01-01 open Assets:US:Investments:ACME
-    #     2014-01-01 open Assets:US:Investments:Cash
-    #     2014-01-01 open Assets:US:Bank:Checking
-    #     2014-01-01 open Income:US:Investments:Dividends
-    #     2014-01-01 open Equity:Internalized
+    @loader.loaddoc
+    def test_internalization_explicit_returns(self, entries, errors, _):
+        """
+        2014-01-01 open Assets:Bank:Checking     USD
+        2014-01-01 open Assets:Invest:Cash       USD
+        2014-01-01 open Income:Invest:Dividends  USD
 
-    #     2014-01-01 * "Deposit"
-    #       Assets:US:Investments:Cash       10000 USD
-    #       Assets:US:Bank:Checking
+        2014-01-10 * "Transferring money for investing"
+          Assets:Bank:Checking      -1000.00 USD
+          Assets:Invest:Cash         1000.00 USD
 
-    #     2014-01-01 * "Buy"
-    #       Assets:US:Investments:ACME       5 ACME {20.00 USD}
-    #       Assets:US:Investments:Cash
+        2014-04-01 * "Dividends paid outside the account"
+          Assets:Bank:Checking       100.00 USD
+          Income:Invest:Dividends   -100.00 USD
 
-    #     2014-06-01 * "Dividend from ACME"
-    #       Income:US:Investments:Dividends -300 USD
-    #       Equity:Internalized
+        2015-01-01 balance Assets:Invest:Cash     1000.00 USD
+        """
+        self.assertFalse(errors)
+        returns_, dates, internalized_entries = returns.compute_returns(
+            entries, 'Equity:Internalized', {'Assets:Invest:Cash'}, {'Expenses:Fees'})
+        print(returns_)
 
-    #     2014-06-01 * "Dividend (Internalized)"
-    #       Equity:Internalized             -300 USD
-    #       Assets:US:Investments:Cash
+        ## FIXME: Allow explicit internalization and uncomment this:
+        if 0:
+            self.assertEqual({'USD': 1.1}, returns_)
+            self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
 
-    #     2015-01-01 price ACME            26.00 USD
+    @loader.loaddoc
+    def test_internalization_explicit_returns_bycash(self, entries, errors, _):
+        """
+        2014-01-01 open Assets:Bank:Checking     USD
+        2014-01-01 open Assets:Invest:Cash       USD
+        2014-01-01 open Income:Invest:Dividends  USD
 
-    #     2015-01-01 balance Assets:US:Investments:Cash  10200 USD
-    #     2015-01-01 balance Assets:US:Investments:ACME  5 ACME
-    #     """
-    #     self.assertFalse(errors)
-    #     self.compute_and_check_returns(entries, [])
+        2014-01-10 * "Transferring money for investing"
+          Assets:Bank:Checking      -1000.00 USD
+          Assets:Invest:Cash         1000.00 USD
 
-    # # Check internalization by ignoring cash accounts.
-    # @loader.loaddoc
-    # def test_implicit_solution(self, entries, errors, _):
-    #     """
-    #     2014-01-01 open Assets:US:Investments:ACME
-    #     2014-01-01 open Assets:US:Investments:Cash
-    #     2014-01-01 open Assets:US:Bank:Checking
-    #     2014-01-01 open Income:US:Investments:Dividends
+        2014-04-01 * "Dividends"
+          Assets:Invest:Cash         100.00 USD
+          Income:Invest:Dividends   -100.00 USD
 
-    #     2014-01-01 * "Deposit"
-    #       Assets:US:Investments:Cash       10000 USD
-    #       Assets:US:Bank:Checking
+        2015-01-01 balance Assets:Invest:Cash     1100.00 USD
+        """
+        self.assertFalse(errors)
+        returns_, dates, internalized_entries = returns.compute_returns(
+            entries, 'Equity:Internalized', {'Assets:Invest:Cash'}, {'Expenses:Fees'})
+        print(returns_)
 
-    #     2014-01-01 * "Buy"
-    #       Assets:US:Investments:ACME       5 ACME {20.00 USD}
-    #       Assets:US:Investments:Cash
-
-    #     2014-06-01 * "Dividend from ACME"
-    #       Income:US:Investments:Dividends -300 USD
-    #       Assets:US:Investments:Cash
-
-    #     2015-01-01 price ACME            26.00 USD
-
-    #     2015-01-01 balance Assets:US:Investments:Cash  10200 USD
-    #     2015-01-01 balance Assets:US:Investments:ACME  5 ACME
-    #     """
-    #     self.assertFalse(errors)
-    #     self.compute_and_check_returns(entries, """
-    #         2014-06-01 * "Dividend from ACME"
-    #           Income:US:Investments:Dividends -300 USD
-    #           Assets:US:Investments:Cash
-    #     """)
-
-    # def compute_and_check_returns(self, entries, expected_internalized):
-    #     # Compute the returns including cash in the account. This should return
-    #     # the same as the first case in the previous example.
-    #     assets = {'Assets:US:Investments:ACME', 'Assets:US:Investments:Cash'}
-    #     intflows = {'Income:US:Investments:Dividends'}
-    #     returns_with_cash, dates, internalized_entries = returns.compute_returns(
-    #         entries, 'Equity:Internalized', assets, intflows)
-    #     self.assertEqual({'USD': 1.033}, returns_with_cash)
-    #     self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
-
-    #     # Compute the returns excluding cash in the account.
-    #     #
-    #     # Now this should correctly reflect the impact of the large dividend when not
-    #     # considering the cash account.
-    #     assets = {'Assets:US:Investments:ACME'}
-    #     returns_no_cash, dates, internalized_entries = returns.compute_returns(
-    #         entries, 'Equity:Internalized', assets, intflows)
-    #     self.assertEqual({'USD': 5.200}, returns_no_cash)
-    #     self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
-
-    #     if expected_internalized:
-    #         self.assertEqualEntries(expected_internalized, internalized_entries)
-
-
-    # # Check internalization against an obvious case of internal + external
-    # # flows, not with an example ignoring cash (though it's the same thing,
-    # # really).
-    # @loader.loaddoc
-    # def test_non_cash_mixed(self, entries, errors, _):
-    #     """
-    #     2014-01-01 open Assets:US:Investments:ACME
-    #     2014-01-01 open Assets:US:Investments:Cash
-    #     2014-01-01 open Assets:US:Bank:Checking
-    #     2014-01-01 open Income:US:Investments:Dividends
-
-    #     2014-01-01 * "Deposit"
-    #       Assets:US:Investments:Cash       10000 USD
-    #       Assets:US:Bank:Checking
-
-    #     2014-01-01 * "Buy"
-    #       Assets:US:Investments:ACME       5 ACME {20.00 USD}
-    #       Assets:US:Investments:Cash
-
-    #     2014-06-01 * "Dividend from ACME paid outside"
-    #       Income:US:Investments:Dividends -300 USD
-    #       Assets:US:Bank:Checking
-
-    #     2015-01-01 price ACME            26.00 USD
-
-    #     2015-01-01 balance Assets:US:Investments:Cash  9900 USD
-    #     2015-01-01 balance Assets:US:Investments:ACME  5 ACME
-    #     """
-    #     self.assertFalse(errors)
-
-    #     assets = {'Assets:US:Investments:ACME', 'Assets:US:Investments:Cash'}
-    #     intflows = {'Income:US:Investments:Dividends'}
-    #     returns_with_cash, dates, internalized_entries = returns.compute_returns(
-    #         entries, 'Equity:Internalized', assets, intflows)
-
-    #     self.assertEqual({'USD': 1.0330899999999998}, returns_with_cash)
-    #     self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
-
-    #     self.assertEqualEntries("""
-
-    #     2014-06-01 * "Dividend from ACME paid outside"
-    #       Income:US:Investments:Dividends -300 USD
-    #       Assets:US:Bank:Checking
-
-    #     """, internalized_entries)
+        ## FIXME: Allow explicit internalization and uncomment this:
+        if 0:
+            self.assertEqual({'USD': 1.1}, returns_)
+            self.assertEqual((datetime.date(2014, 1, 1), datetime.date(2015, 1, 1)), dates)
 
 
 class TestReturnsExampleScript(test_utils.TestCase):
