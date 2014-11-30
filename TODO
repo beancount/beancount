@@ -82,6 +82,12 @@ beancount: TODO
     a lint check that ensures the non-test files are never importing any of othe
     test files.
 
+  - USEFUL. Issue warnings if the price date is too far from the requested
+    market value date. This will help with returns, a lot. You should likely do
+    this in the price_map object, in the lookup function, maybe, so that all
+    modules benefit from the feature. You could ideally provide a date and a
+    tolerancen, and somehow issue warnings automatically.
+
 
 ** Documentation / Ongoing
 

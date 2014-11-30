@@ -11,7 +11,6 @@ import re
 from os import path
 
 from beancount.core.amount import ZERO
-from beancount.core.amount import Decimal
 from beancount.core.amount import Amount
 from beancount.core.amount import amount_div
 from beancount.core import display_context
@@ -38,7 +37,6 @@ from beancount.parser import lexer
 from beancount.parser import options
 from beancount.core import account
 from beancount.core import data
-from beancount.utils import misc_utils
 
 
 __sanity_checks__ = False
@@ -654,7 +652,7 @@ class Builder(lexer.LexBuilder):
         # Merge the tags from the stack with the explicit tags of this
         # transaction, or make None.
         tags = txn_fields.tags
-        assert isinstance(tags, set)
+        assert isinstance(tags, (set, frozenset))
         if self.tags:
             tags.update(self.tags)
         tags = frozenset(tags) if tags else None

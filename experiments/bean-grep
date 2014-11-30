@@ -11,7 +11,7 @@ from beancount.core import data
 
 def main():
     import argparse
-    optparser = argparse.ArgumentParser(__doc__)
+    optparser = argparse.ArgumentParser(description=__doc__)
     optparser.add_argument('filename', help='Filename.')
 
     optparser.add_argument('-q', '--quiet', action='store_true',

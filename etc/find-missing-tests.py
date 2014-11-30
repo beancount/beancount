@@ -50,7 +50,7 @@ def is_complete(filename):
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(__doc__.strip())
+    parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('source_root', action='store')
     opts = parser.parse_args()
 
