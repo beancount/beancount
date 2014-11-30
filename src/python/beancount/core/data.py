@@ -33,15 +33,26 @@ def new_directive(clsname, fields):
 # All possible types of entries. These are the main data structrues in use
 # within the program. They are all treated as immutable.
 #
-# Common Attributes:
+# Common Attributes (prepended to declared list):
 #   source: A Source instance, denotes where the directive was parsed from.
 #   date: A datetime.date instance; all directives have an associated date. Note:
 #     Beancount does not consider time, only dates. The line where the directive
 #     shows up in the file is used as a secondary sort key beyond the date.
+#
+# Common Attributes (appended to declared list):
+#   metadata: A dict of strings to objects, potentially attached to each of the
+#     directive types. The values may be strings, account names, tags, dates,
+#     numbers, amounts and currencies.
+#
+# All the directives created via new_directive() below are prepended the 'source'
+# and 'date' attributes and appended the 'metadata' attributes.
+
 
 # An "open account" directive.
 #
 # Attributes:
+#   source: See above.
+#   date: See above.
 #   account: A string, the name of the account that is being opened.
 #   currencies: A list of strings, currencies that are allowed in this account.
 #     May be None, in which case it means that there are no restrictions on which
@@ -51,6 +62,7 @@ def new_directive(clsname, fields):
 #     None if not specified. In practice, this attribute will be should be left
 #     unspecified (None) in the vast majority of cases. See BOOKING_METHODS for
 #     valid attribute values when set.
+#   metadata: See above.
 Open = new_directive('Open', 'account currencies booking')
 
 # A set of valid booking method names for positions on accounts.
@@ -71,9 +83,12 @@ Close = new_directive('Close', 'account')
 # in case you need it, while you're enterering past history into your Ledger.
 #
 # Attributes:
+#   source: See above.
+#   date: See above.
 #   account: A string, the name of the account which needs to be filled.
 #   source_account: A string, the anem of the account which is used to debit from
 #     in order to fill 'account'.
+#   metadata: See above.
 Pad = new_directive('Pad', 'account source_account')
 
 # A "check the balance of this account" directive. This directive asserts that
@@ -84,11 +99,14 @@ Pad = new_directive('Pad', 'account source_account')
 # transactions correctly.
 #
 # Attributes:
+#   source: See above.
+#   date: See above.
 #   account: A string, the account whose balance to check at the given date.
 #   amount: An Amount, the number of units of the given currency you're
 #     expecting 'account' to have at this date.
 #   diff_amount: None if the balance check succeeds. This value is set to
 #     an Amount instance if the balance fails, the amount of the difference.
+#   metadata: See above.
 Balance = new_directive('Balance', 'account amount diff_amount')
 
 # A transaction! This is the main type of object that we manipulate, and the
@@ -96,6 +114,8 @@ Balance = new_directive('Balance', 'account amount diff_amount')
 # representing these types of structures with a spreadsheet is difficult.
 #
 # Attributes:
+#   source: See above.
+#   date: See above.
 #   flag: A single-character string or None. This user-specified string
 #     represents some custom/user-defined state of the transaction. You can use
 #     this for various purposes. Otherwise common, pre-defined flags are defined
@@ -108,6 +128,7 @@ Balance = new_directive('Balance', 'account amount diff_amount')
 #   links: A set of link strings (without the '^'), or None, if an empty set.
 #   postings: A list of Posting instances, the legs of this transaction. See the
 #     doc under Posting below.
+#   metadata: See above.
 Transaction = new_directive('Transaction',
                             'flag payee narration tags links postings')
 
@@ -119,10 +140,13 @@ Transaction = new_directive('Transaction',
 # file, which does not get parsed and stored.
 #
 # Attributes:
+#   source: See above.
+#   date: See above.
 #   account: A string, the account which the note is to be attached to. This is
 #     never None, notes always have an account they correspond to.
 #   comment: A free-form string, the text of the note. This can be logn if you
 #     want it to.
+#   metadata: See above.
 Note = new_directive('Note', 'account comment')
 
 # An "event value change" directive. These directives are used as string
@@ -146,10 +170,13 @@ Note = new_directive('Note', 'account comment')
 # in the same input file.
 #
 # Attributes:
+#   source: See above.
+#   date: See above.
 #   type: A short string, typically a single lowercase word, that defines a
 #     unique variable whose value changes over time. For example, 'location'.
 #   description: A free-form string, the value of the variable as of the date
 #     of the transaction.
+#   metadata: See above.
 Event = new_directive('Event', 'type description')
 
 # A price declaration directive. This establishes the price of a currency in
@@ -162,9 +189,12 @@ Event = new_directive('Event', 'type description')
 # trading system, you should probably use something else).
 #
 # Attributes:
+#   source: See above.
+#   date: See above.
 #  currency: A string, the currency that is being priced, e.g. GOOG.
 #  amount: An instance of Amount, the number of units and currency that
 #    'currency' is worth, for instance 1200.12 USD.
+#   metadata: See above.
 Price = new_directive('Price', 'currency amount')
 
 # A document file declaration directive. This directive is used to attach a
@@ -178,9 +208,12 @@ Price = new_directive('Price', 'currency amount')
 # on the file hierarchy, and you can get them by parsing the list of entries.
 #
 # Attributes:
+#   source: See above.
+#   date: See above.
 #   account: A string, the accountwhich the statement or document is associated
 #     with.
 #   filename: The absolute filename of the document file.
+#   metadata: See above.
 Document = new_directive('Document', 'account filename')
 
 
@@ -208,9 +241,6 @@ Source = namedtuple('Source', 'filename lineno')
 # entry field should be set to.
 #
 # Attributes:
-#   metadata: A dict of strings to values, the metadata that was attached
-#     specifically to that posting, or None, if not provided. In practice, most
-#     of the instances will be unlikely to have metadata.
 #   entry: A Transaction instance (see above), which the posting applies to.
 #     It is convenient to have Posting instances point to their parent entries,
 #     because account journals contain lists of Postings and non-Transaction
@@ -228,6 +258,9 @@ Source = namedtuple('Source', 'filename lineno')
 #     associated with the posting. Most postings don't have a flag, but it can
 #     be convenient to mark a particular posting as problematic or pending to
 #     be reconciled for a future import of its account.
+#   metadata: A dict of strings to values, the metadata that was attached
+#     specifically to that posting, or None, if not provided. In practice, most
+#     of the instances will be unlikely to have metadata.
 Posting = namedtuple('Posting', 'entry account position price flag metadata')
 
 
