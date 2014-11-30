@@ -635,13 +635,24 @@ class Builder(lexer.LexBuilder):
                     last_posting = posting_or_kv
                 else:
                     if last_posting is None:
-                        entry_metadata[posting_or_kv.key] = posting_or_kv.value
+                        value = entry_metadata.setdefault(posting_or_kv.key,
+                                                          posting_or_kv.value)
+                        if value is not posting_or_kv.value:
+                            self.errors.append(ParserError(
+                                source, "Duplicate metadata field on entry: {}".format(
+                                    posting_or_kv), None))
                     else:
                         if last_posting.metadata is None:
                             last_posting = last_posting._replace(metadata={})
                             postings.pop(-1)
                             postings.append(last_posting)
-                        last_posting.metadata[posting_or_kv.key] = posting_or_kv.value
+
+                        value = last_posting.metadata.setdefault(posting_or_kv.key,
+                                                                 posting_or_kv.value)
+                        if value is not posting_or_kv.value:
+                            self.errors.append(ParserError(
+                                source, "Duplicate posting metadata field: {}".format(
+                                    posting_or_kv), None))
 
         # Unpack the transaction fields.
         payee_narration = self.unpack_txn_strings(txn_fields, source)

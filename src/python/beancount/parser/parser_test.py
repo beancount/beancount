@@ -6,6 +6,7 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import unittest
 import inspect
 import tempfile
+import re
 import sys
 import subprocess
 
@@ -772,9 +773,17 @@ class TestMetaData(unittest.TestCase):
             test: "Bananas"
             test: "Apples"
             test: "Oranges"
+            Assets:Investments   100 USD
+              test: "Bananas"
+              test: "Apples"
+            Income:Investments  -100 USD
         """
         self.assertEqual(1, len(entries))
-        self.assertEqual({'test': 'Oranges'}, entries[0].metadata)
+        self.assertEqual({'test': 'Bananas'}, entries[0].metadata)
+        self.assertEqual({'test': 'Bananas'}, entries[0].postings[0].metadata)
+        self.assertEqual(3, len(errors))
+        self.assertTrue(all(re.search('Duplicate.*metadata field', error.message)
+                            for error in errors))
 
     @parsedoc
     def test_metadata_empty(self, entries, errors, _):
