@@ -47,6 +47,7 @@ def new_directive(clsname, fields):
 # All the directives created via new_directive() below are prepended the 'source'
 # and 'date' attributes and appended the 'metadata' attributes.
 
+# pylint: disable=invalid-name
 
 # An "open account" directive.
 #

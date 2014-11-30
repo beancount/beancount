@@ -36,7 +36,7 @@ def do_lex(filename, unused_args):
         sys.stdout.write('{:12} {:6d} {}\n'.format(
             '(None)' if token is None else token, lineno, repr(text)))
 
-do_dump_lexer = do_lex
+do_dump_lexer = do_lex  # pylint: disable=invalid-name
 
 
 def do_parse(filename, unused_args):

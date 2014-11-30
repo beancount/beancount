@@ -214,7 +214,6 @@ from beancount import loader
 from beancount.parser import printer
 from beancount.parser import options
 from beancount.core import data
-from beancount.core import account_types
 from beancount.core import inventory
 from beancount.core import getters
 from beancount.core import flags
