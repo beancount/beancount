@@ -9,7 +9,6 @@ import textwrap
 
 from beancount.core import account_types
 from beancount.core import account
-from beancount.core import amount
 from beancount.core import display_context
 
 

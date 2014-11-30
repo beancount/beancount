@@ -46,7 +46,7 @@ COMMANDS = [
 
 def main():
     logging.basicConfig(level=logging.INFO, format='%(levelname)-8s: %(message)s')
-    parser = argparse.ArgumentParser(__doc__.strip())
+    parser = argparse.ArgumentParser(description=__doc__.strip())
     parser.add_argument('filename', help='Beancount filename')
     parser.add_argument('output_directory', help='Output directory for the tutorial files')
     args = parser.parse_args()

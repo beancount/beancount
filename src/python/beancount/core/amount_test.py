@@ -1,8 +1,6 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
-import re
-import io
 
 from .amount import D
 from .amount import Decimal
@@ -83,15 +81,15 @@ class TestAmount(unittest.TestCase):
 
         self.assertEqual('100034.023 USD', str(amount))
 
-        dc = display_context.DisplayContext()
-        dc.set_commas(True)
-        self.assertEqual('100,034.023 USD', amount.to_string(dc))
+        dcontext = display_context.DisplayContext()
+        dcontext.set_commas(True)
+        self.assertEqual('100,034.023 USD', amount.to_string(dcontext))
 
-        dc.set_precision(1)
-        self.assertEqual('100,034.0 USD', amount.to_string(dc))
+        dcontext.set_precision(1)
+        self.assertEqual('100,034.0 USD', amount.to_string(dcontext))
 
-        dc.set_precision(4, 'USD')
-        self.assertEqual('100,034.0230 USD', amount.to_string(dc))
+        dcontext.set_precision(4, 'USD')
+        self.assertEqual('100,034.0230 USD', amount.to_string(dcontext))
 
     def test_comparisons(self):
         amount1 = Amount(Decimal('100'), 'USD')

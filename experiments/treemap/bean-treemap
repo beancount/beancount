@@ -16,7 +16,7 @@ from beancount.core import realization
 
 def main():
     import argparse
-    optparser = argparse.ArgumentParser(__doc__)
+    optparser = argparse.ArgumentParser(description=__doc__)
 
     optparser.add_argument('filename',
                            help='Filename.')

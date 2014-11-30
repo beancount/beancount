@@ -211,7 +211,8 @@ def do_missing_open(filename, args):
     for account, first_use_date in first_use_map.items():
         if account not in open_close_map:
             new_entries.append(
-                data.Open(data.Source(filename, 0), first_use_date, account, None, None))
+                data.Open(data.Source(filename, 0), first_use_date, account,
+                          None, None, None))
 
     dcontext = options_map['display_context']
     printer.print_entries(data.sort(new_entries), dcontext)

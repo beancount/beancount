@@ -7,7 +7,6 @@ import re
 import sys
 import textwrap
 
-from beancount.core import amount
 from beancount.core import interpolate
 from beancount.core import data
 from beancount.core import display_context
@@ -46,9 +45,9 @@ def align_position_strings(strings):
     string_items = []
     search = re.compile('[A-Z]').search
     for string in strings:
-        mo = search(string)
-        if mo:
-            index = mo.start()
+        match = search(string)
+        if match:
+            index = match.start()
             if index != 0:
                 max_before = max(index, max_before)
                 max_after = max(len(string) - index, max_after)

@@ -46,7 +46,17 @@ def new_directive(clsname, fields):
 #   currencies: A list of strings, currencies that are allowed in this account.
 #     May be None, in which case it means that there are no restrictions on which
 #     currencies may be stored in this account.
-Open = new_directive('Open', 'account currencies')
+#   booking: A string, the booking method to use to disambiguate postings to this
+#     account (when zero or more than one postings match the specification), or
+#     None if not specified. In practice, this attribute will be should be left
+#     unspecified (None) in the vast majority of cases. See BOOKING_METHODS for
+#     valid attribute values when set.
+Open = new_directive('Open', 'account currencies booking')
+
+# A set of valid booking method names for positions on accounts.
+# The following methods are not yet implemented:
+#   FIFO, LIFO, AVERAGE, AVERAGE_ONLY.
+BOOKING_METHODS = {'STRICT', 'NONE'}
 
 # A "close account" directive.
 #

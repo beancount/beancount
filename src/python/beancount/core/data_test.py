@@ -129,7 +129,7 @@ class TestData(unittest.TestCase):
             data.Close(data.Source(".", 1000), date2, account, None),
             data.Balance(data.Source(".", 1001), date2, account,
                          amount.Amount(D('200.00'), 'USD"'), None, None),
-            data.Open(data.Source(".", 1002), date2, account, 'USD', None),
+            data.Open(data.Source(".", 1002), date2, account, 'USD', None, None),
             data.Transaction(data.Source(".", 1009), date2, FLAG,
                              None, "Transaction 2", None, None, [], None),
             data.Transaction(data.Source(".", 1008), date2, FLAG,

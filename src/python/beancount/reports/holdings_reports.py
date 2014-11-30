@@ -119,7 +119,8 @@ def get_holdings_entries(entries, options_map):
 
     # Add an entry for the equity account we're using.
     source = data.Source('report_holdings_print', -1)
-    used_open_entries.insert(0, data.Open(source, latest_date, equity_account, None, None))
+    used_open_entries.insert(0, data.Open(source, latest_date, equity_account,
+                                          None, None, None))
 
     # Get the latest price entries.
     price_entries = prices.get_last_price_entries(entries, None)

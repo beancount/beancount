@@ -14,6 +14,8 @@ from beancount.core.amount import ONE
 from beancount.core.data import Price
 from beancount.core import amount
 from beancount.core import data
+from beancount.core import inventory
+from beancount.core import position
 from beancount.utils import misc_utils
 from beancount.utils import bisect_key
 
@@ -284,3 +286,55 @@ def convert_amount(price_map, target_currency, amount_):
     else:
         converted_amount = amount_
     return converted_amount
+
+
+def get_position_market_value(position_, date, price_map):
+    """Compute the market value of the position at a particular date.
+
+    If the price map does not contain price information, we avoid converting the
+    position and return itself, unchanged.
+
+    Args:
+      position: An instance of Position
+      date: A datetime.date instance, the date at which to market the instruments.
+        If the date provided is None, the inventory is valued at the latest market
+        prices.
+      price_map: A price map, as created by beancount.ops.prices.
+    Returns:
+      An inventory of market values per currency.
+
+    """
+    lot = position_.lot
+    cost_currency = lot.cost.currency if lot.cost else None
+    if cost_currency:
+        base_quote = (lot.currency, cost_currency)
+        price_date, price_number = get_price(price_map, base_quote, date)
+        if price_number is None:
+            return position_
+        else:
+            new_amount = amount.Amount(position_.number * price_number, cost_currency)
+    else:
+        new_amount = amount.Amount(position_.number, lot.currency)
+    return position.from_amounts(new_amount)
+
+
+def get_inventory_market_value(balance, date, price_map):
+    """Compute the market value of the inventory in a currency at a date.
+
+    This function converts all the positions to their market value, in their
+    respective cost currencies.
+
+    Args:
+      balance: An instance of Inventory.
+      date: A datetime.date instance, the date at which to market the instruments.
+        If the date provided is None, the inventory is valued at the latest market
+        prices.
+      price_map: A price map, as created by beancount.ops.prices.
+    Returns:
+      An inventory of market values per currency.
+    """
+    new_balance = inventory.Inventory()
+    for position_ in balance.get_positions():
+        new_balance.add_position(
+            get_position_market_value(position_, date, price_map))
+    return new_balance

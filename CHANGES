@@ -1,6 +1,51 @@
 ========================
    beancount: CHANGES
 ========================
+Note: This file contains only changes in the 'default' branch.
+
+
+2014-11-29
+
+  - Completed work on calculating returns (merged branch 'returns' into
+    default). I created a new package called "projects" to hold these special
+    tasks, those that don't integrate in the plugins framework, and created a
+    beancount.projects.returns library that can be inovoked as a script, like
+    this:
+
+      python3 -m beancount.projects.returns <filename.beancount> ...
+
+    For the arguments, you will have to read the docstring. You essentially need
+    to provide two or three regular expressions to list the set of accounts
+    that define you portfolio as well as other lists of accounts that should be
+    considered internal flows. See the docstring for details. I will eventually
+    move much of that explanation into a Google Doc and detail it in more depth.
+
+    There is also a script that runs it on the example beancount file, as well
+    as examples in the unit tests.
+
+
+2014-11-27
+
+  - Started the "booking" branch which will implement the
+    http://furius.ca/beancount/doc/proposal-booking proposal. The first step was
+    to add an argument to the Open directive to specify the default booking
+    method to use when there are either 0, 2 or more matching lots in an
+    inventory. The only value supported by this are currently "STRICT" (the
+    default) or "NONE" which effectively disables inventory booking and is
+    equivalent to Ledger's method of accumulating lots. The new syntax looked
+    like this and is backward compatible with previous synta for it:
+
+      YYYY-MM-DD open <account>   [<commodities>]  ["<booking-method>"]
+
+    Though the result may be inventories with positive and negative positions in
+    the same commodity, this is useful for working with accounts booked at their
+    average cost (until we have correct treatment of basis for those with
+    dedicated syntax for merging lots). The total number of units and the total
+    cost should be correct.
+
+    This state of the 'booking' branch was merged into the 'default' branch,
+    which is why it appears in this CHANGE entry.
+
 
 2014-11-21
 

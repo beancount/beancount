@@ -682,7 +682,8 @@ class TestEntriesFromBalance(cmptest.TestCase):
 
     def setUp(self):
         self.balances = collections.defaultdict(inventory.Inventory)
-        self.balances['Assets:US:Investment'] = inventory.from_string('10 GOOG {500.00 USD}')
+        self.balances['Assets:US:Investment'] = (
+            inventory.from_string('10 GOOG {500.00 USD}'))
         self.balances['Assets:US:Bank:Checking'] = inventory.from_string('1823.23 USD')
 
     def test_create_entries_from_balances__simple(self):

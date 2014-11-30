@@ -51,24 +51,34 @@ def validate_inventory_booking(entries, unused_options_map):
     """
     errors = []
 
+    # A mapping of account name to booking method, accumulated in the main loop.
+    booking_methods = {}
+
     balances = collections.defaultdict(inventory.Inventory)
     for entry in entries:
-        if not isinstance(entry, data.Transaction):
-            continue
+        if isinstance(entry, data.Transaction):
+            for posting in entry.postings:
+                # Update the balance of each posting on its respective account
+                # without allowing booking to a negative position, and if an error
+                # is encountered, catch it and return it.
+                running_balance = balances[posting.account]
+                position_, unused_reducing = running_balance.add_position(posting.position)
 
-        for posting in entry.postings:
-            # Update the balance of each posting on its respective account
-            # without allowing booking to a negative position, and if an error
-            # is encountered, catch it and return it.
-            running_balance = balances[posting.account]
+                # Skip this check if the booking method is set to 'NONE'.
+                if booking_methods.get(posting.account, None) == 'NONE':
+                    continue
 
-            position_, reducing = running_balance.add_position(posting.position)
-            if position_.is_negative_at_cost():
-                errors.append(
-                    ValidationError(
-                        posting.entry.source,
-                        "Position held at cost goes negative: {}".format(position_),
-                        posting.entry))
+                # Check for a negative entry.
+                # FIXME: Maybe this should be using the reducing flag instead.
+                if position_.is_negative_at_cost():
+                    errors.append(
+                        ValidationError(
+                            posting.entry.source,
+                            "Position held at cost goes negative: {}".format(position_),
+                            posting.entry))
+
+        elif isinstance(entry, data.Open):
+            booking_methods[entry.account] = entry.booking
 
     return errors
 

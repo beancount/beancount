@@ -149,7 +149,7 @@ def main():
                         help='Do not report errors.')
 
     parser.add_argument('filename', metavar='FILENAME.beancount',
-                        help='The Beancout input filename to load.')
+                        help='The Beancount input filename to load.')
 
     subparsers = parser.add_subparsers(title='report',
                                        help='Name/specification of the desired report.')

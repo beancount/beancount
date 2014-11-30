@@ -1,7 +1,5 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import textwrap
-
 from beancount import loader
 from beancount.parser import cmptest
 

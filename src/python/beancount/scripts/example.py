@@ -332,6 +332,30 @@ def iter_dates_with_balance(date_begin, date_end, entries, accounts):
         yield date, balances
 
 
+def iter_quarters(date_begin, date_end):
+    """Iterate over all quarters between begin and end dates.
+
+    Args:
+      date_begin: The start date.
+      date_end: The end date.
+    Yields:
+      Instances of datetime.date at the beginning of the quarters. This will
+      include the quarter of the beginning date and of the end date.
+    """
+    quarter = (date_begin.year, (date_begin.month-1)//3)
+    quarter_last = (date_end.year, (date_end.month-1)//3)
+    assert quarter <= quarter_last
+    while True:
+        year, trimester = quarter
+        yield datetime.date(year, trimester*3 + 1, 1)
+        if quarter == quarter_last:
+            break
+        trimester = (trimester + 1) % 4
+        if trimester == 0:
+            year += 1
+        quarter = (year, trimester)
+
+
 def get_minimum_balance(entries, account, currency):
     """Compute the minimum balance of the given account according to the entries history.
 
@@ -687,15 +711,29 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
     account = 'Assets:CC:Investment'
     account_cash = join(account, 'Cash')
     account_gains = 'Income:CC:Investment:Gains'
+    account_dividends = 'Income:CC:Investment:Dividends'
+    accounts_stocks = ['Assets:CC:Investment:{}'.format(commodity)
+                       for commodity in stocks]
 
     open_entries = parse("""
       {date_begin} open {account}:Cash    CCY
       {date_begin} open {account_gains}    CCY
+      {date_begin} open {account_dividends}    CCY
     """, **vars())
     for stock in stocks:
         open_entries.extend(parse("""
           {date_begin} open {account}:{stock} {stock}
         """, **vars()))
+
+    # Figure out dates at which dividends should be distributed, near the end of
+    # each quarter.
+    days_to = datetime.timedelta(days=3*90-10)
+    dividend_dates = []
+    for quarter_begin in iter_quarters(date_begin, date_end):
+        end_of_quarter = quarter_begin + days_to
+        if not (date_begin < end_of_quarter < date_end):
+            continue
+        dividend_dates.append(end_of_quarter)
 
     # Iterate over all the dates, but merging in the postings for the cash
     # account.
@@ -704,13 +742,44 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
     commission = D('8.95')
     round_units = D('1')
     frac_invest = D('1.00')
+    frac_dividend = D('0.004')
     p_daily_buy = 1./15  # days
     p_daily_sell = 1./90  # days
 
     stocks_inventory = inventory.Inventory()
     new_entries = []
+    dividend_date_iter = iter(dividend_dates)
+    next_dividend_date = next(dividend_date_iter)
     for date, balances in iter_dates_with_balance(date_begin, date_end,
                                                   entries, [account_cash]):
+
+        # Check if we should insert a dividend. Note that we could not factor
+        # this out because we want to explicitly reinvest the cash dividends and
+        # we also want the dividends to be proportional to the amount of
+        # invested stock, so one feeds on the other and vice-versa.
+        if next_dividend_date and date > next_dividend_date:
+            # Compute the total balances for the stock accounts in order to
+            # create a realistic dividend.
+            total = inventory.Inventory()
+            for account_stock in accounts_stocks:
+                total.add_inventory(balances[account_stock])
+
+            # Create an entry offering dividends of 1% of the portfolio.
+            portfolio_cost = total.cost().get_units('CCY').number
+            amount_cash = (frac_dividend * portfolio_cost).quantize(D('0.01'))
+            dividend = parse("""
+              {next_dividend_date} * "Dividends on portfolio"
+                {account}:Cash        {amount_cash:.2f} CCY
+                {account_dividends}
+            """, **vars())[0]
+            new_entries.append(dividend)
+
+            # Advance the next dividend date.
+            try:
+                next_dividend_date = next(dividend_date_iter)
+            except StopIteration:
+                next_dividend_date = None
+
         # If the balance is high, buy with high probability.
         balance = balances[account_cash]
         total_cash = balance.get_units('CCY').number
@@ -741,7 +810,9 @@ def generate_taxable_investment(date_begin, date_end, entries, price_map, stocks
                     """, **vars())[0]
                     new_entries.append(buy)
 
+                    account_stock = ':'.join([account, stock])
                     balances[account_cash].add_position(buy.postings[0].position)
+                    balances[account_stock].add_position(buy.postings[1].position)
                     stocks_inventory.add_position(buy.postings[1].position)
 
                 # Don't sell on days you buy.

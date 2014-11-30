@@ -8,7 +8,6 @@ __author__ = "Martin Blais <blais@furius.ca>"
 import re
 import io
 
-from beancount.core import amount
 from beancount.core import data
 from beancount.core import position
 from beancount.core import interpolate

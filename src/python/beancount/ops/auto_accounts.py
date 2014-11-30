@@ -34,7 +34,8 @@ def auto_insert_open(entries, unused_options_map):
     for account, date_first_used in accounts_first.items():
         if account not in opened_accounts:
             source = data.Source('<auto_accounts>', 0)
-            new_entries.append(data.Open(source, date_first_used, account, None, None))
+            new_entries.append(data.Open(source, date_first_used, account,
+                                         None, None, None))
 
     if new_entries:
         new_entries.extend(entries)
