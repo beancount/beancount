@@ -295,8 +295,8 @@ class HLedgerPrinter(LedgerPrinter):
                      else '')
 
         posting_str = '  {:64} {:>16} {:>16}'.format(flag_posting,
-                                                     quote_currency(amount_str),
-                                                     quote_currency(cost_str))
+                                                     quote_currency(pos_str),
+                                                     quote_currency(price_str))
         oss.write(posting_str.rstrip())
 
         oss.write('\n')
