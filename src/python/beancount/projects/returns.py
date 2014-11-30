@@ -717,7 +717,9 @@ def find_matching(entries, acc_types,
     for entry in entries:
         if not isinstance(entry, data.Transaction):
             continue
-        if any(assets_match(posting.account) for posting in entry.postings):
+        if any((assets_match(posting.account) or (internalize_match and
+                                                  internalize_match(posting.account)))
+               for posting in entry.postings):
             matching_entries.append(entry)
 
             for posting in entry.postings:
