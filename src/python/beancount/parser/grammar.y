@@ -108,6 +108,7 @@ const char* getTokenName(int token);
 %type <pyobj> posting
 %type <pyobj> key_value
 %type <pyobj> key_value_list
+%type <pyobj> key_value_value
 %type <pyobj> posting_or_kv_list
 %type <pyobj> currency_list
 %type <pyobj> open
@@ -221,16 +222,28 @@ posting : INDENT optflag ACCOUNT position eol
             DECREF1($3);
         }
 
-key_value : INDENT KEY STRING eol
+key_value : INDENT KEY key_value_value eol
           {
               $$ = BUILD("key_value", "OO", $2, $3);
               DECREF2($2, $3);
           }
-          | INDENT KEY eol
-          {
-              $$ = BUILD("key_value", "OO", $2, Py_None);
-              DECREF1($2);
-          }
+
+key_value_value : STRING
+                | ACCOUNT
+                | DATE
+                | CURRENCY
+                | TAG
+                | NUMBER
+                | amount
+                {
+                    $$ = $1;
+                    DECREF1($1);
+                }
+                | empty
+                {
+                    Py_INCREF(Py_None);
+                    $$ = Py_None;
+                }
 
 posting_or_kv_list : empty
                    {

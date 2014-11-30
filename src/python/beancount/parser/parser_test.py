@@ -3,6 +3,7 @@ Tests for parser.
 """
 __author__ = "Martin Blais <blais@furius.ca>"
 
+import datetime
 import unittest
 import inspect
 import tempfile
@@ -10,6 +11,7 @@ import re
 import sys
 import subprocess
 
+from beancount.core.amount import D
 from beancount.parser.parser import parsedoc
 from beancount.parser import parser
 from beancount.parser import lexer
@@ -831,6 +833,29 @@ class TestMetaData(unittest.TestCase):
             test1: "Something"
         """
         self.assertEqual(9, len(entries))
+
+    @parsedoc
+    def test_metadata_data_types(self, entries, errors, _):
+        """
+          2013-05-18 * ""
+            string: "Something"
+            account: Assets:Investments:Cash
+            date: 2012-01-01
+            currency: GOOG
+            tag: #trip-florida
+            number: 345.67
+            amount: 345.67 USD
+        """
+        self.assertEqual(1, len(entries))
+        self.assertEqual({
+            'string': 'Something',
+            'account': 'Assets:Investments:Cash',
+            'date': datetime.date(2012, 1, 1),
+            'currency': 'GOOG',
+            'tag': 'trip-florida',
+            'number': D('345.67'),
+            'amount': amount.from_string('345.67 USD'),
+            }, entries[0].metadata)
 
 
 class TestLexerErrors(unittest.TestCase):
