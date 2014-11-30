@@ -568,12 +568,12 @@ class TestReturnsInternalize(cmptest.TestCase):
         """
         self.assertFalse(errors)
 
-        accounts_assets = {'Assets:Invest:Cash', 'Assets:Invest:BOOG'}
+        accounts_value = {'Assets:Invest:Cash', 'Assets:Invest:BOOG'}
         accounts_intflows = {'Income:Invest:PnL', 'Income:Invest:Dividends',
                              'Expenses:Commissions', 'Expenses:Fees'}
         new_entries, replaced_entries = returns.internalize(
             entries, 'Equity:Internalized',
-            accounts_assets, accounts_intflows)
+            accounts_value, accounts_intflows)
 
         # Check that the split entry has been replaced.
         self.assertEqualEntries("""
