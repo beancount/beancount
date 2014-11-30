@@ -58,9 +58,14 @@ def main():
 
     # Loop over accounts with investments in them. This is defined by the user.
     FORMAT = "  {:<16}  {:10} -> {:10}: {:>12.2%} {:>12.2%}"
-    for account_name, assets_regexp, intflows_regexp in [
-        ('ETrade', 'Assets:US:ETrade', '(Income:US:ETrade|Expenses:Financial)'),
-        ('Vanguard', 'Assets:US:Vanguard', '(Income:US:ETrade|Expenses:Financial)')]:
+    for account_name, assets_regexp, intflows_regexp, internalize_regexp in [
+        ('ETrade', 'Assets:US:ETrade',
+         '(Income:US:ETrade|Expenses:Financial)', None),
+        ('ETrade (no cash)', 'Assets:US:ETrade:[A-Z]+$',
+         '(Income:US:ETrade|Expenses:Financial)', 'Income:US:ETrade:Dividends'),
+        ('Vanguard', 'Assets:US:Vanguard',
+         '(Income:US:ETrade|Expenses:Financial)', None)
+    ]:
 
         # Print a header.
         print()
@@ -72,7 +77,7 @@ def main():
             # Compute the returns.
             total_returns, dates, int_entries = returns.compute_returns_with_regexp(
                 entries, options_map, 'Assets:Internalized',
-                assets_regexp, intflows_regexp,
+                assets_regexp, intflows_regexp, internalize_regexp,
                 date_begin=date_begin, date_end=date_end)
 
             # Annualize the returns for the period.
