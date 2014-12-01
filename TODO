@@ -755,6 +755,14 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
 
+  - Build library functions to dedent, parse and create single entries, and
+    automatically reach up the stack frame into vars to replace. These should be
+    used in the example generation scripts and should be as convenient as
+    possible for a user to generate new data, because I get a feeling that
+    we're going to do this a lot more in the future.
+
+
+
   - IDEA: Using inference and a reasonable buffer amount, can I automatically
     figure out how much extra cash from checking can safely be transferred out
     for investing? i.e. sum up upcoming expenses (rent + cc) and expected
