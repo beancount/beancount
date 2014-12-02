@@ -5,9 +5,10 @@ __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
 import inspect
-import tempfile
+import re
 import sys
 import subprocess
+import tempfile
 
 from beancount.parser.parser import parsedoc
 from beancount.parser import parser
@@ -290,6 +291,25 @@ class TestUglyBugs(unittest.TestCase):
         """
         self.assertEqual(7, len(entries))
         self.assertEqual([], errors)
+
+
+class TestTagStack(unittest.TestCase):
+
+    @parsedoc
+    def test_tag_left_unclosed(self, entries, errors, _):
+        """
+          pushtag #trip-to-nowhere
+        """
+        self.assertEqual(1, len(errors))
+        self.assertTrue(re.search('Unbalanced tag', errors[0].message))
+
+    @parsedoc
+    def test_pop_invalid_tag(self, entries, errors, _):
+        """
+          poptag #trip-to-nowhere
+        """
+        self.assertTrue(errors)
+        self.assertTrue(re.search('absent tag', errors[0].message))
 
 
 class TestMultipleLines(unittest.TestCase):
