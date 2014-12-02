@@ -15,7 +15,6 @@ from beancount.core import data
 from beancount.ops import prices
 from beancount.parser import cmptest
 from beancount.parser import options
-from beancount.parser import printer
 from beancount.projects import returns
 from beancount.utils import test_utils
 
