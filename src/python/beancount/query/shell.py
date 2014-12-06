@@ -225,9 +225,7 @@ class BQLShell(DispatchingShell):
         """
         # Compile the print statement.
         try:
-            c_from = query_compile.compile_from(print_stmt.from_clause, self.env_entries)
-            # FIXME: This should be EvalPrint
-            c_print = query_parser.Print(c_from)
+            c_print = query_compile.compile(print_stmt, self.env_entries)
         except query_compile.CompilationError as exc:
             print('ERROR: {}.'.format(str(exc).rstrip('.')))
             return

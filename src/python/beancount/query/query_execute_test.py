@@ -260,9 +260,9 @@ class TestFilterEntries(CommonInputBase, QueryBase):
 class TestExecutePrint(CommonInputBase, QueryBase):
 
     def test_print_with_filter(self):
-        statement = q.Print(c.EvalFrom(c.EvalEqual(cc.YearEntryColumn(),
-                                                   c.EvalConstant(2012)),
-                                       None, None, None))
+        statement = c.EvalPrint(c.EvalFrom(c.EvalEqual(cc.YearEntryColumn(),
+                                                       c.EvalConstant(2012)),
+                                           None, None, None))
         oss = io.StringIO()
         x.execute_print(statement, self.entries, self.options_map, oss)
 
@@ -275,12 +275,12 @@ class TestExecutePrint(CommonInputBase, QueryBase):
         """, oss.getvalue())
 
     def test_print_with_no_filter(self):
-        statement = q.Print(c.EvalFrom(None, None, None, None))
+        statement = c.EvalPrint(c.EvalFrom(None, None, None, None))
         oss = io.StringIO()
         x.execute_print(statement, self.entries, self.options_map, oss)
         self.assertEqualEntries(self.INPUT, oss.getvalue())
 
-        statement = q.Print(None)
+        statement = c.EvalPrint(None)
         oss = io.StringIO()
         x.execute_print(statement, self.entries, self.options_map, oss)
         self.assertEqualEntries(self.INPUT, oss.getvalue())

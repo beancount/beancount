@@ -56,17 +56,17 @@ def filter_entries(c_from, entries, options_map):
     return entries
 
 
-def execute_print(print_stmt, entries, options_map, file):
+def execute_print(c_print, entries, options_map, file):
     """Print entries from a print statement specification.
 
     Args:
-      query: An instance of a compiled Print statemnet.
+      c_print: An instance of a compiled EvalPrint statemnet.
       entries: A list of directives.
       options_map: A parser's option_map.
       file: The output file to print to.
     """
-    if print_stmt and print_stmt.from_clause is not None:
-        entries = filter_entries(print_stmt.from_clause, entries, options_map)
+    if c_print and c_print.c_from is not None:
+        entries = filter_entries(c_print.c_from, entries, options_map)
 
     printer.print_entries(entries, file=file)
 

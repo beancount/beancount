@@ -918,7 +918,8 @@ def compile(statement, targets_environ, postings_environ, entries_environ):
         statement = transform_journal(statement)
 
     if isinstance(statement, query_parser.Select):
-        c_query = compile_select(explain.statement, env_targets, env_postings, env_entries)
+        c_query = compile_select(statement,
+                                 targets_environ, postings_environ, entries_environ)
     elif isinstance(statement, query_parser.Print):
         c_query = compile_print(statement, entries_environ)
     else:
