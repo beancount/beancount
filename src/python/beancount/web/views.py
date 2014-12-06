@@ -171,7 +171,7 @@ class TagView(View):
           tags: A set of strings, the tags to include. Entries with at least
             one of these tags will be included in the output.
         """
-        assert isinstance(tags, (set, list, tuple))
+        assert isinstance(tags, (set, frozenset, list, tuple))
         self.tags = tags
         View.__init__(self, entries, options_map, title)
 

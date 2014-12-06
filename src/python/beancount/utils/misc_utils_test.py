@@ -241,3 +241,20 @@ class TestDistribution(unittest.TestCase):
         dist.update(3)
         dist.update(4)
         self.assertEqual(2, dist.mode())
+
+
+class TestLineFileProxy(unittest.TestCase):
+
+    def test_line_file_proxy(self):
+        output = []
+        fileobj = misc_utils.LineFileProxy(output.append, ' ')
+        fileobj.write('a')
+        fileobj.write('b')
+        fileobj.write('c\n')
+        fileobj.write('d')
+        self.assertEqual([' abc'], output)
+        fileobj.flush()
+        self.assertEqual([' abc'], output)
+        fileobj.write('e\n')
+        self.assertEqual([' abc', ' de'], output)
+        fileobj.close()

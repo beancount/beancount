@@ -15,7 +15,7 @@ CompareError = collections.namedtuple('CompareError', 'source message entry')
 IGNORED_FIELD_NAMES = {'source', 'entry', 'diff_amount'}
 
 
-def stable_hash_namedtuple__recursive(objtuple, ignore=frozenset()):
+def stable_hash_namedtuple(objtuple, ignore=frozenset()):
     """Hash the given namedtuple and its child fields.
 
     The hash_obj is updated. This iterates over all the members of objtuple,
@@ -33,7 +33,7 @@ def stable_hash_namedtuple__recursive(objtuple, ignore=frozenset()):
     for attr_name, attr_value in zip(objtuple._fields, objtuple):
         if attr_name in ignore:
             continue
-        if isinstance(attr_value, (list, set)):
+        if isinstance(attr_value, (list, set, frozenset)):
             subhashes = set()
             for element in attr_value:
                 if isinstance(element, tuple):
@@ -47,10 +47,6 @@ def stable_hash_namedtuple__recursive(objtuple, ignore=frozenset()):
         else:
             hashobj.update(str(attr_value).encode())
     return hashobj.hexdigest()
-
-
-# pylint: disable=invalid-name
-stable_hash_namedtuple = stable_hash_namedtuple__recursive
 
 
 def hash_entry(entry):

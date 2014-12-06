@@ -179,7 +179,7 @@ def load(holdings_filename, prices_filename, currency):
 
 
 def main():
-    parser = argparse.ArgumentParser(__doc__.strip())
+    parser = argparse.ArgumentParser(description=__doc__.strip())
 
     parser.add_argument('holdings_filename',
                         help='Holdings CSV filename')
