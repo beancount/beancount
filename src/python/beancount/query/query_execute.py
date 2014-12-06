@@ -2,11 +2,13 @@
 """
 import collections
 import datetime
+import itertools
 
 from beancount.query import query_compile
 from beancount.query import query_env
 from beancount.core import data
 from beancount.core import inventory
+from beancount.core import getters
 from beancount.parser import printer
 from beancount.ops import summarize
 from beancount.utils import misc_utils
@@ -98,8 +100,15 @@ class Allocator:
 
 class RowContext:
     """A dumb container for information used by a row expression."""
+
+    # The current posting being evaluated.
     posting = None
+
+    # The current running balance *after* applying the posting.
     balance = None
+
+    # A dict of account name strings to (open, close) entries for those accounts.
+    open_close_map = None
 
 
 def uses_balance_column(c_expr):
@@ -155,10 +164,19 @@ def execute_query(query, entries, options_map):
     order_indexes = query.order_indexes
 
     # Figure out if we need to compute balance.
-    # FIXME: Initialize to None if balance is nowhere to be found.
-    balance = inventory.Inventory()
+    balance = None
+    if any(uses_balance_column(c_expr)
+           for c_expr in itertools.chain(
+               [c_target.c_expr for c_target in query.c_targets],
+               [query.c_where] if query.c_where else [])):
+        balance = inventory.Inventory()
+
+    # Create the context container which we will use to evaluate rows.
     context = RowContext()
     context.balance = balance
+
+    # Initialize the open/close map for use by some of the accessors.
+    context.open_close_map = getters.get_account_open_close(entries)
 
     # Dispatch between the non-aggregated queries and aggregated queries.
     c_where = query.c_where

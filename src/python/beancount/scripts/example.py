@@ -1574,7 +1574,7 @@ def write_example_file(date_birth, date_begin, date_end, file):
 
     output = io.StringIO()
     def output_section(title, entries):
-        output.write('{}\n\n'.format(title))
+        output.write('\n\n\n{}\n\n'.format(title))
         printer.print_entries(data.sort(entries), dcontext, file=output)
 
     output.write(FILE_PREAMBLE.format(**vars()))

@@ -869,14 +869,16 @@ def transform_balances(balances):
     cooked_select = query_parser.Parser().parse("""
 
       SELECT account, sum({}(change))
+      GROUP BY 1
+      ORDER BY 1
 
     """.format(balances.summary_func or ""))
 
     return query_parser.Select(cooked_select.targets,
                                balances.from_clause,
                                None,
-                               query_parser.GroupBy([1], None),
-                               query_parser.OrderBy([1], None),
+                               cooked_select.group_by,
+                               cooked_select.order_by,
                                None, None, None, None)
 
 

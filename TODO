@@ -216,6 +216,10 @@ http://furius.ca/beancount/doc/proposal-query
     kicks in before a query, like the web interface.
 
 
+  - Move bean-example to being just a doctor subcommand; we really don't need to
+    make that a first-class thing.
+
+
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 

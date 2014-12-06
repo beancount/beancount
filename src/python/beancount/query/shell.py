@@ -225,7 +225,10 @@ class BQLShell(DispatchingShell):
         """
         # Compile the print statement.
         try:
-            c_print = query_compile.compile(print_stmt, self.env_entries)
+            c_print = query_compile.compile(print_stmt,
+                                            self.env_targets,
+                                            self.env_postings,
+                                            self.env_entries)
         except query_compile.CompilationError as exc:
             print('ERROR: {}.'.format(str(exc).rstrip('.')))
             return

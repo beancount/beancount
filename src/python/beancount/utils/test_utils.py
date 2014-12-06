@@ -21,12 +21,14 @@ from os import path
 get_test_port = itertools.count(9470).__next__
 
 
-def find_repository_root(filename):
+def find_repository_root(filename=None):
     """Return the path to the repository root.
 
     Returns:
       A string, the root directory.
     """
+    if filename is None:
+        filename = __file__
     while not all(path.exists(path.join(filename, sigfile))
                   for sigfile in ('PKGINFO', 'COPYING', 'README')):
         filename = path.dirname(filename)

@@ -119,6 +119,30 @@ class Parent(query_compile.EvalFunction):
         args = self.eval_args(context)
         return account.parent(args[0])
 
+class OpenDate(query_compile.EvalFunction):
+    "Get the date of the open directive of the account."
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, datetime.date)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        open_entry, close_entry = context.open_close_map[args[0]]
+        return open_entry.date if open_entry else None
+
+class CloseDate(query_compile.EvalFunction):
+    "Get the date of the close directive of the account."
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, datetime.date)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        close_entry, close_entry = context.open_close_map[args[0]]
+        return close_entry.date if close_entry else None
+
 
 # Operation on inventories.
 
@@ -171,6 +195,8 @@ SIMPLE_FUNCTIONS = {
     'length'                       : Length,
     'maxwidth'                     : MaxWidth,
     'parent'                       : Parent,
+    'open_date'                    : OpenDate,
+    'close_date'                   : CloseDate,
     ('units', position.Position)   : UnitsPosition,
     ('units', inventory.Inventory) : UnitsInventory,
     ('cost', position.Position)    : CostPosition,
