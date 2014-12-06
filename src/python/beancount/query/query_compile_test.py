@@ -175,7 +175,8 @@ class TestCompileMisc(unittest.TestCase):
         self.assertEqual('date', qc.find_unique_name('date', {}))
         self.assertEqual('date', qc.find_unique_name('date', {'account', 'number'}))
         self.assertEqual('date_1', qc.find_unique_name('date', {'date', 'number'}))
-        self.assertEqual('date_2', qc.find_unique_name('date', {'date', 'date_1', 'date_3'}))
+        self.assertEqual('date_2',
+                         qc.find_unique_name('date', {'date', 'date_1', 'date_3'}))
 
 
 class CompileSelectBase(unittest.TestCase):
@@ -599,7 +600,8 @@ class TestTranslationJournal(CompileSelectBase):
             qp.Select([
                 qp.Target(qp.Column('date'), None),
                 qp.Target(qp.Column('flag'), None),
-                qp.Target(qp.Function('maxwidth', [qp.Column('payee'), qp.Constant(48)]), None),
+                qp.Target(qp.Function('maxwidth', [qp.Column('payee'),
+                                                   qp.Constant(48)]), None),
                 qp.Target(qp.Function('maxwidth', [qp.Column('narration'),
                                                    qp.Constant(80)]), None),
                 qp.Target(qp.Column('account'), None),
@@ -616,7 +618,8 @@ class TestTranslationJournal(CompileSelectBase):
             qp.Select([
                 qp.Target(qp.Column('date'), None),
                 qp.Target(qp.Column('flag'), None),
-                qp.Target(qp.Function('maxwidth', [qp.Column('payee'), qp.Constant(48)]), None),
+                qp.Target(qp.Function('maxwidth', [qp.Column('payee'),
+                                                   qp.Constant(48)]), None),
                 qp.Target(qp.Function('maxwidth', [qp.Column('narration'),
                                                    qp.Constant(80)]), None),
                 qp.Target(qp.Column('account'), None),
@@ -635,7 +638,8 @@ class TestTranslationJournal(CompileSelectBase):
             qp.Select([
                 qp.Target(qp.Column('date'), None),
                 qp.Target(qp.Column('flag'), None),
-                qp.Target(qp.Function('maxwidth', [qp.Column('payee'), qp.Constant(48)]), None),
+                qp.Target(qp.Function('maxwidth', [qp.Column('payee'),
+                                                   qp.Constant(48)]), None),
                 qp.Target(qp.Function('maxwidth', [qp.Column('narration'),
                                                    qp.Constant(80)]), None),
                 qp.Target(qp.Column('account'), None),
@@ -654,14 +658,16 @@ class TestTranslationJournal(CompileSelectBase):
             qp.Select([
                 qp.Target(qp.Column('date'), None),
                 qp.Target(qp.Column('flag'), None),
-                qp.Target(qp.Function('maxwidth', [qp.Column('payee'), qp.Constant(48)]), None),
+                qp.Target(qp.Function('maxwidth', [qp.Column('payee'),
+                                                   qp.Constant(48)]), None),
                 qp.Target(qp.Function('maxwidth', [qp.Column('narration'),
                                                    qp.Constant(80)]), None),
                 qp.Target(qp.Column('account'), None),
                 qp.Target(qp.Function('cost', [qp.Column('change')]), None),
                 qp.Target(qp.Function('cost', [qp.Column('balance')]), None),
             ],
-                      qp.From(qp.Equal(qp.Column('year'), qp.Constant(2014)), None, None, None),
+                      qp.From(qp.Equal(qp.Column('year'), qp.Constant(2014)),
+                              None, None, None),
                       qp.Match(qp.Column('account'), qp.Constant('liabilities')),
                       None, None, None, None, None, None),
             select)
@@ -701,7 +707,8 @@ class TestTranslationBalance(CompileSelectBase):
                 qp.Target(qp.Function('sum', [qp.Function('cost',
                                                           [qp.Column('change')])]), None),
                 ],
-                      qp.From(qp.Equal(qp.Column('year'), qp.Constant(2014)), None, None, None),
+                      qp.From(qp.Equal(qp.Column('year'), qp.Constant(2014)),
+                              None, None, None),
                       None,
                       qp.GroupBy([1], None),
                       qp.OrderBy([1], None),

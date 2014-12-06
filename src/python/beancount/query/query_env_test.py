@@ -50,7 +50,8 @@ class TestCompileDataTypes(unittest.TestCase):
             qe.CostPosition([qc.EvalConstant(17)])
         with self.assertRaises(qc.CompilationError):
             qe.CostPosition([qc.EvalConstant(inventory.Inventory())])
-        c_cost = qe.CostPosition([qc.EvalConstant(position.Position.from_string('100 USD'))])
+        c_cost = qe.CostPosition([qc.EvalConstant(
+            position.Position.from_string('100 USD'))])
         self.assertEqual(amount.Amount, c_cost.dtype)
 
     def test_compile_EvalSum(self):
