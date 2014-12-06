@@ -3,9 +3,10 @@
 import collections
 import datetime
 
+from beancount.query import query_compile
+from beancount.query import query_env
 from beancount.core import data
 from beancount.core import inventory
-from beancount.query import query_compile
 from beancount.parser import printer
 from beancount.ops import summarize
 from beancount.utils import misc_utils
@@ -99,6 +100,18 @@ class RowContext:
     """A dumb container for information used by a row expression."""
     posting = None
     balance = None
+
+
+def uses_balance_column(c_expr):
+    """Return true if the expression accesses the special 'balance' column.
+
+    Args:
+      c_expr: A compiled expression tree (an EvalNode node).
+    Returns:
+      A boolean, true if the expression contains a BalanceColumn node.
+    """
+    return (isinstance(c_expr, query_env.BalanceColumn) or
+            any(uses_balance_column(c_node) for c_node in c_expr.childnodes()))
 
 
 def execute_query(query, entries, options_map):

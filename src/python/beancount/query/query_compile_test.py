@@ -586,6 +586,8 @@ class TestCompileSelectOrderBy(CompileSelectBase):
 
 class TestTranslationJournal(CompileSelectBase):
 
+    maxDiff = 4096
+
     def test_journal(self):
         journal = self.parse("JOURNAL;")
         select = c.translate_journal(journal)
@@ -596,7 +598,8 @@ class TestTranslationJournal(CompileSelectBase):
                 p.Target(p.Function('maxwidth', [p.Column('payee'), p.Constant(48)]), None),
                 p.Target(p.Function('maxwidth', [p.Column('narration'), p.Constant(80)]), None),
                 p.Target(p.Column('account'), None),
-                p.Target(p.Column('change'), None)
+                p.Target(p.Column('change'), None),
+                p.Target(p.Column('balance'), None),
             ],
                  None, None, None, None, None, None, None, None),
             select)
@@ -611,7 +614,8 @@ class TestTranslationJournal(CompileSelectBase):
                 p.Target(p.Function('maxwidth', [p.Column('payee'), p.Constant(48)]), None),
                 p.Target(p.Function('maxwidth', [p.Column('narration'), p.Constant(80)]), None),
                 p.Target(p.Column('account'), None),
-                p.Target(p.Column('change'), None)
+                p.Target(p.Column('change'), None),
+                p.Target(p.Column('balance'), None),
             ],
                  None,
                      p.Match(p.Column('account'), p.Constant('liabilities')),
@@ -628,7 +632,26 @@ class TestTranslationJournal(CompileSelectBase):
                 p.Target(p.Function('maxwidth', [p.Column('payee'), p.Constant(48)]), None),
                 p.Target(p.Function('maxwidth', [p.Column('narration'), p.Constant(80)]), None),
                 p.Target(p.Column('account'), None),
-                p.Target(p.Column('change'), None)
+                p.Target(p.Column('change'), None),
+                p.Target(p.Column('balance'), None),
+            ],
+                 p.From(p.Equal(p.Column('year'), p.Constant(2014)), None, None, None),
+                     p.Match(p.Column('account'), p.Constant('liabilities')),
+                     None, None, None, None, None, None),
+            select)
+
+    def test_journal_with_account_func_and_from(self):
+        journal = self.parse("JOURNAL 'liabilities' AT cost FROM year = 2014;")
+        select = c.translate_journal(journal)
+        self.assertEqual(
+            p.Select([
+                p.Target(p.Column('date'), None),
+                p.Target(p.Column('flag'), None),
+                p.Target(p.Function('maxwidth', [p.Column('payee'), p.Constant(48)]), None),
+                p.Target(p.Function('maxwidth', [p.Column('narration'), p.Constant(80)]), None),
+                p.Target(p.Column('account'), None),
+                p.Target(p.Function('cost', [p.Column('change')]), None),
+                p.Target(p.Function('cost', [p.Column('balance')]), None),
             ],
                  p.From(p.Equal(p.Column('year'), p.Constant(2014)), None, None, None),
                      p.Match(p.Column('account'), p.Constant('liabilities')),
@@ -639,7 +662,7 @@ class TestTranslationJournal(CompileSelectBase):
 class TestTranslationBalance(CompileSelectBase):
 
     def test_balance(self):
-        balance = self.parse("BALANCE;")
+        balance = self.parse("BALANCES;")
         select = c.translate_balance(balance)
         self.assertEqual(
             p.Select([
@@ -650,7 +673,7 @@ class TestTranslationBalance(CompileSelectBase):
             select)
 
     def test_balance_with_units(self):
-        balance = self.parse("BALANCE cost;")
+        balance = self.parse("BALANCES AT cost;")
         select = c.translate_balance(balance)
         self.assertEqual(
             p.Select([
@@ -661,7 +684,7 @@ class TestTranslationBalance(CompileSelectBase):
             select)
 
     def test_balance_with_units_and_from(self):
-        balance = self.parse("BALANCE cost FROM year = 2014;")
+        balance = self.parse("BALANCES AT cost FROM year = 2014;")
         select = c.translate_balance(balance)
         self.assertEqual(
             p.Select([

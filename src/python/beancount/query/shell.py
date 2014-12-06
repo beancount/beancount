@@ -316,7 +316,7 @@ class BQLShell(DispatchingShell):
         select = query_compile.translate_journal(journal)
         return self.on_Select(select)
 
-    def on_Balance(self, balance):
+    def on_Balances(self, balance):
         """
         Select balances of some subset of postings. This command is a
         convenience and converts into an equivalent Select statement, designed

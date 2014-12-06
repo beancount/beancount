@@ -34,7 +34,7 @@ Select = collections.namedtuple(
                'group_by order_by pivot_by limit distinct flatten'))
 
 # A select query that produces final balances for accounts.
-# This is equivalent to
+# This is more or equivalent to
 #
 #   SELECT account, sum(change) FROM <from_clause>
 #   GROUP BY account
@@ -53,8 +53,10 @@ Balances = collections.namedtuple('Balances', 'summary_func from_clause')
 #
 # Attributes:
 #   account: A string, the name of the account to restrict to.
+#   summary_func: A method on an inventory to call on the changes column.
+#     May be to extract units, value at cost, etc.
 #   from_clause: An instance of 'From', or None if absent.
-Journal = collections.namedtuple('Journal', 'account from_clause')
+Journal = collections.namedtuple('Journal', 'account summary_func from_clause')
 
 # A query that will simply print the selected entries in Beancount format.
 #
@@ -64,6 +66,12 @@ Print = collections.namedtuple('Print', 'from_clause')
 
 # Errors command (prints errors and context around them).
 Errors = collections.namedtuple('Errors', '')
+
+# Explains a command (prints out AST for debugging).
+#
+# Attributes:
+#   statement: An instance of a compiled statement to explain.
+Explain = collections.namedtuple('Explain', 'statement')
 
 
 
@@ -177,7 +185,7 @@ class Lexer:
     keywords = {
         'EXPLAIN',
         'SELECT', 'AS', 'FROM', 'WHERE', 'OPEN', 'CLOSE', 'CLEAR', 'ON',
-        'BALANCES', 'JOURNAL', 'PRINT',
+        'BALANCES', 'JOURNAL', 'PRINT', 'AT',
         'ERRORS',
         'GROUP', 'BY', 'HAVING', 'ORDER', 'DESC', 'ASC', 'PIVOT',
         'LIMIT', 'FLATTEN', 'DISTINCT',
@@ -594,7 +602,6 @@ class SelectParser(Lexer):
 class Parser(SelectParser):
     """PLY parser for the Beancount Query Language's full command syntax.
     """
-
     start = 'top_statement'
 
     def p_regular_statement(self, p):
@@ -623,17 +630,23 @@ class Parser(SelectParser):
 
     def p_balances_statement(self, p):
         """
-        balances_statement : BALANCES from
-                           | BALANCES ID from
+        balances_statement : BALANCES summary_func from
         """
-        p[0] = Balances(None, p[2]) if len(p) == 3 else Balances(p[2], p[3])
+        p[0] = Balances(p[2], p[3])
 
     def p_journal_statement(self, p):
         """
-        journal_statement : JOURNAL from
-                          | JOURNAL account from
+        journal_statement : JOURNAL summary_func from
+                          | JOURNAL account summary_func from
         """
-        p[0] = Journal(p[2], p[3]) if len(p) == 4 else Journal(None, p[2])
+        p[0] = Journal(None, p[2], p[3]) if len(p) == 4 else Journal(p[2], p[3], p[4])
+
+    def p_summary_func(self, p):
+        """
+        summary_func : empty
+                     | AT ID
+        """
+        p[0] = p[2] if len(p) == 3 else None
 
     def p_print_statement(self, p):
         """

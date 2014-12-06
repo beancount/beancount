@@ -844,12 +844,14 @@ def translate_journal(journal):
            MAXWIDTH(payee, 48),
            MAXWIDTH(narration, 80),
            account,
-           change
+           {summary_func}(change),
+           {summary_func}(balance)
         {where}
 
-    """.format(where='WHERE account ~ "{}"'.format(journal.account)
-               if journal.account
-               else ''))
+    """.format(where=('WHERE account ~ "{}"'.format(journal.account)
+                      if journal.account
+                      else ''),
+               summary_func=journal.summary_func or ''))
 
     return p.Select(cooked_select.targets,
                     journal.from_clause,

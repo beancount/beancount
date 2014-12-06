@@ -496,25 +496,34 @@ class TestBalances(QueryParserTestBase):
                        q.From(q.Equal(q.Column('date'),
                                       q.Constant(datetime.date(2014, 1, 1))),
                               None, True, None)),
-            "BALANCES units FROM date = 2014-01-01 CLOSE;")
+            "BALANCES AT units FROM date = 2014-01-01 CLOSE;")
 
 
 class TestJournal(QueryParserTestBase):
 
     def test_journal_empty(self):
-        self.assertParse(q.Journal(None, None),
+        self.assertParse(q.Journal(None, None, None),
                          "JOURNAL;")
 
     def test_journal_account(self):
-        self.assertParse(q.Journal('Assets:Checking', None),
+        self.assertParse(q.Journal('Assets:Checking', None, None),
                          "JOURNAL 'Assets:Checking';")
+
+    def test_journal_summary(self):
+        self.assertParse(q.Journal(None, 'cost', None),
+                         "JOURNAL AT cost;")
+
+    def test_journal_account_and_summary(self):
+        self.assertParse(q.Journal('Assets:Checking', 'cost', None),
+                         "JOURNAL 'Assets:Checking' AT cost;")
 
     def test_journal_from(self):
         self.assertParse(
-            q.Journal(None, q.From(q.Equal(q.Column('date'),
-                                           q.Constant(datetime.date(2014, 1, 1))),
-                                   None, True, None)),
+            q.Journal(None, None, q.From(q.Equal(q.Column('date'),
+                                                 q.Constant(datetime.date(2014, 1, 1))),
+                                         None, True, None)),
             "JOURNAL FROM date = 2014-01-01 CLOSE;")
+
 
 class TestPrint(QueryParserTestBase):
 
@@ -553,3 +562,23 @@ class TestExpressionName(QueryParserTestBase):
     def test_binary(self):
         self.assertEqual('and_account_date', q.get_expression_name(
             q.And(q.Column('account'), q.Column('date'))))
+
+
+class TestExplain(QueryParserTestBase):
+
+    def test_explain_select(self):
+        self.assertParse(q.Explain(
+            qSelect([q.Target(q.Column('date'), None),
+                     q.Target(q.Column('account'), None)],
+                    where_clause=q.Match(q.Column('account'), q.Constant('etrade')))
+            ), "EXPLAIN SELECT date, account WHERE account ~ 'etrade';")
+
+    def test_explain_balances(self):
+        self.assertParse(q.Explain(
+            q.Balances('cost', None)
+            ), "EXPLAIN BALANCES AT cost;")
+
+    def test_explain_journal(self):
+        self.assertParse(q.Explain(
+            q.Journal('Assets:ETrade', 'units', None)
+            ), "EXPLAIN JOURNAL 'Assets:ETrade' AT units;")

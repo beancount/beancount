@@ -296,6 +296,25 @@ class TestAllocation(unittest.TestCase):
         self.assertEqual([None, None, None], allocator.create_store())
 
 
+class TestBalanceColumn(unittest.TestCase):
+
+    def test_uses_balance_column(self):
+        c_simple = cc.BalanceColumn()
+        self.assertTrue(x.uses_balance_column(c_simple))
+
+        c_simple_not = cc.AccountColumn()
+        self.assertFalse(x.uses_balance_column(c_simple_not))
+
+        c_subexpr = c.EvalEqual(cc.BalanceColumn(), c.EvalConstant(2012))
+        self.assertTrue(x.uses_balance_column(c_subexpr))
+
+        c_subexpr_not = c.EvalEqual(cc.AccountColumn(), c.EvalConstant('Assets'))
+        self.assertFalse(x.uses_balance_column(c_subexpr_not))
+
+
+
+
+
 class TestExecuteNonAggregatedQuery(QueryBase):
 
     INPUT = """
