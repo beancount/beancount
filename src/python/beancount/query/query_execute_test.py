@@ -79,7 +79,7 @@ class QueryBase(cmptest.TestCase):
 
 
 class CommonInputBase:
-    INPUT = """
+    INPUT = textwrap.dedent("""
 
     2010-01-01 open Assets:Bank:Checking
     2010-01-01 open Assets:ForeignBank:Checking
@@ -111,7 +111,7 @@ class CommonInputBase:
       Assets:Bank:Checking       104.00 USD
       Expenses:Restaurant
 
-    """
+    """)
     def setUp(self):
         super().setUp()
         self.entries, _, self.options_map = parser.parse_string(textwrap.dedent(self.INPUT))
@@ -197,7 +197,7 @@ class TestFilterEntries(CommonInputBase, QueryBase):
 
         self.assertEqualEntries(self.INPUT + textwrap.dedent("""
 
-          2014-04-04 C "Conversion for Inventory(-50.00 USD, -60.00 CAD)"
+          2014-04-04 C "Conversion for (-50.00 USD, -60.00 CAD)"
             Equity:Conversions:Current                                              50.00 USD                    @ 0.00 NOTHING
             Equity:Conversions:Current                                              60.00 CAD                    @ 0.00 NOTHING
 
@@ -247,6 +247,7 @@ class TestFilterEntries(CommonInputBase, QueryBase):
         filtered_entries = x.filter_entries(self.compile("""
           SELECT date, type FROM CLEAR;
         """).c_from, self.entries, self.options_map)
+
         self.assertEqualEntries(self.INPUT + textwrap.dedent("""
 
           2014-04-04 T "Transfer balance for 'Expenses:Restaurant' (Transfer balance)"

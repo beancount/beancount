@@ -172,7 +172,7 @@ class TestOpenClose(cmptest.TestCase):
 
         ;; 2012-09-01  END   --------------------------------
 
-        2012-08-31 C "Conversion for Inventory(-8000 USD, 9750 CAD)"
+        2012-08-31 C "Conversion for (-8000 USD, 9750 CAD)"
           Equity:Conversions:Current    8000 USD  @ 0 NOTHING
           Equity:Conversions:Current   -9750 CAD  @ 0 NOTHING
 
@@ -302,7 +302,7 @@ class TestOpenClose(cmptest.TestCase):
 
         ;; 2012-09-01  END   --------------------------------
 
-        2012-08-31 C "Conversion for Inventory(-3000 USD, 3750 CAD)"
+        2012-08-31 C "Conversion for (-3000 USD, 3750 CAD)"
           Equity:Conversions:Current    3,000 USD @ 0 NOTHING
           Equity:Conversions:Current   -3,750 CAD @ 0 NOTHING
 
