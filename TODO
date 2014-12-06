@@ -88,6 +88,8 @@ beancount: TODO
     modules benefit from the feature. You could ideally provide a date and a
     tolerancen, and somehow issue warnings automatically.
 
+  - Fix FIXME in beancount.projects.returns, from DClemente issues.
+
 
 ** Documentation / Ongoing
 
