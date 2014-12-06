@@ -6,10 +6,10 @@ import textwrap
 from beancount.core.amount import D
 from beancount.core.amount import Decimal
 from beancount.core import inventory
-from beancount.query import query_parser as q
-from beancount.query import query_compile as c
-from beancount.query import query_env as cc
-from beancount.query import query_execute as x
+from beancount.query import query_parser
+from beancount.query import query_compile as qc
+from beancount.query import query_env as qe
+from beancount.query import query_execute as qx
 from beancount.parser import cmptest
 from beancount.parser import parser
 from beancount.utils import misc_utils
@@ -20,13 +20,13 @@ class QueryBase(cmptest.TestCase):
     maxDiff = 8192
 
     # Default execution contexts.
-    xcontext_entries = cc.FilterEntriesEnvironment()
-    xcontext_targets = cc.TargetsEnvironment()
-    xcontext_postings = cc.FilterPostingsEnvironment()
+    xcontext_entries = qe.FilterEntriesEnvironment()
+    xcontext_targets = qe.TargetsEnvironment()
+    xcontext_postings = qe.FilterPostingsEnvironment()
 
     def setUp(self):
         super().setUp()
-        self.parser = q.Parser()
+        self.parser = query_parser.Parser()
 
     def parse(self, bql_string):
         """Parse a query.
@@ -46,10 +46,10 @@ class QueryBase(cmptest.TestCase):
         Returns:
           A compiled EvalQuery node.
         """
-        return c.compile_select(self.parse(bql_string),
-                                self.xcontext_targets,
-                                self.xcontext_postings,
-                                self.xcontext_entries)
+        return qc.compile_select(self.parse(bql_string),
+                                 self.xcontext_targets,
+                                 self.xcontext_postings,
+                                 self.xcontext_entries)
 
     def check_query(self,
                     input_string, bql_string,
@@ -59,7 +59,7 @@ class QueryBase(cmptest.TestCase):
 
         entries, _, options_map = parser.parse_string(input_string)
         query = self.compile(bql_string)
-        result_types, result_rows = x.execute_query(query, entries, options_map)
+        result_types, result_rows = qx.execute_query(query, entries, options_map)
 
         if debug:
             with misc_utils.box('result_types'):
@@ -121,13 +121,13 @@ class TestFilterEntries(CommonInputBase, QueryBase):
 
     def test_filter_empty_from(self):
         # Check that no filter outputs the very same thing.
-        filtered_entries = x.filter_entries(self.compile("""
+        filtered_entries = qx.filter_entries(self.compile("""
           SELECT * ;
         """).c_from, self.entries, self.options_map)
         self.assertEqualEntries(self.entries, filtered_entries)
 
     def test_filter_by_year(self):
-        filtered_entries = x.filter_entries(self.compile("""
+        filtered_entries = qx.filter_entries(self.compile("""
           SELECT date, type FROM year(date) = 2012;
         """).c_from, self.entries, self.options_map)
         self.assertEqualEntries("""
@@ -139,7 +139,7 @@ class TestFilterEntries(CommonInputBase, QueryBase):
         """, filtered_entries)
 
     def test_filter_by_expr1(self):
-        filtered_entries = x.filter_entries(self.compile("""
+        filtered_entries = qx.filter_entries(self.compile("""
           SELECT date, type
           FROM NOT (type = 'transaction' AND
                     (year(date) = 2012 OR year(date) = 2013));
@@ -166,7 +166,7 @@ class TestFilterEntries(CommonInputBase, QueryBase):
         """, filtered_entries)
 
     def test_filter_by_expr2(self):
-        filtered_entries = x.filter_entries(self.compile("""
+        filtered_entries = qx.filter_entries(self.compile("""
           SELECT date, type FROM date < 2012-06-01;
         """).c_from, self.entries, self.options_map)
         self.assertEqualEntries("""
@@ -191,7 +191,7 @@ class TestFilterEntries(CommonInputBase, QueryBase):
         """, filtered_entries)
 
     def test_filter_close_undated(self):
-        filtered_entries = x.filter_entries(self.compile("""
+        filtered_entries = qx.filter_entries(self.compile("""
           SELECT date, type FROM CLOSE;
         """).c_from, self.entries, self.options_map)
 
@@ -204,13 +204,13 @@ class TestFilterEntries(CommonInputBase, QueryBase):
         """), filtered_entries)
 
     def test_filter_close_dated(self):
-        filtered_entries = x.filter_entries(self.compile("""
+        filtered_entries = qx.filter_entries(self.compile("""
           SELECT date, type FROM CLOSE ON 2013-06-01;
         """).c_from, self.entries, self.options_map)
         self.assertEqualEntries(self.entries[:-2], filtered_entries)
 
     def test_filter_open_dated(self):
-        filtered_entries = x.filter_entries(self.compile("""
+        filtered_entries = qx.filter_entries(self.compile("""
           SELECT date, type FROM OPEN ON 2013-01-01;
         """).c_from, self.entries, self.options_map)
 
@@ -244,7 +244,7 @@ class TestFilterEntries(CommonInputBase, QueryBase):
         """, filtered_entries)
 
     def test_filter_clear(self):
-        filtered_entries = x.filter_entries(self.compile("""
+        filtered_entries = qx.filter_entries(self.compile("""
           SELECT date, type FROM CLEAR;
         """).c_from, self.entries, self.options_map)
 
@@ -260,11 +260,11 @@ class TestFilterEntries(CommonInputBase, QueryBase):
 class TestExecutePrint(CommonInputBase, QueryBase):
 
     def test_print_with_filter(self):
-        statement = c.EvalPrint(c.EvalFrom(c.EvalEqual(cc.YearEntryColumn(),
-                                                       c.EvalConstant(2012)),
-                                           None, None, None))
+        statement = qc.EvalPrint(qc.EvalFrom(qc.EvalEqual(qe.YearEntryColumn(),
+                                                          qc.EvalConstant(2012)),
+                                             None, None, None))
         oss = io.StringIO()
-        x.execute_print(statement, self.entries, self.options_map, oss)
+        qx.execute_print(statement, self.entries, self.options_map, oss)
 
         self.assertEqualEntries("""
 
@@ -275,21 +275,21 @@ class TestExecutePrint(CommonInputBase, QueryBase):
         """, oss.getvalue())
 
     def test_print_with_no_filter(self):
-        statement = c.EvalPrint(c.EvalFrom(None, None, None, None))
+        statement = qc.EvalPrint(qc.EvalFrom(None, None, None, None))
         oss = io.StringIO()
-        x.execute_print(statement, self.entries, self.options_map, oss)
+        qx.execute_print(statement, self.entries, self.options_map, oss)
         self.assertEqualEntries(self.INPUT, oss.getvalue())
 
-        statement = c.EvalPrint(None)
+        statement = qc.EvalPrint(None)
         oss = io.StringIO()
-        x.execute_print(statement, self.entries, self.options_map, oss)
+        qx.execute_print(statement, self.entries, self.options_map, oss)
         self.assertEqualEntries(self.INPUT, oss.getvalue())
 
 
 class TestAllocation(unittest.TestCase):
 
     def test_allocator(self):
-        allocator = x.Allocator()
+        allocator = qx.Allocator()
         self.assertEqual(0, allocator.allocate())
         self.assertEqual(1, allocator.allocate())
         self.assertEqual(2, allocator.allocate())
@@ -299,17 +299,17 @@ class TestAllocation(unittest.TestCase):
 class TestBalanceColumn(unittest.TestCase):
 
     def test_uses_balance_column(self):
-        c_simple = cc.BalanceColumn()
-        self.assertTrue(x.uses_balance_column(c_simple))
+        c_simple = qe.BalanceColumn()
+        self.assertTrue(qx.uses_balance_column(c_simple))
 
-        c_simple_not = cc.AccountColumn()
-        self.assertFalse(x.uses_balance_column(c_simple_not))
+        c_simple_not = qe.AccountColumn()
+        self.assertFalse(qx.uses_balance_column(c_simple_not))
 
-        c_subexpr = c.EvalEqual(cc.BalanceColumn(), c.EvalConstant(2012))
-        self.assertTrue(x.uses_balance_column(c_subexpr))
+        c_subexpr = qc.EvalEqual(qe.BalanceColumn(), qc.EvalConstant(2012))
+        self.assertTrue(qx.uses_balance_column(c_subexpr))
 
-        c_subexpr_not = c.EvalEqual(cc.AccountColumn(), c.EvalConstant('Assets'))
-        self.assertFalse(x.uses_balance_column(c_subexpr_not))
+        c_subexpr_not = qc.EvalEqual(qe.AccountColumn(), qc.EvalConstant('Assets'))
+        self.assertFalse(qx.uses_balance_column(c_subexpr_not))
 
 
 
