@@ -226,6 +226,7 @@ class BQLShell(DispatchingShell):
         # Compile the print statement.
         try:
             c_from = query_compile.compile_from(print_stmt.from_clause, self.env_entries)
+            # FIXME: This should be EvalPrint
             c_print = query_parser.Print(c_from)
         except query_compile.CompilationError as exc:
             print('ERROR: {}.'.format(str(exc).rstrip('.')))
@@ -336,6 +337,10 @@ class BQLShell(DispatchingShell):
         """
         Compile and print a compiled statement for debugging.
         """
+        print("Parsed statement:")
+        print("  {}".format(explain.statement))
+        print()
+
         if isinstance(explain.statement, query_parser.Select):
             # Compile the select statement and print it uot.
             try:

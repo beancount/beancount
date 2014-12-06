@@ -201,15 +201,16 @@ class CompileSelectBase(unittest.TestCase):
         Returns:
           The AST.
         """
-        select = self.parse(query)
-        query = c.compile_select(select,
-                                 self.xcontext_targets,
-                                 self.xcontext_postings,
-                                 self.xcontext_entries)
-        self.assertInvariants(query)
-        return query
+        statement = self.parse(query)
+        c_query = c.compile(statement,
+                            self.xcontext_targets,
+                            self.xcontext_postings,
+                            self.xcontext_entries)
+        if isinstance(c_query, p.Select):
+            self.assertSelectInvariants(c_query)
+        return c_query
 
-    def assertInvariants(self, query):
+    def assertSelectInvariants(self, query):
         """Assert the invariants on the query.
 
         Args:
@@ -283,6 +284,9 @@ class CompileSelectBase(unittest.TestCase):
             self.assertEqual(expected, actual)
             return actual
         except AssertionError:
+            print()
+            print("Expected: {}".format(expected))
+            print("Actual  : {}".format(actual))
             raise
 
 
@@ -697,3 +701,13 @@ class TestTranslationBalance(CompileSelectBase):
                      p.OrderBy([1], None),
                      None, None, None, None),
             select)
+
+
+class TestCompilePrint(CompileSelectBase):
+
+    def test_print(self):
+        self.assertCompile(c.EvalPrint(None), "PRINT;")
+
+    def test_print_from(self):
+        self.assertCompile(c.EvalPrint(c.EvalFrom(c.EvalEqual(cc.YearEntryColumn(), c.EvalConstant(2014)), None, None, None)),
+                           "PRINT FROM year = 2014;")

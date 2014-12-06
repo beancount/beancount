@@ -742,7 +742,7 @@ def compile_select(select, targets_environ, postings_environ, entries_environ):
       postings_environ: : A compilation environment for evaluating postings filters.
       entries_environ: : A compilation environment for evaluating entry filters.
     Returns:
-      An instance of Query, ready to be executed.
+      An instance of EvalQuery, ready to be executed.
     """
 
     # Process the FROM clause and figure out the execution environment for the
@@ -859,11 +859,11 @@ def transform_journal(journal):
                     None, None, None, None, None, None)
 
 
-def transform_balance(balance):
+def transform_balances(balances):
     """Translate a Balances entry into an uncompiled Select statement.
 
     Args:
-      balance: An instance of a Balance object.
+      balances: An instance of a Balance object.
     Returns:
       An instance of an uncompiled Select object.
     """
@@ -872,11 +872,57 @@ def transform_balance(balance):
 
       SELECT account, sum({}(change))
 
-    """.format(balance.summary_func or ""))
+    """.format(balances.summary_func or ""))
 
     return p.Select(cooked_select.targets,
-                    balance.from_clause,
+                    balances.from_clause,
                     None,
                     p.GroupBy([1], None),
                     p.OrderBy([1], None),
                     None, None, None, None)
+
+
+# A compiled print statement, ready for execution.
+#
+# Attributes:
+#   c_from: An instance of EvalNode, a compiled expression tree, for directives.
+EvalPrint = collections.namedtuple('EvalPrint', 'c_from')
+
+def compile_print(print_stmt, env_entries):
+    """Compile a Print statement.
+
+    Args:
+      statement: An instance of query_parser.Print.
+      entries_environ: : A compilation environment for evaluating entry filters.
+    Returns:
+      An instance of EvalPrint, ready to be executed.
+    """
+    c_from = compile_from(print_stmt.from_clause, env_entries)
+    return EvalPrint(c_from)
+
+
+def compile(statement, targets_environ, postings_environ, entries_environ):
+    """Prepare an AST any of the statement into an executable statement.
+
+    Args:
+      statement: An instance of the parser's Select, Balances, Journal or Print.
+      targets_environ: A compilation environment for evaluating targets.
+      postings_environ: : A compilation environment for evaluating postings filters.
+      entries_environ: : A compilation environment for evaluating entry filters.
+    Returns:
+      An instance of EvalQuery or EvalPrint, ready to be executed.
+    """
+    if isinstance(statement, query_parser.Balances):
+        statement = transform_balances(statement)
+    elif isinstance(statement, query_parser.Journal):
+        statement = transform_journal(statement)
+
+    if isinstance(statement, query_parser.Select):
+        c_query = compile_select(explain.statement, env_targets, env_postings, env_entries)
+    elif isinstance(statement, query_parser.Print):
+        c_query = compile_print(statement, entries_environ)
+    else:
+        raise NotImplementedError(
+            "Cannot compile a statement of type '{}'".format(type(statement)))
+
+    return c_query

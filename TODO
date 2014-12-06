@@ -3,6 +3,10 @@ beancount: TODO
 * Query Language
 http://furius.ca/beancount/doc/proposal-query
 
+  - All short name imports in the query package should become two-letters and be
+    consistent across files, e.g. qe, qc, qp, etc. Do this, for clarity.
+
+
   - Use the display_context  in the BQL rendering routines instead of using the
     display precision mode in the displayed numbers only.
 
