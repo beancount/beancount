@@ -313,7 +313,7 @@ class BQLShell(DispatchingShell):
 
         See the SELECT query help for more details on the FROM clause.
         """
-        select = query_compile.translate_journal(journal)
+        select = query_compile.transform_journal(journal)
         return self.on_Select(select)
 
     def on_Balances(self, balance):
@@ -329,7 +329,7 @@ class BQLShell(DispatchingShell):
 
         See the SELECT query help for more details on the FROM clause.
         """
-        select = query_compile.translate_balance(balance)
+        select = query_compile.transform_balance(balance)
         return self.on_Select(select)
 
     def on_Explain(self, explain):

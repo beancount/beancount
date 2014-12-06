@@ -590,7 +590,7 @@ class TestTranslationJournal(CompileSelectBase):
 
     def test_journal(self):
         journal = self.parse("JOURNAL;")
-        select = c.translate_journal(journal)
+        select = c.transform_journal(journal)
         self.assertEqual(
             p.Select([
                 p.Target(p.Column('date'), None),
@@ -606,7 +606,7 @@ class TestTranslationJournal(CompileSelectBase):
 
     def test_journal_with_account(self):
         journal = self.parse("JOURNAL 'liabilities';")
-        select = c.translate_journal(journal)
+        select = c.transform_journal(journal)
         self.assertEqual(
             p.Select([
                 p.Target(p.Column('date'), None),
@@ -624,7 +624,7 @@ class TestTranslationJournal(CompileSelectBase):
 
     def test_journal_with_account_and_from(self):
         journal = self.parse("JOURNAL 'liabilities' FROM year = 2014;")
-        select = c.translate_journal(journal)
+        select = c.transform_journal(journal)
         self.assertEqual(
             p.Select([
                 p.Target(p.Column('date'), None),
@@ -642,7 +642,7 @@ class TestTranslationJournal(CompileSelectBase):
 
     def test_journal_with_account_func_and_from(self):
         journal = self.parse("JOURNAL 'liabilities' AT cost FROM year = 2014;")
-        select = c.translate_journal(journal)
+        select = c.transform_journal(journal)
         self.assertEqual(
             p.Select([
                 p.Target(p.Column('date'), None),
@@ -663,7 +663,7 @@ class TestTranslationBalance(CompileSelectBase):
 
     def test_balance(self):
         balance = self.parse("BALANCES;")
-        select = c.translate_balance(balance)
+        select = c.transform_balance(balance)
         self.assertEqual(
             p.Select([
                 p.Target(p.Column('account'), None),
@@ -674,7 +674,7 @@ class TestTranslationBalance(CompileSelectBase):
 
     def test_balance_with_units(self):
         balance = self.parse("BALANCES AT cost;")
-        select = c.translate_balance(balance)
+        select = c.transform_balance(balance)
         self.assertEqual(
             p.Select([
                 p.Target(p.Column('account'), None),
@@ -685,7 +685,7 @@ class TestTranslationBalance(CompileSelectBase):
 
     def test_balance_with_units_and_from(self):
         balance = self.parse("BALANCES AT cost FROM year = 2014;")
-        select = c.translate_balance(balance)
+        select = c.transform_balance(balance)
         self.assertEqual(
             p.Select([
                 p.Target(p.Column('account'), None),

@@ -827,7 +827,7 @@ def compile_select(select, targets_environ, postings_environ, entries_environ):
                      select.flatten)
 
 
-def translate_journal(journal):
+def transform_journal(journal):
     """Translate a Journal entry into an uncompiled Select statement.
 
     Args:
@@ -859,7 +859,7 @@ def translate_journal(journal):
                     None, None, None, None, None, None)
 
 
-def translate_balance(balance):
+def transform_balance(balance):
     """Translate a Balances entry into an uncompiled Select statement.
 
     Args:
