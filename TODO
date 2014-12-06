@@ -14,6 +14,7 @@ http://furius.ca/beancount/doc/proposal-query
   - Move beancount.scripts.report_test.search_words() to
     test_utils.search_words().
 
+
   - The OPEN ON and CLOSE ON syntaxes get on my nerves. I need something
     simpler, maybe even something simpler for "just this year". Maybe an
     auto-open at the first transaction that occurs after filtering, something
@@ -39,7 +40,10 @@ http://furius.ca/beancount/doc/proposal-query
 
 
   - Create a setvar for style (boxed, spaced, etc.)
-  - Rename 'change' column to 'position'.
+
+  - Rename 'change' column to 'position', and support dotted attribute name
+    syntax. It should map onto the Python syntax one-to-one.
+
   - Compute the special 'balance' row and produce journals with it.
 
   - Cache .format methods in renderers, they may be caching the formatting

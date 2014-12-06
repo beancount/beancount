@@ -866,11 +866,17 @@ def transform_balances(balances):
     Returns:
       An instance of an uncompiled Select object.
     """
+    ## FIXME: Change the aggregation rules to allow GROUP-BY not to include the
+    ## non-aggregate ORDER-BY columns, so we could just GROUP-BY accounts here
+    ## instead of having to include the sort-key. I think it should be fine if
+    ## the first or last sort-order value gets used, because it would simplify
+    ## the input statement.
+
     cooked_select = query_parser.Parser().parse("""
 
-      SELECT account, sum({}(change))
-      GROUP BY 1
-      ORDER BY 1
+      SELECT account, SUM({}(change))
+      GROUP BY account, ACCOUNT_SORTKEY(account)
+      ORDER BY ACCOUNT_SORTKEY(account)
 
     """.format(balances.summary_func or ""))
 

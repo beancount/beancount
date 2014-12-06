@@ -1,4 +1,5 @@
 import datetime
+import re
 import io
 import unittest
 import textwrap
@@ -27,7 +28,7 @@ def setUp(self):
     assert not errors
 
 
-class TestExecuteUseCases(unittest.TestCase):
+class TestUseCases(unittest.TestCase):
     """Testing all the use cases from the proposal here.
     I'm hoping to replace reports by these queries instead."""
 
@@ -35,16 +36,15 @@ class TestExecuteUseCases(unittest.TestCase):
         self.shell = shell.BQLShell(False, entries, errors, options_map)
 
     def test_accounts(self):
-        # Note: We could improve this further by allowing sorting by the account
-        # sort order. See account_types.get_account_sort_function(). A function
-        # to obtain the account sort key for an ORDER-BY declaration would
-        # replicate this and correctly order the accounts instead of
-        # lexicographic order.
-        with test_utils.capture('stdout') as output:
+        with test_utils.capture('stdout') as stdout:
             self.shell.onecmd("""
-              SELECT DISTINCT account, open_date(account) ORDER BY 1;
+              SELECT DISTINCT account, open_date(account)
+              ORDER BY account_sortkey(account);
             """)
-        print(output.getvalue())
+        output = stdout.getvalue()
+        self.assertTrue(re.search('Assets:US:BofA:Checking *2012-01-01', output))
+        self.assertTrue(re.search('Equity:Opening-Balances *1980-05-12', output))
+        self.assertTrue(re.search('Expenses:Financial:Commissions *1980-05-12', output))
 
     def test_balances(self):
         with test_utils.capture('stdout') as output:

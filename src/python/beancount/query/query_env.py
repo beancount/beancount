@@ -18,6 +18,7 @@ from beancount.core import amount
 from beancount.core import position
 from beancount.core import inventory
 from beancount.core import account
+from beancount.core import account_types
 from beancount.core import data
 from beancount.core import getters
 from beancount.query import query_compile
@@ -143,6 +144,18 @@ class CloseDate(query_compile.EvalFunction):
         close_entry, close_entry = context.open_close_map[args[0]]
         return close_entry.date if close_entry else None
 
+class AccountSortKey(query_compile.EvalFunction):
+    "Get a string to sort accounts in order taking into account the types."
+    __intypes__ = [str]
+
+    def __init__(self, operands):
+        super().__init__(operands, str)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        index, name = account_types.get_account_sort_key(context.account_types, args[0])
+        return '{}-{}'.format(index, name)
+
 
 # Operation on inventories.
 
@@ -197,6 +210,7 @@ SIMPLE_FUNCTIONS = {
     'parent'                       : Parent,
     'open_date'                    : OpenDate,
     'close_date'                   : CloseDate,
+    'account_sortkey'              : AccountSortKey,
     ('units', position.Position)   : UnitsPosition,
     ('units', inventory.Inventory) : UnitsInventory,
     ('cost', position.Position)    : CostPosition,

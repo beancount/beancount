@@ -32,8 +32,8 @@ DEFAULT_ACCOUNT_TYPES = AccountTypes("Assets",
                                      "Expenses")
 
 
-def get_account_sort_function(account_types):
-    """Return a function that can be used to extract a key to sort account names.
+def get_account_sort_key(account_types, account_name):
+    """Return a typle that can be used to sort account names.
 
     Args:
       account_types: An instance of AccountTypes, a tuple of account type names.
@@ -42,9 +42,7 @@ def get_account_sort_function(account_types):
       function. It accepts a single argument, the account name to sort and
       produces a sortable key.
     """
-    assert isinstance(account_types, AccountTypes)
-    return lambda account_name: (account_types.index(get_account_type(account_name)),
-                                 account_name)
+    return (account_types.index(get_account_type(account_name)), account_name)
 
 
 def get_account_type(account_name):

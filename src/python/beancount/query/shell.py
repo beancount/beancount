@@ -1,12 +1,12 @@
 """An interactive command-line shell interpreter for the Beancount Query Language.
 """
-import os
-import sys
+import atexit
 import cmd
 import io
-import readline
+import os
 import re
-import atexit
+import readline
+import sys
 import textwrap
 import traceback
 from os import path

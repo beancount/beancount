@@ -10,6 +10,7 @@ from beancount.core import data
 from beancount.core import inventory
 from beancount.core import getters
 from beancount.parser import printer
+from beancount.parser import options
 from beancount.ops import summarize
 from beancount.utils import misc_utils
 
@@ -107,6 +108,12 @@ class RowContext:
     # The current running balance *after* applying the posting.
     balance = None
 
+    # The parser's options_map.
+    options_map = None
+
+    # An AccountTypes tuple of the account types.
+    account_types = None
+
     # A dict of account name strings to (open, close) entries for those accounts.
     open_close_map = None
 
@@ -175,7 +182,9 @@ def execute_query(query, entries, options_map):
     context = RowContext()
     context.balance = balance
 
-    # Initialize the open/close map for use by some of the accessors.
+    # Initialize some global properties for use by some of the accessors.
+    context.options_map = options_map
+    context.account_types = options.get_account_types(options_map)
     context.open_close_map = getters.get_account_open_close(entries)
 
     # Dispatch between the non-aggregated queries and aggregated queries.
