@@ -799,6 +799,8 @@ class TestExecuteOptions(QueryBase):
 class TestExecuteUseCases(QueryBase):
     """Testing all the use cases from the proposal."""
 
+    def test_accounts(self):
+        pass
 
 
 

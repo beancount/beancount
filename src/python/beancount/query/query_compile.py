@@ -836,23 +836,24 @@ def translate_journal(journal):
       An instance of an uncompiled Select object.
     """
     p = query_parser
+    cooked_select = p.Parser().parse("""
 
-    columns = [
-        p.Target(p.Column('date'), None),
-        p.Target(p.Column('flag'), None),
-        p.Target(p.Function('maxwidth', [p.Column('payee'), p.Constant(48)]), None),
-        p.Target(p.Function('maxwidth', [p.Column('narration'), p.Constant(80)]), None),
-        p.Target(p.Column('account'), None),
-        p.Target(p.Column('change'), None),
-        ]
+        SELECT
+           date,
+           flag,
+           MAXWIDTH(payee, 48),
+           MAXWIDTH(narration, 80),
+           account,
+           change
+        {where}
 
-    where_expr = (p.Match(p.Column('account'), p.Constant(journal.account))
-                  if journal.account
-                  else None)
+    """.format(where='WHERE account ~ "{}"'.format(journal.account)
+               if journal.account
+               else ''))
 
-    return p.Select(columns,
+    return p.Select(cooked_select.targets,
                     journal.from_clause,
-                    where_expr,
+                    cooked_select.where_clause,
                     None, None, None, None, None, None)
 
 
@@ -865,17 +866,13 @@ def translate_balance(balance):
       An instance of an uncompiled Select object.
     """
     p = query_parser
+    cooked_select = p.Parser().parse("""
 
-    summary_expr = (p.Function('sum', [p.Column('change')])
-                    if balance.summary_func is None
-                    else p.Function('sum', [p.Function(balance.summary_func,
-                                                       [p.Column('change')])]))
-    columns = [
-        p.Target(p.Column('account'), None),
-        p.Target(summary_expr, None),
-        ]
+      SELECT account, sum({}(change))
 
-    return p.Select(columns,
+    """.format(balance.summary_func or ""))
+
+    return p.Select(cooked_select.targets,
                     balance.from_clause,
                     None,
                     p.GroupBy([1], None),
