@@ -11,8 +11,13 @@ http://furius.ca/beancount/doc/proposal-query
     display precision mode in the displayed numbers only.
 
 
-  - Move beancount.scripts.report_test.search_words() to
-    test_utils.search_words().
+  - This should fail:
+
+       SELECT DISTINCT account  GROUP BY account, account_sortkey(account)
+       ORDER BY 2;"
+
+    I think you need to apply the ORDER-BY separately, and be able to ORDER-BY
+    aggregate values.
 
 
   - The OPEN ON and CLOSE ON syntaxes get on my nerves. I need something

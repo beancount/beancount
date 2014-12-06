@@ -109,6 +109,20 @@ def docfile(function):
     return new_function
 
 
+def search_words(words, line):
+    """Search for a sequence of words in a line.
+
+    Args:
+      words: A list of strings, the words to look for, or a space-separated string.
+      line: A string, the line to search into.
+    Returns:
+      A MatchObject, or None.
+    """
+    if isinstance(words, str):
+        words = words.split()
+    return re.search('.*'.join(r'\b{}\b'.format(word) for word in words), line)
+
+
 class TestCase(unittest.TestCase):
 
     def assertLines(self, text1, text2, message=None):

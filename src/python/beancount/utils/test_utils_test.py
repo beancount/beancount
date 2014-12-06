@@ -44,6 +44,11 @@ class TestTestUtils(unittest.TestCase):
         self.assertEqual("7f9034b1-51e7-420c-ac6b-945b5c594ebf",
                          open(filename).read())
 
+    def test_search_words(self):
+        test_utils.search_words('i walrus is',
+                                'i am the walrus is not chicago')
+        test_utils.search_words('i walrus is'.split(),
+                                'i am the walrus is not chicago')
 
 class TestTestCase(test_utils.TestCase):
 
