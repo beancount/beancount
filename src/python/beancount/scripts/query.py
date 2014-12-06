@@ -3,19 +3,11 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import argparse
-import io
 import logging
-import re
 import sys
-import textwrap
 import os
 
 from beancount import loader
-from beancount.ops import validation
-from beancount.reports import report
-from beancount.reports import misc_reports
-from beancount.reports import table
-from beancount.utils import file_utils
 from beancount.utils import misc_utils
 from beancount.query import shell
 

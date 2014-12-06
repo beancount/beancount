@@ -91,10 +91,10 @@ class DispatchingShell(cmd.Cmd):
     def add_help(self):
         "Attach help functions for each of the parsed token handlers."
         for attrname, func in list(self.__class__.__dict__.items()):
-            mo = re.match('on_(.*)', attrname)
-            if not mo:
+            match = re.match('on_(.*)', attrname)
+            if not match:
                 continue
-            command_name = mo.group(1)
+            command_name = match.group(1)
             setattr(self.__class__, 'help_{}'.format(command_name.lower()),
                     lambda _, fun=func: print(textwrap.dedent(fun.__doc__).strip()))
 

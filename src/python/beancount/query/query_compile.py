@@ -835,8 +835,7 @@ def transform_journal(journal):
     Returns:
       An instance of an uncompiled Select object.
     """
-    p = query_parser
-    cooked_select = p.Parser().parse("""
+    cooked_select = query_parser.Parser().parse("""
 
         SELECT
            date,
@@ -853,10 +852,10 @@ def transform_journal(journal):
                       else ''),
                summary_func=journal.summary_func or ''))
 
-    return p.Select(cooked_select.targets,
-                    journal.from_clause,
-                    cooked_select.where_clause,
-                    None, None, None, None, None, None)
+    return query_parser.Select(cooked_select.targets,
+                               journal.from_clause,
+                               cooked_select.where_clause,
+                               None, None, None, None, None, None)
 
 
 def transform_balances(balances):
@@ -867,19 +866,18 @@ def transform_balances(balances):
     Returns:
       An instance of an uncompiled Select object.
     """
-    p = query_parser
-    cooked_select = p.Parser().parse("""
+    cooked_select = query_parser.Parser().parse("""
 
       SELECT account, sum({}(change))
 
     """.format(balances.summary_func or ""))
 
-    return p.Select(cooked_select.targets,
-                    balances.from_clause,
-                    None,
-                    p.GroupBy([1], None),
-                    p.OrderBy([1], None),
-                    None, None, None, None)
+    return query_parser.Select(cooked_select.targets,
+                               balances.from_clause,
+                               None,
+                               query_parser.GroupBy([1], None),
+                               query_parser.OrderBy([1], None),
+                               None, None, None, None)
 
 
 # A compiled print statement, ready for execution.

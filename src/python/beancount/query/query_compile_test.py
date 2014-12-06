@@ -600,7 +600,8 @@ class TestTranslationJournal(CompileSelectBase):
                 p.Target(p.Column('date'), None),
                 p.Target(p.Column('flag'), None),
                 p.Target(p.Function('maxwidth', [p.Column('payee'), p.Constant(48)]), None),
-                p.Target(p.Function('maxwidth', [p.Column('narration'), p.Constant(80)]), None),
+                p.Target(p.Function('maxwidth', [p.Column('narration'),
+                                                 p.Constant(80)]), None),
                 p.Target(p.Column('account'), None),
                 p.Target(p.Column('change'), None),
                 p.Target(p.Column('balance'), None),
@@ -616,7 +617,8 @@ class TestTranslationJournal(CompileSelectBase):
                 p.Target(p.Column('date'), None),
                 p.Target(p.Column('flag'), None),
                 p.Target(p.Function('maxwidth', [p.Column('payee'), p.Constant(48)]), None),
-                p.Target(p.Function('maxwidth', [p.Column('narration'), p.Constant(80)]), None),
+                p.Target(p.Function('maxwidth', [p.Column('narration'),
+                                                 p.Constant(80)]), None),
                 p.Target(p.Column('account'), None),
                 p.Target(p.Column('change'), None),
                 p.Target(p.Column('balance'), None),
@@ -634,7 +636,8 @@ class TestTranslationJournal(CompileSelectBase):
                 p.Target(p.Column('date'), None),
                 p.Target(p.Column('flag'), None),
                 p.Target(p.Function('maxwidth', [p.Column('payee'), p.Constant(48)]), None),
-                p.Target(p.Function('maxwidth', [p.Column('narration'), p.Constant(80)]), None),
+                p.Target(p.Function('maxwidth', [p.Column('narration'),
+                                                 p.Constant(80)]), None),
                 p.Target(p.Column('account'), None),
                 p.Target(p.Column('change'), None),
                 p.Target(p.Column('balance'), None),
@@ -652,7 +655,8 @@ class TestTranslationJournal(CompileSelectBase):
                 p.Target(p.Column('date'), None),
                 p.Target(p.Column('flag'), None),
                 p.Target(p.Function('maxwidth', [p.Column('payee'), p.Constant(48)]), None),
-                p.Target(p.Function('maxwidth', [p.Column('narration'), p.Constant(80)]), None),
+                p.Target(p.Function('maxwidth', [p.Column('narration'),
+                                                 p.Constant(80)]), None),
                 p.Target(p.Column('account'), None),
                 p.Target(p.Function('cost', [p.Column('change')]), None),
                 p.Target(p.Function('cost', [p.Column('balance')]), None),
@@ -682,7 +686,8 @@ class TestTranslationBalance(CompileSelectBase):
         self.assertEqual(
             p.Select([
                 p.Target(p.Column('account'), None),
-                p.Target(p.Function('sum', [p.Function('cost', [p.Column('change')])]), None),
+                p.Target(p.Function('sum', [p.Function('cost',
+                                                       [p.Column('change')])]), None),
             ], None, None, p.GroupBy([1], None), p.OrderBy([1], None),
                      None, None, None, None),
             select)
@@ -693,7 +698,8 @@ class TestTranslationBalance(CompileSelectBase):
         self.assertEqual(
             p.Select([
                 p.Target(p.Column('account'), None),
-                p.Target(p.Function('sum', [p.Function('cost', [p.Column('change')])]), None),
+                p.Target(p.Function('sum', [p.Function('cost',
+                                                       [p.Column('change')])]), None),
             ],
                      p.From(p.Equal(p.Column('year'), p.Constant(2014)), None, None, None),
                      None,
@@ -709,5 +715,7 @@ class TestCompilePrint(CompileSelectBase):
         self.assertCompile(c.EvalPrint(None), "PRINT;")
 
     def test_print_from(self):
-        self.assertCompile(c.EvalPrint(c.EvalFrom(c.EvalEqual(cc.YearEntryColumn(), c.EvalConstant(2014)), None, None, None)),
-                           "PRINT FROM year = 2014;")
+        self.assertCompile(c.EvalPrint(
+            c.EvalFrom(c.EvalEqual(cc.YearEntryColumn(), c.EvalConstant(2014)),
+                       None, None, None)
+            ), "PRINT FROM year = 2014;")

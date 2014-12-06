@@ -1,7 +1,5 @@
 __author__ = "Martin Blais <blais@furius.ca>"
 
-import re
-
 from beancount.utils import test_utils
 from beancount.scripts import query
 
