@@ -43,7 +43,7 @@ Select = collections.namedtuple(
 #   summary_func: A method on an inventory to call on the changes column.
 #     May be to extract units, value at cost, etc.
 #   from_clause: An instance of 'From', or None if absent.
-Balance = collections.namedtuple('Balance', 'summary_func from_clause')
+Balances = collections.namedtuple('Balances', 'summary_func from_clause')
 
 # A select query that produces a journal of postings.
 # This is equivalent to
@@ -177,7 +177,7 @@ class Lexer:
     keywords = {
         'EXPLAIN',
         'SELECT', 'AS', 'FROM', 'WHERE', 'OPEN', 'CLOSE', 'CLEAR', 'ON',
-        'BALANCE', 'JOURNAL', 'PRINT',
+        'BALANCES', 'JOURNAL', 'PRINT',
         'ERRORS',
         'GROUP', 'BY', 'HAVING', 'ORDER', 'DESC', 'ASC', 'PIVOT',
         'LIMIT', 'FLATTEN', 'DISTINCT',
@@ -608,7 +608,7 @@ class Parser(SelectParser):
     def p_statement(self, p):
         """
         statement : select_statement
-                  | balance_statement
+                  | balances_statement
                   | journal_statement
                   | print_statement
                   | errors_statement
@@ -621,12 +621,12 @@ class Parser(SelectParser):
                   | empty
         """
 
-    def p_balance_statement(self, p):
+    def p_balances_statement(self, p):
         """
-        balance_statement : BALANCE from
-                          | BALANCE ID from
+        balances_statement : BALANCES from
+                           | BALANCES ID from
         """
-        p[0] = Balance(None, p[2]) if len(p) == 3 else Balance(p[2], p[3])
+        p[0] = Balances(None, p[2]) if len(p) == 3 else Balances(p[2], p[3])
 
     def p_journal_statement(self, p):
         """

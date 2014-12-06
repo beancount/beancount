@@ -475,27 +475,29 @@ class TestSelectOptions(QueryParserTestBase):
         self.assertParse(qSelect(q.Wildcard(), limit=100, flatten=True),
                          "SELECT * LIMIT 100 FLATTEN;")
 
-class TestBalance(QueryParserTestBase):
 
-    def test_balance_empty(self):
-        self.assertParse(q.Balance(None, None),
-                         "BALANCE;")
+class TestBalances(QueryParserTestBase):
 
-    def test_balance_from(self):
+    def test_balances_empty(self):
+        self.assertParse(q.Balances(None, None),
+                         "BALANCES;")
+
+    def test_balances_from(self):
         self.assertParse(
-            q.Balance(None,
-                      q.From(q.Equal(q.Column('date'),
-                                     q.Constant(datetime.date(2014, 1, 1))),
-                             None, True, None)),
-            "BALANCE FROM date = 2014-01-01 CLOSE;")
+            q.Balances(None,
+                       q.From(q.Equal(q.Column('date'),
+                                      q.Constant(datetime.date(2014, 1, 1))),
+                              None, True, None)),
+            "BALANCES FROM date = 2014-01-01 CLOSE;")
 
-    def test_balance_from_with_transformer(self):
+    def test_balances_from_with_transformer(self):
         self.assertParse(
-            q.Balance('units',
-                      q.From(q.Equal(q.Column('date'),
-                                     q.Constant(datetime.date(2014, 1, 1))),
-                             None, True, None)),
-            "BALANCE units FROM date = 2014-01-01 CLOSE;")
+            q.Balances('units',
+                       q.From(q.Equal(q.Column('date'),
+                                      q.Constant(datetime.date(2014, 1, 1))),
+                              None, True, None)),
+            "BALANCES units FROM date = 2014-01-01 CLOSE;")
+
 
 class TestJournal(QueryParserTestBase):
 

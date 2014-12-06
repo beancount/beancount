@@ -816,7 +816,7 @@ class FilterPostingsEnvironment(c.CompilationEnvironment):
         'change'        : ChangeColumn,
         'price'         : PriceColumn,
         'weight'        : WeightColumn,
-        'balance_'      : BalanceColumn,
+        'balance'       : BalanceColumn,
         }
     functions = copy.copy(SIMPLE_FUNCTIONS)
 
