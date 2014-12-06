@@ -909,6 +909,9 @@ def compile(statement, targets_environ, postings_environ, entries_environ):
       entries_environ: : A compilation environment for evaluating entry filters.
     Returns:
       An instance of EvalQuery or EvalPrint, ready to be executed.
+    Raises:
+      CompilationError: If the statement cannot be compiled, or is not one of the
+        supported statements.
     """
     if isinstance(statement, query_parser.Balances):
         statement = transform_balances(statement)
@@ -921,7 +924,7 @@ def compile(statement, targets_environ, postings_environ, entries_environ):
     elif isinstance(statement, query_parser.Print):
         c_query = compile_print(statement, entries_environ)
     else:
-        raise NotImplementedError(
+        raise CompilationError(
             "Cannot compile a statement of type '{}'".format(type(statement)))
 
     return c_query

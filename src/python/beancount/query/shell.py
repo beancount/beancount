@@ -233,7 +233,7 @@ class BQLShell(DispatchingShell):
         with self.get_pager() as file:
             query_execute.execute_print(c_print, self.entries, self.options_map, file)
 
-    def on_Select(self, select):
+    def on_Select(self, statement):
         """
         Extract data from a query on the postings.
 
@@ -279,16 +279,16 @@ class BQLShell(DispatchingShell):
         """
         # Compile the SELECT statement.
         try:
-            query = query_compile.compile_select(select,
-                                                 self.env_targets,
-                                                 self.env_postings,
-                                                 self.env_entries)
+            c_query = query_compile.compile(statement,
+                                            self.env_targets,
+                                            self.env_postings,
+                                            self.env_entries)
         except query_compile.CompilationError as exc:
             print('ERROR: {}.'.format(str(exc).rstrip('.')))
             return
 
         # Execute it to obtain the result rows.
-        result_types, result_rows = query_execute.execute_query(query,
+        result_types, result_rows = query_execute.execute_query(c_query,
                                                                 self.entries,
                                                                 self.options_map)
 
@@ -312,8 +312,7 @@ class BQLShell(DispatchingShell):
 
         See the SELECT query help for more details on the FROM clause.
         """
-        select = query_compile.transform_journal(journal)
-        return self.on_Select(select)
+        return self.on_Select(journal)
 
     def on_Balances(self, balance):
         """
@@ -328,8 +327,7 @@ class BQLShell(DispatchingShell):
 
         See the SELECT query help for more details on the FROM clause.
         """
-        select = query_compile.transform_balance(balance)
-        return self.on_Select(select)
+        return self.on_Select(balance)
 
     def on_Explain(self, explain):
         """
@@ -339,29 +337,26 @@ class BQLShell(DispatchingShell):
         print("  {}".format(explain.statement))
         print()
 
-        if isinstance(explain.statement, query_parser.Select):
-            # Compile the select statement and print it uot.
-            try:
-                query = query_compile.compile_select(explain.statement,
-                                                     self.env_targets,
-                                                     self.env_postings,
-                                                     self.env_entries)
-            except query_compile.CompilationError as exc:
-                print('ERROR: {}.'.format(str(exc).rstrip('.')))
-                return
+        # Compile the select statement and print it uot.
+        try:
+            query = query_compile.compile(explain.statement,
+                                          self.env_targets,
+                                          self.env_postings,
+                                          self.env_entries)
+        except query_compile.CompilationError as exc:
+            print(str(exc).rstrip('.'))
+            return
 
-            print("Compiled query:")
-            print("  {}".format(query))
-            print()
-            print("Targets:")
-            for c_target in query.c_targets:
-                print("  '{}'{}: {}".format(
-                    c_target.name or '(invisible)',
-                    ' (aggregate)' if query_compile.is_aggregate(c_target.c_expr) else '',
-                    c_target.c_expr.dtype.__name__))
-            print()
-        else:
-            print("(Unsupported statement)")
+        print("Compiled query:")
+        print("  {}".format(query))
+        print()
+        print("Targets:")
+        for c_target in query.c_targets:
+            print("  '{}'{}: {}".format(
+                c_target.name or '(invisible)',
+                ' (aggregate)' if query_compile.is_aggregate(c_target.c_expr) else '',
+                c_target.c_expr.dtype.__name__))
+        print()
 
     def help_targets(self):
         template = textwrap.dedent("""
