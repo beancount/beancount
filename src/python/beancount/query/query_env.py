@@ -270,14 +270,14 @@ class SumBase(query_compile.EvalAggregator):
     def __init__(self, operands):
         super().__init__(operands, inventory.Inventory)
 
+    def __call__(self, context):
+        return context.store[self.handle]
+
     def allocate(self, allocator):
         self.handle = allocator.allocate()
 
     def initialize(self, store):
         store[self.handle] = inventory.Inventory()
-
-    def finalize(self, store):
-        return store[self.handle]
 
 class SumAmount(SumBase):
     "Calculate the sum of the amount. The result is an Inventory."

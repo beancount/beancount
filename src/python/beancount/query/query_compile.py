@@ -230,8 +230,18 @@ class EvalAggregator(EvalFunction):
     # We should not have to recurse any further because there should be no
     # aggregations under an aggregation node.
 
-## FIXME: pre-process to find the aggregate nodes directly and move these
-## methods to aggregates. Remove the recursion.
+    def __call__(self, context):
+        """Return the value on evaluation.
+
+        Args:
+          context: The evaluation object to which the evaluation need to apply.
+            This is either an entry, a Posting instance, or a particular result
+            set row from a sub-select. This is the provider for the underlying
+            data.
+        Returns:
+          The final aggregated value.
+        """
+        # Return None by default.
 
     def allocate(self, allocator):
         """Allocate handles to store data for a node's aggregate storage.

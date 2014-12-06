@@ -274,11 +274,17 @@ def execute_query(query, entries, options_map):
         for key, store in agg_store.items():
             key_iter = iter(key)
             values = []
+
+            # Finalize the store.
+            for c_expr in c_aggregate_exprs:
+                c_expr.finalize(store)
+            context.store = store
+
             for index, c_target in enumerate(query.c_targets):
                 if index in group_indexes:
                     value = next(key_iter)
                 else:
-                    value = c_target.c_expr.finalize(store)
+                    value = c_target.c_expr(context)
                 values.append(value)
 
             # Compute result and sort-key objects.

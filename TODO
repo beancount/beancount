@@ -73,15 +73,7 @@ http://furius.ca/beancount/doc/proposal-query
     Time to write test for this, for the mode rounding.
 
 
-  - Make mode of decimal objects "per currency" in the amount renderer.
-
-  - Add help like this: "help <topic>": help should be provided via docstring
-    over columns, functions, and parsed commands (select, print, journal, etc.).
-    Create a function that will compile all the help topics and implement it
-    from the shell. There should also be a way to list all the help topics.
-    Something basic, but one should be able to craft a query from it and find
-    out the list of legal names in each environment.
-
+  - Convert the amount renderer to use the display-context.
 
 
   - Render with custom routine, not beancount.reports.table
@@ -89,22 +81,9 @@ http://furius.ca/beancount/doc/proposal-query
     * Find a way to pipe into treeify
     * Deal with rendering on multiple lines, e.g., for inventories with multiple positions
 
-  - Make it possible to run from the command-line in batch mode
-
-
-
 
   - Implement set variables for format and verbosity and display precision and what-not
-  - Implement JOURNAL account FROM
-  - Implement BALANCES FROM
 
-
-
-  - Support both orders for this:
-
-      beancount> select account, sum(units(change)), sum(cost(change))   group by 1 order by 1;
-      beancount> select account, units(sum(change)), cost(sum(change))   group by 1 order by 1;
-      ERROR: Invalid function 'units(Inventory)' in targets/column context.
 
 
   - Support matching on other than Transactions instances.
