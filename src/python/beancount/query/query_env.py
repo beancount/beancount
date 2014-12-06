@@ -32,8 +32,8 @@ class Length(c.EvalFunction):
     def __init__(self, operands):
         super().__init__(operands, int)
 
-    def __call__(self, posting):
-        args = self.eval_args(posting)
+    def __call__(self, context):
+        args = self.eval_args(context)
         return len(args[0])
 
 class Str(c.EvalFunction):
@@ -43,8 +43,8 @@ class Str(c.EvalFunction):
     def __init__(self, operands):
         super().__init__(operands, str)
 
-    def __call__(self, posting):
-        args = self.eval_args(posting)
+    def __call__(self, context):
+        args = self.eval_args(context)
         return repr(args[0])
 
 class MaxWidth(c.EvalFunction):
@@ -54,8 +54,8 @@ class MaxWidth(c.EvalFunction):
     def __init__(self, operands):
         super().__init__(operands, str)
 
-    def __call__(self, posting):
-        string, width = self.eval_args(posting)
+    def __call__(self, context):
+        string, width = self.eval_args(context)
         return textwrap.shorten(string, width=width)
 
 
@@ -68,8 +68,8 @@ class Year(c.EvalFunction):
     def __init__(self, operands):
         super().__init__(operands, int)
 
-    def __call__(self, posting):
-        args = self.eval_args(posting)
+    def __call__(self, context):
+        args = self.eval_args(context)
         return args[0].year
 
 class Month(c.EvalFunction):
@@ -79,8 +79,8 @@ class Month(c.EvalFunction):
     def __init__(self, operands):
         super().__init__(operands, int)
 
-    def __call__(self, posting):
-        args = self.eval_args(posting)
+    def __call__(self, context):
+        args = self.eval_args(context)
         return args[0].month
 
 class Day(c.EvalFunction):
@@ -90,8 +90,8 @@ class Day(c.EvalFunction):
     def __init__(self, operands):
         super().__init__(operands, int)
 
-    def __call__(self, posting):
-        args = self.eval_args(posting)
+    def __call__(self, context):
+        args = self.eval_args(context)
         return args[0].day
 
 class Weekday(c.EvalFunction):
@@ -101,8 +101,8 @@ class Weekday(c.EvalFunction):
     def __init__(self, operands):
         super().__init__(operands, str)
 
-    def __call__(self, posting):
-        args = self.eval_args(posting)
+    def __call__(self, context):
+        args = self.eval_args(context)
         return args[0].strftime('%a')
 
 
@@ -115,8 +115,8 @@ class Parent(c.EvalFunction):
     def __init__(self, operands):
         super().__init__(operands, str)
 
-    def __call__(self, posting):
-        args = self.eval_args(posting)
+    def __call__(self, context):
+        args = self.eval_args(context)
         return account.parent(args[0])
 
 
@@ -129,9 +129,20 @@ class UnitsPosition(c.EvalFunction):
     def __init__(self, operands):
         super().__init__(operands, amount.Amount)
 
-    def __call__(self, posting):
-        args = self.eval_args(posting)
+    def __call__(self, context):
+        args = self.eval_args(context)
         return args[0].get_units()
+
+class UnitsInventory(c.EvalFunction):
+    "Get the number of units of a position (stripping cost)."
+    __intypes__ = [inventory.Inventory]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return args[0].units()
 
 class CostPosition(c.EvalFunction):
     "Get the cost of a position."
@@ -140,9 +151,20 @@ class CostPosition(c.EvalFunction):
     def __init__(self, operands):
         super().__init__(operands, amount.Amount)
 
-    def __call__(self, posting):
-        args = self.eval_args(posting)
+    def __call__(self, context):
+        args = self.eval_args(context)
         return args[0].get_cost()
+
+class CostInventory(c.EvalFunction):
+    "Get the cost of an inventory."
+    __intypes__ = [inventory.Inventory]
+
+    def __init__(self, operands):
+        super().__init__(operands, inventory.Inventory)
+
+    def __call__(self, context):
+        args = self.eval_args(context)
+        return args[0].cost()
 
 SIMPLE_FUNCTIONS = {
     'str'                          : Str,
@@ -150,7 +172,9 @@ SIMPLE_FUNCTIONS = {
     'maxwidth'                     : MaxWidth,
     'parent'                       : Parent,
     ('units', position.Position)   : UnitsPosition,
+    ('units', inventory.Inventory) : UnitsInventory,
     ('cost', position.Position)    : CostPosition,
+    ('cost', inventory.Inventory)  : CostInventory,
     'year'                         : Year,
     'month'                        : Month,
     'day'                          : Day,
@@ -194,8 +218,8 @@ class Sum(c.EvalAggregator):
     def initialize(self, store):
         store[self.handle] = self.dtype()
 
-    def update(self, store, posting):
-        value = self.eval_args(posting)[0]
+    def update(self, store, context):
+        value = self.eval_args(context)[0]
         store[self.handle] += value
 
     def finalize(self, store):
@@ -219,24 +243,24 @@ class SumAmount(SumBase):
     "Calculate the sum of the amount. The result is an Inventory."
     __intypes__ = [amount.Amount]
 
-    def update(self, store, posting):
-        value = self.eval_args(posting)[0]
+    def update(self, store, context):
+        value = self.eval_args(context)[0]
         store[self.handle].add_amount(value)
 
 class SumPosition(SumBase):
     "Calculate the sum of the position. The result is an Inventory."
     __intypes__ = [position.Position]
 
-    def update(self, store, posting):
-        value = self.eval_args(posting)[0]
+    def update(self, store, context):
+        value = self.eval_args(context)[0]
         store[self.handle].add_position(value)
 
 class SumInventory(SumBase):
     "Calculate the sum of the inventories. The result is an Inventory."
     __intypes__ = [inventory.Inventory]
 
-    def update(self, store, posting):
-        value = self.eval_args(posting)[0]
+    def update(self, store, context):
+        value = self.eval_args(context)[0]
         store[self.handle].add_inventory(value)
 
 class First(c.EvalAggregator):
@@ -252,9 +276,9 @@ class First(c.EvalAggregator):
     def initialize(self, store):
         store[self.handle] = None
 
-    def update(self, store, posting):
+    def update(self, store, context):
         if store[self.handle] is None:
-            value = self.eval_args(posting)[0]
+            value = self.eval_args(context)[0]
             store[self.handle] = value
 
     def finalize(self, store):
@@ -273,8 +297,8 @@ class Last(c.EvalAggregator):
     def initialize(self, store):
         store[self.handle] = None
 
-    def update(self, store, posting):
-        value = self.eval_args(posting)[0]
+    def update(self, store, context):
+        value = self.eval_args(context)[0]
         store[self.handle] = value
 
     def finalize(self, store):
@@ -293,8 +317,8 @@ class Min(c.EvalAggregator):
     def initialize(self, store):
         store[self.handle] = self.dtype()
 
-    def update(self, store, posting):
-        value = self.eval_args(posting)[0]
+    def update(self, store, context):
+        value = self.eval_args(context)[0]
         if value < store[self.handle]:
             store[self.handle] = value
 
@@ -314,8 +338,8 @@ class Max(c.EvalAggregator):
     def initialize(self, store):
         store[self.handle] = self.dtype()
 
-    def update(self, store, posting):
-        value = self.eval_args(posting)[0]
+    def update(self, store, context):
+        value = self.eval_args(context)[0]
         if value > store[self.handle]:
             store[self.handle] = value
 
@@ -539,8 +563,8 @@ class IdColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, posting):
-        return hash_entry(posting.entry)
+    def __call__(self, context):
+        return hash_entry(context.posting.entry)
 
 class TypeColumn(c.EvalColumn):
     "The data type of the parent transaction for this posting."
@@ -549,8 +573,8 @@ class TypeColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, posting):
-        return type(posting.entry).__name__.lower()
+    def __call__(self, context):
+        return type(context.posting.entry).__name__.lower()
 
 class FilenameColumn(c.EvalColumn):
     "The filename where the posting was parsed from or created."
@@ -559,8 +583,8 @@ class FilenameColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, posting):
-        return posting.entry.source.filename
+    def __call__(self, context):
+        return context.posting.entry.source.filename
 
 class LineNoColumn(c.EvalColumn):
     "The line number from the file the posting was parsed from."
@@ -569,8 +593,8 @@ class LineNoColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(int)
 
-    def __call__(self, posting):
-        return posting.entry.source.lineno
+    def __call__(self, context):
+        return context.posting.entry.source.lineno
 
 class DateColumn(c.EvalColumn):
     "The date of the parent transaction for this posting."
@@ -579,8 +603,8 @@ class DateColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(datetime.date)
 
-    def __call__(self, posting):
-        return posting.entry.date
+    def __call__(self, context):
+        return context.posting.entry.date
 
 class YearColumn(c.EvalColumn):
     "The year of the date of the parent transaction for this posting."
@@ -589,8 +613,8 @@ class YearColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(int)
 
-    def __call__(self, posting):
-        return posting.entry.date.year
+    def __call__(self, context):
+        return context.posting.entry.date.year
 
 class MonthColumn(c.EvalColumn):
     "The month of the date of the parent transaction for this posting."
@@ -599,8 +623,8 @@ class MonthColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(int)
 
-    def __call__(self, posting):
-        return posting.entry.date.month
+    def __call__(self, context):
+        return context.posting.entry.date.month
 
 class DayColumn(c.EvalColumn):
     "The day of the date of the parent transaction for this posting."
@@ -609,8 +633,8 @@ class DayColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(int)
 
-    def __call__(self, posting):
-        return posting.entry.date.day
+    def __call__(self, context):
+        return context.posting.entry.date.day
 
 class FlagColumn(c.EvalColumn):
     "The flag of the parent transaction for this posting."
@@ -619,8 +643,8 @@ class FlagColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, posting):
-        return posting.entry.flag
+    def __call__(self, context):
+        return context.posting.entry.flag
 
 class PayeeColumn(c.EvalColumn):
     "The payee of the parent transaction for this posting."
@@ -629,8 +653,8 @@ class PayeeColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, posting):
-        return posting.entry.payee or ''
+    def __call__(self, context):
+        return context.posting.entry.payee or ''
 
 class NarrationColumn(c.EvalColumn):
     "The narration of the parent transaction for this posting."
@@ -639,8 +663,8 @@ class NarrationColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, posting):
-        return posting.entry.narration
+    def __call__(self, context):
+        return context.posting.entry.narration
 
 class TagsColumn(c.EvalColumn):
     "The set of tags of the parent transaction for this posting."
@@ -649,8 +673,8 @@ class TagsColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(set)
 
-    def __call__(self, posting):
-        return posting.entry.tags or EMPTY_SET
+    def __call__(self, context):
+        return context.posting.entry.tags or EMPTY_SET
 
 class LinksColumn(c.EvalColumn):
     "The set of links of the parent transaction for this posting."
@@ -659,8 +683,8 @@ class LinksColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(set)
 
-    def __call__(self, posting):
-        return posting.entry.links or EMPTY_SET
+    def __call__(self, context):
+        return context.posting.entry.links or EMPTY_SET
 
 class PostingFlagColumn(c.EvalColumn):
     "The flag of the posting itself."
@@ -669,8 +693,8 @@ class PostingFlagColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, posting):
-        return posting.flag
+    def __call__(self, context):
+        return context.posting.flag
 
 class AccountColumn(c.EvalColumn):
     "The account of the posting."
@@ -679,8 +703,8 @@ class AccountColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, posting):
-        return posting.account
+    def __call__(self, context):
+        return context.posting.account
 
 class NumberColumn(c.EvalColumn):
     "The number of units of the posting."
@@ -689,8 +713,8 @@ class NumberColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(Decimal)
 
-    def __call__(self, posting):
-        return posting.position.number
+    def __call__(self, context):
+        return context.posting.position.number
 
 class CurrencyColumn(c.EvalColumn):
     "The currency of the posting."
@@ -699,8 +723,8 @@ class CurrencyColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, posting):
-        return posting.position.lot.currency
+    def __call__(self, context):
+        return context.posting.position.lot.currency
 
 class CostNumberColumn(c.EvalColumn):
     "The number of cost units of the posting."
@@ -709,8 +733,9 @@ class CostNumberColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(Decimal)
 
-    def __call__(self, posting):
-        return posting.position.lot.cost.number if posting.position.lot.cost else ZERO
+    def __call__(self, context):
+        cost = context.posting.position.lot.cost
+        return cost.number if cost else ZERO
 
 class CostCurrencyColumn(c.EvalColumn):
     "The cost currency of the posting."
@@ -719,8 +744,9 @@ class CostCurrencyColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(str)
 
-    def __call__(self, posting):
-        return posting.position.lot.cost.currency if posting.position.lot.cost else ''
+    def __call__(self, context):
+        cost = context.posting.position.lot.cost
+        return cost.currency if cost else ''
 
 class ChangeColumn(c.EvalColumn):
     "The position for the posting. These can be summed into inventories."
@@ -729,8 +755,8 @@ class ChangeColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(position.Position)
 
-    def __call__(self, posting):
-        return posting.position
+    def __call__(self, context):
+        return context.posting.position
 
 class PriceColumn(c.EvalColumn):
     "The price attached to the posting."
@@ -739,8 +765,8 @@ class PriceColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(amount.Amount)
 
-    def __call__(self, posting):
-        return posting.price
+    def __call__(self, context):
+        return context.posting.price
 
 class WeightColumn(c.EvalColumn):
     "The computed weight used for this posting."
@@ -749,8 +775,19 @@ class WeightColumn(c.EvalColumn):
     def __init__(self):
         super().__init__(amount.Amount)
 
-    def __call__(self, posting):
-        return interpolate.get_balance_amount(posting)
+    def __call__(self, context):
+        return interpolate.get_balance_amount(context)
+
+class BalanceColumn(c.EvalColumn):
+    "The balance for the posting. These can be summed into inventories."
+    __intypes__ = [data.Posting]
+
+    def __init__(self):
+        super().__init__(inventory.Inventory)
+
+    def __call__(self, context):
+        return copy.copy(context.balance)
+
 
 class FilterPostingsEnvironment(c.CompilationEnvironment):
     """An execution context that provides access to attributes on Postings.
@@ -779,6 +816,7 @@ class FilterPostingsEnvironment(c.CompilationEnvironment):
         'change'        : ChangeColumn,
         'price'         : PriceColumn,
         'weight'        : WeightColumn,
+        'balance_'      : BalanceColumn,
         }
     functions = copy.copy(SIMPLE_FUNCTIONS)
 

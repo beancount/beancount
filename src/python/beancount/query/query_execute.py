@@ -4,6 +4,7 @@ import collections
 import datetime
 
 from beancount.core import data
+from beancount.core import inventory
 from beancount.query import query_compile
 from beancount.parser import printer
 from beancount.ops import summarize
@@ -94,6 +95,12 @@ class Allocator:
         return [None] * self.size
 
 
+class RowContext:
+    """A dumb container for information used by a row expression."""
+    posting = None
+    balance = None
+
+
 def execute_query(query, entries, options_map):
     """Given a compiled select statement, execute the query.
 
@@ -134,6 +141,12 @@ def execute_query(query, entries, options_map):
                       if c_target.name]
     order_indexes = query.order_indexes
 
+    # Figure out if we need to compute balance.
+    # FIXME: Initialize to None if balance is nowhere to be found.
+    balance = inventory.Inventory()
+    context = RowContext()
+    context.balance = balance
+
     # Dispatch between the non-aggregated queries and aggregated queries.
     c_where = query.c_where
     schwartz_rows = []
@@ -149,9 +162,14 @@ def execute_query(query, entries, options_map):
         for entry in entries:
             if isinstance(entry, data.Transaction):
                 for posting in entry.postings:
-                    if c_where is None or c_where(posting):
+                    context.posting = posting
+                    if c_where is None or c_where(context):
+                        # Compute the balance.
+                        if balance is not None:
+                            balance.add_position(posting.position)
+
                         # Evaluate all the values.
-                        values = [c_expr(posting) for c_expr in c_target_exprs]
+                        values = [c_expr(context) for c_expr in c_target_exprs]
 
                         # Compute result and sort-key objects.
                         result = ResultRow._make(values[index]
@@ -188,9 +206,14 @@ def execute_query(query, entries, options_map):
         for entry in entries:
             if isinstance(entry, data.Transaction):
                 for posting in entry.postings:
-                    if c_where is None or c_where(posting):
+                    context.posting = posting
+                    if c_where is None or c_where(context):
+                        # Compute the balance.
+                        if balance is not None:
+                            balance.add_position(posting.position)
+
                         # Compute the non-aggregate expressions.
-                        row_key = tuple(c_expr(posting)
+                        row_key = tuple(c_expr(context)
                                         for c_expr in c_nonaggregate_exprs)
 
                         # Get an appropriate store for the unique key of this row.
@@ -205,7 +228,7 @@ def execute_query(query, entries, options_map):
 
                         # Update the aggregate expressions.
                         for c_expr in c_aggregate_exprs:
-                            c_expr.update(store, posting)
+                            c_expr.update(store, context)
 
         # Iterate over all the aggregations to produce the schwartzian rows.
         for key, store in agg_store.items():
