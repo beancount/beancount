@@ -99,11 +99,13 @@ class DispatchingShell(cmd.Cmd):
         """Initialize the setting variables of the interactive shell."""
         self.vars_types = {
             'pager': str,
+            'format': str,
             'boxed': convert_bool,
             'spaced': convert_bool,
             }
         self.vars = {
             'pager': os.environ.get('PAGER', None),
+            'format': 'text',
             'boxed': False,
             'spaced': False,
             }
@@ -347,7 +349,7 @@ class BQLShell(DispatchingShell):
             # FIXME: Implement output to other formats; use 'formats' to dispatch.
             output_format = self.vars['format']
             if output_format != 'text':
-                print("Unsupported output format '{}'.".format(output_format)
+                print("Unsupported output format '{}'.".format(output_format))
 
             with self.get_pager() as file:
                 query_render.render_text(result_types, result_rows, file,
