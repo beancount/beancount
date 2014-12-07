@@ -310,6 +310,8 @@ http://furius.ca/beancount/doc/proposal-query
     is currently not exhaustive.
 
 
+  - Operating currencies getting pulled out are necessary... maybe do this in
+    the translation?
 
 
 * Requirements for Shipping 2.0
