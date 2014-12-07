@@ -298,6 +298,13 @@ http://furius.ca/beancount/doc/proposal-inventory
 
 * Removing Holdings
 
+  - I think there's a way to simplify holdings: you can probably remove the
+    "Holding" type and replace that with a Posting, which really, is much like a
+    Holding, it has an account and a position, and a price.... That would
+    normalize Holding quite a bit, even if it means we end up adding a few
+    unused slots to Posting. I'm happy to do that! Simplify simplify simplify...
+    always.
+
   - Along with the new inventory, you can make Holding -> Position. This makes
     a lot of sense actually. Do do this!
 
@@ -540,6 +547,19 @@ http://furius.ca/beancount/doc/proposal-inter
 
     This could be used for various subaccounts actually. It's a nice way to
     guide reporting that does not complexify the semantics.
+
+
+* Basic Directives as Plugins
+
+  I recently teased out that many of the basic functions can be implemented as
+  individual stages of transformations on the list of directives. This started
+  out as a way to add plugins by adding a custom transformation stage, but now
+  I see that if I can make the parser able to consume generic syntax that might
+  allow extensions, and to allow these plugins to specify new directive types
+  for extensions, I might be able to shove a *lot* of the existing
+  functionality into nice isolated plugin modules. Even functionality as basic
+  as Balance checks.  I'm not going to to do this in the first release, but I
+  want to set the stage for it.
 
 
 * Current / Misc / To Be Classified
@@ -1527,209 +1547,7 @@ http://furius.ca/beancount/doc/proposal-inter
     correct.
 
 
-  - (plugin/validation) Consider a strict validation plugin that kicks off
-    errors when amounts are posted to accounts which have children. Basically,
-    make it possible to disallow postings on accounts with children.
 
-
-
-
-
-
-
-  - (parser) Support enabling flex debugging in beancount.core._parser.parse(),
-    using "yyset_debug(int bdebug)".
-
-
-
-
-  - Require Python 3.4 and introduce Enum's where relevant.
-
-
-
-  - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
-
-
-
-** Refactoring: Holding to Position
-
-  - I think there's a way to simplify holdings: you can probably remove the
-    "Holding" type and replace that with a Posting, which really, is much like a
-    Holding, it has an account and a position, and a price.... That would
-    normalize Holding quite a bit, even if it means we end up adding a few
-    unused slots to Posting. I'm happy to do that! Simplify simplify simplify...
-    always.
-
-
-** File Input as Environment Variable
-
-  - It might be really nice if all the commands would accept an environment
-    variable for the default file to use, if set. This means that the Beancount
-    filename could be an option like in Ledger and HLedger, e.g. with -f. It
-    *IS* true that in almost all cases I'm using the one, same input file for
-    all the programs, that is, the concept of a "default" is quite common.
-
-    This should probably go in before the first release because it has highly
-    visible impact on all the bean-query commands.
-
-
-** Prepare for Plugins Revamp
-
-  I recently teased out that many of the basic functions can be implemented as
-  individual stages of transformations on the list of directives. This started
-  out as a way to add plugins by adding a custom transformation stage, but now
-  I see that if I can make the parser able to consume generic syntax that might
-  allow extensions, and to allow these plugins to specify new directive types
-  for extensions, I might be able to shove a *lot* of the existing
-  functionality into nice isolated plugin modules. Even functionality as basic
-  as Balance checks.  I'm not going to to do this in the first release, but I
-  want to set the stage for it.
-
-
-** Precision
-
-  - (precision) FIXME: The better way to render numbers at the end would be to
-    let the user specify a desired rendering precision for each currency. Deal
-    with this throughout better.
-
-       "Hmm, that's right, I should probably set a maximum precision for rendering
-       numbers which require more digits than the default of 2. This is an
-       interesting one: I need to do something a bit more thorough about precision; 2
-       is not appropriate for everything either. I need to figure out a way to let a
-       user specify a desired rendering precision for each currency...
-       (probably via some options, unfortunately). In the meantime, I've made it so
-       that the max number of digits rendered is 5.
-
-       There's also the issue of setting the max digits during arithmetic operations,
-       which should also not be 28. I'll deal with that later."
-
-  - Automatically detect precision of each currency based on usage in file:
-
-      (Idea from Daniel Clemente): "You could use auto-detection: for each
-      currency, use the maximum number of decimals that the input file used. E.g.
-      if user writes 351.64 PLN, 151.1 PLN, 155 PLN, then use 2 decimals.
-      Alternatively, use "the most common" number of decimals. If 90% transactions
-      have 3 decimals, 5% have 4, 5% have 0, use 3."
-
-
-** Padding documentation from email
-
-  - Put this in the docs to explain "pad"
-
-     > > Ok, restarted example, let's say you begin
-     > > accounting in dec 2013, you'll have this:
-     > >
-     > >   2010-01-01 open
-     > >   2010-01-01 pad
-     > >   2013-12-04 balance
-     > >   2013-12-08 * ...
-     > >   2013-12-11 * ...
-     > >   2013-12-17 * ...
-     > >
-     > > eventually, moving forward, you'll get to 2014:
-     > >
-     > >   2010-01-01 open
-     > >   2010-01-01 pad
-     > >   2013-12-04 balance
-     > >   2013-12-08 * ...
-     > >   2013-12-11 * ...
-     > >   2013-12-17 * ...
-     > >   2013-12-22 * ...
-     > >   2013-12-29 * ...
-     > >   2014-01-02 * ...
-     > >   2014-12-04 balance
-     > >   2014-12-06 * ...
-     > >
-     > > Allright, now you decide you like this, and you
-     > > want to enter statements before you started.
-     > > You find your paper statement for november, and
-     > > fill in:
-     > >
-     > >   2010-01-01 open
-     > >   2010-01-01 pad
-     > >   ; here you insert
-     > >   2013-11-04 balance
-     > >   2013-11-08 * ...
-     > >   2013-11-18 * ...
-     > >   ...
-     > >   ; this is what was there previously
-     > >   2013-12-04 balance
-     > >   2013-12-08 * ...
-     > >   2013-12-11 * ...
-     > >   2013-12-17 * ...
-     > >   2013-12-22 * ...
-     > >   2013-12-29 * ...
-     > >   2014-01-02 * ...
-     > >   2014-12-04 balance
-     > >   2014-12-06 * ...
-     > >
-     > > Great. Now, notice how the balance for
-     > > 2013-11-04 is probably different than that of
-     > > 2013-12-04. If instead of a pad directive you
-     > > had added a manual adjustment, you'd have to
-     > > change it here. This is the beauty of the pad
-     > > directive: it automatically does it for you.
-     > >
-     > > Now, let's keep going backward in time. You dig
-     > > around your records, you find September's
-     > > statement, but you cannot find the statement
-     > > for October, maybe it's lost, or somewhere
-     > > else. Fine! You insert a pad directive to
-     > > account for those missing transactions:
-     > >
-     > >   2010-01-01 open
-     > >   2010-01-01 pad
-     > >
-     > >   2013-09-04 balance
-     > >   2013-09-05 * ...
-     > >   ... september transactions
-     > >   2013-09-30 * ...
-     > >   2013-10-04 balance
-     > >
-     > >   ; padding for missing October statement,
-     > > where is my statement?
-     > >   2013-10-04 pad
-     > >   2013-11-04 balance
-     > >
-     > >   ... november transactions
-     > >   2013-11-08 * ...
-     > >   2013-11-18 * ...
-     > >   ...
-     > >   2013-12-04 balance
-     > >
-     > >   2013-12-08 * ...
-     > >   2013-12-11 * ...
-     > >   2013-12-17 * ...
-     > >   2013-12-22 * ...
-     > >   2013-12-29 * ...
-     > >   2014-01-02 * ...
-     > >   2014-12-04 balance
-     > >
-     > >   2014-12-06 * ...
-     > >
-     > > This is the full example.
-
-Improve this bit:
-
-    >   But the detailed explanation cannot be found. There's only one phrase: „Think
-    >   of the Equity account as something from the past that you had to give up in
-    >   order to obtain the beginning snapshot of the Assets + Liabilities balance.“
-    >
-    > Great comment. I'll improve this.
-
- More user comments:
-
-    >   After doing my research, I found about debits and credits, which in Beancount
-    >   you represent with positive numbers and negative numbers respectively. I
-    >   found that having a name for each group of accounts helps me to think of them
-    >   at the same time, e.g. Liabilities+Equity+Income as part of a common thing,
-    >   instead of having to research each of it independently.
-    >   In the documentation you start speaking about numbers, then about signs, then
-    >   about grouping the accounts. Maybe it's better to go top-down and start
-    >   saying that there are two types of account (usually +, usually -) and then
-    >   divide each group further.
-    >
-    > I will change that, thanks for the comment.
 
 
 * Internal: Review Dependency Graph
@@ -1752,6 +1570,13 @@ Improve this bit:
   - beancount.core.getters: Should this move to ops as well? Check the
     dependency tree, see if it makes sense.
 
+
+
+* Code Quality
+
+  - Require Python 3.4 and introduce Enum's where relevant.
+
+  - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
 
 
 * Core
@@ -2276,7 +2101,11 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
   - Bug: Invalid account names should only be reported once.
 
+
 *** Lexer Level Errors
+
+  - (parser) Support enabling flex debugging in beancount.core._parser.parse(),
+    using "yyset_debug(int bdebug)".
 
   - When an error occurs, skip the lexer to the next empty line and recommence.
 
@@ -3328,3 +3157,121 @@ come up with a creative solution that solves this problem.
   - Begin with a USB key in hand. "On this 8 GB USB key, I have all of 8 years
     history of financial transactions in my life. Every single price paid that
     went recorded into an account it these.
+** Padding documentation from email
+
+  - Put this in the docs to explain "pad"
+
+     > > Ok, restarted example, let's say you begin
+     > > accounting in dec 2013, you'll have this:
+     > >
+     > >   2010-01-01 open
+     > >   2010-01-01 pad
+     > >   2013-12-04 balance
+     > >   2013-12-08 * ...
+     > >   2013-12-11 * ...
+     > >   2013-12-17 * ...
+     > >
+     > > eventually, moving forward, you'll get to 2014:
+     > >
+     > >   2010-01-01 open
+     > >   2010-01-01 pad
+     > >   2013-12-04 balance
+     > >   2013-12-08 * ...
+     > >   2013-12-11 * ...
+     > >   2013-12-17 * ...
+     > >   2013-12-22 * ...
+     > >   2013-12-29 * ...
+     > >   2014-01-02 * ...
+     > >   2014-12-04 balance
+     > >   2014-12-06 * ...
+     > >
+     > > Allright, now you decide you like this, and you
+     > > want to enter statements before you started.
+     > > You find your paper statement for november, and
+     > > fill in:
+     > >
+     > >   2010-01-01 open
+     > >   2010-01-01 pad
+     > >   ; here you insert
+     > >   2013-11-04 balance
+     > >   2013-11-08 * ...
+     > >   2013-11-18 * ...
+     > >   ...
+     > >   ; this is what was there previously
+     > >   2013-12-04 balance
+     > >   2013-12-08 * ...
+     > >   2013-12-11 * ...
+     > >   2013-12-17 * ...
+     > >   2013-12-22 * ...
+     > >   2013-12-29 * ...
+     > >   2014-01-02 * ...
+     > >   2014-12-04 balance
+     > >   2014-12-06 * ...
+     > >
+     > > Great. Now, notice how the balance for
+     > > 2013-11-04 is probably different than that of
+     > > 2013-12-04. If instead of a pad directive you
+     > > had added a manual adjustment, you'd have to
+     > > change it here. This is the beauty of the pad
+     > > directive: it automatically does it for you.
+     > >
+     > > Now, let's keep going backward in time. You dig
+     > > around your records, you find September's
+     > > statement, but you cannot find the statement
+     > > for October, maybe it's lost, or somewhere
+     > > else. Fine! You insert a pad directive to
+     > > account for those missing transactions:
+     > >
+     > >   2010-01-01 open
+     > >   2010-01-01 pad
+     > >
+     > >   2013-09-04 balance
+     > >   2013-09-05 * ...
+     > >   ... september transactions
+     > >   2013-09-30 * ...
+     > >   2013-10-04 balance
+     > >
+     > >   ; padding for missing October statement,
+     > > where is my statement?
+     > >   2013-10-04 pad
+     > >   2013-11-04 balance
+     > >
+     > >   ... november transactions
+     > >   2013-11-08 * ...
+     > >   2013-11-18 * ...
+     > >   ...
+     > >   2013-12-04 balance
+     > >
+     > >   2013-12-08 * ...
+     > >   2013-12-11 * ...
+     > >   2013-12-17 * ...
+     > >   2013-12-22 * ...
+     > >   2013-12-29 * ...
+     > >   2014-01-02 * ...
+     > >   2014-12-04 balance
+     > >
+     > >   2014-12-06 * ...
+     > >
+     > > This is the full example.
+
+Improve this bit:
+
+    >   But the detailed explanation cannot be found. There's only one phrase: „Think
+    >   of the Equity account as something from the past that you had to give up in
+    >   order to obtain the beginning snapshot of the Assets + Liabilities balance.“
+    >
+    > Great comment. I'll improve this.
+
+ More user comments:
+
+    >   After doing my research, I found about debits and credits, which in Beancount
+    >   you represent with positive numbers and negative numbers respectively. I
+    >   found that having a name for each group of accounts helps me to think of them
+    >   at the same time, e.g. Liabilities+Equity+Income as part of a common thing,
+    >   instead of having to research each of it independently.
+    >   In the documentation you start speaking about numbers, then about signs, then
+    >   about grouping the accounts. Maybe it's better to go top-down and start
+    >   saying that there are two types of account (usually +, usually -) and then
+    >   divide each group further.
+    >
+    > I will change that, thanks for the comment.
