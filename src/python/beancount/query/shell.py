@@ -76,7 +76,8 @@ class DispatchingShell(cmd.Cmd):
 
     def __init__(self, is_interactive, parser):
         super().__init__()
-        load_history(path.expanduser(HISTORY_FILENAME))
+        if is_interactive:
+            load_history(path.expanduser(HISTORY_FILENAME))
         self.is_interactive = is_interactive
         self.parser = parser
         self.initialize_vars()

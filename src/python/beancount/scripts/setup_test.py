@@ -43,7 +43,28 @@ class TestSetup(test_utils.TestCase):
             # Run some basic commands using the newly installed version.
             example_filename = path.join(rootdir, 'examples/basic/basic.beancount')
 
+            # Run bean-check.
+            command = [path.join(bindir, 'bean-check'), '-v', example_filename]
+            pipe = subprocess.Popen(command, shell=False,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    env={'PYTHONPATH': path.join(libdir)},
+                                    cwd=rootdir)
+            stdout, stderr = pipe.communicate()
+            self.assertEqual(0, pipe.returncode, stderr)
+
+            # Run bean-report.
             command = [path.join(bindir, 'bean-report'), example_filename, 'balsheet']
+            pipe = subprocess.Popen(command, shell=False,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    env={'PYTHONPATH': path.join(libdir)},
+                                    cwd=rootdir)
+            stdout, stderr = pipe.communicate()
+            self.assertEqual(0, pipe.returncode, stderr)
+
+            # Run bean-query.
+            command = [path.join(bindir, 'bean-query'), example_filename, 'balances;']
             pipe = subprocess.Popen(command, shell=False,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE,

@@ -3,15 +3,109 @@ beancount: TODO
 * Query Language
 http://furius.ca/beancount/doc/proposal-query
 
-  - All short name imports in the query package should become two-letters and be
-    consistent across files, e.g. qe, qc, qp, etc. Do this, for clarity.
+  - This indicates a bug in the cost() in the inventory; try this on the example file:
+
+       beancount> SELECT cost_currency, cost(sum(change))  WHERE account ~ '(Assets|Liabilities)' GROUP BY cost_currency;
+       cos  cost_sum_change
+       --- ------------------
+       USD 107327.79266 USD
+             2980.09    USD
+              346.50    VACHR
+
+    There aren't supposed to be multiple entries for USD there. Try without cost
+    and you'll see thtat 2980.09 is the only about of USD in USD. Something's up.
+
+
+  - Create tests for all the realistic test cases
+    Use cases:
+
+     # FIXME: About balance reports, what is the recommended way to remove empty
+     # balances? e.g. on a balance sheet when using the CLEAR option.
+
+     # holdings --by currency:
+     #   SELECT currency, sum(change)
+     #   GROUP BY currency
+
+     # holdings --by account
+     #   SELECT account, sum(change)
+     #   GROUP BY account
+
+     # networth,equity:
+     #   SELECT convert(sum(change), 'USD')
+     #   SELECT convert(sum(change), 'CAD')
+
+     # prices:
+     #   SELECT date, currency, cost
+     #   WHERE type = 'Price'
+
+     # all_prices:
+     #   PRINT
+     #   WHERE type = 'Price'
+
+     # check,validate:
+     #   CHECK
+
+     # errors:
+     #   ERRORS
+
+     # current_events,latest_events:
+     #   SELECT date, location, narration
+     #   WHERE type = 'Event'
+
+     # events:
+     #   SELECT location, narration
+     #   WHERE type = 'Event'
+
+     # activity,updated:
+     #   SELECT account, LATEST(date)
+
+     # stats-types:
+     #   SELECT DISTINCT COUNT(type)
+     #   SELECT COUNT(DISTINCT type) -- unsure
+
+     # stats-directives:
+     #   SELECT COUNT(id)
+
+     # stats-entries:
+     #   SELECT COUNT(id) WHERE type = 'Transaction'
+
+     # stats-postings:
+     #   SELECT COUNT(*)
+
+     # SELECT
+     #   root_account, AVG(balance)
+     # FROM (
+     #   SELECT
+     #     MAXDEPTH(account, 2) as root_account
+     #     MONTH(date) as month,
+     #     SUM(change) as balance
+     #   WHERE date > 2014-01-01
+     #   GROUP BY root_account, month
+     # )
+     # GROUP BY root_account
+
+
+     # Look at 401k
+     # select account, sum(units(change)) where account ~ '2014.*401k' group by 1 order by 1;
+
+
+     # FIXME: from mailing-list:
+     # SELECT account, payee, sum(change)
+     # WHERE account ~ "Payable" OR account ~ "Receivable" GROUP BY 1, 2;
+
+
+     # FIXME: To render holdings at "average cost", e.g. when aggregating by account,
+     # you could provide an "AVERAGE(Inventory)" function that merges an inventory's
+     # lots in the same way that the holdings merge right now. THIS is how to replace
+     # and remove all holdings support.
+
 
 
   - Use the display_context  in the BQL rendering routines instead of using the
     display precision mode in the displayed numbers only.
 
 
-  - This should fail:
+  - This should fail (it doesn't):
 
        SELECT DISTINCT account  GROUP BY account, account_sortkey(account)
        ORDER BY 2;"
@@ -29,27 +123,29 @@ http://furius.ca/beancount/doc/proposal-query
 
     where CLAMPED means (open + close + clear) operations.
 
-  - Add an automated test in setup_test.py for running bean-query
 
   - Add tests for all environment functions
-  - Add interactive shell tests (somehow)
-  - Rename bean-query to bean-report
-    * Allow calling with a command-line argument directly
-    * Support a 'batch mode' format to process multiple statements (needs
-      support for redirection of output to files)
-  - Create tests for all the realistic test cases
+
+  - Optional: Support a 'batch mode' format to process multiple statements at
+    once, reading the input files only once (needs support for redirection of
+    output to files).
+
   - Write a documentation doc
 
-  - In docs: explain five ways to "get data out": web, report, query,
-    export/convert, write script.
+
+  - In docs: explain four ways to "get data out": bean-web, bean-report,
+    bean-query, write script.
 
 
   - Create a setvar for style (boxed, spaced, etc.)
 
+
   - Rename 'change' column to 'position', and support dotted attribute name
     syntax. It should map onto the Python syntax one-to-one.
 
+
   - Compute the special 'balance' row and produce journals with it.
+
 
   - Cache .format methods in renderers, they may be caching the formatting
     themselves. Time the difference, see if it matters, look at CPython
@@ -206,6 +302,14 @@ http://furius.ca/beancount/doc/proposal-query
 
   - Move bean-example to being just a doctor subcommand; we really don't need to
     make that a first-class thing.
+
+  - Support constants for flags, e.g. flags.conversion is equivalent to 'C'.
+    Add those to our existing unit tests.
+
+  - Create test cases for all query_env, including evaluation. The list of tests
+    is currently not exhaustive.
+
+
 
 
 * Requirements for Shipping 2.0
