@@ -3,18 +3,6 @@ beancount: TODO
 * Query Language
 http://furius.ca/beancount/doc/proposal-query
 
-  - This indicates a bug in the cost() in the inventory; try this on the example file:
-
-       beancount> SELECT cost_currency, cost(sum(change))  WHERE account ~ '(Assets|Liabilities)' GROUP BY cost_currency;
-       cos  cost_sum_change
-       --- ------------------
-       USD 107327.79266 USD
-             2980.09    USD
-              346.50    VACHR
-
-    There aren't supposed to be multiple entries for USD there. Try without cost
-    and you'll see thtat 2980.09 is the only about of USD in USD. Something's up.
-
 
   - Create tests for all the realistic test cases
     Use cases:

@@ -7,6 +7,7 @@ import os
 import re
 import readline
 import sys
+import shlex
 import textwrap
 import traceback
 from os import path
@@ -64,6 +65,17 @@ def get_history(max_entries):
             for index in range(min(num_entries, max_entries))]
 
 
+def convert_bool(string):
+    """Convert a string to a boolean.
+
+    Args:
+      string: A string representing a boolean.
+    Returns:
+      The corresponding boolean.
+    """
+    return not (string.lower() in ('f', 'false', '0'))
+
+
 class DispatchingShell(cmd.Cmd):
     """A usable convenient shell for interpreting commands, with history."""
 
@@ -85,8 +97,15 @@ class DispatchingShell(cmd.Cmd):
 
     def initialize_vars(self):
         """Initialize the setting variables of the interactive shell."""
+        self.vars_types = {
+            'pager': str,
+            'boxed': convert_bool,
+            'spaced': convert_bool,
+            }
         self.vars = {
-            'pager': os.environ.get('PAGER', None)
+            'pager': os.environ.get('PAGER', None),
+            'boxed': False,
+            'spaced': False,
             }
 
     def add_help(self):
@@ -129,6 +148,31 @@ class DispatchingShell(cmd.Cmd):
     def do_clear(self, _):
         "Clear the history."
         readline.clear_history()
+
+    def do_set(self, line):
+        "Get/set shell settings variables."
+        if not line:
+            for varname, value in sorted(self.vars.items()):
+                print('{}: {}'.format(varname, value))
+        else:
+            components = shlex.split(line)
+            varname = components[0]
+            if len(components) == 1:
+                try:
+                    value = self.vars[varname]
+                    print('{}: {}'.format(varname, value))
+                except KeyError:
+                    print("Variable '{}' does not exist.".format(varname))
+            elif len(components) == 2:
+                value = components[1]
+                try:
+                    converted_value = self.vars_types[varname](value)
+                    self.vars[varname] = converted_value
+                    print('{}: {}'.format(varname, converted_value))
+                except KeyError:
+                    print("Variable '{}' does not exist.".format(varname))
+            else:
+                print("Invalid number of arguments.")
 
     def do_lex(self, line):
         "Just run the lexer on the following command and print the output."
@@ -300,8 +344,15 @@ class BQLShell(DispatchingShell):
         if not result_rows:
             print("(empty)")
         else:
+            # FIXME: Implement output to other formats; use 'formats' to dispatch.
+            output_format = self.vars['format']
+            if output_format != 'text':
+                print("Unsupported output format '{}'.".format(output_format)
+
             with self.get_pager() as file:
-                query_render.render_text(result_types, result_rows, file)
+                query_render.render_text(result_types, result_rows, file,
+                                         boxed=self.vars['boxed'],
+                                         spaced=self.vars['spaced'])
 
     def on_Journal(self, journal):
         """
