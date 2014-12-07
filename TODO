@@ -93,6 +93,16 @@ beancount: TODO
 
 ** Documentation / Ongoing
 
+  - In the comparison doc: describe how Beancount has asset types
+
+  - Comparison w/ Ledger doc: "balance sheet and closing of year"
+
+  - A nice new Health Care section is nearly complete... complete it with DEDUC
+    and COPAY legs explanation. Write an accompanying plugin to insert the
+    deductible tracking and what-not.
+
+  - Write out the taxes section, you have all the details, no need to wait
+
   - Write document on converting between implementations
 
   - Complete "How Inventories Work?"
@@ -101,6 +111,14 @@ beancount: TODO
 
   - Change documentation script to try to download to ODT format and then batch
     format to ebook
+
+  - You should have a dedicated section of your document that explains how market
+    values are reported, that is, via the unrealized gains plugin. Also provide a
+    market() function, to value holdings.
+
+  - Finally bake a PDF of all GDocs documentation and add a link to it. Should
+    be mobile-friendly.
+
 
 
 * Standalone Tools
@@ -427,6 +445,13 @@ http://furius.ca/beancount/doc/proposal-inventory
 
 * Plugins
 
+  - Create a verification plugin that checks that there is a single currency in
+    use per account. Check Open directives, also check actual usage.
+
+  - Put all verification plugins, including nounused and noduplicates under
+    beancount.plugins.constraints.*.
+
+
   - Would it make sense for every plugin to provide a validation function? We
     could then move all the validation routines in their plugin file. I very
     much like this idea: it creates more isolation for routines and less
@@ -436,9 +461,6 @@ http://furius.ca/beancount/doc/proposal-inventory
     ensure that the mutable portion of the entries hasn't been modified by the
     user-provided validation functions.
     'beancount.ops.documents' could benefit from this split.
-
-
-  - Bring in IRA portfolio plugin into the main and configure it properly.
 
   - Idea for an additional check: a plugin that computes the weight using the "@
     price" value on a posting held-at-cost, checked against the rest of postings
@@ -450,6 +472,19 @@ http://furius.ca/beancount/doc/proposal-inventory
 
   - Deal with wash sales... complete doc, call MSSB to figure out if/how they
     adjust the cost basis of a future stock vesting event.
+
+
+* Basic Directives as Plugins
+
+  I recently teased out that many of the basic functions can be implemented as
+  individual stages of transformations on the list of directives. This started
+  out as a way to add plugins by adding a custom transformation stage, but now
+  I see that if I can make the parser able to consume generic syntax that might
+  allow extensions, and to allow these plugins to specify new directive types
+  for extensions, I might be able to shove a *lot* of the existing
+  functionality into nice isolated plugin modules. Even functionality as basic
+  as Balance checks.  I'm not going to to do this in the first release, but I
+  want to set the stage for it.
 
 
 * Fix Unrealized Gains
@@ -549,17 +584,30 @@ http://furius.ca/beancount/doc/proposal-inter
     guide reporting that does not complexify the semantics.
 
 
-* Basic Directives as Plugins
+  - Idea: in the query language, provide a special Account:Payee field, in
+    order to play with the notion of payee-as-subacccount often discussed.
 
-  I recently teased out that many of the basic functions can be implemented as
-  individual stages of transformations on the list of directives. This started
-  out as a way to add plugins by adding a custom transformation stage, but now
-  I see that if I can make the parser able to consume generic syntax that might
-  allow extensions, and to allow these plugins to specify new directive types
-  for extensions, I might be able to shove a *lot* of the existing
-  functionality into nice isolated plugin modules. Even functionality as basic
-  as Balance checks.  I'm not going to to do this in the first release, but I
-  want to set the stage for it.
+    could also provide a clean_payee() function, that would attempt to clean
+    the ugly payee names!
+
+
+
+* Project: Auto-transfer Inference
+
+  - IDEA: Using inference and a reasonable buffer amount, can I automatically
+    figure out how much extra cash from checking can safely be transferred out
+    for investing? i.e. sum up upcoming expenses (rent + cc) and expected
+    salary payments, and calculate it automatically. Not obvious, but why not?
+
+
+
+* Project: List Unverified Postings
+
+  - Idea! Allow the selection or reporting of all the postings since their
+    balance check in each account. These postings can be called "unverified"
+    and it should be possible to report just those. Maybe we can restrict
+    further to the list of those without a '*' flag, or maybe just those with a
+    '!' flag. "Show me all that's unverified right now."
 
 
 * Current / Misc / To Be Classified
@@ -571,60 +619,10 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
 
-  - IDEA: Using inference and a reasonable buffer amount, can I automatically
-    figure out how much extra cash from checking can safely be transferred out
-    for investing? i.e. sum up upcoming expenses (rent + cc) and expected
-    salary payments, and calculate it automatically. Not obvious, but why not?
+  (query)
 
+  - Journal rendering: add terminal colors (easy).
 
-
-  - IDEA: Create a plugin that will convert "doc:" metadata to a document file,
-    that will search for a unique string name in all the filenames and
-    associate the filename with this directive via a link or something.
-
-
-  - In the comparison doc: describe how Beancount has asset types
-
-
-
-  - Idea: in the query language, provide a special Account:Payee field, in
-    order to play with the notion of payee-as-subacccount often discussed.
-
-    could also provide a clean_payee() function, that would attempt to clean
-    the ugly payee names!
-
-
-  - Idea! Allow the selection or reporting of all the postings since their
-    balance check in each account. These postings can be called "unverified"
-    and it should be possible to report just those.
-
-
-
-  - Create a verification plugin that checks that there is a single currency in
-    use per account. Check Open directives, also check actual usage.
-
-  - Create a verification plugin that checks that there aren't any postings to
-    non-leaf accounts.
-
-  - Put all verification plugins, including nounused and noduplicates under
-    beancount.plugins.constraints.*.
-
-
-
-  - A nice new Health Care section is nearly complete... complete it with DEDUC
-    and COPAY legs explanation. Write an accompanying plugin to insert the
-    deductible tracking and what-not.
-
-  - Write out the taxes section, you have all the details, no need to wait
-
-
-
-  - (web) In the web interface, it would be nice to have a fancy overlay here,
-    that automatically appears after parsing if there are errors and that
-    automatically smoothly fades out.
-
-  - Configure more pylint tests and make them pass. We're using a small subset
-    at the moment.
 
 
 
@@ -635,37 +633,30 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
 
+
+
+
+  - (web) In the web interface, it would be nice to have a fancy overlay here,
+    that automatically appears after parsing if there are errors and that
+    automatically smoothly fades out.
+
+
+
+
+
+
   - Eventually you want to clean up the locations of the example files. I think
     the basic.beancount and starterkit.beancount files aren't really that useful
     anymore, other than for automated testing.
+    examples/tutorial/example.beancount should move away from the tutorial files.
 
 
 
-  - Comparison w/ Ledger doc: "balance sheet and closing of year"
 
-
-
-  - You should have a dedicated section of your document that explains how market
-    values are reported, that is, via the unrealized gains plugin. Also provide a
-    market() function, to value holdings.
-
-
-
-  - (docs) Write a script to download and bake all my PDFs docs in a printable
-    and mobile-friendly formats.
 
   - (docs) I'd like the documentation links to open in "View" mode by default,
     YET still allowing the user to switch to "Suggestion" mode if they want to.
 
-
-
-  (documentation)
-  - Write a worked and detailed example of generating automated transactions in
-    the Plugins document.
-
-
-
-  - Journal rendering: add terminal colors (easy).
 
 
 
@@ -1574,6 +1565,9 @@ http://furius.ca/beancount/doc/proposal-inter
 
 * Code Quality
 
+  - Configure more pylint tests and make them pass. We're using a small subset
+    at the moment.
+
   - Require Python 3.4 and introduce Enum's where relevant.
 
   - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
@@ -2217,6 +2211,10 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
     could have a dramatic effect on performance.
 
 ** Documents
+
+  - IDEA: Create a plugin that will convert "doc:" metadata to a document file,
+    that will search for a unique string name in all the filenames and
+    associate the filename with this directive via a link or something.
 
   - Write a proposal for implementing a transformation on a specific set of
     transactions, that supports capital gains with commission taken into
@@ -3275,3 +3273,9 @@ Improve this bit:
     >   divide each group further.
     >
     > I will change that, thanks for the comment.
+
+** Example
+
+  (documentation)
+  - Write a worked and detailed example of generating automated transactions in
+    the Plugins document.
