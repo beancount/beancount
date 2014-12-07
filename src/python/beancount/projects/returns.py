@@ -847,7 +847,7 @@ def main():
                         format='%(levelname)-8s: %(message)s')
 
     # Load the input file and build the price database.
-    entries, errors, options_map = loader.load(args.filename)
+    entries, errors, options_map = loader.load_file(args.filename, log_errors=logging.error)
 
     # Compute the returns.
     returns, (date_first, date_last), _ = compute_returns_with_regexp(
