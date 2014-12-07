@@ -69,22 +69,48 @@ def tempdir():
         shutil.rmtree(tempdir, ignore_errors=True)
 
 
-@contextlib.contextmanager
-def capture(attribute='stdout'):
+def capture(attributes='stdout'):
     """A context manager that captures what's printed to stdout.
 
     Args:
-      attribute: A string, the name of the sys attribute to override.
+      attributes: A string or a list of strings, the name of the sys attributes to override
+        with StringIO instances.
     Yields:
       A StringIO string accumulator.
     """
-    capture_attr = '__capture_{}__'.format(attribute)
-    setattr(sys, capture_attr, getattr(sys, attribute))
-    oss = io.StringIO()
-    setattr(sys, attribute, oss)
-    yield oss
-    setattr(sys, attribute, getattr(sys, capture_attr))
-    delattr(sys, capture_attr)
+    return patch(sys, attributes, io.StringIO)
+
+
+@contextlib.contextmanager
+def patch(obj, attributes, replacement_type):
+    """A context manager that temporarily patches an object's attributes.
+
+    All attributes in 'attributes' are saved and replaced by new instances
+    of type 'replacement_type'.
+
+    Args:
+      obj: The object to patch up.
+      attributes: A string or a sequence of strings, the names of attributes to replace.
+      replacement_type: A callable to build replacment objects.
+    Yields:
+      An instance of a list of sequencs of 'replacement_type'.
+    """
+    single = isinstance(attributes, str)
+    if single:
+        attributes = [attributes]
+
+    saved = []
+    replacements = []
+    for attribute in attributes:
+        replacement = replacement_type()
+        replacements.append(replacement)
+        saved.append(getattr(obj, attribute))
+        setattr(obj, attribute, replacement)
+
+    yield replacements[0] if single else replacements
+
+    for attribute, saved_attr in zip(attributes, saved):
+        setattr(obj, attribute, saved_attr)
 
 
 def docfile(function):

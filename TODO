@@ -1547,10 +1547,6 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
 
-  - Support in test_utils.capture('stdout', 'stderr') as (stdout, stderr).
-    Replace all nested code that is inconvenient.
-
-
   - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
 
 
