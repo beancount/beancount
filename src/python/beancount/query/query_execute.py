@@ -313,8 +313,8 @@ def execute_query(query, entries, options_map):
         result_rows = result_rows[:query.limit]
 
     # Flatten inventories if requested.
-    # if query.flatten:
-    #     result_types, result_rows = flatten_results(result_types, result_rows)
+    if query.flatten:
+        result_types, result_rows = flatten_results(result_types, result_rows)
 
     return (result_types, result_rows)
 
