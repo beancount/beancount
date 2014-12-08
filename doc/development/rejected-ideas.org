@@ -44,7 +44,7 @@ rejected, and the reasons why they were rejected.
       * CURRENCY: CAD, USD, other
       * TYPE: Asset, Income, Liability
       * INSTITUTION: RBC, RBC-Investment, HSBC, TD, etc.
-      * SOURCE: Google, Eladian, MarketFactory, etc.
+      * SOURCE: Softimage, Eladian, MarketFactory, etc.
       * DESTINATION: IRS, CRA, State-NewYork, State-California
 
     Ideally, one should be able to generate report by querying on a subset of

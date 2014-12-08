@@ -221,12 +221,12 @@ option "documents" "starterdocs"
 ;; position, as well as the original transaction that got us
 ;; that position, which provides its cost (book value).
 
-2013-02-03 * "Bought some Google stock"
+2013-02-03 * "Bought some stock"
   Assets:US:ETrade:Investment:GOOG         8 GOOG {701.20 USD}
   Expenses:Financial:Commissions         7.95 USD
   Assets:US:ETrade:Investment:Cash
 
-2013-09-03 * "Bought some Google stock"
+2013-09-03 * "Bought some stock"
   Assets:US:ETrade:Investment:GOOG         4 GOOG {850.08 USD}
   Expenses:Financial:Commissions         7.95 USD
   Assets:US:ETrade:Investment:Cash
