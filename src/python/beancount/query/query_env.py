@@ -242,8 +242,8 @@ class Count(query_compile.EvalAggregator):
     def update(self, store, unused_ontext):
         store[self.handle] += 1
 
-    def finalize(self, store):
-        return store[self.handle]
+    def __call__(self, context):
+        return context.store[self.handle]
 
 class Sum(query_compile.EvalAggregator):
     "Calculate the sum of the numerical argument."
@@ -262,16 +262,13 @@ class Sum(query_compile.EvalAggregator):
         value = self.eval_args(context)[0]
         store[self.handle] += value
 
-    def finalize(self, store):
-        return store[self.handle]
+    def __call__(self, context):
+        return context.store[self.handle]
 
 class SumBase(query_compile.EvalAggregator):
 
     def __init__(self, operands):
         super().__init__(operands, inventory.Inventory)
-
-    def __call__(self, context):
-        return context.store[self.handle]
 
     def allocate(self, allocator):
         self.handle = allocator.allocate()
@@ -279,7 +276,11 @@ class SumBase(query_compile.EvalAggregator):
     def initialize(self, store):
         store[self.handle] = inventory.Inventory()
 
+    def __call__(self, context):
+        return context.store[self.handle]
+
 class SumAmount(SumBase):
+
     "Calculate the sum of the amount. The result is an Inventory."
     __intypes__ = [amount.Amount]
 
@@ -321,8 +322,8 @@ class First(query_compile.EvalAggregator):
             value = self.eval_args(context)[0]
             store[self.handle] = value
 
-    def finalize(self, store):
-        return store[self.handle]
+    def __call__(self, context):
+        return context.store[self.handle]
 
 class Last(query_compile.EvalAggregator):
     "Keep the last of the values seen."
@@ -341,8 +342,8 @@ class Last(query_compile.EvalAggregator):
         value = self.eval_args(context)[0]
         store[self.handle] = value
 
-    def finalize(self, store):
-        return store[self.handle]
+    def __call__(self, context):
+        return context.store[self.handle]
 
 class Min(query_compile.EvalAggregator):
     "Compute the minimum of the values."
@@ -362,8 +363,8 @@ class Min(query_compile.EvalAggregator):
         if value < store[self.handle]:
             store[self.handle] = value
 
-    def finalize(self, store):
-        return store[self.handle]
+    def __call__(self, context):
+        return context.store[self.handle]
 
 class Max(query_compile.EvalAggregator):
     "Compute the maximum of the values."
@@ -383,8 +384,8 @@ class Max(query_compile.EvalAggregator):
         if value > store[self.handle]:
             store[self.handle] = value
 
-    def finalize(self, store):
-        return store[self.handle]
+    def __call__(self, context):
+        return context.store[self.handle]
 
 AGGREGATOR_FUNCTIONS = {
     ('sum', amount.Amount)       : SumAmount,

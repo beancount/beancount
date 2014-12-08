@@ -42,6 +42,13 @@ class TestUseCases(unittest.TestCase):
         return test_function
 
     @runshell
+    def test_print_from(self, output):
+        """
+        PRINT FROM narration ~ 'alone'
+        """
+        self.assertTrue(re.search('Eating out alone', output))
+
+    @runshell
     def test_accounts(self, output):
         """
         SELECT DISTINCT account, open_date(account)
@@ -148,19 +155,8 @@ class TestUseCases(unittest.TestCase):
         SELECT account, currency, cost_currency, sum(change)
         GROUP BY account, currency, cost_currency;
         """
-        print()
-        print(output)
-
         ## FIXME: Here we need to finally support FLATTEN to make this happen properly.
 
-
-
-    @runshell
-    def test_print_from(self, output):
-        """
-        PRINT FROM narration ~ 'alone'
-        """
-        self.assertTrue(re.search('Eating out alone', output))
 
 
 

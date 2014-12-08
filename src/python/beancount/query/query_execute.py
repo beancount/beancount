@@ -7,6 +7,7 @@ import itertools
 from beancount.query import query_compile
 from beancount.query import query_env
 from beancount.core import data
+from beancount.core import position
 from beancount.core import inventory
 from beancount.core import getters
 from beancount.parser import printer
@@ -311,4 +312,56 @@ def execute_query(query, entries, options_map):
     if query.limit is not None:
         result_rows = result_rows[:query.limit]
 
+    # Flatten inventories if requested.
+    # if query.flatten:
+    #     result_types, result_rows = flatten_results(result_types, result_rows)
+
     return (result_types, result_rows)
+
+
+def flatten_results(result_types, result_rows):
+    """Convert inventories in result types to have a row for each.
+
+    This routine will expand all result lines with an inventory into a new line
+    for each position.
+
+    Args:
+        result_types: A list of (name, data-type) item pairs.
+        result_rows: A list of ResultRow tuples of length and types described by
+          'result_types'.
+    Returns:
+        result_types: A list of (name, data-type) item pairs. There should be no
+          Inventory types anymore.
+        result_rows: A list of ResultRow tuples of length and types described by
+          'result_types'. All inventories from the input should have been converted
+          to Position types.
+    """
+    indexes = set(index
+                  for index, (name, result_type) in enumerate(result_types)
+                  if result_type is inventory.Inventory)
+    if not indexes:
+        return (result_types, result_rows)
+
+    ResultRow = type(result_rows[0])
+
+    # We have to make at least some conversions.
+    num_columns = len(result_types)
+    output_rows = []
+    for result_row in result_rows:
+        max_rows = max(len(result_row[icol]) for icol in indexes)
+        for irow in range(max_rows):
+            output_row = []
+            for icol in range(num_columns):
+                value = result_row[icol]
+                if icol in indexes:
+                    value = value[irow] if irow < len(value) else None
+                output_row.append(value)
+            output_rows.append(ResultRow._make(output_row))
+
+    # Convert the types.
+    output_types = [(name, (position.Position
+                            if result_type is inventory.Inventory
+                            else result_type))
+                    for name, result_type in result_types]
+
+    return output_types, output_rows

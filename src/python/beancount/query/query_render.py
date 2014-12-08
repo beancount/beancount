@@ -305,6 +305,9 @@ class PositionRenderer(ColumnRenderer):
         return self.total_width
 
     def format(self, pos):
+        if pos is None:
+            return self.empty
+
         strings = []
         if self.fmt_with_cost is None:
             lot = pos.lot

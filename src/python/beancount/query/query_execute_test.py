@@ -684,8 +684,6 @@ class TestExecuteAggregatedQuery(QueryBase):
                 ])
 
 
-
-
 class TestExecuteOptions(QueryBase):
 
     INPUT = """
@@ -815,128 +813,38 @@ class TestExecuteOptions(QueryBase):
                 ])
 
 
-class TestExecuteUseCases(QueryBase):
-    """Testing all the use cases from the proposal."""
+class TestExecuteFlatten(QueryBase):
 
-    def test_accounts(self):
+    def test_flatten_results(self):
+        ## FIXME: We need some dedicated tests of flattening results.
         pass
 
+    INPUT = """
 
+      plugin "beancount.ops.auto_accounts"
 
+      2010-02-23 *
+        Assets:Something       5.00 USD
+        Assets:Something       2.00 CAD
+        Assets:Something       4 GOOG {531.20 USD}
+        Equity:Rest
 
-# FIXME: Create test cases for all query_env, including evaluation. The list of
-# tests is currently not exhaustive.
+    """
 
-
-
-
-# FIXME: This will be a great test query to look at the special 'balance' column:
-# select date, narration, account, change where account ~ 'Van.*Cash' ;
-
-
-# FIXME: This reports an ugly error -- fix this:
-# print from has_account ~ 'IRA:Cash' ;
-
-
-
-# balances,bal,trial,ledger:
-#   SELECT account, sum(change) GROUP BY account;
-
-# balsheet:
-#   SELECT account, sum(change)
-#   FROM year = 2014  OPEN ON 2014-01-01  CLOSE ON 2015-01-01
-
-# income:
-#   SELECT account, sum(change)
-#   WHERE account ~ '(Income|Expenses):*'
-
-# journal,register,account:
-#   SELECT date, payee, narration, change, balance
-#   WHERE account = 'Assets:US:Bank:Checking'
-
-# conversions:
-#   SELECT date, payee, narration, change, balance
-#   WHERE flag = 'C'
-# or
-#   WHERE flag = FLAGS.conversion
-
-# documents:
-#   SELECT date, account, narration
-#   WHERE type = 'Document'
-
-# holdings:
-#   SELECT account, currency, cost-currency, sum(change)
-#   GROUP BY account, currency, cost-currency
-
-# holdings --by currency:
-#   SELECT currency, sum(change)
-#   GROUP BY currency
-# holdings --by account
-#   SELECT account, sum(change)
-#   GROUP BY account
-# networth,equity:
-#   SELECT convert(sum(change), 'USD')
-#   SELECT convert(sum(change), 'CAD')
-# commodities:
-#   SELECT DISTINCT currency
-#   SELECT DISTINCT cost-currency
-#   SELECT DISTINCT currency, cost-currency
-# prices:
-#   SELECT date, currency, cost
-#   WHERE type = 'Price'
-# all_prices:
-#   PRINT
-#   WHERE type = 'Price'
-# check,validate:
-#   CHECK
-# errors:
-#   ERRORS
-# print:
-#   PRINT WHERE ...
-# accounts:
-#   SELECT DISTINCT account
-# current_events,latest_events:
-#   SELECT date, location, narration
-#   WHERE type = 'Event'
-# events:
-#   SELECT location, narration
-#   WHERE type = 'Event'
-# activity,updated:
-#   SELECT account, LATEST(date)
-# stats-types:
-#   SELECT DISTINCT COUNT(type)
-#   SELECT COUNT(DISTINCT type) -- unsure
-# stats-directives:
-#   SELECT COUNT(id)
-# stats-entries:
-#   SELECT COUNT(id) WHERE type = 'Transaction'
-# stats-postings:
-#   SELECT COUNT(*)
-
-
-# SELECT
-#   root_account, AVG(balance)
-# FROM (
-#   SELECT
-#     MAXDEPTH(account, 2) as root_account
-#     MONTH(date) as month,
-#     SUM(change) as balance
-#   WHERE date > 2014-01-01
-#   GROUP BY root_account, month
-# )
-# GROUP BY root_account
-
-
-# Look at 401k
-# select account, sum(units(change)) where account ~ '2014.*401k' group by 1 order by 1;
-
-
-# FIXME: from mailing-list:
-# SELECT account, payee, sum(change)
-# WHERE account ~ "Payable" OR account ~ "Receivable" GROUP BY 1, 2;
-
-
-# FIXME: To render holdings at "average cost", e.g. when aggregating by account,
-# you could provide an "AVERAGE(Inventory)" function that merges an inventory's
-# lots in the same way that the holdings merge right now. THIS is how to replace
-# and remove all holdings support.
+    def test_flatten(self):
+        self.check_query(
+            self.INPUT,
+            """
+            SELECT account, sum(change)
+            WHERE account = 'Assets:Something'
+            GROUP BY account
+            FLATTEN;
+            """,
+            [
+                ('account', str),
+                ('sum_change', inventory.Inventory),
+                ],
+            [
+                ('Assets:Something',
+                 inventory.from_string("5.00 USD, 2.00 CAD, 4 GOOG {531.20 USD}")),
+                ])

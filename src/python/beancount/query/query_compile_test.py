@@ -675,6 +675,12 @@ class TestTranslationJournal(CompileSelectBase):
 
 class TestTranslationBalance(CompileSelectBase):
 
+    group_by = qp.GroupBy([qp.Column('account'),
+                           qp.Function('account_sortkey', [qp.Column(name='account')])],
+                          None)
+
+    order_by = qp.OrderBy([qp.Function('account_sortkey', [qp.Column('account')])], None)
+
     def test_balance(self):
         balance = self.parse("BALANCES;")
         select = qc.transform_balances(balance)
@@ -682,7 +688,7 @@ class TestTranslationBalance(CompileSelectBase):
             qp.Select([
                 qp.Target(qp.Column('account'), None),
                 qp.Target(qp.Function('sum', [qp.Column('change')]), None),
-                ], None, None, qp.GroupBy([1], None), qp.OrderBy([1], None),
+                ], None, None, self.group_by, self.order_by,
                       None, None, None, None),
             select)
 
@@ -693,8 +699,8 @@ class TestTranslationBalance(CompileSelectBase):
             qp.Select([
                 qp.Target(qp.Column('account'), None),
                 qp.Target(qp.Function('sum', [qp.Function('cost',
-                                                          [qp.Column('change')])]), None),
-                ], None, None, qp.GroupBy([1], None), qp.OrderBy([1], None),
+                                                          [qp.Column('change')])]), None)],
+                      None, None, self.group_by, self.order_by,
                       None, None, None, None),
             select)
 
@@ -710,8 +716,8 @@ class TestTranslationBalance(CompileSelectBase):
                       qp.From(qp.Equal(qp.Column('year'), qp.Constant(2014)),
                               None, None, None),
                       None,
-                      qp.GroupBy([1], None),
-                      qp.OrderBy([1], None),
+                      self.group_by,
+                      self.order_by,
                       None, None, None, None),
             select)
 
