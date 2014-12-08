@@ -4,6 +4,16 @@
 Note: This file contains only changes in the 'default' branch.
 
 
+2014-12-07
+
+  - After much more work on the SQL query language (in 'shell' branch), I need
+    to access Inventory positions by index, so I removed the getitem ([])
+    operator from Inventory, which was unused in the codebase. (If you have
+    scripts this *may* affect you; translate calls to [] into calls to
+    .get_position()).
+
+
+
 2014-11-29
 
   - Completed work on calculating returns (merged branch 'returns' into
