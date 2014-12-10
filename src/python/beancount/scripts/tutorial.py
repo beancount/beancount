@@ -8,6 +8,8 @@ import subprocess
 import os
 from os import path
 
+from beancount.utils import test_utils
+
 
 # pylint: disable=bad-whitespace
 COMMANDS = [
@@ -58,7 +60,9 @@ def main():
         with open(output_filename, 'w') as output_file:
             with open(errors_filename, 'w') as errors_file:
                 command = command_template.format(args.filename)
-                pipe = subprocess.Popen(command, shell=True,
+                pipe = subprocess.Popen(command,
+                                        env=test_utils.subprocess_env(),
+                                        shell=True,
                                         stdout=output_file,
                                         stderr=errors_file)
                 pipe.communicate()

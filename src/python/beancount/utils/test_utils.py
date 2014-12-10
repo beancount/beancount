@@ -12,6 +12,7 @@ import contextlib
 import functools
 import shutil
 import itertools
+import os
 from os import path
 
 
@@ -24,6 +25,8 @@ get_test_port = itertools.count(9470).__next__
 def find_repository_root(filename):
     """Return the path to the repository root.
 
+    Args:
+      filename: A string, the name of a file within the repository.
     Returns:
       A string, the root directory.
     """
@@ -31,6 +34,31 @@ def find_repository_root(filename):
                   for sigfile in ('PKGINFO', 'COPYING', 'README')):
         filename = path.dirname(filename)
     return filename
+
+
+def find_python_lib():
+    """Return the path to the root of the Python libraries.
+
+    Returns:
+      A string, the root directory.
+    """
+    return path.dirname(path.dirname(path.dirname(__file__)))
+
+
+def subprocess_env():
+    """Return a dict to use as environment for running subprocesses.
+
+    Returns:
+      A string, the root directory.
+    """
+    # Ensure we have locations to invoke our Python executable and our
+    # runnable binaries in the test environment to run subprocesses.
+    binpath = ':'.join([
+        path.dirname(sys.executable),
+        path.join(find_repository_root(__file__), 'bin'),
+        os.environ.get('PATH', '').strip(':')]).strip(':')
+    return {'PATH': binpath,
+            'PYTHONPATH': find_python_lib()}
 
 
 def run_with_args(function, args):
