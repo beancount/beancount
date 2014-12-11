@@ -128,7 +128,9 @@ class EntryPrinter:
         rows = [self.render_posting_strings(posting)
                 for posting in entry.postings]
         strs_account = [row[0] for row in rows]
-        width_account = max(len(flag_account) for flag_account in strs_account)
+        width_account = (max(len(flag_account) for flag_account in strs_account)
+                         if strs_account
+                         else 1)
         strs_position, width_position = align_position_strings(row[1] for row in rows)
         strs_weight, width_weight = align_position_strings(row[2] for row in rows)
 
