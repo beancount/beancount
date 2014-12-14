@@ -1,5 +1,11 @@
 -*- mode: org -*-
 beancount: TODO
+* Metadata
+
+  - Merge source (filename and lineno) into metadata and simplify all
+    constructors to take this value either at the beginning or at the end.
+
+
 * Requirements for Shipping 2.0
 ** Establish Display Precision
 
