@@ -763,7 +763,8 @@ def parsedoc(fun):
 
     @functools.wraps(fun)
     def newfun(self):
-        assert fun.__doc__, "You need to insert a docstring on {}".format(fun.__name__)
+        assert fun.__doc__ is not None, (
+            "You need to insert a docstring on {}".format(fun.__name__))
         entries, errors, options_map = parse_string(textwrap.dedent(fun.__doc__),
                                                     report_filename=filename,
                                                     report_firstline=lineno)
