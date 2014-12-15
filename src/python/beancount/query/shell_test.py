@@ -112,7 +112,7 @@ class TestUseCases(unittest.TestCase):
     @runshell
     def test_income_statement(self, output):
         """
-        SELECT account, cost(sum(change))
+        SELECT account, cost(sum(position))
         FROM OPEN ON 2014-01-01 CLOSE ON 2015-01-01
         WHERE account ~ '(Income|Expenses):*'
         GROUP BY account, account_sortkey(account)
@@ -135,7 +135,7 @@ class TestUseCases(unittest.TestCase):
     @runshell
     def test_conversions(self, output):
         """
-        SELECT date, payee, narration, change, balance
+        SELECT date, payee, narration, position, balance
         FROM OPEN ON 2014-07-01 CLOSE ON 2014-10-01
         WHERE flag = 'C'
         """
@@ -152,7 +152,7 @@ class TestUseCases(unittest.TestCase):
     @runshell
     def test_holdings(self, output):
         """
-        SELECT account, currency, cost_currency, sum(change)
+        SELECT account, currency, cost_currency, sum(position)
         GROUP BY account, currency, cost_currency;
         """
         ## FIXME: Here we need to finally support FLATTEN to make this happen properly.

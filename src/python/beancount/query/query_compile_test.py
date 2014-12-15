@@ -21,8 +21,8 @@ class TestCompileExpression(unittest.TestCase):
                                                qe.TargetsEnvironment()))
 
     def test_expr_function(self):
-        self.assertEqual(qe.SumPosition([qe.ChangeColumn()]),
-                         qc.compile_expression(qp.Function('sum', [qp.Column('change')]),
+        self.assertEqual(qe.SumPosition([qe.PositionColumn()]),
+                         qc.compile_expression(qp.Function('sum', [qp.Column('position')]),
                                                qe.TargetsEnvironment()))
 
     def test_expr_unaryop(self):
@@ -62,7 +62,7 @@ class TestCompileAggregateChecks(unittest.TestCase):
     def test_is_aggregrate_derived(self):
         columns, aggregates = qc.get_columns_and_aggregates(
             qc.EvalAnd(
-                qc.EvalEqual(qe.ChangeColumn(), qc.EvalConstant(42)),
+                qc.EvalEqual(qe.PositionColumn(), qc.EvalConstant(42)),
                 qc.EvalOr(
                     qc.EvalNot(qc.EvalEqual(qe.DateColumn(),
                                             qc.EvalConstant(datetime.date(2014, 1, 1)))),
@@ -71,7 +71,7 @@ class TestCompileAggregateChecks(unittest.TestCase):
 
         columns, aggregates = qc.get_columns_and_aggregates(
             qc.EvalAnd(
-                qc.EvalEqual(qe.ChangeColumn(), qc.EvalConstant(42)),
+                qc.EvalEqual(qe.PositionColumn(), qc.EvalConstant(42)),
                 qc.EvalOr(
                     qc.EvalNot(qc.EvalEqual(qe.DateColumn(),
                                             qc.EvalConstant(datetime.date(2014, 1, 1)))),
@@ -81,19 +81,19 @@ class TestCompileAggregateChecks(unittest.TestCase):
 
     def test_get_columns_and_aggregates(self):
         # Simple column.
-        c_query = qe.ChangeColumn()
+        c_query = qe.PositionColumn()
         columns, aggregates = qc.get_columns_and_aggregates(c_query)
         self.assertEqual((1, 0), (len(columns), len(aggregates)))
         self.assertFalse(qc.is_aggregate(c_query))
 
         # Multiple columns.
-        c_query = qc.EvalAnd(qe.ChangeColumn(), qe.DateColumn())
+        c_query = qc.EvalAnd(qe.PositionColumn(), qe.DateColumn())
         columns, aggregates = qc.get_columns_and_aggregates(c_query)
         self.assertEqual((2, 0), (len(columns), len(aggregates)))
         self.assertFalse(qc.is_aggregate(c_query))
 
         # Simple aggregate.
-        c_query = qe.SumPosition([qe.ChangeColumn()])
+        c_query = qe.SumPosition([qe.PositionColumn()])
         columns, aggregates = qc.get_columns_and_aggregates(c_query)
         self.assertEqual((0, 1), (len(columns), len(aggregates)))
         self.assertTrue(qc.is_aggregate(c_query))
@@ -112,7 +112,7 @@ class TestCompileAggregateChecks(unittest.TestCase):
 
         # Mix of column and aggregates (this is used to detect this illegal case).
         c_query = qc.EvalAnd(qe.Length([qe.AccountColumn()]),
-                             qe.SumPosition([qe.ChangeColumn()]))
+                             qe.SumPosition([qe.PositionColumn()]))
         columns, aggregates = qc.get_columns_and_aggregates(c_query)
         self.assertEqual((1, 1), (len(columns), len(aggregates)))
         self.assertTrue(qc.is_aggregate(c_query))
@@ -605,7 +605,7 @@ class TestTranslationJournal(CompileSelectBase):
                 qp.Target(qp.Function('maxwidth', [qp.Column('narration'),
                                                    qp.Constant(80)]), None),
                 qp.Target(qp.Column('account'), None),
-                qp.Target(qp.Column('change'), None),
+                qp.Target(qp.Column('position'), None),
                 qp.Target(qp.Column('balance'), None),
             ],
                  None, None, None, None, None, None, None, None),
@@ -623,7 +623,7 @@ class TestTranslationJournal(CompileSelectBase):
                 qp.Target(qp.Function('maxwidth', [qp.Column('narration'),
                                                    qp.Constant(80)]), None),
                 qp.Target(qp.Column('account'), None),
-                qp.Target(qp.Column('change'), None),
+                qp.Target(qp.Column('position'), None),
                 qp.Target(qp.Column('balance'), None),
             ],
                  None,
@@ -643,7 +643,7 @@ class TestTranslationJournal(CompileSelectBase):
                 qp.Target(qp.Function('maxwidth', [qp.Column('narration'),
                                                    qp.Constant(80)]), None),
                 qp.Target(qp.Column('account'), None),
-                qp.Target(qp.Column('change'), None),
+                qp.Target(qp.Column('position'), None),
                 qp.Target(qp.Column('balance'), None),
             ],
                  qp.From(qp.Equal(qp.Column('year'), qp.Constant(2014)), None, None, None),
@@ -663,7 +663,7 @@ class TestTranslationJournal(CompileSelectBase):
                 qp.Target(qp.Function('maxwidth', [qp.Column('narration'),
                                                    qp.Constant(80)]), None),
                 qp.Target(qp.Column('account'), None),
-                qp.Target(qp.Function('cost', [qp.Column('change')]), None),
+                qp.Target(qp.Function('cost', [qp.Column('position')]), None),
                 qp.Target(qp.Function('cost', [qp.Column('balance')]), None),
             ],
                       qp.From(qp.Equal(qp.Column('year'), qp.Constant(2014)),
@@ -687,7 +687,7 @@ class TestTranslationBalance(CompileSelectBase):
         self.assertEqual(
             qp.Select([
                 qp.Target(qp.Column('account'), None),
-                qp.Target(qp.Function('sum', [qp.Column('change')]), None),
+                qp.Target(qp.Function('sum', [qp.Column('position')]), None),
                 ], None, None, self.group_by, self.order_by,
                       None, None, None, None),
             select)
@@ -699,7 +699,7 @@ class TestTranslationBalance(CompileSelectBase):
             qp.Select([
                 qp.Target(qp.Column('account'), None),
                 qp.Target(qp.Function('sum', [qp.Function('cost',
-                                                          [qp.Column('change')])]), None)],
+                                                          [qp.Column('position')])]), None)],
                       None, None, self.group_by, self.order_by,
                       None, None, None, None),
             select)
@@ -711,7 +711,7 @@ class TestTranslationBalance(CompileSelectBase):
             qp.Select([
                 qp.Target(qp.Column('account'), None),
                 qp.Target(qp.Function('sum', [qp.Function('cost',
-                                                          [qp.Column('change')])]), None),
+                                                          [qp.Column('position')])]), None),
                 ],
                       qp.From(qp.Equal(qp.Column('year'), qp.Constant(2014)),
                               None, None, None),

@@ -853,7 +853,7 @@ def transform_journal(journal):
            MAXWIDTH(payee, 48),
            MAXWIDTH(narration, 80),
            account,
-           {summary_func}(change),
+           {summary_func}(position),
            {summary_func}(balance)
         {where}
 
@@ -884,7 +884,7 @@ def transform_balances(balances):
 
     cooked_select = query_parser.Parser().parse("""
 
-      SELECT account, SUM({}(change))
+      SELECT account, SUM({}(position))
       GROUP BY account, ACCOUNT_SORTKEY(account)
       ORDER BY ACCOUNT_SORTKEY(account)
 

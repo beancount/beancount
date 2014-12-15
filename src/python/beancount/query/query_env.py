@@ -789,7 +789,7 @@ class CostCurrencyColumn(query_compile.EvalColumn):
         cost = context.posting.position.lot.cost
         return cost.currency if cost else ''
 
-class ChangeColumn(query_compile.EvalColumn):
+class PositionColumn(query_compile.EvalColumn):
     "The position for the posting. These can be summed into inventories."
     __intypes__ = [data.Posting]
 
@@ -854,7 +854,8 @@ class FilterPostingsEnvironment(query_compile.CompilationEnvironment):
         'currency'      : CurrencyColumn,
         'cost_number'   : CostNumberColumn,
         'cost_currency' : CostCurrencyColumn,
-        'change'        : ChangeColumn,
+        'position'      : PositionColumn,
+        'change'        : PositionColumn,  # Backwards compatible.
         'price'         : PriceColumn,
         'weight'        : WeightColumn,
         'balance'       : BalanceColumn,
@@ -869,4 +870,4 @@ class TargetsEnvironment(FilterPostingsEnvironment):
     functions.update(AGGREGATOR_FUNCTIONS)
 
     # The list of columns that a wildcard will expand into.
-    wildcard_columns = 'date flag payee narration change'.split()
+    wildcard_columns = 'date flag payee narration position'.split()

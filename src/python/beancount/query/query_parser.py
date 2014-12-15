@@ -36,11 +36,11 @@ Select = collections.namedtuple(
 # A select query that produces final balances for accounts.
 # This is more or equivalent to
 #
-#   SELECT account, sum(change) FROM <from_clause>
+#   SELECT account, sum(position) FROM <from_clause>
 #   GROUP BY account
 #
 # Attributes:
-#   summary_func: A method on an inventory to call on the changes column.
+#   summary_func: A method on an inventory to call on the position column.
 #     May be to extract units, value at cost, etc.
 #   from_clause: An instance of 'From', or None if absent.
 Balances = collections.namedtuple('Balances', 'summary_func from_clause')
@@ -53,7 +53,7 @@ Balances = collections.namedtuple('Balances', 'summary_func from_clause')
 #
 # Attributes:
 #   account: A string, the name of the account to restrict to.
-#   summary_func: A method on an inventory to call on the changes column.
+#   summary_func: A method on an inventory to call on the position column.
 #     May be to extract units, value at cost, etc.
 #   from_clause: An instance of 'From', or None if absent.
 Journal = collections.namedtuple('Journal', 'account summary_func from_clause')

@@ -3,6 +3,8 @@ beancount: TODO
 * Query Language
 http://furius.ca/beancount/doc/proposal-query
 
+  - Document mapping from language fields to postings.
+
 
   - Create tests for all the realistic test cases
     Use cases:
@@ -89,14 +91,13 @@ http://furius.ca/beancount/doc/proposal-query
 
 
 
-  - Use the display_context  in the BQL rendering routines instead of using the
+  - Use the display_context in the BQL rendering routines instead of using the
     display precision mode in the displayed numbers only.
 
 
   - This should fail (it doesn't):
 
-       SELECT DISTINCT account  GROUP BY account, account_sortkey(account)
-       ORDER BY 2;"
+       SELECT DISTINCT account  GROUP BY account, account_sortkey(account) ORDER BY 2;
 
     I think you need to apply the ORDER-BY separately, and be able to ORDER-BY
     aggregate values.
@@ -118,7 +119,7 @@ http://furius.ca/beancount/doc/proposal-query
     once, reading the input files only once (needs support for redirection of
     output to files).
 
-  - Write a documentation doc
+  - Write a documentation for the query language.
 
 
   - In docs: explain four ways to "get data out": bean-web, bean-report,

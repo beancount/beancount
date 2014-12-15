@@ -89,7 +89,7 @@ class TestCompileDataTypes(unittest.TestCase):
             (qe.AccountColumn, str),
             (qe.NumberColumn, Decimal),
             (qe.CurrencyColumn, str),
-            (qe.ChangeColumn, position.Position),
+            (qe.PositionColumn, position.Position),
             # Entries accessors.
             (qe.TypeEntryColumn, str),
             (qe.FilenameEntryColumn, str),

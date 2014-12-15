@@ -459,7 +459,7 @@ class TestExecuteAggregatedQuery(QueryBase):
         self.check_sorted_query(
             self.INPUT,
             """
-            SELECT account, sum(change) as amount
+            SELECT account, sum(position) as amount
             GROUP BY account;
             """,
             [
@@ -476,11 +476,11 @@ class TestExecuteAggregatedQuery(QueryBase):
         self.check_sorted_query(
             self.INPUT,
             """
-            SELECT count(change)
+            SELECT count(position)
             GROUP BY account;
             """,
             [
-                ('count_change', int),
+                ('count_position', int),
                 ],
             [
                 (1,),
@@ -493,7 +493,7 @@ class TestExecuteAggregatedQuery(QueryBase):
         self.check_query(
             self.INPUT,
             """
-            SELECT account, sum(change) as amount
+            SELECT account, sum(position) as amount
             GROUP BY account
             ORDER BY account;
             """,
@@ -512,7 +512,7 @@ class TestExecuteAggregatedQuery(QueryBase):
         self.check_query(
             self.INPUT,
             """
-            SELECT account, sum(change) as amount
+            SELECT account, sum(position) as amount
             GROUP BY account, length(account)
             ORDER BY length(account);
             """,
@@ -588,7 +588,7 @@ class TestExecuteAggregatedQuery(QueryBase):
         self.check_query(
             self.INPUT,
             """
-            SELECT length(account) as len, sum(change) as amount
+            SELECT length(account) as len, sum(position) as amount
             GROUP BY account, len
             ORDER BY len;
             """,
@@ -836,14 +836,14 @@ class TestExecuteFlatten(QueryBase):
         self.check_query(
             self.INPUT,
             """
-            SELECT account, sum(change)
+            SELECT account, sum(position)
             WHERE account = 'Assets:Something'
             GROUP BY account
             FLATTEN;
             """,
             [
                 ('account', str),
-                ('sum_change', inventory.Inventory),
+                ('sum_position', inventory.Inventory),
                 ],
             [
                 ('Assets:Something',

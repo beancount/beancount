@@ -85,14 +85,14 @@ class TestSelectTarget(QueryParserTestBase):
     def test_target_multiple(self):
         self.assertParse(qSelect([qp.Target(qp.Column('date'), None),
                                   qp.Target(qp.Column('account'), None),
-                                  qp.Target(qp.Column('change'), None)]),
-                         "SELECT date, account, change;")
+                                  qp.Target(qp.Column('position'), None)]),
+                         "SELECT date, account, position;")
 
     def test_target_multiple_as(self):
         self.assertParse(qSelect([qp.Target(qp.Column('date'), 'xdate'),
                                   qp.Target(qp.Column('account'), None),
-                                  qp.Target(qp.Column('change'), 'xchange')]),
-                         "SELECT date as xdate, account, change as xchange;")
+                                  qp.Target(qp.Column('position'), 'xposition')]),
+                         "SELECT date as xdate, account, position as xposition;")
 
 
 class TestSelectExpression(QueryParserTestBase):
@@ -404,9 +404,9 @@ class TestSelectGroupBy(QueryParserTestBase):
             qSelect(qp.Wildcard(),
                     group_by=qp.GroupBy([qp.Column('a')],
                                         qp.Equal(
-                                            qp.Function('sum', [qp.Column('change')]),
+                                            qp.Function('sum', [qp.Column('position')]),
                                             qp.Constant(0)))),
-            "SELECT * GROUP BY a HAVING sum(change) = 0;")
+            "SELECT * GROUP BY a HAVING sum(position) = 0;")
 
     def test_groupby_numbers(self):
         self.assertParse(qSelect(qp.Wildcard(), group_by=qp.GroupBy([1], None)),
