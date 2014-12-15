@@ -380,3 +380,24 @@ def holding_to_posting(holding):
              if holding.price_number
              else None)
     return data.Posting(None, holding.account, position_, price, None)
+
+
+def get_pholding_market_value(pholding):
+    """Convert a Posting to its market value.
+
+    This function assumes that the Posting instance already has a non-null
+    'price' attribute.
+
+    Args:
+      holding: An instance of beancount.core.data.Posting.
+    Returns:
+      An instance of Amount.
+    """
+    price = pholding.price
+    position_ = pholding.position
+    assert price, (
+        "Empty price: '{}'".format(pholding))
+    assert price.currency != position_.lot.currency, (
+        "Invalid currency: '{}'".format(pholding))
+    return amount.Amount(position_.number * price.number,
+                         price.currency)
