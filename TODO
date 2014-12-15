@@ -123,6 +123,13 @@ beancount: TODO
 
 
 
+
+  - README for example files
+  - Implement example for documents
+  - Implement example for import
+  - Implement example for dashboard
+  - Implement example for prices
+
 * Standalone Tools
 
   - Build an 'statement' tool that will render a treeified balance sheet in two

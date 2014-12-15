@@ -748,7 +748,7 @@ class TestReturnsExampleScript(test_utils.TestCase):
     def test_returns_invoke_via_main(self):
         # We want to ensure we can call the module and it doesn't fail.
         example_filename = path.join(test_utils.find_repository_root(__file__),
-                                     'examples', 'tutorial', 'example.beancount')
+                                     'examples', 'example.beancount')
         self.assertTrue(path.exists(example_filename))
 
         command = [sys.executable, '-m', 'beancount.projects.returns',
