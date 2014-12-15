@@ -12,6 +12,7 @@ import contextlib
 import functools
 import shutil
 import itertools
+import os
 from os import path
 
 
@@ -24,6 +25,8 @@ get_test_port = itertools.count(9470).__next__
 def find_repository_root(filename=None):
     """Return the path to the repository root.
 
+    Args:
+      filename: A string, the name of a file within the repository.
     Returns:
       A string, the root directory.
     """
@@ -33,6 +36,31 @@ def find_repository_root(filename=None):
                   for sigfile in ('PKGINFO', 'COPYING', 'README')):
         filename = path.dirname(filename)
     return filename
+
+
+def find_python_lib():
+    """Return the path to the root of the Python libraries.
+
+    Returns:
+      A string, the root directory.
+    """
+    return path.dirname(path.dirname(path.dirname(__file__)))
+
+
+def subprocess_env():
+    """Return a dict to use as environment for running subprocesses.
+
+    Returns:
+      A string, the root directory.
+    """
+    # Ensure we have locations to invoke our Python executable and our
+    # runnable binaries in the test environment to run subprocesses.
+    binpath = ':'.join([
+        path.dirname(sys.executable),
+        path.join(find_repository_root(__file__), 'bin'),
+        os.environ.get('PATH', '').strip(':')]).strip(':')
+    return {'PATH': binpath,
+            'PYTHONPATH': find_python_lib()}
 
 
 def run_with_args(function, args):
@@ -71,22 +99,48 @@ def tempdir():
         shutil.rmtree(tempdir, ignore_errors=True)
 
 
-@contextlib.contextmanager
-def capture(attribute='stdout'):
+def capture(attributes='stdout'):
     """A context manager that captures what's printed to stdout.
 
     Args:
-      attribute: A string, the name of the sys attribute to override.
+      attributes: A string or a list of strings, the name of the sys attributes to override
+        with StringIO instances.
     Yields:
       A StringIO string accumulator.
     """
-    capture_attr = '__capture_{}__'.format(attribute)
-    setattr(sys, capture_attr, getattr(sys, attribute))
-    oss = io.StringIO()
-    setattr(sys, attribute, oss)
-    yield oss
-    setattr(sys, attribute, getattr(sys, capture_attr))
-    delattr(sys, capture_attr)
+    return patch(sys, attributes, io.StringIO)
+
+
+@contextlib.contextmanager
+def patch(obj, attributes, replacement_type):
+    """A context manager that temporarily patches an object's attributes.
+
+    All attributes in 'attributes' are saved and replaced by new instances
+    of type 'replacement_type'.
+
+    Args:
+      obj: The object to patch up.
+      attributes: A string or a sequence of strings, the names of attributes to replace.
+      replacement_type: A callable to build replacment objects.
+    Yields:
+      An instance of a list of sequencs of 'replacement_type'.
+    """
+    single = isinstance(attributes, str)
+    if single:
+        attributes = [attributes]
+
+    saved = []
+    replacements = []
+    for attribute in attributes:
+        replacement = replacement_type()
+        replacements.append(replacement)
+        saved.append(getattr(obj, attribute))
+        setattr(obj, attribute, replacement)
+
+    yield replacements[0] if single else replacements
+
+    for attribute, saved_attr in zip(attributes, saved):
+        setattr(obj, attribute, saved_attr)
 
 
 def docfile(function):

@@ -360,6 +360,8 @@ http://furius.ca/beancount/doc/proposal-query
 
 ** Misc
 
+  - IMPORTANT: Remove sample_stack for unit tests that fail, or fix the test..
+
   - IMPORTANT LATENT BUG. You need to extend the lexer to parse A-Z for flags,
     not just PSTCU! This is important, as I just realized that it could prevent
     the correct parsing for entries in a round-trip, with postings produced with
@@ -395,6 +397,16 @@ http://furius.ca/beancount/doc/proposal-query
 
 ** Documentation / Ongoing
 
+  - In the comparison doc: describe how Beancount has asset types
+
+  - Comparison w/ Ledger doc: "balance sheet and closing of year"
+
+  - A nice new Health Care section is nearly complete... complete it with DEDUC
+    and COPAY legs explanation. Write an accompanying plugin to insert the
+    deductible tracking and what-not.
+
+  - Write out the taxes section, you have all the details, no need to wait
+
   - Write document on converting between implementations
 
   - Complete "How Inventories Work?"
@@ -404,6 +416,21 @@ http://furius.ca/beancount/doc/proposal-query
   - Change documentation script to try to download to ODT format and then batch
     format to ebook
 
+  - You should have a dedicated section of your document that explains how market
+    values are reported, that is, via the unrealized gains plugin. Also provide a
+    market() function, to value holdings.
+
+  - Finally bake a PDF of all GDocs documentation and add a link to it. Should
+    be mobile-friendly.
+
+
+
+
+  - README for example files
+  - Implement example for documents
+  - Implement example for import
+  - Implement example for dashboard
+  - Implement example for prices
 
 * Standalone Tools
 
@@ -600,6 +627,13 @@ http://furius.ca/beancount/doc/proposal-inventory
 
 * Removing Holdings
 
+  - I think there's a way to simplify holdings: you can probably remove the
+    "Holding" type and replace that with a Posting, which really, is much like a
+    Holding, it has an account and a position, and a price.... That would
+    normalize Holding quite a bit, even if it means we end up adding a few
+    unused slots to Posting. I'm happy to do that! Simplify simplify simplify...
+    always.
+
   - Along with the new inventory, you can make Holding -> Position. This makes
     a lot of sense actually. Do do this!
 
@@ -722,6 +756,13 @@ http://furius.ca/beancount/doc/proposal-inventory
 
 * Plugins
 
+  - Create a verification plugin that checks that there is a single currency in
+    use per account. Check Open directives, also check actual usage.
+
+  - Put all verification plugins, including nounused and noduplicates under
+    beancount.plugins.constraints.*.
+
+
   - Would it make sense for every plugin to provide a validation function? We
     could then move all the validation routines in their plugin file. I very
     much like this idea: it creates more isolation for routines and less
@@ -731,9 +772,6 @@ http://furius.ca/beancount/doc/proposal-inventory
     ensure that the mutable portion of the entries hasn't been modified by the
     user-provided validation functions.
     'beancount.ops.documents' could benefit from this split.
-
-
-  - Bring in IRA portfolio plugin into the main and configure it properly.
 
   - Idea for an additional check: a plugin that computes the weight using the "@
     price" value on a posting held-at-cost, checked against the rest of postings
@@ -745,6 +783,19 @@ http://furius.ca/beancount/doc/proposal-inventory
 
   - Deal with wash sales... complete doc, call MSSB to figure out if/how they
     adjust the cost basis of a future stock vesting event.
+
+
+* Basic Directives as Plugins
+
+  I recently teased out that many of the basic functions can be implemented as
+  individual stages of transformations on the list of directives. This started
+  out as a way to add plugins by adding a custom transformation stage, but now
+  I see that if I can make the parser able to consume generic syntax that might
+  allow extensions, and to allow these plugins to specify new directive types
+  for extensions, I might be able to shove a *lot* of the existing
+  functionality into nice isolated plugin modules. Even functionality as basic
+  as Balance checks.  I'm not going to to do this in the first release, but I
+  want to set the stage for it.
 
 
 * Fix Unrealized Gains
@@ -844,13 +895,38 @@ http://furius.ca/beancount/doc/proposal-inter
     guide reporting that does not complexify the semantics.
 
 
+  - Idea: in the query language, provide a special Account:Payee field, in
+    order to play with the notion of payee-as-subacccount often discussed.
+
+    could also provide a clean_payee() function, that would attempt to clean
+    the ugly payee names!
+
+
+
+* Project: Auto-transfer Inference
+
+  - IDEA: Using inference and a reasonable buffer amount, can I automatically
+    figure out how much extra cash from checking can safely be transferred out
+    for investing? i.e. sum up upcoming expenses (rent + cc) and expected
+    salary payments, and calculate it automatically. Not obvious, but why not?
+
+
+
+* Project: List Unverified Postings
+
+  - Idea! Allow the selection or reporting of all the postings since their
+    balance check in each account. These postings can be called "unverified"
+    and it should be possible to report just those. Maybe we can restrict
+    further to the list of those without a '*' flag, or maybe just those with a
+    '!' flag. "Show me all that's unverified right now."
+
+
 * Current / Misc / To Be Classified
 
   (This is a grab bag of ideas. When I have a new idea coming to me, I don't
   have time to think about where to put it, I just come here and jot it down.
   Every couple of months I clean this mess up and put it in the sections below.
   Please excuse the mess. Of course, I'll clean it up before every release.)
-
 
 
   - Build library functions to dedent, parse and create single entries, and
@@ -861,60 +937,9 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
 
-  - IDEA: Using inference and a reasonable buffer amount, can I automatically
-    figure out how much extra cash from checking can safely be transferred out
-    for investing? i.e. sum up upcoming expenses (rent + cc) and expected
-    salary payments, and calculate it automatically. Not obvious, but why not?
+  (query)
+  - Journal rendering: add terminal colors (easy).
 
-
-
-  - IDEA: Create a plugin that will convert "doc:" metadata to a document file,
-    that will search for a unique string name in all the filenames and
-    associate the filename with this directive via a link or something.
-
-
-  - In the comparison doc: describe how Beancount has asset types
-
-
-
-  - Idea: in the query language, provide a special Account:Payee field, in
-    order to play with the notion of payee-as-subacccount often discussed.
-
-    could also provide a clean_payee() function, that would attempt to clean
-    the ugly payee names!
-
-
-  - Idea! Allow the selection or reporting of all the postings since their
-    balance check in each account. These postings can be called "unverified"
-    and it should be possible to report just those.
-
-
-
-  - Create a verification plugin that checks that there is a single currency in
-    use per account. Check Open directives, also check actual usage.
-
-  - Create a verification plugin that checks that there aren't any postings to
-    non-leaf accounts.
-
-  - Put all verification plugins, including nounused and noduplicates under
-    beancount.plugins.constraints.*.
-
-
-
-  - A nice new Health Care section is nearly complete... complete it with DEDUC
-    and COPAY legs explanation. Write an accompanying plugin to insert the
-    deductible tracking and what-not.
-
-  - Write out the taxes section, you have all the details, no need to wait
-
-
-
-  - (web) In the web interface, it would be nice to have a fancy overlay here,
-    that automatically appears after parsing if there are errors and that
-    automatically smoothly fades out.
-
-  - Configure more pylint tests and make them pass. We're using a small subset
-    at the moment.
 
 
 
@@ -925,37 +950,30 @@ http://furius.ca/beancount/doc/proposal-inter
 
 
 
+
+
+
+  - (web) In the web interface, it would be nice to have a fancy overlay here,
+    that automatically appears after parsing if there are errors and that
+    automatically smoothly fades out.
+
+
+
+
+
+
   - Eventually you want to clean up the locations of the example files. I think
     the basic.beancount and starterkit.beancount files aren't really that useful
     anymore, other than for automated testing.
+    examples/tutorial/example.beancount should move away from the tutorial files.
 
 
 
-  - Comparison w/ Ledger doc: "balance sheet and closing of year"
 
-
-
-  - You should have a dedicated section of your document that explains how market
-    values are reported, that is, via the unrealized gains plugin. Also provide a
-    market() function, to value holdings.
-
-
-
-  - (docs) Write a script to download and bake all my PDFs docs in a printable
-    and mobile-friendly formats.
 
   - (docs) I'd like the documentation links to open in "View" mode by default,
     YET still allowing the user to switch to "Suggestion" mode if they want to.
 
-
-
-  (documentation)
-  - Write a worked and detailed example of generating automated transactions in
-    the Plugins document.
-
-
-
-  - Journal rendering: add terminal colors (easy).
 
 
 
@@ -1149,7 +1167,7 @@ http://furius.ca/beancount/doc/proposal-inter
 
   - New plugin type: a kind of spreaded Pad directive, that creates multiple
     pads at regular intervals. This is to deal with smooth cash distributions or
-    Google meals assignment. You should be able to specify the frequency and
+    work meals assignment. You should be able to specify the frequency and
     have it automatically insert a number of entries to spread the expense
     evenly. 'evenpad', 'multipad', 'distribution'? This should most definitely
     be a plugin.
@@ -1385,8 +1403,8 @@ http://furius.ca/beancount/doc/proposal-inter
         Taxes                        Taxes
           US                           US
             TY2014                       TY2014
-              State                        State:Google
-                Google                     ...
+              State                        State:Company
+                Company                    ...
               ...
 
 
@@ -1713,9 +1731,9 @@ http://furius.ca/beancount/doc/proposal-inter
     document and a transaction and use a common link as a natural way to
     associate them, e.g.:
 
-       2014-06-20 document Income:US:Google:GSU "2014-06-20.google.0000000.pdf" ^ee63c6fc7aa6
+       2014-06-20 document Income:US:Employer:GSU "2014-06-20.employer.0000000.pdf" ^ee63c6fc7aa6
 
-       2014-06-20 * "GOOGLE INC       PAYROLL" | "Refund for fractional shares" ^ee63c6fc7aa6
+       2014-06-20 * "PAYROLL" | "Refund for fractional shares" ^ee63c6fc7aa6
          ...
          ...
 
@@ -1837,213 +1855,7 @@ http://furius.ca/beancount/doc/proposal-inter
     correct.
 
 
-  - (plugin/validation) Consider a strict validation plugin that kicks off
-    errors when amounts are posted to accounts which have children. Basically,
-    make it possible to disallow postings on accounts with children.
 
-
-
-
-
-
-
-  - (parser) Support enabling flex debugging in beancount.core._parser.parse(),
-    using "yyset_debug(int bdebug)".
-
-
-
-
-  - Require Python 3.4 and introduce Enum's where relevant.
-
-
-
-  - Support in test_utils.capture('stdout', 'stderr') as (stdout, stderr).
-    Replace all nested code that is inconvenient.
-
-
-  - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
-
-
-
-** Refactoring: Holding to Position
-
-  - I think there's a way to simplify holdings: you can probably remove the
-    "Holding" type and replace that with a Posting, which really, is much like a
-    Holding, it has an account and a position, and a price.... That would
-    normalize Holding quite a bit, even if it means we end up adding a few
-    unused slots to Posting. I'm happy to do that! Simplify simplify simplify...
-    always.
-
-
-** File Input as Environment Variable
-
-  - It might be really nice if all the commands would accept an environment
-    variable for the default file to use, if set. This means that the Beancount
-    filename could be an option like in Ledger and HLedger, e.g. with -f. It
-    *IS* true that in almost all cases I'm using the one, same input file for
-    all the programs, that is, the concept of a "default" is quite common.
-
-    This should probably go in before the first release because it has highly
-    visible impact on all the bean-query commands.
-
-
-** Prepare for Plugins Revamp
-
-  I recently teased out that many of the basic functions can be implemented as
-  individual stages of transformations on the list of directives. This started
-  out as a way to add plugins by adding a custom transformation stage, but now
-  I see that if I can make the parser able to consume generic syntax that might
-  allow extensions, and to allow these plugins to specify new directive types
-  for extensions, I might be able to shove a *lot* of the existing
-  functionality into nice isolated plugin modules. Even functionality as basic
-  as Balance checks.  I'm not going to to do this in the first release, but I
-  want to set the stage for it.
-
-
-** Precision
-
-  - (precision) FIXME: The better way to render numbers at the end would be to
-    let the user specify a desired rendering precision for each currency. Deal
-    with this throughout better.
-
-       "Hmm, that's right, I should probably set a maximum precision for rendering
-       numbers which require more digits than the default of 2. This is an
-       interesting one: I need to do something a bit more thorough about precision; 2
-       is not appropriate for everything either. I need to figure out a way to let a
-       user specify a desired rendering precision for each currency...
-       (probably via some options, unfortunately). In the meantime, I've made it so
-       that the max number of digits rendered is 5.
-
-       There's also the issue of setting the max digits during arithmetic operations,
-       which should also not be 28. I'll deal with that later."
-
-  - Automatically detect precision of each currency based on usage in file:
-
-      (Idea from Daniel Clemente): "You could use auto-detection: for each
-      currency, use the maximum number of decimals that the input file used. E.g.
-      if user writes 351.64 PLN, 151.1 PLN, 155 PLN, then use 2 decimals.
-      Alternatively, use "the most common" number of decimals. If 90% transactions
-      have 3 decimals, 5% have 4, 5% have 0, use 3."
-
-
-** Padding documentation from email
-
-  - Put this in the docs to explain "pad"
-
-     > > Ok, restarted example, let's say you begin
-     > > accounting in dec 2013, you'll have this:
-     > >
-     > >   2010-01-01 open
-     > >   2010-01-01 pad
-     > >   2013-12-04 balance
-     > >   2013-12-08 * ...
-     > >   2013-12-11 * ...
-     > >   2013-12-17 * ...
-     > >
-     > > eventually, moving forward, you'll get to 2014:
-     > >
-     > >   2010-01-01 open
-     > >   2010-01-01 pad
-     > >   2013-12-04 balance
-     > >   2013-12-08 * ...
-     > >   2013-12-11 * ...
-     > >   2013-12-17 * ...
-     > >   2013-12-22 * ...
-     > >   2013-12-29 * ...
-     > >   2014-01-02 * ...
-     > >   2014-12-04 balance
-     > >   2014-12-06 * ...
-     > >
-     > > Allright, now you decide you like this, and you
-     > > want to enter statements before you started.
-     > > You find your paper statement for november, and
-     > > fill in:
-     > >
-     > >   2010-01-01 open
-     > >   2010-01-01 pad
-     > >   ; here you insert
-     > >   2013-11-04 balance
-     > >   2013-11-08 * ...
-     > >   2013-11-18 * ...
-     > >   ...
-     > >   ; this is what was there previously
-     > >   2013-12-04 balance
-     > >   2013-12-08 * ...
-     > >   2013-12-11 * ...
-     > >   2013-12-17 * ...
-     > >   2013-12-22 * ...
-     > >   2013-12-29 * ...
-     > >   2014-01-02 * ...
-     > >   2014-12-04 balance
-     > >   2014-12-06 * ...
-     > >
-     > > Great. Now, notice how the balance for
-     > > 2013-11-04 is probably different than that of
-     > > 2013-12-04. If instead of a pad directive you
-     > > had added a manual adjustment, you'd have to
-     > > change it here. This is the beauty of the pad
-     > > directive: it automatically does it for you.
-     > >
-     > > Now, let's keep going backward in time. You dig
-     > > around your records, you find September's
-     > > statement, but you cannot find the statement
-     > > for October, maybe it's lost, or somewhere
-     > > else. Fine! You insert a pad directive to
-     > > account for those missing transactions:
-     > >
-     > >   2010-01-01 open
-     > >   2010-01-01 pad
-     > >
-     > >   2013-09-04 balance
-     > >   2013-09-05 * ...
-     > >   ... september transactions
-     > >   2013-09-30 * ...
-     > >   2013-10-04 balance
-     > >
-     > >   ; padding for missing October statement,
-     > > where is my statement?
-     > >   2013-10-04 pad
-     > >   2013-11-04 balance
-     > >
-     > >   ... november transactions
-     > >   2013-11-08 * ...
-     > >   2013-11-18 * ...
-     > >   ...
-     > >   2013-12-04 balance
-     > >
-     > >   2013-12-08 * ...
-     > >   2013-12-11 * ...
-     > >   2013-12-17 * ...
-     > >   2013-12-22 * ...
-     > >   2013-12-29 * ...
-     > >   2014-01-02 * ...
-     > >   2014-12-04 balance
-     > >
-     > >   2014-12-06 * ...
-     > >
-     > > This is the full example.
-
-Improve this bit:
-
-    >   But the detailed explanation cannot be found. There's only one phrase: „Think
-    >   of the Equity account as something from the past that you had to give up in
-    >   order to obtain the beginning snapshot of the Assets + Liabilities balance.“
-    >
-    > Great comment. I'll improve this.
-
- More user comments:
-
-    >   After doing my research, I found about debits and credits, which in Beancount
-    >   you represent with positive numbers and negative numbers respectively. I
-    >   found that having a name for each group of accounts helps me to think of them
-    >   at the same time, e.g. Liabilities+Equity+Income as part of a common thing,
-    >   instead of having to research each of it independently.
-    >   In the documentation you start speaking about numbers, then about signs, then
-    >   about grouping the accounts. Maybe it's better to go top-down and start
-    >   saying that there are two types of account (usually +, usually -) and then
-    >   divide each group further.
-    >
-    > I will change that, thanks for the comment.
 
 
 * Internal: Review Dependency Graph
@@ -2066,6 +1878,16 @@ Improve this bit:
   - beancount.core.getters: Should this move to ops as well? Check the
     dependency tree, see if it makes sense.
 
+
+
+* Code Quality
+
+  - Configure more pylint tests and make them pass. We're using a small subset
+    at the moment.
+
+  - Require Python 3.4 and introduce Enum's where relevant.
+
+  - Install flake8, PyChecker, pep8 after pylint passes, run all of them.
 
 
 * Core
@@ -2316,11 +2138,11 @@ Improve this bit:
        | but sometimes the dimensions get inverted too, like in my recent change about
        | how to track taxation:
        |
-       |   Expenses:Taxes:US:TY2014:Google:Federal
-       |   Expenses:Taxes:US:TY2014:Google:StateNY
-       |   Expenses:Taxes:US:TY2014:Google:CityNYC
+       |   Expenses:Taxes:US:TY2014:Employer:Federal
+       |   Expenses:Taxes:US:TY2014:Employer:StateNY
+       |   Expenses:Taxes:US:TY2014:Employer:CityNYC
        |   ...
-       | Here the "institution" is Google, and shows deeper in the hierarchy.
+       | Here the "institution" is your employer, and shows deeper in the hierarchy.
        | Finally, you often do want to have multiple types for the same or similar
        | accounts, for instance, to track gains and dividends income from a particular
        | investment account, you want a mirror of most of the dimensions except for the
@@ -2352,8 +2174,8 @@ Improve this bit:
        | dimensions, where the ordering of the components would not matter. These two
        | would point to the same bucket, for example (changing the syntax slightly),
        |
-       |   Expenses|Taxes|US|TY2014|Google|Federal
-       |   Expenses|US|Google|Taxes|TY2014|StateNY
+       |   Expenses|Taxes|US|TY2014|Employer|Federal
+       |   Expenses|US|Employer|Taxes|TY2014|StateNY
        |
        | You could then display reports (again, the usual reports, balance sheet,
        | income statement, journals) for "the subset of all transactions which has one
@@ -2384,8 +2206,8 @@ Improve this bit:
        | account where that component appears. (Views provide access to all the reports
        | filtered by a subset of transactions.) You can click your way to any journal
        | or report for that subset of transactions. This exists in HEAD today. You can
-       | draw all the reports where a particular component appears, e.g., "Google", as
-       | in "Income:US:Google:Salary" and "Expenses:Taxes:US:TY2014:Google:Federal".
+       | draw all the reports where a particular component appears, e.g., "Employer", as
+       | in "Income:US:Employer:Salary" and "Expenses:Taxes:US:TY2014:Employer:Federal".
        |
        | But this does not define "dimensions." It would be nice to group values for
        | these components by what kind of thing they are, e.g., a bank, an instution, a
@@ -2396,7 +2218,7 @@ Improve this bit:
        | dimensions by declaring a list of component names that form this dimension.
        | Here's how this would look, with the previous examples (new syntax):
        |
-       |   dimension employer  Google,Autodesk,Apple
+       |   dimension employer  Microsoft,Autodesk,Apple
        |   dimension bank      HSBC,RBC,ETrade
        |   dimension country   US,CA,AU
        |   dimension taxyear   TY2014,TY2013,TY2012,TY2011,TY2010
@@ -2423,9 +2245,9 @@ Improve this bit:
     In ealtion to this... these "dimensions", could they just become other
     dimensions in the filtering language?
 
-      component:Google
+      component:Microsoft
 
-      employer:Google
+      employer:Microsoft
       bank:RBC
       country:US
 
@@ -2438,11 +2260,11 @@ Improve this bit:
   - If you had tags as key-value pairs, those could be used as well:
 
       2014-05-21 * ...
-        #employer:Google
+        #employer:Microsoft
 
     Searching for:
 
-      tag:employer=Google
+      tag:employer=Microsoft
 
     This is another dimension in the same filtering language.
 
@@ -2590,7 +2412,11 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 
   - Bug: Invalid account names should only be reported once.
 
+
 *** Lexer Level Errors
+
+  - (parser) Support enabling flex debugging in beancount.core._parser.parse(),
+    using "yyset_debug(int bdebug)".
 
   - When an error occurs, skip the lexer to the next empty line and recommence.
 
@@ -2702,6 +2528,10 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
     could have a dramatic effect on performance.
 
 ** Documents
+
+  - IDEA: Create a plugin that will convert "doc:" metadata to a document file,
+    that will search for a unique string name in all the filenames and
+    associate the filename with this directive via a link or something.
 
   - Write a proposal for implementing a transformation on a specific set of
     transactions, that supports capital gains with commission taken into
@@ -2897,7 +2727,7 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 ** Wash Sales
 
   - (script) Write a script to check whether an account's trades are subject to
-    the wash sale rule (I need this for Google stock):
+    the wash sale rule (I need this for my personal stock plan):
 
       "An Internal Revenue Service (IRS) rule that prohibits a taxpayer from
     claiming a loss on the sale or trade of a security in a wash sale. The rule
@@ -3329,7 +3159,7 @@ https://docs.google.com/document/d/1d88MkHqxiVdF8XSQBT1QQpOKEOt6OC1P9ZoF3u86DwI/
 ** Programmable View
 
   - GREAT IDEA! Have a web form that you can input a view filtering expression,
-    e.g.  year:2014 component:Google
+    e.g.  year:2014 component:Microsoft
     to have that year's transactions made with this component. Encode the
     results in a unique string that you can decode and create a corresponding
     view of the subset selected by the expression. You can then view any of the
@@ -3642,3 +3472,127 @@ come up with a creative solution that solves this problem.
   - Begin with a USB key in hand. "On this 8 GB USB key, I have all of 8 years
     history of financial transactions in my life. Every single price paid that
     went recorded into an account it these.
+** Padding documentation from email
+
+  - Put this in the docs to explain "pad"
+
+     > > Ok, restarted example, let's say you begin
+     > > accounting in dec 2013, you'll have this:
+     > >
+     > >   2010-01-01 open
+     > >   2010-01-01 pad
+     > >   2013-12-04 balance
+     > >   2013-12-08 * ...
+     > >   2013-12-11 * ...
+     > >   2013-12-17 * ...
+     > >
+     > > eventually, moving forward, you'll get to 2014:
+     > >
+     > >   2010-01-01 open
+     > >   2010-01-01 pad
+     > >   2013-12-04 balance
+     > >   2013-12-08 * ...
+     > >   2013-12-11 * ...
+     > >   2013-12-17 * ...
+     > >   2013-12-22 * ...
+     > >   2013-12-29 * ...
+     > >   2014-01-02 * ...
+     > >   2014-12-04 balance
+     > >   2014-12-06 * ...
+     > >
+     > > Allright, now you decide you like this, and you
+     > > want to enter statements before you started.
+     > > You find your paper statement for november, and
+     > > fill in:
+     > >
+     > >   2010-01-01 open
+     > >   2010-01-01 pad
+     > >   ; here you insert
+     > >   2013-11-04 balance
+     > >   2013-11-08 * ...
+     > >   2013-11-18 * ...
+     > >   ...
+     > >   ; this is what was there previously
+     > >   2013-12-04 balance
+     > >   2013-12-08 * ...
+     > >   2013-12-11 * ...
+     > >   2013-12-17 * ...
+     > >   2013-12-22 * ...
+     > >   2013-12-29 * ...
+     > >   2014-01-02 * ...
+     > >   2014-12-04 balance
+     > >   2014-12-06 * ...
+     > >
+     > > Great. Now, notice how the balance for
+     > > 2013-11-04 is probably different than that of
+     > > 2013-12-04. If instead of a pad directive you
+     > > had added a manual adjustment, you'd have to
+     > > change it here. This is the beauty of the pad
+     > > directive: it automatically does it for you.
+     > >
+     > > Now, let's keep going backward in time. You dig
+     > > around your records, you find September's
+     > > statement, but you cannot find the statement
+     > > for October, maybe it's lost, or somewhere
+     > > else. Fine! You insert a pad directive to
+     > > account for those missing transactions:
+     > >
+     > >   2010-01-01 open
+     > >   2010-01-01 pad
+     > >
+     > >   2013-09-04 balance
+     > >   2013-09-05 * ...
+     > >   ... september transactions
+     > >   2013-09-30 * ...
+     > >   2013-10-04 balance
+     > >
+     > >   ; padding for missing October statement,
+     > > where is my statement?
+     > >   2013-10-04 pad
+     > >   2013-11-04 balance
+     > >
+     > >   ... november transactions
+     > >   2013-11-08 * ...
+     > >   2013-11-18 * ...
+     > >   ...
+     > >   2013-12-04 balance
+     > >
+     > >   2013-12-08 * ...
+     > >   2013-12-11 * ...
+     > >   2013-12-17 * ...
+     > >   2013-12-22 * ...
+     > >   2013-12-29 * ...
+     > >   2014-01-02 * ...
+     > >   2014-12-04 balance
+     > >
+     > >   2014-12-06 * ...
+     > >
+     > > This is the full example.
+
+Improve this bit:
+
+    >   But the detailed explanation cannot be found. There's only one phrase: „Think
+    >   of the Equity account as something from the past that you had to give up in
+    >   order to obtain the beginning snapshot of the Assets + Liabilities balance.“
+    >
+    > Great comment. I'll improve this.
+
+ More user comments:
+
+    >   After doing my research, I found about debits and credits, which in Beancount
+    >   you represent with positive numbers and negative numbers respectively. I
+    >   found that having a name for each group of accounts helps me to think of them
+    >   at the same time, e.g. Liabilities+Equity+Income as part of a common thing,
+    >   instead of having to research each of it independently.
+    >   In the documentation you start speaking about numbers, then about signs, then
+    >   about grouping the accounts. Maybe it's better to go top-down and start
+    >   saying that there are two types of account (usually +, usually -) and then
+    >   divide each group further.
+    >
+    > I will change that, thanks for the comment.
+
+** Example
+
+  (documentation)
+  - Write a worked and detailed example of generating automated transactions in
+    the Plugins document.

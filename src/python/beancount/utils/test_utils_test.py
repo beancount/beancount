@@ -4,6 +4,7 @@ Tests for test utilities.
 __author__ = "Martin Blais <blais@furius.ca>"
 
 import unittest
+import io
 import os
 import sys
 from os import path
@@ -35,6 +36,7 @@ class TestTestUtils(unittest.TestCase):
     def test_capture(self):
         text = "b9baaa0c-0f0a-47db-bffc-a00c6f4ac1db"
         with test_utils.capture() as output:
+            self.assertTrue(isinstance(output, io.StringIO))
             print(text)
         self.assertEqual(text + "\n", output.getvalue())
 

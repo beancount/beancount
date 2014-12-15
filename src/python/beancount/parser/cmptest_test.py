@@ -88,7 +88,7 @@ class TestTestCase(cmptest.TestCase):
         with self.assertRaises(AssertionError):
             self.assertIncludesEntries("""
 
-              2014-02-01 * "GOOGLE PLAY"
+              2014-02-01 * "PLAY"
                 Liabilities:US:Amex:BlueCash     -9.99 USD
                 Expenses:Fun:Music
 
@@ -119,7 +119,7 @@ class TestTestCase(cmptest.TestCase):
 
         self.assertExcludesEntries("""
 
-          2014-02-01 * "GOOGLE PLAY"
+          2014-02-01 * "PLAY"
             Liabilities:US:Amex:BlueCash     -9.99 USD
             Expenses:Fun:Music
 

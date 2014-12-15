@@ -267,10 +267,6 @@ class TestInventory(unittest.TestCase):
             position.from_string('40.50 USD {1.10 CAD / 2012-01-01}'),
             inv.get_position(Lot('USD', A('1.10 CAD'), date(2012, 1, 1))))
 
-        self.assertEqual(
-            position.from_string('40.50 USD {1.10 CAD / 2012-01-01}'),
-            inv[Lot('USD', A('1.10 CAD'), date(2012, 1, 1))])
-
     def test_add(self):
         inv = Inventory()
         inv.add_amount(A('100.00 USD'))

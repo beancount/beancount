@@ -748,13 +748,15 @@ class TestReturnsExampleScript(test_utils.TestCase):
     def test_returns_invoke_via_main(self):
         # We want to ensure we can call the module and it doesn't fail.
         example_filename = path.join(test_utils.find_repository_root(__file__),
-                                     'examples', 'tutorial', 'example.beancount')
+                                     'examples', 'example.beancount')
         self.assertTrue(path.exists(example_filename))
 
         command = [sys.executable, '-m', 'beancount.projects.returns',
                    example_filename,
                    'Assets:US:ETrade', 'Expenses:Financial:Commissions']
-        pipe = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        pipe = subprocess.Popen(command,
+                                env=test_utils.subprocess_env(),
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output, errors = pipe.communicate()
         self.assertEqual(0, pipe.returncode)
         self.assertTrue(re.search(b'Total returns', output))
@@ -767,7 +769,9 @@ class TestReturnsExampleScript(test_utils.TestCase):
                                 'examples', 'returns', 'returns-example.py')
         self.assertTrue(path.exists(script_name))
 
-        pipe = subprocess.Popen(script_name, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        pipe = subprocess.Popen(script_name,
+                                env=test_utils.subprocess_env(),
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output, errors = pipe.communicate()
         self.assertEqual(0, pipe.returncode)
         self.assertFalse(errors)

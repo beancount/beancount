@@ -359,3 +359,19 @@ class TestPrinterAlignment(test_utils.TestCase):
           Assets:US:Investments:Cash  -22473.32 CAD @ 1.10 USD                  ; -24720.65 USD
         """)
         self.assertEqual(expected_str, oss.getvalue())
+
+
+class TestPrinterMisc(unittest.TestCase):
+
+    @parser.parsedoc
+    def test_no_valid_account(self, entries, errors, options_map):
+        """
+        2000-01-01 * "Test"
+          Assets:Foo
+
+        2000-01-01 * "Test"
+          Assets:Foo
+          Assets:Bar
+        """
+        oss = io.StringIO()
+        printer.print_entries(entries, file=oss)

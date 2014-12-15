@@ -17,6 +17,7 @@ from beancount.core import data
 from beancount.core import amount
 from beancount.core import interpolate
 from beancount.core import interpolate_test
+from beancount.utils import test_utils
 
 
 def check_list(test, objlist, explist):
@@ -71,8 +72,10 @@ class TestParserInputs(unittest.TestCase):
         code = ('import beancount.parser.parser_test as p; '
                 'p.TestParserInputs.parse_stdin()')
         pipe = subprocess.Popen([sys.executable, '-c', code, __file__],
+                                env=test_utils.subprocess_env(),
                                 stdin=subprocess.PIPE)
         output, errors = pipe.communicate(self.INPUT.encode('utf-8'))
+        self.assertEqual(0, pipe.returncode)
 
 
 class TestParserEntryTypes(unittest.TestCase):

@@ -146,9 +146,9 @@ only, so I'll have, for example:
 but sometimes the dimensions get inverted too, like in my recent change about
 how to track taxation:
 
-  Expenses:Taxes:US:TY2014:Google:Federal
-  Expenses:Taxes:US:TY2014:Google:StateNY
-  Expenses:Taxes:US:TY2014:Google:CityNYC
+  Expenses:Taxes:US:TY2014:AppleInc:Federal
+  Expenses:Taxes:US:TY2014:AppleInc:StateNY
+  Expenses:Taxes:US:TY2014:AppleInc:CityNYC
   ...
 
 Finally, you often do want to have multiple types for the same or similar
@@ -179,8 +179,8 @@ So I've been thinking about an experiment to rename all accounts according to
 dimensions, where the ordering of the components would not matter. These two
 would point to the same bucket, for example (changing the syntax slightly),
 
-  Expenses|Taxes|US|TY2014|Google|Federal
-  Expenses|US|Google|Taxes|TY2014|StateNY
+  Expenses|Taxes|US|TY2014|AppleInc|Federal
+  Expenses|US|AppleInc|Taxes|TY2014|StateNY
 
 You could then display reports (again, the usual reports, balance sheet,
 income statement, journals) for "the subset of all transactions which has one
@@ -211,8 +211,8 @@ Clicking on the link selects all the transactions with a posting with an
 account where that component appears. (Views provide access to all the reports
 filtered by a subset of transactions.) You can click your way to any journal
 or report for that subset of transactions. This exists in HEAD today. You can
-draw all the reports where a particular component appears, e.g., "Google", as
-in "Income:US:Google:Salary" and "Expenses:Taxes:US:TY2014:Google:Federal".
+draw all the reports where a particular component appears, e.g., "AppleInc", as
+in "Income:US:AppleInc:Salary" and "Expenses:Taxes:US:TY2014:AppleInc:Federal".
 
 But this does not define "dimensions." It would be nice to group values for
 these components by what kind of thing they are, e.g., a bank, an instution, a
@@ -223,7 +223,7 @@ require, BTW, at least not in my account names), allow the user to define
 dimensions by declaring a list of component names that form this dimension.
 Here's how this would look, with the previous examples (new syntax):
 
-  dimension employer  Google,Autodesk,Apple
+  dimension employer  Microsoft,Autodesk,Apple
   dimension bank      HSBC,RBC,ETrade
   dimension country   US,CA,AU
   dimension taxyear   TY2014,TY2013,TY2012,TY2011,TY2010

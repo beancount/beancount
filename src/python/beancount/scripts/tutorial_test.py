@@ -13,7 +13,7 @@ class TestTutorial(test_utils.TestCase):
 
     def test_generate_tutorial(self):
         rootdir = test_utils.find_repository_root(__file__)
-        example_beancount = path.join(rootdir, 'examples', 'tutorial', 'example.beancount')
+        example_beancount = path.join(rootdir, 'examples', 'example.beancount')
         temp_output_dir = tempfile.mkdtemp()
         try:
             result = test_utils.run_with_args(tutorial.main,

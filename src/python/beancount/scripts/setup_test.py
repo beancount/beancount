@@ -41,7 +41,7 @@ class TestSetup(test_utils.TestCase):
                 libdir = path.join(libdir, os.listdir(libdir)[0])
 
             # Run some basic commands using the newly installed version.
-            example_filename = path.join(rootdir, 'examples/basic/basic.beancount')
+            example_filename = path.join(rootdir, 'examples/example.beancount')
 
             # Run bean-check.
             command = [path.join(bindir, 'bean-check'), '-v', example_filename]

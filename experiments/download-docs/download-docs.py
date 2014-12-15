@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""Download all the Beancount docs from Google Drive and bake a nice PDF with it.
+"""Download all the Beancount docs from my personal Google Drive and bake a nice PDF with it.
 """
 __author__ = 'Martin Blais <blais@furius.ca>'
 
