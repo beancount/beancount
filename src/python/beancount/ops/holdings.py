@@ -406,5 +406,9 @@ def get_pholding_market_value(pholding):
     else:
         assert price.currency != position_.lot.currency, (
             "Invalid currency: '{}'".format(pholding))
+        cost = position_.lot.cost
+        if cost:
+            assert price.currency == cost.currency, (
+                "Invalid currency vs. cost: '{}'".format(pholding))
         return amount.Amount(position_.number * price.number,
                              price.currency)

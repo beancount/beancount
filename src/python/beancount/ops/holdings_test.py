@@ -475,3 +475,11 @@ class TestHoldings(unittest.TestCase):
                                    amount.from_string('60.00 USD'),
                                    None)
             holdings.get_pholding_market_value(posting)
+
+        with self.assertRaises(AssertionError):
+            posting = data.Posting(None,
+                                   'Account',
+                                   position.from_string('1000.00 USD {1.25 CAD}'),
+                                   amount.from_string('60.00 USD'),
+                                   None)
+            holdings.get_pholding_market_value(posting)
