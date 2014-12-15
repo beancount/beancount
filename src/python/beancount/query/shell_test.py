@@ -22,7 +22,7 @@ from beancount import loader
 
 def setUp(self):
     example_filename = path.join(test_utils.find_repository_root(__file__),
-                                 'examples', 'tutorial', 'example.beancount')
+                                 'examples', 'example.beancount')
     global entries, errors, options_map
     entries, errors, options_map = loader.load(example_filename)
     assert not errors
