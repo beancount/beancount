@@ -452,13 +452,21 @@ class TestHoldings(unittest.TestCase):
         self.assertEqual(amount.from_string('6000.00 USD'),
                          holdings.get_pholding_market_value(posting))
 
-        with self.assertRaises(AssertionError):
-            posting = data.Posting(None,
-                                   'Account',
-                                   position.from_string('100 MSFT {54.34 USD}'),
-                                   None,
-                                   None)
-            holdings.get_pholding_market_value(posting)
+        posting = data.Posting(None,
+                               'Account',
+                               position.from_string('100 MSFT {54.34 USD}'),
+                               None,
+                               None)
+        self.assertEqual(amount.from_string('5434.00 USD'),
+                         holdings.get_pholding_market_value(posting))
+
+        posting = data.Posting(None,
+                               'Account',
+                               position.from_string('1000.00 USD'),
+                               None,
+                               None)
+        self.assertEqual(amount.from_string('1000.00 USD'),
+                         holdings.get_pholding_market_value(posting))
 
         with self.assertRaises(AssertionError):
             posting = data.Posting(None,
