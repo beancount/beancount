@@ -160,7 +160,7 @@ def report_holdings(currency, relative, entries, options_map,
 
 
 def load_from_csv(fileobj):
-    """Load a list of holdings from a CSV output file.
+    """Load a list of holdings from a CSV file.
 
     Args:
       fileobj: A file object.
