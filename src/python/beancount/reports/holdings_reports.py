@@ -332,12 +332,21 @@ class NetWorthReport(report.TableReport):
                              for holding in holdings_list
                              if holding.currency and holding.cost_currency]
 
+
+
+
+
+            ## FIXME: remove - conversion
+            print(holdings_list[0])
+            pholdings_list = list(map(holdings.holding_to_posting, holdings_list))
+
             # If after conversion there are no valid holdings, skip the currency
             # altogether.
-            if not holdings_list:
+            if not pholdings_list:
                 continue
 
-            net_worths.append((currency, holdings_list[0].market_value))
+            net_worths.append(
+                (currency, holdings.get_pholding_market_value(pholdings_list[0])))
 
         field_spec = [
             (0, 'Currency'),
